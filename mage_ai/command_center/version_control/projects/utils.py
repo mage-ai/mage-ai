@@ -128,6 +128,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'request.payload.version_control_project.sync_config.'
                 'ssh_private_key',
             ),
+            style=dict(multiline=True),
             monospace=True,
             required=True,
             action_uuid='update_project',

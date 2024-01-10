@@ -25,6 +25,7 @@ class ItemType(str, Enum):
 class ObjectType(str, Enum):
     APPLICATION = 'application'
     APPLICATION_EXPANSION = 'application_expansion'
+    AUTHENTICATION = 'authentication'
     BLOCK = 'block'
     BRANCH = 'branch'
     CHAT = 'chat'

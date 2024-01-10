@@ -451,33 +451,3 @@ async def build_push(model: Branch, items: List[Dict]) -> Dict:
     item_dict['applications'][0]['settings'] = item_dict['applications'][0]['settings'][:1]
 
     return item_dict
-
-
-async def build_authenticate_github(model: Branch, items: List[Dict]) -> Dict:
-    return dict(
-        uuid=f'authenticate_github_version_control_{model.name}',
-        item_type=ItemType.NAVIGATE,
-        object_type=ObjectType.APPLICATION,
-        title='Authenticate with GitHub',
-        description='to easily pull, push, and create pull requests',
-        subtitle='Authentication',
-        display_settings_by_attribute=dict(
-            description=dict(
-                text_styles=dict(
-                    small=True,
-                ),
-            ),
-            icon=dict(
-                color_uuid='content.active',
-                icon_uuid='GitHubIcon',
-            ),
-        ),
-        actions=[
-            dict(
-                page=dict(
-                    path='/version-control',
-                ),
-                uuid='authenticate_github_version_control',
-            ),
-        ],
-    )

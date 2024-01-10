@@ -19,6 +19,7 @@ from mage_ai.command_center.version_control.branches.utils import (
 from mage_ai.command_center.version_control.constants import (
     ACTIVATE_MODE,
     DEACTIVATE_MODE,
+    build_authenticate_github,
 )
 from mage_ai.command_center.version_control.files.utils import build_generic_command
 from mage_ai.command_center.version_control.projects.constants import (
@@ -161,6 +162,16 @@ class VersionControlFactory(BaseFactory):
         if not on_base_view and self.search and item_project:
             item = await build_generic_command(self, item_project)
             items.append(item)
+
+        # Check for existing OAuth tokens. If exist, show action to reset them.
+        if True:
+            self.filter_score_mutate_accumulator(
+                await build_authenticate_github(
+                    page=self.page,
+                    user=self.user,
+                ),
+                items,
+            )
 
         return items
 

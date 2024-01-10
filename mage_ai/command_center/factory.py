@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from thefuzz import fuzz
 
 from mage_ai.command_center.constants import ModeType, ObjectType
-from mage_ai.command_center.models import Application, Item, Mode
+from mage_ai.command_center.models import Application, Item, Mode, PageMetadata
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
@@ -37,7 +37,7 @@ class BaseFactory:
         self.component = component
         self.item = Item.load(**item) if item else item
         self.mode = Mode.load(**mode) if mode else mode
-        self.page = page
+        self.page = PageMetadata.load(**page) if page else page
         self.page_history = page_history
         self.picks = picks
         self.results = results

@@ -198,6 +198,8 @@ class FileMetadata(CommandCenterBaseClass):
 
 @dataclass
 class PageMetadata(CommandCenterBaseClass):
+    href: str = None
+    origin: str = None
     path: str = None
     pathname: str = None
     query: Dict = None
@@ -230,6 +232,7 @@ class TriggerMetadata(CommandCenterBaseClass):
 class PipelineRunMetadata(CommandCenterBaseClass):
     backfill_id: int = None
     completed_at: str = None
+    created_at: str = None
     execution_date: str = None
     execution_partition: str = None
     executor_type: ExecutorType = None

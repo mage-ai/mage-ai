@@ -58,6 +58,8 @@ export enum ItemTypeEnum {
 
 export enum ObjectTypeEnum {
   APPLICATION = 'application',
+  APPLICATION_EXPANSION = 'application_expansion',
+  AUTHENTICATION = 'authentication',
   BLOCK = 'block',
   BRANCH = 'branch',
   CHAT = 'chat',
@@ -336,6 +338,8 @@ interface AttributeDisplaySettingsType {
 }
 
 export interface PageHistoryType {
+  href?: string;
+  origin?: string;
   path: string;
   pathname: string;
   query?: KeyValueType;

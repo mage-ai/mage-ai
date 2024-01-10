@@ -190,7 +190,12 @@ export default function useExecuteActions({
       let actionFunction = ({
         results,
         valid,
-      }: ActionResultsWithValidation = {}) => {};
+      }: ActionResultsWithValidation = {
+        action: null,
+        item: null,
+        results: null,
+        valid: false,
+      }) => {};
 
       if (page) {
         const {
@@ -209,7 +214,12 @@ export default function useExecuteActions({
             item,
             results,
             valid,
-          }: ActionResultsWithValidation = {}) => {
+          }: ActionResultsWithValidation = {
+            action: null,
+            item: null,
+            results: null,
+            valid: false,
+          }) => {
             const path = interpolatePagePath(action?.page);
 
             let result = null;

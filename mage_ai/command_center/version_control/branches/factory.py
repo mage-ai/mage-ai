@@ -12,7 +12,6 @@ from mage_ai.command_center.models import Item
 from mage_ai.command_center.version_control.branches.utils import (
     branch_metadata,
     build_and_score_detail,
-    build_authenticate_github,
     build_clone,
     build_delete_branch,
     build_pull,
@@ -119,12 +118,6 @@ class BranchFactory(BaseFactory):
 
             # git push
             self.filter_score_mutate_accumulator(await build_push(branch, items), items)
-
-            # authenticate github
-            self.filter_score_mutate_accumulator(
-                await build_authenticate_github(branch, items),
-                items,
-            )
 
         for item in items:
             if 'metadata' not in item:

@@ -83,6 +83,8 @@ export default function useCache(fetchUUID: () => number | string, opts: {
           item,
           mode: getCurrentMode(),
           page: {
+            href: typeof window !== 'undefined' ? window.location.href : null,
+            origin: typeof window !== 'undefined' ? window.location.origin : null,
             path: router?.asPath,
             pathname: router?.pathname,
             query: router?.query,

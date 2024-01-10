@@ -4,6 +4,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import time
 from asyncio.subprocess import PIPE, STDOUT
 from dataclasses import dataclass
 from typing import Any, Dict, List
@@ -64,6 +65,18 @@ class BaseVersionControl(BaseDataClass):
             stderr=subprocess.STDOUT,
         )
 
+        self.output = proc.stdout.decode().split('\n')
+
+        return self.output
+
+    def run_with_inputs(self, command: str, message: str) -> List[str]:
+        proc = subprocess.Popen(
+            self.prepare_commands(command),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        time.sleep(3)
+        proc.communicate(message.encode())
         self.output = proc.stdout.decode().split('\n')
 
         return self.output
@@ -269,6 +282,7 @@ class Branch(BaseVersionControl):
             if self.remote:
                 commands.append(self.remote.name)
             commands.append(self.name)
+            return self.run_with_inputs(' '.join(commands), 'yes')
 
         lines = await self.run_async(' '.join(commands))
         self.update_attributes()
