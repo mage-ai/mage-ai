@@ -168,4 +168,4 @@ class DBTBlockYAML(DBTBlock):
 
             res = cli.invoke([task] + args)
             if not res.success:
-                raise res.exception
+                raise Exception(str(res.exception))

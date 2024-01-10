@@ -1512,7 +1512,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
                 if kwargs_var:
-                    global_vars_copy.update(kwargs_var)
+                    if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
+                        global_vars_copy.update(kwargs_var)
 
             outputs = self._execute_block(
                 outputs_from_input_vars,
@@ -3238,6 +3239,20 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         new_file_path = self.file_path
 
         if self.pipeline is not None:
+            DX_PRINTER.critical(
+                block=self,
+                old_uuid=old_uuid,
+                old_file_path=old_file_path,
+                block_content=block_content,
+                new_uuid=new_uuid,
+                name=self.name,
+                uuid=self.uuid,
+                file_path=new_file_path,
+                pipeline=self.pipeline.uuid,
+                repo_path=self.pipeline.repo_path,
+                __uuid='__update_name',
+            )
+
             if self.pipeline.has_block(
                 new_uuid,
                 block_type=self.type,

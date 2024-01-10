@@ -305,7 +305,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if res.success:
                 return cli.to_pandas(res)
             else:
-                raise res.exception
+                raise Exception(str(res.exception))
 
     def __create_upstream_tables(
         self,
