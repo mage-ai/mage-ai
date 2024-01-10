@@ -647,22 +647,31 @@ function CommandCenter() {
 
   function invokeRequest(opts) {
     const abortController = new AbortController();
+    const {
+      action,
+      item,
+    } = opts;
     const currentOpts = {
       ...opts,
     };
 
-    setTimeout(() => {
-      abortController.abort();
-      refLoadingRequest.current = false;
-      stopLoading();
-      showError({
-        errors: {
-          messages: [
-            `Request timed out for ${currentOpts?.item?.title}.`,
-          ],
-        },
-      });
-    }, 7000);
+    if (ObjectTypeEnum.BRANCH === item?.object_type
+      && ItemTypeEnum.ACTION === item?.item_type
+      && action?.uuid?.includes('push')
+    ) {
+      setTimeout(() => {
+        abortController.abort();
+        refLoadingRequest.current = false;
+        stopLoading();
+        showError({
+          errors: {
+            messages: [
+              `Request timed out for ${currentOpts?.item?.title}.`,
+            ],
+          },
+        });
+      }, 7000);
+    }
 
     refLoadingRequest.current = true;
     startLoading();

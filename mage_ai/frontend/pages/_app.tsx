@@ -101,7 +101,7 @@ function MyApp(props: MyAppProps & AppProps) {
   }, [commandCenterEnabled, router]);
 
   useEffect(() => {
-    savePageHistory();
+    setTimeout(() => savePageHistory(), 3000);
   }, [savePageHistory]);
 
   useEffect(() => {
