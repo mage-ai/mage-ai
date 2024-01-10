@@ -12,8 +12,12 @@ from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.custom_logger import DX_PRINTER
-from mage_ai.shared.files import find_file_from_another_file_path
+from mage_ai.shared.files import (
+    find_file_from_another_file_path,
+    get_full_file_paths_containing_item,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.path_fixer import add_absolute_path
 
@@ -50,6 +54,22 @@ class DBTBlockYAML(DBTBlock):
                 )
                 if file_path:
                     return os.path.dirname(file_path)
+
+        if file_path is None and self.configuration and self.configuration.get('dbt_project_name'):
+            file_paths = get_full_file_paths_containing_item(
+                os.path.join(
+                    get_repo_path(root_project=False),
+                    'dbt',
+                    self.configuration.get('dbt_project_name'),
+                ),
+                lambda x: x and (
+                    str(x).endswith('dbt_project.yml') or
+                    str(x).endswith('dbt_project.yaml'),
+                ),
+            )
+            if file_paths:
+                file_path = file_paths[0]
+                return os.path.dirname(file_path)
 
     def set_default_configurations(self):
         self.configuration = self.configuration or {}
