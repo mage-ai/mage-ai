@@ -72,9 +72,10 @@ function CodeBlockOutput({
   useEffect(() => {
     if (tabs?.length && !selectedOutputTabs) {
       const tab = tabs[0];
-      setSelectedOutputTabs?.(prev => ({
+      setSelectedOutputTabs?.(() => tabs?.slice(0, 2)?.reduce((acc, tab) => ({
+        ...acc,
         [tab?.uuid]: tab,
-      }));
+      }), {}));
     }
   }, []);
 

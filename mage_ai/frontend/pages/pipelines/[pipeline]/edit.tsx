@@ -227,13 +227,6 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlockState] = useState<BlockType>(null);
-  const setSelectedBlock = useCallback((block: BlockType) => {
-    setSelectedBlockState(block);
-    if (block && disableShortcuts) {
-      setDisableShortcuts(false);
-    }
-  }, [disableShortcuts]);
-
   const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
     block?: {
       type?: BlockTypeEnum | string;
@@ -243,6 +236,14 @@ function PipelineDetailPage({
       path?: string;
     };
   }>(null);
+
+  const setSelectedBlock = useCallback((block: BlockType) => {
+    setSelectedBlockState(block);
+    if (block && disableShortcuts) {
+      setDisableShortcuts(false);
+    }
+    setSelectedBlockDetails(null);
+  }, [disableShortcuts]);
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
@@ -1033,7 +1034,6 @@ function PipelineDetailPage({
     onUpdateFileSuccess,
     openSidekickView,
     pipeline,
-    selectedFilePath: pipelineUUID,
     sendTerminalMessage,
     setDisableShortcuts,
     setSelectedBlock,
@@ -2334,7 +2334,7 @@ function PipelineDetailPage({
   const {
     sendMessage,
   } = useWebSocket(getWebSocket(), {
-    onClose: () => console.log('socketUrlPublish closed'),
+    onClose: () => DEBUG(() => console.log('socketUrlPublish closed')),
     onMessage: (lastMessage) => {
       if (lastMessage) {
         const message: KernelOutputType = JSON.parse(lastMessage.data);
@@ -2397,12 +2397,12 @@ function PipelineDetailPage({
         }
       }
     },
-    onOpen: () => console.log('socketUrlPublish opened'),
+    onOpen: () => DEBUG(() => console.log('socketUrlPublish opened')),
     reconnectAttempts: 10,
     reconnectInterval: 3000,
     shouldReconnect: () => {
       // Will attempt to reconnect on all close events, such as server shutting down.
-      console.log('Attempting to reconnect...');
+      DEBUG(() => console.log('Attempting to reconnect...'));
 
       return true;
     },

@@ -63,10 +63,8 @@ x-app_settings: &app_settings
   ports:
     - 3000:3000
   volumes:
-    - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
-    - ./mage_ai/frontend/.env.development.local:/home/src/mage_ai/frontend/.env.development.local
     - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
-    - ./mage_ai/frontend/.env:/home/src/mage_ai/frontend/.env
+    - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
     - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
     - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
     - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components

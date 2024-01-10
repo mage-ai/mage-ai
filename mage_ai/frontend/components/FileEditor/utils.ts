@@ -95,10 +95,9 @@ export function buildAddBlockRequestPayload(
 
   let blockUUID = getBlockUUID(parts);
   if (parts.length >= 3 && !isDBT) {
-    const nestedFolders = parts.slice(1, parts.length - 1)?.filter(
-      p => p?.length >= 1 && p !== osPath.sep && !p?.startsWith(blockType)
-    ).join(osPath.sep);
-
+    const idx1 = parts?.findIndex(p => p?.startsWith(blockType));
+    const idx2 = parts?.[parts?.length - 1]?.startsWith(blockUUID) ? parts?.length - 1 : parts?.length;
+    const nestedFolders = parts?.slice(idx1 + 1, idx2)?.join(osPath.sep);
     if (nestedFolders?.length >= 1) {
       blockUUID = `${nestedFolders}/${blockUUID}`;
     }
