@@ -51,7 +51,7 @@ class BlockCache(BaseCache):
         if isinstance(block, dict):
             block_type = block.get('type')
             block_uuid = block.get('uuid')
-            block_language = block.get('language', '')
+            block_language = block.get('language')
             configuration = block.get('configuration') or {}
             file_path = os.path.join(
                 repo_path,
