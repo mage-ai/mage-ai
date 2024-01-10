@@ -34,7 +34,7 @@ class BaseVersionControl(BaseDataClass):
 
         return args
 
-    async def run_async(self, command: str) -> List[str]:
+    async def run_async(self, command: str, timeout: int = 12) -> List[str]:
         # proc = await asyncio.create_subprocess_shell(
         #     ' '.join(self.prepare_commands(command)),
         #     stdin=PIPE,
@@ -49,7 +49,7 @@ class BaseVersionControl(BaseDataClass):
                 stdout=PIPE,
                 stderr=STDOUT,
             ),
-            5,
+            timeout,
         )
 
         self.output = await proc.stdout.read()

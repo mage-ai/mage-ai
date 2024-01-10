@@ -120,6 +120,7 @@ function CommandCenter() {
   const commandCenterStateRef = useRef({});
 
   const refAbortController = useRef(null);
+  const refAbortControllerRequest = useRef(null);
 
   const refActive = useRef(false);
   const refFocusedElement = useRef(null);
@@ -133,6 +134,7 @@ function CommandCenter() {
   const refHeaderTitle = useRef(null);
 
   const refLoading = useRef(null);
+  const refLoadingRequest = useRef(null);
   const refInput = useRef(null);
   const refInputKeyboardShortcut = useRef(null);
   const refInputValuePrevious = useRef(null);
@@ -617,8 +619,7 @@ function CommandCenter() {
   }
 
   const {
-    invokeRequest,
-    isLoading: isLoadingRequest,
+    invokeRequest: invokeRequestInit,
   } = useInvokeRequest({
     onSuccessCallback: (
       value,
@@ -643,6 +644,34 @@ function CommandCenter() {
     },
     showError,
   });
+
+  function invokeRequest(opts) {
+    const abortController = new AbortController();
+    const currentOpts = {
+      ...opts,
+    };
+
+    setTimeout(() => {
+      abortController.abort();
+      refLoadingRequest.current = false;
+      stopLoading();
+      showError({
+        errors: {
+          messages: [
+            `Request timed out for ${currentOpts?.item?.title}.`,
+          ],
+        },
+      });
+    }, 7000);
+
+    refLoadingRequest.current = true;
+    startLoading();
+
+    return invokeRequestInit({
+      ...opts,
+      abortController,
+    });
+  }
 
   function handleSelectItemRowBase(
     item: CommandCenterItemType,
@@ -932,15 +961,22 @@ function CommandCenter() {
   }
 
   useEffect(() => {
-    if (isLoadingFetch || isLoadingRequest) {
+    if (isLoadingFetch) {
       startLoading();
     } else {
       stopLoading();
     }
   }, [
     isLoadingFetch,
-    isLoadingRequest,
   ]);
+
+  function abortRequests() {
+    [refAbortController, refAbortControllerRequest].forEach((controller) => {
+      if (controller?.current) {
+        controller?.current?.abort();
+      }
+    });
+  }
 
   function closeCommandCenter() {
     refContainer.current.className = addClassNames(
@@ -954,7 +990,9 @@ function CommandCenter() {
     refInput?.current?.blur();
     refActive.current = false;
 
+    // Reset the items to the original list of items.
     stopLoading();
+    abortRequests();
   }
 
   function openCommandCenter() {
@@ -978,6 +1016,7 @@ function CommandCenter() {
     }
 
     stopLoading();
+    abortRequests();
   }
 
   const {

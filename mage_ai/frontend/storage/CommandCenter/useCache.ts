@@ -54,8 +54,6 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   const requestRef = useRef(null);
   const responseRef = useRef(null);
   const timeout = useRef(null);
-  const timeoutRequest = useRef(null);
-  const timeoutRequestAbortController = useRef(null);
   const router = useRouter();
 
   const [fetch, { isLoading }] = useMutation(
@@ -165,10 +163,6 @@ export default function useCache(fetchUUID: () => number | string, opts: {
             ]),
           };
         }
-
-        clearTimeout(timeoutRequest.current);
-        timeoutRequestAbortController.current = new AbortController();
-        timeoutRequest.current = setTimeout(() => timeoutRequestAbortController?.current?.abort(), 10);
 
         return resolve(fetch(request));
       }, delay);

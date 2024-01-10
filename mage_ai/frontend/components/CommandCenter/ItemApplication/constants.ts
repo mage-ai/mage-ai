@@ -2,11 +2,13 @@ import { CommandCenterActionType, CommandCenterItemType, ItemApplicationType, Ke
 import { ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from '../constants';
 
 export type InvokeRequestOptionsType = {
+  abortController?: any;
   action: CommandCenterActionType;
   focusedItemIndex: number;
   index: number;
   item: CommandCenterItemType;
   results: KeyValueType;
+  timeout?: number;
 };
 
 export type InvokeRequestActionType = {

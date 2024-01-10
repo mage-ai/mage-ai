@@ -417,7 +417,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                         ),
                         dict(
                             label='Email',
-                            description='config --global user.name',
+                            description='config --global user.email',
                             placeholder='e.g. wizard@magic.com',
                             display_settings=dict(
                                 icon_uuid='Email',

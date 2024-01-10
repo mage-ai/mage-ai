@@ -11,6 +11,8 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { onSuccess } from '@api/utils/response';
 import { updateActionFromUpstreamResults } from './utils';
 
+const TIMEOUT_DEFAULT = 12 * 1000
+
 export default function useInvokeRequest({
   onSuccessCallback,
   showError,
@@ -32,6 +34,7 @@ export default function useInvokeRequest({
   invokeRequest: (opts: {
     action: CommandCenterActionType;
     results: KeyValueType;
+    timeout?: number;
   }) => Promise<any>;
   isLoading: boolean;
 } {
@@ -110,6 +113,8 @@ export default function useInvokeRequest({
                 [key: string]: KeyValueType;
               },
             ) => {
+              clearTimeout(timeout.current);
+
               const {
                 action,
                 focusedItemIndex,
