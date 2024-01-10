@@ -44,6 +44,7 @@ class BlockCache(BaseCache):
         """
         block_type = ''
         block_uuid = ''
+        block_language = ''
         configuration = None
         file_path = None
         repo_path = repo_path or get_repo_path(root_project=False)
@@ -61,17 +62,15 @@ class BlockCache(BaseCache):
         else:
             block_type = block.type
             block_uuid = block.uuid
-            block_language = block.language
             configuration = block.configuration or {}
             file_path = block.file_path
 
-        if configuration:
-            file_source = (configuration or {}).get('file_source') or {}
-            if file_source and (file_source or {}).get('path'):
+        file_source = (configuration or {}).get('file_source') or {}
+        if file_source:
+            if (file_source or {}).get('path'):
                 return remove_base_repo_path_or_name((file_source or {}).get('path'))
-        else:
-            block_file_extension = f'.{BLOCK_LANGUAGE_TO_FILE_EXTENSION[block_language]}' \
-                if block_language else ''
+        elif block_language:
+            block_file_extension = f'.{BLOCK_LANGUAGE_TO_FILE_EXTENSION[block_language]}'
             file_path = f'{file_path}{block_file_extension}'
 
         return remove_base_repo_path_or_name(file_path)
