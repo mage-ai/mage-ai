@@ -51,6 +51,7 @@ class BlockCache(BaseCache):
         if isinstance(block, dict):
             block_type = block.get('type')
             block_uuid = block.get('uuid')
+            block_language = block.get('language', '')
             configuration = block.get('configuration') or {}
             file_path = os.path.join(
                 repo_path,
@@ -60,6 +61,7 @@ class BlockCache(BaseCache):
         else:
             block_type = block.type
             block_uuid = block.uuid
+            block_language = block.language
             configuration = block.configuration or {}
             file_path = block.file_path
 
@@ -68,7 +70,6 @@ class BlockCache(BaseCache):
             if file_source and (file_source or {}).get('path'):
                 return remove_base_repo_path_or_name((file_source or {}).get('path'))
         else:
-            block_language = block.get('language', '')
             block_file_extension = f'.{BLOCK_LANGUAGE_TO_FILE_EXTENSION[block_language]}' \
                 if block_language else ''
             file_path = f'{file_path}{block_file_extension}'
