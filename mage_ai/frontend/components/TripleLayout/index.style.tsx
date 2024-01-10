@@ -30,6 +30,10 @@ export const InlineContainerStyle = styled.div<{
   ${props => props.height && `
     height: ${props.height}px;
   `}
+
+  ${props => !props.height && `
+    height: inherit;
+  `}
 `;
 
 export const HeaderStyle = styled.div<{
@@ -301,14 +305,18 @@ export const DraggableStyle = styled.div<{
 `;
 
 export const MainWrapper = styled.div<{
+  noBackground?: boolean;
   inline?: boolean;
 }>`
   height: 100%;
   z-index: 1;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).codeArea};
     position: ${props.inline ? 'absolute' : 'fixed'};
+  `}
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme.background || dark.background).codeArea};
   `}
 `;
 
