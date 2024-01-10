@@ -2238,6 +2238,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 variable_uuid=variable_uuid,
             )
             return data, True
+        return data, False
 
     def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
