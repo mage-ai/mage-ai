@@ -1,8 +1,11 @@
+import json
+import logging
+import time
 from contextlib import contextmanager, redirect_stdout
 from enum import Enum
 from typing import Callable
-import logging
-import time
+
+from mage_ai.shared.hash import merge_dict
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,64 @@ class timer(object):
         # https://statsd.readthedocs.io/en/v3.1/timing.html
         dt = int((time.time() - self.start) * 1000)
         if self.verbose:
-            logger.debug(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')
+            logger.debug(
+                f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}'
+            )
+
+
+class JSONFormatter(logging.Formatter):
+    """JSONFormatter instances are used to convert a log record to json."""
+
+    def __init__(self, fmt=None, datefmt=None, style="%", additional_json_fields=None):
+        super().__init__(fmt, datefmt, style)
+        if additional_json_fields is None:
+            additional_json_fields = []
+        self.additional_json_fields = additional_json_fields
+
+    def usesTime(self):
+        return True
+
+    def format(self, record: logging.LogRecord) -> str:
+        super().format(record)
+        # Baseline fields for all JSON log messages
+        log_data = {
+            'timestamp': record.asctime,
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'logger': record.name,
+            'module': record.module,
+            'function': record.funcName,
+            'line_number': record.lineno,
+        }
+        # Adds exception information and stack trace to the logging message if it exists
+        msg = log_data['message']
+        if record.exc_text:
+            if msg[-1:] != '\n':
+                msg = msg + '\n'
+            msg = msg + record.exc_text
+        if record.stack_info:
+            if msg[-1:] != '\n':
+                msg = msg + '\n'
+            msg = msg + self.formatStack(record.stack_info)
+        record_dict = {
+            label: getattr(record, label, None) for label in self.additional_json_fields
+        }
+        record_dict['message'] = msg
+        merged_record = merge_dict(log_data, record_dict)
+        return json.dumps(merged_record)
+
+
+def set_logging_format(logging_format: str = None, level: str = None) -> None:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JSONFormatter())
+
+    root_logger = logging.getLogger()
+    if level:
+        root_logger.setLevel(level.upper())
+    if logging_format == 'json':
+        if len(root_logger.handlers) > 0:
+            root_logger.removeHandler(root_logger.handlers[0])
+        root_logger.addHandler(handler)
 
 
 class LoggingLevel(str, Enum):
