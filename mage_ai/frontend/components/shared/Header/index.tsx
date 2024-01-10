@@ -218,12 +218,15 @@ function Header({
     if (typeof window !== 'undefined') {
       const media = design?.components?.header?.media;
       const image = new Image();
-      image.src = media?.url || media?.file_path;;
-      image.onload = () => {
-        setCustomMediaSize(image);
-      };
+      const imageSrc = media?.url || media?.file_path;
+      if (imageSrc) {
+        image.src = imageSrc;
+        image.onload = () => {
+          setCustomMediaSize(image);
+        };
 
-      return image;
+        return image;
+      }
     }
   }, [
     design,
