@@ -3,7 +3,7 @@ import logging
 import time
 from contextlib import contextmanager, redirect_stdout
 from enum import Enum
-from typing import Callable
+from typing import Callable, List
 
 from mage_ai.shared.hash import merge_dict
 
@@ -16,9 +16,11 @@ class timer(object):
         function()
     """
 
-    def __init__(self, metric, tags={}, verbose=True):
+    def __init__(self, metric, tags=None, verbose=True):
         self.metric = metric
         self.start = None
+        if tags is None:
+            tags = {}
         self.tags = tags
         self.verbose = verbose
 
@@ -36,9 +38,13 @@ class timer(object):
 
 
 class JSONFormatter(logging.Formatter):
-    """JSONFormatter instances are used to convert a log record to json."""
-
-    def __init__(self, fmt=None, datefmt=None, style="%", additional_json_fields=None):
+    def __init__(
+        self,
+        fmt=None,
+        datefmt=None,
+        style='%',
+        additional_json_fields: List[str] = None,
+    ):
         super().__init__(fmt, datefmt, style)
         if additional_json_fields is None:
             additional_json_fields = []
