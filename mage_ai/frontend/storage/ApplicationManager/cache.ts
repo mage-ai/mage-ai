@@ -14,6 +14,8 @@ import {
 import { get, set } from '../localStorage';
 import { selectEntriesWithValues } from '@utils/hash';
 
+const APPLICATION_PADDING = 16;
+
 export function buildDefaultLayout({
   height: totalHeightProp,
   width: totalWidthProp,
@@ -26,8 +28,8 @@ export function buildDefaultLayout({
   const totalWidth = totalWidthProp
     || typeof window !== 'undefined' ? window?.innerWidth : 1500;
 
-  const height = Math.min(totalHeight, 1200);
-  const width = Math.min(totalWidth, 1500);
+  const height = (Math.min(totalHeight, 1200)) - (APPLICATION_PADDING * 2);
+  const width = (Math.min(totalWidth, 1500)) - (APPLICATION_PADDING * 2);
 
   return {
     dimension: {
@@ -87,6 +89,21 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
     ...selectEntriesWithValues(layoutPrev?.dimension || {}),
     ...selectEntriesWithValues(layout?.dimension || {}),
   };
+
+  const {
+    dimension: dimensionDefault,
+    position: positionDefault,
+  } = buildDefaultLayout();
+
+  if (dimension?.height > dimensionDefault?.height) {
+    dimension.height = dimensionDefault.height;
+    position.y = positionDefault.y;
+  }
+
+  if (dimension?.width > dimensionDefault?.width) {
+    dimension.width = dimensionDefault.width;
+    position.x = positionDefault.x;
+  }
 
   return {
     dimension,

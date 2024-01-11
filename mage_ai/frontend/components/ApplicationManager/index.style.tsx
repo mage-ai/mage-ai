@@ -5,8 +5,10 @@ import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/consta
 import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
 import { transition } from '@oracle/styles/mixins';
 
+const SCALE_PERCENTAGE = 0.1;
 const HEADER_HEIGHT = 6 * UNIT;
 const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
@@ -24,8 +26,8 @@ export const RootApplicationStyle = styled.div`
     #${uuid}.minimized {
       bottom: 0px;
       position: relative;
-      width: 150px;
-      height: 120px;
+      height: ${buildDefaultLayout()?.dimension?.height * SCALE_PERCENTAGE}px;
+      width: ${buildDefaultLayout()?.dimension?.width * SCALE_PERCENTAGE}px;
 
       .minimized {
         position: relative;
@@ -34,7 +36,7 @@ export const RootApplicationStyle = styled.div`
         box-shadow:
           0 0 0 8px #18181C,
           0 0 0 24px rgba(72, 119, 255, 0.7);
-        transform: scale(0.1);
+        transform: scale(${SCALE_PERCENTAGE});
         transform-origin: 0 0;
 
         &:hover {
