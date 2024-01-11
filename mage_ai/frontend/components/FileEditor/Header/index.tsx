@@ -112,6 +112,7 @@ function FileHeaderMenu({
       style={{
         height: '100%',
         position: 'relative',
+        zIndex: 2,
       }}
     >
       <FlexContainer alignItems="center" fullHeight fullWidth>

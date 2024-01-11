@@ -527,6 +527,11 @@ class Mode(CommandCenterBaseClass):
 
 
 @dataclass
+class ItemSettings(CommandCenterBaseClass):
+    cache_expires_at: int = None
+
+
+@dataclass
 class ItemBase(CommandCenterBaseClass):
     action_results: Dict = None
     actions: List[Action] = None
@@ -539,6 +544,7 @@ class ItemBase(CommandCenterBaseClass):
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
+    settings: ItemSettings = None
     subtitle: str = None
     tags: List[ItemTagEnum] = None
     title: str = None
@@ -548,6 +554,7 @@ class ItemBase(CommandCenterBaseClass):
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
         self.serialize_attribute_class('metadata', Metadata)
         self.serialize_attribute_class('mode', Mode)
+        self.serialize_attribute_class('settings', ItemSettings)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
@@ -568,6 +575,7 @@ class Item(ItemBase):
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
+    settings: ItemSettings = None
     subtitle: str = None
     tags: List[ItemTagEnum] = None
     title: str = None

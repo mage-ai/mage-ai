@@ -84,7 +84,9 @@ export default function useApplicationManager({
   function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
     closeApplicationFromCache(uuid);
 
+
     const refRoot = refRoots?.current?.[uuid];
+    console.log('wtffffffffffffffffffffffffff', uuid, refRoot, refRoots)
     if (refRoot) {
       refRoots.current[uuid] = undefined;
       refRoot?.unmount();

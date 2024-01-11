@@ -426,6 +426,10 @@ function CommandCenter() {
   function removeApplication(opts?: {
     application?: ItemApplicationType;
   }) {
+    if (ItemApplicationTypeEnum.EXPANSION === opts?.application?.application_type) {
+      closeApplication(opts?.application?.uuid);
+    }
+
     const count = refApplications?.current?.length || 0;
 
     if (refApplications?.current === null || !count) {
@@ -454,9 +458,7 @@ function CommandCenter() {
     let resetCallback;
     let shouldReset = count === 1;
 
-    if (ItemApplicationTypeEnum.EXPANSION === opts?.application?.application_type) {
-      closeApplication(opts?.application?.uuid);
-    } else if (count >= 2) {
+    if (count >= 2) {
       // Remove the next application from the stack, then re-add it so that all the
       // class name handling is triggered.
       const currentApplicationConfig = refApplications.current?.[0] || {};

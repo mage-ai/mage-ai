@@ -3,9 +3,18 @@ from datetime import datetime
 from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
-from mage_ai.command_center.applications.utils import build_application_arcane_library
-from mage_ai.command_center.constants import ItemType, ObjectType
+from mage_ai.command_center.applications.utils import (
+    build_application_arcane_library,
+    build_close_application,
+)
+from mage_ai.command_center.constants import (
+    ApplicationExpansionStatus,
+    ApplicationExpansionUUID,
+    ItemType,
+    ObjectType,
+)
 from mage_ai.command_center.factory import DEFAULT_RATIO, BaseFactory
+from mage_ai.shared.array import find
 
 
 class ApplicationFactory(BaseFactory):
@@ -47,10 +56,27 @@ class ApplicationFactory(BaseFactory):
 
         items = items[:3]
 
-        self.filter_score_mutate_accumulator(
-            await build_application_arcane_library(),
-            items,
-        )
+        # File browser
+        app = None
+        if self.applications:
+            app = find(
+                lambda x: x.get('uuid') == ApplicationExpansionUUID.ArcaneLibrary,
+                self.applications,
+            )
+            if app:
+                if ApplicationExpansionStatus.MINIMIZED == (app.get('state') or {}).get('status'):
+                    pass
+
+                self.filter_score_mutate_accumulator(
+                    await build_close_application(ApplicationExpansionUUID.ArcaneLibrary),
+                    items,
+                )
+
+        if not app:
+            self.filter_score_mutate_accumulator(
+                await build_application_arcane_library(),
+                items,
+            )
 
         return items
 

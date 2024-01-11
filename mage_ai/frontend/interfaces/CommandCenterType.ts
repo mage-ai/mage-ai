@@ -358,6 +358,10 @@ export interface ModeType {
   };
 }
 
+interface ItemSettingsType {
+  cache_expires_at?: number;
+}
+
 export interface CommandCenterItemType {
   actionResults?: {
     [index: number]: {
@@ -427,6 +431,7 @@ export interface CommandCenterItemType {
   mode?: ModeType;
   object_type?: ObjectTypeEnum;
   score?: number;
+  settings?: ItemSettingsType;
   subtitle?: string;
   tags?: ItemTagEnum[];
   title: string;

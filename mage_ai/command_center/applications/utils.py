@@ -46,6 +46,7 @@ async def build_close_application(uuid: ApplicationExpansionUUID) -> Dict:
                 uuid=uuid,
             ),
         ),
+        settings=dict(cache_expires_at=0),
     )
 
 
@@ -76,4 +77,5 @@ async def build_application_arcane_library() -> Dict:
                 ),
             ),
         ),
+        settings=dict(cache_expires_at=0),
     ))
