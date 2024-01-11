@@ -30,7 +30,6 @@ class ADProvider(SsoProvider, OauthProvider):
         self.__validate()
 
         self.roles_mapping = {}
-        print('ACTIVE_DIRECTORY_ROLES_MAPPING:', ACTIVE_DIRECTORY_ROLES_MAPPING)
         if ACTIVE_DIRECTORY_ROLES_MAPPING:
             try:
                 self.roles_mapping = json.loads(ACTIVE_DIRECTORY_ROLES_MAPPING)
