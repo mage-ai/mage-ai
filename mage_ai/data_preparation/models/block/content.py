@@ -107,5 +107,8 @@ def hydrate_block_outputs(
             parse=p,
             variables=v,
         ),
-        **get_template_vars(include_python_libraries=include_python_libraries),
+        **merge_dict(
+            variables,
+            get_template_vars(include_python_libraries=include_python_libraries),
+        ),
     )
