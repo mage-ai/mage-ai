@@ -97,3 +97,11 @@ class RenderLocationType(str, Enum):
 
 class ApplicationExpansionUUID(str, Enum):
     VersionControlFileDiffs = 'VersionControlFileDiffs'
+
+
+class ApplicationExpansionStatus(str, Enum):
+    ACTIVE = 'ACTIVE'
+    CLOSED = 'CLOSED'
+    INACTIVE = 'INACTIVE'
+    MINIMIZED = 'MINIMIZED'
+    OPEN = 'OPEN'

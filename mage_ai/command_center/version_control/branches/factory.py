@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from mage_ai.command_center.applications.utils import build_close_application
 from mage_ai.command_center.constants import (
+    ApplicationExpansionStatus,
     ApplicationExpansionUUID,
     ApplicationType,
     ItemType,
@@ -47,17 +48,22 @@ class BranchFactory(BaseFactory):
         branch.update_attributes()
 
         # Diff
-        if self.applications and \
-                find(
-                    lambda x: x.get('uuid') == ApplicationExpansionUUID.VersionControlFileDiffs,
-                    self.applications,
-                ):
-
-            self.filter_score_mutate_accumulator(
-                await build_close_application(ApplicationExpansionUUID.VersionControlFileDiffs),
-                items,
+        app = None
+        if self.applications:
+            app = find(
+                lambda x: x.get('uuid') == ApplicationExpansionUUID.VersionControlFileDiffs,
+                self.applications,
             )
-        else:
+            if app:
+                if ApplicationExpansionStatus.MINIMIZED == (app.get('state') or {}).get('status'):
+                    pass
+
+                self.filter_score_mutate_accumulator(
+                    await build_close_application(ApplicationExpansionUUID.VersionControlFileDiffs),
+                    items,
+                )
+
+        if not app:
             self.filter_score_mutate_accumulator(await build_diff(self, model=branch), items)
 
         if item and \

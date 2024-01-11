@@ -27,6 +27,19 @@ import { get, set } from '@storage/localStorage';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { unique } from '@utils/array';
 
+export function getSetLayout(settings = null) {
+  const data = {
+    ...(get(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, settings) || {}),
+    ...(settings || {}),
+  };
+
+  if (settings) {
+    set(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, data);
+  }
+
+  return data;
+}
+
 export function getSetSettings(settings = null) {
   const data = {
     ...(get(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, settings) || {}),

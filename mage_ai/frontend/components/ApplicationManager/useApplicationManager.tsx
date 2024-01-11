@@ -6,7 +6,7 @@ import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useDraggableElement from '@utils/useDraggableElement';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { ApplicationExpansionUUIDEnum, StatusEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum, LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
 import {
   buildDefaultLayout,
   closeApplication as closeApplicationFromCache,
@@ -16,14 +16,20 @@ import {
 import {
   ContainerStyle,
   ContentStyle,
+  DockStyle,
   InnerStyle,
+  OVERLAY_ID,
+  OverlayStyle,
+  ResizeBottomStyle,
   ResizeLeftStyle,
   ResizeRightStyle,
   ResizeTopStyle,
-  ResizeBottomStyle,
+  RootApplicationStyle,
 } from './index.style';
 import { KeyValueType } from '@interfaces/CommandCenterType';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { selectEntriesWithValues } from '@utils/hash';
+import { pauseEvent } from '@utils/events';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -72,6 +78,83 @@ export default function useApplicationManager({
 
   function getActiveApplication() {
     return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
+  }
+
+  function updateApplicationLayoutAndState(uuid: ApplicationExpansionUUIDEnum, opts?: {
+    layout?: LayoutType;
+    state?: StateType;
+  }, cache: {
+    layout?: boolean;
+    state?: boolean;
+  } = {
+    layout: true,
+    state: true,
+  }) {
+    const element = refExpansions?.current?.[uuid];
+    const data: {
+      layout?: LayoutType;
+      state?: StateType;
+    } = {};
+
+    if (cache?.layout) {
+      data.layout = opts?.layout;
+    }
+    if (cache?.state) {
+      data.state = opts?.state;
+    }
+
+    if (element) {
+      const {
+        layout,
+      } = updateApplication({
+        ...data,
+        uuid,
+      });
+
+      const { dimension, position } = opts?.layout || layout;
+
+      element.current.style.height = `${dimension?.height}px`;
+      element.current.style.left = `${position?.x}px`;
+      element.current.style.top = `${position?.y}px`;
+      element.current.style.width = `${dimension?.width}px`;
+    }
+  }
+
+  function minimizeApplication(uuid: ApplicationExpansionUUIDEnum, reverse: boolean = false) {
+    const app = getApplicationsFromCache({
+      uuid,
+    })?.[0];
+
+    updateApplicationLayoutAndState(uuid, {
+      layout: reverse ? app?.layout : buildDefaultLayout(),
+      state: {
+        status: reverse ? StatusEnum.OPEN : StatusEnum.MINIMIZED,
+      },
+    }, {
+      layout: false,
+      // state: true,
+    });
+
+    const refExpansion = refExpansions?.current?.[uuid];
+    const refContainer = refContainers?.current?.[uuid];
+
+    if (!reverse && refExpansion?.current) {
+      refExpansion.current.style.bottom = null;
+      refExpansion.current.style.left = null;
+      refExpansion.current.style.right = null;
+      refExpansion.current.style.top = null;
+    }
+    [refExpansion, refContainer].forEach((ref) => {
+      if (ref?.current) {
+        const func = reverse ? removeClassNames : addClassNames;
+        ref.current.className = func(
+          ref?.current?.className || '',
+          [
+            'minimized',
+          ],
+        );
+      }
+    });
   }
 
   function onChangeLayoutPosition({
@@ -136,26 +219,28 @@ export default function useApplicationManager({
 
   function renderApplications() {
     return (
-      <>
-        <div id={ROOT_APPLICATION_UUID} ref={refRootApplication} />
+      <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
+        <DockStyle>
+          <div style={{ flex: 1 }} />
+          {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
+            if (!refContainers?.current) {
+              refContainers.current = {};
+            }
 
-        {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
-          if (!refContainers?.current) {
-            refContainers.current = {};
-          }
+            const ref = refContainers?.current?.[uuid] || createRef()
+            refContainers.current[uuid] = ref;
 
-          const ref = refContainers?.current?.[uuid] || createRef()
-          refContainers.current[uuid] = ref;
-
-          return (
-            <div
-              id={uuid}
-              key={uuid}
-              ref={ref}
-            />
-          );
-        })}
-      </>
+            return (
+              <div
+                id={uuid}
+                key={uuid}
+                ref={ref}
+              />
+            );
+          })}
+          <div style={{ flex: 1 }} />
+        </DockStyle>
+      </RootApplicationStyle>
     );
   }
 
@@ -232,30 +317,23 @@ export default function useApplicationManager({
           <ResizeLeftStyle ref={rr?.left} />
           <ResizeRightStyle ref={rr?.right} />
           {/*<ResizeTopStyle ref={rr?.top} />*/}
+          <OverlayStyle
+            className={OVERLAY_ID}
+            onClick={(e) => {
+              pauseEvent(e);
+              minimizeApplication(uuid, true);
+            }}
+          />
 
           <Header
             applications={getApplicationsFromCache()}
             closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
+            minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
             ref={rr?.top}
             resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
-              const element = refExpansions?.current?.[uuidApp];
-
-              if (element) {
-                const {
-                  layout: {
-                    dimension,
-                    position,
-                  },
-                } = updateApplication({
-                  layout: buildDefaultLayout(),
-                  uuid: uuidApp,
-                });
-
-                element.current.style.height = `${dimension?.height}px`;
-                element.current.style.left = `${position?.x}px`;
-                element.current.style.top = `${position?.y}px`;
-                element.current.style.width = `${dimension?.width}px`;
-              }
+              updateApplicationLayoutAndState(uuidApp, {
+                layout: buildDefaultLayout(),
+              });
             }}
             setSelectedTab={setSelectedTab}
           />

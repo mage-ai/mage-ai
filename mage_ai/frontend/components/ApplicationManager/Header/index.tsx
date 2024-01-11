@@ -23,10 +23,12 @@ const TOOLTIP_PROPS = {
 function Header({
   applications,
   closeApplication,
+  minimizeApplication,
   resetLayout,
 }: {
   applications: ApplicationManagerApplication[];
   closeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+  minimizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   resetLayout: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   setSelectedTab?: (tab: TabType) => void;
 }, ref) {
@@ -92,7 +94,7 @@ function Header({
               noPadding
               onClick={(e) => {
                 pauseEvent(e);
-                console.log('minimize');
+                application && minimizeApplication(application?.uuid);
               }}
             >
               <Circle borderOnly warning size={1.75 * UNIT}>

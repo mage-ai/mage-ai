@@ -5,9 +5,11 @@ import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/consta
 import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { transition } from '@oracle/styles/mixins';
 
 const HEADER_HEIGHT = 6 * UNIT;
 const RESIZE_SIZE = 1 * UNIT;
+export const OVERLAY_ID = 'application-minimized-overlay'
 
 export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props = {}): {
   accent: string;
@@ -17,12 +19,79 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props =
   };
 }
 
+export const RootApplicationStyle = styled.div`
+  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+    #${uuid}.minimized {
+      bottom: 0px;
+      position: relative;
+      width: 150px;
+      height: 120px;
+
+      .minimized {
+        position: relative;
+        border-radius: 120px;
+        bottom: 0;
+        box-shadow:
+          0 0 0 8px #18181C,
+          0 0 0 24px rgba(72, 119, 255, 0.5);
+        transform: scale(0.1);
+        transform-origin: 0 0;
+
+        &:hover {
+          ${transition()}
+          box-shadow:
+            0 0 0 8px #18181C,
+            0 0 0 32px #2A60FE;
+          cursor: pointer;
+        }
+
+        .${OVERLAY_ID} {
+          ${transition()}
+
+          background-color: rgba(0, 0, 0, 0.2);
+          bottom: 0;
+          height 100%;
+          left: 0;
+          position: absolute;
+          right: 0;
+          width 100%;
+          z-index: 11;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.0);
+          }
+        }
+      }
+    }
+  `)}
+`;
+
+export const DockStyle = styled.div`
+  ${transition()}
+
+  justify-content: center;
+  bottom: 0;
+  display: flex;
+  height: 20px;
+  position: fixed;
+  width: 100%;
+  z-index: 10;
+
+  &:hover {
+    cursor: pointer;
+    height: 110px;
+  }
+`;
+
+export const OverlayStyle = styled.div``;
+
 export const ContainerStyle = styled.div`
   border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
   border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: fixed;
+  z-index: 10;
 `;
 
 export const ContentStyle = styled.div`
