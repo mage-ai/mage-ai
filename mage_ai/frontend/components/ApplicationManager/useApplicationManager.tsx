@@ -132,7 +132,7 @@ export default function useApplicationManager({
       },
     }, {
       layout: false,
-      // state: true,
+      state: true,
     });
 
     const refExpansion = refExpansions?.current?.[uuid];
@@ -247,7 +247,10 @@ export default function useApplicationManager({
   // https://stackoverflow.com/questions/20926551/recommended-way-of-making-react-component-div-draggable
   // Draggable
 
-  function startApplication(applicationConfiguration: ApplicationConfiguration) {
+  function startApplication(
+    applicationConfiguration: ApplicationConfiguration,
+    stateProp: StateType = null,
+  ) {
     const {
       application,
     } = applicationConfiguration;
@@ -272,9 +275,10 @@ export default function useApplicationManager({
 
       const {
         layout,
+        state,
       } = updateApplication({
         applicationConfiguration,
-        state: {
+        state: stateProp || {
           status: StatusEnum.OPEN,
         },
         uuid,
@@ -307,6 +311,7 @@ export default function useApplicationManager({
         <ContainerStyle
           ref={ref}
           style={{
+            display: 'none',
             height,
             left: x,
             top: y,
@@ -357,6 +362,13 @@ export default function useApplicationManager({
 
       refRoots?.current?.[uuid]?.render(expansion);
 
+      setTimeout(() => {
+        if (StatusEnum.MINIMIZED === state?.status) {
+          minimizeApplication(uuid);
+        }
+        ref.current.style.display = 'block';
+      }, 1);
+
       setResizableObject(ref, {
         tries: 10,
       });
@@ -374,10 +386,13 @@ export default function useApplicationManager({
   }
 
   useEffect(() => {
-    getApplicationsFromCache({ status: StatusEnum.OPEN }).forEach(({
+    getApplicationsFromCache().forEach(({
       applicationConfiguration,
+      state,
     }) => {
-      startApplication(applicationConfiguration);
+      if (StatusEnum.OPEN === state?.status || StatusEnum.MINIMIZED === state?.status) {
+        startApplication(applicationConfiguration, state);
+      }
     });
   }, []);
 
