@@ -267,7 +267,6 @@ class BlockActionObjectCache(BaseCache):
                 traversed_paths[directory_full_path] = True
 
                 for path in Path(directory_full_path).rglob('*'):
-
                     if not path.is_file():
                         continue
 
