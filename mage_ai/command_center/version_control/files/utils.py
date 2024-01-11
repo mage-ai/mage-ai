@@ -2,7 +2,12 @@ import urllib.parse
 from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.command_center.constants import ItemType, ObjectType, RenderLocationType
+from mage_ai.command_center.constants import (
+    ApplicationExpansionUUID,
+    ItemType,
+    ObjectType,
+    RenderLocationType,
+)
 from mage_ai.command_center.shared.utils import (
     build_action_fetch_items,
     build_action_generic,
@@ -39,7 +44,7 @@ async def build_diff(factory, model: Branch) -> Dict:
             build_application_expansion(
                 model_class=File,
                 expansion_settings=dict(
-                    uuid='VersionControlFileDiffs',
+                    uuid=ApplicationExpansionUUID.VersionControlFileDiffs,
                 ),
                 actions=[
                     build_action_fetch_items({}),

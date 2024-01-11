@@ -3,6 +3,7 @@ import {
 } from '@components/CommandCenter/constants';
 
 export enum ApplicationExpansionUUIDEnum {
+  ArcaneLibrary = 'ArcaneLibrary',
   VersionControlFileDiffs = 'VersionControlFileDiffs',
 }
 

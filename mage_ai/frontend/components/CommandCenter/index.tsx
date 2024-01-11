@@ -306,7 +306,7 @@ function CommandCenter() {
         refApplications.current = [];
       }
 
-      currentApplicationConfig.application = getCurrentApplicationForItem(
+      const app = getCurrentApplicationForItem(
         currentApplicationConfig?.item,
         refApplications?.current || [],
         {
@@ -314,8 +314,12 @@ function CommandCenter() {
         },
       );
 
-      // @ts-ignore
-      refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
+      if (app) {
+        currentApplicationConfig.application = app;
+
+        // @ts-ignore
+        refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
+      }
     }
 
     const {
@@ -324,6 +328,8 @@ function CommandCenter() {
     } = currentApplicationConfig;
 
     const activeApplicationsCount = refApplications?.current?.length || 0;
+
+    console.log(item, application);
 
     if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
       startApplication(currentApplicationConfig);

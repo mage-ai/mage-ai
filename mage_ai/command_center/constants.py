@@ -96,6 +96,7 @@ class RenderLocationType(str, Enum):
 
 
 class ApplicationExpansionUUID(str, Enum):
+    ArcaneLibrary = 'ArcaneLibrary'
     VersionControlFileDiffs = 'VersionControlFileDiffs'
 
 

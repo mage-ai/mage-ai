@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
+from mage_ai.command_center.applications.utils import build_application_arcane_library
 from mage_ai.command_center.constants import ItemType, ObjectType
 from mage_ai.command_center.factory import DEFAULT_RATIO, BaseFactory
 
@@ -44,7 +45,14 @@ class ApplicationFactory(BaseFactory):
             if item_scored:
                 items.append(item_scored)
 
-        return items[:3]
+        items = items[:3]
+
+        self.filter_score_mutate_accumulator(
+            await build_application_arcane_library(),
+            items,
+        )
+
+        return items
 
     def score_item(self, item_dict: Dict, score: int = None) -> int:
         timestamp = ((item_dict.get('metadata') or {}).get('page') or {}).get('timestamp')

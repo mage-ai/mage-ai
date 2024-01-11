@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-import Controller from '@components/FileEditor/Controller';
 import Dashboard from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';

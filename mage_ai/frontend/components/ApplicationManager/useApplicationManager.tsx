@@ -1,23 +1,26 @@
-import { createRef, useEffect, useCallback, useMemo, useRef, useState } from 'react';
+import { GridThemeProvider } from 'styled-bootstrap-grid';
+import { ThemeContext } from 'styled-components';
+import { ThemeProvider } from 'styled-components';
+import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
 import Header from './Header';
+import KeyboardContext from '@context/Keyboard';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
+import dark from '@oracle/styles/themes/dark';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
+import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum, LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
-import {
-  buildDefaultLayout,
-  closeApplication as closeApplicationFromCache,
-  getApplications as getApplicationsFromCache,
-  updateApplication,
-} from '@storage/ApplicationManager/cache';
+import { ErrorProvider } from '@context/Error';
 import {
   ContainerStyle,
   ContentStyle,
   DockStyle,
+  HEADER_HEIGHT,
   InnerStyle,
   OVERLAY_ID,
   OverlayStyle,
@@ -28,9 +31,16 @@ import {
   RootApplicationStyle,
 } from './index.style';
 import { KeyValueType } from '@interfaces/CommandCenterType';
+import { ModalProvider } from '@context/Modal';
 import { addClassNames, removeClassNames } from '@utils/elements';
-import { selectEntriesWithValues } from '@utils/hash';
+import {
+  buildDefaultLayout,
+  closeApplication as closeApplicationFromCache,
+  getApplications as getApplicationsFromCache,
+  updateApplication,
+} from '@storage/ApplicationManager/cache';
 import { pauseEvent } from '@utils/events';
+import { selectEntriesWithValues } from '@utils/hash';
 
 const GROUP_ID = 'ApplicationManagerGroup';
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
@@ -54,6 +64,9 @@ export default function useApplicationManager({
   renderApplications: () => Element;
   startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
 } {
+  const themeContext = useContext(ThemeContext);
+  const keyboardContext = useContext(KeyboardContext);
+
   const [selectedTab, setSelectedTab] = useState();
 
   const refRootApplication = useRef(null);
@@ -281,129 +294,150 @@ export default function useApplicationManager({
     }
     refApplications.current[uuid] = applicationConfiguration;
 
-    if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
-      if (!refRoots?.current?.[uuid]) {
-        const domNode = document.getElementById(uuid);
-        refRoots.current[uuid] = createRoot(domNode);
-      }
-
-      const ref = refExpansions?.current?.[uuid] || createRef();
-      refExpansions.current[uuid] = ref;
-
-      const {
-        layout,
-        state,
-      } = updateApplication({
-        applicationConfiguration,
-        state: stateProp || {
-          status: StatusEnum.OPEN,
-        },
-        uuid,
-      });
-
-      if (!refResizers?.current?.[uuid]) {
-        refResizers.current[uuid] = {
-          bottom: createRef(),
-          left: createRef(),
-          right: createRef(),
-          top: createRef(),
-        };
-      }
-
-      const rr = refResizers?.current?.[uuid];
-
-      const {
-        dimension: {
-          height,
-          width,
-        },
-        position: {
-          x,
-          y,
-          z,
-        },
-      } = layout;
-
-      const expansion = (
-        <ContainerStyle
-          ref={ref}
-          style={{
-            display: 'none',
-            height,
-            left: x,
-            top: y,
-            width,
-            zIndex: z,
-        }}>
-          <ResizeBottomStyle ref={rr?.bottom} />
-          <ResizeLeftStyle ref={rr?.left} />
-          <ResizeRightStyle ref={rr?.right} />
-          {/*<ResizeTopStyle ref={rr?.top} />*/}
-          <OverlayStyle
-            className={OVERLAY_ID}
-            onClick={(e) => {
-              pauseEvent(e);
-              minimizeApplication(uuid, true);
-            }}
-          />
-
-          <Header
-            applications={getApplicationsFromCache()}
-            closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
-            minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
-            ref={rr?.top}
-            resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
-              updateApplicationLayoutAndState(uuidApp, {
-                layout: buildDefaultLayout(),
-              });
-            }}
-            setSelectedTab={setSelectedTab}
-          />
-
-          <ContentStyle>
-            <InnerStyle>
-              <VersionControlFileDiffs
-                applicationConfiguration={applicationConfiguration}
-                applicationState={applicationState}
-                onChangeState={(prev) => {
-                  if (onChangeState) {
-                    onChangeState?.(prev);
-                  }
-                }}
-                uuid={uuid}
-              />
-            </InnerStyle>
-          </ContentStyle>
-        </ContainerStyle>
-      );
-
-      refRoots?.current?.[uuid]?.render(expansion);
-
-      setTimeout(() => {
-        if (StatusEnum.MINIMIZED === state?.status) {
-          minimizeApplication(uuid);
-        }
-        ref.current.style.display = 'block';
-      }, 1);
-
-      setResizableObject(uuid, ref, {
-        tries: 10,
-      });
-      setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
-        tries: 10,
-      });
-
-      setElementObject(uuid, ref, {
-        tries: 10,
-      });
-      setInteractiveElementsObjects(uuid, [rr?.top], {
-        tries: 10,
-      });
-
-      setElementObjectClickOutside(uuid, ref, GROUP_ID, {
-        tries: 10,
-      });
+    if (!refRoots?.current?.[uuid]) {
+      const domNode = document.getElementById(uuid);
+      refRoots.current[uuid] = createRoot(domNode);
     }
+
+    const ref = refExpansions?.current?.[uuid] || createRef();
+    refExpansions.current[uuid] = ref;
+
+    const {
+      layout,
+      state,
+    } = updateApplication({
+      applicationConfiguration,
+      state: stateProp || {
+        status: StatusEnum.OPEN,
+      },
+      uuid,
+    });
+
+    if (!refResizers?.current?.[uuid]) {
+      refResizers.current[uuid] = {
+        bottom: createRef(),
+        left: createRef(),
+        right: createRef(),
+        top: createRef(),
+      };
+    }
+
+    const rr = refResizers?.current?.[uuid];
+
+    const {
+      dimension: {
+        height,
+        width,
+      },
+      position: {
+        x,
+        y,
+        z,
+      },
+    } = layout;
+
+    let AppComponent;
+    if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+      AppComponent = VersionControlFileDiffs;
+    } else if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
+      AppComponent = ArcaneLibrary;
+    }
+
+    if (!AppComponent) {
+      return;
+    }
+
+    const expansion = (
+      <ContainerStyle
+        ref={ref}
+        style={{
+          display: 'none',
+          height,
+          left: x,
+          top: y,
+          width,
+          zIndex: z,
+      }}>
+        <ResizeBottomStyle ref={rr?.bottom} />
+        <ResizeLeftStyle ref={rr?.left} />
+        <ResizeRightStyle ref={rr?.right} />
+        {/*<ResizeTopStyle ref={rr?.top} />*/}
+        <OverlayStyle
+          className={OVERLAY_ID}
+          onClick={(e) => {
+            pauseEvent(e);
+            minimizeApplication(uuid, true);
+          }}
+        />
+
+        <Header
+          applications={getApplicationsFromCache()}
+          closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
+          minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
+          ref={rr?.top}
+          resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
+            updateApplicationLayoutAndState(uuidApp, {
+              layout: buildDefaultLayout(),
+            });
+          }}
+          setSelectedTab={setSelectedTab}
+        />
+
+        <ContentStyle>
+          <InnerStyle>
+            <AppComponent
+              applicationConfiguration={applicationConfiguration}
+              applicationState={applicationState}
+              containerRef={ref}
+              headerOffset={HEADER_HEIGHT}
+              onChangeState={(prev) => {
+                if (onChangeState) {
+                  onChangeState?.(prev);
+                }
+              }}
+              uuid={uuid}
+            />
+          </InnerStyle>
+        </ContentStyle>
+      </ContainerStyle>
+    );
+
+    refRoots?.current?.[uuid]?.render(
+      <KeyboardContext.Provider value={keyboardContext}>
+        <ThemeProvider theme={themeContext}>
+          <ModalProvider>
+            <ErrorProvider>
+              {expansion}
+            </ErrorProvider>
+          </ModalProvider>
+        </ThemeProvider>
+      </KeyboardContext.Provider>,
+    );
+
+    setTimeout(() => {
+      if (StatusEnum.MINIMIZED === state?.status) {
+        minimizeApplication(uuid);
+      }
+      ref.current.style.display = 'block';
+    }, 1);
+
+    setResizableObject(uuid, ref, {
+      tries: 10,
+    });
+    setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
+      tries: 10,
+    });
+
+    setElementObject(uuid, ref, {
+      tries: 10,
+    });
+    setInteractiveElementsObjects(uuid, [rr?.top], {
+      tries: 10,
+    });
+
+    setElementObjectClickOutside(uuid, ref, GROUP_ID, {
+      tries: 10,
+    });
   }
 
   useEffect(() => {

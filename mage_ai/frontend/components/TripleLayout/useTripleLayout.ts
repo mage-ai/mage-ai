@@ -68,7 +68,12 @@ function useAside(uuid, refData, {
         DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
-      const value = Math.max(DEFAULT_ASIDE_WIDTH, Math.min(maxWidth, prev));
+      let value = prev;
+      if (value < DEFAULT_ASIDE_WIDTH) {
+        value = DEFAULT_ASIDE_WIDTH;
+      } else if (value > maxWidth) {
+        value = prev;
+      }
 
       if (!!prev) {
         setWidthState(value);
@@ -138,6 +143,7 @@ export type UseTripleLayoutType = {
 export type UseTripleLayoutProps = {
   disableAfter?: boolean;
   disableBefore?: boolean;
+  mainContainerRef?: any;
   setWidthAfter?: (value: number) => void;
   setWidthBefore?: (value: number) => void;
   widthAfter?: number;
@@ -149,18 +155,19 @@ export type UseTripleLayoutProps = {
 export default function useTripleLayout(uuid: string, {
   disableAfter,
   disableBefore,
+  mainContainerRef: mainContainerRefProp,
   setWidthAfter: setWidthAfterProp,
   setWidthBefore: setWidthBeforeProp,
   widthAfter: widthAfterProp,
   widthBefore: widthBeforeProp,
   widthOverrideAfter: widthOverrideAfterProp,
   widthOverrideBefore: widthOverrideBeforeProp,
-}: UseTripleLayoutProps): UseTripleLayoutType {
+}: UseTripleLayoutProps = {}): UseTripleLayoutType {
   const { width: widthWindow } = useWindowSize();
   const keyAfter = useMemo(() => `layout_after_${uuid}`, [uuid]);
   const keyBefore = useMemo(() => `layout_before_${uuid}`, [uuid]);
 
-  const mainContainerRef = useRef(null);
+  const mainContainerRef = mainContainerRefProp || useRef(null);
   const [mainContainerWidthInit, setMainContainerWidth] = useState<number>(null);
   const mainContainerWidth = useMemo(() => Math.max(
     mainContainerWidthInit - MINIMUM_WIDTH_MAIN_CONTAINER,

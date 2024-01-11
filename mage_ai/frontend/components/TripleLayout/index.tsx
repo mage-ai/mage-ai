@@ -83,6 +83,7 @@ type TripleLayoutProps = {
   beforeWidth?: number;
   children?: any;
   contained?: boolean;
+  containerRef?: any;
   footerOffset?: number;
   header?: any;
   headerOffset?: number;
@@ -133,6 +134,7 @@ function TripleLayout({
   beforeWidth = 0,
   children,
   contained,
+  containerRef,
   footerOffset,
   header,
   headerOffset = 0,
@@ -154,7 +156,15 @@ function TripleLayout({
   setBeforeWidth,
   uuid,
 }: TripleLayoutProps) {
-  const { width } = useWindowSize();
+  const { width: widthWindow } = useWindowSize();
+  const width = containerRef?.current
+    ? containerRef?.current?.getBoundingClientRect?.()?.width
+    : widthWindow;
+
+  function getOffsetLeft() {
+    return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
+  }
+
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
@@ -186,7 +196,7 @@ function TripleLayout({
           x,
         } = refBeforeInner?.current?.getBoundingClientRect?.() || {};
         if (width) {
-          let newWidth = e.x;
+          let newWidth = (e.x - getOffsetLeft());
           if (newWidth + MAIN_MIN_WIDTH > width - (afterHidden ? 0 : afterWidth)) {
             newWidth = (width - (afterHidden ? 0 : afterWidth)) - MAIN_MIN_WIDTH;
           }
@@ -238,10 +248,11 @@ function TripleLayout({
         } = refAfterInner?.current?.getBoundingClientRect?.() || {};
 
         if (width) {
-          let newWidth = width - e.x;
+          let newWidth = width - (e.x - getOffsetLeft());
           if (newWidth + MAIN_MIN_WIDTH > width - (beforeHidden ? 0 : beforeWidth)) {
             newWidth = (width - (beforeHidden ? 0 : beforeWidth)) - MAIN_MIN_WIDTH;
           }
+
           setAfterWidth?.(Math.max(newWidth, AFTER_MIN_WIDTH));
         }
       }

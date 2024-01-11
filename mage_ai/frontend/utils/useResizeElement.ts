@@ -203,7 +203,6 @@ export default function useResizeElement({
 
       const stopResize = (e) => {
         refOrientationMapping.current[uuid] = null;
-        refRecentValuesMapping.current[uuid] = {};
         window.removeEventListener('mousemove', Resize, false);
         window.removeEventListener('mouseup', stopResize, false);
       };
@@ -213,6 +212,7 @@ export default function useResizeElement({
           return;
         }
 
+        refRecentValuesMapping.current[uuid] = {};
         if (typeof window !== 'undefined') {
           window.addEventListener('mousemove', Resize, false);
           window.addEventListener('mouseup', stopResize, false);

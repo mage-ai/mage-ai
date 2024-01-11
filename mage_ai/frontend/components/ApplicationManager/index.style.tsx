@@ -9,7 +9,7 @@ import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
 import { transition } from '@oracle/styles/mixins';
 
 const SCALE_PERCENTAGE = 0.1;
-const HEADER_HEIGHT = 6 * UNIT;
+export const HEADER_HEIGHT = 6 * UNIT;
 const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
 
