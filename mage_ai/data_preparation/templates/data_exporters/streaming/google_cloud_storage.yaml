@@ -1,0 +1,7 @@
+connector_type: google_cloud_storage
+bucket: bucket
+prefix: prefix
+file_type: parquet
+buffer_size_mb: 5
+buffer_timeout_seconds: 300
+path_to_credentials_json_file: /path/to/your/service/account/key.json

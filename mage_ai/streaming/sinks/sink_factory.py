@@ -33,6 +33,12 @@ class SinkFactory:
             )
 
             return GoogleCloudPubSubSink(config, **kwargs)
+        elif connector_type == SinkType.GOOGLE_CLOUD_STORAGE:
+            from mage_ai.streaming.sinks.google_cloud_storage import (
+                GoogleCloudStorageSink,
+            )
+
+            return GoogleCloudStorageSink(config, **kwargs)
         elif connector_type == SinkType.INFLUXDB:
             from mage_ai.streaming.sinks.influxdb import InfluxDbSink
 
