@@ -1,4 +1,4 @@
-import  { useMemo, useState } from 'react';
+import  { forwardRef, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -7,8 +7,10 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Tooltip from '@oracle/components/Tooltip';
 import { ApplicationExpansionUUIDEnum, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
+import { ArrowsPointingInFromAllCorners, CloseV2, Minimize } from '@oracle/icons';
 import { HeaderStyle} from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { pauseEvent } from '@utils/events';
 
 const TOOLTIP_PROPS = {
   block: true,
@@ -27,7 +29,7 @@ function Header({
   closeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   resetLayout: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   setSelectedTab?: (tab: TabType) => void;
-}) {
+}, ref) {
   const tabs = useMemo(() => applications?.map(({
     applicationConfiguration,
     uuid,
@@ -43,54 +45,8 @@ function Header({
   ]);
 
   return (
-    <HeaderStyle>
-      <FlexContainer alignItems="center">
-        <Flex>
-          <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
-
-          <Tooltip {...TOOLTIP_PROPS} label="Close application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => application && closeApplication(application?.uuid)}
-            >
-              <Circle danger size={1.5 * UNIT} />
-            </Button>
-          </Tooltip>
-
-          <div style={{ paddingLeft: 1.25 * UNIT }} />
-
-          <Tooltip {...TOOLTIP_PROPS} label="Minimize application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => console.log('minimize')}
-            >
-              <Circle warning size={1.5 * UNIT} />
-            </Button>
-          </Tooltip>
-
-          <div style={{ paddingLeft: 1.25 * UNIT }} />
-
-          <Tooltip {...TOOLTIP_PROPS} label="Reset size and position of application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => application && resetLayout(application?.uuid)}
-            >
-              <Circle success size={1.5 * UNIT} />
-            </Button>
-          </Tooltip>
-
-          <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
-        </Flex>
-
+    <HeaderStyle ref={ref}>
+      <FlexContainer alignItems="center" justifyContent="space-between">
         {applications?.length >= 1 && (
           <ButtonTabs
             allowScroll
@@ -105,9 +61,70 @@ function Header({
             uppercase={false}
           />
         )}
+
+        <Flex>
+          <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
+
+          <Tooltip {...TOOLTIP_PROPS} label="Reset size and position of application">
+            <Button
+              iconOnly
+              noBackground
+              noBorder
+              noPadding
+              onClick={(e) => {
+                pauseEvent(e);
+                application && resetLayout(application?.uuid);
+              }}
+            >
+              <Circle borderOnly success size={1.75 * UNIT}>
+                <ArrowsPointingInFromAllCorners success size={1 * UNIT} />
+              </Circle>
+            </Button>
+          </Tooltip>
+
+          <div style={{ paddingLeft: 1.25 * UNIT }} />
+
+          <Tooltip {...TOOLTIP_PROPS} label="Minimize application">
+            <Button
+              iconOnly
+              noBackground
+              noBorder
+              noPadding
+              onClick={(e) => {
+                pauseEvent(e);
+                console.log('minimize');
+              }}
+            >
+              <Circle borderOnly warning size={1.75 * UNIT}>
+                <Minimize warning size={1 * UNIT} />
+              </Circle>
+            </Button>
+          </Tooltip>
+
+          <div style={{ paddingLeft: 1.25 * UNIT }} />
+
+          <Tooltip {...TOOLTIP_PROPS} label="Close application">
+            <Button
+              iconOnly
+              noBackground
+              noBorder
+              noPadding
+              onClick={(e) => {
+                pauseEvent(e);
+                application && closeApplication(application?.uuid);
+              }}
+            >
+              <Circle danger borderOnly size={1.75 * UNIT}>
+                <CloseV2 danger size={1 * UNIT} />
+              </Circle>
+            </Button>
+          </Tooltip>
+
+          <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
+        </Flex>
       </FlexContainer>
     </HeaderStyle>
   );
 }
 
-export default Header;
+export default forwardRef(Header);

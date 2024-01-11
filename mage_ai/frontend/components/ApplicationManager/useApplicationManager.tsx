@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import Header from './Header';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
+import useDraggableElement from '@utils/useDraggableElement';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum, StatusEnum } from '@storage/ApplicationManager/constants';
@@ -22,6 +23,7 @@ import {
   ResizeBottomStyle,
 } from './index.style';
 import { KeyValueType } from '@interfaces/CommandCenterType';
+import { selectEntriesWithValues } from '@utils/hash';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -72,12 +74,18 @@ export default function useApplicationManager({
     return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
   }
 
-  function onResizeCallback({
+  function onChangeLayoutPosition({
     height,
     width,
     x,
     y,
     z,
+  }: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+    z?: number;
   }) {
     const apps = getApplicationsFromCache({
       status: StatusEnum.OPEN,
@@ -86,15 +94,17 @@ export default function useApplicationManager({
     if (app) {
       updateApplication({
         layout: {
-          dimension: {
+          // @ts-ignore
+          dimension: selectEntriesWithValues({
             height,
             width,
-          },
-          position: {
+          }),
+          // @ts-ignore
+          position: selectEntriesWithValues({
             x,
             y,
             z,
-          },
+          }),
         },
         uuid: app?.uuid,
       });
@@ -105,7 +115,14 @@ export default function useApplicationManager({
     setResizableObject,
     setResizersObjects,
   } = useResizeElement({
-    onResizeCallback,
+    onResizeCallback: onChangeLayoutPosition,
+  });
+
+  const {
+    setElementObject,
+    setInteractiveElementsObjects,
+  } = useDraggableElement({
+    onChange: onChangeLayoutPosition,
   });
 
   function getApplications() {
@@ -214,14 +231,15 @@ export default function useApplicationManager({
           <ResizeBottomStyle ref={rr?.bottom} />
           <ResizeLeftStyle ref={rr?.left} />
           <ResizeRightStyle ref={rr?.right} />
-          <ResizeTopStyle ref={rr?.top} />
+          {/*<ResizeTopStyle ref={rr?.top} />*/}
 
           <Header
             applications={getApplicationsFromCache()}
             closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
+            ref={rr?.top}
             resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
               const element = refExpansions?.current?.[uuidApp];
-              console.log(element)
+
               if (element) {
                 const {
                   layout: {
@@ -232,8 +250,6 @@ export default function useApplicationManager({
                   layout: buildDefaultLayout(),
                   uuid: uuidApp,
                 });
-
-                console.log(dimension?.height)
 
                 element.current.style.height = `${dimension?.height}px`;
                 element.current.style.left = `${position?.x}px`;
@@ -266,7 +282,14 @@ export default function useApplicationManager({
       setResizableObject(ref, {
         tries: 10,
       });
-      setResizersObjects(Object.values(rr || {}), {
+      setResizersObjects([rr?.bottom, rr?.left, rr?.right], {
+        tries: 10,
+      });
+
+      setElementObject(ref, {
+        tries: 10,
+      });
+      setInteractiveElementsObjects([rr?.top], {
         tries: 10,
       });
     }

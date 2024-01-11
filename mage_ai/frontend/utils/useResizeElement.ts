@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { delay } from './delay';
+import { buildSetFunction } from './elements';
 import { isEmptyObject, selectEntriesWithValues } from './hash';
 
 export default function useResizeElement({
@@ -18,38 +18,6 @@ export default function useResizeElement({
 
   const [element, setElementRefState] = useState<Element>(null);
   const [resizers, setResizersRefState] = useState<Element[]>(null);
-  function buildSetFunction(updateFunction) {
-    async function setObject(nodeOrNodes, opts: {
-      delay?: number;
-      tries?: number;
-    } = {}) {
-      const valueIsArray = Array.isArray(nodeOrNodes);
-      const nodes = valueIsArray ? nodeOrNodes : [nodeOrNodes];
-
-      await Promise.all(nodes?.map(async (node) => {
-        const tries = opts?.tries || 1;
-        let attempt = 0;
-
-        while (attempt < tries) {
-          if (node?.current) {
-            updateFunction((prev) => {
-              if (valueIsArray) {
-                return [...(prev || []), node?.current];
-              } else {
-                return node?.current;
-              }
-            });
-            break;
-          } else {
-            await delay(opts?.delay || 1000);
-          }
-          attempt++;
-        }
-      }));
-    }
-
-    return setObject;
-  }
 
   const setResizableObject = buildSetFunction(setElementRefState);
   const setResizersObjects = buildSetFunction(setResizersRefState);
@@ -236,6 +204,10 @@ export default function useResizeElement({
     };
 
     const initResize = (e) => {
+      if (e.which !== 1) {
+        return;
+      }
+
       if (typeof window !== 'undefined') {
         window.addEventListener('mousemove', Resize, false);
         window.addEventListener('mouseup', stopResize, false);

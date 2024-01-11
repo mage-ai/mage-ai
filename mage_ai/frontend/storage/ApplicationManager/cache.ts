@@ -37,7 +37,7 @@ export function buildDefaultLayout({
     position: {
       x: (totalWidth - width) / 2,
       y: (totalHeight - height) / 2,
-      z: 1,
+      z: 10,
     },
   };
 }
@@ -72,7 +72,7 @@ export function getApplications({
 }
 
 function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
-  if (!layout || !layoutPrev) {
+  if (!layout && !layoutPrev) {
     return buildDefaultLayout();
   }
 

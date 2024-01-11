@@ -4,6 +4,9 @@ import { Meta, StoryFn } from '@storybook/react';
 import ThemeBlock from '../../ThemeBlock';
 import {
   AISparkle,
+  CloseV2,
+  Minimize,
+  ArrowsPointingInFromAllCorners,
   Action,
   Add,
   AddBlock,
@@ -180,6 +183,9 @@ import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
   AISparkle,
+  CloseV2,
+  Minimize,
+  ArrowsPointingInFromAllCorners,
   Action,
   Add,
   AddBlock,
