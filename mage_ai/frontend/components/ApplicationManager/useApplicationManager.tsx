@@ -32,6 +32,7 @@ import { addClassNames, removeClassNames } from '@utils/elements';
 import { selectEntriesWithValues } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 
+const GROUP_ID = 'ApplicationManagerGroup';
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
 export default function useApplicationManager({
@@ -196,10 +197,12 @@ export default function useApplicationManager({
     }
   }
 
-  function onClickOutside(uuid: ApplicationExpansionUUIDEnum, e: any, isOutside: boolean, opts?: {
-    isOutsidesInteractiveElements?: boolean[];
+  function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, {
+    group,
   }) {
-    // console.log(uuid, isOutside)
+    if (Object.values(group || {})?.every(({ isOutside }) => isOutside)) {
+      getApplicationsFromCache().forEach(({ uuid }) => minimizeApplication(uuid));
+    }
   }
 
   const {
@@ -397,7 +400,9 @@ export default function useApplicationManager({
         tries: 10,
       });
 
-      setElementObjectClickOutside(uuid, ref);
+      setElementObjectClickOutside(uuid, ref, GROUP_ID, {
+        tries: 10,
+      });
     }
   }
 

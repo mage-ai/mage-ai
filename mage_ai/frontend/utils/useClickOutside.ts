@@ -5,12 +5,24 @@ import { BuildSetFunctionProps, buildSetFunction } from './elements';
 export default function useClickOutside({
   onClick,
 }: {
-  onClick?: (uuid: string, e: any, isOutside: boolean, opts?: {
+  onClick?: (uuid: string, isOutside: boolean, opts?: {
+    group?: {
+      [uuid: string]: {
+        isOutside: boolean;
+        isOutsides: boolean;
+      };
+    };
     isOutsidesInteractiveElements?: boolean[];
   }) => void;
 }): {
-  setElementObject: BuildSetFunctionProps;
-  setInteractiveElementsObjects: BuildSetFunctionProps;
+  setElementObject: (uuid: string, nodeOrNodes: any | any[], groupUUID: string, opts?: {
+  delay?: number;
+  tries?: number;
+}) => void;
+  setInteractiveElementsObjects: (uuid: string, nodeOrNodes: any | any[], groupUUID: string, opts?: {
+  delay?: number;
+  tries?: number;
+}) => void;
 } {
   const [elementMapping, setElementRefState] = useState<{
     [uuid: string]: Element;
@@ -18,52 +30,103 @@ export default function useClickOutside({
   const [interactiveElementsMapping, setInteractiveElementsRefState] = useState<{
     [uuid: string]: Element[];
   }>({});
+  const [uuidToGroupMapping, setUUIDToGroupMapping] = useState<{
+    [uuid: string]: string;
+  }>({});
 
-  const setElementObject = buildSetFunction(setElementRefState);
-  const setInteractiveElementsObjects = buildSetFunction(setInteractiveElementsRefState);
+  function setElementObject(uuid, ref, groupUUID, opts) {
+    buildSetFunction(setElementRefState)(uuid, ref, opts);
+    if (groupUUID) {
+      setUUIDToGroupMapping(prev => ({
+        ...prev,
+        [uuid]: groupUUID,
+      }));
+    }
+  };
+
+  function setInteractiveElementsObjects(uuid, ref, groupUUID, opts) {
+    buildSetFunction(setInteractiveElementsRefState)(uuid, ref, opts);
+    if (groupUUID) {
+      setUUIDToGroupMapping(prev => ({
+        ...prev,
+        [uuid]: groupUUID,
+      }));
+    }
+  };
+
+  function calculateOutside(e: any, elementItem: any): boolean {
+    let isOutside = true;
+    // @ts-ignore
+    if (elementItem) {
+      if (elementItem?.contains?.(e.target)) {
+        isOutside = false;
+      } else {
+        const {
+          clientX,
+          clientY,
+        } = e;
+        const {
+          height,
+          width,
+          x,
+          y,
+        } = elementItem?.getBoundingClientRect() || {};
+
+        isOutside = clientX > (x + width)
+          || clientX < x
+          || clientY > (y + height)
+          || clientY < y;
+      }
+    }
+
+    return isOutside;
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      Object.entries(elementMapping || {})?.forEach(([uuid, element]) => {
-        const calculateOutside = (e: any, elementItem: any): boolean => {
-          let isOutside = true;
-          // @ts-ignore
-          if (elementItem?.current) {
-            if (elementItem?.current?.contains?.(e.target)) {
-              isOutside = false;
-            } else {
-              const {
-                clientX,
-                clientY,
-              } = e;
-              const {
-                height,
-                width,
-                x,
-                y,
-              } = elementItem?.current?.getBoundingClientRect() || {};
-
-              isOutside = clientX > (x + width)
-                || clientX < x
-                || clientY > (y + height)
-                || clientY < y;
-            }
-          }
-
-          return isOutside;
+      const results: {
+        [uuid: string]: {
+          isOutside: boolean;
+          isOutsides: boolean;
         };
+      } = {};
+      const resultsGroup = {};
 
+      Object.entries(elementMapping || {})?.forEach(([uuid, element]) => {
         const interactiveElements = interactiveElementsMapping?.[uuid];
 
         const isOutside = calculateOutside(e, element);
         const isOutsides = interactiveElements?.map((elementItem) => calculateOutside(e, elementItem));
 
-        if (onClick) {
-          onClick?.(uuid, e, isOutside, {
-            isOutsidesInteractiveElements: isOutsides,
-          });
+        results[uuid] = {
+          isOutside,
+          isOutsides,
+        };
+
+        const groupUUID = uuidToGroupMapping?.[uuid];
+        if (groupUUID) {
+          resultsGroup[groupUUID] = {
+            ...(resultsGroup?.[groupUUID] || {}),
+            [uuid]: results[uuid],
+          };
         }
       });
+
+      if (onClick) {
+        Object.entries(results)?.forEach(([uuid, {
+          isOutside,
+          isOutsides,
+        }]) => {
+          onClick?.(
+            uuid,
+            isOutside,
+            {
+              group: resultsGroup?.[uuidToGroupMapping?.[uuid]],
+              isOutsidesInteractiveElements: isOutsides,
+            },
+          );
+        });
+      }
     };
 
     if (typeof document !== 'undefined') {
@@ -73,7 +136,7 @@ export default function useClickOutside({
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [elementMapping, interactiveElementsMapping]);
+  }, [elementMapping, interactiveElementsMapping, uuidToGroupMapping]);
 
   return {
     setElementObject,
