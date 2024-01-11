@@ -282,6 +282,7 @@
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
                 "streaming/destinations/google-cloud-pubsub",
+                "streaming/destinations/google-cloud-storage",
                 "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",

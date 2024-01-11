@@ -26,6 +26,15 @@ class BaseObjectStorageConfig(BaseConfig):
 
 class BaseObjectStorageSink(BaseSink):
     def init_storage_client(self):
+        """
+        Initialize the storage client.
+
+        This method should be implemented in subclasses to set up the storage client
+        used for uploading data.
+
+        Raises:
+            NotImplementedError: This method is not implemented in the base class.
+        """
         raise NotImplementedError('init_storage_client method not implemented')
 
     def upload_data_with_client(
@@ -33,9 +42,23 @@ class BaseObjectStorageSink(BaseSink):
         buffer,
         key: str,
     ):
+        """
+        Upload data using the initialized storage client.
+
+        Subclasses should implement this method to handle the actual uploading
+        of data using the initialized storage client.
+
+        Args:
+            buffer: The data IO buffer to be uploaded.
+            key (str): The key for the data file in the destination bucket.
+
+        Raises:
+            NotImplementedError: This method is not implemented in the base class.
+        """
         raise NotImplementedError('upload_data_with_client method not implemented')
 
     def init_client(self):
+        self.init_storage_client()
         self.last_upload_time = None
         self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data)
         self.timer.start()
@@ -68,7 +91,7 @@ class BaseObjectStorageSink(BaseSink):
         self.__reset_timer()
         if not self.buffer:
             return
-        self._print(f'Upload {len(self.buffer)} records to S3.')
+        self._print(f'Upload {len(self.buffer)} records.')
 
         df = pd.DataFrame(self.buffer)
         buffer = BytesIO()
@@ -105,5 +128,5 @@ class BaseObjectStorageSink(BaseSink):
             self.timer.cancel()
         except Exception:
             traceback.print_exc()
-        self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data_to_s3)
+        self.timer = threading.Timer(self.config.buffer_timeout_seconds, self.upload_data)
         self.timer.start()

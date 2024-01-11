@@ -14,7 +14,7 @@ class GoogleCloudStorageConfig(BaseObjectStorageConfig):
     path_to_credentials_json_file: str = None  # e.g., "./google_credentials.json"
 
 
-class AmazonS3Sink(BaseObjectStorageSink):
+class GoogleCloudStorageSink(BaseObjectStorageSink):
     config_class = GoogleCloudStorageConfig
 
     def init_storage_client(self):
