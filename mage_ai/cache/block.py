@@ -8,6 +8,10 @@ import inflection
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 from mage_ai.cache.utils import build_block_dict, build_pipeline_dict
+from mage_ai.data_preparation.models.constants import (
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    BlockType,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -43,6 +47,7 @@ class BlockCache(BaseCache):
         """
         block_type = ''
         block_uuid = ''
+        block_language = ''
         configuration = None
         file_path = None
         repo_path = repo_path or get_repo_path(root_project=False)
@@ -50,10 +55,14 @@ class BlockCache(BaseCache):
         if isinstance(block, dict):
             block_type = block.get('type')
             block_uuid = block.get('uuid')
+            block_language = block.get('language')
             configuration = block.get('configuration') or {}
+            block_type_plural = inflection.pluralize(block_type) \
+                if block_type != BlockType.CUSTOM \
+                else block_type
             file_path = os.path.join(
                 repo_path,
-                inflection.pluralize(block_type),
+                block_type_plural,
                 block_uuid,
             )
         else:
@@ -62,10 +71,12 @@ class BlockCache(BaseCache):
             configuration = block.configuration or {}
             file_path = block.file_path
 
-        if configuration:
-            file_source = (configuration or {}).get('file_source') or {}
-            if file_source and (file_source or {}).get('path'):
-                return remove_base_repo_path_or_name((file_source or {}).get('path'))
+        file_source = (configuration or {}).get('file_source') or {}
+        if file_source.get('path'):
+            return remove_base_repo_path_or_name(file_source.get('path'))
+        elif block_language:
+            block_file_extension = f'.{BLOCK_LANGUAGE_TO_FILE_EXTENSION[block_language]}'
+            file_path = f'{file_path}{block_file_extension}'
 
         return remove_base_repo_path_or_name(file_path)
 
@@ -150,7 +161,7 @@ class BlockCache(BaseCache):
                 pipeline_dict = cache_dict.get('pipeline') or {}
 
                 return pipeline_dict.get('uuid') != pipeline_uuid and \
-                    pipeline_dict.get('repo_path') != repo_path
+                    pipeline_dict.get('repo_path') == repo_path
 
             pipelines_arr = list(filter(__filter, pipelines_arr))
             pipelines_arr.append(build_pipeline_dict(
@@ -195,7 +206,7 @@ class BlockCache(BaseCache):
         def __filter(cache_dict: Dict, pipeline_uuid=pipeline_uuid, repo_path=repo_path) -> bool:
             pipeline_dict = cache_dict.get('pipeline') or {}
             return pipeline_dict.get('uuid') != pipeline_uuid and \
-                pipeline_dict.get('repo_path') != repo_path
+                pipeline_dict.get('repo_path') == repo_path
 
         pipelines = (mapping.get(key) or {}).get('pipelines', [])
 
