@@ -12,7 +12,11 @@
     "start": "next start",
     "type": "next build",
     "build-storybook": "storybook build -s ./public",
-    "storybook": "storybook dev -p 6007 -s ./public"
+    "storybook": "storybook dev -p 6007 -s ./public",
+    "test": "playwright test",
+    "test:h": "playwright test --headed",
+    "test:ci": "playwright test -c playwright.config.ci.ts",
+    "test:report": "playwright show-report"
   },
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
