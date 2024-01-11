@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import Header from './Header';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
+import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
@@ -157,7 +158,7 @@ export default function useApplicationManager({
     });
   }
 
-  function onChangeLayoutPosition({
+  function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
     height,
     width,
     x,
@@ -172,6 +173,7 @@ export default function useApplicationManager({
   }) {
     const apps = getApplicationsFromCache({
       status: StatusEnum.OPEN,
+      uuid,
     });
     const app = apps?.[0];
     if (app) {
@@ -193,6 +195,18 @@ export default function useApplicationManager({
       });
     }
   }
+
+  function onClickOutside(uuid: ApplicationExpansionUUIDEnum, e: any, isOutside: boolean, opts?: {
+    isOutsidesInteractiveElements?: boolean[];
+  }) {
+    // console.log(uuid, isOutside)
+  }
+
+  const {
+    setElementObject: setElementObjectClickOutside,
+  } = useClickOutside({
+    onClick: onClickOutside,
+  });
 
   const {
     setResizableObject,
@@ -369,19 +383,21 @@ export default function useApplicationManager({
         ref.current.style.display = 'block';
       }, 1);
 
-      setResizableObject(ref, {
+      setResizableObject(uuid, ref, {
         tries: 10,
       });
-      setResizersObjects([rr?.bottom, rr?.left, rr?.right], {
+      setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
         tries: 10,
       });
 
-      setElementObject(ref, {
+      setElementObject(uuid, ref, {
         tries: 10,
       });
-      setInteractiveElementsObjects([rr?.top], {
+      setInteractiveElementsObjects(uuid, [rr?.top], {
         tries: 10,
       });
+
+      setElementObjectClickOutside(uuid, ref);
     }
   }
 
