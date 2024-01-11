@@ -171,6 +171,7 @@ class BlockExecutorTest(BaseApiTestCase):
         # )
         self.block_executor._execute_callback.assert_called_with(
             'on_success',
+            block_run_id=None,
             callback_kwargs=dict(retry=dict(attempts=1)),
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
@@ -265,6 +266,7 @@ class BlockExecutorTest(BaseApiTestCase):
             logging_tags={},
             parent_block=self.block,
             pipeline_run=None,
+            upstream_block_uuids_override=[],
         )
 
         self.block.callback_block.execute_callback.assert_called_once_with(

@@ -426,6 +426,7 @@ def fetch_input_variables(
     global_vars: Dict = None,
     dynamic_block_flags: List[DynamicBlockFlag] = None,
     metadata: Dict = None,
+    upstream_block_uuids_override: List[str] = None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -445,14 +446,17 @@ def fetch_input_variables(
             upstream block UUIDs.
     """
     spark = (global_vars or dict()).get('spark')
-    upstream_block_uuids_final = []
+    upstream_block_uuids_final = upstream_block_uuids_override or []
+
+    if upstream_block_uuids_override:
+        upstream_block_uuids = upstream_block_uuids_override
 
     kwargs_vars = []
 
     input_vars = []
     if input_args is not None:
         input_vars = input_args
-        if upstream_block_uuids:
+        if upstream_block_uuids and not upstream_block_uuids_override:
             upstream_block_uuids_final = upstream_block_uuids
     elif pipeline is not None:
         # Mapping of original upstream block UUID and the dynamic block index to use for

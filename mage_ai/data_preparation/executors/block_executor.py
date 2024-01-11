@@ -654,6 +654,7 @@ class BlockExecutor:
                         )
                     self._execute_callback(
                         'on_failure',
+                        block_run_id=block_run_id,
                         callback_kwargs=dict(__error=error, retry=self.retry_metadata),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
@@ -714,6 +715,7 @@ class BlockExecutor:
             if not data_integration_metadata or is_original_block:
                 self._execute_callback(
                     'on_success',
+                    block_run_id=block_run_id,
                     callback_kwargs=dict(retry=self.retry_metadata),
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
@@ -1183,6 +1185,7 @@ class BlockExecutor:
         global_vars: Dict,
         logging_tags: Dict,
         pipeline_run: PipelineRun,
+        block_run_id: int = None,
         callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
@@ -1198,6 +1201,13 @@ class BlockExecutor:
             dynamic_block_index: Index of the dynamic block.
             dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
         """
+        upstream_block_uuids_override = []
+        if is_dynamic_block_child(self.block):
+            if not self.block_run and block_run_id:
+                self.block_run = BlockRun.query.get(block_run_id)
+            if self.block_run:
+                upstream_block_uuids_override.append(self.block_run.block_uuid)
+
         arr = []
         if self.block.callback_block:
             arr.append(self.block.callback_block)
@@ -1218,6 +1228,7 @@ class BlockExecutor:
                     logging_tags=logging_tags,
                     parent_block=self.block,
                     pipeline_run=pipeline_run,
+                    upstream_block_uuids_override=upstream_block_uuids_override,
                 )
             except Exception as callback_err:
                 self.logger.exception(
