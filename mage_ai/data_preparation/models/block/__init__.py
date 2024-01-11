@@ -1771,6 +1771,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         global_vars: Dict = None,
         upstream_block_uuids: List[str] = None,
         metadata: Dict = None,
+        upstream_block_uuids_override: List[str] = None,
     ) -> Tuple[List, List, List]:
         """
         Fetch input variables for the current block's execution.
@@ -1815,6 +1816,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             global_vars=global_vars,
             dynamic_block_flags=dynamic_block_flags,
             metadata=metadata,
+            upstream_block_uuids_override=upstream_block_uuids_override,
         )
 
         DX_PRINTER.critical(
@@ -3553,6 +3555,8 @@ class CallbackBlock(AddonBlock):
         logging_tags: Dict = None,
         parent_block: Block = None,
         from_notebook: bool = False,
+        metadata: Dict = None,
+        upstream_block_uuids_override: List[str] = None,
         **kwargs
     ) -> None:
         with self._redirect_streams(
@@ -3597,7 +3601,9 @@ class CallbackBlock(AddonBlock):
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                metadata=metadata,
                 upstream_block_uuids=[parent_block.uuid] if parent_block else None,
+                upstream_block_uuids_override=upstream_block_uuids_override,
             )
 
             # Copied logic from the method self.execute_block
@@ -3611,11 +3617,27 @@ class CallbackBlock(AddonBlock):
 
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
-                global_vars_copy.update(kwargs_var)
+                if kwargs_var:
+                    if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
+                        global_vars_copy.update(kwargs_var)
 
             callback_kwargs = merge_dict(
                 callback_kwargs,
                 global_vars_copy,
+            )
+
+            DX_PRINTER.critical(
+                block=self,
+                callback=callback,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                execution_partition=execution_partition,
+                input_vars=input_vars,
+                metadata=metadata,
+                upstream_block_uuids=upstream_block_uuids,
+                upstream_block_uuids_override=upstream_block_uuids_override,
+                __uuid='execute_callback',
             )
 
             for callback_function in callback_functions_legacy:
