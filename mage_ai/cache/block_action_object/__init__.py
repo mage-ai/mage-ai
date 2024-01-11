@@ -35,7 +35,7 @@ from mage_ai.data_preparation.templates.constants import (
 from mage_ai.data_preparation.templates.data_integrations.utils import (
     get_templates as get_templates_for_data_integrations,
 )
-from mage_ai.settings.platform import build_repo_path_for_all_projects
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
 
@@ -254,48 +254,46 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
-        for path_dict in build_repo_path_for_all_projects(mage_projects_only=False).values():
-            repo_path = path_dict['root_project_full_path']
+        repo_path = base_repo_path()
+        for block_type in BlockType:
+            file_directory_name = Block.file_directory_name(block_type)
+            directory_full_path = os.path.join(repo_path, file_directory_name)
 
-            for block_type in BlockType:
-                file_directory_name = Block.file_directory_name(block_type)
-                directory_full_path = os.path.join(repo_path, file_directory_name)
+            for path in Path(directory_full_path).rglob('*'):
+                if not path.is_file():
+                    continue
 
-                for path in Path(directory_full_path).rglob('*'):
-                    if not path.is_file():
-                        continue
+                block_file_absolute_path = path.absolute()
+                d = parse_block_file_absolute_path(block_file_absolute_path)
 
-                    block_file_absolute_path = path.absolute()
-                    d = parse_block_file_absolute_path(block_file_absolute_path)
+                file_path = d.get('file_path')
+                filename = d.get('filename')
+                filename_parts = d.get('filename_parts')
+                language = d.get('language')
 
-                    file_path = d.get('file_path')
-                    filename = d.get('filename')
-                    filename_parts = d.get('filename_parts')
-                    language = d.get('language')
+                if '__init__.py' == filename:
+                    continue
 
-                    if '__init__.py' == filename:
-                        continue
+                if not language:
+                    continue
 
-                    if not language:
-                        continue
+                key = self.build_key_for_block_file(
+                    file_path,
+                    block_type,
+                    language,
+                    filename,
+                )
 
-                    key = self.build_key_for_block_file(
-                        file_path,
-                        block_type,
-                        language,
-                        filename,
-                    )
+                content = None
+                with open(block_file_absolute_path, 'r') as f:
+                    content = f.read()
 
-                    content = None
-                    with open(block_file_absolute_path, 'r') as f:
-                        content = f.read()
-
-                    mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
-                        content=content,
-                        file_path=file_path,
-                        language=language,
-                        type=block_type,
-                        uuid='.'.join(filename_parts[:-1]),
-                    )
+                mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
+                    content=content,
+                    file_path=file_path,
+                    language=language,
+                    type=block_type,
+                    uuid='.'.join(filename_parts[:-1]),
+                )
 
         self.set(self.cache_key, mapping)
