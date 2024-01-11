@@ -33,7 +33,7 @@ export const RootApplicationStyle = styled.div`
         bottom: 0;
         box-shadow:
           0 0 0 8px #18181C,
-          0 0 0 24px rgba(72, 119, 255, 0.5);
+          0 0 0 24px rgba(72, 119, 255, 0.7);
         transform: scale(0.1);
         transform-origin: 0 0;
 
@@ -48,7 +48,7 @@ export const RootApplicationStyle = styled.div`
         .${OVERLAY_ID} {
           ${transition()}
 
-          background-color: rgba(0, 0, 0, 0.2);
+          background-color: rgba(0, 0, 0, 0.3);
           bottom: 0;
           height 100%;
           left: 0;
@@ -77,10 +77,15 @@ export const DockStyle = styled.div`
   width: 100%;
   z-index: 10;
 
-  &:hover {
-    cursor: pointer;
-    height: 110px;
-  }
+  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+    :has(#${uuid}.minimized) {
+      &:hover {
+        border-bottom: 40px solid rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        height: 130px;
+      }
+    }
+  `)}
 `;
 
 export const OverlayStyle = styled.div``;
