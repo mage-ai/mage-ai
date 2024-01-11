@@ -11,6 +11,7 @@ import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { FetchItemsType, HandleSelectItemRowType } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import {
+  conditionallyEncodeValue,
   interpolatePagePath,
   updateActionFromUpstreamResults,
 } from './utils';
@@ -171,7 +172,7 @@ export default function useExecuteActions({
 
       if (applicationState) {
         Object.entries(applicationState || {})?.forEach(([key, value]) => {
-          setNested(action, key, value);
+          setNested(action, key, conditionallyEncodeValue(key, value));
         });
       }
 

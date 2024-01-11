@@ -171,6 +171,7 @@ import {
   BlocksCombined,
   TreeWithArrowsDown,
   TreeWithArrowsUp,
+  VersionControlRebase,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
@@ -346,6 +347,7 @@ const ICONS = [
   BlocksCombined,
   TreeWithArrowsDown,
   TreeWithArrowsUp,
+  VersionControlRebase,
 ];
 
 const Icons = () => (

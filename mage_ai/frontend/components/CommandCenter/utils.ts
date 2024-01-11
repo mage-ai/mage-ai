@@ -141,7 +141,7 @@ export function updateActionFromUpstreamResults(
           childKeySetter,
         ]) => {
           const value = dig(result, parentKeyGetter);
-          setNested(actionCopy, childKeySetter, value);
+          setNested(actionCopy, childKeySetter, conditionallyEncodeValue(childKeySetter, value));
         });
       }
     });
@@ -288,4 +288,14 @@ export function launchCommandCenter() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(eventCustom);
   }
+}
+
+export function conditionallyEncodeValue(key: string, value: any) {
+  const keys = key?.split('.');
+
+  if (['resource_id', 'resource_parent_id'].includes?.(keys[keys?.length - 1])) {
+    return encodeURIComponent(value);
+  }
+
+  return value;
 }

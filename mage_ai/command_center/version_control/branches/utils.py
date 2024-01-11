@@ -347,6 +347,7 @@ async def build_delete_branch(model: Branch, items: List[Dict]):
 
 async def build_branch_generic_action(model: Branch, items: List[Dict], action_label: str):
     remotes = Remote.load_all(project=model.project)
+    branches = Branch.load_all(project=model.project)
 
     item_dict = dict(
         item_type=ItemType.ACTION,
@@ -396,8 +397,9 @@ async def build_branch_generic_action(model: Branch, items: List[Dict], action_l
                 ),
                 name='request.query.remote',
                 required=True,
-                type=InteractionInputType.DROPDOWN_MENU,
+                monospace=True,
                 placeholder='e.g. origin',
+                type=InteractionInputType.DROPDOWN_MENU,
                 options=[
                     dict(
                         label=remote.name,
@@ -414,8 +416,16 @@ async def build_branch_generic_action(model: Branch, items: List[Dict], action_l
                     icon_uuid='BranchAlt',
                 ),
                 name='request.resource_id',
-                required=True,
                 placeholder='e.g. master',
+                type=InteractionInputType.DROPDOWN_MENU,
+                options=[
+                    dict(
+                        label=b.name,
+                        value=b.name,
+                    ) for b in branches
+                ],
+                required=True,
+                monospace=True,
             ),
         ],
     )
@@ -447,7 +457,36 @@ async def build_push(model: Branch, items: List[Dict]) -> Dict:
     item_dict = await build_branch_generic_action(model, items, 'push') | dict(
         title='Push current branch to remote',
     )
+    item_dict['display_settings_by_attribute'] = dict(
+        icon=dict(
+            icon_uuid='CircleWithArrowUp',
+            color_uuid='accent.cyan',
+        ),
+    )
 
     item_dict['applications'][0]['settings'] = item_dict['applications'][0]['settings'][:1]
+
+    return item_dict
+
+
+async def build_rebase(model: Branch, items: List[Dict]) -> Dict:
+    item_dict = await build_branch_generic_action(model, items, 'rebase') | dict(
+        title='Rebase local or remote branch into',
+        description=model.name,
+    )
+    item_dict['display_settings_by_attribute'] = dict(
+        icon=dict(
+            icon_uuid='VersionControlRebase',
+            color_uuid='accent.teal',
+        ),
+    )
+
+    remote = item_dict['applications'][0]['settings'][0]
+    remote['label'] = 'Remote (optional)'
+    remote['description'] = 'Leave the remote blank to rebase from a local branch.'
+    remote['options'] = [dict(label='', value='')] + remote['options']
+    branch = item_dict['applications'][0]['settings'][1]
+
+    item_dict['applications'][0]['settings'] = [branch, remote]
 
     return item_dict

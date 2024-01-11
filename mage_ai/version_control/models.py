@@ -153,8 +153,14 @@ class Remote(BaseVersionControl):
 
     @classmethod
     def load_from_text(self, line: str) -> Dict:
-        name, url = line.split('\t')
-        url = url.split('(')[0].strip()
+        name = ''
+        url = ''
+        parts = line.split('\t')
+        if len(parts) >= 1:
+            name = parts[0]
+            if len(parts) >= 2:
+                url = parts[1]
+                url = url.split('(')[0].strip()
 
         return self.load(
             name=name.strip(),
@@ -166,8 +172,8 @@ class Remote(BaseVersionControl):
         self.project = project or self.project
 
         match = find(
-            lambda x: x.name == self.name,
-            [self.load_from_text(line) for line in self.list() if len(line) >= 1],
+            lambda x: x and x.name == self.name,
+            [self.load_from_text(line) for line in self.list() if len(line.strip()) >= 1],
         )
         if match:
             self.url = match.url
@@ -320,14 +326,14 @@ class Branch(BaseVersionControl):
                 commands.append(self.remote.url)
         elif pull or rebase:
             commands.append('rebase' if rebase else 'pull')
-            if self.remote:
+            if self.remote and self.remote.name:
                 commands.append(self.remote.name)
             commands.append(self.name)
         elif checkout or merge:
             commands.extend(['merge' if merge else 'checkout', self.name])
         elif push:
             commands.append('push -u')
-            if self.remote:
+            if self.remote and self.remote.name:
                 commands.append(self.remote.name)
             commands.append(self.name)
 
