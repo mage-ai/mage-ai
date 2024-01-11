@@ -72,9 +72,8 @@ class BlockCache(BaseCache):
             file_path = block.file_path
 
         file_source = (configuration or {}).get('file_source') or {}
-        if file_source:
-            if (file_source or {}).get('path'):
-                return remove_base_repo_path_or_name((file_source or {}).get('path'))
+        if file_source.get('path'):
+            return remove_base_repo_path_or_name(file_source.get('path'))
         elif block_language:
             block_file_extension = f'.{BLOCK_LANGUAGE_TO_FILE_EXTENSION[block_language]}'
             file_path = f'{file_path}{block_file_extension}'
