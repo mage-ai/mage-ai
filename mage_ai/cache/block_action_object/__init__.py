@@ -254,8 +254,8 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
-        for path_dict in build_repo_path_for_all_projects(mage_projects_only=True).values():
-            repo_path = path_dict['full_path']
+        for path_dict in build_repo_path_for_all_projects(mage_projects_only=False).values():
+            repo_path = path_dict['root_project_full_path']
 
             for block_type in BlockType:
                 file_directory_name = Block.file_directory_name(block_type)
