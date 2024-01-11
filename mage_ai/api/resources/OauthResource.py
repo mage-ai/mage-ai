@@ -99,14 +99,20 @@ class OauthResource(GenericResource):
         access_token = Oauth2AccessToken.query.filter(
             Oauth2AccessToken.token == token,
         ).first()
+
+        expire_timedelta = timedelta(days=30)
+        # TODO: BitBucket tokens expire after an hour. We need to add logic to refresh them in the
+        # future.
+        if provider == ProviderName.BITBUCKET:
+            expire_timedelta = timedelta(hours=1)
         if access_token:
-            access_token.expires = datetime.utcnow() + timedelta(days=30)
+            access_token.expires = datetime.utcnow() + expire_timedelta
             access_token.save()
         else:
             access_token = generate_access_token(
                 user,
                 application=oauth_client,
-                duration=int(timedelta(days=30).total_seconds()),
+                duration=int(expire_timedelta.total_seconds()),
                 token=token,
             )
 
