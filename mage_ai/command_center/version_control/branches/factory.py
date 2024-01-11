@@ -14,6 +14,7 @@ from mage_ai.command_center.version_control.branches.utils import (
     build_and_score_detail,
     build_clone,
     build_delete_branch,
+    build_merge,
     build_pull,
     build_push,
     build_rebase,
@@ -122,6 +123,9 @@ class BranchFactory(BaseFactory):
 
             # git rebase
             self.filter_score_mutate_accumulator(await build_rebase(branch, items), items)
+
+            # git merge
+            self.filter_score_mutate_accumulator(await build_merge(branch, items), items)
 
         for item in items:
             if 'metadata' not in item:

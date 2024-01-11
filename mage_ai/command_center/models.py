@@ -68,6 +68,7 @@ class TextStyles(CommandCenterBaseClass):
 class DisplaySettings(CommandCenterBaseClass):
     color_uuid: str = None
     icon_uuid: str = None
+    stroke_uuid: str = None
     text_styles: TextStyles = None
 
     def __post_init__(self):

@@ -203,7 +203,13 @@ async def build_create(factory, model: Project, items: List[Dict]):
         items.append(scored)
 
 
-async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
+async def build_detail_list(
+    factory,
+    model: Remote,
+    include_delete: bool = False,
+    include_fetch: bool = False,
+    include_update: bool = False,
+) -> List[Dict]:
     def shared_dict(model=model) -> Dict:
         return dict(
             object_type=ObjectType.REMOTE,
@@ -241,24 +247,35 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
             query=dict(url=urllib.parse.quote_plus(model.url or '')),
         )
 
-    item_dicts = [
-        dict(
-            item_type=ItemType.ACTION,
-            title='Fetch from remote',
-            description=f'git fetch {model.name}',
-            uuid=f'{model.name}_fetch',
-            actions=[
-                dict(
-                    render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
-                    request=shared_request() | dict(
-                        operation=OperationType.UPDATE,
-                        payload=dict(version_control_remote=dict(fetch=True)),
-                    ),
-                    uuid='fetch_model',
-                ),
-            ],
+    item_fetch = dict(
+        item_type=ItemType.ACTION,
+        title='Fetch from remote',
+        description=f'git fetch {model.name}',
+        uuid=f'{model.name}_fetch',
+        display_settings_by_attribute=dict(
+            icon=dict(
+                icon_uuid='VersionControlFetch',
+            ),
         ),
-        dict(
+        actions=[
+            dict(
+                render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
+                request=shared_request() | dict(
+                    operation=OperationType.UPDATE,
+                    payload=dict(version_control_remote=dict(fetch=True)),
+                ),
+                uuid='fetch_model',
+            ),
+        ],
+    )
+
+    arr = []
+
+    if include_fetch:
+        arr.append(item_fetch)
+
+    if include_update:
+        arr.append(dict(
             item_type=ItemType.UPDATE,
             title='Update remote configurations',
             uuid=f'{model.name}_update',
@@ -273,8 +290,10 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
                     uuid='update_remote',
                 ),
             ],
-        ),
-        dict(
+        ))
+
+    if include_delete:
+        arr.append(dict(
             item_type=ItemType.DELETE,
             title='Remove remote',
             uuid=f'{model.name}_delete',
@@ -298,11 +317,20 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
                     color_uuid='accent.negative',
                 ),
             ),
-        ),
-    ]
+        ))
 
+    return [shared_dict() | i for i in arr]
+
+
+async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
+    item_dicts = await build_detail_list(
+        factory,
+        model,
+        include_delete=True,
+        include_fetch=True,
+        include_update=True,
+    )
     for item_dict in item_dicts:
-        item_dict = shared_dict() | item_dict
         scored = factory.filter_score(item_dict)
         if scored:
             items.append(scored)

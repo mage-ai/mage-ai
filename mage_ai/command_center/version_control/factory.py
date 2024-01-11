@@ -39,6 +39,7 @@ from mage_ai.command_center.version_control.remotes.utils import (
 from mage_ai.command_center.version_control.remotes.utils import (
     build_create as build_create_remote,
 )
+from mage_ai.command_center.version_control.remotes.utils import build_detail_list
 from mage_ai.command_center.version_control.remotes.utils import (
     build_detail_list_items as build_detail_list_items_remote,
 )
@@ -63,7 +64,8 @@ class VersionControlFactory(BaseFactory):
             # results from previously executed actions since the results are stored in a ref.
             result = results[-1]
             if result and result.get('value'):
-                item_project = Project.load(user=self.user, **result.get('value'))
+                item_project = Project.load(**result.get('value'))
+                item_project.hydrate(user=self.user)
                 item = await build(self, item_project)
                 item['score'] = 999
                 items.append(item)
@@ -72,7 +74,8 @@ class VersionControlFactory(BaseFactory):
                 if result.get('value'):
                     value = result.get('value')
 
-                    item_project = Project.load(user=self.user, uuid=value.get('project_uuid'))
+                    item_project = Project.load(uuid=value.get('project_uuid'))
+                    item_project.hydrate(user=self.user)
                     model = Branch.load(
                         current=value.get('current'),
                         name=value.get('name'),
@@ -95,6 +98,7 @@ class VersionControlFactory(BaseFactory):
                 Current remote
             """
             if ObjectType.PROJECT == self.item.object_type:
+                # Project detail view with list of item rows for actions
                 item_project = Project.load(**self.item.metadata.project.to_dict())
                 item_project.hydrate(user=self.user)
 
@@ -113,6 +117,12 @@ class VersionControlFactory(BaseFactory):
                         await build_and_score_branch(self, branch, items)
                 else:
                     await build_clone(self, items, project=item_project)
+
+                # If there aren’t that many branches, maybe user is just getting started.
+                if not self.branches or len(self.branches) <= 3:
+                    for remote in (self.remotes or []):
+                        for i in await build_detail_list(self, remote, include_fetch=True):
+                            self.filter_score_mutate_accumulator(i, items)
 
             if self.item.object_type in [ObjectType.BRANCH, ObjectType.VERSION_CONTROL_FILE]:
                 # Checkout

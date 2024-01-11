@@ -100,7 +100,7 @@ async def build_authenticate_github(page: PageMetadata, user=None) -> Dict:
                 ),
             ),
             icon=dict(
-                color_uuid='content.active',
+                stroke_uuid='accent.purple',
                 icon_uuid='GitHubIcon',
             ),
         ),

@@ -42,7 +42,7 @@ function ItemRow({
   };
 
   const Icon = getIcon(item);
-  const iconColor = getIconColor(item);
+  const { accent, useStroke } = getIconColor(item);
   const category = subtitle || getDisplayCategory(item, true);
 
   const maxLetters = (
@@ -67,7 +67,8 @@ function ItemRow({
         <Flex alignItems="center" flex={1}>
           {Icon && (
             <Icon
-              fill={iconColor?.accent}
+              fill={useStroke ? null : accent}
+              stroke={useStroke ? accent : null}
               size={2 * UNIT}
             />
           )}

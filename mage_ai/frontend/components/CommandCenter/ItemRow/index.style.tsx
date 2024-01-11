@@ -19,6 +19,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 } = {}): {
   accent?: string;
   accentLight?: string;
+  useStroke?: boolean;
 } {
   const theme = opts?.theme;
 
@@ -33,11 +34,13 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   };
 
   const colorUUID = displaySettingsByAttribute?.icon?.color_uuid;
+  const strokeUUID = displaySettingsByAttribute?.icon?.stroke_uuid;
 
   const themeUse = (theme || dark);
 
   let accent = themeUse?.monotone?.gray;
   let accentLight = themeUse?.monotone?.grey500;
+  let useStroke = false;
 
   if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type) {
     return {
@@ -49,6 +52,10 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   if (colorUUID) {
     accent = dig(themeUse, colorUUID);
     accentLight = dig(themeUse, colorUUID);
+  } else if (strokeUUID) {
+    accent = dig(themeUse, strokeUUID);
+    accentLight = dig(themeUse, strokeUUID);
+    useStroke = true;
   } else if (ObjectTypeEnum.APPLICATION == objectType) {
     accent = themeUse?.accent?.sky;
     accentLight = themeUse?.accent?.skyLight;
@@ -91,6 +98,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   return {
     accent,
     accentLight,
+    useStroke,
   };
 }
 

@@ -2,7 +2,6 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
-from mage_ai.api.resources.GitCustomBranchResource import GitCustomBranchResource
 from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import Branch, Remote
@@ -37,8 +36,6 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
 
         if payload.get('clone'):
             model.update(clone=True)
-        else:
-            GitCustomBranchResource.create()
 
         res = self(model, user, **kwargs)
         res.validate_output()

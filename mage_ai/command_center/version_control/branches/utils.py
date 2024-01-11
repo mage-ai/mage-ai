@@ -471,7 +471,7 @@ async def build_push(model: Branch, items: List[Dict]) -> Dict:
 
 async def build_rebase(model: Branch, items: List[Dict]) -> Dict:
     item_dict = await build_branch_generic_action(model, items, 'rebase') | dict(
-        title='Rebase local or remote branch into',
+        title='Rebase a local or remote branch into',
         description=model.name,
     )
     item_dict['display_settings_by_attribute'] = dict(
@@ -484,6 +484,29 @@ async def build_rebase(model: Branch, items: List[Dict]) -> Dict:
     remote = item_dict['applications'][0]['settings'][0]
     remote['label'] = 'Remote (optional)'
     remote['description'] = 'Leave the remote blank to rebase from a local branch.'
+    remote['options'] = [dict(label='', value='')] + remote['options']
+    branch = item_dict['applications'][0]['settings'][1]
+
+    item_dict['applications'][0]['settings'] = [branch, remote]
+
+    return item_dict
+
+
+async def build_merge(model: Branch, items: List[Dict]) -> Dict:
+    item_dict = await build_branch_generic_action(model, items, 'merge') | dict(
+        title='Merge a local or remote branch into',
+        description=model.name,
+    )
+    item_dict['display_settings_by_attribute'] = dict(
+        icon=dict(
+            icon_uuid='VersionControlMerge',
+            color_uuid='accent.purpleLight',
+        ),
+    )
+
+    remote = item_dict['applications'][0]['settings'][0]
+    remote['label'] = 'Remote (optional)'
+    remote['description'] = 'Leave the remote blank to merge from a local branch.'
     remote['options'] = [dict(label='', value='')] + remote['options']
     branch = item_dict['applications'][0]['settings'][1]
 
