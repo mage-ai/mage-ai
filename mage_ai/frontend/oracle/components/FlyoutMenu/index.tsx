@@ -43,6 +43,7 @@ export type FlyoutMenuItemType = {
     openNewWindow?: boolean;
   };
   openConfirmationDialogue?: boolean;
+  render?: (el: any) => any;
   isGroupingTitle?: boolean;
   onClick?: (opts?: any) => void;
   tooltip?: () => string;
@@ -229,6 +230,7 @@ function FlyoutMenu({
           openConfirmationDialogue,
           tooltip,
           uuid,
+          render,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
 
@@ -369,7 +371,7 @@ function FlyoutMenu({
           }
 
           if (linkProps) {
-            return (
+            e = (
               <NextLink
                 {...linkProps}
                 key={`${uuid}-${idx0}`}
@@ -378,6 +380,10 @@ function FlyoutMenu({
                 {el}
               </NextLink>
             );
+          }
+
+          if (render) {
+            el = render(el);
           }
 
           return el;

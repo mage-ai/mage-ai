@@ -1,4 +1,5 @@
 import moment from 'moment-timezone';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
@@ -731,24 +732,48 @@ function useFileComponents({
   const onContextMenuFileTabs = useCallback((event: MouseEvent, filePath: string) => {
     const menuItems = [
       {
-        onClick: () => 1,
         uuid: 'Close tab',
+        onClick: () => removeOpenFilePath(filePath),
       },
       {
-        onClick: () => 1,
         uuid: 'Close all other tabs',
+        onClick: () => openFilePaths?.forEach((fp) => {
+          if (fp !== filePath && !filesTouched?.[fp]) {
+            removeOpenFilePath(fp);
+          }
+        }),
       },
       {
-        onClick: () => 1,
         uuid: 'Close all tabs to the right',
+        onClick: () => {
+          const idx = openFilePaths?.findIndex((fp: string) => fp === filePath);
+          openFilePaths?.slice(idx + 1)?.forEach((fp) => {
+            if (!filesTouched?.[fp]) {
+              removeOpenFilePath(fp);
+            }
+          });
+        },
       },
       {
-        onClick: () => 1,
-        uuid: 'Close tabs with saved files',
+        uuid: 'Close tabs with files saved',
+        onClick: () => {
+          openFilePaths?.forEach((fp: string) => {
+            if (!filesTouched?.[fp]) {
+              removeOpenFilePath(fp);
+            }
+          });
+        },
       },
       {
-        onClick: () => 1,
         uuid: 'Copy file path',
+        onClick: () => alert(`${filePath} is copied to your clipboard.`),
+        render: (el) => (
+          <CopyToClipboard
+            text={filePath}
+          >
+            {el}
+          </CopyToClipboard>
+        ),
       },
     ];
 
