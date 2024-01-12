@@ -383,7 +383,9 @@ function FlyoutMenu({
           }
 
           if (render) {
-            el = render(el);
+            el = React.cloneElement(render(el), {
+              key: `${uuid}-${idx0}`,
+            });
           }
 
           return el;

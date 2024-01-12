@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Divider from '@oracle/elements/Divider';
-import FileTabsScroller from '@components/FileTabsScroller';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
@@ -99,9 +98,7 @@ function ArcaneLibrary({
 
             <Divider light />
 
-            <FileTabsScroller widthOffset={widthOffset}>
-              {tabs}
-            </FileTabsScroller>
+            {tabs}
           </div>
         )}
         mainContainerRef={mainContainerRef}

@@ -1912,16 +1912,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             variable_uuid=variable_uuid,
         )
 
-        DX_PRINTER.debug(
-            'get_variable',
-            block=self,
-            block_uuid_use=block_uuid_use,
-            clean_block_uuid=not changed,
-            partition=partition,
-            value=value,
-            __uuid='output_variables'
-        )
-
         return value
 
     def get_variable_object(

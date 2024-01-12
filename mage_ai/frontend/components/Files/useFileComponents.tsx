@@ -12,7 +12,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FileBrowser from '@components/FileBrowser';
 import FileEditorHeader from '@components/FileEditor/Header';
-import FileTabs from '@components/PipelineDetail/FileTabs';
+import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   FILES_QUERY_INCLUDE_HIDDEN_FILES,
   OriginalContentMappingType,
@@ -69,6 +69,7 @@ import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
+import { useFileTabs } from '@components/PipelineDetail/FileTabs';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export const ICON_SIZE = UNIT * 2;
@@ -206,6 +207,10 @@ function useFileComponents({
   }>({});
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
   const [selectedFilePath, setSelectedFilePathState] = useState<string>(null);
+  const selectedFilePathIndex = useMemo(() => openFilePaths?.findIndex(fp => fp === selectedFilePath), [
+    openFilePaths,
+    selectedFilePath,
+  ]);
 
   const setSelectedFilePath = useCallback((prev: () => string, skipAddingToHistry: boolean = false) => {
     const filePath = typeof prev === 'function' ? prev?.() : prev;
@@ -374,9 +379,9 @@ function useFileComponents({
     idx += offset;
 
     if (idx < 0) {
-      idx = numberOfFilePaths - 1;
-    } else if (idx > numberOfFilePaths - 1) {
       idx = 0;
+    } else if (idx > numberOfFilePaths - 1) {
+      idx = numberOfFilePaths - 1;
     }
 
     setSelectedFilePath(arr[idx], fromHistory);
@@ -830,49 +835,48 @@ function useFileComponents({
     showContextMenuFileTabs,
   ]);
 
+  const {
+    tabs,
+    tabsBefore,
+  } = useFileTabs({
+    filePaths: openFilePaths,
+    filesTouched,
+    isSelectedFilePath: (filePath: string, selectedFilePath: string) => filePath === selectedFilePath,
+    onClickTab: (filePath: string) => {
+      setSelectedFilePath(filePath);
+
+      if (onSelectFile) {
+        onSelectFile?.(filePath);
+      }
+    },
+    onClickTabClose: (filePath: string) => {
+      removeOpenFilePaths([filePath]);
+      if (onClickTabClose) {
+        onClickTabClose?.(filePath);
+      }
+    },
+    onContextMenu: onContextMenuFileTabs,
+    renderTabTitle: (filePath: string) => {
+      const filename = getFilenameFromFilePath(filePath);
+      const arr = openFilenameMapping[filename];
+      if (arr && arr?.length >= 2) {
+        return filePath;
+      }
+
+      return filename;
+    },
+    selectedFilePath,
+  });
+
   const fileTabsMemo = useMemo(() => (
-    <FileTabs
-      filePaths={openFilePaths}
-      filesTouched={filesTouched}
-      isSelectedFilePath={(filePath: string, selectedFilePath: string) => filePath === selectedFilePath}
-      onClickTab={(filePath: string) => {
-        setSelectedFilePath(filePath);
-
-        if (onSelectFile) {
-          onSelectFile?.(filePath);
-        }
-      }}
-      onClickTabClose={(filePath: string) => {
-        removeOpenFilePaths([filePath]);
-        if (onClickTabClose) {
-          onClickTabClose?.(filePath);
-        }
-      }}
-      onContextMenu={onContextMenuFileTabs}
-      renderTabTitle={(filePath: string) => {
-        const filename = getFilenameFromFilePath(filePath);
-        const arr = openFilenameMapping[filename];
-        if (arr && arr?.length >= 2) {
-          return filePath;
-        }
-
-        return filename;
-      }}
-      selectedFilePath={selectedFilePath}
+    <FileTabsScroller
+      // @ts-ignore
+      fileTabs={tabsBefore?.concat(tabs)}
+      selectedFilePathIndex={selectedFilePathIndex}
     >
       {contextMenuFileTabs}
-    </FileTabs>
-  ), [
-    contextMenuFileTabs,
-    filesTouched,
-    onClickTabClose,
-    onContextMenuFileTabs,
-    onSelectFile,
-    openFilePaths,
-    openFilenameMapping,
-    removeOpenFilePaths,
-    selectedFilePath,
-  ]);
+    </FileTabsScroller>
+  ), [contextMenuFileTabs, selectedFilePathIndex, tabs, tabsBefore]);
 
   const fileVersionsMemo = useMemo(() => (
     <ApiReloader uuid={`FileVersions/${selectedFilePath

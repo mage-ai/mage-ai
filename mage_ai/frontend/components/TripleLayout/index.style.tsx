@@ -164,7 +164,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 `;
 
 export const MainContainerHeaderStyle = styled.div`
-height: ${ASIDE_SUBHEADER_HEIGHT}px;
+  min-height: ${ASIDE_SUBHEADER_HEIGHT}px;
 `;
 
 export const AsideHeaderStyle = styled.div<{
