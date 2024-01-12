@@ -14,6 +14,9 @@ export enum PipelineTypeEnum {
   STREAMING = 'streaming',
 }
 
+// Invalid pipeline type used for pipelines with invalid configuration
+export const PIPELINE_TYPE_INVALID = 'invalid';
+
 export const PIPELINE_TYPE_DISPLAY_NAME = {
   [PipelineTypeEnum.INTEGRATION]: 'Integration',
   [PipelineTypeEnum.PYTHON]: 'Python',

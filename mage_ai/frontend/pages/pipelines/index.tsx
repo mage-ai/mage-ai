@@ -23,6 +23,7 @@ import PipelineType, {
   PipelineQueryEnum,
   PipelineStatusEnum,
   PipelineTypeEnum,
+  PIPELINE_TYPE_INVALID,
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
 import Preferences from '@components/settings/workspace/Preferences';
@@ -1318,6 +1319,7 @@ function PipelineListPage() {
         const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
         const schedulesCount = schedules.length;
         const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+        const isInvalid = type as string === PIPELINE_TYPE_INVALID;
 
         const tagsEl = (
           <div key={`pipeline_tags_${idx}`}>
@@ -1388,9 +1390,11 @@ function PipelineListPage() {
             {description}
           </Text>,
           <Text
+            bold={isInvalid}
+            danger={isInvalid}
             key={`pipeline_type_${idx}`}
           >
-            {PIPELINE_TYPE_LABEL_MAPPING[type]}
+            {isInvalid ? capitalize(PIPELINE_TYPE_INVALID) : PIPELINE_TYPE_LABEL_MAPPING[type]}
           </Text>,
           <Text
             key={`pipeline_updated_at_${idx}`}
