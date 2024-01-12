@@ -19,6 +19,44 @@ class DynamicBlockFlag(str, Enum):
     SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
 
 
+def build_dynamic_block_uuid(
+    block_uuid: str,
+    metadata: Dict = None,
+    index: int = None,
+    indexes: List[int] = None,
+    upstream_block_uuid: str = None,
+    upstream_block_uuids: List[str] = None,
+) -> str:
+    """
+    Generates a dynamic block UUID based on the given parameters.
+
+    Args:
+        block_uuid (str): The UUID of the parent block.
+        metadata (Dict): The metadata of the block.
+        index (int): The index of the dynamic block.
+        upstream_block_uuid (str, optional): The UUID of the upstream block.
+
+    Returns:
+        str: The generated dynamic block UUID.
+    """
+    block_uuid_subname = metadata.get('block_uuid', index) if metadata else index
+    uuid = f'{block_uuid}:{block_uuid_subname}'
+
+    if upstream_block_uuids:
+        uuid = ':'.join([
+            str(block_uuid),
+            '__'.join([str(i) for i in upstream_block_uuids]),
+            str(block_uuid_subname),
+        ])
+    elif upstream_block_uuid:
+        parts = upstream_block_uuid.split(':')
+        if len(parts) >= 2:
+            upstream_indexes = ':'.join(parts[1:])
+            uuid = f'{uuid}:{upstream_indexes}'
+
+    return uuid
+
+
 def extract_dynamic_block_index(block_run_block_uuid: str) -> int:
     if block_run_block_uuid:
         parts = block_run_block_uuid.split(':')
@@ -177,6 +215,26 @@ def uuid_for_output_variables(
     )
 
     return (block_uuid, changed)
+
+
+def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
+    options = kwargs.copy()
+
+    for upstream_block in block.upstream_blocks:
+        if is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block):
+            if options.get('dynamic_block_index') is None:
+                options['dynamic_block_index'] = 0
+            if options.get('dynamic_block_uuid') is None:
+                options['dynamic_block_uuid'] = build_dynamic_block_uuid(
+                    block.uuid,
+                    index=0,
+                )
+            if not options.get('dynamic_block_indexes'):
+                options['dynamic_block_indexes'] = {}
+            if upstream_block.uuid not in options['dynamic_block_indexes']:
+                options['dynamic_block_indexes'][upstream_block.uuid] = 0
+
+    return options
 
 
 @dataclass

@@ -3,6 +3,7 @@ from enum import Enum
 from json import JSONDecoder
 
 import numpy as np
+import pandas as pd
 
 from mage_ai.orchestration.db.models.base import BaseModel
 
@@ -54,6 +55,8 @@ def encode_complex(obj):
         return bool(obj)
     elif isinstance(obj, (np.void)):
         return None
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict(orient='records')
 
     return obj
 
