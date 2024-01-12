@@ -21,7 +21,8 @@ You can even control some of the RabbitMQ consumer configurations using the foll
 ```yaml
 configure_consume: True
 
-auto_ack: False
-exclusive: False
-inactivity_timeout: 10.0
+consume_config:
+  auto_ack: False
+  exclusive: False
+  inactivity_timeout: 10.0
 ```
