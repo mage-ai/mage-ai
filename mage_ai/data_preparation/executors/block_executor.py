@@ -1121,7 +1121,10 @@ class BlockExecutor:
                 logging_tags=logging_tags,
                 outputs=result if cache_block_output_in_memory else None,
                 update_tests=False,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_block_uuid=dynamic_block_uuid,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             )
 
         return result

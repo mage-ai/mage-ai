@@ -13,8 +13,11 @@ from mage_ai.data_preparation.models.block.dynamic import (
     all_variable_uuids,
     reduce_output_from_block,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import DynamicBlockFlag
 from mage_ai.data_preparation.models.block.dynamic.utils import (
-    DynamicBlockFlag,
+    build_dynamic_block_uuid as build_dynamic_block_uuid_original,
+)
+from mage_ai.data_preparation.models.block.dynamic.utils import (
     extract_dynamic_block_index,
 )
 from mage_ai.data_preparation.models.block.dynamic.utils import (
@@ -38,6 +41,7 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 is_dynamic_block = is_dynamic_block_original
 is_dynamic_block_child = is_dynamic_block_child_original
 should_reduce_output = should_reduce_output_original
+build_dynamic_block_uuid = build_dynamic_block_uuid_original
 
 
 def clean_name(name: str, **kwargs) -> str:
@@ -52,44 +56,6 @@ def clean_name(name: str, **kwargs) -> str:
         str: The cleaned name.
     """
     return clean_name_orig(name, allow_characters=['/'], **kwargs)
-
-
-def build_dynamic_block_uuid(
-    block_uuid: str,
-    metadata: Dict = None,
-    index: int = None,
-    indexes: List[int] = None,
-    upstream_block_uuid: str = None,
-    upstream_block_uuids: List[str] = None,
-) -> str:
-    """
-    Generates a dynamic block UUID based on the given parameters.
-
-    Args:
-        block_uuid (str): The UUID of the parent block.
-        metadata (Dict): The metadata of the block.
-        index (int): The index of the dynamic block.
-        upstream_block_uuid (str, optional): The UUID of the upstream block.
-
-    Returns:
-        str: The generated dynamic block UUID.
-    """
-    block_uuid_subname = metadata.get('block_uuid', index) if metadata else index
-    uuid = f'{block_uuid}:{block_uuid_subname}'
-
-    if upstream_block_uuids:
-        uuid = ':'.join([
-            str(block_uuid),
-            '__'.join([str(i) for i in upstream_block_uuids]),
-            str(block_uuid_subname),
-        ])
-    elif upstream_block_uuid:
-        parts = upstream_block_uuid.split(':')
-        if len(parts) >= 2:
-            upstream_indexes = ':'.join(parts[1:])
-            uuid = f'{uuid}:{upstream_indexes}'
-
-    return uuid
 
 
 def dynamic_block_values_and_metadata(
@@ -549,7 +515,9 @@ def fetch_input_variables(
             # Block output variables for upstream_block_uuid
             variables = input_variables_by_uuid[upstream_block_uuid]
 
-            dynamic_block_index_for_output_variable = None
+            dynamic_block_index_for_output_variable = \
+                dynamic_block_index_values_for_output_variables.get('dynamic_block_index')
+
             if not disable_dynamic_index_for_output_variables and \
                     dynamic_block_index_mapping and \
                     upstream_block_uuid in dynamic_block_index_mapping:
@@ -677,6 +645,10 @@ def fetch_input_variables(
                     final_val = [final_val]
 
                 input_vars[idx] = final_val
+            elif upstream_is_dynamic_block_child and not upstream_is_dynamic_block:
+                # If the block has only 1 upstream dynamic child and no other
+                # dynamic/dynamic child upstream.
+                input_vars[idx] = variable_values
 
         if dynamic_upstream_block_uuids:
             for tup in reduce_output_indexes:

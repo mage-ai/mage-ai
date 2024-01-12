@@ -40,6 +40,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     DynamicBlockFlag,
     is_dynamic_block,
     is_dynamic_block_child,
+    mock_dynamic_in_real_scenario,
     should_reduce_output,
     uuid_for_output_variables,
 )
@@ -1103,14 +1104,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             #   }
             # }
             if from_notebook:
-                for upstream_block in self.upstream_blocks:
-                    if is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block):
-                        if 'dynamic_block_index' not in kwargs:
-                            kwargs['dynamic_block_index'] = 0
-                        if 'dynamic_block_indexes' not in kwargs:
-                            kwargs['dynamic_block_indexes'] = {}
-                        if upstream_block.uuid not in kwargs['dynamic_block_indexes']:
-                            kwargs['dynamic_block_indexes'][upstream_block.uuid] = 0
+                kwargs = mock_dynamic_in_real_scenario(self, **kwargs)
 
             output = self.execute_sync(
                 global_vars=global_vars,
@@ -1256,6 +1250,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         self.pipeline.type != PipelineType.INTEGRATION:
 
                     try:
+                        DX_PRINTER.critical(
+                            block=self,
+                            execution_partition=execution_partition,
+                            override_outputs=True,
+                            dynamic_block_uuid=dynamic_block_uuid,
+                            __uuid='store_variables',
+                        )
+
                         self.store_variables(
                             variable_mapping,
                             execution_partition=execution_partition,
@@ -1859,6 +1861,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self,
         block_uuid: str,
         dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
         partition: str = None,
     ):
         variable_manager = self.pipeline.variable_manager
@@ -1867,6 +1870,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             self,
             block_uuid=block_uuid,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
         )
 
         res = variable_manager.get_variables_by_block(
@@ -1892,6 +1896,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_uuid: str,
         variable_uuid: str,
         dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
         partition: str = None,
         raise_exception: bool = False,
         spark=None,
@@ -1902,6 +1907,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             self,
             block_uuid=block_uuid,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
         )
 
         value = variable_manager.get_variable(
@@ -1956,10 +1962,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         execution_partition: str = None,
         from_notebook: bool = False,
         global_vars: Dict = None,
+        dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
     ) -> List[Any]:
         all_variables = self.get_variables_by_block(
             block_uuid=block_uuid,
             partition=execution_partition,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
         )
 
         outputs = []
@@ -1973,6 +1983,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 partition=execution_partition,
                 raise_exception=True,
                 spark=self.__get_spark_session_from_global_vars(global_vars),
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_uuid=dynamic_block_uuid,
             )
             outputs.append(variable)
 
@@ -2639,12 +2651,31 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         logging_tags: Dict = None,
         outputs: List[Any] = None,
         update_tests: bool = True,
+        dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
+        **kwargs,
     ) -> None:
         if global_vars is None:
             global_vars = dict()
         if logging_tags is None:
             logging_tags = dict()
+
+        if from_notebook:
+            kwargs = mock_dynamic_in_real_scenario(self, **merge_dict(kwargs, dict(
+                build_block_output_stdout=build_block_output_stdout,
+                custom_code=custom_code,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_uuid=dynamic_block_uuid,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                outputs=outputs,
+                update_tests=update_tests,
+            )))
+            dynamic_block_index = kwargs.get('dynamic_block_index') or dynamic_block_index
+            dynamic_block_uuid = kwargs.get('dynamic_block_uuid') or dynamic_block_uuid
 
         self.dynamic_block_uuid = dynamic_block_uuid
 
@@ -2673,6 +2704,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_uuid=dynamic_block_uuid,
             )
 
         if logger and 'logger' not in global_vars:
@@ -2731,6 +2764,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
             handle_run_tests(
                 self,
+                dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
                 execution_partition=execution_partition,
                 global_vars=global_vars,
