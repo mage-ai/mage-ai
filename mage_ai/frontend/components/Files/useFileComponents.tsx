@@ -33,6 +33,8 @@ import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_BRACKET_LEFT,
+  KEY_CODE_BRACKET_RIGHT,
   KEY_CODE_C,
   KEY_CODE_CONTROL,
   KEY_CODE_META,
@@ -40,6 +42,8 @@ import {
   KEY_CODE_SHIFT,
   KEY_SYMBOL_ARROW_LEFT,
   KEY_SYMBOL_ARROW_RIGHT,
+  KEY_SYMBOL_BRACKET_LEFT,
+  KEY_SYMBOL_BRACKET_RIGHT,
   KEY_SYMBOL_C,
   KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_META,
@@ -167,6 +171,7 @@ function useFileComponents({
 
   const fileTreeRef = useRef(null);
   const contentByFilePath = useRef(null);
+  const selectedFileHistoryRef = useRef([]);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
     [filePath: string]: number;
@@ -197,7 +202,22 @@ function useFileComponents({
     [filePath: string]: FileType;
   }>({});
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
-  const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+  const [selectedFilePath, setSelectedFilePathState] = useState<string>(null);
+  const setSelectedFilePath = useCallback((prev: () => string, skipAddingToHistry: boolean = false) => {
+    const filePath = typeof prev === 'function' ? prev?.() : prev;
+
+    if (!skipAddingToHistry) {
+      if (!selectedFileHistoryRef?.current) {
+        selectedFileHistoryRef.current = [];
+      }
+      const arr = (selectedFileHistoryRef.current || [])?.filter(fp => fp !== filePath);
+      arr.unshift(filePath);
+      selectedFileHistoryRef.current = arr;
+    }
+
+    setSelectedFilePathState(filePath);
+  }, []);
+
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
@@ -237,6 +257,10 @@ function useFileComponents({
 
     const arr = removeOpenFilePathLocalStorage(filePath);
     setOpenFilePaths(arr);
+
+    if (selectedFileHistoryRef?.current) {
+      selectedFileHistoryRef.current = selectedFileHistoryRef.current.filter(fp => fp !== filePath);
+    }
 
     if (selectedFilePath === filePath && arr?.length >= 1) {
       setSelectedFilePath(arr[idx - 1]);
@@ -313,9 +337,14 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  const selectItem = useCallback((offset: number) => {
-    const numberOfFilePaths = openFilePaths?.length || 0;
-    let idx = openFilePaths?.findIndex((filePath: string) => selectedFilePath === filePath);
+  const selectItem = useCallback((offset: number, fromHistory: boolean = false) => {
+    const arr = (fromHistory
+      ? (selectedFileHistoryRef?.current || [])
+      : openFilePaths
+    );
+
+    const numberOfFilePaths = arr?.length || 0;
+    let idx = arr?.findIndex((filePath: string) => selectedFilePath === filePath);
 
     idx += offset;
 
@@ -325,7 +354,7 @@ function useFileComponents({
       idx = 0;
     }
 
-    setSelectedFilePath(openFilePaths[idx]);
+    setSelectedFilePath(arr[idx], fromHistory);
   }, [openFilePaths, selectedFilePath, setSelectedFilePath]);
 
   const {
@@ -339,6 +368,7 @@ function useFileComponents({
   }, [unregisterOnKeyDown, uuid]);
 
   registerOnKeyDown(uuid, (event, keyMapping, keyHistory) => {
+    console.log(keyHistory, keyMapping)
     const filenamesTouched =
       Object.entries(filesTouched).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);
 
@@ -360,6 +390,11 @@ function useFileComponents({
       || keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_CONTROL], [KEY_CODE_ARROW_RIGHT], keyMapping, keyHistory)
     ) {
       selectItem(KEY_CODE_ARROW_LEFT === keyHistory[0] ? -1 : 1);
+    } else if (
+      keysPresentAndKeysRecent([KEY_CODE_CONTROL], [KEY_CODE_BRACKET_LEFT], keyMapping, keyHistory)
+      || keysPresentAndKeysRecent([KEY_CODE_CONTROL], [KEY_CODE_BRACKET_RIGHT], keyMapping, keyHistory)
+    ) {
+      selectItem(KEY_CODE_BRACKET_LEFT === keyHistory[0] ? -1 : 1, true);
     } else if (selectedFilePath
       && keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_SHIFT], [KEY_CODE_C], keyMapping, keyHistory)
     ) {
@@ -609,7 +644,7 @@ function useFileComponents({
         uuid: 'Keyboard shortcuts',
         items: [
           {
-            uuid: 'Next file',
+            uuid: 'Next file in tab',
             beforeIcon: (
               <KeyboardTextGroup
                 addPlusSignBetweenKeys
@@ -620,7 +655,7 @@ function useFileComponents({
             onClick: () => selectItem(1),
           },
           {
-            uuid: 'Previous file',
+            uuid: 'Previous file in tab',
             beforeIcon: (
               <KeyboardTextGroup
                 addPlusSignBetweenKeys
@@ -629,6 +664,28 @@ function useFileComponents({
               />
             ),
             onClick: () => selectItem(-1),
+          },
+          {
+            uuid: 'Next file recently viewed',
+            beforeIcon: (
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_RIGHT]]}
+                monospace
+              />
+            ),
+            onClick: () => selectItem(1, true),
+          },
+          {
+            uuid: 'Previously viewed file',
+            beforeIcon: (
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_LEFT]]}
+                monospace
+              />
+            ),
+            onClick: () => selectItem(-1, true),
           },
           {
             uuid: 'Close current file',

@@ -302,6 +302,7 @@ function FlyoutMenu({
             >
               <FlexContainer
                 alignItems="center"
+                style={{ gridAutoRows: 'auto' }}
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
