@@ -39,24 +39,44 @@ If you want to access your workspaces through the same url, i.e. `https://your-d
 you will need to set up an ingress.
 
 You will need to first install an ingress controller in your kubernetes cluster if you do not already have one.
-The most common ingress controller is the nginx ingress controller . You
+The most common ingress controller is the Ingress-Nginx Controller . You
 can find instructions on how to install the controller [here](https://kubernetes.github.io/ingress-nginx/deploy/).
 
-You can set up a default ingress through the Mage Helm chart by setting the following fields in the
-`values.yaml` file:
+Once the ingress controller is installed, you can create an ingress through the Mage Helm charts. You can create
+an ingress by setting the following fields in the `values.yaml` file:
 
 ```yaml
 ingress:
   enabled: true
-  className: nginx
+  className: nginx # your ingress class name
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
+    - host: your-domain.com
       paths:
         - path: /
           pathType: ImplementationSpecific
+```
+
+There is additional configuration for the ingress that you can set, but that will depend on your
+own requirements. When a workspace is created, you can specify the name of the ingress created above
+to automatically add the workspace to the ingress rules. The workspace will be added to the ingress rules
+like this:
+
+```yaml
+spec:
+  rules:
+    - host: your-domain.com
+      http:
+        paths:
+          - path: /<workspace-name>
+            path_type: Prefix
+            backend:
+              service:
+                name: <service-name>
+                port: 6789
+          - path: ...
 ```
 
 

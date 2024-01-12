@@ -136,7 +136,19 @@ class WorkloadManager:
                                     node_port = service.spec.ports[0].node_port
                                     workload['ip'] = f'{ip}:{node_port}'
                         except Exception:
+                            import traceback
+                            traceback.print_exc()
+                    elif service_type == 'LoadBalancer':
+                        ip = None
+                        port = 6789
+                        try:
+                            ip = service.status.load_balancer.ingress[0].ip
+                            port = service.spec.ports[0].port
+                        except Exception:
                             pass
+                        if ip:
+                            workload['ip'] = f'{ip}:{port}'
+
                 elif stateful_set and stateful_set.spec.replicas == 0:
                     workload['status'] = 'STOPPED'
                 else:
