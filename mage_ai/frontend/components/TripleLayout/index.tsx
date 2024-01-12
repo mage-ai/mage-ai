@@ -29,6 +29,7 @@ import {
   DRAGGABLE_WIDTH,
   DraggableStyle,
   InlineContainerStyle,
+  MainContainerHeaderStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
@@ -736,14 +737,14 @@ function TripleLayout({
       >
         {mainContainerHeader
           ? (
-            <div>
+            <MainContainerHeaderStyle>
               {typeof mainContainerHeader === 'function'
                 ? mainContainerHeader?.({
                   widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
                 })
                 : mainContainerHeader
               }
-            </div>
+            </MainContainerHeaderStyle>
           )
           : null
         }

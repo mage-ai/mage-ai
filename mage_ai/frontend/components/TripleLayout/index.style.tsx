@@ -14,7 +14,7 @@ export const DRAGGABLE_WIDTH = UNIT * 0.5;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
-export const ASIDE_SUBHEADER_HEIGHT = UNIT * 6;
+export const ASIDE_SUBHEADER_HEIGHT = 44;
 export const ALL_HEADERS_HEIGHT = 2 * PADDING_UNITS * 3 * UNIT;
 
 type ScrollbarTrackType = {
@@ -163,6 +163,10 @@ const ASIDE_DRAGGABLE_STYLE = css<{
   `}
 `;
 
+export const MainContainerHeaderStyle = styled.div`
+height: ${ASIDE_SUBHEADER_HEIGHT}px;
+`;
+
 export const AsideHeaderStyle = styled.div<{
   contained?: boolean;
   contrast?: boolean;
@@ -171,7 +175,7 @@ export const AsideHeaderStyle = styled.div<{
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
-  height: ${ASIDE_SUBHEADER_HEIGHT}px;
+  height: ${1 + ASIDE_SUBHEADER_HEIGHT + 2}px;
   z-index: 4;
 
   ${hideScrollBar()}

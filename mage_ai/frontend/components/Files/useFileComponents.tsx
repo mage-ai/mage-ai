@@ -174,6 +174,7 @@ function useFileComponents({
   const fileTreeRef = useRef(null);
   const contentByFilePath = useRef(null);
   const selectedFileHistoryRef = useRef([]);
+  const selectedFilePathRef = useRef(null);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
     [filePath: string]: number;
@@ -205,6 +206,7 @@ function useFileComponents({
   }>({});
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
   const [selectedFilePath, setSelectedFilePathState] = useState<string>(null);
+
   const setSelectedFilePath = useCallback((prev: () => string, skipAddingToHistry: boolean = false) => {
     const filePath = typeof prev === 'function' ? prev?.() : prev;
 
@@ -217,6 +219,7 @@ function useFileComponents({
       selectedFileHistoryRef.current = arr;
     }
 
+    selectedFilePathRef.current = filePath;
     setSelectedFilePathState(filePath);
   }, []);
 
@@ -285,7 +288,8 @@ function useFileComponents({
     }
 
     if (arr?.length >= 1) {
-      setSelectedFilePath(arr[Math.min(idx - 1, arr?.length - 1)]);
+      const idxNext = Math.min(idx - 1, arr?.length - 1);
+      setSelectedFilePath(arr[Math.max(idxNext, 0)]);
     } else if (arr?.length === 0) {
       setSelectedFilePath(null);
     }
@@ -365,7 +369,7 @@ function useFileComponents({
     );
 
     const numberOfFilePaths = arr?.length || 0;
-    let idx = arr?.findIndex((filePath: string) => selectedFilePath === filePath);
+    let idx = arr?.findIndex((filePath: string) => selectedFilePathRef?.current === filePath);
 
     idx += offset;
 
@@ -376,7 +380,7 @@ function useFileComponents({
     }
 
     setSelectedFilePath(arr[idx], fromHistory);
-  }, [openFilePaths, selectedFilePath, setSelectedFilePath]);
+  }, [openFilePaths, setSelectedFilePath]);
 
   const {
     disableGlobalKeyboardShortcuts,
@@ -415,10 +419,10 @@ function useFileComponents({
       || keysPresentAndKeysRecent([KEY_CODE_CONTROL], [KEY_CODE_BRACKET_RIGHT], keyMapping, keyHistory)
     ) {
       selectItem(KEY_CODE_BRACKET_LEFT === keyHistory[0] ? -1 : 1, true);
-    } else if (selectedFilePath
+    } else if (selectedFilePathRef?.current
       && keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_SHIFT], [KEY_CODE_C], keyMapping, keyHistory)
     ) {
-      removeOpenFilePaths([selectedFilePath]);
+      removeOpenFilePaths([selectedFilePathRef?.current]);
     }
 
     if (disableGlobalKeyboardShortcuts) {
@@ -427,7 +431,6 @@ function useFileComponents({
   },
   [
     filesTouched,
-    selectedFilePath,
     selectItem,
   ]);
 
@@ -753,7 +756,20 @@ function useFileComponents({
     const menuItems = [
       {
         uuid: 'Close tab',
-        onClick: () => removeOpenFilePaths([filePath]),
+        onClick: () => {
+          removeOpenFilePaths([filePath]);
+          hideContextMenuFileTabs();
+        },
+      },
+
+      {
+        uuid: 'Close all tabs',
+        onClick: () => openFilePaths?.forEach((fp) => {
+          if (!filesTouched?.[fp]) {
+            removeOpenFilePaths([fp]);
+          }
+          hideContextMenuFileTabs();
+        }),
       },
       {
         uuid: 'Close all other tabs',

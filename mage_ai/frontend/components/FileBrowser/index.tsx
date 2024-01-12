@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import React, {
   Dispatch,
   SetStateAction,
@@ -495,6 +496,18 @@ function FileBrowser({
     const items = [];
     if (selectedFolder) {
       items.push(...[
+        {
+          label: () => 'Open all files in the immediate directory',
+          onClick: () => {
+            selectedFolder?.children?.forEach((file: FileType) => {
+              if (!('children' in file)) {
+                const fp = getFullPath(selectedFolder)
+                onClickFile([fp, file?.name]?.join(osPath.sep));
+              }
+            });
+          },
+          uuid: 'new_folder',
+        },
         {
           label: () => 'New folder',
           onClick: () => {

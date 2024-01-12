@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 class FileContentResource(GenericResource):
@@ -29,7 +30,7 @@ class FileContentResource(GenericResource):
 
         if not file:
             file_path = urllib.parse.unquote(pk)
-            file = File.from_path(file_path, get_repo_path(root_project=True))
+            file = File.from_path(add_absolute_path(file_path), get_repo_path(root_project=True))
 
         try:
             ensure_file_is_in_project(file.file_path)
