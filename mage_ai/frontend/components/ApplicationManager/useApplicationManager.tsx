@@ -9,6 +9,7 @@ import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import dark from '@oracle/styles/themes/dark';
+import useAutoResizer, { DimensionDataType, RectType} from '@utils/useAutoResizer';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
@@ -35,6 +36,7 @@ import { ModalProvider } from '@context/Modal';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
   buildDefaultLayout,
+  buildMaximumLayout,
   closeApplication as closeApplicationFromCache,
   getApplications as getApplicationsFromCache,
   updateApplication,
@@ -81,6 +83,29 @@ export default function useApplicationManager({
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
 
+  function onResizeCallback(
+    uuid: ApplicationExpansionUUIDEnum,
+    data: DimensionDataType,
+    elementRect: RectType,
+  ): void {
+    updateApplicationLayoutAndState(uuid, {
+      layout: {
+        dimension: selectEntriesWithValues(elementRect, ['height', 'width']),
+        position: selectEntriesWithValues(elementRect, ['x', 'y']),
+      },
+    }, {
+      layout: true,
+      state: false,
+    });
+  }
+
+  const {
+    deregisterElementUUIDs,
+    observeThenResizeElements,
+  } = useAutoResizer({
+    onResize: onResizeCallback,
+  });
+
   function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
     closeApplicationFromCache(uuid);
 
@@ -89,6 +114,8 @@ export default function useApplicationManager({
       refRoots.current[uuid] = undefined;
       refRoot?.unmount();
     }
+
+    deregisterElementUUIDs([uuid]);
   }
 
   function getActiveApplication() {
@@ -170,6 +197,14 @@ export default function useApplicationManager({
         );
       }
     });
+
+    if (reverse) {
+      observeThenResizeElements({
+        [uuid]: refExpansion,
+      });
+    } else {
+      deregisterElementUUIDs([uuid]);
+    }
   }
 
   function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
@@ -336,6 +371,8 @@ export default function useApplicationManager({
       },
     } = layout;
 
+    console.log('WTFFFFFFFFFFFFFFF', layout)
+
     let AppComponent;
     if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
       AppComponent = VersionControlFileDiffs;
@@ -373,13 +410,13 @@ export default function useApplicationManager({
         <Header
           applications={getApplicationsFromCache()}
           closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
-          minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
-          ref={rr?.top}
-          resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
+          maximizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
             updateApplicationLayoutAndState(uuidApp, {
-              layout: buildDefaultLayout(),
+              layout: buildMaximumLayout(),
             });
           }}
+          minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
+          ref={rr?.top}
           setSelectedTab={setSelectedTab}
         />
 
@@ -437,6 +474,10 @@ export default function useApplicationManager({
 
     setElementObjectClickOutside(uuid, ref, GROUP_ID, {
       tries: 10,
+    });
+
+    observeThenResizeElements({
+      [uuid]: ref,
     });
   }
 

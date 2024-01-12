@@ -1327,8 +1327,8 @@ function CommandCenter() {
   return (
     <>
       <ContainerStyle
-        // className="hide"
         className={[
+          'hide',
           getCurrentMode()?.type || '',
         ]?.join(' ')}
         ref={refContainer}

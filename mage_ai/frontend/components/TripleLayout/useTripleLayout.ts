@@ -10,6 +10,7 @@ const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
 
 function useAside(uuid, refData, {
   disable,
+  mainContainerWidth,
   refOther,
   setWidth: setWidthProp,
   width: widthProp,
@@ -17,6 +18,7 @@ function useAside(uuid, refData, {
   widthWindow,
 }: {
   disable?: boolean;
+  mainContainerWidth?: number;
   refOther?: {
     current: {
       disable?: boolean;
@@ -38,11 +40,21 @@ function useAside(uuid, refData, {
   width: number;
 } {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
+  const keyHidden = useMemo(() => `${uuid}_hidden`, [uuid]);
+  const hiddenLocal = get(keyHidden);
   const widthLocal = get(key);
 
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHiddenState] = useState(hiddenLocal || false);
   const [mousedownActive, setMousedownActive] = useState(false);
-  const [widthState, setWidthState] = useState(widthLocal || widthProp);
+  const [widthState, setWidthState] = useState(Math.min(
+    widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH),
+    (widthLocal || widthProp),
+  ));
+
+  const setHidden = useCallback((prev) => {
+    setHiddenState(prev);
+    set(keyHidden, typeof prev === 'function' ? prev?.() : prev);
+  }, [keyHidden]);
 
   const width = useMemo(() => {
     const value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
@@ -205,6 +217,7 @@ export default function useTripleLayout(uuid: string, {
     width: widthAfter,
   } = useAside(keyAfter, refAfter, {
     disable: disableAfter,
+    mainContainerWidth,
     refOther: refBefore,
     setWidth: setWidthAfterProp,
     width: widthAfterProp,
@@ -221,6 +234,7 @@ export default function useTripleLayout(uuid: string, {
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
     disable: disableBefore,
+    mainContainerWidth,
     refOther: refAfter,
     setWidth: setWidthBeforeProp,
     width: widthBeforeProp,

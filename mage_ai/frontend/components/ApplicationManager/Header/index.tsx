@@ -23,13 +23,13 @@ const TOOLTIP_PROPS = {
 function Header({
   applications,
   closeApplication,
+  maximizeApplication,
   minimizeApplication,
-  resetLayout,
 }: {
   applications: ApplicationManagerApplication[];
   closeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+  maximizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   minimizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  resetLayout: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   setSelectedTab?: (tab: TabType) => void;
 }, ref) {
   const tabs = useMemo(() => applications?.map(({
@@ -67,7 +67,7 @@ function Header({
         <Flex>
           <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
 
-          <Tooltip {...TOOLTIP_PROPS} label="Reset size and position of application">
+          <Tooltip {...TOOLTIP_PROPS} label="Maximize application">
             <Button
               iconOnly
               noBackground
@@ -75,7 +75,7 @@ function Header({
               noPadding
               onClick={(e) => {
                 pauseEvent(e);
-                application && resetLayout(application?.uuid);
+                application && maximizeApplication(application?.uuid);
               }}
             >
               <Circle borderOnly success size={1.75 * UNIT}>

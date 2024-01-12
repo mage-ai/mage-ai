@@ -1,5 +1,8 @@
+import { useState } from 'react';
+
 import ApiReloader from '@components/ApiReloader';
 import FileEditor from '@components/FileEditor';
+import { OverlayStyle } from './index.style';
 
 function Controller({
   addNewBlock,
@@ -24,8 +27,12 @@ function Controller({
   setSelectedBlock,
   ...props
 }) {
+  const [ready, setReady] = useState(false);
+
   return (
     <>
+      <OverlayStyle ready={ready} />
+
       {openFilePaths?.map((filePath: string) => (
         <div
           key={filePath}
@@ -51,6 +58,12 @@ function Controller({
               onContentChange={(content: string) => setContentByFilePath({
                 [filePath]: content,
               })}
+              onMountCallback={selectedFilePath === filePath ?
+                () => {
+                  setReady(true);
+                }
+                : null
+              }
               onUpdateFileSuccess={onUpdateFileSuccess}
               openSidekickView={openSidekickView}
               originalContent={originalContent}

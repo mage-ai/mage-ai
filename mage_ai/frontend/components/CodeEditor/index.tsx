@@ -81,6 +81,7 @@ type CodeEditorProps = {
   editorRef?: any;
   fontSize?: number;
   language?: string;
+  minimap?: boolean;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
   onMountCallback?: (editor?: any, monaco?: any) => void;
@@ -109,6 +110,7 @@ function CodeEditor({
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
+  minimap,
   onChange,
   onContentSizeChangeCallback,
   onDidChangeCursorPosition,
@@ -407,7 +409,7 @@ function CodeEditor({
           hideCursorInOverviewRuler: true,
           lineNumbers: showLineNumbers ? 'on' : 'off',
           minimap: {
-            enabled: false,
+            enabled: !!minimap,
           },
           overviewRulerBorder: false,
           readOnly,

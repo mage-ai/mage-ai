@@ -1,6 +1,11 @@
 import * as osPath from 'path';
 
 import FileType from '@interfaces/FileType';
+import StatusType from '@interfaces/StatusType';
+
+export function addRepoPath(filePath: string, status: StatusType): string {
+  return osPath.join(status?.repo_path, filePath);
+}
 
 export function getFullPath(
   file: FileType,

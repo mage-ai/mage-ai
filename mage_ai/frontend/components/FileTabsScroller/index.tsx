@@ -113,73 +113,75 @@ function FileTabsScroller({
     return [isOnLeft, isOnRight];
   }
 
+  function handleMove(e) {
+    mouseRef.current = e;
+    isMouseOnCounts();
+  }
+
+  function onScroll() {
+    const {
+      width,
+    } = refScroll?.current?.getBoundingClientRect() || {
+      width: null,
+    };
+    if (width === null) {
+      return;
+    }
+
+    const scrollValue = refScroll?.current?.scrollLeft
+
+    const leftItems = [];
+    const middleItems = [];
+    const rightItems = [];
+    const arr = refFileTabs?.current.map((el, idx) => el?.current?.getBoundingClientRect()?.width || 0);
+
+    let acc = 0;
+    arr?.forEach((widthEl, idx) => {
+      const leftVal = acc;
+      const rightVal = acc + widthEl;
+
+      if (rightVal < scrollValue) {
+        leftItems.push(idx);
+      } else if (leftVal > scrollValue + width) {
+        rightItems.push(idx);
+      } else {
+        middleItems.push(idx);
+      }
+
+      acc += widthEl;
+    });
+
+    const leftCount = leftItems?.length || 0;
+    const rightCount = rightItems?.length || 0;
+    const pair = isMouseOnCounts();
+
+    if (countLeftRef?.current) {
+      if (leftCount >= 2) {
+        if (!pair[0]) {
+          countLeftRef.current.style.display = 'block';
+        }
+        countLeftTextRef.current.innerText = leftCount;
+      } else {
+        countLeftRef.current.style.display = 'none';
+        countLeftTextRef.current.innerText = null;
+      }
+    }
+
+    if (countRightRef?.current) {
+      if (rightCount >= 2) {
+        if (!pair[1]) {
+          countRightRef.current.style.display = 'block';
+        }
+        countRightTextRef.current.innerText = rightCount;
+      } else {
+        countRightRef.current.style.display = 'none';
+        countRightTextRef.current.innerText = null;
+      }
+    }
+  }
+
   useEffect(() => {
-    const handleMove = (e) => {
-      mouseRef.current = e;
-      isMouseOnCounts();
-    };
-
-    const onScroll = () => {
-      const {
-        width,
-      } = refScroll?.current?.getBoundingClientRect() || {
-        width: null,
-      };
-      if (width === null) {
-        return;
-      }
-
-      const scrollValue = refScroll?.current?.scrollLeft
-
-      const leftItems = [];
-      const middleItems = [];
-      const rightItems = [];
-      const arr = refFileTabs?.current.map((el, idx) => el?.current?.getBoundingClientRect()?.width || 0);
-
-      let acc = 0;
-      arr?.forEach((widthEl, idx) => {
-        const leftVal = acc;
-        const rightVal = acc + widthEl;
-
-        if (rightVal < scrollValue) {
-          leftItems.push(idx);
-        } else if (leftVal > scrollValue + width) {
-          rightItems.push(idx);
-        } else {
-          middleItems.push(idx);
-        }
-
-        acc += widthEl;
-      });
-
-      const leftCount = leftItems?.length || 0;
-      const rightCount = rightItems?.length || 0;
-      const pair = isMouseOnCounts();
-
-      if (countLeftRef?.current) {
-        if (leftCount >= 2) {
-          if (!pair[0]) {
-            countLeftRef.current.style.display = 'block';
-          }
-          countLeftTextRef.current.innerText = leftCount;
-        } else {
-          countLeftRef.current.style.display = 'none';
-          countLeftTextRef.current.innerText = null;
-        }
-      }
-
-      if (countRightRef?.current) {
-        if (rightCount >= 2) {
-          if (!pair[1]) {
-            countRightRef.current.style.display = 'block';
-          }
-          countRightTextRef.current.innerText = rightCount;
-        } else {
-          countRightRef.current.style.display = 'none';
-          countRightTextRef.current.innerText = null;
-        }
-      }
-    };
+    onScroll();
 
     if (typeof window !== 'undefined') {
       // @ts-ignore

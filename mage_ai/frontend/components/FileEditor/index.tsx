@@ -64,6 +64,7 @@ type FileEditorProps = {
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
   onFileFetched?: (file: FileType) => void;
+  onMountCallback?: (editor?: any) => void;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
   originalContent?: OriginalContentMappingType;
@@ -93,6 +94,7 @@ function FileEditor({
   hideHeaderButtons,
   onContentChange,
   onFileFetched,
+  onMountCallback,
   onUpdateFileSuccess,
   openSidekickView,
   originalContent,
@@ -289,6 +291,10 @@ function FileEditor({
                 setDisableShortcuts?.(false);
               };
             }
+
+            if (onMountCallback) {
+              onMountCallback?.(editor);
+            }
           }}
           onSave={(value: string) => {
             saveFile(value, file);
@@ -312,6 +318,7 @@ function FileEditor({
     file,
     fileExtension,
     heightTotal,
+    onMountCallback,
     originalValues,
     saveFile,
     setContent,

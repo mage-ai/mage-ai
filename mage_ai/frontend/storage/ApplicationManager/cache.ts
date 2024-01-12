@@ -28,8 +28,42 @@ export function buildDefaultLayout({
   const totalWidth = totalWidthProp
     || typeof window !== 'undefined' ? window?.innerWidth : 1500;
 
-  const height = (Math.min(totalHeight, 1200)) - (APPLICATION_PADDING * 2);
-  const width = (Math.min(totalWidth, 1500)) - (APPLICATION_PADDING * 2);
+  const height = Math.max(
+    Math.min(totalHeight, 1200),
+    784,
+  ) - (APPLICATION_PADDING * 2);
+  const width = Math.max(
+    Math.min(totalWidth, 1500),
+    980,
+  ) - (APPLICATION_PADDING * 2);
+
+  return {
+    dimension: {
+      height,
+      width,
+    },
+    position: {
+      x: (totalWidth - width) / 2,
+      y: (totalHeight - height) / 2,
+      z: 10,
+    },
+  };
+}
+
+export function buildMaximumLayout({
+  height: totalHeightProp,
+  width: totalWidthProp,
+} = {
+  height: null,
+  width: null,
+}): LayoutType {
+  const totalHeight = totalHeightProp
+    || typeof window !== 'undefined' ? window?.innerHeight : null;
+  const totalWidth = totalWidthProp
+    || typeof window !== 'undefined' ? window?.innerWidth : null;
+
+  const height = totalHeight - (APPLICATION_PADDING * 2);
+  const width = totalWidth - (APPLICATION_PADDING * 2);
 
   return {
     dimension: {
@@ -77,6 +111,8 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
   if (!layout && !layoutPrev) {
     return buildDefaultLayout();
   }
+
+  console.log(layout, layoutPrev)
 
   // @ts-ignore
   const position: PositionType = {

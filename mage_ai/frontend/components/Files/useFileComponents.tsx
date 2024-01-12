@@ -25,6 +25,7 @@ import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import useContextMenu from '@utils/useContextMenu';
+import useStatus from '@utils/models/status/useStatus';
 import {
   HeaderStyle,
   MAIN_CONTENT_TOP_OFFSET,
@@ -171,6 +172,10 @@ function useFileComponents({
   const [showHiddenFiles, setShowHiddenFiles] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, false),
   );
+  const { status } = useStatus({
+    refreshInterval: 0,
+    revalidateOnFocus: false,
+  });
 
   const fileTreeRef = useRef(null);
   const contentByFilePath = useRef(null);
