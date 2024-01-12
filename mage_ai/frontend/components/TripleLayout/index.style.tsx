@@ -4,8 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PlainScrollbarStyledCss } from '@oracle/styles/scrollbars';
-import { hideScrollBar } from '@oracle/styles/scrollbars';
+import { PlainScrollbarStyledCss, SCROLLBAR_WIDTH_SMALL, hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 64;
 export const AFTER_MIN_WIDTH = UNIT * 30;
@@ -238,9 +237,11 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 }>`
   ${ASIDE_INNER_STYLE}
   overflow: hidden;
+  margin-right: ${SCROLLBAR_WIDTH_SMALL}px;
 
   &:hover {
     overflow: auto;
+    margin-right: 0;
   }
 
   ${props => props.contained && `

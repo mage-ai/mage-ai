@@ -18,6 +18,7 @@ import {
   CUSTOM_EVENT_NAME_FOLDER_EXPAND,
 } from '@utils/events/constants';
 import {
+  FOLDER_LINE_CLASSNAME,
   ICON_SIZE,
   INDENT_WIDTH,
 } from '../index.style';
@@ -396,6 +397,7 @@ function Folder({
 
       arr.push(
         <div
+          className={FOLDER_LINE_CLASSNAME}
           key={`line-${uuid}-${idx}`}
           style={{
             borderLeft: `1px solid ${theme?.content?.disabled}`,
