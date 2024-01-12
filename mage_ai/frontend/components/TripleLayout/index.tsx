@@ -311,6 +311,7 @@ function TripleLayout({
       {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
+            contrast={afterDividerContrast}
             inline={inline}
             style={{
               width: hasAfterNavigationItems
@@ -399,6 +400,7 @@ function TripleLayout({
     </>
   ), [
     after,
+    afterDividerContrast,
     afterFooter,
     afterFooterBottomOffset,
     afterHeader,
@@ -453,6 +455,7 @@ function TripleLayout({
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
           contained={contained}
+          contrast={beforeDividerContrast}
           inline={inline}
           style={{
             overflow: beforeHidden
@@ -547,6 +550,7 @@ function TripleLayout({
   ), [
     before,
     beforeContentHeightOffsetUse,
+    beforeDividerContrast,
     beforeFooter,
     beforeFooterRef,
     beforeHeader,

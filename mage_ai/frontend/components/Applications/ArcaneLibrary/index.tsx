@@ -94,9 +94,7 @@ function ArcaneLibrary({
             }}
           >
             <Spacing py={1}>
-              <FlexContainer alignItems="center">
-                {menu}
-              </FlexContainer>
+              {menu}
             </Spacing>
 
             <Divider light />

@@ -7,6 +7,8 @@ import ApiReloader from '@components/ApiReloader';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Controller from '@components/FileEditor/Controller';
 import Dashboard from '@components/Dashboard';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import FileBrowser from '@components/FileBrowser';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
@@ -15,8 +17,11 @@ import FileType, {
   OriginalContentMappingType,
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import PipelineType from '@interfaces/PipelineType';
+import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
+import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
   HeaderStyle,
@@ -28,9 +33,17 @@ import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_C,
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
+  KEY_CODE_SHIFT,
+  KEY_SYMBOL_ARROW_LEFT,
+  KEY_SYMBOL_ARROW_RIGHT,
+  KEY_SYMBOL_C,
+  KEY_SYMBOL_CONTROL,
+  KEY_SYMBOL_META,
+  KEY_SYMBOL_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
@@ -214,6 +227,8 @@ function useFileComponents({
   }, [setOpenFilePaths]);
 
   const removeOpenFilePath = useCallback((filePath: string) => {
+    const idx = openFilePaths?.findIndex((fp: string) => fp === filePath);
+
     setContentByFilePath({ [filePath]: null });
     setFilesTouched(prev => ({
       ...prev,
@@ -224,7 +239,7 @@ function useFileComponents({
     setOpenFilePaths(arr);
 
     if (selectedFilePath === filePath && arr?.length >= 1) {
-      setSelectedFilePath(arr[arr.length - 1]);
+      setSelectedFilePath(arr[idx - 1]);
     }
 
     if (arr?.length === 0) {
@@ -298,6 +313,21 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
+  const selectItem = useCallback((offset: number) => {
+    const numberOfFilePaths = openFilePaths?.length || 0;
+    let idx = openFilePaths?.findIndex((filePath: string) => selectedFilePath === filePath);
+
+    idx += offset;
+
+    if (idx < 0) {
+      idx = numberOfFilePaths - 1;
+    } else if (idx > numberOfFilePaths - 1) {
+      idx = 0;
+    }
+
+    setSelectedFilePath(openFilePaths[idx]);
+  }, [openFilePaths, selectedFilePath, setSelectedFilePath]);
+
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -329,22 +359,11 @@ function useFileComponents({
       keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_CONTROL], [KEY_CODE_ARROW_LEFT], keyMapping, keyHistory)
       || keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_CONTROL], [KEY_CODE_ARROW_RIGHT], keyMapping, keyHistory)
     ) {
-      const numberOfFilePaths = openFilePaths?.length || 0;
-      let idx = openFilePaths?.findIndex((filePath: string) => selectedFilePath === filePath);
-
-      if (KEY_CODE_ARROW_LEFT === keyHistory[0]) {
-        idx -= 1;
-      } else if (KEY_CODE_ARROW_RIGHT === keyHistory[0]) {
-        idx += 1;
-      }
-
-      if (idx < 0) {
-        idx = numberOfFilePaths - 1;
-      } else if (idx > numberOfFilePaths - 1) {
-        idx = 0;
-      }
-
-      setSelectedFilePath(openFilePaths[idx]);
+      selectItem(KEY_CODE_ARROW_LEFT === keyHistory[0] ? -1 : 1);
+    } else if (selectedFilePath
+      && keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_SHIFT], [KEY_CODE_C], keyMapping, keyHistory)
+    ) {
+      removeOpenFilePath(selectedFilePath);
     }
 
     if (disableGlobalKeyboardShortcuts) {
@@ -353,9 +372,8 @@ function useFileComponents({
   },
   [
     filesTouched,
-    openFilePaths,
     selectedFilePath,
-    setSelectedFilePath,
+    selectItem,
   ]);
 
   const [updateFile, { isLoadingUpdate }] = useMutation(
@@ -587,9 +605,48 @@ function useFileComponents({
           },
         ],
       },
+      {
+        uuid: 'Keyboard shortcuts',
+        items: [
+          {
+            uuid: 'Next file',
+            beforeIcon: (
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_RIGHT]]}
+                monospace
+              />
+            ),
+            onClick: () => selectItem(1),
+          },
+          {
+            uuid: 'Previous file',
+            beforeIcon: (
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_LEFT]]}
+                monospace
+              />
+            ),
+            onClick: () => selectItem(-1),
+          },
+          {
+            uuid: 'Close current file',
+            beforeIcon: (
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_SHIFT, KEY_SYMBOL_C]]}
+                monospace
+              />
+            ),
+            onClick: () => removeOpenFilePath(selectedFilePath),
+          },
+        ],
+      },
     ];
   }, [
     contentByFilePath,
+    removeOpenFilePath,
     saveFile,
     selectedFilePath,
     setShowHiddenFiles,
@@ -597,9 +654,14 @@ function useFileComponents({
   ]);
 
   const menuMemo = useMemo(() => (
-    <FileEditorHeader
-      menuGroups={headerMenuGroups}
-    />
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <Flex flex={1}>
+        <FileEditorHeader
+          menuGroups={headerMenuGroups}
+        />
+      </Flex>
+      <Spacing mr={1} />
+    </FlexContainer>
   ), [
     headerMenuGroups,
   ]);

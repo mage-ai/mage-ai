@@ -165,6 +165,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
 export const AsideHeaderStyle = styled.div<{
   contained?: boolean;
+  contrast?: boolean;
   inline?: boolean;
   top?: number;
   visible: boolean;
@@ -175,7 +176,7 @@ export const AsideHeaderStyle = styled.div<{
 
   ${hideScrollBar()}
 
-  ${props => `
+  ${props => !props.contrast && `
     background-color: ${(props.theme.background || dark.background).panel};
     top: ${props?.top || 0}px;
   `}
@@ -183,7 +184,14 @@ export const AsideHeaderStyle = styled.div<{
   ${props => !props.visible && `
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
+  `}
+
+  ${props => !props.contrast && `
     border-bottom-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => props.contrast && `
+    border-bottom-color: ${(props.theme.borders || dark.borders).light} !important;
   `}
 
   ${props => props.contained && `
