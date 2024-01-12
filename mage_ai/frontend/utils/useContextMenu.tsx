@@ -46,6 +46,7 @@ function ContextMenu({
 
 export default function useContextMenu(uuid: string, container: Element = null): {
   contextMenu: React.ReactNode;
+  hideContextMenu: () => void;
   showContextMenu: (event: MouseEvent, data: DataType) => void;
 } {
   const [contextMapping, setContextMapping] = useState<ContextMapping>(null);
@@ -123,8 +124,12 @@ export default function useContextMenu(uuid: string, container: Element = null):
     }));
   }, [uuid]);
 
+  const hideContextMenu =
+    useCallback(() => setContextMapping(prev => ignoreKeys(prev, [uuid])), [uuid]);
+
   return {
     contextMenu,
+    hideContextMenu,
     showContextMenu,
   };
 }

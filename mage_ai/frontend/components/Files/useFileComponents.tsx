@@ -248,30 +248,49 @@ function useFileComponents({
     setOpenFilePaths(addOpenFilePathLocalStorage(filePath));
   }, [setOpenFilePaths]);
 
-  const removeOpenFilePath = useCallback((filePath: string) => {
-    const idx = openFilePaths?.findIndex((fp: string) => fp === filePath);
+  const removeOpenFilePaths = useCallback((filePaths: string[]) => {
+    const fps = filePaths?.filter(filePath => filesTouched?.[filePath]
+      && (typeof window === 'undefined'
+        || !window.confirm(`${filePath} has unsaved changes, are you sure you want to close this file?`)));
 
-    setContentByFilePath({ [filePath]: null });
+    const indexes = filePaths?.map((filePath) => openFilePaths?.findIndex((fp: string) => fp === filePath));
+    indexes.sort();
+    let idx = indexes?.find((index, i) => i >= 1 && index > indexes[i - 1] + 1);
+    if (idx === undefined || idx === null) {
+      idx = indexes?.[0];
+    }
+
+    setContentByFilePath(filePaths?.reduce((acc, fp) => ({
+      ...acc,
+      [fp]: null,
+    }), {}));
+
     setFilesTouched(prev => ({
       ...prev,
-      [filePath]: false,
+      ...filePaths?.reduce((acc, fp) => ({
+        ...acc,
+        [fp]: false,
+      }), {}),
     }));
 
-    const arr = removeOpenFilePathLocalStorage(filePath);
-    setOpenFilePaths(arr);
+
+    let arr = [];
+    filePaths?.forEach((filePath: string) => {
+      arr = removeOpenFilePathLocalStorage(filePath);
+      setOpenFilePaths(arr);
+    });
 
     if (selectedFileHistoryRef?.current) {
-      selectedFileHistoryRef.current = selectedFileHistoryRef.current.filter(fp => fp !== filePath);
+      selectedFileHistoryRef.current = selectedFileHistoryRef.current.filter(fp => !filePaths?.includes(fp));
     }
 
-    if (selectedFilePath === filePath && arr?.length >= 1) {
-      setSelectedFilePath(arr[idx - 1]);
-    }
-
-    if (arr?.length === 0) {
+    if (arr?.length >= 1) {
+      setSelectedFilePath(arr[Math.min(idx - 1, arr?.length - 1)]);
+    } else if (arr?.length === 0) {
       setSelectedFilePath(null);
     }
   }, [
+    filesTouched,
     selectedFilePath,
     setContentByFilePath,
     setOpenFilePaths,
@@ -399,7 +418,7 @@ function useFileComponents({
     } else if (selectedFilePath
       && keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_SHIFT], [KEY_CODE_C], keyMapping, keyHistory)
     ) {
-      removeOpenFilePath(selectedFilePath);
+      removeOpenFilePaths([selectedFilePath]);
     }
 
     if (disableGlobalKeyboardShortcuts) {
@@ -697,14 +716,14 @@ function useFileComponents({
                 monospace
               />
             ),
-            onClick: () => removeOpenFilePath(selectedFilePath),
+            onClick: () => removeOpenFilePaths([selectedFilePath]),
           },
         ],
       },
     ];
   }, [
     contentByFilePath,
-    removeOpenFilePath,
+    removeOpenFilePaths,
     saveFile,
     selectedFilePath,
     setShowHiddenFiles,
@@ -726,6 +745,7 @@ function useFileComponents({
 
   const {
     contextMenu: contextMenuFileTabs,
+    hideContextMenu: hideContextMenuFileTabs,
     showContextMenu: showContextMenuFileTabs,
   } = useContextMenu(`${uuid}/FileTabs`);
 
@@ -733,14 +753,15 @@ function useFileComponents({
     const menuItems = [
       {
         uuid: 'Close tab',
-        onClick: () => removeOpenFilePath(filePath),
+        onClick: () => removeOpenFilePaths([filePath]),
       },
       {
         uuid: 'Close all other tabs',
         onClick: () => openFilePaths?.forEach((fp) => {
           if (fp !== filePath && !filesTouched?.[fp]) {
-            removeOpenFilePath(fp);
+            removeOpenFilePaths([fp]);
           }
+          hideContextMenuFileTabs();
         }),
       },
       {
@@ -749,9 +770,10 @@ function useFileComponents({
           const idx = openFilePaths?.findIndex((fp: string) => fp === filePath);
           openFilePaths?.slice(idx + 1)?.forEach((fp) => {
             if (!filesTouched?.[fp]) {
-              removeOpenFilePath(fp);
+              removeOpenFilePaths([fp]);
             }
           });
+          hideContextMenuFileTabs();
         },
       },
       {
@@ -759,14 +781,18 @@ function useFileComponents({
         onClick: () => {
           openFilePaths?.forEach((fp: string) => {
             if (!filesTouched?.[fp]) {
-              removeOpenFilePath(fp);
+              removeOpenFilePaths([fp]);
             }
           });
+          hideContextMenuFileTabs();
         },
       },
       {
         uuid: 'Copy file path',
-        onClick: () => alert(`${filePath} is copied to your clipboard.`),
+        onClick: () => {
+          alert(`${filePath} is copied to your clipboard.`);
+          hideContextMenuFileTabs();
+        },
         render: (el) => (
           <CopyToClipboard
             text={filePath}
@@ -781,6 +807,10 @@ function useFileComponents({
       menuItems,
     });
   }, [
+    filesTouched,
+    hideContextMenuFileTabs,
+    openFilePaths,
+    removeOpenFilePaths,
     showContextMenuFileTabs,
   ]);
 
@@ -797,7 +827,7 @@ function useFileComponents({
         }
       }}
       onClickTabClose={(filePath: string) => {
-        removeOpenFilePath(filePath);
+        removeOpenFilePaths([filePath]);
         if (onClickTabClose) {
           onClickTabClose?.(filePath);
         }
@@ -824,7 +854,7 @@ function useFileComponents({
     onSelectFile,
     openFilePaths,
     openFilenameMapping,
-    removeOpenFilePath,
+    removeOpenFilePaths,
     selectedFilePath,
   ]);
 
