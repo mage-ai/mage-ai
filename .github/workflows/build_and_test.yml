@@ -70,8 +70,6 @@ jobs:
           python3 -m unittest discover -s mage_ai --failfast
         env:
           OPENAI_API_KEY: abcdefg
-          GOOGLE_CLIENT_ID: test
-          GOOGLE_CLIENT_SECRET: test secret
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
