@@ -58,8 +58,6 @@ export default function useAutoResizer({
     const heightFactor = dimensions.height / dimensionsPrev?.height;
 
     Object.entries(resizeElements || {})?.forEach(([uuid, element]) => {
-      console.log(dimensions, dimensionsPrev)
-
       if (element?.current) {
         const rect = element?.current?.getBoundingClientRect();
 
