@@ -22,6 +22,7 @@ export type FileTabProps = {
   };
   onClickTab?: (filePath: string) => void;
   onClickTabClose?: (filePath: string) => void;
+  onContextMenu?: (event: MouseEvent, filePath: string) => void;
   renderTabTitle?: (filePath: string) => string;
   savePipelineContent?: () => void;
 };
@@ -39,6 +40,7 @@ function FileTab({
   isLast,
   onClickTab,
   onClickTabClose,
+  onContextMenu,
   renderTabTitle,
   savePipelineContent,
   selected,
@@ -82,6 +84,7 @@ function FileTab({
       <FileTabStyle
         last={isLast}
         selected={selected}
+        onContextMenu={e => onContextMenu(e, filePath)}
       >
         <FlexContainer
           alignItems="center"

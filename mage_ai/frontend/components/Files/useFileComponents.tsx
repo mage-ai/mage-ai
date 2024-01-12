@@ -23,6 +23,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import useContextMenu from '@utils/useContextMenu';
 import {
   HeaderStyle,
   MAIN_CONTENT_TOP_OFFSET,
@@ -368,7 +369,6 @@ function useFileComponents({
   }, [unregisterOnKeyDown, uuid]);
 
   registerOnKeyDown(uuid, (event, keyMapping, keyHistory) => {
-    console.log(keyHistory, keyMapping)
     const filenamesTouched =
       Object.entries(filesTouched).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);
 
@@ -723,6 +723,42 @@ function useFileComponents({
     headerMenuGroups,
   ]);
 
+  const {
+    contextMenu: contextMenuFileTabs,
+    showContextMenu: showContextMenuFileTabs,
+  } = useContextMenu(`${uuid}/FileTabs`);
+
+  const onContextMenuFileTabs = useCallback((event: MouseEvent, filePath: string) => {
+    const menuItems = [
+      {
+        onClick: () => 1,
+        uuid: 'Close tab',
+      },
+      {
+        onClick: () => 1,
+        uuid: 'Close all other tabs',
+      },
+      {
+        onClick: () => 1,
+        uuid: 'Close all tabs to the right',
+      },
+      {
+        onClick: () => 1,
+        uuid: 'Close tabs with saved files',
+      },
+      {
+        onClick: () => 1,
+        uuid: 'Copy file path',
+      },
+    ];
+
+    showContextMenuFileTabs(event, {
+      menuItems,
+    });
+  }, [
+    showContextMenuFileTabs,
+  ]);
+
   const fileTabsMemo = useMemo(() => (
     <FileTabs
       filePaths={openFilePaths}
@@ -741,6 +777,7 @@ function useFileComponents({
           onClickTabClose?.(filePath);
         }
       }}
+      onContextMenu={onContextMenuFileTabs}
       renderTabTitle={(filePath: string) => {
         const filename = getFilenameFromFilePath(filePath);
         const arr = openFilenameMapping[filename];
@@ -751,10 +788,14 @@ function useFileComponents({
         return filename;
       }}
       selectedFilePath={selectedFilePath}
-    />
+    >
+      {contextMenuFileTabs}
+    </FileTabs>
   ), [
+    contextMenuFileTabs,
     filesTouched,
     onClickTabClose,
+    onContextMenuFileTabs,
     onSelectFile,
     openFilePaths,
     openFilenameMapping,

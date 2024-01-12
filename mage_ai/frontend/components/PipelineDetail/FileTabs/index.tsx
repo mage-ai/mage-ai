@@ -17,6 +17,7 @@ export type TabType = {
 };
 
 type FileTabsProps = {
+  children?: any;
   filePaths: string[];
   isSelectedFilePath?: (filePath: string, selectedFilePath: string) => boolean;
   selectedFilePath: string;
@@ -24,10 +25,12 @@ type FileTabsProps = {
 } & FileTabProps;
 
 function FileTabs({
+  children,
   filePaths,
   isSelectedFilePath,
   onClickTab,
   onClickTabClose,
+  onContextMenu,
   selectedFilePath,
   tabsBefore,
   ...props
@@ -93,11 +96,14 @@ function FileTabs({
                 });
               }
             }}
+            onContextMenu={onContextMenu}
             selected={selected}
             themeContext={themeContext}
           />
         );
       })}
+
+      {children}
     </FlexContainer>
   );
 }
