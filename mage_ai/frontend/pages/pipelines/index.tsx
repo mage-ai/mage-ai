@@ -1319,7 +1319,7 @@ function PipelineListPage() {
         const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
         const schedulesCount = schedules.length;
         const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
-        const isInvalid = type === PIPELINE_TYPE_INVALID;
+        const isInvalid = type as string === PIPELINE_TYPE_INVALID;
 
         const tagsEl = (
           <div key={`pipeline_tags_${idx}`}>

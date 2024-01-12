@@ -134,7 +134,7 @@ export default interface PipelineType {
   schedules?: PipelineScheduleType[];
   settings?: PipelineSettingsType;
   tags?: string[];
-  type?: PipelineTypeEnum | string;
+  type?: PipelineTypeEnum;
   updated_at?: string;
   uuid: string;
   variables?: { [keyof: string]: string };
