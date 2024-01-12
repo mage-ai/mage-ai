@@ -11,7 +11,7 @@ from mage_ai.shared.utils import clean_name
 
 class PageBlockLayoutResource(GenericResource):
     @classmethod
-    def get_model(self, pk):
+    def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
         return PageBlockLayout.load(uuid)
 
@@ -24,7 +24,7 @@ class PageBlockLayoutResource(GenericResource):
 
         return self(model, user, **kwargs)
 
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
         blocks = payload.get('blocks') or {}
         layout = payload.get('layout') or []
 
@@ -73,7 +73,7 @@ class PageBlockLayoutResource(GenericResource):
                 block.update(dict(name=block_name_new))
 
         for block_uuid, block in blocks_with_content.items():
-            block.update_content(
+            await block.update_content_async(
                 blocks.get(block_uuid, {}).get('content'),
                 error_if_file_missing=False,
             )

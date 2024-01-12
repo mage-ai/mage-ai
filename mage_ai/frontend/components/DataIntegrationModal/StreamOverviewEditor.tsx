@@ -14,7 +14,11 @@ import {
 } from '@utils/models/block';
 import { BackgroundStyle } from './index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { ReplicationMethodEnum, UniqueConflictMethodEnum } from '@interfaces/IntegrationSourceType';
+import {
+  REPLICATION_METHODS_BATCH_PIPELINE,
+  ReplicationMethodEnum,
+  UniqueConflictMethodEnum,
+} from '@interfaces/IntegrationSourceType';
 import { InputTypeEnum } from './constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
@@ -39,17 +43,8 @@ function StreamOverviewEditor({
         {
           label: () => 'Replication method',
           inputType: InputTypeEnum.SELECT,
-          options: Object.values(ReplicationMethodEnum).map(value => ({
-            disabled: ReplicationMethodEnum.FULL_TABLE !== value,
-            label: () => {
-              const text = capitalizeRemoveUnderscoreLower(value);
-
-              if (ReplicationMethodEnum.FULL_TABLE !== value) {
-                return `[COMING SOON] ${text}`;
-              }
-
-              return text;
-            },
+          options: REPLICATION_METHODS_BATCH_PIPELINE.map(value => ({
+            label: () => capitalizeRemoveUnderscoreLower(value),
             value: value,
           })),
           uuid: AttributeUUIDEnum.REPLICATION_METHOD,

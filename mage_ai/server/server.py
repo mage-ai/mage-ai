@@ -21,6 +21,9 @@ from tornado.options import options
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.dbt.cache import DBTCache
+from mage_ai.cache.file import FileCache
+from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
@@ -32,7 +35,6 @@ from mage_ai.data_preparation.repo_manager import (
     get_cluster_type,
     get_project_type,
     get_project_uuid,
-    get_variables_dir,
     init_project_uuid,
     init_repo,
 )
@@ -40,7 +42,7 @@ from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -80,7 +82,6 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
-from mage_ai.services.ssh.aws.emr.models import create_tunnel
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
@@ -96,8 +97,16 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
-from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
+from mage_ai.settings.repo import (
+    DEFAULT_MAGE_DATA_DIR,
+    MAGE_CLUSTER_TYPE_ENV_VAR,
+    MAGE_PROJECT_TYPE_ENV_VAR,
+    get_repo_name,
+    get_variables_dir,
+    set_repo_path,
+)
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -329,8 +338,10 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/files', MainPageHandler),
         (r'/global-data-products', MainPageHandler),
         (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
+        (r'/global-hooks', MainPageHandler),
+        (r'/global-hooks/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/templates', MainPageHandler),
-        (r'/templates/(?P<uuid>\w+)', MainPageHandler),
+        (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
 
@@ -509,8 +520,14 @@ async def main(
     if REQUIRE_USER_PERMISSIONS:
         logger.info('User permissions requirement is enabled.')
 
-    logger.info('Initializing block cache.')
-    await BlockCache.initialize_cache(replace=True)
+    try:
+        logger.info('Initializing block cache.')
+        logger.info('Initializing pipeline cache.')
+        await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
+    except Exception as err:
+        print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+        if is_debug():
+            raise err
 
     logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)
@@ -518,14 +535,39 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+    project_model = Project(root_project=True)
+    if project_model:
+        if project_model.spark_config and \
+                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-        Application.clear_cache()
+            Application.clear_cache()
+
+        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+            try:
+                logger.info('Initializing dbt cache.')
+                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
+                logger.info(f'dbt cached in {dbt_cache.file_path}')
+            except Exception as err:
+                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                if is_debug():
+                    raise err
+
+        if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+            try:
+                logger.info('Initializing file cache.')
+                file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                count = len(file_cache._temp_data) if file_cache._temp_data else 0
+                logger.info(
+                    f'{count} files cached in {file_cache.file_path}.',
+                )
+            except Exception as err:
+                print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
+                if is_debug():
+                    raise err
 
     try:
+        from mage_ai.services.ssh.aws.emr.models import create_tunnel
+
         tunnel = create_tunnel(clean_up_on_failure=True)
         if tunnel:
             print(f'SSH tunnel active: {tunnel.is_active()}')
@@ -585,13 +627,14 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    init_project_uuid(overwrite_uuid=project_uuid)
+    init_project_uuid(overwrite_uuid=project_uuid, root_project=True)
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
     if dbt_docs:
         run_docs_server()
     else:
+        set_db_schema()
         run_web_server = True
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
@@ -647,8 +690,8 @@ if __name__ == '__main__':
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
     instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
-    project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
-    cluster_type = os.getenv('CLUSTER_TYPE')
+    project_type = os.getenv(MAGE_PROJECT_TYPE_ENV_VAR, ProjectType.STANDALONE)
+    cluster_type = os.getenv(MAGE_CLUSTER_TYPE_ENV_VAR)
 
     start_server(
         host=host,

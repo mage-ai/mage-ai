@@ -1,3 +1,6 @@
+from mage_ai.data_integrations.utils.settings import get_uuid
+from mage_ai.shared.hash import index_by
+
 SQL_SOURCES = [
     dict(name='BigQuery'),
     dict(
@@ -11,6 +14,8 @@ SQL_SOURCES = [
     dict(name='Snowflake'),
 ]
 
+SQL_SOURCES_MAPPING = index_by(get_uuid, SQL_SOURCES)
+
 SOURCES = sorted([
     dict(name='Amazon S3'),
     dict(name='Amplitude'),
@@ -20,6 +25,7 @@ SOURCES = sorted([
     dict(name='Commercetools'),
     dict(name='Couchbase'),
     dict(name='Datadog'),
+    dict(name='Dremio'),
     dict(name='DynamoDB'),
     dict(name='Facebook Ads'),
     dict(name='Freshdesk'),

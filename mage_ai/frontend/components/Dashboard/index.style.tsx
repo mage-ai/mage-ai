@@ -27,6 +27,7 @@ export const ContainerStyle = styled.div`
 type VerticalNavigationStyleProps = {
   aligned?: 'left' | 'right';
   borderless?: boolean;
+  children?: any;
   showMore?: boolean;
 };
 
@@ -130,7 +131,7 @@ export const SubheaderStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).page};
-    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 
   ${props => !props.noPadding && `

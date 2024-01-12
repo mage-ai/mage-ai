@@ -151,8 +151,6 @@ function PipelineLayout({
     beforeWidth,
   ]);
 
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
-  const projects = dataProjects?.projects;
   const headerMemo = useMemo(() => {
     const breadcrumbs: BreadcrumbType[] = [
       {
@@ -189,14 +187,11 @@ function PipelineLayout({
     return (
       <Header
         breadcrumbs={breadcrumbs}
-        project={projects?.[0]}
-        version={projects?.[0]?.version}
       />
     );
   }, [
     page,
     pipeline,
-    projects,
   ]);
 
   return (

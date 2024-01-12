@@ -180,15 +180,13 @@
               "group": "Sources",
               "pages": [
                 "data-integrations/sources/overview",
-                "data-integrations/sources/add-new-source",
                 "data-integrations/sources/postgresql"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
-                "data-integrations/destinations/overview",
-                "data-integrations/destinations/add-new-destination"
+                "data-integrations/destinations/overview"
               ]
             },
             "data-integrations/batch-pipelines"
@@ -269,12 +267,14 @@
                 "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
-                "streaming/sources/nats"
+                "streaming/sources/nats",
+                "streaming/sources/rabbitmq"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
+                "streaming/destinations/activemq",
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/bigquery",
                 "streaming/destinations/clickhouse",
@@ -282,6 +282,7 @@
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
                 "streaming/destinations/google-cloud-pubsub",
+                "streaming/destinations/google-cloud-storage",
                 "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
@@ -290,6 +291,7 @@
                 "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
                 "streaming/destinations/postgres",
+                "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
                 "streaming/destinations/snowflake",
                 "streaming/destinations/trino"
@@ -346,6 +348,7 @@
               "pages": [
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
+                "integrations/databases/Chroma",
                 "integrations/databases/Druid",
                 "integrations/databases/DuckDB",
                 "integrations/databases/GoogleSheets",
@@ -354,6 +357,7 @@
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
+                "integrations/databases/Qdrant",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
@@ -511,7 +515,8 @@
             "guides/blocks/custom-blocks",
             "guides/blocks/markdown-blocks",
             "guides/blocks/r-blocks",
-            "guides/blocks/replicate-blocks"
+            "guides/blocks/replicate-blocks",
+            "guides/blocks/detach-blocks"
           ]
         },
         {
@@ -610,7 +615,8 @@
           "icon": "pipe-circle-check",
           "pages": [
             "api-reference/pipeline-schedules/overview",
-            "api-reference/pipeline-schedules/read-pipeline-schedules"
+            "api-reference/pipeline-schedules/read-pipeline-schedules",
+            "api-reference/pipeline-schedules/create-pipeline-schedule"
           ]
         },
         {

@@ -1,5 +1,6 @@
 import Router from 'next/router';
 
+import { MetaQueryEnum } from '@api/constants';
 import {
   queryFromUrl,
   queryString,
@@ -12,8 +13,6 @@ type GoToWithQueryProps = {
   replaceParams?: boolean;
 };
 
-export const LIMIT_PARAM = '_limit';
-export const OFFSET_PARAM = '_offset';
 const ITEMS_PER_PAGE = 20;
 
 export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
@@ -71,6 +70,15 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
   });
 }
 
+export type GoToWithFiltersProps = {
+  addingMultipleValues?: boolean;
+  isList?: boolean,
+  itemsPerPage?: number,
+  pushHistory?: boolean,
+  resetLimitParams?: boolean,
+  resetPage?: boolean,
+};
+
 export function goToWithFilters(
   query: any,
   additionalQuery: any,
@@ -79,16 +87,9 @@ export function goToWithFilters(
     isList,
     itemsPerPage,
     pushHistory = false,
-    resetLimitParams,
+    resetLimitParams = false,
     resetPage = false,
-  }: {
-    addingMultipleValues?: boolean;
-    isList?: boolean,
-    itemsPerPage?: number,
-    pushHistory?: boolean,
-    resetLimitParams?: boolean,
-    resetPage?: boolean,
-  },
+  }: GoToWithFiltersProps,
 ) {
   let updatedQuery = { ...query };
 
@@ -127,8 +128,8 @@ export function goToWithFilters(
   }
 
   if (resetLimitParams) {
-    updatedQuery[LIMIT_PARAM] = itemsPerPage || ITEMS_PER_PAGE;
-    updatedQuery[OFFSET_PARAM] = 0;
+    updatedQuery[MetaQueryEnum.LIMIT] = itemsPerPage || ITEMS_PER_PAGE;
+    updatedQuery[MetaQueryEnum.OFFSET] = 0;
   }
 
   goToWithQuery(updatedQuery, { pushHistory });

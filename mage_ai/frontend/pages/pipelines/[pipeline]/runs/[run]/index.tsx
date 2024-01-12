@@ -13,7 +13,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
   COMPLETED_STATUSES,
@@ -41,6 +41,8 @@ import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
+const ROW_LIMIT = 100;
+
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
   pipelineRun: PipelineRunType;
@@ -58,10 +60,10 @@ function PipelineBlockRuns({
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
-
-  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
-    refreshInterval: 5000,
-  });
+  const [pipelineRunStatus, setPipelineRunStatus] = useState(null);
+  const isPipelineRunIdle =
+    // @ts-ignore
+    useMemo(() => !!pipelineRunStatus && pipelineRunStatus !== RunStatus.RUNNING, [pipelineRunStatus]);
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -78,13 +80,13 @@ function PipelineBlockRuns({
     pipelineUUID,
   ]);
 
-  const { data: dataPipelineRun } = api.pipeline_runs.detail(
+  const { data: dataPipelineRun, mutate: fetchPipelineRun } = api.pipeline_runs.detail(
     pipelineRunProp.id,
     {
       _format: 'with_basic_details',
     },
     {
-      refreshInterval: 3000,
+      refreshInterval: !isPipelineRunIdle ? 3000 : null,
       revalidateOnFocus: true,
     },
   );
@@ -95,7 +97,7 @@ function PipelineBlockRuns({
   const {
     execution_date: pipelineRunExecutionDate,
     id: pipelineRunId,
-    status: pipelineRunStatus,
+    status: pipelineRunStatusProp,
   } = pipelineRun;
 
   const blockRunsRequestQuery: BlockRunReqQueryParamsType = {
@@ -110,20 +112,45 @@ function PipelineBlockRuns({
     const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
     blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
   }
+
+  useEffect(() => {
+    if (pipelineRunStatus !== pipelineRunStatusProp) {
+      setPipelineRunStatus(pipelineRunStatusProp);
+    }
+  }, [pipelineRunStatus, pipelineRunStatusProp]);
+
   const { data: dataBlockRuns, mutate: fetchBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
-    { refreshInterval: 5000 },
+    {
+      refreshInterval: !isPipelineRunIdle ? 5000 : null,
+    },
+    {
+      pauseFetch: typeof pipelineRunId === 'undefined' || pipelineRunId === null,
+    },
   );
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
+
+  const blockUuids = blockRuns.map(({ block_uuid }) => block_uuid);
+  const blockUuidArg = useMemo(() => blockUuids, [blockUuids]);
+
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {
+    _limit: ROW_LIMIT,
+    block_uuid: blockUuidArg,
+  }, {
+    refreshInterval: !isPipelineRunIdle ? 5000 : null,
+  });
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRunId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({
+            pipeline_run: pr,
+          }) => {
             setSelectedRun(null);
             fetchBlockRuns?.();
+            fetchPipelineRun();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -213,7 +240,7 @@ function PipelineBlockRuns({
   const buildSidekick = useCallback(props => buildTableSidekick({
     ...props,
     blockRuns,
-    blocksOverride: dataBlocks?.blocks,
+    blocksOverride: totalBlockRuns <= ROW_LIMIT && dataBlocks?.blocks,
     loadingData: loadingOutput,
     outputs: dataOutput?.outputs,
     selectedRun,
@@ -228,6 +255,7 @@ function PipelineBlockRuns({
     selectedRun,
     selectedTabSidekick,
     setSelectedTabSidekick,
+    totalBlockRuns,
   ]);
 
   return (
@@ -306,7 +334,7 @@ function PipelineBlockRuns({
         )
       }
       title={({ name }) => `${name} runs`}
-      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRunId}`}
+      uuid={`pipelines/detail/${PageNameEnum.RUNS}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>

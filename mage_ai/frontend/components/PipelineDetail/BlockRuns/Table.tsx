@@ -120,10 +120,14 @@ function BlockRunsTable({
   );
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [1, 2, 2, 1, 1, 1, null, null];
+  const columnFlex = [1, null, 2, 2, 1, 1, 1, null];
   const columns = [
     {
       uuid: 'Status',
+    },
+    {
+      center: true,
+      uuid: 'Logs',
     },
     {
       uuid: 'Block',
@@ -142,9 +146,6 @@ function BlockRunsTable({
     {
       ...timezoneTooltipProps,
       uuid: 'Completed at',
-    },
-    {
-      uuid: 'Logs',
     },
   ];
 
@@ -200,6 +201,17 @@ function BlockRunsTable({
           >
             {status}
           </Text>,
+          <Button
+            default
+            iconOnly
+            key={`${id}_logs`}
+            noBackground
+            onClick={() => Router.push(
+              `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
+            )}
+          >
+            <Logs default size={2 * UNIT} />
+          </Button>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
             href={'/pipelines/[pipeline]/edit'}
@@ -287,17 +299,6 @@ function BlockRunsTable({
               )
             }
           </Text>,
-          <Button
-            default
-            iconOnly
-            key={`${id}_logs`}
-            noBackground
-            onClick={() => Router.push(
-              `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
-            )}
-          >
-            <Logs default size={2 * UNIT} />
-          </Button>,
         ];
 
         if (isStandardPipeline) {

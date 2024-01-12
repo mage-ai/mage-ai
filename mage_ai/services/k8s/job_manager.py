@@ -36,7 +36,7 @@ class JobManager():
 
         self.pod_config = self.core_api_client.read_namespaced_pod(
             name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-            namespace=os.getenv(KUBE_POD_NAMESPACE_ENV_VAR),
+            namespace=os.getenv(KUBE_POD_NAMESPACE_ENV_VAR, self.namespace),
         )
         self.container_name = KUBE_CONTAINER_NAME
 
@@ -154,6 +154,7 @@ class JobManager():
         pod_spec.containers = [container]
         mage_server_pod_spec = self.pod_config.spec
         pod_spec.volumes.extend(mage_server_pod_spec.volumes)
+        pod_spec.tolerations = mage_server_pod_spec.tolerations
         pod_spec.node_selector = mage_server_pod_spec.node_selector
         pod_spec.image_pull_secrets = pod_spec.image_pull_secrets if pod_spec.image_pull_secrets \
             else mage_server_pod_spec.image_pull_secrets

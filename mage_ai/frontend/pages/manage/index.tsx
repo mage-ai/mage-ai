@@ -9,6 +9,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -245,6 +246,11 @@ function WorkspacePage() {
     [dataStatus],
   );
 
+  const { data } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  });
+  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     { cluster_type: clusterType },
     {
@@ -266,11 +272,13 @@ function WorkspacePage() {
         fetchWorkspaces();
         hideModal();
       }}
+      project={project}
     />
   ), {
   }, [
     clusterType,
     fetchWorkspaces,
+    project,
   ], {
     background: true,
     disableClickOutside: true,
@@ -315,7 +323,7 @@ function WorkspacePage() {
             uuid: 'Type',
           },
           {
-            uuid: 'Public IP address',
+            uuid: 'URL/IP',
           },
           {
             uuid: 'Open',
@@ -325,17 +333,22 @@ function WorkspacePage() {
             uuid: 'Actions',
           },
         ]}
-        rows={workspaces?.map(({ instance }: WorkspaceType) => {
+        rows={workspaces?.map(({ instance, url }: WorkspaceType) => {
           const {
             ip,
             name,
             status,
             type,
           } = instance;
-
-          let link = `http://${ip}`;
-          if (clusterType === 'ecs') {
-            link = `http://${ip}:6789`;
+          
+          const ipOrUrl = url || ip;
+          
+          let link = ipOrUrl;
+          if (ipOrUrl && !ipOrUrl.includes('http')) {
+            link = `http://${ipOrUrl}`;
+            if (clusterType === 'ecs') {
+              link = `http://${ipOrUrl}:6789`;
+            }
           }
 
           return [
@@ -364,10 +377,10 @@ function WorkspacePage() {
             <Text
               key="ip"
             >
-              {ip}
+              {ipOrUrl || 'N/A'}
             </Text>,
             <Button
-              disabled={!ip}
+              disabled={!ipOrUrl}
               iconOnly
               key="open_button"
               onClick={() => window.open(link)}

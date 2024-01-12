@@ -7,11 +7,6 @@ import Spacing from '@oracle/elements/Spacing';
 import StreamSettingsEditorTable from '../StreamSettingsEditorTable';
 import StreamTableSelector from '../StreamTableSelector';
 import Text from '@oracle/elements/Text';
-import { BackgroundStyle } from '../index.style';
-import { InputTypeEnum } from '../constants';
-import { StreamDetailProps } from '../StreamDetail/constants';
-import { COLUMN_TYPES } from '@interfaces/IntegrationSourceType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   AttributeUUIDEnum,
   AttributesMappingType,
@@ -19,9 +14,15 @@ import {
   getParentStreamID,
   getStreamID,
 } from '@utils/models/block';
+import { BackgroundStyle } from '../index.style';
+import { COLUMN_TYPES, ReplicationMethodEnum } from '@interfaces/IntegrationSourceType';
+import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/IntegrationSourceType';
+import { InputTypeEnum } from '../constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { StreamDetailProps } from '../StreamDetail/constants';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { ignoreKeys } from '@utils/hash';
-import { sortByKey } from '@utils/array';
+import { rangeSequential, sortByKey } from '@utils/array';
 
 type StreamSchemaPropertiesEditorProps = {
   attributesMapping: AttributesMappingType;
@@ -32,6 +33,7 @@ type StreamSchemaPropertiesEditorProps = {
 
 function StreamSchemaPropertiesEditor({
   attributesMapping,
+  block,
   highlightedColumnsMapping,
   selectedStreamMapping,
   setAttributesMapping,
@@ -41,6 +43,12 @@ function StreamSchemaPropertiesEditor({
   streamMapping,
   updateStreamsInCatalog,
 }: StreamSchemaPropertiesEditorProps & StreamDetailProps) {
+  const blockDestinationType = block?.metadata?.data_integration?.destination;
+  const supportsUniqueAndKeyProperties = useMemo(() =>
+    !DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT.includes(blockDestinationType),
+    [blockDestinationType],
+  );
+
   useEffect(() => {
     if (stream && !selectedStreamMapping) {
       const id = getStreamID(stream || {});
@@ -70,65 +78,92 @@ function StreamSchemaPropertiesEditor({
     stream,
   ]);
 
-  const tableMemo = useMemo(() => (
-    <StreamSettingsEditorTable
-      attributes={[
+  const usingIncrementalReplication = useMemo(() =>
+    stream?.replication_method === ReplicationMethodEnum.INCREMENTAL,
+    [stream?.replication_method],
+  );
+  const tableMemo = useMemo(() => {
+    const streamSettingAttributes = [
+      {
+        label: () => 'Include property when syncing',
+        inputType: InputTypeEnum.CHECKBOX,
+        uuid: AttributeUUIDEnum.PROPERTY_SELECTED,
+      },
+      {
+        label: () => 'Partition key',
+        inputType: InputTypeEnum.CHECKBOX,
+        uuid: AttributeUUIDEnum.PARTITION_KEYS,
+      },
+      ...COLUMN_TYPES.map((columnType: string) => ({
+        label: () => capitalizeRemoveUnderscoreLower(columnType),
+        inputType: InputTypeEnum.CHECKBOX,
+        uuid: columnType,
+      })),
+    ];
+
+    if (usingIncrementalReplication) {
+      streamSettingAttributes.splice(1, 0,
         {
-          label: () => 'Include property when syncing',
+          label: () => 'Bookmark property',
           inputType: InputTypeEnum.CHECKBOX,
-          uuid: AttributeUUIDEnum.PROPERTY_SELECTED,
+          uuid: AttributeUUIDEnum.BOOKMARK_PROPERTIES,
         },
+      );
+    }
+
+    if (supportsUniqueAndKeyProperties) {
+      streamSettingAttributes.splice(1, 0,
         {
           label: () => 'Unique constraint',
           inputType: InputTypeEnum.CHECKBOX,
           uuid: AttributeUUIDEnum.UNIQUE_CONSTRAINTS,
         },
         {
-          label: () => 'Bookmark property',
-          inputType: InputTypeEnum.CHECKBOX,
-          uuid: AttributeUUIDEnum.BOOKMARK_PROPERTIES,
-        },
-        {
           label: () => 'Key property',
           inputType: InputTypeEnum.CHECKBOX,
           uuid: AttributeUUIDEnum.KEY_PROPERTIES,
         },
-        {
-          label: () => 'Partition key',
-          inputType: InputTypeEnum.CHECKBOX,
-          uuid: AttributeUUIDEnum.PARTITION_KEYS,
-        },
-        ...COLUMN_TYPES.map((columnType: string) => ({
-          label: () => capitalizeRemoveUnderscoreLower(columnType),
-          inputType: InputTypeEnum.CHECKBOX,
-          uuid: columnType,
-        })),
-      ]}
-      attributesMapping={attributesMapping}
-      rowGroupHeaders={[
-        'Options',
-        'Column types',
-      ]}
-      rowsGroupedByIndex={[
-        [0, 1, 2, 3],
-        COLUMN_TYPES?.map((_, idx: number) => idx + 4),
-      ]}
-      setAttributesMapping={setAttributesMapping}
-    />
-  ), [
-    attributesMapping,
-    setAttributesMapping,
-  ]);
+      );
+    }
 
-  const streamsTableMemo = useMemo(() => {
+    let optionsRowGroupingIndexCount = 2;
+    if (usingIncrementalReplication) {
+      optionsRowGroupingIndexCount += 1;
+    }
+    if (supportsUniqueAndKeyProperties) {
+      optionsRowGroupingIndexCount += 2;
+    }
+    const optionsRowGroupingIndexes = rangeSequential(optionsRowGroupingIndexCount);
+
     return (
-      <StreamTableSelector
-        selectedStreamMapping={selectedStreamMapping}
-        setSelectedStreamMapping={setSelectedStreamMapping}
-        streamMapping={streamMapping}
+      <StreamSettingsEditorTable
+        attributes={streamSettingAttributes}
+        attributesMapping={attributesMapping}
+        rowGroupHeaders={[
+          'Options',
+          'Column types',
+        ]}
+        rowsGroupedByIndex={[
+          optionsRowGroupingIndexes,
+          COLUMN_TYPES?.map((_, idx: number) => idx + optionsRowGroupingIndexCount),
+        ]}
+        setAttributesMapping={setAttributesMapping}
       />
     );
   }, [
+    attributesMapping,
+    setAttributesMapping,
+    supportsUniqueAndKeyProperties,
+    usingIncrementalReplication,
+  ]);
+
+  const streamsTableMemo = useMemo(() => (
+    <StreamTableSelector
+      selectedStreamMapping={selectedStreamMapping}
+      setSelectedStreamMapping={setSelectedStreamMapping}
+      streamMapping={streamMapping}
+    />
+  ), [
     selectedStreamMapping,
     setSelectedStreamMapping,
     streamMapping,

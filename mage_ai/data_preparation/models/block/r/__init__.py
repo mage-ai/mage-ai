@@ -1,15 +1,16 @@
-from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.variable import (
-    DATAFRAME_CSV_FILE,
-    VariableType,
-)
-from typing import Dict, List
-import jinja2
 import os
 import subprocess
 import uuid
+from typing import Dict, List
+
+import jinja2
 import pandas as pd
+import simplejson
+
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.variable import DATAFRAME_CSV_FILE, VariableType
+from mage_ai.shared.parsers import encode_complex
 
 BLOCK_TYPE_TO_EXECUTION_TEMPLATE = {
     BlockType.DATA_LOADER: 'data_loader.jinja',
@@ -85,6 +86,13 @@ def __render_global_vars(global_vars: Dict = None):
     def format_value(val):
         if type(val) is int or type(val) is float:
             return val
+        elif type(val) is dict:
+            json_val = simplejson.dumps(
+                val,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            return f"'{json_val}'"
         else:
             return f"'{val}'"
 
@@ -98,8 +106,10 @@ def __render_r_script(
     code: str,
     execution_partition: str = None,
     global_vars: Dict = None,
-    input_variable_objects: List = [],
+    input_variable_objects: List = None,
 ):
+    if input_variable_objects is None:
+        input_variable_objects = []
     if block.type not in BLOCK_TYPE_TO_EXECUTION_TEMPLATE:
         raise Exception(
             f'Block execution for {block.type} with R language is not supported.',

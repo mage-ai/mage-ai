@@ -35,15 +35,16 @@ export type FlyoutMenuItemType = {
   items?: FlyoutMenuItemType[];
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
-  label: () => string | any;
+  label?: () => string | any;
   leftAligned?: boolean;
   linkProps?: {
     as?: string;
     href: string;
+    openNewWindow?: boolean;
   };
   openConfirmationDialogue?: boolean;
   isGroupingTitle?: boolean;
-  onClick?: () => void;
+  onClick?: (opts?: any) => void;
   tooltip?: () => string;
   uuid: string;
 };
@@ -55,7 +56,7 @@ export type FlyoutMenuProps = {
   items: FlyoutMenuItemType[];
   left?: number;
   multipleConfirmDialogues?: boolean;
-  onClickCallback?: () => void;
+  onClickCallback?: (e?: any) => void;
   open: boolean;
   parentRef: any;
   rightOffset?: number;
@@ -138,12 +139,16 @@ function FlyoutMenu({
         const item = items[currentIndex];
         if (item) {
           if (item?.onClick) {
-            item?.onClick?.();
+            item?.onClick?.(event);
           } else if (item?.linkProps) {
-            router.push(item?.linkProps?.href, item?.linkProps?.as);
+            if (item?.linkProps?.openNewWindow && typeof window !== 'undefined') {
+              window.open(item?.linkProps?.href, '_blank');
+            } else {
+              router.push(item?.linkProps?.href, item?.linkProps?.as);
+            }
           }
         }
-        onClickCallback?.();
+        onClickCallback?.(event);
       } else {
         items?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
@@ -229,12 +234,12 @@ function FlyoutMenu({
 
           const ElToUse = linkProps ? LinkAnchorStyle : LinkStyle;
 
-          const labelToRender = label();
+          const labelToRender = label ? label?.() : uuid;
 
           if (isGroupingTitle) {
             return (
               <TitleContainerStyle
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 roundedStyle={roundedStyle}
               >
                 {typeof labelToRender === 'string' && (
@@ -254,7 +259,7 @@ function FlyoutMenu({
               disabled={disabled}
               highlighted={highlightedIndices[0] === idx0}
               indent={indent}
-              key={uuid}
+              key={`${uuid}-${idx0}`}
               largePadding={roundedStyle}
               onClick={(e) => {
                 if (!linkProps) {
@@ -264,10 +269,10 @@ function FlyoutMenu({
                 if (openConfirmationDialogue && !disabled) {
                   setConfirmationDialogueOpen?.(multipleConfirmDialogues ? uuid : true);
                   setConfirmationAction?.(() => onClick);
-                  onClickCallback?.();
+                  onClickCallback?.(e);
                 } else if (onClick && !disabled) {
-                  onClick?.();
-                  onClickCallback?.();
+                  onClick?.(e);
+                  onClickCallback?.(e);
                 }
               }}
               onMouseEnter={() => {
@@ -290,6 +295,10 @@ function FlyoutMenu({
                 }));
               }}
               ref={refArg.current[uuid]}
+              target={linkProps && linkProps?.openNewWindow
+                ? '_blank'
+                : null
+              }
             >
               <FlexContainer
                 alignItems="center"
@@ -310,7 +319,7 @@ function FlyoutMenu({
                         disabled={disabled}
                         noWrapping
                       >
-                        <div role="menuitem">{labelToRender}</div>
+                        <span role="menuitem">{labelToRender}</span>
                       </Text>
                     )}
                   </Flex>
@@ -349,6 +358,7 @@ function FlyoutMenu({
                 block
                 center
                 description={tooltip()}
+                key={`${uuid}-${idx0}`}
                 size={null}
                 widthFitContent
               >
@@ -361,7 +371,7 @@ function FlyoutMenu({
             return (
               <NextLink
                 {...linkProps}
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 passHref
               >
                 {el}

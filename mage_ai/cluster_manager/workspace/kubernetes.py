@@ -80,12 +80,34 @@ class KubernetesWorkspace(Workspace):
         return cls(name)
 
     def delete(self, **kwargs):
-        self.workload_manager.delete_workload(self.name)
-
-        super().delete(**kwargs)
+        try:
+            self.workload_manager.delete_workload(
+                self.name, ingress_name=self.config.ingress_name
+            )
+        finally:
+            super().delete(**kwargs)
 
     def stop(self, **kwargs):
         self.workload_manager.scale_down_workload(self.name)
 
     def resume(self, **kwargs):
         self.workload_manager.restart_workload(self.name)
+
+    def to_dict(self):
+        config = dict(
+            name=self.name,
+            **self.config.to_dict(),
+        )
+
+        ingress_name = config.get('ingress_name')
+        try:
+            if ingress_name:
+                url = self.workload_manager.get_url_from_ingress(
+                    ingress_name,
+                    self.name,
+                )
+                config['url'] = url
+        except Exception:
+            pass
+
+        return config

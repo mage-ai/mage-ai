@@ -13,6 +13,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
@@ -41,7 +42,13 @@ class Git:
         self.origin = None
         self.remote_repo_link = None
         self.repo = None
+
         self.repo_path = os.getcwd()
+
+        if project_platform_activated():
+            git_dict = git_settings()
+            if git_dict and git_dict.get('path'):
+                self.repo_path = git_dict.get('path')
 
         if self.git_config:
             self.remote_repo_link = self.git_config.remote_repo_link
@@ -75,7 +82,7 @@ class Git:
         if self.repo and self.git_config:
             self.__set_git_config()
 
-        if self.remote_repo_link:
+        if self.remote_repo_link and self.repo:
             try:
                 self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
             except git.exc.GitCommandError:
@@ -93,11 +100,17 @@ class Git:
         user: User = None,
         setup_repo: bool = True,
         auth_type: str = None,
+        config_overwrite: Dict = None,
     ) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
-        if preferences and preferences.sync_config:
-            git_config = GitConfig.load(config=preferences.sync_config)
+        config = preferences.sync_config if preferences and preferences.sync_config else {}
+
+        if config_overwrite:
+            config.update(**config_overwrite)
+
+        git_config = GitConfig.load(config=config)
+
         return Git(
             auth_type=auth_type,
             git_config=git_config,
@@ -272,15 +285,18 @@ class Git:
             repo = self.repo
             repo_path = self.repo_path
 
-        parser = GitConfigParser(
-            os.path.join(repo_path, '.gitmodules'),
-            read_only=True,
-        )
+        gitmodules_path = os.path.join(repo_path, '.gitmodules')
+
+        def update_gitmodules(section: str, option: str, value: Any):
+            gitmodules_parser = GitConfigParser(gitmodules_path, read_only=False)
+            gitmodules_parser.set(section, option, value)
+            gitmodules_parser.release()
+
+        parser = GitConfigParser(gitmodules_path)
         sections = parser.sections()
         for section in sections:
             path = parser.get(section, 'path', fallback=None)
             submodule_url = parser.get(section, 'url', fallback=None)
-            parser.release()
             if path and submodule_url:
                 submodule_full_path = os.path.join(repo_path, path)
                 tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
@@ -303,8 +319,7 @@ class Git:
                         url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                         url = urlunsplit(url)
                         # Overwrite the submodule URL with git credentials.
-                        repo.config_writer().set_value(
-                            f'submodule.{path}', 'url', url).release()
+                        update_gitmodules(section, 'url', url)
 
                     subprocess.run(
                         [
@@ -327,11 +342,15 @@ class Git:
                 else:
                     print(f'{section} updated!')
                 finally:
+                    # Restore the submodule URL.
+                    update_gitmodules(section, 'url', submodule_url)
                     if os.path.exists(tmp_full_path):
                         shutil.rmtree(tmp_full_path)
                     repo_config_writer = repo.config_writer()
-                    repo_config_writer.remove_section(f'submodule.{path}')
+                    repo_config_writer.remove_section(section)
                     repo_config_writer.release()
+
+        parser.release()
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -442,6 +461,13 @@ class Git:
         self.repo.git.rebase(self.repo.branches[base_branch_name])
         if message:
             self.repo.index.commit(message)
+
+    def update_config(self, settings: Dict) -> None:
+        for key, value in settings.items():
+            self.repo.config_writer().set_value(
+                *key.split('.'),
+                value,
+            ).release()
 
     def remotes(self, limit: int = 40, user: User = None) -> List[Dict]:
         arr = []

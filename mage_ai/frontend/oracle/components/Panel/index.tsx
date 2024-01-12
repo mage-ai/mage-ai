@@ -25,6 +25,7 @@ const PanelStyle = styled.div<{
   maxHeight?: string;
   maxWidth?: number;
   minWidth?: number;
+  noBackground?: boolean;
   overflowVisible?: boolean;
   success?: boolean;
 }>`
@@ -39,7 +40,7 @@ const PanelStyle = styled.div<{
     border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
-  ${props => props.success && `
+  ${props => !props.noBackground && props.success && `
     background-color: ${(props.theme.background || dark.background).successLight};
   `}
 
@@ -47,11 +48,11 @@ const PanelStyle = styled.div<{
     border: 1px solid ${(props.theme.background || dark.background).success};
   `}
 
-  ${props => !props.dark && !props.success && `
+  ${props => !props.noBackground && !props.dark && !props.success && `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 
-  ${props => props.dark && `
+  ${props => !props.noBackground && props.dark && `
     background-color: ${(props.theme.background || dark.background).content};
   `}
 
@@ -154,9 +155,10 @@ export type PanelProps = {
   maxHeight?: string;
   maxWidth?: number;
   minWidth?: number;
+  noBackground?: boolean;
   noPadding?: boolean;
   overflowVisible?: boolean;
-  subtitle?: string;
+  subtitle?: JSX.Element | string;
   success?: boolean;
 };
 
@@ -177,6 +179,7 @@ function Panel({
   maxHeight,
   maxWidth,
   minWidth,
+  noBackground,
   noPadding,
   overflowVisible,
   subtitle,
@@ -191,6 +194,7 @@ function Panel({
       maxHeight={maxHeight}
       maxWidth={maxWidth}
       minWidth={minWidth}
+      noBackground={noBackground}
       overflowVisible={overflowVisible}
       ref={containerRef}
       success={success}
@@ -222,13 +226,14 @@ function Panel({
         overflowVisible={overflowVisible}
         ref={contentContainerRef}
       >
-        {subtitle &&
+        {subtitle && typeof subtitle === 'string' &&
           <Spacing mb={2}>
             <Text default>
               {subtitle}
             </Text>
           </Spacing>
         }
+        {subtitle && typeof subtitle !== 'string' && subtitle}
         {children}
       </ContentStyle>
 

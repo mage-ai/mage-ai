@@ -1,3 +1,12 @@
+import argparse
+import json
+import os
+from typing import Dict, List
+
+import yaml
+from singer.metadata import to_list, write
+from singer.utils import check_config, load_json
+
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
     INCLUSION_AUTOMATIC,
@@ -6,13 +15,6 @@ from mage_integrations.sources.constants import (
     METADATA_KEY_SELECTED,
 )
 from mage_integrations.utils.array import find
-from singer.metadata import to_list, write
-from singer.utils import check_config, load_json
-from typing import Dict, List
-import argparse
-import json
-import os
-import yaml
 
 
 def get_standard_metadata(
@@ -50,21 +52,24 @@ def update_catalog_dict(
     stream_id: str,
     key_properties: List[str],
     replication_method: str,
-    bookmark_properties: List[str] = [],
-    deselected_columns: List[str] = [],
+    bookmark_properties: List[str] = None,
+    deselected_columns: List[str] = None,
     select_all: bool = False,
     select_stream: bool = False,
     selected_columns: List[str] = None,
     unique_conflict_method: str = None,
-    unique_constraints: List[str] = [],
+    unique_constraints: List[str] = None,
 ) -> Dict:
     stream = find(lambda x: x['tap_stream_id'] == stream_id, catalog['streams'])
 
     stream['key_properties'] = key_properties
-    stream['bookmark_properties'] = bookmark_properties
+    stream['bookmark_properties'] = bookmark_properties or []
     stream['replication_method'] = replication_method
     stream['unique_conflict_method'] = unique_conflict_method
-    stream['unique_constraints'] = unique_constraints
+    stream['unique_constraints'] = unique_constraints or []
+
+    if deselected_columns is None:
+        deselected_columns = []
 
     for d in stream['metadata']:
         breadcrumb = d.get('breadcrumb')
@@ -177,6 +182,11 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--state_json',
+        help='Bookmark state from a JSON string',
+    )
+
+    parser.add_argument(
         '-p', '--properties',
         help='Property selections: DEPRECATED, Please use --catalog instead',
     )
@@ -233,7 +243,8 @@ def parse_args(required_config_keys):
 
     parser.add_argument(
         '--log_to_stdout',
-        help='Sources will log using Singer logger by default. Set his flag to True to log to sys.stdout.',
+        help='Sources will log using Singer logger by default. '
+             'Set his flag to True to log to sys.stdout.',
     )
 
     parser.add_argument(
@@ -251,17 +262,19 @@ def parse_args(required_config_keys):
     args, _ = parser.parse_known_args()
 
     if args.state:
-        setattr(args, 'state_path', args.state)
+        args.state_path = args.state
         args.state = load_json(args.state)
+    elif args.state_json:
+        args.state = json.loads(args.state_json)
     else:
         args.state = {}
 
     if args.properties:
-        setattr(args, 'properties_path', args.properties)
+        args.properties_path = args.properties
         args.properties = load_json(args.properties)
 
     if args.catalog:
-        setattr(args, 'catalog_path', args.catalog)
+        args.catalog_path = args.catalog
         args.catalog = Catalog.load(args.catalog)
 
     query = dict()
@@ -294,7 +307,7 @@ def parse_args(required_config_keys):
         args.catalog = Catalog.from_dict(json.loads(args.catalog_json))
 
     if args.config:
-        setattr(args, 'config_path', args.config)
+        args.config_path = args.config
         config.update(load_json(args.config))
     if args.config_json:
         config.update(json.loads(args.config_json))

@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import BookmarkValues from '../BookmarkValues';
 import Button from '@oracle/elements/Button';
 import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -30,6 +31,7 @@ import Headline from '@oracle/elements/Headline';
 import InteractionType from '@interfaces/InteractionType';
 import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
+import OverwriteVariables from '../OverwriteVariables';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, {
@@ -37,10 +39,10 @@ import PipelineScheduleType, {
   ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
+  VARIABLE_BOOKMARK_VALUES_KEY,
 } from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
-import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -66,7 +68,8 @@ import {
 } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { CardStyle } from './index.style';
-import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
+import { DATE_FORMAT_LONG_NO_SEC } from '@utils/date';
+import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -90,15 +93,15 @@ import {
   getTriggerApiEndpoint,
   getTriggerTypes,
 } from '../utils';
+import { blocksWithStreamsWithIncrementalReplicationMethod } from '@utils/models/pipeline';
 import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
-import { isNumeric, pluralize } from '@utils/string';
+import { isJsonString, isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
@@ -135,8 +138,19 @@ function Edit({
   const pipelineScheduleID = useMemo(() => pipelineSchedule?.id, [pipelineSchedule]);
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
 
+  const bookmarkValuesOriginal = useMemo(() => pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY], [
+    pipelineSchedule,
+  ]);
+  const [bookmarkValues, setBookmarkValues] = useState<{ BookmarkValuesMapping }>(
+    // @ts-ignore
+    bookmarkValuesOriginal
+      ? typeof bookmarkValuesOriginal === 'string' && isJsonString(bookmarkValuesOriginal)
+        ? JSON.stringify(bookmarkValuesOriginal)
+        : bookmarkValuesOriginal
+      : null,
+  );
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
-  const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
+  const [overwriteVariables, setOverwriteVariables] = useState<boolean>(true);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
   const [useHeaderUrl, setUseHeaderUrl] = useState<boolean>(false);
 
@@ -149,16 +163,16 @@ function Edit({
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
-  const {
-    data: dataClientPage,
-  } = api.client_pages.detail('pipeline_schedule:create', {
-    'pipeline_schedules[]': [pipelineScheduleID],
-    'pipelines[]': [pipelineUUID],
-  }, {}, {
-    key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
-    pauseFetch: !pipelineUUID || !pipelineScheduleID,
-  });
-  const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
+  // const {
+  //   data: dataClientPage,
+  // } = api.client_pages.detail('pipeline_schedule:create', {
+  //   'pipeline_schedules[]': [pipelineScheduleID],
+  //   'pipelines[]': [pipelineUUID],
+  // }, {}, {
+  //   key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
+  //   pauseFetch: !pipelineUUID || !pipelineScheduleID,
+  // });
+  // const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
 
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
@@ -304,14 +318,15 @@ function Edit({
 
   useEffect(
     () => {
-      if (startTime) {
-        const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
-          startTime,
-          { localTimezone: displayLocalTimezone },
-        );
-        setDate(startDatetimeObj?.date);
-        setTime(startDatetimeObj?.time);
+      const currentDatetimeString = moment.utc().format(DATE_FORMAT_LONG_NO_SEC);
+      const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
+        startTime || currentDatetimeString,
+        { localTimezone: displayLocalTimezone },
+      );
+      setDate(startDatetimeObj?.date);
+      setTime(startDatetimeObj?.time);
 
+      if (startTime) {
         const mt = moment(startTime).utc();
         setLandingTimeData({
           dayOfMonth: mt.date(),
@@ -320,20 +335,6 @@ function Edit({
           minute: mt.minutes(),
           second: mt.seconds(),
         });
-      } else {
-        const currentDatetime = new Date();
-        setDate(currentDatetime);
-        if (displayLocalTimezone) {
-          setTime({
-            hour: padTime(String(currentDatetime.getHours())),
-            minute: padTime(String(currentDatetime.getMinutes())),
-          });
-        } else {
-          setTime({
-            hour: padTime(String(currentDatetime.getUTCHours())),
-            minute: padTime(String(currentDatetime.getUTCMinutes())),
-          });
-        }
       }
     },
     [displayLocalTimezone, startTime],
@@ -460,7 +461,12 @@ function Edit({
       event_matchers: [],
       schedule_interval: null,
       start_time: null,
-      variables: parseVariables(runtimeVariables),
+      variables: parseVariables({
+        ...runtimeVariables,
+        ...(bookmarkValues ? {
+          [VARIABLE_BOOKMARK_VALUES_KEY]: bookmarkValues,
+        } : {}),
+      }),
     };
 
     if (showLandingTime) {
@@ -542,6 +548,7 @@ function Edit({
       },
     });
   }, [
+    bookmarkValues,
     cronExpressionInvalid,
     customInterval,
     date,
@@ -1515,10 +1522,16 @@ function Edit({
       pipeline,
     ]);
 
-  // TODO: allow users to set their own custom runtime variables.
+  const blocksWithStreamsMapping = useMemo(() => pipeline?.blocks
+    ? blocksWithStreamsWithIncrementalReplicationMethod(pipeline)
+    : null,
+  [
+    pipeline,
+  ]);
+
   const afterMemo = useMemo(() => (
-    <Spacing p={PADDING_UNITS}>
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+    <Spacing py={PADDING_UNITS}>
+      <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
         <Headline>
           Run settings
         </Headline>
@@ -1652,93 +1665,61 @@ function Edit({
         )}
       </Spacing>
 
-      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-        <Headline>
-          Runtime variables
-        </Headline>
-        {isEmptyObject(formattedVariables) && (
-          <Spacing mt={1}>
-            <Text default>
-              This pipeline has no runtime variables.
-            </Text>
-            <NextLink
-              as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
-              href={'/pipelines/[pipeline]/edit'}
-              passHref
-            >
-              <Link primary>
-                Click here
-              </Link>
-            </NextLink> <Text default inline>
-              to add variables to this pipeline.
-            </Text>
-          </Spacing>
-        )}
+      <Spacing mb={UNITS_BETWEEN_SECTIONS} >
+        <Spacing px={PADDING_UNITS}>
+          <Headline>
+            Runtime variables
+          </Headline>
 
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
-            <Spacing mr={2}>
-              <ToggleSwitch
-                checked={overwriteVariables}
-                disabled={isEmptyObject(formattedVariables)}
-                onCheck={setOverwriteVariables}
-              />
-            </Spacing>
-            <Text monospace muted>
-              Overwrite global variables
-            </Text>
-          </FlexContainer>
-
-          {overwriteVariables
-            && runtimeVariables
-            && Object.entries(runtimeVariables).length > 0
-            && (
+          {isEmptyObject(formattedVariables) && (
             <Spacing mt={1}>
-              <Table
-                columnFlex={[null, 1]}
-                columns={[
-                  {
-                    uuid: 'Variable',
-                  },
-                  {
-                    uuid: 'Value',
-                  },
-                ]}
-                rows={Object.entries(runtimeVariables).reduce((acc, [uuid, value]) => {
-                  if (MAGE_VARIABLES_KEY === uuid) {
-                    return acc;
-                  }
-
-                  return acc.concat([[
-                    <Text
-                      default
-                      key={`variable_${uuid}`}
-                      monospace
-                    >
-                      {uuid}
-                    </Text>,
-                    <TextInput
-                      borderless
-                      key={`variable_uuid_input_${uuid}`}
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setRuntimeVariables(vars => ({
-                          ...vars,
-                          [uuid]: e.target.value,
-                        }));
-                      }}
-                      paddingHorizontal={0}
-                      placeholder="Variable value"
-                      value={value}
-                    />,
-                  ]]);
-                }, [])}
-              />
+              <Text default>
+                This pipeline has no runtime variables.
+              </Text>
+              <NextLink
+                as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
+                href={'/pipelines/[pipeline]/edit'}
+                passHref
+              >
+                <Link primary>
+                  Click here
+                </Link>
+              </NextLink> <Text default inline>
+                to add variables to this pipeline.
+              </Text>
             </Spacing>
           )}
         </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <OverwriteVariables
+            enableVariablesOverwrite
+            // @ts-ignore
+            originalVariables={pipelineSchedule?.variables}
+            runtimeVariables={runtimeVariables}
+            setRuntimeVariables={setRuntimeVariables}
+          />
+        </Spacing>
       </Spacing>
+
+      {blocksWithStreamsMapping && Object.keys(blocksWithStreamsMapping || {})?.length >= 1 && (
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <Spacing px={PADDING_UNITS}>
+            <Headline>
+              Override bookmark values
+            </Headline>
+          </Spacing>
+
+          <BookmarkValues
+            bookmarkValues={bookmarkValues}
+            // @ts-ignore
+            originalBookmarkValues={pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY]}
+            pipeline={pipeline}
+            // @ts-ignore
+            setBookmarkValues={setBookmarkValues}
+          />
+        </Spacing>
+      )}
 
       {dbtBlocks?.length >= 1 && (
         <Spacing mb={UNITS_BETWEEN_SECTIONS}>
@@ -1755,18 +1736,21 @@ function Edit({
       )}
     </Spacing>
   ), [
+    blocksWithStreamsMapping,
+    bookmarkValues,
     dbtBlocks,
     enableSLA,
     formattedVariables,
     isStreamingPipeline,
-    overwriteVariables,
+    pipeline,
+    pipelineSchedule?.variables,
     pipelineUUID,
     runtimeVariables,
     schedule,
     scheduleType,
     scheduleVariables,
+    setBookmarkValues,
     setEnableSLA,
-    setOverwriteVariables,
     setRuntimeVariables,
     settings,
   ]);
@@ -1802,7 +1786,7 @@ function Edit({
             Object.entries(interaction?.variables || {}).forEach(([
               variableUUID,
               {
-                types
+                types,
               },
             ]) => {
               if (variablesToUse && variableUUID in variablesToUse) {
@@ -2203,7 +2187,7 @@ function Edit({
                             </Flex>
                           </FlexContainer>
                         </CardStyle>
-                      </Button>
+                      </Button>,
                     );
                   }, [])}
                 </FlexContainer>

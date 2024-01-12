@@ -4,10 +4,12 @@ import sys
 import unittest
 from pathlib import Path
 
-from mage_ai.data_preparation.repo_manager import get_variables_dir, init_project_uuid
+from faker import Faker
+
+from mage_ai.data_preparation.repo_manager import init_project_uuid
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.settings.repo import set_repo_path
+from mage_ai.settings.repo import get_variables_dir, set_repo_path
 from mage_ai.shared.logger import LoggingLevel
 
 if sys.version_info.major <= 3 and sys.version_info.minor <= 7:
@@ -16,7 +18,7 @@ if sys.version_info.major <= 3 and sys.version_info.minor <= 7:
 else:
     class AsyncDBTestCase(unittest.IsolatedAsyncioTestCase):
         def setUp(self):
-            pass
+            self.faker = Faker()
 
         def tearDown(self):
             pass
@@ -24,7 +26,18 @@ else:
         @classmethod
         def setUpClass(self):
             super().setUpClass()
-            self.repo_path = os.path.join(os.getcwd(), 'test')
+
+            repo_path = None
+            for fp in [
+                os.path.dirname(os.getcwd()),
+                os.getcwd(),
+                'test'
+            ]:
+                repo_path = os.path.join(repo_path or '', fp)
+                if not os.path.exists(repo_path):
+                    os.makedirs(repo_path, exist_ok=True)
+
+            self.repo_path = repo_path
             set_repo_path(self.repo_path)
             if not Path(self.repo_path).exists():
                 Path(self.repo_path).mkdir()
@@ -46,7 +59,7 @@ else:
 
 class DBTestCase(unittest.TestCase):
     def setUp(self):
-        pass
+        self.faker = Faker()
 
     def tearDown(self):
         pass
@@ -87,7 +100,15 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.path.join(os.getcwd(), 'test')
+        repo_path = os.path.join(os.getcwd())
+        if not os.path.exists(repo_path):
+            os.makedirs(repo_path, exist_ok=True)
+
+        repo_path = os.path.join(repo_path, 'test')
+        if not os.path.exists(repo_path):
+            os.makedirs(repo_path, exist_ok=True)
+
+        self.repo_path = repo_path
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()

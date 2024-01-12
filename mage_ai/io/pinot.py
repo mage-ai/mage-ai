@@ -74,6 +74,9 @@ class Pinot(BaseSQL):
     def execute(self, query_string: str, **query_vars) -> None:
         super().execute(query_string, **query_vars)
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        self.execute(query)
+
     def execute_queries(self,
                         queries: List[str],
                         query_variables: List[Dict] = None,

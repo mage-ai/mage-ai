@@ -40,9 +40,11 @@ const ICON_SIZE = 3 * UNIT;
 const DEFAULT_NAV_ITEMS = ({
   featureEnabled,
   project,
+  projectPlatformActivated,
 }: {
   featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
   project?: ProjectType;
+  projectPlatformActivated?: boolean;
 }) => {
   let miscItems = [
     {
@@ -107,6 +109,17 @@ const DEFAULT_NAV_ITEMS = ({
         href: '/global-hooks',
       },
     }, 4, miscItems);
+
+    if (projectPlatformActivated) {
+      miscItems = pushAtIndex({
+        Icon: Insights,
+        id: 'platform/global-hooks',
+        label: () => 'Global hooks (platform)',
+        linkProps: {
+          href: '/platform/global-hooks',
+        },
+      }, 5, miscItems);
+    }
   }
 
   return [
@@ -160,7 +173,7 @@ const DEFAULT_NAV_ITEMS = ({
       items: miscItems,
     },
   ];
-}
+};
 
 export type NavigationItem = {
   Icon?: any;
@@ -194,12 +207,14 @@ function VerticalNavigation({
   const { pathname } = router;
 
   const {
-    project,
     featureEnabled,
+    project,
+    projectPlatformActivated,
   } = useProject();
   const defaultNavItems = useMemo(() => DEFAULT_NAV_ITEMS({
-    project,
     featureEnabled,
+    project,
+    projectPlatformActivated,
   }), [
     project,
   ]);

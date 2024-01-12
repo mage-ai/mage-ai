@@ -20,32 +20,36 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
   const onKeyUpRegistry = useMemo(() => ({}), []);
 
   const registerOnKeyDown = useCallback((uuid, onKeyDown, dependencies = []) => {
-    onKeyDownDependencies[uuid] = dependencies;
-    onKeyDownRegistry[uuid] = onKeyDown;
+    if (!!uuid) {
+      onKeyDownDependencies[uuid] = dependencies;
+      onKeyDownRegistry[uuid] = onKeyDown;
+    }
   }, [
     onKeyDownDependencies,
     onKeyDownRegistry,
   ]);
 
   const registerOnKeyUp = useCallback((uuid, onKeyUp, dependencies = []) => {
-    onKeyUpDependencies[uuid] = dependencies;
-    onKeyUpRegistry[uuid] = onKeyUp;
+    if (!!uuid) {
+      onKeyUpDependencies[uuid] = dependencies;
+      onKeyUpRegistry[uuid] = onKeyUp;
+    }
   }, [
     onKeyUpDependencies,
     onKeyUpRegistry,
   ]);
 
   const unregisterOnKeyDown = useCallback((uuid) => {
-    delete onKeyDownDependencies[uuid];
-    delete onKeyDownRegistry[uuid];
+    delete onKeyDownDependencies?.[uuid];
+    delete onKeyDownRegistry?.[uuid];
   }, [
     onKeyDownDependencies,
     onKeyDownRegistry,
   ]);
 
   const unregisterOnKeyUp = useCallback((uuid) => {
-    delete onKeyUpDependencies[uuid];
-    delete onKeyUpRegistry[uuid];
+    delete onKeyUpDependencies?.[uuid];
+    delete onKeyUpRegistry?.[uuid];
   }, [
     onKeyUpDependencies,
     onKeyUpRegistry,

@@ -1,0 +1,22 @@
+pages:
+  pipelines:
+    edit:
+      buttons:
+        block:
+          add:
+            items:
+              - dbt
+            items_more:
+              - templates/list
+              - data_exporter
+              - data_loader
+              - custom
+              - templates/new
+              - global_data_product
+              - markdown
+              - sensor
+              - transformer
+components:
+  header:
+    media:
+      url: https://i.pinimg.com/736x/73/41/9d/73419db4770f33c24815b95d424831b5.jpg

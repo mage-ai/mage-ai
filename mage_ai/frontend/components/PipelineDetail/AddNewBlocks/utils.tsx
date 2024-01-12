@@ -43,6 +43,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.MONGODB
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.ACTIVEMQ,
         DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.BIGQUERY,
         DataSourceTypeEnum.CLICKHOUSE,
@@ -50,6 +51,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.DUMMY,
         DataSourceTypeEnum.ELASTICSEARCH,
         DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
+        DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
         DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
@@ -59,6 +61,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.MYSQL,
         DataSourceTypeEnum.OPENSEARCH,
         DataSourceTypeEnum.POSTGRES,
+        DataSourceTypeEnum.RABBITMQ,
         DataSourceTypeEnum.REDSHIFT,
         DataSourceTypeEnum.SNOWFLAKE,
         DataSourceTypeEnum.TRINO,

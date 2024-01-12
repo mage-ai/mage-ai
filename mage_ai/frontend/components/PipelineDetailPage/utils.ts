@@ -8,7 +8,7 @@ import {
   NavDashboard,
   PipeIcon,
   Schedule,
-  Settings,
+  SettingsWithKnobs,
 } from '@oracle/icons';
 import { PageNameEnum } from './constants';
 import { isViewer } from '@utils/session';
@@ -43,16 +43,6 @@ export function buildNavigationItems(
       },
     },
     {
-      Icon: BackfillV2,
-      id: PageNameEnum.BACKFILLS,
-      isSelected: () => PageNameEnum.BACKFILLS === pageName,
-      label: () => 'Backfills',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/backfills`,
-        href: '/pipelines/[pipeline]/backfills',
-      },
-    },
-    {
       Icon: Logs,
       id: PageNameEnum.PIPELINE_LOGS,
       isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
@@ -73,6 +63,19 @@ export function buildNavigationItems(
       },
     },
   ];
+
+  if (PipelineTypeEnum.PYTHON === pipeline?.type) {
+    navigationItems.splice(2, 0, {
+      Icon: BackfillV2,
+      id: PageNameEnum.BACKFILLS,
+      isSelected: () => PageNameEnum.BACKFILLS === pageName,
+      label: () => 'Backfills',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/backfills`,
+        href: '/pipelines/[pipeline]/backfills',
+      },
+    });
+  }
 
   if (PipelineTypeEnum.INTEGRATION === pipeline?.type) {
     navigationItems.unshift({
@@ -104,7 +107,7 @@ export function buildNavigationItems(
 
     // @ts-ignore
     navigationItems.push({
-      Icon: Settings,
+      Icon: SettingsWithKnobs,
       id: PageNameEnum.SETTINGS,
       isSelected: () => PageNameEnum.SETTINGS === pageName,
       label: () => 'Pipeline settings',

@@ -3,17 +3,19 @@ import BlockType, { OutputType } from '@interfaces/BlockType';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
-import { isJsonString } from '@utils/string';
+import { alphabet, isJsonString } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export const TAB_TREE = { uuid: 'Dependency tree' };
@@ -69,6 +71,8 @@ export default function({
   const arr = [];
   const tabsMoreInner = [];
 
+  const alpha = alphabet();
+
   if (!loadingData) {
     const outputsByType = {};
 
@@ -79,7 +83,7 @@ export default function({
         outputsByType[dataType] = {
           outputs: [],
           priority: Object.keys(outputsByType).length,
-        }
+        };
       }
 
       outputsByType[dataType].outputs.push(output);
@@ -88,7 +92,7 @@ export default function({
     sortByKey(
       Object.entries(outputsByType),
       ([_, d]) => d.priority,
-    )?.forEach(([dataTypeInit, d]) => {
+    )?.forEach(([dataTypeInit, d], idx1: number) => {
       const {
         outputs: outputsInGroup,
       } = d;
@@ -101,7 +105,7 @@ export default function({
         type: dataType,
       }, idx: number) => {
         const emptyOutputMessageEl = (
-          <Spacing key={`output-empty-${idx}`} ml={2}>
+          <Spacing key={`output-empty-${idx1}-${idx}`} ml={2}>
             <Text>
               This block run has no output.
             </Text>
@@ -119,7 +123,7 @@ export default function({
               columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
               columns={columns}
               height={height - heightOffset - 90}
-              key={`output-table-${idx}`}
+              key={`output-table-${idx1}-${idx}`}
               noBorderBottom
               noBorderLeft
               noBorderRight
@@ -136,7 +140,7 @@ export default function({
 
           const blockOutputText = !!textData
             ? (
-              <Spacing key={`output-text-${idx}`} ml={2}>
+              <Spacing key={`output-text-${idx1}-${idx}`} ml={2}>
                 <Text monospace>
                   <pre>
                     {parsedText}
@@ -149,20 +153,22 @@ export default function({
           el = blockOutputText;
         }
 
+        const letter = alpha[idx1];
+
         // If output is text, group them into 1 tab
         if (DataTypeEnum.TEXT === dataTypeInit) {
           arrGroup.push(el);
 
           if (idx === 0) {
             tabsMoreInner.push({
-              uuid: `Block output ${idx + 1}`,
+              uuid: `Block output ${idx + 1}${letter}`,
             });
           }
         } else {
           arr.push(el);
 
           tabsMoreInner.push({
-            uuid: `Block output ${idx + 1}`,
+            uuid: `Block output ${idx + 1}${letter}`,
           });
         }
       });
@@ -194,33 +200,39 @@ export default function({
       <div
         style={{
           position: 'fixed',
-          top: '50px',
+          top: HEADER_HEIGHT,
         }}
       >
         {showTabs && (
-          <Spacing py={PADDING_UNITS}>
-            <ButtonTabs
-              onClickTab={setSelectedTab}
-              selectedTabUUID={selectedTab?.uuid}
-              tabs={selectedRun ? tabsUse : [TAB_TREE]}
-            />
-          </Spacing>
+          <>
+            <Spacing py={0}>
+              <ButtonTabs
+                onClickTab={setSelectedTab}
+                regularSizeText
+                selectedTabUUID={selectedTab?.uuid}
+                tabs={selectedRun ? tabsUse : [TAB_TREE]}
+                underlineStyle
+              />
+            </Spacing>
+          </>
         )}
       </div>
 
       <div
         style={{
           position: 'relative',
-          top: '75px',
+          top: TABS_HEIGHT_OFFSET,
         }}
       >
+        {showTabs && <Divider light />}
+
         {(!selectedRun || TAB_TREE.uuid === selectedTab?.uuid) && (
           <DependencyGraph
             {...updatedProps}
             blocksOverride={blocksOverride}
             enablePorts={false}
             height={height}
-            heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
+            heightOffset={(heightOffset || 0) + (showTabs ? (TABS_HEIGHT_OFFSET + 1) : 0)}
             pipeline={pipeline}
           />
         )}
@@ -234,7 +246,11 @@ export default function({
                 </FlexContainer>
               </Spacing>
             )}
-            {!loadingData && blockOutputToShow}
+            {!loadingData && (
+              <Spacing py={PADDING_UNITS}>
+                {blockOutputToShow}
+              </Spacing>
+            )}
           </>
         )}
       </div>

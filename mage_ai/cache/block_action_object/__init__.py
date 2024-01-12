@@ -35,7 +35,12 @@ from mage_ai.data_preparation.templates.constants import (
 from mage_ai.data_preparation.templates.data_integrations.utils import (
     get_templates as get_templates_for_data_integrations,
 )
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
+)
+from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
 
 
@@ -44,7 +49,8 @@ def parse_block_file_absolute_path(block_file_absolute_path: str) -> Dict:
     file_directory_name = Block.file_directory_name(block_type)
 
     # This is the block_file_absolute_path without the repo_path
-    file_path = str(block_file_absolute_path).replace(get_repo_path(), '')
+    file_path = str(block_file_absolute_path)
+    file_path = remove_base_repo_path(str(block_file_absolute_path))
     if file_path.startswith(os.sep):
         file_path = file_path[1:]
 
@@ -151,7 +157,11 @@ class BlockActionObjectCache(BaseCache):
         if block:
             block_type = block.type
             file_path = os.path.join(block.file.dir_path, block.file.filename)
-            filename = os.path.join(*file_path.split(os.path.sep)[1:])
+            parts = file_path.split(os.path.sep)[1:]
+            if len(parts) == 0:
+                return
+
+            filename = os.path.join(*parts)
             language = block.language
             uuid = block.uuid
         else:
@@ -248,45 +258,51 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
-        for block_type in BlockType:
-            file_directory_name = Block.file_directory_name(block_type)
-            directory_full_path = os.path.join(get_repo_path(), file_directory_name)
+        paths_to_traverse = [dict(full_path=base_repo_path())]
+        if project_platform_activated():
+            paths_to_traverse = build_repo_path_for_all_projects(mage_projects_only=True).values()
+        for path_dict in paths_to_traverse:
+            repo_path = path_dict['full_path']
 
-            for path in Path(directory_full_path).rglob('*'):
-                if not path.is_file():
-                    continue
+            for block_type in BlockType:
+                file_directory_name = Block.file_directory_name(block_type)
+                directory_full_path = os.path.join(repo_path, file_directory_name)
 
-                block_file_absolute_path = path.absolute()
-                d = parse_block_file_absolute_path(block_file_absolute_path)
+                for path in Path(directory_full_path).rglob('*'):
+                    if not path.is_file():
+                        continue
 
-                file_path = d.get('file_path')
-                filename = d.get('filename')
-                filename_parts = d.get('filename_parts')
-                language = d.get('language')
+                    block_file_absolute_path = path.absolute()
+                    d = parse_block_file_absolute_path(block_file_absolute_path)
 
-                if '__init__.py' == filename:
-                    continue
+                    file_path = d.get('file_path')
+                    filename = d.get('filename')
+                    filename_parts = d.get('filename_parts')
+                    language = d.get('language')
 
-                if not language:
-                    continue
+                    if '__init__.py' == filename:
+                        continue
 
-                key = self.build_key_for_block_file(
-                    file_path,
-                    block_type,
-                    language,
-                    filename,
-                )
+                    if not language:
+                        continue
 
-                content = None
-                with open(block_file_absolute_path, 'r') as f:
-                    content = f.read()
+                    key = self.build_key_for_block_file(
+                        file_path,
+                        block_type,
+                        language,
+                        filename,
+                    )
 
-                mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
-                    content=content,
-                    file_path=file_path,
-                    language=language,
-                    type=block_type,
-                    uuid='.'.join(filename_parts[:-1]),
-                )
+                    content = None
+                    with open(block_file_absolute_path, 'r') as f:
+                        content = f.read()
+
+                    mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
+                        content=content,
+                        file_path=file_path,
+                        language=language,
+                        type=block_type,
+                        uuid='.'.join(filename_parts[:-1]),
+                    )
 
         self.set(self.cache_key, mapping)

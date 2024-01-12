@@ -279,7 +279,6 @@ export const getMoreActionsItems = (
       if (!isDBT
         && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType
         && savePipelineContent
-        && (dynamic || otherDynamicBlocks.length === 0)
       ) {
         items.push({
           label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
@@ -296,12 +295,12 @@ export const getMoreActionsItems = (
         });
       }
 
-      if (blocksMapping) {
+      if (blocksMapping || block?.tags) {
         const dynamicChildBlock = upstreamBlocks?.find(
           (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
         );
 
-        if (dynamicChildBlock) {
+        if (dynamicChildBlock || block?.tags?.includes(TagEnum.DYNAMIC_CHILD)) {
           items.push({
             label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
             onClick: () => savePipelineContent({
@@ -341,17 +340,13 @@ export const getMoreActionsItems = (
         uuid: 'has_callback',
       });
 
-
-      if (!isDBT) {
-        items.push({
-          disabled: !!replicatedBlock,
-          label: () => 'Replicate block',
-          onClick: () => addNewBlock({
-            replicated_block: blockUUID,
-          }),
-          uuid: 'Replicate block',
-        });
-      }
+      items.push({
+        label: () => 'Replicate block',
+        onClick: () => addNewBlock({
+          replicated_block: blockUUID,
+        }),
+        uuid: 'Replicate block',
+      });
     }
   }
 

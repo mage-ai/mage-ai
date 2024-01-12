@@ -27,6 +27,7 @@ import {
   Save,
   Schedule,
   Trash,
+  UserSmileyFace,
 } from '@oracle/icons';
 import {
   PADDING_UNITS,
@@ -777,7 +778,7 @@ function RoleDetail({
 
                   <Spacing mr={PADDING_UNITS} />
 
-                  <Schedule muted size={ICON_SIZE} />
+                  <UserSmileyFace muted size={ICON_SIZE} />
 
                   <Spacing mr={1} />
                 </Flex>

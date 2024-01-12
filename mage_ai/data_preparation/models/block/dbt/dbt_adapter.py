@@ -19,6 +19,7 @@ from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.relation import RelationType
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
+from mage_ai.shared.environments import is_debug
 
 
 @dataclass
@@ -30,6 +31,7 @@ class DBTAdapterConfig:
     profiles_dir: Union[str, os.PathLike]
     profile: Optional[str] = None
     target: Optional[str] = None
+    threads = None
 
 
 class DBTAdapter:
@@ -199,25 +201,50 @@ class DBTAdapter:
         profiles_path = self.__profiles.interpolate()
 
         # set dbt flags
-        user_config = read_user_config(profiles_path)
+        # Need to add profiles.yml file
+        try:
+            user_config = read_user_config(profiles_path)
+        except Exception as err:
+            print(f'[ERROR] DBTAdapter.open: {err}.')
+
+            if not profiles_path.endswith('profiles.yaml') and \
+                    not profiles_path.endswith('profiles.yml'):
+
+                try:
+                    user_config = read_user_config(os.path.join(profiles_path, 'profiles.yml'))
+                except Exception as err2:
+                    print(f'[ERROR] DBTAdapter.open: {err2}.')
+                    raise err
+
         adapter_config = DBTAdapterConfig(
             project_dir=self.project_path,
             profiles_dir=profiles_path,
             target=self.target
         )
         flags.set_from_args(adapter_config, user_config)
-        config = RuntimeConfig.from_args(adapter_config)
-        reset_adapters()
-        # register the correct adapter from config
-        register_adapter(config)
-        # load the adapter
-        self.__adapter = get_adapter(config)
-        # connect
-        self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
-        return self
+
+        try:
+            config = RuntimeConfig.from_args(adapter_config)
+            reset_adapters()
+            # register the correct adapter from config
+            register_adapter(config)
+            # load the adapter
+            self.__adapter = get_adapter(config)
+            # connect
+            self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
+            return self
+        except Exception as err:
+            if is_debug():
+                raise err
+            print(f'[DBTAdapter] open: {err}.')
 
     def __enter__(self):
         return self.open()
 
     def __exit__(self, *args):
-        self.close()
+        try:
+            self.close()
+        except Exception as err:
+            if is_debug():
+                raise err
+            print(f'[DBTAdapter] __exit__: {err}.')

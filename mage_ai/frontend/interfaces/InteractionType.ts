@@ -2,6 +2,7 @@ import { BlockLanguageEnum } from './BlockType';
 
 export enum InteractionInputTypeEnum {
   CHECKBOX = 'checkbox',
+  CODE = 'code',
   DROPDOWN_MENU = 'dropdown_menu',
   SWITCH = 'switch',
   TEXT_FIELD = 'text_field',
@@ -47,10 +48,13 @@ export enum InteractionInputStyleInputTypeEnum {
 
 export interface InteractionInputStyleType {
   input_type?: InteractionInputStyleInputTypeEnum;
+  language?: string;
   multiline?: boolean;
 }
 
 export interface InteractionInputType {
+  description?: string;
+  label?: string;
   options?: InteractionInputOptionType[];
   style?: InteractionInputStyleType;
   type?: InteractionInputTypeEnum;

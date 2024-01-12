@@ -9,10 +9,13 @@ from mage_ai.data_preparation.models.errors import FileNotInProjectError
 from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 def full_path(*args) -> str:
-    return os.path.join(get_repo_path(), *list(filter(lambda x: x and len(x) >= 1, args)))
+    return os.path.join(get_repo_path(
+        root_project=True,
+    ), *list(filter(lambda x: x and len(x) >= 1, args)))
 
 
 class FolderResource(GenericResource):
@@ -26,7 +29,7 @@ class FolderResource(GenericResource):
 
     @classmethod
     def member(cls, pk, user, **kwargs):
-        path = full_path(urllib.parse.unquote(pk))
+        path = add_absolute_path(urllib.parse.unquote(pk))
         return cls(dict(path=path), user, **kwargs)
 
     def delete(self, **kwargs):

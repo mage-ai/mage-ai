@@ -1,8 +1,9 @@
 import * as ReactDOM from 'react-dom';
-import Editor, { loader } from '@monaco-editor/react';
+import Editor, { DiffEditor, loader } from '@monaco-editor/react';
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -34,6 +35,8 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_THEME,
 } from './constants';
+import { DEBUG } from '@utils/environment';
+import { DisableGlobalKeyboardShortcuts } from '@context/Keyboard';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE as DEFAULT_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import {
@@ -49,6 +52,7 @@ import { defineTheme } from './utils';
 import { saveCode } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
+  editor: any;
   editorRect: {
     height?: number;
     top: number;
@@ -66,35 +70,42 @@ export type CodeEditorSharedProps = {
   setSelected?: (value: boolean) => void;
   setTextareaFocused?: (value: boolean) => void;
   textareaFocused?: boolean;
-};
+} & DisableGlobalKeyboardShortcuts;
 
 type CodeEditorProps = {
   autocompleteProviders?: ProvidersType;
   autoHeight?: boolean;
   autoSave?: boolean;
   block?: BlockType;
+  containerWidth?: number | string;
+  editorRef?: any;
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
-  onMountCallback?: () => void;
+  onMountCallback?: (editor?: any, monaco?: any) => void;
   onSave?: (value: string) => void;
-  padding?: boolean;
+  originalValue?: string;
+  padding?: number;
   placeholder?: string;
   readOnly?: boolean;
   shortcuts?: ((monaco: any, editor: any) => void)[];
+  showDiffs?: boolean;
   showLineNumbers?: boolean;
   tabSize?: number;
   theme?: any;
+  uuid?: string;
   value?: string;
   width?: number | string;
 } & CodeEditorSharedProps;
 
 function CodeEditor({
-  autocompleteProviders,
   autoHeight,
   autoSave,
+  autocompleteProviders,
   block,
+  containerWidth,
+  editorRef: editorRefProp,
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
@@ -103,23 +114,28 @@ function CodeEditor({
   onDidChangeCursorPosition,
   onMountCallback,
   onSave,
+  originalValue,
   padding,
   placeholder,
   readOnly,
   selected,
+  setDisableGlobalKeyboardShortcuts,
   setSelected,
   setTextareaFocused,
   shortcuts: shortcutsProp,
+  showDiffs,
   showLineNumbers = true,
   tabSize = 4,
   textareaFocused,
   theme = DEFAULT_THEME,
+  uuid,
   value,
   width = '100%',
-}: CodeEditorProps) {
-  const editorRef = useRef(null);
+}: CodeEditorProps, ref) {
+  const editorRef = editorRefProp || useRef(null);
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
+  const timeoutRef = useRef(null);
 
   const [completionDisposable, setCompletionDisposable] = useState([]);
   const [monacoInstance, setMonacoInstance] = useState(null);
@@ -171,8 +187,7 @@ function CodeEditor({
     });
 
     if (autoHeight && !height) {
-      editor._domElement.style.height =
-        `${calculateHeightFromContent(value || '')}px`;
+      editor._domElement.style.height = `${calculateHeightFromContent(value || '')}px`;
     }
 
     editor.onDidFocusEditorWidget(() => {
@@ -184,7 +199,20 @@ function CodeEditor({
        * when mounting the code editor here.
        */
       // setSelected?.(true);
+      DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
+
+      if (setDisableGlobalKeyboardShortcuts) {
+        setDisableGlobalKeyboardShortcuts?.(true);
+      }
       setTextareaFocused?.(true);
+    });
+
+    editor.onDidBlurEditorText(() => {
+      DEBUG(() => console.log('onDidBlurEditorText', uuid));
+
+      if (setDisableGlobalKeyboardShortcuts) {
+        setDisableGlobalKeyboardShortcuts?.(false);
+      }
     });
 
     editor.onDidContentSizeChange(({
@@ -201,13 +229,14 @@ function CodeEditor({
     });
 
     if (selected && textareaFocused) {
-      setTimeout(() => {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
         editor.focus();
       }, 1);
     }
 
     if (onDidChangeCursorPosition) {
-      editor.onDidChangeCursorPosition(({
+      editor?.onDidChangeCursorPosition(({
         position: {
           lineNumber,
         },
@@ -218,12 +247,14 @@ function CodeEditor({
         } = editor._domElement.getBoundingClientRect();
         const lineNumberTop = editor.getTopForLineNumber(lineNumber);
 
-        onDidChangeCursorPosition({
+        onDidChangeCursorPosition?.({
+          editor,
           editorRect: {
             height: Number(height),
             top: Number(top),
           },
           position: {
+            lineNumber,
             lineNumberTop,
           },
         });
@@ -231,7 +262,7 @@ function CodeEditor({
     }
 
     setMounted(true);
-    onMountCallback?.();
+    onMountCallback?.(editor, monaco);
   }, [
     autoHeight,
     height,
@@ -263,17 +294,19 @@ function CodeEditor({
     };
   }, [
     autoSave,
-    editorRef,
     onSave,
   ]);
 
   const selectedPrevious = usePrevious(selected);
   const textareaFocusedPrevious = usePrevious(textareaFocused);
 
+  // This allows us to press escape and remove focus on the text.
   useEffect(() => {
     if (editorRef?.current) {
+      clearTimeout(timeoutRef.current);
+
       if (selected && textareaFocused) {
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           editorRef.current.focus();
         }, 1);
       } else {
@@ -281,11 +314,10 @@ function CodeEditor({
           .findDOMNode(editorRef.current._domElement)
           // @ts-ignore
           .getElementsByClassName('inputarea');
-        textarea[0].blur();
+        textarea?.[0]?.blur();
       }
     }
   }, [
-    editorRef,
     selected,
     selectedPrevious,
     textareaFocused,
@@ -337,12 +369,16 @@ function CodeEditor({
     textareaFocusedPrevious,
   ]);
 
+  const EditorElement = useMemo(() => showDiffs ? DiffEditor : Editor, [showDiffs]);
+
   return (
     <ContainerStyle
       hideDuplicateMenuItems
       padding={padding}
+      ref={ref}
       style={{
         display: mounted ? null : 'none',
+        width: containerWidth,
       }}
     >
       {placeholder && !value?.length && (
@@ -352,10 +388,11 @@ function CodeEditor({
           </Text>
         </PlaceholderStyle>
       )}
-      <Editor
+      <EditorElement
         beforeMount={handleEditorWillMount}
         height={height}
         language={language || DEFAULT_LANGUAGE}
+        modified={showDiffs ? value : undefined}
         onChange={(val: string) => {
           onChange?.(val);
         }}
@@ -383,9 +420,18 @@ function CodeEditor({
           useShadowDOM: false,
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
+          // Options for DiffEditor
+          colorDecorators: true,
+          diffAlgorithm: 'advanced',
+          enableSplitViewResizing: true,
+          renderIndicators: true,
+          renderLineHighlight: 'all',
+          renderMarginRevertIcon: true,
+          renderSideBySide: true,
         }}
+        original={showDiffs ? originalValue : undefined}
         theme={loadedTheme || 'vs-dark'}
-        value={value}
+        value={showDiffs ? undefined : value}
         width={width}
       />
       <div ref={refBottomOfEditor} />
@@ -393,4 +439,4 @@ function CodeEditor({
   );
 }
 
-export default CodeEditor;
+export default React.forwardRef(CodeEditor);

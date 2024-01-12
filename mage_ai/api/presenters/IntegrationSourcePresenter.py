@@ -9,13 +9,20 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 
 class IntegrationSourcePresenter(BasePresenter):
     default_attributes = [
+        'block',
         'name',
+        'partition',
+        'pipeline_run',
+        'pipeline_schedule',
+        'streams',
         'templates',
         'uuid',
     ]
 
-    def present(self, **kwargs):
-        if constants.UPDATE == kwargs['format']:
+    async def prepare_present(self, **kwargs):
+        display_format = kwargs['format']
+
+        if constants.UPDATE == display_format:
             payload = (kwargs.get('payload') or {}).get('integration_source') or {}
 
             catalog = None

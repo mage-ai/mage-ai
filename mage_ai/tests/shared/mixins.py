@@ -1,11 +1,19 @@
 import json
 import os
-import uuid
+import shutil
 from typing import Callable, Dict, List
+from unittest.mock import patch
+
+import yaml
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.global_hooks.constants import HookOutputKey
+from mage_ai.data_preparation.models.global_hooks.constants import (
+    HookOutputKey,
+    PredicateAndOrOperator,
+    PredicateOperator,
+    PredicateValueDataType,
+)
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     Hook,
@@ -13,13 +21,30 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookOperation,
     HookOutputBlock,
     HookOutputSettings,
-    HookPredicate,
     HookStage,
     HookStrategy,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import (
+    HookPredicate,
+    PredicateValueType,
+)
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    local_platform_settings_full_path,
+    platform_settings_full_path,
+)
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
-from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
+from mage_ai.tests.base_test import AsyncDBTestCase
+from mage_ai.tests.factory import (
+    build_pipeline_with_blocks_and_content,
+    create_pipeline_with_blocks,
+)
+
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_content(query: Dict) -> str:
@@ -62,8 +87,11 @@ def build_hooks(
     resource_type: EntityName = None,
     test_predicate_after: bool = False,
     test_predicate_before: bool = False,
-    predicates_match: List[HookPredicate] = None,
-    predicates_miss: List[HookPredicate] = None,
+    predicate_match: HookPredicate = None,
+    predicate_match_after: HookPredicate = None,
+    predicate_match_before: HookPredicate = None,
+    predicate_miss: HookPredicate = None,
+    snapshot: bool = True,
 ) -> List[Hook]:
     if not global_hooks:
         global_hooks = GlobalHooks.load_from_file()
@@ -74,19 +102,37 @@ def build_hooks(
             type=pipeline.type,
         )
 
-    if predicates_match is None:
-        predicates_match = [[
-            HookPredicate.load(resource=matching_predicate_resource),
-        ]]
+    if predicate_match is None and predicate_match_after is None and predicate_match_before is None:
+        predicate_match = HookPredicate.load(
+            and_or_operator=PredicateAndOrOperator.AND,
+            predicates=[HookPredicate.load(
+                left_value=v,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+                operator=PredicateOperator.EQUALS,
+                right_value=v,
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
+            ) for v in matching_predicate_resource.values()],
+        )
 
-    if predicates_miss is None:
-        predicates_miss = [[
-            HookPredicate.load(resource=dict(
-                name=uuid.uuid4().hex,
-                type=pipeline.type,
-            )),
-            predicates_match[0][0],
-        ]]
+    if predicate_miss is None:
+        predicate_miss = HookPredicate.load(
+            and_or_operator=PredicateAndOrOperator.AND,
+            predicates=[HookPredicate.load(
+                left_value=v,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+                operator=PredicateOperator.EQUALS,
+                right_value=None,
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
+            ) for v in matching_predicate_resource.values()],
+        )
 
     if not operation_type:
         operation_type = HookOperation.DETAIL
@@ -119,9 +165,15 @@ def build_hooks(
             hook_setting = hook_settings[idx]
             hook_payload.update(hook_setting)
 
+        predicate_use = predicate_match
+        if predicate_match_after and HookStage.AFTER in hook_dict['stages']:
+            predicate_use = predicate_match_after
+        elif predicate_match_before and HookStage.BEFORE in hook_dict['stages']:
+            predicate_use = predicate_match_before
+
         hook = Hook.load(
             operation_type=operation_type,
-            predicates=predicates_match + predicates_miss,
+            predicate=predicate_use,
             resource_type=resource_type,
             strategies=[HookStrategy.RAISE],
             uuid=f'hook{idx}_{test_case.faker.unique.name()}',
@@ -134,7 +186,11 @@ def build_hooks(
             **hook.to_dict(),
         )
         hook_miss.uuid = test_case.faker.unique.name()
-        hook_miss.predicates = predicates_miss
+        hook_miss.predicate = predicate_miss
+
+        if snapshot:
+            hook.snapshot()
+            hook_miss.snapshot()
 
         hooks.append(hook)
         hooks.append(hook_miss)
@@ -160,16 +216,19 @@ class GlobalHooksMixin(BaseApiTestCase):
         matching_predicate_resource: Dict = None,
         operation_type: HookOperation = None,
         pipeline_type: PipelineType = None,
-        predicates_match: List[HookPredicate] = None,
-        predicates_miss: List[HookPredicate] = None,
+        predicate_match: HookPredicate = None,
+        predicate_match_after: HookPredicate = None,
+        predicate_match_before: HookPredicate = None,
+        predicate_miss: HookPredicate = None,
         resource_type: EntityName = None,
+        snapshot: bool = True,
     ):
         block_settings_init = {
             0: dict(content=build_content({
                 'type[]': [PipelineType.STREAMING.value],
             })),
             1: dict(content=build_content({
-                'type[]': [PipelineType.PYSPARK.value],
+                'type[]': [PipelineType.INTEGRATION.value],
             })),
             2: dict(content=build_content(dict(powers=dict(fire=1)))),
             3: dict(content=build_content(dict(level=2))),
@@ -253,9 +312,12 @@ class GlobalHooksMixin(BaseApiTestCase):
             matching_predicate_resource=matching_predicate_resource,
             operation_type=operation_type,
             pipeline=pipeline1,
-            predicates_match=predicates_match,
-            predicates_miss=predicates_miss,
+            predicate_match=predicate_match,
+            predicate_match_after=predicate_match_after,
+            predicate_match_before=predicate_match_before,
+            predicate_miss=predicate_miss,
             resource_type=resource_type,
+            snapshot=snapshot,
         )
 
         self.blocks1 = blocks1
@@ -282,3 +344,167 @@ class GlobalHooksMixin(BaseApiTestCase):
 
     def cleanup(self):
         pass
+
+
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
+@patch('mage_ai.orchestration.db.models.schedules.project_platform_activated', lambda: True)
+class ProjectPlatformMixin(AsyncDBTestCase):
+    @classmethod
+    def initialize_settings(self, settings: Dict = None):
+        self.platform_project_name = 'mage_platform'
+        content = yaml.dump(settings or dict(
+            projects={
+                self.platform_project_name: {},
+                'mage_data': {},
+            },
+        ))
+        safe_write(platform_settings_full_path(), content)
+
+        content = yaml.dump(dict(
+            projects={
+                self.platform_project_name: dict(active=True),
+            },
+        ))
+        safe_write(local_platform_settings_full_path(), content)
+
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        self.initialize_settings()
+
+    @classmethod
+    def tearDownClass(self):
+        if os.path.exists(platform_settings_full_path()) and \
+                base_repo_path() != platform_settings_full_path():
+
+            os.remove(platform_settings_full_path())
+
+        if os.path.exists(local_platform_settings_full_path()) and \
+                base_repo_path() != local_platform_settings_full_path():
+
+            os.remove(local_platform_settings_full_path())
+
+        try:
+            super().tearDownClass()
+        except Exception as err:
+            print(f'[ERROR] ProjectPlatformMixin.tearDownClass: {err}.')
+
+    def setup_final(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                super().setUp()
+                self.repo_path = get_repo_path(root_project=False)
+                self.pipeline, self.blocks = create_pipeline_with_blocks(
+                    self.faker.unique.name(),
+                    self.repo_path,
+                    return_blocks=True,
+                )
+                self.repo_paths = build_repo_path_for_all_projects(mage_projects_only=True)
+
+    def teardown_final(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                try:
+                    shutil.rmtree(platform_settings_full_path())
+                except Exception:
+                    pass
+                try:
+                    shutil.rmtree(local_platform_settings_full_path())
+                except Exception:
+                    pass
+                super().tearDown()
+
+    def setUp(self):
+        self.setup_final()
+
+    def tearDown(self):
+        self.teardown_final()
+
+
+def setup_dbt_project(repo_path: str) -> str:
+    dbt_directory = os.path.join(repo_path, 'dbt')
+    os.makedirs(dbt_directory, exist_ok=True)
+
+    source_dir = os.path.join(CURRENT_FILE_PATH, 'mocks', 'dbt')
+
+    if os.path.exists(dbt_directory):
+        shutil.rmtree(dbt_directory)
+    shutil.copytree(source_dir, dbt_directory)
+
+    return dbt_directory
+
+
+def remove_dbt_project(project_path: str = None, repo_path: str = None):
+    dbt_directory = project_path or os.path.join(repo_path, 'dbt')
+    try:
+        if os.path.exists(dbt_directory):
+            shutil.rmtree(dbt_directory)
+    except Exception as err:
+        print(f'[ERROR] remove_dbt_project: {err}.')
+
+
+def setup_custom_design(repo_path: str, mock_design_filename: str = None) -> str:
+    destination = os.path.join(repo_path, 'design.yaml')
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+
+    if os.path.exists(destination):
+        os.remove(destination)
+
+    source = os.path.join(CURRENT_FILE_PATH, 'mocks', mock_design_filename or 'mock_design.yaml')
+    shutil.copyfile(source, destination)
+
+    return destination
+
+
+def remove_custom_design(
+    project_path: str = None,
+    repo_path: str = None,
+    mock_design_filename: str = None,
+):
+    destination = os.path.join(repo_path, 'design.yaml')
+    try:
+        if os.path.exists(destination):
+            os.remove(destination)
+    except Exception as err:
+        print(f'[ERROR] remove_custom_design: {err}.')
+
+
+class DBTMixin(AsyncDBTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.dbt_directory = setup_dbt_project(self.repo_path)
+
+    def tearDown(self):
+        remove_dbt_project(repo_path=self.repo_path)
+        super().tearDown()
+
+
+class CustomDesignMixin:
+    def setUp(self):
+        super().setUp()
+
+        setup_custom_design(self.repo_path)
+
+        if hasattr(self, 'repo_paths'):
+            for paths in self.repo_paths.values():
+                full_path = paths.get('full_path')
+                if full_path == self.repo_path:
+                    continue
+                setup_custom_design(repo_path=full_path, mock_design_filename='mock_design2.yaml')
+
+    def tearDown(self):
+        remove_custom_design(repo_path=self.repo_path)
+
+        if hasattr(self, 'repo_paths'):
+            for paths in self.repo_paths.values():
+                full_path = paths.get('full_path')
+                if full_path == self.repo_path:
+                    continue
+                remove_custom_design(
+                    repo_path=full_path,
+                    mock_design_filename='mock_design2.yaml',
+                )
+
+        super().tearDown()

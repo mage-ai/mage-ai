@@ -1,8 +1,18 @@
+import BlockType from './BlockType';
+import PipelineRunType from './PipelineRunType';
+import PipelineScheduleType from './PipelineScheduleType';
+import { PredicateOperatorEnum } from './GlobalHookType';
+
 export enum ReplicationMethodEnum {
   FULL_TABLE = 'FULL_TABLE',
   INCREMENTAL = 'INCREMENTAL',
   LOG_BASED = 'LOG_BASED',
 }
+
+export const REPLICATION_METHODS_BATCH_PIPELINE = [
+  ReplicationMethodEnum.FULL_TABLE,
+  ReplicationMethodEnum.INCREMENTAL,
+];
 
 export enum UniqueConflictMethodEnum {
   IGNORE = 'IGNORE',
@@ -96,6 +106,9 @@ export interface MetadataType {
 export interface StreamType {
   auto_add_new_fields?: boolean;
   bookmark_properties?: string[];
+  bookmark_property_operators?: {
+    [column: string]: PredicateOperatorEnum;
+  };
   destination_table?: string;
   disable_column_type_check?: boolean;
   key_properties?: string[];
@@ -138,11 +151,42 @@ export enum IntegrationSourceEnum {
 }
 
 export enum IntegrationDestinationEnum {
+  AMAZON_S3 = 'amazon_s3',
   BIGQUERY = 'bigquery',
   DELTA_LAKE_S3 = 'delta_lake_s3',
+  GOOGLE_CLOUD_STORAGE = 'google_cloud_storage',
+  KAFKA = 'kafka',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
   SNOWFLAKE = 'snowflake',
+}
+
+export const DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT: IntegrationDestinationEnum[] = [
+  IntegrationDestinationEnum.AMAZON_S3,
+  IntegrationDestinationEnum.GOOGLE_CLOUD_STORAGE,
+  IntegrationDestinationEnum.KAFKA,
+];
+
+export interface StreamStateData {
+  block: BlockType;
+  name?: string;
+  partition: string;
+  pipeline_run: PipelineRunType;
+  pipeline_schedule: PipelineScheduleType;
+  streams: {
+    [stream_id: string]: {
+      record: {
+        [column: string]: string | number | boolean;
+      };
+      state: {
+        bookmarks: {
+          [stream_id: string]: {
+            [column: string]: string | number | boolean;
+          };
+        };
+      };
+    };
+  };
 }
 
 export default interface IntegrationSourceType {

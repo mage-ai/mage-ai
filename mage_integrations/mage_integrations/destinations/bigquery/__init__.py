@@ -291,9 +291,9 @@ WHERE table_id = '{table_name}'
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get(self.TABLE_CONFIG_KEY)
 
-        full_table_name = f'{database_name}.{schema_name}.{table_name}'
+        full_table_name = f'`{database_name}.{schema_name}.{table_name}`'
         table_name_delete = f'_delete_{table_name}'
-        full_table_name_delete = f'{database_name}.{schema_name}.{table_name_delete}'
+        full_table_name_delete = f'`{database_name}.{schema_name}.{table_name_delete}`'
 
         connection = self.build_connection()
         client = connection.client
@@ -507,8 +507,8 @@ WHERE table_id = '{table_name}'
                 )
 
             merge_commands = [
-                f'MERGE INTO {full_table_name} AS a',
-                f'USING (SELECT * FROM {temp_table_name}) AS b',
+                f'MERGE INTO `{full_table_name}` AS a',
+                f'USING (SELECT * FROM `{temp_table_name}`) AS b',
                 f"ON {' AND '.join(on_conditions)}",
             ]
 
@@ -593,7 +593,7 @@ WHERE table_id = '{table_name}'
 
             max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
 
-            insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
+            insert_statement = f"INSERT INTO `{full_table_name}` ({insert_columns}) VALUES"
 
             while len(insert_values) >= 1:
                 query_size = len(insert_statement)

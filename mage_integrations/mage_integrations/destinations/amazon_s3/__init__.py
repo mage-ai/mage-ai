@@ -42,6 +42,32 @@ class AmazonS3(Destination):
            },
         )
 
+        if (
+            not self.config.get('aws_access_key_id') and
+            not self.config.get('aws_secret_access_key') and
+            self.config.get('role_arn')
+        ):
+            # Assume IAM role and get credentials
+            role_session_name = self.config.get('role_session_name', 'mage-data-integration')
+            sts_session = boto3.Session()
+            sts_connection = sts_session.client('sts')
+            assume_role_object = sts_connection.assume_role(
+                RoleArn=self.config.get('role_arn'),
+                RoleSessionName=role_session_name,
+            )
+
+            session = boto3.Session(
+                aws_access_key_id=assume_role_object['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assume_role_object['Credentials']['SecretAccessKey'],
+                aws_session_token=assume_role_object['Credentials']['SessionToken'],
+            )
+
+            return session.client(
+                's3',
+                config=config,
+                region_name=self.region,
+            )
+
         return boto3.client(
             's3',
             aws_access_key_id=self.config.get('aws_access_key_id'),
@@ -69,6 +95,15 @@ class AmazonS3(Destination):
             r['record'] = update_record_with_internal_columns(r['record'])
 
         df = pd.DataFrame([d['record'] for d in record_data])
+        column_header_format = self.config.get('column_header_format')
+        if column_header_format:
+            column_mapping = None
+            if column_header_format == 'lower':
+                column_mapping = {col: col.lower() for col in df.columns}
+            elif column_header_format == 'upper':
+                column_mapping = {col: col.upper() for col in df.columns}
+            if column_mapping:
+                df = df.rename(columns=column_mapping)
 
         buffer = BytesIO()
         if self.file_type == 'parquet':

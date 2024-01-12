@@ -4,7 +4,7 @@ from typing import Awaitable, Dict
 
 import aiohttp
 
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GOOGLE
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
@@ -12,7 +12,7 @@ from mage_ai.settings.sso import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 
 class GoogleProvider(SsoProvider, OauthProvider):
-    provider = OAUTH_PROVIDER_GOOGLE
+    provider = ProviderName.GOOGLE
 
     def __init__(self):
         if not GOOGLE_CLIENT_ID:

@@ -1,27 +1,36 @@
+import hashlib
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
 from mage_ai.data_preparation.models.global_hooks.constants import (
+    GLOBAL_HOOKS_FILENAME,
     RESOURCE_TYPES,
     HookOutputKey,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.data_preparation.models.global_hooks.utils import extract_valid_data
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
+from mage_ai.shared.environments import is_debug, is_test
 from mage_ai.shared.hash import (
     dig,
     extract,
@@ -39,7 +48,7 @@ class HookOperation(str, Enum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
-    EXECUTE = 'execute'
+    EXECUTE = 'execute'  # Resources supported: Pipeline, Block (in the notebook)
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
     UPDATE_ANYWHERE = 'update_anywhere'
@@ -73,15 +82,25 @@ class HookStrategies(BaseDataClass):
 
 @dataclass
 class HookRunSettings(BaseDataClass):
+    asynchronous: bool = False
     with_trigger: bool = False
+
+
+@dataclass
+class ErrorDetails(BaseDataClass):
+    error: str = None
+    errors: str = None
+    message: str = None
 
 
 @dataclass
 class HookStatus(BaseDataClass):
     error: str = None
+    errors: List[ErrorDetails] = None
     strategy: HookStrategy = None
 
     def __post_init__(self):
+        self.serialize_attribute_classes('errors', ErrorDetails)
         self.serialize_attribute_enum('strategy', HookStrategy)
 
 
@@ -108,8 +127,20 @@ class HookOutputSettings(BaseDataClass):
 
 
 @dataclass
-class HookPredicate(BaseDataClass):
-    resource: Dict = field(default_factory=dict)
+class MetadataUser(BaseDataClass):
+    id: int = None
+
+
+@dataclass
+class HookMetadata(BaseDataClass):
+    created_at: str = None
+    snapshot_hash: str = None
+    snapshotted_at: str = None
+    updated_at: str = None
+    user: MetadataUser = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('user', MetadataUser)
 
 
 @dataclass
@@ -120,11 +151,13 @@ class Hook(BaseDataClass):
     )
 
     conditions: List[HookCondition] = None
+    metadata: HookMetadata = None
     operation_type: HookOperation = None
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
     pipeline_settings: Dict = field(default=None)
-    predicates: List[List[HookPredicate]] = None
+    project: Dict = None
+    predicate: HookPredicate = None
     resource_type: EntityName = None
     run_settings: HookRunSettings = None
     stages: List[HookStage] = None
@@ -135,6 +168,8 @@ class Hook(BaseDataClass):
     def __post_init__(self):
         self._pipeline = None
 
+        self.serialize_attribute_class('metadata', HookMetadata)
+        self.serialize_attribute_class('predicate', HookPredicate)
         self.serialize_attribute_class('run_settings', HookRunSettings)
         self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
@@ -144,24 +179,18 @@ class Hook(BaseDataClass):
         self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
 
-        if self.predicates and isinstance(self.predicates, list):
-            rows = []
-            for predicates in self.predicates:
-                row = []
-                if predicates and isinstance(predicates, list):
-                    for predicate in predicates:
-                        row.append(HookPredicate.load(**predicate))
-                rows.append(row)
-            self.predicates = rows
-
     def to_dict(
         self,
         include_all: bool = False,
+        include_project: bool = False,
         include_run_data: bool = False,
+        include_snapshot_validation: bool = False,
         **kwargs,
     ):
         arr = [
             'conditions',
+            'metadata',
+            'predicate',
             'run_settings',
             'stages',
             'strategies',
@@ -172,6 +201,11 @@ class Hook(BaseDataClass):
             arr.extend([
                 'operation_type',
                 'resource_type',
+            ])
+
+        if include_project:
+            arr.extend([
+                'project',
             ])
 
         if include_run_data:
@@ -188,19 +222,14 @@ class Hook(BaseDataClass):
         if self.pipeline_settings:
             data['pipeline'] = self.pipeline_settings
 
-        if self.predicates:
-            rows = []
-            for predicates in self.predicates:
-                if predicates:
-                    row = []
-                    for predicate in predicates:
-                        row.append(predicate.to_dict())
-
-                    if len(row) >= 1:
-                        rows.append(row)
-
-            if len(rows) >= 1:
-                data['predicates'] = rows
+        if include_snapshot_validation:
+            key = 'snapshot_valid'
+            if data.get('metadata'):
+                data['metadata'][key] = self.__validate_snapshot()
+            else:
+                data['metadata'] = {
+                    key: False,
+                }
 
         return data
 
@@ -211,14 +240,28 @@ class Hook(BaseDataClass):
 
         if self.pipeline_settings:
             try:
-                self._pipeline = Pipeline.get(self.pipeline_settings.get('uuid'))
+                repo_path = None
+                if self.project and self.project.get('full_path'):
+                    repo_path = self.project.get('full_path')
+                elif self.pipeline_settings.get('repo_path'):
+                    repo_path = self.pipeline_settings.get('repo_path')
+                self._pipeline = Pipeline.get(
+                    self.pipeline_settings.get('uuid'),
+                    repo_path=repo_path,
+                    all_projects=False if repo_path else True,
+                )
                 self._pipeline.run_pipeline_in_one_process = True
             except Exception as err:
                 print(f'[WARNING] Hook.pipeline {self.uuid}: {err}')
 
         return self._pipeline
 
-    def get_and_set_output(self, pipeline_run: PipelineRun = None) -> Dict:
+    def get_and_set_output(
+        self,
+        pipeline_run: PipelineRun = None,
+        resource_parent_type: str = None,
+        **kwargs,
+    ) -> Dict:
         self.output = {}
 
         if not self.pipeline or not self.output_settings:
@@ -319,7 +362,11 @@ class Hook(BaseDataClass):
 
                     self.output = set_value(self.output, keys, output_acc)
 
-        self.output = extract_valid_data(self.resource_type, self.output or {})
+        self.output = extract_valid_data(
+            self.resource_type,
+            self.output or {},
+            resource_parent_type=resource_parent_type,
+        )
 
         return self.output
 
@@ -328,12 +375,19 @@ class Hook(BaseDataClass):
         check_status: bool = True,
         error_on_failure: bool = True,
         poll_timeout: int = None,
+        resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
+        resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         should_schedule: bool = False,
+        user: Dict = None,
         with_trigger: bool = False,
         **kwargs,
     ) -> None:
         if not self.pipeline:
             return
+
+        pipeline_run = None
 
         try:
             variables_from_operation = extract_valid_data(self.resource_type, dict(
@@ -343,24 +397,32 @@ class Hook(BaseDataClass):
                 payload=kwargs.get('payload'),
                 query=kwargs.get('query'),
                 resource=kwargs.get('resource'),
+                resource_id=resource_id,
+                resource_parent=resource_parent,
+                resource_parent_id=resource_parent_id,
+                resource_parent_type=resource_parent_type,
                 resources=kwargs.get('resources'),
-            ))
+                user=user,
+            ), resource_parent_type=resource_parent_type)
+
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
                 merge_dict(
                     variables_from_operation,
                     dict(
-                        hook=self.to_dict(include_all=True),
+                        hook=self.to_dict(include_all=True, include_project=True),
+                        project=self.project,
                     ),
                 ),
             )
 
-            pipeline_run = None
+            asynchronous = self.run_settings.asynchronous if self.run_settings else False
+
             if with_trigger or (self.run_settings and self.run_settings.with_trigger):
                 pipeline_run = trigger_pipeline(
                     self.pipeline.uuid,
                     variables=variables,
-                    check_status=check_status,
+                    check_status=check_status and not asynchronous,
                     error_on_failure=error_on_failure,
                     poll_interval=1,
                     poll_timeout=poll_timeout,
@@ -368,12 +430,30 @@ class Hook(BaseDataClass):
                     verbose=True,
                     _should_schedule=should_schedule,
                 )
+            elif asynchronous:
+                # TODO: invoking the below method will still block the current
+                # operation from completing
+                PipelineExecutor(self.pipeline).execute(global_vars=variables, update_status=False)
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)
 
             return pipeline_run
         except Exception as err:
-            self.status = HookStatus.load(error=err)
+            error_details_arr = []
+
+            if pipeline_run and pipeline_run.block_runs:
+                for block_run in pipeline_run.block_runs:
+                    block_run.refresh()
+                    # Cannot save raw value in DB; it breaks:
+                    # sqlalchemy.exc.StatementError:
+                    # (builtins.TypeError) Object of type Py4JJavaError is not JSON serializable
+                    # [SQL: UPDATE block_run SET updated_at=CURRENT_TIMESTAMP, status=?, metrics=?
+                    # WHERE block_run.id = ?]
+
+                    # if block_run.metrics.get('__error_details'):
+                    #     error_details_arr.append(block_run.metrics.get('__error_details'))
+
+            self.status = HookStatus.load(error=err, errors=error_details_arr)
 
             if self.strategies:
                 if HookStrategy.RAISE in self.strategies:
@@ -385,13 +465,28 @@ class Hook(BaseDataClass):
                 elif HookStrategy.CONTINUE in self.strategies:
                     self.status.strategy = HookStrategy.CONTINUE
 
+            if is_debug() or is_test():
+                print(f'[ERROR] Hook.run: {err}')
+
     def should_run(
         self,
         operation_types: List[HookOperation],
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
+        resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
+        resources: Dict = None,
+        user: Dict = None,
     ) -> bool:
         if self.operation_type not in operation_types:
             return False
@@ -405,10 +500,66 @@ class Hook(BaseDataClass):
         if not self.__matches_any_condition(conditions):
             return False
 
-        if not self.__matches_any_predicate(operation_resource):
+        if not self.__validate_snapshot():
+            return False
+
+        if not self.__matches_predicate(
+            operation_resource,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent=resource_parent,
+            resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
+            resources=resources,
+            user=user,
+        ):
             return False
 
         return True
+
+    def snapshot(self) -> str:
+        if not self.pipeline:
+            return
+
+        if not self.metadata:
+            self.metadata = HookMetadata.load()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        self.metadata.snapshot_hash = self.__generate_snapshot_hash(prefix=now)
+        self.metadata.snapshotted_at = now
+
+        return self.metadata.snapshot_hash
+
+    def __validate_snapshot(self) -> bool:
+        return self.metadata and \
+                self.metadata.snapshot_hash and \
+                self.metadata.snapshotted_at and \
+                self.metadata.snapshot_hash == self.__generate_snapshot_hash(
+                    self.metadata.snapshotted_at,
+                )
+
+    def __generate_snapshot_hash(self, prefix: str = None) -> str:
+        if not self.pipeline:
+            return None
+
+        hashes = []
+
+        for block in self.pipeline.blocks_by_uuid.values():
+            content = block.content or ''
+            hashes.append(
+                hashlib.md5(f'{prefix or ""}{content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+
+        return hashlib.md5(
+            f'{prefix or ""}{hashes_combined}'.encode(),
+        ).hexdigest()
 
     def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
         if not conditions or not self.conditions:
@@ -416,52 +567,41 @@ class Hook(BaseDataClass):
 
         return any([condition in (self.conditions or []) for condition in conditions])
 
-    def __matches_any_predicate(
+    def __matches_predicate(
         self,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
+        resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
+        resources: Dict = None,
+        user: Dict = None,
     ) -> bool:
-        if not operation_resource or not self.predicates:
+        if not operation_resource or not self.predicate:
             return True
 
-        return any([all([self.__validate_predicate(
-            predicate,
+        return self.predicate.validate(
             operation_resource,
-        ) for predicate in predicates]) for predicates in self.predicates])
-
-    def __validate_predicate(
-        self,
-        predicate: HookPredicate,
-        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
-    ) -> bool:
-        if not predicate.resource or len(predicate.resource) == 0:
-            return True
-
-        def _validate_resource(
-            resource: Union[BaseResource, Block, Dict, Pipeline],
-            predicate=predicate,
-        ) -> bool:
-            model = resource
-            if isinstance(resource, BaseResource):
-                model = resource.model
-
-            def _equals(
-                key: str,
-                value: Any,
-                model=model,
-            ) -> bool:
-                if isinstance(model, dict):
-                    return model.get(key) == value
-
-                return hasattr(model, key) and getattr(model, key) == value
-
-            check = all([_equals(key, value) for key, value in predicate.resource.items()])
-
-            return check
-
-        if isinstance(operation_resource, Iterable) and not isinstance(operation_resource, dict):
-            return all([_validate_resource(res) for res in operation_resource])
-
-        return _validate_resource(operation_resource)
+            error=error,
+            hook=self.to_dict(include_all=True, include_project=True),
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent=resource_parent,
+            resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
+            resources=resources,
+            user=user,
+        )
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -582,7 +722,7 @@ def run_hooks(args_arrays: List[List]) -> List[Dict]:
         hook_dict, kwargs = args_array
         hook = Hook.load(**hook_dict)
         pipeline_run = hook.run(**kwargs)
-        hook.get_and_set_output(pipeline_run=pipeline_run)
+        hook.get_and_set_output(pipeline_run=pipeline_run, **kwargs)
         arr.append(hook.to_dict(include_run_data=True))
 
     return arr
@@ -590,6 +730,7 @@ def run_hooks(args_arrays: List[List]) -> List[Dict]:
 
 @dataclass
 class GlobalHooks(BaseDataClass):
+    project_global_hooks: Dict = None
     resources: GlobalHookResources = None
 
     def __post_init__(self):
@@ -598,14 +739,14 @@ class GlobalHooks(BaseDataClass):
             self.resources.update_attributes()
 
     @classmethod
-    def file_path(self) -> str:
-        return os.path.join(get_repo_path(), 'global_hooks.yaml')
+    def file_path(self, repo_path: str = None) -> str:
+        return os.path.join(repo_path or get_repo_path(), GLOBAL_HOOKS_FILENAME)
 
     @classmethod
-    def load_from_file(self, file_path: str = None) -> 'GlobalHooks':
+    def __load_from_file(self, file_path: str = None, repo_path: str = None) -> 'GlobalHooks':
         yaml_config = {}
 
-        file_path_to_use = file_path or self.file_path()
+        file_path_to_use = file_path or self.file_path(repo_path=repo_path)
         if os.path.exists(file_path_to_use):
             with open(file_path_to_use, 'r') as fp:
                 content = fp.read()
@@ -614,7 +755,39 @@ class GlobalHooks(BaseDataClass):
 
         return self.load(**yaml_config)
 
-    def add_hook(self, hook: Hook, payload: Dict = None, update: bool = False) -> Hook:
+    @classmethod
+    def load_from_file(
+        self,
+        all_global_hooks: bool = True,
+        file_path: str = None,
+        repo_path: str = None,
+    ) -> 'GlobalHooks':
+        model = self.__load_from_file(file_path=file_path, repo_path=repo_path)
+
+        if all_global_hooks and project_platform_activated():
+            model.project_global_hooks = {}
+
+            for project_name, settings in build_repo_path_for_all_projects().items():
+                full_path = settings['full_path']
+
+                model.project_global_hooks[project_name] = dict(
+                    global_hooks=self.__load_from_file(
+                        file_path=os.path.join(full_path, GLOBAL_HOOKS_FILENAME),
+                    ),
+                    project=settings,
+                )
+
+        return model
+
+    def add_hook(
+        self,
+        hook: Hook,
+        payload: Dict = None,
+        snapshot: bool = False,
+        update: bool = False,
+    ) -> Hook:
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+
         if not update and self.get_hook(
             operation_type=hook.operation_type,
             resource_type=hook.resource_type,
@@ -646,7 +819,17 @@ class GlobalHooks(BaseDataClass):
                 hooks,
             )
             if index >= 0:
-                hook_updated = Hook.load(**merge_dict(hook.to_dict(include_all=True), payload))
+                hook_updated = Hook.load(
+                    **merge_dict(
+                        hook.to_dict(include_all=True),
+                        payload,
+                    ),
+                )
+
+                if not hook_updated.metadata:
+                    hook_updated.metadata = HookMetadata.load()
+                hook_updated.metadata.updated_at = now
+
                 if hook.resource_type == hook_updated.resource_type and \
                         hook.operation_type == hook_updated.operation_type:
 
@@ -656,6 +839,9 @@ class GlobalHooks(BaseDataClass):
                     self.add_hook(hook_updated)
                     self.remove_hook(hook)
 
+                if snapshot:
+                    hook_updated.snapshot()
+
                 return hook_updated
             else:
                 raise Exception(
@@ -663,6 +849,15 @@ class GlobalHooks(BaseDataClass):
                     f'{hook.resource_type} and operation {hook.operation_type}.',
                 )
         else:
+            if not hook.metadata:
+                hook.metadata = HookMetadata.load()
+
+            hook.metadata.created_at = now
+            hook.metadata.updated_at = now
+
+            if snapshot:
+                hook.snapshot()
+
             hooks.append(hook)
             setattr(resource, hook.operation_type.value, hooks)
             setattr(self.resources, hook.resource_type.value, resource)
@@ -689,6 +884,7 @@ class GlobalHooks(BaseDataClass):
     def hooks(
         self,
         operation_types: List[HookOperation] = None,
+        project: Dict = None,
         resource_types: List[EntityName] = None,
     ) -> List[Hook]:
         arr = []
@@ -713,6 +909,7 @@ class GlobalHooks(BaseDataClass):
 
                     for hook in hooks:
                         hook.operation_type = operation
+                        hook.project = project
                         hook.resource_type = resource.resource_type
                         arr.append(hook)
 
@@ -734,30 +931,79 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        project: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
+        resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
+        resources: List[Dict] = None,
+        user: Dict = None,
     ) -> List[Hook]:
         def _filter(
-            hook: Hook,
+            hook,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
             operation_types=operation_types,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent=resource_parent,
+            resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resource_type=resource_type,
+            resources=resources,
             stage=stage,
+            user=user,
         ) -> bool:
             return hook.should_run(
+                operation_types,
+                resource_type,
+                stage,
                 conditions=conditions,
+                error=error,
+                meta=meta,
+                metadata=metadata,
                 operation_resource=operation_resource,
-                operation_types=operation_types,
-                resource_type=resource_type,
-                stage=stage,
+                payload=payload,
+                query=query,
+                resource=resource,
+                resource_id=resource_id,
+                resource_parent=resource_parent,
+                resource_parent_id=resource_parent_id,
+                resource_parent_type=resource_parent_type,
+                resources=resources,
+                user=user,
             )
 
-        return list(filter(
-            _filter,
-            self.hooks(),
-        ))
+        hooks = []
+        if project_platform_activated() and self.project_global_hooks:
+            for settings in self.project_global_hooks.values():
+                global_hooks = settings.get('global_hooks')
+                project = settings.get('project')
 
-    def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
+                if global_hooks:
+                    hooks.extend(global_hooks.hooks(project=project))
+        else:
+            hooks = self.hooks()
+
+        return list(filter(_filter, hooks))
+
+    def run_hooks(
+        self,
+        hooks: List[Hook],
+        **kwargs,
+    ) -> List[Hook]:
         hooks_by_pipeline = {}
         for hook in hooks:
             if not hook.pipeline_settings or not hook.pipeline_settings.get('uuid'):
@@ -770,6 +1016,7 @@ class GlobalHooks(BaseDataClass):
             hooks_by_pipeline[pipeline_uuid].append((
                 hook.to_dict(
                     include_all=True,
+                    include_project=True,
                     include_output=True,
                 ),
                 kwargs,
@@ -785,32 +1032,69 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
-        **kwargs,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
+        resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
+        resources: List[Dict] = None,
+        user: Dict = None,
     ) -> List[Hook]:
         hooks = self.get_hooks(
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=stage,
+            operation_types,
+            resource_type,
+            stage,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent=resource_parent,
+            resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
+            resources=resources,
+            user=user,
         )
 
         if not hooks:
             return None
 
-        return self.run_hooks(hooks, **kwargs)
+        return self.run_hooks(
+            hooks,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent=resource_parent,
+            resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
+            resources=resources,
+            user=user,
+        )
 
-    def save(self, file_path: str = None) -> None:
+    def save(self, file_path: str = None, repo_path: str = None) -> None:
         if not file_path:
-            file_path = self.file_path()
+            file_path = self.file_path(repo_path=repo_path)
 
         content_original = None
         if os.path.exists(file_path):
             with open(file_path) as f:
                 content_original = f.read()
 
-        with open(self.file_path(), 'w'):
+        with open(file_path, 'w'):
             try:
                 data = self.to_dict()
                 content = yaml.safe_dump(data)
@@ -821,4 +1105,8 @@ class GlobalHooks(BaseDataClass):
                 raise err
 
     def to_dict(self, **kwargs) -> Dict:
-        return super().to_dict(convert_enum=True, ignore_empty=True)
+        return super().to_dict(
+            convert_enum=True,
+            ignore_attributes=['project_global_hooks'],
+            ignore_empty=True,
+        )

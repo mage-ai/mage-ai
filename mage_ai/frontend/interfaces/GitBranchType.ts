@@ -34,6 +34,9 @@ export default interface GitBranchType {
   access_token_exists?: boolean;
   action_type?: string;
   error?: string;
+  files_absolute_path?: {
+    [key: string]: any;
+  };
   files?: FileType[];
   logs?: GitCommitType[];
   message?: string;

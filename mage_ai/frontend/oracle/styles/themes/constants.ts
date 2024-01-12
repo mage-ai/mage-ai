@@ -5,8 +5,10 @@ export type ThemeType = {
     blueLight: string;
     contentDefaultTransparent: string;
     cyan: string;
+    cyanLight: string;
     cyanTransparent: string;
     dbt: string;
+    dbtDark: string;
     dbtLight: string;
     info: string;
     infoTransparent: string;
@@ -43,6 +45,7 @@ export type ThemeType = {
     output: string;
     page: string;
     panel: string;
+    panelTransparent: string;
     popup: string;
     row: string;
     row2: string;
@@ -50,6 +53,7 @@ export type ThemeType = {
     scrollbarThumbHover: string;
     scrollbarTrack: string;
     success: string;
+    successLight: string;
     table: string;
     tag: string;
   };
@@ -135,11 +139,13 @@ export type ThemeType = {
   interactive: {
     activeBorder: string;
     dangerBorder: string;
+    defaultBackgroundTransparent: string;
     defaultBorder: string;
     disabledBorder: string;
     focusBackground: string;
     focusBorder: string;
     hoverBackground: string;
+    hoverBackgroundTransparent: string;
     hoverBorder: string;
     linkPrimary: string;
     linkSecondary: string;

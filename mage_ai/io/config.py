@@ -27,6 +27,9 @@ class ConfigKey(str, Enum):
     AZURE_STORAGE_ACCOUNT_NAME = 'AZURE_STORAGE_ACCOUNT_NAME'
     AZURE_TENANT_ID = 'AZURE_TENANT_ID'
 
+    CHROMA_COLLECTION = 'CHROMA_COLLECTION'
+    CHROMA_PATH = 'CHROMA_PATH'
+
     CLICKHOUSE_DATABASE = 'CLICKHOUSE_DATABASE'
     CLICKHOUSE_HOST = 'CLICKHOUSE_HOST'
     CLICKHOUSE_INTERFACE = 'CLICKHOUSE_INTERFACE'
@@ -83,6 +86,9 @@ class ConfigKey(str, Enum):
     PINOT_PORT = 'PINOT_PORT'
     PINOT_SCHEME = 'PINOT_SCHEME'
     PINOT_USER = 'PINOT_USER'
+
+    QDRANT_COLLECTION = 'QDRANT_COLLECTION'
+    QDRANT_PATH = 'QDRANT_PATH'
 
     POSTGRES_CONNECTION_METHOD = 'POSTGRES_CONNECTION_METHOD'
     POSTGRES_CONNECT_TIMEOUT = 'POSTGRES_CONNECT_TIMEOUT'
@@ -323,6 +329,7 @@ class VerboseConfigKey(str, Enum):
 
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CHROMA = 'Chroma'
     CLICKHOUSE = 'ClickHouse'
     DRUID = 'Druid'
     DUCKDB = 'Duck DB'
@@ -331,6 +338,7 @@ class VerboseConfigKey(str, Enum):
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
+    QDRANT = 'Qdrant'
 
 
 class ConfigFileLoader(BaseConfigLoader):
@@ -370,6 +378,10 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.REDSHIFT,
             'user',
         ),
+        ConfigKey.CHROMA_COLLECTION: (
+            VerboseConfigKey.CHROMA, 'collection'),
+        ConfigKey.CHROMA_PATH: (
+            VerboseConfigKey.CHROMA, 'path'),
         ConfigKey.CLICKHOUSE_DATABASE: (
             VerboseConfigKey.CLICKHOUSE, 'database'),
         ConfigKey.CLICKHOUSE_HOST: (
@@ -402,6 +414,8 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
         ConfigKey.POSTGRES_SCHEMA: (VerboseConfigKey.POSTGRES, 'schema'),
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
+        ConfigKey.QDRANT_COLLECTION: (VerboseConfigKey.QDRANT, 'collection'),
+        ConfigKey.QDRANT_PATH: (VerboseConfigKey.QDRANT, 'path'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),

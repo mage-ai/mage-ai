@@ -38,7 +38,7 @@ class CreatePage(BasePage):
     @classmethod
     async def disabled(self, current_user: User = None, **kwargs) -> bool:
         pipelines = kwargs.get('pipelines') or []
-        for pipeline in pipelines:
+        for pipeline in [p for p in pipelines if p]:
             pipeline_schedule = PipelineScheduleResource.model_class(pipeline_uuid=pipeline.uuid)
             resource = PipelineScheduleResource(pipeline_schedule, current_user)
             policy = resource.policy_class()(resource, current_user)

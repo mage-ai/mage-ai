@@ -1,7 +1,5 @@
-import asyncio
 import json
 import os
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Union
@@ -14,9 +12,9 @@ from mage_ai.authentication.operation_history.constants import (
 )
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
-from mage_ai.shared.io import read_last_line_async
 
 
 @dataclass
@@ -49,10 +47,14 @@ class OperationHistory:
 
 class OperationHistoryReader:
     def __init__(self, repo_config=None, repo_path: str = None):
-        self.repo_path = repo_path or get_repo_path()
+        self.root_project = project_platform_activated()
+        self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 
         if repo_config is None:
-            self.repo_config = get_repo_config(repo_path=self.repo_path)
+            self.repo_config = get_repo_config(
+                repo_path=self.repo_path,
+                root_project=self.root_project,
+            )
         elif isinstance(repo_config, dict):
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
@@ -102,17 +104,7 @@ class OperationHistoryReader:
 
         return os.path.join(dir_path, filename)
 
-    async def load_most_recent_history(self, timestamp: int = None) -> OperationHistory:
-        try:
-            file_path = self.build_file_path()
-            if self.storage.path_exists(file_path):
-                line = await read_last_line_async()
-                return OperationHistory(**json.loads(line))
-        except Exception as err:
-            if is_debug():
-                print(f'[ERROR] OperationHistoryReader.load_most_recent_history: {err}')
-
-    async def load_all_history_async(
+    def load_all_history(
         self,
         operation: OperationType = None,
         resource_type: ResourceType = None,
@@ -150,7 +142,7 @@ class OperationHistoryReader:
             if not self.storage.path_exists(file_path):
                 continue
 
-            text = await self.storage.read_async(file_path)
+            text = self.storage.read(file_path)
 
             if text:
                 for line in text.split('\n'):
@@ -166,26 +158,13 @@ class OperationHistoryReader:
                             arr.append(record)
                     except json.decoder.JSONDecodeError as err:
                         if is_debug():
-                            print(f'[ERROR] OperationHistoryReader.load_all_history_async: {err}')
+                            print(f'[ERROR] OperationHistoryReader.load_all_history: {err}')
 
         return arr
 
-    async def save(self, operation_history: OperationHistory) -> None:
+    def save(self, operation_history: OperationHistory) -> None:
         text = json.dumps(operation_history.to_dict())
         file_path = self.build_file_path(timestamp=operation_history.timestamp)
         self.storage.makedirs(os.path.dirname(file_path), exist_ok=True)
         with self.storage.open_to_write(file_path, append=True) as f:
             f.write(f'{text}\n')
-
-    async def save_async(self, operation_history: OperationHistory) -> None:
-        last_record = await self.load_most_recent_history()
-
-        if not last_record or last_record != operation_history:
-            try:
-                asyncio.get_running_loop()
-                with ThreadPoolExecutor(1) as pool:
-                    pool.submit(lambda: asyncio.run(self.save(operation_history))).result()
-            except Exception as err:
-                if is_debug():
-                    print(f'[ERROR] OperationHistoryReader.save_async: {err}')
-                asyncio.run(self.save(operation_history))

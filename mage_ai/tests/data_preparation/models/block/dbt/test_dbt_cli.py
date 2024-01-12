@@ -73,36 +73,39 @@ models:
         super().tearDownClass()
 
     def test_invoke(self):
-        DBTCli([
+        DBTCli().invoke([
             'build',
             '--profiles-dir', self.project_dir,
             '--project-dir', self.project_dir,
             '--select', 'mage_test_model'
-        ]).invoke()
+        ])
 
-        DBTCli([
-            'clean',
-            '--project-dir', self.project_dir,
-        ]).invoke()
+        # DBTCli().invoke([
+        #     'clean',
+        #     '--project-dir', self.project_dir,
+        # ])
 
     def test_to_pandas(self):
-        DBTCli([
+        cli = DBTCli()
+
+        cli.invoke([
             'run',
             '--profiles-dir', self.project_dir,
             '--project-dir', self.project_dir,
             '--select', 'mage_test_model'
-        ]).invoke()
+        ])
 
-        df, _res, success = DBTCli([
+        res = cli.invoke([
             'show',
             '--profiles-dir', self.project_dir,
             '--project-dir', self.project_dir,
             '--select', 'mage_test_model',
             '--limit', '1'
-        ]).to_pandas()
+        ])
 
-        self.assertTrue(success)
+        self.assertTrue(res.success)
 
+        df = cli.to_pandas(res)
         self.assertEqual(
             df.to_dict(),
             {'id': {0: 1}}

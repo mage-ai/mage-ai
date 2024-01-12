@@ -99,11 +99,20 @@ function LogsTable({
     });
     blockUUIDs = Array.from(blockUUIDsWithStreamSet);
   }
-  const maxBlockUUIDLength = Math.max(...blockUUIDs.map(k => k.length));
-  const blockUUIDColWidth = Math.min(
-    (maxBlockUUIDLength * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE) + 12 + 8,  // add block color square and spacing
-    UNIT * 50,
-  );
+
+  const blockUUIDColWidth = useMemo(() => {
+    const names = logs?.map(({ name }) => name.split('.log')[0]?.length);
+    const maxBlockUUIDLength = Math.max(...names);
+    const blockUUIDColWidth = Math.min(
+      (maxBlockUUIDLength * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE) + 12 + 8,  // add block color square and spacing
+      UNIT * 50,
+    );
+
+    return blockUUIDColWidth;
+  }, [
+    logs,
+  ]);
+
   const columns = [
     {
       uuid: '_',
@@ -124,7 +133,6 @@ function LogsTable({
       uuid: '_',
     },
   ];
-
 
   const renderRow = useCallback(({ data, index, style }) => {
     const {
@@ -150,7 +158,8 @@ function LogsTable({
     }
 
     let idEl;
-    let blockUUID = blockUUIDProp || name.split('.log')[0];
+    const uuidInit = blockUUIDProp || name.split('.log')[0];
+    let blockUUID = uuidInit;
 
     let streamID;
     let streamIndex;
@@ -200,7 +209,7 @@ function LogsTable({
                 title={blockUUIDProp}
                 width={blockUUIDColWidth - 16}
               >
-                {blockUUID}{streamID && ':'}{streamID && (
+                {uuidInit}{streamID && ':'}{streamID && (
                   <Text default inline monospace>
                     {streamID}
                   </Text>

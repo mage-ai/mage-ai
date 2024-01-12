@@ -13,6 +13,7 @@ import { pauseEvent } from '@utils/events';
 export type TabType = {
   Icon?: any;
   IconSelected?: any;
+  icon?: any;
   label?: () => string | any;
   uuid: string;
 };
@@ -21,28 +22,38 @@ type ButtonTabsProps = {
   allowScroll?: boolean;
   compact?: boolean;
   contained?: boolean;
+  large?: boolean;
+  multiSelection?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   regularSizeText?: boolean;
   selectedTabUUID?: string;
+  selectedTabUUIDs?: {
+    [tabUUID: string]: TabType;
+  };
   small?: boolean;
   tabs: TabType[];
   underlineColor?: string;
   underlineStyle?: boolean;
+  uppercase?: boolean;
 };
 
 function ButtonTabs({
   allowScroll,
   compact,
   contained,
+  large,
+  multiSelection,
   noPadding,
   onClickTab,
   regularSizeText,
   selectedTabUUID,
+  selectedTabUUIDs,
   small,
   tabs,
   underlineColor,
   underlineStyle,
+  uppercase = true,
 }: ButtonTabsProps, ref) {
   const tabEls = useMemo(() => {
     const tabCount: number = tabs.length;
@@ -52,20 +63,37 @@ function ButtonTabs({
       const {
         Icon,
         IconSelected,
+        icon,
         label,
         uuid,
       } = tab;
-      const selected = uuid === selectedTabUUID;
+      const selected = selectedTabUUIDs ? uuid in selectedTabUUIDs : uuid === selectedTabUUID;
       const IconToUse = selected ? (IconSelected || Icon) : Icon;
+      let iconEl;
+      if (icon) {
+        iconEl = React.cloneElement(icon, {
+          ...icon.props,
+          size: 2 * UNIT,
+        });
+      } else {
+        const IconToUse = selected ? (IconSelected || Icon) : Icon;
+        if (IconToUse) {
+          iconEl = (
+            <IconToUse
+              default={!selected}
+              size={2 * UNIT}
+            />
+          );
+        }
+      }
+
       const displayText = label ? label() : uuid;
       const el = (
         <FlexContainer alignItems="center">
-          {IconToUse && (
+          {iconEl && (
             <>
-              <IconToUse
-                default={!selected}
-                size={2 * UNIT}
-              />
+              {iconEl}
+
               <Spacing mr={1} />
             </>
           )}
@@ -74,7 +102,8 @@ function ButtonTabs({
             bold
             default={!selected}
             noWrapping
-            small={!regularSizeText}
+            small={!regularSizeText && !large}
+            uppercase={uppercase}
           >
             {displayText}
           </Text>
@@ -85,7 +114,7 @@ function ButtonTabs({
         arr.push(
           <div
             key={`spacing-${uuid}`}
-            style={{ marginLeft: (regularSizeText ? 2 : 1.5) * UNIT }}
+            style={{ marginLeft: ((regularSizeText || large) ? 2 : 1.5) * UNIT }}
           />,
         );
       }

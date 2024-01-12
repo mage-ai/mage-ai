@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Union
 
 from faker import Faker
@@ -10,7 +10,11 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 
 faker = Faker()
@@ -24,7 +28,12 @@ def create_pipeline(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: PipelineType = None):
+def create_pipeline_with_blocks(
+    name: str,
+    repo_path: str,
+    pipeline_type: PipelineType = None,
+    return_blocks: bool = False,
+):
     """
     Creates a pipeline with blocks for data processing and transformation.
 
@@ -35,11 +44,23 @@ def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: Pipeli
     Returns:
         Pipeline: The created pipeline with added blocks.
     """
-    pipeline = Pipeline.create(
-        name,
-        repo_path=repo_path,
-        pipeline_type=pipeline_type,
-    )
+    tries = 0
+    pipeline = None
+    while pipeline is None and tries < 100:
+        try:
+            name_use = name
+            if tries >= 1:
+                name_use = f'{name_use} {tries}'
+
+            pipeline = Pipeline.create(
+                name_use,
+                repo_path=repo_path,
+                pipeline_type=pipeline_type,
+            )
+        except Exception as err:
+            print(f'[ERROR] create_pipeline_with_blocks: {err}.')
+        tries += 1
+
     block1 = Block.create('block1', 'data_loader', repo_path, language='python')
     block2 = Block.create('block2', 'transformer', repo_path, language='python')
     block3 = Block.create('block3', 'transformer', repo_path, language='python')
@@ -48,6 +69,10 @@ def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: Pipeli
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
     pipeline.add_block(block3, upstream_block_uuids=['block1'])
     pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
+
+    if return_blocks:
+        return pipeline, [block1, block2, block3, block4]
+
     return pipeline
 
 
@@ -128,8 +153,8 @@ def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_run(pipeline_uuid: str):
-    pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
+def create_pipeline_run(pipeline_uuid: str, **kwargs):
+    pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', **kwargs)
     return pipeline_run
 
 
@@ -157,6 +182,40 @@ def create_pipeline_run_with_schedule(
         **kwargs,
     )
     return pipeline_run
+
+
+def create_backfill(
+    pipeline_uuid: str,
+    end_datetime: datetime = None,
+    interval_type: Backfill.IntervalType = Backfill.IntervalType.DAY,
+    interval_units: int = 1,
+    pipeline_schedule_id: int = None,
+    start_datetime: datetime = None,
+    **kwargs,
+):
+    if start_datetime is None:
+        start_datetime = datetime.today() - timedelta(days=1)
+    if end_datetime is None:
+        end_datetime = datetime.today()
+    if pipeline_schedule_id is None:
+        pipeline_schedule = PipelineSchedule.create(
+            name=f'{pipeline_uuid}_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+        )
+        pipeline_schedule_id = pipeline_schedule.id
+    backfill = Backfill.create(
+        end_datetime=end_datetime,
+        interval_type=interval_type,
+        interval_units=interval_units,
+        pipeline_uuid=pipeline_uuid,
+        pipeline_schedule_id=pipeline_schedule_id,
+        start_datetime=start_datetime,
+        status=Backfill.Status.INITIAL,
+        **kwargs,
+    )
+
+    return backfill
 
 
 def create_user(
@@ -196,8 +255,9 @@ async def build_pipeline_with_blocks_and_content(
     block_settings: Dict = None,
     name: str = None,
     pipeline_type: PipelineType = None,
+    repo_path: str = None,
 ) -> Pipeline:
-    repo_path = test_case.repo_path
+    repo_path = repo_path or test_case.repo_path
 
     pipeline = Pipeline.create(
         name or test_case.faker.unique.name(),

@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -26,7 +27,7 @@ export const useError = (
   errorProps: ErrorProps = {},
   inputs: DependencyList = [],
   opts: UseErrorOptionsType = {},
-): [ShowError, HideError] => {
+): [ShowError, HideError, any] => {
   if (component && !isFunctionalComponent(component)) {
     throw new Error(
       'Only stateless components can be used as an argument to useError. ' +
@@ -38,6 +39,8 @@ export const useError = (
     visible,
   } = opts;
 
+  const refError = useRef(null);
+
   const key = useMemo(uuid ? () => uuid : generateKey, [generateKey, uuid]);
   const error = useMemo(() => component, inputs);
   const context = useContext(ErrorContext);
@@ -47,8 +50,12 @@ export const useError = (
   const showError = useCallback((runtimePropsArg: any = {}) => {
     setRuntimeProps(runtimePropsArg);
     setShown(true);
+    refError.current = runtimePropsArg;
   }, []);
-  const hideError = useCallback(() => setShown(false), []);
+  const hideError = useCallback(() => {
+    setShown(false);
+    refError.current = null;
+  }, []);
 
   useEffect(() => {
     if (isShown) {
@@ -73,5 +80,5 @@ export const useError = (
     runtimeProps,
   ]);
 
-  return [showError, hideError];
+  return [showError, hideError, refError];
 };

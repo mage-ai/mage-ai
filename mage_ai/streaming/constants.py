@@ -18,6 +18,7 @@ class SourceType(str, Enum):
 
 
 class SinkType(str, Enum):
+    ACTIVEMQ = 'activemq'
     AMAZON_S3 = 'amazon_s3'
     AZURE_DATA_LAKE = 'azure_data_lake'
     BIGQUERY = 'bigquery'
@@ -37,6 +38,7 @@ class SinkType(str, Enum):
     OPENSEARCH = 'opensearch'
     ORACLEDB = 'oracledb'
     POSTGRES = 'postgres'
+    RABBITMQ = 'rabbitmq'
     REDSHIFT = 'redshift'
     SNOWFLAKE = 'snowflake'
     TRINO = 'trino'

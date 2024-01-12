@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Dict, List
 
+import pandas as pd
+import polars as pl
+
 
 class BaseStorage(ABC):
     @abstractmethod
@@ -43,6 +46,20 @@ class BaseStorage(ABC):
     def remove_dir(self, path: str) -> None:
         """
         Remove a directory with directory path.
+        """
+        pass
+
+    @abstractmethod
+    def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
+        """
+        Read parquet from a file with file path and return a pandas DataFrame.
+        """
+        pass
+
+    @abstractmethod
+    def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
+        """
+        Read parquet from a file with file path and return a polars DataFrame.
         """
         pass
 

@@ -25,12 +25,14 @@ export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
 export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
 export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
 export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
+export const CONFIG_KEY_DBT_PROFILES_FILE_PATH = 'dbt_profiles_file_path';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 export const CONFIG_KEY_LIMIT = 'limit';
 export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = 'unique_upstream_table_name';
 export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = 'upstream_block_configuration';
 export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = 'table_name';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
+export const CONFIG_KEY_DISABLE_QUERY_PREPROCESSING = 'disable_query_preprocessing';
 
 export const CONFIG_KEY_DBT = 'dbt';
 export const CONFIG_KEY_DBT_COMMAND = 'command';
@@ -115,6 +117,11 @@ export interface ConfigurationDataIntegrationType {
   inputs?: ConfigurationDataIntegrationInputsType;
 }
 
+interface FileSourceType {
+  path: string;
+  project_path?: string;
+}
+
 export interface ConfigurationType {
   [CONFIG_KEY_DATA_PROVIDER]?: string;
   [CONFIG_KEY_DATA_PROVIDER_DATABASE]?: string;
@@ -142,6 +149,7 @@ export interface ConfigurationType {
   };
   dynamic?: boolean;
   file_path?: string;
+  file_source?: FileSourceType;
   global_data_product?: {
     outdated_after?: GlobalDataProductOutdatedAfterType;
     outdated_starting_at?: GlobalDataProductOutdatedStartingAtType;

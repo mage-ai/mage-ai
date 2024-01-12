@@ -8,6 +8,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type CircleProps = {
   borderColor?: string;
+  borderOnly?: boolean;
   borderSize?: number;
   children?: any;
   color?: string;
@@ -62,6 +63,11 @@ const CircleStyle = styled.div<CircleProps>`
   ${props => props.borderSize && `
     border-style: solid;
     border-width: ${props.borderSize}px;
+  `}
+
+  ${props => props.danger && props.borderOnly && `
+    background-color: transparent !important;
+    border: 2px solid ${(props.theme.borders || dark.borders).danger};
   `}
 
   ${props => (props.borderSize || props.borderColor) && `

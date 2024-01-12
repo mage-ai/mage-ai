@@ -88,6 +88,9 @@ class ClickHouse(BaseSQLDatabase):
 
         return result
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        return self.client.command(query)
+
     def execute_queries(
         self,
         queries: List[str],

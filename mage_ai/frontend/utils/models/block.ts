@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum, TagEnum } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BreadcrumbEnum,
@@ -1030,4 +1030,34 @@ export function getSelectedColumnsAndAllColumn(stream: StreamType): {
     allColumns,
     selectedColumns,
   };
+}
+
+export function isDynamic(block: BlockType): boolean {
+  const {
+    configuration,
+    tags,
+  } = block || {};
+
+  return configuration?.dynamic || tags?.includes(TagEnum.DYNAMIC);
+}
+
+export function isDynamicChild(block: BlockType): boolean {
+  const {
+    tags,
+  } = block || {};
+
+  return tags?.includes(TagEnum.DYNAMIC_CHILD);
+}
+
+export function isDynamicOrDynamicChild(block: BlockType): boolean {
+  return isDynamic(block) || isDynamicChild(block);
+}
+
+export function reduceOutput(block: BlockType): boolean {
+  const {
+    configuration,
+    tags,
+  } = block || {};
+
+  return configuration?.reduce_output || tags?.includes(TagEnum.REDUCE_OUTPUT);
 }

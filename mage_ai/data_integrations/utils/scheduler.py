@@ -8,7 +8,9 @@ from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_integrations.utils.config import build_config, get_batch_fetch_limit
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.block.data_integration.constants import (
+    KEY_REPLICATION_METHOD,
     MAX_QUERY_STRING_SIZE,
+    REPLICATION_METHOD_INCREMENTAL,
 )
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_block_output_data_for_destination,
@@ -19,9 +21,10 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
     IntegrationPipeline,
 )
+from mage_ai.data_preparation.models.triggers import ScheduleInterval
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
+from mage_ai.orchestration.metrics.pipeline_run import calculate_pipeline_run_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
 
@@ -76,7 +79,11 @@ def initialize_state_and_runs(
 
         block_runs = create_block_runs(pipeline_run, logger, variables=variables)
 
-        calculate_metrics(pipeline_run, logger=logger, logging_tags=tags)
+        calculate_pipeline_run_metrics(
+            pipeline_run,
+            logger=logger,
+            logging_tags=tags,
+        )
 
         return block_runs
     except Exception as err:
@@ -253,6 +260,7 @@ def build_block_run_metadata(
     logging_tags: Dict = None,
     parent_stream: str = None,
     partition: str = None,
+    pipeline_run: PipelineRun = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
     block_run_metadata = []
@@ -270,9 +278,11 @@ def build_block_run_metadata(
 
     if block.is_source():
         return __build_block_run_metadata_for_source(
+            block,
             data_integration_settings,
             logger,
             logging_tags=logging_tags,
+            pipeline_run=pipeline_run,
             selected_streams=selected_streams,
         )
 
@@ -377,9 +387,11 @@ def __build_block_run_metadata_for_destination(
 
 
 def __build_block_run_metadata_for_source(
+    block,
     data_integration_settings: Dict,
     logger: DictLogger,
     logging_tags: Dict = None,
+    pipeline_run: PipelineRun = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
     block_run_metadata = []
@@ -388,20 +400,66 @@ def __build_block_run_metadata_for_source(
     config = data_integration_settings.get('config')
     batch_fetch_limit = get_batch_fetch_limit(config)
 
-    streams = selected_streams or \
-        [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
+    stream_dicts_by_stream_id = index_by(
+        lambda x: x.get('tap_stream_id') or x.get('stream'),
+        get_selected_streams(catalog),
+    )
+
+    streams = []
+
+    if selected_streams:
+        streams = selected_streams
+    else:
+        streams = list(stream_dicts_by_stream_id.keys())
+
+    at_least_one_incremental = False
+
+    for stream_id in streams:
+        if at_least_one_incremental:
+            break
+
+        stream_dict = stream_dicts_by_stream_id.get(stream_id)
+        if not stream_dict:
+            continue
+
+        if REPLICATION_METHOD_INCREMENTAL == stream_dict.get(KEY_REPLICATION_METHOD):
+            at_least_one_incremental = True
+            break
+
+    execution_partition_previous = None
+
+    if at_least_one_incremental and pipeline_run:
+        pipeline_runs_completed = \
+            PipelineRun.recently_completed_pipeline_runs(
+                pipeline_run.pipeline_uuid,
+                pipeline_run_id=pipeline_run.id,
+                pipeline_schedule_id=(
+                    None if
+                    ScheduleInterval.ONCE == pipeline_run.pipeline_schedule.schedule_interval else
+                    pipeline_run.pipeline_schedule_id
+                ),
+                sample_size=1,
+            )
+
+        if pipeline_runs_completed:
+            execution_partition_previous = pipeline_runs_completed[0].execution_partition
+
     data_integration_uuid = data_integration_settings.get('data_integration_uuid')
 
     is_sql_source = data_integration_uuid in SQL_SOURCES_UUID
     record_counts_by_stream = {}
     if is_sql_source:
+
         record_counts_by_stream = index_by(
             lambda x: x['id'],
             count_records(
                 config,
                 data_integration_uuid,
                 streams,
+                block=block,
                 catalog=catalog,
+                partition=execution_partition_previous,
+                variables=pipeline_run.variables if pipeline_run else None,
             ),
         )
 
@@ -432,6 +490,7 @@ def __build_block_run_metadata_for_source(
 
         for idx in range(number_of_batches):
             block_run_metadata.append(dict(
+                execution_partition_previous=execution_partition_previous,
                 index=idx,
                 number_of_batches=number_of_batches,
                 stream=tap_stream_id,

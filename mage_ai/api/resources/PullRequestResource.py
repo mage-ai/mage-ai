@@ -1,8 +1,11 @@
-from github import Auth, Github
+from typing import Dict
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import api
-from typing import Dict
+from mage_ai.data_preparation.git.clients.base import Client as GitClient
+from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
 
 
 def pull_request_to_dict(pr) -> Dict:
@@ -25,23 +28,24 @@ class PullRequestResource(GenericResource):
     def collection(self, query, meta, user, **kwargs):
         arr = []
 
+        remote_url = query.get('remote_url', None)
+        if remote_url:
+            remote_url = remote_url[0]
+
         repository = query.get('repository', None)
         if repository:
             repository = repository[0]
 
-            access_token = api.get_access_token_for_user(user)
-            if access_token:
-                auth = Auth.Token(access_token.token)
-                g = Github(auth=auth)
-                repo = g.get_repo(repository)
-                pulls = repo.get_pulls(
-                    direction='desc',
-                    sort='created',
-                    state='open',
-                ).get_page(0)
+            provider = ProviderName.GITHUB
+            if remote_url:
+                provider = get_provider_from_remote_url(remote_url)
 
-                for pr in pulls:
-                    arr.append(pull_request_to_dict(pr))
+            access_token = api.get_access_token_for_user(user, provider=provider)
+
+            if access_token:
+                arr = GitClient.get_client_for_provider(provider)(
+                    access_token.token
+                ).get_pull_requests(repository)
 
         return self.build_result_set(arr, user, **kwargs)
 
@@ -52,36 +56,53 @@ class PullRequestResource(GenericResource):
         for key in [
             'base_branch',
             'compare_branch',
+            'body',
             'title',
         ]:
-            if key not in payload:
+            if key not in payload or payload.get(key) is None:
                 error.update(dict(message=f'Value for {key} is required but empty.'))
                 raise ApiError(error)
 
+        if payload.get('base_branch') == payload.get('compare_branch'):
+            error.update(
+                dict(
+                    message='Base branch and compare branch cannot be the same.',
+                )
+            )
+            raise ApiError(error)
+
         repository = payload.get('repository')
         if not repository:
-            error.update(dict(
-                message='Repository is empty, ' +
-                'please select a repository to create a pull request in.',
-            ))
+            error.update(
+                dict(
+                    message='Repository is empty, '
+                    + 'please select a repository to create a pull request in.',
+                )
+            )
             raise ApiError(error)
 
-        access_token = api.get_access_token_for_user(user)
+        remote_url = payload.get('remote_url')
+        provider = get_provider_from_remote_url(remote_url)
+
+        access_token = api.get_access_token_for_user(user, provider=provider)
         if not access_token:
-            error.update(dict(
-                message='Access token not found, please authenticate with GitHub.',
-            ))
+            error.update(
+                dict(
+                    message=f'Access token not found, please authenticate with {provider}.',
+                )
+            )
             raise ApiError(error)
 
-        auth = Auth.Token(access_token.token)
-        g = Github(auth=auth)
-        repo = g.get_repo(repository)
+        client = GitClient.get_client_for_provider(provider)(access_token.token)
 
-        pr = repo.create_pull(
-            base=payload.get('base_branch'),
-            body=payload.get('body'),
-            head=payload.get('compare_branch'),
-            title=payload.get('title'),
+        return self(
+            client.create_pull_request(
+                repository,
+                payload.get('base_branch'),
+                payload.get('body'),
+                payload.get('compare_branch'),
+                payload.get('title'),
+            ),
+            user,
+            **kwargs,
         )
-
-        return self(pull_request_to_dict(pr), user, **kwargs)

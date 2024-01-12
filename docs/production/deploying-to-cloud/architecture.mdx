@@ -46,7 +46,7 @@ By default, Mage runs the web server and scheduler in the same container. Mage s
 and run multiple replicas of web servers and schedulers.
 
 To separate the web server and scheduler, you can override the container command with the commands below:
-* Run scheduler only
+* Run scheduler only (The scheduler doesn't need dedicated IP and port)
     ```bash
     /app/run_app.sh mage start project_name --instance-type scheduler
     ```

@@ -125,6 +125,12 @@ class BaseSQL(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **query_vars)
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        with self.conn.cursor() as cursor:
+            result = cursor.execute(query)
+        self.conn.commit()
+        return result
+
     def execute_queries(
         self,
         queries: List[str],

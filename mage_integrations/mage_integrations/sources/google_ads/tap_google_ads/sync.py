@@ -7,6 +7,7 @@ from mage_integrations.sources.google_ads.tap_google_ads.streams import (
     initialize_core_streams,
     initialize_reports,
 )
+from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
 DEFAULT_QUERY_LIMIT = 1000000
@@ -75,8 +76,11 @@ def get_query_limit(config):
         LOGGER.warning(f"The entered query limit is invalid; it will be set to the default query limit of {DEFAULT_QUERY_LIMIT}")
         return DEFAULT_QUERY_LIMIT
 
-def do_sync(config, catalog, resource_schema, state):
+def do_sync(config, catalog, resource_schema, state, logger=None):
     # QA ADDED WORKAROUND [START]
+    if logger is None:
+        logger = LOGGER
+
     try:
         customers = json.loads(config["login_customer_ids"])
     except TypeError:  # falling back to raw value
@@ -119,12 +123,15 @@ def do_sync(config, catalog, resource_schema, state):
         mdata_map = singer.metadata.to_map(catalog_entry["metadata"])
 
         primary_key = mdata_map[()].get("table-key-properties", [])
-        singer.messages.write_schema(stream_name, catalog_entry["schema"], primary_key)
+        write_schema(stream_name,
+                     catalog_entry["schema"],
+                     primary_key,
+                     replication_method=mdata_map[()].get("forced-replication-method", "FULL_TABLE"))
 
         for customer in customers:
             sdk_client = create_sdk_client(config, customer["loginCustomerId"])
 
-            LOGGER.info(f"Syncing {stream_name} for customer Id {customer['customerId']}.")
+            logger.info(f"Syncing {stream_name} for customer Id {customer['customerId']}.")
 
             if core_streams.get(stream_name):
                 stream_obj = core_streams[stream_name]

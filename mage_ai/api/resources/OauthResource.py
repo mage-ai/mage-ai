@@ -6,11 +6,11 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
+    GIT_OAUTH_PROVIDERS,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
-    OAUTH_PROVIDER_GHE,
-    OAUTH_PROVIDER_GITHUB,
     VALID_OAUTH_PROVIDERS,
+    ProviderName,
     get_ghe_hostname,
 )
 from mage_ai.authentication.oauth.utils import (
@@ -31,16 +31,37 @@ class OauthResource(GenericResource):
         if redirect_uri:
             redirect_uri = redirect_uri[0]
 
+        oauth_type = query.get('type', [None])
+        if oauth_type:
+            oauth_type = oauth_type[0]
+
+        providers = VALID_OAUTH_PROVIDERS
+        if oauth_type == 'git':
+            providers = GIT_OAUTH_PROVIDERS
+
         oauths = []
-        for provider, provider_class in NAME_TO_PROVIDER.items():
+        for provider in providers:
             try:
-                provider_instance = provider_class()
-                auth_url_response = provider_instance.get_auth_url_response(
-                    redirect_uri=redirect_uri
+                access_tokens = access_tokens_for_client(
+                    get_oauth_client_id(provider),
+                    user=user,
                 )
-                if auth_url_response:
-                    auth_url_response['provider'] = provider
-                    oauths.append(auth_url_response)
+                model = dict(provider=provider)
+                authenticated = len(access_tokens) >= 1
+                if authenticated:
+                    model['authenticated'] = authenticated
+                    model['expires'] = max(
+                        [access_token.expires for access_token in access_tokens]
+                    )
+                else:
+                    provider_class = NAME_TO_PROVIDER.get(provider)
+                    provider_instance = provider_class()
+                    auth_url_response = provider_instance.get_auth_url_response(
+                        redirect_uri=redirect_uri
+                    )
+                    if auth_url_response:
+                        model.update(**auth_url_response)
+                oauths.append(model)
             except Exception:
                 continue
 
@@ -78,14 +99,20 @@ class OauthResource(GenericResource):
         access_token = Oauth2AccessToken.query.filter(
             Oauth2AccessToken.token == token,
         ).first()
+
+        expire_timedelta = timedelta(days=30)
+        # TODO: BitBucket tokens expire after an hour. We need to add logic to refresh them in the
+        # future.
+        if provider == ProviderName.BITBUCKET:
+            expire_timedelta = timedelta(hours=1)
         if access_token:
-            access_token.expires = datetime.utcnow() + timedelta(days=30)
+            access_token.expires = datetime.utcnow() + expire_timedelta
             access_token.save()
         else:
             access_token = generate_access_token(
                 user,
                 application=oauth_client,
-                duration=int(timedelta(days=30).total_seconds()),
+                duration=int(expire_timedelta.total_seconds()),
                 token=token,
             )
 
@@ -116,15 +143,10 @@ class OauthResource(GenericResource):
 
         ghe_hostname = get_ghe_hostname()
 
-        if pk == OAUTH_PROVIDER_GITHUB and ghe_hostname:
-            provider = OAUTH_PROVIDER_GHE
+        if pk == ProviderName.GITHUB and ghe_hostname:
+            provider = ProviderName.GHE
         else:
             provider = pk
-
-        provider_class = NAME_TO_PROVIDER.get(provider)
-        provider_instance = None
-        if provider_class is not None:
-            provider_instance = provider_class()
 
         access_tokens = access_tokens_for_client(
             get_oauth_client_id(provider),
@@ -137,9 +159,15 @@ class OauthResource(GenericResource):
             model['expires'] = max(
                 [access_token.expires for access_token in access_tokens]
             )
+            return self(model, user, **kwargs)
+
+        provider_class = NAME_TO_PROVIDER.get(provider)
+        provider_instance = None
+        if provider_class is not None:
+            provider_instance = provider_class()
         # If an oauth code is provided, we need to exchange it for an access token for
         # the provider and return the redirect uri.
-        elif code:
+        if code:
             if provider_instance is not None:
                 # 1. Obtain an access token from the Oauth provider.
                 # 2. Update uri query parameters with provider and access token from response.
@@ -171,7 +199,7 @@ class OauthResource(GenericResource):
                 model['url'] = redirect_uri_final
         # Otherwise, return the authorization url to start the oauth flow.
         else:
-            if OAUTH_PROVIDER_GITHUB == provider:
+            if ProviderName.GITHUB == provider:
                 query = dict(
                     client_id=GITHUB_CLIENT_ID,
                     redirect_uri=urllib.parse.quote_plus(

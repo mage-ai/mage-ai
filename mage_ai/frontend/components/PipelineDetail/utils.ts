@@ -1,21 +1,30 @@
+import * as osPath from 'path';
 import moment from 'moment';
 import { NextRouter } from 'next/router';
 
-import BlockType, { OutputType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+  OutputType,
+} from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
+import { BlockFolderNameEnum, FileExtensionEnum } from '@interfaces/FileType';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
+import { DEFAULT_SQL_CONFIG_KEY_LIMIT } from '@components/CodeBlock';
 import {
   LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS,
   get,
   remove,
   set,
 } from '@storage/localStorage';
+import { addUnderscores, isJsonString, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import {
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
+import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { indexBy } from '@utils/array';
-import { isJsonString } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export function initializeContentAndMessages(blocks: BlockType[]) {
@@ -206,4 +215,71 @@ export function buildBlockRefKey({
   uuid?: string;
 }): string {
   return `${type}s/${uuid}.py`;
+}
+
+export function buildBlockFromFilePath({
+  blockIndex,
+  blocks,
+  filePath,
+  isNewBlock,
+  name,
+  repoPathRelativeRoot,
+}: {
+  blockIndex?: number;
+  blocks: BlockType[];
+  filePath: string;
+  isNewBlock?: boolean;
+  name?: string;
+  repoPathRelativeRoot: string;
+}) {
+  // filePath: default_repo/dbt/demo/models/example/model_1.sql
+  // finalFilePath: demo/models/example/model_1.sql
+  const projectPath =
+    `${repoPathRelativeRoot}${osPath.sep}${BlockFolderNameEnum.DBT}${osPath.sep}`;
+  // let finalFilePath = filePath;
+
+  // Only remove the project name and dbt folder from the file path if its in the current
+  // active project’s directory.
+  // if (finalFilePath?.startsWith(projectPath)) {
+  //   finalFilePath = finalFilePath?.replace(projectPath, '');
+  // }
+
+  if (isNewBlock) {
+    let blockName = addUnderscores(name || randomNameGenerator());
+    const sqlExtension = `.${FileExtensionEnum.SQL}`;
+    if (blockName.endsWith(sqlExtension)) {
+      blockName = blockName.slice(0, -4);
+    }
+    // finalFilePath: demo/models/example/model_1.sql
+    // finalFilePath = `${filePath}${osPath.sep}${blockName}.${FileExtensionEnum.SQL}`;
+  }
+
+  const newBlock: BlockRequestPayloadType = {
+    configuration: {
+      file_path: filePath,
+      file_source: {
+        path: filePath,
+      },
+      limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
+    },
+    language: BlockLanguageEnum.SQL,
+    name: removeExtensionFromFilename(filePath),
+    type: BlockTypeEnum.DBT,
+    // Used in project platform
+  };
+
+  if (isNewBlock) {
+    newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
+`;
+  }
+
+  const isAddingFromBlock =
+    typeof blockIndex === 'undefined' || blockIndex === null;
+  const block = blocks[isAddingFromBlock ? blocks.length - 1 : blockIndex];
+  const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+  return {
+    ...newBlock,
+    upstream_blocks: upstreamBlocks,
+  };
 }

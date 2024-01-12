@@ -1,6 +1,8 @@
 import EventMatcherType from './EventMatcherType';
 import { RunStatus as RunStatusEnum } from './BlockRunType';
 
+export const VARIABLE_BOOKMARK_VALUES_KEY = '__bookmark_values__';
+
 export enum ScheduleTypeEnum {
   API = 'api',
   EVENT = 'event',
@@ -89,6 +91,7 @@ export default interface PipelineScheduleType {
   pipeline_in_progress_runs_count?: number;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
+  repo_path?: string;
   runtime_average?: number;
   schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;

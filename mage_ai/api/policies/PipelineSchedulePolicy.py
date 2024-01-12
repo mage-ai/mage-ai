@@ -33,7 +33,10 @@ class PipelineSchedulePolicy(BasePolicy):
     @property
     def entity(self):
         if self.resource and self.resource.model:
-            return Entity.PIPELINE, self.resource.model.pipeline_uuid
+            if isinstance(self.resource.model, dict):
+                return Entity.PIPELINE, self.resource.model.get('pipeline_uuid')
+            else:
+                return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
         return Entity.PROJECT, get_project_uuid()
 
@@ -107,6 +110,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'next_pipeline_run_date',
+    'pipeline_runs_count',
     'runtime_average',
     'tags',
 ], scopes=[

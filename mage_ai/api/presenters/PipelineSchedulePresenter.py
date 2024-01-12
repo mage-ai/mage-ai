@@ -22,34 +22,29 @@ class PipelineSchedulePresenter(BasePresenter):
         'variables',
     ]
 
-    async def present(self, **kwargs):
+    async def prepare_present(self, **kwargs):
         display_format = kwargs['format']
-        data = self.model.to_dict()
-        next_execution_date = self.model.next_execution_date()
 
-        if constants.LIST == display_format:
-            data = self.model.to_dict(include_attributes=[
-                'event_matchers',
-                'last_pipeline_run_status',
-                'pipeline_in_progress_runs_count',
-                'pipeline_runs_count',
-            ])
-            data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
-            data['next_pipeline_run_date'] = next_execution_date
-
-            return data
-        elif display_format in [constants.DETAIL, constants.UPDATE]:
+        if display_format in [constants.DETAIL, constants.UPDATE]:
             data = self.model.to_dict(include_attributes=[
                 'event_matchers',
             ])
             data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
-            data['next_pipeline_run_date'] = next_execution_date
+            data['next_pipeline_run_date'] = self.model.next_execution_date()
 
             return data
         elif 'with_runtime_average' == display_format:
+            data = self.model.to_dict()
             data['runtime_average'] = self.model.runtime_average()
             data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
-            data['next_pipeline_run_date'] = next_execution_date
+            data['next_pipeline_run_date'] = self.model.next_execution_date()
+
+            if constants.DETAIL == kwargs.get('api_operation_action'):
+                data['pipeline_runs_count'] = len(self.model.pipeline_runs)
+        elif isinstance(self.model, dict):
+            data = self.model
+        else:
+            data = self.model.to_dict()
 
         return data
 
@@ -59,8 +54,10 @@ PipelineSchedulePresenter.register_format(
     PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
         'last_pipeline_run_status',
+        'next_pipeline_run_date',
         'pipeline_in_progress_runs_count',
         'pipeline_runs_count',
+        'tags',
     ],
 )
 
@@ -69,6 +66,8 @@ PipelineSchedulePresenter.register_formats([
     constants.UPDATE,
 ], PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
+        'next_pipeline_run_date',
+        'tags',
     ],
 )
 
@@ -76,6 +75,24 @@ PipelineSchedulePresenter.register_formats([
 PipelineSchedulePresenter.register_formats([
     'with_runtime_average',
 ], PipelineSchedulePresenter.default_attributes + [
+        'next_pipeline_run_date',
+        'pipeline_runs_count',
         'runtime_average',
+        'tags',
+    ],
+)
+
+
+PipelineSchedulePresenter.register_formats(
+    [
+        f'integration_source/{constants.DETAIL}',
+    ],
+    [
+        'id',
+        'name',
+        'schedule_interval',
+        'schedule_type',
+        'settings',
+        'variables',
     ],
 )

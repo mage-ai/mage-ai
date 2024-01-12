@@ -6,18 +6,21 @@ import {
   fetchCreate,
   fetchCreateWithParent,
   fetchCreateWithParentAndChild,
-  fetchUpdateWithParent,
   fetchDetailAsync,
   fetchListAsync,
   fetchListWithParentAsync,
   fetchUpdate,
+  fetchUpdateWithParent,
   useDelete,
   useDeleteWithParent,
   useDetail,
+  useDetailAsync,
   useDetailWithParent,
   useDetailWithParentAsync,
   useList,
+  useListAsync,
   useListWithParent,
+  useListWithParentAsync,
   useUpdate,
 } from './utils/use';
 import { handle } from '@api/utils/response';
@@ -32,12 +35,16 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const CACHE_ITEMS: 'cache_items' = 'cache_items';
 export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const COMMAND_CENTER_ITEMS: 'command_center_items' = 'command_center_items';
 export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
 export const COMPUTE_CONNECTIONS: 'compute_connections' = 'compute_connections';
 export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
+export const CONFIGURATION_OPTIONS: 'configuration_options' = 'configuration_options';
+export const CUSTOM_DESIGNS: 'custom_designs' = 'custom_designs';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
@@ -104,7 +111,7 @@ export const WIDGETS: 'widgets' = 'widgets';
 export const WORKSPACES: 'workspaces' = 'workspaces';
 
 // Update this as routes get added
-const RESOURCES: any[][] = [
+const RESOURCES_PAIRS_ARRAY: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
   [AUTOCOMPLETE_ITEMS],
   [BACKFILLS, PIPELINES],
@@ -119,12 +126,16 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
+  [CACHE_ITEMS],
   [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [COMMAND_CENTER_ITEMS],
   [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
   [COMPUTE_CONNECTIONS, COMPUTE_SERVICES],
   [COMPUTE_SERVICES],
+  [CONFIGURATION_OPTIONS, PIPELINES],
+  [CUSTOM_DESIGNS],
   [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
@@ -148,6 +159,7 @@ const RESOURCES: any[][] = [
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
+  [INTEGRATION_SOURCES, PIPELINES],
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
   [INTERACTIONS, PIPELINE_INTERACTIONS],
@@ -196,9 +208,14 @@ const RESOURCES: any[][] = [
   [WORKSPACES],
 ];
 
+// @ts-ignore
+export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce((keys: string[]) => ({
+  [keys[0]]: keys,
+}), {});
+
 const apis: any = {};
 
-RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) => {
+RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, swrOptions]) => {
   if (!apis[resource]) {
     apis[resource] = {
       deleteAsync: async (id: string) => {
@@ -223,12 +240,38 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
         },
         customOptions,
       ),
-      detailAsync: async (ctx: any, id: string, query: any = {}) => {
+      detailAsync: async (
+        id: string,
+        query?: any,
+        options?: FetcherOptionsType,
+      ) => {
+        const response = useDetailAsync(
+          resource,
+          id,
+          query,
+          options,
+        );
+
+        return await handle(response);
+      },
+      detailAsyncServer: async (ctx: any, id: string, query: any = {}) => {
         const response = await fetchDetailAsync(ctx, resource, id, query);
 
         return await handle(response);
       },
-      updateAsync: async (ctx: any, id: string, body: any) => {
+      listAsync: async (
+        query?: any,
+        options?: FetcherOptionsType,
+      ) => {
+        const response = useListAsync(
+          resource,
+          query,
+          options,
+        );
+
+        return await handle(response);
+      },
+      updateAsyncServer: async (ctx: any, id: string, body: any) => {
         const response = await useUpdate(ctx, resource, id, body);
 
         return await handle(response);
@@ -303,9 +346,44 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
       const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
 
       return await handle(response);
-    },
+    };
 
-    apis[resource][parentResource].listAsync = async (ctx: any, parentId: string, query: any = {}) => {
+    apis[resource][parentResource].detailAsync = async (
+      parentId: string,
+      id: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useDetailWithParentAsync(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        options,
+        null,
+      );
+
+      return await handle(response);
+    };
+
+    apis[resource][parentResource].listAsync = async (
+      parentId: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useListWithParentAsync(
+        resource,
+        parentResource,
+        parentId,
+        query,
+        options,
+      );
+
+      return await handle(response);
+    };
+
+    apis[resource][parentResource].listAsyncServer = async (ctx: any, parentId: string, query: any = {}) => {
       const response = await fetchListWithParentAsync(ctx, resource, parentResource, parentId, query);
 
       return await handle(response);
@@ -359,12 +437,6 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
 
     apis[resource].useDelete = (id: string, query?: object) => async () => {
       const response = await useDelete(resource, id, query);
-
-      return await handle(response);
-    },
-
-    apis[resource].listAsync = async (ctx: any, query: any = {}) => {
-      const response = await fetchListAsync(ctx, resource, query);
 
       return await handle(response);
     };

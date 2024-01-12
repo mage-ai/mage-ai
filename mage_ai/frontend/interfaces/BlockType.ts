@@ -6,6 +6,7 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
+import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -55,6 +56,16 @@ export enum BlockTypeEnum {
   MARKDOWN = 'markdown',
   TRANSFORMER = 'transformer',
 }
+
+export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
+  [BlockTypeEnum.CUSTOM]: BlockTypeEnum.CUSTOM,
+  [BlockTypeEnum.DBT]: BlockTypeEnum.DBT,
+};
+
+export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce((acc, [k, v]) => ({
+  ...acc,
+  [v]: k,
+}), {});
 
 export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.CALLBACK,
@@ -175,7 +186,7 @@ export interface AnalysisType {
   variable_uuid: string;
 }
 
-enum ObjectType {
+export enum ObjectType {
   BLOCK_FILE = 'block_file',
   CUSTOM_BLOCK_TEMPLATE = 'custom_block_template',
   MAGE_TEMPLATE = 'mage_template',
@@ -284,9 +295,10 @@ export default interface BlockType {
       config?: {
         [key: string]: number | string;
       };
-      destination?: string;
+      destination?: IntegrationDestinationEnum;
       name?: string;
-      source?: string;
+      source?: IntegrationSourceEnum;
+      sql?: boolean;
     };
     dbt?: {
       block?: {
@@ -305,9 +317,7 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
-  pipelines?: {
-    [uuid: string]: BlockPipelineType;
-  };
+  pipelines?: BlockPipelineType[];
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;

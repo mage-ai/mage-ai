@@ -1,64 +1,26 @@
-import { useState } from 'react';
-
 import Button from '@oracle/elements/Button';
-import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import useErrorViews, { UseErrorViewsProps } from './useErrorViews';
 import { Close } from '@oracle/icons';
 import {
   CloseButtonContainerStyle,
   ErrorPopupStyle,
 } from './index.style';
-import { ErrorType, ErrorResponseType } from '@interfaces/ErrorsType';
-import { isObject } from '@utils/hash';
-
-type ErrorPopupProps = {
-  displayMessage?: string;
-  errors?: ErrorType;
-  links?: {
-    href?: string;
-    label: string;
-    onClick?: () => void;
-  }[];
-  onClose?: () => void;
-  response?: ErrorResponseType;
-};
 
 function ErrorPopup({
-  displayMessage: displayMessageProp,
-  errors: errorsProp,
-  links,
   onClose,
-  response,
-}: ErrorPopupProps) {
-  const [stackTraceVisible, setStackTraceVisible] = useState(false);
-  const [tracebackVisible, setTracebackVisible] = useState(false);
+  ...props
+}: UseErrorViewsProps & {
+  onClose?: () => void;
+}) {
   const {
-    messages: messagesProp,
-  } = errorsProp || {};
-
-  const {
-    errors: errorsFromResponse,
+    displayMessage,
     exception,
-    message: messageFromResponse,
-  } = response?.error || {};
-
-  let displayMessage = displayMessageProp;
-  let messages = messagesProp;
-  if (messageFromResponse) {
-    messages = messageFromResponse.split('\n');
-  }
-
-  if (!exception && !displayMessage && messages?.[0]) {
-    displayMessage = messages[0];
-    messages = null;
-  }
-
-  const errors = Array.isArray(errorsFromResponse)
-    ? errorsFromResponse
-    : isObject(errorsFromResponse)
-      ? Object.values(errorsFromResponse).filter((value) => typeof value === 'string')
-      : [errorsFromResponse ? String(errorsFromResponse) : ''];
+    links,
+    stackTrace,
+    traceback,
+  } = useErrorViews(props);
 
   return (
     <ErrorPopupStyle>
@@ -81,103 +43,29 @@ function ErrorPopup({
 
       {displayMessage && (
         <Spacing mt={1}>
-          <Text default>
-            {displayMessage}
-          </Text>
+          {displayMessage}
         </Spacing>
       )}
 
       {exception && (
         <Spacing mt={1}>
-          <Text
-            default
-            disableWordBreak
-            monospace
-          >
-            {exception}
-          </Text>
+          {exception}
         </Spacing>
       )}
 
-      {messages?.length > 0 && (
+      {traceback && (
         <Spacing mt={2}>
-          <Text bold large>
-            Traceback (<Link
-              onClick={() => setTracebackVisible(prev => !prev)}
-              preventDefault
-              warning
-            >
-              {tracebackVisible ? 'hide' : 'show'} traceback
-            </Link>)
-          </Text>
-
-          {tracebackVisible &&
-            <Spacing mt={1}>
-              {messages.map(msg => (
-                <Text
-                  // @ts-ignore
-                  dangerouslySetInnerHTML={{
-                    // @ts-ignore
-                    __html: msg.replaceAll(' ', '&nbsp;'),
-                  }}
-                  default
-                  disableWordBreak
-                  key={msg}
-                  monospace
-                />
-              ))}
-            </Spacing>
-          }
+          {traceback}
         </Spacing>
       )}
 
-      {errors && (
+      {stackTrace && (
         <Spacing mt={2}>
-          <Text bold large>
-            Stack trace (<Link
-              onClick={() => setStackTraceVisible(prev => !prev)}
-              preventDefault
-              warning
-            >
-              {stackTraceVisible ? 'hide' : 'show'} stack trace
-            </Link>)
-          </Text>
-
-          {stackTraceVisible && (
-            <Spacing mt={1}>
-              {errors.map(msg => (
-                <Text
-                  // @ts-ignore
-                  dangerouslySetInnerHTML={{
-                    // @ts-ignore
-                    __html: msg.replaceAll(' ', '&nbsp;'),
-                  }}
-                  default
-                  disableWordBreak
-                  // @ts-ignore
-                  key={msg}
-                  monospace
-                />
-              ))}
-            </Spacing>
-          )}
+          {stackTrace}
         </Spacing>
       )}
 
-      {links?.map(({ href, label, onClick }) => (
-        <Spacing key={label} mt={2}>
-          <Link
-            href={href}
-            large
-            onClick={onClick}
-            openNewWindow={!!href}
-            underline
-            warning
-          >
-            {label}
-          </Link>
-        </Spacing>
-      ))}
+      {links}
     </ErrorPopupStyle>
   );
 }

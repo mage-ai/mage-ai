@@ -419,6 +419,7 @@ class DataIntegrationMixin:
         upstream_block_uuids: List[str] = None,
         all_catalogs: bool = False,
         all_streams: bool = False,
+        **kwargs,
     ) -> Tuple[List, List, List]:
         block_uuids_to_fetch = upstream_block_uuids or self.upstream_block_uuids_for_inputs
 
@@ -453,13 +454,13 @@ class DataIntegrationMixin:
         # Get the output as inputs for this block
         input_vars_fetched, kwargs_vars, up_block_uuids = self.fetch_input_variables(
             input_vars,
-            execution_partition,
-            global_vars,
+            data_integration_settings_mapping=data_integration_settings_mapping,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
             from_notebook=from_notebook,
+            global_vars=global_vars,
             upstream_block_uuids=block_uuids_to_fetch,
-            data_integration_settings_mapping=data_integration_settings_mapping,
         )
 
         if block_uuids_to_fetch and is_debug():
@@ -515,13 +516,13 @@ class DataIntegrationMixin:
                             kwargs_vars_inner, \
                             _up_block_uuids = self.fetch_input_variables(
                                 None,
-                                execution_partition,
-                                global_vars,
+                                data_integration_settings_mapping=data_integration_settings_mapping,
                                 dynamic_block_index=dynamic_block_index,
                                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                                execution_partition=execution_partition,
                                 from_notebook=from_notebook,
+                                global_vars=global_vars,
                                 upstream_block_uuids=[up_uuid],
-                                data_integration_settings_mapping=data_integration_settings_mapping,
                             )
 
                         if input_vars_inner:

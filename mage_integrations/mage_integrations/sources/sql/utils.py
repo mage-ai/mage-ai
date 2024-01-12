@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Union
 
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -8,6 +8,7 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_OBJECT,
 )
+from mage_integrations.sources.sql.constants import PredicateOperator
 from mage_integrations.utils.array import find
 
 
@@ -56,3 +57,21 @@ def wrap_column_in_quotes(column):
         return f'"{column}"'
 
     return column
+
+
+def predicate_operator_uuid_to_comparison_operator(operator: Union[PredicateOperator, str]) -> str:
+    if isinstance(operator, str):
+        operator = PredicateOperator(operator)
+
+    if PredicateOperator.EQUALS == operator:
+        return '='
+    if PredicateOperator.GREATER_THAN == operator:
+        return '>'
+    if PredicateOperator.GREATER_THAN_OR_EQUALS == operator:
+        return '>='
+    if PredicateOperator.LESS_THAN == operator:
+        return '<'
+    if PredicateOperator.LESS_THAN_OR_EQUALS == operator:
+        return '<='
+    if PredicateOperator.NOT_EQUALS == operator:
+        return '!='

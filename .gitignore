@@ -165,6 +165,7 @@ docker-compose.override.yml
 node_modules
 .npmrc
 mage_ai/server/frontend_dist_base_path
+.env
 
 # Scratch files
 scratch*

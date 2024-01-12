@@ -1,3 +1,4 @@
+import inspect
 import typing
 from dataclasses import dataclass, make_dataclass
 from enum import Enum
@@ -59,6 +60,7 @@ class BaseClass:
                     model.set_value(key, value)
             except AttributeError as err:
                 print(f'[WARNING] {self.__name__}.load: {err}')
+                raise err
 
         return model
 
@@ -118,7 +120,7 @@ class BaseClass:
             else:
                 return value
 
-        is_data_class = issubclass(annotation, BaseDataClass)
+        is_data_class = inspect.isclass(annotation) and issubclass(annotation, BaseDataClass)
         if is_data_class:
             if is_dict_class:
                 if ignore_empty and len(value) == 0:
@@ -197,10 +199,19 @@ class BaseClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enums: {err}')
 
-    def to_dict(self, convert_enum: bool = False, ignore_empty: bool = False, **kwargs) -> Dict:
+    def to_dict(
+        self,
+        convert_enum: bool = False,
+        ignore_attributes: List[str] = None,
+        ignore_empty: bool = False,
+        **kwargs,
+    ) -> Dict:
         data = {}
 
         for key, annotation in self.all_annotations().items():
+            if ignore_attributes and key in ignore_attributes:
+                continue
+
             value = None
             try:
                 value = getattr(self, key)

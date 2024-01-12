@@ -3,6 +3,19 @@ from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.GlobalHookPresenter import GlobalHookPresenter
 
+WRITEABLE_ATTRIBUTES = [
+    'conditions',
+    'operation_type',
+    'outputs',
+    'pipeline',
+    'predicate',
+    'resource_type',
+    'root_project',
+    'run_settings',
+    'stages',
+    'strategies',
+]
+
 
 class GlobalHookPolicy(BasePolicy):
     pass
@@ -46,16 +59,7 @@ GlobalHookPolicy.allow_read(
 
 
 GlobalHookPolicy.allow_write(
-    [
-        'conditions',
-        'operation_type',
-        'outputs',
-        'pipeline',
-        'predicates',
-        'resource_type',
-        'run_settings',
-        'stages',
-        'strategies',
+    WRITEABLE_ATTRIBUTES + [
         'uuid',
     ],
     scopes=[
@@ -70,16 +74,8 @@ GlobalHookPolicy.allow_write(
 
 
 GlobalHookPolicy.allow_write(
-    [
-        'conditions',
-        'operation_type',
-        'outputs',
-        'pipeline',
-        'predicates',
-        'resource_type',
-        'run_settings',
-        'stages',
-        'strategies',
+    WRITEABLE_ATTRIBUTES + [
+        'snapshot',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -94,8 +90,10 @@ GlobalHookPolicy.allow_write(
 
 GlobalHookPolicy.allow_query(
     [
+        'include_snapshot_validation',
         'operation_type[]',
         'resource_type[]',
+        'root_project',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -112,8 +110,10 @@ GlobalHookPolicy.allow_query(
     [
         'include_operation_types',
         'include_resource_types',
+        'include_snapshot_validation',
         'operation_type',
         'resource_type',
+        'root_project',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

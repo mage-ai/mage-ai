@@ -12,6 +12,9 @@ default:
   AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
   AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
   AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
+  # Chroma
+  CHROMA_COLLECTION: collection_name
+  CHROMA_PATH: path
   # Clickhouse
   CLICKHOUSE_DATABASE: default
   CLICKHOUSE_HOST: host.docker.internal
@@ -80,6 +83,9 @@ default:
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
   POSTGRES_PORT: 5432
+  # Qdrant
+  QDRANT_COLLECTION: collection
+  QDRANT_PATH: path
   # Redshift
   REDSHIFT_SCHEMA: public # Optional
   REDSHIFT_DBNAME: redshift_db_name

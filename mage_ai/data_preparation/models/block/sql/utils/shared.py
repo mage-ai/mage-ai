@@ -10,9 +10,12 @@ from mage_ai.data_preparation.models.block.sql.constants import (
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import merge_dict
 
 MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 
@@ -225,10 +228,27 @@ def interpolate_input(
     return query
 
 
-def interpolate_vars(query, global_vars=None):
+def interpolate_vars(query, global_vars=None, block=None):
     if global_vars is None:
         global_vars = dict()
-    return Template(query, undefined=StrictUndefined).render(**global_vars)
+
+    if block:
+        query = block.interpolate_content(query, variables=global_vars)
+
+    return Template(
+        query,
+        undefined=StrictUndefined,
+    ).render(
+        variables=lambda x, p=None, v=global_vars: get_variable_for_template(
+            x,
+            parse=p,
+            variables=v,
+        ),
+        **merge_dict(
+            global_vars,
+            get_template_vars(),
+        ),
+    )
 
 
 def table_name_parts(
@@ -353,8 +373,8 @@ def create_upstream_block_tables(
 
     input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
         None,
-        execution_partition,
-        None,
+        execution_partition=execution_partition,
+        global_vars=None,
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
