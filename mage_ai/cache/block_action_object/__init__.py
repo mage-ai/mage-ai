@@ -35,7 +35,11 @@ from mage_ai.data_preparation.templates.constants import (
 from mage_ai.data_preparation.templates.data_integrations.utils import (
     get_templates as get_templates_for_data_integrations,
 )
-from mage_ai.settings.platform import build_repo_path_for_all_projects
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
+)
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
 
@@ -254,17 +258,15 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
-        traversed_paths = dict()
-        for path_dict in build_repo_path_for_all_projects(mage_projects_only=False).values():
-            repo_path = path_dict['root_project_full_path']
+        paths_to_traverse = [dict(full_path=base_repo_path())]
+        if project_platform_activated():
+            paths_to_traverse = build_repo_path_for_all_projects(mage_projects_only=True).values()
+        for path_dict in paths_to_traverse:
+            repo_path = path_dict['full_path']
 
             for block_type in BlockType:
                 file_directory_name = Block.file_directory_name(block_type)
                 directory_full_path = os.path.join(repo_path, file_directory_name)
-
-                if traversed_paths.get(directory_full_path):
-                    continue
-                traversed_paths[directory_full_path] = True
 
                 for path in Path(directory_full_path).rglob('*'):
                     if not path.is_file():
