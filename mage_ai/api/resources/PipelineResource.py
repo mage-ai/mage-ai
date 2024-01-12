@@ -244,7 +244,7 @@ class PipelineResource(BaseResource):
                         pipelines.append(pipeline)
                     else:
                         # Add pipeline with type "invalid" so pipeline with invalid config
-                        # can still be displayed in UI
+                        # can still be displayed in UI and visible to user
                         pipelines.append(Pipeline(
                             uuid,
                             config=dict(type='invalid'),
