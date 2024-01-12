@@ -619,6 +619,12 @@ class Pipeline:
 
         def build_shared_args_kwargs(c):
             block_type = c.get('type')
+
+            if block_type not in [b.value for b in BlockType]:
+                raise Exception(
+                    f'Error loading pipeline ({self.uuid}): Invalid block type ({block_type})',
+                )
+
             language = c.get('language')
             return Block.block_class_from_type(block_type, language=language, pipeline=self)(
                 c.get('name'),
