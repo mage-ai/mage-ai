@@ -242,6 +242,12 @@ class PipelineResource(BaseResource):
                     pipeline = get_pipeline_with_config(uuid, pipeline_dict['pipeline'])
                     if pipeline:
                         pipelines.append(pipeline)
+                    else:
+                        # Add pipeline with type "invalid" so it can still be displayed in UI
+                        pipelines.append(Pipeline(
+                            pipeline_dict['pipeline']['uuid'],
+                            config=dict(type='invalid'),
+                        ))
                 else:
                     pipeline_uuids_miss.append(uuid)
 
