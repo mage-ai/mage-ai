@@ -1,5 +1,6 @@
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import Link from '@oracle/elements/Link';
 import Text from '@oracle/elements/Text';
 import {
   ButtonActionTypeEnum,
@@ -115,9 +116,15 @@ export function buildSettingsItemWithApplication(): {
             </FlexContainer>
 
             <Text muted small>
-              You can change this by entering
+              You can change this by entering the desired
               <br />
-              the desired key codes separated by commas.
+              <Link
+                href="https://www.toptal.com/developers/keycode"
+                openNewWindow
+                small
+              >
+                key codes
+              </Link> separated by commas.
             </Text>
           </>
         ),
