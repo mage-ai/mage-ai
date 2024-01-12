@@ -63,6 +63,10 @@ try:
     )
 except ValueError:
     MAGE_ACCESS_TOKEN_EXPIRY_TIME = 2592000
+
+# Default access level to give to users created when authenticated through OAuth
+# for the first time. value should be the name of a Mage role (e.g. Viewer, Editor, Admin)
+OAUTH_DEFAULT_ACCESS = os.getenv('OAUTH_DEFAULT_ACCESS')
 LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldaps://127.0.0.1:1636')
 LDAP_BIND_DN = os.getenv('LDAP_BIND_DN', 'cd=admin,dc=example,dc=org')
 LDAP_BIND_PASSWORD = os.getenv('LDAP_BIND_PASSWORD', 'admin_password')
@@ -76,7 +80,8 @@ LDAP_AUTHORIZATION_FILTER = os.getenv(
     '(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))',
 )
 LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
-# values: Viewer, Editor, Admin
+# Default access level to give to users created when authenticated through LDAP
+# for the first time. value should be the name of a Mage role (e.g. Viewer, Editor, Admin)
 LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
 LDAP_GROUP_FIELD = os.getenv('LDAP_GROUP_FIELD', 'memberOf')
 LDAP_ROLES_MAPPING = os.getenv('LDAP_ROLES_MAPPING', None)
@@ -133,6 +138,7 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'DISABLE_NOTEBOOK_EDIT_ACCESS',
     'REQUIRE_USER_AUTHENTICATION',
     'AUTHENTICATION_MODE',
+    'OAUTH_DEFAULT_ACCESS',
     'LDAP_SERVER',
     'LDAP_BIND_DN',
     'LDAP_BIND_PASSWORD',
