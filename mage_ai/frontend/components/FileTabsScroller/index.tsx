@@ -1,6 +1,9 @@
 import React, { createRef, useEffect, useMemo, useState, useRef } from 'react';
 
-import { ScrollerStyle } from './index.style';
+import Circle from '@oracle/elements/Circle';
+import Text from '@oracle/elements/Text';
+import { ChevronLeft, ChevronRight } from '@oracle/icons';
+import { ArrowCount, CountInnerStyle, ScrollerStyle, ICON_SIZE } from './index.style';
 import { sum } from '@utils/array';
 
 type FileTabsScrollerProps = {
@@ -19,6 +22,13 @@ function FileTabsScroller({
   const refScroll = useRef(null);
   const refTabs = useRef(null);
   const refFileTabs = useRef([]);
+  const countLeftRef = useRef(null);
+  const countLeftTextRef = useRef(null);
+  const countRightRef = useRef(null);
+  const countRightTextRef = useRef(null);
+  const timeoutLeftRef = useRef(null);
+  const timeoutRightRef = useRef(null);
+  const mouseRef = useRef(null);
   const [widths, setWidths] = useState(null);
 
   // TODO (dang): show arrows to scroll left and right
@@ -81,9 +91,125 @@ function FileTabsScroller({
     );
   }), [fileTabs]);
 
+  function isMouseOnCounts() {
+    const {
+      left,
+      width,
+    } = refScroll?.current?.getBoundingClientRect() || {
+      left: 0,
+      width: 0,
+    };
+
+    const isOnLeft = mouseRef?.current?.clientX <= left + (ICON_SIZE * 2);
+    if (isOnLeft) {
+      countLeftRef.current.style.display = 'none';
+    }
+
+    const isOnRight = mouseRef?.current?.clientX >= (left + width) - (ICON_SIZE * 2);
+    if (isOnRight) {
+      countRightRef.current.style.display = 'none';
+    }
+
+    return [isOnLeft, isOnRight];
+  }
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      mouseRef.current = e;
+      isMouseOnCounts();
+    };
+
+    const onScroll = () => {
+      const {
+        width,
+      } = refScroll?.current?.getBoundingClientRect() || {
+        width: null,
+      };
+      if (width === null) {
+        return;
+      }
+
+      const scrollValue = refScroll?.current?.scrollLeft
+
+      const leftItems = [];
+      const middleItems = [];
+      const rightItems = [];
+      const arr = refFileTabs?.current.map((el, idx) => el?.current?.getBoundingClientRect()?.width || 0);
+
+      let acc = 0;
+      arr?.forEach((widthEl, idx) => {
+        const leftVal = acc;
+        const rightVal = acc + widthEl;
+
+        if (rightVal < scrollValue) {
+          leftItems.push(idx);
+        } else if (leftVal > scrollValue + width) {
+          rightItems.push(idx);
+        } else {
+          middleItems.push(idx);
+        }
+
+        acc += widthEl;
+      });
+
+      const leftCount = leftItems?.length || 0;
+      const rightCount = rightItems?.length || 0;
+      const pair = isMouseOnCounts();
+
+      if (countLeftRef?.current) {
+        if (leftCount >= 2) {
+          if (!pair[0]) {
+            countLeftRef.current.style.display = 'block';
+          }
+          countLeftTextRef.current.innerText = leftCount;
+        } else {
+          countLeftRef.current.style.display = 'none';
+          countLeftTextRef.current.innerText = null;
+        }
+      }
+
+      if (countRightRef?.current) {
+        if (rightCount >= 2) {
+          if (!pair[1]) {
+            countRightRef.current.style.display = 'block';
+          }
+          countRightTextRef.current.innerText = rightCount;
+        } else {
+          countRightRef.current.style.display = 'none';
+          countRightTextRef.current.innerText = null;
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      refScroll?.current?.addEventListener('mousemove', handleMove);
+      // @ts-ignore
+      refScroll?.current?.addEventListener('scroll', onScroll);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        refScroll?.current?.removeEventListener('mousemove', handleMove);
+        // @ts-ignore
+        refScroll?.current?.removeEventListener('scroll', onScroll);
+      }
+    };
+  }, []);
+
   return (
     <>
       <ScrollerStyle ref={refScroll}>
+        <ArrowCount ref={countLeftRef}>
+          <CountInnerStyle className="count-inner">
+            <ChevronLeft size={ICON_SIZE} warning />
+            <Circle size={ICON_SIZE} warning>
+              <Text bold inverted monospace ref={countLeftTextRef} />
+            </Circle>
+          </CountInnerStyle>
+        </ArrowCount>
+
         <div
           ref={refTabs}
           style={{
@@ -94,6 +220,15 @@ function FileTabsScroller({
         >
           {fileTabsMemo}
         </div>
+
+        <ArrowCount ref={countRightRef} right>
+          <CountInnerStyle className="count-inner">
+            <Circle size={ICON_SIZE} warning>
+              <Text bold inverted monospace ref={countRightTextRef} />
+            </Circle>
+            <ChevronRight size={ICON_SIZE} warning />
+          </CountInnerStyle>
+        </ArrowCount>
       </ScrollerStyle>
 
       {children}
