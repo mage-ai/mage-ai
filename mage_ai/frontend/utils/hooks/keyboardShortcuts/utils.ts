@@ -11,6 +11,20 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ignoreKeys } from '@utils/hash';
 
+export function keysPresentAndKeysRecent(
+  keysPresent: (number | string)[],
+  keysRecent: (number | string)[],
+  keyMapping: {
+    [key: number | string]: boolean;
+  },
+  keyHistory: (number | string)[],
+) {
+  const recentCount = keysRecent?.length || 0;
+  const history = keyHistory?.slice(0, recentCount);
+  return keysPresent?.every(key => keyMapping[key])
+    && keysRecent?.every(key => history?.includes(key));
+}
+
 export function onlyKeysPresent(
   keys: (string | number)[],
   keyMapping: KeyMappingType,

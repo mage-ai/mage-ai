@@ -15,6 +15,7 @@ import FileType, {
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import PipelineType from '@interfaces/PipelineType';
+import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import {
   HeaderStyle,
@@ -23,6 +24,9 @@ import {
   TabsStyle,
 } from './index.style';
 import {
+  KEY_CODE_ARROW_LEFT,
+  KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
 } from '@utils/hooks/keyboardShortcuts/constants';
@@ -34,12 +38,24 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
+import { Edit, Save, VisibleEye } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
 import { get, set } from '@storage/localStorage';
 import { getFilenameFromFilePath } from './utils';
+import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
+import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+
+export const ICON_SIZE = UNIT * 2;
+export const MENU_ICON_SIZE = UNIT * 1.5;
+const MENU_ICON_PROPS = {
+  default: true,
+  size: MENU_ICON_SIZE,
+};
 
 type UseFileComponentsProps = {
   addNewBlock?: (
@@ -50,6 +66,8 @@ type UseFileComponentsProps = {
     },
   ) => void;
   blocks?: BlockType[];
+  contained?: boolean;
+  containerRef?: any;
   deleteWidget?: (value: BlockType) => void;
   disableContextMenu?: boolean;
   fetchAutocompleteItems?: () => void;
@@ -88,13 +106,15 @@ type UseFileComponentsProps = {
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setSelectedBlock?: (value: BlockType) => void;
   showHiddenFilesSetting?: boolean;
-  uuid?: string;
+  uuid: string;
   widgets?: BlockType[];
 };
 
 function useFileComponents({
   addNewBlock,
   blocks,
+  contained,
+  containerRef,
   deleteWidget,
   disableContextMenu,
   fetchAutocompleteItems,
@@ -116,12 +136,15 @@ function useFileComponents({
   setDisableShortcuts,
   setSelectedBlock,
   showHiddenFilesSetting,
-  uuid,
+  uuid: uuidProp,
   widgets,
-}: UseFileComponentsProps = {}) {
+}: UseFileComponentsProps = {
+  uuid: null,
+}) {
+  const uuid = useMemo(() => `useFileComponents/${uuidProp}`, [uuidProp]);
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [showError] = useError(null, {}, [], {
-    uuid: `useFileComponents/${uuid}`,
+    uuid,
   });
   const [showHiddenFiles, setShowHiddenFiles] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, false),
@@ -129,6 +152,14 @@ function useFileComponents({
 
   const fileTreeRef = useRef(null);
   const contentByFilePath = useRef(null);
+
+  const [lastSavedMapping, setSLastSavedMapping] = useState<{
+    [filePath: string]: number;
+  }>({});
+  const [contentTouchedMapping, setContentTouchedMapping] = useState<{
+    [filePath: string]: number;
+  }>({});
+
   const setContentByFilePath = useCallback((data: {
     [filePath: string]: string;
   }) => {
@@ -140,14 +171,26 @@ function useFileComponents({
       ...contentByFilePath.current,
       ...data,
     };
+
+    setContentTouchedMapping(prev => ({
+      ...prev,
+      ...data,
+    }));
   }, [contentByFilePath]);
 
+  const [filesMapping, setFilesMapping] = useState<{
+    [filePath: string]: FileType;
+  }>({});
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
   const [fileVersionsVisible, setFilesVersionsVisible] = useState<boolean>(false);
+  const selectedFile = useMemo(() => filesMapping?.[selectedFilePath], [
+    filesMapping,
+    selectedFilePath,
+  ]);
 
   const openFilenameMapping = useMemo(() => openFilePaths.reduce((acc, filePath: string) => {
     const filename = getFilenameFromFilePath(filePath);
@@ -202,6 +245,13 @@ function useFileComponents({
     }
   }, [addOpenFilePath, onOpenFile]);
 
+  const onFileFetched = useCallback((file: FileType) => {
+    setFilesMapping(prev => ({
+      ...prev,
+      [file.path]: file,
+    }));
+  }, []);
+
   useEffect(() => {
     const arr = getOpenFilePaths();
 
@@ -246,7 +296,6 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  const uuidKeyboard = 'Files/index';
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -254,41 +303,60 @@ function useFileComponents({
   } = useKeyboardContext();
 
   useEffect(() => () => {
-    unregisterOnKeyDown(uuidKeyboard);
-  }, [unregisterOnKeyDown, uuidKeyboard]);
+    unregisterOnKeyDown(uuid);
+  }, [unregisterOnKeyDown, uuid]);
 
-  registerOnKeyDown(
-    uuidKeyboard,
-    (event, keyMapping) => {
-      const filenamesTouched =
-        Object.entries(filesTouched).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);
-      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)
-        && filenamesTouched?.length >= 1
+  registerOnKeyDown(uuid, (event, keyMapping, keyHistory) => {
+    const filenamesTouched =
+      Object.entries(filesTouched).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);
+
+    if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping) && filenamesTouched?.length >= 1) {
+      event.preventDefault();
+
+      const warning =
+        `You have changes that are unsaved: ${filenamesTouched.join(', ')}. ` +
+        'Click cancel and save your changes before reloading page.';
+
+      if (typeof window !== 'undefined'
+        && typeof location !== 'undefined'
+        && window.confirm(warning)
       ) {
-        event.preventDefault();
+        location.reload();
+      }
+    } else if (
+      keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_CONTROL], [KEY_CODE_ARROW_LEFT], keyMapping, keyHistory)
+      || keysPresentAndKeysRecent([KEY_CODE_META, KEY_CODE_CONTROL], [KEY_CODE_ARROW_RIGHT], keyMapping, keyHistory)
+    ) {
+      const numberOfFilePaths = openFilePaths?.length || 0;
+      let idx = openFilePaths?.findIndex((filePath: string) => selectedFilePath === filePath);
 
-        const warning =
-          `You have changes that are unsaved: ${filenamesTouched.join(', ')}. ` +
-          'Click cancel and save your changes before reloading page.';
-
-        if (typeof window !== 'undefined'
-          && typeof location !== 'undefined'
-          && window.confirm(warning)
-        ) {
-          location.reload();
-        }
+      if (KEY_CODE_ARROW_LEFT === keyHistory[0]) {
+        idx -= 1;
+      } else if (KEY_CODE_ARROW_RIGHT === keyHistory[0]) {
+        idx += 1;
       }
 
-      if (disableGlobalKeyboardShortcuts) {
-        return;
+      if (idx < 0) {
+        idx = numberOfFilePaths - 1;
+      } else if (idx > numberOfFilePaths - 1) {
+        idx = 0;
       }
-    },
-    [
-      filesTouched,
-    ],
-  );
 
-  const [updateFile] = useMutation(
+      setSelectedFilePath(openFilePaths[idx]);
+    }
+
+    if (disableGlobalKeyboardShortcuts) {
+      return;
+    }
+  },
+  [
+    filesTouched,
+    openFilePaths,
+    selectedFilePath,
+    setSelectedFilePath,
+  ]);
+
+  const [updateFile, { isLoadingUpdate }] = useMutation(
     (file: FileType) => api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))({
       file_content: file,
     }),
@@ -318,6 +386,7 @@ function useFileComponents({
       ),
     },
   );
+
   const saveFile = useCallback((value: string, f: FileType) => {
     // @ts-ignore
     updateFile({
@@ -336,6 +405,28 @@ function useFileComponents({
     updateFile,
   ]);
 
+  const saveStatus: string = useMemo(() => displayPipelineLastSaved(
+    {
+      updated_at: selectedFile?.modified_timestamp
+        ? (new Date(selectedFile?.modified_timestamp * 1000))?.toISOString()
+        : null,
+      uuid: selectedFile?.path,
+    },
+    {
+      displayRelative: true,
+      isPipelineUpdating: isLoadingUpdate,
+      pipelineContentTouched: contentTouchedMapping?.[selectedFilePath],
+      pipelineLastSaved: lastSavedMapping?.[selectedFilePath],
+      showLastUpdatedTimestamp: selectedFile?.modified_timestamp,
+    },
+  ), [
+    contentTouchedMapping,
+    isLoadingUpdate,
+    lastSavedMapping,
+    selectedFile,
+    selectedFilePath,
+  ]);
+
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
       addNewBlock={addNewBlock}
@@ -346,7 +437,6 @@ function useFileComponents({
       fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       files={files}
-      showHiddenFilesSetting={showHiddenFilesSetting}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
       onCreateFile={onCreateFile}
@@ -356,7 +446,6 @@ function useFileComponents({
       ref={fileTreeRef}
       showError={showError}
       setSelectedBlock={setSelectedBlock}
-      setShowHiddenFiles={toggleShowHiddenFiles}
       showHiddenFiles={showHiddenFiles}
       uuid={uuid}
       widgets={widgets}
@@ -371,7 +460,6 @@ function useFileComponents({
     fetchPipeline,
     fileTreeRef,
     files,
-    showHiddenFilesSetting,
     onCreateFile,
     onSelectBlockFile,
     openFile,
@@ -388,10 +476,13 @@ function useFileComponents({
   const controller = useMemo(() => (
     <Controller
       addNewBlock={addNewBlock}
+      contained={contained}
+      containerRef={containerRef}
       disableRefreshWarning
       fetchPipeline={fetchPipeline}
       fetchVariables={fetchVariables}
       codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
+      onFileFetched={onFileFetched}
       onUpdateFileSuccess={onUpdateFileSuccess}
       openFilePaths={openFilePaths}
       openSidekickView={openSidekickView}
@@ -405,12 +496,16 @@ function useFileComponents({
       setErrors={showError}
       setFilesTouched={setFilesTouched}
       setSelectedBlock={setSelectedBlock}
+      updateFile={updateFile}
     />
   ), [
     addNewBlock,
+    codeEditorMaximumHeightOffset,
+    contained,
+    containerRef,
     fetchPipeline,
     fetchVariables,
-    codeEditorMaximumHeightOffset,
+    onFileFetched,
     onUpdateFileSuccess,
     openFilePaths,
     openSidekickView,
@@ -424,26 +519,86 @@ function useFileComponents({
     setFilesTouched,
     setSelectedBlock,
     showError,
+    updateFile,
   ]);
+
+  const headerMenuGroups = useMemo(() => {
+    return [
+      {
+        uuid: 'File',
+        items: [
+          {
+            beforeIcon: <Save {...MENU_ICON_PROPS} />,
+            uuid: 'Save file and and all changes',
+            onClick: (opts) => {
+              if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
+                saveFile(contentByFilePath.current[selectedFilePath], {
+                  path: selectedFilePath,
+                });
+              }
+            },
+          },
+        ],
+      },
+      {
+        uuid: 'Edit',
+        items: [
+          {
+            beforeIcon: <Edit success={fileVersionsVisible} {...MENU_ICON_PROPS} />,
+            uuid: 'Show previous file versions to undo changes',
+            disabled: fileVersionsVisible,
+            onClick: () => {
+              setFilesVersionsVisible(true);
+            },
+          },
+          {
+            beforeIcon: <Edit {...MENU_ICON_PROPS} />,
+            uuid: 'Close file versions',
+            disabled: !Edit,
+            onClick: () => {
+              setFilesVersionsVisible(false);
+            },
+          },
+        ],
+      },
+      {
+        uuid: 'View',
+        items: [
+          {
+            beforeIcon: <VisibleEye success={showHiddenFiles} {...MENU_ICON_PROPS} />,
+            uuid: 'Show hidden files',
+            disabled: showHiddenFiles,
+            onClick: () => {
+              setShowHiddenFiles(true);
+            },
+          },
+          {
+            beforeIcon: <VisibleEye {...MENU_ICON_PROPS} />,
+            uuid: 'Hide hidden files',
+            disabled: !showHiddenFiles,
+            onClick: () => {
+              setShowHiddenFiles(false);
+            },
+          },
+        ],
+      },
+    ];
+  }, [
+    contentByFilePath,
+    saveFile,
+    selectedFilePath,
+    setShowHiddenFiles,
+    showHiddenFiles,
+  ]);
+      // fileVersionsVisible={fileVersionsVisible}
+      // setFilesVersionsVisible={setFilesVersionsVisible}
 
   const menuMemo = useMemo(() => (
     <FileEditorHeader
-      fileVersionsVisible={fileVersionsVisible}
-      onSave={() => {
-        if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
-          saveFile(contentByFilePath.current[selectedFilePath], {
-            path: selectedFilePath,
-          });
-        }
-      }}
-      setFilesVersionsVisible={setFilesVersionsVisible}
+      menuGroups={headerMenuGroups}
     />
   ), [
-    contentByFilePath,
-    fileVersionsVisible,
-    saveFile,
-    selectedFilePath,
-    setFilesVersionsVisible,
+    headerMenuGroups,
   ]);
 
   const fileTabsMemo = useMemo(() => (
@@ -501,6 +656,21 @@ function useFileComponents({
     showError,
   ]);
 
+  const footerMemo = useMemo(() => {
+    return (
+      <StatusFooter
+        pipelineContentTouched={contentTouchedMapping?.[selectedFilePath]}
+        pipelineLastSaved={lastSavedMapping?.[selectedFilePath]}
+        saveStatus={saveStatus}
+      />
+    );
+  }, [
+    contentTouchedMapping,
+    lastSavedMapping,
+    saveStatus,
+    selectedFilePath,
+  ]);
+
   return {
     browser: fileBrowserMemo,
     controller,
@@ -508,6 +678,7 @@ function useFileComponents({
     filePaths: openFilePaths,
     files,
     filesTouched,
+    footer: footerMemo,
     menu: menuMemo,
     openFile,
     selectedFilePath,

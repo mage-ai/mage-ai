@@ -199,7 +199,7 @@ function CodeEditor({
        * when mounting the code editor here.
        */
       // setSelected?.(true);
-      DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
+      // DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
 
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(true);
@@ -208,7 +208,7 @@ function CodeEditor({
     });
 
     !showDiffs && editor.onDidBlurEditorText(() => {
-      DEBUG(() => console.log('onDidBlurEditorText', uuid));
+      // DEBUG(() => console.log('onDidBlurEditorText', uuid));
 
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(false);

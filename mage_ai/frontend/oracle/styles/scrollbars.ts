@@ -79,7 +79,6 @@ export const ScrollbarStyledCss = css<{
   `}
 `;
 
-
 export const PlainScrollbarStyledCss = css<{
   noScrollbarTrackBackground?: boolean;
   scrollbarBorderRadiusLarge?: boolean;

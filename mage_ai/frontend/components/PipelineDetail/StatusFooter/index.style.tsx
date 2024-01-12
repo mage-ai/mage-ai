@@ -13,7 +13,11 @@ export const StatusFooterStyle = styled.div<{
     background-color: ${(props.theme.background || dark.background).header};
   `}
 
-  ${props => props.width && `
+  ${props => typeof props.width !== 'undefined' && `
     width: ${props.width}px;
+  `}
+
+  ${props => !props.width && `
+    width: inherit;
   `}
 `;

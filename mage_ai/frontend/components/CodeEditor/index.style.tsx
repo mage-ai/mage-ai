@@ -14,7 +14,7 @@ export const ContainerStyle = styled.div<{
   font-family: ${FONT_FAMILY_REGULAR};
 
   ${props => (typeof props.padding === 'number' && props.padding > 0) && `
-    padding-top: ${props.padding}px;
+    // padding-top: ${props.padding}px;
     background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 

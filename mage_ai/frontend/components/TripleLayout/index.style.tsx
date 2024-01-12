@@ -4,7 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { PlainScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 64;
@@ -114,7 +114,7 @@ const ASIDE_INNER_STYLE = css<{
   heightOffset?: number;
   verticalOffset?: number;
 }>`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
 
   height: 100%;
   overflow: auto;
@@ -305,6 +305,7 @@ export const DraggableStyle = styled.div<{
 `;
 
 export const MainWrapper = styled.div<{
+  autoLayout?: boolean;
   noBackground?: boolean;
   inline?: boolean;
 }>`
@@ -318,9 +319,17 @@ export const MainWrapper = styled.div<{
   ${props => !props.noBackground && `
     background-color: ${(props.theme.background || dark.background).codeArea};
   `}
+
+  ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  `}
 `;
 
 export const MainContentStyle = styled.div<{
+  autoLayout?: boolean;
   beforeVisible?: boolean;
   footerOffset?: number;
   headerOffset?: number;
@@ -328,21 +337,38 @@ export const MainContentStyle = styled.div<{
 }>`
   z-index: 2;
 
-  ${props => `
+  ${props => !props.autoLayout && `
     height: calc(100% - ${(props.headerOffset || 0) + (props.footerOffset || 0)}px);
     position: ${props.inline ? 'relative' : 'fixed'};
   `}
 
-  ${props => !props.inline && `
+  ${props => !props.autoLayout && !props.inline && `
     top: ${props.headerOffset || 0}px;
+  `}
+
+  ${props => props.autoLayout && `
+    flex: 1;
+    position: relative;
   `}
 `;
 
-export const MainContentInnerStyle = styled.div`
-  ${ScrollbarStyledCss}
+export const MainContentInnerStyle = styled.div<{
+  autoLayout?: boolean;
+}>`
+  ${PlainScrollbarStyledCss}
 
-  height: 100%;
   overflow: auto;
+
+  ${props => !props.autoLayout && `
+    height: 100%;
+  `}
+
+  ${props => props.autoLayout && `
+    bottom: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  `}
 `;
 
 export const NavigationStyle = styled.div`
@@ -374,7 +400,7 @@ export const NavigationContainerStyle = styled.div<{
   heightOffset: number;
   widthOffset: number;
 }>`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
 
   overflow: auto;
   position: absolute;

@@ -3,6 +3,8 @@ import FileEditor from '@components/FileEditor';
 
 function Controller({
   addNewBlock,
+  contained,
+  containerRef,
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
@@ -20,6 +22,7 @@ function Controller({
   setErrors,
   setFilesTouched,
   setSelectedBlock,
+  ...props
 }) {
   return (
     <>
@@ -34,8 +37,11 @@ function Controller({
         >
           <ApiReloader uuid={`FileEditor/${decodeURIComponent(filePath)}`}>
             <FileEditor
+              {...props}
               active={selectedFilePath === filePath}
               addNewBlock={addNewBlock}
+              contained={contained}
+              containerRef={containerRef}
               disableRefreshWarning={disableRefreshWarning}
               fetchPipeline={fetchPipeline}
               fetchVariables={fetchVariables}

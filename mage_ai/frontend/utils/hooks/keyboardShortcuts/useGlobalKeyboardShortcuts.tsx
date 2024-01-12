@@ -86,7 +86,7 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
       Object.entries(onKeyDownRegistry).forEach(([uuid, onKeyDown]) => {
         // @ts-ignore
         onKeyDown(event, newMapping || {}, newHistory);
-        logRender(`[keydown]: ${uuid}`);
+        // logRender(`[keydown]: ${uuid}`);
       });
     };
 
@@ -143,7 +143,7 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
       Object.entries(onKeyUpRegistry).forEach(([uuid, onKeyUp]) => {
         // @ts-ignore
         onKeyUp(event, previousMapping || {}, previousHistory, newMapping || {});
-        logRender(`[keyup]  : ${uuid}`);
+        // logRender(`[keyup]  : ${uuid}`);
       });
     };
 

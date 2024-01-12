@@ -27,20 +27,6 @@ function ArcaneLibrary({
   const [headerOffset, setHeaderOffset] = useState(null);
 
   const {
-    browser,
-    controller,
-    filePaths,
-    menu,
-    selectedFilePath,
-    tabs,
-    versions,
-    versionsVisible,
-  } = useFileComponents({
-    selectedFilePath: query?.file_path,
-    showHiddenFilesSetting: true,
-  });
-
-  const {
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
@@ -51,6 +37,24 @@ function ArcaneLibrary({
     widthAfter,
     widthBefore,
   } = useTripleLayout(ApplicationExpansionUUIDEnum.ArcaneLibrary);
+
+  const {
+    browser,
+    controller,
+    filePaths,
+    footer,
+    menu,
+    selectedFilePath,
+    tabs,
+    versions,
+    versionsVisible,
+  } = useFileComponents({
+    contained: true,
+    containerRef: mainContainerRef,
+    selectedFilePath: query?.file_path,
+    showHiddenFilesSetting: true,
+    uuid: ApplicationExpansionUUIDEnum.ArcaneLibrary,
+  });
 
   useEffect(() => {
     setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);
@@ -64,6 +68,7 @@ function ArcaneLibrary({
         afterHidden={!(versionsVisible && selectedFilePath)}
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
+        autoLayout
         before={browser}
         beforeContentHeightOffset={48}
         beforeHeaderOffset={0}
@@ -73,8 +78,8 @@ function ArcaneLibrary({
         beforeWidth={widthBefore}
         contained
         containerRef={containerRef}
-        headerOffset={headerOffset + headerOffsetProp}
         inline
+        mainContainerFooter={footer}
         mainContainerHeader={({ widthOffset }) => (
           <div
             ref={refHeader}
@@ -83,11 +88,13 @@ function ArcaneLibrary({
               zIndex: 3,
             }}
           >
-            <Spacing p={1}>
+            <Spacing py={1}>
               <FlexContainer alignItems="center">
                 {menu}
               </FlexContainer>
             </Spacing>
+
+            <Divider light />
 
             <FileTabsScroller widthOffset={widthOffset}>
               {tabs}

@@ -70,6 +70,7 @@ type TripleLayoutProps = {
   afterOverflow?: 'hidden';
   afterSubheader?: any;
   afterWidth?: number;
+  autoLayout?: boolean;
   before?: any;
   beforeContentHeightOffset?: number;
   beforeDividerContrast?: boolean;
@@ -121,6 +122,7 @@ function TripleLayout({
   afterOverflow,
   afterSubheader,
   afterWidth = 0,
+  autoLayout,
   before,
   beforeContentHeightOffset,
   beforeDividerContrast,
@@ -561,6 +563,80 @@ function TripleLayout({
     toggleBefore,
   ]);
 
+  const afterMemo = useMemo(() => {
+    if (after && !shouldHideAfterWrapper) {
+      return (
+        <AfterStyle
+          heightOffset={afterHeightOffset}
+          inline={inline}
+          style={{
+            width: afterWidthFinal,
+          }}
+        >
+          <DraggableStyle
+            active={afterMousedownActive}
+            contrast={afterDividerContrast}
+            disabled={afterHidden}
+            left={0}
+            ref={refAfterInnerDraggable}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+          />
+
+          {hasAfterNavigationItems && (
+            <NavigationStyle>
+              {!afterHidden && (
+                <>
+                  <NavigationInnerStyle aligned="right">
+                    <VerticalNavigationStyle
+                      aligned="right"
+                      borderless
+                      showMore={navigationShowMore}
+                    >
+                      <VerticalNavigation
+                        aligned="right"
+                        navigationItems={afterNavigationItems}
+                      />
+                    </VerticalNavigationStyle>
+                  </NavigationInnerStyle>
+
+                  <NavigationContainerStyle
+                    aligned="right"
+                    fullWidth
+                    heightOffset={afterHeightOffset}
+                    // 1 for the border-left
+                    widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
+                  >
+                    {afterContent}
+                  </NavigationContainerStyle>
+                </>
+              )}
+
+              {afterHidden && afterContent}
+            </NavigationStyle>
+          )}
+
+          {!hasAfterNavigationItems && afterContent}
+        </AfterStyle>
+      );
+    }
+
+    return null;
+  }, [
+    after,
+    afterContent,
+    afterDividerContrast,
+    afterHeightOffset,
+    afterHidden,
+    afterMousedownActive,
+    afterNavigationItems,
+    afterWidthFinal,
+    contained,
+    hasAfterNavigationItems,
+    inline,
+    navigationShowMore,
+    shouldHideAfterWrapper,
+  ]);
+
   const el = useMemo(() => (
     <>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
@@ -640,7 +716,10 @@ function TripleLayout({
         </BeforeStyle>
       )}
 
+      {autoLayout && afterMemo}
+
       <MainWrapper
+        autoLayout={autoLayout}
         inline={inline}
         noBackground={noBackground}
         style={{
@@ -649,16 +728,21 @@ function TripleLayout({
         }}
       >
         {mainContainerHeader
-          ?
-            typeof mainContainerHeader === 'function'
-              ? mainContainerHeader?.({
-                widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
-              })
-              : mainContainerHeader
+          ? (
+            <div>
+              {typeof mainContainerHeader === 'function'
+                ? mainContainerHeader?.({
+                  widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
+                })
+                : mainContainerHeader
+              }
+            </div>
+          )
           : null
         }
 
         <MainContentStyle
+          autoLayout={autoLayout}
           headerOffset={contained
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
@@ -670,6 +754,7 @@ function TripleLayout({
           }}
         >
           <MainContentInnerStyle
+            autoLayout={autoLayout}
             noScrollbarTrackBackground
             ref={mainContainerRef}
           >
@@ -680,59 +765,7 @@ function TripleLayout({
         {mainContainerFooter}
       </MainWrapper>
 
-      {after && !shouldHideAfterWrapper && (
-        <AfterStyle
-          heightOffset={afterHeightOffset}
-          inline={inline}
-          style={{
-            width: afterWidthFinal,
-          }}
-        >
-          <DraggableStyle
-            active={afterMousedownActive}
-            contrast={afterDividerContrast}
-            disabled={afterHidden}
-            left={0}
-            ref={refAfterInnerDraggable}
-            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
-          />
-
-          {hasAfterNavigationItems && (
-            <NavigationStyle>
-              {!afterHidden && (
-                <>
-                  <NavigationInnerStyle aligned="right">
-                    <VerticalNavigationStyle
-                      aligned="right"
-                      borderless
-                      showMore={navigationShowMore}
-                    >
-                      <VerticalNavigation
-                        aligned="right"
-                        navigationItems={afterNavigationItems}
-                      />
-                    </VerticalNavigationStyle>
-                  </NavigationInnerStyle>
-
-                  <NavigationContainerStyle
-                    aligned="right"
-                    fullWidth
-                    heightOffset={afterHeightOffset}
-                    // 1 for the border-left
-                    widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
-                  >
-                    {afterContent}
-                  </NavigationContainerStyle>
-                </>
-              )}
-
-              {afterHidden && afterContent}
-            </NavigationStyle>
-          )}
-
-          {!hasAfterNavigationItems && afterContent}
-        </AfterStyle>
-      )}
+      {!autoLayout && afterMemo}
     </>
   ), [
     after,
@@ -743,6 +776,7 @@ function TripleLayout({
     afterMousedownActive,
     afterNavigationItems,
     afterWidthFinal,
+    autoLayout,
     beforeContent,
     beforeDividerContrast,
     beforeHeightOffset,

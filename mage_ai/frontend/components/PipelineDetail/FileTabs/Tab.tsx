@@ -89,7 +89,6 @@ function FileTab({
         >
           <Tooltip
             appearAbove
-            appearBefore
             label={filePath}
             size={null}
             widthFitContent

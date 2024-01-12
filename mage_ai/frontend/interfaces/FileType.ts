@@ -83,9 +83,11 @@ export default interface FileType {
   content?: string;
   disabled?: boolean;
   isNotFolder?: boolean;
+  modified_timestamp?: number;
   name?: string;
   parent?: FileType;
   path?: string;
+  size?: number;
   uuid?: string;
 }
 

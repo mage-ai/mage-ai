@@ -82,6 +82,7 @@ import useCodeBlockComponents from '@components/CodeBlockV2/useCodeBlockComponen
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
+import useAutoScroll from '@components/CodeEditor/useAutoScroll';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   ArrowDown,
@@ -1108,33 +1109,11 @@ function CodeBlock({
     setRunEndTime,
   ]);
 
-  const onDidChangeCursorPosition = useCallback(({
-    editorRect: {
-      top,
-    },
-    position: {
-      lineNumberTop,
-    },
-  }: OnDidChangeCursorPositionParameterType) => {
-    if (mainContainerRef?.current) {
-      const {
-        height: mainContainerHeight,
-      } = mainContainerRef.current.getBoundingClientRect();
-
-      if (top + lineNumberTop > mainContainerHeight) {
-        const newY = mainContainerRef.current.scrollTop
-          + ((lineNumberTop - mainContainerHeight) + top);
-
-        mainContainerRef.current.scrollTo(0, newY);
-      } else if (lineNumberTop + top < SINGLE_LINE_HEIGHT) {
-        const newY = mainContainerRef.current.scrollTop
-          + ((lineNumberTop + top) - SINGLE_LINE_HEIGHT);
-        mainContainerRef.current.scrollTo(0, newY);
-      }
-    }
-  }, [
-    mainContainerRef,
-  ]);
+  const {
+    onDidChangeCursorPosition,
+  } = useAutoScroll({
+    containerRef: mainContainerRef,
+  });
 
   const messagesWithType = useMemo(() => getMessagesWithType(messages, errorMessages), [
     errorMessages,

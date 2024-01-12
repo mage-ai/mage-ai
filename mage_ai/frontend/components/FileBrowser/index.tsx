@@ -69,7 +69,7 @@ type FileBrowserProps = {
   setShowHiddenFiles?: Dispatch<SetStateAction<boolean>>;
   showHiddenFilesSetting?: boolean;
   showHiddenFiles?: boolean;
-  uuid?: string;
+  uuid: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
@@ -103,7 +103,7 @@ function FileBrowser({
   setShowHiddenFiles,
   showHiddenFiles,
   showHiddenFilesSetting,
-  uuid,
+  uuid: uuidFileBrowser,
   widgets = [],
 }: FileBrowserProps, ref) {
   const timeout = useRef(null);
@@ -381,7 +381,7 @@ function FileBrowser({
       setSelectedFile={setSelectedFile}
       theme={themeContext}
       timeout={timeout}
-      uuidContainer={uuid}
+      uuidContainer={uuidFileBrowser}
     />
   )), [
     disableContextMenu,
@@ -395,7 +395,7 @@ function FileBrowser({
     onSelectBlockFile,
     reloadCount,
     renderAfterContent,
-    uuid,
+    uuidFileBrowser,
   ]);
 
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [

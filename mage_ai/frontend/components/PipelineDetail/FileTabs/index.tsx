@@ -1,13 +1,12 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
 
-import Button from '@oracle/elements/Button';
 import FileTab, { FileTabProps } from './Tab';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Text from '@oracle/elements/Text';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
+import { useKeyboardContext } from '@context/Keyboard';
 
 export type TabType = {
   label?: () => string;
@@ -49,7 +48,7 @@ function FileTabs({
       {tabsBefore?.length >= 1 && tabsBefore?.map(({
         label,
         onClick,
-        uuid,
+        uuid: uuidFileTab,
       }) => {
         const selected: boolean = isSelectedFilePath
           ? isSelectedFilePath(uuid, selectedFilePath)
@@ -57,7 +56,6 @@ function FileTabs({
 
         return (
           <FileTab
-            key={uuid}
             onClickTab={() => onClick?.({
               onClickTab,
             })}

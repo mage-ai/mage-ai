@@ -27,6 +27,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
+import useAutoScroll from '@components/CodeEditor/useAutoScroll';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
@@ -53,6 +54,8 @@ import { useWindowSize } from '@utils/sizes';
 type FileEditorProps = {
   active: boolean;
   addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
+  contained?: boolean;
+  containerRef?: any;
   disableRefreshWarning?: boolean;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
@@ -60,6 +63,7 @@ type FileEditorProps = {
   codeEditorMaximumHeightOffset?: number;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
+  onFileFetched?: (file: FileType) => void;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
   originalContent?: OriginalContentMappingType;
@@ -73,11 +77,14 @@ type FileEditorProps = {
     [path: string]: boolean;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  updateFile?: (payload: { file_content: FileType }) => any;
 };
 
 function FileEditor({
   active,
   addNewBlock,
+  contained,
+  containerRef: containerRefProp,
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
@@ -85,6 +92,7 @@ function FileEditor({
   codeEditorMaximumHeightOffset,
   hideHeaderButtons,
   onContentChange,
+  onFileFetched,
   onUpdateFileSuccess,
   openSidekickView,
   originalContent,
@@ -96,11 +104,13 @@ function FileEditor({
   setErrors,
   setFilesTouched,
   setSelectedBlock,
+  updateFile: updateFileProp,
 }: FileEditorProps) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const containerRef = useRef(null);
+  const containerRef = containerRefProp || useRef(null);
+  const editorRef = useRef(null);
 
   const { height: heightTotal } = useWindowSize();
 
@@ -118,6 +128,9 @@ function FileEditor({
   useEffect(() => {
     if (data?.file_content) {
       setFile(data.file_content);
+      if (onFileFetched) {
+        onFileFetched?.(data.file_content);
+      }
     } else if (data?.error) {
       errorOrSuccess(data, {
         onErrorCallback: (response, errors) => setErrors({
@@ -137,14 +150,25 @@ function FileEditor({
   }, [onContentChange]);
   const [touched, setTouched] = useState<boolean>(false);
 
+  const isSelected = useMemo(() => encodeURIComponent(selectedFilePath) === filePath, [
+    filePath,
+    selectedFilePath,
+  ]);
+
   useEffect(() => {
-    if (selectedFilePath) {
+    if (isSelected) {
       containerRef?.current?.scrollIntoView();
+
+      if (editorRef?.current) {
+        editorRef?.current?.focus();
+      }
     }
-  }, [selectedFilePath]);
+  }, [isSelected]);
 
   const [updateFile] = useMutation(
-    api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path)),
+    payload => updateFileProp
+      ? updateFileProp(payload)
+      : api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))(payload),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -216,6 +240,13 @@ function FileEditor({
     originalContent,
   ]);
 
+  const {
+    onDidChangeCursorPosition,
+  } = useAutoScroll({
+    contained,
+    containerRef,
+  });
+
   const codeEditorEl = useMemo(() => {
     if (file?.path) {
       const showDiffs = !!originalValues && originalValues?.content_from_base;
@@ -225,8 +256,7 @@ function FileEditor({
           autoHeight
           height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
           language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
-          // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
-          // onDidChangeCursorPosition={onDidChangeCursorPosition}
+          onDidChangeCursorPosition={onDidChangeCursorPosition}
           onChange={(value: string) => {
             setContent(value);
             if (setFilesTouched) {
@@ -247,6 +277,8 @@ function FileEditor({
             setTouched(true);
           }}
           onMountCallback={(editor) => {
+            editorRef.current = editor;
+
             if (setDisableShortcuts) {
               editor.onDidFocusEditorWidget = () => {
                 setDisableShortcuts?.(true);
@@ -407,7 +439,7 @@ function FileEditor({
   );
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRefProp ? null : containerRef}>
       {!hideHeaderButtons && (
         <Spacing p={2}>
           <FlexContainer justifyContent="space-between">

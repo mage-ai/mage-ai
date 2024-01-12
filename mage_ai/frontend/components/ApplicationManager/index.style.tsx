@@ -140,7 +140,7 @@ export const HeaderStyle = styled.div`
 
 export const InnerStyle = styled.div`
   backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-  background-color: rgb(0, 0, 0, 0.9);
+  background-color: rgba(24, 24, 28, 0.95);
   bottom: 0;
   height 100%;
   left: 0;

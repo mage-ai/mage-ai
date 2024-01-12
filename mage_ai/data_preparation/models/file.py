@@ -313,6 +313,14 @@ class File:
 
         update_file_cache()
 
+    @property
+    def size(self) -> int:
+        return os.path.getsize(self.file_path)
+
+    @property
+    def modified_timestamp(self) -> float:
+        return os.path.getmtime(self.file_path)
+
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
 
@@ -409,13 +417,23 @@ class File:
         update_file_cache()
 
     def to_dict(self, include_content=False):
-        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
+        data = dict(
+            name=self.filename,
+            path=os.path.join(self.dir_path, self.filename),
+            size=self.size,
+            modified_timestamp=self.modified_timestamp,
+        )
         if include_content:
             data['content'] = self.content()
         return data
 
     async def to_dict_async(self, include_content=False):
-        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
+        data = dict(
+            name=self.filename,
+            path=os.path.join(self.dir_path, self.filename),
+            size=self.size,
+            modified_timestamp=self.modified_timestamp,
+        )
         if include_content:
             data['content'] = await self.content_async()
         return data
