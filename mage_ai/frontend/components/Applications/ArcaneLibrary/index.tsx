@@ -27,9 +27,13 @@ function ArcaneLibrary({
   const [headerOffset, setHeaderOffset] = useState(null);
 
   const {
+    hiddenAfter,
+    hiddenBefore,
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
+    setHiddenAfter,
+    setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
     setWidthAfter,
@@ -64,16 +68,17 @@ function ArcaneLibrary({
     <ContainerStyle>
       <TripleLayout
         after={versions}
+        afterDividerContrast
         afterHeightOffset={0}
-        afterHidden={!(versionsVisible && selectedFilePath)}
+        afterHidden={hiddenAfter}
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
         autoLayout
         before={browser}
-        beforeContentHeightOffset={48}
-        beforeHeaderOffset={0}
+        beforeContentHeightOffset={headerOffsetProp}
+        beforeDividerContrast
         beforeHeightOffset={0}
-        beforeHidden={false}
+        beforeHidden={hiddenBefore}
         beforeMousedownActive={mousedownActiveBefore}
         beforeWidth={widthBefore}
         contained
@@ -103,8 +108,10 @@ function ArcaneLibrary({
         )}
         mainContainerRef={mainContainerRef}
         noBackground
+        setAfterHidden={setHiddenAfter}
         setAfterMousedownActive={setMousedownActiveAfter}
         setAfterWidth={setWidthAfter}
+        setBeforeHidden={setHiddenBefore}
         setBeforeMousedownActive={setMousedownActiveBefore}
         setBeforeWidth={setWidthBefore}
         uuid={ApplicationExpansionUUIDEnum.ArcaneLibrary}

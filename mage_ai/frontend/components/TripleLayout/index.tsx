@@ -567,6 +567,7 @@ function TripleLayout({
     if (after && !shouldHideAfterWrapper) {
       return (
         <AfterStyle
+          autoLayout={autoLayout}
           heightOffset={afterHeightOffset}
           inline={inline}
           style={{
@@ -630,6 +631,7 @@ function TripleLayout({
     afterMousedownActive,
     afterNavigationItems,
     afterWidthFinal,
+    autoLayout,
     contained,
     hasAfterNavigationItems,
     inline,
@@ -661,6 +663,7 @@ function TripleLayout({
 
       {before && (
         <BeforeStyle
+          autoLayout={autoLayout}
           heightOffset={beforeHeightOffset}
           inline={inline}
           style={{
@@ -760,6 +763,7 @@ function TripleLayout({
           >
             {children}
           </MainContentInnerStyle>
+
         </MainContentStyle>
 
         {mainContainerFooter}

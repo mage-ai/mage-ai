@@ -30,7 +30,9 @@ function useAside(uuid, refData, {
   widthOverride?: boolean;
   widthWindow?: number;
 }): {
+  hidden?: boolean;
   mousedownActive: boolean;
+  setHidden: (value: boolean) => void;
   setMousedownActive: (value: boolean) => void;
   setWidth: (value: number) => void;
   width: number;
@@ -38,6 +40,7 @@ function useAside(uuid, refData, {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
   const widthLocal = get(key);
 
+  const [hidden, setHidden] = useState(false);
   const [mousedownActive, setMousedownActive] = useState(false);
   const [widthState, setWidthState] = useState(widthLocal || widthProp);
 
@@ -119,7 +122,9 @@ function useAside(uuid, refData, {
   ]);
 
   return {
+    hidden,
     mousedownActive,
+    setHidden,
     setMousedownActive,
     setWidth,
     width,
@@ -127,11 +132,15 @@ function useAside(uuid, refData, {
 }
 
 export type UseTripleLayoutType = {
+  hiddenAfter?: boolean;
+  hiddenBefore?: boolean;
   mainContainerRef: {
     current: any;
   };
   mousedownActiveAfter: boolean;
   mousedownActiveBefore: boolean;
+  setHiddenAfter: (value: boolean) => void;
+  setHiddenBefore: (value: boolean) => void;
   setMousedownActiveAfter: (value: boolean) => void;
   setMousedownActiveBefore: (value: boolean) => void;
   setWidthAfter: (value: number) => void;
@@ -188,7 +197,9 @@ export default function useTripleLayout(uuid: string, {
   });
 
   const {
+    hidden: hiddenAfter,
     mousedownActive: mousedownActiveAfter,
+    setHidden: setHiddenAfter,
     setMousedownActive: setMousedownActiveAfter,
     setWidth: setWidthAfter,
     width: widthAfter,
@@ -202,7 +213,9 @@ export default function useTripleLayout(uuid: string, {
   });
 
   const {
+    hidden: hiddenBefore,
     mousedownActive: mousedownActiveBefore,
+    setHidden: setHiddenBefore,
     setMousedownActive: setMousedownActiveBefore,
     setWidth: setWidthBefore,
     width: widthBefore,
@@ -265,9 +278,13 @@ export default function useTripleLayout(uuid: string, {
   // ]);
 
   return {
+    hiddenAfter,
+    hiddenBefore,
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
+    setHiddenAfter,
+    setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
     setWidthAfter,

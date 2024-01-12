@@ -89,6 +89,7 @@ export const TabStyle = styled.div<{
 `;
 
 const ASIDE_STYLE = css<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -106,6 +107,13 @@ const ASIDE_STYLE = css<{
     background-color: ${(props.theme.background || dark.background).panel};
     position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
+  `}
+
+  ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
+    height: inherit;
+    overflow: hidden;
   `}
 `;
 
@@ -250,6 +258,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 `;
 
 export const AfterStyle = styled.aside<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -348,7 +357,11 @@ export const MainContentStyle = styled.div<{
   `}
 
   ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
     flex: 1;
+    justify-content: space-between;
+    overflow: auto;
     position: relative;
   `}
 `;
@@ -365,10 +378,7 @@ export const MainContentInnerStyle = styled.div<{
   `}
 
   ${props => props.autoLayout && `
-    bottom: 0;
-    position: absolute;
-    top: 0;
-    width: 100%;
+    flex: 1;
   `}
 `;
 

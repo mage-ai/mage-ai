@@ -1,3 +1,4 @@
+import moment from 'moment-timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
@@ -23,6 +24,7 @@ import {
   MenuStyle,
   TabsStyle,
 } from './index.style';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
@@ -373,6 +375,9 @@ function useFileComponents({
             setContentByFilePath({
               [file?.path]: null,
             });
+            setSLastSavedMapping({
+              [file?.path]: moment().utc().unix(),
+            });
 
             if (onUpdateFileSuccess) {
               onUpdateFileSuccess?.(file);
@@ -408,7 +413,7 @@ function useFileComponents({
   const saveStatus: string = useMemo(() => displayPipelineLastSaved(
     {
       updated_at: selectedFile?.modified_timestamp
-        ? (new Date(selectedFile?.modified_timestamp * 1000))?.toISOString()
+        ? (moment.unix(selectedFile?.modified_timestamp))?.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET)
         : null,
       uuid: selectedFile?.path,
     },
@@ -417,7 +422,7 @@ function useFileComponents({
       isPipelineUpdating: isLoadingUpdate,
       pipelineContentTouched: contentTouchedMapping?.[selectedFilePath],
       pipelineLastSaved: lastSavedMapping?.[selectedFilePath],
-      showLastUpdatedTimestamp: selectedFile?.modified_timestamp,
+      showLastUpdatedTimestamp: selectedFile?.modified_timestamp * 1000,
     },
   ), [
     contentTouchedMapping,
@@ -590,8 +595,6 @@ function useFileComponents({
     setShowHiddenFiles,
     showHiddenFiles,
   ]);
-      // fileVersionsVisible={fileVersionsVisible}
-      // setFilesVersionsVisible={setFilesVersionsVisible}
 
   const menuMemo = useMemo(() => (
     <FileEditorHeader
@@ -659,6 +662,7 @@ function useFileComponents({
   const footerMemo = useMemo(() => {
     return (
       <StatusFooter
+        inline
         pipelineContentTouched={contentTouchedMapping?.[selectedFilePath]}
         pipelineLastSaved={lastSavedMapping?.[selectedFilePath]}
         saveStatus={saveStatus}
