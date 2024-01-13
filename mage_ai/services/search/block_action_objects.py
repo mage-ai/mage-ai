@@ -28,15 +28,11 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
             if not text:
                 continue
 
-            score = max([fuzz.token_sort_ratio(query, t) for t in text])
-            if score >= (ratio / 2):
-                DX_PRINTER.info(
-                    uuid,
-                    object_type=object_type,
-                    score=score,
-                    text=text,
-                )
+            arr = [fuzz.token_sort_ratio(query, t) for t in text]
+            if not arr:
+                continue
 
+            score = max(arr)
             if score < ratio:
                 continue
 
