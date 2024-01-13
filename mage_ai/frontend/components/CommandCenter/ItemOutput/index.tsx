@@ -39,7 +39,7 @@ function ItemOutput({
     ObjectTypeEnum.REMOTE,
     ObjectTypeEnum.VERSION_CONTROL_FILE,
   ].includes(objectType)) {
-    const arr = actionResults?.[objectType];
+    const arr: any[] = actionResults?.[objectType] as any[];
     const result = arr?.[arr?.length - 1];
     let output = result?.value?.output;
     if (output) {

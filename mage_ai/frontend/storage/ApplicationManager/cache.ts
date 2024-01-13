@@ -1,6 +1,5 @@
 import {
   ApplicationManagerApplication,
-  ApplicationExpansionUUIDEnum,
   DimensionType,
   LOCAL_STORAGE_KEY_APPLICATION_MANAGER,
   LayoutType,
@@ -8,6 +7,7 @@ import {
   StateType,
   StatusEnum,
 } from './constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import {
   ApplicationConfiguration,
 } from '@components/CommandCenter/constants';

@@ -36,7 +36,7 @@ export type FetchItemsType = {
 }
 
 export type HandleSelectItemRowType = {
-  handleSelectItemRow: (
+  handleSelectItemRow?: (
     item: CommandCenterItemType,
     focusedItemIndex: number,
     fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,

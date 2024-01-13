@@ -6,7 +6,8 @@ import Circle from '@oracle/elements/Circle';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Tooltip from '@oracle/components/Tooltip';
-import { ApplicationExpansionUUIDEnum, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
+import { ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ArrowsPointingInFromAllCorners, CloseV2, Minimize } from '@oracle/icons';
 import { HeaderStyle} from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -30,7 +31,7 @@ function Header({
   closeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   maximizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   minimizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  setSelectedTab?: (tab: TabType) => void;
+  setSelectedTab?: (prevState: (value: TabType) => TabType) => void;
 }, ref) {
   const tabs = useMemo(() => applications?.map(({
     applicationConfiguration,

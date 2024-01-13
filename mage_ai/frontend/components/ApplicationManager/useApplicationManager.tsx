@@ -15,7 +15,8 @@ import useDraggableElement from '@utils/useDraggableElement';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { ApplicationExpansionUUIDEnum, LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
+import { LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ErrorProvider } from '@context/Error';
 import {
   ContainerStyle,
@@ -42,7 +43,7 @@ import {
   updateApplication,
 } from '@storage/ApplicationManager/cache';
 import { pauseEvent } from '@utils/events';
-import { selectEntriesWithValues } from '@utils/hash';
+import { selectEntriesWithValues, selectKeys } from '@utils/hash';
 
 const GROUP_ID = 'ApplicationManagerGroup';
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
@@ -57,13 +58,7 @@ export default function useApplicationManager({
   onChangeState?: (prev: (data: any) => any) => any;
 }): {
   closeApplication: (uuid: ApplicationExpansionUUIDEnum) => void;
-  getApplications: () => {
-    applications: ApplicationConfiguration[];
-    expansions: any[];
-    containers: any[];
-    roots: any[];
-  };
-  renderApplications: () => Element;
+  renderApplications: () => JSX.Element;
   startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
 } {
   const themeContext = useContext(ThemeContext);
@@ -90,8 +85,8 @@ export default function useApplicationManager({
   ): void {
     updateApplicationLayoutAndState(uuid, {
       layout: {
-        dimension: selectEntriesWithValues(elementRect, ['height', 'width']),
-        position: selectEntriesWithValues(elementRect, ['x', 'y']),
+        dimension: selectEntriesWithValues(selectKeys(elementRect, ['height', 'width'])),
+        position: selectEntriesWithValues(selectKeys(elementRect, ['x', 'y'])),
       },
     }, {
       layout: true,
@@ -274,15 +269,6 @@ export default function useApplicationManager({
     onChange: onChangeLayoutPosition,
   });
 
-  function getApplications() {
-    return {
-      applications: refApplications,
-      expansions: refExpansions,
-      containers: refContainers,
-      roots: refRoots,
-    };
-  }
-
   function renderApplications() {
     return (
       <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
@@ -323,7 +309,7 @@ export default function useApplicationManager({
     const {
       expansion_settings: expansionSettings,
     } = application;
-    const uuid = expansionSettings?.uuid;
+    const uuid: ApplicationExpansionUUIDEnum = expansionSettings?.uuid;
 
     if (!refApplications?.current) {
       refApplications.current = {};
@@ -496,7 +482,6 @@ export default function useApplicationManager({
 
   return {
     closeApplication,
-    getApplications,
     renderApplications,
     startApplication,
   };

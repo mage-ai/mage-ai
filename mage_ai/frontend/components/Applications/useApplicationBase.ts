@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 
 export type ApplicationBaseType = {
   containerRef: {

@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
 import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.style';

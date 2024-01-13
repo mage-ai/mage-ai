@@ -10,6 +10,11 @@ import {
   VersionControlRemote,
 } from './VersionControlType';
 
+export enum ApplicationExpansionUUIDEnum {
+  ArcaneLibrary = 'ArcaneLibrary',
+  VersionControlFileDiffs = 'VersionControlFileDiffs',
+}
+
 export enum RenderLocationTypeEnum {
   ITEMS_CONTAINER_AFTER = 'items_container_after',
 }
@@ -89,6 +94,7 @@ interface TextStylesType {
 interface DisplaySettingsType {
   color_uuid?: string;
   icon_uuid?: string;
+  stroke_uuid?: string;
   text_styles?: TextStylesType;
 }
 
@@ -317,7 +323,7 @@ interface ApplicationConfigurationsType {
 }
 
 interface ExpansionSettingsType {
-  uuid: string;
+  uuid: ApplicationExpansionUUIDEnum;
 }
 
 export interface ItemApplicationType {

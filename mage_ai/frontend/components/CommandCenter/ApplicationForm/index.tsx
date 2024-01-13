@@ -73,7 +73,7 @@ function ApplicationForm({
   const [attributesTouched, setAttributesTouched] = useState<{
     [key: string]: boolean;
   }>(null);
-  const [requestsData, setRequestsData] = useState<KeyValueType>(KeyValueType);
+  const [requestsData, setRequestsData] = useState<KeyValueType>(null);
 
   const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
     const val = prev1 ? prev1?.(prev2) : prev1;
@@ -377,7 +377,7 @@ function ApplicationForm({
     if (requestsData?.files) {
       inner = (
         <div style={{ paddingBottom: 8, paddingTop: 8 }}>
-          {requestsData?.files?.map((file, idx) => (
+          {(requestsData?.files as any[])?.map((file, idx) => (
             <Folder
               disableContextMenu
               file={file}

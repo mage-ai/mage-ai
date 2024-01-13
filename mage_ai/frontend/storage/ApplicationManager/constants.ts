@@ -1,12 +1,7 @@
 import {
   ApplicationConfiguration,
 } from '@components/CommandCenter/constants';
-
-export enum ApplicationExpansionUUIDEnum {
-  ArcaneLibrary = 'ArcaneLibrary',
-  VersionControlFileDiffs = 'VersionControlFileDiffs',
-}
-
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 export const LOCAL_STORAGE_KEY_APPLICATION_MANAGER = 'application_manager';
 
 export enum StatusEnum {

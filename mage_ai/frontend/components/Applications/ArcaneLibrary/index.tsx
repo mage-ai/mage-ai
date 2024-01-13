@@ -8,7 +8,7 @@ import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useFileComponents from '@components/Files/useFileComponents';
 import useTripleLayout from '@components/TripleLayout/useTripleLayout';
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ContainerStyle } from '../index.style';
 import { FILE_BROWSER_TABS, FileBrowserTabEnum } from './constants';
 

@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';;
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -13,11 +13,13 @@ export const HEADER_HEIGHT = 6 * UNIT;
 const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
 
-export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props = {}): {
+export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: {
+  theme?: any;
+} = {}): {
   accent: string;
 } {
   return {
-    accent: (props.theme || dark)?.accent?.negativeTransparent,
+    accent: (props?.theme || dark)?.accent?.negativeTransparent,
   };
 }
 

@@ -87,6 +87,7 @@ function FileBrowserNavigation({
           onClickFolder={(path: string) => console.log(path, true)}
           ref={fileTreeRef}
           showError={showError}
+          uuid="FileBrowserNavigation"
         />
       )}
 

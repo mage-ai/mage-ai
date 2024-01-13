@@ -71,20 +71,20 @@ export type FolderSharedProps = {
 };
 
 type FolderProps = {
-  containerRef: any;
+  containerRef?: any;
   cursorRef?: {
     current: any;
   };
   file: FileType;
   level: number;
   reloadCount?: number;
-  setCoordinates: (coordinates: {
+  setCoordinates?: (coordinates: {
     x: number;
     y: number;
   }) => void;
-  setDraggingFile: (file: FileType) => void;
-  setSelectedFile: (file: FileType) => void;
-  theme: ThemeType;
+  setDraggingFile?: (file: FileType) => void;
+  setSelectedFile?: (file: FileType) => void;
+  theme?: ThemeType;
   timeout?: any;
   uuidCombined?: string[];
   uuidContainer?: string;
@@ -544,12 +544,12 @@ function Folder({
 
               e.preventDefault();
 
-              setCoordinates({
+              setCoordinates?.({
                 x: e.pageX,
                 y: e.pageY,
               });
-              setDraggingFile(null);
-              setSelectedFile({
+              setDraggingFile?.(null);
+              setSelectedFile?.({
                 ...file,
                 uuid,
               });
@@ -572,12 +572,12 @@ function Folder({
 
             clearTimeout(timeout.current);
             timeout.current = setTimeout(() => {
-              setCoordinates({
+              setCoordinates?.({
                 x: e.pageX,
                 y: e.pageY,
               });
-              setDraggingFile(file);
-              setSelectedFile(null);
+              setDraggingFile?.(file);
+              setSelectedFile?.(null);
             }, 300);
           }}
           style={{

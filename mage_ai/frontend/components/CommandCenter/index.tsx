@@ -278,7 +278,6 @@ function CommandCenter() {
 
   const {
     closeApplication,
-    getApplications,
     renderApplications,
     startApplication,
   } = useApplicationManager({

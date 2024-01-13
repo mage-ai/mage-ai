@@ -28,7 +28,7 @@ type ActionResultsWithValidation = {
   item: CommandCenterItemType;
   results: KeyValueType;
   valid: boolean;
-};
+} | Promise<any>;
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
@@ -117,10 +117,8 @@ export default function useExecuteActions({
 
   function actionFunctionWrapper(actionFunction: (
     opts: ActionResultsWithValidation,
-  ) => {
-    data: KeyValueType;
-  } | ActionResultEnum): (opts: ActionResultsWithValidation) => ActionResultsWithValidation {
-    function inner(opts: ActionResultsWithValidation) {
+  ) => ActionResultsWithValidation | ActionResultEnum): (opts: ActionResultsWithValidation) => ActionResultsWithValidation | ActionResultEnum {
+    function inner(opts: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum {
       const {
         action,
         item,
@@ -265,7 +263,7 @@ export default function useExecuteActions({
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
           actionFunction = actionFunctionWrapper(({
             results,
-          }: ActionResultsWithValidation) => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
             const { options } = action?.interaction || { options: null };
 
             return router.push({
@@ -282,16 +280,18 @@ export default function useExecuteActions({
             action,
             item,
             results,
-          }: ActionResultsWithValidation) => {
-            return removeApplication?.({
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+            removeApplication?.({
               application: item?.metadata?.application,
             });
+
+            return ActionResultEnum.SUCCESS;
           });
         } else if (CommandCenterActionInteractionTypeEnum.RESET_FORM === type) {
           if (typeof window !== 'undefined') {
             actionFunction = actionFunctionWrapper(({
               item,
-            }: ActionResultsWithValidation) => {
+            }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
               const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
                 detail: {
                   actionType: CommandCenterActionInteractionTypeEnum.RESET_FORM ,
@@ -300,6 +300,8 @@ export default function useExecuteActions({
               });
 
               window.dispatchEvent(eventCustom);
+
+              return ActionResultEnum.SUCCESS;
             });
           }
         } else if (CommandCenterActionInteractionTypeEnum.SELECT_ITEM === type) {
@@ -307,7 +309,7 @@ export default function useExecuteActions({
             action,
             item,
             results,
-          }: ActionResultsWithValidation) => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
             const { item: itemToSelect } = action?.interaction || { options: null };
 
             setNested(
@@ -326,24 +328,28 @@ export default function useExecuteActions({
               const items = getItems?.() || [];
               const itemIndex = items?.findIndex(({ uuid }) => uuid === itemToSelect?.uuid);
 
-              return handleSelectItemRow?.(items?.[itemIndex], itemIndex);
+              handleSelectItemRow?.(items?.[itemIndex], itemIndex);
             } else {
               console.log('[ERROR] useExecuteActions: getItems and/or handleSelectItemRow is undefined.');
             }
+
+            return ActionResultEnum.SUCCESS;
           });
         } else if (CommandCenterActionInteractionTypeEnum.FETCH_ITEMS === type) {
           actionFunction = actionFunctionWrapper(({
             action,
-          }: ActionResultsWithValidation) => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
             const { options } = action?.interaction || { options: null };
-            return fetchItems?.(options);
+            fetchItems?.(options);
+
+            return ActionResultEnum.SUCCESS;
           });
         } else if (type && interaction?.element) {
           actionFunction = actionFunctionWrapper(({
             action,
             item,
             results,
-          }: ActionResultsWithValidation) => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
             const { element, options } = action?.interaction || { options: null };
 
             const nodes = [];
@@ -377,7 +383,7 @@ export default function useExecuteActions({
               ],
             );
 
-            return result;
+            return ActionResultEnum.SUCCESS;
           });
         }
       } else if (request?.operation && request?.resource) {
@@ -385,7 +391,7 @@ export default function useExecuteActions({
           action,
           item,
           results,
-        }: ActionResultsWithValidation) => {
+        }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
           let parsedResult = {};
 
           if (action?.application_state_parsers) {

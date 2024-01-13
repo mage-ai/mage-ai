@@ -19,7 +19,7 @@ import api from '@api';
 import useApplicationBase, { ApplicationBaseType } from '@components/Applications/useApplicationBase';
 import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ContainerStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { KeyValueType } from '@interfaces/CommandCenterType';

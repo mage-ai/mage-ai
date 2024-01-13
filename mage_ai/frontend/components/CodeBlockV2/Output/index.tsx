@@ -154,7 +154,6 @@ function CodeBlockOutput({
         ? (
           <ButtonTabs
             allowScroll
-            multiSelection
             onClickTab={(tab: TabType) => {
               // @ts-ignore
               setSelectedOutputTabs?.(prev => {

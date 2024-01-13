@@ -1,6 +1,6 @@
 export function selectEntriesWithValues(obj, opts?: {
   includeEmptyArrays?: boolean;
-}) {
+}): any {
   if (!obj) {
     return {};
   }
@@ -82,7 +82,7 @@ export function pickKey(obj) {
 
 export function selectKeys(obj, keys, opts?: {
   include_blanks?: boolean;
-}) {
+}): any {
   return keys.reduce((acc, key) => {
     if (key in obj || opts?.include_blanks) {
       acc[key] = obj?.[key];
