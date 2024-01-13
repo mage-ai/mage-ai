@@ -5,8 +5,8 @@ from typing import Dict, List, Union
 
 from thefuzz import fuzz
 
-from mage_ai.command_center.constants import ObjectType
-from mage_ai.command_center.models import Application, Item
+from mage_ai.command_center.constants import ModeType, ObjectType
+from mage_ai.command_center.models import Application, Item, Mode, PageMetadata
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
@@ -19,26 +19,52 @@ class BaseFactory:
     def __init__(
         self,
         application: Dict = None,
+        applications: List[Dict] = None,
         component: str = None,
         item: Dict = None,
+        mode: Dict = None,
         page: str = None,
         page_history: List[Dict] = None,
         picks: str = None,
+        results: Dict = None,
         search: str = None,
         search_history: List[Dict] = None,
         search_ratio: int = DEFAULT_RATIO,
         user: User = None,
     ):
         self.application = Application.load(**application) if application else application
+        self.applications = applications
         self.component = component
         self.item = Item.load(**item) if item else item
-        self.page = page
+        self.mode = Mode.load(**mode) if mode else mode
+        self.page = PageMetadata.load(**page) if page else page
         self.page_history = page_history
         self.picks = picks
+        self.results = results
         self.search = search
         self.search_history = search_history
         self.search_ratio = search_ratio
         self.user = user
+
+    def build_another_factory(self, factory_class=None) -> 'BaseFactory':
+        factory = factory_class() if factory_class else BaseFactory()
+        for key in [
+            'application',
+            'applications',
+            'component',
+            'item',
+            'mode',
+            'page',
+            'page_history',
+            'picks',
+            'results',
+            'search',
+            'search_history',
+            'search_ratio',
+            'user',
+        ]:
+            setattr(factory, key, getattr(self, key))
+        return factory
 
     @classmethod
     async def create_items(
@@ -60,16 +86,23 @@ class BaseFactory:
 
             return await factory_class(**kwargs).process(items_dicts)
 
-        application = kwargs.get('application')
-        item = kwargs.get('item')
-        if application and item:
-            object_type = item.get('object_type')
-            if ObjectType.PIPELINE == object_type:
-                from mage_ai.command_center.pipelines.factory import PipelineFactory
-                factory_or_items = [PipelineFactory]
-            elif ObjectType.TRIGGER == object_type:
-                from mage_ai.command_center.triggers.factory import TriggerFactory
-                factory_or_items = [TriggerFactory]
+        mode = Mode.load(**kwargs.get('mode')) if kwargs.get('mode') else None
+        if mode and ModeType.VERSION_CONTROL == mode.type:
+            from mage_ai.command_center.version_control.factory import (
+                VersionControlFactory,
+            )
+            factory_or_items = [VersionControlFactory]
+        else:
+            application = kwargs.get('application')
+            item = kwargs.get('item')
+            if application and item:
+                object_type = item.get('object_type')
+                if ObjectType.PIPELINE == object_type:
+                    from mage_ai.command_center.pipelines.factory import PipelineFactory
+                    factory_or_items = [PipelineFactory]
+                elif ObjectType.TRIGGER == object_type:
+                    from mage_ai.command_center.triggers.factory import TriggerFactory
+                    factory_or_items = [TriggerFactory]
 
         return flatten(await asyncio.gather(
             *[process_factory_items(class_or_items) for class_or_items in factory_or_items]
@@ -88,36 +121,42 @@ class BaseFactory:
         return item_dict.get('uuid') or ''
 
     # Subclasses can override this
-    def get_searchable_text(self, item_dict: Dict, **kwargs) -> str:
+    def get_searchable_text(self, item_dict: Dict, **kwargs) -> List[str]:
         arr = []
-        for key in ['title', 'description', 'uuid', 'item_type', 'object_type']:
-            if item_dict.get(key):
-                value = item_dict.get(key)
-                if value:
-                    value = value.lower()
-                    extension = Path(value).suffix
-                    if extension:
-                        arr.append(Path(value).stem)
-                        arr.append(extension)
-                    arr.append(value)
+        for key in [
+            'description',
+            'item_type',
+            'object_type',
+            'subtitle',
+            'title',
+            'uuid',
+        ]:
+            value = item_dict.get(key) if item_dict else None
+            if not value:
+                continue
 
-        text = ' '.join(arr)
-        return ' '.join([
-            text,
-            text.replace('_', ' '),
-        ])
+            value = value.lower().strip()
+            extension = Path(value).suffix
+            if extension:
+                arr.append(Path(value).stem)
+                arr.append(extension)
+            arr.append(value)
+
+        return arr
 
     # Subclasses can override this
     def score_item(self, _item_dict: Dict, score: int = None) -> int:
         return score
 
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
+        if not item_dict:
+            return None
+
         score = 0
         if self.search:
-            score = fuzz.partial_token_sort_ratio(
-                self.search,
-                self.get_searchable_text(item_dict),
-            )
+            text = self.get_searchable_text(item_dict)
+            score = max([fuzz.partial_token_sort_ratio(self.search, t) for t in text])
+
             if score < self.search_ratio:
                 return None
 
@@ -126,6 +165,11 @@ class BaseFactory:
             return merge_dict(item_dict, dict(score=self.score_item(item_dict, score=score)))
 
         return None
+
+    def filter_score_mutate_accumulator(self, item_dict: Dict, accumulator: List[Dict]):
+        scored = self.filter_score(item_dict)
+        if scored:
+            accumulator.append(scored)
 
     async def process(self, items_dicts: List[Dict] = None) -> List[Item]:
         items_dicts_scored = []

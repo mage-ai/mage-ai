@@ -101,6 +101,7 @@ function KeyboardText({
       inline
       monospace={monospace}
       muted={disabled || mutedDisabled}
+      noWrapping
       // @ts-ignore
       style={style}
       xsmall

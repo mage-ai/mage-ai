@@ -43,6 +43,7 @@ export type FlyoutMenuItemType = {
     openNewWindow?: boolean;
   };
   openConfirmationDialogue?: boolean;
+  render?: (el: any) => any;
   isGroupingTitle?: boolean;
   onClick?: (opts?: any) => void;
   tooltip?: () => string;
@@ -229,6 +230,7 @@ function FlyoutMenu({
           openConfirmationDialogue,
           tooltip,
           uuid,
+          render,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
 
@@ -302,6 +304,7 @@ function FlyoutMenu({
             >
               <FlexContainer
                 alignItems="center"
+                style={{ gridAutoRows: 'auto' }}
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
@@ -368,7 +371,7 @@ function FlyoutMenu({
           }
 
           if (linkProps) {
-            return (
+            el = (
               <NextLink
                 {...linkProps}
                 key={`${uuid}-${idx0}`}
@@ -377,6 +380,12 @@ function FlyoutMenu({
                 {el}
               </NextLink>
             );
+          }
+
+          if (render) {
+            el = React.cloneElement(render(el), {
+              key: `${uuid}-${idx0}`,
+            });
           }
 
           return el;

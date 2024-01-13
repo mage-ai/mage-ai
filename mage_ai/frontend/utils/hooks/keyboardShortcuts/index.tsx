@@ -87,7 +87,7 @@ export function useKeyboardShortcuts(uuid, elementToListen, {
 
       onKeyDown?.(event, newMapping[uuid] || {}, newHistory);
 
-      logRender(`keyboardShortcuts keydown ${uuid}`);
+      // logRender(`keyboardShortcuts keydown ${uuid}`);
     };
 
     const el = elementToListen?.current || elementToListen;

@@ -4,8 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
-import { hideScrollBar } from '@oracle/styles/scrollbars';
+import { PlainScrollbarStyledCss, SCROLLBAR_WIDTH_SMALL, hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 64;
 export const AFTER_MIN_WIDTH = UNIT * 30;
@@ -15,7 +14,7 @@ export const DRAGGABLE_WIDTH = UNIT * 0.5;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
-export const ASIDE_SUBHEADER_HEIGHT = UNIT * 6;
+export const ASIDE_SUBHEADER_HEIGHT = 44;
 export const ALL_HEADERS_HEIGHT = 2 * PADDING_UNITS * 3 * UNIT;
 
 type ScrollbarTrackType = {
@@ -90,6 +89,7 @@ export const TabStyle = styled.div<{
 `;
 
 const ASIDE_STYLE = css<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -108,13 +108,20 @@ const ASIDE_STYLE = css<{
     position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
+
+  ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
+    height: inherit;
+    overflow: hidden;
+  `}
 `;
 
 const ASIDE_INNER_STYLE = css<{
   heightOffset?: number;
   verticalOffset?: number;
 }>`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
 
   height: 100%;
   overflow: auto;
@@ -156,19 +163,25 @@ const ASIDE_DRAGGABLE_STYLE = css<{
   `}
 `;
 
+export const MainContainerHeaderStyle = styled.div`
+  min-height: ${ASIDE_SUBHEADER_HEIGHT}px;
+`;
+
 export const AsideHeaderStyle = styled.div<{
   contained?: boolean;
+  contrast?: boolean;
   inline?: boolean;
   top?: number;
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
-  height: ${ASIDE_SUBHEADER_HEIGHT}px;
+  max-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
+  min-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
   z-index: 4;
 
   ${hideScrollBar()}
 
-  ${props => `
+  ${props => !props.contrast && `
     background-color: ${(props.theme.background || dark.background).panel};
     top: ${props?.top || 0}px;
   `}
@@ -176,7 +189,14 @@ export const AsideHeaderStyle = styled.div<{
   ${props => !props.visible && `
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
+  `}
+
+  ${props => !props.contrast && `
     border-bottom-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => props.contrast && `
+    border-bottom-color: ${(props.theme.borders || dark.borders).light} !important;
   `}
 
   ${props => props.contained && `
@@ -223,6 +243,7 @@ export const AsideSubheaderStyle = styled.div<{
 `;
 
 export const BeforeStyle = styled.aside<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -238,9 +259,11 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 }>`
   ${ASIDE_INNER_STYLE}
   overflow: hidden;
+  margin-right: ${SCROLLBAR_WIDTH_SMALL}px;
 
   &:hover {
     overflow: auto;
+    margin-right: 0;
   }
 
   ${props => props.contained && `
@@ -249,6 +272,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 `;
 
 export const AfterStyle = styled.aside<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -305,6 +329,7 @@ export const DraggableStyle = styled.div<{
 `;
 
 export const MainWrapper = styled.div<{
+  autoLayout?: boolean;
   noBackground?: boolean;
   inline?: boolean;
 }>`
@@ -318,9 +343,17 @@ export const MainWrapper = styled.div<{
   ${props => !props.noBackground && `
     background-color: ${(props.theme.background || dark.background).codeArea};
   `}
+
+  ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  `}
 `;
 
 export const MainContentStyle = styled.div<{
+  autoLayout?: boolean;
   beforeVisible?: boolean;
   footerOffset?: number;
   headerOffset?: number;
@@ -328,21 +361,40 @@ export const MainContentStyle = styled.div<{
 }>`
   z-index: 2;
 
-  ${props => `
+  ${props => !props.autoLayout && `
     height: calc(100% - ${(props.headerOffset || 0) + (props.footerOffset || 0)}px);
     position: ${props.inline ? 'relative' : 'fixed'};
   `}
 
-  ${props => !props.inline && `
+  ${props => !props.autoLayout && !props.inline && `
     top: ${props.headerOffset || 0}px;
+  `}
+
+  ${props => props.autoLayout && `
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    overflow: auto;
+    position: relative;
   `}
 `;
 
-export const MainContentInnerStyle = styled.div`
-  ${ScrollbarStyledCss}
+export const MainContentInnerStyle = styled.div<{
+  autoLayout?: boolean;
+  noScrollbarTrackBackground?: boolean;
+}>`
+  ${PlainScrollbarStyledCss}
 
-  height: 100%;
   overflow: auto;
+
+  ${props => !props.autoLayout && `
+    height: 100%;
+  `}
+
+  ${props => props.autoLayout && `
+    flex: 1;
+  `}
 `;
 
 export const NavigationStyle = styled.div`
@@ -374,7 +426,7 @@ export const NavigationContainerStyle = styled.div<{
   heightOffset: number;
   widthOffset: number;
 }>`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
 
   overflow: auto;
   position: absolute;

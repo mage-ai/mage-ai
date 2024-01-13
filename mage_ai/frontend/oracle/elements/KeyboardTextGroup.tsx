@@ -76,6 +76,7 @@ function KeyboardTextGroup({
               disabled={disabled}
               key={`spacing-${keyText}-plus-sign`}
               monospace={monospace}
+              noWrapping
               small={small}
             >
               +

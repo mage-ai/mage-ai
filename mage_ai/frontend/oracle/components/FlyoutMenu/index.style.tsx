@@ -28,8 +28,7 @@ export const FlyoutMenuContainerStyle = styled.div<{
   z-index: 1;
 
   ${props => props.width && `
-    min-width: 0px;
-    width: ${props.width}px;
+    min-width: ${props.width}px;
   `}
 
   ${({ maxHeight }) => maxHeight && `

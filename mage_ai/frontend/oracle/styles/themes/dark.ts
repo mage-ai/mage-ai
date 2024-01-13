@@ -85,6 +85,8 @@ export default {
     yellowLight: YELLOW_TRANSPARENT,
   },
   background: {
+    blackTransparent: 'rgba(0, 0, 0, 0.6)',
+    blackTransparentDark: 'rgba(0, 0, 0, 0.8)',
     chartBlock: '#2E3036',
     codeArea: '#1E1F24',
     codeTextarea: '#000000',
@@ -92,6 +94,7 @@ export default {
     danger: RED_XLIGHT,
     dark: GRAY,
     dashboard: '#18181C',
+    dashboardTransparent: 'rgba(24, 24, 28, 0.1)',
     header: '#1B1B1B',
     menu: NAVY,
     muted: SILVER,
@@ -194,6 +197,7 @@ export default {
   },
   interactive: {
     activeBorder: BLACK,
+    blackBackgroundTransparent: 'rgba(0, 0, 0, 0.5)',
     checked: BLACK,
     dangerBorder: RED,
     defaultBackground: '#36383F',
@@ -204,6 +208,7 @@ export default {
     focusBorder: BLUE_HIGHLIGHT,
     hoverBackground: GRAY_HIGHLIGHT,
     hoverBackgroundTransparent: 'rgba(78, 78, 78, 0.5)',
+    hoverBlackBackgroundTransparent: 'rgba(0, 0, 0, 0.7)',
     hoverBorder: DARK_GRAY_LINES,
     hoverOverlay: 'rgba(255, 255, 255, 0.1)',
     linkPrimary: BLUE_TEXT,

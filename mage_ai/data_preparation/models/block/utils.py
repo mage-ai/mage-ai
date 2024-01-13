@@ -557,16 +557,6 @@ def fetch_input_variables(
                         for var in variables
                     ]
 
-            DX_PRINTER.critical(
-                'input_variables',
-                block_run_outputs_cache=block_run_outputs_cache,
-                should_reduce=should_reduce,
-                upstream_block_uuid=upstream_block_uuid,
-                variable_values=variable_values,
-                variables=variables,
-                __uuid='output_variables'
-            )
-
             upstream_in_dynamic_upstream = False
             if dynamic_upstream_block_uuids:
                 for uuids in dynamic_upstream_block_uuids:

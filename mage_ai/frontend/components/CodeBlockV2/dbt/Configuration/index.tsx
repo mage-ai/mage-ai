@@ -286,15 +286,11 @@ function Configuration({
 
                 <Text muted inline small>
                   Manually enter the full path from the root directory of the current project,
-                  <br />
                   to the dbt project directory that contains the <Text muted inline monospace small>
                     dbt_project.yml
                   </Text> file.
-                  <br />
                   Interpolate environment variables, runtime variables, etc.
-                  <br />
                   using the following syntax:
-                  <br />
                   <Text muted inline monospace small>
                     {'{{ env_var(\'NAME\') }}'}
                   </Text> or <Text muted inline monospace small>
@@ -329,17 +325,12 @@ function Configuration({
                   Manually enter the full path with the filename <Text muted inline monospace small>
                     profiles.yml
                   </Text>
-                  <br />
                   from the root directory of the current project,
-                  <br />
                   to the dbt project directory that contains the <Text muted inline monospace small>
                     profiles.yml
                   </Text> file.
-                  <br />
                   Interpolate environment variables, runtime variables, etc.
-                  <br />
                   using the following syntax:
-                  <br />
                   <Text muted inline monospace small>
                     {'{{ env_var(\'NAME\') }}'}
                   </Text> or <Text muted inline monospace small>
@@ -374,11 +365,8 @@ function Configuration({
                   Manually enter the target name from the <Text muted inline monospace small>
                     dbt_project.yml
                   </Text> file.
-                  <br />
                   Interpolate environment variables, runtime variables, etc.
-                  <br />
                   using the following syntax:
-                  <br />
                   <Text muted inline monospace small>
                     {'{{ env_var(\'NAME\') }}'}
                   </Text> or <Text muted inline monospace small>

@@ -91,6 +91,7 @@ def create_secret(
     entity: Entity = Entity.GLOBAL,
     project_uuid: str = None,
     pipeline_uuid: str = None,
+    repo_name: str = None,
 ):
     from mage_ai.orchestration.db.models.secrets import Secret
     missing_values = []
@@ -117,7 +118,7 @@ def create_secret(
         'name': name,
         'value': encrypted_value,
         'key_uuid': key_uuid,
-        'repo_name': Project().repo_path_for_database_query('secrets')[0],
+        'repo_name': repo_name or Project().repo_path_for_database_query('secrets')[0],
     }
 
     secret = Secret(**kwargs)
@@ -125,7 +126,7 @@ def create_secret(
     return secret
 
 
-def get_valid_secrets_for_repo() -> List:
+def get_valid_secrets_for_repo(repo_names: List[str] = None) -> List:
     """
     This method still only returns secrets for the current repo. This will need to be
     updated in the future to return secrets based on the parameters passed in.
@@ -137,9 +138,10 @@ def get_valid_secrets_for_repo() -> List:
 
     fernet = Fernet(key)
 
-    secrets = Secret.query.filter(
-        Secret.repo_name.in_(Project().repo_path_for_database_query('secrets')),
-    )
+    if not repo_names:
+        repo_names = Project().repo_path_for_database_query('secrets')
+
+    secrets = Secret.query.filter(Secret.repo_name.in_(repo_names))
     valid_secrets = []
     if secrets.count() > 0:
         for secret in secrets:
@@ -216,6 +218,7 @@ def delete_secret(
     entity: Entity = Entity.GLOBAL,
     pipeline_uuid: str = None,
     project_uuid: str = None,
+    repo_name: str = None,
     **kwargs,
 ) -> None:
     from mage_ai.orchestration.db.models.secrets import Secret
@@ -231,7 +234,7 @@ def delete_secret(
     if entity == Entity.GLOBAL and not secret:
         secret = Secret.query.filter(
             Secret.name == name,
-            Secret.repo_name == Project().repo_path_for_database_query('secrets')[0],
+            Secret.repo_name == repo_name or Project().repo_path_for_database_query('secrets')[0],
             Secret.key_uuid.is_(None),
         ).one_or_none()
 

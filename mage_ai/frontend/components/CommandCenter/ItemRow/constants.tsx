@@ -1,17 +1,26 @@
 import * as AllIcons from '@oracle/icons';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
-import { CommandCenterItemType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
+import { CommandCenterItemType, ItemTypeEnum, ModeTypeEnum, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import {
+  Binary,
   BlockGeneric,
+  HexagonAll,
   BranchAlt,
+  CategorizationUseCase,
   Chat,
+  ChurnV3,
   Code,
   DocumentIcon,
+  EstimationUseCase,
   File as FileIcon,
   FolderOutline,
+  ForecastV3,
+  LTVUseCase,
   Lightning,
   NavDashboard,
   PipelineV3,
+  PlugAPI,
+  RankingV3,
   Schedule,
   ScheduleClockWithBorderDots,
   SettingsWithKnobs,
@@ -19,6 +28,13 @@ import {
 } from '@oracle/icons';
 
 export function getIcon(item: CommandCenterItemType) {
+  if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type) {
+    return Binary;
+  }
+  if (ModeTypeEnum.VERSION_CONTROL === item?.mode?.type) {
+    return ForecastV3;
+  }
+
   const {
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
@@ -42,14 +58,16 @@ export function getIcon(item: CommandCenterItemType) {
   const mapping = {
     [ObjectTypeEnum.APPLICATION]: NavDashboard,
     [ObjectTypeEnum.BLOCK]: BlockGeneric,
+    [ObjectTypeEnum.BRANCH]: BranchAlt,
     [ObjectTypeEnum.CHAT]: Chat,
     [ObjectTypeEnum.CODE]: Code,
     [ObjectTypeEnum.DOCUMENT]: DocumentIcon,
     [ObjectTypeEnum.FILE]: FileIcon,
     [ObjectTypeEnum.FOLDER]: FolderOutline,
-    [ObjectTypeEnum.GIT]: BranchAlt,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
     [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
+    [ObjectTypeEnum.PROJECT]: HexagonAll,
+    [ObjectTypeEnum.REMOTE]: PlugAPI,
     [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };

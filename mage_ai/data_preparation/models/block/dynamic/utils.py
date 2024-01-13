@@ -87,7 +87,7 @@ def should_reduce_output(block) -> bool:
     Returns:
         bool: True if the block should reduce its output, False otherwise.
     """
-    if not block.configuration or not block.configuration.get('reduce_output', False):
+    if not block or not block.configuration or not block.configuration.get('reduce_output', False):
         return False
     return True
 

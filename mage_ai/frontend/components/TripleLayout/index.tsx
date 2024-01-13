@@ -29,6 +29,7 @@ import {
   DRAGGABLE_WIDTH,
   DraggableStyle,
   InlineContainerStyle,
+  MainContainerHeaderStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
@@ -70,6 +71,7 @@ type TripleLayoutProps = {
   afterOverflow?: 'hidden';
   afterSubheader?: any;
   afterWidth?: number;
+  autoLayout?: boolean;
   before?: any;
   beforeContentHeightOffset?: number;
   beforeDividerContrast?: boolean;
@@ -83,6 +85,7 @@ type TripleLayoutProps = {
   beforeWidth?: number;
   children?: any;
   contained?: boolean;
+  containerRef?: any;
   footerOffset?: number;
   header?: any;
   headerOffset?: number;
@@ -120,6 +123,7 @@ function TripleLayout({
   afterOverflow,
   afterSubheader,
   afterWidth = 0,
+  autoLayout,
   before,
   beforeContentHeightOffset,
   beforeDividerContrast,
@@ -133,6 +137,7 @@ function TripleLayout({
   beforeWidth = 0,
   children,
   contained,
+  containerRef,
   footerOffset,
   header,
   headerOffset = 0,
@@ -154,7 +159,15 @@ function TripleLayout({
   setBeforeWidth,
   uuid,
 }: TripleLayoutProps) {
-  const { width } = useWindowSize();
+  const { width: widthWindow } = useWindowSize();
+  const width = containerRef?.current
+    ? containerRef?.current?.getBoundingClientRect?.()?.width
+    : widthWindow;
+
+  function getOffsetLeft() {
+    return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
+  }
+
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
@@ -186,7 +199,7 @@ function TripleLayout({
           x,
         } = refBeforeInner?.current?.getBoundingClientRect?.() || {};
         if (width) {
-          let newWidth = e.x;
+          let newWidth = (e.x - getOffsetLeft());
           if (newWidth + MAIN_MIN_WIDTH > width - (afterHidden ? 0 : afterWidth)) {
             newWidth = (width - (afterHidden ? 0 : afterWidth)) - MAIN_MIN_WIDTH;
           }
@@ -238,10 +251,11 @@ function TripleLayout({
         } = refAfterInner?.current?.getBoundingClientRect?.() || {};
 
         if (width) {
-          let newWidth = width - e.x;
+          let newWidth = width - (e.x - getOffsetLeft());
           if (newWidth + MAIN_MIN_WIDTH > width - (beforeHidden ? 0 : beforeWidth)) {
             newWidth = (width - (beforeHidden ? 0 : beforeWidth)) - MAIN_MIN_WIDTH;
           }
+
           setAfterWidth?.(Math.max(newWidth, AFTER_MIN_WIDTH));
         }
       }
@@ -298,6 +312,7 @@ function TripleLayout({
       {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
+            contrast={afterDividerContrast}
             inline={inline}
             style={{
               width: hasAfterNavigationItems
@@ -386,6 +401,7 @@ function TripleLayout({
     </>
   ), [
     after,
+    afterDividerContrast,
     afterFooter,
     afterFooterBottomOffset,
     afterHeader,
@@ -440,6 +456,7 @@ function TripleLayout({
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
           contained={contained}
+          contrast={beforeDividerContrast}
           inline={inline}
           style={{
             overflow: beforeHidden
@@ -534,6 +551,7 @@ function TripleLayout({
   ), [
     before,
     beforeContentHeightOffsetUse,
+    beforeDividerContrast,
     beforeFooter,
     beforeFooterRef,
     beforeHeader,
@@ -548,6 +566,82 @@ function TripleLayout({
     refBeforeInner,
     setBeforeHidden,
     toggleBefore,
+  ]);
+
+  const afterMemo = useMemo(() => {
+    if (after && !shouldHideAfterWrapper) {
+      return (
+        <AfterStyle
+          autoLayout={autoLayout}
+          heightOffset={afterHeightOffset}
+          inline={inline}
+          style={{
+            width: afterWidthFinal,
+          }}
+        >
+          <DraggableStyle
+            active={afterMousedownActive}
+            contrast={afterDividerContrast}
+            disabled={afterHidden}
+            left={0}
+            ref={refAfterInnerDraggable}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
+          />
+
+          {hasAfterNavigationItems && (
+            <NavigationStyle>
+              {!afterHidden && (
+                <>
+                  <NavigationInnerStyle aligned="right">
+                    <VerticalNavigationStyle
+                      aligned="right"
+                      borderless
+                      showMore={navigationShowMore}
+                    >
+                      <VerticalNavigation
+                        aligned="right"
+                        navigationItems={afterNavigationItems}
+                      />
+                    </VerticalNavigationStyle>
+                  </NavigationInnerStyle>
+
+                  <NavigationContainerStyle
+                    aligned="right"
+                    fullWidth
+                    heightOffset={afterHeightOffset}
+                    // 1 for the border-left
+                    widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
+                  >
+                    {afterContent}
+                  </NavigationContainerStyle>
+                </>
+              )}
+
+              {afterHidden && afterContent}
+            </NavigationStyle>
+          )}
+
+          {!hasAfterNavigationItems && afterContent}
+        </AfterStyle>
+      );
+    }
+
+    return null;
+  }, [
+    after,
+    afterContent,
+    afterDividerContrast,
+    afterHeightOffset,
+    afterHidden,
+    afterMousedownActive,
+    afterNavigationItems,
+    afterWidthFinal,
+    autoLayout,
+    contained,
+    hasAfterNavigationItems,
+    inline,
+    navigationShowMore,
+    shouldHideAfterWrapper,
   ]);
 
   const el = useMemo(() => (
@@ -574,6 +668,7 @@ function TripleLayout({
 
       {before && (
         <BeforeStyle
+          autoLayout={autoLayout}
           heightOffset={beforeHeightOffset}
           inline={inline}
           style={{
@@ -629,7 +724,10 @@ function TripleLayout({
         </BeforeStyle>
       )}
 
+      {autoLayout && afterMemo}
+
       <MainWrapper
+        autoLayout={autoLayout}
         inline={inline}
         noBackground={noBackground}
         style={{
@@ -638,16 +736,21 @@ function TripleLayout({
         }}
       >
         {mainContainerHeader
-          ?
-            typeof mainContainerHeader === 'function'
-              ? mainContainerHeader?.({
-                widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
-              })
-              : mainContainerHeader
+          ? (
+            <MainContainerHeaderStyle>
+              {typeof mainContainerHeader === 'function'
+                ? mainContainerHeader?.({
+                  widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
+                })
+                : mainContainerHeader
+              }
+            </MainContainerHeaderStyle>
+          )
           : null
         }
 
         <MainContentStyle
+          autoLayout={autoLayout}
           headerOffset={contained
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
@@ -659,69 +762,19 @@ function TripleLayout({
           }}
         >
           <MainContentInnerStyle
+            autoLayout={autoLayout}
             noScrollbarTrackBackground
             ref={mainContainerRef}
           >
             {children}
           </MainContentInnerStyle>
+
         </MainContentStyle>
 
         {mainContainerFooter}
       </MainWrapper>
 
-      {after && !shouldHideAfterWrapper && (
-        <AfterStyle
-          heightOffset={afterHeightOffset}
-          inline={inline}
-          style={{
-            width: afterWidthFinal,
-          }}
-        >
-          <DraggableStyle
-            active={afterMousedownActive}
-            contrast={afterDividerContrast}
-            disabled={afterHidden}
-            left={0}
-            ref={refAfterInnerDraggable}
-            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
-          />
-
-          {hasAfterNavigationItems && (
-            <NavigationStyle>
-              {!afterHidden && (
-                <>
-                  <NavigationInnerStyle aligned="right">
-                    <VerticalNavigationStyle
-                      aligned="right"
-                      borderless
-                      showMore={navigationShowMore}
-                    >
-                      <VerticalNavigation
-                        aligned="right"
-                        navigationItems={afterNavigationItems}
-                      />
-                    </VerticalNavigationStyle>
-                  </NavigationInnerStyle>
-
-                  <NavigationContainerStyle
-                    aligned="right"
-                    fullWidth
-                    heightOffset={afterHeightOffset}
-                    // 1 for the border-left
-                    widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
-                  >
-                    {afterContent}
-                  </NavigationContainerStyle>
-                </>
-              )}
-
-              {afterHidden && afterContent}
-            </NavigationStyle>
-          )}
-
-          {!hasAfterNavigationItems && afterContent}
-        </AfterStyle>
-      )}
+      {!autoLayout && afterMemo}
     </>
   ), [
     after,
@@ -732,6 +785,7 @@ function TripleLayout({
     afterMousedownActive,
     afterNavigationItems,
     afterWidthFinal,
+    autoLayout,
     beforeContent,
     beforeDividerContrast,
     beforeHeightOffset,

@@ -10,6 +10,8 @@ const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
 
 function useAside(uuid, refData, {
   disable,
+  hidden: hiddenProp,
+  mainContainerWidth,
   refOther,
   setWidth: setWidthProp,
   width: widthProp,
@@ -17,6 +19,8 @@ function useAside(uuid, refData, {
   widthWindow,
 }: {
   disable?: boolean;
+  hidden?: boolean;
+  mainContainerWidth?: number;
   refOther?: {
     current: {
       disable?: boolean;
@@ -30,16 +34,39 @@ function useAside(uuid, refData, {
   widthOverride?: boolean;
   widthWindow?: number;
 }): {
+  hidden?: boolean;
   mousedownActive: boolean;
+  setHidden: (value: boolean) => void;
   setMousedownActive: (value: boolean) => void;
   setWidth: (value: number) => void;
   width: number;
 } {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
+  const keyHidden = useMemo(() => `${uuid}_hidden`, [uuid]);
+  const hiddenLocal = get(keyHidden);
   const widthLocal = get(key);
 
+  const [hidden, setHiddenState] = useState([
+    hiddenLocal,
+    hiddenProp,
+    false,
+  ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
-  const [widthState, setWidthState] = useState(widthLocal || widthProp);
+  const [widthState, setWidthState] = useState(Math.min(...[
+    typeof widthWindow !== 'undefined'
+      ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH)
+      : null,
+    (
+      typeof widthLocal !== 'undefined' ? widthLocal : null
+      || typeof widthProp !== 'undefined' ? widthProp : null
+    ),
+    DEFAULT_ASIDE_WIDTH,
+  ].filter(v => v)));
+
+  const setHidden = useCallback((prev) => {
+    setHiddenState(prev);
+    set(keyHidden, typeof prev === 'function' ? prev?.() : prev);
+  }, [keyHidden]);
 
   const width = useMemo(() => {
     const value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
@@ -68,7 +95,12 @@ function useAside(uuid, refData, {
         DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
-      const value = Math.max(DEFAULT_ASIDE_WIDTH, Math.min(maxWidth, prev));
+      let value = prev;
+      if (value < DEFAULT_ASIDE_WIDTH) {
+        value = DEFAULT_ASIDE_WIDTH;
+      } else if (value > maxWidth) {
+        value = prev;
+      }
 
       if (!!prev) {
         setWidthState(value);
@@ -95,7 +127,10 @@ function useAside(uuid, refData, {
 
   const widthWindowPrev = usePrevious(widthWindow);
   useEffect(() => {
-    if (widthWindow !== widthWindowPrev) {
+    if (typeof widthWindow !== 'undefined'
+      && typeof widthWindowPrev !== 'undefined'
+      && widthWindow !== widthWindowPrev
+    ) {
       setWidth(widthWindow * (width / widthWindowPrev));
     }
   }, [width, widthWindow, widthWindowPrev]);
@@ -114,7 +149,9 @@ function useAside(uuid, refData, {
   ]);
 
   return {
+    hidden,
     mousedownActive,
+    setHidden,
     setMousedownActive,
     setWidth,
     width,
@@ -122,11 +159,15 @@ function useAside(uuid, refData, {
 }
 
 export type UseTripleLayoutType = {
+  hiddenAfter?: boolean;
+  hiddenBefore?: boolean;
   mainContainerRef: {
     current: any;
   };
   mousedownActiveAfter: boolean;
   mousedownActiveBefore: boolean;
+  setHiddenAfter: (value: boolean) => void;
+  setHiddenBefore: (value: boolean) => void;
   setMousedownActiveAfter: (value: boolean) => void;
   setMousedownActiveBefore: (value: boolean) => void;
   setWidthAfter: (value: number) => void;
@@ -138,6 +179,9 @@ export type UseTripleLayoutType = {
 export type UseTripleLayoutProps = {
   disableAfter?: boolean;
   disableBefore?: boolean;
+  hiddenAfter?: boolean;
+  hiddenBefore?: boolean;
+  mainContainerRef?: any;
   setWidthAfter?: (value: number) => void;
   setWidthBefore?: (value: number) => void;
   widthAfter?: number;
@@ -149,18 +193,21 @@ export type UseTripleLayoutProps = {
 export default function useTripleLayout(uuid: string, {
   disableAfter,
   disableBefore,
+  hiddenAfter: hiddenAfterProp,
+  hiddenBefore: hiddenBeforeProp,
+  mainContainerRef: mainContainerRefProp,
   setWidthAfter: setWidthAfterProp,
   setWidthBefore: setWidthBeforeProp,
   widthAfter: widthAfterProp,
   widthBefore: widthBeforeProp,
   widthOverrideAfter: widthOverrideAfterProp,
   widthOverrideBefore: widthOverrideBeforeProp,
-}: UseTripleLayoutProps): UseTripleLayoutType {
+}: UseTripleLayoutProps = {}): UseTripleLayoutType {
   const { width: widthWindow } = useWindowSize();
   const keyAfter = useMemo(() => `layout_after_${uuid}`, [uuid]);
   const keyBefore = useMemo(() => `layout_before_${uuid}`, [uuid]);
 
-  const mainContainerRef = useRef(null);
+  const mainContainerRef = mainContainerRefProp || useRef(null);
   const [mainContainerWidthInit, setMainContainerWidth] = useState<number>(null);
   const mainContainerWidth = useMemo(() => Math.max(
     mainContainerWidthInit - MINIMUM_WIDTH_MAIN_CONTAINER,
@@ -181,12 +228,16 @@ export default function useTripleLayout(uuid: string, {
   });
 
   const {
+    hidden: hiddenAfter,
     mousedownActive: mousedownActiveAfter,
+    setHidden: setHiddenAfter,
     setMousedownActive: setMousedownActiveAfter,
     setWidth: setWidthAfter,
     width: widthAfter,
   } = useAside(keyAfter, refAfter, {
     disable: disableAfter,
+    hidden: hiddenAfterProp,
+    mainContainerWidth,
     refOther: refBefore,
     setWidth: setWidthAfterProp,
     width: widthAfterProp,
@@ -195,12 +246,16 @@ export default function useTripleLayout(uuid: string, {
   });
 
   const {
+    hidden: hiddenBefore,
     mousedownActive: mousedownActiveBefore,
+    setHidden: setHiddenBefore,
     setMousedownActive: setMousedownActiveBefore,
     setWidth: setWidthBefore,
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
     disable: disableBefore,
+    hidden: hiddenBeforeProp,
+    mainContainerWidth,
     refOther: refAfter,
     setWidth: setWidthBeforeProp,
     width: widthBeforeProp,
@@ -258,9 +313,13 @@ export default function useTripleLayout(uuid: string, {
   // ]);
 
   return {
+    hiddenAfter,
+    hiddenBefore,
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
+    setHiddenAfter,
+    setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
     setWidthAfter,

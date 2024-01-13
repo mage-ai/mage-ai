@@ -137,13 +137,14 @@ class File:
         exclude_dir_pattern: str = None,
         exclude_pattern: str = None,
         pattern: str = None,
+        check_file_path: bool = False,
     ):
         dir_selector = None
         file_selector = None
 
         if exclude_pattern is not None or pattern is not None:
-            def __select(x: Dict, pattern=pattern):
-                filename = x.get('name')
+            def __select(x: Dict, check_file_path=check_file_path, pattern=pattern):
+                filename = x.get('path') if check_file_path else x.get('name')
                 checks = []
                 if exclude_pattern:
                     checks.append(not re.search(exclude_pattern, filename or ''))
@@ -312,6 +313,14 @@ class File:
 
         update_file_cache()
 
+    @property
+    def size(self) -> int:
+        return os.path.getsize(self.file_path)
+
+    @property
+    def modified_timestamp(self) -> float:
+        return os.path.getmtime(self.file_path)
+
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
 
@@ -407,14 +416,30 @@ class File:
 
         update_file_cache()
 
-    def to_dict(self, include_content=False):
-        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
+    def to_dict(self, include_content: bool = False, include_metadata: bool = False):
+        data = dict(
+            name=self.filename,
+            path=os.path.join(self.dir_path, self.filename),
+            size=None,
+            modified_timestamp=None,
+        )
+
         if include_content:
             data['content'] = self.content()
+
+        if include_metadata:
+            data['size'] = self.size
+            data['modified_timestamp'] = self.modified_timestamp
+
         return data
 
     async def to_dict_async(self, include_content=False):
-        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
+        data = dict(
+            name=self.filename,
+            path=os.path.join(self.dir_path, self.filename),
+            size=self.size,
+            modified_timestamp=self.modified_timestamp,
+        )
         if include_content:
             data['content'] = await self.content_async()
         return data

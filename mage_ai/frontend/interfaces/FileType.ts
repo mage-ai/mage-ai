@@ -62,6 +62,19 @@ const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
   FileExtensionEnum.YML,
 ];
 
+export const FILE_EXTENSION_PRIORITY = {
+  [FileExtensionEnum.PY]: 0,
+  [FileExtensionEnum.SQL]: 1,
+  [FileExtensionEnum.R]: 2,
+  [FileExtensionEnum.YAML]: 3,
+  [FileExtensionEnum.YML]: 3,
+  [FileExtensionEnum.MD]: 4,
+  [FileExtensionEnum.TXT]: 5,
+  [FileExtensionEnum.JSON]: 6,
+  [FileExtensionEnum.CSV]: 7,
+  [FileExtensionEnum.SH]: 8,
+}
+
 export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
   new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
@@ -78,14 +91,30 @@ export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX = new RegExp([
   FileExtensionEnum.YML,
 ].map(ext => `\.${ext}$`).join('|'));
 
+export const COMMON_EXCLUDE_PATTERNS = new RegExp([
+  '__init__\.py',
+  'metadata\.yaml',
+  'interactions\.yaml',
+  '\.DS_Store',
+].join('|'));
+
+export const COMMON_EXCLUDE_DIR_PATTERNS = new RegExp([
+  'compiled',
+  '__pycache__',
+].join('|'));
+
 export default interface FileType {
   children?: FileType[];
   content?: string;
   disabled?: boolean;
+  extension?: FileExtensionEnum;
   isNotFolder?: boolean;
+  language?: BlockLanguageEnum;
+  modified_timestamp?: number;
   name?: string;
   parent?: FileType;
   path?: string;
+  size?: number;
   uuid?: string;
 }
 
@@ -123,4 +152,17 @@ export type OriginalContentMappingType = {
     relativePath: string;
     repoPath: string;
   };
+};
+
+export const FILE_EXTENSION_DISPLAY_MAPPING = {
+  [FileExtensionEnum.CSV]: 'Comma-separated values',
+  [FileExtensionEnum.JSON]: 'JSON',
+  [FileExtensionEnum.MD]: 'Markdown',
+  [FileExtensionEnum.PY]: 'Python',
+  [FileExtensionEnum.R]: 'R',
+  [FileExtensionEnum.SH]: 'Shell script',
+  [FileExtensionEnum.SQL]: 'SQL',
+  [FileExtensionEnum.TXT]: 'Text',
+  [FileExtensionEnum.YAML]: 'YAML',
+  [FileExtensionEnum.YML]: 'YAML',
 };

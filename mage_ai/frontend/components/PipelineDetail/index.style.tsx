@@ -68,6 +68,7 @@ export const FileTabStyle = styled.div<{
   border-right: 1px solid transparent;
   height: 100%;
   padding: ${1 * UNIT}px ${1.5 * UNIT}px;
+  position: relative;
 
   ${props => `
     &:hover {

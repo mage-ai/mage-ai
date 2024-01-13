@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import React, {
   Dispatch,
   SetStateAction,
@@ -32,12 +33,13 @@ import {
 } from '@utils/events/constants';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
+import { DEBUG } from '@utils/environment';
 import { DBT } from '@oracle/icons';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
-import { find } from '@utils/array';
+import { find, range } from '@utils/array';
 import { getBlockFromFile } from './utils';
 import { getFullPath } from '@utils/files';
 import { initiateDownload } from '@utils/downloads';
@@ -69,7 +71,7 @@ type FileBrowserProps = {
   setShowHiddenFiles?: Dispatch<SetStateAction<boolean>>;
   showHiddenFilesSetting?: boolean;
   showHiddenFiles?: boolean;
-  uuid?: string;
+  uuid: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
@@ -103,9 +105,16 @@ function FileBrowser({
   setShowHiddenFiles,
   showHiddenFiles,
   showHiddenFilesSetting,
-  uuid,
+  uuid: uuidFileBrowser,
   widgets = [],
 }: FileBrowserProps, ref) {
+  const renderRef = useRef(0);
+  DEBUG(() => {
+    renderRef.current += 1;
+    console.log(`[FileBrowser][${uuidFileBrowser}]: ${renderRef.current} renders`);
+  });
+
+  const cursorRef = useRef(null);
   const timeout = useRef(null);
   const refView = useRef(null);
   const themeContext = useContext(ThemeContext);
@@ -366,6 +375,7 @@ function FileBrowser({
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
       containerRef={ref}
+      cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
       file={file}
       key={`${file.name}-${reloadCount}`}
@@ -381,7 +391,7 @@ function FileBrowser({
       setSelectedFile={setSelectedFile}
       theme={themeContext}
       timeout={timeout}
-      uuidContainer={uuid}
+      uuidContainer={uuidFileBrowser}
     />
   )), [
     disableContextMenu,
@@ -395,7 +405,7 @@ function FileBrowser({
     onSelectBlockFile,
     reloadCount,
     renderAfterContent,
-    uuid,
+    uuidFileBrowser,
   ]);
 
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
@@ -495,6 +505,18 @@ function FileBrowser({
     const items = [];
     if (selectedFolder) {
       items.push(...[
+        {
+          label: () => 'Open all files in the immediate directory',
+          onClick: () => {
+            selectedFolder?.children?.forEach((file: FileType) => {
+              if (!('children' in file)) {
+                const fp = getFullPath(selectedFolder)
+                onClickFile([fp, file?.name]?.join(osPath.sep));
+              }
+            });
+          },
+          uuid: 'new_folder',
+        },
         {
           label: () => 'New folder',
           onClick: () => {
@@ -600,6 +622,40 @@ function FileBrowser({
         });
       }
     } else if (selectedFile) {
+      if (selectedFile?.path) {
+        items.push({
+          label: () => {
+            const parts = selectedFile?.path?.split(osPath.sep);
+            const count = parts?.length || 0;
+
+            return (
+              <Text muted monospace noWrapping xsmall>
+                {parts?.map((part, idx) => (
+                  <span>
+                    {idx >= 1 && <br />}
+                    {idx >= 1 && '|'}{range(idx).map(() => '--').join('')}<Text
+                      inline
+                      monospace
+                      muted={idx <= count - 2}
+                      noWrapping
+                      xsmall
+                    >
+                      {part}
+                    </Text>{idx <= count - 2 && '/'}
+                  </span>
+                ))}
+              </Text>
+            );
+          },
+          onClick: () => onClickFile
+            ? onClickFile?.(selectedFile?.path) :
+            openFile
+              ? openFile?.(selectedFile?.path)
+              : null,
+          uuid: 'file_path',
+        });
+      }
+
       items.push(...[
         {
           label: () => 'Rename file',

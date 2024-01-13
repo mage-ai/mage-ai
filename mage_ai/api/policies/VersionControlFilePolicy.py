@@ -61,7 +61,9 @@ VersionControlFilePolicy.allow_write(
 VersionControlFilePolicy.allow_write(
     [
         'add',
+        'command',
         'commit',
+        'message',
         'reset',
     ],
     scopes=[
@@ -74,22 +76,15 @@ VersionControlFilePolicy.allow_write(
     override_permission_condition=lambda _policy: True,
 )
 
-
 VersionControlFilePolicy.allow_query(
     [
-        'staged',
-        'unstaged',
-        'untracked',
+        'diff',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.CREATE,
-        OperationType.DELETE,
-        OperationType.DETAIL,
         OperationType.LIST,
-        OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
     override_permission_condition=lambda _policy: True,

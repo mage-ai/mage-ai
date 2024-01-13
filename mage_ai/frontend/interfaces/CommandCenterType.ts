@@ -3,10 +3,30 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { removeUnderscore } from '@utils/string';
+import {
+  VersionControlBranch,
+  VersionControlCommit,
+  VersionControlProject,
+  VersionControlRemote,
+} from './VersionControlType';
+
+export enum ApplicationExpansionUUIDEnum {
+  ArcaneLibrary = 'ArcaneLibrary',
+  VersionControlFileDiffs = 'VersionControlFileDiffs',
+}
+
+export enum RenderLocationTypeEnum {
+  ITEMS_CONTAINER_AFTER = 'items_container_after',
+}
 
 export enum ItemTagEnum {
   PINNED = 'pinned',
   RECENT = 'recent',
+}
+
+export enum ValidationTypeEnum {
+  CONFIRMATION = 'confirmation',
+  CUSTOM_VALIDATION_PARSERS = 'custom_validation_parsers',
 }
 
 export enum ButtonActionTypeEnum {
@@ -14,42 +34,60 @@ export enum ButtonActionTypeEnum {
   CLOSE_APPLICATION = 'close_application',
   CUSTOM_ACTIONS = 'custom_actions',
   EXECUTE = 'execute',
+  REPLACE_APPLICATION = 'replace_application',
   RESET_FORM = 'reset_form',
+  SELECT_ITEM_FROM_REQUEST = 'select_item_from_request',
 }
 
 export enum ItemApplicationTypeEnum {
   DETAIL = 'detail',
   DETAIL_LIST = 'detail_list',
+  EXPANSION = 'expansion',
   FORM = 'form',
+  LIST = 'list'
 }
 
 export enum ItemTypeEnum {
   ACTION = 'action',
   CREATE = 'create',
+  DELETE = 'delete',
   DETAIL = 'detail',
   LIST = 'list',
+  MODE_ACTIVATION = 'mode_activation',
+  MODE_DEACTIVATION = 'mode_deactivation',
   NAVIGATE = 'navigate',
   OPEN = 'open',
   SUPPORT = 'support',
+  UPDATE = 'update',
 }
 
 export enum ObjectTypeEnum {
   APPLICATION = 'application',
+  APPLICATION_EXPANSION = 'application_expansion',
+  AUTHENTICATION = 'authentication',
   BLOCK = 'block',
+  BRANCH = 'branch',
   CHAT = 'chat',
   CODE = 'code',
   DOCUMENT = 'document',
   FILE = 'file',
   FOLDER = 'folder',
-  GIT = 'git',
   PIPELINE = 'pipeline',
   PIPELINE_RUN = 'pipeline_run',
+  PROJECT = 'project',
+  REMOTE = 'remote',
   SETTINGS = 'settings',
   TRIGGER = 'trigger',
+  VERSION_CONTROL_FILE = 'version_control_file',
+}
+
+export enum ModeTypeEnum {
+  VERSION_CONTROL = 'version_control',
 }
 
 interface TextStylesType {
   monospace?: boolean;
+  muted?: boolean;
   regular?: boolean;
   small?: boolean;
 }
@@ -57,40 +95,47 @@ interface TextStylesType {
 interface DisplaySettingsType {
   color_uuid?: string;
   icon_uuid?: string;
+  stroke_uuid?: string;
   text_styles?: TextStylesType;
 }
 
 export const TYPE_TITLE_MAPPING = {
   [ItemTypeEnum.ACTION]: 'Cast',
   [ItemTypeEnum.CREATE]: 'Conjure',
+  [ItemTypeEnum.DELETE]: 'Destroy',
   [ItemTypeEnum.DETAIL]: 'Enchant',
   [ItemTypeEnum.LIST]: 'Enchant',
   [ItemTypeEnum.NAVIGATE]: 'Teleport',
   [ItemTypeEnum.OPEN]: 'Summon',
   [ItemTypeEnum.SUPPORT]: 'Heal',
+  [ItemTypeEnum.UPDATE]: 'Alchemize',
 };
 
 export const TYPE_TITLE_MAPPING_NORMAL = {
   [ItemTypeEnum.ACTION]: 'Action',
   [ItemTypeEnum.CREATE]: 'Create',
+  [ItemTypeEnum.DELETE]: 'Delete',
   [ItemTypeEnum.DETAIL]: 'View',
   [ItemTypeEnum.LIST]: 'View',
   [ItemTypeEnum.NAVIGATE]: 'Launch',
   [ItemTypeEnum.OPEN]: 'Open',
   [ItemTypeEnum.SUPPORT]: 'Support',
+  [ItemTypeEnum.UPDATE]: 'Update',
 };
 
 export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.APPLICATION]: ObjectTypeEnum.APPLICATION,
   [ObjectTypeEnum.BLOCK]: ObjectTypeEnum.BLOCK,
+  [ObjectTypeEnum.BRANCH]: ObjectTypeEnum.BRANCH,
   [ObjectTypeEnum.CHAT]: ObjectTypeEnum.CHAT,
   [ObjectTypeEnum.CODE]: ObjectTypeEnum.CODE,
   [ObjectTypeEnum.DOCUMENT]: ObjectTypeEnum.DOCUMENT,
   [ObjectTypeEnum.FILE]: ObjectTypeEnum.FILE,
   [ObjectTypeEnum.FOLDER]: ObjectTypeEnum.FOLDER,
-  [ObjectTypeEnum.GIT]: ObjectTypeEnum.GIT,
   [ObjectTypeEnum.PIPELINE]: ObjectTypeEnum.PIPELINE,
   [ObjectTypeEnum.PIPELINE_RUN]: ObjectTypeEnum.PIPELINE_RUN,
+  [ObjectTypeEnum.PROJECT]: ObjectTypeEnum.PROJECT,
+  [ObjectTypeEnum.REMOTE]: ObjectTypeEnum.REMOTE,
   [ObjectTypeEnum.TRIGGER]: ObjectTypeEnum.TRIGGER,
 };
 
@@ -165,8 +210,12 @@ interface CommandCenterActionBaseType {
 
 export enum CommandCenterActionInteractionTypeEnum {
   CLICK = 'click',
+  CLOSE_APPLICATION = 'close_application',
+  FETCH_ITEMS = 'fetch_items',
   OPEN_FILE = 'open_file',
+  RESET_FORM = 'reset_form',
   SCROLL = 'scroll',
+  SELECT_ITEM = 'select_item',
 }
 
 export interface KeyValueType {
@@ -189,6 +238,7 @@ export interface CommandCenterActionInteractionType {
     class_name?: string;
     id?: string;
   };
+  item: CommandCenterItemType;
   options?: KeyValueType;
   type: CommandCenterActionInteractionTypeEnum;
 }
@@ -201,13 +251,42 @@ export interface CommandCenterActionPageType {
   query?: KeyValueType;
 }
 
+export interface RenderOptionsType {
+  location: RenderLocationTypeEnum;
+}
+
+interface ApplicationStateParserType {
+  function_body: string;
+  // Should almost always be something like this:
+/*
+dict(
+            positional_argument_names=[
+                'item',
+                'action',
+                'applicationState',
+                'options',
+            ],
+            function_body="""
+const names = Object.keys(applicationState?.VersionControlFileDiffs?.files || {})?.join(' ');
+action.request.payload.version_control_file.add = names
+return action
+""",
+*/
+
+  positional_argument_names: string[];
+}
+
 export interface CommandCenterActionType extends CommandCenterActionBaseType {
+  application_state_parsers?: ApplicationStateParserType[];
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
+  render_options?: RenderOptionsType;
   request?: CommandCenterActionRequestType;
   upstream_action_value_key_mapping?: KeyValueType;
   uuid: string;
+  validation_parsers?: ApplicationStateParserType[];
+  validations?: ValidationTypeEnum[];
 }
 
 export interface FormInputType extends InteractionInputType {
@@ -231,10 +310,30 @@ export interface ButtonActionType {
   tooltip?: string;
 }
 
+interface ConfigurationRequestsType {
+  files?: CommandCenterActionRequestType;
+}
+
+interface ApplicationConfigurationsType {
+  interaction_parsers?: {
+    [key: string]: {
+      action_uuid: string;
+      name: string;
+    };
+  };
+  requests?: ConfigurationRequestsType;
+}
+
+interface ExpansionSettingsType {
+  uuid: ApplicationExpansionUUIDEnum;
+}
+
 export interface ItemApplicationType {
   actions?: CommandCenterActionType[];
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
+  configurations?: ApplicationConfigurationsType;
+  expansion_settings?: ExpansionSettingsType;
   settings: FormInputType[];
   uuid: string;
 }
@@ -243,14 +342,32 @@ interface AttributeDisplaySettingsType {
   description?: DisplaySettingsType;
   icon?: DisplaySettingsType;
   item?: DisplaySettingsType;
+  subtitle?: DisplaySettingsType;
 }
 
 export interface PageHistoryType {
+  href?: string;
+  origin?: string;
   path: string;
   pathname: string;
   query?: KeyValueType;
   timestamp?: number;
   title: string;
+}
+
+export interface ModeType {
+  disable_cache_items?: boolean;
+  type: ModeTypeEnum;
+  version_control?: {
+    branch?: VersionControlBranch;
+    commit?: VersionControlCommit
+    project?: VersionControlProject;
+    remote?: VersionControlRemote;
+  };
+}
+
+interface ItemSettingsType {
+  cache_expires_at?: number;
 }
 
 export interface CommandCenterItemType {
@@ -269,7 +386,16 @@ export interface CommandCenterItemType {
   item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {
+    application?: ItemApplicationType;
     block?: BlockMetadataType;
+    branch?: {
+      current: boolean;
+      name: string;
+      output:  string[];
+      project_uuid: string;
+      remote: string;
+      repo_path: string;
+    };
     file?: FileMetadataType;
     page?: PageHistoryType;
     pipeline?: PipelineMetadataType;
@@ -286,6 +412,15 @@ export interface CommandCenterItemType {
       started_at?: string;
       status?: string;
     };
+    project?: {
+      output:  string[];
+      repo_path: string;
+      user: {
+        email: string;
+        name: string;
+      };
+      uuid: string;
+    };
     trigger?: {
       description?: string;
       global_data_product_uuid?: string;
@@ -301,8 +436,11 @@ export interface CommandCenterItemType {
       status?: string;
     };
   };
-  object_type: ObjectTypeEnum;
+  mode?: ModeType;
+  object_type?: ObjectTypeEnum;
   score?: number;
+  settings?: ItemSettingsType;
+  subtitle?: string;
   tags?: ItemTagEnum[];
   title: string;
   uuid: string;

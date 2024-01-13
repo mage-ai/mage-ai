@@ -1,8 +1,12 @@
 export function selectEntriesWithValues(obj, opts?: {
   includeEmptyArrays?: boolean;
-}) {
+}): any {
+  if (!obj) {
+    return {};
+  }
+
   const finalObj = {};
-  Object.entries(obj).forEach(([k, v]) => {
+  Object.entries(obj || {}).forEach(([k, v]) => {
     if (typeof v !== 'undefined' && v !== null) {
       if (!Array.isArray(v) || opts?.includeEmptyArrays || (v?.length >= 1 && v?.every(i => typeof i !== 'undefined' && i !== null))) {
         finalObj[k] = v;
@@ -78,7 +82,7 @@ export function pickKey(obj) {
 
 export function selectKeys(obj, keys, opts?: {
   include_blanks?: boolean;
-}) {
+}): any {
   return keys.reduce((acc, key) => {
     if (key in obj || opts?.include_blanks) {
       acc[key] = obj?.[key];
@@ -115,7 +119,36 @@ export function setNested(obj, path, value) {
     schema = schema[elem];
   }
 
-  schema[pList[len-1]] = value;
+  const valuePrev = schema[pList[len-1]];
+  if (Array.isArray(value) && valuePrev && Array.isArray(valuePrev)) {
+    // @ts-ignore
+    schema[pList[len-1]] = (valuePrev || []).concat(value);
+  } else {
+    schema[pList[len-1]] = value;
+  }
 
   return schema;
+}
+
+
+// Deep merge two objects.
+// @param target
+// @param ...sources
+
+export function mergeDeep(target, ...sources) {
+  if (!sources.length) return target;
+  const source = sources.shift();
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        mergeDeep(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+
+  return mergeDeep(target, ...sources);
 }

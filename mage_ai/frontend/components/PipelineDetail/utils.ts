@@ -22,6 +22,7 @@ import { addUnderscores, isJsonString, randomNameGenerator, removeExtensionFromF
 import {
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
+  momentInLocalTimezone,
 } from '@utils/date';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { indexBy } from '@utils/array';
@@ -175,6 +176,7 @@ export function displayPipelineLastSaved(
     isPipelineUpdating?: boolean;
     pipelineContentTouched?: boolean;
     pipelineLastSaved?: number;
+    showLastUpdatedTimestamp?: number;
   },
 ): string {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -200,6 +202,9 @@ export function displayPipelineLastSaved(
       }
       saveStatus = `Last saved ${lastSavedDate}`;
     }
+  } else if (opts?.showLastUpdatedTimestamp) {
+    const lastSavedDate = momentInLocalTimezone(moment(opts?.showLastUpdatedTimestamp), displayLocalTimezone);
+    saveStatus = `Last saved ${lastSavedDate}`;
   } else {
     saveStatus = 'All changes saved';
   }

@@ -23,7 +23,6 @@ type ButtonTabsProps = {
   compact?: boolean;
   contained?: boolean;
   large?: boolean;
-  multiSelection?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   regularSizeText?: boolean;
@@ -43,7 +42,6 @@ function ButtonTabs({
   compact,
   contained,
   large,
-  multiSelection,
   noPadding,
   onClickTab,
   regularSizeText,

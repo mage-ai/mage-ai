@@ -47,9 +47,12 @@ export enum InteractionInputStyleInputTypeEnum {
 }
 
 export interface InteractionInputStyleType {
+  default?: boolean;
   input_type?: InteractionInputStyleInputTypeEnum;
   language?: string;
+  monospace?: boolean;
   multiline?: boolean;
+  muted?: boolean;
 }
 
 export interface InteractionInputType {
@@ -57,6 +60,7 @@ export interface InteractionInputType {
   label?: string;
   options?: InteractionInputOptionType[];
   style?: InteractionInputStyleType;
+  text?: string[];
   type?: InteractionInputTypeEnum;
 }
 

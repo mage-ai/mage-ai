@@ -293,6 +293,7 @@ async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
                     dict(
                         label='Trigger pipeline',
                         tooltip='Run pipeline now.',
+                        keyboard_shortcuts=[[18, 13]],
                         action_types=[
                             ButtonActionType.EXECUTE,
                             ButtonActionType.RESET_FORM,

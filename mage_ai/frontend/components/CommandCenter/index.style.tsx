@@ -1,13 +1,15 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
-import { ITEM_ROW_HEIGHT, MAX_WIDTH } from './ItemRow/index.style';
+import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.style';
 import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { getApplicationColors } from '@components/ApplicationManager/index.style';
 
 export const COMPONENT_UUID = 'command-center';
 
@@ -18,8 +20,12 @@ export const HEADER_TITLE_ID = `${COMPONENT_UUID}-header-title`;
 export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
 export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
+export const INPUT_CONTAINER_ID = `${COMPONENT_UUID}-input-container`;
+export const OUTPUT_CONTAINER_ID = `${COMPONENT_UUID}-output-container`;
+export const CLOSE_OUTPUT_BUTTON_ID = `${COMPONENT_UUID}-close-output-button`;
 
 export const SHARED_PADDING = SCROLLBAR_WIDTH;
+export const CONTAINER_HEIGHT = (ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2);
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
 const FOOTER_CONTENT_HEIGHT = 5.5 * UNIT;
 
@@ -46,9 +52,38 @@ export const ContainerStyle = styled.div<{
   z-index: 100;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.dashboard};
+    background-color: ${(props.theme || dark).background.blackTransparent};
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey400};
+
+    #${INPUT_CONTAINER_ID} {
+      border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
+    #${OUTPUT_CONTAINER_ID} {
+      border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
+    &.version_control {
+      border: 1px solid ${getApplicationColors(
+      ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+      props,
+    )?.accent};
+
+      #${INPUT_CONTAINER_ID} {
+        border-bottom: 1px solid ${getApplicationColors(
+        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+        props,
+      )?.accent};
+      }
+
+      #${OUTPUT_CONTAINER_ID} {
+        border-top: 1px solid ${getApplicationColors(
+        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+        props,
+      )?.accent};
+      }
+    }
   `}
 
   &.hide {
@@ -60,10 +95,6 @@ export const ContainerStyle = styled.div<{
 
 export const InputContainerStyle = styled.div`
   height: ${HEADER_CONTENT_HEIGHT + (SCROLLBAR_WIDTH * 2)}px;
-
-  ${props => `
-    border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
-  `}
 `;
 
 export const HeaderContainerStyle = styled.div`
@@ -102,11 +133,10 @@ export const InputStyle = styled.input`
   `}
 `;
 
-const SHARED_CONTAINER_STYLES = css`
-  ${ScrollbarStyledCss}
+const BASE_CONTAINER_STYLES = css`
+  ${PlainScrollbarStyledCss}
   ${hideScrollBar()}
 
-  height: ${(ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2)}px;
   overflow: auto;
   max-width: ${MAX_WIDTH}px;
 
@@ -120,6 +150,12 @@ const SHARED_CONTAINER_STYLES = css`
       display: block !important;
     }
   }
+`;
+
+const SHARED_CONTAINER_STYLES = css`
+  ${BASE_CONTAINER_STYLES}
+
+  height: ${CONTAINER_HEIGHT}px;
 
   ${props => `
     .${ItemRowClassNameEnum.ITEM_ROW} {
@@ -170,9 +206,41 @@ export const ApplicationContainerStyle = styled.div`
 
 export const ApplicationContentStyle = styled.div`
   left: ${SCROLLBAR_WIDTH}px;
-  max-width: ${MAX_WIDTH - (SCROLLBAR_WIDTH * 2)}px;
+  max-width: ${ITEM_ROW_MAX_WIDTH}px;
   padding-bottom: ${1 * UNIT}px;
   padding-top: ${1 * UNIT}px;
+  position: relative;
+`;
+
+export const OutputContainerStyle = styled.div`
+  ${BASE_CONTAINER_STYLES}
+
+  max-height: ${CONTAINER_HEIGHT}px;
+
+  ${props => `
+    background-color: ${(props.theme || dark).background.blackTransparentDark};
+  `}
+
+  &.inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
+
+  &:hover {
+    // for Internet Explorer, Edge
+    -ms-overflow-style: block !important;
+    // for Firefox
+    scrollbar-width: block !important;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: block !important;
+    }
+  }
+`;
+
+export const OutputContentStyle = styled.div`
+  left: ${SCROLLBAR_WIDTH}px;
+  max-width: ${ITEM_ROW_MAX_WIDTH}px;
+  padding: ${(1 * UNIT) + SCROLLBAR_WIDTH}px ${1 * UNIT}px;
   position: relative;
 `;
 
@@ -211,6 +279,18 @@ const FOOTER_STYLES = css`
   height: ${FOOTER_CONTENT_HEIGHT}px;
   padding-left: ${SCROLLBAR_WIDTH + UNIT}px;
   padding-right: ${SCROLLBAR_WIDTH + UNIT}px;
+
+  &.output-inactive {
+    #${CLOSE_OUTPUT_BUTTON_ID} {
+      display: none;
+    }
+  }
+
+  &.output-active {
+    #${CLOSE_OUTPUT_BUTTON_ID} {
+      display: block;
+    }
+  }
 
   ${props => `
     background-color: ${(props.theme || dark)?.background?.panelTransparent};

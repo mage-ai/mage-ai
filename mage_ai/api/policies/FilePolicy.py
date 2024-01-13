@@ -62,7 +62,11 @@ FilePolicy.allow_query(
     [
         'exclude_dir_pattern',
         'exclude_pattern',
+        'flatten',
         'pattern',
+        'project_uuid',
+        'repo_path',
+        'version_control_files',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

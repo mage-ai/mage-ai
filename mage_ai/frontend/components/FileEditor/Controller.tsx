@@ -1,8 +1,13 @@
+import { useState } from 'react';
+
 import ApiReloader from '@components/ApiReloader';
 import FileEditor from '@components/FileEditor';
+import { OverlayStyle } from './index.style';
 
 function Controller({
   addNewBlock,
+  contained,
+  containerRef,
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
@@ -20,9 +25,14 @@ function Controller({
   setErrors,
   setFilesTouched,
   setSelectedBlock,
+  ...props
 }) {
+  const [ready, setReady] = useState(false);
+
   return (
     <>
+      <OverlayStyle ready={ready} />
+
       {openFilePaths?.map((filePath: string) => (
         <div
           key={filePath}
@@ -34,8 +44,11 @@ function Controller({
         >
           <ApiReloader uuid={`FileEditor/${decodeURIComponent(filePath)}`}>
             <FileEditor
+              {...props}
               active={selectedFilePath === filePath}
               addNewBlock={addNewBlock}
+              contained={contained}
+              containerRef={containerRef}
               disableRefreshWarning={disableRefreshWarning}
               fetchPipeline={fetchPipeline}
               fetchVariables={fetchVariables}
@@ -45,6 +58,12 @@ function Controller({
               onContentChange={(content: string) => setContentByFilePath({
                 [filePath]: content,
               })}
+              onMountCallback={selectedFilePath === filePath ?
+                () => {
+                  setReady(true);
+                }
+                : null
+              }
               onUpdateFileSuccess={onUpdateFileSuccess}
               openSidekickView={openSidekickView}
               originalContent={originalContent}

@@ -9,6 +9,7 @@ import Button from '@oracle/elements/Button';
 import Footer from './Footer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
+import ItemOutput from './ItemOutput';
 import ItemRow from './ItemRow';
 import LaunchKeyboardShortcutText from './LaunchKeyboardShortcutText';
 import Loading from '@oracle/components/Loading';
@@ -16,7 +17,10 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import useApplicationManager from '@components/ApplicationManager/useApplicationManager';
 import useCache from '@storage/CommandCenter/useCache';
+import useExecuteActions from './useExecuteActions';
+import useInvokeRequest from './useInvokeRequest';
 import {
   APPLICATION_FOOTER_ID,
   ApplicationContainerStyle,
@@ -31,14 +35,17 @@ import {
   HeaderContainerStyle,
   HeaderStyle,
   HeaderTitleStyle,
-  KeyboardShortcutStyle,
+  INPUT_CONTAINER_ID,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
   InputStyle,
   ItemsContainerStyle,
+  KeyboardShortcutStyle,
   LoadingStyle,
   MAIN_TEXT_INPUT_ID,
+  OUTPUT_CONTAINER_ID,
+  OutputContainerStyle,
   SHARED_PADDING,
 } from './index.style';
 import { ArrowLeft } from '@oracle/icons';
@@ -50,9 +57,11 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  ModeTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
   getButtonLabel,
+  ApplicationExpansionUUIDEnum,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
 import {
@@ -61,6 +70,8 @@ import {
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
   KEY_CODE_BACKSPACE,
+  KEY_CODE_C,
+  KEY_CODE_CONTROL,
   KEY_CODE_DELETE,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
@@ -79,8 +90,10 @@ import {
   addPickHistory,
   addSearchHistory,
   combineUnique,
+  getCurrentMode,
   getSearchHistory,
   getSetSettings,
+  setMode,
 } from '@storage/CommandCenter/utils';
 import { addCachedItems, getCachedItems } from '@storage/CommandCenter/cache';
 import {
@@ -94,7 +107,7 @@ import {
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
-import { setNested } from '@utils/hash';
+import { mergeDeep, setNested } from '@utils/hash';
 import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -105,7 +118,10 @@ function CommandCenter() {
     uuid: COMPONENT_UUID,
   });
 
+  const commandCenterStateRef = useRef({});
+
   const refAbortController = useRef(null);
+  const refAbortControllerRequest = useRef(null);
 
   const refActive = useRef(false);
   const refFocusedElement = useRef(null);
@@ -119,6 +135,7 @@ function CommandCenter() {
   const refHeaderTitle = useRef(null);
 
   const refLoading = useRef(null);
+  const refLoadingRequest = useRef(null);
   const refInput = useRef(null);
   const refInputKeyboardShortcut = useRef(null);
   const refInputValuePrevious = useRef(null);
@@ -129,12 +146,24 @@ function CommandCenter() {
   const refFooterButtonEscape = useRef(null);
   const refFooterButtonUp = useRef(null);
 
+  const refRootOutputContainer = useRef(null);
+  const refOutputContainer = useRef(null);
+  const refOutputContainerState = useRef(null);
+
   const refRootItems = useRef(null);
   const refItems = useRef([]);
   const refItemsInit = useRef(null);
   const refItemsApplicationDetailList = useRef(null);
   const refItemsNodes = useRef({});
   const refItemsNodesContainer = useRef(null);
+
+  const refItemsActionResults = useRef({});
+  function getItemsActionResults(): KeyValueType {
+    return refItemsActionResults?.current;
+  }
+  function getItems(): CommandCenterItemType[] {
+    return refItems?.current;
+  }
 
   const refFocusedItemIndex = useRef(null);
   const refFocusedSearchHistoryIndex = useRef(null);
@@ -176,28 +205,39 @@ function CommandCenter() {
   function isCurrentApplicationDetailList(
     applicationConfigurationToCheck: ApplicationConfiguration = null,
   ): boolean {
-    return ItemApplicationTypeEnum.DETAIL_LIST === (
+    return [
+      ItemApplicationTypeEnum.LIST,
+      ItemApplicationTypeEnum.DETAIL_LIST,
+    ].includes((
       applicationConfigurationToCheck || getCurrentApplicationConfiguration()
-    )?.application?.application_type;
+    )?.application?.application_type);
   }
 
-  function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
+  function toggleClassNames(classNamesIn: string[], classNamesOut: string[], refsArray: any[]) {
     refsArray.forEach((r) => {
       if (r?.current) {
         r.current.className = addClassNames(
           r?.current?.className || '',
-          [
-            reverse ? 'inactive' : 'active',
-          ],
+          classNamesIn,
         );
         r.current.className = removeClassNames(
           r?.current?.className || '',
-          [
-            reverse ? 'active' : 'inactive',
-          ],
+          classNamesOut,
         );
       }
     });
+  }
+
+  function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
+    toggleClassNames(
+      [
+        reverse ? 'inactive' : 'active',
+      ],
+      [
+        reverse ? 'active' : 'inactive',
+      ],
+      refsArray,
+    );
   }
 
   function addHeaderTitle() {
@@ -227,9 +267,24 @@ function CommandCenter() {
 
   function updateInputProperties() {
     const currentApplicationConfig = getCurrentApplicationConfiguration();
-    refInput.current.value = '';
-    refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
+    if (refInput?.current) {
+      refInput.current.value = '';
+      refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
+    }
   }
+
+  function onChangeState(prev: (data: any) => any) {
+    refApplicationState.current = prev(refApplicationState?.current);
+  }
+
+  const {
+    closeApplication,
+    renderApplications,
+    startApplication,
+  } = useApplicationManager({
+    applicationState: refApplicationState,
+    onChangeState,
+  });
 
   function addApplication(
     applicationConfiguration: {
@@ -251,7 +306,7 @@ function CommandCenter() {
         refApplications.current = [];
       }
 
-      currentApplicationConfig.application = getCurrentApplicationForItem(
+      const app = getCurrentApplicationForItem(
         currentApplicationConfig?.item,
         refApplications?.current || [],
         {
@@ -259,8 +314,12 @@ function CommandCenter() {
         },
       );
 
-      // @ts-ignore
-      refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
+      if (app) {
+        currentApplicationConfig.application = app;
+
+        // @ts-ignore
+        refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
+      }
     }
 
     const {
@@ -270,8 +329,16 @@ function CommandCenter() {
 
     const activeApplicationsCount = refApplications?.current?.length || 0;
 
+    if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
+      startApplication(currentApplicationConfig);
+      fetchItems({
+        exclude: [
+          item?.uuid,
+        ],
+        refresh: true,
+      });
+    } else if ([
     // Detail, Form
-    if ([
       ItemApplicationTypeEnum.DETAIL,
       ItemApplicationTypeEnum.FORM,
     ].includes(application?.application_type)) {
@@ -296,9 +363,13 @@ function CommandCenter() {
           {...currentApplicationConfig}
           applicationState={refApplicationState}
           applicationsRef={refApplications}
+          fetchItems={fetchItems}
+          getItemsActionResults={getItemsActionResults}
+          handleSelectItemRow={handleSelectItemRow}
           refError={refError}
           removeApplication={removeApplication}
           router={router}
+          showError={showError}
         />
       );
 
@@ -339,6 +410,10 @@ function CommandCenter() {
         {...currentApplicationConfig}
         applicationState={refApplicationState}
         applicationsRef={refApplications}
+        closeOutput={closeOutput}
+        fetchItems={fetchItems}
+        getItemsActionResults={getItemsActionResults}
+        handleSelectItemRow={handleSelectItemRow}
         refError={refError}
         removeApplication={removeApplication}
         router={router}
@@ -346,7 +421,13 @@ function CommandCenter() {
     );
   }
 
-  function removeApplication() {
+  function removeApplication(opts?: {
+    application?: ItemApplicationType;
+  }) {
+    if (ItemApplicationTypeEnum.EXPANSION === opts?.application?.application_type) {
+      closeApplication(opts?.application?.uuid as ApplicationExpansionUUIDEnum);
+    }
+
     const count = refApplications?.current?.length || 0;
 
     if (refApplications?.current === null || !count) {
@@ -370,8 +451,6 @@ function CommandCenter() {
 
       refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
       refInput?.current?.focus();
-
-      updateInputProperties();
     }
 
     let resetCallback;
@@ -545,315 +624,198 @@ function CommandCenter() {
     }
   }
 
-  const [
-    invokeRequest,
-    {
-      isLoading: isLoadingRequest,
-    },
-  ] = useMutation(
-    ({
-      action,
-      results,
-    }: InvokeRequestOptionsType) => {
-      const actionCopy = updateActionFromUpstreamResults(action, results);
-
-      const {
-        request: {
-          operation,
-          payload,
-          query,
-          resource,
-          resource_id: resourceID,
-          resource_parent: resourceParent,
-          resource_parent_id: resourceParentID,
-        },
-      } = actionCopy;
-
-      let endpoint = api?.[resource];
-      if (resourceParent) {
-        endpoint = endpoint?.[resourceParent];
-      }
-
-      const ids = [];
-
-      if (resourceParentID) {
-        ids.push(resourceParentID);
-      }
-
-      if (resourceID) {
-        ids.push(resourceID);
-      }
-
-      let submitRequest = null;
-      if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
-      } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
-      } else if (OperationTypeEnum.DELETE === operation) {
-        submitRequest = () => endpoint?.useDelete(...ids, query)();
-      } else if (OperationTypeEnum.DETAIL === operation) {
-        submitRequest = () => endpoint?.detailAsync(...ids, query);
-      } else if (OperationTypeEnum.LIST === operation) {
-        submitRequest = () => endpoint?.listAsync(...ids, query);
-      }
-
-      if (submitRequest) {
-        return submitRequest();
-      }
-    },
-    {
-      onSuccess: (
-        response: any,
-        variables: {
-          action: CommandCenterActionType;
-          focusedItemIndex: number;
-          index: number;
-          item: CommandCenterItemType;
-          results: KeyValueType;
-        },
-      ) => onSuccess(
-        response, {
-          callback: (
-            resp: {
-              [key: string]: KeyValueType;
-            },
-          ) => {
-            const {
-              focusedItemIndex,
-              index = 0,
-              action: {
-                request: {
-                  operation,
-                  response_resource_key: responseResourceKey,
-                },
-                uuid,
-              },
-            } = variables;
-
-            const value = resp?.[responseResourceKey];
-
-            const items = refItems?.current || [];
-            if (items) {
-              const item = items?.[focusedItemIndex];
-              if (item) {
-                setNested(item, `actionResults.${uuid || index}.${responseResourceKey}`, value);
-                refItems.current[focusedItemIndex] = item;
-              }
-            }
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  function executeAction(
-    item: CommandCenterItemType,
-    focusedItemIndex: number,
-    actions: CommandCenterActionType[] = null,
-  ) {
-    const actionSettings = [];
-
-    if (!item?.actionResults) {
-      if (!refItems?.current?.[focusedItemIndex]) {
-        refItems.current[focusedItemIndex] = item;
-      }
-
-      if (refItems?.current && refItems?.current?.[focusedItemIndex]) {
-        refItems.current[focusedItemIndex].actionResults = {};
-      }
-    }
-
-    (actions || item?.actions || [])?.forEach((actionInit, index: number) => {
-      let action = { ...actionInit };
-      const applicationState = (refApplicationState?.current || {})?.[action?.uuid];
-      if (applicationState) {
-        Object.entries(applicationState || {})?.forEach(([key, value]) => {
-          setNested(action, key, value);
-        });
-      }
-
-      if (!refItems?.current?.[focusedItemIndex]?.actionResults) {
-        try {
-          refItems.current[focusedItemIndex].actionResults[action?.uuid || index] = {
-            action,
-          };
-        } catch (error) {
-          console.error('CommandCenter/index.executeAction: ', error);
-        }
-      }
-
-      const {
-        interaction,
-        page,
-        request,
-        uuid: actionUUID,
-      } = action || {
-        interaction: null,
-        page: null,
-        request: null,
-        uuid: null,
-      };
-
-      let actionFunction = (results: KeyValueType = {}) => {};
-
-      if (page) {
-        const {
-          external,
-          open_new_window: openNewWindow,
-          path: pathInit,
-        } = page || {
-          external: false,
-          openNewWindow: false,
-          path: null,
-        };
-
-        if (pathInit) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const path = interpolatePagePath(actionCopy?.page);
-
-            let result = null;
-            if (external) {
-              if (openNewWindow && typeof window !== 'undefined') {
-                result = window.open(path, '_blank');
-              } else {
-                result = window.location.href = path;
-              }
-            } else {
-              if (openNewWindow && typeof window !== 'undefined') {
-                result = window.open(path, '_blank');
-              } else {
-                result = router.push(path);
-              }
-            }
-
-            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[actionUUID || index]) {
-              refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
-            }
-
-            return result;
-          };
-        }
-      } else if (interaction) {
-        const {
-          element,
-          type,
-        } = interaction || {
-          element: null,
-          event: null,
-        };
-
-        // TODO (dangerous): open the file and the file editor in an application on the same page;
-        // this will be supported when Application Center is launched.
-        if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-
-            const { options } = actionCopy?.interaction || { options: null };
-
-            return router.push({
-              pathname: '/files',
-              query: {
-                file_path: typeof options?.file_path === 'string'
-                  ? encodeURIComponent(String(options?.file_path))
-                  : null,
-              },
-            });
-          };
-        } else if (element && type) {
-          const { options } = interaction || { options: null };
-
-          actionFunction = (results: KeyValueType = {}) => {
-            const nodes = [];
-            if (element?.id) {
-              const node = document.getElementById(element?.id);
-              nodes.push(node);
-            } else if (element?.class_name) {
-              const node = document.getElementsByClassName(element?.class_name);
-              nodes.push(node);
-            }
-
-            const result = nodes?.map((node) => {
-              if (node) {
-                if (options) {
-                  return node?.[type]?.(options);
-                } else {
-                  return node?.[type]?.();
-                }
-              }
-            });
-
-            refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
-
-            return result;
-          };
-        }
-      } else if (request?.operation && request?.resource) {
-        actionFunction = (results: KeyValueType = {}) => invokeRequest({
-          action,
-          focusedItemIndex,
-          index,
-          item,
-          results,
-        });
-      }
-
-      actionSettings.push({
-        action,
-        actionFunction,
-      });
-    });
-
-    const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
-      const {
-        action,
-        actionFunction,
-      } = actionSettings?.[index];
-      const {
-        delay,
-        uuid,
-      } = action;
-
-      const result = new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve(actionFunction(results));
-        }, delay || 0);
-      });
-
-      return result?.then((resultsInner) => {
-        if (index + 1 <= actionSettings?.length - 1) {
-          return invokeActionAndCallback(index + 1, {
-            ...results,
-            [uuid]: resultsInner,
-          });
-        }
-      });
-    };
-
-    if (actionSettings?.length >= 1) {
-      return invokeActionAndCallback(0);
-    }
+  function onRequestFinish() {
+    refLoadingRequest.current = false;
+    stopLoading();
   }
 
-  function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
+  const {
+    invokeRequest: invokeRequestInit,
+  } = useInvokeRequest({
+    onSuccessCallback: (
+      value,
+      {
+        action,
+        focusedItemIndex,
+        item,
+      },
+    ) => {
+      setNested(
+        refItemsActionResults.current,
+        item?.object_type,
+        [
+          {
+            action,
+            item,
+            value,
+          },
+        ],
+      );
+      getItemsActionResults();
+      onRequestFinish();
+    },
+    showError,
+  });
+
+  function invokeRequest(opts) {
+    const abortController = new AbortController();
+    const {
+      action,
+      item,
+    } = opts;
+    const currentOpts = {
+      ...opts,
+    };
+
+    if (ObjectTypeEnum.BRANCH === item?.object_type
+      && ItemTypeEnum.ACTION === item?.item_type
+      && action?.uuid?.includes('push')
+    ) {
+      setTimeout(() => {
+        abortController.abort();
+        onRequestFinish();
+        showError({
+          errors: {
+            messages: [
+              `Request timed out for ${currentOpts?.item?.title}.`,
+            ],
+          },
+        });
+      }, 7000);
+    }
+
+    refLoadingRequest.current = true;
+    startLoading();
+
+    return invokeRequestInit({
+      ...opts,
+      abortController,
+    });
+  }
+
+  function handleSelectItemRowBase(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) {
     addPickHistory(item);
+
+    const searchText = refInput?.current?.value;
+    if (searchText?.length >= 1) {
+      addSearchHistory(searchText, item, refItems?.current);
+    }
+
     const applicationsCount = item?.applications?.length || 0;
-    if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
+    const mode = getCurrentMode();
+
+    if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type && mode) {
+      deactivateMode();
+    } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode?.type) {
+      activateMode(item);
+    } else if (applicationsCount >= 1) {
+      // What was this used for in the conditional statement? isCurrentApplicationDetailList()
+      // If the selected item has an application, add it.
+
       addApplication({
         application: null,
         item,
-        focusedItemIndex,
         executeAction,
+        focusedItemIndex,
         invokeRequest,
         itemsRef: refItems,
       });
-    } else {
-      return executeAction(item, focusedItemIndex);
+
+      // Don’t try to execute the action or else selecting the row will add the application
+      // AND select the row which will then execute the action associated with it.
+      // if (item?.actions?.length >= 1) {
+      //   executeAction(item, focusedItemIndex).then(() => add());
+      // } else {
+      //   add();
+      // }
+
+    } else if (fallbackCallback) {
+      fallbackCallback?.(item, focusedItemIndex);
     }
+  }
+
+  function closeOutput() {
+    activateClassNamesForRefs([refOutputContainer], true);
+    toggleClassNames(['output-inactive'], ['output-active'], [
+      refApplicationsFooter,
+      refFooter,
+    ]);
+    toggleClassNames(['inactive'], ['active'], [
+      refOutputContainer,
+    ]);
+    refOutputContainerState.current = null;
+  }
+
+  function openOutput() {
+    activateClassNamesForRefs([refOutputContainer]);
+    toggleClassNames(['output-active'], ['output-inactive'], [
+      refApplicationsFooter,
+      refFooter,
+    ]);
+    toggleClassNames(['aactive'], ['inactive'], [
+      refOutputContainer,
+    ]);
+  }
+
+  function renderOutput({
+    item,
+    action,
+    results,
+  }: {
+    item?: CommandCenterItemType;
+    action?: CommandCenterActionType;
+    results?: KeyValueType;
+  }) {
+    refOutputContainerState.current = {
+      item,
+      action,
+      results,
+      actionResults: {
+        ...(refItemsActionResults?.current || {}),
+      },
+    };
+
+    if (!refRootOutputContainer?.current) {
+      const domNode = document.getElementById(OUTPUT_CONTAINER_ID);
+      refRootOutputContainer.current = createRoot(domNode);
+    }
+
+    refRootOutputContainer?.current?.render(
+      <ItemOutput
+        {...refOutputContainerState.current}
+      />
+    );
+
+    openOutput();
+  }
+
+  const executeAction = useExecuteActions({
+    applicationState: refApplicationState,
+    commandCenterState: commandCenterStateRef,
+    fetchItems,
+    getItems,
+    handleSelectItemRow: handleSelectItemRowBase,
+    invokeRequest,
+    itemsActionResultsRef: refItemsActionResults,
+    removeApplication,
+    renderOutput,
+    router,
+  });
+
+  function handleSelectItemRow(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) {
+    return handleSelectItemRowBase(
+      item,
+      focusedItemIndex,
+      fallbackCallback ? fallbackCallback : (i, f) => executeAction(i, f),
+    )
   }
 
   function renderItems(
@@ -922,6 +884,31 @@ function CommandCenter() {
     return new Promise((resolve, reject) => resolve?.(refItems?.current));
   }
 
+  function toggleMode() {
+    refInput.current.value = '';
+    refItems.current = null;
+    refItemsInit.current = null;
+    updateInputProperties();
+    renderItems([]);
+    fetchItems();
+  }
+
+  function deactivateMode() {
+    setMode(null);
+    toggleMode();
+  }
+
+  function activateMode(item: CommandCenterItemType) {
+    setMode(item?.mode);
+    toggleMode();
+    refContainer.current.className = addClassNames(
+      refContainer?.current?.className || '',
+      [
+        item?.mode?.type,
+      ],
+    );
+  }
+
   const {
     fetch: fetchItemsInit,
     isLoading: isLoadingFetch,
@@ -937,13 +924,18 @@ function CommandCenter() {
       },
       {
         disableRenderingCache,
+        exclude,
+        refresh,
         uuid,
       }: {
         disableRenderingCache?: boolean;
+        exclude?: string[];
+        refresh?: boolean;
         uuid: number | string;
       },
     ) => {
-      if (refFetchCount?.current === uuid) {
+      const match = refFetchCount?.current === uuid;
+      if (match || refresh) {
         const items = addCachedItems(
           command_center_item?.items || [],
           {
@@ -954,16 +946,17 @@ function CommandCenter() {
           },
         );
 
-        if (refItemsInit?.current === null) {
-          refItemsInit.current = items;
-        }
+        if (match) {
+          if (refItemsInit?.current === null) {
+            refItemsInit.current = items;
+          }
 
-        if (isCurrentApplicationDetailList() && refItemsApplicationDetailList?.current === null) {
-          refItemsApplicationDetailList.current = items;
+          if (isCurrentApplicationDetailList() && refItemsApplicationDetailList?.current === null) {
+            refItemsApplicationDetailList.current = items;
+          }
         }
 
         refSettings.current = getSetSettings(command_center_item?.settings || {});
-
         renderItems(items);
       }
     },
@@ -979,26 +972,31 @@ function CommandCenter() {
 
     const currentApplicationConfig = getCurrentApplicationConfiguration();
     if (isCurrentApplicationDetailList(currentApplicationConfig)) {
-      fetchOptions = {
-        ...fetchOptions,
-        ...currentApplicationConfig,
+      fetchOptions = mergeDeep({
         disableRenderingCache: true,
-      };
+      }, currentApplicationConfig, fetchOptions);
     }
 
     return fetchItemsInit(fetchOptions);
   }
 
   useEffect(() => {
-    if (isLoadingFetch || isLoadingRequest) {
+    if (isLoadingFetch) {
       startLoading();
     } else {
       stopLoading();
     }
   }, [
     isLoadingFetch,
-    isLoadingRequest,
   ]);
+
+  function abortRequests() {
+    [refAbortController, refAbortControllerRequest].forEach((controller) => {
+      if (controller?.current) {
+        controller?.current?.abort();
+      }
+    });
+  }
 
   function closeCommandCenter() {
     refContainer.current.className = addClassNames(
@@ -1011,6 +1009,10 @@ function CommandCenter() {
     refFocusedElement.current = null;
     refInput?.current?.blur();
     refActive.current = false;
+
+    // Reset the items to the original list of items.
+    stopLoading();
+    abortRequests();
   }
 
   function openCommandCenter() {
@@ -1032,6 +1034,9 @@ function CommandCenter() {
     } else {
       fetchItems();
     }
+
+    stopLoading();
+    abortRequests();
   }
 
   const {
@@ -1065,6 +1070,11 @@ function CommandCenter() {
       return false;
     }
 
+    // Doesn’t work
+    // if (commandCenterStateRef?.current?.disableKeyboardShortcuts) {
+    //   return;
+    // }
+
     let stopHandling = false;
 
     if (startSequenceValid()) {
@@ -1074,6 +1084,11 @@ function CommandCenter() {
       } else {
         openCommandCenter();
       }
+    } else if (refOutputContainerState?.current
+      && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping, { allowExtraKeys: 0 })
+    ) {
+      // Close the output
+      closeOutput();
     } else if (isApplicationActive()) {
       const currentApplicationConfig = getCurrentApplicationConfiguration();
       const application = (currentApplicationConfig || {})?.application;
@@ -1093,7 +1108,7 @@ function CommandCenter() {
           } = button;
 
           keyboardShortcuts?.forEach((keyCodes) => {
-            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 0 })) {
+            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 1 })) {
               pauseEvent(event);
 
               if (!actionExecuted) {
@@ -1104,6 +1119,10 @@ function CommandCenter() {
               return executeButtonActions({
                 ...currentApplicationConfig,
                 button,
+                fetchItems,
+                getItemsActionResults,
+                handleSelectItemRow,
+                itemsRef: refItems,
                 refError,
                 removeApplication,
               });
@@ -1149,14 +1168,7 @@ function CommandCenter() {
       ) {
         pauseEvent(event);
         // Pressing enter on an item
-        const itemSelected = refItems?.current?.[focusedItemIndex];
-
-        const searchText = refInput?.current?.value;
-        if (searchText?.length >= 1) {
-          addSearchHistory(searchText, itemSelected, refItems?.current);
-        }
-
-        handleSelectItemRow(itemSelected, focusedItemIndex);
+        handleSelectItemRow(refItems?.current?.[focusedItemIndex], focusedItemIndex);
       } else if (
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 0 })
           || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 0 })
@@ -1311,159 +1323,173 @@ function CommandCenter() {
   }, []);
 
   return (
-    <ContainerStyle
-      className="hide"
-      ref={refContainer}
-    >
-      <InputContainerStyle>
-        <HeaderContainerStyle>
-          <HeaderStyle
-            className="inactive"
-            id={HEADER_ID}
-            ref={refHeader}
-          >
-            <Button
-              borderLess
-              iconOnly
-              noBackground
-              onClick={() => removeApplication()}
-              outline
+    <>
+      <ContainerStyle
+        className={[
+          'hide',
+          getCurrentMode()?.type || '',
+        ]?.join(' ')}
+        ref={refContainer}
+      >
+        <InputContainerStyle id={INPUT_CONTAINER_ID}>
+          <HeaderContainerStyle>
+            <HeaderStyle
+              className="inactive"
+              id={HEADER_ID}
+              ref={refHeader}
             >
-              <ArrowLeft size={2 * UNIT} />
-            </Button>
+              <Button
+                borderLess
+                iconOnly
+                noBackground
+                onClick={() => removeApplication()}
+                outline
+              >
+                <ArrowLeft size={2 * UNIT} />
+              </Button>
 
-            <Spacing mr={1} />
+              <Spacing mr={1} />
 
-            <KeyboardTextGroup
-              addPlusSignBetweenKeys
-              keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
-              monospace
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
+                monospace
+              />
+
+              <Spacing mr={1} />
+
+              <HeaderTitleStyle id={HEADER_TITLE_ID} ref={refHeaderTitle} />
+            </HeaderStyle>
+
+            <InputStyle
+              autoComplete="off"
+              className="inactive"
+              id={MAIN_TEXT_INPUT_ID}
+              onChange={(e) => {
+                // There is no need to set refInput.current.value = searchText,
+                // this is already done when typing in the input element.
+                const searchText = e.target.value;
+                const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
+
+                refInputValuePrevious.current = searchText;
+
+                renderItems(isCurrentApplicationDetailList()
+                  ? refItemsApplicationDetailList?.current || []
+                  : combineUnique([
+                      refItemsInit?.current || [],
+                      refItems?.current || [],
+                      getCachedItems() || [],
+                    ]),
+                  {
+                    shouldFilter: true,
+                  },
+                );
+
+                fetchItems({ delay: 300 });
+
+                if (isRemoving) {
+                  refSelectedSearchHistoryIndex.current = null;
+                  refFocusedSearchHistoryIndex.current = null;
+                } else if (refFocusedSearchHistoryIndex?.current !== null) {
+                  refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+                  refFocusedSearchHistoryIndex.current = null;
+                }
+              }}
+              onFocus={() => {
+                refFocusedElement.current = InputElementEnum.MAIN;
+              }}
+              onBlur={() => {
+                refFocusedElement.current = null;
+              }}
+              placeholder={getInputPlaceholder(getCurrentApplicationConfiguration())}
+              ref={refInput}
             />
 
-            <Spacing mr={1} />
+            <KeyboardShortcutStyle
+              className="inactive"
+              ref={refInputKeyboardShortcut}
+            >
+              <LaunchKeyboardShortcutText settings={refSettings?.current} />
+            </KeyboardShortcutStyle>
+          </HeaderContainerStyle>
+        </InputContainerStyle>
 
-            <HeaderTitleStyle id={HEADER_TITLE_ID} ref={refHeaderTitle} />
-          </HeaderStyle>
-
-          <InputStyle
-            autoComplete="off"
-            className="inactive"
-            id={MAIN_TEXT_INPUT_ID}
-            onChange={(e) => {
-              // There is no need to set refInput.current.value = searchText,
-              // this is already done when typing in the input element.
-              const searchText = e.target.value;
-              const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
-
-              refInputValuePrevious.current = searchText;
-
-              renderItems(isCurrentApplicationDetailList()
-                ? refItemsApplicationDetailList?.current || []
-                : combineUnique([
-                    refItemsInit?.current || [],
-                    refItems?.current || [],
-                    getCachedItems() || [],
-                  ]),
-                {
-                  shouldFilter: true,
-                },
-              );
-
-              fetchItems({ delay: 300 });
-
-              if (isRemoving) {
-                refSelectedSearchHistoryIndex.current = null;
-                refFocusedSearchHistoryIndex.current = null;
-              } else if (refFocusedSearchHistoryIndex?.current !== null) {
-                refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
-                refFocusedSearchHistoryIndex.current = null;
-              }
-            }}
-            onFocus={() => {
-              refFocusedElement.current = InputElementEnum.MAIN;
-            }}
-            onBlur={() => {
-              refFocusedElement.current = null;
-            }}
-            placeholder={getInputPlaceholder()}
-            ref={refInput}
-          />
-
-          <KeyboardShortcutStyle
-            className="inactive"
-            ref={refInputKeyboardShortcut}
-          >
-            <LaunchKeyboardShortcutText settings={refSettings?.current} />
-          </KeyboardShortcutStyle>
-        </HeaderContainerStyle>
-      </InputContainerStyle>
-
-      <ItemsContainerStyle
-        className="inactive"
-        id={ITEMS_CONTAINER_UUID}
-        ref={refItemsNodesContainer}
-      >
-      </ItemsContainerStyle>
-
-      <ApplicationContainerStyle
-        className="inactive"
-        id={ITEM_CONTEXT_CONTAINER_ID}
-        ref={refApplicationsNodesContainer}
-      />
-
-      <FooterWraperStyle>
-        <LoadingStyle
+        <ItemsContainerStyle
           className="inactive"
-          ref={refLoading}
+          id={ITEMS_CONTAINER_UUID}
+          ref={refItemsNodesContainer}
         >
-          <Loading width="100%" />
-        </LoadingStyle>
+        </ItemsContainerStyle>
 
-        <FooterStyle
+        <ApplicationContainerStyle
           className="inactive"
-          id={FOOTER_ID}
-          ref={refFooter}
-        >
-          <Footer
-            addApplication={(item, application) => addApplication({
-              application,
-              executeAction,
-              focusedItemIndex: refFocusedItemIndex?.current,
-              invokeRequest,
-              item,
-              itemsRef: refItems,
-            })}
-            closeCommandCenter={closeCommandCenter}
-            handleNavigation={(increment: number) => {
-              if (increment >= 1) {
-                handleNavigation(Math.min(
-                  refItems?.current?.length - 1,
-                  refFocusedItemIndex?.current + increment,
-                ));
-              } else if (increment <= -1) {
-                handleNavigation(Math.max(
-                  0,
-                  refFocusedItemIndex?.current + increment,
-                ));
-              }
-            }}
-            handleSelectItemRow={() => handleSelectItemRow(
-              refItems?.current?.[refFocusedItemIndex?.current],
-              refFocusedItemIndex?.current,
-            )}
-            refFooterButtonEnter={refFooterButtonEnter}
-            refFooterButtonEscape={refFooterButtonEscape}
-            refFooterButtonUp={refFooterButtonUp}
-          />
-        </FooterStyle>
-
-        <ApplicationFooterStyle
-          className="inactive"
-          id={APPLICATION_FOOTER_ID}
-          ref={refApplicationsFooter}
+          id={ITEM_CONTEXT_CONTAINER_ID}
+          ref={refApplicationsNodesContainer}
         />
-      </FooterWraperStyle>
-    </ContainerStyle>
+
+        <OutputContainerStyle
+          className="inactive"
+          id={OUTPUT_CONTAINER_ID}
+          ref={refOutputContainer}
+        />
+
+        <FooterWraperStyle>
+          <LoadingStyle
+            className="inactive"
+            ref={refLoading}
+          >
+            <Loading width="100%" />
+          </LoadingStyle>
+
+          <FooterStyle
+            className="inactive output-inactive"
+            id={FOOTER_ID}
+            ref={refFooter}
+          >
+            <Footer
+              addApplication={(item, application) => addApplication({
+                application,
+                executeAction,
+                focusedItemIndex: refFocusedItemIndex?.current,
+                invokeRequest,
+                item,
+                itemsRef: refItems,
+              })}
+              closeCommandCenter={closeCommandCenter}
+              closeOutput={closeOutput}
+              handleNavigation={(increment: number) => {
+                if (increment >= 1) {
+                  handleNavigation(Math.min(
+                    refItems?.current?.length - 1,
+                    refFocusedItemIndex?.current + increment,
+                  ));
+                } else if (increment <= -1) {
+                  handleNavigation(Math.max(
+                    0,
+                    refFocusedItemIndex?.current + increment,
+                  ));
+                }
+              }}
+              handleSelectItemRow={() => handleSelectItemRow(
+                refItems?.current?.[refFocusedItemIndex?.current],
+                refFocusedItemIndex?.current,
+              )}
+              refFooterButtonEnter={refFooterButtonEnter}
+              refFooterButtonEscape={refFooterButtonEscape}
+              refFooterButtonUp={refFooterButtonUp}
+            />
+          </FooterStyle>
+
+          <ApplicationFooterStyle
+            className="inactive output-inactive"
+            id={APPLICATION_FOOTER_ID}
+            ref={refApplicationsFooter}
+          />
+        </FooterWraperStyle>
+      </ContainerStyle>
+
+      {renderApplications()}
+    </>
   );
 }
 

@@ -33,6 +33,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
   [BlockLanguageEnum.YAML]: 'YAML',
 };
 
+// Consider using the one from interfaces/FileType.ts
 export const LANGUAGE_DISPLAY_MAPPING = {
   [BlockLanguageEnum.MARKDOWN]: 'Markdown',
   [BlockLanguageEnum.PYTHON]: 'Python',

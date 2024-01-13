@@ -30,21 +30,30 @@ function ItemRow({
     description,
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
+    subtitle,
     title,
   } = item;
   const {
     description: descriptionDisplaySettings,
+    subtitle: subtitleDisplaySettings,
   } = displaySettingsByAttribute || {
     description: null,
+    subtitle: null,
   };
 
   const Icon = getIcon(item);
-  const iconColor = getIconColor(item);
+  const { accent, useStroke } = getIconColor(item);
+  const category = subtitle || getDisplayCategory(item, true);
 
+  const maxLetters = (
+    descriptionDisplaySettings?.text_styles?.monospace
+      ? 100
+      : 150
+  ) - ((1.5 * (title?.length || 0) + (category?.length || 0)));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
-  if (descriptionCount > 40) {
-    descriptionUse = `${descriptionUse?.slice(0, 40)}..`;
+  if (descriptionCount > maxLetters) {
+    descriptionUse = `${descriptionUse?.slice(0, maxLetters)}..`;
   }
 
   return (
@@ -58,7 +67,8 @@ function ItemRow({
         <Flex alignItems="center" flex={1}>
           {Icon && (
             <Icon
-              fill={iconColor?.accent}
+              fill={useStroke ? null : accent}
+              stroke={useStroke ? accent : null}
               size={2 * UNIT}
             />
           )}
@@ -82,8 +92,14 @@ function ItemRow({
           )}
         </Flex>
 
-        <Text muted>
-          {getDisplayCategory(item, true)}
+        <Text
+          monospace={subtitleDisplaySettings?.text_styles?.monospace}
+          small={!subtitleDisplaySettings?.text_styles?.regular}
+          muted={typeof subtitleDisplaySettings?.text_styles?.muted === 'undefined'
+            || subtitleDisplaySettings?.text_styles?.muted
+          }
+        >
+          {category}
         </Text>
       </FlexContainer>
     </ItemStyle>

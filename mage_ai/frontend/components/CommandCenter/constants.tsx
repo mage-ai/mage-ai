@@ -9,6 +9,8 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  KeyValueType,
+  ModeTypeEnum,
   ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
@@ -18,7 +20,7 @@ import {
   KEY_SYMBOL_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
-import { getSetSettings } from '@storage/CommandCenter/utils';
+import { getCurrentMode, getSetSettings } from '@storage/CommandCenter/utils';
 
 export enum ItemRowClassNameEnum {
   FOCUSED = 'focused',
@@ -28,6 +30,18 @@ export enum ItemRowClassNameEnum {
 
 export enum InputElementEnum {
   MAIN = 'main',
+}
+
+export type FetchItemsType = {
+  fetchItems: (opts?: KeyValueType) => Promise<any>;
+}
+
+export type HandleSelectItemRowType = {
+  handleSelectItemRow?: (
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) => void;
 }
 
 export type ExecuteActionableType = {
@@ -52,6 +66,33 @@ export function getInputPlaceholder({
   application?: ItemApplicationType;
   item?: CommandCenterItemType;
 } = {}) {
+  const mode = getCurrentMode();
+
+  if (mode) {
+    if (ModeTypeEnum.VERSION_CONTROL === mode?.type) {
+      if ([
+        ItemApplicationTypeEnum.DETAIL_LIST,
+        ItemApplicationTypeEnum.LIST,
+      ].includes(application?.application_type)) {
+        if (ObjectTypeEnum.PROJECT === item?.object_type) {
+          return 'Add remote, create/switch branches, commit changes...';
+        } else if (ObjectTypeEnum.BRANCH === item?.object_type) {
+          let text = item?.metadata?.branch?.name || '';
+
+          if (item?.metadata?.branch?.current) {
+            text = `${text} (current)`;
+          }
+
+          return text;
+        } else if (ObjectTypeEnum.REMOTE === item?.object_type) {
+          return 'Add, update, delete remotes';
+        }
+      }
+
+      return 'Setup projects, clone branches, commit files, push code...';
+    }
+  }
+
   if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
     if (ObjectTypeEnum.PIPELINE === item?.object_type) {
       return `Search blocks and triggers in ${item?.title}`;

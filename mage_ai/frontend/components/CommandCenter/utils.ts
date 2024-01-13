@@ -1,8 +1,9 @@
-import { ApplicationConfiguration, ExecuteActionableType } from './constants';
+import { ApplicationConfiguration, ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from './constants';
 import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
   ButtonActionTypeEnum,
+  CommandCenterActionInteractionTypeEnum,
   CommandCenterActionPageType,
   CommandCenterActionType,
   CommandCenterItemType,
@@ -75,14 +76,28 @@ export function filterItems(
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
   return sortByKey(
     items || [],
-    ({ score, title }) => `${1 / score}${title}`,
+    ({ score, title }) => `${score}${122 - (title || 'z').charCodeAt(0)}`,
     {
-      ascending: true,
+      ascending: false,
     },
   );
 }
 
 export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {
+  if (item?.mode?.type) {
+    if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type) {
+      return 'Mode';
+    } else {
+      return 'Deactivate';
+    }
+  }
+
+  if (ObjectTypeEnum.BRANCH === item?.object_type) {
+    if (item?.metadata?.branch?.current) {
+      return 'Current branch';
+    }
+  }
+
   if (normal) {
     const part1 = TYPE_TITLE_MAPPING_NORMAL[item?.item_type];
     let part2 = OBJECT_TITLE_MAPPING_SHORT[item?.object_type];
@@ -126,7 +141,7 @@ export function updateActionFromUpstreamResults(
           childKeySetter,
         ]) => {
           const value = dig(result, parentKeyGetter);
-          setNested(actionCopy, childKeySetter, value);
+          setNested(actionCopy, childKeySetter, conditionallyEncodeValue(childKeySetter, value));
         });
       }
     });
@@ -139,23 +154,28 @@ export function executeButtonActions({
   application,
   button,
   executeAction,
+  fetchItems,
   focusedItemIndex,
+  getItemsActionResults,
+  handleSelectItemRow,
   item,
+  itemsRef,
   refError,
   removeApplication,
 }: {
   application: ItemApplicationType;
   button: ButtonActionType;
   focusedItemIndex: number;
+  getItemsActionResults?: () => KeyValueType;
   item: CommandCenterItemType;
+  itemsRef?: any;
   refError: any;
   removeApplication: () => void;
-} & ExecuteActionableType) {
+} & ExecuteActionableType & FetchItemsType & HandleSelectItemRowType) {
   const actionTypes = button?.action_types || [];
 
   const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
     const actionType = actionTypes?.[index];
-
     let actionFunction = (result: KeyValueType = {}) => {};
 
     if (ButtonActionTypeEnum.RESET_FORM === actionType) {
@@ -167,18 +187,45 @@ export function executeButtonActions({
           },
         });
 
-        actionFunction = (result: KeyValueType = {}) => window.dispatchEvent(eventCustom);
+        actionFunction = (result: KeyValueType = {}) => {
+          if (item?.actions?.some(({
+            interaction,
+          }) => CommandCenterActionInteractionTypeEnum.RESET_FORM === interaction?.type)) {
+            // Let the useExecuteAction hook take care of this because that action may have
+            // custom validations and parsers.
+            return;
+          } else {
+            window.dispatchEvent(eventCustom);
+          }
+        };
       }
     } else if (ButtonActionTypeEnum.EXECUTE === actionType) {
       actionFunction = (result: KeyValueType = {}) => executeAction(item, focusedItemIndex);
     } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
-      actionFunction = (result: KeyValueType = {}) => removeApplication();
+      actionFunction = (result: KeyValueType = {}) => {
+        if (item?.actions?.some(({
+          interaction,
+        }) => CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === interaction?.type)) {
+          // Let the useExecuteAction hook take care of this because that action may have
+          // custom validations and parsers.
+          return;
+        } else {
+          removeApplication();
+        }
+      };
     } else if (ButtonActionTypeEnum.CUSTOM_ACTIONS === actionType) {
       actionFunction = (result: KeyValueType = {}) => executeAction(
         item,
         focusedItemIndex,
         button?.actions,
       );
+    } else if (ButtonActionTypeEnum.SELECT_ITEM_FROM_REQUEST === actionType) {
+      actionFunction = (result: KeyValueType = {}) => fetchItems({
+        results: getItemsActionResults?.(),
+      }).then((response) => {
+        const items = rankItems(response?.data?.command_center_item?.items || []);
+        handleSelectItemRow(items?.[0], 0);
+      });
     }
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
@@ -241,4 +288,14 @@ export function launchCommandCenter() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(eventCustom);
   }
+}
+
+export function conditionallyEncodeValue(key: string, value: any) {
+  const keys = key?.split('.');
+
+  if (['resource_id', 'resource_parent_id'].includes?.(keys[keys?.length - 1])) {
+    return encodeURIComponent(value);
+  }
+
+  return value;
 }

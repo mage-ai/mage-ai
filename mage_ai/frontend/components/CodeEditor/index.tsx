@@ -81,6 +81,7 @@ type CodeEditorProps = {
   editorRef?: any;
   fontSize?: number;
   language?: string;
+  minimap?: boolean;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
   onMountCallback?: (editor?: any, monaco?: any) => void;
@@ -109,6 +110,7 @@ function CodeEditor({
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
+  minimap,
   onChange,
   onContentSizeChangeCallback,
   onDidChangeCursorPosition,
@@ -182,7 +184,7 @@ function CodeEditor({
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
-    editor.getModel().updateOptions({
+    !showDiffs && editor.getModel().updateOptions({
       tabSize,
     });
 
@@ -190,7 +192,7 @@ function CodeEditor({
       editor._domElement.style.height = `${calculateHeightFromContent(value || '')}px`;
     }
 
-    editor.onDidFocusEditorWidget(() => {
+    !showDiffs && editor.onDidFocusEditorWidget(() => {
       /*
        * Added onClick handler for selecting block in CodeContainerStyle component.
        * Disabled the setSelected call below because if a user updates the block name
@@ -199,7 +201,7 @@ function CodeEditor({
        * when mounting the code editor here.
        */
       // setSelected?.(true);
-      DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
+      // DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
 
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(true);
@@ -207,15 +209,15 @@ function CodeEditor({
       setTextareaFocused?.(true);
     });
 
-    editor.onDidBlurEditorText(() => {
-      DEBUG(() => console.log('onDidBlurEditorText', uuid));
+    !showDiffs && editor.onDidBlurEditorText(() => {
+      // DEBUG(() => console.log('onDidBlurEditorText', uuid));
 
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(false);
       }
     });
 
-    editor.onDidContentSizeChange(({
+    !showDiffs && editor.onDidContentSizeChange(({
       contentHeight,
       contentHeightChanged,
     }) => {
@@ -235,7 +237,7 @@ function CodeEditor({
       }, 1);
     }
 
-    if (onDidChangeCursorPosition) {
+    if (!showDiffs && onDidChangeCursorPosition) {
       editor?.onDidChangeCursorPosition(({
         position: {
           lineNumber,
@@ -274,6 +276,7 @@ function CodeEditor({
     setMounted,
     setTextareaFocused,
     shortcutsProp,
+    showDiffs,
     tabSize,
     textareaFocused,
     value,
@@ -406,7 +409,7 @@ function CodeEditor({
           hideCursorInOverviewRuler: true,
           lineNumbers: showLineNumbers ? 'on' : 'off',
           minimap: {
-            enabled: false,
+            enabled: !!minimap,
           },
           overviewRulerBorder: false,
           readOnly,

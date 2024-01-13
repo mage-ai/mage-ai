@@ -2,11 +2,12 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import Branch, Remote
 
 
-class VersionControlBranchResource(AsyncBaseResource):
+class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         project = kwargs.get('parent_model')
@@ -20,18 +21,7 @@ class VersionControlBranchResource(AsyncBaseResource):
             remote.project = project
             remote.hydrate()
 
-        model = Branch()
-        model.project = project
-        model.remote = remote
-
-        models = []
-        for m in [Branch.load(
-            name=line.strip(),
-        ) for line in model.list(include_all=True) if len(line) >= 1]:
-            m.project = project
-            m.remote = remote
-            models.append(m)
-
+        models = Branch.load_all(project=project, remote=remote)
         return self.build_result_set(
             models,
             user,
@@ -40,20 +30,37 @@ class VersionControlBranchResource(AsyncBaseResource):
 
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs):
-        model = self.hydrate_models(**kwargs)
+        model = self.hydrate_models(user, **kwargs)
         model.name = payload.get('name')
         model.create()
 
-        return self(model, user, **kwargs)
+        if payload.get('clone'):
+            model.update(clone=True)
+
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     @classmethod
     async def member(self, pk: str, user: User, **kwargs):
-        model = self.hydrate_models(**kwargs)
-        model.name = urllib.parse.unquote(pk)
-        return self(model, user, **kwargs)
+        model = self.hydrate_models(user, name=urllib.parse.unquote(pk), **kwargs)
+
+        query = kwargs.get('query') or {}
+        log = query.get('log', [None])
+        if log:
+            log = log[0]
+        if log:
+            model.detail(log=True)
+
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     async def update(self, payload: Dict, **kwargs):
-        self.model.update(**payload)
+        await self.model.update_async(**payload)
+        self.validate_output()
 
     async def delete(self, **kwargs):
         query = kwargs.get('query') or {}
@@ -63,23 +70,19 @@ class VersionControlBranchResource(AsyncBaseResource):
 
         self.model.delete(force=force)
 
+        self.validate_output()
+
     @classmethod
-    def hydrate_models(self, **kwargs):
+    def hydrate_models(self, user: User, name: str = None, **kwargs):
         project = kwargs.get('parent_model')
 
         query = kwargs.get('query') or {}
-
         remote = query.get('remote', [None])
         if remote:
             remote = remote[0]
 
-        if remote:
-            remote = Remote.load(name=remote)
-            remote.project = project
-            remote.hydrate()
+        project.branch.hydrate(name=name)
+        project.remote.hydrate(name=remote)
+        project.hydrate(user=user)
 
-        model = Branch()
-        model.project = project
-        model.remote = remote
-
-        return model
+        return project.branch

@@ -1,5 +1,6 @@
 import './requestIdleCallbackPolyfill';
 
+import * as osPath from 'path';
 import styled from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,12 +13,13 @@ import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
 import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
-import { ChevronDown, ChevronRight } from '@oracle/icons';
+import { ChevronDown, ChevronRight, build } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
 import {
   CUSTOM_EVENT_NAME_FOLDER_EXPAND,
 } from '@utils/events/constants';
 import {
+  FOLDER_LINE_CLASSNAME,
   ICON_SIZE,
   INDENT_WIDTH,
 } from '../index.style';
@@ -49,6 +51,7 @@ export type FolderSharedProps = {
   isInPipelinesFolder?: boolean;
   isNotFolder?: boolean;
   onlyShowChildren?: boolean;
+  onlyShowFolders?: boolean;
   onSelectBlockFile?: (
     blockUUID: string,
     blockType: BlockTypeEnum,
@@ -68,17 +71,20 @@ export type FolderSharedProps = {
 };
 
 type FolderProps = {
-  containerRef: any;
+  containerRef?: any;
+  cursorRef?: {
+    current: any;
+  };
   file: FileType;
   level: number;
   reloadCount?: number;
-  setCoordinates: (coordinates: {
+  setCoordinates?: (coordinates: {
     x: number;
     y: number;
   }) => void;
-  setDraggingFile: (file: FileType) => void;
-  setSelectedFile: (file: FileType) => void;
-  theme: ThemeType;
+  setDraggingFile?: (file: FileType) => void;
+  setSelectedFile?: (file: FileType) => void;
+  theme?: ThemeType;
   timeout?: any;
   uuidCombined?: string[];
   uuidContainer?: string;
@@ -135,10 +141,26 @@ function DeferredRender({ children, idleTimeout }) {
   return children;
 }
 
+function buildFolderUUIDParts({
+  name,
+  path,
+}: FileType, uuidCombined: string[] = []): string[] {
+  if (path) {
+    return [...(uuidCombined || []), path];
+  }
+
+  return [...(uuidCombined || []), name || DEFAULT_NAME];
+}
+
+function buildFolderUUID(parts: string[]): string {
+  return parts.join(osPath.sep);
+}
+
 function Folder({
   allowEmptyFolders,
   allowSelectingFolders,
   containerRef,
+  cursorRef,
   disableContextMenu,
   file,
   isFileDisabled,
@@ -149,6 +171,7 @@ function Folder({
   onClickFolder,
   onSelectBlockFile,
   onlyShowChildren,
+  onlyShowFolders,
   openFile,
   openSidekickView,
   reloadCount,
@@ -171,6 +194,7 @@ function Folder({
     disabled: disabledProp,
     name,
     parent: parentFile,
+    path,
   } = file;
   const children = useMemo(() =>
     (childrenProp
@@ -183,11 +207,11 @@ function Folder({
   );
 
   const uuidCombinedUse =
-    useMemo(() => [].concat(uuidCombined || []).concat(name || DEFAULT_NAME), [
-      name,
-      uuidCombined,,
+    useMemo(() => buildFolderUUIDParts(file, uuidCombined), [
+      file,
+      uuidCombined,
     ]);
-  const uuid = useMemo(() => uuidCombinedUse?.join('/'), [uuidCombinedUse]);
+  const uuid = useMemo(() => buildFolderUUID(uuidCombinedUse), [uuidCombinedUse]);
 
   const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
   const refChildren = useRef(null);
@@ -238,6 +262,7 @@ function Folder({
       allowEmptyFolders={allowEmptyFolders}
       allowSelectingFolders={allowSelectingFolders}
       containerRef={containerRef}
+      cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
       file={{
         ...f,
@@ -246,11 +271,12 @@ function Folder({
       isFileDisabled={isFileDisabled}
       isNotFolder={f?.isNotFolder}
       isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
-      key={`${uuid}/${f?.name || DEFAULT_NAME}-${reloadCount}`}
+      key={`${buildFolderUUID(buildFolderUUIDParts(f, uuidCombinedUse))}-${reloadCount}`}
       level={onlyShowChildren ? level : level + 1}
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
+      onlyShowFolders={onlyShowFolders}
       openFile={openFile}
       openSidekickView={openSidekickView}
       reloadCount={reloadCount}
@@ -280,6 +306,7 @@ function Folder({
     onClickFile,
     onClickFolder,
     onSelectBlockFile,
+    onlyShowFolders,
     onlyShowChildren,
     openFile,
     openSidekickView,
@@ -297,7 +324,6 @@ function Folder({
     uuidCombinedUse,
     uuidContainer,
   ]);
-
 
   const toggleExpandsion = useCallback((
     expand: boolean = null,
@@ -392,6 +418,7 @@ function Folder({
 
       arr.push(
         <div
+          className={FOLDER_LINE_CLASSNAME}
           key={`line-${uuid}-${idx}`}
           style={{
             borderLeft: `1px solid ${theme?.content?.disabled}`,
@@ -441,6 +468,10 @@ function Folder({
       }
     }, 1);
   }, []);
+
+  if (!isFolder && onlyShowFolders) {
+    return null;
+  }
 
   return (
     <>
@@ -504,23 +535,25 @@ function Folder({
             }
           }}
           onContextMenu={(e) => {
-            clearTimeout(timeout.current);
+            if (!disableContextMenu) {
+              clearTimeout(timeout.current);
 
-            if (!containerRef?.current?.contains(e.target) || disableContextMenu) {
-              return;
+              if (!containerRef?.current?.contains(e.target) || disableContextMenu) {
+                return;
+              }
+
+              e.preventDefault();
+
+              setCoordinates?.({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setDraggingFile?.(null);
+              setSelectedFile?.({
+                ...file,
+                uuid,
+              });
             }
-
-            e.preventDefault();
-
-            setCoordinates({
-              x: e.pageX,
-              y: e.pageY,
-            });
-            setDraggingFile(null);
-            setSelectedFile({
-              ...file,
-              uuid,
-            });
           }}
           onMouseDown={(e) => {
             const block = file ? getBlockFromFile(file, null, true) : null;
@@ -539,12 +572,12 @@ function Folder({
 
             clearTimeout(timeout.current);
             timeout.current = setTimeout(() => {
-              setCoordinates({
+              setCoordinates?.({
                 x: e.pageX,
                 y: e.pageY,
               });
-              setDraggingFile(file);
-              setSelectedFile(null);
+              setDraggingFile?.(file);
+              setSelectedFile?.(null);
             }, 300);
           }}
           style={{
@@ -553,6 +586,16 @@ function Folder({
             display: 'flex',
             minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
             paddingRight: (UNIT / 4),
+          }}
+          onMouseEnter={(e) => {
+            if (cursorRef) {
+              cursorRef.current = {
+                event: e,
+                file,
+                toggleExpandsion,
+                uuid,
+              };
+            }
           }}
         >
           <Flex alignItems="center" flex={1}>

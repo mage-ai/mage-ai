@@ -8,12 +8,16 @@ import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { CLOSE_OUTPUT_BUTTON_ID } from './index.style';
 import { CommandCenterItemType, ItemApplicationType,} from '@interfaces/CommandCenterType';
 import {
   KEY_SYMBOL_ARROW_DOWN,
   KEY_SYMBOL_ARROW_UP,
+  KEY_SYMBOL_C,
+  KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_ENTER,
   KEY_SYMBOL_ESCAPE,
+  KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SettingsWithKnobs } from '@oracle/icons';
@@ -23,6 +27,7 @@ import { pauseEvent } from '@utils/events';
 type FooterProps = {
   addApplication: (item: CommandCenterItemType, application: ItemApplicationType) => void;
   closeCommandCenter: () => void;
+  closeOutput: () => void;
   handleNavigation: (increment: number) => void;
   handleSelectItemRow: () => void;
   refFooterButtonEnter: any;
@@ -33,6 +38,7 @@ type FooterProps = {
 function Footer({
   addApplication,
   closeCommandCenter,
+  closeOutput,
   handleNavigation,
   handleSelectItemRow,
   refFooterButtonEnter,
@@ -47,17 +53,40 @@ function Footer({
   return (
     <FlexContainer alignItems="center" fullWidth justifyContent="space-between">
       <Flex alignItems="center" flex={1}>
-        <Button
-          iconOnly
-          noBackground
-          noBorder
-          noPadding
-          onClick={() => {
-            addApplication(item, application);
-          }}
-        >
-          <SettingsWithKnobs default size={UNIT * 2} />
-        </Button>
+        <FlexContainer alignItems="center">
+          <Button
+            iconOnly
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => {
+              addApplication(item, application);
+            }}
+          >
+            <SettingsWithKnobs default size={UNIT * 2} />
+          </Button>
+
+          <div style={{ marginRight: UNIT * 2 }} />
+
+          <div id={CLOSE_OUTPUT_BUTTON_ID}>
+            <KeyboardShortcutButton
+              addPlusSignBetweenKeys
+              bold
+              compact
+              default
+              keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_C]]}
+              keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+              noBackground
+              onClick={(e) => {
+                pauseEvent(e);
+                closeOutput();
+              }}
+              uuid="command-center-footer-close-output"
+            >
+              Close output
+            </KeyboardShortcutButton>
+          </div>
+        </FlexContainer>
       </Flex>
 
       <FlexContainer alignItems="center">

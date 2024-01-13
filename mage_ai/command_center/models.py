@@ -3,12 +3,16 @@ from typing import Dict, List, Union
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
+    ApplicationExpansionUUID,
     ApplicationType,
     ButtonActionType,
     InteractionType,
     ItemTagEnum,
     ItemType,
+    ModeType,
     ObjectType,
+    RenderLocationType,
+    ValidationType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import (
@@ -30,12 +34,27 @@ from mage_ai.presenters.interactions.models import (
 )
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.version_control.models import Branch, Commit, Project, Remote
 
 
 @dataclass
 class CommandCenterBaseClass(BaseDataClass):
     def to_dict(self, ignore_empty: bool = True, **kwargs) -> Dict:
         return super().to_dict(ignore_empty=True, **kwargs)
+
+
+@dataclass
+class VersionControlState(BaseDataClass):
+    branch: Branch = None
+    commit: Commit = None
+    project: Project = None
+    remote: Remote = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('branch', Branch)
+        self.serialize_attribute_class('commit', Commit)
+        self.serialize_attribute_class('project', Project)
+        self.serialize_attribute_class('remote', Remote)
 
 
 @dataclass
@@ -49,6 +68,7 @@ class TextStyles(CommandCenterBaseClass):
 class DisplaySettings(CommandCenterBaseClass):
     color_uuid: str = None
     icon_uuid: str = None
+    stroke_uuid: str = None
     text_styles: TextStyles = None
 
     def __post_init__(self):
@@ -62,13 +82,20 @@ class InteractionElement(CommandCenterBaseClass):
 
 
 @dataclass
+class InteractionItem(CommandCenterBaseClass):
+    uuid: str
+
+
+@dataclass
 class Interaction(CommandCenterBaseClass):
     type: InteractionType
     element: InteractionElement = None
+    item: InteractionItem = None
     options: Dict = None
 
     def __post_init__(self):
         self.serialize_attribute_class('element', InteractionElement)
+        self.serialize_attribute_class('item', InteractionItem)
         self.serialize_attribute_enum('type', InteractionType)
 
 
@@ -97,18 +124,40 @@ class Request(CommandCenterBaseClass):
 
 
 @dataclass
+class RenderOptions(CommandCenterBaseClass):
+    location: RenderLocationType = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('location', RenderLocationType)
+
+
+@dataclass
+class ApplicationStateParser(CommandCenterBaseClass):
+    function_body: str
+    positional_argument_names: List[str]
+
+
+@dataclass
 class Action(CommandCenterBaseClass):
+    application_state_parsers: List[ApplicationStateParser] = None
     delay: int = None
     interaction: Interaction = None
     page: Page = None
+    render_options: RenderOptions = None
     request: Request = None
     upstream_action_value_key_mapping: Dict = None
     uuid: str = None
+    validation_parsers: List[ApplicationStateParser] = None
+    validations: List[ValidationType] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('interaction', Interaction)
         self.serialize_attribute_class('page', Page)
+        self.serialize_attribute_class('render_options', RenderOptions)
         self.serialize_attribute_class('request', Request)
+        self.serialize_attribute_classes('application_state_parsers', ApplicationStateParser)
+        self.serialize_attribute_classes('validation_parsers', ApplicationStateParser)
+        self.serialize_attribute_enums('validations', ValidationType)
 
 
 @dataclass
@@ -150,6 +199,8 @@ class FileMetadata(CommandCenterBaseClass):
 
 @dataclass
 class PageMetadata(CommandCenterBaseClass):
+    href: str = None
+    origin: str = None
     path: str = None
     pathname: str = None
     query: Dict = None
@@ -182,6 +233,7 @@ class TriggerMetadata(CommandCenterBaseClass):
 class PipelineRunMetadata(CommandCenterBaseClass):
     backfill_id: int = None
     completed_at: str = None
+    created_at: str = None
     execution_date: str = None
     execution_partition: str = None
     executor_type: ExecutorType = None
@@ -199,20 +251,59 @@ class PipelineRunMetadata(CommandCenterBaseClass):
 
 
 @dataclass
+class ProjectMetadata(CommandCenterBaseClass):
+    repo_path: str
+    uuid: str
+    sync_config: Dict = None
+    user: Dict = None
+
+
+@dataclass
+class BranchMetadata(CommandCenterBaseClass):
+    current: bool = False
+    name: str = None
+    output: List[str] = None
+    project_uuid: str = None
+    remote: str = None
+    repo_path: str = None
+
+
+@dataclass
+class RemoteMetadata(CommandCenterBaseClass):
+    name: str = None
+    repo_path: str = None
+    url: str = None
+
+
+@dataclass
+class ApplicationMetadata(CommandCenterBaseClass):
+    application_type: ApplicationType
+    uuid: ApplicationExpansionUUID
+
+
+@dataclass
 class Metadata(CommandCenterBaseClass):
+    application: ApplicationMetadata = None
     block: BlockMetadata = None
+    branch: BranchMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
     pipeline: PipelineMetadata = None
     pipeline_run: PipelineRunMetadata = None
+    project: ProjectMetadata = None
+    remote: RemoteMetadata = None
     trigger: TriggerMetadata = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('application', ApplicationMetadata)
         self.serialize_attribute_class('block', BlockMetadata)
+        self.serialize_attribute_class('branch', BranchMetadata)
         self.serialize_attribute_class('file', FileMetadata)
         self.serialize_attribute_class('page', PageMetadata)
         self.serialize_attribute_class('pipeline', PipelineMetadata)
         self.serialize_attribute_class('pipeline_run', PipelineRunMetadata)
+        self.serialize_attribute_class('project', ProjectMetadata)
+        self.serialize_attribute_class('remote', RemoteMetadata)
         self.serialize_attribute_class('trigger', TriggerMetadata)
 
 
@@ -228,6 +319,7 @@ class FormInput(CommandCenterBaseClass):
     required: bool = False
     options: List[InteractionInputOption] = None
     style: InteractionInputStyle = None
+    text: List[str] = None
     type: InteractionInputType = None
     value: str = None
 
@@ -254,14 +346,40 @@ class Button(CommandCenterBaseClass):
 
 
 @dataclass
+class ConfigurationRequests(CommandCenterBaseClass):
+    files: Request = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('files', Request)
+
+
+@dataclass
+class ApplicationConfigurations(CommandCenterBaseClass):
+    interaction_parsers: Dict = None
+    requests: ConfigurationRequests = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('requests', ConfigurationRequests)
+
+
+@dataclass
+class ExpansionSettings(CommandCenterBaseClass):
+    uuid: str
+
+
+@dataclass
 class Application(CommandCenterBaseClass):
     application_type: ApplicationType
     uuid: str
     actions: List[Action] = None
     buttons: List[Button] = None
+    configurations: ApplicationConfigurations = None
+    expansion_settings: ExpansionSettings = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('configurations', ApplicationConfigurations)
+        self.serialize_attribute_class('expansion_settings', ExpansionSettings)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)
@@ -389,6 +507,7 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
     description: DisplaySettings = None
     icon: DisplaySettings = None
     item: DisplaySettings = None
+    subtitle: DisplaySettings = None
 
     def __post_init__(self):
         self.serialize_attribute_class('description', DisplaySettings)
@@ -397,24 +516,45 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
 
 
 @dataclass
+class Mode(CommandCenterBaseClass):
+    type: ModeType
+    disable_cache_items: bool = True
+    version_control: VersionControlState = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('version_control', VersionControlState)
+        self.serialize_attribute_enum('type', ModeType)
+
+
+@dataclass
+class ItemSettings(CommandCenterBaseClass):
+    cache_expires_at: int = None
+
+
+@dataclass
 class ItemBase(CommandCenterBaseClass):
-    item_type: ItemType
-    object_type: ObjectType
-    title: str
-    uuid: str
     action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
-    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
+    item_type: ItemType = None
     items: List[Dict] = None
     metadata: Metadata = None
-    tags: List[ItemTagEnum] = None
+    mode: Mode = None
+    object_type: ObjectType = None
     score: int = 0
+    settings: ItemSettings = None
+    subtitle: str = None
+    tags: List[ItemTagEnum] = None
+    title: str = None
+    uuid: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
         self.serialize_attribute_class('metadata', Metadata)
+        self.serialize_attribute_class('mode', Mode)
+        self.serialize_attribute_class('settings', ItemSettings)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
@@ -424,18 +564,22 @@ class ItemBase(CommandCenterBaseClass):
 
 @dataclass
 class Item(ItemBase):
-    item_type: ItemType
-    object_type: ObjectType
-    title: str
-    uuid: str
     action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
-    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
+    item_type: ItemType = None
     items: List[ItemBase] = None
     metadata: Metadata = None
+    mode: Mode = None
+    object_type: ObjectType = None
     score: int = 0
+    settings: ItemSettings = None
+    subtitle: str = None
+    tags: List[ItemTagEnum] = None
+    title: str = None
+    uuid: str = None
 
     def __post_init__(self):
         super().__post_init__()

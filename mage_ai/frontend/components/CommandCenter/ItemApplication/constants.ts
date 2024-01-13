@@ -1,12 +1,14 @@
 import { CommandCenterActionType, CommandCenterItemType, ItemApplicationType, KeyValueType } from '@interfaces/CommandCenterType';
-import { ExecuteActionableType } from '../constants';
+import { ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from '../constants';
 
 export type InvokeRequestOptionsType = {
+  abortController?: any;
   action: CommandCenterActionType;
   focusedItemIndex: number;
   index: number;
   item: CommandCenterItemType;
   results: KeyValueType;
+  timeout?: number;
 };
 
 export type InvokeRequestActionType = {
@@ -26,10 +28,16 @@ export type ApplicationProps = {
   applicationsRef: {
     current: CurrentType[];
   };
+  closeOutput?: () => void;
   focusedItemIndex: number;
+  getItemsActionResults?: () => KeyValueType;
   item: CommandCenterItemType;
   itemsRef?: any;
   refError?: any;
   removeApplication: () => void;
   router: any;
-} & InvokeRequestActionType & ExecuteActionableType;
+  showError?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
+} & InvokeRequestActionType & ExecuteActionableType & FetchItemsType & HandleSelectItemRowType;

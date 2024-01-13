@@ -35,15 +35,14 @@ CommandCenterItemPolicy.allow_read(
 
 CommandCenterItemPolicy.allow_write(
     [
-        'application',
         'component',
-        'item',
+        'state',
+        'timeline',
         'page',
         'page_history',
         'picks',
         'search',
         'search_history',
-        'settings',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

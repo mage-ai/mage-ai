@@ -19,14 +19,15 @@ from mage_ai.presenters.interactions.constants import (
 from mage_ai.presenters.interactions.utils import interpolate_content
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class InteractionInputOption:
+class InteractionInputOption(BaseDataClass):
     label: str = None
     value: Union[bool, float, int, str] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return dict(
             label=self.label,
             value=self.value,

@@ -5,6 +5,7 @@ import {
   CommandCenterSearchHistoryType,
   ItemTagEnum,
   ItemTypeEnum,
+  ModeType,
   ObjectTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
@@ -12,6 +13,8 @@ import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PICKS,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
+  LOCAL_STORAGE_COMMAND_CENTER_ITEMS,
+  LOCAL_STORAGE_COMMAND_CENTER_MODE,
   LOCAL_STORAGE_COMMAND_CENTER_SETTINGS,
 } from './constants';
 import {
@@ -23,6 +26,19 @@ import {
 import { get, set } from '@storage/localStorage';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { unique } from '@utils/array';
+
+export function getSetLayout(settings = null) {
+  const data = {
+    ...(get(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, settings) || {}),
+    ...(settings || {}),
+  };
+
+  if (settings) {
+    set(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, data);
+  }
+
+  return data;
+}
 
 export function getSetSettings(settings = null) {
   const data = {
@@ -178,4 +194,14 @@ export function addPickHistory(item: CommandCenterItemType): string {
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PICKS, final);
 
   return final;
+}
+
+export function setMode(mode: ModeType) {
+  // Clear cache so that only items in the mode are cached.
+  set(LOCAL_STORAGE_COMMAND_CENTER_ITEMS, []);
+  set(LOCAL_STORAGE_COMMAND_CENTER_MODE, mode || null);
+}
+
+export function getCurrentMode(): ModeType {
+  return get(LOCAL_STORAGE_COMMAND_CENTER_MODE);
 }
