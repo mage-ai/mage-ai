@@ -4,24 +4,26 @@ import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
+import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useFileComponents from '@components/Files/useFileComponents';
 import useTripleLayout from '@components/TripleLayout/useTripleLayout';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { ContainerStyle } from '../index.style';
 
 function ArcaneLibrary({
-  containerRef,
-  headerOffset: headerOffsetProp,
   query,
-}: {
-  containerRef: {
-    current: HTMLDivElement;
-  };
-  headerOffset: number;
-  query?: {
+  ...props
+}: ApplicationBaseType & {
+   query?: {
     file_path: string;
   };
 }) {
+  useApplicationBase(props);
+  const {
+    containerRef,
+    headerOffset: headerOffsetProp,
+  } = props;
+
   const refHeader = useRef(null);
   const [headerOffset, setHeaderOffset] = useState(null);
 

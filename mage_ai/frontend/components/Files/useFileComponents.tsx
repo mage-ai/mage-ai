@@ -466,15 +466,17 @@ function useFileComponents({
           callback: ({
             file_content: file,
           }) => {
+            const filePath = convertFilePathToRelativeRoot(file?.path, status);
+
             setApiReloads(prev => ({
               ...prev,
-              [`FileVersions/${file?.path}`]: Number(new Date()),
+              [`FileVersions/${filePath}`]: Number(new Date()),
             }));
             setContentByFilePath({
-              [file?.path]: null,
+              [filePath]: null,
             });
             setSLastSavedMapping({
-              [file?.path]: moment().utc().unix(),
+              [filePath]: moment().utc().unix(),
             });
 
             if (onUpdateFileSuccess) {
@@ -910,6 +912,9 @@ function useFileComponents({
     selectedFilePath,
     showError,
   ]);
+
+  console.log(contentTouchedMapping,
+lastSavedMapping)
 
   const footerMemo = useMemo(() => {
     return (

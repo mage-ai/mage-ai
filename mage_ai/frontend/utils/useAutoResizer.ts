@@ -70,6 +70,7 @@ export default function useAutoResizer({
           return;
         }
 
+        console.log('resize')
         element.current.style.height = `${height}px`;
         element.current.style.width = `${width}px`;
         element.current.style.left = `${x}px`;

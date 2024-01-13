@@ -16,6 +16,7 @@ import VersionControlFileBrowser, {
   buildMapping,
 } from '@components/CommandCenter/ApplicationItemDetail//VersionControlFileBrowser';
 import api from '@api';
+import useApplicationBase, { ApplicationBaseType } from '@components/Applications/useApplicationBase';
 import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
@@ -34,14 +35,16 @@ function VersionControlFileDiffs({
   applicationState,
   onChangeState,
   uuid,
+  ...props
 }: {
   applicationConfiguration: ApplicationConfiguration;
   applicationState: {
     current: KeyValueType;
   };
   onChangeState?: (prev: (data: any) => any) => any;
-  uuid: ApplicationExpansionUUIDEnum;
-}) {
+} & ApplicationBaseType) {
+  useApplicationBase(props);
+
   const refContent = useRef({});
   const refRows = useRef([]);
 

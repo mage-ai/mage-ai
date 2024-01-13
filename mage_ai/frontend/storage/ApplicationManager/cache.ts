@@ -12,9 +12,23 @@ import {
   ApplicationConfiguration,
 } from '@components/CommandCenter/constants';
 import { get, set } from '../localStorage';
-import { selectEntriesWithValues } from '@utils/hash';
+import { dig, selectEntriesWithValues, setNested } from '@utils/hash';
 
 const APPLICATION_PADDING = 16;
+
+export function minimumLayout() {
+  return {
+    dimension: {
+      height: 240,
+      width: 300,
+    },
+    position: {
+      x: 0,
+      y: 0,
+      z: 100,
+    },
+  };
+}
 
 export function buildDefaultLayout({
   height: totalHeightProp,
@@ -98,7 +112,7 @@ export function getApplications({
   status?: StatusEnum;
   uuid?: ApplicationExpansionUUIDEnum;
 } = {}): ApplicationManagerApplication[] {
-  const arr = get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER) || [];
+  const arr = (get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER) || [])?.filter(a => !!a);
 
   if (status || uuid) {
     return arr?.filter(app => (!status || app?.state?.status === status) && (!uuid || app?.uuid === uuid));
@@ -145,12 +159,34 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
   };
 }
 
+function validateLayout(app: ApplicationManagerApplication) {
+  const {
+    layout,
+  } = app;
+
+  const layoutNew = {};
+  [
+    'dimension.height',
+    'dimension.width',
+    'position.x',
+    'position.y',
+  ].forEach((key) => {
+    setNested(layoutNew, key, Math.max(
+      dig(layout, key) || 0,
+      dig(minimumLayout(), key),
+    ));
+  });
+  app.layout = layoutNew;
+
+  return app;
+}
+
 export function updateApplication(application: {
   applicationConfiguration?: ApplicationConfiguration;
   layout?: LayoutType;
   state?: StateType;
   uuid: ApplicationExpansionUUIDEnum;
-}) {
+}): ApplicationManagerApplication {
   const {
     state,
     uuid,
@@ -171,6 +207,8 @@ export function updateApplication(application: {
       ...application,
     };
 
+    appUpdated = validateLayout(appUpdated);
+
     if (index >= 0) {
       apps[index] = appUpdated;
     } else {
@@ -178,7 +216,7 @@ export function updateApplication(application: {
     }
   }
 
-  set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER, apps);
+  set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER, apps?.filter(a => !!a));
 
   return appUpdated;
 }

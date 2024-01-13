@@ -248,9 +248,10 @@ export default function useApplicationManager({
   function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, {
     group,
   }) {
-    if (Object.values(group || {})?.every(({ isOutside }) => isOutside)) {
-      getApplicationsFromCache().forEach(({ uuid }) => minimizeApplication(uuid));
-    }
+    // Don’t minimize when clicking outside
+    // if (Object.values(group || {})?.every(({ isOutside }) => isOutside)) {
+    //   getApplicationsFromCache().forEach(({ uuid }) => minimizeApplication(uuid));
+    // }
   }
 
   const {
@@ -382,6 +383,37 @@ export default function useApplicationManager({
       return;
     }
 
+    const onMountCallback = () => {
+      setTimeout(() => {
+        if (StatusEnum.MINIMIZED === state?.status) {
+          minimizeApplication(uuid);
+        }
+        ref.current.style.display = 'block';
+      }, 1);
+
+      setResizableObject(uuid, ref, {
+        tries: 10,
+      });
+      setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
+        tries: 10,
+      });
+
+      setElementObject(uuid, ref, {
+        tries: 10,
+      });
+      setInteractiveElementsObjects(uuid, [rr?.top], {
+        tries: 10,
+      });
+
+      setElementObjectClickOutside(uuid, ref, GROUP_ID, {
+        tries: 10,
+      });
+
+      observeThenResizeElements({
+        [uuid]: ref,
+      });
+    };
+
     const expansion = (
       <ContainerStyle
         ref={ref}
@@ -430,6 +462,7 @@ export default function useApplicationManager({
                   onChangeState?.(prev);
                 }
               }}
+              onMount={onMountCallback}
               uuid={uuid}
             />
           </InnerStyle>
@@ -448,35 +481,6 @@ export default function useApplicationManager({
         </ThemeProvider>
       </KeyboardContext.Provider>,
     );
-
-    setTimeout(() => {
-      if (StatusEnum.MINIMIZED === state?.status) {
-        minimizeApplication(uuid);
-      }
-      ref.current.style.display = 'block';
-    }, 1);
-
-    setResizableObject(uuid, ref, {
-      tries: 10,
-    });
-    setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
-      tries: 10,
-    });
-
-    setElementObject(uuid, ref, {
-      tries: 10,
-    });
-    setInteractiveElementsObjects(uuid, [rr?.top], {
-      tries: 10,
-    });
-
-    setElementObjectClickOutside(uuid, ref, GROUP_ID, {
-      tries: 10,
-    });
-
-    observeThenResizeElements({
-      [uuid]: ref,
-    });
   }
 
   useEffect(() => {
