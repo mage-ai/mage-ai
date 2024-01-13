@@ -371,8 +371,6 @@ export default function useApplicationManager({
       },
     } = layout;
 
-    console.log('WTFFFFFFFFFFFFFFF', layout)
-
     let AppComponent;
     if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
       AppComponent = VersionControlFileDiffs;

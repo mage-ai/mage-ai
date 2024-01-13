@@ -112,8 +112,6 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
     return buildDefaultLayout();
   }
 
-  console.log(layout, layoutPrev)
-
   // @ts-ignore
   const position: PositionType = {
     ...selectEntriesWithValues(layoutPrev?.position || {}),

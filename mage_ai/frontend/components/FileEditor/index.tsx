@@ -28,6 +28,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import useAutoScroll from '@components/CodeEditor/useAutoScroll';
+import { DEBUG } from '@utils/environment';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
@@ -108,6 +109,12 @@ function FileEditor({
   setSelectedBlock,
   updateFile: updateFileProp,
 }: FileEditorProps) {
+  const renderRef = useRef(0);
+  DEBUG(() => {
+    renderRef.current += 1;
+    console.log(`[FileEditor][${filePath}]: ${renderRef.current} renders`);
+  });
+
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);

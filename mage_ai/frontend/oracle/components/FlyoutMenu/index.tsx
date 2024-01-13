@@ -371,7 +371,7 @@ function FlyoutMenu({
           }
 
           if (linkProps) {
-            e = (
+            el = (
               <NextLink
                 {...linkProps}
                 key={`${uuid}-${idx0}`}

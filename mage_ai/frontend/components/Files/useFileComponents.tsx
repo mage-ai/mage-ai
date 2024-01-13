@@ -62,6 +62,7 @@ import {
 } from '@storage/files';
 import { Edit, Save, VisibleEye } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { convertFilePathToRelativeRoot } from '@utils/files';
 import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
 import { get, set } from '@storage/localStorage';
 import { getFilenameFromFilePath } from './utils';
@@ -233,9 +234,20 @@ function useFileComponents({
     setSelectedFilePathState(filePath);
   }, []);
 
-  const [filesTouched, setFilesTouched] = useState<{
+  const [filesTouched, setFilesTouchedState] = useState<{
     [filePath: string]: boolean;
   }>({});
+  const setFilesTouched = useCallback((prev) => {
+    setFilesTouchedState((prev2) => {
+      const val = typeof prev === 'function' ? prev?.(prev2) : prev;
+
+      return Object.entries(val).reduce((acc, [k, v]) => ({
+        ...acc,
+        [convertFilePathToRelativeRoot(k, status)]: v,
+      }), {});
+    });
+  }, [status]);
+
   const [fileVersionsVisible, setFilesVersionsVisible] = useState<boolean>(false);
   const selectedFile = useMemo(() => filesMapping?.[selectedFilePath], [
     filesMapping,

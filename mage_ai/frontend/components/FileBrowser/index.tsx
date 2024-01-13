@@ -33,6 +33,7 @@ import {
 } from '@utils/events/constants';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
+import { DEBUG } from '@utils/environment';
 import { DBT } from '@oracle/icons';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
@@ -107,6 +108,12 @@ function FileBrowser({
   uuid: uuidFileBrowser,
   widgets = [],
 }: FileBrowserProps, ref) {
+  const renderRef = useRef(0);
+  DEBUG(() => {
+    renderRef.current += 1;
+    console.log(`[FileBrowser][${uuidFileBrowser}]: ${renderRef.current} renders`);
+  });
+
   const timeout = useRef(null);
   const refView = useRef(null);
   const themeContext = useContext(ThemeContext);
