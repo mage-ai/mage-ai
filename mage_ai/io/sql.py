@@ -53,6 +53,7 @@ class BaseSQL(BaseSQLConnection):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
+        overwrite_types: Dict = None,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
@@ -61,6 +62,7 @@ class BaseSQL(BaseSQLConnection):
             schema_name,
             table_name,
             unique_constraints=unique_constraints,
+            overwrite_types=overwrite_types,
         )
 
     def build_create_table_as_command(
@@ -222,6 +224,7 @@ class BaseSQL(BaseSQLConnection):
         allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        overwrite_types: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -325,11 +328,13 @@ class BaseSQL(BaseSQLConnection):
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                     if should_create_table:
+
                         query = self.build_create_table_command(
                             db_dtypes,
                             schema_name,
                             table_name,
                             unique_constraints=unique_constraints,
+                            overwrite_types=overwrite_types,
                         )
                         cur.execute(query)
 

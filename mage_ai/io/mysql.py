@@ -1,4 +1,4 @@
-from typing import IO, List, Mapping, Union
+from typing import IO, Dict, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -53,12 +53,20 @@ class MySQL(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
+        overwrite_types: Dict = None,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
         query = []
-        for cname in dtypes:
-            query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
+        if overwrite_types is not None:
+            for cname in dtypes:
+                if cname in overwrite_types.keys():
+                    dtypes[cname] = overwrite_types[cname]
+                query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
+
+        else:
+            for cname in dtypes:
+                query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
 
         return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
 
