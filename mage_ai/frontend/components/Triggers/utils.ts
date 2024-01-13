@@ -271,9 +271,14 @@ function calculateCronValueWithOffset(
       }
     }
   }
+
+  const cronValueFinal = typeof range[currentIndex] === 'number'
+    ? range[currentIndex]
+    : timeUnitValue;
+
   return {
     additionalOffset: additionalOffsetForGreaterTimeUnit,
-    cronValue: String(range[currentIndex] || timeUnitValue),
+    cronValue: String(cronValueFinal),
   };
 }
 
