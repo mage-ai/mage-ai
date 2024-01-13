@@ -25,10 +25,12 @@ enum ActionResultEnum {
 
 type ActionResultsWithValidation = {
   action: CommandCenterActionType;
-  item: CommandCenterItemType;
-  results: KeyValueType;
   valid: boolean;
-} | Promise<any>;
+  results: KeyValueType;
+  item: CommandCenterItemType;
+  error?: KeyValueType;
+  data?: KeyValueType;
+};
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
@@ -117,14 +119,19 @@ export default function useExecuteActions({
 
   function actionFunctionWrapper(actionFunction: (
     opts: ActionResultsWithValidation,
-  ) => ActionResultsWithValidation | ActionResultEnum): (opts: ActionResultsWithValidation) => ActionResultsWithValidation | ActionResultEnum {
-    function inner(opts: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum {
+  ) => ActionResultsWithValidation | ActionResultEnum  | Promise<any>): (opts: ActionResultsWithValidation) => ActionResultsWithValidation | ActionResultEnum  | Promise<any> {
+    function inner(opts: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum  | Promise<any> {
       const {
         action,
         item,
         results,
         valid,
-      } = opts;
+      } = (isObject(opts) ? opts : null) || {
+        action: null,
+        item: null,
+        results: null,
+        valid: null,
+      };
 
       if (valid === false) {
         return ActionResultEnum.INVALID;
@@ -263,7 +270,7 @@ export default function useExecuteActions({
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
           actionFunction = actionFunctionWrapper(({
             results,
-          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
             const { options } = action?.interaction || { options: null };
 
             return router.push({
@@ -280,7 +287,7 @@ export default function useExecuteActions({
             action,
             item,
             results,
-          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
             removeApplication?.({
               application: item?.metadata?.application,
             });
@@ -291,7 +298,7 @@ export default function useExecuteActions({
           if (typeof window !== 'undefined') {
             actionFunction = actionFunctionWrapper(({
               item,
-            }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+            }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
               const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
                 detail: {
                   actionType: CommandCenterActionInteractionTypeEnum.RESET_FORM ,
@@ -309,7 +316,7 @@ export default function useExecuteActions({
             action,
             item,
             results,
-          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
             const { item: itemToSelect } = action?.interaction || { options: null };
 
             setNested(
@@ -338,7 +345,7 @@ export default function useExecuteActions({
         } else if (CommandCenterActionInteractionTypeEnum.FETCH_ITEMS === type) {
           actionFunction = actionFunctionWrapper(({
             action,
-          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
             const { options } = action?.interaction || { options: null };
             fetchItems?.(options);
 
@@ -349,7 +356,7 @@ export default function useExecuteActions({
             action,
             item,
             results,
-          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
             const { element, options } = action?.interaction || { options: null };
 
             const nodes = [];
@@ -391,7 +398,7 @@ export default function useExecuteActions({
           action,
           item,
           results,
-        }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum => {
+        }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
           let parsedResult = {};
 
           if (action?.application_state_parsers) {
@@ -450,17 +457,14 @@ export default function useExecuteActions({
         }, delay || 0);
       });
 
-      return result?.then((resultsInner: {
-        data: KeyValueType;
-      } | ActionResultEnum) => {
-
+      return result?.then((resultsInner: ActionResultsWithValidation | ActionResultEnum) => {
         if (typeof resultsInner !== 'undefined' && ActionResultEnum.INVALID === resultsInner) {
           return ActionResultEnum
         }
 
         const combined = {
           ...(results || {}),
-          [uuid]: !!request ? (resultsInner?.data || resultsInner) : resultsInner,
+          [uuid]: !!request ? ((resultsInner as ActionResultsWithValidation)?.data || resultsInner) : resultsInner,
         };
 
         if (RenderLocationTypeEnum.ITEMS_CONTAINER_AFTER === renderOptions?.location) {
@@ -472,7 +476,7 @@ export default function useExecuteActions({
         }
 
         if (resultsInner && isObject(resultsInner)) {
-          if (resultsInner?.error || resultsInner?.data?.error) {
+          if ((resultsInner as ActionResultsWithValidation)?.error || (resultsInner as ActionResultsWithValidation)?.data?.error) {
             return;
           }
         }

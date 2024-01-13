@@ -61,6 +61,7 @@ import {
   KeyValueType,
   ObjectTypeEnum,
   getButtonLabel,
+  ApplicationExpansionUUIDEnum,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
 import {
@@ -426,7 +427,7 @@ function CommandCenter() {
     application?: ItemApplicationType;
   }) {
     if (ItemApplicationTypeEnum.EXPANSION === opts?.application?.application_type) {
-      closeApplication(opts?.application?.uuid);
+      closeApplication(opts?.application?.uuid as ApplicationExpansionUUIDEnum);
     }
 
     const count = refApplications?.current?.length || 0;

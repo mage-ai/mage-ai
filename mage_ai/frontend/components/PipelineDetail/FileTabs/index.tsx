@@ -48,15 +48,15 @@ export function useFileTabs({
     uuid: uuidFileTab,
   }) => {
     const selected: boolean = isSelectedFilePath
-      ? isSelectedFilePath(uuid, selectedFilePath)
-      : selectedFilePath === encodeURIComponent(uuid);
+      ? isSelectedFilePath(uuidFileTab, selectedFilePath)
+      : selectedFilePath === encodeURIComponent(uuidFileTab);
 
     return (
       <FileTab
         onClickTab={() => onClick?.({
           onClickTab,
         })}
-        renderTabTitle={() => label ? label?.() : uuid}
+        renderTabTitle={() => label ? label?.() : uuidFileTab}
         selected={selected}
         themeContext={themeContext}
       />

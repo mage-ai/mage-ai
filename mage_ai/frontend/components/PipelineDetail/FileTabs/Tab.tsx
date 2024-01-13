@@ -22,7 +22,7 @@ export type FileTabProps = {
   };
   onClickTab?: (filePath: string) => void;
   onClickTabClose?: (filePath: string) => void;
-  onContextMenu?: (event: MouseEvent, filePath: string) => void;
+  onContextMenu?: (event: any, filePath: string) => void;
   renderTabTitle?: (filePath: string) => string;
   savePipelineContent?: () => void;
 };

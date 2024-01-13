@@ -190,10 +190,10 @@ function useFileComponents({
   const selectedFilePathRef = useRef(null);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
-    [filePath: string]: number;
+    [filePath: string]: string | number;
   }>({});
   const [contentTouchedMapping, setContentTouchedMapping] = useState<{
-    [filePath: string]: number;
+    [filePath: string]: string | number;
   }>({});
 
   const setContentByFilePath = useCallback((data: {
@@ -224,7 +224,7 @@ function useFileComponents({
     selectedFilePath,
   ]);
 
-  const setSelectedFilePath = useCallback((prev: () => string, skipAddingToHistry: boolean = false) => {
+  const setSelectedFilePath = useCallback((prev: (string | ((p?: string) => string)), skipAddingToHistry: boolean = false) => {
     const filePath = typeof prev === 'function' ? prev?.() : prev;
 
     if (!skipAddingToHistry) {
@@ -358,7 +358,7 @@ function useFileComponents({
       }
     }
 
-    setSelectedFilePath((prev) => {
+    setSelectedFilePath((prev: string): string => {
       if (fp) {
         return fp;
       } else if (!prev && arr?.length >= 1) {
@@ -470,7 +470,7 @@ function useFileComponents({
     selectItem,
   ]);
 
-  const [updateFile, { isLoadingUpdate }] = useMutation(
+  const [updateFile, { isLoading: isLoadingUpdate }] = useMutation(
     (file: FileType) => api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path))({
       file_content: file,
     }),
@@ -534,8 +534,8 @@ function useFileComponents({
     {
       displayRelative: true,
       isPipelineUpdating: isLoadingUpdate,
-      pipelineContentTouched: contentTouchedMapping?.[selectedFilePath],
-      pipelineLastSaved: lastSavedMapping?.[selectedFilePath],
+      pipelineContentTouched: !!contentTouchedMapping?.[selectedFilePath],
+      pipelineLastSaved: Number(lastSavedMapping?.[selectedFilePath]),
       showLastUpdatedTimestamp: selectedFile?.modified_timestamp * 1000,
     },
   ), [
@@ -930,7 +930,7 @@ function useFileComponents({
   const fileVersionsMemo = useMemo(() => (
     <ApiReloader uuid={`FileVersions/${selectedFilePath
         ? decodeURIComponent(selectedFilePath)
-        : ''
+        : '__missing_file_path__'
       }`
     }>
       <FileVersions
@@ -947,8 +947,9 @@ function useFileComponents({
     return (
       <StatusFooter
         inline
-        pipelineContentTouched={contentTouchedMapping?.[selectedFilePath]}
-        pipelineLastSaved={lastSavedMapping?.[selectedFilePath]}
+        pipelineContentTouched={!!contentTouchedMapping?.[selectedFilePath]}
+        pipelineLastSaved={Number(lastSavedMapping?.[selectedFilePath])}
+        refreshInterval={0}
         saveStatus={saveStatus}
       />
     );

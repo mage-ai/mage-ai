@@ -87,6 +87,7 @@ export enum ModeTypeEnum {
 
 interface TextStylesType {
   monospace?: boolean;
+  muted?: boolean;
   regular?: boolean;
   small?: boolean;
 }
@@ -237,6 +238,7 @@ export interface CommandCenterActionInteractionType {
     class_name?: string;
     id?: string;
   };
+  item: CommandCenterItemType;
   options?: KeyValueType;
   type: CommandCenterActionInteractionTypeEnum;
 }

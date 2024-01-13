@@ -243,6 +243,7 @@ export const AsideSubheaderStyle = styled.div<{
 `;
 
 export const BeforeStyle = styled.aside<{
+  autoLayout?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -381,6 +382,7 @@ export const MainContentStyle = styled.div<{
 
 export const MainContentInnerStyle = styled.div<{
   autoLayout?: boolean;
+  noScrollbarTrackBackground?: boolean;
 }>`
   ${PlainScrollbarStyledCss}
 

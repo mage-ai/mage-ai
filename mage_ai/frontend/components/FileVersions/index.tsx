@@ -84,7 +84,7 @@ function FileVersions({
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
   const fileExtension = useMemo(() => ((typeof selectedFilePath !== 'string' && isObject(selectedFilePath))
-    ? selectedFilePath?.path || selectedFilePath?.name
+    ? (selectedFilePath as FileType)?.path || (selectedFilePath as FileType)?.name
     : selectedFilePath
   )?.match(regex)?.[0]?.split('.')?.[1], [
     selectedFilePath,

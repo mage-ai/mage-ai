@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ignoreKeys } from '@utils/hash';
+import { KeyValueType } from '@interfaces/CommandCenterType';
 import { DimensionType } from '@storage/ApplicationManager/constants';
 
 export enum ResizeStrategy {
@@ -11,6 +12,12 @@ export type DimensionDataType = {
   height?: number;
   width?: number;
   widthWithoutScrollbar?: number;
+};
+
+type ResizableElements = {
+  [uuid: string]: {
+    current: Element & { style: KeyValueType };
+  };
 };
 
 export type RectType = {
@@ -28,21 +35,17 @@ export default function useAutoResizer({
   strategy?: ResizeStrategy;
 } = {}): {
   deregisterElementUUIDs: (uuids: string[]) => void;
-  observeThenResizeElements: (opts: {
-    [uuid: string]: Element;
-  }) => void;
+  observeThenResizeElements: (opts: ResizableElements) => void;
 } {
   const observerRef = useRef(null);
   const dimensionsRef = useRef(null);
-  const [elementsMapping, setElementsMapping] = useState<{
-    [uuid: string]: Element;
-  }>({});
+  const [elementsMapping, setElementsMapping] = useState<ResizableElements>({});
 
   const removeElements = useCallback((uuids: string[]) => {
     setElementsMapping(prev => ignoreKeys(prev, uuids));
   }, []);
 
-  function getWindowDimensions(): DimensionType {
+  function getWindowDimensions(): DimensionDataType {
     return {
       height: window?.innerHeight,
       width: window?.innerWidth,
@@ -50,7 +53,7 @@ export default function useAutoResizer({
     };
   }
 
-  const handleResize = useCallback((observedElements, resizeElements) => {
+  const handleResize = useCallback((observedElements, resizeElements: ResizableElements) => {
     const dimensionsPrev = dimensionsRef?.current;
     const dimensions = getWindowDimensions();
 
@@ -89,9 +92,7 @@ export default function useAutoResizer({
     dimensionsRef.current = dimensions;
   }, []);
 
-  function observeThenResizeElements(resizeElements: {
-    [uuid: string]: Element,
-  } = {}) {
+  function observeThenResizeElements(resizeElements?: ResizableElements) {
     setElementsMapping(prev => ({
       ...prev,
       ...resizeElements,

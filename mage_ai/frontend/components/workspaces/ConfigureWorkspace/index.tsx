@@ -137,6 +137,7 @@ function ConfigureWorkspace({
           files={files}
           isFileDisabled={opts?.isFileDisabled}
           openFile={opts.onFileOpen}
+          uuid="ConfigureWorkspace/FileBrowser"
         />
       </WindowContentStyle>
     </WindowContainerStyle>

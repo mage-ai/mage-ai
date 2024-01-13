@@ -65,6 +65,7 @@ function FilesPage() {
         openFile={openFile}
         ref={fileTreeRef}
         showError={setErrors}
+        uuid="pages/manage/files"
       />
     </Spacing>
   ), [

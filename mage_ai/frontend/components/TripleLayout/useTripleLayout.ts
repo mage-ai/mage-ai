@@ -254,7 +254,7 @@ export default function useTripleLayout(uuid: string, {
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
     disable: disableBefore,
-    hiddenB: hiddenBeforeProp,
+    hidden: hiddenBeforeProp,
     mainContainerWidth,
     refOther: refAfter,
     setWidth: setWidthBeforeProp,

@@ -8,7 +8,7 @@ import { sum } from '@utils/array';
 
 type FileTabsScrollerProps = {
   children?: any;
-  fileTabs?: React.Element[];
+  fileTabs?: JSX.Element[];
   selectedFilePathIndex?: number;
   widthOffset?: number;
 };

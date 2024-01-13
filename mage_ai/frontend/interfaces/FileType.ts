@@ -109,7 +109,7 @@ export default interface FileType {
   disabled?: boolean;
   extension?: FileExtensionEnum;
   isNotFolder?: boolean;
-  language: BlockLanguageEnum;
+  language?: BlockLanguageEnum;
   modified_timestamp?: number;
   name?: string;
   parent?: FileType;

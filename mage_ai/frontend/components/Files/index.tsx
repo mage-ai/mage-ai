@@ -30,6 +30,7 @@ function FilesPageComponent({
   } = useFileComponents({
     selectedFilePath: query?.file_path,
     showHiddenFilesSetting: true,
+    uuid: 'Pages/Files',
   });
 
   useEffect(() => {

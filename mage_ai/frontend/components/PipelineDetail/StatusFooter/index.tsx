@@ -29,9 +29,10 @@ const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
   inline?: boolean;
-  pipelineType: PipelineTypeEnum;
+  pipelineType?: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
   pipelineLastSaved?: number;
+  refreshInterval?: number;
   saveStatus?: string;
   width?: number;
 };
@@ -41,10 +42,11 @@ function StatusFooter({
   pipelineType,
   pipelineContentTouched,
   pipelineLastSaved,
+  refreshInterval,
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
-  const { kernel } = useKernel({ pipelineType });
+  const { kernel } = useKernel({ pipelineType, refreshInterval });
   const {
     alive,
     usage,

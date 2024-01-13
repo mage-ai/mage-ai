@@ -343,6 +343,7 @@ function VersionControl() {
             );
           }}
           useRootFolder
+          uuid="pages/VersionControl"
         />
       );
     }
@@ -548,6 +549,7 @@ function VersionControl() {
     originalContent,
     selectedFilePath: selectedFilePathMemo,
     showHiddenFilesSetting: true,
+    uuid: 'pages/VersionControlPage',
   });
 
   const [fetchFileDiffs, { isLoading }] = useMutation(

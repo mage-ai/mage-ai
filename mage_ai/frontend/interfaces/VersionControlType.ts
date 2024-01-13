@@ -9,8 +9,10 @@ export interface VersionControlCommit {
 
 export interface VersionControlFileType {
   additions?: number
+  content?: string;
   deletions?: number;
   diff?: string[];
+  file_path?: string;
   name: string;
   output?: string[];
   project_uuid?: string;

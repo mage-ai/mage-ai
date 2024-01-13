@@ -164,7 +164,17 @@ function validateLayout(app: ApplicationManagerApplication) {
     layout,
   } = app;
 
-  const layoutNew = {};
+  const layoutNew = {
+    dimension: {
+      height: null,
+      width: null,
+    },
+    position: {
+      x: null,
+      y: null,
+      z: null,
+    },
+  };
   [
     'dimension.height',
     'dimension.width',

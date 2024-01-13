@@ -7,7 +7,7 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Checkbox from '@oracle/elements/Checkbox';
 import CodeEditor from '@components/CodeEditor';
 import FileNavigation from './FileNavigation';
-import FileType from '@interfaces/FileType';
+import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
@@ -21,7 +21,6 @@ import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ContainerStyle } from './index.style';
-import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VersionControlFileType } from '@interfaces/VersionControlType';
@@ -39,11 +38,16 @@ function VersionControlFileDiffs({
 }: {
   applicationConfiguration: ApplicationConfiguration;
   applicationState: {
-    current: KeyValueType;
+    current: KeyValueType | {
+      files?: FileType[];
+    };
   };
   onChangeState?: (prev: (data: any) => any) => any;
 } & ApplicationBaseType) {
-  useApplicationBase(props);
+  useApplicationBase({
+    ...props,
+    uuid,
+  });
 
   const refContent = useRef({});
   const refRows = useRef([]);
@@ -107,6 +111,9 @@ function VersionControlFileDiffs({
     ({
       filePath,
       content,
+    }: {
+      filePath: string;
+      content: string;
     }) => api.file_contents.useUpdate(encodeURIComponent(filePath))({
       file_content: {
         content,
