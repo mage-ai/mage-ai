@@ -60,11 +60,11 @@ def get_values(
     ] if s])
     if model:
         if hasattr(model, 'uuid'):
-            uuid += '_' + getattr(model, 'uuid')
+            uuid += '_' + model.uuid
         elif hasattr(model, 'id'):
-            uuid += '_' + getattr(model, 'id')
+            uuid += '_' + model.id
         elif hasattr(model, 'name'):
-            uuid += '_' + getattr(model, 'name')
+            uuid += '_' + model.name
 
     return dict(
         action_uuid=action_uuid,
