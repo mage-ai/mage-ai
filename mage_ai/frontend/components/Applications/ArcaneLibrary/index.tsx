@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -9,6 +10,7 @@ import useFileComponents from '@components/Files/useFileComponents';
 import useTripleLayout from '@components/TripleLayout/useTripleLayout';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { ContainerStyle } from '../index.style';
+import { FILE_BROWSER_TABS, FileBrowserTabEnum } from './constants';
 
 function ArcaneLibrary({
   query,
@@ -26,6 +28,7 @@ function ArcaneLibrary({
 
   const refHeader = useRef(null);
   const [headerOffset, setHeaderOffset] = useState(null);
+  const [selectedTab, setSelectedTab] = useState<TabType>(FILE_BROWSER_TABS?.[0]);
 
   const {
     hiddenAfter,
@@ -41,10 +44,13 @@ function ArcaneLibrary({
     setWidthBefore,
     widthAfter,
     widthBefore,
-  } = useTripleLayout(ApplicationExpansionUUIDEnum.ArcaneLibrary);
+  } = useTripleLayout(ApplicationExpansionUUIDEnum.ArcaneLibrary, {
+    hiddenAfter: true,
+  });
 
   const {
     browser,
+    browserFlatten,
     controller,
     filePaths,
     footer,
@@ -75,9 +81,24 @@ function ArcaneLibrary({
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
         autoLayout
-        before={browser}
+        before={FileBrowserTabEnum.GROUPED_BY_TYPE === selectedTab?.uuid ? browserFlatten : browser}
         beforeContentHeightOffset={headerOffsetProp}
         beforeDividerContrast
+        beforeHeader={(
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <ButtonTabs
+              allowScroll
+              onClickTab={(tab: TabType) => {
+                setSelectedTab?.(tab);
+              }}
+              selectedTabUUID={selectedTab?.uuid}
+              tabs={FILE_BROWSER_TABS}
+              underlineColor="#4877FF"
+              underlineStyle
+              uppercase={false}
+            />
+          </FlexContainer>
+        )}
         beforeHeightOffset={0}
         beforeHidden={hiddenBefore}
         beforeMousedownActive={mousedownActiveBefore}

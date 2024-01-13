@@ -14,8 +14,11 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
-  FILES_QUERY_INCLUDE_HIDDEN_FILES,
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   OriginalContentMappingType,
+  FILES_QUERY_INCLUDE_HIDDEN_FILES,
+  COMMON_EXCLUDE_PATTERNS,
+  COMMON_EXCLUDE_DIR_PATTERNS,
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
@@ -62,19 +65,20 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
-import { Edit, Save, VisibleEye } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { convertFilePathToRelativeRoot } from '@utils/files';
-import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
-import { get, set } from '@storage/localStorage';
-import { getFilenameFromFilePath } from './utils';
+import { useKeyboardContext } from '@context/Keyboard';
+import { useFileTabs } from '@components/PipelineDetail/FileTabs';
+import { useError } from '@context/Error';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { onSuccess } from '@api/utils/response';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { useError } from '@context/Error';
-import { useFileTabs } from '@components/PipelineDetail/FileTabs';
-import { useKeyboardContext } from '@context/Keyboard';
+import { getFilenameFromFilePath } from './utils';
+import { get, set } from '@storage/localStorage';
+import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
+import { convertFilePathToRelativeRoot } from '@utils/files';
+import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { Edit, Save, VisibleEye } from '@oracle/icons';
 
 export const ICON_SIZE = UNIT * 2;
 export const MENU_ICON_SIZE = UNIT * 1.5;
@@ -386,6 +390,14 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
+  const { data: filesFlattenData, mutate: fetchFilesFLatten } = api.files.list({
+    pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+    flatten: true,
+    exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+    exclude_dir_pattern: COMMON_EXCLUDE_DIR_PATTERNS,
+  });
+  const filesFlatten = useMemo(() => filesFlattenData?.files  || [], [filesFlattenData]);
+
   const selectItem = useCallback((offset: number, fromHistory: boolean = false) => {
     const arr = (fromHistory
       ? (selectedFileHistoryRef?.current || [])
@@ -534,30 +546,27 @@ function useFileComponents({
     selectedFilePath,
   ]);
 
-  const fileBrowserMemo = useMemo(() => (
-    <FileBrowser
-      addNewBlock={addNewBlock}
-      blocks={blocks}
-      deleteWidget={deleteWidget}
-      disableContextMenu={disableContextMenu}
-      fetchAutocompleteItems={fetchAutocompleteItems}
-      fetchFiles={fetchFiles}
-      fetchPipeline={fetchPipeline}
-      files={files}
-      onClickFile={(path: string) => openFile(path)}
-      onClickFolder={(path: string) => openFile(path, true)}
-      onCreateFile={onCreateFile}
-      onSelectBlockFile={onSelectBlockFile}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      ref={fileTreeRef}
-      showError={showError}
-      setSelectedBlock={setSelectedBlock}
-      showHiddenFiles={showHiddenFiles}
-      uuid={uuid}
-      widgets={widgets}
-    />
-  ), [
+  const fileBrowserProps = useMemo(() => ({
+    addNewBlock,
+    blocks,
+    deleteWidget,
+    disableContextMenu,
+    fetchAutocompleteItems,
+    fetchFiles,
+    fetchPipeline,
+    onClickFile: openFile,
+    onClickFolder: (path: string) => openFile(path, true),
+    onCreateFile,
+    onSelectBlockFile,
+    openSidekickView,
+    pipeline,
+    ref: fileTreeRef,
+    showError,
+    setSelectedBlock,
+    showHiddenFiles,
+    uuid,
+    widgets,
+  }), [
     addNewBlock,
     blocks,
     deleteWidget,
@@ -566,7 +575,6 @@ function useFileComponents({
     fetchFiles,
     fetchPipeline,
     fileTreeRef,
-    files,
     onCreateFile,
     onSelectBlockFile,
     openFile,
@@ -578,6 +586,26 @@ function useFileComponents({
     toggleShowHiddenFiles,
     uuid,
     widgets,
+  ]);
+
+  const fileBrowserMemo = useMemo(() => (
+    <FileBrowser
+      {...fileBrowserProps}
+      files={files}
+    />
+  ), [
+    files,
+    fileBrowserProps
+  ]);
+
+  const fileBrowserFlattenMemo = useMemo(() => (
+    <FileBrowser
+      {...fileBrowserProps}
+      files={buildFileTreeByExtension(filesFlatten)}
+    />
+  ), [
+    fileBrowserProps,
+    filesFlatten,
   ]);
 
   const controller = useMemo(() => (
@@ -933,6 +961,7 @@ function useFileComponents({
 
   return {
     browser: fileBrowserMemo,
+    browserFlatten: fileBrowserFlattenMemo,
     controller,
     fetchFiles,
     filePaths: openFilePaths,

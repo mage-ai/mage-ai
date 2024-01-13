@@ -5,8 +5,10 @@ class FilePresenter(BasePresenter):
     default_attributes = [
         'children',
         'disabled',
+        'modified_timestamp',
         'name',
         'path',
+        'size',
     ]
 
     def present(self, **kwargs):

@@ -62,6 +62,7 @@ FilePolicy.allow_query(
     [
         'exclude_dir_pattern',
         'exclude_pattern',
+        'flatten',
         'pattern',
         'project_uuid',
         'repo_path',

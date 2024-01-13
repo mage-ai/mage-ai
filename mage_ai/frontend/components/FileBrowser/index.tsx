@@ -39,7 +39,7 @@ import { HEADER_Z_INDEX } from '@components/constants';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
-import { find } from '@utils/array';
+import { find, range } from '@utils/array';
 import { getBlockFromFile } from './utils';
 import { getFullPath } from '@utils/files';
 import { initiateDownload } from '@utils/downloads';
@@ -622,6 +622,40 @@ function FileBrowser({
         });
       }
     } else if (selectedFile) {
+      if (selectedFile?.path) {
+        items.push({
+          label: () => {
+            const parts = selectedFile?.path?.split(osPath.sep);
+            const count = parts?.length || 0;
+
+            return (
+              <Text muted monospace noWrapping xsmall>
+                {parts?.map((part, idx) => (
+                  <span>
+                    {idx >= 1 && <br />}
+                    {idx >= 1 && '|'}{range(idx).map(() => '--').join('')}<Text
+                      inline
+                      monospace
+                      muted={idx <= count - 2}
+                      noWrapping
+                      xsmall
+                    >
+                      {part}
+                    </Text>{idx <= count - 2 && '/'}
+                  </span>
+                ))}
+              </Text>
+            );
+          },
+          onClick: () => onClickFile
+            ? onClickFile?.(selectedFile?.path) :
+            openFile
+              ? openFile?.(selectedFile?.path)
+              : null,
+          uuid: 'file_path',
+        });
+      }
+
       items.push(...[
         {
           label: () => 'Rename file',

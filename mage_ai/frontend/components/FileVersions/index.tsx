@@ -24,7 +24,7 @@ import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { pushAtIndex } from '@utils/array';
-import { selectEntriesWithValues } from '@utils/hash';
+import { isObject, selectEntriesWithValues } from '@utils/hash';
 
 type FileVersionsProps = {
   onActionCallback?: (file: FileType, opts?: {
@@ -83,7 +83,10 @@ function FileVersions({
   ]);
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
-  const fileExtension = useMemo(() => selectedFilePath?.match(regex)?.[0]?.split('.')?.[1], [
+  const fileExtension = useMemo(() => ((typeof selectedFilePath !== 'string' && isObject(selectedFilePath))
+    ? selectedFilePath?.path || selectedFilePath?.name
+    : selectedFilePath
+  )?.match(regex)?.[0]?.split('.')?.[1], [
     selectedFilePath,
     regex,
   ]);

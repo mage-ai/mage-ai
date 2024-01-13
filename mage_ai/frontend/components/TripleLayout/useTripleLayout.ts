@@ -10,6 +10,7 @@ const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
 
 function useAside(uuid, refData, {
   disable,
+  hidden: hiddenProp,
   mainContainerWidth,
   refOther,
   setWidth: setWidthProp,
@@ -18,6 +19,7 @@ function useAside(uuid, refData, {
   widthWindow,
 }: {
   disable?: boolean;
+  hidden?: boolean;
   mainContainerWidth?: number;
   refOther?: {
     current: {
@@ -44,12 +46,22 @@ function useAside(uuid, refData, {
   const hiddenLocal = get(keyHidden);
   const widthLocal = get(key);
 
-  const [hidden, setHiddenState] = useState(hiddenLocal || false);
+  const [hidden, setHiddenState] = useState([
+    hiddenLocal,
+    hiddenProp,
+    false,
+  ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
-  const [widthState, setWidthState] = useState(Math.min(
-    widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH),
-    (widthLocal || widthProp),
-  ));
+  const [widthState, setWidthState] = useState(Math.min(...[
+    typeof widthWindow !== 'undefined'
+      ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH)
+      : null,
+    (
+      typeof widthLocal !== 'undefined' ? widthLocal : null
+      || typeof widthProp !== 'undefined' ? widthProp : null
+    ),
+    DEFAULT_ASIDE_WIDTH,
+  ].filter(v => v)));
 
   const setHidden = useCallback((prev) => {
     setHiddenState(prev);
@@ -115,7 +127,10 @@ function useAside(uuid, refData, {
 
   const widthWindowPrev = usePrevious(widthWindow);
   useEffect(() => {
-    if (widthWindow !== widthWindowPrev) {
+    if (typeof widthWindow !== 'undefined'
+      && typeof widthWindowPrev !== 'undefined'
+      && widthWindow !== widthWindowPrev
+    ) {
       setWidth(widthWindow * (width / widthWindowPrev));
     }
   }, [width, widthWindow, widthWindowPrev]);
@@ -164,6 +179,8 @@ export type UseTripleLayoutType = {
 export type UseTripleLayoutProps = {
   disableAfter?: boolean;
   disableBefore?: boolean;
+  hiddenAfter?: boolean;
+  hiddenBefore?: boolean;
   mainContainerRef?: any;
   setWidthAfter?: (value: number) => void;
   setWidthBefore?: (value: number) => void;
@@ -176,6 +193,8 @@ export type UseTripleLayoutProps = {
 export default function useTripleLayout(uuid: string, {
   disableAfter,
   disableBefore,
+  hiddenAfter: hiddenAfterProp,
+  hiddenBefore: hiddenBeforeProp,
   mainContainerRef: mainContainerRefProp,
   setWidthAfter: setWidthAfterProp,
   setWidthBefore: setWidthBeforeProp,
@@ -217,6 +236,7 @@ export default function useTripleLayout(uuid: string, {
     width: widthAfter,
   } = useAside(keyAfter, refAfter, {
     disable: disableAfter,
+    hidden: hiddenAfterProp,
     mainContainerWidth,
     refOther: refBefore,
     setWidth: setWidthAfterProp,
@@ -234,6 +254,7 @@ export default function useTripleLayout(uuid: string, {
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
     disable: disableBefore,
+    hiddenB: hiddenBeforeProp,
     mainContainerWidth,
     refOther: refAfter,
     setWidth: setWidthBeforeProp,

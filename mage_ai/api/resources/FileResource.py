@@ -1,4 +1,5 @@
 import os
+import re
 import urllib.parse
 from typing import Dict
 
@@ -14,7 +15,9 @@ from mage_ai.data_preparation.models.errors import (
 from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.path_fixer import add_absolute_path
+from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.files import get_absolute_paths_from_all_files
+from mage_ai.shared.path_fixer import add_absolute_path, remove_base_repo_directory_name
 from mage_ai.version_control.models import File as VersionControlFile
 from mage_ai.version_control.models import Project
 
@@ -34,6 +37,10 @@ class FileResource(GenericResource):
             repo_path = repo_path[0]
         if repo_path:
             repo_path = urllib.parse.unquote(repo_path)
+
+        flatten = query.get('flatten', [None])
+        if flatten:
+            flatten = flatten[0]
 
         version_control_files = query.get('version_control_files', [False])
         if version_control_files:
@@ -71,6 +78,29 @@ class FileResource(GenericResource):
                 f.name.strip(),
             ).replace('.', '\\.') for f in files if f.name and f.name.strip()])
             check_file_path = True
+
+        if flatten:
+            def __parse_values(tup) -> Dict:
+                absolute_path, size, modified_timestamp = tup
+                return dict(
+                    name=os.path.basename(absolute_path),
+                    size=size,
+                    path=remove_base_repo_directory_name(absolute_path),
+                    modified_timestamp=modified_timestamp,
+                )
+
+            return self.build_result_set(
+                get_absolute_paths_from_all_files(
+                    starting_full_path_directory=base_repo_path(),
+                    comparator=lambda path: (
+                        not exclude_pattern or
+                        not re.search(exclude_pattern, path or '')
+                    ) and (not pattern or re.search(pattern, path or '')),
+                    parse_values=__parse_values,
+                ),
+                user,
+                **kwargs,
+            )
 
         return self.build_result_set(
             [File.get_all_files(

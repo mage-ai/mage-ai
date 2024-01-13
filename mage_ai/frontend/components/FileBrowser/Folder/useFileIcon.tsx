@@ -74,7 +74,7 @@ export default function useFileIcon({
   , [
     file,
     filePath,
-    useRootFolder,,
+    useRootFolder,
   ]);
 
   const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
@@ -136,13 +136,15 @@ export default function useFileIcon({
     let iconColorInner;
     let IconInner = FileFill;
 
+    const { extension } = file || { extension: null };
+
     if (!isFolder && isNotFolder) {
       IconInner = Ellipsis;
     } else if (isPipelineFolder) {
       IconInner = PipelineV3
     } else if (name === FOLDER_NAME_CHARTS) {
       IconInner = Charts;
-    } else if (isFolder) {
+    } else if (isFolder && !extension) {
       if (isFirstParentFolderForBlock) {
         IconInner = BLOCK_TYPE_ICON_MAPPING?.[blockType] || FolderIcon;
       } else {
@@ -154,8 +156,8 @@ export default function useFileIcon({
       IconInner = Pipeline;
     } else if (name?.includes('.log')) {
       IconInner = Logs;
-    } else if (!isFolder) {
-      const fx = getFileExtension(name);
+    } else if (!isFolder || extension) {
+      const fx = extension || getFileExtension(name);
       if (fx && fx in FILE_EXTENSION_ICON_MAPPING) {
         IconInner = FILE_EXTENSION_ICON_MAPPING[fx];
         iconColorInner = FILE_EXTENSION_COLOR_MAPPING[fx];
@@ -169,6 +171,7 @@ export default function useFileIcon({
   }, [
     allowEmptyFolders,
     blockType,
+    file,
     isFirstParentFolderForBlock,
     isFolder,
     isInPipelinesFolder,

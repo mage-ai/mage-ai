@@ -1,5 +1,6 @@
 import './requestIdleCallbackPolyfill';
 
+import * as osPath from 'path';
 import styled from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +13,7 @@ import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
 import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
-import { ChevronDown, ChevronRight } from '@oracle/icons';
+import { ChevronDown, ChevronRight, build } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
 import {
   CUSTOM_EVENT_NAME_FOLDER_EXPAND,
@@ -140,6 +141,21 @@ function DeferredRender({ children, idleTimeout }) {
   return children;
 }
 
+function buildFolderUUIDParts({
+  name,
+  path,
+}: FileType, uuidCombined: string[] = []): string[] {
+  if (path) {
+    return [...(uuidCombined || []), path];
+  }
+
+  return [...(uuidCombined || []), name || DEFAULT_NAME];
+}
+
+function buildFolderUUID(parts: string[]): string {
+  return parts.join(osPath.sep);
+}
+
 function Folder({
   allowEmptyFolders,
   allowSelectingFolders,
@@ -178,6 +194,7 @@ function Folder({
     disabled: disabledProp,
     name,
     parent: parentFile,
+    path,
   } = file;
   const children = useMemo(() =>
     (childrenProp
@@ -190,11 +207,11 @@ function Folder({
   );
 
   const uuidCombinedUse =
-    useMemo(() => [].concat(uuidCombined || []).concat(name || DEFAULT_NAME), [
-      name,
-      uuidCombined,,
+    useMemo(() => buildFolderUUIDParts(file, uuidCombined), [
+      file,
+      uuidCombined,
     ]);
-  const uuid = useMemo(() => uuidCombinedUse?.join('/'), [uuidCombinedUse]);
+  const uuid = useMemo(() => buildFolderUUID(uuidCombinedUse), [uuidCombinedUse]);
 
   const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
   const refChildren = useRef(null);
@@ -254,7 +271,7 @@ function Folder({
       isFileDisabled={isFileDisabled}
       isNotFolder={f?.isNotFolder}
       isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
-      key={`${uuid}/${f?.name || DEFAULT_NAME}-${reloadCount}`}
+      key={`${buildFolderUUID(buildFolderUUIDParts(f, uuidCombinedUse))}-${reloadCount}`}
       level={onlyShowChildren ? level : level + 1}
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}

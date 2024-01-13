@@ -109,11 +109,11 @@ function FileEditor({
   setSelectedBlock,
   updateFile: updateFileProp,
 }: FileEditorProps) {
-  const renderRef = useRef(0);
-  DEBUG(() => {
-    renderRef.current += 1;
-    console.log(`[FileEditor][${filePath}]: ${renderRef.current} renders`);
-  });
+  // const renderRef = useRef(0);
+  // DEBUG(() => {
+  //   renderRef.current += 1;
+  //   console.log(`[FileEditor][${filePath}]: ${renderRef.current} renders`);
+  // });
 
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [file, setFile] = useState<FileType>(null);

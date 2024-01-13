@@ -1,3 +1,4 @@
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
 import { get, set } from './localStorage';
 import { remove, removeAtIndex } from '@utils/array';
 
@@ -33,4 +34,17 @@ export function removeOpenFilePath(filePath: string): string[] {
   setOpenFilePaths(arrNew);
 
   return arrNew;
+}
+
+export function getFileExtension(filename: string): FileExtensionEnum {
+  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
+  const fx = match?.length >= 1
+    ? match[0].replace('.', '') as FileExtensionEnum
+    : null;
+
+  if ([FileExtensionEnum.YAML, FileExtensionEnum.YML].includes(fx)) {
+    return FileExtensionEnum.YAML;
+  }
+
+  return fx;
 }

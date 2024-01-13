@@ -175,7 +175,8 @@ export const AsideHeaderStyle = styled.div<{
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
-  height: ${1 + ASIDE_SUBHEADER_HEIGHT + 2}px;
+  max-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
+  min-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
   z-index: 4;
 
   ${hideScrollBar()}
