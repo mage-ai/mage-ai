@@ -57,6 +57,7 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  ModeType,
   ModeTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
@@ -328,6 +329,8 @@ function CommandCenter() {
     } = currentApplicationConfig;
 
     const activeApplicationsCount = refApplications?.current?.length || 0;
+
+    console.log(item, application);
 
     if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
       startApplication(currentApplicationConfig);
@@ -884,29 +887,38 @@ function CommandCenter() {
     return new Promise((resolve, reject) => resolve?.(refItems?.current));
   }
 
-  function toggleMode() {
+  function toggleMode(mode?: ModeType) {
+    setMode(mode);
     refInput.current.value = '';
     refItems.current = null;
     refItemsInit.current = null;
     updateInputProperties();
     renderItems([]);
     fetchItems();
+
+    if (mode) {
+      refContainer.current.className = addClassNames(
+        refContainer?.current?.className || '',
+        [
+          mode?.type,
+        ],
+      );
+    }
+
+    refContainer.current.className = removeClassNames(
+      refContainer?.current?.className || '',
+      [
+        'hide',
+      ],
+    );
   }
 
   function deactivateMode() {
-    setMode(null);
-    toggleMode();
+    toggleMode(null);
   }
 
   function activateMode(item: CommandCenterItemType) {
-    setMode(item?.mode);
-    toggleMode();
-    refContainer.current.className = addClassNames(
-      refContainer?.current?.className || '',
-      [
-        item?.mode?.type,
-      ],
-    );
+    toggleMode(item?.mode);
   }
 
   const {
@@ -1326,7 +1338,7 @@ function CommandCenter() {
     <>
       <ContainerStyle
         className={[
-          'hide',
+          refActive?.current ? '' : 'hide',
           getCurrentMode()?.type || '',
         ]?.join(' ')}
         ref={refContainer}
