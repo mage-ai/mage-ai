@@ -49,7 +49,7 @@ function ItemRow({
     descriptionDisplaySettings?.text_styles?.monospace
       ? 100
       : 150
-  ) - ((1.5 * (title?.length || 0) + (category?.length || 0)));
+  ) - ((1.75 * (title?.length || 0) + (category?.length || 0)));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > maxLetters) {
@@ -75,7 +75,7 @@ function ItemRow({
 
           <div style={{ marginRight: 1.5 * UNIT }} />
 
-          <Text weightStyle={4}>
+          <Text noWrapping weightStyle={4}>
             {title}
           </Text>
 

@@ -287,6 +287,13 @@ function CommandCenter() {
     onChangeState,
   });
 
+  function resetViewForNewTransition() {
+    refInput.current.value = '';
+    refItems.current = null;
+    refItemsInit.current = null;
+    updateInputProperties();
+  }
+
   function addApplication(
     applicationConfiguration: {
       application: ItemApplicationType;
@@ -330,8 +337,6 @@ function CommandCenter() {
 
     const activeApplicationsCount = refApplications?.current?.length || 0;
 
-    console.log(item, application);
-
     if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
       startApplication(currentApplicationConfig);
       fetchItems({
@@ -340,6 +345,7 @@ function CommandCenter() {
         ],
         refresh: true,
       });
+      resetViewForNewTransition();
     } else if ([
     // Detail, Form
       ItemApplicationTypeEnum.DETAIL,
@@ -889,10 +895,7 @@ function CommandCenter() {
 
   function toggleMode(mode?: ModeType) {
     setMode(mode);
-    refInput.current.value = '';
-    refItems.current = null;
-    refItemsInit.current = null;
-    updateInputProperties();
+    resetViewForNewTransition();
     renderItems([]);
     fetchItems();
 

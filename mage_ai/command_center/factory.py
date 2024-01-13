@@ -10,9 +10,10 @@ from mage_ai.command_center.models import Application, Item, Mode, PageMetadata
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import ignore_keys, merge_dict
 
-DEFAULT_RATIO = 65
+DEFAULT_RATIO = 53
 
 
 class BaseFactory:
@@ -154,10 +155,32 @@ class BaseFactory:
 
         score = 0
         if self.search:
-            text = self.get_searchable_text(item_dict)
-            score = max([fuzz.partial_token_sort_ratio(self.search, t) for t in text])
+            text = list(set(self.get_searchable_text(item_dict)))
+            if not text:
+                return None
 
+            arr = [fuzz.ratio(self.search, t) for t in text]
+            if not arr:
+                return None
+
+            score = max(arr)
             if score < self.search_ratio:
+                if score >= self.search_ratio / 2:
+                    if is_debug():
+                        uuid = item_dict.get('uuid') or 'UUID-MISSING'
+                        token_scores = '\n'.join(
+                            [f'\t{score}: {token}' for score, token in sorted(
+                                zip(arr, text),
+                                key=lambda tup: tup[0],
+                                reverse=True,
+                            ) if score > 0][:2]
+                        )
+
+                        print(
+                            f'[CommandCenter.filter_score]: {self.search} ({uuid})\n'
+                            f'{token_scores}'
+                        )
+
                 return None
 
         condition = item_dict.get('condition')
