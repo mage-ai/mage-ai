@@ -416,15 +416,21 @@ class File:
 
         update_file_cache()
 
-    def to_dict(self, include_content=False):
+    def to_dict(self, include_content: bool = False, include_metadata: bool = False):
         data = dict(
             name=self.filename,
             path=os.path.join(self.dir_path, self.filename),
-            size=self.size,
-            modified_timestamp=self.modified_timestamp,
+            size=None,
+            modified_timestamp=None,
         )
+
         if include_content:
             data['content'] = self.content()
+
+        if include_metadata:
+            data['size'] = self.size
+            data['modified_timestamp'] = self.modified_timestamp
+
         return data
 
     async def to_dict_async(self, include_content=False):

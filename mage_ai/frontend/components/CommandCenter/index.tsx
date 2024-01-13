@@ -329,8 +329,6 @@ function CommandCenter() {
 
     const activeApplicationsCount = refApplications?.current?.length || 0;
 
-    console.log(item, application);
-
     if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
       startApplication(currentApplicationConfig);
       fetchItems({
