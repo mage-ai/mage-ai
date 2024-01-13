@@ -87,7 +87,7 @@ export default function useClickOutside({
       const results: {
         [uuid: string]: {
           isOutside: boolean;
-          isOutsides: boolean;
+          isOutsides: boolean[];
         };
       } = {};
       const resultsGroup = {};

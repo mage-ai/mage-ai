@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import Panel from '@oracle/components/Panel';
-import { ignoreKeys, isEmpyObject } from '@utils/hash';
+import { ignoreKeys } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 
 type DataType = {

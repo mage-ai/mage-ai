@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ElementType from '@interfaces/ElementType';
 import { buildSetFunction } from './elements';
 import { isEmptyObject, selectEntriesWithValues } from './hash';
 
@@ -18,10 +19,10 @@ export default function useResizeElement({
   const refHandlers = useRef({});
 
   const [elementMapping, setElementRefState] = useState<{
-    [uuid: string]: Element;
+    [uuid: string]: ElementType;
   }>({});
   const [resizersMapping, setResizersRefState] = useState<{
-    [uuid: string]: Element[];
+    [uuid: string]: ElementType[];
   }>({});
 
   const setResizableObject = buildSetFunction(setElementRefState);

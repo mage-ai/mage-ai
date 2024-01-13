@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import ElementType from '@interfaces/ElementType';
 import { BuildSetFunctionProps, buildSetFunction } from './elements';
 
 export default function useDraggableElement({
@@ -18,10 +19,10 @@ export default function useDraggableElement({
   const refHandlers = useRef({});
 
   const [elementMapping, setElementRefState] = useState<{
-    [uuid: string]: Element;
+    [uuid: string]: ElementType;
   }>({});
   const [interactiveElementsMapping, setInteractiveElementsRefState] = useState<{
-    [uuid: string]: Element[];
+    [uuid: string]: ElementType[];
   }>({});
 
   const setElementObject = buildSetFunction(setElementRefState);
