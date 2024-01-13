@@ -36,6 +36,8 @@ import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_ARROW_DOWN,
+  KEY_CODE_ARROW_UP,
   KEY_CODE_BRACKET_LEFT,
   KEY_CODE_BRACKET_RIGHT,
   KEY_CODE_C,
@@ -912,9 +914,6 @@ function useFileComponents({
     selectedFilePath,
     showError,
   ]);
-
-  console.log(contentTouchedMapping,
-lastSavedMapping)
 
   const footerMemo = useMemo(() => {
     return (

@@ -114,6 +114,7 @@ function FileBrowser({
     console.log(`[FileBrowser][${uuidFileBrowser}]: ${renderRef.current} renders`);
   });
 
+  const cursorRef = useRef(null);
   const timeout = useRef(null);
   const refView = useRef(null);
   const themeContext = useContext(ThemeContext);
@@ -374,6 +375,7 @@ function FileBrowser({
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
       containerRef={ref}
+      cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
       file={file}
       key={`${file.name}-${reloadCount}`}

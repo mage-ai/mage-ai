@@ -13,7 +13,7 @@ export const ContainerStyle = styled.div`
   display: inline-block;
   min-width: 100%;
 
-  .row:hover {
+  .row:hover, .row.highlighted {
     ${props => `
       background-color: ${(props.theme.interactive || dark.interactive).hoverBlackBackgroundTransparent};
     `}

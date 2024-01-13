@@ -71,6 +71,9 @@ export type FolderSharedProps = {
 
 type FolderProps = {
   containerRef: any;
+  cursorRef?: {
+    current: any;
+  };
   file: FileType;
   level: number;
   reloadCount?: number;
@@ -141,6 +144,7 @@ function Folder({
   allowEmptyFolders,
   allowSelectingFolders,
   containerRef,
+  cursorRef,
   disableContextMenu,
   file,
   isFileDisabled,
@@ -241,6 +245,7 @@ function Folder({
       allowEmptyFolders={allowEmptyFolders}
       allowSelectingFolders={allowSelectingFolders}
       containerRef={containerRef}
+      cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
       file={{
         ...f,
@@ -302,7 +307,6 @@ function Folder({
     uuidCombinedUse,
     uuidContainer,
   ]);
-
 
   const toggleExpandsion = useCallback((
     expand: boolean = null,
@@ -565,6 +569,16 @@ function Folder({
             display: 'flex',
             minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
             paddingRight: (UNIT / 4),
+          }}
+          onMouseEnter={(e) => {
+            if (cursorRef) {
+              cursorRef.current = {
+                event: e,
+                file,
+                toggleExpandsion,
+                uuid,
+              };
+            }
           }}
         >
           <Flex alignItems="center" flex={1}>

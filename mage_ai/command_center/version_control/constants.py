@@ -76,6 +76,9 @@ async def build_reset_authentication_github(oauth_resource: OauthResource, user=
 
 
 async def build_authenticate_github(page: PageMetadata, user=None) -> Dict:
+    if not page:
+        return
+
     oauth_resource = await OauthResource.member(ProviderName.GITHUB, user, query=dict(
         redirect_uri=[urllib.parse.quote_plus(f'{page.origin}/version-control')],
     ))

@@ -149,6 +149,9 @@ class BaseFactory:
         return score
 
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
+        if not item_dict:
+            return None
+
         score = 0
         if self.search:
             text = self.get_searchable_text(item_dict)
