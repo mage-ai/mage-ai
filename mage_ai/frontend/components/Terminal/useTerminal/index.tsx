@@ -155,7 +155,7 @@ export default function useTerminal({
     setItemsState(arr);
   }, []);
 
-  const addItem = useCallback((item: CachedItemType, idx: number) => {
+  const addItem = useCallback((item: CachedItemType, idx: number = 0) => {
     if (!item) {
       return;
     }

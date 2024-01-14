@@ -190,7 +190,7 @@ function Terminal({
     lastMessage,
   ]);
 
-  const kernelOutputsUpdated = useMemo(() => {
+  const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
     if (typeof outputs !== 'undefined') {
       return outputs;
     }
@@ -207,6 +207,7 @@ function Terminal({
 
     return splitStdout.map(d => ({
       data: d,
+      execution_state: null,
       type: DataTypeEnum.TEXT,
     }));
   }, [outputs, stdout]);
@@ -506,7 +507,7 @@ in the context menu that appears.
                 <Text inline monospace>
                   {lastCommand && (
                     <Ansi>
-                      {lastCommand}
+                      {Array.isArray(lastCommand) ? lastCommand.join('\n') : lastCommand}
                     </Ansi>
                   )}
                 </Text>

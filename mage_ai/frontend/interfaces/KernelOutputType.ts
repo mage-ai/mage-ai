@@ -31,7 +31,7 @@ export default interface KernelOutputType {
   data?: string | string[];
   block_type?: BlockTypeEnum;
   error?: string;
-  execution_state: ExecutionStateEnum;
+  execution_state?: ExecutionStateEnum;
   metadata?: {
     [key: string]: string;
   };

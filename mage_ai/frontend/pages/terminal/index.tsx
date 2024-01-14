@@ -1,8 +1,9 @@
 import React from 'react';
 
 import Dashboard from '@components/Dashboard';
-import PrivateRoute from '@components/shared/PrivateRoute';
 import PortalTerminal from '@components/Applications/PortalTerminal';
+import PrivateRoute from '@components/shared/PrivateRoute';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { HEADER_HEIGHT } from '@components/ApplicationManager/index.style';
 
 function TerminalPage() {
@@ -12,7 +13,11 @@ function TerminalPage() {
       uuid="terminal/index"
     >
       <PortalTerminal
+        containerRef={null}
         headerOffset={HEADER_HEIGHT}
+        onMount={() => true}
+        uuid={ApplicationExpansionUUIDEnum.PortalTerminal}
+
       />
     </Dashboard>
   );

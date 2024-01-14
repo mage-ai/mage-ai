@@ -64,7 +64,7 @@ class ApplicationFactory(BaseFactory):
             app = None
             if self.applications:
                 app = find(
-                    lambda x: x.get('uuid') == uuid,
+                    lambda x, uuid=uuid: x.get('uuid') == uuid,
                     self.applications,
                 )
                 if app:
