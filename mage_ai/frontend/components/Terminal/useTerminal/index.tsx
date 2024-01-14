@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import AuthToken from '@api/utils/AuthToken';
 import Divider from '@oracle/elements/Divider';
 import FileEditorHeader from '@components/FileEditor/Header';
+import FileTabsScroller from '@components/FileTabsScroller';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
@@ -17,15 +18,16 @@ import {
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { cleanName, randomNameGenerator } from '@utils/string';
 import { getItems, setItems } from './storage';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { randomNameGenerator } from '@utils/string';
 import { useFileTabs } from '@components/PipelineDetail/FileTabs';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const UUID_MAIN = 'Main Mage';
+const DEFAULT_ITEM = { selected: true, uuid: UUID_MAIN };
 
 export const ICON_SIZE = UNIT * 2;
 export const MENU_ICON_SIZE = UNIT * 1.5;
@@ -172,7 +174,12 @@ export default function useTerminal({
 
     const index = items?.findIndex(({ uuid }) => uuid === uuidSelected);
     const values = items?.filter(({ uuid }) => uuid !== uuidSelected);
-    values[values?.length > index ? values?.length - 1 : index].selected = true;
+
+    if (values?.length === 0) {
+      values.push(DEFAULT_ITEM);
+    } else {
+      values[values?.length > index ? values?.length - 1 : index].selected = true;
+    }
 
     setItems(values, true);
     setItemsState(() => values);
@@ -185,7 +192,7 @@ export default function useTerminal({
       if (arr?.length >= 1) {
         setItemsState(arr);
       } else {
-        addItem({ selected: true, uuid: UUID_MAIN });
+        addItem(DEFAULT_ITEM);
       }
     }
   }, []);
@@ -202,7 +209,9 @@ export default function useTerminal({
     queryParams: {
       term_name: `${user?.id}--${uuidTerminalController}--${selectedItem?.uuid}`,
     },
-    shouldReconnect: () => !!selectedItem,
+    // shouldReconnect: (data) => {
+    //   return false;
+    // },
     // onOpen
     // onMessage
   }, !!selectedItem);
@@ -223,16 +232,7 @@ export default function useTerminal({
   }, [lastMessage, selectedItem, setStdout]);
 
   const setSelectedItemUUID = useCallback((uuidSelected: string) => {
-    updateItems([
-      {
-        ...selectedItem,
-        selected: false,
-      },
-      {
-        ...items?.find(({ uuid }) => uuid === uuidSelected),
-        selected: true,
-      },
-    ]);
+    updateItems(items?.map(item => ({ ...item, selected: item?.uuid === uuidSelected })));
   }, [items, selectedItem]);
 
   const {
@@ -247,8 +247,15 @@ export default function useTerminal({
       removeItem(uuid);
     },
     onContextMenu,
+    renderTabIcon: (uuid: string) => (
+      <TerminalIcon
+        {...MENU_ICON_PROPS}
+        muted={uuid !== selectedItem?.uuid}
+        success={uuid === selectedItem?.uuid}
+      />
+    ),
     renderTabTitle: (uuid: string) => {
-      return uuid;
+      return uuid?.replace('_', ' ');
     },
     selectedFilePath: selectedItem?.uuid,
     shouldDisableClose: (uuid: string) => uuid === UUID_MAIN,
@@ -349,8 +356,8 @@ export default function useTerminal({
             uuid: 'Add new tab',
             onClick: (opts) => {
               addItem({
-                name: randomNameGenerator(),
                 selected: true,
+                uuid: cleanName(randomNameGenerator()),
               });
             },
           },
@@ -374,6 +381,16 @@ export default function useTerminal({
     headerMenuGroups,
   ]);
 
+  const tabsMemo = useMemo(() => (
+    <FileTabsScroller
+      // @ts-ignore
+      fileTabs={tabs}
+      selectedFilePathIndex={items?.findIndex(({ uuid }) => selectedItem?.uuid === uuid)}
+    >
+      {/*contextMenu*/}
+    </FileTabsScroller>
+  ), [items, selectedItem, tabs]);
+
   const menuTabsCombined = useMemo(() => (
     <div
       style={{
@@ -387,14 +404,14 @@ export default function useTerminal({
 
       <Divider light />
 
-      {tabs}
+      {tabsMemo}
     </div>
-  ), [menuMemo, tabs]);
+  ), [menuMemo, tabsMemo]);
 
   return {
     menu: menuMemo,
     menuTabsCombined,
-    tabs,
+    tabs: tabsMemo,
     terminal,
   };
 }

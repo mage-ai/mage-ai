@@ -26,16 +26,17 @@ type FileTabsProps = {
 
 export function useFileTabs({
   filePaths,
+  filesTouched,
   isSelectedFilePath,
   onClickTab,
   onClickTabClose,
   onContextMenu,
+  renderTabIcon,
+  renderTabTitle,
+  savePipelineContent,
   selectedFilePath,
   shouldDisableClose,
   tabsBefore,
-  filesTouched,
-  renderTabTitle,
-  savePipelineContent,
 }: FileTabsProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const filePathsMemo =
@@ -85,7 +86,6 @@ export function useFileTabs({
         isLast={idx === numberOfFilePaths - 1}
         key={filePath}
         onClickTab={onClickTab}
-        renderTabTitle={renderTabTitle}
         onClickTabClose={(fp: string) => {
           if (onClickTabClose) {
             onClickTabClose(fp);
@@ -102,6 +102,8 @@ export function useFileTabs({
           }
         }}
         onContextMenu={onContextMenu}
+        renderTabIcon={renderTabIcon}
+        renderTabTitle={renderTabTitle}
         selected={selected}
         themeContext={themeContext}
       />

@@ -3,6 +3,7 @@ import React from 'react';
 import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import PortalTerminal from '@components/Applications/PortalTerminal';
+import { HEADER_HEIGHT } from '@components/ApplicationManager/index.style';
 
 function TerminalPage() {
   return (
@@ -10,7 +11,9 @@ function TerminalPage() {
       title="Terminal"
       uuid="terminal/index"
     >
-      <PortalTerminal />
+      <PortalTerminal
+        headerOffset={HEADER_HEIGHT}
+      />
     </Dashboard>
   );
 }

@@ -23,6 +23,7 @@ export type FileTabProps = {
   onClickTab?: (filePath: string) => void;
   onClickTabClose?: (filePath: string) => void;
   onContextMenu?: (event: any, filePath: string) => void;
+  renderTabIcon?: (uuid: string) => JSX.Element;
   renderTabTitle?: (filePath: string) => string;
   savePipelineContent?: () => void;
 };
@@ -43,6 +44,7 @@ function FileTab({
   onClickTab,
   onClickTabClose,
   onContextMenu,
+  renderTabIcon,
   renderTabTitle,
   savePipelineContent,
   selected,
@@ -104,18 +106,20 @@ function FileTab({
             >
               {!filesTouched[filePath] && (
                 <>
-                  {isBlockFile
-                    ?
-                      <BlockIcon
-                        color={color}
-                        size={UNIT * 1}
-                        square
-                      />
-                    :
-                      <Icon
-                        fill={iconColor}
-                        size={UNIT * 1.5}
-                      />
+                  {renderTabIcon
+                    ? renderTabIcon(filePath)
+                    : isBlockFile
+                      ?
+                        <BlockIcon
+                          color={color}
+                          size={UNIT * 1}
+                          square
+                        />
+                      :
+                        <Icon
+                          fill={iconColor}
+                          size={UNIT * 1.5}
+                        />
                   }
                 </>
               )}
