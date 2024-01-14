@@ -232,7 +232,7 @@ async def build_create_and_score(factory, model: Pipeline) -> Dict:
             dict(
                 upstream_action_value_key_mapping=dict(
                     create_model={
-                        'data.pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
+                        'pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
                     }
                 ),
                 page=dict(
@@ -339,7 +339,7 @@ async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
             dict(
                 upstream_action_value_key_mapping=dict(
                     create_model={
-                        'data.pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
+                        'pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
                     }
                 ),
                 page=dict(
@@ -439,7 +439,7 @@ async def build_create_pipeline_run_once(factory, model: TriggerMetadata) -> Dic
             dict(
                 upstream_action_value_key_mapping=dict(
                     create_model={
-                        'data.pipeline_run.id': 'page.parameters.pipeline_run_id',
+                        'pipeline_run.id': 'page.parameters.pipeline_run_id',
                     }
                 ),
                 page=dict(

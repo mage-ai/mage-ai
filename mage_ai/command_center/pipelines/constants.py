@@ -98,7 +98,7 @@ ITEMS = [
             dict(
                 upstream_action_value_key_mapping=dict(
                     create_model={
-                        'data.pipeline.uuid': 'page.parameters.uuid',
+                        'pipeline.uuid': 'page.parameters.uuid',
                     }
                 ),
                 page=dict(

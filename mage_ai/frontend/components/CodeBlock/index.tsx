@@ -1508,7 +1508,7 @@ function CodeBlock({
             </NextLink>
           </Spacing>
 
-          <Spacing mb={1}>
+          <Spacing pb={1}>
             <Text monospace muted small>
               Override global data product settings
             </Text>

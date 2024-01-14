@@ -95,7 +95,7 @@ ITEMS = [
                 ),
                 upstream_action_value_key_mapping=dict(
                     create_file={
-                        'data.file.path': 'interaction.options.file_path',
+                        'file.path': 'interaction.options.file_path',
                     }
                 ),
                 uuid='open_file',
