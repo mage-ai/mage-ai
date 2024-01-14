@@ -108,57 +108,29 @@ export default function useApplicationManager({
   }
 
   function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
-    const apps = getOpenApplications();
-
-    // App is already on top
-    if (apps?.[0]?.uuid === uuid) {
-      return;
-    }
-
-    let zIndexMax = DEFAULT_Z_INDEX;
-    let zIndexMin = DEFAULT_Z_INDEX;
-
-    const mapping = {};
-
-    const zIndexes = apps?.forEach((app) => {
-      const {
-        element,
-        uuid: uuidApp,
-      } = app;
-      const zIndex = (element as RefType)?.current?.style?.zIndex;
-      if (zIndex > zIndexMax) {
-        zIndexMax = zIndex;
-      }
-      if (zIndex < zIndexMin) {
-        zIndexMin = zIndex;
-      }
-
-      mapping[uuidApp] = {
-        element,
-        zIndex,
+    let pick = null;
+    const apps = [];
+    getOpenApplications({
+      ascending: true,
+    })?.forEach((app) => {
+      if (app?.uuid === uuid) {
+        pick = app;
+      } else {
+        apps.push(app);
       }
     });
 
-    Object.entries(mapping)?.forEach(([uuidApp, {
+    apps?.forEach(({
       element,
-      zIndex,
-    }]: [ApplicationExpansionUUIDEnum, {
-      element: RefType;
-      zIndex: number;
-    }]) => {
-      let zValue;
-      if (uuidApp === uuid) {
-        zValue = (zIndexMax - zIndexMin) + DEFAULT_Z_INDEX + 1;
-      } else {
-        zValue = (zIndex - zIndexMin) + DEFAULT_Z_INDEX;
-      }
-
-      element.current.style.zIndex = zValue;
+      uuid: uuidApp,
+    }, idx: number) => {
+      const z = DEFAULT_Z_INDEX + idx;
+      element.current.style.zIndex = z;
 
       updateApplicationLayoutAndState(uuidApp, {
         layout: {
           position: {
-            z: zValue,
+            z,
           },
         },
       }, {
@@ -166,6 +138,21 @@ export default function useApplicationManager({
         state: false,
       });
     });
+
+    if (pick?.element?.current) {
+      const z = DEFAULT_Z_INDEX + (apps?.length || 0);
+      pick.element.current.style.zIndex = z;
+      updateApplicationLayoutAndState(uuid, {
+        layout: {
+          position: {
+            z,
+          },
+        },
+      }, {
+        layout: true,
+        state: false,
+      });
+    }
   }
 
   function onResizeCallback(
@@ -339,35 +326,83 @@ export default function useApplicationManager({
       clientY: null,
     };
 
+    let height;
+    let width;
+    let x;
+    let y;
+
+    const percentageY = clientY / (typeof window === 'undefined' ? 0 : window.innerHeight);
+    const percentageX = clientX / (typeof window === 'undefined' ? 0 : window.innerWidth);
+
     if (clientX <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientX + APPLICATION_PADDING) >= window.innerWidth)) {
       pauseEvent(opts?.event);
 
+      height = 1;
+      width = 0.5;
+      y = 0;
+
+      if (percentageY <= 0.1) {
+        // Top corner
+        height = 0.5;
+      } else if (percentageY >= 0.5) {
+        // Bottom corner
+        height = 0.5;
+        y = 0.5;
+      }
+
       // Left side: layout aligned to the left side
       if (clientX <= APPLICATION_PADDING) {
-        updateApplicationLayoutAndState(uuid, {
-          layout: buildMaximumLayout(null, {
-            height: 1,
-            width: 0.5,
-            x: 0,
-            y: 0,
-          }),
-        }, {
-          layout: true,
-          state: false,
-        });
+        x = 0;
       } else {
-        updateApplicationLayoutAndState(uuid, {
-          layout: buildMaximumLayout(null, {
-            height: 1,
-            width: 0.5,
-            x: 0.5,
-            y: 0,
-          }),
-        }, {
-          layout: true,
-          state: false,
-        });
+        x = 0.5;
       }
+
+      updateApplicationLayoutAndState(uuid, {
+        layout: buildMaximumLayout(null, {
+          height,
+          width,
+          x,
+          y,
+        }),
+      }, {
+        layout: true,
+        state: false,
+      });
+    } else if (clientY <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientY + APPLICATION_PADDING) >= window.innerHeight)) {
+      pauseEvent(opts?.event);
+
+      height = 0.5;
+      width = 1;
+      x = 0;
+
+      if (percentageX <= 0.25) {
+        // Left corner
+        width = 0.5;
+      } else if (percentageX >= 0.75) {
+        // Right corner
+        width = 0.5;
+        x = 0.5;
+      }
+
+      if (clientY <= APPLICATION_PADDING) {
+        // Top
+        y = 0;
+      } else {
+        // Bottom
+        y = 0.5;
+      }
+
+      updateApplicationLayoutAndState(uuid, {
+        layout: buildMaximumLayout(null, {
+          height,
+          width,
+          x,
+          y,
+        }),
+      }, {
+        layout: true,
+        state: false,
+      });
     } else {
       onChangeLayoutPosition(uuid, opts);
     }
@@ -587,6 +622,9 @@ export default function useApplicationManager({
           maximizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
             updateApplicationLayoutAndState(uuidApp, {
               layout: buildMaximumLayout(),
+            }, {
+              layout: true,
+              state: false,
             });
           }}
           minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}

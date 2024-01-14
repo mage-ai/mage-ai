@@ -15,9 +15,9 @@ export enum StatusEnum {
 }
 
 export interface PositionType {
-  x: number;
-  y: number;
-  z: number;
+  x?: number;
+  y?: number;
+  z?: number;
 }
 
 export interface DimensionType {
@@ -30,8 +30,8 @@ export interface StateType {
 }
 
 export interface LayoutType {
-  dimension: DimensionType;
-  position: PositionType;
+  dimension?: DimensionType;
+  position?: PositionType;
 }
 
 export interface ApplicationManagerApplication {

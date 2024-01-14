@@ -172,18 +172,33 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
   };
 
   const {
-    dimension: dimensionDefault,
-    position: positionDefault,
-  } = buildDefaultLayout();
+    dimension: dimensionMax,
+    position: positionMax,
+  } = buildMaximumLayout();
 
-  if (dimension?.height > dimensionDefault?.height) {
-    dimension.height = dimensionDefault.height;
-    position.y = positionDefault.y;
+  if (dimension?.height > dimensionMax?.height) {
+    dimension.height = dimensionMax.height;
+    position.y = positionMax.y;
   }
 
-  if (dimension?.width > dimensionDefault?.width) {
-    dimension.width = dimensionDefault.width;
-    position.x = positionDefault.x;
+  if (dimension?.width > dimensionMax?.width) {
+    dimension.width = dimensionMax.width;
+    position.x = positionMax.x;
+  }
+
+  const {
+    dimension: dimensionMin,
+    position: positionMin,
+  } = minimumLayout();
+
+  if (dimension?.height < dimensionMin?.height) {
+    dimension.height = dimensionMin.height;
+    position.y = positionMin.y;
+  }
+
+  if (dimension?.width < dimensionMin?.width) {
+    dimension.width = dimensionMin.width;
+    position.x = positionMin.x;
   }
 
   return {

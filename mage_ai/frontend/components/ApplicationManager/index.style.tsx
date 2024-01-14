@@ -75,7 +75,7 @@ function minimizedDimensions(): {
 export const RootApplicationStyle = styled.div`
   ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
     #${uuid}.minimized {
-      bottom: ${minimizedDimensions().height / 2}px;
+      bottom: ${minimizedDimensions().height * 0.5}px;
       margin-left: 8px;
       margin-right: 8px;
       position: relative;
@@ -85,7 +85,7 @@ export const RootApplicationStyle = styled.div`
 
       &:hover {
         ${transition()}
-        bottom: ${minimizedDimensions().height}px;
+        transform: translateY(-38px);
       }
 
       .minimized {
