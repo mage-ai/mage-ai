@@ -22,6 +22,7 @@ export function buildSetFunction(updateFunction) {
   async function setObject(uuid: string, nodeOrNodes: any | any[], opts: {
     delay?: number;
     tries?: number;
+
   } = {}) {
     const valueIsArray = Array.isArray(nodeOrNodes);
     const nodes = valueIsArray ? nodeOrNodes : [nodeOrNodes];

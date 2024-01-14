@@ -28,6 +28,7 @@ import {
   OVERLAY_ID,
   OverlayStyle,
   ResizeBottomStyle,
+  ResizeCornerStyle,
   ResizeLeftStyle,
   ResizeRightStyle,
   ResizeTopStyle,
@@ -297,11 +298,21 @@ export default function useApplicationManager({
     onClick: onClickOutside,
   });
 
+  function onResizeStartCallback(uuid: ApplicationExpansionUUIDEnum, opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) {
+    updateZIndex(uuid);
+  }
+
   const {
     setResizableObject,
     setResizersObjects,
   } = useResizeElement({
     onResizeCallback: onChangeLayoutPosition,
+    onResizeStartCallback,
   });
 
   const {
@@ -378,9 +389,13 @@ export default function useApplicationManager({
     if (!refResizers?.current?.[uuid]) {
       refResizers.current[uuid] = {
         bottom: createRef(),
+        bottomLeft: createRef(),
+        bottomRight: createRef(),
         left: createRef(),
         right: createRef(),
         top: createRef(),
+        topLeft: createRef(),
+        topRight: createRef(),
       };
     }
 
@@ -420,7 +435,15 @@ export default function useApplicationManager({
       setResizableObject(uuid, ref, {
         tries: 10,
       });
-      setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
+      setResizersObjects(uuid, [
+        rr?.bottom,
+        rr?.bottomLeft,
+        rr?.bottomRight,
+        rr?.left,
+        rr?.right,
+        rr?.topLeft,
+        rr?.topRight,
+      ], {
         tries: 10,
       });
 
@@ -452,10 +475,14 @@ export default function useApplicationManager({
           width,
           zIndex: z,
       }}>
-        <ResizeBottomStyle ref={rr?.bottom} />
-        <ResizeLeftStyle ref={rr?.left} />
-        <ResizeRightStyle ref={rr?.right} />
-        {/*<ResizeTopStyle ref={rr?.top} />*/}
+        <ResizeBottomStyle ref={rr?.bottom} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle left bottom ref={rr?.bottomLeft} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle left top ref={rr?.topLeft} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle right bottom ref={rr?.bottomRight} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle right top ref={rr?.topRight} onClick={() => updateZIndex(uuid)} />
+        <ResizeLeftStyle ref={rr?.left} onClick={() => updateZIndex(uuid)} />
+        <ResizeRightStyle ref={rr?.right} onClick={() => updateZIndex(uuid)} />
+
         <OverlayStyle
           className={OVERLAY_ID}
           onClick={(e) => {

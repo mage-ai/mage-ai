@@ -11,8 +11,9 @@ import { transition } from '@oracle/styles/mixins';
 
 const SCALE_PERCENTAGE = 0.1;
 export const HEADER_HEIGHT = 6 * UNIT;
-const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
+const RESIZE_SIZE = 1 * UNIT;
+const RESIZE_SIZE_CORNER = 4 * UNIT;
 
 function getRGBA(color: string, opts?: {
   transparency?: number;
@@ -225,13 +226,13 @@ const RESIZE_STYLES = css`
 export const ResizeLeftStyle = styled.div`
   ${RESIZE_STYLES}
 
-  bottom: 0;
+  bottom: ${RESIZE_SIZE_CORNER}px;
   left: 0;
-  top: 0;
-  height: 100%;
+  top: ${RESIZE_SIZE_CORNER}px;
+  height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover {
+  &:hover, &:active {
     cursor: col-resize;
   }
 `;
@@ -239,13 +240,13 @@ export const ResizeLeftStyle = styled.div`
 export const ResizeRightStyle = styled.div`
   ${RESIZE_STYLES}
 
-  bottom: 0;
+  bottom: ${RESIZE_SIZE_CORNER}px;
   right: 0;
-  top: 0;
-  height: 100%;
+  top: ${RESIZE_SIZE_CORNER}px;
+  height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover {
+  &:hover, &:active {
     cursor: col-resize;
   }
 `;
@@ -253,13 +254,13 @@ export const ResizeRightStyle = styled.div`
 export const ResizeTopStyle = styled.div`
   ${RESIZE_STYLES}
 
-  left: 0;
+  left: ${RESIZE_SIZE_CORNER}px;
   right: 0;
   top: 0;
   height: ${RESIZE_SIZE}px;
-  width: 100%;
+  width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover {
+  &:hover, &:active {
     cursor: row-resize;
   }
 `;
@@ -268,12 +269,88 @@ export const ResizeBottomStyle = styled.div`
   ${RESIZE_STYLES}
 
   bottom: 0;
-  left: 0;
+  left: ${RESIZE_SIZE_CORNER}px;
   right: 0;
   height: ${RESIZE_SIZE}px;
-  width: 100%;
+  width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover {
+  &:hover, &:active {
     cursor: row-resize;
   }
+`;
+
+export const ResizeCornerStyle = styled.div<{
+  bottom?: boolean,
+  left?: boolean,
+  right?: boolean,
+  top?: boolean,
+}>`
+  ${RESIZE_STYLES}
+
+  height: ${RESIZE_SIZE_CORNER}px;
+  width: ${RESIZE_SIZE_CORNER}px;
+
+  &:hover {
+    background-color: transparent;
+  }
+
+  ${props => ((props.top && props.left) || (props.bottom && props.right)) && `
+    &:hover, &:active {
+      cursor: nwse-resize;
+    }
+  `}
+
+  ${props => ((props.top && props.right) || (props.bottom && props.left)) && `
+    &:hover, &:active {
+      cursor: nesw-resize;
+    }
+  `}
+
+  ${props => (props.top && props.left) &&`
+    border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.top && props.right) &&`
+    border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.bottom && props.left) &&`
+    border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.bottom && props.right) &&`
+    border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => props.bottom && `
+    bottom: 0;
+
+    &:hover {
+      border-bottom: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.left && `
+    left: 0;
+
+    &:hover {
+      border-left: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.right && `
+    right: 0;
+
+    &:hover {
+      border-right: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.top && `
+    top: 0;
+
+    &:hover {
+      border-top: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
 `;
