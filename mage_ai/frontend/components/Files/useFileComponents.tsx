@@ -225,7 +225,7 @@ function useFileComponents({
   ]);
 
   const setSelectedFilePath = useCallback((prev: (string | ((p?: string) => string)), skipAddingToHistry: boolean = false) => {
-    const filePath = typeof prev === 'function' ? prev?.() : prev;
+    const filePath = convertFilePathToRelativeRoot(typeof prev === 'function' ? prev?.() : prev, status);
 
     if (!skipAddingToHistry) {
       if (!selectedFileHistoryRef?.current) {
@@ -238,7 +238,7 @@ function useFileComponents({
 
     selectedFilePathRef.current = filePath;
     setSelectedFilePathState(filePath);
-  }, []);
+  }, [status]);
 
   const [filesTouched, setFilesTouchedState] = useState<{
     [filePath: string]: boolean;
@@ -270,16 +270,20 @@ function useFileComponents({
     return acc;
   }, {}), [openFilePaths]);
 
-  const setOpenFilePaths = useCallback((filePaths: string[]) => {
+  const setOpenFilePaths = useCallback((filePathsInit: string[]) => {
+    const filePaths = filePathsInit?.map(fp => convertFilePathToRelativeRoot(fp, status));
+
     setOpenFilePathsLocalStorage(filePaths);
     setOpenFilePathsState(filePaths);
-  }, []);
+  }, [status]);
 
   const addOpenFilePath = useCallback((filePath: string) => {
-    setOpenFilePaths(addOpenFilePathLocalStorage(filePath));
-  }, [setOpenFilePaths]);
+    setOpenFilePaths(addOpenFilePathLocalStorage(convertFilePathToRelativeRoot(filePath, status)));
+  }, [setOpenFilePaths, status]);
 
-  const removeOpenFilePaths = useCallback((filePaths: string[]) => {
+  const removeOpenFilePaths = useCallback((filePathsInit: string[]) => {
+    const filePaths = filePathsInit?.map(fp => convertFilePathToRelativeRoot(fp, status));
+
     const fps = filePaths?.filter(filePath => filesTouched?.[filePath]
       && (typeof window === 'undefined'
         || !window.confirm(`${filePath} has unsaved changes, are you sure you want to close this file?`)));
@@ -326,9 +330,12 @@ function useFileComponents({
     selectedFilePath,
     setContentByFilePath,
     setOpenFilePaths,
+    status,
   ]);
 
-  const openFile = useCallback((filePath: string, isFolder?: boolean) => {
+  const openFile = useCallback((filePathInit: string, isFolder?: boolean) => {
+    const filePath = convertFilePathToRelativeRoot(filePathInit, status);
+
     if (!isFolder) {
       addOpenFilePath(filePath);
       setSelectedFilePath(filePath);
@@ -337,21 +344,21 @@ function useFileComponents({
     if (onOpenFile) {
       onOpenFile?.(filePath, isFolder);
     }
-  }, [addOpenFilePath, onOpenFile]);
+  }, [addOpenFilePath, onOpenFile, status]);
 
   const onFileFetched = useCallback((file: FileType) => {
     setFilesMapping(prev => ({
       ...prev,
-      [file.path]: file,
+      [convertFilePathToRelativeRoot(file.path, status)]: file,
     }));
-  }, []);
+  }, [status]);
 
   useEffect(() => {
     const arr = getOpenFilePaths();
 
     let fp;
     if (selectedFilePathDefault) {
-      fp = decodeURIComponent(selectedFilePathDefault);
+      fp = convertFilePathToRelativeRoot(decodeURIComponent(selectedFilePathDefault), status);
       if (!arr?.includes(fp)) {
         arr.push(fp);
         openFile(fp);
@@ -373,6 +380,7 @@ function useFileComponents({
     openFile,
     selectedFilePathDefault,
     setOpenFilePaths,
+    status,
   ]);
 
   const toggleShowHiddenFiles = useCallback(() => {

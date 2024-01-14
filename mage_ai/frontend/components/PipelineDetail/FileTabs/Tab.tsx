@@ -110,11 +110,20 @@ function FileTab({
                     ? renderTabIcon(filePath)
                     : isBlockFile
                       ?
-                        <BlockIcon
-                          color={color}
-                          size={UNIT * 1}
-                          square
-                        />
+                        <div
+                          style={{
+                            padding: 1,
+                            justifyContent: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <BlockIcon
+                            color={color}
+                            size={10}
+                            square
+                          />
+                        </div>
                       :
                         <Icon
                           fill={iconColor}
@@ -126,6 +135,7 @@ function FileTab({
 
               {filesTouched[filePath] && (
                 <Tooltip
+                  block
                   label="Unsaved changes"
                   size={null}
                   widthFitContent

@@ -12,10 +12,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Terminal from '@components/Terminal';
 import useContextMenu from '@utils/useContextMenu';
 import { CachedItemType } from './constants';
-import { CommandCenterStateEnum } from '@interfaces/CommandCenterType';
+import { ApplicationExpansionUUIDEnum, CommandCenterStateEnum } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
 import { KEY_CODE_K, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { StatusEnum } from '@storage/ApplicationManager/constants';
 import { Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { cleanName, randomNameGenerator } from '@utils/string';
@@ -200,21 +202,32 @@ export default function useTerminal({
       detail,
     }) => {
       if (selectedItem) {
-        // Need this or else it’ll set it back to false.
-        setTimeout(() =>
-          setFocus(selectedItem, () => CommandCenterStateEnum.OPEN !== detail?.state),
-          1,
-        );
+        if (detail?.state) {
+          // Need this or else it’ll set it back to false.
+          setTimeout(() =>
+            setFocus(selectedItem, () => CommandCenterStateEnum.OPEN !== detail?.state),
+            1,
+          );
+        } else if (detail?.item?.uuid === ApplicationExpansionUUIDEnum.PortalTerminal) {
+          setTimeout(() =>
+            setFocus(selectedItem, () => StatusEnum.OPEN === detail?.item?.state?.status),
+            1,
+          );
+        }
       }
     };
 
     if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleState);
       // @ts-ignore
       window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleState);
         // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
       }

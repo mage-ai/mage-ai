@@ -1296,6 +1296,10 @@ function CommandCenter() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (!refActive?.current) {
+        return;
+      }
+
       let isOutside = true;
       // @ts-ignore
       if (refContainer?.current) {

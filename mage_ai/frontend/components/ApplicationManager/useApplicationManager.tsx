@@ -18,6 +18,7 @@ import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobal
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
 import { ErrorProvider } from '@context/Error';
 import { LayoutType, StatusEnum, StateType, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
 import {
@@ -199,7 +200,7 @@ export default function useApplicationManager({
   } = {
     layout: true,
     state: true,
-  }) {
+  }): ApplicationManagerApplication {
     const element = refExpansions?.current?.[uuid];
     const data: {
       layout?: LayoutType;
@@ -213,29 +214,30 @@ export default function useApplicationManager({
       data.state = opts?.state;
     }
 
+    let app;
     if (element) {
-      const {
-        layout,
-      } = updateApplication({
+      app = updateApplication({
         ...data,
         uuid,
       });
 
-      const { dimension, position } = opts?.layout || layout;
+      const { dimension, position } = opts?.layout || app?.layout;
 
       element.current.style.height = `${dimension?.height}px`;
       element.current.style.left = `${position?.x}px`;
       element.current.style.top = `${position?.y}px`;
       element.current.style.width = `${dimension?.width}px`;
     }
+
+    return app;
   }
 
   function minimizeApplication(uuid: ApplicationExpansionUUIDEnum, reverse: boolean = false) {
-    const app = getApplicationsFromCache({
+    let app = getApplicationsFromCache({
       uuid,
     })?.[0];
 
-    updateApplicationLayoutAndState(uuid, {
+    app = updateApplicationLayoutAndState(uuid, {
       layout: reverse ? app?.layout : buildDefaultLayout(),
       state: {
         status: reverse ? StatusEnum.OPEN : StatusEnum.MINIMIZED,
@@ -258,6 +260,7 @@ export default function useApplicationManager({
         refExpansion.current.style.top = null;
       }
     }
+
     [refExpansion, refContainer].forEach((ref) => {
       if (ref?.current) {
         const func = reverse ? removeClassNames : addClassNames;
@@ -276,6 +279,15 @@ export default function useApplicationManager({
       });
     } else {
       deregisterElementUUIDs([uuid]);
+    }
+
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, {
+        detail: {
+          item: app,
+        },
+      });
+      window.dispatchEvent(eventCustom);
     }
   }
 
@@ -479,6 +491,10 @@ export default function useApplicationManager({
     applicationConfiguration: ApplicationConfiguration,
     stateProp: StateType = null,
   ) {
+    if (!applicationConfiguration?.application) {
+      return;
+    }
+
     const {
       application,
     } = applicationConfiguration;
@@ -671,9 +687,14 @@ export default function useApplicationManager({
     getApplicationsFromCache().forEach(({
       applicationConfiguration,
       state,
+      uuid,
     }) => {
       if (StatusEnum.OPEN === state?.status || StatusEnum.MINIMIZED === state?.status) {
-        startApplication(applicationConfiguration, state);
+        if (applicationConfiguration?.application) {
+          startApplication(applicationConfiguration, state);
+        } else {
+          closeApplication(uuid);
+        }
       }
     });
   }, []);
