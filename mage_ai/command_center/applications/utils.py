@@ -15,6 +15,17 @@ from mage_ai.command_center.shared.utils import (
 )
 from mage_ai.version_control.models import File
 
+"""
+Icons:
+Arcane Library (file browser): ChurnV3
+Portal Terminal (terminal):    RankingV3
+Version Control (file diffs):  ForecastV3
+
+LTVUseCase
+CategorizationUseCase
+EstimationUseCase
+"""
+
 
 async def build_close_application(uuid: ApplicationExpansionUUID) -> Dict:
     title = application_title(uuid)
@@ -70,7 +81,7 @@ async def build_application_arcane_library() -> Dict:
         ],
         display_settings_by_attribute=dict(
             description=dict(text_styles=dict(monospace=False)),
-            icon=dict(color_uuid='accent.sky', icon_uuid='RankingV3'),
+            icon=dict(icon_uuid='RankingV3'),
             subtitle=dict(
                 text_styles=dict(
                     monospace=True,
@@ -79,3 +90,45 @@ async def build_application_arcane_library() -> Dict:
         ),
         settings=dict(cache_expires_at=0),
     ))
+
+
+async def build_application_portal_terminal() -> Dict:
+    return build_generic(model_class=File, item_dict=dict(
+        item_type=ItemType.DETAIL,
+        object_type=ObjectType.TERMINAL,
+        title='Portal Terminal',
+        description='execute shell commands in a terminal',
+        subtitle='Terminal',
+        applications=[
+            build_application_expansion(
+                model_class=File,
+                expansion_settings=dict(
+                    uuid=ApplicationExpansionUUID.PortalTerminal,
+                ),
+                actions=[
+                    build_action_fetch_items({}),
+                ],
+            ),
+        ],
+        display_settings_by_attribute=dict(
+            description=dict(text_styles=dict(monospace=False)),
+            icon=dict(icon_uuid='ForecastV3'),
+            subtitle=dict(
+                text_styles=dict(
+                    monospace=True,
+                ),
+            ),
+        ),
+        settings=dict(cache_expires_at=0),
+    ))
+
+
+async def build_open_application(uuid: ApplicationExpansionUUID) -> Dict:
+    func = None
+    if ApplicationExpansionUUID.ArcaneLibrary == uuid:
+        func = build_application_arcane_library
+    elif ApplicationExpansionUUID.PortalTerminal == uuid:
+        func = build_application_portal_terminal
+
+    if func:
+        return await func()

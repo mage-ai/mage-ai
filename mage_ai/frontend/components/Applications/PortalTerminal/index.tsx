@@ -67,6 +67,8 @@ function PortalTerminal({
         beforeWidth={widthBefore}
         contained
         containerRef={containerRef}
+        hideAfterCompletely
+        hideBeforeCompletely
         inline
         // mainContainerFooter={footer}
         mainContainerHeader={menuTabsCombined}

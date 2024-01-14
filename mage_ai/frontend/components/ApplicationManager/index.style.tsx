@@ -41,8 +41,10 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
 
   if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
     accent = (props?.theme || dark)?.accent?.purple;
-  } else {
+  } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
     accent = (props?.theme || dark)?.accent?.negative;
+  } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+    accent = (props?.theme || dark)?.background?.success;
   }
 
   return {

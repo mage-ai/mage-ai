@@ -37,6 +37,7 @@ class ObjectType(str, Enum):
     PIPELINE_RUN = 'pipeline_run'
     PROJECT = 'project'
     REMOTE = 'remote'
+    TERMINAL = 'terminal'
     TRIGGER = 'trigger'
     VERSION_CONTROL_FILE = 'version_control_file'
 
@@ -97,6 +98,7 @@ class RenderLocationType(str, Enum):
 
 class ApplicationExpansionUUID(str, Enum):
     ArcaneLibrary = 'ArcaneLibrary'
+    PortalTerminal = 'PortalTerminal'
     VersionControlFileDiffs = 'VersionControlFileDiffs'
 
 

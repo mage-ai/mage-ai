@@ -12,10 +12,9 @@ import Spacing from '@oracle/elements/Spacing';
 import Terminal from '@components/Terminal';
 import useContextMenu from '@utils/useContextMenu';
 import { CachedItemType } from './constants';
-import {
-  KEY_CODE_K,
-  KEY_CODE_META,
-} from '@utils/hooks/keyboardShortcuts/constants';
+import { CommandCenterStateEnum } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
+import { KEY_CODE_K, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -122,7 +121,7 @@ export default function useTerminal({
   }, []);
   const setFocus = useCallback(({ uuid }: CachedItemType, prev0) => {
     setFocusState((prev1) => {
-      const value = typeof prev0 === 'function' ? prev0(prev1?.[uuid] || true) : prev0;
+      const value = typeof prev0 === 'function' ? prev0(prev1?.[uuid]) : prev0;
 
       return {
         ...prev1,
@@ -195,6 +194,32 @@ export default function useTerminal({
       }
     }
   }, []);
+
+  useEffect(() => {
+    const handleState = ({
+      detail,
+    }) => {
+      if (selectedItem) {
+        // Need this or else it’ll set it back to false.
+        setTimeout(() =>
+          setFocus(selectedItem, () => CommandCenterStateEnum.OPEN !== detail?.state),
+          1,
+        );
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+      }
+    };
+  }, [selectedItem]);
 
   const {
     lastMessage,
@@ -274,6 +299,7 @@ export default function useTerminal({
       return null;
     }
 
+
     return (
       <Terminal
         command={command?.[selectedItem?.uuid] || ''}
@@ -281,7 +307,7 @@ export default function useTerminal({
         commandIndex={commandIndex?.[selectedItem?.uuid] || 0}
         cursorIndex={cursorIndex?.[selectedItem?.uuid] || 0}
         externalKeyboardShortcuts={externalKeyboardShortcuts}
-        focus={focus?.[selectedItem?.uuid] || true}
+        focus={focus?.[selectedItem?.uuid] || false}
         lastMessage={lastMessage}
         oauthWebsocketData={oauthWebsocketData}
         outputs={outputs}
