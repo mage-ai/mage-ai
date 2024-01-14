@@ -1,7 +1,9 @@
+import ElementType from '@interfaces/ElementType';
 import {
   ApplicationConfiguration,
 } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+
 export const LOCAL_STORAGE_KEY_APPLICATION_MANAGER = 'application_manager';
 
 export enum StatusEnum {
@@ -34,6 +36,7 @@ export interface LayoutType {
 
 export interface ApplicationManagerApplication {
   applicationConfiguration: ApplicationConfiguration;
+  element?: ElementType;
   layout?: LayoutType;
   state?: StateType;
   uuid: ApplicationExpansionUUIDEnum;

@@ -302,7 +302,6 @@ function VersionControlFileDiffs({
             }}
             selectedTabUUID={selectedTab?.uuid}
             tabs={tabs}
-            underlineColor={getApplicationColors(uuid)?.accent}
             underlineStyle
             uppercase={false}
           />

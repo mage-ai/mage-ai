@@ -5,6 +5,7 @@ import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
+import ElementType from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
 import RefType from '@interfaces/RefType';
@@ -16,9 +17,9 @@ import useDraggableElement from '@utils/useDraggableElement';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ErrorProvider } from '@context/Error';
+import { LayoutType, StatusEnum, StateType, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
 import {
   ContainerStyle,
   ContentStyle,
@@ -34,6 +35,7 @@ import {
   ResizeTopStyle,
   RootApplicationStyle,
 } from './index.style';
+import { KEY_CODE_ALT_STRING, KEY_CODE_TAB } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { ModalProvider } from '@context/Modal';
 import { addClassNames, removeClassNames } from '@utils/elements';
@@ -44,9 +46,13 @@ import {
   getApplications as getApplicationsFromCache,
   updateApplication,
 } from '@storage/ApplicationManager/cache';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { selectEntriesWithValues, selectKeys } from '@utils/hash';
+import { sortByKey } from '@utils/array';
+import { useKeyboardContext } from '@context/Keyboard';
 
+const COMPONENT_UUID = 'ApplicationManager';
 const GROUP_ID = 'ApplicationManagerGroup';
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -80,41 +86,63 @@ export default function useApplicationManager({
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
 
+  function getOpenApplications({
+    ascending,
+  }: {
+    ascending?: boolean;
+  } = {
+    ascending: false,
+  }): ApplicationManagerApplication[] {
+    const apps = getApplicationsFromCache({ status: StatusEnum.OPEN })?.map((app) => ({
+      ...app,
+      element: refExpansions?.current?.[app?.uuid],
+    }));
+
+    return sortByKey(
+      apps,
+      ({ element }) => Number(element?.current?.style?.zIndex || 0),
+      { ascending },
+    );
+  }
+
   function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
-    if (refExpansions?.current) {
-      let zIndexMax = 10;
-      let zIndexMin = 10;
+    let zIndexMax = 10;
+    let zIndexMin = 10;
 
-      const mapping = {};
-      const zIndexes = Object.entries(refExpansions?.current || {})?.forEach(([uuidApp, element]) => {
-        const zIndex = (element as RefType)?.current?.style?.zIndex;
-        if (zIndex > zIndexMax) {
-          zIndexMax = zIndex;
-        }
-        if (zIndex < zIndexMin) {
-          zIndexMin = zIndex;
-        }
+    const mapping = {};
 
-        mapping[uuidApp] = {
-          element,
-          zIndex,
-        }
-      });
+    const zIndexes = getOpenApplications()?.forEach((app) => {
+      const {
+        element,
+        uuid: uuidApp,
+      } = app;
+      const zIndex = (element as RefType)?.current?.style?.zIndex;
+      if (zIndex > zIndexMax) {
+        zIndexMax = zIndex;
+      }
+      if (zIndex < zIndexMin) {
+        zIndexMin = zIndex;
+      }
 
-      Object.entries(mapping)?.forEach(([uuidApp, {
+      mapping[uuidApp] = {
         element,
         zIndex,
-      }]: [ApplicationExpansionUUIDEnum, {
-        element: RefType;
-        zIndex: number;
-      }]) => {
-        if (uuidApp === uuid) {
-          element.current.style.zIndex = `${(zIndexMax - zIndexMin) + 11}`;
-        } else {
-          element.current.style.zIndex = `${(zIndex - zIndexMin) + 10}`;
-        }
-      });
-    }
+      }
+    });
+
+    Object.entries(mapping)?.forEach(([uuidApp, {
+      element,
+      zIndex,
+    }]: [ApplicationExpansionUUIDEnum, {
+      element: RefType;
+      zIndex: number;
+    }]) => {
+      if (uuidApp === uuid) {
+        element.current.style.zIndex = `${(zIndexMax - zIndexMin) + 11}`;
+      } else {
+        element.current.style.zIndex = `${(zIndex - zIndexMin) + 10}`;
+      }
+    });
   }
 
   function onResizeCallback(
@@ -150,10 +178,6 @@ export default function useApplicationManager({
     }
 
     deregisterElementUUIDs([uuid]);
-  }
-
-  function getActiveApplication() {
-    return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
   }
 
   function updateApplicationLayoutAndState(uuid: ApplicationExpansionUUIDEnum, opts?: {
@@ -547,6 +571,30 @@ export default function useApplicationManager({
       }
     });
   }, []);
+
+  const {
+    disableGlobalKeyboardShortcuts,
+    registerOnKeyDown,
+    registerOnKeyUp,
+    unregisterOnKeyDown,
+    unregisterOnKeyUp,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(COMPONENT_UUID);
+    unregisterOnKeyUp(COMPONENT_UUID);
+  }, [unregisterOnKeyDown, unregisterOnKeyUp, COMPONENT_UUID]);
+
+  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
+    if (onlyKeysPresent([KEY_CODE_ALT_STRING, KEY_CODE_TAB], keyMapping)) {
+      const uuidBottom = getOpenApplications({ ascending: true })?.[0]?.uuid;
+      if (uuidBottom) {
+        pauseEvent(event);
+        updateZIndex(uuidBottom);
+      }
+    }
+  }, [
+  ]);
 
   return {
     closeApplication,
