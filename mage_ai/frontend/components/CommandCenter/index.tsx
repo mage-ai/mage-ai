@@ -54,6 +54,7 @@ import {
   CommandCenterActionRequestType,
   CommandCenterActionType,
   CommandCenterItemType,
+  CommandCenterStateEnum,
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
@@ -64,7 +65,10 @@ import {
   getButtonLabel,
   ApplicationExpansionUUIDEnum,
 } from '@interfaces/CommandCenterType';
-import { CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
+import {
+  CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN,
+  CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED,
+} from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -1028,6 +1032,15 @@ function CommandCenter() {
     // Reset the items to the original list of items.
     stopLoading();
     abortRequests();
+
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, {
+        detail: {
+          state: CommandCenterStateEnum.CLOSED,
+        },
+      });
+      window.dispatchEvent(eventCustom);
+    }
   }
 
   function openCommandCenter() {
@@ -1052,6 +1065,15 @@ function CommandCenter() {
 
     stopLoading();
     abortRequests();
+
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, {
+        detail: {
+          state: CommandCenterStateEnum.OPEN,
+        },
+      });
+      window.dispatchEvent(eventCustom);
+    }
   }
 
   const {

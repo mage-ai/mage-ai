@@ -14,7 +14,6 @@ import {
   EstimationUseCase,
   File as FileIcon,
   FolderOutline,
-  ForecastV3,
   LTVUseCase,
   Lightning,
   NavDashboard,
@@ -32,7 +31,7 @@ export function getIcon(item: CommandCenterItemType) {
     return Binary;
   }
   if (ModeTypeEnum.VERSION_CONTROL === item?.mode?.type) {
-    return ForecastV3;
+    return ChurnV3;
   }
 
   const {

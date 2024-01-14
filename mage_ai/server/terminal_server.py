@@ -17,6 +17,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
 )
+from mage_ai.shared.array import find_index
 
 
 class MageTermManager(terminado.NamedTermManager):
@@ -100,7 +101,12 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
         api_key = message.get('api_key')
         token = message.get('token')
+        # This is a list of strings
         command = message.get('command')
+
+        index = find_index(lambda x: x == '__CLEAR_OUTPUT__', command or [])
+        if index >= 0:
+            command[index] = r"clear -x && history -c && history -w && clear -x"
 
         # If terminal access disable return
         if DISABLE_TERMINAL:
@@ -149,7 +155,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
             self.terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
 
-        for cmd in build_color_commands():
+        for cmd in build_color_commands(uuid=term_name):
             self.terminal.ptyproc.write(f'{cmd}\r')
 
         self.terminal.read_buffer.clear()

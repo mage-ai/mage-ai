@@ -12,6 +12,7 @@ import {
 
 export enum ApplicationExpansionUUIDEnum {
   ArcaneLibrary = 'ArcaneLibrary',
+  PortalTerminal = 'PortalTerminal',
   VersionControlFileDiffs = 'VersionControlFileDiffs',
 }
 
@@ -77,6 +78,7 @@ export enum ObjectTypeEnum {
   PROJECT = 'project',
   REMOTE = 'remote',
   SETTINGS = 'settings',
+  TERMINAL = 'terminal',
   TRIGGER = 'trigger',
   VERSION_CONTROL_FILE = 'version_control_file',
 }
@@ -206,6 +208,11 @@ interface CommandCenterActionBaseType {
   interaction?: any;
   page?: any;
   request?: any;
+}
+
+export enum CommandCenterStateEnum {
+  CLOSED = 'CLOSED',
+  OPEN = 'OPEN',
 }
 
 export enum CommandCenterActionInteractionTypeEnum {

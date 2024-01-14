@@ -8,6 +8,7 @@ import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
 import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
+import PortalTerminal from '@components/Applications/PortalTerminal';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import dark from '@oracle/styles/themes/dark';
 import useAutoResizer, { DimensionDataType, RectType} from '@utils/useAutoResizer';
@@ -538,10 +539,12 @@ export default function useApplicationManager({
     } = layout;
 
     let AppComponent;
-    if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
-      AppComponent = VersionControlFileDiffs;
-    } else if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
+    if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
       AppComponent = ArcaneLibrary;
+    } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
+      AppComponent = PortalTerminal;
+    } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+      AppComponent = VersionControlFileDiffs;
     }
 
     if (!AppComponent) {

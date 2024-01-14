@@ -4,8 +4,8 @@ from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
 from mage_ai.command_center.applications.utils import (
-    build_application_arcane_library,
     build_close_application,
+    build_open_application,
 )
 from mage_ai.command_center.constants import (
     ApplicationExpansionStatus,
@@ -57,26 +57,31 @@ class ApplicationFactory(BaseFactory):
         items = items[:3]
 
         # File browser
-        app = None
-        if self.applications:
-            app = find(
-                lambda x: x.get('uuid') == ApplicationExpansionUUID.ArcaneLibrary,
-                self.applications,
-            )
-            if app:
-                if ApplicationExpansionStatus.MINIMIZED == (app.get('state') or {}).get('status'):
-                    pass
+        for uuid in [
+            ApplicationExpansionUUID.ArcaneLibrary,
+            ApplicationExpansionUUID.PortalTerminal,
+        ]:
+            app = None
+            if self.applications:
+                app = find(
+                    lambda x, uuid=uuid: x.get('uuid') == uuid,
+                    self.applications,
+                )
+                if app:
+                    status = (app.get('state') or {}).get('status')
+                    if ApplicationExpansionStatus.MINIMIZED == status:
+                        pass
 
+                    self.filter_score_mutate_accumulator(
+                        await build_close_application(uuid),
+                        items,
+                    )
+
+            if not app:
                 self.filter_score_mutate_accumulator(
-                    await build_close_application(ApplicationExpansionUUID.ArcaneLibrary),
+                    await build_open_application(uuid),
                     items,
                 )
-
-        if not app:
-            self.filter_score_mutate_accumulator(
-                await build_application_arcane_library(),
-                items,
-            )
 
         return items
 
