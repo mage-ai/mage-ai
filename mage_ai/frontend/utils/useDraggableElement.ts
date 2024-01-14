@@ -5,8 +5,15 @@ import { BuildSetFunctionProps, buildSetFunction } from './elements';
 
 export default function useDraggableElement({
   onChange,
+  onStart,
 }: {
   onChange?: (uuid: string, opts?: {
+    event: Event;
+    x: number;
+    y: number;
+  }) => void;
+  onStart?: (uuid: string, opts?: {
+    event: Event;
     x: number;
     y: number;
   }) => void;
@@ -29,7 +36,7 @@ export default function useDraggableElement({
   const setInteractiveElementsObjects = buildSetFunction(setInteractiveElementsRefState);
 
   useEffect(() => {
-    Object.entries(elementMapping || {})?.forEach(([uuid, element]) => {
+    Object.entries(elementMapping || {})?.forEach(([uuid, element]: [string, ElementType]) => {
       const interactiveElements = interactiveElementsMapping?.[uuid];
 
       const startExecution = (e) => {
@@ -46,6 +53,7 @@ export default function useDraggableElement({
 
         if (onChange) {
           onChange?.(uuid, {
+            event: e,
             x,
             y,
           });
@@ -68,6 +76,13 @@ export default function useDraggableElement({
           return;
         }
 
+        if (onStart) {
+          onStart?.(uuid, {
+            event: e,
+            ...(refRecentValuesMapping?.current?.[uuid] || {}),
+          });
+        }
+
         refStateMapping.current[uuid] = true;
         refRecentValuesMapping.current[uuid] = {
           offsetLeft: element.offsetLeft - e.clientX,
@@ -88,13 +103,13 @@ export default function useDraggableElement({
     });
 
     return () => {
-      Object.entries(interactiveElementsMapping || {})?.forEach(([uuid, interactiveElements]) => {
+      Object.entries(interactiveElementsMapping || {})?.forEach(([uuid, interactiveElements]: [string, ElementType[]]) => {
         interactiveElements?.forEach((interactiveEl) => {
           interactiveEl?.removeEventListener('mousedown', refHandlers.current[uuid]);
         });
       });
     };
-  }, [elementMapping, interactiveElementsMapping]);
+  }, [elementMapping, interactiveElementsMapping, onChange, onStart]);
 
   return {
     setElementObject,

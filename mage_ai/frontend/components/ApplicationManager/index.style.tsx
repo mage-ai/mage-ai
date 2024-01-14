@@ -6,30 +6,87 @@ import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
+import { hexToRgb } from '@utils/string';
 import { transition } from '@oracle/styles/mixins';
 
 const SCALE_PERCENTAGE = 0.1;
 export const HEADER_HEIGHT = 6 * UNIT;
-const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
+const RESIZE_SIZE = 1 * UNIT;
+const RESIZE_SIZE_CORNER = 2 * UNIT;
+
+function getRGBA(color: string, opts?: {
+  transparency?: number;
+}) {
+  const {
+    r,
+    g,
+    b,
+  } = hexToRgb(color);
+
+  return `rgba(${r}, ${g}, ${b}, ${opts?.transparency || 1})`;
+}
 
 export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: {
   theme?: any;
+  transparency?: number;
 } = {}): {
   accent: string;
+  background: string;
+  border: string;
 } {
+  let accent;
+  let background;
+  let border;
+
+  if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
+    accent = (props?.theme || dark)?.accent?.purple;
+  } else {
+    accent = (props?.theme || dark)?.accent?.negative;
+  }
+
   return {
-    accent: (props?.theme || dark)?.accent?.negativeTransparent,
+    accent,
+    background: background || getRGBA(accent, props),
+    border: border || getRGBA(accent, {
+      ...props,
+      transparency: 0.3,
+    }),
+  };
+}
+
+function minimizedDimensions(): {
+  height: number;
+  width: number;
+} {
+  const {
+    dimension: {
+      height,
+      width,
+    },
+  } = buildDefaultLayout()
+
+  return {
+    height: height * SCALE_PERCENTAGE,
+    width: width * SCALE_PERCENTAGE,
   };
 }
 
 export const RootApplicationStyle = styled.div`
   ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
     #${uuid}.minimized {
-      bottom: 0px;
+      bottom: ${minimizedDimensions().height * 0.5}px;
+      margin-left: 8px;
+      margin-right: 8px;
       position: relative;
-      height: ${buildDefaultLayout()?.dimension?.height * SCALE_PERCENTAGE}px;
-      width: ${buildDefaultLayout()?.dimension?.width * SCALE_PERCENTAGE}px;
+      height: ${minimizedDimensions().height}px;
+      width: ${minimizedDimensions().width}px;
+      z-index: 100;
+
+      &:hover {
+        ${transition()}
+        transform: translateY(-38px);
+      }
 
       .minimized {
         position: relative;
@@ -37,7 +94,7 @@ export const RootApplicationStyle = styled.div`
         bottom: 0;
         box-shadow:
           0 0 0 8px #18181C,
-          0 0 0 24px rgba(72, 119, 255, 0.7);
+          0 0 0 24px rgba(72, 119, 255, 0.3);
         transform: scale(${SCALE_PERCENTAGE});
         transform-origin: 0 0;
 
@@ -73,23 +130,23 @@ export const RootApplicationStyle = styled.div`
 export const DockStyle = styled.div`
   ${transition()}
 
-  justify-content: center;
   bottom: 0;
   display: flex;
   height: 20px;
+  justify-content: center;
   position: fixed;
   width: 100%;
   z-index: 10;
 
-  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
-    :has(#${uuid}.minimized) {
-      &:hover {
-        border-bottom: 40px solid rgba(0, 0, 0, 0.5);
-        cursor: pointer;
-        height: 130px;
-      }
-    }
-  `)}
+  // ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+  //   :has(#${uuid}.minimized) {
+  //     &:hover {
+  //       border-bottom: 40px solid rgba(0, 0, 0, 0.5);
+  //       cursor: pointer;
+  //       height: 130px;
+  //     }
+  //   }
+  // `)}
 `;
 
 export const OverlayStyle = styled.div``;
@@ -100,7 +157,6 @@ export const ContainerStyle = styled.div`
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: fixed;
-  z-index: 10;
 `;
 
 export const ContentStyle = styled.div`
@@ -138,6 +194,12 @@ export const HeaderStyle = styled.div`
   position: fixed;
   width: inherit;
   z-index: 5;
+
+  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+    &#${uuid}-header {
+      background-color: ${getApplicationColors(uuid, { transparency: 0.5 })?.background};
+    }
+  `)}
 `;
 
 export const InnerStyle = styled.div`
@@ -164,13 +226,13 @@ const RESIZE_STYLES = css`
 export const ResizeLeftStyle = styled.div`
   ${RESIZE_STYLES}
 
-  bottom: 0;
+  bottom: ${RESIZE_SIZE_CORNER}px;
   left: 0;
-  top: 0;
-  height: 100%;
+  top: ${RESIZE_SIZE_CORNER}px;
+  height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover {
+  &:hover, &:active {
     cursor: col-resize;
   }
 `;
@@ -178,13 +240,13 @@ export const ResizeLeftStyle = styled.div`
 export const ResizeRightStyle = styled.div`
   ${RESIZE_STYLES}
 
-  bottom: 0;
+  bottom: ${RESIZE_SIZE_CORNER}px;
   right: 0;
-  top: 0;
-  height: 100%;
+  top: ${RESIZE_SIZE_CORNER}px;
+  height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover {
+  &:hover, &:active {
     cursor: col-resize;
   }
 `;
@@ -192,13 +254,13 @@ export const ResizeRightStyle = styled.div`
 export const ResizeTopStyle = styled.div`
   ${RESIZE_STYLES}
 
-  left: 0;
+  left: ${RESIZE_SIZE_CORNER}px;
   right: 0;
   top: 0;
   height: ${RESIZE_SIZE}px;
-  width: 100%;
+  width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover {
+  &:hover, &:active {
     cursor: row-resize;
   }
 `;
@@ -207,12 +269,88 @@ export const ResizeBottomStyle = styled.div`
   ${RESIZE_STYLES}
 
   bottom: 0;
-  left: 0;
+  left: ${RESIZE_SIZE_CORNER}px;
   right: 0;
   height: ${RESIZE_SIZE}px;
-  width: 100%;
+  width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover {
+  &:hover, &:active {
     cursor: row-resize;
   }
+`;
+
+export const ResizeCornerStyle = styled.div<{
+  bottom?: boolean,
+  left?: boolean,
+  right?: boolean,
+  top?: boolean,
+}>`
+  ${RESIZE_STYLES}
+
+  height: ${RESIZE_SIZE_CORNER}px;
+  width: ${RESIZE_SIZE_CORNER}px;
+
+  &:hover {
+    background-color: transparent;
+  }
+
+  ${props => ((props.top && props.left) || (props.bottom && props.right)) && `
+    &:hover, &:active {
+      cursor: nwse-resize;
+    }
+  `}
+
+  ${props => ((props.top && props.right) || (props.bottom && props.left)) && `
+    &:hover, &:active {
+      cursor: nesw-resize;
+    }
+  `}
+
+  ${props => (props.top && props.left) &&`
+    border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.top && props.right) &&`
+    border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.bottom && props.left) &&`
+    border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => (props.bottom && props.right) &&`
+    border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
+  `}
+
+  ${props => props.bottom && `
+    bottom: 0;
+
+    &:hover {
+      border-bottom: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.left && `
+    left: 0;
+
+    &:hover {
+      border-left: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.right && `
+    right: 0;
+
+    &:hover {
+      border-right: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
+
+  ${props => props.top && `
+    top: 0;
+
+    &:hover {
+      border-top: ${RESIZE_SIZE}px solid rgba(0, 0, 0, 0.3);
+    }
+  `}
 `;

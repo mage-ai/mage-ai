@@ -57,15 +57,9 @@ export function onlyKeysPresent(
     delete keyMappingUse[KEY_CODE_META];
   }
 
-  const allowKeyCodeAltKey = keys?.some(key => altKeyCodesAsStrings?.includes(String(key)))
-    && !keysHasAlt;
+  const allowKeyCodeAltKey = keys?.some(key => altKeyCodesAsStrings?.includes(String(key)));
 
-  if (allowKeyCodeAltKey && KEY_CODE_ALT_STRING in keyMappingUse) {
-    delete keyMappingUse[KEY_CODE_ALT_STRING];
-  }
-
-
-  const otherKeysPressed = Object
+  let otherKeysPressed = Object
     .entries(keyMappingUse)
     .filter(([k, v]) => v
       // Pressed key is a key in the keys argument
@@ -77,6 +71,11 @@ export function onlyKeysPresent(
       && (!keysHasShift || !shiftKeyCodesAsStrings.includes(String(k)))
       && !keys?.includes(k)
     );
+
+  // Handle alt keys
+  if (allowKeyCodeAltKey) {
+    return keys?.filter?.(k => !altKeyCodesAsStrings?.includes(String(k)))?.every?.(k => keyMappingUse[k]);
+  }
 
   return keys.every(k => keyMappingUse[k])
     && (otherKeysPressed?.length || 0) <= (opts?.allowExtraKeys || 0);

@@ -126,7 +126,7 @@ function FileHeaderMenu({
                 onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
                 ref={refFile}
               >
-                <Text>
+                <Text noWrapping>
                   File
                 </Text>
               </Button>
@@ -148,7 +148,7 @@ function FileHeaderMenu({
                 onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
                 ref={refRun}
               >
-                <Text>
+                <Text noWrapping>
                   Edit
                 </Text>
               </Button>
@@ -169,7 +169,7 @@ function FileHeaderMenu({
                 noBackground={!fileVersionsVisible}
                 onClick={() => setFilesVersionsVisible?.(!fileVersionsVisible)}
               >
-                <Text>
+                <Text noWrapping>
                   {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}
                 </Text>
               </Button>
@@ -194,7 +194,7 @@ function FileHeaderMenu({
                 onMouseEnter={() => setHighlightedIndex(val => val !== null ? idx : null)}
                 ref={refMenuGroup}
               >
-                <Text default={defaultTextContent}>
+                <Text default={defaultTextContent} noWrapping>
                   {label ? label?.() : uuid}
                 </Text>
               </Button>

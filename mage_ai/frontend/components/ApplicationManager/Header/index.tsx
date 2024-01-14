@@ -9,7 +9,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import { ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ArrowsPointingInFromAllCorners, CloseV2, Minimize } from '@oracle/icons';
-import { HeaderStyle} from '../index.style';
+import { HeaderStyle, getApplicationColors } from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
@@ -48,7 +48,7 @@ function Header({
   ]);
 
   return (
-    <HeaderStyle ref={ref}>
+    <HeaderStyle id={`${selectedTab?.uuid}-header`} ref={ref}>
       <FlexContainer alignItems="center" justifyContent="space-between">
         {applications?.length >= 1 && (
           <ButtonTabs
@@ -59,7 +59,7 @@ function Header({
             }}
             selectedTabUUID={selectedTab?.uuid}
             tabs={tabs}
-            underlineColor="#4877FF"
+            underlineColor={getApplicationColors(selectedTab?.uuid as ApplicationExpansionUUIDEnum)?.accent}
             underlineStyle
             uppercase={false}
           />

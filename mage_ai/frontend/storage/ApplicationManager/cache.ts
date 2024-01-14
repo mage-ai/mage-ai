@@ -14,7 +14,8 @@ import {
 import { get, set } from '../localStorage';
 import { dig, selectEntriesWithValues, setNested } from '@utils/hash';
 
-const APPLICATION_PADDING = 16;
+export const APPLICATION_PADDING = 16;
+export const DEFAULT_Z_INDEX = 10;
 
 export function minimumLayout() {
   return {
@@ -25,7 +26,7 @@ export function minimumLayout() {
     position: {
       x: 0,
       y: 0,
-      z: 100,
+      z: DEFAULT_Z_INDEX,
     },
   };
 }
@@ -59,25 +60,57 @@ export function buildDefaultLayout({
     position: {
       x: (totalWidth - width) / 2,
       y: (totalHeight - height) / 2,
-      z: 10,
+      z: DEFAULT_Z_INDEX,
     },
   };
 }
 
-export function buildMaximumLayout({
-  height: totalHeightProp,
-  width: totalWidthProp,
+export function buildMaximumLayout(dimension?: DimensionType, {
+  height: heightPercentage,
+  width: widthPercentage,
+  x: xPercentage,
+  y: yPercentage,
+}: {
+  height?: number;
+  width?: number;
+  x?: number;
+  y?: number;
 } = {
   height: null,
   width: null,
+  x: null,
+  y: null,
 }): LayoutType {
+  const {
+    height: totalHeightProp,
+    width: totalWidthProp,
+  } = dimension || {
+    height: null,
+    width: null,
+  };
+
   const totalHeight = totalHeightProp
     || typeof window !== 'undefined' ? window?.innerHeight : null;
   const totalWidth = totalWidthProp
     || typeof window !== 'undefined' ? window?.innerWidth : null;
 
-  const height = totalHeight - (APPLICATION_PADDING * 2);
-  const width = totalWidth - (APPLICATION_PADDING * 2);
+  let height = totalHeight - (APPLICATION_PADDING * 2);
+  let width = totalWidth - (APPLICATION_PADDING * 2);
+  let x = (totalWidth - width) / 2;
+  let y = (totalHeight - height) / 2;
+
+  if (heightPercentage !== null) {
+    height = (totalHeight * heightPercentage) - (APPLICATION_PADDING * 2);
+  }
+  if (widthPercentage !== null) {
+    width = (totalWidth * widthPercentage) - (APPLICATION_PADDING * 2);
+  }
+  if (xPercentage !== null) {
+    x = (totalWidth * xPercentage) + (APPLICATION_PADDING * 1) * (x >= 50 ? -1 : 1);
+  }
+  if (yPercentage !== null) {
+    y = (totalHeight * yPercentage) + (APPLICATION_PADDING * 1) * (y >= 50 ? -1 : 1);
+  }
 
   return {
     dimension: {
@@ -85,8 +118,8 @@ export function buildMaximumLayout({
       width,
     },
     position: {
-      x: (totalWidth - width) / 2,
-      y: (totalHeight - height) / 2,
+      x,
+      y,
       z: 10,
     },
   };
@@ -139,18 +172,33 @@ function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
   };
 
   const {
-    dimension: dimensionDefault,
-    position: positionDefault,
-  } = buildDefaultLayout();
+    dimension: dimensionMax,
+    position: positionMax,
+  } = buildMaximumLayout();
 
-  if (dimension?.height > dimensionDefault?.height) {
-    dimension.height = dimensionDefault.height;
-    position.y = positionDefault.y;
+  if (dimension?.height > dimensionMax?.height) {
+    dimension.height = dimensionMax.height;
+    position.y = positionMax.y;
   }
 
-  if (dimension?.width > dimensionDefault?.width) {
-    dimension.width = dimensionDefault.width;
-    position.x = positionDefault.x;
+  if (dimension?.width > dimensionMax?.width) {
+    dimension.width = dimensionMax.width;
+    position.x = positionMax.x;
+  }
+
+  const {
+    dimension: dimensionMin,
+    position: positionMin,
+  } = minimumLayout();
+
+  if (dimension?.height < dimensionMin?.height) {
+    dimension.height = dimensionMin.height;
+    position.y = positionMin.y;
+  }
+
+  if (dimension?.width < dimensionMin?.width) {
+    dimension.width = dimensionMin.width;
+    position.x = positionMin.x;
   }
 
   return {
@@ -180,6 +228,7 @@ function validateLayout(app: ApplicationManagerApplication) {
     'dimension.width',
     'position.x',
     'position.y',
+    'position.z',
   ].forEach((key) => {
     setNested(layoutNew, key, Math.max(
       dig(layout, key) || 0,

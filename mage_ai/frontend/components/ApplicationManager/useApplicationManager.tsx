@@ -5,6 +5,7 @@ import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
+import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
@@ -15,9 +16,9 @@ import useDraggableElement from '@utils/useDraggableElement';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { LayoutType, StatusEnum, StateType } from '@storage/ApplicationManager/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ErrorProvider } from '@context/Error';
+import { LayoutType, StatusEnum, StateType, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
 import {
   ContainerStyle,
   ContentStyle,
@@ -27,24 +28,32 @@ import {
   OVERLAY_ID,
   OverlayStyle,
   ResizeBottomStyle,
+  ResizeCornerStyle,
   ResizeLeftStyle,
   ResizeRightStyle,
   ResizeTopStyle,
   RootApplicationStyle,
 } from './index.style';
+import { KEY_CODE_ALT_STRING, KEY_CODE_TAB } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { ModalProvider } from '@context/Modal';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
+  APPLICATION_PADDING,
+  DEFAULT_Z_INDEX,
   buildDefaultLayout,
   buildMaximumLayout,
   closeApplication as closeApplicationFromCache,
   getApplications as getApplicationsFromCache,
   updateApplication,
 } from '@storage/ApplicationManager/cache';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { selectEntriesWithValues, selectKeys } from '@utils/hash';
+import { sortByKey } from '@utils/array';
+import { useKeyboardContext } from '@context/Keyboard';
 
+const COMPONENT_UUID = 'ApplicationManager';
 const GROUP_ID = 'ApplicationManagerGroup';
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -77,6 +86,73 @@ export default function useApplicationManager({
   const refRoots = useRef({});
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
+
+  function getOpenApplications({
+    ascending,
+  }: {
+    ascending?: boolean;
+  } = {
+    ascending: false,
+  }): ApplicationManagerApplication[] {
+    const apps = getApplicationsFromCache({ status: StatusEnum.OPEN })?.map((app) => ({
+      ...app,
+      element: refExpansions?.current?.[app?.uuid],
+    }));
+
+    return sortByKey(
+      apps,
+      ({ element }) => Number(element?.current?.style?.zIndex || 0),
+      { ascending },
+    );
+  }
+
+  function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
+    let pick = null;
+    const apps = [];
+    getOpenApplications({
+      ascending: true,
+    })?.forEach((app) => {
+      if (app?.uuid === uuid) {
+        pick = app;
+      } else {
+        apps.push(app);
+      }
+    });
+
+    apps?.forEach(({
+      element,
+      uuid: uuidApp,
+    }, idx: number) => {
+      const z = DEFAULT_Z_INDEX + idx;
+      element.current.style.zIndex = z;
+
+      updateApplicationLayoutAndState(uuidApp, {
+        layout: {
+          position: {
+            z,
+          },
+        },
+      }, {
+        layout: true,
+        state: false,
+      });
+    });
+
+    if (pick?.element?.current) {
+      const z = DEFAULT_Z_INDEX + (apps?.length || 0);
+      pick.element.current.style.zIndex = z;
+      updateApplicationLayoutAndState(uuid, {
+        layout: {
+          position: {
+            z,
+          },
+        },
+      }, {
+        layout: true,
+        state: false,
+      });
+    }
+  }
 
   function onResizeCallback(
     uuid: ApplicationExpansionUUIDEnum,
@@ -111,10 +187,6 @@ export default function useApplicationManager({
     }
 
     deregisterElementUUIDs([uuid]);
-  }
-
-  function getActiveApplication() {
-    return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
   }
 
   function updateApplicationLayoutAndState(uuid: ApplicationExpansionUUIDEnum, opts?: {
@@ -175,11 +247,15 @@ export default function useApplicationManager({
     const refExpansion = refExpansions?.current?.[uuid];
     const refContainer = refContainers?.current?.[uuid];
 
-    if (!reverse && refExpansion?.current) {
-      refExpansion.current.style.bottom = null;
-      refExpansion.current.style.left = null;
-      refExpansion.current.style.right = null;
-      refExpansion.current.style.top = null;
+    if (refExpansion?.current) {
+      if (reverse) {
+        updateZIndex(uuid);
+      } else {
+        refExpansion.current.style.bottom = null;
+        refExpansion.current.style.left = null;
+        refExpansion.current.style.right = null;
+        refExpansion.current.style.top = null;
+      }
     }
     [refExpansion, refContainer].forEach((ref) => {
       if (ref?.current) {
@@ -240,6 +316,97 @@ export default function useApplicationManager({
     }
   }
 
+  function onChangePosition(uuid: ApplicationExpansionUUIDEnum, opts) {
+    const {
+      clientX,
+      clientY,
+    } = opts?.event || {
+      clientX: null,
+      clientY: null,
+    };
+
+    let height;
+    let width;
+    let x;
+    let y;
+
+    const percentageY = clientY / (typeof window === 'undefined' ? 0 : window.innerHeight);
+    const percentageX = clientX / (typeof window === 'undefined' ? 0 : window.innerWidth);
+
+    if (clientX <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientX + APPLICATION_PADDING) >= window.innerWidth)) {
+      pauseEvent(opts?.event);
+
+      height = 1;
+      width = 0.5;
+      y = 0;
+
+      if (percentageY <= 0.1) {
+        // Top corner
+        height = 0.5;
+      } else if (percentageY >= 0.5) {
+        // Bottom corner
+        height = 0.5;
+        y = 0.5;
+      }
+
+      // Left side: layout aligned to the left side
+      if (clientX <= APPLICATION_PADDING) {
+        x = 0;
+      } else {
+        x = 0.5;
+      }
+
+      updateApplicationLayoutAndState(uuid, {
+        layout: buildMaximumLayout(null, {
+          height,
+          width,
+          x,
+          y,
+        }),
+      }, {
+        layout: true,
+        state: false,
+      });
+    } else if (clientY <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientY + APPLICATION_PADDING) >= window.innerHeight)) {
+      pauseEvent(opts?.event);
+
+      height = 0.5;
+      width = 1;
+      x = 0;
+
+      if (percentageX <= 0.25) {
+        // Left corner
+        width = 0.5;
+      } else if (percentageX >= 0.75) {
+        // Right corner
+        width = 0.5;
+        x = 0.5;
+      }
+
+      if (clientY <= APPLICATION_PADDING) {
+        // Top
+        y = 0;
+      } else {
+        // Bottom
+        y = 0.5;
+      }
+
+      updateApplicationLayoutAndState(uuid, {
+        layout: buildMaximumLayout(null, {
+          height,
+          width,
+          x,
+          y,
+        }),
+      }, {
+        layout: true,
+        state: false,
+      });
+    } else {
+      onChangeLayoutPosition(uuid, opts);
+    }
+  }
+
   function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, {
     group,
   }) {
@@ -255,25 +422,34 @@ export default function useApplicationManager({
     onClick: onClickOutside,
   });
 
+  function onStartResize(uuid: ApplicationExpansionUUIDEnum, opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) {
+    updateZIndex(uuid);
+  }
+
   const {
     setResizableObject,
     setResizersObjects,
   } = useResizeElement({
     onResizeCallback: onChangeLayoutPosition,
+    onStart: onStartResize,
   });
 
   const {
     setElementObject,
     setInteractiveElementsObjects,
   } = useDraggableElement({
-    onChange: onChangeLayoutPosition,
+    onChange: onChangePosition,
   });
 
   function renderApplications() {
     return (
       <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
         <DockStyle>
-          <div style={{ flex: 1 }} />
           {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
             if (!refContainers?.current) {
               refContainers.current = {};
@@ -290,7 +466,6 @@ export default function useApplicationManager({
               />
             );
           })}
-          <div style={{ flex: 1 }} />
         </DockStyle>
       </RootApplicationStyle>
     );
@@ -338,9 +513,13 @@ export default function useApplicationManager({
     if (!refResizers?.current?.[uuid]) {
       refResizers.current[uuid] = {
         bottom: createRef(),
+        bottomLeft: createRef(),
+        bottomRight: createRef(),
         left: createRef(),
         right: createRef(),
         top: createRef(),
+        topLeft: createRef(),
+        topRight: createRef(),
       };
     }
 
@@ -380,7 +559,15 @@ export default function useApplicationManager({
       setResizableObject(uuid, ref, {
         tries: 10,
       });
-      setResizersObjects(uuid, [rr?.bottom, rr?.left, rr?.right], {
+      setResizersObjects(uuid, [
+        rr?.bottom,
+        rr?.bottomLeft,
+        rr?.bottomRight,
+        rr?.left,
+        rr?.right,
+        rr?.topLeft,
+        rr?.topRight,
+      ], {
         tries: 10,
       });
 
@@ -402,6 +589,7 @@ export default function useApplicationManager({
 
     const expansion = (
       <ContainerStyle
+        onClick={() => updateZIndex(uuid)}
         ref={ref}
         style={{
           display: 'none',
@@ -409,12 +597,16 @@ export default function useApplicationManager({
           left: x,
           top: y,
           width,
-          zIndex: z,
+          zIndex: (getOpenApplications()?.[0]?.layout?.position?.z || z) + 1,
       }}>
-        <ResizeBottomStyle ref={rr?.bottom} />
-        <ResizeLeftStyle ref={rr?.left} />
-        <ResizeRightStyle ref={rr?.right} />
-        {/*<ResizeTopStyle ref={rr?.top} />*/}
+        <ResizeBottomStyle ref={rr?.bottom} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle left bottom ref={rr?.bottomLeft} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle left top ref={rr?.topLeft} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle right bottom ref={rr?.bottomRight} onClick={() => updateZIndex(uuid)} />
+        <ResizeCornerStyle right top ref={rr?.topRight} onClick={() => updateZIndex(uuid)} />
+        <ResizeLeftStyle ref={rr?.left} onClick={() => updateZIndex(uuid)} />
+        <ResizeRightStyle ref={rr?.right} onClick={() => updateZIndex(uuid)} />
+
         <OverlayStyle
           className={OVERLAY_ID}
           onClick={(e) => {
@@ -424,11 +616,14 @@ export default function useApplicationManager({
         />
 
         <Header
-          applications={getApplicationsFromCache()}
+          applications={getApplicationsFromCache({ uuid })}
           closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
           maximizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
             updateApplicationLayoutAndState(uuidApp, {
               layout: buildMaximumLayout(),
+            }, {
+              layout: true,
+              state: false,
             });
           }}
           minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
@@ -479,6 +674,30 @@ export default function useApplicationManager({
       }
     });
   }, []);
+
+  const {
+    disableGlobalKeyboardShortcuts,
+    registerOnKeyDown,
+    registerOnKeyUp,
+    unregisterOnKeyDown,
+    unregisterOnKeyUp,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(COMPONENT_UUID);
+    unregisterOnKeyUp(COMPONENT_UUID);
+  }, [unregisterOnKeyDown, unregisterOnKeyUp, COMPONENT_UUID]);
+
+  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
+    if (onlyKeysPresent([KEY_CODE_ALT_STRING, KEY_CODE_TAB], keyMapping)) {
+      const uuidBottom = getOpenApplications({ ascending: true })?.[0]?.uuid;
+      if (uuidBottom) {
+        pauseEvent(event);
+        updateZIndex(uuidBottom);
+      }
+    }
+  }, [
+  ]);
 
   return {
     closeApplication,

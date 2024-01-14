@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ElementType from '@interfaces/ElementType';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { buildSetFunction } from './elements';
 import { isEmptyObject, selectEntriesWithValues } from './hash';
+import { pauseEvent } from '@utils/events';
 
 export default function useResizeElement({
   onResizeCallback,
+  onStart,
 }: {
   onResizeCallback?: (uuid: string, opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) => void;
+  onStart?: (uuid: string, opts?: {
     height?: number;
     width?: number;
     x?: number;
@@ -26,11 +35,13 @@ export default function useResizeElement({
   }>({});
 
   const setResizableObject = buildSetFunction(setElementRefState);
-  const setResizersObjects = buildSetFunction(setResizersRefState);
+  const setResizersObjects =  buildSetFunction(setResizersRefState);
 
   useEffect(() => {
-    Object.entries(elementMapping || {})?.forEach(([uuid, element]) => {
+    Object.entries(elementMapping || {})?.forEach(([uuid, element]: [ApplicationExpansionUUIDEnum, ElementType]) => {
       const Resize = (e) => {
+        pauseEvent(e);
+
         const {
           height,
           width,
@@ -50,8 +61,8 @@ export default function useResizeElement({
           const verticalEdgePercentage = (e.clientY - offsetTop) / height;
           const horizontalEdgePercentage = (e.clientX - offsetLeft) / width;
 
-          const isHorizontalEdge = horizontalEdgePercentage <= 0.01 || horizontalEdgePercentage >= 0.99;
-          const isVerticalEdge = verticalEdgePercentage <= 0.01 || verticalEdgePercentage >= 0.99;
+          const isHorizontalEdge = horizontalEdgePercentage <= 0.05 || horizontalEdgePercentage >= 0.95;
+          const isVerticalEdge = verticalEdgePercentage <= 0.05 || verticalEdgePercentage >= 0.95;
           const isCorner = isHorizontalEdge && isVerticalEdge;
 
           refOrientationMapping.current[uuid] = {
@@ -77,14 +88,16 @@ export default function useResizeElement({
         const clientX = e.clientX;
         const clientY = e.clientY;
 
-        if (isHorizontal) {
+        if (isHorizontal || isCorner) {
           if (isLeft) {
             width2 = offsetRight - clientX;
             left2 = clientX;
           } else {
             width2 = clientX - offsetLeft;
           }
-        } else {
+        }
+
+        if (!isHorizontal || isCorner) {
           if (isTop) {
             height2 = offsetBottom - clientY;
             top2 = clientY;
@@ -100,7 +113,7 @@ export default function useResizeElement({
           y?: number;
         } = {};
 
-        if (isHorizontal) {
+        if (isHorizontal || isCorner) {
           if (isLeft) {
             // If there is no previous value
             if (!refRecentValuesMapping?.current?.[uuid]?.left ||
@@ -146,7 +159,9 @@ export default function useResizeElement({
               dataForCallback.width = width2;
             }
           }
-        } else {
+        }
+
+        if (!isHorizontal || isCorner) {
           if (top2) {
             // If there is no previous value
             if (!refRecentValuesMapping?.current?.[uuid]?.top ||
@@ -213,6 +228,10 @@ export default function useResizeElement({
           return;
         }
 
+        if (onStart) {
+          onStart?.(uuid, refRecentValuesMapping?.current?.[uuid]);
+        }
+
         refRecentValuesMapping.current[uuid] = {};
         if (typeof window !== 'undefined') {
           window.addEventListener('mousemove', Resize, false);
@@ -231,12 +250,12 @@ export default function useResizeElement({
 
     return () => {
       Object.entries(resizersMapping || {})?.forEach(([uuid, resizers]) => {
-        resizers?.forEach((resizer) => {
+        (resizers as ElementType[])?.forEach((resizer) => {
           resizer?.removeEventListener('mousedown', refHandlers.current[uuid]);
         });
       });
     };
-  }, [elementMapping, resizersMapping]);
+  }, [onResizeCallback, onStart]);
 
   return {
     setResizableObject,
