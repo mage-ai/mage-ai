@@ -37,7 +37,7 @@ export function useFileTabs({
 }: FileTabsProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const filePathsMemo =
-    useMemo(() => filePaths.map(path => decodeURIComponent(path)), [filePaths]);
+    useMemo(() => filePaths?.map(path => decodeURIComponent(path)), [filePaths]);
   const numberOfFilePaths = useMemo(() => filePathsMemo?.length || 0, [
     filePathsMemo,
   ]);

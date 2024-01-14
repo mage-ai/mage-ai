@@ -35,30 +35,119 @@ import { useKeyboardContext } from '@context/Keyboard';
 export const DEFAULT_TERMINAL_UUID = 'terminal';
 
 type TerminalProps = {
+  command?: string;
+  commandHistory?: string[];
+  commandIndex?: number;
+  cursorIndex?: number;
+  focus?: boolean;
   lastMessage: WebSocketEventMap['message'] | null;
   onFocus?: () => void;
   sendMessage: (message: string, keep?: boolean) => void;
+  setCommand?: (prev: (value: string) => string) => void;
+  setCommandHistory?: (prev: (value: string[]) => string[]) => void;
+  setCommandIndex?: (prev: (value: number) => number) => void;
+  setCursorIndex?: (prev: (value: number) => number) => void;
+  setFocus?: (prev: (value: boolean) => boolean) => void;
+  setStdout?: (prev: (value: string) => string) => void;
+  stdout?: string;
   uuid?: string;
   width?: number;
 };
 
 function Terminal({
+  command: commandProp,
+  commandHistory: commandHistoryProp,
+  commandIndex: commandIndexProp,
+  cursorIndex: cursorIndexProp,
+  focus: focusProp,
   lastMessage,
   onFocus,
   sendMessage,
+  setCommand: setCommandProp,
+  setCommandHistory: setCommandHistoryProp,
+  setCommandIndex: setCommandIndexProp,
+  setCursorIndex: setCursorIndexProp,
+  setFocus: setFocusProp,
+  setStdout: setStdoutProp,
+  stdout: stdoutProp,
   uuid: terminalUUID = DEFAULT_TERMINAL_UUID,
   width,
 }: TerminalProps) {
   const refContainer = useRef(null);
   const refInner = useRef(null);
 
-  const [command, setCommand] = useState<string>('');
-  const [commandIndex, setCommandIndex] = useState<number>(0);
-  const [cursorIndex, setCursorIndex] = useState<number>(0);
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
-  const [focus, setFocus] = useState<boolean>(false);
+  const [commandState, setCommandState] = useState<string>('');
+  const setCommand = useCallback((prev) => {
+    if (setCommandProp) {
+      return setCommandProp?.(prev);
+    }
 
-  const [stdout, setStdout] = useState<string>();
+    return setCommandState(prev);
+  }, [setCommandProp]);
+  const command = useMemo(() => typeof commandProp !== 'undefined'
+    ? commandProp
+    : commandState
+  , [commandProp, commandState]);
+  const [commandHistoryState, setCommandHistoryState] = useState<string[]>([]);
+  const setCommandHistory = useCallback((prev) => {
+    if (setCommandHistoryProp) {
+      return setCommandHistoryProp?.(prev);
+    }
+
+    return setCommandHistoryState(prev);
+  }, [setCommandHistoryProp]);
+  const commandHistory = useMemo(() => typeof commandHistoryProp !== 'undefined'
+    ? commandHistoryProp
+    : commandHistoryState
+  , [commandHistoryProp, commandHistoryState]);
+  const [commandIndexState, setCommandIndexState] = useState<number>(0);
+  const setCommandIndex = useCallback((prev) => {
+    if (setCommandIndexProp) {
+      return setCommandIndexProp?.(prev);
+    }
+
+    return setCommandIndexState(prev);
+  }, [setCommandIndexProp]);
+  const commandIndex = useMemo(() => typeof commandIndexProp !== 'undefined'
+    ? commandIndexProp
+    : commandIndexState
+  , [commandIndexProp, commandIndexState]);
+  const [cursorIndexState, setCursorIndexState] = useState<number>(0);
+  const setCursorIndex = useCallback((prev) => {
+    if (setCursorIndexProp) {
+      return setCursorIndexProp?.(prev);
+    }
+
+    return setCursorIndexState(prev);
+  }, [setCursorIndexProp]);
+  const cursorIndex = useMemo(() => typeof cursorIndexProp !== 'undefined'
+    ? cursorIndexProp
+    : cursorIndexState
+  , [cursorIndexProp, cursorIndexState]);
+  const [focusState, setFocusState] = useState<boolean>(false);
+  const setFocus = useCallback((prev) => {
+    if (setFocusProp) {
+      return setFocusProp?.(prev);
+    }
+
+    return setFocusState(prev);
+  }, [setFocusProp]);
+  const focus = useMemo(() => typeof focusProp !== 'undefined'
+    ? focusProp
+    : focusState
+  , [focusProp, focusState]);
+  const [stdoutState, setStdoutState] = useState<string>();
+  const setStdout = useCallback((prev) => {
+    if (setStdoutProp) {
+      return setStdoutProp?.(prev);
+    }
+
+    return setStdoutState(prev);
+  }, [setStdoutProp]);
+  const stdout = useMemo(() => typeof stdoutProp !== 'undefined'
+    ? stdoutProp
+    : stdoutState
+  , [stdoutProp, stdoutState]);
 
   const token = useMemo(() => new AuthToken(), []);
   const oauthWebsocketData = useMemo(() => ({
@@ -273,7 +362,7 @@ in the context menu that appears.
 `);
             }
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
-            setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
+            setCommand(prev => prev?.slice(0, cursorIndex) + key + prev?.slice(cursorIndex));
             setCursorIndex(currIdx => currIdx + 1);
           }
         }
