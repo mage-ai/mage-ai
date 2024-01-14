@@ -13,7 +13,7 @@ const SCALE_PERCENTAGE = 0.1;
 export const HEADER_HEIGHT = 6 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
 const RESIZE_SIZE = 1 * UNIT;
-const RESIZE_SIZE_CORNER = 4 * UNIT;
+const RESIZE_SIZE_CORNER = 2 * UNIT;
 
 function getRGBA(color: string, opts?: {
   transparency?: number;

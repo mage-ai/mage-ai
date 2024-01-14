@@ -40,6 +40,8 @@ import { KeyValueType } from '@interfaces/CommandCenterType';
 import { ModalProvider } from '@context/Modal';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
+  APPLICATION_PADDING,
+  DEFAULT_Z_INDEX,
   buildDefaultLayout,
   buildMaximumLayout,
   closeApplication as closeApplicationFromCache,
@@ -106,12 +108,19 @@ export default function useApplicationManager({
   }
 
   function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
-    let zIndexMax = 10;
-    let zIndexMin = 10;
+    const apps = getOpenApplications();
+
+    // App is already on top
+    if (apps?.[0]?.uuid === uuid) {
+      return;
+    }
+
+    let zIndexMax = DEFAULT_Z_INDEX;
+    let zIndexMin = DEFAULT_Z_INDEX;
 
     const mapping = {};
 
-    const zIndexes = getOpenApplications()?.forEach((app) => {
+    const zIndexes = apps?.forEach((app) => {
       const {
         element,
         uuid: uuidApp,
@@ -137,11 +146,25 @@ export default function useApplicationManager({
       element: RefType;
       zIndex: number;
     }]) => {
+      let zValue;
       if (uuidApp === uuid) {
-        element.current.style.zIndex = `${(zIndexMax - zIndexMin) + 11}`;
+        zValue = (zIndexMax - zIndexMin) + DEFAULT_Z_INDEX + 1;
       } else {
-        element.current.style.zIndex = `${(zIndex - zIndexMin) + 10}`;
+        zValue = (zIndex - zIndexMin) + DEFAULT_Z_INDEX;
       }
+
+      element.current.style.zIndex = zValue;
+
+      updateApplicationLayoutAndState(uuidApp, {
+        layout: {
+          position: {
+            z: zValue,
+          },
+        },
+      }, {
+        layout: true,
+        state: false,
+      });
     });
   }
 
@@ -307,6 +330,49 @@ export default function useApplicationManager({
     }
   }
 
+  function onChangePosition(uuid: ApplicationExpansionUUIDEnum, opts) {
+    const {
+      clientX,
+      clientY,
+    } = opts?.event || {
+      clientX: null,
+      clientY: null,
+    };
+
+    if (clientX <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientX + APPLICATION_PADDING) >= window.innerWidth)) {
+      pauseEvent(opts?.event);
+
+      // Left side: layout aligned to the left side
+      if (clientX <= APPLICATION_PADDING) {
+        updateApplicationLayoutAndState(uuid, {
+          layout: buildMaximumLayout(null, {
+            height: 1,
+            width: 0.5,
+            x: 0,
+            y: 0,
+          }),
+        }, {
+          layout: true,
+          state: false,
+        });
+      } else {
+        updateApplicationLayoutAndState(uuid, {
+          layout: buildMaximumLayout(null, {
+            height: 1,
+            width: 0.5,
+            x: 0.5,
+            y: 0,
+          }),
+        }, {
+          layout: true,
+          state: false,
+        });
+      }
+    } else {
+      onChangeLayoutPosition(uuid, opts);
+    }
+  }
+
   function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, {
     group,
   }) {
@@ -322,7 +388,7 @@ export default function useApplicationManager({
     onClick: onClickOutside,
   });
 
-  function onResizeStartCallback(uuid: ApplicationExpansionUUIDEnum, opts?: {
+  function onStartResize(uuid: ApplicationExpansionUUIDEnum, opts?: {
     height?: number;
     width?: number;
     x?: number;
@@ -336,14 +402,14 @@ export default function useApplicationManager({
     setResizersObjects,
   } = useResizeElement({
     onResizeCallback: onChangeLayoutPosition,
-    onResizeStartCallback,
+    onStart: onStartResize,
   });
 
   const {
     setElementObject,
     setInteractiveElementsObjects,
   } = useDraggableElement({
-    onChange: onChangeLayoutPosition,
+    onChange: onChangePosition,
   });
 
   function renderApplications() {
@@ -497,7 +563,7 @@ export default function useApplicationManager({
           left: x,
           top: y,
           width,
-          zIndex: z,
+          zIndex: (getOpenApplications()?.[0]?.layout?.position?.z || z) + 1,
       }}>
         <ResizeBottomStyle ref={rr?.bottom} onClick={() => updateZIndex(uuid)} />
         <ResizeCornerStyle left bottom ref={rr?.bottomLeft} onClick={() => updateZIndex(uuid)} />

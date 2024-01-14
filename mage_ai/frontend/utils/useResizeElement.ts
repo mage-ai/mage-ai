@@ -8,7 +8,7 @@ import { pauseEvent } from '@utils/events';
 
 export default function useResizeElement({
   onResizeCallback,
-  onResizeStartCallback,
+  onStart,
 }: {
   onResizeCallback?: (uuid: string, opts?: {
     height?: number;
@@ -16,7 +16,7 @@ export default function useResizeElement({
     x?: number;
     y?: number;
   }) => void;
-  onResizeStartCallback?: (uuid: string, opts?: {
+  onStart?: (uuid: string, opts?: {
     height?: number;
     width?: number;
     x?: number;
@@ -228,7 +228,9 @@ export default function useResizeElement({
           return;
         }
 
-        onResizeStartCallback(uuid, refRecentValuesMapping?.current?.[uuid]);
+        if (onStart) {
+          onStart?.(uuid, refRecentValuesMapping?.current?.[uuid]);
+        }
 
         refRecentValuesMapping.current[uuid] = {};
         if (typeof window !== 'undefined') {
@@ -253,7 +255,7 @@ export default function useResizeElement({
         });
       });
     };
-  }, [elementMapping, resizersMapping, onResizeCallback, onResizeStartCallback]);
+  }, [onResizeCallback, onStart]);
 
   return {
     setResizableObject,
