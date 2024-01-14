@@ -162,11 +162,12 @@ class VersionControlFactory(BaseFactory):
                     await build_and_score_remote(self, remote, items)
         else:
             on_base_view = True
-            items.append(build_create_project() | dict(score=100))
+            create_project = build_create_project()
 
             if self.mode:
                 if ModeType.VERSION_CONTROL == self.mode.type:
                     self.filter_score_mutate_accumulator(DEACTIVATE_MODE, items)
+                    self.filter_score_mutate_accumulator(create_project | dict(score=100), items)
             else:
                 self.filter_score_mutate_accumulator(ACTIVATE_MODE, items)
 

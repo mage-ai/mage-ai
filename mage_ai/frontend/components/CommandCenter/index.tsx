@@ -57,6 +57,7 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  ModeType,
   ModeTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
@@ -286,6 +287,13 @@ function CommandCenter() {
     onChangeState,
   });
 
+  function resetViewForNewTransition() {
+    refInput.current.value = '';
+    refItems.current = null;
+    refItemsInit.current = null;
+    updateInputProperties();
+  }
+
   function addApplication(
     applicationConfiguration: {
       application: ItemApplicationType;
@@ -337,6 +345,7 @@ function CommandCenter() {
         ],
         refresh: true,
       });
+      resetViewForNewTransition();
     } else if ([
     // Detail, Form
       ItemApplicationTypeEnum.DETAIL,
@@ -884,29 +893,35 @@ function CommandCenter() {
     return new Promise((resolve, reject) => resolve?.(refItems?.current));
   }
 
-  function toggleMode() {
-    refInput.current.value = '';
-    refItems.current = null;
-    refItemsInit.current = null;
-    updateInputProperties();
+  function toggleMode(mode?: ModeType) {
+    setMode(mode);
+    resetViewForNewTransition();
     renderItems([]);
     fetchItems();
+
+    if (mode) {
+      refContainer.current.className = addClassNames(
+        refContainer?.current?.className || '',
+        [
+          mode?.type,
+        ],
+      );
+    }
+
+    refContainer.current.className = removeClassNames(
+      refContainer?.current?.className || '',
+      [
+        'hide',
+      ],
+    );
   }
 
   function deactivateMode() {
-    setMode(null);
-    toggleMode();
+    toggleMode(null);
   }
 
   function activateMode(item: CommandCenterItemType) {
-    setMode(item?.mode);
-    toggleMode();
-    refContainer.current.className = addClassNames(
-      refContainer?.current?.className || '',
-      [
-        item?.mode?.type,
-      ],
-    );
+    toggleMode(item?.mode);
   }
 
   const {
@@ -1326,7 +1341,7 @@ function CommandCenter() {
     <>
       <ContainerStyle
         className={[
-          'hide',
+          refActive?.current ? '' : 'hide',
           getCurrentMode()?.type || '',
         ]?.join(' ')}
         ref={refContainer}
