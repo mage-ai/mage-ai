@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
+from mage_ai.server.websockets.terminal.utils import build_color_commands
 from mage_ai.settings import (
     DISABLE_TERMINAL,
     REQUIRE_USER_AUTHENTICATION,
@@ -147,4 +148,8 @@ class TerminalWebsocketServer(terminado.TermSocket):
         if self.term_command == 'bash':
             self.terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+
+        for cmd in build_color_commands():
+            self.terminal.ptyproc.write(f'{cmd}\r')
+
         self.terminal.read_buffer.clear()
