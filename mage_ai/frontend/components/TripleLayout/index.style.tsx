@@ -151,7 +151,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
   ${props => `
     height: calc(100% + ${props?.top || 0}px);
-    top: -${props?.top || 0}px;
+    top: ${(props?.top || 0) * -1}px;
   `}
 
   ${props => !props.disabled && `

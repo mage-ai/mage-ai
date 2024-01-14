@@ -39,6 +39,14 @@ class FileContentResource(GenericResource):
             error.update(
                 message=f'File at path: {file.file_path} is not in the project directory.')
             raise ApiError(error)
+
+        if not file.exists():
+            return self(dict(
+                content='',
+                name=pk,
+                path=pk,
+            ), user, **kwargs)
+
         return self(file, user, **kwargs)
 
     async def update(self, payload, **kwargs):

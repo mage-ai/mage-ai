@@ -98,6 +98,15 @@ function FlyoutMenu({
   const menuRefs = useRef({});
   const keyTextGroupRef = useRef(null);
 
+  const highlightedIndicesRef = useRef(null);
+  const itemsRef = useRef(null);
+  const onClickCallbackRef = useRef(null);
+  const openRef = useRef(null);
+  highlightedIndicesRef.current = highlightedIndices;
+  itemsRef.current = items;
+  onClickCallbackRef.current = onClickCallback;
+  openRef.current = open
+
   const router = useRouter();
 
   const {
@@ -112,7 +121,7 @@ function FlyoutMenu({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (!open) {
+      if (!openRef?.current) {
         return;
       }
 
@@ -121,10 +130,10 @@ function FlyoutMenu({
         return;
       }
 
-      const currentIndex = highlightedIndices[0];
+      const currentIndex = highlightedIndicesRef?.current[0];
       if (keyMapping[KEY_CODE_ARROW_DOWN]) {
         pauseEvent(event);
-        if (typeof currentIndex === 'undefined' || currentIndex === items.length - 1) {
+        if (typeof currentIndex === 'undefined' || currentIndex === itemsRef?.current?.length - 1) {
           setHighlightedIndices([0]);
         } else {
           setHighlightedIndices([currentIndex + 1]);
@@ -132,12 +141,12 @@ function FlyoutMenu({
       } else if (keyMapping[KEY_CODE_ARROW_UP]) {
         pauseEvent(event);
         if (typeof currentIndex === 'undefined' || currentIndex === 0) {
-          setHighlightedIndices([items.length - 1]);
+          setHighlightedIndices([itemsRef?.current?.length - 1]);
         } else {
           setHighlightedIndices([currentIndex - 1]);
         }
       } else if (keyMapping[KEY_CODE_ENTER] && typeof currentIndex !== 'undefined') {
-        const item = items[currentIndex];
+        const item = itemsRef?.current?.[currentIndex];
         if (item) {
           if (item?.onClick) {
             item?.onClick?.(event);
@@ -149,20 +158,14 @@ function FlyoutMenu({
             }
           }
         }
-        onClickCallback?.(event);
+        onClickCallbackRef?.current?.(event);
       } else {
-        items?.forEach(({ keyboardShortcutValidation }) => {
+        itemsRef?.current?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
         });
       }
     },
-    [
-      highlightedIndices,
-      items,
-      onClickCallback,
-      open,
-      setHighlightedIndices,
-    ],
+    [],
   );
 
   useEffect(() => {

@@ -12,6 +12,7 @@ import {
 
 export enum ApplicationExpansionUUIDEnum {
   ArcaneLibrary = 'ArcaneLibrary',
+  CodeMatrix = 'CodeMatrix',
   PortalTerminal = 'PortalTerminal',
   VersionControlFileDiffs = 'VersionControlFileDiffs',
 }

@@ -52,12 +52,24 @@ function useAside(uuid, refData, {
     false,
   ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
+<<<<<<< HEAD
   const [widthState, setWidthState] = useState(
     typeof widthLocal !== 'undefined'
         ? widthLocal : typeof widthProp !== 'undefined'
           ? widthProp
           : DEFAULT_ASIDE_WIDTH,
   );
+=======
+  const [widthState, setWidthState] = useState(Math.min(...[
+    typeof widthWindow !== 'undefined'
+      ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH)
+      : null,
+    (
+      typeof widthLocal !== 'undefined' ? widthLocal : null
+      || typeof widthProp !== 'undefined' ? widthProp : null
+    ),
+  ].filter(v => v)));
+>>>>>>> d9e3000fd ([td] Code Matrix application)
 
   const setHidden = useCallback((prev) => {
     setHiddenState(prev);

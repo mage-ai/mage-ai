@@ -22,7 +22,15 @@ function getRGBA(color: string, opts?: {
     r,
     g,
     b,
-  } = hexToRgb(color);
+  } = hexToRgb(color) || {
+    r: null,
+    g: null,
+    b: null,
+  };
+
+  if (!(r && g && b)) {
+    return;
+  }
 
   return `rgba(${r}, ${g}, ${b}, ${opts?.transparency || 1})`;
 }

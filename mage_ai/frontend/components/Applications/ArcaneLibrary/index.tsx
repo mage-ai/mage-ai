@@ -27,8 +27,6 @@ function ArcaneLibrary({
     startUpOptions,
   } = props;
 
-  const refHeader = useRef(null);
-  const [headerOffset, setHeaderOffset] = useState(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(FILE_BROWSER_TABS?.[0]);
 
   const {
@@ -69,10 +67,6 @@ function ArcaneLibrary({
     uuid: ApplicationExpansionUUIDEnum.ArcaneLibrary,
   });
 
-  useEffect(() => {
-    setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);
-  }, [filePaths]);
-
   return (
     <ContainerStyle>
       <TripleLayout
@@ -109,9 +103,8 @@ function ArcaneLibrary({
         containerRef={containerRef}
         inline
         mainContainerFooter={footer}
-        mainContainerHeader={({ widthOffset }) => (
+        mainContainerHeader={(
           <div
-            ref={refHeader}
             style={{
               position: 'relative',
               zIndex: 3,

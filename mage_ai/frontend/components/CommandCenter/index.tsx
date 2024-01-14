@@ -134,6 +134,7 @@ function CommandCenter({
 
   const refActive = useRef(false);
   const refFocusedElement = useRef(null);
+  const fetchItemsRef = useRef(null);
   const refReload = useRef(null);
   const refSettings = useRef(null);
 
@@ -1004,6 +1005,7 @@ function CommandCenter({
 
     return fetchItemsInit(fetchOptions);
   }
+  fetchItemsRef.current = fetchItems;
 
   useEffect(() => {
     if (isLoadingFetch) {
@@ -1169,7 +1171,7 @@ function CommandCenter({
                 ...currentApplicationConfig,
                 closeCommandCenter,
                 button,
-                fetchItems,
+                fetchItems: fetchItemsRef?.current,
                 getItemsActionResults,
                 handleSelectItemRow,
                 itemsRef: refItems,
@@ -1289,10 +1291,7 @@ function CommandCenter({
         }
       }
     }
-  }, [
-    fetchItems,
-    reload,
-  ]);
+  }, []);
 
   useEffect(() => {
     if (refReload?.current === null) {
