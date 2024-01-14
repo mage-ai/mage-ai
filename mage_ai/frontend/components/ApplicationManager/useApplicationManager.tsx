@@ -5,10 +5,9 @@ import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
-import ElementType from '@interfaces/ElementType';
+import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
-import RefType from '@interfaces/RefType';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import dark from '@oracle/styles/themes/dark';
 import useAutoResizer, { DimensionDataType, RectType} from '@utils/useAutoResizer';

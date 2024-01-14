@@ -59,7 +59,7 @@ function Header({
             }}
             selectedTabUUID={selectedTab?.uuid}
             tabs={tabs}
-            underlineColor={getApplicationColors(selectedTab?.uuid)?.accent}
+            underlineColor={getApplicationColors(selectedTab?.uuid as ApplicationExpansionUUIDEnum)?.accent}
             underlineStyle
             uppercase={false}
           />
