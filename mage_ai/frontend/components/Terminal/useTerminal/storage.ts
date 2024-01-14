@@ -1,23 +1,19 @@
-import { LOCAL_STORAGE_TERMINAL_UUIDS } from './constants';
+import { CachedItemType } from './constants';
+import { LOCAL_STORAGE_TERMINAL_ITEMS } from './constants';
 import { get, set } from '@storage/localStorage';
 
-export type CachedItem = {
-  selected: boolean;
-  uuid: string;
-};
-
-export function getUUIDs(): CachedItem[] {
-  return get(LOCAL_STORAGE_TERMINAL_UUIDS, [])?.filter(({ uuid }) => !!uuid) as CachedItem[];
+export function getItems(): CachedItemType[] {
+  return get(LOCAL_STORAGE_TERMINAL_ITEMS, [])?.filter(({ uuid }) => !!uuid) as CachedItemType[];
 }
 
-export function setUUIDs(uuids: CachedItem[], replace: boolean = true): CachedItem[] {
-  let arr = uuids;
+export function setItems(items: CachedItemType[], replace: boolean = true): CachedItemType[] {
+  let arr = items;
   if (!replace) {
-    arr.push(...getUUIDs());
+    arr.push(...getItems());
   }
 
-  arr = arr?.filter(({ uuid }) => !!uuid);
-  set(LOCAL_STORAGE_TERMINAL_UUIDS, arr);
+  arr = arr?.filter(i => !!i?.uuid);
+  set(LOCAL_STORAGE_TERMINAL_ITEMS, arr);
 
   return arr;
 }

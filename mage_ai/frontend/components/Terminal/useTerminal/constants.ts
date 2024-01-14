@@ -1,1 +1,6 @@
-export const LOCAL_STORAGE_TERMINAL_UUIDS = 'terminal_uuids';
+export const LOCAL_STORAGE_TERMINAL_ITEMS = 'terminal_items';
+
+export type CachedItemType = {
+  selected: boolean;
+  uuid: string;
+};

@@ -20,6 +20,7 @@ type FileTabsProps = {
   filePaths: string[];
   isSelectedFilePath?: (filePath: string, selectedFilePath: string) => boolean;
   selectedFilePath: string;
+  shouldDisableClose?: (uuid: string) => boolean;
   tabsBefore?: TabType[];
 } & FileTabProps;
 
@@ -30,6 +31,7 @@ export function useFileTabs({
   onClickTabClose,
   onContextMenu,
   selectedFilePath,
+  shouldDisableClose,
   tabsBefore,
   filesTouched,
   renderTabTitle,
@@ -76,6 +78,7 @@ export function useFileTabs({
 
     return (
       <FileTab
+        disableClose={shouldDisableClose && shouldDisableClose?.(filePath)}
         savePipelineContent={savePipelineContent}
         filesTouched={filesTouched}
         filePath={filePath}
@@ -113,6 +116,7 @@ export function useFileTabs({
     renderTabTitle,
     savePipelineContent,
     selectedFilePath,
+    shouldDisableClose,
   ]);
 
   return {

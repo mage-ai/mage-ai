@@ -1,7 +1,7 @@
 from typing import List
 
 
-def build_color_commands() -> List[str]:
+def build_color_commands(uuid: str = None) -> List[str]:
     # for i in 00{2..8} {0{3,4,9},10}{0..7}
     # do echo -e "$i \e[0;${i}mSubdermatoglyphic text\e[00m  \e[1;${i}mSubdermatoglyphic text\e[00m"
     # done
@@ -144,15 +144,25 @@ def build_color_commands() -> List[str]:
         '36:',
     ])
 
+    icons = [r'🧙', r'🧙‍♀️', r'🧙‍♂️']
+    index = 0
+    if uuid:
+        index = len(uuid) % len(icons)
+    icon = icons[index]
+
+    ps_command = ''.join([
+        r'PS1="$TITLEBAR\n\[${COLOR_RED_BG}\]\u \[${COLOR_GREEN_BG}\]\${PWD} ',
+        r'\[${COLOR_PURPLE_BG}\]',
+        icon,
+        r' →\[${COLOR_NC}\] "',
+    ])
+
     return [
         r"export COLOR_PURPLE_BG='\e[0;45m'",
         r"export COLOR_GREEN_BG='\e[0;42m'",
         r"export COLOR_RED_BG='\e[0;41m'",
         r"LS_COLORS=$LS_COLORS:'" + ls_colors + "'",
         "export LS_COLORS",
-        (
-            r'PS1="$TITLEBAR\n\[${COLOR_RED_BG}\]\u \[${COLOR_GREEN_BG}\]\${PWD} '
-            r'\[${COLOR_PURPLE_BG}\]🧙 →\[${COLOR_NC}\] "'
-        ),
         "ls --color=al > /dev/null 2>&1 && alias ls='ls -F --color=al' || alias ls='ls -G'",
+        ps_command,
     ]

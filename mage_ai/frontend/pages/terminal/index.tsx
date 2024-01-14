@@ -2,22 +2,15 @@ import React from 'react';
 
 import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import useTerminal from '@components/Terminal/useTerminal';
+import PortalTerminal from '@components/Applications/PortalTerminal';
 
 function TerminalPage() {
-  const {
-    tabs,
-    terminal,
-  } = useTerminal({
-    uuid: 'Pages/TerminalPage',
-  });
-
   return (
     <Dashboard
       title="Terminal"
       uuid="terminal/index"
     >
-      {terminal}
+      <PortalTerminal />
     </Dashboard>
   );
 }

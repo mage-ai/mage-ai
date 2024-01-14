@@ -21,6 +21,7 @@ export function keysPresentAndKeysRecent(
 ) {
   const recentCount = keysRecent?.length || 0;
   const history = keyHistory?.slice(0, recentCount);
+
   return keysPresent?.every(key => keyMapping[key])
     && keysRecent?.every(key => history?.includes(key));
 }

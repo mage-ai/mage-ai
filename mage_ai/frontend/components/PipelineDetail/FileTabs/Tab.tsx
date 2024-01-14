@@ -28,6 +28,7 @@ export type FileTabProps = {
 };
 
 type FileTabPropsInternal = {
+  disableClose?: boolean;
   filePath?: string;
   isLast?: boolean;
   selected?: boolean;
@@ -35,6 +36,7 @@ type FileTabPropsInternal = {
 };
 
 function FileTab({
+  disableClose,
   filePath,
   filesTouched = {},
   isLast,
@@ -141,7 +143,7 @@ function FileTab({
             </FlexContainer>
           </Tooltip>
 
-          {onClickTabClose && (
+          {onClickTabClose && !disableClose && (
             <>
               <Spacing mr={2} />
 

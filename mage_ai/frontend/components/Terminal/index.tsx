@@ -3,6 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
+import KernelOutputType, {
+  DataTypeEnum,
+  DATA_TYPE_TEXTLIKE,
+} from '@interfaces/KernelOutputType';
 import Text from '@oracle/elements/Text';
 import {
   CharacterStyle,
@@ -11,10 +15,6 @@ import {
   InputStyle,
   LineStyle,
 } from './index.style';
-import {
-  DataTypeEnum,
-  DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -28,7 +28,7 @@ import {
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -39,9 +39,21 @@ type TerminalProps = {
   commandHistory?: string[];
   commandIndex?: number;
   cursorIndex?: number;
+  externalKeyboardShortcuts?: (
+    event: any,
+    keyMapping: {
+      [key: string]: boolean;
+    },
+    keyHistory: number[],
+  ) => boolean;
   focus?: boolean;
   lastMessage: WebSocketEventMap['message'] | null;
+  oauthWebsocketData?: {
+    api_key: string;
+    token: string;
+  };
   onFocus?: () => void;
+  outputs?: KernelOutputType[];
   sendMessage: (message: string, keep?: boolean) => void;
   setCommand?: (prev: (value: string) => string) => void;
   setCommandHistory?: (prev: (value: string[]) => string[]) => void;
@@ -59,9 +71,12 @@ function Terminal({
   commandHistory: commandHistoryProp,
   commandIndex: commandIndexProp,
   cursorIndex: cursorIndexProp,
+  externalKeyboardShortcuts,
   focus: focusProp,
   lastMessage,
+  oauthWebsocketData: oauthWebsocketDataProp,
   onFocus,
+  outputs,
   sendMessage,
   setCommand: setCommandProp,
   setCommandHistory: setCommandHistoryProp,
@@ -150,10 +165,11 @@ function Terminal({
   , [stdoutProp, stdoutState]);
 
   const token = useMemo(() => new AuthToken(), []);
-  const oauthWebsocketData = useMemo(() => ({
+  const oauthWebsocketData = useMemo(() => oauthWebsocketDataProp || ({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,
     token: token.decodedToken.token,
   }), [
+    oauthWebsocketDataProp,
     token,
   ]);
 
@@ -175,6 +191,10 @@ function Terminal({
   ]);
 
   const kernelOutputsUpdated = useMemo(() => {
+    if (typeof outputs !== 'undefined') {
+      return outputs;
+    }
+
     if (!stdout) {
       return [];
     }
@@ -189,7 +209,7 @@ function Terminal({
       data: d,
       type: DataTypeEnum.TEXT,
     }));
-  }, [stdout]);
+  }, [outputs, stdout]);
 
   useEffect(() => {
     if (refContainer.current && refInner.current) {
@@ -272,7 +292,12 @@ function Terminal({
       } = event;
 
       if (focus) {
-        pauseEvent(event);
+        if (externalKeyboardShortcuts && externalKeyboardShortcuts(event, keyMapping, keyHistory)) {
+          return;
+        } else {
+          pauseEvent(event);
+        }
+
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
           if (command?.length >= 0) {
             sendMessage(JSON.stringify({
@@ -295,14 +320,14 @@ function Terminal({
             decreaseCursorIndex();
           } else if (onlyKeysPresent([KEY_CODE_ARROW_RIGHT], keyMapping)) {
             increaseCursorIndex();
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+          } else if (keysPresentAndKeysRecent([KEY_CODE_ARROW_UP], [KEY_CODE_ARROW_UP], keyMapping, keyHistory)) {
             if (commandHistory.length >= 1) {
               const idx = Math.max(0, commandIndex - 1);
               setCommand(commandHistory[idx]);
               setCommandIndex(idx);
               setCursorIndex(commandHistory[idx]?.length || 0);
             }
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+          } else if (keysPresentAndKeysRecent([KEY_CODE_ARROW_DOWN], [KEY_CODE_ARROW_DOWN], keyMapping, keyHistory)) {
             if (commandHistory.length >= 1) {
               const idx = Math.min(commandHistory.length, commandIndex + 1);
               const nextCommand = commandHistory[idx] || '';
@@ -372,7 +397,9 @@ in the context menu that appears.
       command,
       commandHistory,
       commandIndex,
+      externalKeyboardShortcuts,
       focus,
+      kernelOutputsUpdated,
       setCommand,
       setCommandHistory,
       setCommandIndex,
