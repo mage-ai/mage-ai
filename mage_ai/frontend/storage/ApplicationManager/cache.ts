@@ -25,7 +25,7 @@ export function minimumLayout() {
     position: {
       x: 0,
       y: 0,
-      z: 100,
+      z: 10,
     },
   };
 }
@@ -180,6 +180,7 @@ function validateLayout(app: ApplicationManagerApplication) {
     'dimension.width',
     'position.x',
     'position.y',
+    'position.z',
   ].forEach((key) => {
     setNested(layoutNew, key, Math.max(
       dig(layout, key) || 0,

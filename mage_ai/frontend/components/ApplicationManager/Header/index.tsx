@@ -48,7 +48,7 @@ function Header({
   ]);
 
   return (
-    <HeaderStyle ref={ref}>
+    <HeaderStyle id={`${selectedTab?.uuid}-header`} ref={ref}>
       <FlexContainer alignItems="center" justifyContent="space-between">
         {applications?.length >= 1 && (
           <ButtonTabs

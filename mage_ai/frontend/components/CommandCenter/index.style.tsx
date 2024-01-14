@@ -68,20 +68,20 @@ export const ContainerStyle = styled.div<{
       border: 1px solid ${getApplicationColors(
       ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
       props,
-    )?.accent};
+    )?.border};
 
       #${INPUT_CONTAINER_ID} {
         border-bottom: 1px solid ${getApplicationColors(
         ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
         props,
-      )?.accent};
+      )?.border};
       }
 
       #${OUTPUT_CONTAINER_ID} {
         border-top: 1px solid ${getApplicationColors(
         ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
         props,
-      )?.accent};
+      )?.border};
       }
     }
   `}

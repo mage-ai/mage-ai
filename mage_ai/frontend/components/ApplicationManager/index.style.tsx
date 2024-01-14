@@ -6,6 +6,7 @@ import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
+import { hexToRgb } from '@utils/string';
 import { transition } from '@oracle/styles/mixins';
 
 const SCALE_PERCENTAGE = 0.1;
@@ -13,13 +14,43 @@ export const HEADER_HEIGHT = 6 * UNIT;
 const RESIZE_SIZE = 1 * UNIT;
 export const OVERLAY_ID = 'application-minimized-overlay'
 
+function getRGBA(color: string, opts?: {
+  transparency?: number;
+}) {
+  const {
+    r,
+    g,
+    b,
+  } = hexToRgb(color);
+
+  return `rgba(${r}, ${g}, ${b}, ${opts?.transparency || 1})`;
+}
+
 export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: {
   theme?: any;
+  transparency?: number;
 } = {}): {
   accent: string;
+  background: string;
+  border: string;
 } {
+  let accent;
+  let background;
+  let border;
+
+  if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
+    accent = (props?.theme || dark)?.accent?.purple;
+  } else {
+    accent = (props?.theme || dark)?.accent?.negative;
+  }
+
   return {
-    accent: (props?.theme || dark)?.accent?.negativeTransparent,
+    accent,
+    background: background || getRGBA(accent, props),
+    border: border || getRGBA(accent, {
+      ...props,
+      transparency: 0.3,
+    }),
   };
 }
 
@@ -100,7 +131,6 @@ export const ContainerStyle = styled.div`
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: fixed;
-  z-index: 10;
 `;
 
 export const ContentStyle = styled.div`
@@ -138,6 +168,12 @@ export const HeaderStyle = styled.div`
   position: fixed;
   width: inherit;
   z-index: 5;
+
+  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+    &#${uuid}-header {
+      background-color: ${getApplicationColors(uuid, { transparency: 0.5 })?.background};
+    }
+  `)}
 `;
 
 export const InnerStyle = styled.div`

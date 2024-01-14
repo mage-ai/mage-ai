@@ -400,8 +400,37 @@ export default function useApplicationManager({
       });
     };
 
+    const onClickApplication = (uuid: ApplicationExpansionUUIDEnum) => {
+      if (refExpansions?.current) {
+        let zIndexMax = 10;
+        const mapping = {};
+        const zIndexes = Object.entries(refExpansions?.current || {})?.forEach(([uuid, element]) => {
+          const zIndex = element?.current?.style?.zIndex;
+          if (zIndex > zIndexMax) {
+            zIndexMax = zIndex;
+          }
+
+          mapping[uuid] = {
+            element,
+            zIndex,
+          }
+        });
+
+        const obj = mapping?.[uuid];
+        if (obj) {
+          const {
+            element,
+            zIndex,
+          } = obj;
+
+          element.current.style.zIndex = `${zIndexMax + 1}`;
+        }
+      }
+    };
+
     const expansion = (
       <ContainerStyle
+        onClick={() => onClickApplication(uuid)}
         ref={ref}
         style={{
           display: 'none',
@@ -424,7 +453,7 @@ export default function useApplicationManager({
         />
 
         <Header
-          applications={getApplicationsFromCache()}
+          applications={getApplicationsFromCache({ uuid })}
           closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
           maximizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
             updateApplicationLayoutAndState(uuidApp, {

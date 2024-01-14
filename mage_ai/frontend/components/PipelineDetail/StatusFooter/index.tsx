@@ -101,6 +101,7 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    noWrapping
                     small
                   >
                     CPU: <Text
@@ -123,6 +124,7 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    noWrapping
                     small
                   >
                     /
@@ -139,7 +141,7 @@ function StatusFooter({
 
                   <Spacing mr={1} />
 
-                  <Text monospace muted small>
+                  <Text monospace muted noWrapping small>
                     Memory: {kernelMemory}
                   </Text>
                 </>
@@ -197,7 +199,7 @@ function StatusFooter({
 
             <Spacing mr={1} />
 
-            <Text monospace muted small warning={pipelineContentTouched}>
+            <Text monospace muted noWrapping small warning={pipelineContentTouched}>
               {saveStatus}
             </Text>
           </FlexContainer>
