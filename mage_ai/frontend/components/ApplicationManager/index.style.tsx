@@ -54,13 +54,38 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
   };
 }
 
+function minimizedDimensions(): {
+  height: number;
+  width: number;
+} {
+  const {
+    dimension: {
+      height,
+      width,
+    },
+  } = buildDefaultLayout()
+
+  return {
+    height: height * SCALE_PERCENTAGE,
+    width: width * SCALE_PERCENTAGE,
+  };
+}
+
 export const RootApplicationStyle = styled.div`
   ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
     #${uuid}.minimized {
-      bottom: 0px;
+      bottom: ${minimizedDimensions().height / 2}px;
+      margin-left: 8px;
+      margin-right: 8px;
       position: relative;
-      height: ${buildDefaultLayout()?.dimension?.height * SCALE_PERCENTAGE}px;
-      width: ${buildDefaultLayout()?.dimension?.width * SCALE_PERCENTAGE}px;
+      height: ${minimizedDimensions().height}px;
+      width: ${minimizedDimensions().width}px;
+      z-index: 100;
+
+      &:hover {
+        ${transition()}
+        bottom: ${minimizedDimensions().height}px;
+      }
 
       .minimized {
         position: relative;
@@ -68,7 +93,7 @@ export const RootApplicationStyle = styled.div`
         bottom: 0;
         box-shadow:
           0 0 0 8px #18181C,
-          0 0 0 24px rgba(72, 119, 255, 0.7);
+          0 0 0 24px rgba(72, 119, 255, 0.3);
         transform: scale(${SCALE_PERCENTAGE});
         transform-origin: 0 0;
 
@@ -104,23 +129,23 @@ export const RootApplicationStyle = styled.div`
 export const DockStyle = styled.div`
   ${transition()}
 
-  justify-content: center;
   bottom: 0;
   display: flex;
   height: 20px;
+  justify-content: center;
   position: fixed;
   width: 100%;
   z-index: 10;
 
-  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
-    :has(#${uuid}.minimized) {
-      &:hover {
-        border-bottom: 40px solid rgba(0, 0, 0, 0.5);
-        cursor: pointer;
-        height: 130px;
-      }
-    }
-  `)}
+  // ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+  //   :has(#${uuid}.minimized) {
+  //     &:hover {
+  //       border-bottom: 40px solid rgba(0, 0, 0, 0.5);
+  //       cursor: pointer;
+  //       height: 130px;
+  //     }
+  //   }
+  // `)}
 `;
 
 export const OverlayStyle = styled.div``;

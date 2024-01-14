@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
+import RefType from '@interfaces/RefType';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import dark from '@oracle/styles/themes/dark';
 import useAutoResizer, { DimensionDataType, RectType} from '@utils/useAutoResizer';
@@ -77,6 +78,43 @@ export default function useApplicationManager({
   const refRoots = useRef({});
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
+
+  function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
+    if (refExpansions?.current) {
+      let zIndexMax = 10;
+      let zIndexMin = 10;
+
+      const mapping = {};
+      const zIndexes = Object.entries(refExpansions?.current || {})?.forEach(([uuidApp, element]) => {
+        const zIndex = (element as RefType)?.current?.style?.zIndex;
+        if (zIndex > zIndexMax) {
+          zIndexMax = zIndex;
+        }
+        if (zIndex < zIndexMin) {
+          zIndexMin = zIndex;
+        }
+
+        mapping[uuidApp] = {
+          element,
+          zIndex,
+        }
+      });
+
+      Object.entries(mapping)?.forEach(([uuidApp, {
+        element,
+        zIndex,
+      }]: [ApplicationExpansionUUIDEnum, {
+        element: RefType;
+        zIndex: number;
+      }]) => {
+        if (uuidApp === uuid) {
+          element.current.style.zIndex = `${(zIndexMax - zIndexMin) + 11}`;
+        } else {
+          element.current.style.zIndex = `${(zIndex - zIndexMin) + 10}`;
+        }
+      });
+    }
+  }
 
   function onResizeCallback(
     uuid: ApplicationExpansionUUIDEnum,
@@ -175,11 +213,15 @@ export default function useApplicationManager({
     const refExpansion = refExpansions?.current?.[uuid];
     const refContainer = refContainers?.current?.[uuid];
 
-    if (!reverse && refExpansion?.current) {
-      refExpansion.current.style.bottom = null;
-      refExpansion.current.style.left = null;
-      refExpansion.current.style.right = null;
-      refExpansion.current.style.top = null;
+    if (refExpansion?.current) {
+      if (reverse) {
+        updateZIndex(uuid);
+      } else {
+        refExpansion.current.style.bottom = null;
+        refExpansion.current.style.left = null;
+        refExpansion.current.style.right = null;
+        refExpansion.current.style.top = null;
+      }
     }
     [refExpansion, refContainer].forEach((ref) => {
       if (ref?.current) {
@@ -273,7 +315,6 @@ export default function useApplicationManager({
     return (
       <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
         <DockStyle>
-          <div style={{ flex: 1 }} />
           {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
             if (!refContainers?.current) {
               refContainers.current = {};
@@ -290,7 +331,6 @@ export default function useApplicationManager({
               />
             );
           })}
-          <div style={{ flex: 1 }} />
         </DockStyle>
       </RootApplicationStyle>
     );
@@ -400,37 +440,9 @@ export default function useApplicationManager({
       });
     };
 
-    const onClickApplication = (uuid: ApplicationExpansionUUIDEnum) => {
-      if (refExpansions?.current) {
-        let zIndexMax = 10;
-        const mapping = {};
-        const zIndexes = Object.entries(refExpansions?.current || {})?.forEach(([uuid, element]) => {
-          const zIndex = element?.current?.style?.zIndex;
-          if (zIndex > zIndexMax) {
-            zIndexMax = zIndex;
-          }
-
-          mapping[uuid] = {
-            element,
-            zIndex,
-          }
-        });
-
-        const obj = mapping?.[uuid];
-        if (obj) {
-          const {
-            element,
-            zIndex,
-          } = obj;
-
-          element.current.style.zIndex = `${zIndexMax + 1}`;
-        }
-      }
-    };
-
     const expansion = (
       <ContainerStyle
-        onClick={() => onClickApplication(uuid)}
+        onClick={() => updateZIndex(uuid)}
         ref={ref}
         style={{
           display: 'none',
