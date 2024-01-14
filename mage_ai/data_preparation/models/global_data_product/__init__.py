@@ -75,7 +75,7 @@ class GlobalDataProduct:
 
         return self._object
 
-    def get_outputs(self, from_notebook: bool = False, global_vars: Dict = None) -> Dict:
+    def get_outputs(self, from_notebook: bool = False, global_vars: Dict = None, **kwargs) -> Dict:
         data = {}
 
         if not self.settings or len(self.settings) == 0:
