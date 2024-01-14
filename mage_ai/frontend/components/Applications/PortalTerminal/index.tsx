@@ -44,6 +44,7 @@ function PortalTerminal({
     widthBefore,
   } = useTripleLayout(ApplicationExpansionUUIDEnum.PortalTerminal, {
     hiddenAfter: true,
+    hiddenBefore: true,
   });
 
   return (

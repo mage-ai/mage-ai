@@ -10,6 +10,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Terminal from '@components/Terminal';
+import useContextMenu from '@utils/useContextMenu';
 import { CachedItemType } from './constants';
 import {
   KEY_CODE_K,
@@ -23,6 +24,7 @@ import { getItems, setItems } from './storage';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pushAtIndex } from '@utils/array';
 import { useFileTabs } from '@components/PipelineDetail/FileTabs';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -57,7 +59,7 @@ export default function useTerminal({
 
   const [items, setItemsState] = useState<CachedItemType[]>(null);
   const selectedItem: CachedItemType =
-    useMemo(() => items?.find(({ selected }) => selected) || items?.[0], [items]);
+    useMemo(() => items?.find(item => item?.selected) || items?.[0], [items]);
 
   const [command, setCommandState] = useState<{
     [uuid: string]: string;
@@ -139,8 +141,8 @@ export default function useTerminal({
     });
   }, []);
 
-  const updateItems = useCallback((items: CachedItemType[]) => {
-    const arr = (getItems() || [])?.map((item) => {
+  const updateItems = useCallback((items: CachedItemType[], replace: boolean = false) => {
+    const arr = replace ? items : (getItems() || [])?.map((item) => {
       let i = items?.find(({ uuid }) => uuid === item?.uuid);
       if (i) {
         i = {
@@ -154,15 +156,12 @@ export default function useTerminal({
     setItemsState(arr);
   }, []);
 
-  const addItem = useCallback((item: CachedItemType) => {
+  const addItem = useCallback((item: CachedItemType, idx: number) => {
     if (!item) {
       return;
     }
 
-    const values = [{
-      ...item,
-      selected: true,
-    }].concat(items?.map(i => ({ ...i, selected: false })));
+    const values = pushAtIndex(item, idx || 0, items?.map(i => ({ ...i, selected: false })));
     setItems(values, true);
     setItemsState(() => values);
   }, [items]);
@@ -195,10 +194,6 @@ export default function useTerminal({
         addItem(DEFAULT_ITEM);
       }
     }
-  }, []);
-
-  const onContextMenu = useCallback(() => {
-
   }, []);
 
   const {
@@ -234,32 +229,6 @@ export default function useTerminal({
   const setSelectedItemUUID = useCallback((uuidSelected: string) => {
     updateItems(items?.map(item => ({ ...item, selected: item?.uuid === uuidSelected })));
   }, [items, selectedItem]);
-
-  const {
-    tabs,
-  } = useFileTabs({
-    filePaths: items?.map(({ uuid }) => uuid),
-    isSelectedFilePath: (uuid: string, selected: string) => uuid === selected,
-    onClickTab: (uuid: string) => {
-      setSelectedItemUUID(uuid);
-    },
-    onClickTabClose: (uuid: string) => {
-      removeItem(uuid);
-    },
-    onContextMenu,
-    renderTabIcon: (uuid: string) => (
-      <TerminalIcon
-        {...MENU_ICON_PROPS}
-        muted={uuid !== selectedItem?.uuid}
-        success={uuid === selectedItem?.uuid}
-      />
-    ),
-    renderTabTitle: (uuid: string) => {
-      return uuid?.replace('_', ' ');
-    },
-    selectedFilePath: selectedItem?.uuid,
-    shouldDisableClose: (uuid: string) => uuid === UUID_MAIN,
-  });
 
   const stdoutSelected = useMemo(() => stdout?.[selectedItem?.uuid], [selectedItem, stdout]);
   const outputs: KernelOutputType[] = useMemo(() => {
@@ -381,15 +350,91 @@ export default function useTerminal({
     headerMenuGroups,
   ]);
 
+  const {
+    contextMenu,
+    hideContextMenu,
+    showContextMenu,
+  } = useContextMenu(`${uuidTerminalController}/tabs`);
+
+  const onContextMenu = useCallback((event: MouseEvent, uuid: string) => {
+    const menuItems = [
+      {
+        uuid: 'Close all tabs',
+        onClick: () => {
+          updateItems([DEFAULT_ITEM], true);
+          hideContextMenu();
+        },
+      },
+    ];
+
+    if (DEFAULT_ITEM?.uuid !== uuid) {
+      menuItems.unshift({
+        uuid: 'Close tab',
+        onClick: () => {
+          removeItem(uuid);
+          hideContextMenu();
+        },
+      });
+    }
+
+    menuItems.unshift({
+      uuid: 'Add tab',
+      onClick: () => {
+        addItem({
+          selected: true,
+          uuid: cleanName(randomNameGenerator()),
+        }, items?.findIndex(item => item?.uuid === uuid));
+        hideContextMenu();
+      },
+    });
+
+    showContextMenu(event, {
+      menuItems,
+    });
+  }, [
+    addItem,
+    hideContextMenu,
+    items,
+    removeItem,
+    showContextMenu,
+    updateItems,
+  ]);
+
+  const {
+    tabs,
+  } = useFileTabs({
+    filePaths: items?.map(item => item?.uuid),
+    isSelectedFilePath: (uuid: string, selected: string) => uuid === selected,
+    onClickTab: (uuid: string) => {
+      setSelectedItemUUID(uuid);
+    },
+    onClickTabClose: (uuid: string) => {
+      removeItem(uuid);
+    },
+    onContextMenu,
+    renderTabIcon: (uuid: string) => (
+      <TerminalIcon
+        {...MENU_ICON_PROPS}
+        muted={uuid !== selectedItem?.uuid}
+        success={uuid === selectedItem?.uuid}
+      />
+    ),
+    renderTabTitle: (uuid: string) => {
+      return uuid?.replace('_', ' ');
+    },
+    selectedFilePath: selectedItem?.uuid,
+    shouldDisableClose: (uuid: string) => uuid === UUID_MAIN,
+  });
+
   const tabsMemo = useMemo(() => (
     <FileTabsScroller
       // @ts-ignore
       fileTabs={tabs}
-      selectedFilePathIndex={items?.findIndex(({ uuid }) => selectedItem?.uuid === uuid)}
+      selectedFilePathIndex={items?.findIndex(item => selectedItem?.uuid === item?.uuid)}
     >
-      {/*contextMenu*/}
+      {contextMenu}
     </FileTabsScroller>
-  ), [items, selectedItem, tabs]);
+  ), [contextMenu, items, selectedItem, tabs]);
 
   const menuTabsCombined = useMemo(() => (
     <div

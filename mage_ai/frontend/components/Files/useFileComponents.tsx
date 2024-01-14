@@ -818,12 +818,14 @@ function useFileComponents({
 
       {
         uuid: 'Close all tabs',
-        onClick: () => openFilePaths?.forEach((fp) => {
-          if (!filesTouched?.[fp]) {
-            removeOpenFilePaths([fp]);
-          }
+        onClick: () => {
+          openFilePaths?.forEach((fp) => {
+            if (!filesTouched?.[fp]) {
+              removeOpenFilePaths([fp]);
+            }
+          });
           hideContextMenuFileTabs();
-        }),
+        },
       },
       {
         uuid: 'Close all other tabs',
