@@ -39,12 +39,13 @@ export const DATA_TYPE_TEXTLIKE = [
 ];
 
 export enum MsgType {
-  DISPLAY_DATA = 'display_data',
-  EXECUTE_INPUT = 'execute_input',
-  EXECUTE_RESULT = 'execute_result',
-  STATUS = 'status',
-  STREAM = 'stream',
+  ERROR = 'error',
   STREAM_PIPELINE = 'stream_pipeline',
+  STREAM = 'stream',
+  STATUS = 'status',
+  EXECUTE_RESULT = 'execute_result',
+  EXECUTE_INPUT = 'execute_input',
+  DISPLAY_DATA = 'display_data',
 }
 
 interface ExecutionMetadataType {

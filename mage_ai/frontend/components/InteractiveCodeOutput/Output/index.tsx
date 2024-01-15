@@ -87,9 +87,12 @@ function Output({
 
   const {
     code,
-    errors,
+    error: errorInit,
+    errors: errorsInit,
     results,
   } = outputByType;
+  const errors = useMemo(() => [...(errorInit || []), ...(errorsInit || [])], [errorInit, errorsInit]);
+
   const executeInputs = useMemo(() => outputByType?.[MsgType.EXECUTE_INPUT], [outputByType]);
   const executionState = useMemo(() => outputs?.[outputs?.length - 1]?.execution_state, [outputs]);
   const executionStatus = useMemo(() => {
@@ -231,6 +234,7 @@ function Output({
     tables,
     text,
   } = useOutputGroups({
+    errors,
     outputs: results,
   });
 
@@ -279,8 +283,8 @@ function Output({
         <Flex flex={1} flexDirection="column" alignItems="flex-end">
           <Text default monospace>
             {statusRecent && ExecutionStateEnum.IDLE !== executionState && (
-              <Text inline monospace muted>
-                Most recent update
+              <Text default inline monospace>
+                Most recent output at
               </Text>
             )} {statusRecent || '...'}
           </Text>

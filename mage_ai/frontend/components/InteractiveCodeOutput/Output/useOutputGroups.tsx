@@ -13,6 +13,7 @@ import useDataTable from './useDataTable';
 import { HTMLOutputStyle } from './index.style';
 import { TableDataType, prepareTableData } from './utils';
 import { isJsonString } from '@utils/string';
+import { isObject } from '@utils/hash';
 
 export type ElementWithType = {
   dataType: DataTypeEnum;
@@ -33,8 +34,10 @@ export type OutputGroupsType = {
 };
 
 export default function useOutputGroups({
+  errors,
   outputs,
 }: {
+  errors: KernelOutputType[];
   outputs: KernelOutputType[];
 }): OutputGroupsType {
   return useMemo(() => {
@@ -43,6 +46,33 @@ export default function useOutputGroups({
     const json = [];
     const tables = [];
     const text = [];
+
+    errors?.forEach((output) => {
+      const {
+        content,
+      } = output;
+
+      const textData = [
+        content?.ename,
+        content?.evalue,
+        ...content?.traceback,
+      ].map((t) => ({
+        dataType: DataTypeEnum.TEXT,
+        element: (
+          <Text key={t} monospace preWrap>
+            {t?.length >= 1 && <Ansi>{t}</Ansi>}
+            {!t?.length && <>&nbsp;</>}
+          </Text>
+        ),
+      }));
+
+      if (textData?.length >= 1) {
+        text.push({
+          elementsWithType: textData,
+          output,
+        });
+      }
+    });
 
     outputs?.forEach((output) => {
       const {
@@ -62,18 +92,21 @@ export default function useOutputGroups({
         let dataJSON;
 
         if (isJsonString(data)) {
-          dataJSON = JSON.parse(data);
+          const temp = JSON.parse(data);
+          if (isObject(temp)) {
+            dataJSON = temp;
 
-          const {
-            data: dataDisplay,
-            type: typeDisplay,
-          } = dataJSON;
+            const {
+              data: dataDisplay,
+              type: typeDisplay,
+            } = dataJSON;
 
-          if (DataTypeEnum.TABLE === typeDisplay) {
-            tablesData.push({
-              dataType: DataTypeEnum.TABLE,
-              element: useDataTable(prepareTableData(dataDisplay)),
-            });
+            if (DataTypeEnum.TABLE === typeDisplay) {
+              tablesData.push({
+                dataType: DataTypeEnum.TABLE,
+                element: useDataTable(prepareTableData(dataDisplay)),
+              });
+            }
           }
         }
 
@@ -89,7 +122,7 @@ export default function useOutputGroups({
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           if (dataJSON) {
             jsonData.push({
-              dataType: DataTypeEnum.JSON,
+              dataType: DataTypeEnum.TEXT,
               element: (
                 <Text monospace preWrap>
                   <Ansi>

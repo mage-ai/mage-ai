@@ -24,7 +24,6 @@ function keyInMapping(key, keyMapping) {
 }
 
 function keyInHistory(key, keyHistory) {
-  console.log('alias', key ,getKeyAliases(key))
   return getKeyAliases(key)?.some(key => keyHistory?.includes(key));
 }
 

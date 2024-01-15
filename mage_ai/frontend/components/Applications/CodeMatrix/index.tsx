@@ -18,7 +18,7 @@ import useTripleLayout from '@components/TripleLayout/useTripleLayout';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
-import { DISPLAY_LABEL_MAPPING } from '@interfaces/WebSocketType';
+import { DISPLAY_LABEL_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
 import { PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -39,17 +39,27 @@ function CodeMatrix({
   };
 }) {
   const contentRef = useRef(null);
+  const onOpenCallbackRef= useRef(null);
   const sendMessageRef = useRef(null);
 
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
-  const [open, setOpen] = useState(false);
+  const [openState, setOpen] = useState(false);
   const [pause, setPause] = useState(false);
   const [ready, setReady] = useState(false);
   const [shouldConnect, setShouldConnect] = useState(false);
 
   const shouldReconnect = useCallback(() => {
-    return open && !pause && ready && shouldConnect;
-  }, [open, pause, ready, shouldConnect]);
+    return openState && !pause && ready && shouldConnect;
+  }, [openState, pause, ready, shouldConnect]);
+
+  const onOpen = useCallback((value: boolean) => {
+    setOpen(value);
+
+    if (value && !onOpenCallbackRef?.current) {
+      onOpenCallbackRef?.current?.();
+      onOpenCallbackRef.current = null;
+    }
+  }, []);
 
   useApplicationBase(props);
   const {
@@ -86,13 +96,20 @@ function CodeMatrix({
     sendMessage,
     shell,
   } = useInteractiveCodeOutput({
-    messagesDefault: getItems(),
+    getDefaultMessages: () => getItems(),
     onMessage,
-    onOpen: setOpen,
+    onOpen,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
   });
+
+  const open = useMemo(() => openState && WebSocketStateEnum.OPEN === connectionState, [
+    connectionState,
+    openState,
+  ]);
+
+  console.log('connectionState', connectionState)
 
   const shortcuts = useMemo(() => {
     return [
@@ -171,33 +188,6 @@ function CodeMatrix({
           menuGroups={menuGroups}
         />
       </Flex>
-
-      <Flex alignItems="center">
-        <Tooltip
-          appearBefore
-          block
-          label={`WebSocket readiness state: ${DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}`}
-          size={null}
-          visibleDelay={300}
-          widthFitContent
-        >
-          <Button
-            iconOnly
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => setShouldConnect(prev => !prev)}
-          >
-            <PowerOnOffButton
-              danger={!(open && ready && shouldConnect)}
-              size={2 * UNIT}
-              success={open && ready && shouldConnect}
-            />
-          </Button>
-        </Tooltip>
-      </Flex>
-
-      <Spacing mr={1} />
     </FlexContainer>
   ), [
     connectionState,
@@ -216,7 +206,6 @@ function CodeMatrix({
   }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
 
   registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
-    console.log(keyMapping, keyHistory)
 
     // if (keyMapping[KEY_CODE_META]) {
     //   console.log('Pausing event');
@@ -228,9 +217,18 @@ function CodeMatrix({
       lookback: 2,
     })) {
       console.log('Running code from CodeMatrix keyboard shortcuts.');
-      sendMessage({
-        message: contentRef.current,
-      });
+      if (shouldConnect) {
+        sendMessage({
+          message: contentRef.current,
+        });
+      } else {
+        onOpenCallbackRef.current = () => {
+          sendMessage({
+            message: contentRef.current,
+          });
+        };
+        setShouldConnect(true);
+      }
     }
   }, []);
 
@@ -239,12 +237,61 @@ function CodeMatrix({
       <TripleLayout
         after={(
           <div>
+            {(!shouldConnect || !open) && (
+              <Text default monospace>
+                WebSocket readiness state: <Text active inline monospace>
+                  {DISPLAY_LABEL_MAPPING[connectionState]}
+                </Text>
+              </Text>
+            )}
+
             {output}
             {shell}
           </div>
         )}
         afterCombinedWithMain
         afterDividerContrast
+        afterHeader={(
+          <Flex alignItems="center">
+            {!shouldConnect && (
+              <Text monospace warning>
+                Turn on the WebSocket connection before coding
+              </Text>
+            )}
+            {shouldConnect && !open && (
+              <Text monospace warning>
+                WebSocket connection isn’t open yet
+              </Text>
+            )}
+
+            <Spacing mr={2} />
+
+            <Tooltip
+              appearBefore
+              block
+              label={`WebSocket readiness state: ${DISPLAY_LABEL_MAPPING[connectionState]}`}
+              size={null}
+              visibleDelay={300}
+              widthFitContent
+            >
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => setShouldConnect(prev => !prev)}
+              >
+                <PowerOnOffButton
+                  danger={!(open && ready && shouldConnect)}
+                  size={2 * UNIT}
+                  success={open && ready && shouldConnect}
+                />
+              </Button>
+            </Tooltip>
+
+            <Spacing mr={1} />
+          </Flex>
+        )}
         afterHeightOffset={0}
         // afterHidden={hiddenAfter}
         afterMousedownActive={mousedownActiveAfter}

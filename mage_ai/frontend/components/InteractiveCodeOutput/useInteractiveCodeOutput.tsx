@@ -3,7 +3,7 @@ import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
-import { useCallback, useContext, useMemo, useRef } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
 import KernelOutputType from '@interfaces/KernelOutputType';
@@ -20,7 +20,7 @@ import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 
 export default function useInteractiveCodeOutput({
   code,
-  messagesDefault,
+  getDefaultMessages,
   onMessage,
   onOpen,
   shouldConnect = false,
@@ -28,7 +28,7 @@ export default function useInteractiveCodeOutput({
   uuid,
 }: {
   code?: string;
-  messagesDefault?: KernelOutputType[];
+  getDefaultMessages?: () => KernelOutputType[];
   onMessage?: (message: KernelOutputType) => void;
   onOpen?: (value: boolean) => void;
   shouldConnect?: boolean;
@@ -54,14 +54,14 @@ export default function useInteractiveCodeOutput({
     token,
   ]);
 
-  const messagesRef = useRef(messagesDefault || []);
+  const messagesRef = useRef([]);
   const outputContainerRef = useRef(null);
   const outputContentRef = useRef(null);
   const outputItemsRef = useRef([]);
   const outputRootRef = useRef(null);
   const outputRootUUID = useRef(`${uuid}-output-root`);
 
-  function renderOutputs(messages: KernelOutputType[]) {
+  function renderOutputs(outputs: KernelOutputType[]) {
     if (!outputRootRef?.current) {
       const domNode = document.getElementById(outputRootUUID.current);
       if (domNode) {
@@ -78,17 +78,7 @@ export default function useInteractiveCodeOutput({
     let parentID = null;
     let outputsByParentID = [];
 
-    messages?.forEach((message: KernelOutputType) => {
-      const output = parseRawDataFromMessage(String(message?.data)) || {
-        data: null,
-        data_type: null,
-        execution_metadata: null,
-        msg_id: null,
-        msg_type: null,
-        parent_message: null,
-        uuid: null,
-      };
-
+    outputs?.forEach((output: KernelOutputType) => {
       const {
         data,
         data_type: dataType,
@@ -100,7 +90,15 @@ export default function useInteractiveCodeOutput({
         msg_type: msgType,
         parent_message: parentMessage,
         uuid: msgUUID,
-      } = output;
+      } = output || {
+        data: null,
+        data_type: null,
+        execution_metadata: null,
+        msg_id: null,
+        msg_type: null,
+        parent_message: null,
+        uuid: null,
+      };
       const {
         date,
         session,
@@ -154,6 +152,17 @@ export default function useInteractiveCodeOutput({
     );
   }
 
+  useEffect(() => {
+    if (getDefaultMessages) {
+      setTimeout(() => {
+        messagesRef.current = getDefaultMessages?.();
+        if (messagesRef.current) {
+          renderOutputs(messagesRef.current);
+        }
+      }, 1);
+    }
+  }, []);
+
   const {
     // lastMessage,
     readyState,
@@ -165,14 +174,23 @@ export default function useInteractiveCodeOutput({
       }
     },
     onOpen: () => onOpen(true),
-    onMessage: (message: KernelOutputType) => {
-      messagesRef.current.push(message);
+    onMessage: (messageEvent: {
+      data: string;
+    }) => {
+      console.log(messageEvent);
+      const {
+        data,
+      } = messageEvent;
+      if (data) {
+        const output = parseRawDataFromMessage(data);
+        messagesRef.current.push(output);
 
-      if (onMessage && message?.data) {
-        onMessage?.(parseRawDataFromMessage(String(message?.data)));
+        if (onMessage) {
+          onMessage?.(output);
+        }
+
+        renderOutputs(messagesRef?.current);
       }
-
-      renderOutputs(messagesRef?.current);
     },
   }, shouldConnect && !!uuid);
 
@@ -203,6 +221,8 @@ export default function useInteractiveCodeOutput({
       />
     );
   }, []);
+
+  console.log(readyState)
 
   return {
     connectionState: READY_STATE_MAPPING[readyState],

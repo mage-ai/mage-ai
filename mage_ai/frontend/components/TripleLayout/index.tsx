@@ -376,6 +376,8 @@ function TripleLayout({
               fullWidth
               justifyContent={afterCombinedWithMain ? 'flex-end' : null}
             >
+              {afterCombinedWithMain && !afterHidden && afterHeader}
+
               <Flex>
                 {!afterCombinedWithMain && <Spacing pl={afterHidden ? 1 : 2} />}
                 <Button
@@ -412,7 +414,7 @@ function TripleLayout({
                 {afterCombinedWithMain && <Spacing pr={afterHidden ? 1 : 2} />}
               </Flex>
 
-              {!afterHidden && afterHeader}
+              {!afterCombinedWithMain && !afterHidden && afterHeader}
             </FlexContainer>
 >>>>>>> d9e3000fd ([td] Code Matrix application)
           </AsideHeaderStyle>

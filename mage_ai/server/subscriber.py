@@ -19,11 +19,6 @@ MSG_ID_REGEX = re.compile(r'_[\d]+_[\d]+$')
 def contains_msg_id(mapping: Dict[str, str], msg_id: str) -> str:
     # msg_id = 'f59e1913-80fc7db2b112bfbdc12e21b3_1_1'
     msg_ids = [MSG_ID_REGEX.sub('', m) for m in mapping.keys()]
-    print(
-        MSG_ID_REGEX.sub('', msg_id) in msg_ids,
-        MSG_ID_REGEX.sub('', msg_id),
-        msg_ids,
-    )
     return MSG_ID_REGEX.sub('', msg_id) in msg_ids
 
 
