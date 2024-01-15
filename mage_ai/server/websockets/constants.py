@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Channel(str, Enum):
-    TERMINAL = 'TERMINAL'
+    CODE = 'CODE'
 
 
 class ExecutionState(str, Enum):
