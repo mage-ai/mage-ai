@@ -23,11 +23,11 @@ def contains_msg_id(mapping: Dict[str, str], msg_id: str) -> str:
 
 
 def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]]):
-    now = datetime.utcnow()
-    owners = []
-
+    # Every variable must be in the while loop or else it accumulates.
     while True:
         try:
+            now = datetime.utcnow()
+            owners = []
             client = get_active_kernel_client()
             message = client.get_iopub_msg(timeout=1)
             msg_id = message['parent_header']['msg_id']
@@ -43,7 +43,9 @@ def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]])
             for subscriber, callback, on_failure in owners:
                 if message.get('content'):
                     if callback:
-                        callback(message)
+                        callback(merge_dict(message, dict(
+                            type='orphan',
+                        )))
                     else:
                         logger.warn(f'[{now}] No callback for message: {message}')
         except Exception as err:

@@ -87,7 +87,7 @@ class ParentMessage(BaseDataClass):
     msg_id: str = None
     msg_type: str = None  # execute_input, execute_result
     token: str = None
-    type: str = None
+    type: str = None  # orphan (msg_id doesn’t belong to any subscriber)
     uuid: str = None
 
     def __post_init__(self):

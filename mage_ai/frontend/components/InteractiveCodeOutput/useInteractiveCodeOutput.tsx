@@ -64,24 +64,79 @@ export default function useInteractiveCodeOutput({
       }
 
       if (outputRootRef?.current) {
-        const {
-          msg_id: msgID,
-          uuid: msgUUID,
-        } = parseRawDataFromMessage(String(message?.data)) || {};
+        const outputsGrouped = [];
 
-        const output = (
-          <Output
-            key={msgUUID || `${msgID}-${message?.timeStamp}`}
-            message={message}
-          />
-        );
+        let parentID = null;
+        let outputsByParentID = [];
 
-        outputItemsRef.current.push(output);
-        outputRootRef?.current?.render(
-          <>
-            {outputItemsRef?.current?.map(el => el)}
-          </>,
-        );
+        messagesRef?.current?.forEach((message: KernelOutputType) => {
+          const output = parseRawDataFromMessage(String(message?.data)) || {
+            data: null,
+            data_type: null,
+            execution_metadata: null,
+            msg_id: null,
+            msg_type: null,
+            parent_message: null,
+            uuid: null,
+          };
+
+          const {
+            data,
+            data_type: dataType,
+            execution_metadata: executionMetadata,
+            // The code that was executed; e.g. 1 + 1
+            message: messageOutput,
+            msg_id: msgID,
+            // status, execute_input, execute_result
+            msg_type: msgType,
+            parent_message: parentMessage,
+            uuid: msgUUID,
+          } = output;
+          const {
+            date,
+            session,
+          } = executionMetadata || {
+            date: null,
+            session: null,
+          };
+
+          if (parentID === null && parentMessage?.msg_id) {
+            parentID = parentMessage?.msg_id;
+          }
+
+          if (parentID) {
+            if (parentID === parentMessage?.msg_id) {
+              outputsByParentID.push(output);
+            } else {
+              outputsGrouped.push(
+                <Output
+                  outputs={outputsByParentID}
+                />
+              );
+              console.log('outputsByParentID', outputsByParentID)
+              outputsByParentID = [output];
+              parentID = parentMessage?.msg_id;
+            }
+          }
+        });
+
+        // outputItemsRef.current.push(
+        //   <Output
+        //     key={msgUUID || `${msgID}-${message?.timeStamp}`}
+        //     message={message}
+        //   />
+        // );
+
+        // outputItemsRef?.current?.forEach(() => {
+
+        // });
+
+
+        // outputRootRef?.current?.render(
+        //   <>
+        //     {outputs}
+        //   </>,
+        // );
       }
 
       if (onMessage) {
