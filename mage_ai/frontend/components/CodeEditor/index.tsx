@@ -171,7 +171,6 @@ function CodeEditor({
 
     const shortcuts = [];
 
-    console.log(shortcutsProp)
     shortcutsProp?.forEach((func) => {
       shortcuts.push(func(monaco, editor));
     });

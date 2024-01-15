@@ -369,7 +369,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 `;
 
-const TextStyle = styled.p<TextProps>`
+export const TextStyle = styled.p<TextProps>`
   ${SHARED_STYLES}
 `;
 

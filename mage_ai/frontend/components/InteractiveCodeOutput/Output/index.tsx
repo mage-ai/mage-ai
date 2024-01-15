@@ -260,14 +260,13 @@ function Output({
 
       <FlexContainer alignItems="flex-start" justifyContent="space-between">
         <Flex flex={1} flexDirection="column">
-          <Text default monospace small>
+          <Text default monospace>
             {statusFirst}
           </Text>
           <Text
             danger={ExecutionStatusEnum.FAILED === executionStatus}
             default={ExecutionStatusEnum.CANCELLED === executionStatus}
             monospace
-            small
             success={ExecutionStatusEnum.SUCCESS === executionStatus}
             warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
           >
@@ -278,14 +277,14 @@ function Output({
         </Flex>
 
         <Flex flex={1} flexDirection="column" alignItems="flex-end">
-          <Text default monospace small>
+          <Text default monospace>
             {statusRecent && ExecutionStateEnum.IDLE !== executionState && (
-              <Text inline monospace muted small>
+              <Text inline monospace muted>
                 Most recent update
               </Text>
             )} {statusRecent || '...'}
           </Text>
-          <Text default monospace ref={timerTextRef} small />
+          <Text default monospace ref={timerTextRef} />
         </Flex>
       </FlexContainer>
 

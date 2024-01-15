@@ -25,6 +25,7 @@ export const EXECUTION_STATUS_DISPLAY_LABEL_MAPPING = {
 export enum DataTypeEnum {
   IMAGE_PNG = 'image/png',
   PROGRESS = 'progress',
+  STDOUT = 'stdout',
   TABLE = 'table',
   TEXT = 'text',
   TEXT_HTML = 'text/html',
@@ -32,6 +33,7 @@ export enum DataTypeEnum {
 }
 
 export const DATA_TYPE_TEXTLIKE = [
+  DataTypeEnum.STDOUT,
   DataTypeEnum.TEXT,
   DataTypeEnum.TEXT_PLAIN,
 ];

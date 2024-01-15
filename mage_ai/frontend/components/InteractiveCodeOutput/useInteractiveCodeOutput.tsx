@@ -20,6 +20,7 @@ import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 
 export default function useInteractiveCodeOutput({
   code,
+  messagesDefault,
   onMessage,
   onOpen,
   shouldConnect = false,
@@ -27,6 +28,7 @@ export default function useInteractiveCodeOutput({
   uuid,
 }: {
   code?: string;
+  messagesDefault?: KernelOutputType[];
   onMessage?: (message: KernelOutputType) => void;
   onOpen?: (value: boolean) => void;
   shouldConnect?: boolean;
@@ -52,12 +54,105 @@ export default function useInteractiveCodeOutput({
     token,
   ]);
 
-  const messagesRef = useRef([]);
+  const messagesRef = useRef(messagesDefault || []);
   const outputContainerRef = useRef(null);
   const outputContentRef = useRef(null);
   const outputItemsRef = useRef([]);
   const outputRootRef = useRef(null);
   const outputRootUUID = useRef(`${uuid}-output-root`);
+
+  function renderOutputs(messages: KernelOutputType[]) {
+    if (!outputRootRef?.current) {
+      const domNode = document.getElementById(outputRootUUID.current);
+      if (domNode) {
+        outputRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (!outputRootRef?.current) {
+      return;
+    }
+
+    const outputsGrouped = [];
+
+    let parentID = null;
+    let outputsByParentID = [];
+
+    messages?.forEach((message: KernelOutputType) => {
+      const output = parseRawDataFromMessage(String(message?.data)) || {
+        data: null,
+        data_type: null,
+        execution_metadata: null,
+        msg_id: null,
+        msg_type: null,
+        parent_message: null,
+        uuid: null,
+      };
+
+      const {
+        data,
+        data_type: dataType,
+        execution_metadata: executionMetadata,
+        // The code that was executed; e.g. 1 + 1
+        message: messageOutput,
+        msg_id: msgID,
+        // status, execute_input, execute_result
+        msg_type: msgType,
+        parent_message: parentMessage,
+        uuid: msgUUID,
+      } = output;
+      const {
+        date,
+        session,
+      } = executionMetadata || {
+        date: null,
+        session: null,
+      };
+
+      const uuidUse = parentMessage?.msg_id || msgUUID;
+
+      if (parentID === null && uuidUse) {
+        parentID = uuidUse;
+      }
+
+      if (parentID) {
+        if (parentID === uuidUse) {
+          outputsByParentID.push(output);
+        } else {
+          outputsGrouped.push(
+            <Output
+              key={parentID}
+              outputs={outputsByParentID}
+            />
+          );
+          // console.log('outputsByParentID', outputsByParentID)
+          outputsByParentID = [output];
+          parentID = uuidUse;
+        }
+      }
+    });
+
+    if (outputsByParentID?.length >= 1) {
+      outputsGrouped.push(
+        <Output
+          key={parentID}
+          outputs={outputsByParentID}
+        />
+      );
+    }
+
+    outputRootRef?.current?.render(
+      <KeyboardContext.Provider value={keyboardContext}>
+        <ThemeProvider theme={themeContext}>
+          <ModalProvider>
+            <ErrorProvider>
+              {outputsGrouped}
+            </ErrorProvider>
+          </ModalProvider>
+        </ThemeProvider>
+      </KeyboardContext.Provider>,
+    );
+  }
 
   const {
     // lastMessage,
@@ -73,98 +168,11 @@ export default function useInteractiveCodeOutput({
     onMessage: (message: KernelOutputType) => {
       messagesRef.current.push(message);
 
-      if (!outputRootRef?.current) {
-        const domNode = document.getElementById(outputRootUUID.current);
-        if (domNode) {
-          outputRootRef.current = createRoot(domNode);
-        }
+      if (onMessage && message?.data) {
+        onMessage?.(parseRawDataFromMessage(String(message?.data)));
       }
 
-      if (outputRootRef?.current) {
-        const outputsGrouped = [];
-
-        let parentID = null;
-        let outputsByParentID = [];
-
-        messagesRef?.current?.forEach((message: KernelOutputType) => {
-          const output = parseRawDataFromMessage(String(message?.data)) || {
-            data: null,
-            data_type: null,
-            execution_metadata: null,
-            msg_id: null,
-            msg_type: null,
-            parent_message: null,
-            uuid: null,
-          };
-
-          const {
-            data,
-            data_type: dataType,
-            execution_metadata: executionMetadata,
-            // The code that was executed; e.g. 1 + 1
-            message: messageOutput,
-            msg_id: msgID,
-            // status, execute_input, execute_result
-            msg_type: msgType,
-            parent_message: parentMessage,
-            uuid: msgUUID,
-          } = output;
-          const {
-            date,
-            session,
-          } = executionMetadata || {
-            date: null,
-            session: null,
-          };
-
-          const uuidUse = parentMessage?.msg_id || msgUUID;
-
-          if (parentID === null && uuidUse) {
-            parentID = uuidUse;
-          }
-
-          if (parentID) {
-            if (parentID === uuidUse) {
-              outputsByParentID.push(output);
-            } else {
-              outputsGrouped.push(
-                <Output
-                  key={parentID}
-                  outputs={outputsByParentID}
-                />
-              );
-              // console.log('outputsByParentID', outputsByParentID)
-              outputsByParentID = [output];
-              parentID = uuidUse;
-            }
-          }
-        });
-
-        if (outputsByParentID?.length >= 1) {
-          outputsGrouped.push(
-            <Output
-              key={parentID}
-              outputs={outputsByParentID}
-            />
-          );
-        }
-
-        outputRootRef?.current?.render(
-          <KeyboardContext.Provider value={keyboardContext}>
-            <ThemeProvider theme={themeContext}>
-              <ModalProvider>
-                <ErrorProvider>
-                  {outputsGrouped}
-                </ErrorProvider>
-              </ModalProvider>
-            </ThemeProvider>
-          </KeyboardContext.Provider>,
-        );
-      }
-
-      if (onMessage) {
-        onMessage?.(message);
-      }
+      renderOutputs(messagesRef?.current);
     },
   }, shouldConnect && !!uuid);
 

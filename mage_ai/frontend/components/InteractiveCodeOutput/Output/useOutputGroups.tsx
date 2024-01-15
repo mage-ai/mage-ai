@@ -10,7 +10,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import Text from '@oracle/elements/Text';
 import useDataTable from './useDataTable';
-import { HTMLOutputStyle } from '@components/CodeBlock/CodeOutput/index.style';
+import { HTMLOutputStyle } from './index.style';
 import { TableDataType, prepareTableData } from './utils';
 import { isJsonString } from '@utils/string';
 

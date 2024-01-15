@@ -7,8 +7,10 @@ import FileEditor from '@components/FileEditor';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useInteractiveCodeOutput from '@components/InteractiveCodeOutput/useInteractiveCodeOutput';
@@ -22,6 +24,7 @@ import { PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCode, setCode } from './utils';
+import { getItems, setItems } from './storage';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -73,7 +76,8 @@ function CodeMatrix({
     hiddenBefore: true,
   });
 
-  const onMessage = useCallback((message: string) => {
+  const onMessage = useCallback((message: KernelOutputType) => {
+    setItems([message], false);
   }, []);
 
   const {
@@ -82,6 +86,7 @@ function CodeMatrix({
     sendMessage,
     shell,
   } = useInteractiveCodeOutput({
+    messagesDefault: getItems(),
     onMessage,
     onOpen: setOpen,
     shouldConnect,
@@ -168,25 +173,28 @@ function CodeMatrix({
       </Flex>
 
       <Flex alignItems="center">
-        <Text default monospace small>
-          {DISPLAY_LABEL_MAPPING[connectionState]}
-        </Text>
-
-        <Spacing mr={1} />
-
-        <Button
-          iconOnly
-          noBackground
-          noBorder
-          noPadding
-          onClick={() => setShouldConnect(prev => !prev)}
+        <Tooltip
+          appearBefore
+          block
+          label={`WebSocket readiness state: ${DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}`}
+          size={null}
+          visibleDelay={300}
+          widthFitContent
         >
-          <PowerOnOffButton
-            danger={!(open && ready && shouldConnect)}
-            size={2 * UNIT}
-            success={open && ready && shouldConnect}
-          />
-        </Button>
+          <Button
+            iconOnly
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => setShouldConnect(prev => !prev)}
+          >
+            <PowerOnOffButton
+              danger={!(open && ready && shouldConnect)}
+              size={2 * UNIT}
+              success={open && ready && shouldConnect}
+            />
+          </Button>
+        </Tooltip>
       </Flex>
 
       <Spacing mr={1} />
@@ -208,10 +216,6 @@ function CodeMatrix({
   }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
 
   registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
-    setPause(false);
-  }, []);
-
-  registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
     console.log(keyMapping, keyHistory)
 
     // if (keyMapping[KEY_CODE_META]) {
@@ -220,7 +224,9 @@ function CodeMatrix({
     //   setPause(true);
     // }
 
-    if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory)) {
+    if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory, {
+      lookback: 2,
+    })) {
       console.log('Running code from CodeMatrix keyboard shortcuts.');
       sendMessage({
         message: contentRef.current,

@@ -1,1 +1,2 @@
 export const LOCAL_STORAGE_CODE_MATRIX_CONTENT = 'code_matrix_content_DONT_STORE_SENSITIVE_CODE';
+export const LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT = 'code_matrix_data_output_DONT_STORE_SENSITIVE_CODE';
