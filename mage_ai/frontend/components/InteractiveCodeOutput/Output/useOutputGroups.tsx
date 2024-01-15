@@ -9,14 +9,14 @@ import KernelOutputType, {
   MsgType,
 } from '@interfaces/KernelOutputType';
 import Text from '@oracle/elements/Text';
+import useDataTable from './useDataTable';
 import { HTMLOutputStyle } from '@components/CodeBlock/CodeOutput/index.style';
 import { TableDataType, prepareTableData } from './utils';
 import { isJsonString } from '@utils/string';
 
 export type OutputGroupType = {
-  data?: TableDataType[];
   elements: JSX.Element[];
-  outputs: KernelOutputType[];
+  output: KernelOutputType[];
 };
 
 export type OutputGroupsType = {
@@ -65,7 +65,7 @@ export default function useOutputGroups({
           } = dataJSON;
 
           if (DataTypeEnum.TABLE === typeDisplay) {
-            tablesData.push(prepareTableData(dataDisplay));
+            tablesData.push(useDataTable(prepareTableData(dataDisplay)));
           }
         }
 
@@ -126,7 +126,7 @@ export default function useOutputGroups({
       }
       if (tablesData?.length >= 1) {
         tables.push({
-          data: tablesData,
+          elements: tablesData,
           output,
         });
       }

@@ -1,6 +1,7 @@
 import tzMoment from 'moment-timezone';
 import { useEffect, useMemo, useRef } from 'react';
 
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Loading from '@oracle/components/Loading';
@@ -12,6 +13,7 @@ import KernelOutputType, {
   ExecutionStatusEnum,
   MsgType,
 } from '@interfaces/KernelOutputType';
+import OutputDataCombined from './OutputDataCombined';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useOutputGroups from './useOutputGroups';
@@ -166,24 +168,6 @@ function Output({
   */
 
   const {
-    html,
-    images,
-    json,
-    tables,
-    text,
-  } = useOutputGroups({
-    outputs: results,
-  });
-
-  console.log(
-    html,
-    images,
-    json,
-    tables,
-    text,
-  );
-
-  const {
     statusFirst,
     statusRecent,
   } = useMemo(() => {
@@ -240,12 +224,31 @@ function Output({
     };
   }, [displayLocalTimezone, outputByType, outputs]);
 
-  console.log(
-    executionState,
-    ExecutionStateEnum.IDLE === executionState,
-    executionStatus,
-    EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus],
-  );
+  const {
+    html,
+    images,
+    json,
+    tables,
+    text,
+  } = useOutputGroups({
+    outputs: results,
+  });
+
+  const outputDataMemo = useMemo(() => (
+    <OutputDataCombined
+      html={html}
+      images={images}
+      json={json}
+      tables={tables}
+      text={text}
+    />
+  ), [
+    html,
+    images,
+    json,
+    tables,
+    text,
+  ]);
 
   return (
     <>
@@ -285,6 +288,8 @@ function Output({
           <Text default monospace ref={timerTextRef} small />
         </Flex>
       </FlexContainer>
+
+      {outputDataMemo}
     </>
   );
 }
