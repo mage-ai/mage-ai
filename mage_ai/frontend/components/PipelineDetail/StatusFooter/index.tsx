@@ -28,6 +28,7 @@ import { roundNumber } from '@utils/string';
 const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
+  children?: JSX.Element;
   inline?: boolean;
   pipelineType?: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
@@ -39,6 +40,7 @@ type StatusFooterProps = {
 };
 
 function StatusFooter({
+  children,
   inline,
   pipelineType,
   pipelineContentTouched,
@@ -156,6 +158,8 @@ function StatusFooter({
               </FlexContainer>
             </>
           )}
+
+          {children}
 
           {saveStatus && (
             <Tooltip

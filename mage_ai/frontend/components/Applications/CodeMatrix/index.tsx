@@ -1,15 +1,20 @@
 import tzMoment from 'moment-timezone';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useMonaco } from '@monaco-editor/react';
 
 import dark from '@oracle/styles/themes/dark';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components'
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Button from '@oracle/elements/Button';
+import FileTabsScroller from '@components/FileTabsScroller';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import FileEditor from '@components/FileEditor';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import { addKeyboardShortcut } from '@components/CodeEditor/keyboard_shortcuts';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -30,7 +35,7 @@ import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
 import { DISPLAY_LABEL_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
-import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
+import { KEY_CODE_ENTER, KEY_CODE_META, KEY_SYMBOL_ENTER, KEY_SYMBOL_M, KEY_SYMBOL_META } from '@utils/hooks/keyboardShortcuts/constants';
 import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon, PauseV2, Callback } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -40,6 +45,9 @@ import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
+import { selectKeys } from '@utils/hash';
+
+const CURRENT_EXECUTION_STATE_ID = 'CURRENT_EXECUTION_STATE_ID';
 
 function CodeMatrix({
   query,
@@ -57,12 +65,16 @@ function CodeMatrix({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
 
+  const editorRef = useRef(null);
+  const editorKeyMappingRef = useRef({});
+
   const outputBottomRef = useRef(null);
   const statusStateRootRef = useRef(null);
   const runButtonRootRef = useRef(null)
   const runButtonRef = useRef(null)
   const executionStateRef = useRef(null);
   const executionStatusRef = useRef(null);
+  const currentExecutionStateRootRef = useRef(null);
 
   const contentRef = useRef(null);
   const onOpenCallbackRef= useRef(null);
@@ -76,9 +88,56 @@ function CodeMatrix({
   const [ready, setReady] = useState(false);
   const [shouldConnect, setShouldConnect] = useState(false);
 
+  const monaco = useMonaco();
+
+  const onMountCallback = useCallback((editor) => {
+    setReady(true);
+    editorRef.current = editor;
+  }, [monaco]);
+
+  useEffect(() => {
+    if (monaco && ready) {
+      editorRef.current.onKeyDown((event) => {
+        editorKeyMappingRef.current = {
+          ...editorKeyMappingRef.current,
+          ...selectKeys(event, [
+            'altGraphKey',
+            'altKey',
+            'code',
+            'ctrlKey',
+            'keyCode',
+            'metaKey',
+            'shiftKey',
+          ]),
+        };
+      });
+
+      editorRef.current.addAction({
+        id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/run-code`,
+        label: 'Run code',
+        keybindingContext: null,
+        keybindings: [
+          // metaKey
+          // 3
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        ],
+        precondition: null,
+        run: (editor) => {
+          const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
+          const text = editor.getValue();
+          const message = highlightedText || text;
+
+          sendMessageRef?.current?.({
+            message,
+          });
+        },
+      });
+    }
+  }, [monaco, ready]);
+
   const shouldReconnect = useCallback(() => {
-    return openState && !pause && shouldConnect;
-  }, [openState, pause, shouldConnect]);
+    return true;
+  }, []);
 
   const onOpen = useCallback((value: boolean) => {
     setOpen(value);
@@ -136,11 +195,14 @@ function CodeMatrix({
     }
 
     setItems([output], false);
+
     executionStateRef.current = executionState;
     executionStatusRef.current = executionStatus;
+
+    renderStatusAndState(output);
   }, []);
 
-  function renderStatusAndState() {
+  function renderStatusAndState(output: KernelOutputType) {
     if (!statusStateRootRef?.current) {
       const domNode = document.getElementById('CodeMatrix-StatusState');
       if (domNode) {
@@ -148,19 +210,9 @@ function CodeMatrix({
       }
     }
 
-    if (!runButtonRootRef?.current) {
-      const domNode = document.getElementById('CodeMatrix-RunButton');
-      if (domNode) {
-        runButtonRootRef.current = createRoot(domNode);
-      }
-    }
-
     if (statusStateRootRef?.current) {
       statusStateRootRef?.current?.render(
         <div>
-          <Text default monospace xsmall>
-            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionStateRef?.current]}
-          </Text>
           <Text default monospace xsmall>
             Recent run status: <Text
               danger={ExecutionStatusEnum.FAILED === executionStatusRef?.current}
@@ -172,8 +224,25 @@ function CodeMatrix({
               warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatusRef?.current || ExecutionStatusEnum.CANCELLED === executionStatusRef?.current}
               xsmall
             >
-              {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatusRef?.current]?.toLowerCase()}
+              {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatusRef?.current]?.toUpperCase() || 'N/A'}
             </Text>
+          </Text>
+        </div>
+      );
+    }
+
+    if (!currentExecutionStateRootRef?.current) {
+      const domNode = document.getElementById(CURRENT_EXECUTION_STATE_ID);
+      if (domNode) {
+        currentExecutionStateRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (currentExecutionStateRootRef?.current) {
+      currentExecutionStateRootRef?.current?.render(
+        <div>
+          <Text default monospace xsmall>
+            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[output?.execution_state]}
           </Text>
         </div>
       );
@@ -188,13 +257,15 @@ function CodeMatrix({
     top?: boolean;
   }) {
     setTimeout(() => {
-      if (bottom) {
-        afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
-          afterInnerRef?.current?.getBoundingClientRect()?.height
-            + outputBottomRef?.current?.getBoundingClientRect()?.height
-        );
-      } else if (top) {
-        afterInnerRef.current.scrollTop = 0;
+      if (afterInnerRef?.current) {
+        if (bottom) {
+          afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
+            afterInnerRef?.current?.getBoundingClientRect()?.height
+              + outputBottomRef?.current?.getBoundingClientRect()?.height
+          );
+        } else if (top) {
+          afterInnerRef.current.scrollTop = 0;
+        }
       }
     }, 1);
   }
@@ -233,29 +304,6 @@ function CodeMatrix({
 
   const fileEditor = useMemo(() => {
     console.log('FILE EDITOR REDNER');
-    const shortcuts = [
-      (monaco, _editor) => {
-        return {
-          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/run-code`,
-          keybindingContext: null,
-          keybindings: [
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-          ],
-          label: 'Run code',
-          precondition: null,
-          run: (editor) => {
-            const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
-            const text = editor.getValue();
-            const message = highlightedText || text;
-
-            sendMessageRef?.current?.({
-              message,
-            });
-          },
-        };
-      },
-    ];
-
     return (
       <FileEditor
         active
@@ -273,14 +321,13 @@ function CodeMatrix({
           contentRef.current = content;
           setCode(language, content);
         }}
-        onMountCallback={() => {
-          setReady(true);
+        onMountCallback={(editor) => {
+          onMountCallback(editor);
         }}
         saveFile={() => false}
-        shortcuts={shortcuts}
       />
     );
-  }, [language]);
+  }, [language, onMountCallback]);
 
   const menuGroups = useMemo(() => {
     return [
@@ -363,6 +410,10 @@ function CodeMatrix({
           <Text default monospace xsmall ref={kernelStatusCheckResultsTextRef} />
         </Flex>
       </Flex>
+
+      <FlexContainer justifyContent="flex-end" id={CURRENT_EXECUTION_STATE_ID} />
+
+      <Spacing mr={1} />
     </FlexContainer>
   ), [
     connectionState,
@@ -372,40 +423,40 @@ function CodeMatrix({
     shouldConnect,
   ]);
 
-  const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
-  const { registerOnKeyDown, registerOnKeyUp, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
+  // const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
+  // const { registerOnKeyDown, registerOnKeyUp, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
 
-  useEffect(() => () => {
-    unregisterOnKeyDown(uuidKeyboard);
-    unregisterOnKeyUp(uuidKeyboard);
-  }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
+  // useEffect(() => () => {
+  //   unregisterOnKeyDown(uuidKeyboard);
+  //   unregisterOnKeyUp(uuidKeyboard);
+  // }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
 
-  registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
+  // registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
 
-    // if (keyMapping[KEY_CODE_META]) {
-    //   console.log('Pausing event');
-    //   event.preventDefault();
-    //   setPause(true);
-    // }
+  //   // if (keyMapping[KEY_CODE_META]) {
+  //   //   console.log('Pausing event');
+  //   //   event.preventDefault();
+  //   //   setPause(true);
+  //   // }
 
-    if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory, {
-      lookback: 2,
-    })) {
-      console.log('Running code from CodeMatrix keyboard shortcuts.');
-      if (shouldConnect) {
-        sendMessage({
-          message: contentRef.current,
-        });
-      } else {
-        onOpenCallbackRef.current = () => {
-          sendMessage({
-            message: contentRef.current,
-          });
-        };
-        setShouldConnect(true);
-      }
-    }
-  }, []);
+  //   if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory, {
+  //     lookback: 2,
+  //   })) {
+  //     console.log('Running code from CodeMatrix keyboard shortcuts.');
+  //     if (shouldConnect) {
+  //       sendMessage({
+  //         message: contentRef.current,
+  //       });
+  //     } else {
+  //       onOpenCallbackRef.current = () => {
+  //         sendMessage({
+  //           message: contentRef.current,
+  //         });
+  //       };
+  //       setShouldConnect(true);
+  //     }
+  //   }
+  // }, []);
 
   const footer = useMemo(() => {
     return (
@@ -413,7 +464,9 @@ function CodeMatrix({
         inline
         refreshInterval={0}
         revalidateOnFocus={false}
-      />
+      >
+        <Flex flexDirection="column" id="CodeMatrix-StatusState" />
+      </StatusFooter>
     );
   }, [
   ]);
@@ -431,106 +484,120 @@ function CodeMatrix({
   ]);
 
   const afterHeaderMemo = useMemo(() => {
+    const items = [
+      <Spacing ml={1} id="CodeMatrix-RunButton">
+        <FlexContainer alignItems="center">
+          <Button
+            beforeIcon={<PlayButtonFilled success />}
+            secondary
+            compact
+            small
+            ref={runButtonRef}
+            loading={running}
+            onClick={() => {
+              executionStateRef.current = ExecutionStateEnum.QUEUED;
+
+              if (!open || !shouldConnect) {
+                onOpenCallbackRef.current = () => {
+                  sendMessage({
+                    message: contentRef.current,
+                  });
+                };
+                setRunning(true);
+                setShouldConnect(true);
+              } else {
+                setRunning(true);
+                sendMessage({
+                  message: contentRef.current,
+                });
+              }
+            }}
+          >
+            Execute code
+          </Button>
+
+          <div style={{ marginRight: 4 }} />
+
+          <KeyboardTextGroup
+            addPlusSignBetweenKeys
+            compact
+            keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+            monospace
+            small
+          />
+
+          <Spacing mr={1} />
+        </FlexContainer>
+      </Spacing>,
+    ];
+
+    if (running) {
+      items.push(
+      );
+    }
+
+    items.push(...[
+      <Spacing ml={1} id="CodeMatrix-RunButton">
+        <ButtonGroup>
+          <Button
+            beforeIcon={<CircleWithArrowUp active />}
+            compact
+            small
+            secondary
+            onClick={() => {
+              scrollTo({ top: true });
+            }}
+          >
+            Go to top
+          </Button>
+          <Button
+            beforeIcon={<CubeWithArrowDown active />}
+            compact
+            small
+            secondary
+            onClick={() => {
+              scrollTo({ bottom: true });
+            }}
+          >
+            Go down
+          </Button>
+        </ButtonGroup>
+      </Spacing>,
+      <Spacing ml={1} id="CodeMatrix-RunButton">
+        <Button
+          beforeIcon={<Callback default />}
+          compact
+          small
+          secondary
+          onClick={() => {
+            clearOutputs();
+            setItems([], true);
+          }}
+        >
+          Clear outputs
+        </Button>
+      </Spacing>,
+      <Spacing ml={1} id="CodeMatrix-RunButton">
+        <Button
+          disabled={executionStateRef?.current === ExecutionStateEnum.IDLE}
+          beforeIcon={<PauseV2 warning />}
+          compact
+          small
+          onClick={() => {
+            executionStateRef.current = null;
+            setRunning(false);
+            interrupt();
+          }}
+        >
+          Stop execution
+        </Button>
+      </Spacing>,
+    ]);
+
     return (
-      <>
-        <Flex flex={1} alignItems="center" justifyContent="flex-start">
-          <Spacing ml={1} id="CodeMatrix-RunButton">
-            <Button
-              beforeIcon={<Callback default />}
-              compact
-              small
-              secondary
-              onClick={() => {
-                clearOutputs();
-                setItems([], true);
-              }}
-            >
-              Clear outputs
-            </Button>
-          </Spacing>
-
-          <Spacing ml={1} id="CodeMatrix-RunButton">
-            <ButtonGroup>
-              <Button
-                beforeIcon={<CircleWithArrowUp active />}
-                compact
-                small
-                secondary
-                onClick={() => {
-                  scrollTo({ top: true });
-                }}
-              >
-                Go to top
-              </Button>
-                <Button
-                  beforeIcon={<CubeWithArrowDown active />}
-                  compact
-                  small
-                  secondary
-                  onClick={() => {
-                    scrollTo({ bottom: true });
-                  }}
-                >
-                  Go down
-                </Button>
-              </ButtonGroup>
-            </Spacing>
-        </Flex>
-
-        <Flex flexDirection="column" id="CodeMatrix-StatusState" />
-
-        <Flex flex={1} alignItems="center" justifyContent="flex-end">
-          {executionStateRef?.current && ExecutionStateEnum.IDLE !== executionStateRef.current && (
-            <Spacing mr={1} id="CodeMatrix-RunButton">
-              <Button
-                beforeIcon={<PauseV2 warning />}
-                compact
-                small
-                onClick={() => {
-                  executionStateRef.current = null;
-                  setRunning(false);
-                  interrupt();
-                }}
-              >
-                Stop execution
-              </Button>
-            </Spacing>
-          )}
-
-          {(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) && (
-            <Spacing mr={1} id="CodeMatrix-RunButton">
-              <Button
-                beforeIcon={<PlayButtonFilled success />}
-                secondary
-                compact
-                small
-                ref={runButtonRef}
-                loading={running}
-                onClick={() => {
-                  executionStateRef.current = ExecutionStateEnum.QUEUED;
-
-                  if (!open || !shouldConnect) {
-                    onOpenCallbackRef.current = () => {
-                      sendMessage({
-                        message: contentRef.current,
-                      });
-                    };
-                    setRunning(true);
-                    setShouldConnect(true);
-                  } else {
-                    setRunning(true);
-                    sendMessage({
-                      message: contentRef.current,
-                    });
-                  }
-                }}
-              >
-                Execute code
-              </Button>
-            </Spacing>
-          )}
-        </Flex>
-      </>
+      <FileTabsScroller
+        fileTabs={[items]}
+      />
     );
   }, [open, shouldConnect, sendMessage, running]);
 

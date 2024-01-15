@@ -50,7 +50,6 @@ export function getExecutionStatusAndState(outputs: KernelOutputType[]): {
   const results = outputs?.filter(item => item?.msg_type ===  MsgType.EXECUTE_RESULT || item?.content || item?.data?.length >= 1);
   const inputs = outputs?.filter(item => item?.msg_type ===  MsgType.EXECUTE_INPUT);
 
-
   let status;
   let state = outputs?.[outputs?.length - 1]?.execution_state;
 

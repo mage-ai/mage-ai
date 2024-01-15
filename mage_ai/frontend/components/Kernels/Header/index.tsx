@@ -123,7 +123,7 @@ function KernelHeader({
           small
         >
           <Text monospace noWrapping small>
-            {kernel?.name} {limbo ? 'not connected' : kernel?.alive ? 'alive' : 'dead'}
+            {kernel?.name} {limbo ? 'status unknown 🤷' : kernel?.alive ? 'alive' : 'dead'}
           </Text>
         </Button>
 

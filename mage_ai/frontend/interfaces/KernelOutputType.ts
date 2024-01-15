@@ -83,6 +83,7 @@ export default interface KernelOutputType {
   };
   execution_metadata?: ExecutionMetadataType;
   execution_state?: ExecutionStateEnum;
+  execution_status?: ExecutionStatusEnum;
   message?: string;
   metadata?: {
     [key: string]: string;
