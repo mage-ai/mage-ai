@@ -26,7 +26,9 @@ function Output({
 
   // Show execution_result msg_type as the primary information.
 
-  // Show timestamp execution_metadata.date alongside the status and result.
+  // Show timestamp execution_metadata.date alongside the status and result..
+
+  // Clicking the group block of output, user can write code and use the result as variables.
 
   return (
     <Text>
