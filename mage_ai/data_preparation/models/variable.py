@@ -4,13 +4,18 @@ from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List
 
+import modin.pandas as mpd
 import numpy as np
 import pandas as pd
 import polars as pl
 from pandas.api.types import is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
-from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_cleaner.shared.utils import (
+    is_geo_dataframe,
+    is_modin_dataframe,
+    is_spark_dataframe,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
@@ -49,6 +54,7 @@ class VariableType(str, Enum):
     GEO_DATAFRAME = 'geo_dataframe'
     POLARS_DATAFRAME = 'polars_dataframe'
     SPARK_DATAFRAME = 'spark_dataframe'
+    MODIN_DATAFRAME = 'modin_dataframe'
 
 
 class Variable:
@@ -196,6 +202,9 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
+        elif self.variable_type == Variable.MODIN_DATAFRAME:
+            return self.__read_modin_parquet(sample=sample, sample_count=sample_count)
+
         return self.__read_json(raise_exception=raise_exception, sample=sample)
 
     async def read_data_async(
@@ -230,6 +239,9 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
+        elif self.variable_type == Variable.MODIN_DATAFRAME:
+            return await self.__read_modin_parquet(sample=sample, sample_count=sample_count)
+
         return await self.__read_json_async(sample=sample)
 
     @contextmanager
@@ -261,6 +273,8 @@ class Variable:
             self.variable_type = VariableType.SPARK_DATAFRAME
         elif is_geo_dataframe(data):
             self.variable_type = VariableType.GEO_DATAFRAME
+        elif is_modin_dataframe(data):
+            self.variable_type = VariableType.MODIN_DATAFRAME
 
         # Dataframe analysis variables share the same uuid as the original dataframe variable
         # so we won't write the metadata file for them
@@ -268,7 +282,7 @@ class Variable:
             self.__write_dataframe_analysis(data)
             return
 
-        if self.variable_type == VariableType.DATAFRAME:
+        if self.variable_type in [VariableType.DATAFRAME, VariableType.MODIN_DATAFRAME]:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             self.__write_polars_dataframe(data)
@@ -296,12 +310,14 @@ class Variable:
             self.variable_type = VariableType.SPARK_DATAFRAME
         elif is_geo_dataframe(data):
             self.variable_type = VariableType.GEO_DATAFRAME
+        elif is_modin_dataframe(data):
+            self.variable_type = VariableType.MODIN_DATAFRAME
 
         if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             self.__write_dataframe_analysis(data)
             return
 
-        if self.variable_type == VariableType.DATAFRAME:
+        if self.variable_type in [VariableType.DATAFRAME, VariableType.MODIN_DATAFRAME]:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             self.__write_polars_dataframe(data)
@@ -553,6 +569,51 @@ class Variable:
         )
         if sample and sample_count:
             df = df.limit(sample_count)
+        return df
+
+    def __read_modin_parquet(
+        self,
+        sample: bool = False,
+        sample_count: int = None,
+        raise_exception: bool = False,
+    ) -> pd.DataFrame:
+        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
+
+        read_sample_success = False
+        if sample:
+            try:
+                df = self.storage.read_modin_parquet(sample_file_path, engine='pyarrow')
+                read_sample_success = True
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(f'Failed to read parquet file: {sample_file_path}') from ex
+                else:
+                    traceback.print_exc()
+        if not read_sample_success:
+            try:
+                df = self.storage.read_modin_parquet(file_path, engine='pyarrow')
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
+                else:
+                    traceback.print_exc()
+                df = mpd.DataFrame()
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if df.shape[0] > sample_count:
+                df = df.iloc[:sample_count]
+
+        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        if self.storage.path_exists(column_types_filename):
+            column_types = self.storage.read_json_file(column_types_filename)
+            # ddf = dask_from_pandas(df)
+            if should_deserialize_pandas(column_types):
+                df = apply_transform_pandas(
+                    df,
+                    lambda row: deserialize_columns(row, column_types),
+                )
+            df = cast_column_types(df, column_types)
         return df
 
     def __write_geo_dataframe(self, data) -> None:

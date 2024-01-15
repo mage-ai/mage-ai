@@ -4,7 +4,11 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_cleaner.shared.utils import (
+    is_geo_dataframe,
+    is_modin_dataframe,
+    is_spark_dataframe,
+)
 from mage_ai.data_preparation.models.variable import (
     VARIABLE_DIR,
     Variable,
@@ -62,6 +66,9 @@ class VariableManager:
             variable_type = VariableType.SPARK_DATAFRAME
         elif is_geo_dataframe(data):
             variable_type = VariableType.GEO_DATAFRAME
+        elif is_modin_dataframe(data):
+            variable_type = VariableType.MODIN_DATAFRAME
+
         variable = Variable(
             clean_name(variable_uuid),
             self.__pipeline_path(pipeline_uuid),
