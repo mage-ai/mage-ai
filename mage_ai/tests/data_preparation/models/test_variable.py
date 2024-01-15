@@ -1,5 +1,6 @@
 import os
 
+import modin.pandas as mpd
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -167,6 +168,57 @@ class VariableTest(DBTestCase):
         assert_polars_frame_equal(variable1.read_data(sample=True, sample_count=1), df1.head(1))
         assert_polars_frame_equal(variable2.read_data(), df2)
         assert_polars_frame_equal(variable2.read_data(sample=True, sample_count=1), df2.head(1))
+
+    def test_write_and_read_modin_dataframe(self):
+        pipeline = self.__create_pipeline('test pipeline modin')
+        variable1 = Variable(
+            'modin1',
+            pipeline.dir_path,
+            'block1',
+        )
+        variable2 = Variable('modin2', pipeline.dir_path, 'block2')
+        df1 = mpd.DataFrame(
+            [
+                [1, 'test'],
+                [2, 'test2'],
+            ],
+            columns=['col1', 'col2']
+        )
+        df2 = mpd.DataFrame(
+            [
+                [1, 'test', 3.123, 41414123123124],
+                [2, 'test2', 4.321, 12111111],
+            ],
+            columns=['col1', 'col2', 'col3', 'col4']
+        )
+        df2['col4'] = df2['col4'].astype('Int64')
+        variable1.write_data(df1)
+        variable2.write_data(df2)
+        variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block1', 'modin1', 'data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block1', 'modin1', 'sample_data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block2', 'modin2', 'data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block2', 'modin2', 'sample_data.parquet'),
+        ))
+
+        df1 = mpd.io.to_pandas(df1)
+        df2 = mpd.io.to_pandas(df2)
+
+        assert_frame_equal(mpd.io.to_pandas(variable1.read_data()), df1)
+        assert_frame_equal(
+            mpd.io.to_pandas(variable1.read_data(sample=True, sample_count=1)), df1.head(1)
+        )
+        assert_frame_equal(mpd.io.to_pandas(variable2.read_data()), df2)
+        assert_frame_equal(
+            mpd.io.to_pandas(variable2.read_data(sample=True, sample_count=1)), df2.head(1)
+        )
 
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(

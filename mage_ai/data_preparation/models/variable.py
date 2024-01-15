@@ -156,7 +156,7 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
-        if self.variable_type == VariableType.DATAFRAME:
+        if self.variable_type in [VariableType.DATAFRAME, VariableType.MODIN_DATAFRAME]:
             self.__delete_parquet()
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__delete_dataframe_analysis()
@@ -202,7 +202,7 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        elif self.variable_type == Variable.MODIN_DATAFRAME:
+        elif self.variable_type == VariableType.MODIN_DATAFRAME:
             return self.__read_modin_parquet(sample=sample, sample_count=sample_count)
 
         return self.__read_json(raise_exception=raise_exception, sample=sample)
@@ -239,8 +239,8 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
-        elif self.variable_type == Variable.MODIN_DATAFRAME:
-            return await self.__read_modin_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.MODIN_DATAFRAME:
+            return self.__read_modin_parquet(sample=sample, sample_count=sample_count)
 
         return await self.__read_json_async(sample=sample)
 
@@ -576,7 +576,7 @@ class Variable:
         sample: bool = False,
         sample_count: int = None,
         raise_exception: bool = False,
-    ) -> pd.DataFrame:
+    ) -> mpd.DataFrame:
         file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
 

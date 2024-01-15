@@ -17,6 +17,7 @@ from queue import Queue
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import inflection
+import modin.pandas as mpd
 import pandas as pd
 import polars as pl
 import simplejson
@@ -2130,7 +2131,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 outputs and non data product outputs are handled slightly differently.
         """
         variable_manager = self.pipeline.variable_manager
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, (pd.DataFrame, mpd.DataFrame)):
             if csv_lines_only:
                 data = dict(
                     table=data.to_csv(header=True, index=False).strip('\n').split('\n')
@@ -2771,7 +2772,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
-            if type(data) is pd.DataFrame:
+            if isinstance(data, (pd.DataFrame, mpd.DataFrame)):
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS or shape_only:
                     self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
