@@ -8,6 +8,7 @@ from tornado.websocket import WebSocketHandler
 from mage_ai.api.errors import ApiError
 from mage_ai.server.active_kernel import get_active_kernel_client
 from mage_ai.server.logger import Logger
+from mage_ai.server.websockets.code.server import Code as CodeWebSocketServer
 from mage_ai.server.websockets.models import Error, Message
 from mage_ai.shared.hash import merge_dict
 
@@ -39,7 +40,10 @@ def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]])
             orphan = False
             if len(owners) == 0:
                 logger.error(f'[{now}] WebSocket: no subscribers for {msg_id}')
-                owners.extend(subscribers)
+                for subscriber, _callback, _on_failure in subscribers:
+                    if isinstance(subscriber, CodeWebSocketServer):
+                        continue
+                    owners.append(subscribers)
                 orphan = True
 
             for subscriber, callback, on_failure in owners:

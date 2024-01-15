@@ -374,7 +374,7 @@ function TripleLayout({
               alignItems="center"
               fullHeight
               fullWidth
-              justifyContent={afterCombinedWithMain ? 'flex-end' : null}
+              justifyContent={afterCombinedWithMain ? 'space-between' : null}
             >
               {afterCombinedWithMain && !afterHidden && afterHeader}
 

@@ -7,8 +7,10 @@ import FileEditor from '@components/FileEditor';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KernelHeader from '@components/Kernels/Header';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
+import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
@@ -49,8 +51,8 @@ function CodeMatrix({
   const [shouldConnect, setShouldConnect] = useState(false);
 
   const shouldReconnect = useCallback(() => {
-    return openState && !pause && ready && shouldConnect;
-  }, [openState, pause, ready, shouldConnect]);
+    return openState && !pause && shouldConnect;
+  }, [openState, pause, shouldConnect]);
 
   const onOpen = useCallback((value: boolean) => {
     setOpen(value);
@@ -108,8 +110,6 @@ function CodeMatrix({
     connectionState,
     openState,
   ]);
-
-  console.log('connectionState', connectionState)
 
   const shortcuts = useMemo(() => {
     return [
@@ -187,13 +187,62 @@ function CodeMatrix({
         <FileEditorHeader
           menuGroups={menuGroups}
         />
+
+        <Spacing mr={2} />
+
+        <KernelHeader />
+
+        <Spacing mr={2} />
+
+        <Flex alignItems="center">
+          <Tooltip
+            block
+            description={(!open || !shouldConnect) && (
+              <>
+                {!shouldConnect && (
+                  <Text warning small>
+                    Turn on the WebSocket connection before coding
+                  </Text>
+                )}
+                {shouldConnect && !open && (
+                  <Text warning small>
+                    WebSocket connection isn’t open yet
+                  </Text>
+                )}
+              </>
+            )}
+            forceVisible={!(open && shouldConnect)}
+            size={null}
+            visibleDelay={300}
+            widthFitContent
+          >
+            <Button
+              beforeIcon={(
+                <PowerOnOffButton
+                  danger={!(open && shouldConnect)}
+                  size={1.25 * UNIT}
+                  success={open && shouldConnect}
+                />
+              )}
+              onClick={() => setShouldConnect(prev => !prev)}
+              compact
+              secondary
+              small
+            >
+              <Text monospace noWrapping small>
+                WebSocket {DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}
+              </Text>
+            </Button>
+          </Tooltip>
+
+          <Spacing mr={2} />
+        </Flex>
       </Flex>
     </FlexContainer>
   ), [
     connectionState,
     menuGroups,
     open,
-    ready,
     shouldConnect,
   ]);
 
@@ -232,6 +281,17 @@ function CodeMatrix({
     }
   }, []);
 
+  const footer = useMemo(() => {
+    return (
+      <StatusFooter
+        inline
+        refreshInterval={0}
+        revalidateOnFocus={false}
+      />
+    );
+  }, [
+  ]);
+
   return (
     <ContainerStyle>
       <TripleLayout
@@ -251,47 +311,7 @@ function CodeMatrix({
         )}
         afterCombinedWithMain
         afterDividerContrast
-        afterHeader={(
-          <Flex alignItems="center">
-            {!shouldConnect && (
-              <Text monospace warning>
-                Turn on the WebSocket connection before coding
-              </Text>
-            )}
-            {shouldConnect && !open && (
-              <Text monospace warning>
-                WebSocket connection isn’t open yet
-              </Text>
-            )}
-
-            <Spacing mr={2} />
-
-            <Tooltip
-              appearBefore
-              block
-              label={`WebSocket readiness state: ${DISPLAY_LABEL_MAPPING[connectionState]}`}
-              size={null}
-              visibleDelay={300}
-              widthFitContent
-            >
-              <Button
-                iconOnly
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setShouldConnect(prev => !prev)}
-              >
-                <PowerOnOffButton
-                  danger={!(open && ready && shouldConnect)}
-                  size={2 * UNIT}
-                  success={open && ready && shouldConnect}
-                />
-              </Button>
-            </Tooltip>
-
-            <Spacing mr={1} />
-          </Flex>
-        )}
+        // afterHeader
         afterHeightOffset={0}
         // afterHidden={hiddenAfter}
         afterMousedownActive={mousedownActiveAfter}
@@ -322,7 +342,7 @@ function CodeMatrix({
         contained
         containerRef={containerRef}
         inline
-        // mainContainerFooter={footer}
+        mainContainerFooter={footer}
         mainContainerHeader={(
           <div
             style={{
