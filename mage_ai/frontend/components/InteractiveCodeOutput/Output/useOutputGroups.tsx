@@ -14,8 +14,13 @@ import { HTMLOutputStyle } from './index.style';
 import { TableDataType, prepareTableData } from './utils';
 import { isJsonString } from '@utils/string';
 
+export type ElementWithType = {
+  dataType: DataTypeEnum;
+  element: JSX.Element;
+};
+
 export type OutputGroupType = {
-  elements: JSX.Element[];
+  elementsWithType: ElementWithType[];
   output: KernelOutputType[];
 };
 
@@ -65,74 +70,89 @@ export default function useOutputGroups({
           } = dataJSON;
 
           if (DataTypeEnum.TABLE === typeDisplay) {
-            tablesData.push(useDataTable(prepareTableData(dataDisplay)));
+            tablesData.push({
+              dataType: DataTypeEnum.TABLE,
+              element: useDataTable(prepareTableData(dataDisplay)),
+            });
           }
         }
 
         if (DataTypeEnum.TEXT_HTML === dataType) {
-          htmlData.push(
-            <HTMLOutputStyle monospace>
-              <InnerHTML html={data} />
-            </HTMLOutputStyle>
-          );
+          htmlData.push({
+            dataType: DataTypeEnum.TEXT_HTML,
+            element: (
+              <HTMLOutputStyle monospace>
+                <InnerHTML html={data} />
+              </HTMLOutputStyle>
+            ),
+          });
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           if (dataJSON) {
-            jsonData.push(
-              <Text monospace preWrap>
-                <Ansi>
-                  {JSON.stringify(dataJSON, null, 2)}
-                </Ansi>
-              </Text>
-            );
+            jsonData.push({
+              dataType: DataTypeEnum.JSON,
+              element: (
+                <Text monospace preWrap>
+                  <Ansi>
+                    {JSON.stringify(dataJSON, null, 2)}
+                  </Ansi>
+                </Text>
+              ),
+            });
           } else {
             const lines =
               data?.split('\\n')?.reduce((acc, dLine) => acc.concat(dLine?.split('\n')), []);
-            textData.push(...lines.map((t) => (
-              <Text key={t} monospace preWrap>
-                {t?.length >= 1 && <Ansi>{t}</Ansi>}
-                {!t?.length && <>&nbsp;</>}
-              </Text>
-            )));
+            textData.push(...lines.map((t) => ({
+              dataType: DataTypeEnum.TEXT,
+              element: (
+                <Text key={t} monospace preWrap>
+                  {t?.length >= 1 && <Ansi>{t}</Ansi>}
+                  {!t?.length && <>&nbsp;</>}
+                </Text>
+              ),
+            })));
           }
         } else if (DataTypeEnum.IMAGE_PNG === dataType) {
-          imagesData.push(
-            <div style={{ backgroundColor: 'white' }}>
-              <img
-                alt={`Image ${idx} from code output`}
-                src={`data:image/png;base64, ${data}`}
-              />
-            </div>,
-          );
+          imagesData.push({
+            dataType: DataTypeEnum.IMAGE_PNG,
+            element: (
+              <div style={{ backgroundColor: 'white' }}>
+                <img
+                  alt={`Image ${idx} from code output`}
+                  src={`data:image/png;base64, ${data}`}
+                />
+              </div>
+            ),
+          });
         }
       });
 
       if (htmlData?.length >= 1) {
         html.push({
-          elements: htmlData,
+          elementsWithType: htmlData,
           output,
         });
       }
       if (imagesData?.length >= 1) {
         images.push({
-          elements: imagesData,
+          elementsWithType: imagesData,
           output,
         });
       }
       if (jsonData?.length >= 1) {
         json.push({
-          elements: jsonData,
+          elementsWithType: jsonData,
           output,
         });
       }
       if (tablesData?.length >= 1) {
         tables.push({
-          elements: tablesData,
+          elementsWithType: tablesData,
           output,
         });
       }
       if (textData?.length >= 1) {
         text.push({
-          elements: textData,
+          elementsWithType: textData,
           output,
         });
       }

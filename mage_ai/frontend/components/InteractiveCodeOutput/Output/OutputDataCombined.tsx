@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import OutputRow from './OutputRow';
-import { OutputGroupsType } from './useOutputGroups';
+import { ElementWithType, OutputGroupsType } from './useOutputGroups';
 import { sortByKey } from '@utils/array';
 
 function OutputDataCombined({
@@ -19,10 +19,10 @@ function OutputDataCombined({
       tables,
       text,
     ].reduce((acc, arr) => acc.concat(arr?.reduce((accInner, {
-      elements,
+      elementsWithType,
       output,
-    }) => accInner.concat(elements?.map(element => ({
-      element,
+    }) => accInner.concat(elementsWithType?.map(elementWithType => ({
+      elementWithType,
       output,
     })) || []), []) || []), []);
 
@@ -30,14 +30,15 @@ function OutputDataCombined({
       combinedFlatten,
       ({ output }) => output?.execution_metadata?.date,
     ).map(({
-      element,
+      elementWithType,
       output,
     }, idx: number) => (
       <OutputRow
+        dataType={elementWithType?.dataType}
         key={`${output?.uuid}-${output?.msg_id}-${idx}`}
         output={output}
       >
-        {element}
+        {elementWithType?.element}
       </OutputRow>
     ));
   }, [
