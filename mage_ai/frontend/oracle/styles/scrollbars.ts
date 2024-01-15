@@ -21,6 +21,19 @@ export function hideScrollBar() {
   `;
 }
 
+export function showScrollBar() {
+  return `
+    // for Internet Explorer, Edge
+    -ms-overflow-style: block !important;
+    // for Firefox
+    scrollbar-width: block !important;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: block !important;
+    }
+  `;
+}
+
 export const ScrollbarStyledCss = css<{
   noScrollbarTrackBackground?: boolean;
   scrollbarBorderRadiusLarge?: boolean;

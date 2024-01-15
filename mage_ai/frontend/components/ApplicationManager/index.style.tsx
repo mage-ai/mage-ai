@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';;
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
-import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
@@ -28,7 +28,7 @@ function getRGBA(color: string, opts?: {
     b: null,
   };
 
-  if (!(r && g && b)) {
+  if (!(r !== null && g !== null && b !== null)) {
     return;
   }
 
@@ -46,13 +46,17 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
   let accent;
   let background;
   let border;
+  let transparencyOverride;
 
   if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
     accent = (props?.theme || dark)?.accent?.purple;
   } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
     accent = (props?.theme || dark)?.accent?.negative;
-  } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+  } else if (ApplicationExpansionUUIDEnum.CodeMatrix === uuid) {
     accent = (props?.theme || dark)?.background?.success;
+  } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+    accent = (props?.theme || dark)?.accent?.yellow;
+    transparencyOverride = 0.7;
   }
 
   return {
@@ -60,7 +64,7 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
     background: background || getRGBA(accent, props),
     border: border || getRGBA(accent, {
       ...props,
-      transparency: 0.3,
+      transparency: transparencyOverride || 0.3,
     }),
   };
 }

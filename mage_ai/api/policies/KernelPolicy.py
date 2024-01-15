@@ -44,12 +44,3 @@ KernelPolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access())
-
-
-KernelPolicy.allow_query([
-    'check_execution_state',
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access())

@@ -98,16 +98,20 @@ function Output({
   const executionStatus = useMemo(() => {
     if (ExecutionStateEnum.IDLE === executionState) {
       if (errors?.length >= 1) {
-        return ExecutionStatusEnum.FAILED;
+        return [ExecutionStatusEnum.FAILED, ExecutionStateEnum.IDLE];
       } else if (!results?.length) {
-        return ExecutionStatusEnum.EMPTY_RESULTS;
+        return [ExecutionStatusEnum.EMPTY_RESULTS, ExecutionStateEnum.IDLE];
       } else {
-        return ExecutionStatusEnum.SUCCESS;
+        return [ExecutionStatusEnum.SUCCESS, ExecutionStateEnum.IDLE];
       }
+    } else if (executeInputs?.length >= 1) {
+      return [ExecutionStatusEnum.RUNNING, ExecutionStateEnum.BUSY];
+    } else if (outputs?.length >= 1) {
+      return [ExecutionStatusEnum.PENDING, ExecutionStateEnum.QUEUED];
     }
 
-    return ExecutionStatusEnum.RUNNING;
-  }, [errors, executionState]);
+    return [ExecutionStatusEnum.PENDING, ExecutionStateEnum.BUSY];
+  }, [errors, executionState, executeInputs])[0];
   executionStateRef.current = executionState;
 
   const startTiming = () => {

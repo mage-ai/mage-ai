@@ -12,6 +12,7 @@ import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/Pipe
 import { onSuccess } from '@api/utils/response';
 
 export type UseKernelType = {
+  caller?: string;
   checkExecutionState?: boolean;
   pipelineType?: PipelineTypeEnum;
   refreshInterval?: number;
@@ -26,11 +27,12 @@ export type UseKernelType = {
 };
 
 function useKernel({
+  caller,
   checkExecutionState,
   pipelineType,
   refreshInterval = 5000,
   revalidateOnFocus,
-  showErrors,
+  showError,
 }: UseKernelType = {}): {
   fetch: () => void;
   health: {
@@ -45,12 +47,15 @@ function useKernel({
   restart: () => void;
   update: () => void;
 } {
+  const checkToggleRef = useRef(null);
   const latencyRef = useRef(null);
   const timerRef = useRef(null);
+  checkToggleRef.current = checkExecutionState;
 
   const {
     data: dataKernels,
     mutate: fetchKernels,
+<<<<<<< HEAD
 <<<<<<< HEAD
   } = useDelayFetch(api.kernels.list, {}, {
     refreshInterval,
@@ -62,6 +67,18 @@ function useKernel({
   } = api.kernels.list(checkExecutionState
     ? { check_execution_state: true }
     : {},
+=======
+  } = api.kernels.list(
+    // checkExecutionState
+    !!caller
+    ? {
+      // check_execution_state: checkToggleRef.current
+      __limit: caller,
+    }
+    : {
+
+    },
+>>>>>>> 0d2a347b6 (status)
     {
       refreshInterval,
       revalidateOnFocus,
@@ -90,6 +107,10 @@ function useKernel({
       timeLastTest: Number(new Date()),
     }
     timerRef.current = Number(new Date())
+
+    if (checkExecutionState) {
+      checkToggleRef.current = !checkToggleRef.current;
+    }
   }, [kernel])
 
   const [updateKernel]: any = useMutation(

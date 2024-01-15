@@ -258,7 +258,7 @@ export default {
     frame: '0px 10px 40px rgba(0, 0, 0, 0.26)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
-    small: '0px, 4px, rgba(0, 0, 0, 0.25)',
+    small: '0px 4px rgba(0, 0, 0, 0.25)',
     window: '0px 10px 60px rgba(0, 0, 0, 0.7)',
   },
   status: {

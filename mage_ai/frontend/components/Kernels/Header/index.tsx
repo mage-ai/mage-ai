@@ -1,10 +1,14 @@
+import tzMoment from 'moment-timezone';
 import { createRef, useEffect, useMemo, useRef, useState } from 'react';
 
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useKernel, { UseKernelType } from '@utils/models/kernel/useKernel';
@@ -12,10 +16,14 @@ import { SHARED_FILE_HEADER_BUTTON_PROPS } from '@components/PipelineDetail/File
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function KernelHeader({
+  outputs,
   refreshInterval = 12000,
   revalidateOnFocus = true,
   showError,
-}: UseKernelType) {
+}: {
+  outputs?: KernelOutputType[];
+} & UseKernelType) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const buttonRef = useRef(null);
   const [highlightedIndex, setHighlightedIndex] = useState(null);
 
@@ -32,40 +40,54 @@ function KernelHeader({
     showError,
   });
 
-  const items = useMemo(() => [
-    {
-      onClick: () => restart(),
-      uuid: 'Restart kernel',
-    },
-    {
-      onClick: () => interrupt(),
-      uuid: 'Interrupt kernel',
-    },
-    {
-      onClick: () => fetch(),
-      uuid: 'Get latest status',
-    },
-    {
-      isGroupingTitle: true,
-      label: () => (
-        <FlexContainer flexDirection="column">
-          <Text default monospace small>
-            Latency: {Math.round(health?.latency * 10000) / 10000}s
-          </Text>
-          <Text default monospace small>
-            Test duration: {health?.timeBetween}s
-          </Text>
-          <Text default monospace small>
-            Time since test: {Math.round((Number(new Date()) - health?.timeLastTest) / 1000)}s
-          </Text>
-          <Spacing mb={1} />
-        </FlexContainer>
-      ),
-      uuid: 'Health',
+  const items = useMemo(() => {
+    const arr = [
+      {
+        onClick: () => restart(),
+        uuid: 'Restart kernel',
+      },
+      {
+        onClick: () => interrupt(),
+        uuid: 'Interrupt kernel',
+      },
+      {
+        onClick: () => fetch(),
+        uuid: 'Get latest status',
+      },
+    ];
+
+    if (outputs?.length >= 1) {
+      const output = outputs?.[outputs?.length - 1];
+      const datetime = momentInLocalTimezone(
+        tzMoment(output?.[0]?.execution_metadata?.date),
+        displayLocalTimezone,
+      ).format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+
+      arr.push({
+        isGroupingTitle: true,
+        label: () => (
+          <FlexContainer flexDirection="column">
+            <Text default monospace small>
+              Kernel alive
+            </Text>
+            <Text default monospace small>
+              Last checked:
+            </Text>
+            <Text default monospace small>
+              {utcStringToElapsedTime(datetime, true)}
+            </Text>
+            <Spacing mb={1} />
+          </FlexContainer>
+        ),
+        uuid: 'Health',
+      });
     }
-  ], [
+
+    return arr;
+  }, [
     fetch,
     health,
+    outputs,
     restart,
     interrupt,
   ]);

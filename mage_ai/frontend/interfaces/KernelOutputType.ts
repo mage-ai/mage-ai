@@ -10,9 +10,16 @@ export enum ExecutionStatusEnum {
   CANCELLED = 'cancelled',
   EMPTY_RESULTS = 'empty_results',
   FAILED = 'failed',
+  PENDING = 'pending',
   RUNNING = 'running',
   SUCCESS = 'success',
 }
+
+export const EXECUTION_STATE_DISPLAY_LABEL_MAPPING = {
+  [ExecutionStateEnum.BUSY]: 'Executing',
+  [ExecutionStateEnum.IDLE]: 'Ready for the next command',
+  [ExecutionStateEnum.QUEUED]: 'Waiting in the queue',
+};
 
 export const EXECUTION_STATUS_DISPLAY_LABEL_MAPPING = {
   [ExecutionStatusEnum.CANCELLED]: 'Cancelled',
@@ -46,6 +53,7 @@ export enum MsgType {
   EXECUTE_RESULT = 'execute_result',
   EXECUTE_INPUT = 'execute_input',
   DISPLAY_DATA = 'display_data',
+  USAGE_REQUEST = 'usage_request',
 }
 
 interface ExecutionMetadataType {

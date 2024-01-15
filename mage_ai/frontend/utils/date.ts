@@ -158,7 +158,7 @@ export function timeDifference({
  *   - >= 1 hr: X hr(s) Y min(s) ago
  *   - < 1 hr: X min(s) ago
  */
-export function utcStringToElapsedTime(datetime: string) {
+export function utcStringToElapsedTime(datetime: string, seconds: boolean = false) {
   const then = moment.utc(datetime);
   const now = moment.utc();
   const duration = moment.duration(now.diff(then));
@@ -173,8 +173,10 @@ export function utcStringToElapsedTime(datetime: string) {
   } else if (duration.hours() >= 1) {
     timeDisplay = `${pluralize('hr', duration.hours(), true)} ` +
       `${pluralize('min', duration.minutes(), true)} ago`;
-  } else {
+  } else if (duration.minutes() >= 1 || !seconds)  {
     timeDisplay = `${pluralize('min', duration.minutes(), true)} ago`;
+  } else if (seconds) {
+    timeDisplay = `${pluralize('sec', duration.seconds(), true)} ago`;
   }
 
   return timeDisplay;

@@ -6,19 +6,25 @@ import { createRoot } from 'react-dom/client';
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
-import KernelOutputType from '@interfaces/KernelOutputType';
+import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, MsgType } from '@interfaces/KernelOutputType';
 import KeyboardContext from '@context/Keyboard';
 import Output from './Output';
 import Shell from './Shell';
+import useKernel from '@utils/models/kernel/useKernel';
 import { ErrorProvider } from '@context/Error';
 import { ModalProvider } from '@context/Modal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { OutputContainerStyle, OutputContentStyle } from './Output/index.style';
 import { READY_STATE_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
+import { dedupe } from '@utils/array';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
+import { getLatestOutputGroup, getExecutionStatusAndState } from './Output/utils';
+import KernelType from '@interfaces/KernelType';
 
 export default function useInteractiveCodeOutput({
+  checkKernelStatus,
   code,
   getDefaultMessages,
   onMessage,
@@ -27,6 +33,7 @@ export default function useInteractiveCodeOutput({
   shouldReconnect,
   uuid,
 }: {
+  checkKernelStatus?: boolean;
   code?: string;
   getDefaultMessages?: () => KernelOutputType[];
   onMessage?: (message: KernelOutputType) => void;
@@ -36,12 +43,24 @@ export default function useInteractiveCodeOutput({
   uuid: string;
 }): {
   connectionState: WebSocketStateEnum;
+  executionState: ExecutionStateEnum;
+  executionStatus: ExecutionStatusEnum;
+  kernel: KernelType;
+  kernelStatusCheckResults: KernelOutputType[];
   output: JSX.Element;
   sendMessage: (payload: {
     [key: string]: any;
   }) => void;
   shell: JSX.Element;
 } {
+  const {
+    kernel,
+  } = useKernel({
+    refreshInterval: checkKernelStatus ? 7000 : 0,
+    revalidateOnFocus: checkKernelStatus ? true : false,
+  });
+  const kernelStatusCheckResultsRef = useRef([]);
+
   const keyboardContext = useContext(KeyboardContext);
   const themeContext = useContext(ThemeContext);
 
@@ -170,24 +189,36 @@ export default function useInteractiveCodeOutput({
   } = useWebSocket(getWebSocket(`${uuid}-${user?.id}`), {
     shouldReconnect: (data) => {
       if (shouldReconnect) {
-        shouldReconnect?.(data)
+        return shouldReconnect?.(data)
       }
     },
     onOpen: () => onOpen(true),
     onMessage: (messageEvent: {
       data: string;
     }) => {
-      console.log(messageEvent);
       const {
         data,
       } = messageEvent;
+
+
       if (data) {
         const output = parseRawDataFromMessage(data);
-        messagesRef.current.push(output);
 
         if (onMessage) {
           onMessage?.(output);
         }
+
+        // This comes from checking the kernel and hitting the kernels endpoint.
+        if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
+          kernelStatusCheckResultsRef.current = [
+            ...kernelStatusCheckResultsRef.current,
+            output,
+          ].slice(0, 12);
+          return;
+        }
+
+        messagesRef.current.push(output);
+        messagesRef.current = dedupe(messagesRef.current || [], ['msg_id']);
 
         renderOutputs(messagesRef?.current);
       }
@@ -205,12 +236,12 @@ export default function useInteractiveCodeOutput({
 
   const outputRoot = useMemo(() => {
     return (
-      <div ref={outputContainerRef}>
-        <div
+      <OutputContainerStyle ref={outputContainerRef}>
+        <OutputContentStyle
           id={outputRootUUID.current}
           ref={outputContentRef}
         />
-      </div>
+      </OutputContainerStyle>
     );
   }, []);
 
@@ -222,12 +253,13 @@ export default function useInteractiveCodeOutput({
     );
   }, []);
 
-  console.log(readyState)
-
   return {
     connectionState: READY_STATE_MAPPING[readyState],
+    kernel,
+    kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,
     output: outputRoot,
     sendMessage,
     shell,
+    ...getExecutionStatusAndState(messagesRef?.current || []),
   };
 }

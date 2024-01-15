@@ -1,3 +1,4 @@
+import tzMoment from 'moment-timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
@@ -6,9 +7,11 @@ import Divider from '@oracle/elements/Divider';
 import FileEditor from '@components/FileEditor';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelHeader from '@components/Kernels/Header';
-import KernelOutputType from '@interfaces/KernelOutputType';
+import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, EXECUTION_STATE_DISPLAY_LABEL_MAPPING, EXECUTION_STATUS_DISPLAY_LABEL_MAPPING, MsgType } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
@@ -22,7 +25,7 @@ import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
 import { DISPLAY_LABEL_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
-import { PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
+import { PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCode, setCode } from './utils';
@@ -40,9 +43,11 @@ function CodeMatrix({
     file_path: string;
   };
 }) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const contentRef = useRef(null);
   const onOpenCallbackRef= useRef(null);
   const sendMessageRef = useRef(null);
+  const kernelStatusCheckResultsTextRef = useRef(null);
 
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
   const [openState, setOpen] = useState(false);
@@ -88,16 +93,32 @@ function CodeMatrix({
     hiddenBefore: true,
   });
 
-  const onMessage = useCallback((message: KernelOutputType) => {
-    setItems([message], false);
+  const onMessage = useCallback((output: KernelOutputType) => {
+    if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
+      const datetime = momentInLocalTimezone(
+        tzMoment(output?.[0]?.execution_metadata?.date),
+        displayLocalTimezone,
+      ).format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+
+      if (kernelStatusCheckResultsTextRef?.current) {
+        kernelStatusCheckResultsTextRef.current.innerText = `Last checked ${utcStringToElapsedTime(datetime, true)}`;
+      }
+    } else {
+      setItems([output], false);
+    }
   }, []);
 
   const {
     connectionState,
+    executionState,
+    executionStatus,
+    kernel,
+    kernelStatusCheckResults,
     output,
     sendMessage,
     shell,
   } = useInteractiveCodeOutput({
+    checkKernelStatus: true,
     getDefaultMessages: () => getItems(),
     onMessage,
     onOpen,
@@ -188,11 +209,15 @@ function CodeMatrix({
           menuGroups={menuGroups}
         />
 
-        <Spacing mr={2} />
+        <Spacing mr={1} />
 
-        <KernelHeader />
+        <KernelHeader
+          outputs={kernelStatusCheckResults}
+          refreshInterval={0}
+          revalidateOnFocus={false}
+        />
 
-        <Spacing mr={2} />
+        <Spacing mr={1} />
 
         <Flex alignItems="center">
           <Tooltip
@@ -235,12 +260,15 @@ function CodeMatrix({
             </Button>
           </Tooltip>
 
-          <Spacing mr={2} />
+          <Spacing mr={1} />
+
+          <Text default monospace small ref={kernelStatusCheckResultsTextRef} />
         </Flex>
       </Flex>
     </FlexContainer>
   ), [
     connectionState,
+    kernelStatusCheckResults,
     menuGroups,
     open,
     shouldConnect,
@@ -292,32 +320,70 @@ function CodeMatrix({
   }, [
   ]);
 
+  const afterOutput = useMemo(() => (
+    <div>
+      {output}
+      {shell}
+      <div style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }} />
+    </div>
+  ), [
+    connectionState,
+    open,
+    output,
+    shell,
+    shouldConnect,
+  ]);
+
+  const afterHeaderMemo = useMemo(() => {
+    return (
+      <>
+        <Flex flexDirection="column">
+          <Text default monospace xsmall>
+            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionState]}
+          </Text>
+          <Text default monospace xsmall>
+            Recent run status: {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]?.toLowerCase()}
+          </Text>
+        </Flex>
+
+        <Flex flex={1} alignItems="center" justifyContent="flex-end">
+          <Spacing mr={1} />
+
+          <Button
+            beforeIcon={<PlayButtonFilled success />}
+            secondary
+            compact
+            small
+            onClick={() => {
+              sendMessage({
+                message: contentRef.current,
+              });
+            }}
+          >
+            Execute code
+          </Button>
+
+          <Spacing mr={1} />
+        </Flex>
+      </>
+    );
+  }, [executionState, executionStatus, sendMessage]);
+
   return (
     <ContainerStyle>
       <TripleLayout
-        after={(
-          <div>
-            {(!shouldConnect || !open) && (
-              <Text default monospace>
-                WebSocket readiness state: <Text active inline monospace>
-                  {DISPLAY_LABEL_MAPPING[connectionState]}
-                </Text>
-              </Text>
-            )}
-
-            {output}
-            {shell}
-          </div>
-        )}
+        after={afterOutput}
         afterCombinedWithMain
         afterDividerContrast
-        // afterHeader
+        afterHeader={afterHeaderMemo}
         afterHeightOffset={0}
-        // afterHidden={hiddenAfter}
+        afterHidden={hiddenAfter}
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
         autoLayout
-        // before={FileBrowserTabEnum.GROUPED_BY_TYPE === selectedTab?.uuid ? browserFlatten : browser}
+        before={(
+          <div />
+        )}
         beforeContentHeightOffset={headerOffsetProp}
         beforeDividerContrast
         // beforeHeader={(

@@ -436,6 +436,7 @@ function TripleLayout({
 
       <AfterInnerStyle
         heightMinus={afterInnerHeightMinus}
+        hidden={afterHidden}
         noScrollbarTrackBackground
         overflow={afterOverflow}
         ref={refAfterInner}
@@ -446,7 +447,7 @@ function TripleLayout({
           : null
         }
       >
-        {!afterHidden && after}
+        {after}
       </AfterInnerStyle>
 
       {afterFooter && !afterHidden && (

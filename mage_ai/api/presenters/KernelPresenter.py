@@ -1,4 +1,3 @@
-from datetime import datetime
 from inspect import isawaitable
 
 from mage_ai.api.presenters.BasePresenter import BasePresenter
@@ -8,14 +7,11 @@ class KernelPresenter(BasePresenter):
     default_attributes = [
         'alive',
         'id',
-        'latency',
         'name',
         'usage',
     ]
 
     async def present(self, **kwargs):
-        query = kwargs.get('query', {})
-
         kernel = self.resource.model
 
         kernel_response = dict(
@@ -26,15 +22,6 @@ class KernelPresenter(BasePresenter):
         if kernel.is_alive() and kernel.has_kernel:
             try:
                 client = kernel.client()
-
-                check_execution_state = query.get('check_execution_state', [False])
-                if check_execution_state:
-                    check_execution_state = check_execution_state[0]
-                if check_execution_state:
-                    now = datetime.utcnow().timestamp()
-                    client.execute('1')
-                    kernel_response['latency'] = datetime.utcnow().timestamp() - now
-
                 session = kernel.session
                 control_channel = client.control_channel
                 usage_request = session.msg("usage_request", {})

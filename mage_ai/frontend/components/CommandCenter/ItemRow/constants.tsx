@@ -8,7 +8,6 @@ import {
   BranchAlt,
   CategorizationUseCase,
   Chat,
-  ChurnV3,
   Code,
   DocumentIcon,
   EstimationUseCase,
@@ -31,7 +30,7 @@ export function getIcon(item: CommandCenterItemType) {
     return Binary;
   }
   if (ModeTypeEnum.VERSION_CONTROL === item?.mode?.type) {
-    return ChurnV3;
+    return LTVUseCase;
   }
 
   const {

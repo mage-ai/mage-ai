@@ -264,3 +264,17 @@ export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => a
     return arr3.includes(i);
   });
 }
+
+export function dedupe(arr: any[], uniqueKeys: string[]): any[] {
+  const mapping = {}
+
+  return arr?.reduce((acc, obj) => {
+    const key = uniqueKeys.map(key => dig(obj, key)).join();
+    if (key in mapping) {
+      return acc;
+    } else {
+      mapping[key] = true;
+      return [...acc, obj];
+    }
+  }, []);
+}

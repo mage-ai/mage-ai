@@ -48,7 +48,11 @@ function StatusFooter({
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
-  const { kernel } = useKernel({ pipelineType, refreshInterval, revalidateOnFocus });
+  const { kernel } = useKernel({
+    pipelineType,
+    refreshInterval,
+    revalidateOnFocus,
+  });
   const {
     alive,
     usage,

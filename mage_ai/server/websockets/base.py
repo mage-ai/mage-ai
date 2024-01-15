@@ -49,20 +49,16 @@ class BaseHandler(WebSocketHandler):
             ))
             message = Message.load_from_publisher_message(**message)
 
-        print('should_filter_message', should_filter_message(message))
         if should_filter_message(message):
             return
 
         message = filter_out_sensitive_data(message)
-        print('filter_out_sensitive_data', message)
-        # message = self.format_error(message)
-        # print('format_error', message)
+        message = self.format_error(message)
 
         if message.msg_id in self.running_executions_mapping:
             message = self.running_executions_mapping.get(message.msg_id)
 
         for client in self.clients:
-            print('SENDINGGGGGGGGGGGGGGGGGGGG', message.to_dict())
             client.write_message(simplejson.dumps(
                 message.to_dict(),
                 default=encode_complex,

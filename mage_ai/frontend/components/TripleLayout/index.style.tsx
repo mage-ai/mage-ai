@@ -119,6 +119,7 @@ const ASIDE_STYLE = css<{
 
 const ASIDE_INNER_STYLE = css<{
   heightOffset?: number;
+  hidden?: boolean;
   verticalOffset?: number;
 }>`
   ${PlainScrollbarStyledCss}
@@ -131,6 +132,10 @@ const ASIDE_INNER_STYLE = css<{
   ${props => typeof props.verticalOffset !== 'undefined' && props.verticalOffset !== null && `
     height: calc(100% - ${props.verticalOffset + (props.heightOffset || 0)}px);
     top: ${props.verticalOffset}px;
+  `}
+
+  ${props => props.hidden && `
+    display: none;
   `}
 `;
 
@@ -257,6 +262,7 @@ export const BeforeStyle = styled.aside<{
 export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   contained?: boolean;
   heightOffset?: number;
+  hidden?: boolean;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
@@ -285,6 +291,7 @@ export const AfterStyle = styled.aside<{
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
   heightMinus?: number;
+  hidden?: boolean;
   overflow?: string;
   verticalOffset?: number;
 }>`

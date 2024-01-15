@@ -40,10 +40,10 @@ def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]])
             orphan = False
             if len(owners) == 0:
                 logger.error(f'[{now}] WebSocket: no subscribers for {msg_id}')
-                for subscriber, _callback, _on_failure in subscribers:
-                    if isinstance(subscriber, CodeWebSocketServer):
+                for subscriber, callback, on_failure in subscribers:
+                    if subscriber is CodeWebSocketServer:
                         continue
-                    owners.append(subscribers)
+                    owners.append((subscriber, callback, on_failure))
                 orphan = True
 
             for subscriber, callback, on_failure in owners:
