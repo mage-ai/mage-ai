@@ -6,6 +6,22 @@ export enum ExecutionStateEnum {
   QUEUED = 'queued', // Block is being attempted to run but another block is still busy
 }
 
+export enum ExecutionStatusEnum {
+  CANCELLED = 'cancelled',
+  EMPTY_RESULTS = 'empty_results',
+  FAILED = 'failed',
+  RUNNING = 'running',
+  SUCCESS = 'success',
+}
+
+export const EXECUTION_STATUS_DISPLAY_LABEL_MAPPING = {
+  [ExecutionStatusEnum.CANCELLED]: 'Cancelled',
+  [ExecutionStatusEnum.EMPTY_RESULTS]: 'No results',
+  [ExecutionStatusEnum.FAILED]: 'Failed',
+  [ExecutionStatusEnum.RUNNING]: 'Running',
+  [ExecutionStatusEnum.SUCCESS]: 'Success',
+};
+
 export enum DataTypeEnum {
   IMAGE_PNG = 'image/png',
   PROGRESS = 'progress',
@@ -45,8 +61,14 @@ interface ExecutionMetadataType {
 export default interface KernelOutputType {
   data?: string | string[];
   data_type?: DataTypeEnum;
+  data_types?: DataTypeEnum[];
   block_type?: BlockTypeEnum;
-  error?: string;
+  error?: {
+    code: number;
+    errors: string[];
+    message: string;
+    type: string;
+  };
   execution_metadata?: ExecutionMetadataType;
   execution_state?: ExecutionStateEnum;
   message?: string;

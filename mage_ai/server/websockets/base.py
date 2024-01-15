@@ -8,7 +8,7 @@ from mage_ai.server.websockets.utils import (
     should_filter_message,
     validate_message,
 )
-from mage_integrations.utils.parsers import encode_complex
+from mage_ai.shared.parsers import encode_complex
 
 
 class BaseHandler(WebSocketHandler):
@@ -40,6 +40,13 @@ class BaseHandler(WebSocketHandler):
     @classmethod
     def send_message(self, message: Message) -> None:
         if isinstance(message, dict) and ('header' in message or 'parent_header' in message):
+            print(simplejson.dumps(
+                message,
+                default=encode_complex,
+                sort_keys=True,
+                indent=2,
+                ignore_nan=True,
+            ))
             message = Message.load_from_publisher_message(**message)
 
         if should_filter_message(message):

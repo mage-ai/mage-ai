@@ -1,12 +1,19 @@
 import useWebSocket from 'react-use-websocket';
+import { GridThemeProvider } from 'styled-bootstrap-grid';
+import { ThemeContext } from 'styled-components';
+import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useContext, useMemo, useRef } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
 import KernelOutputType from '@interfaces/KernelOutputType';
+import KeyboardContext from '@context/Keyboard';
 import Output from './Output';
 import Shell from './Shell';
+import { ErrorProvider } from '@context/Error';
+import { ModalProvider } from '@context/Modal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { READY_STATE_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
@@ -14,20 +21,28 @@ import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 export default function useInteractiveCodeOutput({
   code,
   onMessage,
+  onOpen,
   shouldConnect = false,
+  shouldReconnect,
   uuid,
 }: {
   code?: string;
   onMessage?: (message: KernelOutputType) => void;
+  onOpen?: (value: boolean) => void;
   shouldConnect?: boolean;
+  shouldReconnect?: (event: any) => boolean;
   uuid: string;
 }): {
+  connectionState: WebSocketStateEnum;
   output: JSX.Element;
   sendMessage: (payload: {
     [key: string]: any;
   }) => void;
   shell: JSX.Element;
 } {
+  const keyboardContext = useContext(KeyboardContext);
+  const themeContext = useContext(ThemeContext);
+
   const user = getUser() || { id: '__NO_ID__' };
   const token = useMemo(() => new AuthToken(), []);
   const oauthWebsocketData = useMemo(() => ({
@@ -46,13 +61,15 @@ export default function useInteractiveCodeOutput({
 
   const {
     // lastMessage,
-    // readyState,
+    readyState,
     sendMessage: sendMessageInit,
   } = useWebSocket(getWebSocket(`${uuid}-${user?.id}`), {
-    // shouldReconnect: (data) => {
-    //   return false;
-    // },
-    // onOpen
+    shouldReconnect: (data) => {
+      if (shouldReconnect) {
+        shouldReconnect?.(data)
+      }
+    },
+    onOpen: () => onOpen(true),
     onMessage: (message: KernelOutputType) => {
       messagesRef.current.push(message);
 
@@ -100,43 +117,49 @@ export default function useInteractiveCodeOutput({
             session: null,
           };
 
-          if (parentID === null && parentMessage?.msg_id) {
-            parentID = parentMessage?.msg_id;
+          const uuidUse = parentMessage?.msg_id || msgUUID;
+
+          if (parentID === null && uuidUse) {
+            parentID = uuidUse;
           }
 
           if (parentID) {
-            if (parentID === parentMessage?.msg_id) {
+            if (parentID === uuidUse) {
               outputsByParentID.push(output);
             } else {
               outputsGrouped.push(
                 <Output
+                  key={parentID}
                   outputs={outputsByParentID}
                 />
               );
-              console.log('outputsByParentID', outputsByParentID)
+              // console.log('outputsByParentID', outputsByParentID)
               outputsByParentID = [output];
-              parentID = parentMessage?.msg_id;
+              parentID = uuidUse;
             }
           }
         });
 
-        // outputItemsRef.current.push(
-        //   <Output
-        //     key={msgUUID || `${msgID}-${message?.timeStamp}`}
-        //     message={message}
-        //   />
-        // );
+        if (outputsByParentID?.length >= 1) {
+          outputsGrouped.push(
+            <Output
+              key={parentID}
+              outputs={outputsByParentID}
+            />
+          );
+        }
 
-        // outputItemsRef?.current?.forEach(() => {
-
-        // });
-
-
-        // outputRootRef?.current?.render(
-        //   <>
-        //     {outputs}
-        //   </>,
-        // );
+        outputRootRef?.current?.render(
+          <KeyboardContext.Provider value={keyboardContext}>
+            <ThemeProvider theme={themeContext}>
+              <ModalProvider>
+                <ErrorProvider>
+                  {outputsGrouped}
+                </ErrorProvider>
+              </ModalProvider>
+            </ThemeProvider>
+          </KeyboardContext.Provider>,
+        );
       }
 
       if (onMessage) {
@@ -174,6 +197,7 @@ export default function useInteractiveCodeOutput({
   }, []);
 
   return {
+    connectionState: READY_STATE_MAPPING[readyState],
     output: outputRoot,
     sendMessage,
     shell,

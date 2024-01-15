@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import FileEditor from '@components/FileEditor';
@@ -7,6 +8,7 @@ import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useInteractiveCodeOutput from '@components/InteractiveCodeOutput/useInteractiveCodeOutput';
@@ -14,8 +16,10 @@ import useTripleLayout from '@components/TripleLayout/useTripleLayout';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
+import { DISPLAY_LABEL_MAPPING } from '@interfaces/WebSocketType';
 import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
-import { Terminal as TerminalIcon } from '@oracle/icons';
+import { PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCode, setCode } from './utils';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -35,8 +39,14 @@ function CodeMatrix({
   const sendMessageRef = useRef(null);
 
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
+  const [open, setOpen] = useState(false);
   const [pause, setPause] = useState(false);
   const [ready, setReady] = useState(false);
+  const [shouldConnect, setShouldConnect] = useState(false);
+
+  const shouldReconnect = useCallback(() => {
+    return open && !pause && ready && shouldConnect;
+  }, [open, pause, ready, shouldConnect]);
 
   useApplicationBase(props);
   const {
@@ -67,12 +77,15 @@ function CodeMatrix({
   }, []);
 
   const {
+    connectionState,
     output,
     sendMessage,
     shell,
   } = useInteractiveCodeOutput({
     onMessage,
-    shouldConnect: ready,
+    onOpen: setOpen,
+    shouldConnect,
+    shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
   });
 
@@ -99,7 +112,7 @@ function CodeMatrix({
         };
       },
     ];
-  }, [sendMessage]);
+  }, [open, ready, sendMessage]);
 
   const fileEditor = useMemo(() => {
     return (
@@ -153,34 +166,67 @@ function CodeMatrix({
           menuGroups={menuGroups}
         />
       </Flex>
+
+      <Flex alignItems="center">
+        <Text default monospace small>
+          {DISPLAY_LABEL_MAPPING[connectionState]}
+        </Text>
+
+        <Spacing mr={1} />
+
+        <Button
+          iconOnly
+          noBackground
+          noBorder
+          noPadding
+          onClick={() => setShouldConnect(prev => !prev)}
+        >
+          <PowerOnOffButton
+            danger={!(open && ready && shouldConnect)}
+            size={2 * UNIT}
+            success={open && ready && shouldConnect}
+          />
+        </Button>
+      </Flex>
+
       <Spacing mr={1} />
     </FlexContainer>
   ), [
+    connectionState,
     menuGroups,
+    open,
+    ready,
+    shouldConnect,
   ]);
 
-  // const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
-  // const { registerOnKeyDown, registerOnKeyUp, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
-  // useEffect(() => () => {
-  //   unregisterOnKeyDown(uuidKeyboard);
-  //   unregisterOnKeyUp(uuidKeyboard);
-  // }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
-  // registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
-  //   console.log('down', keyMapping, keyHistory);
-  //   if (keysPresentAndKeysRecent([KEY_CODE_META], [], keyMapping, keyHistory)) {
-  //     pauseEvent(event);
-  //     setPause(true);
-  //     console.log('BAM')
-  //   }
-  // }, []);
-  // registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
-  //   setPause(false);
-  //   console.log('up', keyMapping, keyHistory);
-  //   if (keysPresentAndKeysRecent([KEY_CODE_META], [], keyMapping, keyHistory)) {
-  //     pauseEvent(event);
-  //     console.log('BAM')
-  //   }
-  // }, []);
+  const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
+  const { registerOnKeyDown, registerOnKeyUp, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+    unregisterOnKeyUp(uuidKeyboard);
+  }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
+
+  registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
+    setPause(false);
+  }, []);
+
+  registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
+    console.log(keyMapping, keyHistory)
+
+    // if (keyMapping[KEY_CODE_META]) {
+    //   console.log('Pausing event');
+    //   event.preventDefault();
+    //   setPause(true);
+    // }
+
+    if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory)) {
+      console.log('Running code from CodeMatrix keyboard shortcuts.');
+      sendMessage({
+        message: contentRef.current,
+      });
+    }
+  }, []);
 
   return (
     <ContainerStyle>

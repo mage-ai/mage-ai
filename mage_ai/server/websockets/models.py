@@ -62,8 +62,8 @@ class Error(BaseDataClass):
 @dataclass
 class ExecutionMetadata(BaseDataClass):
     date: datetime = None
-    execution_count: int = None
     initialize_database: bool = False
+    execution_count: int = None
     metadata: Dict = None
     reload_modules: bool = False
     session: str = None
@@ -75,17 +75,19 @@ class ExecutionMetadata(BaseDataClass):
 class ParentMessage(BaseDataClass):
     api_key: str = None
     buffers: List[str] = None
+    code: str = None
+    content: Dict = None
     data: Union[List[str], str] = None
     data_type: str = None  # DataType
     data_types: List[str] = None  # List[DataType]
     error: Error = None
     executed: bool = False
     execution_metadata: ExecutionMetadata = None
-    execution_state: ExecutionState = None
+    execution_state: str = None
     parent_message: Dict = None
     message: str = None
     msg_id: str = None
-    msg_type: str = None  # execute_input, execute_result
+    msg_type: str = None  # execute_input, execute_result, stream, idle
     token: str = None
     type: str = None  # orphan (msg_id doesn’t belong to any subscriber)
     uuid: str = None
@@ -93,12 +95,12 @@ class ParentMessage(BaseDataClass):
     def __post_init__(self):
         self.serialize_attribute_class('error', Error)
         self.serialize_attribute_class('execution_metadata', ExecutionMetadata)
-        self.serialize_attribute_class('execution_state', ExecutionState)
         self.uuid = self.uuid or str(uuid.uuid4())
 
     def to_dict(self, **kwargs) -> Dict:
         return dict(
             buffers=[str(v) for v in (self.buffers or [])],
+            content=self.content,
             data=self.data,
             data_type=self.data_type,
             data_types=self.data_types,
@@ -107,7 +109,7 @@ class ParentMessage(BaseDataClass):
             execution_metadata=(
                 self.execution_metadata.to_dict() if self.execution_metadata else None
             ),
-            execution_state=self.execution_state.value if self.execution_state else None,
+            execution_state=self.execution_state if self.execution_state else None,
             parent_message=self.parent_message,
             message=self.message,
             msg_id=self.msg_id,
@@ -145,26 +147,45 @@ class Message(ParentMessage):
         buffers = kwargs.get('buffers') or []
         content = kwargs.get('content') or {}
         header = kwargs.get('header') or {}
-        metadata = kwargs.get('metadata') or {}
+        metadata = kwargs.get('metadata', {}) or {}
         msg_id = kwargs.get('msg_id') or None
         msg_type = kwargs.get('msg_type') or None
         parent_header = kwargs.get('parent_header') or {}
 
+        code = None
         data = []
+        data_type = None
         data_types = []
-        if content.get('data'):
+        execution_count = None
+        execution_state = None
+
+        if 'code' in content:
+            code = content.get('code')
+        if 'data' in content:
             for d_type, data_output in (content.get('data') or {}).items():
                 data.append(data_output)
+                data_type = d_type
                 data_types.append(d_type)
-
-        execution_count = content.get('execution_count')
+        if 'execution_count' in content:
+            execution_count = content.get('execution_count')
+        if 'execution_state' in content:
+            execution_state = content.get('execution_state')
+        if 'name' in content:
+            data_types.append(content.get('name'))
+        if 'text' in content:
+            data.append(content.get('text'))
+        if 'metadata' in content:
+            metadata.update(content.get('metadata'))
 
         return Message.load(
             buffers=buffers,
+            code=code,
+            content=content,
             data=data,
-            data_type=data_types[0] if data_types else None,
+            data_type=data_type,
             data_types=data_types,
-            executed=True if (execution_count or msg_type == 'execute_result') else False,
+            executed=msg_type == 'execute_result',
+            execution_state=execution_state,
             execution_metadata=ExecutionMetadata.load(
                 date=header.get('date'),
                 execution_count=execution_count,
@@ -173,7 +194,6 @@ class Message(ParentMessage):
                 username=header.get('username'),
                 version=header.get('version'),
             ),
-            message=content.get('code'),
             msg_id=msg_id,
             msg_type=msg_type,
             parent_message=Message.load(
@@ -186,6 +206,7 @@ class Message(ParentMessage):
                 msg_id=parent_header.get('msg_id'),
                 msg_type=parent_header.get('msg_type'),
             ),
+            type=kwargs.get('type'),
         )
 
     @property
