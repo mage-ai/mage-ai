@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -32,6 +32,7 @@ function CodeMatrix({
   };
 }) {
   const contentRef = useRef(null);
+  const sendMessageRef = useRef(null);
 
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
   const [pause, setPause] = useState(false);
@@ -62,13 +63,17 @@ function CodeMatrix({
     hiddenBefore: true,
   });
 
+  const onMessage = useCallback((message: string) => {
+  }, []);
+
   const {
     output,
     sendMessage,
     shell,
   } = useInteractiveCodeOutput({
+    onMessage,
     shouldConnect: ready,
-    uuid: ApplicationExpansionUUIDEnum.CodeMatrix,
+    uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
   });
 
   const shortcuts = useMemo(() => {
@@ -85,12 +90,16 @@ function CodeMatrix({
           run: (editor) => {
             const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
             const text = editor.getValue();
-            console.log(highlightedText || text);
+            const message = highlightedText || text;
+
+            sendMessage?.({
+              message,
+            });
           },
         };
       },
     ];
-  }, []);
+  }, [sendMessage]);
 
   const fileEditor = useMemo(() => {
     return (
@@ -177,15 +186,15 @@ function CodeMatrix({
     <ContainerStyle>
       <TripleLayout
         after={(
-          <>
+          <div>
             {output}
             {shell}
-          </>
+          </div>
         )}
         afterCombinedWithMain
         afterDividerContrast
         afterHeightOffset={0}
-        afterHidden={hiddenAfter}
+        // afterHidden={hiddenAfter}
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
         autoLayout

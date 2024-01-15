@@ -1,6 +1,6 @@
 import KernelOutputType from '@interfaces/KernelOutputType';
 import { getMessagesWithType } from '@components/CodeBlock/utils';
-import { removASCII, removeANSI } from '@utils/string';
+import { isJsonString, removASCII, removeANSI } from '@utils/string';
 
 export function getMessagesWithAndWithoutErrors(
   messages: KernelOutputType[],
@@ -58,4 +58,12 @@ export function getMessagesWithAndWithoutErrors(
     withError,
     withoutError,
   };
+}
+
+export function parseRawDataFromMessage(data: string): KernelOutputType {
+  if (data?.length >= 1 && isJsonString(data)) {
+    return JSON.parse(data);
+  }
+
+  return null;
 }
