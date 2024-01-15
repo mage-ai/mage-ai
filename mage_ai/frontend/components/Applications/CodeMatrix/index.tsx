@@ -50,6 +50,7 @@ function CodeMatrix({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
 
+  const outputBottomRef = useRef(null);
   const statusStateRootRef = useRef(null);
   const runButtonRootRef = useRef(null)
   const runButtonRef = useRef(null)
@@ -87,6 +88,7 @@ function CodeMatrix({
   } = props;
 
   const {
+    afterInnerRef,
     hiddenAfter,
     hiddenBefore,
     mainContainerRef,
@@ -118,6 +120,8 @@ function CodeMatrix({
       if (kernelStatusCheckResultsTextRef?.current) {
         kernelStatusCheckResultsTextRef.current.innerText = `Last checked ${utcStringToElapsedTime(datetime, true)}`;
       }
+
+      return;
     } else {
       setItems([output], false);
     }
@@ -183,6 +187,9 @@ function CodeMatrix({
         </ThemeProvider>
       );
     }
+
+    // Scroll down
+
   }, []);
 
   const {
@@ -197,18 +204,30 @@ function CodeMatrix({
     getDefaultMessages: () => getItems(),
     onMessage,
     onOpen,
+    onRenderOutputCallback: () => {
+      setTimeout(() => {
+        console.log('goooooooooooooo', afterInnerRef?.current?.getBoundingClientRect()?.height, outputBottomRef?.current?.getBoundingClientRect()?.height)
+        afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
+          afterInnerRef?.current?.getBoundingClientRect()?.height
+            + outputBottomRef?.current?.getBoundingClientRect()?.height
+        );
+
+      }, 1)
+    },
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
   });
+  sendMessageRef.current = sendMessage;
 
   const open = useMemo(() => openState && WebSocketStateEnum.OPEN === connectionState, [
     connectionState,
     openState,
   ]);
 
-  const shortcuts = useMemo(() => {
-    return [
+  const fileEditor = useMemo(() => {
+    console.log('FILE EDITOR REDNER');
+    const shortcuts = [
       (monaco, _editor) => {
         return {
           id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/run-code`,
@@ -223,19 +242,17 @@ function CodeMatrix({
             const text = editor.getValue();
             const message = highlightedText || text;
 
-            sendMessage?.({
+            sendMessageRef?.current?.({
               message,
             });
           },
         };
       },
     ];
-  }, [open, ready, sendMessage]);
 
-  const fileEditor = useMemo(() => {
     return (
       <FileEditor
-        active={!pause}
+        active
         file={{
           content: (getCode(language) || '') as string,
           uuid: ApplicationExpansionUUIDEnum.CodeMatrix,
@@ -257,7 +274,7 @@ function CodeMatrix({
         shortcuts={shortcuts}
       />
     );
-  }, [language, pause, shortcuts]);
+  }, [language]);
 
   const menuGroups = useMemo(() => {
     return [
@@ -399,7 +416,7 @@ function CodeMatrix({
     <div>
       {output}
       {shell}
-      <div style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }} />
+      <div ref={outputBottomRef} style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }} />
     </div>
   ), [
     connectionState,
@@ -455,6 +472,7 @@ function CodeMatrix({
         afterHeader={afterHeaderMemo}
         afterHeightOffset={0}
         afterHidden={hiddenAfter}
+        afterInnerRef={afterInnerRef}
         afterMousedownActive={mousedownActiveAfter}
         afterWidth={widthAfter}
         autoLayout

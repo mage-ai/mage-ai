@@ -10,6 +10,7 @@ import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import { RefType } from '@interfaces/ElementType'
 import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
 import VerticalNavigation from '@components/Dashboard/VerticalNavigation';
@@ -70,6 +71,7 @@ type TripleLayoutProps = {
   afterHeightOffset?: number;
   afterHidden?: boolean;
   afterInnerHeightMinus?: number;
+  afterInnerRef?: RefType;
   afterMousedownActive?: boolean;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
@@ -123,6 +125,7 @@ function TripleLayout({
   afterHeightOffset,
   afterHidden,
   afterInnerHeightMinus,
+  afterInnerRef,
   afterMousedownActive,
   afterNavigationItems,
   afterOverflow,
@@ -173,7 +176,7 @@ function TripleLayout({
     return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
   }
 
-  const refAfterInner = useRef(null);
+  const refAfterInner = afterInnerRef || useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);

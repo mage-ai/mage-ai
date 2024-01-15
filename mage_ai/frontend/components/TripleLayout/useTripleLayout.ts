@@ -4,6 +4,7 @@ import usePrevious from '@utils/usePrevious';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { get, set, setLocalStorageValue } from '@storage/localStorage';
 import { useWindowSize } from '@utils/sizes';
+import { RefType } from '@interfaces/ElementType';
 
 const DEFAULT_ASIDE_WIDTH = 25 * UNIT;
 const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
@@ -172,6 +173,8 @@ function useAside(uuid, refData, {
 }
 
 export type UseTripleLayoutType = {
+  afterInnerRef?: RefType;
+  beforeInnerRef?: RefType;
   hiddenAfter?: boolean;
   hiddenBefore?: boolean;
   mainContainerRef: {
@@ -220,6 +223,8 @@ export default function useTripleLayout(uuid: string, {
   const keyAfter = useMemo(() => `layout_after_${uuid}`, [uuid]);
   const keyBefore = useMemo(() => `layout_before_${uuid}`, [uuid]);
 
+  const afterInnerRef = useRef(null);
+  const beforeInnerRef = useRef(null);
   const mainContainerRef = mainContainerRefProp || useRef(null);
   const [mainContainerWidthInit, setMainContainerWidth] = useState<number>(null);
   const mainContainerWidth = useMemo(() => Math.max(
@@ -326,6 +331,8 @@ export default function useTripleLayout(uuid: string, {
   // ]);
 
   return {
+    afterInnerRef,
+    beforeInnerRef,
     hiddenAfter,
     hiddenBefore,
     mainContainerRef,

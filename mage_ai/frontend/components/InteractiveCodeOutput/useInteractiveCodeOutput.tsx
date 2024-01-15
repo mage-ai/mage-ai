@@ -11,6 +11,7 @@ import KeyboardContext from '@context/Keyboard';
 import Output from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
+import ComponentWithCallback from '@components/shared/ComponentWithCallback';
 import { ErrorProvider } from '@context/Error';
 import { ModalProvider } from '@context/Modal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
@@ -29,6 +30,7 @@ export default function useInteractiveCodeOutput({
   getDefaultMessages,
   onMessage,
   onOpen,
+  onRenderOutputCallback,
   shouldConnect = false,
   shouldReconnect,
   uuid,
@@ -41,6 +43,7 @@ export default function useInteractiveCodeOutput({
     executionStatus: ExecutionStatusEnum;
   }) => void;
   onOpen?: (value: boolean) => void;
+  onRenderOutputCallback?: () => void;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
@@ -98,7 +101,7 @@ export default function useInteractiveCodeOutput({
     let parentID = null;
     let outputsByParentID = [];
 
-    outputs?.forEach((output: KernelOutputType) => {
+    outputs?.slice(-300)?.forEach((output: KernelOutputType) => {
       const {
         data,
         data_type: dataType,
@@ -164,7 +167,9 @@ export default function useInteractiveCodeOutput({
         <ThemeProvider theme={themeContext}>
           <ModalProvider>
             <ErrorProvider>
-              {outputsGrouped}
+              <ComponentWithCallback callback={onRenderOutputCallback}>
+                {outputsGrouped}
+              </ComponentWithCallback>
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
@@ -240,6 +245,7 @@ export default function useInteractiveCodeOutput({
         <OutputContentStyle
           id={outputRootUUID.current}
           ref={outputContentRef}
+          callback={onRenderOutputCallback}
         />
       </OutputContainerStyle>
     );
