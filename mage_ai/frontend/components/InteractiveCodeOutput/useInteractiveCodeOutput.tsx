@@ -36,15 +36,16 @@ export default function useInteractiveCodeOutput({
   checkKernelStatus?: boolean;
   code?: string;
   getDefaultMessages?: () => KernelOutputType[];
-  onMessage?: (message: KernelOutputType) => void;
+  onMessage?: (message: KernelOutputType, opts?: {
+    executionState: ExecutionStateEnum;
+    executionStatus: ExecutionStatusEnum;
+  }) => void;
   onOpen?: (value: boolean) => void;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
 }): {
   connectionState: WebSocketStateEnum;
-  executionState: ExecutionStateEnum;
-  executionStatus: ExecutionStatusEnum;
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
   output: JSX.Element;
@@ -203,9 +204,10 @@ export default function useInteractiveCodeOutput({
 
       if (data) {
         const output = parseRawDataFromMessage(data);
+        const arr = dedupe([...messagesRef.current, output], ['msg_id']);
 
         if (onMessage) {
-          onMessage?.(output);
+          onMessage?.(output, getExecutionStatusAndState(getLatestOutputGroup(arr || [])));
         }
 
         // This comes from checking the kernel and hitting the kernels endpoint.
@@ -217,9 +219,7 @@ export default function useInteractiveCodeOutput({
           return;
         }
 
-        messagesRef.current.push(output);
-        messagesRef.current = dedupe(messagesRef.current || [], ['msg_id']);
-
+        messagesRef.current = arr;
         renderOutputs(messagesRef?.current);
       }
     },
@@ -260,6 +260,5 @@ export default function useInteractiveCodeOutput({
     output: outputRoot,
     sendMessage,
     shell,
-    ...getExecutionStatusAndState(messagesRef?.current || []),
   };
 }

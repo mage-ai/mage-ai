@@ -1,6 +1,10 @@
 import tzMoment from 'moment-timezone';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import dark from '@oracle/styles/themes/dark';
+import { ThemeContext } from 'styled-components';
+import { ThemeProvider } from 'styled-components'
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -44,6 +48,14 @@ function CodeMatrix({
   };
 }) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const themeContext = useContext(ThemeContext);
+
+  const statusStateRootRef = useRef(null);
+  const runButtonRootRef = useRef(null)
+  const runButtonRef = useRef(null)
+  const executionStateRef = useRef(null);
+  const executionStatusRef = useRef(null);
+
   const contentRef = useRef(null);
   const onOpenCallbackRef= useRef(null);
   const sendMessageRef = useRef(null);
@@ -93,7 +105,10 @@ function CodeMatrix({
     hiddenBefore: true,
   });
 
-  const onMessage = useCallback((output: KernelOutputType) => {
+  const onMessage = useCallback((output: KernelOutputType, {
+    executionState,
+    executionStatus,
+  }) => {
     if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
       const datetime = momentInLocalTimezone(
         tzMoment(output?.[0]?.execution_metadata?.date),
@@ -106,12 +121,72 @@ function CodeMatrix({
     } else {
       setItems([output], false);
     }
+
+    executionStateRef.current = executionState;
+    executionStatusRef.current = executionStatus;
+
+    if (!statusStateRootRef?.current) {
+      const domNode = document.getElementById('CodeMatrix-StatusState');
+      if (domNode) {
+        statusStateRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (!runButtonRootRef?.current) {
+      const domNode = document.getElementById('CodeMatrix-RunButton');
+      if (domNode) {
+        runButtonRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (statusStateRootRef?.current) {
+      statusStateRootRef?.current?.render(
+        <div>
+          <Text default monospace xsmall>
+            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionState]}
+          </Text>
+          <Text default monospace xsmall>
+            Recent run status: <Text
+              danger={ExecutionStatusEnum.FAILED === executionStatus}
+              default={ExecutionStatusEnum.CANCELLED === executionStatus}
+              inline
+              monospace
+              muted={ExecutionStatusEnum.PENDING === executionStatus}
+              success={ExecutionStatusEnum.SUCCESS === executionStatus}
+              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus || ExecutionStatusEnum.CANCELLED === executionStatus}
+              xsmall
+            >
+              {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]?.toLowerCase()}
+            </Text>
+          </Text>
+        </div>
+      );
+    }
+
+    if (runButtonRootRef?.current) {
+      runButtonRootRef?.current?.render(
+        <ThemeProvider theme={themeContext}>
+          <Button
+            beforeIcon={<PlayButtonFilled success />}
+            secondary
+            compact
+            small
+            loading={executionStateRef.current === ExecutionStateEnum.BUSY || executionStatusRef.current === ExecutionStatusEnum.RUNNING}
+            onClick={() => {
+              sendMessage({
+                message: contentRef.current,
+              });
+            }}
+          >
+            Execute code
+          </Button>
+        </ThemeProvider>
+      );
+    }
   }, []);
 
   const {
     connectionState,
-    executionState,
-    executionStatus,
     kernel,
     kernelStatusCheckResults,
     output,
@@ -262,7 +337,7 @@ function CodeMatrix({
 
           <Spacing mr={1} />
 
-          <Text default monospace small ref={kernelStatusCheckResultsTextRef} />
+          <Text default monospace xsmall ref={kernelStatusCheckResultsTextRef} />
         </Flex>
       </Flex>
     </FlexContainer>
@@ -337,37 +412,39 @@ function CodeMatrix({
   const afterHeaderMemo = useMemo(() => {
     return (
       <>
-        <Flex flexDirection="column">
-          <Text default monospace xsmall>
-            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionState]}
-          </Text>
-          <Text default monospace xsmall>
-            Recent run status: {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]?.toLowerCase()}
-          </Text>
-        </Flex>
+        <Flex flexDirection="column" id="CodeMatrix-StatusState" />
 
         <Flex flex={1} alignItems="center" justifyContent="flex-end">
-          <Spacing mr={1} />
-
-          <Button
-            beforeIcon={<PlayButtonFilled success />}
-            secondary
-            compact
-            small
-            onClick={() => {
-              sendMessage({
-                message: contentRef.current,
-              });
-            }}
-          >
-            Execute code
-          </Button>
-
-          <Spacing mr={1} />
+          <Spacing mx={1} id="CodeMatrix-RunButton">
+            <Button
+              beforeIcon={<PlayButtonFilled success />}
+              secondary
+              compact
+              small
+              ref={runButtonRef}
+              loading={executionStateRef.current === ExecutionStateEnum.BUSY || executionStatusRef.current === ExecutionStatusEnum.RUNNING}
+              onClick={() => {
+                if (!open || !shouldConnect) {
+                  onOpenCallbackRef.current = () => {
+                    sendMessage({
+                      message: contentRef.current,
+                    });
+                  };
+                  setShouldConnect(true);
+                } else {
+                  sendMessage({
+                    message: contentRef.current,
+                  });
+                }
+              }}
+            >
+              Execute code
+            </Button>
+          </Spacing>
         </Flex>
       </>
     );
-  }, [executionState, executionStatus, sendMessage]);
+  }, [open, shouldConnect, sendMessage]);
 
   return (
     <ContainerStyle>
