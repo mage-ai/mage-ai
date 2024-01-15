@@ -48,6 +48,7 @@ export default function useInteractiveCodeOutput({
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
 }): {
+  clearOutputs: () => void;
   connectionState: WebSocketStateEnum;
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
@@ -177,6 +178,11 @@ export default function useInteractiveCodeOutput({
     );
   }
 
+  function clearOutputs() {
+    messagesRef.current = [];
+    renderOutputs([]);
+  }
+
   useEffect(() => {
     if (getDefaultMessages) {
       setTimeout(() => {
@@ -222,6 +228,8 @@ export default function useInteractiveCodeOutput({
             output,
           ].slice(0, 12);
           return;
+        } else if (MsgType.SHUTDOWN_REQUEST === output?.msg_id) {
+          return;
         }
 
         messagesRef.current = arr;
@@ -260,6 +268,7 @@ export default function useInteractiveCodeOutput({
   }, []);
 
   return {
+    clearOutputs,
     connectionState: READY_STATE_MAPPING[readyState],
     kernel,
     kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,

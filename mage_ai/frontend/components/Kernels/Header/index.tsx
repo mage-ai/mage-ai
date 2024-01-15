@@ -79,6 +79,7 @@ function KernelHeader({
             <Spacing mb={1} />
           </FlexContainer>
         ),
+        onClick: () => false,
         uuid: 'Health',
       });
     }
@@ -92,6 +93,8 @@ function KernelHeader({
     interrupt,
   ]);
 
+  const limbo = useMemo(() => typeof outputs !== 'undefined' && !outputs?.length, [outputs]);
+
   return (
     <ClickOutside
       onClickOutside={() => setHighlightedIndex(null)}
@@ -104,7 +107,14 @@ function KernelHeader({
     >
       <div style={{ position: 'relative' }}>
         <Button
-          beforeIcon={<Circle danger={!kernel?.alive} size={1 * UNIT} success={kernel?.alive} />}
+          beforeIcon={
+            <Circle
+              danger={!limbo && !kernel?.alive}
+              size={1 * UNIT}
+              warning={limbo}
+              success={!limbo && kernel?.alive}
+            />
+          }
           compact
           onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
           onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
@@ -113,7 +123,7 @@ function KernelHeader({
           small
         >
           <Text monospace noWrapping small>
-            {kernel?.name} {kernel?.alive ? 'alive' : 'dead'}
+            {kernel?.name} {limbo ? 'not connected' : kernel?.alive ? 'alive' : 'dead'}
           </Text>
         </Button>
 

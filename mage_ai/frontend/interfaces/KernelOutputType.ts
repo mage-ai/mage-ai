@@ -46,13 +46,14 @@ export const DATA_TYPE_TEXTLIKE = [
 ];
 
 export enum MsgType {
-  ERROR = 'error',
-  STREAM_PIPELINE = 'stream_pipeline',
-  STREAM = 'stream',
-  STATUS = 'status',
-  EXECUTE_RESULT = 'execute_result',
-  EXECUTE_INPUT = 'execute_input',
   DISPLAY_DATA = 'display_data',
+  ERROR = 'error',
+  EXECUTE_INPUT = 'execute_input',
+  EXECUTE_RESULT = 'execute_result',
+  SHUTDOWN_REQUEST = 'shutdown_request',
+  STATUS = 'status',
+  STREAM = 'stream',
+  STREAM_PIPELINE = 'stream_pipeline',
   USAGE_REQUEST = 'usage_request',
 }
 

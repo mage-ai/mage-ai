@@ -5,6 +5,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { get, set, setLocalStorageValue } from '@storage/localStorage';
 import { useWindowSize } from '@utils/sizes';
 import { RefType } from '@interfaces/ElementType';
+import { truthy } from '@utils/obj';
 
 const DEFAULT_ASIDE_WIDTH = 25 * UNIT;
 const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
@@ -54,6 +55,7 @@ function useAside(uuid, refData, {
   ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [widthState, setWidthState] = useState(
     typeof widthLocal !== 'undefined'
         ? widthLocal : typeof widthProp !== 'undefined'
@@ -71,6 +73,16 @@ function useAside(uuid, refData, {
     ),
   ].filter(v => v)));
 >>>>>>> d9e3000fd ([td] Code Matrix application)
+=======
+  const [widthState, setWidthState] = useState(
+    Math.min(...[
+      truthy(widthWindow) ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH) : null,
+      truthy(widthLocal) ? widthLocal : null,
+      truthy(widthProp)  ? widthProp : null,
+    ].filter(v => v))
+    || DEFAULT_ASIDE_WIDTH
+  );
+>>>>>>> 2b7ba3462 ([after header buttonms)
 
   const setHidden = useCallback((prev) => {
     setHiddenState(prev);

@@ -123,6 +123,7 @@ const SHARED_STYLES = css<{
   padding: ${1 * UNIT}px ${1.5 * UNIT}px;
   position: relative;
   z-index: 0;
+  white-space: nowrap;
 
   ${props => !props.noBold && `
     font-family: ${FONT_FAMILY_BOLD};

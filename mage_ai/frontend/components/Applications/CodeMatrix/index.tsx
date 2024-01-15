@@ -6,6 +6,7 @@ import dark from '@oracle/styles/themes/dark';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components'
 import Button from '@oracle/elements/Button';
+import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import FileEditor from '@components/FileEditor';
@@ -24,12 +25,13 @@ import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useInteractiveCodeOutput from '@components/InteractiveCodeOutput/useInteractiveCodeOutput';
 import useTripleLayout from '@components/TripleLayout/useTripleLayout';
+import useKernel from '@utils/models/kernel/useKernel';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
 import { DISPLAY_LABEL_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
-import { PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon } from '@oracle/icons';
+import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon, PauseV2, Callback } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCode, setCode } from './utils';
@@ -47,6 +49,11 @@ function CodeMatrix({
     file_path: string;
   };
 }) {
+  const { interrupt } = useKernel({
+    refreshInterval: 0,
+    revalidateOnFocus: false,
+  });
+
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext = useContext(ThemeContext);
 
@@ -62,6 +69,7 @@ function CodeMatrix({
   const sendMessageRef = useRef(null);
   const kernelStatusCheckResultsTextRef = useRef(null);
 
+  const [running, setRunning] = useState(false);
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
   const [openState, setOpen] = useState(false);
   const [pause, setPause] = useState(false);
@@ -111,6 +119,10 @@ function CodeMatrix({
     executionState,
     executionStatus,
   }) => {
+    if (MsgType.SHUTDOWN_REQUEST === output?.msg_type) {
+      return;
+    }
+
     if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
       const datetime = momentInLocalTimezone(
         tzMoment(output?.[0]?.execution_metadata?.date),
@@ -120,15 +132,15 @@ function CodeMatrix({
       if (kernelStatusCheckResultsTextRef?.current) {
         kernelStatusCheckResultsTextRef.current.innerText = `Last checked ${utcStringToElapsedTime(datetime, true)}`;
       }
-
       return;
-    } else {
-      setItems([output], false);
     }
 
+    setItems([output], false);
     executionStateRef.current = executionState;
     executionStatusRef.current = executionStatus;
+  }, []);
 
+  function renderStatusAndState() {
     if (!statusStateRootRef?.current) {
       const domNode = document.getElementById('CodeMatrix-StatusState');
       if (domNode) {
@@ -147,52 +159,55 @@ function CodeMatrix({
       statusStateRootRef?.current?.render(
         <div>
           <Text default monospace xsmall>
-            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionState]}
+            {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[executionStateRef?.current]}
           </Text>
           <Text default monospace xsmall>
             Recent run status: <Text
-              danger={ExecutionStatusEnum.FAILED === executionStatus}
-              default={ExecutionStatusEnum.CANCELLED === executionStatus}
+              danger={ExecutionStatusEnum.FAILED === executionStatusRef?.current}
+              default={ExecutionStatusEnum.CANCELLED === executionStatusRef?.current}
               inline
               monospace
-              muted={ExecutionStatusEnum.PENDING === executionStatus}
-              success={ExecutionStatusEnum.SUCCESS === executionStatus}
-              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus || ExecutionStatusEnum.CANCELLED === executionStatus}
+              muted={ExecutionStatusEnum.PENDING === executionStatusRef?.current}
+              success={ExecutionStatusEnum.SUCCESS === executionStatusRef?.current}
+              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatusRef?.current || ExecutionStatusEnum.CANCELLED === executionStatusRef?.current}
               xsmall
             >
-              {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]?.toLowerCase()}
+              {EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatusRef?.current]?.toLowerCase()}
             </Text>
           </Text>
         </div>
       );
     }
+  }
 
-    if (runButtonRootRef?.current) {
-      runButtonRootRef?.current?.render(
-        <ThemeProvider theme={themeContext}>
-          <Button
-            beforeIcon={<PlayButtonFilled success />}
-            secondary
-            compact
-            small
-            loading={executionStateRef.current === ExecutionStateEnum.BUSY || executionStatusRef.current === ExecutionStatusEnum.RUNNING}
-            onClick={() => {
-              sendMessage({
-                message: contentRef.current,
-              });
-            }}
-          >
-            Execute code
-          </Button>
-        </ThemeProvider>
-      );
-    }
+  function scrollTo({
+    bottom,
+    top,
+  }: {
+    bottom?: boolean;
+    top?: boolean;
+  }) {
+    setTimeout(() => {
+      if (bottom) {
+        afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
+          afterInnerRef?.current?.getBoundingClientRect()?.height
+            + outputBottomRef?.current?.getBoundingClientRect()?.height
+        );
+      } else if (top) {
+        afterInnerRef.current.scrollTop = 0;
+      }
+    }, 1);
+  }
 
-    // Scroll down
-
-  }, []);
+  function onRenderOutputCallback() {
+    scrollTo({
+      bottom: true,
+    });
+    setRunning(false);
+  }
 
   const {
+    clearOutputs,
     connectionState,
     kernel,
     kernelStatusCheckResults,
@@ -204,16 +219,7 @@ function CodeMatrix({
     getDefaultMessages: () => getItems(),
     onMessage,
     onOpen,
-    onRenderOutputCallback: () => {
-      setTimeout(() => {
-        console.log('goooooooooooooo', afterInnerRef?.current?.getBoundingClientRect()?.height, outputBottomRef?.current?.getBoundingClientRect()?.height)
-        afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
-          afterInnerRef?.current?.getBoundingClientRect()?.height
-            + outputBottomRef?.current?.getBoundingClientRect()?.height
-        );
-
-      }, 1)
-    },
+    onRenderOutputCallback,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
@@ -412,61 +418,126 @@ function CodeMatrix({
   }, [
   ]);
 
-  const afterOutput = useMemo(() => (
+  const afterOutputMemo = useMemo(() => (
     <div>
+      {console.log("AFTER OUTPUT")}
       {output}
       {shell}
       <div ref={outputBottomRef} style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }} />
     </div>
   ), [
-    connectionState,
-    open,
     output,
     shell,
-    shouldConnect,
   ]);
 
   const afterHeaderMemo = useMemo(() => {
     return (
       <>
+        <Flex flex={1} alignItems="center" justifyContent="flex-start">
+          <Spacing ml={1} id="CodeMatrix-RunButton">
+            <Button
+              beforeIcon={<Callback default />}
+              compact
+              small
+              secondary
+              onClick={() => {
+                clearOutputs();
+                setItems([], true);
+              }}
+            >
+              Clear outputs
+            </Button>
+          </Spacing>
+
+          <Spacing ml={1} id="CodeMatrix-RunButton">
+            <ButtonGroup>
+              <Button
+                beforeIcon={<CircleWithArrowUp active />}
+                compact
+                small
+                secondary
+                onClick={() => {
+                  scrollTo({ top: true });
+                }}
+              >
+                Go to top
+              </Button>
+                <Button
+                  beforeIcon={<CubeWithArrowDown active />}
+                  compact
+                  small
+                  secondary
+                  onClick={() => {
+                    scrollTo({ bottom: true });
+                  }}
+                >
+                  Go down
+                </Button>
+              </ButtonGroup>
+            </Spacing>
+        </Flex>
+
         <Flex flexDirection="column" id="CodeMatrix-StatusState" />
 
         <Flex flex={1} alignItems="center" justifyContent="flex-end">
-          <Spacing mx={1} id="CodeMatrix-RunButton">
-            <Button
-              beforeIcon={<PlayButtonFilled success />}
-              secondary
-              compact
-              small
-              ref={runButtonRef}
-              loading={executionStateRef.current === ExecutionStateEnum.BUSY || executionStatusRef.current === ExecutionStatusEnum.RUNNING}
-              onClick={() => {
-                if (!open || !shouldConnect) {
-                  onOpenCallbackRef.current = () => {
+          {executionStateRef?.current && ExecutionStateEnum.IDLE !== executionStateRef.current && (
+            <Spacing mr={1} id="CodeMatrix-RunButton">
+              <Button
+                beforeIcon={<PauseV2 warning />}
+                compact
+                small
+                onClick={() => {
+                  executionStateRef.current = null;
+                  setRunning(false);
+                  interrupt();
+                }}
+              >
+                Stop execution
+              </Button>
+            </Spacing>
+          )}
+
+          {(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) && (
+            <Spacing mr={1} id="CodeMatrix-RunButton">
+              <Button
+                beforeIcon={<PlayButtonFilled success />}
+                secondary
+                compact
+                small
+                ref={runButtonRef}
+                loading={running}
+                onClick={() => {
+                  executionStateRef.current = ExecutionStateEnum.QUEUED;
+
+                  if (!open || !shouldConnect) {
+                    onOpenCallbackRef.current = () => {
+                      sendMessage({
+                        message: contentRef.current,
+                      });
+                    };
+                    setRunning(true);
+                    setShouldConnect(true);
+                  } else {
+                    setRunning(true);
                     sendMessage({
                       message: contentRef.current,
                     });
-                  };
-                  setShouldConnect(true);
-                } else {
-                  sendMessage({
-                    message: contentRef.current,
-                  });
-                }
-              }}
-            >
-              Execute code
-            </Button>
-          </Spacing>
+                  }
+                }}
+              >
+                Execute code
+              </Button>
+            </Spacing>
+          )}
         </Flex>
       </>
     );
-  }, [open, shouldConnect, sendMessage]);
+  }, [open, shouldConnect, sendMessage, running]);
 
   return (
     <ContainerStyle>
       <TripleLayout
-        after={afterOutput}
+        after={afterOutputMemo}
         afterCombinedWithMain
         afterDividerContrast
         afterHeader={afterHeaderMemo}

@@ -18,9 +18,6 @@ export type UseKernelType = {
   refreshInterval?: number;
   revalidateOnFocus?: boolean;
   showError?: (
-    key: string,
-    component: ErrorType,
-    hideError: (key: string) => void,
     errorProps: ErrorProps,
     opts?: UseErrorOptionsType,
   ) => void;
@@ -126,8 +123,8 @@ function useKernel({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => fetch(),
-          onErrorCallback: (response, errors) => showErrors({
+          callback: () => fetchKernels(),
+          onErrorCallback: (response, errors) => showError({
             errors,
             response,
           }),
