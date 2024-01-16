@@ -2,6 +2,7 @@ import tzMoment from 'moment-timezone';
 import { useEffect, useMemo, useRef } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Loading from '@oracle/components/Loading';
@@ -18,10 +19,11 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useOutputGroups from './useOutputGroups';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone } from '@utils/date';
-import { LoadingStyle } from './index.style';
+import { RowGroupStyle, LoadingStyle, HeaderStyle } from './index.style';
 import { isEmptyObject } from '@utils/hash';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 import { prettyUnitOfTime } from '@utils/string';
+import { generalizeMsgID } from '@utils/models/kernel/utils';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortByKey } from '@utils/array';
 
@@ -233,42 +235,49 @@ function Output({
   });
 
   return (
-    <>
-      <Spacing mb={1}>
-        <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
-          <Loading className={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) ? 'inactive' : 'active'} width="100%" />
-        </LoadingStyle>
-      </Spacing>
+    <RowGroupStyle>
+      <Divider medium />
+      <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
+        <Loading className={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) ? 'inactive' : 'active'} width="100%" />
+      </LoadingStyle>
 
-      <FlexContainer alignItems="flex-start" justifyContent="space-between">
-        <Flex flex={1} flexDirection="column">
-          <Text default monospace>
-            {first}
-          </Text>
-          <Text
-            danger={ExecutionStatusEnum.FAILED === executionStatus}
-            default={ExecutionStatusEnum.CANCELLED === executionStatus}
-            monospace
-            success={ExecutionStatusEnum.SUCCESS === executionStatus}
-            warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
-          >
-            {ExecutionStateEnum.IDLE === executionState
-              && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
-            }
-          </Text>
-        </Flex>
+      <HeaderStyle>
+        <FlexContainer alignItems="flex-start" justifyContent="space-between">
+          <Flex alignItems="center" flex={1} flexDirection="row">
+            <Text default monospace small>
+              {recent || first}
+            </Text>
 
-        <Flex flex={1} flexDirection="column" alignItems="flex-end">
-          <Text default monospace>
-            {recent && ExecutionStateEnum.IDLE !== executionState && (
-              <Text default inline monospace>
-                Most recent output at
+            <Spacing mr={1} />
+
+            <Text
+              danger={ExecutionStatusEnum.FAILED === executionStatus}
+              default={ExecutionStatusEnum.CANCELLED === executionStatus}
+              monospace
+              success={ExecutionStatusEnum.SUCCESS === executionStatus}
+              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
+              small
+            >
+              {ExecutionStateEnum.IDLE === executionState
+                && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
+              }
+            </Text>
+          </Flex>
+
+          {console.log(!timerTextRef?.current, !executionStateRef?.current, ExecutionStateEnum.IDLE === executionStateRef.current, timeout.current)}
+          <Flex flex={1} flexDirection="column" alignItems="flex-end">
+            {!timeout?.current && (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) && (
+              <Text muted monospace small>
+                {generalizeMsgID(outputs?.[0]?.msg_id || '', {
+                  short: true,
+                })}
               </Text>
-            )} {recent || '...'}
-          </Text>
-          <Text default monospace ref={timerTextRef} />
-        </Flex>
-      </FlexContainer>
+            )}
+
+            <Text default monospace ref={timerTextRef} small />
+          </Flex>
+        </FlexContainer>
+      </HeaderStyle>
 
       <OutputDataCombined
         html={html}
@@ -277,7 +286,7 @@ function Output({
         tables={tables}
         text={text}
       />
-    </>
+    </RowGroupStyle>
   );
 }
 

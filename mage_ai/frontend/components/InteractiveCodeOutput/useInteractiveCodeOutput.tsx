@@ -8,7 +8,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import AuthToken from '@api/utils/AuthToken';
 import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, MsgType } from '@interfaces/KernelOutputType';
 import KeyboardContext from '@context/Keyboard';
-import Output from './Output';
+import OutputGroup from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
@@ -143,7 +143,7 @@ export default function useInteractiveCodeOutput({
         outputsByParentID.push(output);
       } else {
         outputsGrouped.push(
-          <Output
+          <OutputGroup
             key={parentID}
             outputs={outputsByParentID}
           />
@@ -155,7 +155,7 @@ export default function useInteractiveCodeOutput({
 
     if (outputsByParentID?.length >= 1) {
       outputsGrouped.push(
-        <Output
+        <OutputGroup
           key={parentID}
           outputs={outputsByParentID}
         />

@@ -63,6 +63,7 @@ import { useWindowSize } from '@utils/sizes';
 type TripleLayoutProps = {
   after?: any;
   afterCombinedWithMain?: boolean;
+  afterDark?: boolean;
   afterDividerContrast?: boolean;
   afterFooter?: any;
   afterFooterBottomOffset?: number;
@@ -117,6 +118,7 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   afterCombinedWithMain,
+  afterDark,
   afterDividerContrast,
   afterFooter,
   afterFooterBottomOffset,
@@ -646,6 +648,7 @@ function TripleLayout({
       return (
         <AfterStyle
           autoLayout={autoLayout}
+          dark={afterDark}
           heightOffset={afterHeightOffset}
           inline={inline}
           style={{
@@ -709,6 +712,7 @@ function TripleLayout({
     after,
     afterCombinedWithMain,
     afterContent,
+    afterDark,
     afterDividerContrast,
     afterHeightOffset,
     afterHidden,

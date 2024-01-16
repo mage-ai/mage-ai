@@ -67,3 +67,17 @@ export function parseRawDataFromMessage(data: string): KernelOutputType {
 
   return null;
 }
+
+export function generalizeMsgID(msgID: string, {
+  short = false,
+}: {
+  short?: boolean;
+} = {}): string {
+  const val = msgID?.replaceAll(/_[\d]+_[\d]+$/g, '');
+
+  if (short) {
+    return val?.slice(0, 8);
+  }
+
+  return val;
+}

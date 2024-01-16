@@ -90,6 +90,7 @@ export const TabStyle = styled.div<{
 
 const ASIDE_STYLE = css<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -107,6 +108,10 @@ const ASIDE_STYLE = css<{
     background-color: ${(props.theme.background || dark.background).panel};
     position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
+  `}
+
+  ${props => props.dark && `
+    background-color: ${(props.theme || dark).background.blackTransparentDark};
   `}
 
   ${props => props.autoLayout && `
@@ -251,6 +256,7 @@ export const AsideSubheaderStyle = styled.div<{
 
 export const BeforeStyle = styled.aside<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -281,6 +287,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 
 export const AfterStyle = styled.aside<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`

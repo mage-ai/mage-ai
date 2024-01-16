@@ -1,5 +1,5 @@
 import KernelOutputType from '@interfaces/KernelOutputType';
-import { LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT } from './constants';
+import { LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT, LOCAL_STORAGE_CODE_MATRIX_INTERACTIONS } from './constants';
 import { dedupe } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 
@@ -22,4 +22,26 @@ export function setItems(items: KernelOutputType[], replace: boolean = true): Ke
   set(LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT, arr);
 
   return arr;
+}
+
+export function getInteractionsCache(): {
+  scrollTop?: number;
+} {
+  return get(LOCAL_STORAGE_CODE_MATRIX_INTERACTIONS) || {};
+}
+
+export function setInteractionsCache({
+  scrollTop,
+}: {
+  scrollTop?: number;
+}): {
+  scrollTop?: number;
+} {
+  const cache = get(LOCAL_STORAGE_CODE_MATRIX_INTERACTIONS) || {};
+  const val = set(LOCAL_STORAGE_CODE_MATRIX_INTERACTIONS, {
+    ...(cache || {}),
+    scrollTop,
+  });
+
+  return val;
 }

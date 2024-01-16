@@ -21,6 +21,11 @@ const SHARED_HIDDEN_STYLES = css`
   z-index: -1;
 `;
 
+export const RowGroupStyle = styled.div`
+  padding-bottom: ${1 * UNIT}px;
+  padding-top: ${1 * UNIT}px;
+`;
+
 export const LoadingStyle = styled.div<{
   isIdle?: boolean;
 }>`
@@ -33,8 +38,14 @@ export const LoadingStyle = styled.div<{
   }
 
   ${props => props.isIdle && `
-    border-top: 1px solid ${(props.theme || dark).borders.light};
+    // border-top: 1px solid ${(props.theme || dark).borders.light};
   `}
+`;
+
+export const HeaderStyle = styled.div`
+  margin-left: ${UNIT}px;
+  margin-right: ${UNIT}px;
+  margin-top: ${UNIT}px;
 `;
 
 export const HTMLOutputStyle = styled.div`
@@ -111,7 +122,7 @@ export const RowStyle = styled.div`
   // ${hideScrollBar}
 
   overflow: auto;
-  padding: ${UNIT}px;
+  // padding: ${UNIT}px;
   position: relative;
   transform: translateZ(0);
   width: 100%;
@@ -120,6 +131,10 @@ export const RowStyle = styled.div`
     .${TOGGLE_CLASSNAME} {
       display: block;
     }
+  }
+
+  code {
+    width: inherit;
   }
 `;
 
@@ -139,4 +154,6 @@ export const FloatingIndicatorStyle = styled.div`
 
 
 export const RowContentStyle = styled.div`
+  margin-left: ${UNIT}px;
+  margin-right: ${UNIT}px;
 `;

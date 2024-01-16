@@ -68,7 +68,7 @@ for key in keys:
                 value_type=str(value_type),
             )
         except Exception as err:
-            print(err)
+            pass
     elif isinstance(value, pd.DataFrame):
         outputs[key] = dict(
             value=value.to_dict('split'),
@@ -86,7 +86,6 @@ for key in keys:
                 value_type=str(value_type),
             )
         except Exception as err:
-            print(f'[CodeProcessor] serialization: {err}')
             outputs_to_pickle[key] = value
 
 
@@ -103,7 +102,7 @@ for key, value in outputs_to_pickle.items():
         with open(os.path.join(pickle_dir, key), 'wb') as f:
             pickle.dump(value, f)
     except Exception as err:
-        print(f'[POSTPROCESS] Error: {err}')
+        pass
 
 with open(file_path, 'w') as f:
     f.write(json.dumps(outputs))

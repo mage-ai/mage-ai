@@ -40,7 +40,7 @@ import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButto
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCode, setCode } from './utils';
-import { getItems, setItems } from './storage';
+import { getInteractionsCache, setInteractionsCache, getItems, setItems } from './storage';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -158,17 +158,25 @@ function CodeMatrix({
           },
         },
         {
-          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/output-clear-all`,
-          label: 'Clear all outputs',
+          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/output-scroll-bttom-all`,
+          label: 'Teleport to the bottom of the outputs',
           keybindings: [
-            // metaKey, 41
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
           ],
           run: () => {
-            clearOutputs();
+            scrollTo({ bottom: true });
           },
         },
-
+        {
+          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/output-scroll-top-all`,
+          label: 'Teleport to the top of the outputs',
+          keybindings: [
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ,
+          ],
+          run: () => {
+            scrollTo({ top: true });
+          },
+        },
       ].forEach((shortcut) => {
         editorRef.current.addAction({
           ...shortcut,
@@ -218,6 +226,26 @@ function CodeMatrix({
     hiddenBefore: true,
   });
 
+  useEffect(() => {
+    if (afterInnerRef?.current) {
+      const val = getInteractionsCache()?.scrollTop;
+
+      if (typeof val !== 'undefined') {
+        afterInnerRef.current.scrollTop = val;
+      }
+
+      const handleScroll = (e) => {
+        setInteractionsCache({
+          scrollTop: e?.target?.scrollTop,
+        });
+      };
+
+      afterInnerRef?.current?.addEventListener('scroll', handleScroll);
+
+      return () => afterInnerRef?.current?.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
   const onMessage = useCallback((output: KernelOutputType, {
     executionState,
     executionStatus,
@@ -257,7 +285,7 @@ function CodeMatrix({
     if (statusStateRootRef?.current) {
       statusStateRootRef?.current?.render(
         <div>
-          <Text default monospace xsmall>
+          <Text default monospace noWrapping xsmall>
             Recent run status: <Text
               danger={ExecutionStatusEnum.FAILED === executionStatusRef?.current}
               default={ExecutionStatusEnum.CANCELLED === executionStatusRef?.current}
@@ -285,7 +313,7 @@ function CodeMatrix({
     if (currentExecutionStateRootRef?.current) {
       currentExecutionStateRootRef?.current?.render(
         <div>
-          <Text default monospace xsmall>
+          <Text default monospace noWrapping xsmall>
             {EXECUTION_STATE_DISPLAY_LABEL_MAPPING[output?.execution_state]}
           </Text>
         </div>
@@ -425,8 +453,8 @@ function CodeMatrix({
               )}
               onClick={() => setShouldConnect(prev => !prev)}
               compact
-              secondary
               small
+              secondary
             >
               <Text monospace noWrapping small>
                 WebSocket {DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}
@@ -436,7 +464,7 @@ function CodeMatrix({
 
           <Spacing mr={1} />
 
-          <Text default monospace xsmall ref={kernelStatusCheckResultsTextRef} />
+          <Text default monospace noWrapping xsmall ref={kernelStatusCheckResultsTextRef} />
         </Flex>
       </Flex>
 
@@ -517,7 +545,6 @@ function CodeMatrix({
         <FlexContainer alignItems="center">
           <Button
             beforeIcon={<PlayButtonFilled success />}
-            secondary
             compact
             small
             ref={runButtonRef}
@@ -634,6 +661,7 @@ function CodeMatrix({
       <TripleLayout
         after={afterOutputMemo}
         afterCombinedWithMain
+        afterDark
         afterDividerContrast
         afterHeader={afterHeaderMemo}
         afterHeightOffset={0}

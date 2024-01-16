@@ -61,7 +61,7 @@ export default function useOutputGroups({
     ].forEach((t) => textDataError.push({
       dataType: DataTypeEnum.TEXT,
       element: (
-        <Text key={t} monospace preWrap>
+        <Text key={t} monospace preWrap small>
           {t?.length >= 1 && <Ansi>{t}</Ansi>}
           {!t?.length && <>&nbsp;</>}
         </Text>
@@ -126,7 +126,7 @@ export default function useOutputGroups({
           jsonData.push({
             dataType: DataTypeEnum.TEXT,
             element: (
-              <Text monospace preWrap>
+              <Text monospace preWrap small>
                 <Ansi>
                   {JSON.stringify(dataJSON, null, 2)}
                 </Ansi>
@@ -139,7 +139,7 @@ export default function useOutputGroups({
           textData.push(...lines.map((t) => ({
             dataType: DataTypeEnum.TEXT,
             element: (
-              <Text key={t} monospace preWrap>
+              <Text key={t} monospace preWrap small>
                 {t?.length >= 1 && <Ansi>{t}</Ansi>}
                 {!t?.length && <>&nbsp;</>}
               </Text>
