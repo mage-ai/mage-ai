@@ -88,12 +88,15 @@ def set_logging_format(logging_format: str = None, level: str = None) -> None:
     handler.setFormatter(JSONFormatter())
 
     root_logger = logging.getLogger()
-    if level:
-        root_logger.setLevel(level.upper())
     if logging_format == 'json':
         if len(root_logger.handlers) > 0:
             root_logger.removeHandler(root_logger.handlers[0])
         root_logger.addHandler(handler)
+    if level:
+        try:
+            root_logger.setLevel(level.upper())
+        except (TypeError, ValueError):
+            root_logger.exception('Invalid logging level %s', level)
 
 
 class LoggingLevel(str, Enum):
