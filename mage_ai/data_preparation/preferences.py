@@ -119,6 +119,9 @@ class Preferences:
 
         self.sync_config = build_sync_config(project_sync_config)
 
+        if isinstance(self.sync_config.get('auth_type'), str):
+            self.sync_config['auth_type'] = self.sync_config['auth_type'].lower()
+
     def is_git_integration_enabled(self) -> bool:
         return (
             self.sync_config.get('remote_repo_link')
