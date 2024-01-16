@@ -27,9 +27,7 @@ def build_path(repo_path: str, partition: str, filename: str = None) -> str:
     return path
 
 
-msg_id = 'test'
-
-with open(build_path(get_repo_path(root_project=True), msg_id, 'variables.json'), 'r') as f:
+with open(build_path(get_repo_path(root_project=True), '__MSG_ID__', 'variables.json'), 'r') as f:
     variables = json.loads(f.read())
 
 
@@ -38,7 +36,7 @@ class Test:
         pass
 
 
-keys = [k for k in locals() if not k.startswith(
+keys = [k for k in locals().keys() if not k.startswith(
     '__',
 ) and not k.endswith('__') and k not in variables]
 
@@ -64,10 +62,13 @@ for key in keys:
         type(Test().test),  # method
         type(inspect),  # module
     ]:
-        outputs[key] = dict(
-            value=inspect.getsource(value),
-            value_type=str(value_type),
-        )
+        try:
+            outputs[key] = dict(
+                value=inspect.getsource(value),
+                value_type=str(value_type),
+            )
+        except Exception as err:
+            print(err)
     elif isinstance(value, pd.DataFrame):
         outputs[key] = dict(
             value=value.to_dict('split'),
@@ -88,16 +89,21 @@ for key in keys:
             print(f'[CodeProcessor] serialization: {err}')
             outputs_to_pickle[key] = value
 
+
 repo_path = get_repo_path(root_project=True)
-file_path = os.path.join(repo_path, msg_id, 'outputs.json')
-os.makedirs(os.path.join(repo_path, msg_id), exist_ok=True)
-pickle_path = os.makedirs(os.path.join(repo_path, msg_id, 'outputs'), exist_ok=True)
+
+file_path = build_path(repo_path, '__MSG_ID__', 'outputs.json')
+pickle_dir = build_path(repo_path, '__MSG_ID__', 'outputs')
+os.makedirs(pickle_dir,  exist_ok=True)
 
 for key, value in outputs_to_pickle.items():
     if not value:
         continue
-    with open(os.path.join(pickle_path, key), 'wb') as f:
-        pickle.dump(value, f)
+    try:
+        with open(os.path.join(pickle_dir, key), 'wb') as f:
+            pickle.dump(value, f)
+    except Exception as err:
+        print(f'[POSTPROCESS] Error: {err}')
 
 with open(file_path, 'w') as f:
     f.write(json.dumps(outputs))

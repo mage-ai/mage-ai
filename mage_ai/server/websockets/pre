@@ -1,3 +1,5 @@
+%reset -f
+
 import json
 import os
 
@@ -17,7 +19,7 @@ def build_path(repo_path: str, partition: str, filename: str = None) -> str:
 
 # 1. Clear variables
 # 2. Store current variable names to file
-file_path = build_path(get_repo_path(root_project=True), 'msg_id', 'variables.json')
+file_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', 'variables.json')
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
 keys = dir()

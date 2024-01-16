@@ -1,4 +1,4 @@
-# import asyncio
+import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -18,6 +18,8 @@ from mage_ai.settings import is_disable_pipeline_edit_access
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.utils.code import reload_all_repo_modules
+
+ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 def init_kernel_client(kernel_name: KernelName = None) -> KernelClient:
@@ -231,7 +233,7 @@ class Client(BaseDataClass):
 
     def execute(self, code: str = None) -> Message:
         self.__preprocess()
-        code = code or self.message.messageg
+        code = code or self.message.message
 
         if code:
             prepare_environment(
@@ -247,8 +249,23 @@ class Client(BaseDataClass):
                 ),
             )
 
+            partition = uuid.uuid4().hex
+
+            with open(os.path.join(ABSOLUTE_PATH, 'pre')) as f:
+                pre_code = f.read()
+            with open(os.path.join(ABSOLUTE_PATH, 'post')) as f:
+                post_code = f.read()
+
+            code = '\n'.join([
+                pre_code.replace('__MSG_ID__', partition).strip(),
+                code,
+                post_code.replace('__MSG_ID__', partition).strip(),
+            ])
+
+            print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n', code)
             self.message.msg_id = self.client.execute(code)
-            # Moves files
+            # Moves files from partition to msg_id
+
             self.message.executed = True
         else:
             self.message.error = Error.load(**merge_dict(ApiError.RESOURCE_INVALID, dict(

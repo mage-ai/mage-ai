@@ -194,8 +194,6 @@ export default function useInteractiveCodeOutput({
     }
   }, []);
 
-  // console.log(messagesRef?.current)
-
   const {
     // lastMessage,
     readyState,
@@ -216,8 +214,6 @@ export default function useInteractiveCodeOutput({
 
       if (data) {
         const output = parseRawDataFromMessage(data);
-
-        console.log(output)
 
         // // Is the next output a status message, and is the one before not a status message,
         // //  from another group and only a status message?
@@ -248,7 +244,6 @@ export default function useInteractiveCodeOutput({
         }
 
         messagesRef.current = arr;
-        console.log('RENDERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR', arr?.length)
         renderOutputs(arr);
       }
     },
