@@ -62,3 +62,9 @@ class CloudRunWorkspace(Workspace):
 
     def update(self, **kwargs):
         raise NotImplementedError('Update not implemented for Cloud Run')
+
+    def stop(self):
+        raise NotImplementedError('Stop not implemented for Cloud Run')
+
+    def resume(self, **kwargs):
+        raise NotImplementedError('Resume not implemented for Cloud Run')
