@@ -455,10 +455,10 @@ async def main(
                     f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
                     f', branch: {sync_config.branch}'
                 )
-            except Exception as err:
-                logger.info(
+            except Exception:
+                logger.exception(
                     f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                    f', branch: {sync_config.branch} with error: {str(err)}'
+                    f', branch: {sync_config.branch}'
                 )
 
     if REQUIRE_USER_AUTHENTICATION:
