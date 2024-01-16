@@ -175,23 +175,14 @@ function Output({
     outputs: results,
   });
 
-  const inactive = (outputs?.length === 1 && index < groupsCount) ||
-    (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current);
+  const inactive = (outputs?.length === 1
+    && index < groupsCount
+    && outputs?.[0]?.execution_metadata?.date
+    && now.diff(outputs?.[0]?.execution_metadata?.date, 'minutes') >= 4
+  ) || (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current);
 
   return (
     <RowGroupStyle>
-      <Divider medium />
-
-      <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
-        <Loading
-          className={inactive
-            ? 'inactive'
-            : 'active'
-        }
-          width="100%"
-        />
-      </LoadingStyle>
-
       <HeaderStyle>
         <FlexContainer alignItems="flex-start" justifyContent="space-between">
           <Flex alignItems="center" flex={1} flexDirection="row">
@@ -238,6 +229,18 @@ function Output({
         tables={tables}
         text={text}
       />
+
+      <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
+        <Loading
+          className={inactive
+            ? 'inactive'
+            : 'active'
+        }
+          width="100%"
+        />
+      </LoadingStyle>
+
+      <Divider medium />
     </RowGroupStyle>
   );
 }

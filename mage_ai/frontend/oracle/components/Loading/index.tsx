@@ -11,6 +11,7 @@ export enum LoadingStyleEnum {
 }
 
 type LoadingProps = {
+  className?: string;
   color?: string;
   colorLight?: string;
   height?: number;
