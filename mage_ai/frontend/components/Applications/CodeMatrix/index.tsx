@@ -95,6 +95,11 @@ function CodeMatrix({
     editorRef.current = editor;
   }, [monaco]);
 
+
+  function getCodeForMessage(): string {
+    return editorRef?.current?.getValue() || contentRef?.current;
+  }
+
   useEffect(() => {
     if (monaco && ready) {
       editorRef.current.onKeyDown((event) => {
@@ -128,7 +133,7 @@ function CodeMatrix({
           const message = highlightedText || text;
 
           sendMessageRef?.current?.({
-            message,
+            message: getCodeForMessage(),
           });
         },
       });
@@ -291,6 +296,12 @@ function CodeMatrix({
     onMessage,
     onOpen,
     onRenderOutputCallback,
+    outputPadding: (
+      <div
+        ref={outputBottomRef}
+        style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }}
+      />
+    ),
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
@@ -476,7 +487,6 @@ function CodeMatrix({
       {console.log("AFTER OUTPUT")}
       {output}
       {shell}
-      <div ref={outputBottomRef} style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }} />
     </div>
   ), [
     output,
@@ -500,7 +510,7 @@ function CodeMatrix({
               if (!open || !shouldConnect) {
                 onOpenCallbackRef.current = () => {
                   sendMessage({
-                    message: contentRef.current,
+                    message: getCodeForMessage(),
                   });
                 };
                 setRunning(true);
@@ -508,7 +518,7 @@ function CodeMatrix({
               } else {
                 setRunning(true);
                 sendMessage({
-                  message: contentRef.current,
+                  message: getCodeForMessage(),
                 });
               }
             }}

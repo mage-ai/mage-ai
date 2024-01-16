@@ -13,7 +13,6 @@ from mage_ai.server.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
-from mage_ai.server.websockets.code.processor import postprocess, preprocess
 from mage_ai.server.websockets.constants import ExecutionState
 from mage_ai.settings import is_disable_pipeline_edit_access
 from mage_ai.shared.hash import merge_dict
@@ -232,7 +231,7 @@ class Client(BaseDataClass):
 
     def execute(self, code: str = None) -> Message:
         self.__preprocess()
-        code = code or self.message.message
+        code = code or self.message.messageg
 
         if code:
             prepare_environment(
@@ -249,8 +248,8 @@ class Client(BaseDataClass):
             )
 
             self.message.msg_id = self.client.execute(code)
+            # Moves files
             self.message.executed = True
-            self.__postprocess(self.message.msg_id)
         else:
             self.message.error = Error.load(**merge_dict(ApiError.RESOURCE_INVALID, dict(
                 errors=[
@@ -263,7 +262,3 @@ class Client(BaseDataClass):
     def __preprocess(self) -> None:
         if isinstance(self.message, dict):
             self.message = Message.load(**self.message)
-        preprocess(self.client)
-
-    def __postprocess(self, msg_id: str) -> None:
-        postprocess(self.client, msg_id)

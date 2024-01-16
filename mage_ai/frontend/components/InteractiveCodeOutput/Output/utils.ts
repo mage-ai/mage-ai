@@ -14,8 +14,8 @@ export function prepareTableData(data: TableDataType): TableDataType {
 
 export function getLatestOutputGroup(outputs: KernelOutputType[]): KernelOutputType[] {
   const mapping = {};
-  let dateMax;
-  let groupID;
+  const dateMaxes = [];
+  const groupIDs = [];
 
   outputs?.forEach((item) => {
     const key = item?.msg_id;
@@ -30,16 +30,24 @@ export function getLatestOutputGroup(outputs: KernelOutputType[]): KernelOutputT
     mapping[key].dates.push(date);
     mapping[key].outputs.push(item);
 
-    if (!dateMax) {
-      dateMax = date;
+    if (!dateMaxes?.length) {
+      dateMaxes.push(date);
+      groupIDs.push(date);
     }
-    if (date > dateMax) {
-      dateMax = date;
-      groupID = key;
+
+    if (date > dateMaxes?.[0]) {
+      dateMaxes.unshift(date);
+      groupIDs.unshift(key);
     }
   });
 
-  return mapping[groupID]?.outputs;
+  groupIDs?.forEach((groupID) => {
+    const outputs = mapping?.[groupID]?.outputs;
+    const arr = outputs?.filter((item) => ![MsgType.EXECUTE_INPUT, MsgType.STATUS]?.includes(item?.msg_type));
+    if (arr?.length >= 1) {
+      return mapping[groupID]?.outputs;
+    }
+  });
 }
 
 export function getExecutionStatusAndState(outputs: KernelOutputType[]): {

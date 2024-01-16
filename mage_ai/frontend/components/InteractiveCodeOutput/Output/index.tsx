@@ -174,62 +174,52 @@ function Output({
 
   */
 
-  const {
-    statusFirst,
-    statusRecent,
-  } = useMemo(() => {
-    const now = momentInLocalTimezone(tzMoment(), displayLocalTimezone);
-    const arr = outputByType?.[MsgType.STATUS];
-    const count = arr?.length;
+  const now = momentInLocalTimezone(tzMoment(), displayLocalTimezone);
+  const arr = outputByType?.[MsgType.STATUS];
+  const count = arr?.length;
 
-    let first;
-    if (arr?.[0]?.execution_metadata?.date) {
-      first = momentInLocalTimezone(
-        tzMoment(arr?.[0]?.execution_metadata?.date),
-        displayLocalTimezone,
-      );
-    }
+  let first;
+  if (arr?.[0]?.execution_metadata?.date) {
+    first = momentInLocalTimezone(
+      tzMoment(arr?.[0]?.execution_metadata?.date),
+      displayLocalTimezone,
+    );
+  }
 
-    let recent;
-    if (count >= 2 && arr?.[count - 1]?.execution_metadata?.date) {
-      recent = momentInLocalTimezone(
-        tzMoment(arr?.[count - 1]?.execution_metadata?.date),
-        displayLocalTimezone,
-      );
-    } else if (outputs?.length >= 2) {
-      const outs = outputs?.filter(output => ![
-        MsgType.EXECUTE_INPUT,
-        MsgType.STATUS,
-      ].includes(output?.msg_type));
-      recent = momentInLocalTimezone(
-        tzMoment(outs?.[outs?.length - 1]?.execution_metadata?.date),
-        displayLocalTimezone,
-      );
-    }
+  let recent;
+  if (count >= 2 && arr?.[count - 1]?.execution_metadata?.date) {
+    recent = momentInLocalTimezone(
+      tzMoment(arr?.[count - 1]?.execution_metadata?.date),
+      displayLocalTimezone,
+    );
+  } else if (outputs?.length >= 2) {
+    const outs = outputs?.filter(output => ![
+      MsgType.EXECUTE_INPUT,
+      MsgType.STATUS,
+    ].includes(output?.msg_type));
+    recent = momentInLocalTimezone(
+      tzMoment(outs?.[outs?.length - 1]?.execution_metadata?.date),
+      displayLocalTimezone,
+    );
+  }
 
-    [first, recent].forEach((dt, idx) => {
-      if (dt) {
-        if (now.diff(dt, 'days') >= 1) {
-          if (idx === 0) {
-            first = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-          } else {
-            recent = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-          }
+  [first, recent].forEach((dt, idx) => {
+    if (dt) {
+      if (now.diff(dt, 'days') >= 1) {
+        if (idx === 0) {
+          first = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
         } else {
-          if (idx === 0) {
-            first = dt.format(TIME_FORMAT);
-          } else {
-            recent = dt.format(TIME_FORMAT);
-          }
+          recent = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+        }
+      } else {
+        if (idx === 0) {
+          first = dt.format(TIME_FORMAT);
+        } else {
+          recent = dt.format(TIME_FORMAT);
         }
       }
-    })
-
-    return {
-      statusRecent: recent,
-      statusFirst: first,
-    };
-  }, [displayLocalTimezone, outputByType, outputs]);
+    }
+  });
 
   const {
     html,
@@ -242,34 +232,18 @@ function Output({
     outputs: results,
   });
 
-  const outputDataMemo = useMemo(() => (
-    <OutputDataCombined
-      html={html}
-      images={images}
-      json={json}
-      tables={tables}
-      text={text}
-    />
-  ), [
-    html,
-    images,
-    json,
-    tables,
-    text,
-  ]);
-
   return (
     <>
       <Spacing mb={1}>
-        <LoadingStyle isIdle={ExecutionStateEnum.IDLE === executionStateRef.current}>
-          <Loading className={ExecutionStateEnum.IDLE === executionStateRef.current ? 'inactive' : 'active'} width="100%" />
+        <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
+          <Loading className={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) ? 'inactive' : 'active'} width="100%" />
         </LoadingStyle>
       </Spacing>
 
       <FlexContainer alignItems="flex-start" justifyContent="space-between">
         <Flex flex={1} flexDirection="column">
           <Text default monospace>
-            {statusFirst}
+            {first}
           </Text>
           <Text
             danger={ExecutionStatusEnum.FAILED === executionStatus}
@@ -286,17 +260,23 @@ function Output({
 
         <Flex flex={1} flexDirection="column" alignItems="flex-end">
           <Text default monospace>
-            {statusRecent && ExecutionStateEnum.IDLE !== executionState && (
+            {recent && ExecutionStateEnum.IDLE !== executionState && (
               <Text default inline monospace>
                 Most recent output at
               </Text>
-            )} {statusRecent || '...'}
+            )} {recent || '...'}
           </Text>
           <Text default monospace ref={timerTextRef} />
         </Flex>
       </FlexContainer>
 
-      {outputDataMemo}
+      <OutputDataCombined
+        html={html}
+        images={images}
+        json={json}
+        tables={tables}
+        text={text}
+      />
     </>
   );
 }

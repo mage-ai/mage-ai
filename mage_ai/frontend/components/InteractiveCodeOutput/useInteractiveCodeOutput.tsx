@@ -31,6 +31,7 @@ export default function useInteractiveCodeOutput({
   onMessage,
   onOpen,
   onRenderOutputCallback,
+  outputPadding,
   shouldConnect = false,
   shouldReconnect,
   uuid,
@@ -44,6 +45,7 @@ export default function useInteractiveCodeOutput({
   }) => void;
   onOpen?: (value: boolean) => void;
   onRenderOutputCallback?: () => void;
+  outputPadding?: JSX.Element;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
@@ -137,20 +139,17 @@ export default function useInteractiveCodeOutput({
         parentID = uuidUse;
       }
 
-      if (parentID) {
-        if (parentID === uuidUse) {
-          outputsByParentID.push(output);
-        } else {
-          outputsGrouped.push(
-            <Output
-              key={parentID}
-              outputs={outputsByParentID}
-            />
-          );
-          // console.log('outputsByParentID', outputsByParentID)
-          outputsByParentID = [output];
-          parentID = uuidUse;
-        }
+      if (parentID === uuidUse) {
+        outputsByParentID.push(output);
+      } else {
+        outputsGrouped.push(
+          <Output
+            key={parentID}
+            outputs={outputsByParentID}
+          />
+        );
+        outputsByParentID = [output];
+        parentID = uuidUse;
       }
     });
 
@@ -171,6 +170,7 @@ export default function useInteractiveCodeOutput({
               <ComponentWithCallback callback={onRenderOutputCallback}>
                 {outputsGrouped}
               </ComponentWithCallback>
+              {outputPadding}
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
@@ -194,6 +194,8 @@ export default function useInteractiveCodeOutput({
     }
   }, []);
 
+  // console.log(messagesRef?.current)
+
   const {
     // lastMessage,
     readyState,
@@ -212,9 +214,22 @@ export default function useInteractiveCodeOutput({
         data,
       } = messageEvent;
 
-
       if (data) {
         const output = parseRawDataFromMessage(data);
+
+        console.log(output)
+
+        // // Is the next output a status message, and is the one before not a status message,
+        // //  from another group and only a status message?
+        // // If so, filter it out.
+        // if (output?.msg_type === MsgType.STATUS) {
+        //   const prev = messagesRef?.current?.slice(-1)?.[0];
+        //   if (prev?.msg_type !== MsgType.STATUS
+        //     && output?.parent_message?.msg_id !== prev?.parent_message?.msg_id) {
+        //     return;
+        //   }
+        // }
+
         const arr = dedupe([...messagesRef.current, output], ['msg_id']);
 
         if (onMessage) {
@@ -233,7 +248,8 @@ export default function useInteractiveCodeOutput({
         }
 
         messagesRef.current = arr;
-        renderOutputs(messagesRef?.current);
+        console.log('RENDERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR', arr?.length)
+        renderOutputs(arr);
       }
     },
   }, shouldConnect && !!uuid);
