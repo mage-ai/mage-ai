@@ -1,7 +1,6 @@
-import re
 import traceback
 from datetime import datetime
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, List, Tuple
 
 from tornado.websocket import WebSocketHandler
 
@@ -10,17 +9,10 @@ from mage_ai.server.active_kernel import get_active_kernel_client
 from mage_ai.server.logger import Logger
 from mage_ai.server.websockets.code.server import Code as CodeWebSocketServer
 from mage_ai.server.websockets.models import Error, Message
+from mage_ai.server.websockets.uuids import contains_msg_id
 from mage_ai.shared.hash import merge_dict
 
 logger = Logger().new_server_logger(__name__)
-
-MSG_ID_REGEX = re.compile(r'_[\d]+_[\d]+$')
-
-
-def contains_msg_id(mapping: Dict[str, str], msg_id: str) -> str:
-    # msg_id = 'f59e1913-80fc7db2b112bfbdc12e21b3_1_1'
-    msg_ids = [MSG_ID_REGEX.sub('', m) for m in mapping.keys()]
-    return MSG_ID_REGEX.sub('', msg_id) in msg_ids
 
 
 def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]]):
