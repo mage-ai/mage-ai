@@ -24,26 +24,87 @@ const SHARED_HIDDEN_STYLES = css`
 export const RowGroupStyle = styled.div`
   padding-bottom: ${1 * UNIT}px;
   padding-top: ${1 * UNIT}px;
+
+  .inactive {
+    display: none;
+  }
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  &.row-group-selected {
+    ${props => `
+      background-color: ${(props.theme || dark).accent.cyanTransparent};
+      box-shadow:
+        2px 1px 0 1px ${(props.theme || dark).accent.cyan} inset,
+        -1px -1px 0 1px ${(props.theme || dark).accent.cyan} inset
+    `}
+  }
+
+  &.errors {
+    ${props => `
+      background-color: ${(props.theme || dark).accent.negativeTransparentMore};
+    `}
+  }
 `;
 
 export const LoadingStyle = styled.div<{
   isIdle?: boolean;
 }>`
-  // position: absolute;
   height: ${LOADING_HEIGHT}px;
   width: 100%;
 
   .inactive {
     ${SHARED_HIDDEN_STYLES}
+    height: 0;
   }
-
-  ${props => props.isIdle && `
-    // border-top: 1px solid ${(props.theme || dark).borders.light};
-  `}
 `;
 
 export const HeaderStyle = styled.div`
-  margin: ${UNIT}px;
+  margin-bottom: ${UNIT}px;
+  padding-left: ${UNIT}px;
+  padding-right: ${UNIT}px;
+`;
+
+export const RowStyle = styled.div`
+  ${PlainScrollbarStyledCss}
+  // ${hideScrollBar}
+
+  overflow: auto;
+  // padding: ${UNIT}px;
+  position: relative;
+  transform: translateZ(0);
+  width: 100%;
+
+  &.has-scroll {
+    .${TOGGLE_CLASSNAME} {
+      display: block;
+    }
+  }
+
+  code {
+    width: inherit;
+  }
+`;
+
+export const FloatingIndicatorStyle = styled.div`
+  display: none;
+  margin-bottom: auto;
+  margin-top: auto;
+  position: fixed;
+  right: ${SCROLLBAR_WIDTH_SMALL * 2}px;
+  top: calc(50% - ${INDICATOR_SIZE}px);
+  z-index: 5;
+
+  ${props => `
+    box-shadow: ${(props.theme || dark).shadow.small};
+  `}
+`;
+
+export const RowContentStyle = styled.div`
+  margin-left: ${UNIT}px;
+  margin-right: ${UNIT}px;
 `;
 
 export const HTMLOutputStyle = styled.div`
@@ -115,43 +176,3 @@ export const OutputContainerStyle = styled.div`
 export const OutputContentStyle = styled.div`
 `;
 
-export const RowStyle = styled.div`
-  ${PlainScrollbarStyledCss}
-  // ${hideScrollBar}
-
-  overflow: auto;
-  // padding: ${UNIT}px;
-  position: relative;
-  transform: translateZ(0);
-  width: 100%;
-
-  &.has-scroll {
-    .${TOGGLE_CLASSNAME} {
-      display: block;
-    }
-  }
-
-  code {
-    width: inherit;
-  }
-`;
-
-export const FloatingIndicatorStyle = styled.div`
-  display: none;
-  margin-bottom: auto;
-  margin-top: auto;
-  position: fixed;
-  right: ${SCROLLBAR_WIDTH_SMALL * 2}px;
-  top: calc(50% - ${INDICATOR_SIZE}px);
-  z-index: 5;
-
-  ${props => `
-    box-shadow: ${(props.theme || dark).shadow.small};
-  `}
-`;
-
-
-export const RowContentStyle = styled.div`
-  margin-left: ${UNIT}px;
-  margin-right: ${UNIT}px;
-`;

@@ -16,7 +16,7 @@ export function groupOutputsAndSort(outputs: KernelOutputType[]): KernelOutputTy
   const mapping = {};
 
   outputs?.forEach((item) => {
-    const key = item?.msg_id;
+    const key = item?.parent_message?.msg_id;
     if (!(key in mapping)) {
       mapping[key] = {
         dates: [],
@@ -28,9 +28,9 @@ export function groupOutputsAndSort(outputs: KernelOutputType[]): KernelOutputTy
     mapping[key].outputs.push(item);
   });
 
-  return sortByKey(Object.entries(mapping || {})?.map(([msgID, { dates, outputs }]) => ({
+  return sortByKey(Object.entries(mapping || {})?.map(([groupID, { dates, outputs }]) => ({
     dates: sortByKey(dates, d => d),
-    msgID,
+    groupID,
     outputs: sortByKey(outputs || [], o => o?.execution_metadata?.date),
   })), ({ dates }) => dates?.[0]);
 }
@@ -41,7 +41,7 @@ export function getLatestOutputGroup(outputs: KernelOutputType[]): KernelOutputT
   const groupIDs = [];
 
   outputs?.forEach((item) => {
-    const key = item?.msg_id;
+    const key = item?.parent_message?.msg_id;
     if (!(key in mapping)) {
       mapping[key] = {
         dates: [],

@@ -69,15 +69,25 @@ export function parseRawDataFromMessage(data: string): KernelOutputType {
 }
 
 export function generalizeMsgID(msgID: string, {
-  short = false,
+  medium,
+  short,
 }: {
+  medium?: boolean;
   short?: boolean;
 } = {}): string {
-  const val = msgID?.replaceAll(/_[\d]+_[\d]+$/g, '');
+  const parts = [];
 
-  if (short) {
-    return val?.slice(0, 8);
+  if (short || medium) {
+    parts.push(msgID?.split('-')?.[0]);
   }
 
-  return val;
+  if (medium) {
+    parts.push(msgID?.split('_')?.slice(-1)[0]);
+  }
+
+  if (!short && !medium) {
+    parts.push(msgID);
+  }
+
+  return parts?.join('/');
 }

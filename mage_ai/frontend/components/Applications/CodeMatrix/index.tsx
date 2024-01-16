@@ -18,6 +18,7 @@ import { addKeyboardShortcut } from '@components/CodeEditor/keyboard_shortcuts';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelHeader from '@components/Kernels/Header';
@@ -152,9 +153,18 @@ function CodeMatrix({
             const text = editor.getValue();
             const message = highlightedText || text;
 
-            sendMessageRef?.current?.({
-              message: getCodeForMessage(),
-            });
+            if (!shouldConnect) {
+              setShouldConnect(true);
+              setTimeout(() => {
+                sendMessageRef?.current?.({
+                  message: getCodeForMessage(),
+                });
+              }, 1);
+            } else {
+              sendMessageRef?.current?.({
+                message: getCodeForMessage(),
+              });
+            }
           },
         },
         {
@@ -328,6 +338,36 @@ function CodeMatrix({
     setRunning(false);
   }
 
+  function onClickOutputGroup(e: Event, opts?: {
+    dates: string[];
+    groupsCount: number;
+    index: number;
+    msgID: number;
+    outputs: KernelOutputType[];
+  }): void {
+    if (typeof document !== 'undefined') {
+      const refs = [
+        ...document.querySelectorAll('.row-group-selected'),
+      ];
+      refs?.forEach((ref) => {
+        if (ref) {
+          ref.className = removeClassNames(
+            ref.className || '',
+            [
+              'row-group-selected',
+            ],
+          );
+        }
+      });
+    }
+    e.currentTarget.className = addClassNames(
+      e?.currentTarget?.className || '',
+      [
+        'row-group-selected',
+      ],
+    );
+  }
+
   const {
     clearOutputs,
     connectionState,
@@ -339,6 +379,7 @@ function CodeMatrix({
   } = useInteractiveCodeOutput({
     checkKernelStatus: true,
     getDefaultMessages: () => getItems(),
+    onClickOutputGroup,
     onMessage,
     onOpen,
     onRenderOutputCallback,

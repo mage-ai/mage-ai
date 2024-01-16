@@ -18,6 +18,7 @@ import Link from '@oracle/elements/Link';
 import OutputDataCombined from './OutputDataCombined';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import useOutputGroups from './useOutputGroups';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone } from '@utils/date';
 import { RowGroupStyle, LoadingStyle, HeaderStyle } from './index.style';
@@ -30,14 +31,17 @@ import { sortByKey } from '@utils/array';
 
 function Output({
   dates,
+  groupID,
   groupsCount,
   index,
+  onClick,
   outputs: outputsProp,
 }: {
   dates: string[];
+  groupID: string;
   groupsCount: number;
   index: number;
-  msgID: string;
+  onClick?: (e: Event) => void;
   outputs: KernelOutputType[];
 }) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -175,14 +179,34 @@ function Output({
     outputs: results,
   });
 
-  const inactive = (outputs?.length === 1
+  const hasErrors = useMemo(() => errors?.length >= 1, [errors]);
+  const inactive = useMemo(() =>
+  hasErrors || (outputs?.length === 1 && outputs?.msg_type === MsgType.STATUS)
+  || (outputs?.length === 1
     && index < groupsCount
     && outputs?.[0]?.execution_metadata?.date
     && now.diff(outputs?.[0]?.execution_metadata?.date, 'minutes') >= 4
-  ) || (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current);
+  ) || (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)
+  , [
+    hasErrors, outputs, index, groupsCount, now,
+  ]);
 
   return (
-    <RowGroupStyle>
+    <RowGroupStyle
+      className={[
+        inactive ? 'inactive' : 'active',
+        hasErrors ? 'errors' : '',
+      ]?.filter(c => !!c)?.join(' ')}
+      onClick={(e) => {
+        if (onClick) {
+          onClick?.(e);
+        }
+      }}
+    >
+      <LoadingStyle className={inactive ? 'inactive' : 'active'} isIdle={inactive}>
+        <Loading width="100%" />
+      </LoadingStyle>
+
       <HeaderStyle>
         <FlexContainer alignItems="flex-start" justifyContent="space-between">
           <Flex alignItems="center" flex={1} flexDirection="row">
@@ -207,17 +231,30 @@ function Output({
           </Flex>
 
           <Flex flex={1} flexDirection="column" alignItems="flex-end">
-            {inactive && (
+            {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
+
+            <Spacing mr={1} />
+
+            <Tooltip
+              appearBefore
+              block
+              label={(
+                <Text default monospace small>
+                  {groupID}
+                </Text>
+              )}
+              size={null}
+              visibleDelay={300}
+              widthFitContent
+            >
               <Link>
                 <Text muted monospace small>
-                  {generalizeMsgID(outputs?.[0]?.msg_id || '', {
-                    short: true,
+                  {generalizeMsgID(groupID || '', {
+                    medium: true,
                   })}
                 </Text>
               </Link>
-            )}
-
-            {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
+            </Tooltip>
           </Flex>
         </FlexContainer>
       </HeaderStyle>
@@ -229,18 +266,6 @@ function Output({
         tables={tables}
         text={text}
       />
-
-      <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
-        <Loading
-          className={inactive
-            ? 'inactive'
-            : 'active'
-        }
-          width="100%"
-        />
-      </LoadingStyle>
-
-      <Divider medium />
     </RowGroupStyle>
   );
 }

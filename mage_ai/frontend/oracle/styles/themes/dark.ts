@@ -67,6 +67,7 @@ export default {
     infoTransparent: 'rgba(0, 171, 255, 0.5)',
     negative: '#FF1E59',
     negativeTransparent: 'rgba(255, 30, 89, 0.3)',
+    negativeTransparentMore: 'rgba(255, 30, 89, 0.15)',
     pink: PINK,
     pinkLight: PINK_TRANSPARENT,
     positive: '#00A81A',

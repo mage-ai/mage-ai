@@ -28,6 +28,7 @@ export default function useInteractiveCodeOutput({
   checkKernelStatus,
   code,
   getDefaultMessages,
+  onClickOutputGroup,
   onMessage,
   onOpen,
   onRenderOutputCallback,
@@ -39,6 +40,13 @@ export default function useInteractiveCodeOutput({
   checkKernelStatus?: boolean;
   code?: string;
   getDefaultMessages?: () => KernelOutputType[];
+  onClickOutputGroup?: (e: Event, opts?: {
+    dates: string[];
+    groupID: number;
+    groupsCount: number;
+    index: number;
+    outputs: KernelOutputType[];
+  }) => void;
   onMessage?: (message: KernelOutputType, opts?: {
     executionState: ExecutionStateEnum;
     executionStatus: ExecutionStatusEnum;
@@ -103,15 +111,26 @@ export default function useInteractiveCodeOutput({
     const groupsCount = groups?.length;
     const outputsGrouped = groups?.map(({
       dates,
-      msgID,
+      groupID,
       outputs,
-    }, idx) => (
+    }, index) => (
       <OutputGroup
         dates={dates}
         groupsCount={groupsCount}
-        index={idx}
-        key={msgID}
-        msgID={msgID}
+        index={index}
+        key={groupID}
+        groupID={groupID}
+        onClick={(e) => {
+          if (onClickOutputGroup) {
+            onClickOutputGroup?.(e, {
+              dates,
+              groupsCount,
+              index,
+              groupID,
+              outputs,
+            });
+          }
+        }}
         outputs={outputs}
       />
     ));

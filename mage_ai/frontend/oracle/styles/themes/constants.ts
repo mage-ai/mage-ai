@@ -14,6 +14,7 @@ export type ThemeType = {
     infoTransparent: string;
     negative: string;
     negativeTransparent: string;
+    negativeTransparentMore: string;
     pink: string;
     pinkLight: string;
     positive: string;
