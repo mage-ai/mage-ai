@@ -1,6 +1,6 @@
 from typing import Dict, List, Mapping, Union
 
-from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
+from google.cloud.bigquery import Client, LoadJobConfig, SchemaField, WriteDisposition
 from google.oauth2 import service_account
 from pandas import DataFrame
 
@@ -188,6 +188,7 @@ WHERE TABLE_NAME = '{table_name}'
         table_id: str = None,
         database: Union[str, None] = None,
         if_exists: str = 'replace',
+        overwrite_types: Dict = None,
         query_string: Union[str, None] = None,
         verbose: bool = True,
         **configuration_params,
@@ -199,16 +200,17 @@ WHERE TABLE_NAME = '{table_name}'
         Args:
             df (DataFrame): Data frame to export
             table_id (str): ID of the table to export the data frame to. If of the format
-            `"your-project.your_dataset.your_table_name"`. If this table exists,
-            the table schema must match the data frame schema. If this table doesn't exist,
-            the table schema is automatically inferred.
+                `"your-project.your_dataset.your_table_name"`. If this table exists,
+                the table schema must match the data frame schema. If this table doesn't exist,
+                the table schema is automatically inferred.
             if_exists (str): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
                 - `'append'`: appends data frame to existing table. In this case the schema must
                                 match the original table.
-            Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument,
-            this parameter is ignored (as both define the same functionality).
+                Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument,
+                this parameter is ignored (as both define the same functionality).
+            overwrite_types (Dict): The column types to be overwritten by users.
             **configuration_params: Configuration parameters for export job
         """
         if table_id is None:
@@ -258,6 +260,8 @@ WHERE table_id = '{table_name}'
 
             else:
                 config = LoadJobConfig(**configuration_params)
+                if overwrite_types is not None:
+                    config.schema = [SchemaField(k, v) for k, v in overwrite_types.items()]
                 if 'write_disposition' not in configuration_params:
                     if if_exists == 'replace':
                         config.write_disposition = WriteDisposition.WRITE_TRUNCATE
