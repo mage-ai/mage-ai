@@ -157,6 +157,7 @@ function ConnectionSettings({
               error: '',
               touched: !!jarFileExists,
             }}
+            minWidth={UNIT * 30}
             monospace
             onChange={(e) => {
               pauseEvent(e);
@@ -164,6 +165,7 @@ function ConnectionSettings({
             }}
             onClick={e => pauseEvent(e)}
             paddingVertical={(UNIT / 2) - 2}
+            placeholder="e.g. /home/path/example1.jar"
             ref={refNewJarFileUUID}
             small
             value={newJarFile || ''}
@@ -293,39 +295,13 @@ function ConnectionSettings({
 
           <Spacing mr={PADDING_UNITS} />
 
-          <Flex flex={1}>
-            <TextInput
-              afterIcon={<Edit />}
-              afterIconClick={(_, inputRef) => {
-                inputRef?.current?.focus();
-              }}
-              afterIconSize={ICON_SIZE}
-              alignRight
-              fullWidth
+          <Flex flex={1} justifyContent="flex-end">
+            <Text
               large
               monospace
-              noBackground
-              noBorder
-              onChange={(e) => {
-                if (config === JarFileConfigEnum.EMR) {
-                  const jarFiles = emrJarFiles.map(({ value }) => value);
-                  jarFiles[idx - sparkJarFiles.length] = e.target.value;
-                  setObjectAttributesEMRConfig({
-                    spark_jars: jarFiles,
-                  });
-                } else {
-                  const jarFiles = sparkJarFiles.map(({ value }) => value);
-                  jarFiles[idx] = e.target.value;
-                  setObjectAttributesSparkConfig({
-                    spark_jars: jarFiles,
-                  });
-                }
-              }}
-              paddingHorizontal={0}
-              paddingVertical={0}
-              placeholder="e.g. /home/path/example1.jar"
-              value={value || ''}
-            />
+            >
+              {value}
+            </Text>
           </Flex>
         </FlexContainer>
       </Spacing>
