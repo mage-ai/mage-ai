@@ -136,8 +136,7 @@ class WorkloadManager:
                                     node_port = service.spec.ports[0].node_port
                                     workload['ip'] = f'{ip}:{node_port}'
                         except Exception:
-                            import traceback
-                            traceback.print_exc()
+                            pass
                     elif service_type == 'LoadBalancer':
                         ip = None
                         port = 6789
