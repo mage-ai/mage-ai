@@ -21,7 +21,7 @@ import { dedupe } from '@utils/array';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
-import { getLatestOutputGroup, getExecutionStatusAndState } from './Output/utils';
+import { groupOutputsAndSort, getLatestOutputGroup, getExecutionStatusAndState } from './Output/utils';
 import KernelType from '@interfaces/KernelType';
 
 export default function useInteractiveCodeOutput({
@@ -99,68 +99,22 @@ export default function useInteractiveCodeOutput({
       return;
     }
 
-    const outputsGrouped = [];
-
-    let parentID = null;
-    let outputsByParentID = [];
-
-    outputs?.slice(-300)?.forEach((output: KernelOutputType) => {
-      const {
-        data,
-        data_type: dataType,
-        execution_metadata: executionMetadata,
-        // The code that was executed; e.g. 1 + 1
-        message: messageOutput,
-        msg_id: msgID,
-        // status, execute_input, execute_result
-        msg_type: msgType,
-        parent_message: parentMessage,
-        uuid: msgUUID,
-      } = output || {
-        data: null,
-        data_type: null,
-        execution_metadata: null,
-        msg_id: null,
-        msg_type: null,
-        parent_message: null,
-        uuid: null,
-      };
-      const {
-        date,
-        session,
-      } = executionMetadata || {
-        date: null,
-        session: null,
-      };
-
-      const uuidUse = parentMessage?.msg_id || msgUUID;
-
-      if (parentID === null && uuidUse) {
-        parentID = uuidUse;
-      }
-
-      if (parentID === uuidUse) {
-        outputsByParentID.push(output);
-      } else {
-        outputsGrouped.push(
-          <OutputGroup
-            key={parentID}
-            outputs={outputsByParentID}
-          />
-        );
-        outputsByParentID = [output];
-        parentID = uuidUse;
-      }
-    });
-
-    if (outputsByParentID?.length >= 1) {
-      outputsGrouped.push(
-        <OutputGroup
-          key={parentID}
-          outputs={outputsByParentID}
-        />
-      );
-    }
+    const groups = groupOutputsAndSort(outputs);
+    const groupsCount = groups?.length;
+    const outputsGrouped = groups?.map(({
+      dates,
+      msgID,
+      outputs,
+    }, idx) => (
+      <OutputGroup
+        dates={dates}
+        groupsCount={groupsCount}
+        index={idx}
+        key={msgID}
+        msgID={msgID}
+        outputs={outputs}
+      />
+    ));
 
     outputRootRef?.current?.render(
       <KeyboardContext.Provider value={keyboardContext}>

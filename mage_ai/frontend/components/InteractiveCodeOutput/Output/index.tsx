@@ -14,6 +14,7 @@ import KernelOutputType, {
   ExecutionStatusEnum,
   MsgType,
 } from '@interfaces/KernelOutputType';
+import Link from '@oracle/elements/Link';
 import OutputDataCombined from './OutputDataCombined';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -28,8 +29,15 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { sortByKey } from '@utils/array';
 
 function Output({
+  dates,
+  groupsCount,
+  index,
   outputs: outputsProp,
 }: {
+  dates: string[];
+  groupsCount: number;
+  index: number;
+  msgID: string;
   outputs: KernelOutputType[];
 }) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -143,85 +151,18 @@ function Output({
     }
   }, []);
 
-  // Group output by parent message ID; these are messages from a single request.
-  // These groups will act as blocks of output.
-  // console.log(parentMessage?.msg_id, msgType, messageOutput || data);
-
-  // const data = useMemo(() => parseRawDataFromMessage(message?.data || '') || {}, [message]);
-  // console.log(data);
-
-  // Group status msg_type; if there are consecutive statuses, render them inline so that
-  // it looks like they are just loading in place.
-  // Show the loading bar; underneath on the left show a count up timer and on the right
-  // show the most recent timestamp and update these values in place.
-
-  // Show execution_input msg_type as additional information that isn’t the primary focus.
-  // This can be a collapsable block of code that appears below the status.
-
-  // Show execution_result msg_type as the primary information.
-
-  // Show timestamp execution_metadata.date alongside the status and result..
-
-  // Clicking the group block of output, user can write code and use the result as variables.
-
-  /*
-  ------------------------------------------------------------------------------------------
-  start time                                               elapsed time         last updated
-
-  > Code executing....
-
-  > output line by line                                                  (toggle)  [timestamp]
-  > output line by line                                                  (toggle)  [timestamp]
-  > output line by line                                                  (toggle)  [timestamp]
-
-  */
-
   const now = momentInLocalTimezone(tzMoment(), displayLocalTimezone);
-  const arr = outputByType?.[MsgType.STATUS];
-  const count = arr?.length;
 
-  let first;
-  if (arr?.[0]?.execution_metadata?.date) {
-    first = momentInLocalTimezone(
-      tzMoment(arr?.[0]?.execution_metadata?.date),
-      displayLocalTimezone,
-    );
-  }
-
-  let recent;
-  if (count >= 2 && arr?.[count - 1]?.execution_metadata?.date) {
-    recent = momentInLocalTimezone(
-      tzMoment(arr?.[count - 1]?.execution_metadata?.date),
-      displayLocalTimezone,
-    );
-  } else if (outputs?.length >= 2) {
-    const outs = outputs?.filter(output => ![
-      MsgType.EXECUTE_INPUT,
-      MsgType.STATUS,
-    ].includes(output?.msg_type));
-    recent = momentInLocalTimezone(
-      tzMoment(outs?.[outs?.length - 1]?.execution_metadata?.date),
-      displayLocalTimezone,
-    );
-  }
-
-  [first, recent].forEach((dt, idx) => {
-    if (dt) {
-      if (now.diff(dt, 'days') >= 1) {
-        if (idx === 0) {
-          first = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-        } else {
-          recent = dt.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-        }
-      } else {
-        if (idx === 0) {
-          first = dt.format(TIME_FORMAT);
-        } else {
-          recent = dt.format(TIME_FORMAT);
-        }
-      }
+  let first = dates?.length >= 1
+    ? momentInLocalTimezone(tzMoment(dates?.[0]), displayLocalTimezone)
+    : null;
+  if (first) {
+    if (now.diff(first, 'days') >= 1) {
+      first = first.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+    } else {
+      first = first.format(TIME_FORMAT);
     }
-  });
+  }
 
   const {
     html,
@@ -234,18 +175,28 @@ function Output({
     outputs: results,
   });
 
+  const inactive = (outputs?.length === 1 && index < groupsCount) ||
+    (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current);
+
   return (
     <RowGroupStyle>
       <Divider medium />
+
       <LoadingStyle isIdle={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)}>
-        <Loading className={(!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) ? 'inactive' : 'active'} width="100%" />
+        <Loading
+          className={inactive
+            ? 'inactive'
+            : 'active'
+        }
+          width="100%"
+        />
       </LoadingStyle>
 
       <HeaderStyle>
         <FlexContainer alignItems="flex-start" justifyContent="space-between">
           <Flex alignItems="center" flex={1} flexDirection="row">
             <Text default monospace small>
-              {recent || first}
+              {first}
             </Text>
 
             <Spacing mr={1} />
@@ -264,17 +215,18 @@ function Output({
             </Text>
           </Flex>
 
-          {console.log(!timerTextRef?.current, !executionStateRef?.current, ExecutionStateEnum.IDLE === executionStateRef.current, timeout.current)}
           <Flex flex={1} flexDirection="column" alignItems="flex-end">
-            {!timeout?.current && (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current) && (
-              <Text muted monospace small>
-                {generalizeMsgID(outputs?.[0]?.msg_id || '', {
-                  short: true,
-                })}
-              </Text>
+            {inactive && (
+              <Link>
+                <Text muted monospace small>
+                  {generalizeMsgID(outputs?.[0]?.msg_id || '', {
+                    short: true,
+                  })}
+                </Text>
+              </Link>
             )}
 
-            <Text default monospace ref={timerTextRef} small />
+            {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
           </Flex>
         </FlexContainer>
       </HeaderStyle>

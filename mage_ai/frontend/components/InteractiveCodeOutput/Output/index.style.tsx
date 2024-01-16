@@ -43,9 +43,7 @@ export const LoadingStyle = styled.div<{
 `;
 
 export const HeaderStyle = styled.div`
-  margin-left: ${UNIT}px;
-  margin-right: ${UNIT}px;
-  margin-top: ${UNIT}px;
+  margin: ${UNIT}px;
 `;
 
 export const HTMLOutputStyle = styled.div`

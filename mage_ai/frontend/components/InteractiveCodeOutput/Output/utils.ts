@@ -1,5 +1,5 @@
 import KernelOutputType, { ExecutionStatusEnum, ExecutionStateEnum, MsgType } from "@interfaces/KernelOutputType";
-import { groupBy } from "@utils/array";
+import { groupBy, sortByKey } from "@utils/array";
 
 export type TableDataType = {
   columns?: string[];
@@ -10,6 +10,29 @@ export type TableDataType = {
 
 export function prepareTableData(data: TableDataType): TableDataType {
   return data;
+}
+
+export function groupOutputsAndSort(outputs: KernelOutputType[]): KernelOutputType[] {
+  const mapping = {};
+
+  outputs?.forEach((item) => {
+    const key = item?.msg_id;
+    if (!(key in mapping)) {
+      mapping[key] = {
+        dates: [],
+        outputs: [],
+      };
+    }
+
+    mapping[key].dates.push(item?.execution_metadata?.date);
+    mapping[key].outputs.push(item);
+  });
+
+  return sortByKey(Object.entries(mapping || {})?.map(([msgID, { dates, outputs }]) => ({
+    dates: sortByKey(dates, d => d),
+    msgID,
+    outputs: sortByKey(outputs || [], o => o?.execution_metadata?.date),
+  })), ({ dates }) => dates?.[0]);
 }
 
 export function getLatestOutputGroup(outputs: KernelOutputType[]): KernelOutputType[] {
