@@ -20,7 +20,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import useOutputGroups from './useOutputGroups';
-import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone } from '@utils/date';
+import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, DATE_FORMAT_LONG_MS, momentInLocalTimezone } from '@utils/date';
 import { RowGroupStyle, LoadingStyle, HeaderStyle } from './index.style';
 import { isEmptyObject } from '@utils/hash';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
@@ -28,6 +28,7 @@ import { prettyUnitOfTime } from '@utils/string';
 import { generalizeMsgID } from '@utils/models/kernel/utils';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortByKey } from '@utils/array';
+import { pauseEvent } from '@utils/events';
 
 function Output({
   dates,
@@ -157,16 +158,11 @@ function Output({
 
   const now = momentInLocalTimezone(tzMoment(), displayLocalTimezone);
 
-  let first = dates?.length >= 1
+  const datetimeSmallest = dates?.length >= 1
     ? momentInLocalTimezone(tzMoment(dates?.[0]), displayLocalTimezone)
     : null;
-  if (first) {
-    if (now.diff(first, 'days') >= 1) {
-      first = first.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-    } else {
-      first = first.format(TIME_FORMAT);
-    }
-  }
+  const dateFull = datetimeSmallest && datetimeSmallest.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+  const timeFull = datetimeSmallest && datetimeSmallest.format(TIME_FORMAT);
 
   const {
     html,
@@ -209,14 +205,30 @@ function Output({
 
       <HeaderStyle>
         <FlexContainer alignItems="flex-start" justifyContent="space-between">
-          <Flex alignItems="center" flex={1} flexDirection="row">
-            <Text default monospace small>
-              {first}
-            </Text>
+          <Flex alignItems="center" flex={1} flexDirection="row" style={{ position: 'relative' }} >
+            <Tooltip
+              appearBefore
+              block
+              label={(
+                <Text default monospace small>
+                  {datetimeSmallest ? datetimeSmallest.format(DATE_FORMAT_LONG_MS) : null}
+                </Text>
+              )}
+              size={null}
+              visibleDelay={300}
+              widthFitContent
+            >
+              <Text default monospace small>
+                {datetimeSmallest
+                  ? (now.diff(datetimeSmallest, 'days') >= 1 ? dateFull : timeFull)
+                  : null
+                }
+              </Text>
+            </Tooltip>
 
             <Spacing mr={1} />
 
-            <Text
+            {/*<Text
               danger={ExecutionStatusEnum.FAILED === executionStatus}
               default={ExecutionStatusEnum.CANCELLED === executionStatus}
               monospace
@@ -227,7 +239,7 @@ function Output({
               {ExecutionStateEnum.IDLE === executionState
                 && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
               }
-            </Text>
+            </Text>*/}
           </Flex>
 
           <Flex flex={1} flexDirection="column" alignItems="flex-end">
@@ -247,7 +259,13 @@ function Output({
               visibleDelay={300}
               widthFitContent
             >
-              <Link>
+              <Link
+                noOutline
+                onClick={(e) => {
+                  pauseEvent(e);
+                }}
+                preventDefault
+              >
                 <Text muted monospace small>
                   {generalizeMsgID(groupID || '', {
                     medium: true,

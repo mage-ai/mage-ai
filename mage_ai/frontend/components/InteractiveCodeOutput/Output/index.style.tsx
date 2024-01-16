@@ -7,6 +7,7 @@ import { REGULAR } from '@oracle/styles/fonts/sizes';
 import { SCROLLBAR_WIDTH_SMALL, PlainScrollbarStyledCss, hideScrollBar, showScrollBar } from '@oracle/styles/scrollbars';
 import { SHARED_STYLES } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { transition } from '@oracle/styles/mixins';
 
 export const INDICATOR_SIZE = 3 * UNIT;
 export const TOGGLE_CLASSNAME = 'output-row-toggle';
@@ -22,6 +23,7 @@ const SHARED_HIDDEN_STYLES = css`
 `;
 
 export const RowGroupStyle = styled.div`
+  ${transition}
   padding-bottom: ${1 * UNIT}px;
   padding-top: ${1 * UNIT}px;
 
@@ -46,6 +48,14 @@ export const RowGroupStyle = styled.div`
     ${props => `
       background-color: ${(props.theme || dark).accent.negativeTransparentMore};
     `}
+
+    &.row-group-selected {
+      ${props => `
+        box-shadow:
+          2px 1px 0 1px ${(props.theme || dark).accent.negative} inset,
+          -1px -1px 0 1px ${(props.theme || dark).accent.negative} inset
+      `}
+    }
   }
 `;
 

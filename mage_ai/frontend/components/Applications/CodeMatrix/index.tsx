@@ -345,6 +345,8 @@ function CodeMatrix({
     msgID: number;
     outputs: KernelOutputType[];
   }): void {
+    const isAlreadySelected = e?.currentTarget?.className?.includes('row-group-selected');
+
     if (typeof document !== 'undefined') {
       const refs = [
         ...document.querySelectorAll('.row-group-selected'),
@@ -360,12 +362,16 @@ function CodeMatrix({
         }
       });
     }
-    e.currentTarget.className = addClassNames(
-      e?.currentTarget?.className || '',
-      [
-        'row-group-selected',
-      ],
-    );
+
+    if (e?.currentTarget && !isAlreadySelected) {
+      e.currentTarget.className = addClassNames(
+        e?.currentTarget?.className || '',
+        [
+          'row-group-selected',
+        ],
+      );
+    }
+
   }
 
   const {
