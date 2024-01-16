@@ -58,6 +58,11 @@ export enum MainNavigationTabEnum {
   SYSTEM = 'system',
 }
 
+export enum JarFileConfigEnum {
+  EMR = 'emr_config',
+  SPARK = 'spark_config',
+}
+
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CLUSTERS]: 'Clusters',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
