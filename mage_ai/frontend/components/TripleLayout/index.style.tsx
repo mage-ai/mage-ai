@@ -125,10 +125,10 @@ const ASIDE_STYLE = css<{
 const ASIDE_INNER_STYLE = css<{
   heightOffset?: number;
   hidden?: boolean;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${PlainScrollbarStyledCss}
-
   height: 100%;
   overflow: auto;
   position: relative;
@@ -141,6 +141,12 @@ const ASIDE_INNER_STYLE = css<{
 
   ${props => props.hidden && `
     display: none;
+  `}
+
+  ${props => typeof props.rows !== 'undefined' && `
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
   `}
 `;
 
@@ -269,6 +275,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   contained?: boolean;
   heightOffset?: number;
   hidden?: boolean;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
@@ -300,6 +307,7 @@ export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
   heightMinus?: number;
   hidden?: boolean;
   overflow?: string;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}

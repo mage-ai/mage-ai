@@ -76,6 +76,7 @@ type TripleLayoutProps = {
   afterMousedownActive?: boolean;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
+  afterRows?: number;
   afterSubheader?: any;
   afterWidth?: number;
   autoLayout?: boolean;
@@ -131,6 +132,7 @@ function TripleLayout({
   afterMousedownActive,
   afterNavigationItems,
   afterOverflow,
+  afterRows,
   afterSubheader,
   afterWidth = 0,
   autoLayout,
@@ -445,6 +447,7 @@ function TripleLayout({
         noScrollbarTrackBackground
         overflow={afterOverflow}
         ref={refAfterInner}
+        rows={afterRows}
         verticalOffset={afterHeader
           ? afterSubheader
             ? ASIDE_HEADER_HEIGHT + afterHeightOffset
@@ -484,6 +487,7 @@ function TripleLayout({
     afterHeightOffset,
     afterHidden,
     afterOverflow,
+    afterRows,
     afterSubheader,
     afterWidthFinal,
     contained,

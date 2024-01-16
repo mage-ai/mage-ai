@@ -5,6 +5,7 @@ import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
+import mock from './mock';
 import AuthToken from '@api/utils/AuthToken';
 import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, MsgType } from '@interfaces/KernelOutputType';
 import KeyboardContext from '@context/Keyboard';
@@ -12,10 +13,11 @@ import OutputGroup from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { ErrorProvider } from '@context/Error';
 import { ModalProvider } from '@context/Modal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { OutputContainerStyle, OutputContentStyle } from './Output/index.style';
+import { OutputContainerStyle, OutputContentStyle, ShellContainerStyle, ShellContentStyle } from './index.style';
 import { READY_STATE_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { dedupe } from '@utils/array';
 import { getUser } from '@utils/session';
@@ -32,7 +34,7 @@ export default function useInteractiveCodeOutput({
   onMessage,
   onOpen,
   onRenderOutputCallback,
-  outputPadding,
+  onRenderShellCallback,
   shouldConnect = false,
   shouldReconnect,
   uuid,
@@ -53,7 +55,7 @@ export default function useInteractiveCodeOutput({
   }) => void;
   onOpen?: (value: boolean) => void;
   onRenderOutputCallback?: () => void;
-  outputPadding?: JSX.Element;
+  onRenderShellCallback?: () => void;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
@@ -88,12 +90,59 @@ export default function useInteractiveCodeOutput({
     token,
   ]);
 
+  const selectedGroupOfOutputs = useRef();
   const messagesRef = useRef([]);
   const outputContainerRef = useRef(null);
   const outputContentRef = useRef(null);
   const outputItemsRef = useRef([]);
   const outputRootRef = useRef(null);
   const outputRootUUID = useRef(`${uuid}-output-root`);
+
+  const messagesShellRef = useRef([]);
+  const shellContainerRef = useRef(null);
+  const shellContentRef = useRef(null);
+  const shellItemsRef = useRef([]);
+  const shellRootRef = useRef(null);
+  const shellRootUUID = useRef(`${uuid}-shell-root`);
+
+  const outputBottomRef = useRef(null);
+
+  function setupGroups() {
+    setTimeout(() => {
+      const active = selectedGroupOfOutputs?.current?.active;
+      [
+        outputContainerRef,
+        shellContainerRef,
+      ].forEach((ref) => {
+        if (ref?.current) {
+          if (active) {
+            ref.current.className = addClassNames(
+              ref.current.className || '',
+              [
+                'inline',
+              ],
+            );
+          } else {
+            ref.current.className = removeClassNames(
+              ref.current.className || '',
+              [
+                'inline',
+              ],
+            );
+          }
+        }
+      });
+
+      if (active) {
+        renderOutputs(selectedGroupOfOutputs?.current?.outputs);
+      } else if (getDefaultMessages) {
+        messagesRef.current = getDefaultMessages?.();
+        if (messagesRef.current) {
+          renderOutputs(messagesRef.current);
+        }
+      }
+    }, 1);
+  }
 
   function renderOutputs(outputs: KernelOutputType[]) {
     if (!outputRootRef?.current) {
@@ -106,6 +155,8 @@ export default function useInteractiveCodeOutput({
     if (!outputRootRef?.current) {
       return;
     }
+
+    console.log('RENDERING', outputs?.length, outputs)
 
     const groups = groupOutputsAndSort(outputs);
     const groupsCount = groups?.length;
@@ -121,15 +172,53 @@ export default function useInteractiveCodeOutput({
         key={groupID}
         groupID={groupID}
         onClick={(e) => {
-          if (onClickOutputGroup) {
-            onClickOutputGroup?.(e, {
-              dates,
-              groupsCount,
-              index,
-              groupID,
-              outputs,
+          if (typeof document !== 'undefined') {
+            const refs = [
+              ...document.querySelectorAll('.row-group-selected'),
+            ];
+            refs?.forEach((ref) => {
+              if (ref) {
+                ref.className = removeClassNames(
+                  ref.className || '',
+                  [
+                    'row-group-selected',
+                  ],
+                );
+              }
             });
           }
+
+          if (e?.currentTarget) {
+            e.currentTarget.className = addClassNames(
+              e?.currentTarget?.className || '',
+              [
+                'row-group-selected',
+              ],
+            );
+          }
+
+          const data = {
+            dates,
+            groupsCount,
+            index,
+            groupID,
+            outputs,
+          };
+
+          if (!selectedGroupOfOutputs?.current?.active) {
+            if (selectedGroupOfOutputs?.current && selectedGroupOfOutputs?.current?.groupID === groupID) {
+              selectedGroupOfOutputs.current = { active: true, ...data };;
+              console.log(selectedGroupOfOutputs.current)
+            } else {
+              selectedGroupOfOutputs.current = { active: false, ...data };
+            }
+          }
+
+          if (onClickOutputGroup) {
+            onClickOutputGroup?.(e, data);
+          }
+
+          setupGroups();
         }}
         outputs={outputs}
       />
@@ -143,7 +232,6 @@ export default function useInteractiveCodeOutput({
               <ComponentWithCallback callback={onRenderOutputCallback}>
                 {outputsGrouped}
               </ComponentWithCallback>
-              {outputPadding}
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
@@ -157,14 +245,7 @@ export default function useInteractiveCodeOutput({
   }
 
   useEffect(() => {
-    if (getDefaultMessages) {
-      setTimeout(() => {
-        messagesRef.current = getDefaultMessages?.();
-        if (messagesRef.current) {
-          renderOutputs(messagesRef.current);
-        }
-      }, 1);
-    }
+    setupGroups();
   }, []);
 
   const {
@@ -243,11 +324,16 @@ export default function useInteractiveCodeOutput({
     );
   }, []);
 
-  const shell = useMemo(() => {
+  const shellRoot = useMemo(() => {
     return (
-      <Shell
-        messagesRef={messagesRef}
-      />
+      <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
+        <ShellContentStyle
+          id={shellRootUUID.current}
+          ref={shellContentRef}
+          callback={onRenderShellCallback}
+        />
+        <div ref={outputBottomRef} />
+      </ShellContainerStyle>
     );
   }, []);
 
@@ -258,6 +344,6 @@ export default function useInteractiveCodeOutput({
     kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,
     output: outputRoot,
     sendMessage,
-    shell,
+    shell: shellRoot,
   };
 }

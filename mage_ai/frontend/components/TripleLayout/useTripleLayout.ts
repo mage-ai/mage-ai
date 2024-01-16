@@ -31,6 +31,8 @@ function useAside(uuid, refData, {
       widthProp?: number;
     };
   };
+  rows?: number;
+  setRows?: (value: number) => void;
   setWidth?: (value: number) => void;
   width?: number;
   widthOverride?: boolean;
@@ -45,13 +47,19 @@ function useAside(uuid, refData, {
 } {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
   const keyHidden = useMemo(() => `${uuid}_hidden`, [uuid]);
+  const keyRows = useMemo(() => `${uuid}_rows`, [uuid]);
   const hiddenLocal = get(keyHidden);
+  const rowsLocal = get(keyRows);
   const widthLocal = get(key);
 
   const [hidden, setHiddenState] = useState([
     hiddenLocal,
     hiddenProp,
     false,
+  ].find(v => typeof v !== 'undefined' && v !== null));
+  const [rows, setRowsState] = useState([2,
+    rowsLocal,
+    null,
   ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
 <<<<<<< HEAD
@@ -88,6 +96,11 @@ function useAside(uuid, refData, {
     setHiddenState(prev);
     set(keyHidden, typeof prev === 'function' ? prev?.() : prev);
   }, [keyHidden]);
+
+  const setRows = useCallback((prev) => {
+    setRowsState(prev);
+    set(keyRows, typeof prev === 'function' ? prev?.() : prev);
+  }, [keyRows]);
 
   const width = useMemo(() => {
     let value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
@@ -177,8 +190,10 @@ function useAside(uuid, refData, {
   return {
     hidden,
     mousedownActive,
+    rows,
     setHidden,
     setMousedownActive,
+    setRows,
     setWidth,
     width,
   };
@@ -194,10 +209,14 @@ export type UseTripleLayoutType = {
   };
   mousedownActiveAfter: boolean;
   mousedownActiveBefore: boolean;
+  rowsAfter: number;
+  rowsBefore: number;
   setHiddenAfter: (value: boolean) => void;
   setHiddenBefore: (value: boolean) => void;
   setMousedownActiveAfter: (value: boolean) => void;
   setMousedownActiveBefore: (value: boolean) => void;
+  setRowsAfter: (rows: number) => void;
+  setRowsBefore: (rows: number) => void;
   setWidthAfter: (value: number) => void;
   setWidthBefore: (value: number) => void;
   widthAfter: number;
@@ -260,8 +279,10 @@ export default function useTripleLayout(uuid: string, {
   const {
     hidden: hiddenAfter,
     mousedownActive: mousedownActiveAfter,
+    rows: rowsAfter,
     setHidden: setHiddenAfter,
     setMousedownActive: setMousedownActiveAfter,
+    setRows: setRowsAfter,
     setWidth: setWidthAfter,
     width: widthAfter,
   } = useAside(keyAfter, refAfter, {
@@ -278,8 +299,10 @@ export default function useTripleLayout(uuid: string, {
   const {
     hidden: hiddenBefore,
     mousedownActive: mousedownActiveBefore,
+    rows: rowsBefore,
     setHidden: setHiddenBefore,
     setMousedownActive: setMousedownActiveBefore,
+    setRows: setRowsBefore,
     setWidth: setWidthBefore,
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
@@ -350,10 +373,14 @@ export default function useTripleLayout(uuid: string, {
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
+    rowsAfter,
+    rowsBefore,
     setHiddenAfter,
     setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
+    setRowsAfter,
+    setRowsBefore,
     setWidthAfter,
     setWidthBefore,
     widthAfter,

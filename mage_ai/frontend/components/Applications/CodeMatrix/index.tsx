@@ -69,7 +69,6 @@ function CodeMatrix({
   const editorRef = useRef(null);
   const editorKeyMappingRef = useRef({});
 
-  const outputBottomRef = useRef(null);
   const statusStateRootRef = useRef(null);
   const runButtonRootRef = useRef(null)
   const runButtonRef = useRef(null)
@@ -113,7 +112,7 @@ function CodeMatrix({
         if (bottom) {
           afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
             afterInnerRef?.current?.getBoundingClientRect()?.height
-              + outputBottomRef?.current?.getBoundingClientRect()?.height
+              // + outputBottomRef?.current?.getBoundingClientRect()?.height
           );
         } else if (top) {
           afterInnerRef.current.scrollTop = 0;
@@ -223,10 +222,12 @@ function CodeMatrix({
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
+    rowsAfter,
     setHiddenAfter,
     setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
+    setRowsAfter,
     setWidthAfter,
     setWidthBefore,
     widthAfter,
@@ -332,46 +333,28 @@ function CodeMatrix({
   }
 
   function onRenderOutputCallback() {
-    scrollTo({
-      bottom: true,
-    });
-    setRunning(false);
+    // scrollTo({
+    //   bottom: true,
+    // });
+    // setRunning(false);
+
+    // if (outputBottomRef?.current) {
+    //   outputBottomRef.current.style.height =
+    //     `${mainContainerRef?.current?.getBoundingClientRect()?.height}px`;
+    // }
+  }
+
+  function onRenderShellCallback() {
+
   }
 
   function onClickOutputGroup(e: Event, opts?: {
     dates: string[];
+    groupID: number;
     groupsCount: number;
     index: number;
-    msgID: number;
     outputs: KernelOutputType[];
   }): void {
-    const isAlreadySelected = e?.currentTarget?.className?.includes('row-group-selected');
-
-    if (typeof document !== 'undefined') {
-      const refs = [
-        ...document.querySelectorAll('.row-group-selected'),
-      ];
-      refs?.forEach((ref) => {
-        if (ref) {
-          ref.className = removeClassNames(
-            ref.className || '',
-            [
-              'row-group-selected',
-            ],
-          );
-        }
-      });
-    }
-
-    if (e?.currentTarget && !isAlreadySelected) {
-      e.currentTarget.className = addClassNames(
-        e?.currentTarget?.className || '',
-        [
-          'row-group-selected',
-        ],
-      );
-    }
-
   }
 
   const {
@@ -389,12 +372,7 @@ function CodeMatrix({
     onMessage,
     onOpen,
     onRenderOutputCallback,
-    outputPadding: (
-      <div
-        ref={outputBottomRef}
-        style={{ height: mainContainerRef?.current?.getBoundingClientRect()?.height }}
-      />
-    ),
+    onRenderShellCallback,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
@@ -575,13 +553,15 @@ function CodeMatrix({
   }, [
   ]);
 
-  const afterOutputMemo = useMemo(() => (
-    <div>
-      {console.log("AFTER OUTPUT")}
-      {output}
-      {shell}
-    </div>
-  ), [
+  const afterOutputMemo = useMemo(() => {
+    return (
+      <>
+        {console.log("AFTER OUTPUT")}
+        {output}
+        {shell}
+      </>
+    );
+  }, [
     output,
     shell,
   ]);
@@ -715,6 +695,7 @@ function CodeMatrix({
         afterHidden={hiddenAfter}
         afterInnerRef={afterInnerRef}
         afterMousedownActive={mousedownActiveAfter}
+        afterRows={rowsAfter}
         afterWidth={widthAfter}
         autoLayout
         before={(

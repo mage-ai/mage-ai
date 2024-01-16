@@ -23,7 +23,7 @@ const SHARED_HIDDEN_STYLES = css`
 `;
 
 export const RowGroupStyle = styled.div`
-  ${transition}
+  ${transition()}
   padding-bottom: ${1 * UNIT}px;
   padding-top: ${1 * UNIT}px;
 
@@ -40,7 +40,7 @@ export const RowGroupStyle = styled.div`
       background-color: ${(props.theme || dark).accent.cyanTransparent};
       box-shadow:
         2px 1px 0 1px ${(props.theme || dark).accent.cyan} inset,
-        -1px -1px 0 1px ${(props.theme || dark).accent.cyan} inset
+        -1px -1px 0 1px ${(props.theme || dark).accent.cyan} inset;
     `}
   }
 
@@ -53,9 +53,49 @@ export const RowGroupStyle = styled.div`
       ${props => `
         box-shadow:
           2px 1px 0 1px ${(props.theme || dark).accent.negative} inset,
-          -1px -1px 0 1px ${(props.theme || dark).accent.negative} inset
+          -1px -1px 0 1px ${(props.theme || dark).accent.negative} inset;
       `}
-    }
+
+
+    // background: linear-gradient(58deg, rgba(255, 241, 244, 0.06), rgba(255, 241, 244, 0.06));
+    // background-size: 400% 400%;
+    // -webkit-animation: AnimationName 0s ease infinite;
+    // -moz-animation: AnimationName 0s ease infinite;
+    // animation: AnimationName 0s ease infinite;
+
+    // @-webkit-keyframes AnimationName {
+    //   0% {
+    //     background-position:53% 0%
+    //   };
+    //   50% {
+    //     background-position:48% 100%
+    //   };
+    //   100% {
+    //     background-position:53% 0%
+    //   };
+    // }
+    // @-moz-keyframes AnimationName {
+    //   0% {
+    //     background-position:53% 0%
+    //   };
+    //   50% {
+    //     background-position:48% 100%
+    //   };
+    //   100% {
+    //     background-position:53% 0%
+    //   };
+    // }
+    // @keyframes AnimationName {
+    //   0% {
+    //     background-position:53% 0%
+    //   };
+    //   50% {
+    //     background-position:48% 100%
+    //   };
+    //   100% {
+    //     background-position:53% 0%
+    //   };
+    // }
   }
 `;
 
@@ -179,10 +219,3 @@ export const HTMLOutputStyle = styled.div`
     }
   }
 `;
-
-export const OutputContainerStyle = styled.div`
-`;
-
-export const OutputContentStyle = styled.div`
-`;
-
