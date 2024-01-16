@@ -48,7 +48,7 @@ class WidgetResource(GenericResource):
         )
 
         if payload.get('content'):
-            await resource.write_async(payload['content'], widget=True)
+            await resource.update_content_async(payload['content'], widget=True)
 
         if payload.get('configuration'):
             resource.configuration = payload['configuration']
