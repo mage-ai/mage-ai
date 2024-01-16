@@ -18,5 +18,5 @@ class Logger:
         if LoggingLevel.is_valid_level(level):
             server_logger.setLevel(level.upper())
         else:
-            print(f"invalid verbosity {level} for logger {name}")
+            print(f'invalid verbosity {level} for logger {name}')
         return server_logger
