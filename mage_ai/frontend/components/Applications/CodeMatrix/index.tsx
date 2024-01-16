@@ -100,6 +100,27 @@ function CodeMatrix({
     return editorRef?.current?.getValue() || contentRef?.current;
   }
 
+  function scrollTo({
+    bottom,
+    top,
+  }: {
+    bottom?: boolean;
+    top?: boolean;
+  }) {
+    setTimeout(() => {
+      if (afterInnerRef?.current) {
+        if (bottom) {
+          afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
+            afterInnerRef?.current?.getBoundingClientRect()?.height
+              + outputBottomRef?.current?.getBoundingClientRect()?.height
+          );
+        } else if (top) {
+          afterInnerRef.current.scrollTop = 0;
+        }
+      }
+    }, 1);
+  }
+
   useEffect(() => {
     if (monaco && ready) {
       editorRef.current.onKeyDown((event) => {
@@ -117,25 +138,43 @@ function CodeMatrix({
         };
       });
 
-      editorRef.current.addAction({
-        id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/run-code`,
-        label: 'Run code',
-        keybindingContext: null,
-        keybindings: [
-          // metaKey
-          // 3
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-        ],
-        precondition: null,
-        run: (editor) => {
-          const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
-          const text = editor.getValue();
-          const message = highlightedText || text;
+      [
+        {
+          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/run-code`,
+          label: 'Run code',
+          keybindings: [
+            // metaKey
+            // 3
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+          ],
+          run: (editor) => {
+            const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
+            const text = editor.getValue();
+            const message = highlightedText || text;
 
-          sendMessageRef?.current?.({
-            message: getCodeForMessage(),
-          });
+            sendMessageRef?.current?.({
+              message: getCodeForMessage(),
+            });
+          },
         },
+        {
+          id: `${ApplicationExpansionUUIDEnum.CodeMatrix}/output-clear-all`,
+          label: 'Clear all outputs',
+          keybindings: [
+            // metaKey, 41
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
+          ],
+          run: () => {
+            clearOutputs();
+          },
+        },
+
+      ].forEach((shortcut) => {
+        editorRef.current.addAction({
+          ...shortcut,
+          keybindingContext: null,
+          precondition: null,
+        });
       });
     }
   }, [monaco, ready]);
@@ -252,27 +291,6 @@ function CodeMatrix({
         </div>
       );
     }
-  }
-
-  function scrollTo({
-    bottom,
-    top,
-  }: {
-    bottom?: boolean;
-    top?: boolean;
-  }) {
-    setTimeout(() => {
-      if (afterInnerRef?.current) {
-        if (bottom) {
-          afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
-            afterInnerRef?.current?.getBoundingClientRect()?.height
-              + outputBottomRef?.current?.getBoundingClientRect()?.height
-          );
-        } else if (top) {
-          afterInnerRef.current.scrollTop = 0;
-        }
-      }
-    }, 1);
   }
 
   function onRenderOutputCallback() {
