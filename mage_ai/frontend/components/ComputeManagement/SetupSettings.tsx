@@ -1,8 +1,6 @@
-import { renderToString } from 'react-dom/server';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
-import Chip from '@oracle/components/Chip';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
 import ErrorMessage from './ErrorMessage';
@@ -10,33 +8,33 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyValueConfigurationSection from './shared/KeyValueConfigurationSection';
-import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import api from '@api';
 import {
   Add,
   Edit,
   Save,
   Trash,
 } from '@oracle/icons';
-import { CardStyle } from './index.style';
 import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
-import { ObjectAttributesType } from './constants';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
+import { JarFileConfigEnum, ObjectAttributesType } from './constants';
 import {
   PADDING_UNITS,
   UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { removeAtIndex } from '@utils/array';
+
+type JarFileType = {
+  config: JarFileConfigEnum;
+  value: string;
+};
 
 type ConnectionSettingsProps = {
   attributesTouched: {
@@ -49,7 +47,7 @@ type ConnectionSettingsProps = {
   onCancel?: () => void;
   selectedComputeService?: ComputeServiceUUIDEnum;
   setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
-}
+};
 
 function ConnectionSettings({
   attributesTouched,
@@ -90,18 +88,35 @@ function ConnectionSettings({
   ]);
 
   const refNewJarFileUUID = useRef(null);
-  const refNewEnvironmentVariableUUID = useRef(null);
 
-  const [isAddingNewJarFile, setIsAddingNewJarFile] = useState(false);
+  const [isAddingNewJarFile, setIsAddingNewJarFile] = useState<boolean>(false);
   const [newJarFile, setNewJarFile] = useState<string>(null);
-  const jarFiles = useMemo(() => objectAttributesSparkConfig?.spark_jars || [], [
-    objectAttributesSparkConfig,
+  const sparkJarFiles: JarFileType[] = useMemo(() => (objectAttributesSparkConfig?.spark_jars || [])
+    .map(val => ({
+      config: JarFileConfigEnum.SPARK,
+      value: val,
+    })),
+    [objectAttributesSparkConfig],
+  );
+  const emrJarFiles: JarFileType[] = useMemo(() => (objectAttributesEMRConfig?.spark_jars || [])
+    .map(val => ({
+      config: JarFileConfigEnum.EMR,
+      value: val,
+    })),
+    [objectAttributesEMRConfig],
+  );
+  const allJarFiles: JarFileType[] = useMemo(() => sparkJarFiles.concat(emrJarFiles), [
+    emrJarFiles,
+    sparkJarFiles,
   ]);
-  const hasJarFiles = useMemo(() => jarFiles?.length >= 1, [jarFiles]);
-  const jarFileExists = useMemo(() => (jarFiles || []).includes(newJarFile), [
-    jarFiles,
-    newJarFile,
-  ]);
+  const hasJarFiles = useMemo(() => allJarFiles?.length >= 1, [allJarFiles]);
+  const jarFileExists = useMemo(() => (allJarFiles || [])
+    .some(jarFile => jarFile.value === newJarFile), 
+    [
+      allJarFiles,
+      newJarFile,
+    ],
+  );
 
   const addJarFileButton = useMemo(() => (
     <FlexContainer alignItems="center">
@@ -137,16 +152,18 @@ function ConnectionSettings({
             autoComplete="off"
             compact
             meta={{
-              touched: !!jarFileExists,
               error: '',
+              touched: !!jarFileExists,
             }}
+            minWidth={UNIT * 30}
             monospace
-            onClick={e => pauseEvent(e)}
-            paddingVertical={(UNIT / 2) - 2}
             onChange={(e) => {
               pauseEvent(e);
               setNewJarFile(e.target.value);
             }}
+            onClick={e => pauseEvent(e)}
+            paddingVertical={(UNIT / 2) - 2}
+            placeholder="e.g. /home/path/example1.jar"
             ref={refNewJarFileUUID}
             small
             value={newJarFile || ''}
@@ -155,15 +172,27 @@ function ConnectionSettings({
           <Spacing mr={1} />
 
           <Button
-            disabled={jarFileExists}
             compact
+            disabled={jarFileExists}
             onClick={(e) => {
               pauseEvent(e);
 
               if (!jarFileExists) {
-                setObjectAttributesSparkConfig({
-                  spark_jars: jarFiles.concat(newJarFile),
-                });
+                if (selectedComputeService === ComputeServiceUUIDEnum.AWS_EMR) {
+                  const updatedJarFiles = emrJarFiles
+                    .map(({ value }) => value)
+                    .concat(newJarFile);
+                  setObjectAttributesEMRConfig({
+                    spark_jars: updatedJarFiles,
+                  });
+                } else {
+                  const updatedJarFiles = sparkJarFiles
+                    .map(({ value }) => value)
+                    .concat(newJarFile);
+                  setObjectAttributesSparkConfig({
+                    spark_jars: updatedJarFiles,
+                  });
+                }
 
                 setIsAddingNewJarFile(false);
                 setNewJarFile(null);
@@ -194,17 +223,18 @@ function ConnectionSettings({
       )}
     </FlexContainer>
   ), [
-    jarFileExists,
-    jarFiles,
-    hasJarFiles,
     isAddingNewJarFile,
+    hasJarFiles,
+    jarFileExists,
     newJarFile,
-    refNewJarFileUUID,
-    setIsAddingNewJarFile,
-    setNewJarFile,
+    emrJarFiles,
+    selectedComputeService,
+    setObjectAttributesEMRConfig,
+    sparkJarFiles,
+    setObjectAttributesSparkConfig,
   ]);
 
-  const jarFilesMemo = useMemo(() => jarFiles?.map((value: string, idx: number) => (
+  const jarFilesMemo = useMemo(() => allJarFiles?.map(({ config, value }: JarFileType, idx: number) => (
     <div key={value}>
       <Divider light />
 
@@ -216,10 +246,17 @@ function ConnectionSettings({
             noBorder
             noPadding
             onClick={() => {
-              const arr = [...jarFiles];
-              setObjectAttributesSparkConfig({
-                spark_jars: removeAtIndex(arr, idx),
-              });
+              if (config === JarFileConfigEnum.EMR) {
+                const jarFiles = emrJarFiles.map(({ value }) => value);
+                setObjectAttributesEMRConfig({
+                  spark_jars: removeAtIndex(jarFiles, idx - sparkJarFiles.length),
+                });
+              } else {
+                const jarFiles = sparkJarFiles.map(({ value }) => value);
+                setObjectAttributesSparkConfig({
+                  spark_jars: removeAtIndex(jarFiles, idx),
+                });
+              }
             }}
           >
             <Trash default size={ICON_SIZE} />
@@ -232,43 +269,28 @@ function ConnectionSettings({
             large
             monospace
           >
-            File {idx + 1}
+            File {idx + 1} ({config})
           </Text>
 
           <Spacing mr={PADDING_UNITS} />
 
-          <Flex flex={1}>
-            <TextInput
-              afterIcon={<Edit />}
-              afterIconClick={(_, inputRef) => {
-                inputRef?.current?.focus();
-              }}
-              afterIconSize={ICON_SIZE}
-              alignRight
-              fullWidth
+          <Flex flex={1} justifyContent="flex-end">
+            <Text
               large
               monospace
-              noBackground
-              noBorder
-              onChange={(e) => {
-                const arr = [...jarFiles];
-                arr[idx] = e.target.value;
-                setObjectAttributesSparkConfig({
-                  spark_jars: arr,
-                });
-              }}
-              paddingHorizontal={0}
-              paddingVertical={0}
-              placeholder="e.g. /home/path/example1.jar"
-              value={value || ''}
-            />
+            >
+              {value}
+            </Text>
           </Flex>
         </FlexContainer>
       </Spacing>
     </div>
   )), [
-    jarFiles,
+    allJarFiles,
+    emrJarFiles,
+    setObjectAttributesEMRConfig,
     setObjectAttributesSparkConfig,
+    sparkJarFiles,
   ]);
 
   const awsEMRSetupMemo = useMemo(() => {
@@ -312,11 +334,11 @@ function ConnectionSettings({
                 }}
                 afterIconSize={ICON_SIZE}
                 alignRight
+                fullWidth
                 large
                 monospace
                 noBackground
                 noBorder
-                fullWidth
                 onChange={e => setObjectAttributes({
                   remote_variables_dir: e.target.value,
                 })}
@@ -380,10 +402,10 @@ function ConnectionSettings({
                 afterIconSize={ICON_SIZE}
                 alignRight
                 autoComplete="off"
+                fullWidth
                 large
                 noBackground
                 noBorder
-                fullWidth
                 onChange={e => setObjectAttributesSparkConfig({
                   app_name: e.target.value,
                 })}
@@ -428,10 +450,10 @@ function ConnectionSettings({
                 }}
                 afterIconSize={ICON_SIZE}
                 alignRight
+                fullWidth
                 large
                 noBackground
                 noBorder
-                fullWidth
                 onChange={e => setObjectAttributesSparkConfig({
                   spark_master: e.target.value,
                 })}
@@ -471,11 +493,11 @@ function ConnectionSettings({
                 }}
                 afterIconSize={ICON_SIZE}
                 alignRight
+                fullWidth
                 large
                 monospace
                 noBackground
                 noBorder
-                fullWidth
                 onChange={e => setObjectAttributesSparkConfig({
                   spark_home: e.target.value,
                 })}
@@ -510,64 +532,62 @@ function ConnectionSettings({
               uuid,
               valid,
               value,
-            }) => {
-              return (
-                <div key={uuid}>
-                  <Divider light />
+            }) => (
+              <div key={uuid}>
+                <Divider light />
 
-                  <Spacing p={PADDING_UNITS}>
-                    <FlexContainer alignItems="center">
-                      <FlexContainer flexDirection="column">
-                        <Text
-                          danger={!valid}
-                          default
-                          large
-                          monospace={!name}
-                        >
-                          {name || uuid} {!valid && (
-                            <Text danger inline large>
-                              is invalid
+                <Spacing p={PADDING_UNITS}>
+                  <FlexContainer alignItems="center">
+                    <FlexContainer flexDirection="column">
+                      <Text
+                        danger={!valid}
+                        default
+                        large
+                        monospace={!name}
+                      >
+                        {name || uuid} {!valid && (
+                          <Text danger inline large>
+                            is invalid
+                          </Text>
+                        )}
+                      </Text>
+
+                      {description && (
+                        <Text muted small>
+                          {description}
+                        </Text>
+                      )}
+                    </FlexContainer>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex flex={1} justifyContent="flex-end">
+                      {!valid && (
+                        <>
+                          {!error && required && (
+                            <Text large muted>
+                              Required but missing
                             </Text>
                           )}
+                          {!error && !required && (
+                            <Text large muted>
+                              Invalid
+                            </Text>
+                          )}
+                          {error && <ErrorMessage error={error} large />}
+                        </>
+                      )}
+
+                      {valid && value && (
+                        <Text default large>
+                          {value}
                         </Text>
-
-                        {description && (
-                          <Text muted small>
-                            {description}
-                          </Text>
-                        )}
-                      </FlexContainer>
-
-                      <Spacing mr={PADDING_UNITS} />
-
-                      <Flex flex={1} justifyContent="flex-end">
-                        {!valid && (
-                          <>
-                            {!error && required && (
-                              <Text muted large>
-                                Required but missing
-                              </Text>
-                            )}
-                            {!error && !required && (
-                              <Text muted large>
-                                Invalid
-                              </Text>
-                            )}
-                            {error && <ErrorMessage error={error} large />}
-                          </>
-                        )}
-
-                        {valid && value && (
-                          <Text default large>
-                            {value}
-                          </Text>
-                        )}
-                      </Flex>
-                    </FlexContainer>
-                  </Spacing>
-                </div>
-              );
-            })}
+                      )}
+                    </Flex>
+                  </FlexContainer>
+                </Spacing>
+              </div>
+            ))}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -602,7 +622,7 @@ function ConnectionSettings({
                   muted
                   small
                 >
-                  kwargs['context']
+                  kwargs[&#39;context&#39;]
                 </Text>.
               </Text>
             </FlexContainer>
@@ -642,7 +662,7 @@ function ConnectionSettings({
                       muted
                       small
                     >
-                      kwargs['context']
+                      kwargs[&#39;context&#39;]
                     </Text>,
                     <br />
                     e.g. If variable name is <Text
@@ -660,7 +680,7 @@ function ConnectionSettings({
                       muted
                       small
                     >
-                      kwargs['context']['spark']
+                      kwargs[&#39;context&#39;][&#39;spark&#39;]
                     </Text>.
                   </Text>
                 </FlexContainer>
@@ -675,11 +695,11 @@ function ConnectionSettings({
                     }}
                     afterIconSize={ICON_SIZE}
                     alignRight
+                    fullWidth
                     large
                     monospace
                     noBackground
                     noBorder
-                    fullWidth
                     onChange={e => setObjectAttributesSparkConfig({
                       custom_session_var_name: e.target.value,
                     })}
@@ -721,10 +741,10 @@ function ConnectionSettings({
                   afterIconSize={ICON_SIZE}
                   alignRight
                   autoComplete="off"
+                  fullWidth
                   large
                   noBackground
                   noBorder
-                  fullWidth
                   onChange={e => setObjectAttributesEMRConfig({
                     bootstrap_script_path: e.target.value,
                   })}
@@ -769,13 +789,18 @@ function ConnectionSettings({
             justifyContent="space-between"
           >
             <Flex flex={1} flexDirection="column">
-              <Headline level={4}>
-                JAR files
-              </Headline>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Headline level={4}>
+                  JAR files
+                </Headline>
+                {hasJarFiles && (
+                  addJarFileButton
+                )}
+              </FlexContainer>
 
               <Spacing mt={1}>
                 <Text muted>
-                  These files will be to be uploaded to the cluster
+                  These files will be uploaded to the cluster
                   and added to the <Text
                     inline
                     monospace
@@ -786,14 +811,6 @@ function ConnectionSettings({
                 </Text>
               </Spacing>
             </Flex>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            {hasJarFiles && (
-              <FlexContainer alignItems="center">
-                {addJarFileButton}
-              </FlexContainer>
-            )}
           </FlexContainer>
         </Spacing>
 

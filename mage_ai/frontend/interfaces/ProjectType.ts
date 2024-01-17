@@ -39,6 +39,7 @@ export interface EMRConfigType {
   slave_spark_properties?: {
     [key: string]: boolean | number | string;
   };
+  spark_jars?: string[];
 }
 
 export interface SparkConfigType {
