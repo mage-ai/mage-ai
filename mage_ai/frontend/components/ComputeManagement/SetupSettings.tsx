@@ -9,7 +9,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyValueConfigurationSection from './shared/KeyValueConfigurationSection';
 import Panel from '@oracle/components/Panel';
-import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -91,7 +90,6 @@ function ConnectionSettings({
   const refNewJarFileUUID = useRef(null);
 
   const [isAddingNewJarFile, setIsAddingNewJarFile] = useState<boolean>(false);
-  const [jarFileConfig, setJarFileConfig] = useState<JarFileConfigEnum>(JarFileConfigEnum.SPARK);
   const [newJarFile, setNewJarFile] = useState<string>(null);
   const sparkJarFiles: JarFileType[] = useMemo(() => (objectAttributesSparkConfig?.spark_jars || [])
     .map(val => ({
@@ -173,29 +171,6 @@ function ConnectionSettings({
 
           <Spacing mr={1} />
 
-          {selectedComputeService === ComputeServiceUUIDEnum.AWS_EMR &&
-            <>
-              <Select
-                compact
-                onChange={e => {
-                  if (e.target.value === JarFileConfigEnum.EMR) {
-                    setJarFileConfig(JarFileConfigEnum.EMR);
-                  } else {
-                    setJarFileConfig(JarFileConfigEnum.SPARK);
-                  }
-                }}
-                paddingVertical={3}
-                small
-                value={jarFileConfig}
-              >
-                <option value={JarFileConfigEnum.SPARK}>Add to Spark config</option>
-                <option value={JarFileConfigEnum.EMR}>Add to EMR config</option>
-              </Select>
-
-              <Spacing mr={1} />
-            </>
-          }
-
           <Button
             compact
             disabled={jarFileExists}
@@ -203,7 +178,7 @@ function ConnectionSettings({
               pauseEvent(e);
 
               if (!jarFileExists) {
-                if (jarFileConfig === JarFileConfigEnum.EMR) {
+                if (selectedComputeService === ComputeServiceUUIDEnum.AWS_EMR) {
                   const updatedJarFiles = emrJarFiles
                     .map(({ value }) => value)
                     .concat(newJarFile);
@@ -252,7 +227,6 @@ function ConnectionSettings({
     hasJarFiles,
     jarFileExists,
     newJarFile,
-    jarFileConfig,
     emrJarFiles,
     selectedComputeService,
     setObjectAttributesEMRConfig,
