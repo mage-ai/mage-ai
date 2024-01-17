@@ -15,7 +15,15 @@ from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.services.redis.redis import init_redis_client
-from mage_ai.settings import HOSTNAME, REDIS_URL, SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+from mage_ai.settings import (
+    HOSTNAME,
+    REDIS_URL,
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+    SERVER_LOGGING_FORMAT,
+    SERVER_VERBOSITY,
+)
+from mage_ai.shared.logger import set_logging_format
 
 LIVENESS_TIMEOUT_SECONDS = 300
 
@@ -206,6 +214,11 @@ class Worker(mp.Process):
                 traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             )
         initialize_new_relic()
+
+        set_logging_format(
+            logging_format=SERVER_LOGGING_FORMAT,
+            level=SERVER_VERBOSITY,
+        )
 
     @newrelic.agent.background_task(name='worker-run', group='Task')
     def run(self):

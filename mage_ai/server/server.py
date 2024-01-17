@@ -93,6 +93,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     REQUIRE_USER_PERMISSIONS,
     ROUTES_BASE_PATH,
+    SERVER_LOGGING_FORMAT,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
@@ -108,7 +109,7 @@ from mage_ai.settings.repo import (
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
-from mage_ai.shared.logger import LoggingLevel
+from mage_ai.shared.logger import LoggingLevel, set_logging_format
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -631,6 +632,15 @@ def start_server(
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
+    set_logging_format(
+        logging_format=SERVER_LOGGING_FORMAT,
+        level=SERVER_VERBOSITY,
+    )
+
+    if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
+        options.logging = SERVER_VERBOSITY
+    enable_pretty_logging()
+
     if dbt_docs:
         run_docs_server()
     else:
@@ -659,10 +669,6 @@ def start_server(
                 traceback.print_exc()
 
         if run_web_server:
-            if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
-                options.logging = SERVER_VERBOSITY
-            enable_pretty_logging()
-
             # Start web server
             asyncio.run(
                 main(
