@@ -173,24 +173,28 @@ function ConnectionSettings({
 
           <Spacing mr={1} />
 
-          <Select
-            compact
-            onChange={e => {
-              if (e.target.value === JarFileConfigEnum.EMR) {
-                setJarFileConfig(JarFileConfigEnum.EMR);
-              } else {
-                setJarFileConfig(JarFileConfigEnum.SPARK);
-              }
-            }}
-            paddingVertical={3}
-            small
-            value={jarFileConfig}
-          >
-            <option value={JarFileConfigEnum.SPARK}>Add to Spark config</option>
-            <option value={JarFileConfigEnum.EMR}>Add to EMR config</option>
-          </Select>
+          {selectedComputeService === ComputeServiceUUIDEnum.AWS_EMR &&
+            <>
+              <Select
+                compact
+                onChange={e => {
+                  if (e.target.value === JarFileConfigEnum.EMR) {
+                    setJarFileConfig(JarFileConfigEnum.EMR);
+                  } else {
+                    setJarFileConfig(JarFileConfigEnum.SPARK);
+                  }
+                }}
+                paddingVertical={3}
+                small
+                value={jarFileConfig}
+              >
+                <option value={JarFileConfigEnum.SPARK}>Add to Spark config</option>
+                <option value={JarFileConfigEnum.EMR}>Add to EMR config</option>
+              </Select>
 
-          <Spacing mr={1} />
+              <Spacing mr={1} />
+            </>
+          }
 
           <Button
             compact

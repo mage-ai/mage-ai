@@ -458,7 +458,7 @@ function ComputeManagement({
                 <Button
                   compact
                   onClick={() => {
-                    setSelectedComputeService(null)
+                    setSelectedComputeService(null);
                     setSelectedTab(null);
                   }}
                   secondary
