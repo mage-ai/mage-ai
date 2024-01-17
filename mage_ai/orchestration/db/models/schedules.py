@@ -90,6 +90,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     start_time = Column(DateTime(timezone=True), default=None)
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
+    last_enabled_at = Column(DateTime(timezone=True), default=None)
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
