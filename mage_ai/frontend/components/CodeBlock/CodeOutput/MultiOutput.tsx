@@ -16,7 +16,7 @@ type MultiOutputProps = {
 function MultiOutput({ outputs }: MultiOutputProps) {
   const outputsRef = useRef({});
 
-  const tabs = useMemo(() => outputs.map(({ uuid }) => ({ uuid }), [outputs]));
+  const tabs = useMemo(() => outputs.map(({ uuid }) => ({ uuid })), [outputs]);
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs?.[0]);
 
@@ -49,16 +49,21 @@ function MultiOutput({ outputs }: MultiOutputProps) {
           setSelectedTab(tab);
 
           Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
+            // @ts-ignore
             if (ref?.current) {
               if (tab?.uuid === uuid) {
+                // @ts-ignore
                 ref.current.className = removeClassNames(
+                  // @ts-ignore
                   ref.current.className || '',
                   [
                     'inactive',
                   ],
                 );
               } else {
+                // @ts-ignore
                 ref.current.className = addClassNames(
+                  // @ts-ignore
                   ref.current.className || '',
                   [
                     'inactive',

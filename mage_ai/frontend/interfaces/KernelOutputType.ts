@@ -35,6 +35,7 @@ export default interface KernelOutputType {
   metadata?: {
     [key: string]: string;
   };
+  multi_output?: boolean;
   msg_id?: string;
   msg_type?: MsgType;
   pipeline_uuid?: string;
