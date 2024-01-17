@@ -277,3 +277,15 @@ to clean up old variables:
 ```bash
 mage clean-cached-variables [project_path]
 ```
+
+## Cache block output in memory
+
+By default, Mage persists block output on disk. In pipeline's metadata.yaml, you have the option to configure the pipeline to cache
+the block output in memory instead of persisting the block output on disk. The feature is only supported in standard batch
+pipeline (without dynamic blocks) for now.
+
+Example config:
+```yaml
+cache_block_output_in_memory: true
+run_pipeline_in_one_process: true
+```
