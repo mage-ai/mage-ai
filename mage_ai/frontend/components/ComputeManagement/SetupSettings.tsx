@@ -254,6 +254,7 @@ function ConnectionSettings({
     newJarFile,
     jarFileConfig,
     emrJarFiles,
+    selectedComputeService,
     setObjectAttributesEMRConfig,
     sparkJarFiles,
     setObjectAttributesSparkConfig,
