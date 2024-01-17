@@ -735,13 +735,13 @@ def fetch_input_variables(
 
                 input_vars[idx] = final_value
 
-    # DX_PRINTER.debug(
-    #     'fetch_input_variables final',
-    #     input_vars=input_vars,
-    #     kwargs_vars=kwargs_vars,
-    #     upstream_block_uuids_final=upstream_block_uuids_final,
-    #     __uuid='output_variables'
-    # )
+    DX_PRINTER.debug(
+        'fetch_input_variables final',
+        input_vars=input_vars,
+        kwargs_vars=kwargs_vars,
+        upstream_block_uuids_final=upstream_block_uuids_final,
+        __uuid='output_variables'
+    )
 
     return input_vars, kwargs_vars, upstream_block_uuids_final
 
