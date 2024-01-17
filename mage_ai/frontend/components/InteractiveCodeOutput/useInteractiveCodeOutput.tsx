@@ -107,9 +107,33 @@ export default function useInteractiveCodeOutput({
 
   const outputBottomRef = useRef(null);
 
+  function isAnyOutputGroupSelected() {
+    return !!selectedGroupOfOutputs?.current?.active;
+  }
+
+  console.log(selectedGroupOfOutputs?.current?.outputs?.map(o => o?.msg_id))
+
+  function removeSelectedFromAllRowGroups() {
+    if (typeof document !== 'undefined') {
+      const refs = [
+        ...document.querySelectorAll('.row-group-selected'),
+      ];
+      refs?.forEach((ref) => {
+        if (ref) {
+          ref.className = removeClassNames(
+            ref.className || '',
+            [
+              'row-group-selected',
+            ],
+          );
+        }
+      });
+    }
+  }
+
   function setupGroups() {
     setTimeout(() => {
-      const active = selectedGroupOfOutputs?.current?.active;
+      const active = isAnyOutputGroupSelected();
       [
         outputContainerRef,
         shellContainerRef,
@@ -134,6 +158,7 @@ export default function useInteractiveCodeOutput({
       });
 
       if (active) {
+        removeSelectedFromAllRowGroups();
         renderOutputs(selectedGroupOfOutputs?.current?.outputs);
       } else if (getDefaultMessages) {
         messagesRef.current = getDefaultMessages?.();
@@ -141,7 +166,7 @@ export default function useInteractiveCodeOutput({
           renderOutputs(messagesRef.current);
         }
       }
-    }, 1);
+    }, 300);
   }
 
   function renderOutputs(outputs: KernelOutputType[]) {
@@ -155,8 +180,6 @@ export default function useInteractiveCodeOutput({
     if (!outputRootRef?.current) {
       return;
     }
-
-    console.log('RENDERING', outputs?.length, outputs)
 
     const groups = groupOutputsAndSort(outputs);
     const groupsCount = groups?.length;
@@ -172,21 +195,7 @@ export default function useInteractiveCodeOutput({
         key={groupID}
         groupID={groupID}
         onClick={(e) => {
-          if (typeof document !== 'undefined') {
-            const refs = [
-              ...document.querySelectorAll('.row-group-selected'),
-            ];
-            refs?.forEach((ref) => {
-              if (ref) {
-                ref.className = removeClassNames(
-                  ref.className || '',
-                  [
-                    'row-group-selected',
-                  ],
-                );
-              }
-            });
-          }
+          removeSelectedFromAllRowGroups();
 
           if (e?.currentTarget) {
             e.currentTarget.className = addClassNames(
@@ -205,7 +214,7 @@ export default function useInteractiveCodeOutput({
             outputs,
           };
 
-          if (!selectedGroupOfOutputs?.current?.active) {
+          if (!isAnyOutputGroupSelected()) {
             if (selectedGroupOfOutputs?.current && selectedGroupOfOutputs?.current?.groupID === groupID) {
               selectedGroupOfOutputs.current = { active: true, ...data };;
               console.log(selectedGroupOfOutputs.current)
@@ -259,44 +268,42 @@ export default function useInteractiveCodeOutput({
       }
     },
     onOpen: () => onOpen(true),
-    onMessage: (messageEvent: {
-      data: string;
-    }) => {
-      const {
-        data,
-      } = messageEvent;
+    onMessage: (messageEvent: { data: string }) => {
+      if (!messageEvent?.data) {
+        return;
+      }
 
-      if (data) {
-        const output = parseRawDataFromMessage(data);
+      const output = parseRawDataFromMessage(messageEvent?.data);
 
-        // // Is the next output a status message, and is the one before not a status message,
-        // //  from another group and only a status message?
-        // // If so, filter it out.
-        // if (output?.msg_type === MsgType.STATUS) {
-        //   const prev = messagesRef?.current?.slice(-1)?.[0];
-        //   if (prev?.msg_type !== MsgType.STATUS
-        //     && output?.parent_message?.msg_id !== prev?.parent_message?.msg_id) {
-        //     return;
-        //   }
-        // }
+      // // Is the next output a status message, and is the one before not a status message,
+      // //  from another group and only a status message?
+      // // If so, filter it out.
+      // if (output?.msg_type === MsgType.STATUS) {
+      //   const prev = messagesRef?.current?.slice(-1)?.[0];
+      //   if (prev?.msg_type !== MsgType.STATUS
+      //     && output?.parent_message?.msg_id !== prev?.parent_message?.msg_id) {
+      //     return;
+      //   }
+      // }
 
-        const arr = dedupe([...messagesRef.current, output], ['msg_id']);
+      const arr = dedupe([...messagesRef.current, output], ['msg_id']);
 
-        if (onMessage) {
-          onMessage?.(output, getExecutionStatusAndState(getLatestOutputGroup(arr || [])));
-        }
+      if (onMessage) {
+        onMessage?.(output, getExecutionStatusAndState(getLatestOutputGroup(arr || [])));
+      }
 
-        // This comes from checking the kernel and hitting the kernels endpoint.
-        if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
-          kernelStatusCheckResultsRef.current = [
-            ...kernelStatusCheckResultsRef.current,
-            output,
-          ].slice(0, 12);
-          return;
-        } else if (MsgType.SHUTDOWN_REQUEST === output?.msg_id) {
-          return;
-        }
-
+      // This comes from checking the kernel and hitting the kernels endpoint.
+      if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
+        kernelStatusCheckResultsRef.current = [
+          ...kernelStatusCheckResultsRef.current,
+          output,
+        ].slice(0, 12);
+        return;
+      } else if (MsgType.SHUTDOWN_REQUEST === output?.msg_id) {
+        return;
+      } else if (isAnyOutputGroupSelected()) {
+        console.log('HANDLE MESSAGES WHEN OUTPUT GROUP SELECTED');
+      } else {
         messagesRef.current = arr;
         renderOutputs(arr);
       }
