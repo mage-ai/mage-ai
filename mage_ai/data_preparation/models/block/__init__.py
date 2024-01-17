@@ -36,8 +36,11 @@ from mage_ai.data_preparation.models.block.data_integration.mixins import (
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     execute_data_integration,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import DynamicBlockFlag
 from mage_ai.data_preparation.models.block.dynamic.utils import (
-    DynamicBlockFlag,
+    format_output as format_output_for_dynamic_block,
+)
+from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
     mock_dynamic_in_real_scenario,
@@ -2121,6 +2124,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_uuid: str = None,
         csv_lines_only: bool = False,
         execution_partition: str = None,
+        skip_dynamic_block: bool = False,
     ) -> Tuple[Dict, bool]:
         """
         Takes variable data and formats it to return to the frontend.
@@ -2130,7 +2134,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 outputs and non data product outputs are handled slightly differently.
         """
         variable_manager = self.pipeline.variable_manager
-        if isinstance(data, pd.DataFrame):
+
+        if is_dynamic_block(self) and not skip_dynamic_block:
+            data, is_data_product = self.__format_output_data(
+                format_output_for_dynamic_block(data),
+                variable_uuid=variable_uuid,
+                skip_dynamic_block=True,
+            )
+            return merge_dict(data, dict(multi_output=True)), is_data_product
+        elif isinstance(data, pd.DataFrame):
             if csv_lines_only:
                 data = dict(
                     table=data.to_csv(header=True, index=False).strip('\n').split('\n')

@@ -158,6 +158,7 @@ export interface SampleDataType {
 }
 
 export interface OutputType {
+  multi_output?: boolean;
   sample_data: SampleDataType;
   shape: number[];
   text_data: string;

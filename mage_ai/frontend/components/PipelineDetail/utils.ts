@@ -28,6 +28,46 @@ import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { indexBy } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
+function prepareOutput(output) {
+  let data;
+  let type;
+
+  if (typeof output === 'object') {
+    const {
+      sample_data: sampleData,
+      shape: shape,
+      text_data: textDataJsonString,
+    } = output || {};
+    type = output?.type;
+
+    if (sampleData) {
+      data = {
+        data: {
+          shape,
+          ...sampleData,
+        },
+        type,
+      };
+    } else if (textDataJsonString && isJsonString(textDataJsonString)) {
+      data = JSON.parse(textDataJsonString);
+      type = DataTypeEnum.TABLE;
+    } else {
+      data = textDataJsonString;
+    }
+  } else {
+    type = DataTypeEnum.TEXT;
+    data = {
+      data: String(output),
+      type,
+    };
+  }
+
+  return {
+    data,
+    type,
+  };
+}
+
 export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
   const contentByBlockUUID = {};
@@ -39,35 +79,40 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     uuid,
   }: BlockType) => {
     if (outputs?.length >= 1) {
-      messagesInit[uuid] = outputs.map((output: OutputType) => {
-        if (typeof output === 'object') {
-          const {
-            sample_data: sampleData,
-            shape: shape,
-            text_data: textDataJsonString,
-            type,
-          } = output || {};
+      let outputsFinal = [];
+      let multiOutput = false;
+      let outputType;
 
-          if (sampleData) {
-            return {
-              data: {
-                shape,
-                ...sampleData,
-              },
-              type,
-            };
-          } else if (textDataJsonString && isJsonString(textDataJsonString)) {
-            return JSON.parse(textDataJsonString);
-          }
+      outputs.forEach((output: OutputType) => {
+        const {
+          data,
+          type,
+        } = prepareOutput(output)
 
-          return textDataJsonString;
-        } else {
-          return {
-            data: String(output),
-            type: DataTypeEnum.TEXT,
-          };
-        }
+        multiOutput = multiOutput || output?.multi_output;
+        outputType = outputType || type;
+        outputsFinal.push({
+          data,
+          type,
+        });
       });
+
+      if (multiOutput) {
+        outputsFinal = [
+          {
+            data: {
+              columns: outputs?.map((output, idx) => output?.variable_uuid || `output_${idx}`),
+              index: outputs?.map((o, i) => i),
+              shape: [outputs?.length || 0, 1],
+              rows: outputsFinal?.map(o => o?.data),
+            },
+            type: outputType,
+            multi_output: true,
+          },
+        ];
+      }
+
+      messagesInit[uuid] = outputsFinal;
     }
 
     if (!contentByBlockUUID[type]) {

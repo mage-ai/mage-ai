@@ -1,8 +1,13 @@
+import json
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
+import pandas as pd
+
+from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
@@ -235,6 +240,84 @@ def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
                 options['dynamic_block_indexes'][upstream_block.uuid] = 0
 
     return options
+
+
+def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
+    columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+    row_count, column_count = dataframe.shape
+
+    return dict(
+        data=dict(
+            columns=columns_to_display,
+            rows=json.loads(
+                dataframe[columns_to_display].to_json(orient='split')
+            )['data'],
+            index=list(dataframe.index),
+            shape=[row_count, column_count],
+        ),
+        type=DataType.TABLE,
+    )
+
+
+def format_output(child_data: Union[
+    List[Union[Dict, int, str, pd.DataFrame]],
+    pd.DataFrame
+]) -> Dict:
+    if isinstance(child_data, list):
+        item = child_data[0]
+        if isinstance(item, pd.DataFrame):
+            child_data = [child_data]
+        elif isinstance(item, dict):
+            child_data = pd.DataFrame(child_data)
+        else:
+            child_data = pd.DataFrame(
+                [dict(col=value) for value in child_data],
+            )
+    elif isinstance(child_data, pd.DataFrame):
+        return child_data
+
+    return child_data
+
+
+def transform_output_for_display(
+    output: Tuple[
+        Union[
+            List[Union[Dict, int, str, pd.DataFrame]],
+            pd.DataFrame
+        ],
+        List[Dict]
+    ],
+) -> List[Dict]:
+    child_data = None
+    metadata = None
+    if len(output) >= 1:
+        child_data = output[0]
+
+        if len(output) >= 2:
+            metadata = output[1]
+
+    if child_data is None:
+        return []
+
+    child_data = format_output(child_data)
+    if isinstance(child_data, list):
+        child_data = [transform_dataframe_for_display(data) for data in child_data]
+    else:
+        child_data = transform_dataframe_for_display(child_data)
+
+    if metadata is not None:
+        metadata = transform_dataframe_for_display(format_output(metadata))
+
+    return dict(
+        data=dict(
+            columns=['child_data', 'metadata'],
+            index=[0, 1],
+            rows=[child_data, metadata],
+            shape=[2, 2],
+        ),
+        type=DataType.TABLE,
+        multi_output=True,
+    )
 
 
 @dataclass

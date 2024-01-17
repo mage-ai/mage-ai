@@ -2,6 +2,7 @@ import json
 import re
 from typing import Dict, List
 
+from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -84,7 +85,7 @@ def get_content_inside_triple_quotes(parts):
     return None, None
 
 
-def add_internal_output_info(code: str) -> str:
+def add_internal_output_info(block, code: str) -> str:
     if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
         return code
     code_lines = remove_comments(code.split('\n'))
@@ -129,18 +130,24 @@ def add_internal_output_info(code: str) -> str:
         else:
             end_index = -1
         code_without_last_line = '\n'.join(code_lines[:end_index])
+        is_dynamic = block and is_dynamic_block(block)
+
         internal_output = f"""
 # Post processing code below (source: output_display.py)
 
 
 def __custom_output():
-    from datetime import datetime
-    from mage_ai.shared.parsers import encode_complex, sample_output
     import json
+    import warnings
+    from datetime import datetime
+
     import pandas as pd
     import polars as pl
     import simplejson
-    import warnings
+
+    from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
+    from mage_ai.shared.parsers import encode_complex, sample_output
+
 
     if pd.__version__ < '1.5.0':
         from pandas.core.common import SettingWithCopyWarning
@@ -151,7 +158,14 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, pd.DataFrame) and (
+    if bool({is_dynamic}):
+        _json_string = simplejson.dumps(
+            transform_output_for_display(_internal_output_return),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif isinstance(_internal_output_return, pd.DataFrame) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
@@ -268,6 +282,7 @@ spark = SparkSession.builder.getOrCreate()
 '''
 
     return f"""{magic_header}
+from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
@@ -351,7 +366,7 @@ def execute_custom_code():
         )
     output = block_output['output'] or []
 
-    if {widget}:
+    if {widget} or is_dynamic_block(block):
         return output
     else:
         return find(lambda val: val is not None, output)
