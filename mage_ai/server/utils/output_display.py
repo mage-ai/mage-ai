@@ -2,7 +2,10 @@ import json
 import re
 from typing import Dict, List
 
-from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -130,7 +133,8 @@ def add_internal_output_info(block, code: str) -> str:
         else:
             end_index = -1
         code_without_last_line = '\n'.join(code_lines[:end_index])
-        is_dynamic = block and is_dynamic_block(block)
+        is_dynamic = is_dynamic_block(block) if block else False
+        is_dynamic_child = is_dynamic_block_child(block) if block else False
 
         internal_output = f"""
 # Post processing code below (source: output_display.py)
@@ -146,6 +150,9 @@ def __custom_output():
     import simplejson
 
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
+    from mage_ai.data_preparation.models.block.dynamic.utils import (
+        transform_output_for_display_dynamic_child,
+    )
     from mage_ai.shared.parsers import encode_complex, sample_output
 
 
@@ -161,6 +168,13 @@ def __custom_output():
     if bool({is_dynamic}):
         _json_string = simplejson.dumps(
             transform_output_for_display(_internal_output_return),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif bool({is_dynamic_child}):
+        _json_string = simplejson.dumps(
+            transform_output_for_display_dynamic_child(_internal_output_return),
             default=encode_complex,
             ignore_nan=True,
         )
@@ -282,7 +296,9 @@ spark = SparkSession.builder.getOrCreate()
 '''
 
     return f"""{magic_header}
+from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
 from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block_child
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
@@ -346,7 +362,9 @@ def execute_custom_code():
     logger.setLevel('INFO')
     if 'logger' not in global_vars:
         global_vars['logger'] = logger
-    block_output = block.execute_with_callback(
+
+    block_output = dict(output=[])
+    options = dict(
         custom_code=code,
         execution_uuid={execution_uuid},
         from_notebook=True,
@@ -356,6 +374,20 @@ def execute_custom_code():
         run_settings=json.loads('{run_settings_json}'),
         update_status={update_status},
     )
+
+    is_dynamic_child = is_dynamic_block_child(block)
+
+    if is_dynamic_child:
+        outputs = []
+        settings = build_combinations_for_dynamic_child(block, **options)
+        for config in settings:
+            output_dict = block.execute_with_callback(**merge_dict(options, config))
+            if output_dict and output_dict.get('output'):
+                outputs.append(output_dict.get('output'))
+        block_output['output'] = outputs
+    else:
+        block_output = block.execute_with_callback(**options)
+
     if {run_tests}:
         block.run_tests(
             custom_code=code,
@@ -364,9 +396,10 @@ def execute_custom_code():
             global_vars=global_vars,
             update_tests=False,
         )
+
     output = block_output['output'] or []
 
-    if {widget} or is_dynamic_block(block):
+    if {widget} or is_dynamic_block(block) or is_dynamic_child:
         return output
     else:
         return find(lambda val: val is not None, output)
