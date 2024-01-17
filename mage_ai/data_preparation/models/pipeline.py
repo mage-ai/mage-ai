@@ -17,6 +17,10 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+)
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
@@ -1090,10 +1094,11 @@ class Pipeline:
                             widget=widget,
                         )
                     if 'outputs' in block_data:
-                        await block.save_outputs_async(
-                            block_data['outputs'],
-                            override=True,
-                        )
+                        if not is_dynamic_block(block) and not is_dynamic_block_child(block):
+                            await block.save_outputs_async(
+                                block_data['outputs'],
+                                override=True,
+                            )
 
                     name = block_data.get('name')
 

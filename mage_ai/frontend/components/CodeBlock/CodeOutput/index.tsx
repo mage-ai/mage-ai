@@ -22,6 +22,7 @@ import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
+import MultiOutput from './MultiOutput';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
@@ -63,6 +64,7 @@ import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { isObject } from '@utils/hash';
 
 type CodeOutputProps = {
   alwaysShowExtraInfo?: boolean;
@@ -322,15 +324,49 @@ function CodeOutput({
     tableContent,
     testContent,
   } = useMemo(() => {
-    const createDataTableElement = ({
-      columns,
-      index,
-      rows,
-      shape,
-    }, {
+    const createDataTableElement = (output, {
       borderTop,
       selected: selectedProp,
-    }) => {
+    }, dataInit: {
+      multi_output?: boolean;
+    } = {}) => {
+      const {
+        columns,
+        index,
+        rows,
+        shape,
+      } = output;
+
+      if (dataInit && isObject(dataInit)) {
+        if (!!dataInit?.multi_output) {
+          return (
+            <MultiOutput
+              outputs={rows?.map((row, idx: number) => ({
+                render: () => {
+                  if (!row) {
+                    return <div />;
+                  }
+
+                  const {
+                    data,
+                    type,
+                  } = row;
+                  if (DataTypeEnum.TABLE === type) {
+                    return createDataTableElement(data, {
+                      borderTop,
+                      selected: selectedProp,
+                    });
+                  }
+
+                  return data;
+                },
+                uuid: columns?.[idx],
+              }))}
+            />
+          );
+        }
+      }
+
       if (shape) {
         setDataFrameShape(shape);
       }
@@ -347,7 +383,7 @@ function CodeOutput({
         );
       }
 
-      return rows.length >= 1 && (
+      return rows?.length >= 1 && (
         <DataTable
           columns={columns}
           disableScrolling={!selectedProp}
@@ -473,38 +509,40 @@ function CodeOutput({
           }
 
           if (isJsonString(rawString)) {
+            const data = JSON.parse(rawString);
             const {
               data: dataDisplay,
               type: typeDisplay,
-            } = JSON.parse(rawString);
+            } = data;
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-              isTable = true;
+              if (dataDisplay) {
+                isTable = true;
+                const tableEl = createDataTableElement(dataDisplay, {
+                  borderTop,
+                  selected,
+                }, data);
+                tableContent.push(tableEl);
 
-              const tableEl = createDataTableElement(dataDisplay, {
-                borderTop,
-                selected,
-              });
-              tableContent.push(tableEl);
-
-              if (!isDBT) {
-                displayElement = tableEl;
+                if (!isDBT) {
+                  displayElement = tableEl;
+                }
               }
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          isTable = true;
-          const tableEl = createDataTableElement(
-            isJsonString(data) ? JSON.parse(data) : data,
-            {
+          const dataDisplay = isJsonString(data) ? JSON.parse(data) : data;
+          if (dataDisplay) {
+            isTable = true;
+            const tableEl = createDataTableElement(dataDisplay, {
               borderTop,
               selected,
-            },
-          );
-          tableContent.push(tableEl);
+            }, output);
+            tableContent.push(tableEl);
 
-          if (!isDBT) {
-            displayElement = tableEl;
+            if (!isDBT) {
+              displayElement = tableEl;
+            }
           }
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');

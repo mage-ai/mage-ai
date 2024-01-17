@@ -483,7 +483,7 @@ db_connection.start_session()
 """
                 client.execute(initialize_db_connection)
 
-            msg_id = client.execute(add_internal_output_info(code))
+            msg_id = client.execute(add_internal_output_info(block, code))
 
             WebSocketServer.running_executions_mapping[msg_id] = value
 

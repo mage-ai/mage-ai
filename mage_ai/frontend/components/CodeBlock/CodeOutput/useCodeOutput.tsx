@@ -392,7 +392,6 @@ export default function useCodeOutput({
             } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-
               const tableEl = createTableData(dataDisplay, {
                 borderTop,
                 selected,

@@ -138,7 +138,7 @@ export default function({
             ? JSON.stringify(JSON.parse(textData), null, 2)
             : textData;
 
-          const blockOutputText = !!textData
+          const blockOutputText = (typeof textData !== 'undefined' && textData !== null)
             ? (
               <Spacing key={`output-text-${idx1}-${idx}`} ml={2}>
                 <Text monospace>

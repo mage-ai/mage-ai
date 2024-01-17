@@ -1,8 +1,13 @@
+import json
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
+import pandas as pd
+
+from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
@@ -225,9 +230,13 @@ def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
             if options.get('dynamic_block_index') is None:
                 options['dynamic_block_index'] = 0
             if options.get('dynamic_block_uuid') is None:
+                dynamic_block_index = options.get('dynamic_block_index')
+                if dynamic_block_index is None:
+                    dynamic_block_index = 0
+
                 options['dynamic_block_uuid'] = build_dynamic_block_uuid(
                     block.uuid,
-                    index=0,
+                    index=dynamic_block_index,
                 )
             if not options.get('dynamic_block_indexes'):
                 options['dynamic_block_indexes'] = {}
@@ -235,6 +244,233 @@ def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
                 options['dynamic_block_indexes'][upstream_block.uuid] = 0
 
     return options
+
+
+def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
+    data = None
+    if isinstance(dataframe, pd.DataFrame):
+        columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+        row_count, column_count = dataframe.shape
+
+        data = dict(
+            columns=columns_to_display,
+            rows=json.loads(
+                dataframe[columns_to_display].to_json(orient='split')
+            )['data'],
+            index=list(dataframe.index),
+            shape=[row_count, column_count],
+        )
+    else:
+        data = dict(
+            columns=['col0'],
+            rows=[[dataframe]],
+            index=[0],
+            shape=[1, 1],
+        )
+
+    return dict(
+        data=data,
+        type=DataType.TABLE,
+    )
+
+
+def format_output(child_data: Union[
+    List[Union[Dict, int, str, pd.DataFrame]],
+    pd.DataFrame
+]) -> Dict:
+    if isinstance(child_data, list):
+        item = child_data[0]
+        if isinstance(item, pd.DataFrame):
+            child_data = [child_data]
+        elif isinstance(item, dict):
+            child_data = pd.DataFrame(child_data)
+        else:
+            child_data = pd.DataFrame(
+                [dict(col=value) for value in child_data],
+            )
+    elif isinstance(child_data, pd.DataFrame):
+        return child_data
+
+    return child_data
+
+
+def transform_output(
+    output: Tuple[
+        Union[
+            List[Union[Dict, int, str, pd.DataFrame]],
+            pd.DataFrame
+        ],
+        List[Dict]
+    ],
+):
+    child_data = None
+    metadata = None
+    if len(output) >= 1:
+        child_data = output[0]
+
+        if len(output) >= 2:
+            metadata = output[1]
+
+    if child_data is None:
+        return []
+
+    child_data = format_output(child_data)
+
+    if isinstance(child_data, tuple):
+        return transform_output(child_data)
+    elif isinstance(child_data, list):
+        child_data = [transform_dataframe_for_display(data) for data in child_data]
+    else:
+        child_data = transform_dataframe_for_display(child_data)
+
+    if metadata is not None:
+        metadata = transform_dataframe_for_display(format_output(metadata))
+
+    return child_data, metadata
+
+
+def transform_output_for_display(
+    output: Tuple[
+        Union[
+            List[Union[Dict, int, str, pd.DataFrame]],
+            pd.DataFrame
+        ],
+        List[Dict]
+    ],
+) -> List[Dict]:
+    child_data, metadata = transform_output(output)
+
+    return dict(
+        data=dict(
+            columns=['child_data', 'metadata'],
+            index=[0, 1],
+            rows=[child_data, metadata],
+            shape=[2, 2],
+        ),
+        type=DataType.TABLE,
+        multi_output=True,
+    )
+
+
+def transform_output_for_display_dynamic_child(
+    outputs: List[
+        Tuple[
+            Union[
+                List[Union[Dict, int, str, pd.DataFrame]],
+                pd.DataFrame
+            ],
+            List[Dict]
+        ]
+    ],
+) -> List[Dict]:
+    columns = []
+    child_data_arr = []
+    rows_count = []
+
+    for idx, output in enumerate(outputs):
+        child_data, metadata = transform_output(output)
+
+        column = f'child_{idx}'
+        if metadata and isinstance(metadata, dict):
+            if metadata.get('block_uuid'):
+                column = metadata.get('block_uuid')
+        columns.append(column)
+
+        if child_data and isinstance(child_data, dict):
+            data = child_data.get('data')
+            if data and isinstance(data, dict):
+                shape = data.get('shape')
+                if shape and isinstance(shape, list) and len(shape) >= 1:
+                    rows_count.append(shape[0])
+
+        child_data_arr.append(child_data)
+
+    return dict(
+        data=dict(
+            columns=columns,
+            index=[idx for idx, _i in enumerate(child_data_arr)],
+            rows=child_data_arr,
+            shape=[max(rows_count) if rows_count else 0, len(columns)],
+        ),
+        type=DataType.TABLE,
+        multi_output=True,
+    )
+
+
+def create_combinations(combinations: List[Any]) -> List[Any]:
+    def __create_combinations(combinations_inner: List[Any]) -> List[Any]:
+        combos = []
+
+        for idx, arr in enumerate(combinations_inner):
+            for value in arr:
+                combinations_next = combinations_inner[(idx + 1):]
+                if len(combinations_next) >= 1:
+                    for combos_down in __create_combinations(combinations_next):
+                        combos.append([value] + combos_down)
+                else:
+                    combos.append([value])
+
+        return combos
+
+    count = len(combinations)
+    arr = __create_combinations(combinations)
+    return [combo for combo in arr if len(combo) == count]
+
+
+def build_combinations_for_dynamic_child(block, **kwargs):
+    pipeline = block.pipeline
+
+    dynamic_counts = []
+    index_of_dynamic_blocks = []
+
+    input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
+        None,
+        dynamic_block_index=None,
+        dynamic_block_indexes=None,
+        dynamic_upstream_block_uuids=None,
+        execution_partition=None,
+        from_notebook=True,
+        global_vars=kwargs.get('global_vars'),
+        metadata=None,
+    )
+
+    for idx, upstream_block_uuid in enumerate(upstream_block_uuids):
+        count = 1
+        is_dynamic = False
+
+        upstream_block = pipeline.get_block(upstream_block_uuid)
+        if is_dynamic_block(upstream_block):
+            is_dynamic = True
+            if idx < len(input_vars):
+                count = len(input_vars[idx])
+
+        index_of_dynamic_blocks.append(is_dynamic)
+        dynamic_counts.append([idx for idx, _i in enumerate(range(count))])
+
+    combinations = create_combinations(dynamic_counts)
+
+    settings = []
+    for dynamic_block_index, arr in enumerate(combinations):
+        # dynamic_block_index = 0
+        # arr = [1, 2, 3, 4]
+
+        # dynamic_block_indexes = { 'dynamic_parent': 1 }
+        dynamic_block_indexes = {}
+        for idx, upstream_block_uuid in enumerate(upstream_block_uuids):
+            # idx = 0
+            # upstream_block_uuid = dynamic_parent
+            # index_of_dynamic_blocks = [True, False, True, False]
+            if index_of_dynamic_blocks[idx]:
+                # index_of_dynamic_blocks[0] = index_of_dynamic_blocks[0] = True
+                # arr[idx] = arr[0] = 1
+                dynamic_block_indexes[upstream_block_uuid] = arr[idx]
+
+        settings.append(dict(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+        ))
+
+    return settings
 
 
 @dataclass
