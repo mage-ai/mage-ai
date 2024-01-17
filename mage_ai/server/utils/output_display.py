@@ -137,6 +137,7 @@ def __custom_output():
     from datetime import datetime
     from mage_ai.shared.parsers import encode_complex, sample_output
     import json
+    import modin.pandas as mpd
     import pandas as pd
     import polars as pl
     import simplejson
@@ -151,7 +152,7 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, pd.DataFrame) and (
+    if isinstance(_internal_output_return, (pd.DataFrame, mpd.DataFrame)) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]

@@ -83,6 +83,10 @@ def is_spark_dataframe(df):
     return type(df).__module__ == 'pyspark.sql.dataframe'
 
 
+def is_modin_dataframe(df):
+    return type(df).__module__ == 'modin.pandas.dataframe'
+
+
 def __parse_element(element: str) -> Any:
     if element == 'nan' or element == 'np.nan':
         return np.nan

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Dict, List
 
+import modin.pandas as mpd
 import pandas as pd
 import polars as pl
 
@@ -60,6 +61,13 @@ class BaseStorage(ABC):
     def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
         """
         Read parquet from a file with file path and return a polars DataFrame.
+        """
+        pass
+
+    @abstractmethod
+    def read_modin_parquet(self, file_path: str, **kwargs) -> mpd.DataFrame:
+        """
+        Read parquet from a file with file path and return a modin pandas DataFrame.
         """
         pass
 

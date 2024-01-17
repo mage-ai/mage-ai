@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from typing import Dict, List
 
 import aiofiles
+import modin.pandas as mpd
 import pandas as pd
 import polars as pl
 import simplejson
@@ -98,6 +99,9 @@ class LocalStorage(BaseStorage):
 
     def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
         return pl.read_parquet(file_path, use_pyarrow=True)
+
+    def read_modin_parquet(self, file_path: str, **kwargs) -> mpd.DataFrame:
+        return mpd.read_parquet(file_path, engine='pyarrow')
 
     def write_csv(self, df: pd.DataFrame, file_path: str) -> None:
         File.create_parent_directories(file_path)

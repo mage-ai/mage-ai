@@ -3,6 +3,7 @@ import json
 from contextlib import contextmanager
 from typing import Dict, List
 
+import modin.pandas as mpd
 import pandas as pd
 import polars as pl
 import simplejson
@@ -110,6 +111,10 @@ class GCSStorage(BaseStorage):
     def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
         buffer = io.BytesIO(self.bucket.blob(gcs_url_path(file_path)).download_as_bytes())
         return pl.read_parquet(buffer, **kwargs)
+
+    def read_modin_parquet(self, file_path: str, **kwargs) -> mpd.DataFrame:
+        buffer = io.BytesIO(self.bucket.blob(gcs_url_path(file_path)).download_as_bytes())
+        return mpd.read_parquet(buffer, **kwargs)
 
     def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
         buffer = io.BytesIO()
