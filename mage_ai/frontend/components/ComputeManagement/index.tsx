@@ -70,7 +70,6 @@ function ComputeManagement({
   heightOffset,
   mainContainerRef,
 }: ComputeManagementProps) {
-  console.log('render/////////')
   const {
     height: heightWindow,
     width: widthWindow,

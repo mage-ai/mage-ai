@@ -815,9 +815,14 @@ function ConnectionSettings({
             justifyContent="space-between"
           >
             <Flex flex={1} flexDirection="column">
-              <Headline level={4}>
-                JAR files
-              </Headline>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Headline level={4}>
+                  JAR files
+                </Headline>
+                {hasJarFiles && (
+                  addJarFileButton
+                )}
+              </FlexContainer>
 
               <Spacing mt={1}>
                 <Text muted>
@@ -832,14 +837,6 @@ function ConnectionSettings({
                 </Text>
               </Spacing>
             </Flex>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            {hasJarFiles && (
-              <FlexContainer alignItems="center">
-                {addJarFileButton}
-              </FlexContainer>
-            )}
           </FlexContainer>
         </Spacing>
 
