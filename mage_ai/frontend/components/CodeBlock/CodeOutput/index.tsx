@@ -341,11 +341,16 @@ function CodeOutput({
         if (!!dataInit?.multi_output) {
           return (
             <MultiOutput
-              outputs={rows?.map(({
-                data,
-                type,
-              }, idx: number) => ({
+              outputs={rows?.map((row, idx: number) => ({
                 render: () => {
+                  if (!row) {
+                    return <div />;
+                  }
+
+                  const {
+                    data,
+                    type,
+                  } = row;
                   if (DataTypeEnum.TABLE === type) {
                     return createDataTableElement(data, {
                       borderTop,

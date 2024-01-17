@@ -247,18 +247,29 @@ def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
 
 
 def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
-    columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-    row_count, column_count = dataframe.shape
+    data = None
+    if isinstance(dataframe, pd.DataFrame):
+        columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+        row_count, column_count = dataframe.shape
 
-    return dict(
-        data=dict(
+        data = dict(
             columns=columns_to_display,
             rows=json.loads(
                 dataframe[columns_to_display].to_json(orient='split')
             )['data'],
             index=list(dataframe.index),
             shape=[row_count, column_count],
-        ),
+        )
+    else:
+        data = dict(
+            columns=['col0'],
+            rows=[[dataframe]],
+            index=[0],
+            shape=[1, 1],
+        )
+
+    return dict(
+        data=data,
         type=DataType.TABLE,
     )
 
@@ -304,7 +315,10 @@ def transform_output(
         return []
 
     child_data = format_output(child_data)
-    if isinstance(child_data, list):
+
+    if isinstance(child_data, tuple):
+        return transform_output(child_data)
+    elif isinstance(child_data, list):
         child_data = [transform_dataframe_for_display(data) for data in child_data]
     else:
         child_data = transform_dataframe_for_display(child_data)
