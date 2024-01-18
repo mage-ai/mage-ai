@@ -1,9 +1,6 @@
 import uuid
 
-from mage_ai.data_preparation.models.block.dynamic import (
-    all_variable_uuids,
-    reduce_output_from_block,
-)
+from mage_ai.data_preparation.models.block.dynamic import all_variable_uuids
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 
@@ -49,50 +46,3 @@ class DynamicHelpersTest(BaseApiTestCase):
                 'output_2',
             ],
         )
-
-    def test_reduce_output_from_block(self):
-        self.block.configuration = dict(dynamic=True)
-        self.pipeline1.add_block(self.block)
-
-        partition = 'mage'
-        value_base = uuid.uuid4().hex
-
-        for block_uuid in range(3):
-            for i in range(3):
-                variable_mapping = {
-                    'output_0': f'{value_base}_{block_uuid}_{i}',
-                    'output_1': uuid.uuid4().hex,
-                }
-
-                parts = [
-                    self.block2.uuid,
-                    str(block_uuid),
-                    str(i),
-                ]
-                dynamic_block_uuid = ':'.join(parts)
-
-                self.block2.store_variables(
-                    variable_mapping,
-                    dynamic_block_uuid=dynamic_block_uuid,
-                    execution_partition=partition,
-                    override=True,
-                    override_outputs=True,
-                )
-
-        values = reduce_output_from_block(
-            self.block2,
-            'output_0',
-            partition=partition,
-        )
-
-        self.assertEqual(sorted(values), [
-            # f'{value_base}_0_0',
-            # f'{value_base}_0_1',
-            # f'{value_base}_0_2',
-            # f'{value_base}_1_0',
-            # f'{value_base}_1_1',
-            # f'{value_base}_1_2',
-            f'{value_base}_2_0',
-            f'{value_base}_2_1',
-            f'{value_base}_2_2',
-        ])

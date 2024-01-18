@@ -495,7 +495,10 @@ def build_combinations_for_dynamic_child(
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index
                         )
-                        arr.extend([idx for idx in range(len(values))])
+                        if values is not None:
+                            arr.extend([idx for idx in range(len(values))])
+                        else:
+                            arr.append(0)
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
