@@ -1182,6 +1182,7 @@ class PipelineScheduleTests(DBTestCase):
         trigger_configs = [
             Trigger.load(
                 config=dict(
+                    last_enabled_at=datetime(2024, 1, 1, 0, 0, 0),
                     name='test create batch trigger 1',
                     pipeline_uuid='test_create_or_update_batch',
                     schedule_type=ScheduleType.TIME,
@@ -1192,6 +1193,7 @@ class PipelineScheduleTests(DBTestCase):
             ),
             Trigger.load(
                 config=dict(
+                    last_enabled_at=datetime(2024, 1, 1, 0, 0, 0),
                     name='test create batch trigger 2',
                     pipeline_uuid='test_create_or_update_batch',
                     schedule_type=ScheduleType.API,
@@ -1202,6 +1204,7 @@ class PipelineScheduleTests(DBTestCase):
             ),
             Trigger.load(
                 config=dict(
+                    last_enabled_at=datetime(2024, 1, 1, 0, 0, 0),
                     name='test create batch trigger 3',
                     pipeline_uuid='test_create_or_update_batch',
                     schedule_type=ScheduleType.TIME,
