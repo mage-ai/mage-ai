@@ -530,28 +530,29 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if current_execution_date is None:
                 return False
 
-            """
-            Check if "create_initial_pipeline_run" setting is not enabled. If
-            it is not, check if current execution date is before current datetime in
-            order to avoid initial pipeline run. A 59 min buffer is added to the
-            current datetime since the run is generally scheduled shortly after
-            the execution date, and no run would ever be scheduled if the execution
-            date was compared against actual current time. We also make sure the
-            current execution date is after the trigger's creation date.
-            """
-            create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
-            avoid_initial_pipeline_run = (
-                compare(
+            if self.last_enabled_at is None:
+                """
+                Check if the last_enabled_at attribute has a value (if it does not,
+                it could mean that the pipeline schedule already existed and was active).
+                If there is no value for last_enabled_at, we default to not creating an
+                initial pipeline run.
+                """
+                avoid_initial_pipeline_run = True
+            else:
+                """
+                Check if "create_initial_pipeline_run" setting is not enabled. If
+                it is not, check if current execution date is before the datetime
+                that the pipeline schedule was last enabled in order to avoid
+                the initial pipeline run.
+                """
+                create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
+                avoid_initial_pipeline_run = compare(
                     current_execution_date,
-                    datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
-                ) == -1 or
-                compare(
-                    current_execution_date,
-                    self.created_at,
-                ) == -1
-            ) if not create_initial_pipeline_run else False
+                    self.last_enabled_at,
+                ) == -1 if not create_initial_pipeline_run else False
 
-            # If the execution date is before start time or current time, don't schedule it.
+            # If the execution date is before start time or date pipeline schedule
+            # was last enabled, don't schedule it.
             if (
                 self.start_time is not None and
                 compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1
@@ -559,7 +560,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
-            # current_execution_date, then don’t schedule
+            # current_execution_date, then don’t schedule.
             if not find(
                 lambda x: compare(
                     x.execution_date.replace(tzinfo=pytz.UTC),
