@@ -11,12 +11,21 @@ def get_dynamic_child_block_indexes(
     block,
     execution_partition: str = None,
 ) -> List[int]:
+    from mage_ai.data_preparation.models.block.dynamic.utils import (
+        build_combinations_for_dynamic_child,
+    )
+
     """
     Get all the folder names in the dynamic child block’s variables directory:
         0/
         1/
         2/
     """
+    count = len(build_combinations_for_dynamic_child(
+        block,
+        execution_partition=execution_partition,
+    ))
+
     variable_manager = block.pipeline.variable_manager
     variable_uuids = variable_manager.get_variables_by_block(
         block.pipeline.uuid,
@@ -25,7 +34,7 @@ def get_dynamic_child_block_indexes(
         partition=execution_partition,
     )
 
-    return sorted([int(uuid) for uuid in variable_uuids if uuid.isnumeric()])
+    return sorted([int(uuid) for uuid in variable_uuids if uuid.isnumeric() and int(uuid) < count])
 
 
 def get_variable_objects(

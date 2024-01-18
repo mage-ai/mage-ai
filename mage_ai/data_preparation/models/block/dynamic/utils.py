@@ -482,13 +482,16 @@ def build_combinations_for_dynamic_child(
                 # e.g. 3 combinations aka children were made for the upstream dynamic child block
                 arr = []
                 children_created = build_combinations_for_dynamic_child(upstream_block)
-                for dynamic_block_index in range(len(children_created)):
-                    values, _metadata = get_outputs_for_dynamic_block(
-                        upstream_block,
-                        execution_partition=execution_partition,
-                        dynamic_block_index=dynamic_block_index
-                    )
-                    arr.extend([idx for idx in range(len(values))])
+                if is_dynamic:
+                    for dynamic_block_index in range(len(children_created)):
+                        values, _metadata = get_outputs_for_dynamic_block(
+                            upstream_block,
+                            execution_partition=execution_partition,
+                            dynamic_block_index=dynamic_block_index
+                        )
+                        arr.extend([idx for idx in range(len(values))])
+                else:
+                    arr.extend([idx for idx in range(len(children_created))])
             else:
                 arr, _metadata = get_outputs_for_dynamic_block(
                     upstream_block,
