@@ -527,7 +527,7 @@ def build_combinations_for_dynamic_child(
 
             parent_index = dynamic_block_index % len(dynamic_counts[idx])
 
-            if is_dynamic_child:
+            if is_dynamic_child or is_dynamic:
                 dynamic_block_indexes[upstream_block.uuid] = parent_index
 
         settings.append(dict(

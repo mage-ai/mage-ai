@@ -1603,6 +1603,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
             sample_count=sample_count,
             block_uuid=block_uuid,
             metadata=self.metrics.get('metadata') if self.metrics else None,
+            dynamic_block_index=self.metrics.get('dynamic_block_index') if self.metrics else None,
         )
 
 

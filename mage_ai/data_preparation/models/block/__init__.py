@@ -1976,6 +1976,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_uuid: str = None,
         selected_variables: List[str] = None,
         metadata: Dict = None,
+        dynamic_block_index: int = None,
     ) -> List[Dict]:
         data_products = []
         outputs = []
@@ -1984,34 +1985,56 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic = is_dynamic_block(self)
 
         if is_dynamic_child or is_dynamic:
+            pairs = []
+
             if is_dynamic_child:
-                data_arr = get_outputs_for_dynamic_child(
+                tuples = get_outputs_for_dynamic_child(
                     self,
                     execution_partition=execution_partition,
-                    sample=sample,
                     sample_count=sample_count,
                 )
+                for tup in tuples:
+                    if not is_dynamic:
+                        tup = (list(tup),)
+                    pairs.append(tup)
+
+                if dynamic_block_index is not None:
+                    pairs = [pairs[dynamic_block_index]]
             elif is_dynamic:
-                data_arr = get_outputs_for_dynamic_block(
+                tup = get_outputs_for_dynamic_block(
                     self,
                     execution_partition=execution_partition,
-                    sample=sample,
                     sample_count=sample_count,
                 )
+                pairs.append(tup)
 
-            for output in data_arr:
-                data, is_data_product = self.__format_output_data(
-                    output,
-                    None,
-                    block_uuid=self.uuid,
-                    csv_lines_only=csv_lines_only,
-                    execution_partition=execution_partition,
-                )
+            for pair in pairs:
+                child_data = None
+                metadata = None
+                if len(pair) >= 1:
+                    child_data = pair[0]
+                    if len(pair) >= 2:
+                        metadata = pair[1]
 
-                if is_data_product:
-                    data_products.append(data)
-                else:
-                    outputs.append(data)
+                for output, variable_uuid in [
+                    (child_data, 'child_data'),
+                    (metadata, 'metadata'),
+                ]:
+                    if output is None:
+                        continue
+
+                    data, is_data_product = self.__format_output_data(
+                        output,
+                        variable_uuid,
+                        block_uuid=self.uuid,
+                        csv_lines_only=csv_lines_only,
+                        execution_partition=execution_partition,
+                    )
+
+                    if is_data_product:
+                        data_products.append(data)
+                    else:
+                        outputs.append(data)
         else:
             if self.pipeline is None:
                 return
@@ -2081,6 +2104,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
+        dynamic_block_index: int = None,
     ) -> List[Dict]:
         data_products = []
         outputs = []
@@ -2101,6 +2125,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     if not is_dynamic:
                         tup = (list(tup),)
                     pairs.append(tup)
+                if dynamic_block_index is not None:
+                    pairs = [pairs[dynamic_block_index]]
             elif is_dynamic:
                 tup = await get_outputs_for_dynamic_block_async(
                     self,
