@@ -100,6 +100,10 @@ def should_reduce_output(block) -> bool:
     return True
 
 
+def has_reduce_output_from_upstreams(block) -> bool:
+    return any([should_reduce_output(upstream_block) for upstream_block in block.upstream_blocks])
+
+
 def has_dynamic_block_upstream_parent(block) -> bool:
     return block.upstream_blocks and any([is_dynamic_block(b) for b in block.upstream_blocks])
 
@@ -357,6 +361,14 @@ def transform_output_for_display(
         type=DataType.TABLE,
         multi_output=True,
     )
+
+
+def transform_output_for_display_reduce_output(output: List[Any]) -> List[Dict]:
+    return [dict(
+        text_data=data,
+        type=DataType.TEXT,
+        variable_uuid=f'output_{idx}',
+    ) for idx, data in enumerate(output)]
 
 
 def transform_output_for_display_dynamic_child(

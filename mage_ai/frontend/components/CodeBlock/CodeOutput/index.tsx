@@ -497,6 +497,8 @@ function CodeOutput({
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
+
+
           const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
@@ -511,22 +513,43 @@ function CodeOutput({
 
           if (isJsonString(rawString)) {
             const data = JSON.parse(rawString);
-            const {
-              data: dataDisplay,
-              type: typeDisplay,
-            } = data;
 
-            if (DataTypeEnum.TABLE === typeDisplay) {
-              if (dataDisplay) {
-                isTable = true;
-                const tableEl = createDataTableElement(dataDisplay, {
-                  borderTop,
-                  selected,
-                }, data);
-                tableContent.push(tableEl);
+            if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
+              const textArr = data?.map(d => d?.text_data);
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  {textArr.map((t) => (
+                    <Text key={t} monospace preWrap>
+                      {t?.length >= 1 && (
+                        <Ansi>
+                          {t}
+                        </Ansi>
+                      )}
+                      {!t?.length && (
+                        <>&nbsp;</>
+                      )}
+                    </Text>
+                  ))}
+                </OutputRowStyle>
+              );
+            } else {
+              const {
+                data: dataDisplay,
+                type: typeDisplay,
+              } = data;
 
-                if (!isDBT) {
-                  displayElement = tableEl;
+              if (DataTypeEnum.TABLE === typeDisplay) {
+                if (dataDisplay) {
+                  isTable = true;
+                  const tableEl = createDataTableElement(dataDisplay, {
+                    borderTop,
+                    selected,
+                  }, data);
+                  tableContent.push(tableEl);
+
+                  if (!isDBT) {
+                    displayElement = tableEl;
+                  }
                 }
               }
             }

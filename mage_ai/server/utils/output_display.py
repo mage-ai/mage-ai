@@ -3,6 +3,7 @@ import re
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.block.dynamic.utils import (
+    has_reduce_output_from_upstreams,
     is_dynamic_block,
     is_dynamic_block_child,
 )
@@ -133,6 +134,8 @@ def add_internal_output_info(block, code: str) -> str:
         else:
             end_index = -1
         code_without_last_line = '\n'.join(code_lines[:end_index])
+
+        has_reduce_output = has_reduce_output_from_upstreams(block) if block else False
         is_dynamic = is_dynamic_block(block) if block else False
         is_dynamic_child = is_dynamic_block_child(block) if block else False
 
@@ -152,6 +155,7 @@ def __custom_output():
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         transform_output_for_display_dynamic_child,
+        transform_output_for_display_reduce_output,
     )
     from mage_ai.shared.parsers import encode_complex, sample_output
 
@@ -176,6 +180,13 @@ def __custom_output():
     elif bool({is_dynamic}):
         _json_string = simplejson.dumps(
             transform_output_for_display(_internal_output_return),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif bool({has_reduce_output}):
+        _json_string = simplejson.dumps(
+            transform_output_for_display_reduce_output(_internal_output_return),
             default=encode_complex,
             ignore_nan=True,
         )
@@ -298,6 +309,7 @@ spark = SparkSession.builder.getOrCreate()
 
     return f"""{magic_header}
 from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
+from mage_ai.data_preparation.models.block.dynamic.utils import has_reduce_output_from_upstreams
 from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block_child
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -376,6 +388,7 @@ def execute_custom_code():
         update_status={update_status},
     )
 
+    has_reduce_output = has_reduce_output_from_upstreams(block)
     is_dynamic_child = is_dynamic_block_child(block)
 
     if is_dynamic_child:
@@ -400,7 +413,7 @@ def execute_custom_code():
 
     output = block_output['output'] or []
 
-    if {widget} or is_dynamic_block(block) or is_dynamic_child:
+    if {widget} or is_dynamic_block(block) or is_dynamic_child or has_reduce_output:
         return output
     else:
         return find(lambda val: val is not None, output)

@@ -221,6 +221,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         is_dynamic_block,
         is_dynamic_block_child,
+        should_reduce_output,
     )
 
     input_vars = []
@@ -239,19 +240,36 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 execution_partition=execution_partition,
             )
 
-            index = dynamic_block_index % len(pairs)
-            pair = pairs[index]
-            child_data = pair[0]
-            metadata = pair[1] if len(pair) >= 2 else None
+            if should_reduce_output(upstream_block):
+                child_data = []
+                metadata = {}
+                for pair in pairs:
+                    if len(pair) >= 1:
+                        child_data.append(pair[0])
+                        if len(pair) >= 2:
+                            metadata_inner = pair[1]
+                            if metadata_inner and \
+                                    isinstance(metadata, dict) and \
+                                    isinstance(metadata_inner, dict):
 
-            if is_dynamic:
-                index = dynamic_block_index % len(child_data)
-                child_data = child_data[index]
-                metadata = metadata[index] if metadata and index < len(metadata) else None
+                                metadata.update(metadata_inner)
 
-            input_vars.append(child_data)
-            if metadata:
+                input_vars.append(child_data)
                 kwargs_vars.append(metadata)
+            else:
+                index = dynamic_block_index % len(pairs)
+                pair = pairs[index]
+                child_data = pair[0]
+                metadata = pair[1] if len(pair) >= 2 else None
+
+                if is_dynamic:
+                    index = dynamic_block_index % len(child_data)
+                    child_data = child_data[index]
+                    metadata = metadata[index] if metadata and index < len(metadata) else None
+
+                input_vars.append(child_data)
+                if metadata:
+                    kwargs_vars.append(metadata)
         elif is_dynamic:
             child_data, metadata = get_outputs_for_dynamic_block(
                 upstream_block,
