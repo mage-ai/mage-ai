@@ -339,35 +339,34 @@ function CodeOutput({
         shape,
       } = output;
 
-      if (dataInit && isObject(dataInit)) {
-        if (!!dataInit?.multi_output) {
-          return (
-            <MultiOutput
-              outputs={rows?.map((row, idx: number) => ({
-                render: () => {
-                  if (!row) {
-                    return <div />;
-                  }
+      if (dataInit && isObject(dataInit) && !!dataInit?.multi_output) {
+        return (
+          <MultiOutput
+            outputs={rows?.map((row, idx: number) => ({
+              render: () => {
+                if (!row) {
+                  return <div />;
+                }
 
-                  const {
-                    data,
-                    type,
-                  } = row;
-                  if (DataTypeEnum.TABLE === type) {
-                    return createDataTableElement(data, {
-                      borderTop,
-                      selected: selectedProp,
-                    });
-                  }
+                const {
+                  data,
+                  type,
+                } = row;
+                if (DataTypeEnum.TABLE === type) {
+                  return createDataTableElement(data, {
+                    borderTop,
+                    selected: selectedProp,
+                  });
+                }
 
-                  return data;
-                },
-                uuid: columns?.[idx],
-              }))}
-            />
-          );
-        }
+                return data;
+              },
+              uuid: columns?.[idx],
+            }))}
+          />
+        );
       }
+
 
       if (shape) {
         setDataFrameShape(shape);
@@ -546,25 +545,95 @@ function CodeOutput({
               displayElement = tableEl;
             }
           }
-        } else if (DATA_TYPE_TEXTLIKE.includes(dataType) && !isObject(data)) {
-          const textArr = data?.split('\\n');
+        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+          if (isObject(data)) {
+            if (output?.multi_output && DataTypeEnum.TEXT === output?.type) {
+              const {
+                columns,
+                rows,
+              } = data;
 
-          displayElement = (
-            <OutputRowStyle {...outputRowSharedProps}>
-              {textArr.map((t) => (
-                <Text key={t} monospace preWrap>
-                  {t?.length >= 1 && (
-                    <Ansi>
-                      {t}
-                    </Ansi>
-                  )}
-                  {!t?.length && (
-                    <>&nbsp;</>
-                  )}
-                </Text>
-              ))}
-            </OutputRowStyle>
-          );
+              displayElement = (
+                <MultiOutput
+                  outputs={rows?.map(({
+                    data: value,
+                    type: typeInner,
+                  }, idx: number) => ({
+                    render: () => {
+                      if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
+                        const textArr = value?.split('\\n');
+                        return (
+                          <OutputRowStyle
+                            contained
+                            first
+                            last
+                            normalPadding
+                          >
+                            {textArr.map((t) => (
+                              <Text key={t} monospace preWrap>
+                                {t?.length >= 1 && (
+                                  <Ansi>
+                                    {t}
+                                  </Ansi>
+                                )}
+                                {!t?.length && (
+                                  <>&nbsp;</>
+                                )}
+                              </Text>
+                            ))}
+                          </OutputRowStyle>
+                        );
+                      } else if (DataTypeEnum.TABLE === typeInner && isObject(value)) {
+                        return createDataTableElement(value, {
+                          borderTop,
+                          selected,
+                        });
+                      }
+                    },
+                    uuid: columns?.[idx],
+                  }))}
+                />
+              );
+            } else if (data?.data) {
+              const textArr = data?.data?.split('\\n');
+
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  {textArr.map((t) => (
+                    <Text key={t} monospace preWrap>
+                      {t?.length >= 1 && (
+                        <Ansi>
+                          {t}
+                        </Ansi>
+                      )}
+                      {!t?.length && (
+                        <>&nbsp;</>
+                      )}
+                    </Text>
+                  ))}
+                </OutputRowStyle>
+              );
+            }
+          } else {
+            const textArr = data?.split('\\n');
+
+            displayElement = (
+              <OutputRowStyle {...outputRowSharedProps}>
+                {textArr.map((t) => (
+                  <Text key={t} monospace preWrap>
+                    {t?.length >= 1 && (
+                      <Ansi>
+                        {t}
+                      </Ansi>
+                    )}
+                    {!t?.length && (
+                      <>&nbsp;</>
+                    )}
+                  </Text>
+                ))}
+              </OutputRowStyle>
+            );
+          }
         } else if (dataType === DataTypeEnum.TEXT_HTML) {
           if (data) {
             displayElement = (

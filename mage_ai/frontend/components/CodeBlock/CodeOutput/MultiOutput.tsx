@@ -44,6 +44,8 @@ function MultiOutput({ outputs }: MultiOutputProps) {
     return arr;
   }, [outputs]);
 
+  console.log(outputs)
+
   return (
     <MultiOutputStyle>
       <ButtonTabs

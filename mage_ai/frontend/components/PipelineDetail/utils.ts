@@ -43,11 +43,9 @@ function prepareOutput(output) {
 
     if (sampleData) {
       data = {
-        data: {
-          shape,
-          ...sampleData,
-        },
+        shape,
         type,
+        ...sampleData,
       };
     } else if (textDataJsonString && isJsonString(textDataJsonString)) {
       data = JSON.parse(textDataJsonString);
@@ -109,7 +107,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
               columns: outputs?.map((output, idx) => output?.variable_uuid || `output_${idx}`),
               index: outputs?.map((o, i) => i),
               shape: [outputs?.length || 0, 1],
-              rows: outputsFinal?.map(o => o?.data),
+              rows: outputsFinal,
             },
             type: outputType,
             multi_output: true,

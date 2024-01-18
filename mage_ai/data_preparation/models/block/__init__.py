@@ -37,9 +37,6 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
     execute_data_integration,
 )
 from mage_ai.data_preparation.models.block.dynamic.utils import (
-    format_output as format_output_for_dynamic_block,
-)
-from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
     mock_dynamic_in_real_scenario,
@@ -2092,35 +2089,51 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic = is_dynamic_block(self)
 
         if is_dynamic_child or is_dynamic:
+            pairs = []
+
             if is_dynamic_child:
-                data_pairs = await get_outputs_for_dynamic_child_async(
+                tuples = await get_outputs_for_dynamic_child_async(
                     self,
                     execution_partition=execution_partition,
                     sample_count=sample_count,
                 )
+                for tup in tuples:
+                    pairs.append(tup)
             elif is_dynamic:
-                data_pairs = await get_outputs_for_dynamic_block_async(
+                tup = await get_outputs_for_dynamic_block_async(
                     self,
                     execution_partition=execution_partition,
                     sample_count=sample_count,
                 )
+                pairs.append(tup)
 
-            for pair in data_pairs:
-                if not pair:
-                    continue
+            for pair in pairs:
+                child_data = None
+                metadata = None
+                if len(pair) >= 1:
+                    child_data = pair[0]
+                    if len(pair) >= 2:
+                        metadata = pair[1]
 
-                data, is_data_product = self.__format_output_data(
-                    pair[0],
-                    None,
-                    block_uuid=self.uuid,
-                    csv_lines_only=csv_lines_only,
-                    execution_partition=execution_partition,
-                )
+                for output, variable_uuid in [
+                    (child_data, 'child_data'),
+                    (metadata, 'metadata'),
+                ]:
+                    if output is None:
+                        continue
 
-                if is_data_product:
-                    data_products.append(data)
-                else:
-                    outputs.append(data)
+                    data, is_data_product = self.__format_output_data(
+                        output,
+                        variable_uuid,
+                        block_uuid=self.uuid,
+                        csv_lines_only=csv_lines_only,
+                        execution_partition=execution_partition,
+                    )
+
+                    if is_data_product:
+                        data_products.append(data)
+                    else:
+                        outputs.append(data)
         else:
             if self.pipeline is None:
                 return
@@ -2188,12 +2201,20 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         """
         variable_manager = self.pipeline.variable_manager
 
-        if is_dynamic_block(self) and not skip_dynamic_block:
+        is_dynamic_child = is_dynamic_block_child(self)
+        is_dynamic = is_dynamic_block(self)
+
+        if (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
+            from mage_ai.data_preparation.models.block.dynamic.utils import (
+                format_output,
+            )
+
             data, is_data_product = self.__format_output_data(
-                format_output_for_dynamic_block(data),
+                format_output(data),
                 variable_uuid=variable_uuid,
                 skip_dynamic_block=True,
             )
+
             return merge_dict(data, dict(multi_output=True)), is_data_product
         elif isinstance(data, pd.DataFrame):
             if csv_lines_only:
