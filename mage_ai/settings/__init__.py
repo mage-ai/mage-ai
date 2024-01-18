@@ -108,7 +108,6 @@ NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 
 # If enabled, the /metrics route will expose Tornado server metrics
 ENABLE_PROMETHEUS = get_bool_value(os.getenv('ENABLE_PROMETHEUS', 'False'))
-ENABLE_PROJECT_PLATFORM = os.getenv('ENABLE_PROJECT_PLATFORM', '0').lower() in ('true', '1', 't')
 
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
@@ -171,5 +170,4 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'GHE_CLIENT_ID',
     'GHE_CLIENT_SECRET',
     'GHE_HOSTNAME',
-    'ENABLE_PROJECT_PLATFORM',
 ]
