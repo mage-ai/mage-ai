@@ -1071,6 +1071,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
+                    **kwargs,
                 )
                 conditional_message = (
                     f'{conditional_message}Conditional block '

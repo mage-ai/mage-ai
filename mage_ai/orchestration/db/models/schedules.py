@@ -1111,6 +1111,11 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                     block = pipeline.get_block(block_run.block_uuid)
                     if block:
                         upstream_block_uuids = block.upstream_block_uuids
+                        # If an upstream dynamic child fails, the block_run.block_uuid won’t match.
+                        if block_run.block_uuid == block.uuid:
+                            block_uuids = list(block_uuids) + [pipeline.get_block(
+                                block_inner,
+                            ).uuid for block_inner in block_uuids]
                 if any(
                     b in block_uuids
                     for b in upstream_block_uuids
