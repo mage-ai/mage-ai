@@ -265,7 +265,8 @@ function CodeOutput({
 
       if (DATA_TYPE_TEXTLIKE.includes(last?.type)
         && last?.type === curr.type
-        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        && !isObject(combineTextData(curr?.data))
+        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
       ) {
         if (Array.isArray(last.data)) {
           last.data.concat(curr.data);
@@ -274,7 +275,8 @@ function CodeOutput({
           last.data = [last.data, currentText].join('\n');
         }
       } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        && !isObject(combineTextData(curr?.data))
+        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
       ) {
         arr.push({
           ...curr,
@@ -337,35 +339,34 @@ function CodeOutput({
         shape,
       } = output;
 
-      if (dataInit && isObject(dataInit)) {
-        if (!!dataInit?.multi_output) {
-          return (
-            <MultiOutput
-              outputs={rows?.map((row, idx: number) => ({
-                render: () => {
-                  if (!row) {
-                    return <div />;
-                  }
+      if (dataInit && isObject(dataInit) && !!dataInit?.multi_output) {
+        return (
+          <MultiOutput
+            outputs={rows?.map((row, idx: number) => ({
+              render: () => {
+                if (!row) {
+                  return <div />;
+                }
 
-                  const {
-                    data,
-                    type,
-                  } = row;
-                  if (DataTypeEnum.TABLE === type) {
-                    return createDataTableElement(data, {
-                      borderTop,
-                      selected: selectedProp,
-                    });
-                  }
+                const {
+                  data,
+                  type,
+                } = row;
+                if (DataTypeEnum.TABLE === type) {
+                  return createDataTableElement(data, {
+                    borderTop,
+                    selected: selectedProp,
+                  });
+                }
 
-                  return data;
-                },
-                uuid: columns?.[idx],
-              }))}
-            />
-          );
-        }
+                return data;
+              },
+              uuid: columns?.[idx],
+            }))}
+          />
+        );
       }
+
 
       if (shape) {
         setDataFrameShape(shape);
@@ -471,11 +472,11 @@ function CodeOutput({
 
         const borderTop = idx >= 1;
 
-        if (typeof data === 'string' && data.match(INTERNAL_TEST_REGEX)) {
+        if (typeof data === 'string' && data?.match(INTERNAL_TEST_REGEX)) {
           const parts = data.split('\n');
           const partsNonTest = [];
           parts.forEach((part: string) => {
-            if (part.match(INTERNAL_TEST_REGEX)) {
+            if (part?.match(INTERNAL_TEST_REGEX)) {
               const parts = part.split(INTERNAL_TEST_STRING);
               const rawString = parts[parts.length - 1];
               if (isJsonString(rawString)) {
@@ -495,7 +496,7 @@ function CodeOutput({
 
         if (data === null) {
           return;
-        } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
+        } else if (typeof data === 'string' && data?.match(INTERNAL_OUTPUT_REGEX)) {
           const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
@@ -510,22 +511,43 @@ function CodeOutput({
 
           if (isJsonString(rawString)) {
             const data = JSON.parse(rawString);
-            const {
-              data: dataDisplay,
-              type: typeDisplay,
-            } = data;
 
-            if (DataTypeEnum.TABLE === typeDisplay) {
-              if (dataDisplay) {
-                isTable = true;
-                const tableEl = createDataTableElement(dataDisplay, {
-                  borderTop,
-                  selected,
-                }, data);
-                tableContent.push(tableEl);
+            if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
+              const textArr = data?.map(d => d?.text_data);
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  {textArr.map((t) => (
+                    <Text key={t} monospace preWrap>
+                      {t?.length >= 1 && typeof t === 'string' && (
+                        <Ansi>
+                          {t}
+                        </Ansi>
+                      )}
+                      {!t?.length && (
+                        <>&nbsp;</>
+                      )}
+                    </Text>
+                  ))}
+                </OutputRowStyle>
+              );
+            } else {
+              const {
+                data: dataDisplay,
+                type: typeDisplay,
+              } = data;
 
-                if (!isDBT) {
-                  displayElement = tableEl;
+              if (DataTypeEnum.TABLE === typeDisplay) {
+                if (dataDisplay) {
+                  isTable = true;
+                  const tableEl = createDataTableElement(dataDisplay, {
+                    borderTop,
+                    selected,
+                  }, data);
+                  tableContent.push(tableEl);
+
+                  if (!isDBT) {
+                    displayElement = tableEl;
+                  }
                 }
               }
             }
@@ -545,24 +567,98 @@ function CodeOutput({
             }
           }
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
-          const textArr = data?.split('\\n');
+          if (isObject(data)) {
+            if (output?.multi_output && DataTypeEnum.TEXT === output?.type) {
+              const {
+                // @ts-ignore
+                columns,
+                // @ts-ignore
+                rows,
+              } = data;
 
-          displayElement = (
-            <OutputRowStyle {...outputRowSharedProps}>
-              {textArr.map((t) => (
-                <Text key={t} monospace preWrap>
-                  {t?.length >= 1 && (
-                    <Ansi>
-                      {t}
-                    </Ansi>
-                  )}
-                  {!t?.length && (
-                    <>&nbsp;</>
-                  )}
-                </Text>
-              ))}
-            </OutputRowStyle>
-          );
+              displayElement = (
+                <MultiOutput
+                  outputs={rows?.map(({
+                    data: value,
+                    type: typeInner,
+                  }, idx: number) => ({
+                    render: () => {
+                      if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
+                        const textArr = value?.split('\\n');
+                        return (
+                          <OutputRowStyle
+                            contained
+                            first
+                            last
+                            normalPadding
+                          >
+                            {textArr.map((t) => (
+                              <Text key={t} monospace preWrap>
+                                {t?.length >= 1 && typeof t === 'string' && (
+                                  <Ansi>
+                                    {t}
+                                  </Ansi>
+                                )}
+                                {!t?.length && (
+                                  <>&nbsp;</>
+                                )}
+                              </Text>
+                            ))}
+                          </OutputRowStyle>
+                        );
+                      } else if (DataTypeEnum.TABLE === typeInner && isObject(value)) {
+                        return createDataTableElement(value, {
+                          borderTop,
+                          selected,
+                        });
+                      }
+                    },
+                    uuid: columns?.[idx],
+                  }))}
+                />
+              );
+              // @ts-ignore
+            } else if (data?.data) {
+              // @ts-ignore
+              const textArr = data?.data?.split('\\n');
+
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  {textArr.map((t) => (
+                    <Text key={t} monospace preWrap>
+                      {t?.length >= 1 && typeof t === 'string' && (
+                        <Ansi>
+                          {t}
+                        </Ansi>
+                      )}
+                      {!t?.length && (
+                        <>&nbsp;</>
+                      )}
+                    </Text>
+                  ))}
+                </OutputRowStyle>
+              );
+            }
+          } else {
+            const textArr = data?.split('\\n');
+
+            displayElement = (
+              <OutputRowStyle {...outputRowSharedProps}>
+                {textArr.map((t) => (
+                  <Text key={t} monospace preWrap>
+                    {t?.length >= 1 && typeof t === 'string' && (
+                      <Ansi>
+                        {t}
+                      </Ansi>
+                    )}
+                    {!t?.length && (
+                      <>&nbsp;</>
+                    )}
+                  </Text>
+                ))}
+              </OutputRowStyle>
+            );
+          }
         } else if (dataType === DataTypeEnum.TEXT_HTML) {
           if (data) {
             displayElement = (

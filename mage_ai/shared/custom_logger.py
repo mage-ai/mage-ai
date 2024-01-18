@@ -1,3 +1,4 @@
+import inspect
 import logging
 from enum import Enum
 
@@ -45,11 +46,14 @@ COLORS = [c for c in Color]
 def targets():
     return [
         # 'get_outputs',
+        # 'get_callers',
+        # 'get_variable',
         # 'get_variables_by_block',
         # 'fetch_input_variables',
         # 'output_variables',
         # 'uuid_for_output_variables',
         # 'dynamic_block_values_and_metadata',
+        'store_variables',
         'nothing',
     ]
 
@@ -125,6 +129,25 @@ class ColorPrinter:
 
         print('\n')
         print(f'{color}{"_" * 100}{color}')
+
+    def get_callers(self):
+        curframe = inspect.currentframe()
+        calframe = inspect.getouterframes(curframe, 2)
+
+        function_name = calframe[1][3]
+        callers = []
+        for frame_info in calframe[2:]:
+            caller = frame_info[3]
+            if caller.startswith('<cell'):
+                break
+            else:
+                callers.append(caller)
+
+        self.debug(
+            function_name,
+            callers=callers,
+            __uuid='get_callers'
+        )
 
 
 class CustomFormatter(logging.Formatter):

@@ -6,6 +6,9 @@ from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 
+from mage_ai.data_preparation.models.block.dynamic.variables import (
+    get_outputs_for_dynamic_block,
+)
 from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
@@ -97,6 +100,10 @@ def should_reduce_output(block) -> bool:
     return True
 
 
+def has_reduce_output_from_upstreams(block) -> bool:
+    return any([should_reduce_output(upstream_block) for upstream_block in block.upstream_blocks])
+
+
 def has_dynamic_block_upstream_parent(block) -> bool:
     return block.upstream_blocks and any([is_dynamic_block(b) for b in block.upstream_blocks])
 
@@ -184,7 +191,11 @@ def uuid_for_output_variables(
         block_uuid = dynamic_block_uuid
         dynamic_block_index = None
 
-    if dynamic_block_index is not None or is_dynamic_block_child(block):
+    is_dynamic = is_dynamic_block(block)
+    is_dynamic_child = is_dynamic_block_child(block)
+    if (not is_dynamic and (dynamic_block_index is None or is_dynamic_child)) or \
+            (is_dynamic and is_dynamic_child):
+
         parts = block_uuid.split(':')
 
         if len(parts) >= 2:
@@ -352,6 +363,16 @@ def transform_output_for_display(
     )
 
 
+def transform_output_for_display_reduce_output(output: List[Any]) -> List[Dict]:
+    arr = [dict(
+        text_data=data,
+        type=DataType.TEXT,
+        variable_uuid=f'output_{idx}',
+    ) for idx, data in enumerate(output)]
+
+    return arr
+
+
 def transform_output_for_display_dynamic_child(
     outputs: List[
         Tuple[
@@ -362,12 +383,15 @@ def transform_output_for_display_dynamic_child(
             List[Dict]
         ]
     ],
+    is_dynamic: bool = False,
 ) -> List[Dict]:
     columns = []
     child_data_arr = []
     rows_count = []
 
     for idx, output in enumerate(outputs):
+        if not is_dynamic:
+            output = (output,)
         child_data, metadata = transform_output(output)
 
         column = f'child_{idx}'
@@ -417,53 +441,97 @@ def create_combinations(combinations: List[Any]) -> List[Any]:
     return [combo for combo in arr if len(combo) == count]
 
 
-def build_combinations_for_dynamic_child(block, **kwargs):
-    pipeline = block.pipeline
+def build_combinations_for_dynamic_child(
+    block,
+    execution_partition: str = None,
+    **kwargs,
+):
+    """
+    kwargs (if from output_display.py)
+        custom_code
+        execution_uuid
+        from_notebook
+        global_vars
+        logger
+        output_messages_to_logs
+        run_settings
+        update_status
+    """
 
+    """
+    A list for each upstream block
+    [
+        [0, 1, 2],
+        [0],
+        [0, 1],
+    ]
+    """
     dynamic_counts = []
-    index_of_dynamic_blocks = []
 
-    input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
-        None,
-        dynamic_block_index=None,
-        dynamic_block_indexes=None,
-        dynamic_upstream_block_uuids=None,
-        execution_partition=None,
-        from_notebook=True,
-        global_vars=kwargs.get('global_vars'),
-        metadata=None,
-    )
+    for upstream_block in block.upstream_blocks:
+        # Dynamic child logic always takes precedence
+        has_reduce_output = should_reduce_output(upstream_block)
+        is_dynamic_child = is_dynamic_block_child(upstream_block)
+        is_dynamic = is_dynamic_block(upstream_block)
 
-    for idx, upstream_block_uuid in enumerate(upstream_block_uuids):
-        count = 1
-        is_dynamic = False
+        if (is_dynamic_child or is_dynamic) and not has_reduce_output:
+            if is_dynamic_child:
+                """
+                Get the number of children that was for this upstream block:
+                by getting all the top level output variables: e.g.
+                    0/
+                        output_0
+                    1/
+                        output_1
+                Top level variables are: 0, 1...N
+                """
+                # e.g. 3 combinations aka children were made for the upstream dynamic child block
+                arr = []
+                children_created = build_combinations_for_dynamic_child(upstream_block)
+                if is_dynamic:
+                    for dynamic_block_index in range(len(children_created)):
+                        values, _metadata = get_outputs_for_dynamic_block(
+                            upstream_block,
+                            execution_partition=execution_partition,
+                            dynamic_block_index=dynamic_block_index
+                        )
+                        arr.extend([idx for idx in range(len(values))])
+                else:
+                    arr.extend([idx for idx in range(len(children_created))])
+            else:
+                arr, _metadata = get_outputs_for_dynamic_block(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
+            if arr is not None:
+                dynamic_counts.append([idx for idx in range(len(arr))])
+            else:
+                dynamic_counts.append([0])
+        else:
+            dynamic_counts.append([0])
 
-        upstream_block = pipeline.get_block(upstream_block_uuid)
-        if is_dynamic_block(upstream_block):
-            is_dynamic = True
-            if idx < len(input_vars):
-                count = len(input_vars[idx])
-
-        index_of_dynamic_blocks.append(is_dynamic)
-        dynamic_counts.append([idx for idx, _i in enumerate(range(count))])
-
+    # [[0], [1], [2]]
     combinations = create_combinations(dynamic_counts)
 
     settings = []
-    for dynamic_block_index, arr in enumerate(combinations):
+    for dynamic_block_index, _arr in enumerate(combinations):
         # dynamic_block_index = 0
         # arr = [1, 2, 3, 4]
 
         # dynamic_block_indexes = { 'dynamic_parent': 1 }
         dynamic_block_indexes = {}
-        for idx, upstream_block_uuid in enumerate(upstream_block_uuids):
-            # idx = 0
-            # upstream_block_uuid = dynamic_parent
-            # index_of_dynamic_blocks = [True, False, True, False]
-            if index_of_dynamic_blocks[idx]:
-                # index_of_dynamic_blocks[0] = index_of_dynamic_blocks[0] = True
-                # arr[idx] = arr[0] = 1
-                dynamic_block_indexes[upstream_block_uuid] = arr[idx]
+        for idx, upstream_block in enumerate(block.upstream_blocks):
+            is_dynamic_child = is_dynamic_block_child(upstream_block)
+            is_dynamic = is_dynamic_block(upstream_block)
+
+            # 0 % 3 = 0
+            # 1 % 3 = 1
+            # 2 % 3 = 2
+
+            parent_index = dynamic_block_index % len(dynamic_counts[idx])
+
+            if is_dynamic_child or is_dynamic:
+                dynamic_block_indexes[upstream_block.uuid] = parent_index
 
         settings.append(dict(
             dynamic_block_index=dynamic_block_index,
