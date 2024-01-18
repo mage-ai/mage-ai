@@ -930,7 +930,7 @@ def sync_sub_stream(sub_stream_name, parent_obj, updates=False):
 
             # If metadata is empty, set it as None
             if type(rec.get('metadata')) == dict and len(rec.get('metadata')) == 0:
-                        rec['metadata'] = None
+                rec['metadata'] = None
 
             if "id" in rec:
                 singer.write_record(sub_stream_name,
@@ -1094,7 +1094,7 @@ def sync_event_updates(stream_name, is_sub_stream):
                 rec = reduce_foreign_keys(rec, stream_name)
                 # If metadata is empty, set it as None
                 if type(rec.get('metadata')) == dict and len(rec.get('metadata')) == 0:
-                        rec['metadata'] = None
+                    rec['metadata'] = None
                 rec["updated"] = events_obj.created
                 rec["updated_by_event_type"] = events_obj.type
                 rec = transformer.transform(
