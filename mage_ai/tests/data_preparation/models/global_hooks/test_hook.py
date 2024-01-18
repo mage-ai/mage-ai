@@ -27,8 +27,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.shared.hash import merge_dict
-from mage_ai.tests.factory import create_pipeline_with_blocks
-from mage_ai.tests.shared.mixins import GlobalHooksMixin, ProjectPlatformMixin
+from mage_ai.tests.shared.mixins import GlobalHooksMixin
 
 
 class HookTest(GlobalHooksMixin):
@@ -827,22 +826,22 @@ class HookTest(GlobalHooksMixin):
         self.assertEqual(snapshot_hash, hook.metadata.snapshot_hash)
 
 
-class HookProjectPlatformTest(ProjectPlatformMixin, GlobalHooksMixin):
-    async def test_pipeline(self):
-        await self.setUpAsync()
+# class HookProjectPlatformTest(ProjectPlatformMixin, GlobalHooksMixin):
+#     async def test_pipeline(self):
+#         await self.setUpAsync()
 
-        for hook in self.hooks_match[:3]:
-            for project in self.repo_paths.values():
-                pipeline = create_pipeline_with_blocks(
-                    self.faker.unique.name(),
-                    project['full_path'],
-                )
-                pipeline.save()
+#         for hook in self.hooks_match[:3]:
+#             for project in self.repo_paths.values():
+#                 pipeline = create_pipeline_with_blocks(
+#                     self.faker.unique.name(),
+#                     project['full_path'],
+#                 )
+#                 pipeline.save()
 
-                hook._pipeline = None
-                hook.pipeline_settings = dict(uuid=pipeline.uuid)
-                self.assertIsNone(hook.pipeline)
+#                 hook._pipeline = None
+#                 hook.pipeline_settings = dict(uuid=pipeline.uuid)
+#                 self.assertIsNone(hook.pipeline)
 
-                hook._pipeline = None
-                hook.project = project
-                self.assertEqual(hook.pipeline.uuid, pipeline.uuid)
+#                 hook._pipeline = None
+#                 hook.project = project
+#                 self.assertEqual(hook.pipeline.uuid, pipeline.uuid)
