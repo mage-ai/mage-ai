@@ -1,5 +1,5 @@
 import tzMoment from 'moment-timezone';
-import { useEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -35,6 +35,7 @@ function Output({
   groupID,
   groupsCount,
   index,
+  interactiveShell,
   onClick,
   outputs: outputsProp,
 }: {
@@ -42,9 +43,10 @@ function Output({
   groupID: string;
   groupsCount: number;
   index: number;
+  interactiveShell?: JSX.Element;
   onClick?: (e: Event) => void;
   outputs: KernelOutputType[];
-}) {
+}, ref) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const executionStateRef = useRef(null);
@@ -198,6 +200,7 @@ function Output({
           onClick?.(e);
         }
       }}
+      ref={ref}
     >
       <LoadingStyle className={inactive ? 'inactive' : 'active'} isIdle={inactive}>
         <Loading width="100%" />
@@ -284,8 +287,10 @@ function Output({
         tables={tables}
         text={text}
       />
+
+      {interactiveShell}
     </RowGroupStyle>
   );
 }
 
-export default Output;
+export default forwardRef(Output);

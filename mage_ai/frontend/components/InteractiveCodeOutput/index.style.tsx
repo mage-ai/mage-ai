@@ -17,6 +17,9 @@ const CONTENT_STYLE = css`
 
 export const ShellContainerStyle = styled.div`
   ${CONTAINER_STYLE}
+
+  height: 500px;
+  background: red;
 `;
 
 export const OutputContainerStyle = styled.div`

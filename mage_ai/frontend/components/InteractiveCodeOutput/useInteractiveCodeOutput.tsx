@@ -3,7 +3,7 @@ import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
-import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import mock from './mock';
 import AuthToken from '@api/utils/AuthToken';
@@ -29,18 +29,21 @@ import KernelType from '@interfaces/KernelType';
 export default function useInteractiveCodeOutput({
   checkKernelStatus,
   code,
+  containerRef,
   getDefaultMessages,
   onClickOutputGroup,
   onMessage,
   onOpen,
   onRenderOutputCallback,
-  onRenderShellCallback,
   shouldConnect = false,
   shouldReconnect,
   uuid,
 }: {
   checkKernelStatus?: boolean;
   code?: string;
+  containerRef?: {
+    current: any;
+  };
   getDefaultMessages?: () => KernelOutputType[];
   onClickOutputGroup?: (e: Event, opts?: {
     dates: string[];
@@ -55,7 +58,6 @@ export default function useInteractiveCodeOutput({
   }) => void;
   onOpen?: (value: boolean) => void;
   onRenderOutputCallback?: () => void;
-  onRenderShellCallback?: () => void;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
@@ -65,10 +67,10 @@ export default function useInteractiveCodeOutput({
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
   output: JSX.Element;
+  scrollTo: () => void;
   sendMessage: (payload: {
     [key: string]: any;
   }) => void;
-  shell: JSX.Element;
 } {
   const {
     kernel,
@@ -92,6 +94,9 @@ export default function useInteractiveCodeOutput({
 
   const selectedGroupOfOutputs = useRef();
   const messagesRef = useRef([]);
+
+  const outputGroupRefs = useRef({});
+
   const outputContainerRef = useRef(null);
   const outputContentRef = useRef(null);
   const outputItemsRef = useRef([]);
@@ -99,6 +104,7 @@ export default function useInteractiveCodeOutput({
   const outputRootUUID = useRef(`${uuid}-output-root`);
 
   const messagesShellRef = useRef([]);
+
   const shellContainerRef = useRef(null);
   const shellContentRef = useRef(null);
   const shellItemsRef = useRef([]);
@@ -107,11 +113,32 @@ export default function useInteractiveCodeOutput({
 
   const outputBottomRef = useRef(null);
 
+  const [interactiveShell, setInteractiveShell] = useState<JSX.Element>(null);
+
+  function scrollTo({
+    bottom,
+    top,
+  }: {
+    bottom?: boolean;
+    top?: boolean;
+  }) {
+    setTimeout(() => {
+      if (containerRef?.current) {
+        if (bottom) {
+          containerRef.current.scrollTop = containerRef?.current?.scrollHeight - (
+            containerRef?.current?.getBoundingClientRect()?.height
+              // + outputBottomRef?.current?.getBoundingClientRect()?.height
+          );
+        } else if (top) {
+          containerRef.current.scrollTop = 0;
+        }
+      }
+    }, 1);
+  }
+
   function isAnyOutputGroupSelected() {
     return !!selectedGroupOfOutputs?.current?.active;
   }
-
-  console.log(selectedGroupOfOutputs?.current?.outputs?.map(o => o?.msg_id))
 
   function removeSelectedFromAllRowGroups() {
     if (typeof document !== 'undefined') {
@@ -121,7 +148,7 @@ export default function useInteractiveCodeOutput({
       refs?.forEach((ref) => {
         if (ref) {
           ref.className = removeClassNames(
-            ref.className || '',
+            ref.className,
             [
               'row-group-selected',
             ],
@@ -134,39 +161,106 @@ export default function useInteractiveCodeOutput({
   function setupGroups() {
     setTimeout(() => {
       const active = isAnyOutputGroupSelected();
-      [
-        outputContainerRef,
-        shellContainerRef,
-      ].forEach((ref) => {
-        if (ref?.current) {
-          if (active) {
-            ref.current.className = addClassNames(
-              ref.current.className || '',
-              [
-                'inline',
-              ],
-            );
-          } else {
-            ref.current.className = removeClassNames(
-              ref.current.className || '',
-              [
-                'inline',
-              ],
-            );
-          }
-        }
-      });
+      // [
+      //   outputContainerRef,
+      //   shellContainerRef,
+      // ].forEach((ref) => {
+      //   if (ref?.current) {
+      //     if (active) {
+      //       ref.current.className = addClassNames(
+      //         ref.current.className || '',
+      //         [
+      //           'inline',
+      //         ],
+      //       );
+      //     } else {
+      //       ref.current.className = removeClassNames(
+      //         ref.current.className || '',
+      //         [
+      //           'inline',
+      //         ],
+      //       );
+      //     }
+      //   }
+      // });
 
       if (active) {
-        removeSelectedFromAllRowGroups();
-        renderOutputs(selectedGroupOfOutputs?.current?.outputs);
-      } else if (getDefaultMessages) {
+        // removeSelectedFromAllRowGroups();
+        // renderOutputs(selectedGroupOfOutputs?.current?.outputs);
+      }
+
+      if (getDefaultMessages) {
         messagesRef.current = getDefaultMessages?.();
         if (messagesRef.current) {
           renderOutputs(messagesRef.current);
         }
       }
     }, 300);
+  }
+
+  function renderInteractiveShell(groupID: string) {
+    // if (!shellRootRef?.current) {
+    //   const domNode = document.getElementById(shellRootUUID.current);
+    //   if (domNode) {
+    //     shellRootRef.current = createRoot(domNode);
+    //   }
+    // }
+
+    // if (!shellRootRef?.current) {
+    //   return;
+    // }
+
+    // const targetRef = outputGroupRefs?.current?.[groupID];
+
+    // console.log('heloooooooo')
+    // shellRootRef?.current?.render(
+    //   <KeyboardContext.Provider value={keyboardContext}>
+    //     <ThemeProvider theme={themeContext}>
+    //       <ModalProvider>
+    //         <ErrorProvider>
+    //           <ComponentWithCallback callback={onRenderOutputCallback}>
+                // <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
+                //   Hello
+                // </ShellContainerStyle>
+    //           </ComponentWithCallback>
+    //         </ErrorProvider>
+    //       </ModalProvider>
+    //     </ThemeProvider>
+    //   </KeyboardContext.Provider>,
+    // );
+
+    // setInteractiveShell(
+    //   <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
+    //     Hello
+    //   </ShellContainerStyle>
+    // );
+  }
+
+  function shellMountCallback() {
+    shellContainerRef?.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    });
+  }
+
+  function handleClickGroup(data) {
+    const {
+      groupID,
+    } = data;
+
+
+    if (selectedGroupOfOutputs?.current?.groupID === groupID) {
+      if (!selectedGroupOfOutputs?.current?.active) {
+        setupGroups();
+        setTimeout(() => removeSelectedFromAllRowGroups(), 1);
+
+        containerRef.current.style.overflow = 'hidden';
+      }
+      selectedGroupOfOutputs.current = { active: true, ...data };
+    } else {
+      selectedGroupOfOutputs.current = { active: false, ...data };
+    }
+
   }
 
   function renderOutputs(outputs: KernelOutputType[]) {
@@ -183,55 +277,72 @@ export default function useInteractiveCodeOutput({
 
     const groups = groupOutputsAndSort(outputs);
     const groupsCount = groups?.length;
-    const outputsGrouped = groups?.map(({
+    const outputsGrouped = [];
+    groups?.forEach(({
       dates,
       groupID,
       outputs,
-    }, index) => (
-      <OutputGroup
-        dates={dates}
-        groupsCount={groupsCount}
-        index={index}
-        key={groupID}
-        groupID={groupID}
-        onClick={(e) => {
-          removeSelectedFromAllRowGroups();
+    }, index) => {
+      outputGroupRefs.current[groupID] = outputGroupRefs?.current?.[groupID] || createRef();
+      const ref = outputGroupRefs?.current?.[groupID];
 
-          if (e?.currentTarget) {
-            e.currentTarget.className = addClassNames(
-              e?.currentTarget?.className || '',
-              [
-                'row-group-selected',
-              ],
-            );
-          }
+      outputsGrouped.push(
+        <OutputGroup
+          dates={dates}
+          groupsCount={groupsCount}
+          index={index}
+          key={groupID}
+          groupID={groupID}
+          onClick={(e) => {
+            removeSelectedFromAllRowGroups();
 
-          const data = {
-            dates,
-            groupsCount,
-            index,
-            groupID,
-            outputs,
-          };
+            setTimeout(() => {
+              if (outputGroupRefs?.current?.[groupID]?.current) {
+                const ref = outputGroupRefs?.current?.[groupID];
+                ref.current.className = addClassNames(
+                  ref?.current?.className || '',
+                  [
+                    'row-group-selected',
+                  ],
+                );
+              }
+            }, 1);
 
-          if (!isAnyOutputGroupSelected()) {
-            if (selectedGroupOfOutputs?.current && selectedGroupOfOutputs?.current?.groupID === groupID) {
-              selectedGroupOfOutputs.current = { active: true, ...data };;
-              console.log(selectedGroupOfOutputs.current)
-            } else {
-              selectedGroupOfOutputs.current = { active: false, ...data };
+            const data = {
+              dates,
+              groupsCount,
+              index,
+              groupID,
+              outputs,
+            };
+            handleClickGroup(data);
+
+            if (onClickOutputGroup) {
+              onClickOutputGroup?.(e, data);
             }
-          }
+          }}
+          outputs={outputs}
+          ref={ref}
+        />
+      );
 
-          if (onClickOutputGroup) {
-            onClickOutputGroup?.(e, data);
-          }
-
-          setupGroups();
-        }}
-        outputs={outputs}
-      />
-    ));
+      if (selectedGroupOfOutputs?.current?.groupID === groupID
+        && selectedGroupOfOutputs?.current?.active
+      ) {
+        outputsGrouped.push(
+          <ComponentWithCallback
+            id={shellRootUUID.current}
+            key={shellRootUUID.current}
+            ref={shellContainerRef}
+            callback={shellMountCallback}
+          >
+            <ShellContainerStyle  messagesRef={messagesRef}>
+              Hello
+            </ShellContainerStyle>
+          </ComponentWithCallback>
+        );
+      }
+    });
 
     outputRootRef?.current?.render(
       <KeyboardContext.Provider value={keyboardContext}>
@@ -240,6 +351,8 @@ export default function useInteractiveCodeOutput({
             <ErrorProvider>
               <ComponentWithCallback callback={onRenderOutputCallback}>
                 {outputsGrouped}
+
+                {/*<ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />*/}
               </ComponentWithCallback>
             </ErrorProvider>
           </ModalProvider>
@@ -262,6 +375,12 @@ export default function useInteractiveCodeOutput({
     readyState,
     sendMessage: sendMessageInit,
   } = useWebSocket(getWebSocket(`${uuid}-${user?.id}`), {
+    heartbeat: {
+      message: 'ping',
+      returnMessage: 'pong',
+      timeout: 60000,
+      interval: 25000,
+    },
     shouldReconnect: (data) => {
       if (shouldReconnect) {
         return shouldReconnect?.(data)
@@ -321,26 +440,17 @@ export default function useInteractiveCodeOutput({
 
   const outputRoot = useMemo(() => {
     return (
-      <OutputContainerStyle ref={outputContainerRef}>
-        <OutputContentStyle
-          id={outputRootUUID.current}
-          ref={outputContentRef}
-          callback={onRenderOutputCallback}
-        />
-      </OutputContainerStyle>
-    );
-  }, []);
+      <div>
+        <OutputContainerStyle ref={outputContainerRef}>
+          <OutputContentStyle
+            id={outputRootUUID.current}
+            ref={outputContentRef}
+            callback={onRenderOutputCallback}
+          />
+        </OutputContainerStyle>
 
-  const shellRoot = useMemo(() => {
-    return (
-      <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
-        <ShellContentStyle
-          id={shellRootUUID.current}
-          ref={shellContentRef}
-          callback={onRenderShellCallback}
-        />
         <div ref={outputBottomRef} />
-      </ShellContainerStyle>
+      </div>
     );
   }, []);
 
@@ -350,7 +460,7 @@ export default function useInteractiveCodeOutput({
     kernel,
     kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,
     output: outputRoot,
+    scrollTo,
     sendMessage,
-    shell: shellRoot,
   };
 }

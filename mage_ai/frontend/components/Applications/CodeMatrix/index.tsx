@@ -100,27 +100,6 @@ function CodeMatrix({
     return editorRef?.current?.getValue() || contentRef?.current;
   }
 
-  function scrollTo({
-    bottom,
-    top,
-  }: {
-    bottom?: boolean;
-    top?: boolean;
-  }) {
-    setTimeout(() => {
-      if (afterInnerRef?.current) {
-        if (bottom) {
-          afterInnerRef.current.scrollTop = afterInnerRef?.current?.scrollHeight - (
-            afterInnerRef?.current?.getBoundingClientRect()?.height
-              // + outputBottomRef?.current?.getBoundingClientRect()?.height
-          );
-        } else if (top) {
-          afterInnerRef.current.scrollTop = 0;
-        }
-      }
-    }, 1);
-  }
-
   useEffect(() => {
     if (monaco && ready) {
       editorRef.current.onKeyDown((event) => {
@@ -344,10 +323,6 @@ function CodeMatrix({
     // }
   }
 
-  function onRenderShellCallback() {
-
-  }
-
   function onClickOutputGroup(e: Event, opts?: {
     dates: string[];
     groupID: number;
@@ -363,16 +338,16 @@ function CodeMatrix({
     kernel,
     kernelStatusCheckResults,
     output,
+    scrollTo,
     sendMessage,
-    shell,
   } = useInteractiveCodeOutput({
     checkKernelStatus: true,
+    containerRef: afterInnerRef,
     getDefaultMessages: () => getItems(),
     onClickOutputGroup,
     onMessage,
     onOpen,
     onRenderOutputCallback,
-    onRenderShellCallback,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
@@ -558,12 +533,10 @@ function CodeMatrix({
       <>
         {console.log("AFTER OUTPUT")}
         {output}
-        {shell}
       </>
     );
   }, [
     output,
-    shell,
   ]);
 
   const afterHeaderMemo = useMemo(() => {
