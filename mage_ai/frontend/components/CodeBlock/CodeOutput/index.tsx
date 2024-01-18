@@ -266,7 +266,7 @@ function CodeOutput({
       if (DATA_TYPE_TEXTLIKE.includes(last?.type)
         && last?.type === curr.type
         && !isObject(combineTextData(curr?.data))
-        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
       ) {
         if (Array.isArray(last.data)) {
           last.data.concat(curr.data);
@@ -276,7 +276,7 @@ function CodeOutput({
         }
       } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
         && !isObject(combineTextData(curr?.data))
-        && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
       ) {
         arr.push({
           ...curr,
@@ -472,11 +472,11 @@ function CodeOutput({
 
         const borderTop = idx >= 1;
 
-        if (typeof data === 'string' && data.match(INTERNAL_TEST_REGEX)) {
+        if (typeof data === 'string' && data?.match(INTERNAL_TEST_REGEX)) {
           const parts = data.split('\n');
           const partsNonTest = [];
           parts.forEach((part: string) => {
-            if (part.match(INTERNAL_TEST_REGEX)) {
+            if (part?.match(INTERNAL_TEST_REGEX)) {
               const parts = part.split(INTERNAL_TEST_STRING);
               const rawString = parts[parts.length - 1];
               if (isJsonString(rawString)) {
@@ -496,7 +496,7 @@ function CodeOutput({
 
         if (data === null) {
           return;
-        } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
+        } else if (typeof data === 'string' && data?.match(INTERNAL_OUTPUT_REGEX)) {
           const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
