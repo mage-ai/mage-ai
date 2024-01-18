@@ -165,16 +165,17 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if bool({is_dynamic}):
+    # Dynamic block child logic always takes precedence over dynamic block logic
+    if bool({is_dynamic_child}):
         _json_string = simplejson.dumps(
-            transform_output_for_display(_internal_output_return),
+            transform_output_for_display_dynamic_child(_internal_output_return),
             default=encode_complex,
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif bool({is_dynamic_child}):
+    elif bool({is_dynamic}):
         _json_string = simplejson.dumps(
-            transform_output_for_display_dynamic_child(_internal_output_return),
+            transform_output_for_display(_internal_output_return),
             default=encode_complex,
             ignore_nan=True,
         )

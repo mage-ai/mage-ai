@@ -27,6 +27,7 @@ import {
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { indexBy } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { isEmptyObject } from '@utils/hash';
 
 function prepareOutput(output) {
   let data;
@@ -51,6 +52,10 @@ function prepareOutput(output) {
     } else if (textDataJsonString && isJsonString(textDataJsonString)) {
       data = JSON.parse(textDataJsonString);
       type = DataTypeEnum.TABLE;
+      if (isEmptyObject(data)) {
+        data = null;
+        type = DataTypeEnum.TEXT;
+      }
     } else {
       data = textDataJsonString;
     }

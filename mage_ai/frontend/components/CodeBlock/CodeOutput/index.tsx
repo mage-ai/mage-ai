@@ -265,6 +265,7 @@ function CodeOutput({
 
       if (DATA_TYPE_TEXTLIKE.includes(last?.type)
         && last?.type === curr.type
+        && !isObject(combineTextData(curr?.data))
         && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
       ) {
         if (Array.isArray(last.data)) {
@@ -274,6 +275,7 @@ function CodeOutput({
           last.data = [last.data, currentText].join('\n');
         }
       } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+        && !isObject(combineTextData(curr?.data))
         && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
       ) {
         arr.push({
@@ -544,7 +546,7 @@ function CodeOutput({
               displayElement = tableEl;
             }
           }
-        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+        } else if (DATA_TYPE_TEXTLIKE.includes(dataType) && !isObject(data)) {
           const textArr = data?.split('\\n');
 
           displayElement = (

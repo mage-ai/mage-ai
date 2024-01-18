@@ -16,18 +16,21 @@ type MultiOutputProps = {
 function MultiOutput({ outputs }: MultiOutputProps) {
   const outputsRef = useRef({});
 
-  const tabs = useMemo(() => outputs.map(({ uuid }) => ({ uuid })), [outputs]);
+  const tabs = useMemo(() => outputs.map(({ uuid }, idx) => ({
+    label: () => uuid,
+    uuid: `${uuid}_${idx}`,
+  })), [outputs]);
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs?.[0]);
 
   const outputsMemo = useMemo(() => {
     const arr = [];
 
-
     outputs?.forEach(({
       render,
-      uuid,
+      uuid: uuidInit,
     }, idx: number) => {
+      const uuid = `${uuidInit}_${idx}`;
       outputsRef.current[uuid] = outputsRef?.current?.[uuid] || createRef<HTMLDivElement>();
       const ref = outputsRef?.current?.[uuid];
 
