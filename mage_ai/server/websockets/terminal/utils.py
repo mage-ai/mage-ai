@@ -1,6 +1,7 @@
 from typing import List
 
 
+# RUNNING THESE COMMANDs will freeze the pip installed app.
 def build_color_commands(uuid: str = None) -> List[str]:
     """
     Enter this in your terminal to view available colors:
