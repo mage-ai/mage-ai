@@ -1,12 +1,12 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.data_preparation.models.triggers import (
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
     get_triggers_by_pipeline,
 )
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 
 
 class PipelineTriggerResource(GenericResource):
