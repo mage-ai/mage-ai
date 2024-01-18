@@ -25,7 +25,7 @@ import {
   momentInLocalTimezone,
 } from '@utils/date';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
-import { indexBy } from '@utils/array';
+import { indexBy, range } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { isEmptyObject } from '@utils/hash';
 
@@ -90,14 +90,17 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
         const {
           data,
           type,
-        } = prepareOutput(output)
+        } = prepareOutput(output);
 
         multiOutput = multiOutput || output?.multi_output;
-        outputType = outputType || type;
-        outputsFinal.push({
-          data,
-          type,
-        });
+        outputType = (!data && !outputType && outputs?.length >= 2) ? null : (outputType || type);
+
+        if (!!data || outputs?.length === 1) {
+          outputsFinal.push({
+            data,
+            type,
+          });
+        }
       });
 
       if (multiOutput) {
@@ -113,6 +116,25 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
             multi_output: true,
           },
         ];
+        // This is to display reduce output data
+      } else if (DataTypeEnum.TABLE === outputType && outputsFinal?.length >= 2 && !!outputsFinal?.[0]?.data?.text_data) {
+        const rows = outputsFinal?.map(({ data }) => data);
+        if (rows?.length >= 1) {
+          const columns = range(Math.max(...rows?.map(row => row?.length)))?.map((_, idx) => `col${idx}`);
+          const shape = [rows?.length, columns?.length];
+          const index = rows?.map((_, idx) => idx);
+          outputsFinal = [
+            {
+              data: {
+                rows,
+                columns,
+                shape,
+                index,
+              },
+              type: outputType,
+            },
+          ];
+        }
       }
 
       messagesInit[uuid] = outputsFinal;

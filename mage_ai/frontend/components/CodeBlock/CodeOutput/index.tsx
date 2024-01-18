@@ -65,6 +65,7 @@ import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/Pipeline
 import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { isObject } from '@utils/hash';
+import { range } from '@utils/array';
 
 type CodeOutputProps = {
   alwaysShowExtraInfo?: boolean;
@@ -513,23 +514,42 @@ function CodeOutput({
             const data = JSON.parse(rawString);
 
             if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
-              const textArr = data?.map(d => d?.text_data);
-              displayElement = (
-                <OutputRowStyle {...outputRowSharedProps}>
-                  {textArr.map((t) => (
-                    <Text key={t} monospace preWrap>
-                      {t?.length >= 1 && typeof t === 'string' && (
-                        <Ansi>
-                          {t}
-                        </Ansi>
-                      )}
-                      {!t?.length && (
-                        <>&nbsp;</>
-                      )}
-                    </Text>
-                  ))}
-                </OutputRowStyle>
-              );
+              if (Array.isArray(data?.[0]?.text_data)) {
+                isTable = true;
+                const rows = data?.map(d => d?.text_data);
+                const columns = range(Math.max(...rows?.map(row => row?.length)))?.map((_, idx) => `col${idx}`);
+                const shape = [rows?.length, columns?.length];
+                const index = rows?.map((_, idx) => idx);
+                const tableEl = createDataTableElement({
+                  rows,
+                  columns,
+                  shape,
+                  index,
+                }, {
+                  borderTop,
+                  selected,
+                }, data);
+                tableContent.push(tableEl);
+                displayElement = tableEl;
+              } else {
+                const textArr = data?.map(d => d?.text_data);
+                displayElement = (
+                  <OutputRowStyle {...outputRowSharedProps}>
+                    {textArr.map((t) => (
+                      <Text key={t} monospace preWrap>
+                        {t?.length >= 1 && typeof t === 'string' && (
+                          <Ansi>
+                            {t}
+                          </Ansi>
+                        )}
+                        {!t?.length && (
+                          <>&nbsp;</>
+                        )}
+                      </Text>
+                    ))}
+                  </OutputRowStyle>
+                );
+              }
             } else {
               const {
                 data: dataDisplay,

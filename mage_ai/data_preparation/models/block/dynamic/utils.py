@@ -187,12 +187,12 @@ def uuid_for_output_variables(
     if block_uuid is None:
         block_uuid = block.uuid
 
-    if dynamic_block_uuid:
-        block_uuid = dynamic_block_uuid
-        dynamic_block_index = None
+    is_dynamic_child = is_dynamic_block_child(block)
+
+    if is_dynamic_child and dynamic_block_index is not None:
+        return os.path.join(block.uuid, str(dynamic_block_index)), True
 
     is_dynamic = is_dynamic_block(block)
-    is_dynamic_child = is_dynamic_block_child(block)
     if (not is_dynamic and (dynamic_block_index is None or is_dynamic_child)) or \
             (is_dynamic and is_dynamic_child):
 
