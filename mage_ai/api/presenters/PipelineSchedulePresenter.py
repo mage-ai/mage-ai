@@ -66,6 +66,7 @@ PipelineSchedulePresenter.register_formats([
     constants.UPDATE,
 ], PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
+        'last_enabled_at',
         'next_pipeline_run_date',
         'tags',
     ],

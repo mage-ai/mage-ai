@@ -62,6 +62,7 @@ class Trigger(BaseConfig):
     start_time: datetime
     schedule_interval: str
     status: ScheduleStatus = ScheduleStatus.INACTIVE
+    last_enabled_at: datetime = None
     variables: Dict = field(default_factory=dict)
     sla: int = None     # in seconds
     settings: Dict = field(default_factory=dict)
@@ -89,6 +90,7 @@ class Trigger(BaseConfig):
     def to_dict(self) -> Dict:
         return dict(
             envs=self.envs,
+            last_enabled_at=self.last_enabled_at,
             name=self.name,
             pipeline_uuid=self.pipeline_uuid,
             schedule_interval=self.schedule_interval,

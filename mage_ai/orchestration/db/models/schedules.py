@@ -54,6 +54,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
     SettingsConfig,
     Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -288,20 +289,32 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 traceback.print_exc()
                 continue
 
+            last_enabled_at = trigger_config.last_enabled_at
+            if trigger_config.status == ScheduleStatus.ACTIVE and \
+                    trigger_config.last_enabled_at is None:
+                last_enabled_at = datetime.now(tz=pytz.UTC)
+                trigger_config.last_enabled_at = last_enabled_at
+                add_or_update_trigger_for_pipeline_and_persist(
+                    trigger_config,
+                    trigger_config.pipeline_uuid,
+                )
+
             kwargs = dict(
+                last_enabled_at=last_enabled_at,
                 name=trigger_config.name,
                 pipeline_uuid=trigger_config.pipeline_uuid,
-                schedule_type=trigger_config.schedule_type,
-                start_time=trigger_config.start_time,
                 schedule_interval=trigger_config.schedule_interval,
+                schedule_type=trigger_config.schedule_type,
+                settings=trigger_config.settings,
+                sla=trigger_config.sla,
+                start_time=trigger_config.start_time,
                 status=trigger_config.status,
                 variables=trigger_config.variables,
-                sla=trigger_config.sla,
-                settings=trigger_config.settings,
             )
 
             if existing_trigger:
                 if any([
+                    existing_trigger.last_enabled_at != kwargs.get('last_enabled_at'),
                     existing_trigger.name != kwargs.get('name'),
                     existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
                     existing_trigger.schedule_interval != kwargs.get('schedule_interval'),

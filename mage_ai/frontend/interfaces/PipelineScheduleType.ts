@@ -86,6 +86,7 @@ export default interface PipelineScheduleType {
   event_matchers?: EventMatcherType[];
   global_data_product_uuid?: string;
   id?: number;
+  last_enabled_at?: string;
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   next_pipeline_run_date?: string;

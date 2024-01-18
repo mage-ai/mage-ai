@@ -127,6 +127,7 @@ function TriggerDetail({
     description,
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
+    last_enabled_at: lastEnabledAt,
     name: pipelineScheduleName,
     next_pipeline_run_date: nextRunDate,
     schedule_interval: scheduleInterval,
@@ -458,6 +459,30 @@ function TriggerDetail({
           {displayLocalTimezone
             ? datetimeInLocalTimezone(startTime, displayLocalTimezone)
             : startTime
+          }
+        </Text>,
+      ]);
+    }
+
+    if (lastEnabledAt) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_last_enabled_at_label"
+        >
+          <CalendarDate {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            Last enabled at
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_last_enabled_at"
+          monospace
+        >
+          {displayLocalTimezone
+            ? datetimeInLocalTimezone(lastEnabledAt, displayLocalTimezone)
+            : dateFormatLong(lastEnabledAt, { includeSeconds: true })
           }
         </Text>,
       ]);
