@@ -223,7 +223,6 @@ class PipelineSchedulerTests(DBTestCase):
     @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_with_integration_pipeline(self):
         integration_pipeline_schedule = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 10, 10, 0, 0, 0),
             name='integration trigger',
             pipeline_uuid='test_integration_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
@@ -232,7 +231,6 @@ class PipelineSchedulerTests(DBTestCase):
             start_time=datetime(2023, 10, 10, 13, 13, 20),
         )
         pipeline_schedule = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 10, 10, 0, 0, 0),
             name='standard trigger',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
@@ -262,7 +260,6 @@ class PipelineSchedulerTests(DBTestCase):
             )
 
         shared_attrs = dict(
-            last_enabled_at=datetime(2023, 10, 10, 0, 0, 0),
             name='trigger',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
@@ -310,7 +307,6 @@ class PipelineSchedulerTests(DBTestCase):
             )
 
         shared_attrs = dict(
-            last_enabled_at=datetime(2023, 10, 10, 0, 0, 0),
             name='trigger',
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.HOURLY,
@@ -592,7 +588,6 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_sla_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -601,7 +596,6 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@hourly',
         )
         PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 3, 31, 0, 0, 0),
             name='test_sla_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -632,7 +626,7 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 1, 0, 0, 0),
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -642,7 +636,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@hourly',
         )
         ps2 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 1, 0, 0, 0),
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -652,7 +646,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@daily',
         )
         ps3 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 1, 0, 0, 0),
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
             settings=dict(create_initial_pipeline_run=True),
@@ -675,6 +669,11 @@ class PipelineSchedulerTests(DBTestCase):
 
         with patch.object(PipelineScheduler, 'schedule') as _:
             schedule_all()
+        """
+        The pipeline runs are still scheduled even though the last_enabled_at
+        date occurs after the current execution date due to the
+        create_initial_pipeline_run setting being enabled.
+        """
         self.assertEqual(1, len(ps1.pipeline_runs))
         self.assertEqual(
             PipelineRun.PipelineRunStatus.INITIAL, ps1.pipeline_runs[0].status
@@ -722,6 +721,15 @@ class PipelineSchedulerTests(DBTestCase):
             start_time=datetime(2023, 4, 5, 1, 20, 33),
             schedule_interval='@weekly',
         )
+        ps4 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_4',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
 
         test_concurrency_config = dict(
             pipeline_run_limit_all_triggers=2,
@@ -750,6 +758,9 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(
             PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
         )
+        # No pipeline run is scheduled for ps4 due to the last_enabled_at date
+        # occurring after the current execution date.
+        self.assertEqual(0, len(ps4.pipeline_runs))
 
     @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_set(self):
@@ -758,7 +769,6 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_both_limit_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -773,7 +783,6 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         ps2 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_both_limit_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -782,7 +791,6 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@weekly',
         )
         ps3 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_both_limit_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -822,7 +830,6 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 3, 0, 0, 0),
             name='test_limit_skip_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -837,7 +844,6 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         ps2 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 3, 0, 0, 0),
             name='test_limit_skip_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -846,7 +852,6 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@daily',
         )
         ps3 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 4, 0, 0, 0),
             name='test_limit_skip_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -887,7 +892,6 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 2, 12, 30, 40),
             name='test_negative_quota_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -908,7 +912,6 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         ps2 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 28, 12, 30, 40),
             name='test_negative_quota_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -917,7 +920,6 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@weekly',
         )
         ps3 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 5, 2, 12, 30, 40),
             name='test_negative_quota_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -968,7 +970,6 @@ class PipelineSchedulerTests(DBTestCase):
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_limit_include_all_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -983,7 +984,6 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         ps2 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_limit_include_all_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
@@ -992,7 +992,6 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_interval='@weekly',
         )
         ps3 = PipelineSchedule.create(
-            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_limit_include_all_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
