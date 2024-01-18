@@ -8,6 +8,7 @@ class PipelineSchedulePresenter(BasePresenter):
         'description',
         'global_data_product_uuid',
         'id',
+        'last_enabled_at',
         'name',
         'pipeline_uuid',
         'repo_path',
@@ -66,7 +67,6 @@ PipelineSchedulePresenter.register_formats([
     constants.UPDATE,
 ], PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
-        'last_enabled_at',
         'next_pipeline_run_date',
         'tags',
     ],
