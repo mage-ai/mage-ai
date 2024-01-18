@@ -355,13 +355,23 @@ class BlockExecutor:
                 dynamic_upstream_block_uuids = dynamic_upstream_block_uuids_reduce + \
                     dynamic_upstream_block_uuids_no_reduce
 
-            conditional_result = self._execute_conditional(
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                global_vars=global_vars,
-                logging_tags=tags,
-                pipeline_run=pipeline_run,
-            )
+            should_run_conditional = True
+
+            if is_dynamic_block_child(self.block):
+                if self.block_run and self.block_run.block_uuid == self.block.uuid:
+                    should_run_conditional = False
+
+            if should_run_conditional:
+                conditional_result = should_run_conditional and self._execute_conditional(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    global_vars=global_vars,
+                    logging_tags=tags,
+                    pipeline_run=pipeline_run,
+                )
+            else:
+                conditional_result = not should_run_conditional
+
             if not conditional_result:
                 self.logger.info(
                     f'Conditional block(s) returned false for {self.block.uuid}. '
