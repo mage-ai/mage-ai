@@ -467,7 +467,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         **kwargs,
     ) -> str:
         variables = variables or {}
-        if self.pipeline and self.pipeline.variables:
+        if self.pipeline and self.pipeline.variables and not variables:
+            # If variables is an empty dictionary, set it with the pipeline variables
             variables.update(self.pipeline.variables)
 
         if upstream_block_uuids is None:
