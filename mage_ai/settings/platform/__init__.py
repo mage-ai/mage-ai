@@ -5,7 +5,6 @@ from typing import Dict
 import yaml
 from jinja2 import Template
 
-from mage_ai.settings import ENABLE_PROJECT_PLATFORM
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
 from mage_ai.settings.platform.constants import (
     LOCAL_PLATFORM_SETTINGS_FILENAME,
@@ -204,7 +203,7 @@ def build_active_project_repo_path(repo_path: str = None) -> str:
 
 
 def project_platform_activated() -> bool:
-    return ENABLE_PROJECT_PLATFORM and os.path.exists(platform_settings_full_path())
+    return os.path.exists(platform_settings_full_path())
 
 
 def platform_settings(mage_projects_only: bool = False) -> Dict:

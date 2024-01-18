@@ -1,0 +1,112 @@
+---
+title: "Multi-project platform"
+sidebarTitle: ""
+description: "Manage infinite number of Mage and non-Mage projects from a single running Mage application."
+icon: "layer-group"
+"og:image": "https://media2.giphy.com/media/zXmbOaTpbY6mA/giphy.gif"
+---
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Multi-project platform"
+        src="https://media2.giphy.com/media/zXmbOaTpbY6mA/giphy.gif"
+    />
+    </p>
+</Frame>
+
+<br />
+
+## Overview
+
+<video
+    controls
+    className="w-full aspect-video"
+    src="https://github.com/mage-ai/assets/blob/main/platform/multi-project-platform.mp4">
+</video>
+
+In a previous universe, a single Mage application supported only 1 Mage project and only read
+files from sub-directories of the top-level Mage project.
+
+In the new multi-verse, you can manage and run multiple different Mage projects and other
+non-Mage projects (e.g. dbt projects).
+
+## Structure
+
+You’ll still need a top-level directory to store all your files and folders.
+This top-level directory can be named anything. You’ll still start the Mage application
+pointing to this directory. For example: `mage start multiverse_project`.
+
+Within this top-level directory, you can add any number of files and folders in any structure
+you see fit.
+
+There are a few requirements:
+
+1. At the root of the top-level directory, create a file named `settings.yaml`.
+1. For any Mage related projects, there needs to be a file named `metadata.yaml` in the root directory
+    of the Mage project you wish to use in this multi-project setup. For example, here is how
+    a setup with 3 Mage projects can look:
+
+    ```
+    mutliverse_project/
+        fire/
+            data_loaders/
+            pipelines/
+            metadata.yaml
+            io_config.yaml
+        lightning/
+            data_loaders/
+            pipelines/
+            metadata.yaml
+            io_config.yaml
+        water/
+            ice/
+                glacier/
+                    data_loaders/
+                    pipelines/
+                    metadata.yaml
+                    io_config.yaml
+        settings.yaml
+    ```
+
+In the `settings.yaml` file, you’ll need to register the project so that Mage knows where
+your active projects live.
+
+Open the `settings.yaml` file and add the following (adjust to your specific setup):
+
+```yaml
+# multiverse_project/settings.ymal
+
+projects:
+  fire: {}
+  lightning: {}
+  glacier:
+    path: water/ice/glacier
+```
+
+Note that the project named `glacier` has a custom path configured in the settings.
+This allows Mage to reference the project using `glacier` while supporting the flexibility of
+any project to be located anywhere.
+
+For a skeleton template of a pre-configured Multi-project platform setup, 
+clone this [repository](https://github.com/mage-ai/platform_template). 
+
+---
+
+## Project preferences
+
+Each Mage project can have its own set of feature settings, custom designs, and more.
+
+However, the top-level project can override these settings for each project.
+
+To set project-wide settings, go to the project preferences page and on the left side there will
+be a navigation option to configure the settings for the entire platform.
+
+---
+
+## Migrating an existing Mage project
+
+If you have an existing project, take the entire project directory and add it as a sub-directory
+into the new top-level folder (e.g. `multiverse_project`).
+
+Then, add your existing project’s name to the `settings.yaml` file.

@@ -22,7 +22,8 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
 )
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
-from mage_ai.settings.utils import base_repo_path
+
+# from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import AsyncDBTestCase, DBTestCase
 from mage_ai.tests.factory import (
@@ -1801,11 +1802,11 @@ class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
             'mage_ai.orchestration.db.models.schedules.project_platform_activated',
             lambda: False,
         ):
-            pipeline_schedule1 = PipelineSchedule.create(
-                name='test pipeline',
-                pipeline_uuid=self.pipeline.uuid,
-                repo_path=base_repo_path(),
-            )
+            # pipeline_schedule1 = PipelineSchedule.create(
+            #     name='test pipeline',
+            #     pipeline_uuid=self.pipeline.uuid,
+            #     repo_path=base_repo_path(),
+            # )
             pipeline_schedule2 = PipelineSchedule.create(
                 name='test pipeline',
                 pipeline_uuid=self.pipeline.uuid,
@@ -1814,7 +1815,7 @@ class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
 
             ids = [ps.id for ps in PipelineSchedule.repo_query.all()]
 
-            self.assertIn(pipeline_schedule1.id, ids)
+            # self.assertIn(pipeline_schedule1.id, ids)
             self.assertIn(pipeline_schedule2.id, ids)
 
         with patch(

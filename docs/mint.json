@@ -54,6 +54,10 @@
       "url": "production"
     },
     {
+      "name": "Platform",
+      "url": "platform"
+    },
+    {
       "name": "Contribute",
       "url": "contributing"
     },
@@ -222,7 +226,8 @@
                 "dbt/snapshots",
                 "dbt/running-dbt-tests"
               ]
-            }
+            },
+            "dbt/developer-experience"
           ]
         },
         "orchestration/global-data-products/overview",
@@ -769,12 +774,31 @@
       ]
     },
     {
+      "group": "Overview",
+      "pages": [
+        "platform/overview"
+      ]
+    },
+    {
+      "group": "Designs",
+      "pages": [
+        "platform/designs/setup"
+      ]
+    },
+    {
+      "group": "Projects",
+      "pages": [
+        "platform/projects/management"
+      ]
+    },
+    {
       "group": "Get Started",
       "pages": [
         "contributing/overview",
         "contributing/development-environment"
       ]
-    },{
+    },
+    {
       "group": "Components",
       "pages":[
         {
