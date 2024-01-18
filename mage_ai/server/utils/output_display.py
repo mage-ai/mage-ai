@@ -199,7 +199,10 @@ def __custom_output():
     ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
-        _rows = json.loads(_sample[_columns].to_json(default_handler=str, orient='split'))['data']
+        _rows = simplejson.loads(_sample[_columns].fillna('').to_json(
+            default_handler=str,
+            orient='split',
+        ))['data']
         _shape = _internal_output_return.shape
         _index = _sample.index.tolist()
 
