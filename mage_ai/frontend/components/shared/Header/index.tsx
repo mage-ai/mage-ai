@@ -210,24 +210,28 @@ function Header({
     height?: number;
     width?: number;
   }>(null);
-  // const customDesignMedia = useMemo(() => {
-  //   if (typeof window !== 'undefined') {
-  //     const media = design?.components?.header?.media;
-  //     const image = new Image();
-  //     const imageSrc = media?.url || media?.file_path;
-  //     if (imageSrc) {
-  //       image.src = imageSrc;
-  //       image.onload = () => {
-  //         setCustomMediaSize(image);
-  //       };
 
-  //       return image;
-  //     }
-  //   }
-  // }, [
-  //   design,
-  //   setCustomMediaSize,
-  // ]);
+  const customDesignMedia = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const media = design?.components?.header?.media;
+      if (media) {
+        const image = new Image();
+        const imageSrc = media?.url || media?.file_path;
+
+        if (typeof imageSrc !== 'undefined' && imageSrc !== null) {
+          image.src = imageSrc;
+          image.onload = () => {
+            setCustomMediaSize(image);
+          };
+
+          return image;
+        }
+      }
+    }
+  }, [
+    design,
+    setCustomMediaSize,
+  ]);
 
   const logoLink = useMemo(() => {
     let logoHeight = LOGO_HEIGHT;
@@ -269,6 +273,7 @@ function Header({
     customMediaSize,
     design,
   ]);
+
 
   const userDropdown: FlyoutMenuItemType[] = [
     {
