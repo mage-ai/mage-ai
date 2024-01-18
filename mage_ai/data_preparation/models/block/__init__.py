@@ -39,7 +39,6 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
-    mock_dynamic_in_real_scenario,
     should_reduce_output,
     uuid_for_output_variables,
 )
@@ -2766,23 +2765,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if logging_tags is None:
             logging_tags = dict()
 
-        if from_notebook:
-            kwargs = mock_dynamic_in_real_scenario(self, **merge_dict(kwargs, dict(
-                build_block_output_stdout=build_block_output_stdout,
-                custom_code=custom_code,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_uuid=dynamic_block_uuid,
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                logger=logger,
-                logging_tags=logging_tags,
-                outputs=outputs,
-                update_tests=update_tests,
-            )))
-            dynamic_block_index = kwargs.get('dynamic_block_index') or dynamic_block_index
-            dynamic_block_uuid = kwargs.get('dynamic_block_uuid') or dynamic_block_uuid
-
         self.dynamic_block_uuid = dynamic_block_uuid
 
         if self.pipeline \
@@ -3161,14 +3143,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             override,
             override_outputs,
             dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
         )
 
         block_uuid, changed = uuid_for_output_variables(
             self,
             block_uuid=self.uuid,
             dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
         )
 
         for uuid, data in variables_data['variable_mapping'].items():
@@ -3198,6 +3178,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         override: bool = False,
         override_outputs: bool = False,
         spark=None,
+        dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
     ) -> None:
         variables_data = self.__store_variables_prepare(
@@ -3205,13 +3186,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             execution_partition,
             override,
             override_outputs,
-            dynamic_block_uuid,
+            dynamic_block_index=dynamic_block_index,
         )
 
         block_uuid, changed = uuid_for_output_variables(
             self,
             block_uuid=self.uuid,
-            dynamic_block_uuid=dynamic_block_uuid,
+            dynamic_block_index=dynamic_block_index,
         )
 
         for uuid, data in variables_data['variable_mapping'].items():

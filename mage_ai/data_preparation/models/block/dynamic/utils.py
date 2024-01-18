@@ -187,12 +187,12 @@ def uuid_for_output_variables(
     if block_uuid is None:
         block_uuid = block.uuid
 
-    if dynamic_block_uuid:
-        block_uuid = dynamic_block_uuid
-        dynamic_block_index = None
+    is_dynamic_child = is_dynamic_block_child(block)
+
+    if is_dynamic_child and dynamic_block_index is not None:
+        return os.path.join(block.uuid, str(dynamic_block_index)), True
 
     is_dynamic = is_dynamic_block(block)
-    is_dynamic_child = is_dynamic_block_child(block)
     if (not is_dynamic and (dynamic_block_index is None or is_dynamic_child)) or \
             (is_dynamic and is_dynamic_child):
 
@@ -495,7 +495,10 @@ def build_combinations_for_dynamic_child(
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index
                         )
-                        arr.extend([idx for idx in range(len(values))])
+                        if values is not None:
+                            arr.extend([idx for idx in range(len(values))])
+                        else:
+                            arr.append(0)
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:

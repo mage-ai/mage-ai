@@ -87,7 +87,7 @@ class DynamicChildController:
 
                 tries = 0
                 count = 0
-                while tries < 10 and count == 0:
+                while tries < 12 and count == 0:
                     # If this block tries to get the data too soon, it’ll return empty.
                     pairs = get_outputs_for_dynamic_child(
                         upstream_block,
@@ -95,7 +95,7 @@ class DynamicChildController:
                     )
                     count = len(pairs)
                     if count == 0:
-                        time.sleep(5)
+                        time.sleep(10)
                         tries += 1
 
                 counts_by_upstream_block_uuid[upstream_block.uuid] = count
@@ -106,7 +106,7 @@ class DynamicChildController:
             elif is_dynamic:
                 tries = 0
                 count = 0
-                while tries < 10 and count == 0:
+                while tries < 12 and count == 0:
                     # If this block tries to get the data too soon, it’ll return empty.
                     values, metadata = get_outputs_for_dynamic_block(
                         upstream_block,
@@ -114,7 +114,7 @@ class DynamicChildController:
                     )
                     count = len(values)
                     if count == 0:
-                        time.sleep(5)
+                        time.sleep(10)
                         tries += 1
 
                 counts_by_upstream_block_uuid[upstream_block.uuid] = count
@@ -122,14 +122,14 @@ class DynamicChildController:
 
         tries = 0
         combos = None
-        while tries < 10 and combos is None:
+        while tries < 12 and combos is None:
             try:
                 combos = build_combinations_for_dynamic_child(
                     self.block,
                     execution_partition=execution_partition,
                 )
             except Exception:
-                time.sleep(5)
+                time.sleep(10)
                 tries += 1
 
         block_run_dicts = []

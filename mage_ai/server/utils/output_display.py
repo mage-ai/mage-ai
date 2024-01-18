@@ -400,22 +400,33 @@ def execute_custom_code():
     if is_dynamic_child:
         outputs = []
         settings = build_combinations_for_dynamic_child(block, **options)
-        for config in settings:
+        for dynamic_block_index, config in enumerate(settings):
             output_dict = block.execute_with_callback(**merge_dict(options, config))
             if output_dict and output_dict.get('output'):
                 outputs.append(output_dict.get('output'))
+
+            if {run_tests}:
+                block.run_tests(
+                    custom_code=code,
+                    dynamic_block_index=dynamic_block_index,
+                    from_notebook=True,
+                    logger=logger,
+                    global_vars=global_vars,
+                    update_tests=False,
+                )
+
         block_output['output'] = outputs
     else:
         block_output = block.execute_with_callback(**options)
 
-    if {run_tests}:
-        block.run_tests(
-            custom_code=code,
-            from_notebook=True,
-            logger=logger,
-            global_vars=global_vars,
-            update_tests=False,
-        )
+        if {run_tests}:
+            block.run_tests(
+                custom_code=code,
+                from_notebook=True,
+                logger=logger,
+                global_vars=global_vars,
+                update_tests=False,
+            )
 
     output = block_output['output'] or []
 

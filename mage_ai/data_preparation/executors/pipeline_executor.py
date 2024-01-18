@@ -105,7 +105,7 @@ class PipelineExecutor:
                     block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
 
                 block_run.update(**block_run_data)
-                return BlockExecutor(**executor_kwargs).execute(
+                return BlockExecutor(block_run_id=block_run.id, **executor_kwargs).execute(
                     block_run_id=block_run.id,
                     block_run_outputs_cache=block_run_outputs_cache,
                     cache_block_output_in_memory=self.pipeline.cache_block_output_in_memory,

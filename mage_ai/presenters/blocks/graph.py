@@ -110,6 +110,19 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
 
     # Remove the originals
     for block_uuid, block in pipeline.blocks_by_uuid.items():
+        # If all upstream dynamic child blocks reduce output, remove the original upstream
+        # from its upstream blocks
+        if block.upstream_blocks and all([is_dynamic_block_child(
+            up,
+        ) and should_reduce_output(
+            up,
+        ) for up in block.upstream_blocks]):
+            for upstream_block in block.upstream_blocks:
+                block_dicts_by_uuid[block_uuid]['upstream_blocks'] = list(filter(
+                    lambda x, upstream_block=upstream_block: x != upstream_block.uuid,
+                    block_dicts_by_uuid[block_uuid]['upstream_blocks'],
+                ))
+
         is_dynamic_child = is_dynamic_block_child(block)
         is_dynamic = is_dynamic_block(block)
 
@@ -121,19 +134,24 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
                     not all([should_reduce_output(up) for up in upstream_dynamic_childs]):
 
                 uuid = block.uuid_replicated if block.replicated_block else block_uuid
-
                 brs = (block_runs_by_block_uuid.get(uuid) or {}).get('clones') or []
                 if brs and len(brs) >= 1:
                     if uuid in block_dicts_by_uuid:
                         block_dicts_by_uuid.pop(uuid, None)
 
-    # Add the originals upstream blocks if the originals are still in the dicts
+    # Add the originals upstream blocks if the originals are still in the dicts and
+    # if the upstream doesn’t reduce output
     for block_uuid, block in pipeline.blocks_by_uuid.items():
         if block.replicated_block:
             block_uuid = block.uuid_replicated
 
         for up_block in block.upstream_blocks:
             up_uuid = up_block.uuid_replicated if up_block.replicated_block else up_block.uuid
+
+            if is_dynamic_block_child(up_block) and \
+                    should_reduce_output(up_block):
+
+                continue
 
             if block_uuid in block_dicts_by_uuid:
                 if up_uuid in block_dicts_by_uuid:
@@ -145,6 +163,8 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
                         if up_block2.uuid == up_uuid and block_run.block_uuid != up_uuid:
                             up_brs.append(block_run.block_uuid)
                     block_dicts_by_uuid[block_uuid]['upstream_blocks'].extend(up_brs)
+
+    # De-dupe upstream blocks
 
     return block_dicts_by_uuid
 
