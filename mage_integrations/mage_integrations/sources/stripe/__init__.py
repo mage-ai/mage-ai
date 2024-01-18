@@ -726,6 +726,9 @@ def sync_stream(stream_name, is_sub_stream=False, logger=None):
                     # any fields that aren't present in the whitelist.
                     if stream_field_whitelist:
                         rec = apply_whitelist(rec, stream_field_whitelist)
+                    # If metadata is empty, set it as None
+                    if type(rec.get('metadata')) == dict and len(rec.get('metadata')) == 0:
+                        rec['metadata'] = None
 
                     singer.write_record(stream_name,
                                         rec,
@@ -924,6 +927,11 @@ def sync_sub_stream(sub_stream_name, parent_obj, updates=False):
             ))
             # NB: Older structures (such as invoice_line_items) may not have had their ID present.
             #     Skip these if they don't match the structure we expect.
+
+            # If metadata is empty, set it as None
+            if type(rec.get('metadata')) == dict and len(rec.get('metadata')) == 0:
+                        rec['metadata'] = None
+
             if "id" in rec:
                 singer.write_record(sub_stream_name,
                                     rec,
@@ -1084,6 +1092,9 @@ def sync_event_updates(stream_name, is_sub_stream):
                 rec = recursive_to_dict(event_resource_obj)
                 rec = unwrap_data_objects(rec)
                 rec = reduce_foreign_keys(rec, stream_name)
+                # If metadata is empty, set it as None
+                if type(rec.get('metadata')) == dict and len(rec.get('metadata')) == 0:
+                        rec['metadata'] = None
                 rec["updated"] = events_obj.created
                 rec["updated_by_event_type"] = events_obj.type
                 rec = transformer.transform(
