@@ -20,7 +20,7 @@ class Destination(BaseDestination):
     SCHEMA_CONFIG_KEY = 'schema'
     TABLE_CONFIG_KEY = 'table'
 
-    BATCH_SIZE = 50000
+    BATCH_SIZE = 25000
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
