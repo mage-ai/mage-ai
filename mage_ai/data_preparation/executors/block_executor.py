@@ -21,9 +21,6 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.dynamic.child import DynamicChildController
-from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
-    DynamicChildBlockFactory,
-)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
@@ -1041,9 +1038,6 @@ class BlockExecutor:
                             arr.append(br)
 
                     return arr
-
-        if self.block and isinstance(self.block, DynamicChildBlockFactory):
-            self.block.set_pipeline_run(pipeline_run)
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,

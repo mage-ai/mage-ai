@@ -8,9 +8,7 @@ from faker import Faker
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
-    DynamicChildBlockFactory,
-)
+from mage_ai.data_preparation.models.block.dynamic.child import DynamicChildController
 from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -363,7 +361,6 @@ class BlockExecutorTest(BaseApiTestCase):
             test_case=self,
         ):
             test_case.assertEqual(block_uuid, block1.uuid)
-            test_case.assertEqual(metrics, dict(children=children))
 
         def __execute_sync(
             child_data=child_data,
@@ -409,7 +406,7 @@ class BlockExecutorTest(BaseApiTestCase):
             execution_partition=pipeline_run.execution_partition,
         )
 
-        self.assertTrue(isinstance(executor.block, DynamicChildBlockFactory))
+        self.assertTrue(isinstance(executor.block, DynamicChildController))
 
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
@@ -428,7 +425,7 @@ class BlockExecutorTest(BaseApiTestCase):
             execution_partition=pipeline_run.execution_partition,
         )
 
-        self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
+        self.assertFalse(isinstance(executor.block, DynamicChildController))
 
         # with patch.object(pipeline, 'get_block', lambda _x: block2):
         with patch.object(block2, 'execute_sync') as mock_execute_sync:
@@ -489,7 +486,7 @@ class BlockExecutorTest(BaseApiTestCase):
             execution_partition=pipeline_run.execution_partition,
         )
 
-        self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
+        self.assertFalse(isinstance(executor.block, DynamicChildController))
 
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
