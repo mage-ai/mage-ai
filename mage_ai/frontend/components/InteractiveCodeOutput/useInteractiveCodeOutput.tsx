@@ -12,8 +12,9 @@ import KeyboardContext from '@context/Keyboard';
 import OutputGroup from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
-import useTerminal from '@components/Terminal/useTerminal';
+import useTerminalComponents from '@components/Terminal/useTerminalComponents';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
+import { useKeyboardContext } from '@context/Keyboard';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { ErrorProvider } from '@context/Error';
 import { ModalProvider } from '@context/Modal';
@@ -119,14 +120,32 @@ export default function useInteractiveCodeOutput({
   const terminalStateRef = useRef({});
 
   const {
+    input: inputShell,
+    output: outputShell,
+    registerKeyboardShortcuts,
+    renderInput,
+    renderOutput,
     setFocus,
-    terminal,
-  } = useTerminal({
-    terminalStateRef,
-    uuid,
+  } = useTerminalComponents({
+    containerRef,
+    onMessage: () => {},
+    queryParams: {
+      term_name: `${user?.id}--${uuid}`,
+    },
+    uuid: 'terminal',
   });
 
-  shellItemsRef.current = terminal;
+  const {
+    registerOnKeyDown,
+    setDisableGlobalKeyboardShortcuts,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuid);
+  }, [unregisterOnKeyDown, uuid]);
+
+  registerOnKeyDown(uuid, registerKeyboardShortcuts, []);
 
   function scrollTo({
     bottom,
@@ -223,22 +242,27 @@ export default function useInteractiveCodeOutput({
       return;
     }
 
-    console.log(shellItemsRef.current)
-
     shellRootRef?.current?.render(
       <KeyboardContext.Provider value={keyboardContext}>
         <ThemeProvider theme={themeContext}>
           <ModalProvider>
             <ErrorProvider>
-              {shellItemsRef.current}
+              <ComponentWithCallback
+                callback={() => {
+                  setTimeout(() => {
+                    renderInput();
+                    renderOutput();
+                  }, 1);
+                }}
+              >
+                {outputShell}
+                {inputShell}
+              </ComponentWithCallback>
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
       </KeyboardContext.Provider>,
     );
-
-    setFocus(true);
-    terminalStateRef.current.focus = true;
   }
 
   function shellMountCallback() {
@@ -246,6 +270,7 @@ export default function useInteractiveCodeOutput({
       behavior: 'smooth',
       block: 'end',
     });
+    renderInteractiveShell();
   }
 
   function handleClickGroup(data) {
@@ -270,7 +295,7 @@ export default function useInteractiveCodeOutput({
     if (selectedGroupOfOutputs?.current?.groupID === groupID) {
       if (!selectedGroupOfOutputs?.current?.active) {
         setupGroups();
-        renderInteractiveShell();
+        setFocus(true);
       }
       selectedGroupOfOutputs.current = { active: true, ...data };
     } else {

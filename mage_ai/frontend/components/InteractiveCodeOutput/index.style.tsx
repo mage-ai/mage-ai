@@ -20,7 +20,9 @@ export const ShellContainerStyle = styled.div`
 
   height: 500px;
   position: relative;
-  background: red;
+  background: black;
+  width: inherit;
+  overflow: auto;
 `;
 
 export const OutputContainerStyle = styled.div`
