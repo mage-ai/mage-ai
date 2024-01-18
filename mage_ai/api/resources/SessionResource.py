@@ -78,8 +78,10 @@ class SessionResource(BaseResource):
             conn = new_ldap_connection()
             auth, user_dn, user_attributes = conn.authenticate(email, password)
             if not auth:
-                if user_dn != "":
-                    error.update({'message': 'wrong password.'})
+                if not user_dn:
+                    error.update({'message': 'LDAP user not found.'})
+                else:
+                    error.update({'message': 'LDAP password invalid.'})
                 raise ApiError(error)
 
             authz = conn.authorize(user_dn)
