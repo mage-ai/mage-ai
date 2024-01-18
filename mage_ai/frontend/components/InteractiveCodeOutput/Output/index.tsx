@@ -35,7 +35,6 @@ function Output({
   groupID,
   groupsCount,
   index,
-  interactiveShell,
   onClick,
   outputs: outputsProp,
 }: {
@@ -43,7 +42,6 @@ function Output({
   groupID: string;
   groupsCount: number;
   index: number;
-  interactiveShell?: JSX.Element;
   onClick?: (e: Event) => void;
   outputs: KernelOutputType[];
 }, ref) {
@@ -287,8 +285,6 @@ function Output({
         tables={tables}
         text={text}
       />
-
-      {interactiveShell}
     </RowGroupStyle>
   );
 }

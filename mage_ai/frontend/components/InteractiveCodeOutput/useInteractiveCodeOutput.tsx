@@ -12,6 +12,7 @@ import KeyboardContext from '@context/Keyboard';
 import OutputGroup from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
+import useTerminal from '@components/Terminal/useTerminal';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { ErrorProvider } from '@context/Error';
@@ -115,6 +116,18 @@ export default function useInteractiveCodeOutput({
 
   const [interactiveShell, setInteractiveShell] = useState<JSX.Element>(null);
 
+  const terminalStateRef = useRef({});
+
+  const {
+    setFocus,
+    terminal,
+  } = useTerminal({
+    terminalStateRef,
+    uuid,
+  });
+
+  shellItemsRef.current = terminal;
+
   function scrollTo({
     bottom,
     top,
@@ -198,42 +211,34 @@ export default function useInteractiveCodeOutput({
     }, 300);
   }
 
-  function renderInteractiveShell(groupID: string) {
-    // if (!shellRootRef?.current) {
-    //   const domNode = document.getElementById(shellRootUUID.current);
-    //   if (domNode) {
-    //     shellRootRef.current = createRoot(domNode);
-    //   }
-    // }
+  function renderInteractiveShell() {
+    if (!shellRootRef?.current) {
+      const domNode = document.getElementById(shellRootUUID.current);
+      if (domNode) {
+        shellRootRef.current = createRoot(domNode);
+      }
+    }
 
-    // if (!shellRootRef?.current) {
-    //   return;
-    // }
+    if (!shellRootRef?.current) {
+      return;
+    }
 
-    // const targetRef = outputGroupRefs?.current?.[groupID];
+    console.log(shellItemsRef.current)
 
-    // console.log('heloooooooo')
-    // shellRootRef?.current?.render(
-    //   <KeyboardContext.Provider value={keyboardContext}>
-    //     <ThemeProvider theme={themeContext}>
-    //       <ModalProvider>
-    //         <ErrorProvider>
-    //           <ComponentWithCallback callback={onRenderOutputCallback}>
-                // <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
-                //   Hello
-                // </ShellContainerStyle>
-    //           </ComponentWithCallback>
-    //         </ErrorProvider>
-    //       </ModalProvider>
-    //     </ThemeProvider>
-    //   </KeyboardContext.Provider>,
-    // );
+    shellRootRef?.current?.render(
+      <KeyboardContext.Provider value={keyboardContext}>
+        <ThemeProvider theme={themeContext}>
+          <ModalProvider>
+            <ErrorProvider>
+              {shellItemsRef.current}
+            </ErrorProvider>
+          </ModalProvider>
+        </ThemeProvider>
+      </KeyboardContext.Provider>,
+    );
 
-    // setInteractiveShell(
-    //   <ShellContainerStyle ref={shellContainerRef} messagesRef={messagesRef}>
-    //     Hello
-    //   </ShellContainerStyle>
-    // );
+    setFocus(true);
+    terminalStateRef.current.focus = true;
   }
 
   function shellMountCallback() {
@@ -248,19 +253,29 @@ export default function useInteractiveCodeOutput({
       groupID,
     } = data;
 
+    removeSelectedFromAllRowGroups();
+
+    setTimeout(() => {
+      if (outputGroupRefs?.current?.[groupID]?.current) {
+        const ref = outputGroupRefs?.current?.[groupID];
+        ref.current.className = addClassNames(
+          ref?.current?.className || '',
+          [
+            'row-group-selected',
+          ],
+        );
+      }
+    }, 1);
 
     if (selectedGroupOfOutputs?.current?.groupID === groupID) {
       if (!selectedGroupOfOutputs?.current?.active) {
         setupGroups();
-        setTimeout(() => removeSelectedFromAllRowGroups(), 1);
-
-        containerRef.current.style.overflow = 'hidden';
+        renderInteractiveShell();
       }
       selectedGroupOfOutputs.current = { active: true, ...data };
     } else {
       selectedGroupOfOutputs.current = { active: false, ...data };
     }
-
   }
 
   function renderOutputs(outputs: KernelOutputType[]) {
@@ -294,20 +309,6 @@ export default function useInteractiveCodeOutput({
           key={groupID}
           groupID={groupID}
           onClick={(e) => {
-            removeSelectedFromAllRowGroups();
-
-            setTimeout(() => {
-              if (outputGroupRefs?.current?.[groupID]?.current) {
-                const ref = outputGroupRefs?.current?.[groupID];
-                ref.current.className = addClassNames(
-                  ref?.current?.className || '',
-                  [
-                    'row-group-selected',
-                  ],
-                );
-              }
-            }, 1);
-
             const data = {
               dates,
               groupsCount,
@@ -331,13 +332,13 @@ export default function useInteractiveCodeOutput({
       ) {
         outputsGrouped.push(
           <ComponentWithCallback
-            id={shellRootUUID.current}
-            key={shellRootUUID.current}
+            id={`${shellRootUUID.current}-callback`}
+            key={`${shellRootUUID.current}-callback`}
             ref={shellContainerRef}
             callback={shellMountCallback}
           >
             <ShellContainerStyle  messagesRef={messagesRef}>
-              Hello
+              <ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />
             </ShellContainerStyle>
           </ComponentWithCallback>
         );
@@ -351,8 +352,6 @@ export default function useInteractiveCodeOutput({
             <ErrorProvider>
               <ComponentWithCallback callback={onRenderOutputCallback}>
                 {outputsGrouped}
-
-                {/*<ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />*/}
               </ComponentWithCallback>
             </ErrorProvider>
           </ModalProvider>

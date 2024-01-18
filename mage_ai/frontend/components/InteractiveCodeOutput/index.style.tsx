@@ -19,6 +19,7 @@ export const ShellContainerStyle = styled.div`
   ${CONTAINER_STYLE}
 
   height: 500px;
+  position: relative;
   background: red;
 `;
 
