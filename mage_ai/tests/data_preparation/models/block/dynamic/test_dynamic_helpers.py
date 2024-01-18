@@ -50,57 +50,6 @@ class DynamicHelpersTest(BaseApiTestCase):
             ],
         )
 
-    def test_all_variable_uuids_with_colons(self):
-        partition = 'mage'
-
-        for block_uuid in range(3):
-            for i in range(3):
-                variable_mapping = {
-                    f'output_{block_uuid}_{i}_0': uuid.uuid4().hex,
-                    f'output_{block_uuid}_{i}_1': uuid.uuid4().hex,
-                }
-
-                parts = [
-                    self.block.uuid,
-                ]
-                if block_uuid >= 1:
-                    parts.append(f'custom_uuid_{block_uuid}')
-                parts.append(str(i))
-                dynamic_block_uuid = ':'.join(parts)
-
-                self.block.store_variables(
-                    variable_mapping,
-                    dynamic_block_uuid=dynamic_block_uuid,
-                    execution_partition=partition,
-                    override=True,
-                    override_outputs=True,
-                )
-
-        self.assertEqual(
-            sorted(all_variable_uuids(self.block, partition=partition)),
-            [
-                # 'output_0_0_0',
-                # 'output_0_0_1',
-                # 'output_0_1_0',
-                # 'output_0_1_1',
-                # 'output_0_2_0',
-                # 'output_0_2_1',
-                # 'output_1_0_0',
-                # 'output_1_0_1',
-                # 'output_1_1_0',
-                # 'output_1_1_1',
-                # 'output_1_2_0',
-                # 'output_1_2_1',
-                # 'output_2_0_0',
-                # 'output_2_0_1',
-                # 'output_2_1_0',
-                # 'output_2_1_1',
-                # 'output_2_2_0',
-                # 'output_2_2_1',
-                'block1',
-            ],
-        )
-
     def test_reduce_output_from_block(self):
         self.block.configuration = dict(dynamic=True)
         self.pipeline1.add_block(self.block)

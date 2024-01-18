@@ -1,1 +1,0 @@
-[{"block_uuid":"block3:0:0","metadata":{"dynamic_block_index":0,"dynamic_upstream_block_uuids":["block2:0:0"]}},{"block_uuid":"block3:1:1","metadata":{"dynamic_block_index":1,"dynamic_upstream_block_uuids":["block2:1:1"]}},{"block_uuid":"block3:2:2","metadata":{"dynamic_block_index":2,"dynamic_upstream_block_uuids":["block2:2:2"]}}]
