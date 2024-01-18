@@ -534,10 +534,12 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 """
                 Check if the last_enabled_at attribute has a value (if it does not,
                 it could mean that the pipeline schedule already existed and was active).
-                If there is no value for last_enabled_at, we default to not creating an
-                initial pipeline run.
+                If there is no value for last_enabled_at, we default to creating an
+                initial pipeline run. Otherwise, no additional pipeline runs would be
+                created for the existing pipeline schedule until it was disabled and
+                re-enabled (so that the last_enabled_at attribute would get updated).
                 """
-                avoid_initial_pipeline_run = True
+                avoid_initial_pipeline_run = False
             else:
                 """
                 Check if "create_initial_pipeline_run" setting is not enabled. If
