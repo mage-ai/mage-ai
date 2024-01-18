@@ -44,11 +44,10 @@ function MultiOutput({ outputs }: MultiOutputProps) {
     return arr;
   }, [outputs]);
 
-  console.log(outputs)
-
   return (
     <MultiOutputStyle>
       <ButtonTabs
+        allowScroll
         selectedTabUUID={selectedTab?.uuid}
         onClickTab={(tab) => {
           setSelectedTab(tab);
