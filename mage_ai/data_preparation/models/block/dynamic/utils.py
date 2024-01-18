@@ -503,7 +503,10 @@ def build_combinations_for_dynamic_child(
                     upstream_block,
                     execution_partition=execution_partition,
                 )
-            dynamic_counts.append([idx for idx in range(len(arr))])
+            if arr is not None:
+                dynamic_counts.append([idx for idx in range(len(arr))])
+            else:
+                dynamic_counts.append([0])
         else:
             dynamic_counts.append([0])
 

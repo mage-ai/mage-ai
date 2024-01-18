@@ -570,7 +570,9 @@ function CodeOutput({
           if (isObject(data)) {
             if (output?.multi_output && DataTypeEnum.TEXT === output?.type) {
               const {
+                // @ts-ignore
                 columns,
+                // @ts-ignore
                 rows,
               } = data;
 
@@ -615,7 +617,9 @@ function CodeOutput({
                   }))}
                 />
               );
+              // @ts-ignore
             } else if (data?.data) {
+              // @ts-ignore
               const textArr = data?.data?.split('\\n');
 
               displayElement = (
