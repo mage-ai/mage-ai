@@ -140,7 +140,7 @@ class DynamicChildController:
             dynamic_upstream_block_uuids = []
             upstream_blocks_from_metadata = []
 
-            for index, upstream_block in enumerate(upstream_blocks):
+            for upstream_block in upstream_blocks:
                 is_dynamic_child = is_dynamic_block_child(upstream_block)
                 is_dynamic = is_dynamic_block(upstream_block)
 

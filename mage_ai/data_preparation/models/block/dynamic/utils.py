@@ -511,7 +511,7 @@ def build_combinations_for_dynamic_child(
     combinations = create_combinations(dynamic_counts)
 
     settings = []
-    for dynamic_block_index, arr in enumerate(combinations):
+    for dynamic_block_index, _arr in enumerate(combinations):
         # dynamic_block_index = 0
         # arr = [1, 2, 3, 4]
 
