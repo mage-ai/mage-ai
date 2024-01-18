@@ -497,8 +497,6 @@ function CodeOutput({
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
-
-
           const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
@@ -520,7 +518,7 @@ function CodeOutput({
                 <OutputRowStyle {...outputRowSharedProps}>
                   {textArr.map((t) => (
                     <Text key={t} monospace preWrap>
-                      {t?.length >= 1 && (
+                      {t?.length >= 1 && typeof t === 'string' && (
                         <Ansi>
                           {t}
                         </Ansi>
@@ -594,7 +592,7 @@ function CodeOutput({
                           >
                             {textArr.map((t) => (
                               <Text key={t} monospace preWrap>
-                                {t?.length >= 1 && (
+                                {t?.length >= 1 && typeof t === 'string' && (
                                   <Ansi>
                                     {t}
                                   </Ansi>
@@ -624,7 +622,7 @@ function CodeOutput({
                 <OutputRowStyle {...outputRowSharedProps}>
                   {textArr.map((t) => (
                     <Text key={t} monospace preWrap>
-                      {t?.length >= 1 && (
+                      {t?.length >= 1 && typeof t === 'string' && (
                         <Ansi>
                           {t}
                         </Ansi>
@@ -644,7 +642,7 @@ function CodeOutput({
               <OutputRowStyle {...outputRowSharedProps}>
                 {textArr.map((t) => (
                   <Text key={t} monospace preWrap>
-                    {t?.length >= 1 && (
+                    {t?.length >= 1 && typeof t === 'string' && (
                       <Ansi>
                         {t}
                       </Ansi>

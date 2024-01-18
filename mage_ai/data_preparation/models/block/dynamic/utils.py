@@ -364,11 +364,13 @@ def transform_output_for_display(
 
 
 def transform_output_for_display_reduce_output(output: List[Any]) -> List[Dict]:
-    return [dict(
+    arr = [dict(
         text_data=data,
         type=DataType.TEXT,
         variable_uuid=f'output_{idx}',
     ) for idx, data in enumerate(output)]
+
+    return arr
 
 
 def transform_output_for_display_dynamic_child(
@@ -381,12 +383,15 @@ def transform_output_for_display_dynamic_child(
             List[Dict]
         ]
     ],
+    is_dynamic: bool = False,
 ) -> List[Dict]:
     columns = []
     child_data_arr = []
     rows_count = []
 
     for idx, output in enumerate(outputs):
+        if not is_dynamic:
+            output = (output,)
         child_data, metadata = transform_output(output)
 
         column = f'child_{idx}'
@@ -465,10 +470,11 @@ def build_combinations_for_dynamic_child(
 
     for upstream_block in block.upstream_blocks:
         # Dynamic child logic always takes precedence
+        has_reduce_output = should_reduce_output(upstream_block)
         is_dynamic_child = is_dynamic_block_child(upstream_block)
         is_dynamic = is_dynamic_block(upstream_block)
 
-        if is_dynamic_child or is_dynamic:
+        if (is_dynamic_child or is_dynamic) and not has_reduce_output:
             if is_dynamic_child:
                 """
                 Get the number of children that was for this upstream block:

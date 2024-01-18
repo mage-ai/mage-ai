@@ -2098,6 +2098,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     sample_count=sample_count,
                 )
                 for tup in tuples:
+                    if not is_dynamic:
+                        tup = (list(tup),)
                     pairs.append(tup)
             elif is_dynamic:
                 tup = await get_outputs_for_dynamic_block_async(

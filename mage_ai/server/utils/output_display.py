@@ -172,7 +172,10 @@ def __custom_output():
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):
         _json_string = simplejson.dumps(
-            transform_output_for_display_dynamic_child(_internal_output_return),
+            transform_output_for_display_dynamic_child(
+                _internal_output_return,
+                is_dynamic=bool({is_dynamic}),
+            ),
             default=encode_complex,
             ignore_nan=True,
         )
