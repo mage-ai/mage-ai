@@ -58,7 +58,7 @@ export default function useTerminal({
     token,
   ]);
 
-  const [items, setItemsState] = useState<CachedItemType[]>(null);
+  const [items, setItemsState] = useState<CachedItemType[]>([]);
   const selectedItem: CachedItemType =
     useMemo(() => items?.find(item => item?.selected) || items?.[0], [items]);
 
