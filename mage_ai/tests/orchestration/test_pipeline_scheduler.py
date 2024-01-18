@@ -823,7 +823,7 @@ class PipelineSchedulerTests(DBTestCase):
             PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
         )
 
-    @freeze_time('2023-05-04 21:20:33')
+    @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_skip_runs(self):
         pipeline = create_pipeline_with_blocks(
             'test pipeline_run_limit_skip',
@@ -963,7 +963,7 @@ class PipelineSchedulerTests(DBTestCase):
             PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
         )
 
-    @freeze_time('2023-05-01 00:20:33')
+    @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_include_all(self):
         pipeline = create_pipeline_with_blocks(
             'test pipeline_run_limit_include_all',
