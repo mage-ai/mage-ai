@@ -504,6 +504,21 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 )
             return val
 
+        def remove_empty_dicts(val: Dict):
+            # Remove empty dicts to avoid
+            # insertion issues with write_pandas and
+            # pyarrow
+            if isinstance(val, dict) and len(val) == 0:
+                return None
+            # Checks if nested dict also contain
+            # a empty dict
+            elif isinstance(val, dict) and len(val) != 0:
+                for key, value in val.items():
+                    if isinstance(value, dict) and len(value) == 0:
+                        val[key] = None
+                        return val
+            return val
+
         mapping = column_type_mapping(
             self.schemas[stream],
             convert_column_type,
@@ -520,6 +535,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             if COLUMN_TYPE_STRING == col_type \
                     and COLUMN_FORMAT_DATETIME != col_settings.get('format'):
                 df[clean_col_name] = df[clean_col_name].apply(lambda x: serialize_obj(x))
+            elif COLUMN_TYPE_OBJECT == col_type:
+                df[clean_col_name] = df[clean_col_name].apply(lambda x: remove_empty_dicts(x))
         return df
 
 
