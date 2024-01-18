@@ -256,7 +256,8 @@ class PipelineScheduleResource(DatabaseResource):
             payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
-        if payload.get('status') == ScheduleStatus.ACTIVE:
+        if payload.get('status') == ScheduleStatus.ACTIVE and \
+                payload.get('last_enabled_at') is None:
             payload['last_enabled_at'] = datetime.now(tz=pytz.UTC)
 
         if pipeline.should_save_trigger_in_code_automatically():
