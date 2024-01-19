@@ -62,6 +62,7 @@ class OracleDB(Destination):
         ]
 
     def test_connection(self) -> None:
+        self.logger.info('Testing connection')
         oracledb_connection = self.build_connection()
         conn = oracledb_connection.build_connection()
         cursor = conn.cursor()
@@ -147,6 +148,7 @@ WHERE TABLE_NAME = '{table_name.upper()}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        self.logger.info(f'Testing build_insert_commands {table_name}')
         columns = list(schema['properties'].keys())
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=column_type_mapping(
@@ -205,6 +207,7 @@ END;
                 insert_command = f'INSERT {insert_into} VALUES {insert_value}'
             commands.append(insert_command)
 
+        self.logger.info(f'Testing build_insert_commands: {commands}')
         return commands
 
     def does_table_exist(
@@ -214,7 +217,7 @@ END;
         database_name: str = None,
     ) -> bool:
         oracledb_connection = self.build_connection()
-        connection = oracledb_connection.uild_connection()
+        connection = oracledb_connection.build_connection()
         cursor = connection.cursor()
         cursor.execute(
             f'SELECT COUNT(*) FROM user_tables WHERE table_name = \'{table_name.upper()}\'')

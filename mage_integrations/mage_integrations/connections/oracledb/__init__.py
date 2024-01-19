@@ -24,5 +24,7 @@ class OracleDB(Connection):
         return "{}:{}/{}".format(self.host, self.port, self.service)
 
     def build_connection(self):
+        self.logger.info('Testing build_connection')
+        oracledb.init_oracle_client()
         return oracledb.connect(
             user=self.user, password=self.password, dsn=self.make_dsn())
