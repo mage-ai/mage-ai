@@ -839,7 +839,8 @@
           "icon": "browser",
           "pages": [
             "contributing/frontend/overview",
-            "contributing/charts/how-to-add"
+            "contributing/charts/how-to-add",
+            "contributing/frontend/testing"
           ]
         },
         {

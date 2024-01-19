@@ -12,7 +12,11 @@
     "start": "next start",
     "type": "next build",
     "build-storybook": "storybook build -s ./public",
-    "storybook": "storybook dev -p 6007 -s ./public"
+    "storybook": "storybook dev -p 6007 -s ./public",
+    "test": "playwright test",
+    "test:h": "playwright test --headed",
+    "test:ci": "playwright test -c playwright.config.ci.ts",
+    "test:report": "playwright show-report"
   },
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
@@ -87,7 +91,7 @@
     "yarn": "^1.22.21"
   },
   "devDependencies": {
-    "@playwright/test": "1.31.2",
+    "@playwright/test": "1.40.1",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",
