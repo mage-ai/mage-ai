@@ -1,10 +1,10 @@
 import { test, expect } from './base';
 
-const visibleTimeout = 30000;
+const visibleTimeout = 10000;
 
 test.beforeEach(async ({ page }, testInfo) => {
-  // Set timeout for all tests running this hook to 60 seconds.
-  testInfo.setTimeout(60000);
+  // Set timeout for all tests running this hook to 30 seconds.
+  testInfo.setTimeout(30000);
 });
 
 test.afterEach(async ({ page }, testInfo) => {
