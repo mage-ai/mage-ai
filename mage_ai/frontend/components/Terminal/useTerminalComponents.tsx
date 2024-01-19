@@ -31,11 +31,13 @@ import {
   KEY_CODE_C,
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
+  KEY_CODE_K,
   KEY_CODE_META,
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { sendMessage } from './utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -43,6 +45,7 @@ export default function useTerminalComponents({
   containerRef,
   onMessage,
   queryParams,
+  setupColors,
   uuid,
 }: {
   containerRef?: {
@@ -52,6 +55,7 @@ export default function useTerminalComponents({
   queryParams?: {
     [key: string]: string;
   };
+  setupColors?: boolean;
   uuid: string;
 }) {
   const keyboardContext = useContext(KeyboardContext);
@@ -73,16 +77,24 @@ export default function useTerminalComponents({
   const stdoutRef = useRef('');
   const outputRef = useRef(null);
 
+  const renderCounts = useRef(0);
+
   const oauthWebsocketDataRef = useRef({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,
     token: (new AuthToken()).decodedToken.token,
   });
 
   function setFocus(value) {
+    const prev = focusRef?.current;
     if (typeof value === 'function') {
       focusRef.current = value(focusRef?.current);
     } else {
       focusRef.current = value;
+    }
+
+    if (prev !== value) {
+      renderInput();
+      renderOutput();
     }
   }
 
@@ -92,6 +104,7 @@ export default function useTerminalComponents({
     } else {
       commandRef.current = value;
     }
+    scrollTo();
   }
 
   function setCommandIndex(value) {
@@ -167,7 +180,11 @@ export default function useTerminalComponents({
     // shouldReconnect: (data) => {
     //   return false;
     // },
-    // onOpen
+    onOpen: () => {
+      if (setupColors) {
+        sendCommand(sendMessage);
+      }
+    },
     onMessage: ({
       data,
     }) => {
@@ -184,8 +201,12 @@ export default function useTerminalComponents({
       }
 
       renderOutput();
+
+      setTimeout(() => scrollTo(), 1);
     },
   });
+
+  console.log(stdoutRef.current)
 
   function sendMessage(commands: string[]) {
     sendMessageInit(JSON.stringify({
@@ -219,6 +240,7 @@ export default function useTerminalComponents({
     }
 
     if (inputRootRef?.current) {
+      console.log('renderInputs');
       const lastCommand = getLastCommand();
 
       inputRootRef?.current?.render(
@@ -227,6 +249,10 @@ export default function useTerminalComponents({
             <InputStyle
               focused={focusRef?.current
                 && (commandRef?.current?.length === 0)}
+              onClick={(e) => {
+                pauseEvent(e);
+                setFocus(true);
+              }}
             >
               <Text monospace>
                 <Text inline monospace>
@@ -236,7 +262,9 @@ export default function useTerminalComponents({
                     </Ansi>
                   )}
                 </Text>
-                {commandRef?.current?.split('').map(((char: string, idx: number, arr: string[]) => (
+                {commandRef?.current
+                  && typeof commandRef?.current === 'string'
+                  && commandRef?.current?.split('').map(((char: string, idx: number, arr: string[]) => (
                   <CharacterStyle
                     focusBeginning={focusRef?.current && cursorIndexRef?.current === 0 && idx === 0}
                     focused={
@@ -256,6 +284,9 @@ export default function useTerminalComponents({
           </ThemeProvider>
         </KeyboardContext.Provider>,
       );
+
+      scrollTo();
+      renderCounts.current = (renderCounts.current || 0) + 1;
     }
   }
 
@@ -268,12 +299,20 @@ export default function useTerminalComponents({
     }
 
     if (outputRootRef?.current) {
+      console.log('renderOutputs');
+
       const kernelOutputsUpdated = getKernelOutputsUpdated()
 
       outputRootRef?.current?.render(
         <KeyboardContext.Provider value={keyboardContext}>
           <ThemeProvider theme={themeContext}>
-            <InnerStyle ref={outputRef}>
+            <div
+              onClick={(e) => {
+                pauseEvent(e);
+                setFocus(true);
+              }}
+              ref={outputRef}
+            >
               {kernelOutputsUpdated?.reduce((acc, kernelOutput: {
                 command?: string;
                 data: string;
@@ -334,7 +373,7 @@ export default function useTerminalComponents({
 
                 return acc.concat(arr);
               }, [])}
-            </InnerStyle>
+            </div>
           </ThemeProvider>
         </KeyboardContext.Provider>,
       );
@@ -444,6 +483,12 @@ in the context menu that appears.
       } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
         setCommand(prev => prev?.slice(0, cursorIndex) + key + prev?.slice(cursorIndex));
         setCursorIndex(currIdx => currIdx + 1);
+      } else if (keysPresentAndKeysRecent([KEY_CODE_META], [KEY_CODE_K], keyMapping, keyHistory)) {
+        sendMessage(['stdin', '__CLEAR_OUTPUT__']);
+        sendMessage(['stdin', '\r']);
+        stdoutRef.current = '';
+
+        return true;
       }
     }
 

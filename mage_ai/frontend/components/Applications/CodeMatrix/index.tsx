@@ -222,6 +222,10 @@ function CodeMatrix({
 
       if (typeof val !== 'undefined') {
         afterInnerRef.current.scrollTop = val;
+      } else {
+        scrollTo({
+          bottom: true,
+        });
       }
 
       const handleScroll = (e) => {

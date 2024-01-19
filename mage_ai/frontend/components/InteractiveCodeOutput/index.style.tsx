@@ -18,6 +18,8 @@ const CONTENT_STYLE = css`
 export const ShellContainerStyle = styled.div`
   ${CONTAINER_STYLE}
 
+  ${hideScrollBar}
+
   height: 500px;
   position: relative;
   background: black;

@@ -41,6 +41,7 @@ const SHARED_HIDDEN_STYLES = css`
 export const ContainerStyle = styled.div<{
   className?: string;
 }>`
+<<<<<<< HEAD
   border-radius: ${BORDER_RADIUS_XLARGE}px;
   left: 50%;
   overflow: hidden;
@@ -72,34 +73,62 @@ export const ContainerStyle = styled.div<{
 
     #${OUTPUT_CONTAINER_ID} {
       border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+=======
+  &.hide {
+    .command-center {
+      bottom: 100%;
+      opacity: 0;
+      right: 100%;
+      visibility: none;
+>>>>>>> 1c3be6c24 (use terminal)
     }
+  }
 
-    &.version_control {
-      border: 1px solid ${getApplicationColors(
-      ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
-      props,
-    )?.border};
+  .command-center {
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    border-radius: ${BORDER_RADIUS_XLARGE}px;
+    left: 50%;
+    overflow: hidden;
+    position: fixed;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: ${MAX_WIDTH + (1 * 2)}px;
+    z-index: 100;
+
+    ${props => `
+      background-color: ${(props.theme || dark).background.blackTransparent};
+      box-shadow: ${(props.theme || dark).shadow.window};
+      border: 1px solid ${(props.theme || dark).monotone.grey400};
 
       #${INPUT_CONTAINER_ID} {
-        border-bottom: 1px solid ${getApplicationColors(
-        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
-        props,
-      )?.border};
+        border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
       }
 
       #${OUTPUT_CONTAINER_ID} {
-        border-top: 1px solid ${getApplicationColors(
+        border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+      }
+
+      &.version_control {
+        border: 1px solid ${getApplicationColors(
         ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
         props,
       )?.border};
-      }
-    }
-  `}
 
-  &.hide {
-    bottom: 100%;
-    opacity: 0;
-    right: 100%;
+        #${INPUT_CONTAINER_ID} {
+          border-bottom: 1px solid ${getApplicationColors(
+          ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+          props,
+        )?.border};
+        }
+
+        #${OUTPUT_CONTAINER_ID} {
+          border-top: 1px solid ${getApplicationColors(
+          ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+          props,
+        )?.border};
+        }
+      }
+    `}
   }
 `;
 

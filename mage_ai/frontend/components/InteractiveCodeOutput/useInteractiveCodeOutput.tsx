@@ -13,6 +13,7 @@ import OutputGroup from './Output';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
 import useTerminalComponents from '@components/Terminal/useTerminalComponents';
+import useClickOutside from '@utils/useClickOutside';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
 import { useKeyboardContext } from '@context/Keyboard';
 import { addClassNames, removeClassNames } from '@utils/elements';
@@ -27,6 +28,7 @@ import { getWebSocket } from '@api/utils/url';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 import { groupOutputsAndSort, getLatestOutputGroup, getExecutionStatusAndState } from './Output/utils';
 import KernelType from '@interfaces/KernelType';
+import { pauseEvent } from '@utils/events';
 
 export default function useInteractiveCodeOutput({
   checkKernelStatus,
@@ -69,7 +71,10 @@ export default function useInteractiveCodeOutput({
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
   output: JSX.Element;
-  scrollTo: () => void;
+  scrollTo: (opts?: {
+    bottom?: boolean;
+    top?: boolean;
+  }) => void;
   sendMessage: (payload: {
     [key: string]: any;
   }) => void;
@@ -127,12 +132,21 @@ export default function useInteractiveCodeOutput({
     renderOutput,
     setFocus,
   } = useTerminalComponents({
-    containerRef,
+    containerRef: shellContainerRef,
     onMessage: () => {},
     queryParams: {
       term_name: `${user?.id}--${uuid}`,
     },
+    setupColors: true,
     uuid: 'terminal',
+  });
+
+  const {
+    setElementObject,
+  } = useClickOutside({
+    onClick: (uuid, isOutside) => {
+      setFocus(!isOutside);
+    },
   });
 
   const {
@@ -355,16 +369,30 @@ export default function useInteractiveCodeOutput({
       if (selectedGroupOfOutputs?.current?.groupID === groupID
         && selectedGroupOfOutputs?.current?.active
       ) {
+        const shellEl = (
+          <ShellContainerStyle
+            onClick={(e) => {
+              pauseEvent(e);
+              setFocus(true);
+            }}
+            ref={shellContainerRef}
+            messagesRef={messagesRef}
+          >
+            <ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />
+          </ShellContainerStyle>
+        );
+        setElementObject('shell', shellEl, 'shell', {
+          delay: 300,
+          tries: 10,
+        });
+
         outputsGrouped.push(
           <ComponentWithCallback
+            callback={shellMountCallback}
             id={`${shellRootUUID.current}-callback`}
             key={`${shellRootUUID.current}-callback`}
-            ref={shellContainerRef}
-            callback={shellMountCallback}
           >
-            <ShellContainerStyle  messagesRef={messagesRef}>
-              <ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />
-            </ShellContainerStyle>
+            {shellEl}
           </ComponentWithCallback>
         );
       }
@@ -444,11 +472,12 @@ export default function useInteractiveCodeOutput({
         return;
       } else if (MsgType.SHUTDOWN_REQUEST === output?.msg_id) {
         return;
-      } else if (isAnyOutputGroupSelected()) {
-        console.log('HANDLE MESSAGES WHEN OUTPUT GROUP SELECTED');
       } else {
         messagesRef.current = arr;
         renderOutputs(arr);
+        scrollTo({
+          bottom: true,
+        });
       }
     },
   }, shouldConnect && !!uuid);
