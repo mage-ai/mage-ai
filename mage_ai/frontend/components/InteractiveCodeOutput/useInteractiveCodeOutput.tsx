@@ -70,7 +70,7 @@ export default function useInteractiveCodeOutput({
   scrollOutputTo: (opts?: {
     bottom?: boolean;
     top?: boolean;
-  }) => void;
+  }, smooth?: boolean) => void;
   sendMessage: (payload: KeyValueType) => void;
 } {
   const {
@@ -135,7 +135,7 @@ export default function useInteractiveCodeOutput({
   }: {
     bottom?: number | boolean;
     top?: number | boolean;
-  }) {
+  }, smooth: boolean = true) {
     setTimeout(() => {
       if (containerRef?.current) {
         if (bottom !== null) {
@@ -143,12 +143,12 @@ export default function useInteractiveCodeOutput({
             top: bottom === true
               ? containerRef?.current?.scrollHeight - containerRef?.current?.getBoundingClientRect()?.height
               : Number(bottom),
-            behavior: 'smooth',
+            behavior: smooth ? 'smooth' : 'instant',
           })
         } else if (top !== null) {
           containerRef.current.scrollTo({
             top: top === true ? 0 : Number(top),
-            behavior: 'smooth',
+            behavior: smooth ? 'smooth' : 'instant',
           });
         }
       }
@@ -374,7 +374,7 @@ export default function useInteractiveCodeOutput({
         renderOutputs(arr);
         scrollOutputTo({
           bottom: true,
-        });
+        }, false);
       }
     },
   }, shouldConnect && !!uuid);

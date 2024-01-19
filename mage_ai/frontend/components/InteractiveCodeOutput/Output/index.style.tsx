@@ -100,15 +100,14 @@ export const RowGroupStyle = styled.div`
 `;
 
 export const LoadingStyle = styled.div<{
-  isIdle?: boolean;
+  inactive?: boolean;
 }>`
   height: ${LOADING_HEIGHT}px;
   width: 100%;
 
-  .inactive {
-    ${SHARED_HIDDEN_STYLES}
-    height: 0;
-  }
+  ${props => props.inactive && `
+    display: none;
+  `}
 `;
 
 export const HeaderStyle = styled.div`

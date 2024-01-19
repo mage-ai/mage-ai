@@ -1,5 +1,5 @@
 import tzMoment from 'moment-timezone';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -46,6 +46,8 @@ function Output({
   outputs: KernelOutputType[];
 }, ref) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+
+  const [inactive, setInactive] = useState(false);
 
   const executionStateRef = useRef(null);
   const refLoading = useRef(null);
@@ -176,116 +178,116 @@ function Output({
   });
 
   const hasErrors = useMemo(() => errors?.length >= 1, [errors]);
-  const inactive = useMemo(() =>
-  hasErrors || (outputs?.length === 1 && outputs?.msg_type === MsgType.STATUS)
-  || (outputs?.length === 1
-    && index < groupsCount
-    && outputs?.[0]?.execution_metadata?.date
-    && now.diff(outputs?.[0]?.execution_metadata?.date, 'minutes') >= 4
-  ) || (!executionStateRef?.current || ExecutionStateEnum.IDLE === executionStateRef.current)
-  , [
-    hasErrors, outputs, index, groupsCount, now,
-  ]);
+  useEffect(() => {
+    setInactive(hasErrors
+      || (outputs?.length === 1 && outputs?.msg_type === MsgType.STATUS)
+      || (outputs?.length === 1 && index < groupsCount && outputs?.[0]?.execution_metadata?.date && now.diff(outputs?.[0]?.execution_metadata?.date, 'minutes') >= 4)
+      || ExecutionStateEnum.IDLE === executionState);
+  }, [outputs]);
+
+  console.log(inactive)
 
   return (
-    <RowGroupStyle
-      className={[
-        inactive ? 'inactive' : 'active',
-        hasErrors ? 'errors' : '',
-      ]?.filter(c => !!c)?.join(' ')}
-      onClick={(e) => {
-        if (onClick) {
-          onClick?.(e);
-        }
-      }}
-      ref={ref}
-    >
-      <LoadingStyle className={inactive ? 'inactive' : 'active'} isIdle={inactive}>
+    <>
+      <LoadingStyle inactive={inactive}>
         <Loading width="100%" />
       </LoadingStyle>
 
-      <HeaderStyle>
-        <FlexContainer alignItems="flex-start" justifyContent="space-between">
-          <Flex alignItems="center" flex={1} flexDirection="row" style={{ position: 'relative' }} >
-            <Tooltip
-              appearBefore
-              block
-              label={(
-                <Text default monospace small>
-                  {datetimeSmallest ? datetimeSmallest.format(DATE_FORMAT_LONG_MS) : null}
-                </Text>
-              )}
-              size={null}
-              visibleDelay={300}
-              widthFitContent
-            >
-              <Text default monospace small>
-                {datetimeSmallest
-                  ? (now.diff(datetimeSmallest, 'days') >= 1 ? dateFull : timeFull)
-                  : null
-                }
-              </Text>
-            </Tooltip>
-
-            <Spacing mr={1} />
-
-            {/*<Text
-              danger={ExecutionStatusEnum.FAILED === executionStatus}
-              default={ExecutionStatusEnum.CANCELLED === executionStatus}
-              monospace
-              success={ExecutionStatusEnum.SUCCESS === executionStatus}
-              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
-              small
-            >
-              {ExecutionStateEnum.IDLE === executionState
-                && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
-              }
-            </Text>*/}
-          </Flex>
-
-          <Flex flex={1} flexDirection="column" alignItems="flex-end">
-            {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
-
-            <Spacing mr={1} />
-
-            <Tooltip
-              appearBefore
-              block
-              label={(
-                <Text default monospace small>
-                  {groupID}
-                </Text>
-              )}
-              size={null}
-              visibleDelay={300}
-              widthFitContent
-            >
-              <Link
-                noOutline
-                onClick={(e) => {
-                  pauseEvent(e);
-                }}
-                preventDefault
+      <RowGroupStyle
+        className={[
+          inactive ? 'inactive' : 'active',
+          hasErrors ? 'errors' : '',
+        ]?.filter(c => !!c)?.join(' ')}
+        onClick={(e) => {
+          if (onClick) {
+            onClick?.(e);
+          }
+        }}
+        ref={ref}
+      >
+        <HeaderStyle>
+          <FlexContainer alignItems="flex-start" justifyContent="space-between">
+            <Flex alignItems="center" flex={1} flexDirection="row" style={{ position: 'relative' }} >
+              <Tooltip
+                appearBefore
+                block
+                label={(
+                  <Text default monospace small>
+                    {datetimeSmallest ? datetimeSmallest.format(DATE_FORMAT_LONG_MS) : null}
+                  </Text>
+                )}
+                size={null}
+                visibleDelay={300}
+                widthFitContent
               >
-                <Text muted monospace small>
-                  {generalizeMsgID(groupID || '', {
-                    medium: true,
-                  })}
+                <Text default monospace small>
+                  {datetimeSmallest
+                    ? (now.diff(datetimeSmallest, 'days') >= 1 ? dateFull : timeFull)
+                    : null
+                  }
                 </Text>
-              </Link>
-            </Tooltip>
-          </Flex>
-        </FlexContainer>
-      </HeaderStyle>
+              </Tooltip>
 
-      <OutputDataCombined
-        html={html}
-        images={images}
-        json={json}
-        tables={tables}
-        text={text}
-      />
-    </RowGroupStyle>
+              <Spacing mr={1} />
+
+              {/*<Text
+                danger={ExecutionStatusEnum.FAILED === executionStatus}
+                default={ExecutionStatusEnum.CANCELLED === executionStatus}
+                monospace
+                success={ExecutionStatusEnum.SUCCESS === executionStatus}
+                warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
+                small
+              >
+                {ExecutionStateEnum.IDLE === executionState
+                  && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
+                }
+              </Text>*/}
+            </Flex>
+
+            <Flex flex={1} flexDirection="column" alignItems="flex-end">
+              {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
+
+              <Spacing mr={1} />
+
+              <Tooltip
+                appearBefore
+                block
+                label={(
+                  <Text default monospace small>
+                    {groupID}
+                  </Text>
+                )}
+                size={null}
+                visibleDelay={300}
+                widthFitContent
+              >
+                <Link
+                  noOutline
+                  onClick={(e) => {
+                    pauseEvent(e);
+                  }}
+                  preventDefault
+                >
+                  <Text muted monospace small>
+                    {generalizeMsgID(groupID || '', {
+                      medium: true,
+                    })}
+                  </Text>
+                </Link>
+              </Tooltip>
+            </Flex>
+          </FlexContainer>
+        </HeaderStyle>
+
+        <OutputDataCombined
+          html={html}
+          images={images}
+          json={json}
+          tables={tables}
+          text={text}
+        />
+      </RowGroupStyle>
+    </>
   );
 }
 

@@ -93,10 +93,16 @@ function CodeMatrix({
 
   const onMountCallback = useCallback((editor) => {
     editorRef.current = editor;
+    setMounted(true);
   }, []);
 
   function getCodeFromEditor(): string {
-    return editorRef?.current?.getValue() || contentRef?.current;
+    const highlightedText = editorRef?.current?.getModel().getValueInRange(
+      editorRef?.current?.getSelection(),
+    );
+    const text = editorRef?.current?.getValue();
+    const message = highlightedText || text || contentRef?.current;
+    return message;
   }
 
   useEffect(() => {
@@ -125,23 +131,8 @@ function CodeMatrix({
             // 3
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
           ],
-          run: (editor) => {
-            const highlightedText = editor.getModel().getValueInRange(editor.getSelection());
-            const text = editor.getValue();
-            const message = highlightedText || text;
-
-            if (!shouldConnect) {
-              setShouldConnect(true);
-              setTimeout(() => {
-                sendMessageRef?.current?.({
-                  message: getCodeFromEditor(),
-                });
-              }, 1);
-            } else {
-              sendMessageRef?.current?.({
-                message: getCodeFromEditor(),
-              });
-            }
+          run: () => {
+            sendMessage();
           },
         },
         {
@@ -210,13 +201,8 @@ function CodeMatrix({
     if (afterInnerRef?.current) {
       const val = getInteractionsCache()?.scrollTop;
       scrollOutputTo({
-        bottom: typeof val !== 'undefined' ? val : true,
+        bottom: typeof val !== 'undefined' ? Number(val) : true,
       });
-
-      if (typeof val !== 'undefined') {
-        afterInnerRef.current.scrollTop = val;
-      } else {
-      }
 
       const handleScroll = (e) => {
         setInteractionsCache({
