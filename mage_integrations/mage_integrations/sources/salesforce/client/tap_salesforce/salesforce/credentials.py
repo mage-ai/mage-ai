@@ -31,7 +31,7 @@ def parse_credentials(config):
 
 
 class SalesforceAuth():
-    def __init__(self, credentials, is_sandbox=False):
+    def __init__(self, credentials, is_sandbox='login'):
         self.is_sandbox = is_sandbox
         self._credentials = credentials
         self._access_token = None
@@ -77,12 +77,7 @@ class SalesforceAuthOAuth(SalesforceAuth):
 
     @property
     def _login_url(self):
-        login_url = 'https://login.salesforce.com/services/oauth2/token'
-
-        if self.is_sandbox:
-            login_url = 'https://test.salesforce.com/services/oauth2/token'
-
-        return login_url
+        return f"https://{self.is_sandbox}.salesforce.com/services/oauth2/token"
 
     def login(self):
         try:
@@ -103,10 +98,6 @@ class SalesforceAuthOAuth(SalesforceAuth):
             if resp:
                 error_message = error_message + ", Response from Salesforce: {}".format(resp.text)
             raise Exception(error_message) from e
-        finally:
-            LOGGER.info("Starting new login timer")
-            self.login_timer = threading.Timer(self.REFRESH_TOKEN_EXPIRATION_PERIOD, self.login)
-            self.login_timer.start()
 
 
 class SalesforceAuthPassword(SalesforceAuth):

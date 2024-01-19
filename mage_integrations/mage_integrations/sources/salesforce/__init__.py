@@ -53,21 +53,7 @@ class Salesforce(Source):
         catalog = Catalog(do_discover(self.client,
                                       streams=self.config.get('streams', None),
                                       logger=self.logger)['streams'])
-        self.__finally_clean_up()
         return catalog
-
-    def __finally_clean_up(self):
-        if self.client:
-            if self.client.rest_requests_attempted > 0:
-                self.logger.info(
-                    f"This job used {self.client.rest_requests_attempted} REST requests \
-                    towards the Salesforce quota.")
-            if self.client.jobs_completed > 0:
-                self.logger.info(
-                    f"Replication used {self.client.jobs_completed} Bulk API jobs \
-                    towards the Salesforce quota.")
-            if self.client.login_timer:
-                self.client.login_timer.cancel()
 
     def test_connection(self):
         try:

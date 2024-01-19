@@ -11,7 +11,7 @@ You must enter the following settings when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `api_type` | The `api_type` is used to switch the behavior of the tap between using Salesforce's "REST" and "BULK" APIs. When new fields are discovered in Salesforce objects, the `select_fields_by_default` key describes whether or not the tap will select those fields by default. | `REST`, `BULK` |
-| `domain` | If `test`, then sandbox account configuration/endpoints will be used.  | `login`, `test` |
+| `domain` | Your Salesforce instance domain. Use 'login' (default) or 'test' (sandbox), or Salesforce My domain.| `test`, `login`|
 | `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
 | `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SSZ`. | `2022-11-30T21:31:20Z` |
 
