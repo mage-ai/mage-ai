@@ -206,8 +206,6 @@ export default function useTerminalComponents({
     },
   });
 
-  console.log(stdoutRef.current)
-
   function sendMessage(commands: string[]) {
     sendMessageInit(JSON.stringify({
       ...(oauthWebsocketDataRef?.current || {}),

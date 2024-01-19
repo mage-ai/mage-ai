@@ -9,7 +9,9 @@ import mock from './mock';
 import AuthToken from '@api/utils/AuthToken';
 import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, MsgType } from '@interfaces/KernelOutputType';
 import KeyboardContext from '@context/Keyboard';
+import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import OutputGroup from './Output';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import Shell from './Shell';
 import useKernel from '@utils/models/kernel/useKernel';
 import useTerminalComponents from '@components/Terminal/useTerminalComponents';
@@ -120,9 +122,7 @@ export default function useInteractiveCodeOutput({
 
   const outputBottomRef = useRef(null);
 
-  const [interactiveShell, setInteractiveShell] = useState<JSX.Element>(null);
-
-  const terminalStateRef = useRef({});
+  const terminalRef = useRef({});
 
   const {
     input: inputShell,
@@ -140,6 +140,20 @@ export default function useInteractiveCodeOutput({
     setupColors: true,
     uuid: 'terminal',
   });
+
+  terminalRef.current = (
+    <ComponentWithCallback
+      callback={() => {
+        setTimeout(() => {
+          renderInput();
+          renderOutput();
+        }, 1);
+      }}
+    >
+      {outputShell}
+      {inputShell}
+    </ComponentWithCallback>
+  );
 
   const {
     setElementObject,
@@ -159,7 +173,17 @@ export default function useInteractiveCodeOutput({
     unregisterOnKeyDown(uuid);
   }, [unregisterOnKeyDown, uuid]);
 
-  registerOnKeyDown(uuid, registerKeyboardShortcuts, []);
+  registerOnKeyDown(uuid, (event, keyMapping, keyHistory) => {
+    if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping) && !!selectedGroupOfOutputs?.current) {
+      pauseEvent(event);
+      selectedGroupOfOutputs.current = null;
+      setupGroups();
+      removeSelectedFromAllRowGroups();
+      return;
+    }
+
+    registerKeyboardShortcuts(event, keyMapping, keyHistory);
+  }, []);
 
   function scrollTo({
     bottom,
@@ -261,17 +285,7 @@ export default function useInteractiveCodeOutput({
         <ThemeProvider theme={themeContext}>
           <ModalProvider>
             <ErrorProvider>
-              <ComponentWithCallback
-                callback={() => {
-                  setTimeout(() => {
-                    renderInput();
-                    renderOutput();
-                  }, 1);
-                }}
-              >
-                {outputShell}
-                {inputShell}
-              </ComponentWithCallback>
+              {terminalRef.current}
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
