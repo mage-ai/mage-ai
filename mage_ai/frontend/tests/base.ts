@@ -8,8 +8,12 @@ export const test = base.extend<{ page: void; }>({
     await page.getByRole('textbox').first().press('Tab');
     await page.locator('input[type="password"]').fill('admin');
     await page.locator('input[type="password"]').press('Enter');
-    // Wait since app auto redirects to `/overview` on sign in.
-    await page.waitForSelector('text=Overview');
+
+    /*
+     * Wait for redirected page, which can be /overview (if at least 1 pipeline run exists)
+     * or /pipelines (if no pipeline runs exist), to load after signing in.
+     */
+    await expect(page.getByRole('button', { name: 'New' })).toBeVisible({ timeout: 10000 });
 
     // Use subsequent tests.
     await use(page);
