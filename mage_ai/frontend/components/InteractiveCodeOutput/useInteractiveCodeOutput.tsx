@@ -1,69 +1,61 @@
 import useWebSocket from 'react-use-websocket';
-import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components';
-import { createRoot } from 'react-dom/client';
 import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import mock from './mock';
 import AuthToken from '@api/utils/AuthToken';
-import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, MsgType } from '@interfaces/KernelOutputType';
-import KeyboardContext from '@context/Keyboard';
-import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
-import OutputGroup from './Output';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import Shell from './Shell';
-import useKernel from '@utils/models/kernel/useKernel';
-import useTerminalComponents from '@components/Terminal/useTerminalComponents';
-import useClickOutside from '@utils/useClickOutside';
 import ComponentWithCallback from '@components/shared/ComponentWithCallback';
-import { useKeyboardContext } from '@context/Keyboard';
-import { addClassNames, removeClassNames } from '@utils/elements';
+import KernelOutputType, { RawEventOutputDataType, ExecutionStateEnum, ExecutionStatusEnum, GroupOfOutputsType, MsgType } from '@interfaces/KernelOutputType';
+import KernelType from '@interfaces/KernelType';
+import KeyboardContext from '@context/Keyboard';
+import OutputGroup from './Output';
+import useKernel from '@utils/models/kernel/useKernel';
 import { ErrorProvider } from '@context/Error';
+import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import { ModalProvider } from '@context/Modal';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { OutputContainerStyle, OutputContentStyle, ShellContainerStyle, ShellContentStyle } from './index.style';
 import { READY_STATE_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
+import { RefType } from '@interfaces/ElementType';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { dedupe } from '@utils/array';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
-import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 import { groupOutputsAndSort, getLatestOutputGroup, getExecutionStatusAndState } from './Output/utils';
-import KernelType from '@interfaces/KernelType';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 import { pauseEvent } from '@utils/events';
+import { useKeyboardContext } from '@context/Keyboard';
+import { KeyValueType } from '@interfaces/CommandCenterType';
+
+const SELECTED_ROW_GROUP_CLASS_NAME = 'row-group-selected';
+const OUTPUT_ACTIVE_MODE_CLASS_NAME = 'inline';
 
 export default function useInteractiveCodeOutput({
-  checkKernelStatus,
-  code,
+  checkKernelStatus = false,
   containerRef,
   getDefaultMessages,
-  onClickOutputGroup,
   onMessage,
   onOpen,
   onRenderOutputCallback,
-  shouldConnect = false,
+  onRenderOutputFocusedCallback,
+  onSelectActiveGroupOfOutputs,
+  shouldConnect = true,
   shouldReconnect,
   uuid,
 }: {
   checkKernelStatus?: boolean;
-  code?: string;
-  containerRef?: {
-    current: any;
-  };
+  containerRef?: RefType;
   getDefaultMessages?: () => KernelOutputType[];
-  onClickOutputGroup?: (e: Event, opts?: {
-    dates: string[];
-    groupID: number;
-    groupsCount: number;
-    index: number;
-    outputs: KernelOutputType[];
-  }) => void;
   onMessage?: (message: KernelOutputType, opts?: {
     executionState: ExecutionStateEnum;
     executionStatus: ExecutionStatusEnum;
   }) => void;
+  onSelectActiveGroupOfOutputs?: (opts?: GroupOfOutputsType) => void;
   onOpen?: (value: boolean) => void;
   onRenderOutputCallback?: () => void;
+  onRenderOutputFocusedCallback?: () => void;
   shouldConnect?: boolean;
   shouldReconnect?: (event: any) => boolean;
   uuid: string;
@@ -72,17 +64,18 @@ export default function useInteractiveCodeOutput({
   connectionState: WebSocketStateEnum;
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
+  interruptKernel: () => void;
   output: JSX.Element;
-  scrollTo: (opts?: {
+  outputFocused: JSX.Element;
+  scrollOutputTo: (opts?: {
     bottom?: boolean;
     top?: boolean;
   }) => void;
-  sendMessage: (payload: {
-    [key: string]: any;
-  }) => void;
+  sendMessage: (payload: KeyValueType) => void;
 } {
   const {
     kernel,
+    interrupt,
   } = useKernel({
     refreshInterval: checkKernelStatus ? 7000 : 0,
     revalidateOnFocus: checkKernelStatus ? true : false,
@@ -106,62 +99,16 @@ export default function useInteractiveCodeOutput({
 
   const outputGroupRefs = useRef({});
 
+  const outputRootUUID = useRef(`${uuid}-output-root`);
+  const outputRootRef = useRef(null);
   const outputContainerRef = useRef(null);
   const outputContentRef = useRef(null);
-  const outputItemsRef = useRef([]);
-  const outputRootRef = useRef(null);
-  const outputRootUUID = useRef(`${uuid}-output-root`);
-
-  const messagesShellRef = useRef([]);
-
-  const shellContainerRef = useRef(null);
-  const shellContentRef = useRef(null);
-  const shellItemsRef = useRef([]);
-  const shellRootRef = useRef(null);
-  const shellRootUUID = useRef(`${uuid}-shell-root`);
-
   const outputBottomRef = useRef(null);
 
-  const terminalRef = useRef({});
-
-  const {
-    input: inputShell,
-    output: outputShell,
-    registerKeyboardShortcuts,
-    renderInput,
-    renderOutput,
-    setFocus,
-  } = useTerminalComponents({
-    containerRef: shellContainerRef,
-    onMessage: () => {},
-    queryParams: {
-      term_name: `${user?.id}--${uuid}`,
-    },
-    setupColors: true,
-    uuid: 'terminal',
-  });
-
-  terminalRef.current = (
-    <ComponentWithCallback
-      callback={() => {
-        setTimeout(() => {
-          renderInput();
-          renderOutput();
-        }, 1);
-      }}
-    >
-      {outputShell}
-      {inputShell}
-    </ComponentWithCallback>
-  );
-
-  const {
-    setElementObject,
-  } = useClickOutside({
-    onClick: (uuid, isOutside) => {
-      setFocus(!isOutside);
-    },
-  });
+  const outputFocusedRootUUID = useRef(`${uuid}-output-focused-root`);
+  const outputFocusedRootRef = useRef(null);
+  const outputFocusedContainerRef = useRef(null);
+  const outputFocusedContentRef = useRef(null);
 
   const {
     registerOnKeyDown,
@@ -179,48 +126,46 @@ export default function useInteractiveCodeOutput({
       selectedGroupOfOutputs.current = null;
       setupGroups();
       removeSelectedFromAllRowGroups();
-      return;
     }
-
-    registerKeyboardShortcuts(event, keyMapping, keyHistory);
   }, []);
 
-  function scrollTo({
-    bottom,
-    top,
+  function scrollOutputTo({
+    bottom = null,
+    top = null,
   }: {
-    bottom?: boolean;
-    top?: boolean;
+    bottom?: number | boolean;
+    top?: number | boolean;
   }) {
     setTimeout(() => {
       if (containerRef?.current) {
-        if (bottom) {
-          containerRef.current.scrollTop = containerRef?.current?.scrollHeight - (
-            containerRef?.current?.getBoundingClientRect()?.height
-              // + outputBottomRef?.current?.getBoundingClientRect()?.height
-          );
-        } else if (top) {
-          containerRef.current.scrollTop = 0;
+        if (bottom !== null) {
+          containerRef.current.scrollTo({
+            top: bottom === true
+              ? containerRef?.current?.scrollHeight - containerRef?.current?.getBoundingClientRect()?.height
+              : Number(bottom),
+            behavior: 'smooth',
+          })
+        } else if (top !== null) {
+          containerRef.current.scrollTo({
+            top: top === true ? 0 : Number(top),
+            behavior: 'smooth',
+          });
         }
       }
     }, 1);
   }
 
-  function isAnyOutputGroupSelected() {
-    return !!selectedGroupOfOutputs?.current?.active;
-  }
-
   function removeSelectedFromAllRowGroups() {
     if (typeof document !== 'undefined') {
       const refs = [
-        ...document.querySelectorAll('.row-group-selected'),
+        ...document.querySelectorAll(`.${SELECTED_ROW_GROUP_CLASS_NAME}`),
       ];
       refs?.forEach((ref) => {
         if (ref) {
           ref.className = removeClassNames(
             ref.className,
             [
-              'row-group-selected',
+              SELECTED_ROW_GROUP_CLASS_NAME,
             ],
           );
         }
@@ -230,33 +175,33 @@ export default function useInteractiveCodeOutput({
 
   function setupGroups() {
     setTimeout(() => {
-      const active = isAnyOutputGroupSelected();
-      // [
-      //   outputContainerRef,
-      //   shellContainerRef,
-      // ].forEach((ref) => {
-      //   if (ref?.current) {
-      //     if (active) {
-      //       ref.current.className = addClassNames(
-      //         ref.current.className || '',
-      //         [
-      //           'inline',
-      //         ],
-      //       );
-      //     } else {
-      //       ref.current.className = removeClassNames(
-      //         ref.current.className || '',
-      //         [
-      //           'inline',
-      //         ],
-      //       );
-      //     }
-      //   }
-      // });
+      [
+        outputContainerRef,
+        outputFocusedContainerRef,
+      ].forEach((ref) => {
+        if (ref?.current) {
+          if (active) {
+            ref.current.className = addClassNames(
+              ref.current.className || '',
+              [
+                OUTPUT_ACTIVE_MODE_CLASS_NAME,
+              ],
+            );
+          } else {
+            ref.current.className = removeClassNames(
+              ref.current.className || '',
+              [
+                OUTPUT_ACTIVE_MODE_CLASS_NAME,
+              ],
+            );
+          }
+        }
+      });
 
+      const active = selectedGroupOfOutputs?.current?.active;
       if (active) {
-        // removeSelectedFromAllRowGroups();
-        // renderOutputs(selectedGroupOfOutputs?.current?.outputs);
+        removeSelectedFromAllRowGroups();
+        renderOutputs(selectedGroupOfOutputs?.current?.outputs);
       }
 
       if (getDefaultMessages) {
@@ -268,40 +213,7 @@ export default function useInteractiveCodeOutput({
     }, 300);
   }
 
-  function renderInteractiveShell() {
-    if (!shellRootRef?.current) {
-      const domNode = document.getElementById(shellRootUUID.current);
-      if (domNode) {
-        shellRootRef.current = createRoot(domNode);
-      }
-    }
-
-    if (!shellRootRef?.current) {
-      return;
-    }
-
-    shellRootRef?.current?.render(
-      <KeyboardContext.Provider value={keyboardContext}>
-        <ThemeProvider theme={themeContext}>
-          <ModalProvider>
-            <ErrorProvider>
-              {terminalRef.current}
-            </ErrorProvider>
-          </ModalProvider>
-        </ThemeProvider>
-      </KeyboardContext.Provider>,
-    );
-  }
-
-  function shellMountCallback() {
-    shellContainerRef?.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'end',
-    });
-    renderInteractiveShell();
-  }
-
-  function handleClickGroup(data) {
+  function handleClickGroup(data: GroupOfOutputsType) {
     const {
       groupID,
     } = data;
@@ -314,18 +226,19 @@ export default function useInteractiveCodeOutput({
         ref.current.className = addClassNames(
           ref?.current?.className || '',
           [
-            'row-group-selected',
+            SELECTED_ROW_GROUP_CLASS_NAME,
           ],
         );
       }
     }, 1);
 
+    // Click twice to activate group
     if (selectedGroupOfOutputs?.current?.groupID === groupID) {
-      if (!selectedGroupOfOutputs?.current?.active) {
+      const alreadyActive = selectedGroupOfOutputs?.current?.active;
+      if (!alreadyActive) {
         setupGroups();
-        setFocus(true);
+        selectedGroupOfOutputs.current = { active: true, ...data };
       }
-      selectedGroupOfOutputs.current = { active: true, ...data };
     } else {
       selectedGroupOfOutputs.current = { active: false, ...data };
     }
@@ -340,13 +253,12 @@ export default function useInteractiveCodeOutput({
     }
 
     if (!outputRootRef?.current) {
-      return;
+      console.log('[ERROR] InteractiveCOdeOutput: output root doesn’t exist.');
     }
 
-    const groups = groupOutputsAndSort(outputs);
+    const groups: GroupOfOutputsType[] = groupOutputsAndSort(outputs);
     const groupsCount = groups?.length;
-    const outputsGrouped = [];
-    groups?.forEach(({
+    const outputsGrouped = groups?.map(({
       dates,
       groupID,
       outputs,
@@ -354,7 +266,7 @@ export default function useInteractiveCodeOutput({
       outputGroupRefs.current[groupID] = outputGroupRefs?.current?.[groupID] || createRef();
       const ref = outputGroupRefs?.current?.[groupID];
 
-      outputsGrouped.push(
+      return (
         <OutputGroup
           dates={dates}
           groupsCount={groupsCount}
@@ -362,7 +274,7 @@ export default function useInteractiveCodeOutput({
           key={groupID}
           groupID={groupID}
           onClick={(e) => {
-            const data = {
+            const data: GroupOfOutputsType = {
               dates,
               groupsCount,
               index,
@@ -371,45 +283,14 @@ export default function useInteractiveCodeOutput({
             };
             handleClickGroup(data);
 
-            if (onClickOutputGroup) {
-              onClickOutputGroup?.(e, data);
+            if (onSelectActiveGroupOfOutputs) {
+              onSelectActiveGroupOfOutputs?.(data);
             }
           }}
           outputs={outputs}
           ref={ref}
         />
       );
-
-      if (selectedGroupOfOutputs?.current?.groupID === groupID
-        && selectedGroupOfOutputs?.current?.active
-      ) {
-        const shellEl = (
-          <ShellContainerStyle
-            onClick={(e) => {
-              pauseEvent(e);
-              setFocus(true);
-            }}
-            ref={shellContainerRef}
-            messagesRef={messagesRef}
-          >
-            <ShellContentStyle id={shellRootUUID.current} ref={shellContentRef} />
-          </ShellContainerStyle>
-        );
-        setElementObject('shell', shellEl, 'shell', {
-          delay: 300,
-          tries: 10,
-        });
-
-        outputsGrouped.push(
-          <ComponentWithCallback
-            callback={shellMountCallback}
-            id={`${shellRootUUID.current}-callback`}
-            key={`${shellRootUUID.current}-callback`}
-          >
-            {shellEl}
-          </ComponentWithCallback>
-        );
-      }
     });
 
     outputRootRef?.current?.render(
@@ -450,10 +331,12 @@ export default function useInteractiveCodeOutput({
     shouldReconnect: (data) => {
       if (shouldReconnect) {
         return shouldReconnect?.(data)
+      } else {
+        return true;
       }
     },
-    onOpen: () => onOpen(true),
-    onMessage: (messageEvent: { data: string }) => {
+    onOpen: () => onOpen && onOpen?.(true),
+    onMessage: (messageEvent: RawEventOutputDataType) => {
       if (!messageEvent?.data) {
         return;
       }
@@ -489,7 +372,7 @@ export default function useInteractiveCodeOutput({
       } else {
         messagesRef.current = arr;
         renderOutputs(arr);
-        scrollTo({
+        scrollOutputTo({
           bottom: true,
         });
       }
@@ -521,13 +404,27 @@ export default function useInteractiveCodeOutput({
     );
   }, []);
 
+  const outputFocusedRoot = useMemo(() => {
+    return (
+      <OutputContainerStyle ref={outputFocusedContainerRef}>
+        <OutputContentStyle
+          id={outputFocusedRootUUID.current}
+          ref={outputFocusedContentRef}
+          callback={onRenderOutputFocusedCallback}
+        />
+      </OutputContainerStyle>
+    );
+  }, []);
+
   return {
     clearOutputs,
     connectionState: READY_STATE_MAPPING[readyState],
     kernel,
     kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,
+    interruptKernel: interrupt,
     output: outputRoot,
-    scrollTo,
+    outputFocused: outputFocusedRoot,
+    scrollOutputTo,
     sendMessage,
   };
 }

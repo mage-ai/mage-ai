@@ -40,27 +40,34 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
   transparency?: number;
 } = {}): {
   accent: string;
+  accentLight?: string;
   background: string;
   border: string;
 } {
   let accent;
+  let accentLight;
   let background;
   let border;
   let transparencyOverride;
 
   if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
     accent = (props?.theme || dark)?.accent?.purple;
+    accentLight = (props?.theme || dark)?.accent?.purpleLight;
   } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
     accent = (props?.theme || dark)?.accent?.negative;
+    accentLight = (props?.theme || dark)?.accent?.negativeTransparent;
   } else if (ApplicationExpansionUUIDEnum.CodeMatrix === uuid) {
     accent = (props?.theme || dark)?.background?.success;
+    accentLight = (props?.theme || dark)?.background?.successLight;
   } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
     accent = (props?.theme || dark)?.accent?.yellow;
+    accentLight = (props?.theme || dark)?.accent?.yellowLight;
     transparencyOverride = 0.7;
   }
 
   return {
     accent,
+    accentLight,
     background: background || getRGBA(accent, props),
     border: border || getRGBA(accent, {
       ...props,

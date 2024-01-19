@@ -17,8 +17,8 @@ export enum ExecutionStatusEnum {
 
 export const EXECUTION_STATE_DISPLAY_LABEL_MAPPING = {
   [ExecutionStateEnum.BUSY]: 'Executing',
-  [ExecutionStateEnum.IDLE]: 'Ready for the next command',
-  [ExecutionStateEnum.QUEUED]: 'Waiting in the queue',
+  [ExecutionStateEnum.IDLE]: 'Ready',
+  [ExecutionStateEnum.QUEUED]: 'Queued',
 };
 
 export const EXECUTION_STATUS_DISPLAY_LABEL_MAPPING = {
@@ -95,4 +95,16 @@ export default interface KernelOutputType {
   pipeline_uuid?: string;
   type: DataTypeEnum;
   uuid?: string;
+}
+
+export interface GroupOfOutputsType {
+  dates: string[];
+  groupID: string;
+  groupsCount: number;
+  index: number;
+  outputs: KernelOutputType[];
+}
+
+export interface RawEventOutputDataType {
+  data: string;
 }

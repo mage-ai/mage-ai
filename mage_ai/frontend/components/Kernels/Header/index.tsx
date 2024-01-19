@@ -16,11 +16,13 @@ import { SHARED_FILE_HEADER_BUTTON_PROPS } from '@components/PipelineDetail/File
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function KernelHeader({
+  compact,
   outputs,
   refreshInterval = 12000,
   revalidateOnFocus = true,
   showError,
 }: {
+  compact?: boolean;
   outputs?: KernelOutputType[];
 } & UseKernelType) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -34,7 +36,7 @@ function KernelHeader({
     kernel,
     restart,
   } = useKernel({
-    checkExecutionState: true,
+    checkExecutionState: false,
     refreshInterval,
     revalidateOnFocus,
     showError,
@@ -123,7 +125,11 @@ function KernelHeader({
           small
         >
           <Text monospace noWrapping small>
-            {kernel?.name} {limbo ? 'status unknown 🤷' : kernel?.alive ? 'alive' : 'dead'}
+            {kernel?.name} {compact ? '' : limbo
+              ? 'status unknown 🤷'
+              : kernel?.alive
+                ? 'alive'
+                : 'dead'}
           </Text>
         </Button>
 

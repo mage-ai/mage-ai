@@ -1,4 +1,4 @@
-import KernelOutputType, { ExecutionStatusEnum, ExecutionStateEnum, MsgType } from "@interfaces/KernelOutputType";
+import KernelOutputType, { GroupOfOutputsType, ExecutionStatusEnum, ExecutionStateEnum, MsgType } from "@interfaces/KernelOutputType";
 import { groupBy, sortByKey } from "@utils/array";
 
 export type TableDataType = {
@@ -12,7 +12,7 @@ export function prepareTableData(data: TableDataType): TableDataType {
   return data;
 }
 
-export function groupOutputsAndSort(outputs: KernelOutputType[]): KernelOutputType[] {
+export function groupOutputsAndSort(outputs: KernelOutputType[]): GroupOfOutputsType[] {
   const mapping = {};
 
   outputs?.forEach((item) => {

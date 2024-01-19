@@ -238,7 +238,6 @@ export default function useTerminalComponents({
     }
 
     if (inputRootRef?.current) {
-      console.log('renderInputs');
       const lastCommand = getLastCommand();
 
       inputRootRef?.current?.render(
@@ -297,8 +296,6 @@ export default function useTerminalComponents({
     }
 
     if (outputRootRef?.current) {
-      console.log('renderOutputs');
-
       const kernelOutputsUpdated = getKernelOutputsUpdated()
 
       outputRootRef?.current?.render(

@@ -3,19 +3,19 @@ import { LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT, LOCAL_STORAGE_CODE_MATRIX_INTERA
 import { dedupe } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 
-export function getItems(): KernelOutputType[] {
+export function getItemsCached(): KernelOutputType[] {
   return dedupe(
     get(LOCAL_STORAGE_CODE_MATRIX_DATA_OUTPUT, [])?.filter(item => !!item),
     ['msg_id'],
   ) as KernelOutputType[];
 }
 
-export function setItems(items: KernelOutputType[], replace: boolean = true): KernelOutputType[] {
+export function setItemsCached(items: KernelOutputType[], replace: boolean = true): KernelOutputType[] {
   let arr = [];
   if (replace) {
     arr = items;
   } else {
-    arr = [...getItems(), ...items];
+    arr = [...getItemsCached(), ...items];
   }
 
   arr = dedupe(arr?.filter(i => !!i), ['msg_id']);

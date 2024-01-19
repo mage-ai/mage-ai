@@ -14,15 +14,18 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import FileEditor from '@components/FileEditor';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import { addKeyboardShortcut } from '@components/CodeEditor/keyboard_shortcuts';
 import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header';
 import Flex from '@oracle/components/Flex';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
+import { KeyValueType } from '@interfaces/CommandCenterType';
+import { getApplicationColors } from '@components/ApplicationManager/index.style';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelHeader from '@components/Kernels/Header';
-import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, EXECUTION_STATE_DISPLAY_LABEL_MAPPING, EXECUTION_STATUS_DISPLAY_LABEL_MAPPING, MsgType } from '@interfaces/KernelOutputType';
+import KernelOutputType, { ExecutionStateEnum, ExecutionStatusEnum, EXECUTION_STATE_DISPLAY_LABEL_MAPPING, EXECUTION_STATUS_DISPLAY_LABEL_MAPPING, MsgType, GroupOfOutputsType } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
@@ -31,7 +34,6 @@ import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useInteractiveCodeOutput from '@components/InteractiveCodeOutput/useInteractiveCodeOutput';
 import useTripleLayout from '@components/TripleLayout/useTripleLayout';
-import useKernel from '@utils/models/kernel/useKernel';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
@@ -40,13 +42,14 @@ import { KEY_CODE_ENTER, KEY_CODE_META, KEY_SYMBOL_ENTER, KEY_SYMBOL_M, KEY_SYMB
 import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon, PauseV2, Callback } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
-import { getCode, setCode } from './utils';
-import { getInteractionsCache, setInteractionsCache, getItems, setItems } from './storage';
+import { getCodeCached, setCodeCached } from './utils';
+import { getInteractionsCache, setInteractionsCache, getItemsCached, setItemsCached } from './storage';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 import { selectKeys } from '@utils/hash';
+import { getApplications } from '@storage/ApplicationManager/cache';
 
 const CURRENT_EXECUTION_STATE_ID = 'CURRENT_EXECUTION_STATE_ID';
 
@@ -58,13 +61,8 @@ function CodeMatrix({
     file_path: string;
   };
 }) {
-  const { interrupt } = useKernel({
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-  });
-
+  const timeoutRef = useRef(null);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const themeContext = useContext(ThemeContext);
 
   const editorRef = useRef(null);
   const editorKeyMappingRef = useRef({});
@@ -80,28 +78,29 @@ function CodeMatrix({
   const onOpenCallbackRef= useRef(null);
   const sendMessageRef = useRef(null);
   const kernelStatusCheckResultsTextRef = useRef(null);
+  const kernelStatusCheckedAtTimestampRef = useRef(null);
+  const kernelStatusTimeoutRef = useRef(null);
 
   const [running, setRunning] = useState(false);
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
-  const [openState, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [pause, setPause] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [shouldConnect, setShouldConnect] = useState(false);
+  const [shouldConnect, setShouldConnect] = useState(true);
+
+  const [mounted, setMounted] = useState(false);
 
   const monaco = useMonaco();
 
   const onMountCallback = useCallback((editor) => {
-    setReady(true);
     editorRef.current = editor;
-  }, [monaco]);
+  }, []);
 
-
-  function getCodeForMessage(): string {
+  function getCodeFromEditor(): string {
     return editorRef?.current?.getValue() || contentRef?.current;
   }
 
   useEffect(() => {
-    if (monaco && ready) {
+    if (mounted && monaco) {
       editorRef.current.onKeyDown((event) => {
         editorKeyMappingRef.current = {
           ...editorKeyMappingRef.current,
@@ -135,12 +134,12 @@ function CodeMatrix({
               setShouldConnect(true);
               setTimeout(() => {
                 sendMessageRef?.current?.({
-                  message: getCodeForMessage(),
+                  message: getCodeFromEditor(),
                 });
               }, 1);
             } else {
               sendMessageRef?.current?.({
-                message: getCodeForMessage(),
+                message: getCodeFromEditor(),
               });
             }
           },
@@ -152,7 +151,7 @@ function CodeMatrix({
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
           ],
           run: () => {
-            scrollTo({ bottom: true });
+            scrollOutputTo({ bottom: true });
           },
         },
         {
@@ -162,7 +161,7 @@ function CodeMatrix({
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ,
           ],
           run: () => {
-            scrollTo({ top: true });
+            scrollOutputTo({ top: true });
           },
         },
       ].forEach((shortcut) => {
@@ -173,19 +172,10 @@ function CodeMatrix({
         });
       });
     }
-  }, [monaco, ready]);
+  }, [monaco, mounted]);
 
   const shouldReconnect = useCallback(() => {
     return true;
-  }, []);
-
-  const onOpen = useCallback((value: boolean) => {
-    setOpen(value);
-
-    if (value && !onOpenCallbackRef?.current) {
-      onOpenCallbackRef?.current?.();
-      onOpenCallbackRef.current = null;
-    }
   }, []);
 
   useApplicationBase(props);
@@ -219,13 +209,13 @@ function CodeMatrix({
   useEffect(() => {
     if (afterInnerRef?.current) {
       const val = getInteractionsCache()?.scrollTop;
+      scrollOutputTo({
+        bottom: typeof val !== 'undefined' ? val : true,
+      });
 
       if (typeof val !== 'undefined') {
         afterInnerRef.current.scrollTop = val;
       } else {
-        scrollTo({
-          bottom: true,
-        });
       }
 
       const handleScroll = (e) => {
@@ -240,32 +230,49 @@ function CodeMatrix({
     }
   }, []);
 
+  function updateKernelStatusCheck() {
+    if (!kernelStatusTimeoutRef?.current
+      || !kernelStatusCheckResultsTextRef?.current
+      || !kernelStatusCheckedAtTimestampRef?.current
+    ) {
+      return;
+    }
+
+    kernelStatusTimeoutRef.current = setTimeout(() => {
+      const datetime = momentInLocalTimezone(
+        tzMoment(kernelStatusCheckedAtTimestampRef?.current),
+        displayLocalTimezone,
+      ).format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
+
+      kernelStatusCheckResultsTextRef.current.innerText =
+        `Kernel checked ${utcStringToElapsedTime(datetime, true)}`;
+
+      updateKernelStatusCheck();
+    }, 1000);
+  }
+
   const onMessage = useCallback((output: KernelOutputType, {
     executionState,
     executionStatus,
   }) => {
+    timeoutRef.current = setTimeout(() => {
+      setRunning(false);
+    }, 3000);
+
     if (MsgType.SHUTDOWN_REQUEST === output?.msg_type) {
       return;
     }
 
     if (output?.parent_message?.msg_type === MsgType.USAGE_REQUEST) {
-      const datetime = momentInLocalTimezone(
-        tzMoment(output?.[0]?.execution_metadata?.date),
-        displayLocalTimezone,
-      ).format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
-
-      if (kernelStatusCheckResultsTextRef?.current) {
-        kernelStatusCheckResultsTextRef.current.innerText = `Last checked ${utcStringToElapsedTime(datetime, true)}`;
-      }
+      kernelStatusCheckedAtTimestampRef.current = output?.execution_metadata?.date;
+      kernelStatusTimeoutRef.current = setTimeout(() => updateKernelStatusCheck(), 1);
       return;
     }
 
-    setItems([output], false);
-
     executionStateRef.current = executionState;
     executionStatusRef.current = executionStatus;
-
     renderStatusAndState(output);
+    setItemsCached([output], false);
   }, []);
 
   function renderStatusAndState(output: KernelOutputType) {
@@ -316,24 +323,9 @@ function CodeMatrix({
   }
 
   function onRenderOutputCallback() {
-    // scrollTo({
-    //   bottom: true,
-    // });
-    // setRunning(false);
-
-    // if (outputBottomRef?.current) {
-    //   outputBottomRef.current.style.height =
-    //     `${mainContainerRef?.current?.getBoundingClientRect()?.height}px`;
-    // }
   }
 
-  function onClickOutputGroup(e: Event, opts?: {
-    dates: string[];
-    groupID: number;
-    groupsCount: number;
-    index: number;
-    outputs: KernelOutputType[];
-  }): void {
+  function onSelectActiveGroupOfOutputs(opts?: GroupOfOutputsType): void {
   }
 
   const {
@@ -341,35 +333,46 @@ function CodeMatrix({
     connectionState,
     kernel,
     kernelStatusCheckResults,
+    interruptKernel,
     output,
-    scrollTo,
-    sendMessage,
+    outputFocused,
+    scrollOutputTo,
+    sendMessage: sendMessageInit,
   } = useInteractiveCodeOutput({
     checkKernelStatus: true,
     containerRef: afterInnerRef,
-    getDefaultMessages: () => getItems(),
-    onClickOutputGroup,
+    getDefaultMessages: () => getItemsCached(),
     onMessage,
-    onOpen,
+    onOpen: setOpen,
     onRenderOutputCallback,
+    onSelectActiveGroupOfOutputs,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
   });
-  sendMessageRef.current = sendMessage;
 
-  const open = useMemo(() => openState && WebSocketStateEnum.OPEN === connectionState, [
-    connectionState,
-    openState,
-  ]);
+  function stopExecution() {
+    interruptKernel();
+    setRunning(false);
+  }
+
+  sendMessageRef.current = sendMessageInit;
+  function sendMessage(payload?: KeyValueType): void {
+    sendMessageRef?.current?.({
+      ...payload,
+      message: getCodeFromEditor(),
+    });
+    setRunning(true);
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setRunning(false), 3000);
+  }
 
   const fileEditor = useMemo(() => {
-    console.log('FILE EDITOR REDNER');
     return (
       <FileEditor
         active
         file={{
-          content: (getCode(language) || '') as string,
+          content: (getCodeCached(language) || '') as string,
           uuid: ApplicationExpansionUUIDEnum.CodeMatrix,
           name: ApplicationExpansionUUIDEnum.CodeMatrix,
           language,
@@ -380,7 +383,7 @@ function CodeMatrix({
         hideHeaderButtons
         onContentChange={(content: string) => {
           contentRef.current = content;
-          setCode(language, content);
+          setCodeCached(language, content);
         }}
         onMountCallback={(editor) => {
           onMountCallback(editor);
@@ -397,79 +400,91 @@ function CodeMatrix({
         items: [
           {
             beforeIcon: <TerminalIcon {...MENU_ICON_PROPS} />,
-            uuid: 'TBD',
-            onClick: (opts) => {
-              console.log(opts);
-            },
+            uuid: 'Execute code',
+            onClick: () => sendMessage(),
+          },
+          {
+            beforeIcon: <TerminalIcon {...MENU_ICON_PROPS} />,
+            uuid: 'Stop execution',
+            onClick: () => stopExecution(),
           },
         ],
       },
     ];
-  }, [
-  ]);
+  }, []);
 
-  const menuMemo = useMemo(() => (
+  const mainContentHeaderMemo = useMemo(() => (
     <FlexContainer alignItems="center" justifyContent="space-between">
       <Flex flex={1}>
-        <FileEditorHeader
-          menuGroups={menuGroups}
-        />
+        <FileEditorHeader menuGroups={menuGroups} />
 
-        <Spacing mr={1} />
-
-        <KernelHeader
-          outputs={kernelStatusCheckResults}
-          refreshInterval={0}
-          revalidateOnFocus={false}
-        />
-
-        <Spacing mr={1} />
-
-        <Flex alignItems="center">
-          <Tooltip
-            block
-            description={(!open || !shouldConnect) && (
-              <>
-                {!shouldConnect && (
-                  <Text warning small>
-                    Turn on the WebSocket connection before coding
-                  </Text>
-                )}
-                {shouldConnect && !open && (
-                  <Text warning small>
-                    WebSocket connection isn’t open yet
-                  </Text>
-                )}
-              </>
-            )}
-            forceVisible={!(open && shouldConnect)}
-            size={null}
-            visibleDelay={300}
-            widthFitContent
-          >
+        <Spacing ml={1} id="CodeMatrix-RunButton">
+          <FlexContainer alignItems="center">
             <Button
-              beforeIcon={(
-                <PowerOnOffButton
-                  danger={!(open && shouldConnect)}
-                  size={1.25 * UNIT}
-                  success={open && shouldConnect}
-                />
-              )}
-              onClick={() => setShouldConnect(prev => !prev)}
+              beforeIcon={running
+                ? (
+                  <Loading
+                    color={getApplicationColors(ApplicationExpansionUUIDEnum.CodeMatrix)?.accent}
+                    colorLight={getApplicationColors(ApplicationExpansionUUIDEnum.CodeMatrix)?.accentLight}
+                    loadingStyle={LoadingStyleEnum.BLOCKS}
+                    width={1 * UNIT}
+                  />
+                )
+                : <PlayButtonFilled success />
+              }
               compact
+              disabled={running}
               small
-              secondary
+              ref={runButtonRef}
+              onClick={() => {
+                sendMessage();
+              }}
             >
-              <Text monospace noWrapping small>
-                WebSocket {DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}
-              </Text>
+              Execute code
             </Button>
-          </Tooltip>
 
-          <Spacing mr={1} />
+            <div style={{ marginRight: 4 }} />
 
-          <Text default monospace noWrapping xsmall ref={kernelStatusCheckResultsTextRef} />
-        </Flex>
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              compact
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+              monospace
+              small
+            />
+
+            <Spacing mr={1} />
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing ml={1} id="CodeMatrix-RunButton">
+          <Button
+            disabled={!running}
+            beforeIcon={<PauseV2 warning />}
+            compact
+            small
+            onClick={() => {
+              stopExecution();
+            }}
+          >
+            Stop execution
+          </Button>
+        </Spacing>
+
+        <Spacing ml={1} id="CodeMatrix-RunButton">
+          <Button
+            beforeIcon={<Callback default />}
+            compact
+            small
+            secondary
+            onClick={() => {
+              clearOutputs();
+              setItemsCached([], true);
+            }}
+          >
+            Clear outputs
+          </Button>
+        </Spacing>
       </Flex>
 
       <FlexContainer justifyContent="flex-end" id={CURRENT_EXECUTION_STATE_ID} />
@@ -479,124 +494,72 @@ function CodeMatrix({
   ), [
     connectionState,
     kernelStatusCheckResults,
-    menuGroups,
     open,
+    running,
     shouldConnect,
   ]);
 
-  // const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
-  // const { registerOnKeyDown, registerOnKeyUp, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
-
-  // useEffect(() => () => {
-  //   unregisterOnKeyDown(uuidKeyboard);
-  //   unregisterOnKeyUp(uuidKeyboard);
-  // }, [unregisterOnKeyDown, unregisterOnKeyUp, uuidKeyboard]);
-
-  // registerOnKeyUp(uuidKeyboard, (event, keyMapping, keyHistory) => {
-
-  //   // if (keyMapping[KEY_CODE_META]) {
-  //   //   console.log('Pausing event');
-  //   //   event.preventDefault();
-  //   //   setPause(true);
-  //   // }
-
-  //   if (keysPresentAndKeysRecent([KEY_CODE_ENTER], [KEY_CODE_META], keyMapping, keyHistory, {
-  //     lookback: 2,
-  //   })) {
-  //     console.log('Running code from CodeMatrix keyboard shortcuts.');
-  //     if (shouldConnect) {
-  //       sendMessage({
-  //         message: contentRef.current,
-  //       });
-  //     } else {
-  //       onOpenCallbackRef.current = () => {
-  //         sendMessage({
-  //           message: contentRef.current,
-  //         });
-  //       };
-  //       setShouldConnect(true);
-  //     }
-  //   }
-  // }, []);
-
-  const footer = useMemo(() => {
-    return (
-      <StatusFooter
-        inline
-        refreshInterval={0}
-        revalidateOnFocus={false}
-      >
-        <Flex flexDirection="column" id="CodeMatrix-StatusState" />
-      </StatusFooter>
-    );
-  }, [
-  ]);
-
-  const afterOutputMemo = useMemo(() => {
-    return (
-      <>
-        {console.log("AFTER OUTPUT")}
-        {output}
-      </>
-    );
-  }, [
-    output,
-  ]);
+  const uuidKeyboard = ApplicationExpansionUUIDEnum.CodeMatrix;
+  const { registerOnKeyDown, unregisterOnKeyDown } = useKeyboardContext();
+  useEffect(() => () => unregisterOnKeyDown(uuidKeyboard), []);
+  registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
+  }, []);
 
   const afterHeaderMemo = useMemo(() => {
     const items = [
-      <Spacing ml={1} id="CodeMatrix-RunButton">
-        <FlexContainer alignItems="center">
+      <Spacing ml={1}>
+        <KernelHeader
+          compact
+          outputs={kernelStatusCheckResults}
+          refreshInterval={0}
+          revalidateOnFocus={false}
+        />
+      </Spacing>,
+      <Spacing ml={1}>
+        <Tooltip
+          block
+          description={(!open || !shouldConnect) && (
+            <>
+              {!shouldConnect && (
+                <Text warning small>
+                  Turn on the WebSocket connection before coding
+                </Text>
+              )}
+              {shouldConnect && !open && (
+                <Text warning small>
+                  WebSocket connection isn’t open yet
+                </Text>
+              )}
+            </>
+          )}
+          forceVisible={!(open && shouldConnect)}
+          size={null}
+          visibleDelay={300}
+          widthFitContent
+        >
           <Button
-            beforeIcon={<PlayButtonFilled success />}
+            beforeIcon={(
+              <PowerOnOffButton
+                danger={!(open && shouldConnect)}
+                size={1.25 * UNIT}
+                success={open && shouldConnect}
+              />
+            )}
+            onClick={() => setShouldConnect(prev => !prev)}
             compact
             small
-            ref={runButtonRef}
-            loading={running}
-            onClick={() => {
-              executionStateRef.current = ExecutionStateEnum.QUEUED;
-
-              if (!open || !shouldConnect) {
-                onOpenCallbackRef.current = () => {
-                  sendMessage({
-                    message: getCodeForMessage(),
-                  });
-                };
-                setRunning(true);
-                setShouldConnect(true);
-              } else {
-                setRunning(true);
-                sendMessage({
-                  message: getCodeForMessage(),
-                });
-              }
-            }}
+            secondary
           >
-            Execute code
+            <Text monospace noWrapping small>
+              WebSocket {DISPLAY_LABEL_MAPPING[connectionState]?.toLowerCase()}
+            </Text>
           </Button>
-
-          <div style={{ marginRight: 4 }} />
-
-          <KeyboardTextGroup
-            addPlusSignBetweenKeys
-            compact
-            keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
-            monospace
-            small
-          />
-
-          <Spacing mr={1} />
-        </FlexContainer>
+        </Tooltip>
       </Spacing>,
     ];
 
-    if (running) {
-      items.push(
-      );
-    }
-
     items.push(...[
-      <Spacing ml={1} id="CodeMatrix-RunButton">
+      <Spacing ml={1}>
         <ButtonGroup>
           <Button
             beforeIcon={<CircleWithArrowUp active />}
@@ -604,7 +567,7 @@ function CodeMatrix({
             small
             secondary
             onClick={() => {
-              scrollTo({ top: true });
+              scrollOutputTo({ top: true });
             }}
           >
             Go to top
@@ -615,41 +578,12 @@ function CodeMatrix({
             small
             secondary
             onClick={() => {
-              scrollTo({ bottom: true });
+              scrollOutputTo({ bottom: true });
             }}
           >
             Go down
           </Button>
         </ButtonGroup>
-      </Spacing>,
-      <Spacing ml={1} id="CodeMatrix-RunButton">
-        <Button
-          beforeIcon={<Callback default />}
-          compact
-          small
-          secondary
-          onClick={() => {
-            clearOutputs();
-            setItems([], true);
-          }}
-        >
-          Clear outputs
-        </Button>
-      </Spacing>,
-      <Spacing ml={1} id="CodeMatrix-RunButton">
-        <Button
-          disabled={executionStateRef?.current === ExecutionStateEnum.IDLE}
-          beforeIcon={<PauseV2 warning />}
-          compact
-          small
-          onClick={() => {
-            executionStateRef.current = null;
-            setRunning(false);
-            interrupt();
-          }}
-        >
-          Stop execution
-        </Button>
       </Spacing>,
     ]);
 
@@ -658,7 +592,19 @@ function CodeMatrix({
         fileTabs={[items]}
       />
     );
-  }, [open, shouldConnect, sendMessage, running]);
+  }, [open, running, shouldConnect]);
+
+  const afterOutputMemo = useMemo(() => {
+    return (
+      <>
+        {output}
+        {outputFocused}
+      </>
+    );
+  }, [
+    output,
+    outputFocused,
+  ]);
 
   return (
     <ContainerStyle>
@@ -702,7 +648,18 @@ function CodeMatrix({
         contained
         containerRef={containerRef}
         inline
-        mainContainerFooter={footer}
+        mainContainerFooter={(
+          <StatusFooter
+            inline
+            refreshInterval={0}
+            revalidateOnFocus={false}
+          >
+            <FlexContainer alignItems="center">
+              <Text default monospace noWrapping xsmall ref={kernelStatusCheckResultsTextRef} />
+              {/*<Flex flexDirection="column" id="CodeMatrix-StatusState" />*/}
+            </FlexContainer>
+          </StatusFooter>
+        )}
         mainContainerHeader={(
           <div
             style={{
@@ -711,7 +668,7 @@ function CodeMatrix({
             }}
           >
             <Spacing py={1}>
-              {menuMemo}
+              {mainContentHeaderMemo}
             </Spacing>
 
             <Divider light />
