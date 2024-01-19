@@ -12,6 +12,7 @@ import { transition } from '@oracle/styles/mixins';
 export const INDICATOR_SIZE = 3 * UNIT;
 export const TOGGLE_CLASSNAME = 'output-row-toggle';
 export const TOGGLE_SCROLLBAR_OFFSET_CLASS = 'toggle_scrollbar_offset';
+export const STICKY_HEADER = 'row-header-sticky';
 
 const SHARED_HIDDEN_STYLES = css`
   bottom: 0;
@@ -24,8 +25,7 @@ const SHARED_HIDDEN_STYLES = css`
 
 export const RowGroupStyle = styled.div`
   ${transition()}
-  padding-bottom: ${1 * UNIT}px;
-  padding-top: ${1 * UNIT}px;
+  position: relative;
 
   .inactive {
     display: none;
@@ -42,6 +42,13 @@ export const RowGroupStyle = styled.div`
         2px 1px 0 1px ${(props.theme || dark).accent.cyan} inset,
         -1px -1px 0 1px ${(props.theme || dark).accent.cyan} inset;
     `}
+
+    .${STICKY_HEADER} {
+      ${props => `
+        backdrop-filter: saturate(100%) blur(${1 * UNIT}px);
+        background-color: ${(props.theme || dark).accent.cyanTransparent};
+      `}
+    }
   }
 
   &.errors {
@@ -103,17 +110,37 @@ export const LoadingStyle = styled.div<{
   inactive?: boolean;
 }>`
   height: ${LOADING_HEIGHT}px;
+  position: absolute;
+  top: 0;
   width: 100%;
 
   ${props => props.inactive && `
     display: none;
+    width: 0;
   `}
+
+  &.active {
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+
+    ${props => `
+      background-color: ${(props.theme || dark)?.background?.blackTransparent};
+    `}
+  }
 `;
 
 export const HeaderStyle = styled.div`
-  margin-bottom: ${UNIT}px;
-  padding-left: ${UNIT}px;
-  padding-right: ${UNIT}px;
+  padding: ${1 * UNIT}px;
+  position: sticky;
+  top: ${0 * UNIT}px;
+  z-index: 1;
+
+  &.${STICKY_HEADER} {
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+
+    ${props => `
+      background-color: ${(props.theme || dark)?.background?.blackTransparent};
+    `}
+  }
 `;
 
 export const RowStyle = styled.div`

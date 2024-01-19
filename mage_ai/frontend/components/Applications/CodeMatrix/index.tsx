@@ -83,6 +83,7 @@ function CodeMatrix({
   const kernelStatusTimeoutRef = useRef(null);
 
   const [running, setRunning] = useState(false);
+  const [selectedGroupOfOutputs, setSelectedGroupOfOutputs] = useState(false);
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
   const [open, setOpen] = useState(false);
   const [pause, setPause] = useState(false);
@@ -166,6 +167,13 @@ function CodeMatrix({
     }
   }, [monaco, mounted]);
 
+  useEffect(() => {
+    return () => {
+      clearTimeout(timeoutRef.current);
+      clearTimeout(kernelStatusTimeoutRef.current);
+    };
+  }, []);
+
   const shouldReconnect = useCallback(() => {
     return true;
   }, []);
@@ -231,8 +239,10 @@ function CodeMatrix({
         displayLocalTimezone,
       ).format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
 
-      kernelStatusCheckResultsTextRef.current.innerText =
-        `Kernel checked ${utcStringToElapsedTime(datetime, true)}`;
+      if (kernelStatusCheckResultsTextRef?.current) {
+        kernelStatusCheckResultsTextRef.current.innerText =
+          `Kernel checked ${utcStringToElapsedTime(datetime, true)}`;
+      }
 
       updateKernelStatusCheck();
     }, 1000);
@@ -581,22 +591,13 @@ function CodeMatrix({
     );
   }, [open, running, shouldConnect]);
 
-  const afterOutputMemo = useMemo(() => {
-    return (
-      <>
-        {output}
-        {outputFocused}
-      </>
-    );
-  }, [
-    output,
-    outputFocused,
-  ]);
-
   return (
     <ContainerStyle>
       <TripleLayout
-        after={afterOutputMemo}
+        after={[
+          output,
+          outputFocused,
+        ]}
         afterCombinedWithMain
         afterDark
         afterDividerContrast

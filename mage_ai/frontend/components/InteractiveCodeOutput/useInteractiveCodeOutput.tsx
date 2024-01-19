@@ -9,7 +9,8 @@ import ComponentWithCallback from '@components/shared/ComponentWithCallback';
 import KernelOutputType, { RawEventOutputDataType, ExecutionStateEnum, ExecutionStatusEnum, GroupOfOutputsType, MsgType } from '@interfaces/KernelOutputType';
 import KernelType from '@interfaces/KernelType';
 import KeyboardContext from '@context/Keyboard';
-import OutputGroup from './Output';
+import OutputGroup, { ROW_GROUP_HEADER_CLASS_NAME } from './Output';
+import { STICKY_HEADER } from './Output/index.style';
 import useKernel from '@utils/models/kernel/useKernel';
 import { ErrorProvider } from '@context/Error';
 import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
@@ -29,8 +30,8 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 
+const OUTPUT_ACTIVE_MODE_CLASS_NAME = 'active-group';
 const SELECTED_ROW_GROUP_CLASS_NAME = 'row-group-selected';
-const OUTPUT_ACTIVE_MODE_CLASS_NAME = 'inline';
 
 export default function useInteractiveCodeOutput({
   checkKernelStatus = false,
@@ -180,7 +181,7 @@ export default function useInteractiveCodeOutput({
         outputFocusedContainerRef,
       ].forEach((ref) => {
         if (ref?.current) {
-          if (active) {
+          if (selectedGroupOfOutputs?.current?.active) {
             ref.current.className = addClassNames(
               ref.current.className || '',
               [
@@ -198,13 +199,10 @@ export default function useInteractiveCodeOutput({
         }
       });
 
-      const active = selectedGroupOfOutputs?.current?.active;
-      if (active) {
+      if (selectedGroupOfOutputs?.current?.active) {
         removeSelectedFromAllRowGroups();
         renderOutputs(selectedGroupOfOutputs?.current?.outputs);
-      }
-
-      if (getDefaultMessages) {
+      } else if (getDefaultMessages) {
         messagesRef.current = getDefaultMessages?.();
         if (messagesRef.current) {
           renderOutputs(messagesRef.current);
@@ -238,6 +236,13 @@ export default function useInteractiveCodeOutput({
       if (!alreadyActive) {
         setupGroups();
         selectedGroupOfOutputs.current = { active: true, ...data };
+
+        if (onSelectActiveGroupOfOutputs) {
+          onSelectActiveGroupOfOutputs?.({
+            active: true,
+            ...onSelectActiveGroupOfOutputs,
+          });
+        }
       }
     } else {
       selectedGroupOfOutputs.current = { active: false, ...data };
@@ -313,8 +318,37 @@ export default function useInteractiveCodeOutput({
     renderOutputs([]);
   }
 
+  function handleScroll() {
+    const yC = containerRef?.current?.getBoundingClientRect()?.y;
+    document.querySelectorAll(`.${ROW_GROUP_HEADER_CLASS_NAME}`)?.forEach((ref) => {
+      const rect = ref?.getBoundingClientRect();
+      if ((rect?.y - rect?.height) <= yC) {
+        ref.className = addClassNames(
+          ref.className,
+          [
+            STICKY_HEADER,
+          ],
+        );
+      } else {
+        ref.className = removeClassNames(
+          ref.className,
+          [
+            STICKY_HEADER,
+          ],
+        );
+      }
+    });
+  }
+
   useEffect(() => {
     setupGroups();
+
+    if (typeof window !== 'undefined') {
+
+      setTimeout(() => containerRef?.current?.addEventListener('scroll', handleScroll), 3000);
+
+      return () => containerRef?.current?.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   const {
@@ -390,23 +424,19 @@ export default function useInteractiveCodeOutput({
 
   const outputRoot = useMemo(() => {
     return (
-      <div>
-        <OutputContainerStyle ref={outputContainerRef}>
-          <OutputContentStyle
-            id={outputRootUUID.current}
-            ref={outputContentRef}
-            callback={onRenderOutputCallback}
-          />
-        </OutputContainerStyle>
-
-        <div ref={outputBottomRef} />
-      </div>
+      <OutputContainerStyle key={`${uuid}-${outputRootUUID}-output`} ref={outputContainerRef}>
+        <OutputContentStyle
+          id={outputRootUUID.current}
+          ref={outputContentRef}
+          callback={onRenderOutputCallback}
+        />
+      </OutputContainerStyle>
     );
   }, []);
 
   const outputFocusedRoot = useMemo(() => {
     return (
-      <OutputContainerStyle ref={outputFocusedContainerRef}>
+      <OutputContainerStyle key={`${uuid}-${outputFocusedRootUUID}-output-focused`} ref={outputFocusedContainerRef}>
         <OutputContentStyle
           id={outputFocusedRootUUID.current}
           ref={outputFocusedContentRef}

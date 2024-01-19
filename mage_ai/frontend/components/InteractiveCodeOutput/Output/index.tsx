@@ -30,6 +30,9 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { sortByKey } from '@utils/array';
 import { pauseEvent } from '@utils/events';
 
+export const ROW_GROUP_CLASS_NAME = 'row-group';
+export const ROW_GROUP_HEADER_CLASS_NAME = 'row-group-header';
+
 function Output({
   dates,
   groupID,
@@ -185,109 +188,106 @@ function Output({
       || ExecutionStateEnum.IDLE === executionState);
   }, [outputs]);
 
-  console.log(inactive)
-
   return (
-    <>
+    <RowGroupStyle
+      className={[
+        ROW_GROUP_CLASS_NAME,
+        inactive ? 'inactive' : 'active',
+        hasErrors ? 'errors' : '',
+      ]?.filter(c => !!c)?.join(' ')}
+      onClick={(e) => {
+        if (onClick) {
+          onClick?.(e);
+        }
+      }}
+      ref={ref}
+    >
       <LoadingStyle inactive={inactive}>
         <Loading width="100%" />
       </LoadingStyle>
 
-      <RowGroupStyle
-        className={[
-          inactive ? 'inactive' : 'active',
-          hasErrors ? 'errors' : '',
-        ]?.filter(c => !!c)?.join(' ')}
-        onClick={(e) => {
-          if (onClick) {
-            onClick?.(e);
-          }
-        }}
-        ref={ref}
-      >
-        <HeaderStyle>
-          <FlexContainer alignItems="flex-start" justifyContent="space-between">
-            <Flex alignItems="center" flex={1} flexDirection="row" style={{ position: 'relative' }} >
-              <Tooltip
-                appearBefore
-                block
-                label={(
-                  <Text default monospace small>
-                    {datetimeSmallest ? datetimeSmallest.format(DATE_FORMAT_LONG_MS) : null}
-                  </Text>
-                )}
-                size={null}
-                visibleDelay={300}
-                widthFitContent
-              >
+      <HeaderStyle className={ROW_GROUP_HEADER_CLASS_NAME}>
+        <FlexContainer alignItems="flex-start" justifyContent="space-between">
+          <Flex alignItems="center" flex={1} flexDirection="row" style={{ position: 'relative' }} >
+            <Tooltip
+              appearBefore
+              block
+              label={(
                 <Text default monospace small>
-                  {datetimeSmallest
-                    ? (now.diff(datetimeSmallest, 'days') >= 1 ? dateFull : timeFull)
-                    : null
-                  }
+                  {datetimeSmallest ? datetimeSmallest.format(DATE_FORMAT_LONG_MS) : null}
                 </Text>
-              </Tooltip>
-
-              <Spacing mr={1} />
-
-              {/*<Text
-                danger={ExecutionStatusEnum.FAILED === executionStatus}
-                default={ExecutionStatusEnum.CANCELLED === executionStatus}
-                monospace
-                success={ExecutionStatusEnum.SUCCESS === executionStatus}
-                warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
-                small
-              >
-                {ExecutionStateEnum.IDLE === executionState
-                  && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
+              )}
+              size={null}
+              visibleDelay={300}
+              widthFitContent
+            >
+              <Text default monospace small>
+                {datetimeSmallest
+                  ? (now.diff(datetimeSmallest, 'days') >= 1 ? dateFull : timeFull)
+                  : null
                 }
-              </Text>*/}
-            </Flex>
+              </Text>
+            </Tooltip>
 
-            <Flex flex={1} flexDirection="column" alignItems="flex-end">
-              {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
+            <Spacing mr={1} />
 
-              <Spacing mr={1} />
+            {/*<Text
+              danger={ExecutionStatusEnum.FAILED === executionStatus}
+              default={ExecutionStatusEnum.CANCELLED === executionStatus}
+              monospace
+              success={ExecutionStatusEnum.SUCCESS === executionStatus}
+              warning={ExecutionStatusEnum.EMPTY_RESULTS === executionStatus}
+              small
+            >
+              {ExecutionStateEnum.IDLE === executionState
+                && EXECUTION_STATUS_DISPLAY_LABEL_MAPPING[executionStatus]
+              }
+            </Text>*/}
+          </Flex>
 
-              <Tooltip
-                appearBefore
-                block
-                label={(
-                  <Text default monospace small>
-                    {groupID}
-                  </Text>
-                )}
-                size={null}
-                visibleDelay={300}
-                widthFitContent
+          <Flex flex={1} flexDirection="column" alignItems="flex-end">
+            {timeout?.current && !inactive && <Text default monospace ref={timerTextRef} small />}
+
+            <Spacing mr={1} />
+
+            <Tooltip
+              appearBefore
+              block
+              label={(
+                <Text default monospace small>
+                  {groupID}
+                </Text>
+              )}
+              size={null}
+              visibleDelay={300}
+              widthFitContent
+            >
+              <Link
+                noOutline
+                onClick={(e) => {
+                  pauseEvent(e);
+                }}
+                preventDefault
               >
-                <Link
-                  noOutline
-                  onClick={(e) => {
-                    pauseEvent(e);
-                  }}
-                  preventDefault
-                >
-                  <Text muted monospace small>
-                    {generalizeMsgID(groupID || '', {
-                      medium: true,
-                    })}
-                  </Text>
-                </Link>
-              </Tooltip>
-            </Flex>
-          </FlexContainer>
-        </HeaderStyle>
+                <Text muted monospace small>
+                  {generalizeMsgID(groupID || '', {
+                    medium: true,
+                  })}
+                </Text>
+              </Link>
+            </Tooltip>
+          </Flex>
+        </FlexContainer>
+      </HeaderStyle>
 
-        <OutputDataCombined
-          html={html}
-          images={images}
-          json={json}
-          tables={tables}
-          text={text}
-        />
-      </RowGroupStyle>
-    </>
+      <OutputDataCombined
+        html={html}
+        images={images}
+        json={json}
+        tables={tables}
+        text={text}
+      />
+    </RowGroupStyle>
   );
 }
 
