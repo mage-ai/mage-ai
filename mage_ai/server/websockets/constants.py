@@ -3,6 +3,7 @@ from enum import Enum
 
 class Channel(str, Enum):
     CODE = 'CODE'
+    DATA = 'DATA'
 
 
 class ExecutionState(str, Enum):

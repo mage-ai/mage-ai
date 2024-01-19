@@ -26,9 +26,13 @@ class BaseHandler(WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def on_message(self, raw_message: str):
+    def preprocess(self, raw_message: str) -> Message:
         message = parse_raw_message(raw_message)
         message = validate_message(message)
+        return message
+
+    def on_message(self, raw_message: str):
+        message = self.preprocess(raw_message)
         if message.error or message.executed:
             return self.send_message(message)
 

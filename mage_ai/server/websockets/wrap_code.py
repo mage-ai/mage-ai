@@ -34,13 +34,12 @@ error = None
 try:
 {}
 except Exception as err:
-    error = err
-""".format(code),
-        '\n' * 40,
+    error = err""".format(code),
         post_code.replace('__MSG_ID__', partition).strip(),
-        """
-if error:
+        """if error:
     raise error
+
+vars().get('_')
 """,
     ])
 
