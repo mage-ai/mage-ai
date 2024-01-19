@@ -21,7 +21,7 @@ from mage_ai.shared.hash import merge_dict
 
 class LDAPAuthenticator(ABC):
     @abstractmethod
-    def authenticate(self, username: str, password: str) -> Tuple[bool, str]:
+    def authenticate(self, username: str, password: str) -> Tuple[bool, str, Dict]:
         pass
 
     @abstractmethod
@@ -29,7 +29,7 @@ class LDAPAuthenticator(ABC):
         pass
 
     def verify(self, username: str, password: str) -> bool:
-        authenticated, user_dn = self.authenticate(username, password)
+        authenticated, user_dn, user_attributes = self.authenticate(username, password)
         if authenticated:
             return self.authorize(user_dn)
         return False
@@ -83,7 +83,7 @@ class LDAPConnection(LDAPAuthenticator):
                 attributes=[self.group_field] if self.group_field else None,
             )
             if not self.conn.entries:
-                return False, ""
+                return False, "", dict()
             user_dn = self.conn.entries[0].entry_dn
             user_attributes = self.conn.entries[0].entry_attributes_as_dict
             if self.conn.rebind(user=user_dn, password=password):
@@ -92,12 +92,12 @@ class LDAPConnection(LDAPAuthenticator):
         except LDAPException:
             return False, "", dict()
 
-    def authorize(self, user_dn: str) -> bool:
+    def authorize(self, username: str) -> bool:
         try:
             if not self.conn:
                 self.bind()
             self.conn.entries.clear()
-            self.conn.search(self.base_dn, self.authorization_filter.format(user_dn=user_dn))
+            self.conn.search(self.base_dn, self.authorization_filter.format(user_dn=username))
             if self.conn.entries:
                 if len(self.conn.entries) > 0:
                     return True
