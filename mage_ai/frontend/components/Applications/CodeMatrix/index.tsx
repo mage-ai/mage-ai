@@ -40,7 +40,7 @@ import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ContainerStyle } from '../index.style';
 import { DISPLAY_LABEL_MAPPING, WebSocketStateEnum } from '@interfaces/WebSocketType';
 import { KEY_CODE_ENTER, KEY_CODE_META, KEY_SYMBOL_ENTER, KEY_SYMBOL_M, KEY_SYMBOL_META } from '@utils/hooks/keyboardShortcuts/constants';
-import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon, PauseV2, Callback } from '@oracle/icons';
+import { CircleWithArrowUp, CubeWithArrowDown, PlayButtonFilled, PowerOnOffButton, Terminal as TerminalIcon, PauseV2, Callback, ArrowLeft, ChevronLeft } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getCodeCached, setCodeCached } from './utils';
@@ -82,6 +82,7 @@ function CodeMatrix({
   const kernelStatusCheckedAtTimestampRef = useRef(null);
   const kernelStatusTimeoutRef = useRef(null);
 
+  const [activeGroup, setActiveGroup] = useState<GroupOfOutputsType>(false);
   const [running, setRunning] = useState(false);
   const [selectedGroupOfOutputs, setSelectedGroupOfOutputs] = useState(false);
   const [language, setLanguage] = useState(BlockLanguageEnum.PYTHON);
@@ -322,14 +323,18 @@ function CodeMatrix({
   function onRenderOutputCallback() {
   }
 
-  function onActiveateGroupOfOutputs(opts?: GroupOfOutputsType): void {
+  function onActiveateGroupOfOutputs(group?: GroupOfOutputsType): void {
+    setActiveGroup(group);
   }
-  function onDeactivateGroupOfOutputs(opts?: GroupOfOutputsType): void {
+
+  function onDeactivateGroupOfOutputs(group?: GroupOfOutputsType): void {
+    setActiveGroup(null);
   }
 
   const {
     clearOutputs,
     connectionState,
+    deactivateGroup,
     kernel,
     kernelStatusCheckResults,
     interruptKernel,
@@ -570,7 +575,7 @@ function CodeMatrix({
               scrollOutputTo({ top: true });
             }}
           >
-            Go to top
+            Teleport top
           </Button>
           <Button
             beforeIcon={<CubeWithArrowDown active />}
@@ -581,18 +586,36 @@ function CodeMatrix({
               scrollOutputTo({ bottom: true });
             }}
           >
-            Go down
+            Portal down
           </Button>
         </ButtonGroup>
       </Spacing>,
     ]);
+
+    if (activeGroup) {
+      items.unshift(
+        <Spacing ml={1}>
+          <Button
+            beforeIcon={<ChevronLeft inverted />}
+            compact
+            small
+            warning
+            onClick={() => {
+              deactivateGroup();
+            }}
+          >
+            Exit output group
+          </Button>
+        </Spacing>,
+      );
+    }
 
     return (
       <FileTabsScroller
         fileTabs={[items]}
       />
     );
-  }, [open, running, shouldConnect]);
+  }, [activeGroup, open, running, shouldConnect]);
 
   return (
     <ContainerStyle>

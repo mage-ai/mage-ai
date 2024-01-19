@@ -28,6 +28,7 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { parseRawDataFromMessage } from '@utils/models/kernel/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+import { delay } from '@utils/delay';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 
 const OUTPUT_ACTIVE_MODE_CLASS_NAME = 'active-group';
@@ -65,6 +66,7 @@ export default function useInteractiveCodeOutput({
 }): {
   clearOutputs: () => void;
   connectionState: WebSocketStateEnum;
+  deactivateGroup: () => void;
   kernel: KernelType;
   kernelStatusCheckResults: KernelOutputType[];
   interruptKernel: () => void;
@@ -99,6 +101,7 @@ export default function useInteractiveCodeOutput({
 
   const selectedGroupOfOutputs = useRef();
   const messagesRef = useRef([]);
+  const messagesBookmarkIndexRef = useRef(null);
 
   const outputGroupRefs = useRef({});
 
@@ -112,6 +115,10 @@ export default function useInteractiveCodeOutput({
   const outputFocusedRootRef = useRef(null);
   const outputFocusedContainerRef = useRef(null);
   const outputFocusedContentRef = useRef(null);
+
+  function isActive(): boolean {
+    return !!selectedGroupOfOutputs?.current?.active;
+  }
 
   const {
     registerOnKeyDown,
@@ -140,16 +147,18 @@ export default function useInteractiveCodeOutput({
     top?: number | boolean;
   }, smooth: boolean = true) {
     setTimeout(() => {
-      if (containerRef?.current) {
+      const ref = isActive() ? outputFocusedContainerRef : containerRef;
+
+      if (ref?.current) {
         if (bottom !== null) {
-          containerRef.current.scrollTo({
+          ref.current.scrollTo({
             top: bottom === true
-              ? containerRef?.current?.scrollHeight - containerRef?.current?.getBoundingClientRect()?.height
+              ? ref?.current?.scrollHeight - ref?.current?.getBoundingClientRect()?.height
               : Number(bottom),
             behavior: smooth ? 'smooth' : 'instant',
           })
         } else if (top !== null) {
-          containerRef.current.scrollTo({
+          ref.current.scrollTo({
             top: top === true ? 0 : Number(top),
             behavior: smooth ? 'smooth' : 'instant',
           });
@@ -176,41 +185,59 @@ export default function useInteractiveCodeOutput({
     }
   }
 
-  function setupGroups() {
-    setTimeout(() => {
-      [
-        outputContainerRef,
-        outputFocusedContainerRef,
-      ].forEach((ref) => {
-        if (ref?.current) {
-          if (selectedGroupOfOutputs?.current?.active) {
-            ref.current.className = addClassNames(
-              ref.current.className || '',
-              [
-                OUTPUT_ACTIVE_MODE_CLASS_NAME,
-              ],
-            );
-          } else {
-            ref.current.className = removeClassNames(
-              ref.current.className || '',
-              [
-                OUTPUT_ACTIVE_MODE_CLASS_NAME,
-              ],
-            );
+  function setupGroups(): Promise<any> {
+    return new Promise((resolve) => {
+      return resolve(delay(300).then(() => {
+        [
+          outputContainerRef,
+          outputFocusedContainerRef,
+        ].forEach((ref) => {
+          if (ref?.current) {
+            if (isActive()) {
+              ref.current.className = addClassNames(
+                ref.current.className || '',
+                [
+                  OUTPUT_ACTIVE_MODE_CLASS_NAME,
+                ],
+              );
+            } else {
+              ref.current.className = removeClassNames(
+                ref.current.className || '',
+                [
+                  OUTPUT_ACTIVE_MODE_CLASS_NAME,
+                ],
+              );
+            }
+          }
+        });
+
+        if (isActive()) {
+          removeSelectedFromAllRowGroups();
+          renderOutputs(selectedGroupOfOutputs?.current?.outputs);
+        } else if (getDefaultMessages) {
+          messagesRef.current = getDefaultMessages?.();
+          if (messagesRef.current) {
+            renderOutputs(messagesRef.current);
           }
         }
-      });
+      }));
+    });
+  }
 
-      if (selectedGroupOfOutputs?.current?.active) {
-        removeSelectedFromAllRowGroups();
-        renderOutputs(selectedGroupOfOutputs?.current?.outputs);
-      } else if (getDefaultMessages) {
-        messagesRef.current = getDefaultMessages?.();
-        if (messagesRef.current) {
-          renderOutputs(messagesRef.current);
-        }
-      }
-    }, 300);
+  function deactivateGroup() {
+    if (onDeactivateGroupOfOutputs) {
+      onDeactivateGroupOfOutputs?.(selectedGroupOfOutputs?.current);
+    }
+    messagesBookmarkIndexRef.current = null;
+    selectedGroupOfOutputs.current = null;
+    // Clear the output focus.
+    renderOutputsFocused([]);
+
+    setupGroups().then(() => {
+      scrollOutputTo({
+        bottom: true,
+      }, false);
+    });
   }
 
   function handleClickGroup(data: GroupOfOutputsType) {
@@ -224,14 +251,10 @@ export default function useInteractiveCodeOutput({
 
     // Click twice to activate group
     if (selectedGroupOfOutputs?.current?.groupID === groupID) {
-      const alreadyActive = selectedGroupOfOutputs?.current?.active;
+      const alreadyActive = isActive();
       if (selectedGroupOfOutputs?.current?.deactivate) {
-        if (onActiveateGroupOfOutputs) {
-          onDeactivateGroupOfOutputs?.(selectedGroupOfOutputs?.current);
-          selectedGroupOfOutputs.current = null;
-          setupGroups();
-          shouldHighlight = false;
-        }
+        deactivateGroup();
+        shouldHighlight = false;
       } else if (alreadyActive) {
         selectedGroupOfOutputs.current = {
           deactivate: true,
@@ -250,7 +273,7 @@ export default function useInteractiveCodeOutput({
     }
 
     if (shouldHighlight) {
-      setTimeout(() => {
+      delay(1).then(() => {
         if (outputGroupRefs?.current?.[groupID]?.current) {
           const ref = outputGroupRefs?.current?.[groupID];
           ref.current.className = addClassNames(
@@ -260,25 +283,15 @@ export default function useInteractiveCodeOutput({
             ],
           );
         }
-      }, 1);
+      });
     }
   }
 
-  function renderOutputs(outputs: KernelOutputType[]) {
-    if (!outputRootRef?.current) {
-      const domNode = document.getElementById(outputRootUUID.current);
-      if (domNode) {
-        outputRootRef.current = createRoot(domNode);
-      }
-    }
-
-    if (!outputRootRef?.current) {
-      console.log('[ERROR] InteractiveCOdeOutput: output root doesn’t exist.');
-    }
-
+  function groupOutputsTogether(outputs: KernelOutputType[]): GroupOfOutputsType[] {
     const groups: GroupOfOutputsType[] = groupOutputsAndSort(outputs);
     const groupsCount = groups?.length;
-    const outputsGrouped = groups?.map(({
+
+    return groups?.map(({
       dates,
       groupID,
       outputs,
@@ -302,23 +315,61 @@ export default function useInteractiveCodeOutput({
               outputs,
             };
             handleClickGroup(data);
-
-            if (onActiveateGroupOfOutputs) {
-              onActiveateGroupOfOutputs?.(data);
-            }
           }}
           outputs={outputs}
           ref={ref}
         />
       );
     });
+  }
 
-    outputRootRef?.current?.render(
+  function renderOutputsFocused(outputs: KernelOutputType[]) {
+    // If active, render new messages in the bottom half using the output focused root.
+    if (!outputFocusedRootRef?.current) {
+      const domNode = document.getElementById(outputFocusedRootUUID.current);
+      if (domNode) {
+        outputFocusedRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (!outputFocusedRootRef?.current) {
+      console.log('[ERROR] InteractiveCodeOutput: output focused root doesn’t exist.');
+    }
+
+    renderUsingRoot(
+      outputFocusedRootRef,
+      groupOutputsTogether(outputs),
+      () => onRenderOutputFocusedCallback ? onRenderOutputFocusedCallback?.() : null,
+    );
+  }
+
+  function renderOutputs(outputs: KernelOutputType[]) {
+    // If active, render new messages in the bottom half using the output focused root.
+    if (!outputRootRef?.current) {
+      const domNode = document.getElementById(outputRootUUID.current);
+      if (domNode) {
+        outputRootRef.current = createRoot(domNode);
+      }
+    }
+
+    if (!outputRootRef?.current) {
+      console.log('[ERROR] InteractiveCodeOutput: output root doesn’t exist.');
+    }
+
+    renderUsingRoot(
+      outputRootRef,
+      groupOutputsTogether(outputs),
+      () => onRenderOutputCallback ? onRenderOutputCallback?.() : null,
+    );
+  }
+
+  function renderUsingRoot(rootRef, outputsGrouped, callback?: () => void) {
+    rootRef?.current?.render(
       <KeyboardContext.Provider value={keyboardContext}>
         <ThemeProvider theme={themeContext}>
           <ModalProvider>
             <ErrorProvider>
-              <ComponentWithCallback callback={onRenderOutputCallback}>
+              <ComponentWithCallback callback={callback}>
                 {outputsGrouped}
               </ComponentWithCallback>
             </ErrorProvider>
@@ -419,8 +470,28 @@ export default function useInteractiveCodeOutput({
       } else if (MsgType.SHUTDOWN_REQUEST === output?.msg_id) {
         return;
       } else {
+        if (isActive()) {
+          if (messagesBookmarkIndexRef?.current === null) {
+            messagesBookmarkIndexRef.current = messagesRef?.current?.length || 0;
+          }
+        } else {
+          messagesBookmarkIndexRef.current = null;
+        }
+
+        // If the output is a status message, and the previous message is a status message,
         messagesRef.current = arr;
-        renderOutputs(arr);
+
+        let outputsToRender = arr;
+
+        if (isActive()) {
+          outputsToRender = outputsToRender?.slice(messagesBookmarkIndexRef?.current || 0);
+          //  Render new messages in the bottom half and keep rendering the active group’s
+          // outputs in the top half.
+          renderOutputsFocused(outputsToRender);
+        } else {
+          renderOutputs(outputsToRender);
+        }
+
         scrollOutputTo({
           bottom: true,
         }, false);
@@ -464,6 +535,7 @@ export default function useInteractiveCodeOutput({
   return {
     clearOutputs,
     connectionState: READY_STATE_MAPPING[readyState],
+    deactivateGroup,
     kernel,
     kernelStatusCheckResults: kernelStatusCheckResultsRef?.current,
     interruptKernel: interrupt,
