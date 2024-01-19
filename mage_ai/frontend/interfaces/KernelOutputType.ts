@@ -50,6 +50,7 @@ export enum MsgType {
   ERROR = 'error',
   EXECUTE_INPUT = 'execute_input',
   EXECUTE_RESULT = 'execute_result',
+  EXECUTE_REQUEST = 'execute_requst',
   SHUTDOWN_REQUEST = 'shutdown_request',
   STATUS = 'status',
   STREAM = 'stream',

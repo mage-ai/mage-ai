@@ -11,6 +11,7 @@ import KernelType from '@interfaces/KernelType';
 import KeyboardContext from '@context/Keyboard';
 import OutputGroup, { ROW_GROUP_HEADER_CLASS_NAME } from './Output';
 import { STICKY_HEADER } from './Output/index.style';
+import useContextMenu from '@utils/useContextMenu';
 import useKernel from '@utils/models/kernel/useKernel';
 import { ErrorProvider } from '@context/Error';
 import { KEY_CODE_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';

@@ -131,3 +131,21 @@ async def read_async(file_path: str) -> str:
         except Exception as err:
             if is_debug():
                 print(f'[ERROR] files.read_async: {err}.')
+
+
+def get_all_files_up_to_depth_level(starting_path: str, depth: int) -> List[str]:
+    """
+    depth is number of directories from the starting path.
+    If starting_path is  .code_state_manager
+    and depth is 2, then an example full path is:
+        .code_state_manager/__temp_940c87bdb5b14944a94c62e8987cfa9c__/outputs.json
+
+    depth 1 is __temp_940c87bdb5b14944a94c62e8987cfa9c__
+    depth 2 is outputs.json
+    """
+    arr = []
+    for root, dirs, files in os.walk(starting_path):
+        if root[len(starting_path):].count(os.sep) < depth:
+            for f in files:
+                arr.append(os.path.join(root, f))
+    return arr

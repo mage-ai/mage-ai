@@ -1,0 +1,8 @@
+CODE_FILENAME = 'code.json'
+MAPPING_FILENAME = 'msg_id_to_temp_uuid'
+OUTPUTS_FILENAME = 'outputs.json'
+OUTPUTS_MISC_DIRECTORY_NAME = 'outputs'
+RESULTS_DIRECTORY_NAME = 'results.json'
+RESULTS_FILENAME = 'results.json'
+VARIABLES_FILE_NAME = 'variables.json'
+VARS_DIRECTORY_NAME = '.code_state_manager'

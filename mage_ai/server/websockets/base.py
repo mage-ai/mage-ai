@@ -66,6 +66,12 @@ class BaseHandler(WebSocketHandler):
                 use_decimal=True,
             ) if message else '')
 
+        self.post_process(message)
+
     @classmethod
     def format_error(self, message: Message) -> Message:
         return message
+
+    @classmethod
+    def post_process(self, message: Message) -> None:
+        pass

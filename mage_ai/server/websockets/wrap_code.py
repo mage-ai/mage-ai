@@ -1,23 +1,21 @@
+import json
 import os
 import uuid
+from datetime import datetime
 
-from mage_ai.settings.repo import get_repo_path, get_variables_dir
+from mage_ai.server.constants import VERSION
+from mage_ai.server.websockets.state_manager.constants import (
+    CODE_FILENAME,
+    MAPPING_FILENAME,
+)
+from mage_ai.server.websockets.state_manager.utils import build_path
+from mage_ai.settings.repo import get_repo_path
 
 ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
-def build_path(repo_path: str, partition: str, filename: str = None) -> str:
-    path = os.path.join(
-        get_variables_dir(repo_path=repo_path),
-        '.code_state_manager',
-        partition,
-    )
-    if filename:
-        path = os.path.join(path, filename)
-    return path
-
-
 def wrap_and_execute(client, code: str) -> str:
+    code_original = code
     partition = f'__temp_{uuid.uuid4().hex}__'
 
     with open(os.path.join(ABSOLUTE_PATH, 'pre')) as f:
@@ -25,6 +23,7 @@ def wrap_and_execute(client, code: str) -> str:
     with open(os.path.join(ABSOLUTE_PATH, 'post')) as f:
         post_code = f.read()
 
+    now = datetime.utcnow().timestamp()
     code = '\n'.join([f'    {c}' for c in code.split('\n')])
 
     code = '\n'.join([
@@ -50,7 +49,15 @@ if error:
     destination_path = build_path(get_repo_path(root_project=True), msg_id)
     os.makedirs(destination_path, exist_ok=True)
 
-    with open(os.path.join(destination_path, 'msg_id_to_temp_uuid'), 'w') as f:
+    with open(os.path.join(destination_path, MAPPING_FILENAME), 'w') as f:
         f.write(partition)
+
+    with open(os.path.join(destination_path, CODE_FILENAME), 'w') as f:
+        f.write(json.dumps(dict(
+            code=code_original,
+            mage_version=VERSION,
+            timestamp_end=datetime.utcnow().timestamp(),
+            timestamp_start=now,
+        )))
 
     return msg_id
