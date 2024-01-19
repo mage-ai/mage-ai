@@ -24,6 +24,13 @@ default:
   MSSQL_USER: SA
 ```
 
+## Dependencies
+
+To connect to the Microsoft SQL Server, you'll need to make sure the driver is installed.
+By default, ODBC Driver 18 is installed in the docker image.
+If you want to use other ODBC Driver versions, you'll need to build a custom docker image (use Mage image as the base image) and install the drivers.
+Here is the doc for installing ODBC drivers for SQL Server: https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server
+
 ---
 
 ## Using SQL block
