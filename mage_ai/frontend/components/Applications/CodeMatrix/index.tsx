@@ -20,6 +20,7 @@ import FileEditorHeader, { MENU_ICON_PROPS } from '@components/FileEditor/Header
 import Flex from '@oracle/components/Flex';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { addClassNames, removeClassNames } from '@utils/elements';
+import useAutoScroll from '@components/CodeEditor/useAutoScroll';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, TIME_FORMAT, momentInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { getApplicationColors } from '@components/ApplicationManager/index.style';
@@ -364,7 +365,7 @@ function CodeMatrix({
           language,
         }}
         contained
-        containerRef={containerRef}
+        containerRef={mainContainerRef}
         disableRefreshWarning
         hideHeaderButtons
         onContentChange={(content: string) => {
