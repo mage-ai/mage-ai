@@ -41,7 +41,8 @@ export default function useInteractiveCodeOutput({
   onOpen,
   onRenderOutputCallback,
   onRenderOutputFocusedCallback,
-  onSelectActiveGroupOfOutputs,
+  onActiveateGroupOfOutputs,
+  onDeactivateGroupOfOutputs,
   shouldConnect = true,
   shouldReconnect,
   uuid,
@@ -53,7 +54,8 @@ export default function useInteractiveCodeOutput({
     executionState: ExecutionStateEnum;
     executionStatus: ExecutionStatusEnum;
   }) => void;
-  onSelectActiveGroupOfOutputs?: (opts?: GroupOfOutputsType) => void;
+  onActiveateGroupOfOutputs?: (opts?: GroupOfOutputsType) => void;
+  onDeactivateGroupOfOutputs?: (opts?: GroupOfOutputsType) => void;
   onOpen?: (value: boolean) => void;
   onRenderOutputCallback?: () => void;
   onRenderOutputFocusedCallback?: () => void;
@@ -218,34 +220,47 @@ export default function useInteractiveCodeOutput({
 
     removeSelectedFromAllRowGroups();
 
-    setTimeout(() => {
-      if (outputGroupRefs?.current?.[groupID]?.current) {
-        const ref = outputGroupRefs?.current?.[groupID];
-        ref.current.className = addClassNames(
-          ref?.current?.className || '',
-          [
-            SELECTED_ROW_GROUP_CLASS_NAME,
-          ],
-        );
-      }
-    }, 1);
+    let shouldHighlight = true;
 
     // Click twice to activate group
     if (selectedGroupOfOutputs?.current?.groupID === groupID) {
       const alreadyActive = selectedGroupOfOutputs?.current?.active;
-      if (!alreadyActive) {
+      if (selectedGroupOfOutputs?.current?.deactivate) {
+        if (onActiveateGroupOfOutputs) {
+          onDeactivateGroupOfOutputs?.(selectedGroupOfOutputs?.current);
+          selectedGroupOfOutputs.current = null;
+          setupGroups();
+          shouldHighlight = false;
+        }
+      } else if (alreadyActive) {
+        selectedGroupOfOutputs.current = {
+          deactivate: true,
+          ...selectedGroupOfOutputs.current,
+        };
+      } else {
         setupGroups();
         selectedGroupOfOutputs.current = { active: true, ...data };
 
-        if (onSelectActiveGroupOfOutputs) {
-          onSelectActiveGroupOfOutputs?.({
-            active: true,
-            ...onSelectActiveGroupOfOutputs,
-          });
+        if (onActiveateGroupOfOutputs) {
+          onActiveateGroupOfOutputs?.(selectedGroupOfOutputs?.current);
         }
       }
     } else {
       selectedGroupOfOutputs.current = { active: false, ...data };
+    }
+
+    if (shouldHighlight) {
+      setTimeout(() => {
+        if (outputGroupRefs?.current?.[groupID]?.current) {
+          const ref = outputGroupRefs?.current?.[groupID];
+          ref.current.className = addClassNames(
+            ref?.current?.className || '',
+            [
+              SELECTED_ROW_GROUP_CLASS_NAME,
+            ],
+          );
+        }
+      }, 1);
     }
   }
 
@@ -288,8 +303,8 @@ export default function useInteractiveCodeOutput({
             };
             handleClickGroup(data);
 
-            if (onSelectActiveGroupOfOutputs) {
-              onSelectActiveGroupOfOutputs?.(data);
+            if (onActiveateGroupOfOutputs) {
+              onActiveateGroupOfOutputs?.(data);
             }
           }}
           outputs={outputs}

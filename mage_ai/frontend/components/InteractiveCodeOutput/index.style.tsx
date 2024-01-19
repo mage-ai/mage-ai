@@ -21,7 +21,11 @@ const CONTAINER_STYLE = css`
       border: none;
 
       .${ROW_GROUP_HEADER_CLASS_NAME} {
+        backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
 
+        ${props => `
+          background-color: ${(props.theme || dark)?.background?.blackTransparent};
+        `}
       }
     }
   }

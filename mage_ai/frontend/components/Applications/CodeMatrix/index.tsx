@@ -322,7 +322,9 @@ function CodeMatrix({
   function onRenderOutputCallback() {
   }
 
-  function onSelectActiveGroupOfOutputs(opts?: GroupOfOutputsType): void {
+  function onActiveateGroupOfOutputs(opts?: GroupOfOutputsType): void {
+  }
+  function onDeactivateGroupOfOutputs(opts?: GroupOfOutputsType): void {
   }
 
   const {
@@ -338,11 +340,12 @@ function CodeMatrix({
   } = useInteractiveCodeOutput({
     checkKernelStatus: true,
     containerRef: afterInnerRef,
+    onActiveateGroupOfOutputs,
+    onDeactivateGroupOfOutputs,
     getDefaultMessages: () => getItemsCached(),
     onMessage,
     onOpen: setOpen,
     onRenderOutputCallback,
-    onSelectActiveGroupOfOutputs,
     shouldConnect,
     shouldReconnect,
     uuid: `code/${ApplicationExpansionUUIDEnum.CodeMatrix}`,
