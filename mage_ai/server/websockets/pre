@@ -1,13 +1,14 @@
 %reset -f
 import json
 import os
+from mage_ai.server.websockets.state_manager.constants import DIR_FILENAME, STATE_DIRECTORY_NAME
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 def build_path(repo_path: str, partition: str, filename: str = None) -> str:
-    path = os.path.join(get_variables_dir(repo_path=repo_path), '.code_state_manager', partition)
+    path = os.path.join(get_variables_dir(repo_path=repo_path), STATE_DIRECTORY_NAME, partition)
     if filename:
         path = os.path.join(path, filename)
     return path
-file_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', 'variables.json')
+file_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME)
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 with open(file_path, 'w') as f:
     f.write(json.dumps(list(dir())))

@@ -12,7 +12,7 @@ from mage_ai.server.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
-from mage_ai.server.websockets.constants import ExecutionState
+from mage_ai.server.websockets.constants import DataType, ExecutionState
 from mage_ai.server.websockets.wrap_code import wrap_and_execute
 from mage_ai.settings import is_disable_pipeline_edit_access
 from mage_ai.shared.hash import merge_dict
@@ -79,8 +79,8 @@ class ParentMessage(BaseDataClass):
     code: str = None
     content: Dict = None
     data: Union[List[str], str] = None
-    data_type: str = None  # DataType
-    data_types: List[str] = None  # List[DataType]
+    data_type: Union[DataType, str] = None  # DataType
+    data_types: List[Union[DataType, str]] = None  # List[DataType]
     error: Error = None
     executed: bool = False
     execution_metadata: ExecutionMetadata = None
@@ -103,8 +103,14 @@ class ParentMessage(BaseDataClass):
             buffers=[str(v) for v in (self.buffers or [])],
             content=self.content,
             data=self.data,
-            data_type=self.data_type,
-            data_types=self.data_types,
+            data_type=self.data_type.value if isinstance(
+                self.data_type,
+                DataType,
+            ) else self.data_type,
+            data_types=[v.value if isinstance(
+                v,
+                DataType,
+            ) else v for v in (self.data_types or []) if v],
             error=self.error.to_dict() if self.error else None,
             executed=self.executed,
             execution_metadata=(
@@ -147,6 +153,7 @@ class Message(ParentMessage):
         """
         buffers = kwargs.get('buffers') or []
         content = kwargs.get('content') or {}
+        data_types = kwargs.get('data_types') or {}
         header = kwargs.get('header') or {}
         metadata = kwargs.get('metadata', {}) or {}
         msg_id = kwargs.get('msg_id') or None
@@ -156,7 +163,6 @@ class Message(ParentMessage):
         code = None
         data = []
         data_type = None
-        data_types = []
         execution_count = None
         execution_state = None
 

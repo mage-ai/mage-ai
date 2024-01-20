@@ -8,13 +8,18 @@ from mage_ai.server.websockets.utils import (
     should_filter_message,
     validate_message,
 )
+from mage_ai.shared.decorators import classproperty
 from mage_ai.shared.parsers import encode_complex
 
 
 class BaseHandler(WebSocketHandler):
     channel = None
     clients = set()
-    running_executions_mapping = dict()
+    running_executions_by_class = dict()
+
+    @classproperty
+    def running_executions_mapping(self):
+        return self.running_executions_by_class.get(self.__name__, {})
 
     def open(self, uuid: str):
         self.__class__.clients.add(self)
@@ -39,7 +44,7 @@ class BaseHandler(WebSocketHandler):
         client = Client.load(message=message)
         message = client.execute()
         if message.msg_id:
-            self.__class__.running_executions_mapping[message.msg_id] = message
+            self.running_executions_mapping[message.msg_id] = message
 
     @classmethod
     def send_message(self, message: Message) -> None:
@@ -56,7 +61,7 @@ class BaseHandler(WebSocketHandler):
         if should_filter_message(message):
             return
 
-        message = filter_out_sensitive_data(message)
+        message = self.filter_out_sensitive_data(message)
         message = self.format_error(message)
 
         if message.msg_id in self.running_executions_mapping:
@@ -71,6 +76,10 @@ class BaseHandler(WebSocketHandler):
             ) if message else '')
 
         self.post_process(message)
+
+    @classmethod
+    def filter_out_sensitive_data(self, message: Message) -> Message:
+        return filter_out_sensitive_data(message)
 
     @classmethod
     def format_error(self, message: Message) -> Message:

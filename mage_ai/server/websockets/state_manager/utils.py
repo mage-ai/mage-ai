@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import shutil
 from pathlib import Path
@@ -7,11 +8,13 @@ from typing import List, Tuple
 import aiofiles
 import simplejson
 
+from mage_ai.server.websockets.constants import DataType
 from mage_ai.server.websockets.state_manager.constants import (
+    CODE_FILENAME,
     MAPPING_FILENAME,
-    RESULTS_DIRECTORY_NAME,
-    RESULTS_FILENAME,
-    VARS_DIRECTORY_NAME,
+    OUTPUTS_DIRECTORY_NAME,
+    STATE_DIRECTORY_NAME,
+    VARIABLES_FILENAME,
 )
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.files import get_all_files_up_to_depth_level
@@ -30,7 +33,7 @@ def build_path(
     """
     return os.path.join(*[part for part in [
         get_variables_dir(repo_path=repo_path or get_repo_path(root_project=True)),
-        VARS_DIRECTORY_NAME,
+        STATE_DIRECTORY_NAME,
         partition,
         filename,
     ] if part and len(part) >= 1])
@@ -96,22 +99,10 @@ async def move_files_from_temp_folders():
             shutil.rmtree(temp_folder_path)
 
 
-async def save_message_output(message):
-    full_path = build_path(partition=message.msg_id, filename=RESULTS_FILENAME)
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-
-    async with aiofiles.open(full_path, 'w') as fp:
-        await fp.write(simplejson.dumps(
-            message.to_dict(),
-            default=encode_complex,
-            ignore_nan=True,
-        ))
-
-
 async def save_child_message_output(message):
     full_path = os.path.join(
         build_path(partition=message.parent_message.msg_id),
-        RESULTS_DIRECTORY_NAME,
+        OUTPUTS_DIRECTORY_NAME,
         f'{message.msg_id}.json',
     )
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -122,3 +113,46 @@ async def save_child_message_output(message):
             default=encode_complex,
             ignore_nan=True,
         ))
+
+
+async def hydrate_message_with_data(message):
+    print('--------------------------------------', message)
+    message.data = message.data or []
+    for data_type in message.data_types:
+        if DataType.CODE == data_type:
+            full_path = build_path(
+                partition=message.msg_id,
+                filename=CODE_FILENAME,
+            )
+            if os.path.exists(full_path):
+                async with aiofiles.open(full_path, 'r') as fp:
+                    content = await fp.read()
+                    if content:
+                        message.data.append(json.loads(content))
+
+        elif DataType.OUTPUTS == data_type:
+            paths = get_all_files_up_to_depth_level(build_path(
+                partition=message.msg_id,
+                filename=OUTPUTS_DIRECTORY_NAME,
+            ), 1)
+
+            outputs = []
+            for full_path in paths:
+                print('WWTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', full_path)
+                async with aiofiles.open(full_path, 'r') as fp:
+                    content = await fp.read()
+                    if content:
+                        outputs.append(json.loads(content))
+            message.data.append(outputs)
+
+        elif DataType.VARIABLES == data_type:
+            full_path = build_path(
+                partition=message.msg_id,
+                filename=VARIABLES_FILENAME,
+            )
+            if os.path.exists(full_path):
+                async with aiofiles.open(full_path, 'r') as fp:
+                    content = await fp.read()
+                    if content:
+                        message.data.append(json.loads(content))
+    return message

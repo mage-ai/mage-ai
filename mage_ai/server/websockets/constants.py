@@ -6,6 +6,12 @@ class Channel(str, Enum):
     DATA = 'DATA'
 
 
+class DataType(str, Enum):
+    CODE = 'code'
+    OUTPUTS = 'outputs'
+    VARIABLES = 'variables'
+
+
 class ExecutionState(str, Enum):
     IDLE = 'idle'
 

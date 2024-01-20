@@ -6,20 +6,17 @@ import pickle
 import pandas as pd
 import simplejson
 
+from mage_ai.server.websockets.state_manager.constants import DIR_FILENAME
+from mage_ai.server.websockets.state_manager.constants import STATE_DIRECTORY_NAME
+from mage_ai.server.websockets.state_manager.constants import VARIABLES_DIRECTORY_NAME
+from mage_ai.server.websockets.state_manager.constants import VARIABLES_FILENAME
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.parsers import encode_complex
-
-# 1. Remove variables that start or end with an underscore
-# 2. Loop through remaining and get its value
-# 3. Attempt to serialize the value
-# 4. If it can’t be done, then move to the next
-# 5. For functions, use inspect.getsource(foo)
-
 
 def build_path(repo_path: str, partition: str, filename: str = None) -> str:
     path = os.path.join(
         get_variables_dir(repo_path=repo_path),
-        '.code_state_manager',
+        STATE_DIRECTORY_NAME,
         partition,
     )
     if filename:
@@ -27,7 +24,7 @@ def build_path(repo_path: str, partition: str, filename: str = None) -> str:
     return path
 
 
-with open(build_path(get_repo_path(root_project=True), '__MSG_ID__', 'variables.json'), 'r') as f:
+with open(build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME), 'r') as f:
     variables = json.loads(f.read())
 
 
@@ -91,8 +88,8 @@ for key in keys:
 
 repo_path = get_repo_path(root_project=True)
 
-file_path = build_path(repo_path, '__MSG_ID__', 'outputs.json')
-pickle_dir = build_path(repo_path, '__MSG_ID__', 'outputs')
+file_path = build_path(repo_path, '__MSG_ID__', VARIABLES_FILENAME)
+pickle_dir = build_path(repo_path, '__MSG_ID__', VARIABLES_DIRECTORY_NAME)
 os.makedirs(pickle_dir,  exist_ok=True)
 
 for key, value in outputs_to_pickle.items():
