@@ -8,18 +8,13 @@ from mage_ai.server.websockets.utils import (
     should_filter_message,
     validate_message,
 )
-from mage_ai.shared.decorators import classproperty
 from mage_ai.shared.parsers import encode_complex
 
 
 class BaseHandler(WebSocketHandler):
     channel = None
     clients = set()
-    running_executions_by_class = dict()
-
-    @classproperty
-    def running_executions_mapping(self):
-        return self.running_executions_by_class.get(self.__name__, {})
+    running_executions_mapping = {}
 
     def open(self, uuid: str):
         self.__class__.clients.add(self)

@@ -8,15 +8,10 @@ from mage_ai.server.websockets.state_manager.utils import (
     hydrate_message_with_data,
     move_files_from_temp_folders,
 )
-from mage_ai.shared.decorators import classproperty
 
 
 class Data(BaseHandler):
     channel = Channel.DATA
-
-    @classproperty
-    def running_executions_mapping(self):
-        return self.running_executions_by_class.get(self.__name__, {})
 
     @classmethod
     def post_process(self, message: Message) -> None:

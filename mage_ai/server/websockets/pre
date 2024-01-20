@@ -8,6 +8,8 @@ def build_path(repo_path: str, partition: str, filename: str = None) -> str:
     if filename:
         path = os.path.join(path, filename)
     return path
+
+
 file_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME)
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 with open(file_path, 'w') as f:

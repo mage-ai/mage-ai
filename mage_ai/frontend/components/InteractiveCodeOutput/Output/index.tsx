@@ -180,6 +180,22 @@ function Output({
     outputs: results,
   });
 
+  const outputMemo = useMemo(() => (
+    <OutputDataCombined
+      html={html}
+      images={images}
+      json={json}
+      tables={tables}
+      text={text}
+    />
+  ), [
+    html,
+    images,
+    json,
+    tables,
+    text,
+  ]);
+
   const hasErrors = useMemo(() => errors?.length >= 1, [errors]);
   useEffect(() => {
     setInactive(hasErrors
@@ -195,6 +211,7 @@ function Output({
         inactive ? 'inactive' : 'active',
         hasErrors ? 'errors' : '',
       ]?.filter(c => !!c)?.join(' ')}
+      key={`${groupID}-${index}`}
       onClick={(e) => {
         if (onClick) {
           onClick?.(e);
@@ -280,13 +297,13 @@ function Output({
         </FlexContainer>
       </HeaderStyle>
 
-      <OutputDataCombined
-        html={html}
-        images={images}
-        json={json}
-        tables={tables}
-        text={text}
-      />
+      {outputMemo && (
+        <>
+          {outputMemo}
+
+          <Spacing pb={1} />
+        </>
+      )}
     </RowGroupStyle>
   );
 }

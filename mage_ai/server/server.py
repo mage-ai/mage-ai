@@ -81,7 +81,8 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.server.websockets.code.server import Code as CodeWebSocketServer
-from mage_ai.server.websockets.data.server import Data as DataWebSocketServer
+
+# from mage_ai.server.websockets.data.server import Data as DataWebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
@@ -280,7 +281,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
         (r'/websocket/code/(?P<uuid>[\w\-\%2f\.]+)', CodeWebSocketServer),
-        (r'/websocket/data/(?P<uuid>[\w\-\%2f\.]+)', DataWebSocketServer),
+        # (r'/websocket/data/(?P<uuid>[\w\-\%2f\.]+)', DataWebSocketServer),
         # Not sure what is using this, perhaps the event triggering via Lambda?
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
@@ -605,11 +606,11 @@ async def main(
             CodeWebSocketServer.send_message,
             CodeWebSocketServer.send_message,
         ),
-        (
-            DataWebSocketServer,
-            DataWebSocketServer.send_message,
-            DataWebSocketServer.send_message,
-        ),
+        # (
+        #     DataWebSocketServer,
+        #     DataWebSocketServer.send_message,
+        #     DataWebSocketServer.send_message,
+        # ),
     ])
 
     await asyncio.Event().wait()
@@ -725,3 +726,4 @@ if __name__ == '__main__':
         project_type=project_type,
         cluster_type=cluster_type,
     )
+9

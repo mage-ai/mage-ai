@@ -24,8 +24,11 @@ def build_path(repo_path: str, partition: str, filename: str = None) -> str:
     return path
 
 
-with open(build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME), 'r') as f:
-    variables = json.loads(f.read())
+variables = {}
+dir_full_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME)
+if os.path.exists(dir_full_path):
+    with open(dir_full_path, 'r') as f:
+        variables = json.loads(f.read())
 
 
 class Test:

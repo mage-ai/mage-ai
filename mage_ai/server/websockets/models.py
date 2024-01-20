@@ -153,7 +153,7 @@ class Message(ParentMessage):
         """
         buffers = kwargs.get('buffers') or []
         content = kwargs.get('content') or {}
-        data_types = kwargs.get('data_types') or {}
+        data_types = kwargs.get('data_types') or []
         header = kwargs.get('header') or {}
         metadata = kwargs.get('metadata', {}) or {}
         msg_id = kwargs.get('msg_id') or None

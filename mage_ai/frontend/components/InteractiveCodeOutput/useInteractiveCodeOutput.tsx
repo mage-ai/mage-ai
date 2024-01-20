@@ -11,6 +11,7 @@ import KernelType from '@interfaces/KernelType';
 import KeyboardContext from '@context/Keyboard';
 import OutputGroup, { ROW_GROUP_HEADER_CLASS_NAME } from './Output';
 import { STICKY_HEADER } from './Output/index.style';
+import useArrowNavigation, { NavigationDirectionEnum } from '@utils/useArrowNavigation';
 import useContextMenu from '@utils/useContextMenu';
 import useKernel from '@utils/models/kernel/useKernel';
 import { ErrorProvider } from '@context/Error';
@@ -120,6 +121,48 @@ export default function useInteractiveCodeOutput({
   function isActive(): boolean {
     return !!selectedGroupOfOutputs?.current?.active;
   }
+
+  // function onNavigation(direction: NavigationDirectionEnum, units: number, next, prev) {
+  //   console.log(direction, units, next, prev)
+  //   // if group is activated and they go left, deactivate it
+  //   if (selectedGroupOfOutputs?.current?.active && NavigationDirectionEnum.LEFT === direction) {
+  //     deactivateGroup();
+  //   } else if (selectedGroupOfOutputs?.current && NavigationDirectionEnum.RIGHT === direction)  {
+  //     // if group is highlighted and arrow is right, activate it
+  //     handleClickGroup(selectedGroupOfOutputs?.current);
+  //   } else if ([NavigationDirectionEnum.UP, NavigationDirectionEnum.DOWN].includes(direction)) {
+  //     handleClickGroup(next);
+  //   }
+  // }
+
+  // function shouldNavigate(event: KeyboardEvent): boolean {
+
+  // }
+  // const rowsRef = useRef({});
+  // const columnsRef = useRef({});
+  // const shape
+
+  // const {
+  //   registerElements,
+  // } = useArrowNavigation({
+  //   onNavigation,
+  //   shouldNavigate,
+  //   uuid: `${uuid}-useArrowNavigation`,
+  // });
+
+
+  // function registerTracking(uuid: string, {
+  //   rows: number,
+  //   columns: number,
+  // }: defaultIndexes: {
+  //   row?: number;
+  //   column?: number;
+  // }) {
+
+  // }
+  // function deregisterTracking(uuid: string) {
+
+  // }
 
   const {
     registerOnKeyDown,
@@ -242,9 +285,7 @@ export default function useInteractiveCodeOutput({
   }
 
   function handleClickGroup(data: GroupOfOutputsType) {
-    const {
-      groupID,
-    } = data;
+    const groupID = data?.groupID;
 
     removeSelectedFromAllRowGroups();
 
@@ -256,6 +297,7 @@ export default function useInteractiveCodeOutput({
       if (selectedGroupOfOutputs?.current?.deactivate) {
         deactivateGroup();
         shouldHighlight = false;
+        // If row is highlighted and arrow is right, activate group
       } else if (alreadyActive) {
         selectedGroupOfOutputs.current = {
           deactivate: true,
@@ -305,7 +347,7 @@ export default function useInteractiveCodeOutput({
           dates={dates}
           groupsCount={groupsCount}
           index={index}
-          key={groupID}
+          key={`${groupID}-${index}`}
           groupID={groupID}
           onClick={(e) => {
             const data: GroupOfOutputsType = {
@@ -408,7 +450,9 @@ export default function useInteractiveCodeOutput({
   }
 
   useEffect(() => {
-    setupGroups();
+    delay(5000).then(() => {
+      setupGroups();
+    });
 
     if (typeof window !== 'undefined') {
 
@@ -483,6 +527,7 @@ export default function useInteractiveCodeOutput({
         messagesRef.current = arr;
 
         let outputsToRender = arr;
+
 
         if (isActive()) {
           outputsToRender = outputsToRender?.slice(messagesBookmarkIndexRef?.current || 0);
