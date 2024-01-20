@@ -629,7 +629,7 @@ function FileBrowser({
             return (
               <Text muted monospace noWrapping xsmall>
                 {parts?.map((part, idx) => (
-                  <span>
+                  <span key={`${part}_${idx}`}>
                     {idx >= 1 && <br />}
                     {idx >= 1 && '|'}{range(idx).map(() => '--').join('')}<Text
                       inline
