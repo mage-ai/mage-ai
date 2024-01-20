@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Dict
+
 import simplejson
 from tornado.websocket import WebSocketHandler
 
@@ -15,6 +18,25 @@ class BaseHandler(WebSocketHandler):
     channel = None
     clients = set()
     running_executions_mapping = {}
+    __executions_start_timestamps = {}
+
+    @classmethod
+    def get_running_executions(self) -> Dict:
+        if self.__name__ not in self.__executions_start_timestamps:
+            self.__executions_start_timestamps[self.__name__] = {}
+
+        if self.__name__ not in self.running_executions_mapping:
+            self.running_executions_mapping[self.__name__] = {}
+        return self.running_executions_mapping[self.__name__]
+
+    @classmethod
+    def add_running_execution(self, key, message) -> Dict:
+        self.__executions_start_timestamps[self.__name__][key] = datetime.utcnow().timestamp()
+
+        mapping = self.get_running_executions()
+        mapping[key] = message
+        self.running_executions_mapping[self.__name__] = mapping
+        return mapping
 
     def open(self, uuid: str):
         self.__class__.clients.add(self)
@@ -39,7 +61,7 @@ class BaseHandler(WebSocketHandler):
         client = Client.load(message=message)
         message = client.execute()
         if message.msg_id:
-            self.running_executions_mapping[message.msg_id] = message
+            self.add_running_execution(message.msg_id, message)
 
     @classmethod
     def send_message(self, message: Message) -> None:
@@ -59,8 +81,8 @@ class BaseHandler(WebSocketHandler):
         message = self.filter_out_sensitive_data(message)
         message = self.format_error(message)
 
-        if message.msg_id in self.running_executions_mapping:
-            message = self.running_executions_mapping.get(message.msg_id)
+        if message.msg_id in self.get_running_executions():
+            message = self.get_running_executions().get(message.msg_id)
 
         for client in self.clients:
             client.write_message(simplejson.dumps(
@@ -82,4 +104,13 @@ class BaseHandler(WebSocketHandler):
 
     @classmethod
     def post_process(self, message: Message) -> None:
-        pass
+        mapping = self.get_running_executions()
+        if message.msg_id in mapping:
+            del mapping[message.msg_id]
+            self.running_executions_mapping[self.__name__] = mapping
+
+        for key, timestamp in self.__executions_start_timestamps[self.__name__].items():
+            if datetime.utcnow().timestamp() - timestamp > 60 * 10:  # 10 minutes
+                del mapping[key]
+                del self.__executions_start_timestamps[self.__name__][key]
+                self.running_executions_mapping[self.__name__] = mapping

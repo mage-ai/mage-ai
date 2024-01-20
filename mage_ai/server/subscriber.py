@@ -2,8 +2,6 @@ import traceback
 from datetime import datetime
 from typing import Callable, List, Tuple
 
-from tornado.websocket import WebSocketHandler
-
 from mage_ai.api.errors import ApiError
 from mage_ai.server.active_kernel import get_active_kernel_client
 from mage_ai.server.logger import Logger
@@ -15,7 +13,7 @@ from mage_ai.shared.hash import merge_dict
 logger = Logger().new_server_logger(__name__)
 
 
-def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]]):
+def get_messages(subscribers: List[Tuple[Callable, Callable, Callable]]):
     # Every variable must be in the while loop or else it accumulates.
     while True:
         try:
@@ -25,20 +23,20 @@ def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]])
             message = client.get_iopub_msg(timeout=1)
             msg_id = message['parent_header']['msg_id']
 
-            for subscriber, callback, on_failure in subscribers:
-                if contains_msg_id(subscriber.running_executions_mapping, msg_id):
-                    owners.append((subscriber, callback, on_failure))
+            for get_mapping, callback, on_failure in subscribers:
+                if contains_msg_id(get_mapping(), msg_id):
+                    owners.append((get_mapping, callback, on_failure))
 
             orphan = False
             if len(owners) == 0:
                 logger.info(f'[{now}] WebSocket: no subscribers for {msg_id}')
-                for subscriber, callback, on_failure in subscribers:
-                    if subscriber is CodeWebSocketServer:
+                for get_mapping, callback, on_failure in subscribers:
+                    if get_mapping is CodeWebSocketServer:
                         continue
-                    owners.append((subscriber, callback, on_failure))
+                    owners.append((get_mapping, callback, on_failure))
                 orphan = True
 
-            for subscriber, callback, on_failure in owners:
+            for get_mapping, callback, on_failure in owners:
                 if message.get('content'):
                     if callback:
                         callback(merge_dict(message, dict(
@@ -48,7 +46,7 @@ def get_messages(subscribers: List[Tuple[WebSocketHandler, Callable, Callable]])
                         logger.warn(f'[{now}] No callback for message: {message}')
         except Exception as err:
             if str(err):
-                for subscriber, _callback, on_failure in owners:
+                for get_mapping, _callback, on_failure in owners:
                     if on_failure:
                         on_failure(Message.load(
                             error=Error.load(**merge_dict(ApiError.RESOURCE_ERROR, dict(
