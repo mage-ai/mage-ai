@@ -265,13 +265,18 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             )
 
             if should_reduce_output(upstream_block):
-                print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', var_objs_arr)
+                child_data = []
+                metadata = {}
                 for arr in var_objs_arr:
-                    if isinstance(arr, list):
-                        input_vars.extend(arr)
+                    if is_dynamic:
+                        child_data.append(arr[0] if len(arr) >= 1 else None)
+                        md = arr[1] if len(arr) >= 2 else None
+                        if isinstance(md, dict):
+                            metadata.update(md)
                     else:
-                        input_vars.append(arr)
-                kwargs_vars.append({})
+                        child_data.append(arr)
+                input_vars.append(child_data)
+                kwargs_vars.append(metadata)
             else:
                 index = dynamic_block_index % len(var_objs_arr)
                 arr = var_objs_arr[index]
