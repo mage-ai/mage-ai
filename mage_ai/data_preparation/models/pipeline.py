@@ -119,21 +119,25 @@ class Pipeline:
         else:
             self.load_config(config, catalog=catalog)
 
-    @property
-    def config_path(self):
-        if project_platform_activated() and not self.use_repo_path:
+    @classmethod
+    def build_config_path(self, uuid: str, repo_path: str, use_repo_path: bool = False) -> str:
+        if project_platform_activated() and not use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
-            config_path, _repo_path = get_pipeline_config_path(self.uuid)
+            config_path, _repo_path = get_pipeline_config_path(uuid)
             if config_path:
                 return config_path
 
         return os.path.join(
-            self.repo_path,
+            repo_path,
             PIPELINES_FOLDER,
-            self.uuid,
+            uuid,
             PIPELINE_CONFIG_FILE,
         )
+
+    @property
+    def config_path(self):
+        return self.build_config_path(self.uuid, self.repo_path, use_repo_path=self.use_repo_path)
 
     @property
     def catalog_config_path(self):

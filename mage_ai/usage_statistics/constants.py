@@ -10,6 +10,7 @@ class EventNameType(str, enum.Enum):
 
 class EventActionType(str, enum.Enum):
     CREATE = 'create'
+    DENY = 'deny'
     IMPRESSION = 'impression'
 
 

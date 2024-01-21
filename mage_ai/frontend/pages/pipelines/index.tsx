@@ -984,11 +984,13 @@ function PipelineListPage() {
                   'Are you sure you don’t want to help everyone in the community?',
                 )) {
                   updateProject({
+                    deny_improve_mage: true,
                     help_improve_mage: false,
                   }).then(() => hideHelpMageModal());
                 }
               } else {
                 updateProject({
+                  deny_improve_mage: true,
                   help_improve_mage: false,
                 }).then(() => hideHelpMageModal());
               }

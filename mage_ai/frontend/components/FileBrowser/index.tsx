@@ -602,15 +602,13 @@ function FileBrowser({
         },
       ]);
 
-      if (featureEnabled?.(featureUUIDs?.PROJECT_PLATFORM)) {
-        items.push({
-          beforeIcon: <GradientLogoIcon width={UNIT * 1.5} />,
-          onClick: () => {
-            showModalNewFolder({ projectType: ProjectTypeEnum.STANDALONE });
-          },
-          uuid: 'New Mage project',
-        });
-      }
+      items.push({
+        beforeIcon: <GradientLogoIcon width={UNIT * 1.5} />,
+        onClick: () => {
+          showModalNewFolder({ projectType: ProjectTypeEnum.STANDALONE });
+        },
+        uuid: 'New Mage project',
+      });
 
       if (featureEnabled?.(featureUUIDs?.DBT_V2)) {
         items.push({

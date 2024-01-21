@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings import REQUIRE_USER_AUTHENTICATION, REQUIRE_USER_PERMISSIONS
+from mage_ai.settings.platform.constants import project_platform_activated
 
 ITEMS = [
     dict(
@@ -55,17 +56,17 @@ ITEMS = [
         path='/platform/global-hooks',
         condition=lambda opts: opts['project'].is_feature_enabled(
             FeatureUUID.GLOBAL_HOOKS,
-        ) and opts['project'].is_feature_enabled(FeatureUUID.PROJECT_PLATFORM),
+        ) and project_platform_activated(),
     ),
     dict(
         title='Platform preferences',
         path='/settings/platform/preferences',
-        condition=lambda opts: opts['project'].is_feature_enabled(FeatureUUID.PROJECT_PLATFORM),
+        condition=lambda _opts: project_platform_activated(),
     ),
     dict(
         title='Platform settings',
         path='/settings/platform/settings',
-        condition=lambda opts: opts['project'].is_feature_enabled(FeatureUUID.PROJECT_PLATFORM),
+        condition=lambda _opts: project_platform_activated(),
     ),
     dict(
         title='Project preferences',

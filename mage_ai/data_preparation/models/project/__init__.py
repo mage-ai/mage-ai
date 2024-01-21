@@ -113,11 +113,8 @@ class Project():
 
         for uuid in FeatureUUID:
             key = uuid.value
-            if FeatureUUID.PROJECT_PLATFORM == uuid:
-                data[key] = project_platform_activated()
-            else:
-                if features and key in features:
-                    data[key] = features.get(key)
+            if features and key in features:
+                data[key] = features.get(key)
 
         return data
 
