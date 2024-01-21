@@ -31,6 +31,20 @@ files from sub-directories of the top-level Mage project.
 In the new multi-verse, you can manage and run multiple different Mage projects and other
 non-Mage projects (e.g. dbt projects).
 
+<Note>
+    Available in versions `>= 0.9.60`
+</Note>
+
+## Migration guide
+
+<Warning>
+    Please read if you have an existing project.
+</Warning>
+
+If you have an existing project, please read the section
+[Migrating an existing Mage project](#migrating-an-existing-mage-project) down below after
+you finish reading the sections that come before.
+
 ## Structure
 
 You’ll still need a top-level directory to store all your files and folders.
@@ -110,3 +124,39 @@ If you have an existing project, take the entire project directory and add it as
 into the new top-level folder (e.g. `multiverse_project`).
 
 Then, add your existing project’s name to the `settings.yaml` file.
+
+<Warning>
+    This next section is very important.
+</Warning>
+
+### Pre-existing database records
+
+If you previously created triggers or secrets in your existing project, you must add the following
+into the `settings.yaml` file in order for those triggers and secrets to be discovered in your
+multi-project setup:
+
+```yaml
+projects:
+  # ...other projects registered
+  glacier:
+    path: water/ice/glacier
+    database:
+      query:
+        # Change this value to your previously named project
+        pipeline_schedules: previously_named_project
+        # Change this value to your previously named project
+        secrets: previously_named_project
+```
+
+Change the value for the key `pipeline_schedules` and `secrets` under the key `database.query`
+to the actual name of your previous project.
+
+When Mage attempts to trigger pipelines, it’ll use the trigger’s `repo_path` column from the
+database (e.g. SQLite, PostgreSQL, etc.) and search for pipelines stored in the project located
+at the path. If the pipeline can’t be found at that path, then the trigger won’t start.
+
+By adding the above mapping to your `settings.yaml` file, Mage can use that `repo_path` 
+for pre-existing triggers. Any new trigger created will have an updated `repo_path` value that
+matches the current project’s absolute path (e.g. `/home/src/multiverse_project/water/ice/glacier`).
+
+The above also applies to all secrets previously created.
