@@ -2347,7 +2347,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data = dict(
                 text_data=simplejson.dumps(
                     data,
-                    default=datetime.isoformat,
+                    default=encode_complex,
                     ignore_nan=True,
                 ),
                 type=DataType.TEXT,
