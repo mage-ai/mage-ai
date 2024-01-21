@@ -7,6 +7,7 @@ import dateutil.parser
 from sqlalchemy.sql import func
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.db.functions import format_datetime
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
@@ -107,7 +108,11 @@ class MonitorStats:
                 PipelineRun.pipeline_uuid,
                 PipelineRun.status,
                 PipelineSchedule.name,
-                func.to_char(PipelineRun.created_at, 'YYYY-MM-DD').label('ds_created_at'),
+                format_datetime(PipelineRun.created_at, [
+                    'year',
+                    'month',
+                    'day',
+                ]).label('ds_created_at'),
             ).
             join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
         )
@@ -151,7 +156,7 @@ class MonitorStats:
                     name=pipeline_schedule_name,
                     data=dict(),
                 )
-            # created_at_formatted = p.created_at.strftime('YYYY-MM-DD')  # Over 1000 ms
+            # p.created_at.strftime >= 1000 ms
             # Loop: 0.5338
             created_at_formatted = p.ds_created_at  # Negligible time
             data = stats_by_schedule_id[pipeline_schedule_id]['data']
@@ -190,7 +195,11 @@ class MonitorStats:
         select = [
             PipelineRun.completed_at,
             PipelineRun.created_at,
-            func.to_char(PipelineRun.created_at, 'YYYY-MM-DD').label('ds_created_at'),
+            format_datetime(PipelineRun.created_at, [
+                'year',
+                'month',
+                'day',
+            ]).label('ds_created_at'),
         ]
 
         if pipeline_uuid:
@@ -240,7 +249,11 @@ class MonitorStats:
             BlockRun.block_uuid.label('name'),
             BlockRun.status,
             func.count(BlockRun.block_uuid).label('n_count'),
-            func.to_char(BlockRun.created_at, 'YYYY-MM-DD').label('ds_created_at'),
+            format_datetime(BlockRun.created_at, [
+                'year',
+                'month',
+                'day',
+            ]).label('ds_created_at'),
         ]
         filter_query = []
 
