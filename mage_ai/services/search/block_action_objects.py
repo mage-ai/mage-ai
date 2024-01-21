@@ -34,7 +34,6 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
 
             score = max(arr)
 
-            print('WTFFFFFFFFFFFFFF', score, text)
             if score < ratio:
                 continue
 

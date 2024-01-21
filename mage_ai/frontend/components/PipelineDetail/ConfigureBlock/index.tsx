@@ -168,6 +168,7 @@ function ConfigureBlock({
           }) => {
             const {
               block_type: blockType,
+              code, // Raw code without block template
               configuration,
               content,
               language,
@@ -177,7 +178,7 @@ function ConfigureBlock({
               ...prev,
               block_action_object: null,
               configuration: configuration,
-              content,
+              content: content,
               language,
               type: blockType,
             }));
@@ -197,11 +198,19 @@ function ConfigureBlock({
     if (isGenerateBlock && generateBlockCommand && !llm) {
       // @ts-ignore
       createLLM({
+        // llm: {
+        //   request: {
+        //     block_description: generateBlockCommand,
+        //   },
+        //   use_case: LLMUseCaseEnum.GENERATE_CODE,
+        // },
         llm: {
           request: {
             block_description: generateBlockCommand,
+            block_type: BlockTypeEnum.TRANSFORMER,
+            code_language: BlockLanguageEnum.PYTHON,
           },
-          use_case: LLMUseCaseEnum.GENERATE_BLOCK_WITH_DESCRIPTION,
+          use_case: LLMUseCaseEnum.GENERATE_CODE,
         },
       });
     }
@@ -559,7 +568,7 @@ function ConfigureBlock({
               : (isReplacingBlock
                 ? 'replace'
                 : 'add')
-            } block
+            }
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>
