@@ -906,6 +906,7 @@ function PipelineListPage() {
     },
   );
   const updateProject = useCallback((payload: {
+    deny_improve_mage?: boolean;
     help_improve_mage?: boolean;
   }) => updateProjectBase({
     project: payload,
