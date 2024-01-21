@@ -97,22 +97,32 @@ function BlocksInPipeline({
         >
           <Checkbox
             checked={allBlocksVisible}
-            label="Show all"
             // @ts-ignore
             onClick={() => setHiddenBlocks(() => ({}))}
           />
+          <Spacing mr={1} />
+          <Text noWrapping>
+            Show all
+          </Text>
+        </FlexContainer>
 
-          <Spacing mr={PADDING_UNITS} />
+        <Spacing mb={1} />
 
+        <FlexContainer
+          alignItems="center"
+        >
           <Checkbox
             checked={allBlocksHidden}
-            label="Hide all"
             // @ts-ignore
             onClick={() => setHiddenBlocks(() => blocks.reduce((acc, { uuid }) => ({
               ...acc,
               [uuid]: true,
             }), {}))}
           />
+          <Spacing mr={1} />
+          <Text noWrapping>
+            Hide all
+          </Text>
         </FlexContainer>
       </Spacing>
 
