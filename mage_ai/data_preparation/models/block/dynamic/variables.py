@@ -265,7 +265,6 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             )
 
             if should_reduce_output(upstream_block):
-                print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', var_objs_arr)
                 child_data = []
                 metadata = {}
                 for arr in var_objs_arr:
