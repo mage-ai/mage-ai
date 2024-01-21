@@ -25,6 +25,7 @@ class OracleDBDestinationTests(unittest.TestCase, SQLDestinationMixin):
         'port': 'port',
         'service': 'service',
         'lower_case': False,
+        'mode': 'mode',
     }
     conn_class_path = 'mage_integrations.destinations.oracledb.OracleDBConnection'
     destination_class = OracleDB
@@ -34,6 +35,7 @@ class OracleDBDestinationTests(unittest.TestCase, SQLDestinationMixin):
         user='user',
         port='port',
         service='service',
+        mode='mode',
     )
     expected_template_config = {
         'config': {
@@ -42,7 +44,8 @@ class OracleDBDestinationTests(unittest.TestCase, SQLDestinationMixin):
             'service': '',
             'password': '',
             'user': '',
-            'database': ''
+            'database': '',
+            'mode': 'thin'
         },
     }
 

@@ -45,10 +45,14 @@ class OracleDB(Destination):
     def database(self) -> str:
         return self.config['database']
 
+    @property
+    def mode(self) -> str:
+        return self.config['mode'] or 'thin'
+
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
             host=self.host, password=self.password,
-            user=self.user, port=self.port, service=self.service)
+            user=self.user, port=self.port, service=self.service, mode=self.mode)
 
     def build_create_schema_commands(
         self,
@@ -62,7 +66,6 @@ class OracleDB(Destination):
         ]
 
     def test_connection(self) -> None:
-        self.logger.info('Testing connection')
         oracledb_connection = self.build_connection()
         conn = oracledb_connection.build_connection()
         cursor = conn.cursor()
@@ -148,7 +151,6 @@ WHERE TABLE_NAME = '{table_name.upper()}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        self.logger.info(f'Testing build_insert_commands {table_name}')
         columns = list(schema['properties'].keys())
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=column_type_mapping(
@@ -207,7 +209,6 @@ END;
                 insert_command = f'INSERT {insert_into} VALUES {insert_value}'
             commands.append(insert_command)
 
-        self.logger.info(f'Testing build_insert_commands: {commands}')
         return commands
 
     def does_table_exist(
