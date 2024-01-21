@@ -783,7 +783,8 @@
         "developer-ux/overview",
         "developer-ux/avatar",
         "developer-ux/file-browser",
-        "developer-ux/code-editor"
+        "developer-ux/code-editor",
+        "developer-ux/block-dependency-tree"
       ]
     },
     {
