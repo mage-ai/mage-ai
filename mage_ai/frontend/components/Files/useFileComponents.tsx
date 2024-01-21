@@ -354,32 +354,31 @@ function useFileComponents({
   }, [status]);
 
   useEffect(() => {
-    const arr = getOpenFilePaths();
+    if (status?.repo_path && status?.repo_path_relative_root) {
+      const arr = getOpenFilePaths();
 
-    let fp;
-    if (selectedFilePathDefault) {
-      fp = convertFilePathToRelativeRoot(decodeURIComponent(selectedFilePathDefault), status);
-      if (!arr?.includes(fp)) {
-        arr.push(fp);
-        openFile(fp);
+      let fp;
+      if (selectedFilePathDefault) {
+        fp = convertFilePathToRelativeRoot(decodeURIComponent(selectedFilePathDefault), status);
+        if (!arr?.includes(fp)) {
+          arr.push(fp);
+          openFile(fp);
+        }
       }
+
+      setSelectedFilePath((prev: string): string => {
+        if (fp) {
+          return fp;
+        } else if (!prev && arr?.length >= 1) {
+          return arr[0];
+        }
+
+        return prev;
+      });
+
+      setOpenFilePaths(arr);
     }
-
-    setSelectedFilePath((prev: string): string => {
-      if (fp) {
-        return fp;
-      } else if (!prev && arr?.length >= 1) {
-        return arr[0];
-      }
-
-      return prev;
-    });
-
-    setOpenFilePaths(arr);
   }, [
-    openFile,
-    selectedFilePathDefault,
-    setOpenFilePaths,
     status,
   ]);
 
@@ -944,6 +943,14 @@ function useFileComponents({
       }`
     }>
       <FileVersions
+        onActionCallback={({
+          content,
+          path,
+        }) => {
+          const fullPath = convertFilePathToRelativeRoot(path, status);
+          removeOpenFilePaths([fullPath]);
+          setTimeout(() => openFile(fullPath), 1);
+        }}
         selectedFilePath={selectedFilePath}
         setErrors={showError}
       />
@@ -951,6 +958,7 @@ function useFileComponents({
   ), [
     selectedFilePath,
     showError,
+    status,
   ]);
 
   const footerMemo = useMemo(() => {

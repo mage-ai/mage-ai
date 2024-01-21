@@ -205,7 +205,7 @@ function FileVersions({
         </Spacing>
       );
 
-      if (fileContent && fileContent?.path === selectedFileVersion?.path) {
+      if (fileContent && fileContent?.path?.includes(selectedFileVersion?.path)) {
         const { content = '' } = fileContent;
         el = (
           <CodeEditor
