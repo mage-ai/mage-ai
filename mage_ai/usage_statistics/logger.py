@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.shared.environments import get_env, is_test
+from mage_ai.shared.environments import get_env, is_debug, is_test
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
@@ -138,6 +138,16 @@ class UsageStatisticLogger():
             ),
             event_properties,
         ))
+
+    async def project_deny_improve_mage(self, project_uuid) -> bool:
+        return await self.__send_message(
+            data=dict(
+                object=EventObjectType.PROJECT,
+                action=EventActionType.DENY,
+            ),
+            override_validation=True,
+            project_uuid=project_uuid,
+        )
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -289,12 +299,15 @@ class UsageStatisticLogger():
         self,
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
+        override_validation: bool = False,
+        project_uuid: str = None,
     ) -> bool:
-        if is_test():
-            return False
+        if not override_validation:
+            if is_test():
+                return False
 
-        if not self.help_improve_mage:
-            return False
+            if not self.help_improve_mage:
+                return False
 
         if data is None:
             data = {}
@@ -303,6 +316,9 @@ class UsageStatisticLogger():
             self.__shared_metadata(),
             data,
         )
+
+        if project_uuid and not data_to_send.get('project_uuid'):
+            data_to_send['project_uuid'] = project_uuid
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -317,11 +333,11 @@ class UsageStatisticLogger():
                 ) as response:
                     response_json = await response.json()
                     if response_json.get('success'):
-                        print(json.dumps(data_to_send, indent=2))
+                        if is_debug():
+                            print(json.dumps(data_to_send, indent=2))
                         return True
         except Exception as err:
-            print(f'Error: {err}')
-
+            print(f'[Statistics] Message: {err}')
         return False
 
     def __shared_metadata(self) -> Dict:

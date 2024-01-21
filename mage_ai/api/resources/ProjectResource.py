@@ -178,6 +178,11 @@ class ProjectResource(GenericResource):
 
             data['help_improve_mage'] = payload['help_improve_mage']
 
+        if 'deny_improve_mage' in payload:
+            await UsageStatisticLogger().project_deny_improve_mage(
+                repo_config.project_uuid or data.get('project_uuid'),
+            )
+
         if 'openai_api_key' in payload:
             openai_api_key = payload.get('openai_api_key')
             if repo_config.openai_api_key != openai_api_key:

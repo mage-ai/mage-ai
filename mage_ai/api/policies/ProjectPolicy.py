@@ -55,6 +55,7 @@ ProjectPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 ProjectPolicy.allow_write([
+    'deny_improve_mage',
     'help_improve_mage',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

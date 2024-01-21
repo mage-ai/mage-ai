@@ -14,4 +14,3 @@ class FeatureUUID(str, Enum):
     LOCAL_TIMEZONE = 'display_local_timezone'
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view'
     OPERATION_HISTORY = 'operation_history'
-    PROJECT_PLATFORM = 'project_platform'
