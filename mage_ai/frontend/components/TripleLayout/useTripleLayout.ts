@@ -52,17 +52,12 @@ function useAside(uuid, refData, {
     false,
   ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
-  const [widthState, setWidthState] = useState(Math.min(...[
-    typeof widthWindow !== 'undefined'
-      ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH)
-      : null,
-    (
-      typeof widthLocal !== 'undefined'
+  const [widthState, setWidthState] = useState(
+    typeof widthLocal !== 'undefined'
         ? widthLocal : typeof widthProp !== 'undefined'
           ? widthProp
-          : DEFAULT_ASIDE_WIDTH
-    ),
-  ].filter(v => v)));
+          : DEFAULT_ASIDE_WIDTH,
+  );
 
   const setHidden = useCallback((prev) => {
     setHiddenState(prev);
@@ -70,7 +65,12 @@ function useAside(uuid, refData, {
   }, [keyHidden]);
 
   const width = useMemo(() => {
-    const value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
+    let value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
+
+
+    if (typeof widthWindow !== 'undefined') {
+      value = Math.min(value, widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH));
+    }
 
     refData.current = {
       ...refData.current,
