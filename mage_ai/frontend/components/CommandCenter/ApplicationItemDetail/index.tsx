@@ -188,7 +188,7 @@ function ApplicationItemDetail({
         language={language}
         padding={UNIT * 2}
         readOnly
-        value={content}
+        value={typeof content === 'string' && content ? content : ''}
       />
     );
     const dt = momentInLocalTimezone(

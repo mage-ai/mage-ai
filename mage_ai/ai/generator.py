@@ -48,6 +48,7 @@ class Generator:
             return await LLMPipelineWizard().generate_code_async(
                 request.get('block_description'),
                 request.get('code_language'),
+                block_type=request.get('block_type'),
             )
 
         raise Exception(f'Use case {use_case} is not supported yet.')

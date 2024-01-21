@@ -1121,7 +1121,13 @@ function CommandCenter() {
       } else {
         openCommandCenter();
       }
-    } else if (refOutputContainerState?.current
+    }
+
+    if (!refActive?.current) {
+      return;
+    }
+
+    if (refOutputContainerState?.current
       && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping, { allowExtraKeys: 0 })
     ) {
       // Close the output

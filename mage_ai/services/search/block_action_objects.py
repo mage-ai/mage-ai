@@ -28,11 +28,12 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
             if not text:
                 continue
 
-            arr = [fuzz.token_sort_ratio(query, t) for t in text]
+            arr = [fuzz.token_set_ratio(query, t) for t in text]
             if not arr:
                 continue
 
             score = max(arr)
+
             if score < ratio:
                 continue
 
@@ -82,4 +83,4 @@ def get_searchable_text(object_type, block_action_object) -> List[str]:
         if groups:
             arr.extend(groups)
 
-    return [t.strip() for t in arr if t and t.strip()]
+    return [t.strip().lower() for t in arr if t and t.strip()]

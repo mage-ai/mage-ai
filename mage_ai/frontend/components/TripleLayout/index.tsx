@@ -323,32 +323,30 @@ function TripleLayout({
             top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
             visible={afterHidden}
           >
-            <FlexContainer alignItems="center" fullHeight fullWidth>
-              <Flex>
-                <Spacing pl={afterHidden ? 1 : 2} />
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => toggleAfter()}
-                >
-                  {afterHidden && (
-                    <ChevronLeft
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                  {!afterHidden && (
-                    <ChevronRight
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                </Button>
-              </Flex>
+            <Flex>
+              <Spacing pl={afterHidden ? 1 : 2} />
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => toggleAfter()}
+              >
+                {afterHidden && (
+                  <ChevronLeft
+                    neutral
+                    size={UNIT * 2}
+                  />
+                )}
+                {!afterHidden && (
+                  <ChevronRight
+                    neutral
+                    size={UNIT * 2}
+                  />
+                )}
+              </Button>
+            </Flex>
 
-              {!afterHidden && afterHeader}
-            </FlexContainer>
+            {!afterHidden && afterHeader}
           </AsideHeaderStyle>
 
           {!afterHidden && afterSubheader && (

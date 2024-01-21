@@ -523,7 +523,25 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         }
       }
 
-      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
+      if (!textareaFocused && !selectedBlock && !isIntegration && useV2AddNewBlock) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
+          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
+        ) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(true);
+          searchTextInputRef?.current?.focus();
+          return;
+        } else if (focusedAddNewBlockSearch
+          && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
+        ) {
+          event.preventDefault();
+          setFocusedAddNewBlockSearch(false);
+          searchTextInputRef?.current?.blur();
+          return;
+        }
+      }
+
+      if (!textareaFocused && !selectedBlock && (disableShortcuts || disableGlobalKeyboardShortcuts)) {
         return;
       }
 
@@ -553,21 +571,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           setPipelineContentTouched(true);
         }
       } else if (!isIntegration) {
-        if (useV2AddNewBlock && (
-          onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
-            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
-        )) {
-          event.preventDefault();
-          setFocusedAddNewBlockSearch(true);
-          searchTextInputRef?.current?.focus();
-        } else if (useV2AddNewBlock
-          && focusedAddNewBlockSearch
-          && onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)
-        ) {
-          event.preventDefault();
-          setFocusedAddNewBlockSearch(false);
-          searchTextInputRef?.current?.blur();
-        } else if (selectedBlock) {
+          if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 

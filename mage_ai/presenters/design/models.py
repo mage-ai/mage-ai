@@ -115,11 +115,11 @@ class CustomDesign(BaseDataClass):
                 mage_projects_only=True,
             ).items():
                 full_path = project['full_path']
-
-                model.custom_designs[project_name] = self.__load_from_file(
-                    file_path=os.path.join(full_path, CUSTOM_DESIGN_FILENAME),
-                    project=project,
-                )
+                if os.path.exists(full_path):
+                    model.custom_designs[project_name] = self.__load_from_file(
+                        file_path=os.path.join(full_path, CUSTOM_DESIGN_FILENAME),
+                        project=project,
+                    )
 
         return model
 

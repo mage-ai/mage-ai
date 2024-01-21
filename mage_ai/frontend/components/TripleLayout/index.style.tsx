@@ -174,7 +174,9 @@ export const AsideHeaderStyle = styled.div<{
   top?: number;
   visible: boolean;
 }>`
+  align-items: center;
   border-bottom: 1px solid transparent;
+  display: flex;
   max-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
   min-height: ${1 + ASIDE_SUBHEADER_HEIGHT}px;
   z-index: 4;
