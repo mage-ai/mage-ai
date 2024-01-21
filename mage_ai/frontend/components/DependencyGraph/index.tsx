@@ -1951,7 +1951,7 @@ function DependencyGraph({
           maxHeight={ZOOMABLE_CANVAS_SIZE}
           maxWidth={ZOOMABLE_CANVAS_SIZE}
           maxZoom={1}
-          minZoom={-0.7}
+          minZoom={-1}
           node={(node) => {
             const nodeID = node?.id;
             const {
@@ -2153,8 +2153,9 @@ function DependencyGraph({
           nodes={nodes}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           onZoomChange={z => {
-            setZoom?.(z);
-            setZoomLevel(z);
+            const zFinal = Math.max(z, 0.05)
+            setZoom?.(zFinal);
+            setZoomLevel(zFinal);
           }}
           pannable={pannable}
           selections={edgeSelections}

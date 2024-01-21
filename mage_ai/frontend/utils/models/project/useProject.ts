@@ -86,7 +86,7 @@ function useProject({
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
     project,
-    projectPlatformActivated: project?.name !== rootProject?.name,
+    projectPlatformActivated: project && rootProject && project?.name !== rootProject?.name,
     rootProject,
     sparkEnabled: computeManagementEnabled
       && (project.spark_config || project.emr_config)

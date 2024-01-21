@@ -178,7 +178,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         return get_active_kernel_client()
 
-    def on_message(self, raw_message):
+    async def on_message(self, raw_message):
         message = json.loads(raw_message)
 
         api_key = message.get('api_key')
@@ -205,7 +205,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     if valid and oauth_token and oauth_token.user:
                         try:
                             if pipeline_uuid:
-                                valid = PipelineResource.policy_class()(
+                                await PipelineResource.policy_class()(
                                     PipelineResource(
                                         pipeline,
                                         oauth_token.user,
@@ -213,15 +213,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                                     oauth_token.user,
                                 ).authorize_action(action=OperationType.UPDATE)
                             else:
-                                valid = ProjectResource.policy_class()(
+                                await ProjectResource.policy_class()(
                                     ProjectResource(
                                         {},
                                         oauth_token.user,
                                     ),
                                     oauth_token.user,
                                 ).authorize_action(action=OperationType.UPDATE)
+                            valid = True
                         except ApiError as err:
                             print(f'[WARNING] WebSocketServer.on_message: {err}.')
+                            valid = False
 
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
@@ -287,7 +289,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 global_vars,
             )
         else:
-            self.__execute_block(
+            await self.__execute_block(
                 message,
                 pipeline,
                 kernel_name,
@@ -371,7 +373,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             for client in cls.clients:
                 client.write_message(json.dumps(message_final))
 
-    def __execute_block(
+    async def __execute_block(
         self,
         message: Dict[str, any],
         pipeline: Pipeline,
@@ -502,7 +504,7 @@ db_connection.start_session()
                     if BlockType.CHART != downstream_block.type:
                         continue
 
-                    self.on_message(json.dumps(dict(
+                    await self.on_message(json.dumps(dict(
                         api_key=message.get('api_key'),
                         code=downstream_block.file.content(),
                         pipeline_uuid=pipeline_uuid,

@@ -1480,7 +1480,7 @@ function CodeBlock({
       const gdp = globalDataProductsByUUID?.[globalDataProduct?.uuid];
 
       return (
-        <CodeHelperStyle>
+        <CodeHelperStyle noMargin>
           <Spacing mb={PADDING_UNITS} mt={1}>
             <Text monospace muted small>
               UUID

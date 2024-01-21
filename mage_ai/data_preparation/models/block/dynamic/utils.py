@@ -289,7 +289,7 @@ def format_output(child_data: Union[
     List[Union[Dict, int, str, pd.DataFrame]],
     pd.DataFrame
 ]) -> Dict:
-    if isinstance(child_data, list):
+    if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
         if isinstance(item, pd.DataFrame):
             child_data = [child_data]
@@ -301,6 +301,8 @@ def format_output(child_data: Union[
             )
     elif isinstance(child_data, pd.DataFrame):
         return child_data
+    else:
+        child_data = pd.DataFrame([dict(col=child_data)])
 
     return child_data
 

@@ -57,10 +57,11 @@ function useAside(uuid, refData, {
       ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH)
       : null,
     (
-      typeof widthLocal !== 'undefined' ? widthLocal : null
-      || typeof widthProp !== 'undefined' ? widthProp : null
+      typeof widthLocal !== 'undefined'
+        ? widthLocal : typeof widthProp !== 'undefined'
+          ? widthProp
+          : DEFAULT_ASIDE_WIDTH
     ),
-    DEFAULT_ASIDE_WIDTH,
   ].filter(v => v)));
 
   const setHidden = useCallback((prev) => {

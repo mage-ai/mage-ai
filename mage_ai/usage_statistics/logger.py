@@ -1,6 +1,7 @@
 import hashlib
 import json
 import platform
+import socket
 from datetime import datetime
 from typing import Callable, Dict, Union
 
@@ -13,6 +14,12 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+    is_replicated_block,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -24,7 +31,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.orchestration.db.models.schedules import PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.environments import get_env, is_debug, is_test
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
@@ -295,6 +302,77 @@ class UsageStatisticLogger():
             event_name=EventNameType.PIPELINE_RUN_ENDED,
         )
 
+    @safe_db_query
+    async def block_run_ended(self, block_run: BlockRun) -> bool:
+        if not self.help_improve_mage:
+            return False
+
+        pipeline_run = block_run.pipeline_run
+        pipeline = pipeline_run.pipeline
+
+        if pipeline.type == PipelineType.INTEGRATION:
+            pipeline_type = 'integration'
+        elif pipeline.type == PipelineType.STREAMING:
+            pipeline_type = 'streaming'
+        else:
+            pipeline_type = 'batch'
+
+        started_at = pipeline_run.started_at \
+            if pipeline_run.started_at else pipeline_run.execution_date
+        completed_at = pipeline_run.completed_at \
+            if pipeline_run.completed_at else datetime.now(tz=pytz.UTC)
+        run_time_seconds = completed_at.timestamp() - started_at.timestamp()
+
+        block_configs = pipeline.all_block_configs
+
+        encoded_block_uuid = block_run.block_uuid.encode('utf-8')
+        block_language = None
+        block_type = None
+        dynamic_block = False
+        dynamic_block_child = False
+        replicated_block = False
+        reduce_output = False
+
+        block = pipeline.get_block(block_run.block_uuid)
+        if block:
+            block_language = block.language
+            block_type = block.type
+            dynamic_block = is_dynamic_block(block)
+            dynamic_block_child = is_dynamic_block_child(block)
+            replicated_block = is_replicated_block(block)
+            reduce_output = should_reduce_output(block)
+
+        encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        data = dict(
+            action=EventActionType.EXECUTE,
+            object=EventObjectType.BLOCK_RUN,
+            landing_time_enabled=1 if pipeline_schedule.landing_time_enabled() else 0,
+            num_pipeline_blocks=len(block_configs),
+            block_uuid=hashlib.sha256(encoded_block_uuid).hexdigest(),
+            block_language=block_language,
+            block_type=block_type,
+            block_dynamic_block=dynamic_block,
+            block_dynamic_block_child=dynamic_block_child,
+            block_replicated_block=replicated_block,
+            block_reduce_output=reduce_output,
+            block_run_status=block_run.status,
+            block_run_uuid=block_run.id,
+            pipeline_run_uuid=pipeline_run.id,
+            pipeline_status=pipeline_run.status,
+            pipeline_type=pipeline_type,
+            pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
+            run_time_seconds=run_time_seconds,
+            trigger_method=pipeline_schedule.schedule_type,
+            unique_block_types=list(set([b.get('type') for b in block_configs])),
+            unique_languages=list(set([b.get('language') for b in block_configs])),
+        )
+
+        return await self.__send_message(
+            data,
+            event_name=EventNameType.BLOCK_RUN_ENDED,
+        )
+
     async def __send_message(
         self,
         data: Dict,
@@ -343,6 +421,7 @@ class UsageStatisticLogger():
     def __shared_metadata(self) -> Dict:
         return dict(
             environment=get_env(),
+            hostname=socket.gethostbyname(socket.gethostname()),
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
             version=self.project.version,

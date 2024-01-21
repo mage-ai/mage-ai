@@ -340,7 +340,7 @@ class File:
                 file_content = await fp.read()
             return file_content
         except Exception as err:
-            print(err)
+            print(f'[File.content_async] {err}')
         return ''
 
     def file_versions(self) -> List[str]:

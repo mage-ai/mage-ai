@@ -18,7 +18,7 @@ type ZoomControlProps = {
 
 export const DEFAULT_ZOOM_LEVEL = 1;
 // How much to change the zoom via the zooming in or out actions
-const ZOOM_FACTOR = 0.5;
+const ZOOM_FACTOR = 0.1;
 // Min container width required for showing the full zoom controls
 const MIN_CONTAINER_WIDTH = UNIT * 35;
 

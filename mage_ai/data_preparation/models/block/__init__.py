@@ -43,6 +43,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     uuid_for_output_variables,
 )
 from mage_ai.data_preparation.models.block.dynamic.variables import (
+    delete_variable_objects_for_dynamic_child,
     fetch_input_variables_for_dynamic_upstream_blocks,
     get_outputs_for_dynamic_block,
     get_outputs_for_dynamic_block_async,
@@ -429,6 +430,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         if self.replicated_block and self.replicated_block_object:
             self._content = self.replicated_block_object.content
 
+        if BlockType.GLOBAL_DATA_PRODUCT == self.type:
+            return ''
+
         if self._content is None:
             self._content = self.file.content()
 
@@ -449,6 +453,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
             self._content = await self.replicated_block_object.content_async()
+
+        if BlockType.GLOBAL_DATA_PRODUCT == self.type:
+            return ''
 
         if self._content is None:
             self._content = await self.file.content_async()
@@ -3151,6 +3158,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             dynamic_block_index=dynamic_block_index,
         )
 
+        is_dynamic_child = is_dynamic_block_child(self)
+        if is_dynamic_child:
+            delete_variable_objects_for_dynamic_child(
+                self,
+                dynamic_block_index=dynamic_block_index,
+                execution_partition=execution_partition,
+            )
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
@@ -3164,12 +3179,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 clean_block_uuid=not changed,
             )
 
-        for uuid in variables_data['removed_variables']:
-            self.pipeline.variable_manager.delete_variable(
-                self.pipeline.uuid,
-                block_uuid,
-                uuid,
-            )
+        if not is_dynamic_child:
+            for uuid in variables_data['removed_variables']:
+                self.pipeline.variable_manager.delete_variable(
+                    self.pipeline.uuid,
+                    block_uuid,
+                    uuid,
+                )
 
     async def store_variables_async(
         self,
@@ -3195,6 +3211,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             dynamic_block_index=dynamic_block_index,
         )
 
+        is_dynamic_child = is_dynamic_block_child(self)
+        if is_dynamic_child:
+            delete_variable_objects_for_dynamic_child(
+                self,
+                dynamic_block_index=dynamic_block_index,
+                execution_partition=execution_partition,
+            )
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
@@ -3208,13 +3232,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 clean_block_uuid=not changed,
             )
 
-        for uuid in variables_data['removed_variables']:
-            self.pipeline.variable_manager.delete_variable(
-                self.pipeline.uuid,
-                block_uuid,
-                uuid,
-                clean_block_uuid=not changed,
-            )
+        if not is_dynamic_child:
+            for uuid in variables_data['removed_variables']:
+                self.pipeline.variable_manager.delete_variable(
+                    self.pipeline.uuid,
+                    block_uuid,
+                    uuid,
+                    clean_block_uuid=not changed,
+                )
 
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
         """Get input variables from upstream blocks' output variables.

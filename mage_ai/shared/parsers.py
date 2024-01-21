@@ -57,6 +57,8 @@ def encode_complex(obj):
         return None
     elif isinstance(obj, pd.DataFrame):
         return obj.to_dict(orient='records')
+    elif isinstance(obj, pd.Series):
+        return obj.to_list()
 
     return obj
 

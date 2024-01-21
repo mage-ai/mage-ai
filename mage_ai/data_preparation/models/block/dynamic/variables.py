@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Tuple, Union
 import pandas as pd
 
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.shared.strings import to_ordinal_integers
 
 
 def get_dynamic_child_block_indexes(
@@ -26,15 +27,7 @@ def get_dynamic_child_block_indexes(
         execution_partition=execution_partition,
     ))
 
-    variable_manager = block.pipeline.variable_manager
-    variable_uuids = variable_manager.get_variables_by_block(
-        block.pipeline.uuid,
-        block_uuid=block.uuid,
-        clean_block_uuid=True,
-        partition=execution_partition,
-    )
-
-    return sorted([int(uuid) for uuid in variable_uuids if uuid.isnumeric() and int(uuid) < count])
+    return [i for i in range(count)]
 
 
 def get_variable_objects(
@@ -74,6 +67,11 @@ def get_variable_objects(
         partition=execution_partition,
     )
 
+    def __sort(variable_object: str):
+        if not variable_object:
+            return -96, -96
+        return to_ordinal_integers(variable_object.block_dir_name)[0], variable_object.uuid
+
     return sorted(
         [variable_manager.get_variable_object(
             block_uuid=block_uuid,
@@ -82,14 +80,29 @@ def get_variable_objects(
             pipeline_uuid=pipeline_uuid,
             variable_uuid=variable_uuid,
         ) for variable_uuid in variable_uuids if variable_uuid != ''],
-        key=lambda variable: (variable.block_dir_name, variable.uuid),
+        key=__sort,
     )
+
+
+def delete_variable_objects_for_dynamic_child(
+    block,
+    dynamic_block_index: int = None,
+    execution_partition: str = None,
+) -> None:
+    variable_objects = get_variable_objects(
+        block,
+        dynamic_block_index=dynamic_block_index,
+        execution_partition=execution_partition,
+    )
+    if variable_objects:
+        for variable_object in variable_objects:
+            variable_object.delete()
 
 
 def get_variable_objects_for_dynamic_child(
     block,
     execution_partition: str = None,
-) -> List[Tuple[Variable, Variable]]:
+) -> List[List[Variable]]:
     """
     To get all the variable objects for a dynamic child block, don’t include the
     dynamic_block_index in the kwargs.
@@ -97,20 +110,24 @@ def get_variable_objects_for_dynamic_child(
     If dynamic_block_index is included, then only the variable objects for that specific
     child is retrieved.
     """
-    variable_object_pairs = []
+    variable_objects_arr = []
 
     indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
     for dynamic_block_index in indexes:
-        variable_object_pairs.append(get_variable_objects(
+        arr = get_variable_objects(
             block,
             execution_partition=execution_partition,
             dynamic_block_index=dynamic_block_index,
-        ))
+        )
 
-    return sorted(
-        variable_object_pairs,
-        key=lambda pairs: (pairs[0].block_dir_name, pairs[0].uuid),
-    )
+        def __sort(variable_object: str):
+            if not variable_object:
+                return -96, -96
+            return to_ordinal_integers(variable_object.block_dir_name)[0], variable_object.uuid
+
+        variable_objects_arr.append(sorted(arr, key=__sort))
+
+    return variable_objects_arr
 
 
 async def get_outputs_async(
@@ -185,15 +202,15 @@ def get_outputs_for_dynamic_child(
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_object_pairs = get_variable_objects_for_dynamic_child(
+    variable_objects_arr = get_variable_objects_for_dynamic_child(
         block,
         execution_partition=execution_partition,
     )
 
-    return [tuple([variable_object.read_data(
+    return [[var_obj.read_data(
         sample=sample,
         sample_count=sample_count,
-    ) for variable_object in pair]) for pair in variable_object_pairs]
+    ) for var_obj in arr] for arr in variable_objects_arr]
 
 
 async def get_outputs_for_dynamic_child_async(
@@ -202,20 +219,18 @@ async def get_outputs_for_dynamic_child_async(
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_object_pairs = get_variable_objects_for_dynamic_child(
+    variable_objects_arr = get_variable_objects_for_dynamic_child(
         block,
         execution_partition=execution_partition,
     )
 
-    async def __read_pair(pair: Tuple[Variable, Variable]):
-        arr = await asyncio.gather(*[variable_object.read_data_async(
+    async def __read_pair(arr: List[Variable]):
+        return await asyncio.gather(*[variable_object.read_data_async(
             sample=sample,
             sample_count=sample_count,
-        ) for variable_object in pair])
+        ) for variable_object in arr])
 
-        return tuple(arr)
-
-    return await asyncio.gather(*[__read_pair(pair) for pair in variable_object_pairs])
+    return await asyncio.gather(*[__read_pair(arr) for arr in variable_objects_arr])
 
 
 def fetch_input_variables_for_dynamic_upstream_blocks(
@@ -244,41 +259,35 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
         upstream_block_uuid = upstream_block.uuid
 
         if is_dynamic_child:
-            pairs = get_outputs_for_dynamic_child(
+            var_objs_arr = get_outputs_for_dynamic_child(
                 upstream_block,
                 execution_partition=execution_partition,
             )
 
             if should_reduce_output(upstream_block):
-                child_data = []
-                metadata = {}
-                for pair in pairs:
-                    if len(pair) >= 1:
-                        child_data.append(pair[0])
-                        if len(pair) >= 2:
-                            metadata_inner = pair[1]
-                            if metadata_inner and \
-                                    isinstance(metadata, dict) and \
-                                    isinstance(metadata_inner, dict):
-
-                                metadata.update(metadata_inner)
-
-                input_vars.append(child_data)
-                kwargs_vars.append(metadata)
+                print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', var_objs_arr)
+                for arr in var_objs_arr:
+                    if isinstance(arr, list):
+                        input_vars.extend(arr)
+                    else:
+                        input_vars.append(arr)
+                kwargs_vars.append({})
             else:
-                index = dynamic_block_index % len(pairs)
-                pair = pairs[index]
-                child_data = pair[0]
-                metadata = pair[1] if len(pair) >= 2 else None
+                index = dynamic_block_index % len(var_objs_arr)
+                arr = var_objs_arr[index]
 
                 if is_dynamic:
-                    index = dynamic_block_index % len(child_data)
-                    child_data = child_data[index]
-                    metadata = metadata[index] if metadata and index < len(metadata) else None
+                    child_data = arr[0] if len(arr) >= 1 else None
+                    metadata = arr[1] if len(arr) >= 2 else None
 
-                input_vars.append(child_data)
-                if metadata:
-                    kwargs_vars.append(metadata)
+                    index = dynamic_block_index % len(child_data)
+                    input_vars.append(child_data[index])
+                    kwargs_vars.append(
+                        metadata[index] if metadata and index < len(metadata) else {},
+                    )
+                else:
+                    input_vars.append(arr)
+                    kwargs_vars.append({})
         elif is_dynamic:
             child_data, metadata = get_outputs_for_dynamic_block(
                 upstream_block,
@@ -286,7 +295,13 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             )
             index = dynamic_block_index % len(child_data)
 
-            input_vars.append(child_data[index])
+            if isinstance(child_data, list):
+                input_vars.append(child_data[index])
+            elif isinstance(child_data, pd.DataFrame):
+                input_vars.append(child_data.iloc[index])
+            elif isinstance(child_data, dict):
+                input_vars.append(child_data.get(index))
+
             if metadata and index < len(metadata):
                 kwargs_vars.append(metadata[index])
         else:

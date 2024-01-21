@@ -1,3 +1,4 @@
+import asyncio
 import json
 import traceback
 from datetime import datetime, timedelta
@@ -42,6 +43,7 @@ from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class BlockExecutor:
@@ -694,6 +696,10 @@ class BlockExecutor:
 
             return result
         finally:
+            if not self.block_run and block_run_id:
+                self.block_run = BlockRun.query.get(block_run_id)
+            if self.block_run:
+                asyncio.run(UsageStatisticLogger().block_run_ended(self.block_run))
             self.logger_manager.output_logs_to_destination()
 
     def _execute(

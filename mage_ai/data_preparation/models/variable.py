@@ -253,6 +253,9 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
+        if isinstance(data, pd.Series):
+            data = data.to_list()
+
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
         elif self.variable_type is None and type(data) is pl.DataFrame:
