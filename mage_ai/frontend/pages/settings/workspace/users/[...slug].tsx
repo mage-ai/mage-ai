@@ -1,13 +1,13 @@
 import PrivateRoute from '@components/shared/PrivateRoute';
 import UserDetail from '@components/users/UserDetail';
 
-type RoleDetailPageProps = {
+type UserDetailPageProps = {
   slug: number | string;
 };
 
-function RoleDetailPage({
+function UserDetailPage({
   slug,
-}: RoleDetailPageProps) {
+}: UserDetailPageProps) {
   return (
     <UserDetail
       slug={slug}
@@ -15,7 +15,7 @@ function RoleDetailPage({
   );
 }
 
-RoleDetailPage.getInitialProps = async (ctx) => {
+UserDetailPage.getInitialProps = async (ctx) => {
   const {
     slug,
   }: {
@@ -27,4 +27,4 @@ RoleDetailPage.getInitialProps = async (ctx) => {
   };
 };
 
-export default PrivateRoute(RoleDetailPage);
+export default PrivateRoute(UserDetailPage);

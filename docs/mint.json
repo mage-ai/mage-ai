@@ -46,6 +46,10 @@
       "url": "guides"
     },
     {
+      "name": "Dev UX",
+      "url": "developer-ux"
+    },
+    {
       "name": "API",
       "url": "api-reference"
     },
@@ -774,6 +778,14 @@
       ]
     },
     {
+      "group": "Features",
+      "pages": [
+        "developer-ux/overview",
+        "developer-ux/avatar",
+        "developer-ux/file-browser"
+      ]
+    },
+    {
       "group": "Overview",
       "pages": [
         "platform/overview"
@@ -800,7 +812,7 @@
     },
     {
       "group": "Components",
-      "pages":[
+      "pages": [
         {
           "group": "Backend",
           "icon": "server",

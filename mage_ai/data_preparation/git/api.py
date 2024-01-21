@@ -107,6 +107,7 @@ def push_raw(
     branch_name: str,
     token: str,
     user: User = None,
+    **kwargs,
 ) -> RemoteProgress:
     custom_progress = RemoteProgress()
     provider = get_provider_from_remote_url(remote_url)
