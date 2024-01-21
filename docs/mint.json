@@ -781,10 +781,11 @@
       "group": "Features",
       "pages": [
         "developer-ux/overview",
-        "developer-ux/avatar",
+        "developer-ux/personalize",
         "developer-ux/file-browser",
         "developer-ux/code-editor",
-        "developer-ux/block-dependency-tree"
+        "developer-ux/block-dependency-tree",
+        "developer-ux/sidekick"
       ]
     },
     {

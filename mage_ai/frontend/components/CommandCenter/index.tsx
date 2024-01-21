@@ -1200,10 +1200,10 @@ function CommandCenter() {
           }
 
           // Reset the items to the original list of items.
-          renderItems(refItemsInit?.current || []);
+          return renderItems(refItemsInit?.current || []);
         } else {
           // If there is no text in the input, close.
-          closeCommandCenter();
+          return closeCommandCenter();
         }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping, { allowExtraKeys: 0 })
         && focusedItemIndex !== null
@@ -1211,7 +1211,7 @@ function CommandCenter() {
       ) {
         pauseEvent(event);
         // Pressing enter on an item
-        handleSelectItemRow(refItems?.current?.[focusedItemIndex], focusedItemIndex);
+        return handleSelectItemRow(refItems?.current?.[focusedItemIndex], focusedItemIndex);
       } else if (
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 0 })
           || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 0 })
@@ -1219,6 +1219,7 @@ function CommandCenter() {
         if (refSelectedSearchHistoryIndex?.current !== null) {
           refSelectedSearchHistoryIndex.current = null;
         }
+
         if (refFocusedSearchHistoryIndex?.current !== null) {
           refFocusedSearchHistoryIndex.current = null;
         }
@@ -1277,7 +1278,7 @@ function CommandCenter() {
         }
 
         if (index !== null) {
-          handleNavigation(index);
+          return handleNavigation(index);
         }
       }
     }

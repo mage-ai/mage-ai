@@ -94,6 +94,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
@@ -2423,7 +2424,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         return self.executor_type
 
     def get_pipelines_from_cache(self) -> List[Dict]:
-        return BlockCache().get_pipelines(self)
+        arr = BlockCache().get_pipelines(self)
+        return unique_by(arr, lambda x: (x.get('pipeline') or {}).get('uuid'))
 
     def to_dict_base(
         self,
