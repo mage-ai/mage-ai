@@ -118,33 +118,141 @@ You can quickly add blocks of code to your pipeline with these methods:
 
 ---
 
-## Re-arrange the order of blocks
+## Re-arrange and hide or show blocks
+
+<AccordionGroup>
+    <Accordion title="Re-arrange the order of blocks" icon="send-back">
+        Drag a block and move it up or down by dropping it on another block.
+
+        <Frame>
+            <p align="center">
+                <img
+                    alt="Drag a block and move it up or down by dropping it on another block."
+                    src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/rearrange-blocks.gif?raw=true"
+                />
+            </p>
+        </Frame>
+    </Accordion>
+
+    <Accordion title="Show blocks in current pipeline" icon="user-secret">
+        When editing a pipeline, you can switch the file browser view to show only the blocks in the
+        current pipeline.
+
+        After toggling this view, you can select which blocks to collapse and which to expand. 
+        This can help optimize vertical screen space while writing code.
+
+        <Frame>
+            <p align="center">
+            <img
+                alt="Show blocks in current pipeline"
+                src="https://github.com/mage-ai/assets/blob/main/dev-ux/file-browser/blocks-in-pipeline.gif?raw=true"
+            />
+            </p>
+        </Frame>
+    </Accordion>
+</AccordionGroup>
 
 ---
 
-## Data integrations
+## Pre-built data integrations for 3rd party sources
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Pre-built data integrations for 3rd party sources"
+        src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/configuration-credentials.png?raw=true"
+    />
+    </p>
+</Frame>
+
+Sync data from 3rd party sources without writing boilerplate code by using pre-built
+data integrations (Singer Taps and Targets) provided by the data engineering community.
+
+<Tip>
+    Data integrations to sync your data to 3rd party destinations are also available in the
+    same feature set.
+</Tip> 
+
+<Tip>
+    These sources and destinations can be combined and chained together with
+    your existing blocks.
+</Tip>
+
+[Read more here](/data-integrations/batch-pipelines)
 
 ---
 
-## Generate code (AI)
+## Generate code (using AI)
+
+A line of code you don’t write is a line of code you never have to debug.
+Use AI to generate the code for you.
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Generate code using AI."
+        src="https://github.com/mage-ai/assets/blob/main/overview/ai-demo.gif?raw=True"
+    />
+    </p>
+</Frame>
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Use AI to generate the code for you."
+        src="https://github.com/mage-ai/assets/blob/main/guides/ai/generate-block.png?raw=true"
+    />
+    </p>
+</Frame>
+
+[Read more here](/guides/ai/overview#generate-block-using-ai)
 
 ---
 
 ## Document and comment code (AI)
 
-There’s a saying: “Work smart, not hard.” 
+“Work smart, not hard.”
 
-You’ll look plenty smart by working the tireless AI super hard by commanding it to do the
-following:
+Let the robots document your code so you can focus on the fun and creative side of coding.
 
 <AccordionGroup>
     <Accordion title="Document the code from a block">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Document the code from a block."
+                src="https://github.com/mage-ai/assets/blob/main/overview/ai-document-block.gif?raw=True"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-documentation-for-a-block)
     </Accordion>
 
     <Accordion title="Write comments inline with the code">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Write comments inline with the code."
+                src="https://github.com/mage-ai/assets/blob/main/overview/ai-code-comments.gif?raw=True"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-comments-in-a-block)
     </Accordion>
 
     <Accordion title="Document the entire pipeline and each block in it">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Document the entire pipeline and each block in it."
+                src="https://github.com/mage-ai/assets/blob/main/overview/ai-document-pipeline.gif?raw=True"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-documentation-for-a-pipeline-and-all-its-blocks)
     </Accordion>
 </AccordionGroup>
 
