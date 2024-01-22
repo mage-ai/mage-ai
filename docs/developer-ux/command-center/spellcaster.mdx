@@ -135,29 +135,29 @@ You can change the default keyboard shortcuts to launch the Command Center:
 These are some of the actions you can invoke from the Command Center.
 
 <CardGroup cols={2}>
-  <Card title="Page navigation" icon="person-from-portal" iconType="duotone">
+  <Card title="Page navigation" icon="person-from-portal" iconType="duotone" color="#9ECBFF">
     Open a page such as the Triggers page, your profile preferences, a specific pipeline, etc.
   </Card>
-  <Card title="Recent pages" icon="page-caret-down" iconType="duotone">
+  <Card title="Recent pages" icon="page-caret-down" iconType="duotone" color="#B1B8C3">
     After landing on a page, you can go back to that page from the Command Center.
     By default, 5 recent pages are available to jump back to.
   </Card>
-  <Card title="New folder" icon="folder" iconType="duotone">
+  <Card title="New folder" icon="folder" iconType="duotone" color="#2A60FE">
     Create a new folder in the project.
   </Card>
-  <Card title="New file" icon="file" iconType="duotone">
+  <Card title="New file" icon="file" iconType="duotone" color="#FFCC19">
     Create a new file in the project.
   </Card>
-  <Card title="New pipeline" icon="diagram-sankey" iconType="duotone">
+  <Card title="New pipeline" icon="diagram-sankey" iconType="duotone" color="#65E3FF">
     Create a new pipeline.
   </Card>
-  <Card title="Run pipeline" icon="bolt" iconType="duotone">
+  <Card title="Run pipeline" icon="bolt" iconType="duotone" color="#D1A2AB">
     Trigger a pipeline to run once immediately.
   </Card>
-  <Card title="Instant help" icon="comments" iconType="duotone">
+  <Card title="Instant help" icon="comments" iconType="duotone" color="#8ADE00">
     Get instant help from the community and maintainers.
   </Card>
-  <Card title="Docs" icon="book" iconType="duotone">
+  <Card title="Docs" icon="book" iconType="duotone" color="#24B400">
     Open the developer documentation.
   </Card>
 </CardGroup>
@@ -208,7 +208,7 @@ These are some of the actions you can invoke from the Command Center.
 Here are some examples of items you can enchant and interact with from the Command Center.
 
 <CardGroup cols={3}>
-    <Card title="Pages" icon="page-caret-down" iconType="duotone">
+    <Card title="Pages" icon="page-caret-down" iconType="duotone" color="#9ECBFF">
         Overview
         
         Pipelines
@@ -217,25 +217,25 @@ Here are some examples of items you can enchant and interact with from the Comma
         
         *and more...*
     </Card>
-    <Card title="Files" icon="file" iconType="duotone">
+    <Card title="Files" icon="file" iconType="duotone" color="#FFCC19">
         Create
 
         View details
     </Card>
-    <Card title="Blocks" icon="code" iconType="duotone">
+    <Card title="Blocks" icon="code" iconType="duotone" color="#6B50D7">
         View details
     </Card>
-    <Card title="Pipelines" icon="diagram-sankey" iconType="duotone">
+    <Card title="Pipelines" icon="diagram-sankey" iconType="duotone" color="#65E3FF">
         Create
 
         View
     </Card>
-    <Card title="Triggers" icon="bolt" iconType="duotone">
+    <Card title="Triggers" icon="bolt" iconType="duotone" color="#D1A2AB">
         Create
 
         View
     </Card>
-    <Card title="Pipeline runs" icon="rabbit-running" iconType="duotone">
+    <Card title="Pipeline runs" icon="rabbit-running" iconType="duotone" color="#00B4CC">
         Create
 
         View
@@ -286,14 +286,37 @@ Here are some examples of items you can enchant and interact with from the Comma
 
 ## Modes
 
-<Card title="Click on me" icon="link" href="/content/components/card-group">
-  This is how you use a card with an icon and a link. Clicking on this card
-  brings you to the Card Group page.
+The Command Center by default will show a standard list of actions and items that are
+useful throughout Mage.
+
+However, there comes a time when you must transform into a different mode to better tackle
+specific quests. Currently supported modes are:
+
+<Card title="Version Control" icon="code-branch" iconType="duotone" color="#FFCC19">
+    Switch into the Version Control mode to become the master of Git workflows.
+    This mode comes with spells and artifacts for
+    pulling code, viewing file diffs, committing changes, pushing features, etc.
 </Card>
 
-1. Version Control mode
+*More modes coming very soon!*
 
 ## Application launcher
 
-1. Arcane Library
-1. Portal Terminal
+The Command Center can launch Mage applications within the currently running Mage instance. 
+These applications can be used simultaneously throughout your journey in Mage.
+
+Currently supported applications:
+
+<Card title="Arcane Library" icon="scroll" iconType="duotone" color="#7D55EC">
+    This is the file browser and the code editor self-contained in a single application.
+</Card>
+
+<Card title="Portal Terminal" icon="person-to-portal" iconType="duotone" color="#FF1E59">
+    This is the terminal with multi-terminal support and can be launched and used on any page.
+</Card>
+
+<Card title="Code Matrix" icon="code-simple" iconType="duotone" color="#8ADE00">
+    This application provides a new and revolutionary way to write code, test, and debug.
+</Card>
+
+*More applications coming very soon!*
