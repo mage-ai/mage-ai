@@ -154,6 +154,7 @@ def __custom_output():
 
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
+        combine_transformed_output_for_multi_output,
         transform_output_for_display_dynamic_child,
         transform_output_for_display_reduce_output,
     )
@@ -172,10 +173,15 @@ def __custom_output():
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):
-        output_transformed = transform_output_for_display_dynamic_child(
-            _internal_output_return,
-            is_dynamic=bool({is_dynamic}),
-        )
+        output_transformed = []
+
+        if _internal_output_return and isinstance(_internal_output_return, list):
+            for output in _internal_output_return:
+                output_tf = transform_output_for_display_dynamic_child(
+                    output,
+                    is_dynamic=bool({is_dynamic}),
+                )
+                output_transformed.append(output_tf)
 
         if is_debug():
             print(type(_internal_output_return))
@@ -183,10 +189,11 @@ def __custom_output():
 
         try:
             _json_string = simplejson.dumps(
-                output_transformed,
+                combine_transformed_output_for_multi_output(output_transformed),
                 default=encode_complex,
                 ignore_nan=True,
             )
+
             return print(f'[__internal_output__]{{_json_string}}')
         except Exception as err:
             print(type(_internal_output_return))

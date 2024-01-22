@@ -133,6 +133,7 @@ class DynamicChildController:
                 tries += 1
 
         block_run_dicts = []
+
         for combo in combos:
             dynamic_block_index = combo.get('dynamic_block_index')
 
@@ -155,7 +156,9 @@ class DynamicChildController:
                             [br for br in block_runs if br.block_uuid != upstream_block.uuid],
                             key=lambda br: br.id,
                         )
-                        dynamic_upstream_block_uuids.append(block_runs[parent_index].block_uuid)
+                        # This errors list index out of range
+                        if parent_index < len(block_runs):
+                            dynamic_upstream_block_uuids.append(block_runs[parent_index].block_uuid)
 
                     if metadata_by_upstream_block_uuid.get(upstream_block.uuid):
                         metadata = metadata_by_upstream_block_uuid[upstream_block.uuid]
@@ -189,7 +192,8 @@ class DynamicChildController:
             block_run = pipeline_run.create_block_run(
                 block_uuid,
                 metrics=block_run_dict,
-                skip_if_exists=True,
+                # skip_if_exists=True,
+                raise_if_exists=True,
             )
             block_runs.append(block_run)
 

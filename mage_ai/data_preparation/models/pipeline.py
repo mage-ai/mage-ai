@@ -1368,6 +1368,13 @@ class Pipeline:
             # [block_uuid]:[replicated_block_uuid]
             block = mapping.get(block_uuid.split(':')[0])
 
+        if not block:
+            print(
+                f'[ERROR] Pipeline.get_block: '
+                f'block {block_uuid} with type {block_type} does not exist in '
+                f'pipeline {self.uuid} for repo_path {self.repo_path}.'
+            )
+
         return block
 
     def get_block_variable(

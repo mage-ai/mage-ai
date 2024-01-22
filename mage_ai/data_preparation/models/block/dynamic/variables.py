@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pandas as pd
 
@@ -99,21 +99,23 @@ def delete_variable_objects_for_dynamic_child(
             variable_object.delete()
 
 
-def get_variable_objects_for_dynamic_child(
+def __get_all_variable_objects_for_dynamic_child(
     block,
     execution_partition: str = None,
 ) -> List[List[Variable]]:
     """
-    To get all the variable objects for a dynamic child block, don’t include the
-    dynamic_block_index in the kwargs.
-
-    If dynamic_block_index is included, then only the variable objects for that specific
-    child is retrieved.
+    This method will get the nested outputs (output_0) in every numeric folder
+    named after the dynamic_block_index (e.g. 0/).
     """
     variable_objects_arr = []
 
     indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
     for dynamic_block_index in indexes:
+        # 0/output_0,
+        # 0/output_1,
+        # 0/output_2,
+
+        # get_variable_objects returns a list of outputs (e.g. [output_0, output_1, output_2])
         arr = get_variable_objects(
             block,
             execution_partition=execution_partition,
@@ -196,21 +198,47 @@ async def get_outputs_for_dynamic_block_async(
     return None, None
 
 
+def __preprocess_and_postprocess_dynamic_child_outputs(
+    block,
+    map_outputs: Callable,
+    execution_partition: str = None,
+):
+    from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+    is_dynamic = is_dynamic_block(block)
+
+    variable_objects_arr = __get_all_variable_objects_for_dynamic_child(
+        block,
+        execution_partition=execution_partition,
+    )
+    variable_objects_arr = map_outputs(variable_objects_arr)
+
+    for idx, arr in enumerate(variable_objects_arr):
+        for idx2, variable_object in enumerate(arr):
+            print(idx, idx2, variable_object)
+
+    if is_dynamic:
+        return variable_objects_arr
+
+    return [arr[0] if len(arr) == 1 else arr for arr in variable_objects_arr]
+
+
 def get_outputs_for_dynamic_child(
     block,
     execution_partition: str = None,
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_objects_arr = get_variable_objects_for_dynamic_child(
+    def __map_outputs(outputs, sample=sample, sample_count=sample_count):
+        return [[var_obj.read_data(
+            sample=sample,
+            sample_count=sample_count,
+        ) for var_obj in arr] for arr in outputs]
+
+    return __preprocess_and_postprocess_dynamic_child_outputs(
         block,
         execution_partition=execution_partition,
+        map_outputs=__map_outputs,
     )
-
-    return [[var_obj.read_data(
-        sample=sample,
-        sample_count=sample_count,
-    ) for var_obj in arr] for arr in variable_objects_arr]
 
 
 async def get_outputs_for_dynamic_child_async(
@@ -219,18 +247,20 @@ async def get_outputs_for_dynamic_child_async(
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_objects_arr = get_variable_objects_for_dynamic_child(
+    async def __map_outputs(outputs, sample=sample, sample_count=sample_count):
+        async def __read_pair(arr: List[Variable], sample=sample, sample_count=sample_count):
+            return await asyncio.gather(*[variable_object.read_data_async(
+                sample=sample,
+                sample_count=sample_count,
+            ) for variable_object in arr])
+
+        return await asyncio.gather(*[__read_pair(arr) for arr in outputs])
+
+    return __preprocess_and_postprocess_dynamic_child_outputs(
         block,
         execution_partition=execution_partition,
+        map_outputs=lambda outputs: asyncio.run(__map_outputs(outputs)),
     )
-
-    async def __read_pair(arr: List[Variable]):
-        return await asyncio.gather(*[variable_object.read_data_async(
-            sample=sample,
-            sample_count=sample_count,
-        ) for variable_object in arr])
-
-    return await asyncio.gather(*[__read_pair(arr) for arr in variable_objects_arr])
 
 
 def fetch_input_variables_for_dynamic_upstream_blocks(
@@ -255,42 +285,49 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     for upstream_block in block.upstream_blocks:
         is_dynamic_child = is_dynamic_block_child(upstream_block)
         is_dynamic = is_dynamic_block(upstream_block)
+        reduce_output = should_reduce_output(upstream_block)
 
         upstream_block_uuid = upstream_block.uuid
 
-        if is_dynamic_child:
+        # If an upstream block has all 3, then retrieve the input data as if you’re fetching
+        # from an upstream dynamic block
+        if is_dynamic_child and (not is_dynamic or not reduce_output):
             var_objs_arr = get_outputs_for_dynamic_child(
                 upstream_block,
                 execution_partition=execution_partition,
             )
 
+            # If dynamic child should reduce its output (which means it passes the entire
+            # output to its downstream blocks):
             if should_reduce_output(upstream_block):
-                child_data = []
-                metadata = {}
-                for arr in var_objs_arr:
-                    if is_dynamic:
-                        child_data.append(arr[0] if len(arr) >= 1 else None)
-                        md = arr[1] if len(arr) >= 2 else None
-                        if isinstance(md, dict):
-                            metadata.update(md)
-                    else:
-                        child_data.append(arr)
-                input_vars.append(child_data)
-                kwargs_vars.append(metadata)
+                input_vars.append(var_objs_arr)
+                kwargs_vars.append({})
             else:
-                index = dynamic_block_index % len(var_objs_arr)
-                arr = var_objs_arr[index]
+                # If is dynamic, the modulus denominator is factored by the number of dynamic
+                # children and the number of actual outputs from the dynamic block
 
                 if is_dynamic:
-                    child_data = arr[0] if len(arr) >= 1 else None
-                    metadata = arr[1] if len(arr) >= 2 else None
+                    # The first index is used to select which dynamic child to get data from
+                    # the 2nd index is used to determine which value from the dynamic list to
+                    # fetch as the input variable.
+                    index1 = dynamic_block_index % len(var_objs_arr)
 
-                    index = dynamic_block_index % len(child_data)
-                    input_vars.append(child_data[index])
-                    kwargs_vars.append(
-                        metadata[index] if metadata and index < len(metadata) else {},
-                    )
+                    child_datas = []
+                    metadatas = {}
+                    pair = var_objs_arr[index1]
+                    if len(pair) >= 1:
+                        child_datas = pair[0]
+                        if len(pair) >= 2:
+                            metadatas = pair[1]
+
+                    index2 = dynamic_block_index % len(child_datas)
+                    child_data = child_datas[index2]
+                    metadata = metadatas[index2] if index2 < len(metadatas) else {}
+                    input_vars.append(child_data)
+                    kwargs_vars.append(metadata)
                 else:
+                    index = dynamic_block_index % len(var_objs_arr)
+                    arr = var_objs_arr[index]
                     input_vars.append(arr)
                     kwargs_vars.append({})
         elif is_dynamic:
