@@ -107,6 +107,22 @@ async def build_create(factory, model: Project, items: List[Dict]):
                     response_resource_key='version_control_branch'
                 ),
                 uuid='create_branch',
+                render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
+            ),
+            dict(
+                interaction=dict(
+                    type=InteractionType.FETCH_ITEMS,
+                ),
+                upstream_action_value_key_mapping=dict(
+                    create_branch={
+                        'version_control_branch.name': '.'.join([
+                            'interaction',
+                            'item',
+                            'uuid',
+                        ]),
+                    },
+                ),
+                uuid=InteractionType.FETCH_ITEMS,
             ),
         ],
         condition=lambda opts: FilePolicy(

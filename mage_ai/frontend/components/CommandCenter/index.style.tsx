@@ -41,7 +41,6 @@ const SHARED_HIDDEN_STYLES = css`
 export const ContainerStyle = styled.div<{
   className?: string;
 }>`
-  backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   border-radius: ${BORDER_RADIUS_XLARGE}px;
   left: 50%;
   overflow: hidden;
@@ -50,6 +49,17 @@ export const ContainerStyle = styled.div<{
   transform: translate(-50%, -50%);
   width: ${MAX_WIDTH + (1 * 2)}px;
   z-index: 100;
+
+  // We have to do this for blur to work on Safari
+  .hide {
+    -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+  }
+  // We have to do this for blur to work on Safari
+  :not(.hide) {
+    -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+  }
 
   ${props => `
     background-color: ${(props.theme || dark).background.blackTransparent};

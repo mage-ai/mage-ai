@@ -13,6 +13,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by, merge_dict
 
@@ -133,13 +134,17 @@ class MonitorStats:
         now = datetime.utcnow().timestamp()
         stats_by_schedule_id = dict()
         pipelines_mapping = {}
-        for pipeline in [Pipeline.get(
-            uuid,
-            check_if_exists=False,
-            repo_path=self.repo_path,
-            use_repo_path=True,
-        ) for uuid in set([p.pipeline_uuid for p in pipeline_runs])]:
-            pipelines_mapping[pipeline.uuid] = pipeline
+        for uuid in set([p.pipeline_uuid for p in pipeline_runs]):
+            try:
+                pipeline = Pipeline.get(
+                    uuid,
+                    all_projects=project_platform_activated(),
+                    check_if_exists=False,
+                    repo_path=self.repo_path,
+                )
+                pipelines_mapping[pipeline.uuid] = pipeline
+            except Exception as err:
+                print(f'[ERROR] MonitorStats.get_pipeline_run_count: {err}.')
         # 0.2497
         print(f'Mapping: {round((datetime.utcnow().timestamp() - now) * 10000) / 10000}')
 
@@ -165,13 +170,14 @@ class MonitorStats:
 
             if group_by_pipeline_type:
                 # Loop: 0.734
-                pipeline_type = pipelines_mapping[p.pipeline_uuid].type
-                if pipeline_type not in data[created_at_formatted]:
-                    data[created_at_formatted][pipeline_type] = dict()
-                if p.status not in data[created_at_formatted][pipeline_type]:
-                    data[created_at_formatted][pipeline_type][p.status] = 1
-                else:
-                    data[created_at_formatted][pipeline_type][p.status] += 1
+                if p.pipeline_uuid in pipelines_mapping:
+                    pipeline_type = pipelines_mapping[p.pipeline_uuid].type
+                    if pipeline_type not in data[created_at_formatted]:
+                        data[created_at_formatted][pipeline_type] = dict()
+                    if p.status not in data[created_at_formatted][pipeline_type]:
+                        data[created_at_formatted][pipeline_type][p.status] = 1
+                    else:
+                        data[created_at_formatted][pipeline_type][p.status] += 1
             else:
                 if p.status not in data[created_at_formatted]:
                     data[created_at_formatted][p.status] = 1

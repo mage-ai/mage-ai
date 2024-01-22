@@ -93,18 +93,17 @@ function SetupSectionRow({
             danger={invalid}
             default
             large={large}
-            noWrapping
             warning={warning}
           >
             {title} {invalid && (
-              <Text danger inline large={large} noWrapping>
+              <Text danger inline large={large}>
                 is required
               </Text>
             )}
           </Text>
 
           {description && typeof description === 'string' && (
-            <Text muted small noWrapping>
+            <Text muted small>
               {description}
             </Text>
           )}
