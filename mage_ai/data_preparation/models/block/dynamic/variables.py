@@ -212,6 +212,10 @@ def __preprocess_and_postprocess_dynamic_child_outputs(
     )
     variable_objects_arr = map_outputs(variable_objects_arr)
 
+    for idx, arr in enumerate(variable_objects_arr):
+        for idx2, variable_object in enumerate(arr):
+            print(idx, idx2, variable_object)
+
     if is_dynamic:
         return variable_objects_arr
 
@@ -299,19 +303,31 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 input_vars.append(var_objs_arr)
                 kwargs_vars.append({})
             else:
-                index = dynamic_block_index % len(var_objs_arr)
-                arr = var_objs_arr[index]
+                # If is dynamic, the modulus denominator is factored by the number of dynamic
+                # children and the number of actual outputs from the dynamic block
 
                 if is_dynamic:
-                    child_data = arr[0] if len(arr) >= 1 else None
-                    metadata = arr[1] if len(arr) >= 2 else None
+                    # The first index is used to select which dynamic child to get data from
+                    # the 2nd index is used to determine which value from the dynamic list to
+                    # fetch as the input variable.
+                    index1 = dynamic_block_index % len(var_objs_arr)
 
-                    index = dynamic_block_index % len(child_data)
-                    input_vars.append(child_data[index])
-                    kwargs_vars.append(
-                        metadata[index] if metadata and index < len(metadata) else {},
-                    )
+                    child_datas = []
+                    metadatas = {}
+                    pair = var_objs_arr[index1]
+                    if len(pair) >= 1:
+                        child_datas = pair[0]
+                        if len(pair) >= 2:
+                            metadatas = pair[1]
+
+                    index2 = dynamic_block_index % len(child_datas)
+                    child_data = child_datas[index2]
+                    metadata = metadatas[index2] if index2 < len(metadatas) else {}
+                    input_vars.append(child_data)
+                    kwargs_vars.append(metadata)
                 else:
+                    index = dynamic_block_index % len(var_objs_arr)
+                    arr = var_objs_arr[index]
                     input_vars.append(arr)
                     kwargs_vars.append({})
         elif is_dynamic:

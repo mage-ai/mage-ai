@@ -33,6 +33,7 @@ from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManage
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     DynamicBlockFlag,
     all_upstreams_completed,
+    check_all_dynamic_upstreams_completed,
     dynamically_created_child_block_runs,
     has_dynamic_block_upstream_parent,
     is_dynamic_block,
@@ -69,7 +70,6 @@ from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
-from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
@@ -925,34 +925,16 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
             block = pipeline.get_block(block_run.block_uuid)
 
-            # If this is the original dynamic child block, don’t run until all it’s
-            # upstream dynamic child blocks have their upstreams completed.
-            if block and block.uuid == block_run.block_uuid and is_dynamic_block_child(block):
-                DX_PRINTER.debug(f'dynamic child original: {block_run.block_uuid}', block=block)
-                upstream_dynamic_child_blocks = \
-                    [up_block for up_block in block.upstream_blocks if is_dynamic_block_child(
-                        up_block,
-                    )]
-
-                for up_block in upstream_dynamic_child_blocks:
-                    DX_PRINTER.debug(f'\tupstream dynamic child: {up_block.uuid}', block=block)
-
-                if upstream_dynamic_child_blocks:
-                    if not all(
-                        [all_upstreams_completed(
-                            up_block,
-                            block_runs_all,
-                        ) for up_block in upstream_dynamic_child_blocks],
-                    ):
-                        continue
-                DX_PRINTER.warning(
-                    f'\tupstream completed for: {block_run.block_uuid}',
-                    block=block,
-                    completed=completed_block_uuids,
-                    all=[b.block_uuid for b in block_runs_all],
-                )
-
-            if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
+            if block and is_dynamic_block_child(block):
+                if check_all_dynamic_upstreams_completed(
+                    block,
+                    block_runs_all,
+                    execution_partition=self.execution_partition
+                ):
+                    completed = True
+                else:
+                    continue
+            elif dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
                 uuids_to_check = []
                 for upstream_block_uuid in dynamic_upstream_block_uuids:
                     upstream_block = pipeline.get_block(upstream_block_uuid)
@@ -1249,15 +1231,20 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
     def create_block_run(
         self,
         block_uuid: str,
+        raise_if_exists: bool = False,
         skip_if_exists: bool = False,
         **kwargs,
     ) -> 'BlockRun':
-        if skip_if_exists:
+        if raise_if_exists or skip_if_exists:
             br = BlockRun.get(
                 pipeline_run_id=self.id,
                 block_uuid=block_uuid,
             )
             if br is not None:
+                if raise_if_exists:
+                    raise Exception(
+                        f'Block run with block_uuid {block_uuid} already exists; ID {br.id}.',
+                    )
                 return br
         return BlockRun.create(
             block_uuid=block_uuid,

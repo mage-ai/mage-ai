@@ -485,7 +485,10 @@ def build_combinations_for_dynamic_child(
                 """
                 # e.g. 3 combinations aka children were made for the upstream dynamic child block
                 arr = []
-                children_created = build_combinations_for_dynamic_child(upstream_block)
+                children_created = build_combinations_for_dynamic_child(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
                         values, _metadata = get_outputs_for_dynamic_block(
@@ -878,3 +881,55 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
                 return False
 
     return all(completed_checks)
+
+
+def check_all_dynamic_upstreams_completed(
+    block,
+    block_runs: List,
+    execution_partition: str = None,
+):
+    pipeline = block.pipeline
+
+    def __is_completed(
+        upstream_block,
+        block_runs=block_runs,
+        execution_partition=execution_partition,
+        pipeline=pipeline,
+    ):
+        if not upstream_block.upstream_blocks:
+            return True
+
+        from mage_ai.orchestration.db.models.schedules import BlockRun
+
+        upstreams_done = all([check_all_dynamic_upstreams_completed(
+            b,
+            block_runs=block_runs,
+            execution_partition=execution_partition,
+        ) for b in upstream_block.upstream_blocks])
+
+        if not upstreams_done:
+            return False
+
+        is_dynamic_child = is_dynamic_block_child(upstream_block)
+        if is_dynamic_child:
+            combos = build_combinations_for_dynamic_child(
+                upstream_block,
+                execution_partition=execution_partition,
+            )
+
+            selected = [br for br in block_runs if pipeline.get_block(
+                br.block_uuid,
+            ).uuid == upstream_block.uuid and br.status == BlockRun.BlockRunStatus.COMPLETED]
+
+            if len(list(selected)) < len(combos) + 1:
+                return False
+
+        return all([br.status == BlockRun.BlockRunStatus.COMPLETED for br in filter(
+            lambda br: pipeline.get_block(br.block_uuid).uuid == upstream_block.uuid,
+            block_runs,
+        )])
+
+    # 1. Are all the upstream blocks for my upstream blocks completed?
+    # 2. Then, are my immediate upstream blocks completed?
+    checks = [__is_completed(upstream_block) for upstream_block in block.upstream_blocks]
+    return all(checks)
