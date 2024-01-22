@@ -1388,6 +1388,9 @@ class Pipeline:
                 block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
                 block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
 
+            tags = config.get('tags', [])
+            config['tags'] = tags + (['import'] if 'import' not in tags else [])
+
         # dump new config information back in temp folder
         with open(config_zip_path, 'w') as pipeline_config:
             yaml.dump(config, pipeline_config)
