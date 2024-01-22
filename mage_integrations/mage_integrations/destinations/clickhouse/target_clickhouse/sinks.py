@@ -183,3 +183,19 @@ class ClickhouseSink(SQLSink):
                     record[key] = json.dumps(value)
 
         return super().bulk_insert_records(full_table_name, schema, records)
+
+    def _validate_and_parse(self, record: dict) -> dict:
+        """Validate or repair the record, parsing to python-native types as needed.
+
+        Args:
+            record: Individual record in the stream.
+
+        Returns:
+            TODO
+        """
+        self._parse_timestamps_in_record(
+            record=record,
+            schema=self.schema,
+            treatment=self.datetime_error_treatment,
+        )
+        return record
