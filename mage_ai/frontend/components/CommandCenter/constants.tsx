@@ -138,7 +138,7 @@ export function buildSettingsItemWithApplication(): {
         description: (
           <>
             <FlexContainer alignItems="center">
-              <Text inline muted small>
+              <Text inline muted noWrapping small>
                 The default is&nbsp;&nbsp;
               </Text>
 
@@ -149,18 +149,19 @@ export function buildSettingsItemWithApplication(): {
                 monospace
               />
 
-              <Text inline muted small>
-                &nbsp;&nbsp;(<Text inline monospace muted small>
+              <Text inline muted noWrapping small>
+                &nbsp;&nbsp;(<Text inline monospace noWrapping muted small>
                   Meta
-                </Text> + <Text inline monospace muted small>Period</Text>).
+                </Text> + <Text inline monospace noWrapping muted small>Period</Text>).
               </Text>
             </FlexContainer>
 
-            <Text muted small>
+            <Text muted noWrapping small>
               You can change this by entering the desired
               <br />
               <Link
                 href="https://www.toptal.com/developers/keycode"
+                inline
                 openNewWindow
                 small
               >

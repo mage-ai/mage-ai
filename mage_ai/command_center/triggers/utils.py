@@ -165,6 +165,7 @@ async def build_create_and_score(factory, model: Pipeline) -> Dict:
                         action_types=[
                             ButtonActionType.EXECUTE,
                             ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
                         ],
                     ),
                 ],
@@ -297,6 +298,7 @@ async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
                         action_types=[
                             ButtonActionType.EXECUTE,
                             ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
                         ],
                     ),
                 ],
@@ -400,6 +402,7 @@ async def build_create_pipeline_run_once(factory, model: TriggerMetadata) -> Dic
                         action_types=[
                             ButtonActionType.EXECUTE,
                             ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
                         ],
                     ),
                 ],

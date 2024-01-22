@@ -175,7 +175,7 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
 
     def __is_dynamic(block_run, pipeline=pipeline):
         block = pipeline.get_block(block_run.block_uuid)
-        return is_dynamic_block(block) or is_dynamic_block_child(block)
+        return block and is_dynamic_block(block) or is_dynamic_block_child(block)
 
     if any(__is_dynamic(block_run) for block_run in block_runs):
         return build_dynamic_blocks_for_block_runs(pipeline, block_runs)
@@ -249,6 +249,9 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
         # Handle dynamic blocks and data integration blocks
         block_run_block_uuid = block_run.block_uuid
         block = pipeline.get_block(block_run_block_uuid)
+
+        if not block:
+            continue
 
         if block.uuid not in [
             'dynamic_parent_a',

@@ -82,7 +82,7 @@ def is_dynamic_block(block) -> bool:
     Returns:
         bool: True if the block is a dynamic block, False otherwise.
     """
-    return block.configuration and block.configuration.get('dynamic', False)
+    return block and block.configuration and block.configuration.get('dynamic', False)
 
 
 def should_reduce_output(block) -> bool:
@@ -118,6 +118,9 @@ def is_dynamic_block_child(block) -> bool:
     Returns:
         bool: True if the block is a dynamic block child, False otherwise.
     """
+    if not block:
+        return False
+
     dynamic_or_child = []
 
     for upstream_block in block.upstream_blocks:

@@ -30,7 +30,7 @@ To enable this feature:
 1. Under the header menu named <b>View</b>, click the option <b>Show output next to code</b>.
 
 <AccordionGroup>
-    <Accordion title="Check out this demo for a quick overview" icon="window">
+    <Accordion title="Check out this demo for a quick overview" icon="window" iconType="duotone">
         <Frame>
           <iframe
             width="560"
@@ -52,7 +52,7 @@ To enable this feature:
 You can quickly add blocks of code to your pipeline with these methods:
 
 <AccordionGroup>
-    <Accordion title="Drag blocks from the file browser and drop it on the pipeline" icon="dragon">
+    <Accordion title="Drag blocks from the file browser and drop it on the pipeline" icon="dragon" iconType="duotone" defaultOpen>
         1. Open the file browser.
         1. Click a file and keep holding down.
         1. Drag the file into the center of the page.
@@ -68,7 +68,7 @@ You can quickly add blocks of code to your pipeline with these methods:
         </Frame>
     </Accordion>
 
-    <Accordion title="Search blocks across entire projects" icon="searchengin">
+    <Accordion title="Search blocks across entire projects" icon="searchengin" iconType="duotone">
         Find existing code and add it to the current pipeline.
 
         <Note>
@@ -103,7 +103,7 @@ You can quickly add blocks of code to your pipeline with these methods:
         </Tip>
     </Accordion>
 
-    <Accordion title="Custom code templates for reducing boilerplate work" icon="cauldron">
+    <Accordion title="Custom code templates for reducing boilerplate work" icon="cauldron" iconType="duotone">
         Create a template for a block or a pipeline that can be reused throughout your project.
 
         <video
@@ -121,7 +121,7 @@ You can quickly add blocks of code to your pipeline with these methods:
 ## Re-arrange and hide or show blocks
 
 <AccordionGroup>
-    <Accordion title="Re-arrange the order of blocks" icon="send-back">
+    <Accordion title="Re-arrange the order of blocks" icon="send-back" iconType="duotone" defaultOpen>
         Drag a block and move it up or down by dropping it on another block.
 
         <Frame>
@@ -134,7 +134,7 @@ You can quickly add blocks of code to your pipeline with these methods:
         </Frame>
     </Accordion>
 
-    <Accordion title="Show blocks in current pipeline" icon="user-secret">
+    <Accordion title="Show blocks in current pipeline" icon="user-secret" iconType="duotone">
         When editing a pipeline, you can switch the file browser view to show only the blocks in the
         current pipeline.
 
@@ -207,7 +207,7 @@ Use AI to generate the code for you.
 Let the robots document your code so you can focus on the fun and creative side of coding.
 
 <AccordionGroup>
-    <Accordion title="Document the code from a block">
+    <Accordion title="Document the code from a block" icon="scroll" iconType="duotone" defaultOpen>
         <Frame>
             <p align="center">
             <img
@@ -220,7 +220,7 @@ Let the robots document your code so you can focus on the fun and creative side 
         [Read more here](/guides/ai/overview#add-documentation-for-a-block)
     </Accordion>
 
-    <Accordion title="Write comments inline with the code">
+    <Accordion title="Write comments inline with the code" icon="comments" iconType="duotone">
         <Frame>
             <p align="center">
             <img
@@ -233,7 +233,7 @@ Let the robots document your code so you can focus on the fun and creative side 
         [Read more here](/guides/ai/overview#add-comments-in-a-block)
     </Accordion>
 
-    <Accordion title="Document the entire pipeline and each block in it">
+    <Accordion title="Document the entire pipeline and each block in it" icon="book" iconType="duotone">
         <Frame>
             <p align="center">
             <img
@@ -309,7 +309,26 @@ Dedicated file browser to discover existing models across multiple projects.
 Enhance your code with these quick power-ups:
 
 <AccordionGroup>
-    <Accordion title="Replicate the code of an existing block">
+    <Accordion title="Recursively dynamic code made simple" defaultOpen icon="spider-web" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Recursively dynamic code made simple."
+                src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/dynamic-blocks.png?raw=True"
+            />
+            </p>
+        </Frame>
+
+        A very `powerful` <b>ultimate</b> *spell*.
+
+        <Warning>
+            With great power... comes great fun.
+        </Warning>
+
+        [Read more here](/design/blocks/dynamic-blocks)
+    </Accordion>
+
+    <Accordion title="Replicate the code of an existing block" icon="sheep" iconType="duotone">
         <Frame>
             <p align="center">
             <img
@@ -322,22 +341,7 @@ Enhance your code with these quick power-ups:
         [Read more here](/guides/blocks/replicate-blocks)
     </Accordion>
 
-    <Accordion title="Recursively dynamic code made simple">
-        <Frame>
-            <p align="center">
-            <img
-                alt="Recursively dynamic code made simple."
-                src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/dynamic-blocks.png?raw=True"
-            />
-            </p>
-        </Frame>
-
-        A very powerful ultimate spell.
-
-        [Read more here](/design/blocks/dynamic-blocks)
-    </Accordion>
-
-    <Accordion title="Modify block variables with no-code">
+    <Accordion title="Modify block variables with no-code" icon="display-code" iconType="duotone">
         <Frame>
             <p align="center">
             <img
@@ -352,7 +356,7 @@ Enhance your code with these quick power-ups:
         [Read more here](/interactions/overview)
     </Accordion>
 
-    <Accordion title="Conditionally execute code">
+    <Accordion title="Conditionally execute code" icon="code-merge" iconType="duotone">
         <Frame>
             <p align="center">
             <img
@@ -365,14 +369,14 @@ Enhance your code with these quick power-ups:
         [Read more here](/design/blocks/conditionals)
     </Accordion>
 
-    <Accordion title="Callbacks">
+    <Accordion title="Callbacks" icon="phone-volume" iconType="duotone">
         A callback block is associated to another block. 
         When the parent block succeeds or fails, the callback block functions are executed.
 
         [Read more here](/design/blocks/callbacks)
     </Accordion>
 
-    <Accordion title="Test your code with pre-built Great Expectations">
+    <Accordion title="Test your code with pre-built Great Expectations" icon="flask-vial" iconType="duotone">
         <Frame>
             <p align="center">
             <img
