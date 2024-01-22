@@ -792,7 +792,6 @@
       "group": "Command Center",
       "pages": [
         "developer-ux/command-center/spellcaster",
-        "developer-ux/command-center/modes",
         "developer-ux/command-center/modes/version-control"
       ]
     },

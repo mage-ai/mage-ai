@@ -502,6 +502,11 @@ async def build_delete_project(factory, model: Project, items: List[Dict]):
                 ),
                 uuid='close_application',
             ),
+            dict(
+                interaction=dict(
+                    type=InteractionType.FETCH_ITEMS,
+                ),
+            ),
         ],
         display_settings_by_attribute=dict(
             icon=dict(

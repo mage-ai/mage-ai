@@ -7,7 +7,7 @@ import subprocess
 import time
 from asyncio.subprocess import PIPE, STDOUT
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git.api import get_access_token_for_user, get_user
@@ -44,18 +44,26 @@ class BaseVersionControl(BaseDataClass):
         import git
         return git.Repo(self.project.repo_path)
 
-    def prepare_commands(self, command: str) -> List[str]:
+    def prepare_commands(self, command: str, encode_command: Callable = None) -> List[str]:
         args = [
             'git',
             '-C',
             self.repo_path,
         ] + shlex.split(command)
 
+        if encode_command:
+            args = [encode_command(arg) for arg in args]
+
         print(f'[VersionControl] Run: {" ".join(args)}')
 
         return args
 
-    async def run_async(self, command: str, timeout: int = 12) -> List[str]:
+    async def run_async(
+        self,
+        command: str,
+        encode_command: Callable = None,
+        timeout: int = 12,
+    ) -> List[str]:
         # proc = await asyncio.create_subprocess_shell(
         #     ' '.join(self.prepare_commands(command)),
         #     stdin=PIPE,
@@ -65,7 +73,7 @@ class BaseVersionControl(BaseDataClass):
 
         proc = await asyncio.wait_for(
             asyncio.create_subprocess_shell(
-                ' '.join(self.prepare_commands(command)),
+                ' '.join(self.prepare_commands(command, encode_command=encode_command)),
                 stdin=PIPE,
                 stdout=PIPE,
                 stderr=STDOUT,
@@ -492,7 +500,11 @@ class File(BaseVersionControl):
         elif command:
             return await self.run_async(re.sub(r'^git', '', command.strip()).strip())
         elif commit:
-            return await self.run_async(f'commit -m "{commit}"')
+            def __encode_command(command_arg: str, commit=commit) -> str:
+                if command_arg == commit:
+                    return f'"{command_arg}"'
+                return command_arg
+            return await self.run_async(f'commit -m "{commit}"', encode_command=__encode_command)
         elif reset:
             return await self.run_async(f'reset {reset}')
 
