@@ -2130,6 +2130,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     execution_partition=execution_partition,
                     sample_count=sample_count,
                 )
+
                 for tup in tuples:
                     if not is_dynamic:
                         tup = (list(tup),)
@@ -2243,11 +2244,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
             from mage_ai.data_preparation.models.block.dynamic.utils import (
-                format_output,
+                coerce_into_dataframe,
             )
 
             data, is_data_product = self.__format_output_data(
-                format_output(data),
+                coerce_into_dataframe(data),
                 variable_uuid=variable_uuid,
                 skip_dynamic_block=True,
             )

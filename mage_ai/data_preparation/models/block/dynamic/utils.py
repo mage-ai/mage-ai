@@ -288,14 +288,14 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     )
 
 
-def format_output(child_data: Union[
+def coerce_into_dataframe(child_data: Union[
     List[Union[Dict, int, str, pd.DataFrame]],
     pd.DataFrame
 ]) -> Dict:
     if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
         if isinstance(item, pd.DataFrame):
-            child_data = [child_data]
+            child_data = child_data
         elif isinstance(item, dict):
             child_data = pd.DataFrame(child_data)
         else:
@@ -330,7 +330,7 @@ def transform_output(
     if child_data is None:
         return []
 
-    child_data = format_output(child_data)
+    child_data = coerce_into_dataframe(child_data)
 
     if isinstance(child_data, tuple):
         return transform_output(child_data)
@@ -340,7 +340,7 @@ def transform_output(
         child_data = transform_dataframe_for_display(child_data)
 
     if metadata is not None:
-        metadata = transform_dataframe_for_display(format_output(metadata))
+        metadata = transform_dataframe_for_display(coerce_into_dataframe(metadata))
 
     return child_data, metadata
 
@@ -378,52 +378,45 @@ def transform_output_for_display_reduce_output(output: List[Any]) -> List[Dict]:
     return arr
 
 
-def transform_output_for_display_dynamic_child(
-    outputs: List[
-        Tuple[
-            Union[
-                List[Union[Dict, int, str, pd.DataFrame]],
-                pd.DataFrame
-            ],
-            List[Dict]
-        ]
-    ],
-    is_dynamic: bool = False,
-) -> List[Dict]:
+def combine_transformed_output_for_multi_output(transform_outputs: List[Dict]):
     columns = []
-    child_data_arr = []
-    rows_count = []
-
-    for idx, output in enumerate(outputs):
-        if not is_dynamic:
-            output = (output,)
-        child_data, metadata = transform_output(output)
-
-        column = f'child_{idx}'
-        if metadata and isinstance(metadata, dict):
-            if metadata.get('block_uuid'):
-                column = metadata.get('block_uuid')
-        columns.append(column)
-
-        if child_data and isinstance(child_data, dict):
-            data = child_data.get('data')
-            if data and isinstance(data, dict):
-                shape = data.get('shape')
-                if shape and isinstance(shape, list) and len(shape) >= 1:
-                    rows_count.append(shape[0])
-
-        child_data_arr.append(child_data)
+    index = []
+    for i in range(len(transform_outputs)):
+        columns.append(f'child_{i}')
+        index.append(i)
 
     return dict(
         data=dict(
             columns=columns,
-            index=[idx for idx, _i in enumerate(child_data_arr)],
-            rows=child_data_arr,
-            shape=[max(rows_count) if rows_count else 0, len(columns)],
+            index=index,
+            rows=transform_outputs,
+            shape=[len(transform_outputs), len(columns)],
         ),
         type=DataType.TABLE,
         multi_output=True,
     )
+
+
+def transform_output_for_display_dynamic_child(
+    output: List[
+        Union[
+            List[Union[Dict, int, str, pd.DataFrame]],
+            Dict,
+            int,
+            str,
+            pd.DataFrame
+        ]
+    ],
+    is_dynamic: bool = False,
+) -> List[Dict]:
+    df = None
+    for output_from_variable_object in output:
+        df_inner = coerce_into_dataframe(output_from_variable_object)
+        if df is None:
+            df = df_inner
+        else:
+            df = pd.concat([df, df_inner], axis=1)
+    return transform_dataframe_for_display(df)
 
 
 def create_combinations(combinations: List[Any]) -> List[Any]:

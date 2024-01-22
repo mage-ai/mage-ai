@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pandas as pd
 
@@ -99,21 +99,23 @@ def delete_variable_objects_for_dynamic_child(
             variable_object.delete()
 
 
-def get_variable_objects_for_dynamic_child(
+def __get_all_variable_objects_for_dynamic_child(
     block,
     execution_partition: str = None,
 ) -> List[List[Variable]]:
     """
-    To get all the variable objects for a dynamic child block, don’t include the
-    dynamic_block_index in the kwargs.
-
-    If dynamic_block_index is included, then only the variable objects for that specific
-    child is retrieved.
+    This method will get the nested outputs (output_0) in every numeric folder
+    named after the dynamic_block_index (e.g. 0/).
     """
     variable_objects_arr = []
 
     indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
     for dynamic_block_index in indexes:
+        # 0/output_0,
+        # 0/output_1,
+        # 0/output_2,
+
+        # get_variable_objects returns a list of outputs (e.g. [output_0, output_1, output_2])
         arr = get_variable_objects(
             block,
             execution_partition=execution_partition,
@@ -196,21 +198,43 @@ async def get_outputs_for_dynamic_block_async(
     return None, None
 
 
+def __preprocess_and_postprocess_dynamic_child_outputs(
+    block,
+    map_outputs: Callable,
+    execution_partition: str = None,
+):
+    from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+    is_dynamic = is_dynamic_block(block)
+
+    variable_objects_arr = __get_all_variable_objects_for_dynamic_child(
+        block,
+        execution_partition=execution_partition,
+    )
+    variable_objects_arr = map_outputs(variable_objects_arr)
+
+    if is_dynamic:
+        return variable_objects_arr
+
+    return [arr[0] if len(arr) == 1 else arr for arr in variable_objects_arr]
+
+
 def get_outputs_for_dynamic_child(
     block,
     execution_partition: str = None,
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_objects_arr = get_variable_objects_for_dynamic_child(
+    def __map_outputs(outputs, sample=sample, sample_count=sample_count):
+        return [[var_obj.read_data(
+            sample=sample,
+            sample_count=sample_count,
+        ) for var_obj in arr] for arr in outputs]
+
+    return __preprocess_and_postprocess_dynamic_child_outputs(
         block,
         execution_partition=execution_partition,
+        map_outputs=__map_outputs,
     )
-
-    return [[var_obj.read_data(
-        sample=sample,
-        sample_count=sample_count,
-    ) for var_obj in arr] for arr in variable_objects_arr]
 
 
 async def get_outputs_for_dynamic_child_async(
@@ -219,18 +243,20 @@ async def get_outputs_for_dynamic_child_async(
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    variable_objects_arr = get_variable_objects_for_dynamic_child(
+    async def __map_outputs(outputs, sample=sample, sample_count=sample_count):
+        async def __read_pair(arr: List[Variable], sample=sample, sample_count=sample_count):
+            return await asyncio.gather(*[variable_object.read_data_async(
+                sample=sample,
+                sample_count=sample_count,
+            ) for variable_object in arr])
+
+        return await asyncio.gather(*[__read_pair(arr) for arr in outputs])
+
+    return __preprocess_and_postprocess_dynamic_child_outputs(
         block,
         execution_partition=execution_partition,
+        map_outputs=lambda outputs: asyncio.run(__map_outputs(outputs)),
     )
-
-    async def __read_pair(arr: List[Variable]):
-        return await asyncio.gather(*[variable_object.read_data_async(
-            sample=sample,
-            sample_count=sample_count,
-        ) for variable_object in arr])
-
-    return await asyncio.gather(*[__read_pair(arr) for arr in variable_objects_arr])
 
 
 def fetch_input_variables_for_dynamic_upstream_blocks(
