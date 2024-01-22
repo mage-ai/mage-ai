@@ -320,9 +320,12 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                         if len(pair) >= 2:
                             metadatas = pair[1]
 
-                    index2 = dynamic_block_index % len(child_datas)
-                    child_data = child_datas[index2]
-                    metadata = metadatas[index2] if index2 < len(metadatas) else {}
+                    child_data = None
+                    metadata = None
+                    if child_datas:
+                        index2 = dynamic_block_index % len(child_datas)
+                        child_data = child_datas[index2]
+                        metadata = metadatas[index2] if index2 < len(metadatas) else {}
                     input_vars.append(child_data)
                     kwargs_vars.append(metadata)
                 else:
