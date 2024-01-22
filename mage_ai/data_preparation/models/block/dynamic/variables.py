@@ -281,28 +281,23 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     for upstream_block in block.upstream_blocks:
         is_dynamic_child = is_dynamic_block_child(upstream_block)
         is_dynamic = is_dynamic_block(upstream_block)
+        reduce_output = should_reduce_output(upstream_block)
 
         upstream_block_uuid = upstream_block.uuid
 
-        if is_dynamic_child:
+        # If an upstream block has all 3, then retrieve the input data as if you’re fetching
+        # from an upstream dynamic block
+        if is_dynamic_child and (not is_dynamic or not reduce_output):
             var_objs_arr = get_outputs_for_dynamic_child(
                 upstream_block,
                 execution_partition=execution_partition,
             )
 
+            # If dynamic child should reduce its output (which means it passes the entire
+            # output to its downstream blocks):
             if should_reduce_output(upstream_block):
-                child_data = []
-                metadata = {}
-                for arr in var_objs_arr:
-                    if is_dynamic:
-                        child_data.append(arr[0] if len(arr) >= 1 else None)
-                        md = arr[1] if len(arr) >= 2 else None
-                        if isinstance(md, dict):
-                            metadata.update(md)
-                    else:
-                        child_data.append(arr)
-                input_vars.append(child_data)
-                kwargs_vars.append(metadata)
+                input_vars.append(var_objs_arr)
+                kwargs_vars.append({})
             else:
                 index = dynamic_block_index % len(var_objs_arr)
                 arr = var_objs_arr[index]
