@@ -16,7 +16,7 @@ from kubernetes.client import (
 
 from mage_ai.services.k8s.constants import CONFIG_FILE, DEFAULT_NAMESPACE
 from mage_ai.shared.config import BaseConfig
-from mage_ai.shared.hash import get_safe_value
+from mage_ai.shared.hash import camel_case_keys_to_snake_case, get_safe_value
 
 # import traceback
 
@@ -61,7 +61,8 @@ class K8sExecutorConfig(BaseConfig):
                 executor_config.pod.get('service_account_name') or DEFAULT_SERVICE_ACCOUNT_NAME
             )
             if executor_config.pod.get('affinity'):
-                affinity = V1Affinity(**executor_config.pod['affinity'])
+                affinity = V1Affinity(
+                    **camel_case_keys_to_snake_case(executor_config.pod['affinity']))
 
             if executor_config.pod.get('tolerations'):
                 tolerations += [V1Toleration(**e) for e in executor_config.pod['tolerations']]

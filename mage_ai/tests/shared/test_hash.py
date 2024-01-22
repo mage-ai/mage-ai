@@ -1,8 +1,51 @@
-from mage_ai.shared.hash import combine_into, get_json_value, set_value
+from mage_ai.shared.hash import (
+    camel_case_keys_to_snake_case,
+    combine_into,
+    get_json_value,
+    set_value,
+)
 from mage_ai.tests.base_test import TestCase
 
 
 class HashTests(TestCase):
+    def test_camel_case_keys_to_snake_case(self):
+        self.assertEqual(
+            camel_case_keys_to_snake_case(dict(
+                nodeAffinity=dict(
+                    requiredDuringSchedulingIgnoredDuringExecution=dict(
+                        nodeSelectorTerms=[
+                            dict(
+                                matchExpressions=[
+                                    dict(
+                                        key='kubernetes.io/os',
+                                        operator='In',
+                                        values=['linux']
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )),
+            dict(
+                node_affinity=dict(
+                    required_during_scheduling_ignored_during_execution=dict(
+                        node_selector_terms=[
+                            dict(
+                                match_expressions=[
+                                    dict(
+                                        key='kubernetes.io/os',
+                                        operator='In',
+                                        values=['linux']
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        )
+
     def test_get_json_value(self):
         self.assertEqual(
             get_json_value('{"k1": "v1", "k2": "v2"}', 'k1'),
