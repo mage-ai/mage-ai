@@ -561,8 +561,6 @@ function useFileComponents({
     fetchAutocompleteItems,
     fetchFiles,
     fetchPipeline,
-    onClickFile: openFile,
-    onClickFolder: (path: string) => openFile(path, true),
     onCreateFile,
     onSelectBlockFile,
     openSidekickView,
@@ -584,7 +582,6 @@ function useFileComponents({
     fileTreeRef,
     onCreateFile,
     onSelectBlockFile,
-    openFile,
     openSidekickView,
     pipeline,
     setSelectedBlock,
@@ -598,21 +595,27 @@ function useFileComponents({
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      onClickFile={(path: string, _: FileType) => openFile(path)}
+      onClickFolder={(path: string, _: FileType) => openFile(path, true)}
       files={files}
     />
   ), [
     files,
-    fileBrowserProps
+    fileBrowserProps,
+    openFile,
   ]);
 
   const fileBrowserFlattenMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      onClickFile={(path: string, file: FileType) => openFile(file?.path)}
+      onClickFolder={(path: string, file: FileType) => openFile(file?.path, true)}
       files={buildFileTreeByExtension(filesFlatten)}
     />
   ), [
     fileBrowserProps,
     filesFlatten,
+    openFile,
   ]);
 
   const controller = useMemo(() => (

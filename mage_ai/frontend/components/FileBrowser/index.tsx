@@ -511,7 +511,7 @@ function FileBrowser({
             selectedFolder?.children?.forEach((file: FileType) => {
               if (!('children' in file)) {
                 const fp = getFullPath(selectedFolder)
-                onClickFile([fp, file?.name]?.join(osPath.sep));
+                onClickFile([fp, file?.name]?.join(osPath.sep), file);
               }
             });
           },
@@ -646,9 +646,9 @@ function FileBrowser({
             );
           },
           onClick: () => onClickFile
-            ? onClickFile?.(selectedFile?.path) :
+            ? onClickFile?.(selectedFile?.path, selectedFile) :
             openFile
-              ? openFile?.(selectedFile?.path)
+              ? openFile?.(selectedFile?.path, selectedFile)
               : null,
           uuid: 'file_path',
         });

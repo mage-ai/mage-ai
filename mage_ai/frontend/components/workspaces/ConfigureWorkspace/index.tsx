@@ -110,7 +110,7 @@ function ConfigureWorkspace({
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
   const [showFileSelector, hideFileSelector] = useModal((opts: {
-    onFileOpen: (filePath: string) => void; 
+    onFileOpen: (filePath: string, file?: any) => void;
     isFileDisabled?: (filePath: string, children: any) => boolean;
   }) => (
     <WindowContainerStyle>
@@ -386,7 +386,7 @@ function ConfigureWorkspace({
                   showFileSelector({
                     isFileDisabled: (filePath, children) => 
                       !children && !filePath.endsWith('.py'),
-                    onFileOpen: (filePath) => {
+                    onFileOpen: (filePath, _) => {
                       setLifecycleConfig(prev => ({
                         ...prev,
                         pre_start_script_path: filePath,
@@ -465,7 +465,7 @@ function ConfigureWorkspace({
                 noBorder
                 onClick={() => 
                   showFileSelector({
-                    onFileOpen: (filePath) => {
+                    onFileOpen: (filePath, _) => {
                       setLifecycleConfig(prev => ({
                         ...prev,
                         post_start: {

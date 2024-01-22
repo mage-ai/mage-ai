@@ -157,6 +157,7 @@ def __custom_output():
         transform_output_for_display_dynamic_child,
         transform_output_for_display_reduce_output,
     )
+    from mage_ai.shared.environments import is_debug
     from mage_ai.shared.parsers import encode_complex, sample_output
 
 
@@ -171,15 +172,26 @@ def __custom_output():
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):
-        _json_string = simplejson.dumps(
-            transform_output_for_display_dynamic_child(
-                _internal_output_return,
-                is_dynamic=bool({is_dynamic}),
-            ),
-            default=encode_complex,
-            ignore_nan=True,
+        output_transformed = transform_output_for_display_dynamic_child(
+            _internal_output_return,
+            is_dynamic=bool({is_dynamic}),
         )
-        return print(f'[__internal_output__]{{_json_string}}')
+
+        if is_debug():
+            print(type(_internal_output_return))
+            print(type(output_transformed))
+
+        try:
+            _json_string = simplejson.dumps(
+                output_transformed,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            return print(f'[__internal_output__]{{_json_string}}')
+        except Exception as err:
+            print(type(_internal_output_return))
+            print(type(output_transformed))
+            raise err
     elif bool({is_dynamic}):
         _json_string = simplejson.dumps(
             transform_output_for_display(_internal_output_return),
