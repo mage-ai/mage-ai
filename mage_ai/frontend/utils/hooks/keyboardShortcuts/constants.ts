@@ -126,13 +126,14 @@ export const KEY_SYMBOL_W = 'W';
 export const KEY_SYMBOL_X = 'X';
 export const KEY_SYMBOL_Y = 'Y';
 export const KEY_SYMBOL_Z = 'Z';
-export const KEY_SYMBOL_ALT = 'alt';
+export const KEY_SYMBOL_ALT = '⌥ option';
 export const KEY_SYMBOL_BRACKET_LEFT = '[';
 export const KEY_SYMBOL_BRACKET_RIGHT = ']';
-export const KEY_SYMBOL_CONTROL = 'ctrl';
+export const KEY_SYMBOL_CONTROL = '^ ctrl';
 export const KEY_SYMBOL_DELETE = 'del';
-export const KEY_SYMBOL_ENTER = 'enter';
-export const KEY_SYMBOL_ESCAPE = 'esc';
+export const KEY_SYMBOL_ENTER = '⌅ enter';
+export const KEY_SYMBOL_RETURN = '↵ return'
+export const KEY_SYMBOL_ESCAPE = '⎋ esc';
 export const KEY_SYMBOL_FORWARD_SLASH = '/';
 export const KEY_SYMBOL_META = '⌘';
 export const KEY_SYMBOL_SHIFT = '⇧';
@@ -143,7 +144,6 @@ export const KEY_SYMBOL_ARROW_LEFT = '⬅';
 export const KEY_SYMBOL_ARROW_RIGHT = '➡';
 export const KEY_SYMBOL_ARROW_UP = '⬆';
 export const KEY_ENTER = 'Enter';
-
 
 export const KEY_CODE_KEY_SYMBOL_MAPPING = {
   [KEY_CODE_A]: KEY_SYMBOL_A,

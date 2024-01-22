@@ -789,6 +789,22 @@
       ]
     },
     {
+      "group": "Command Center",
+      "pages": [
+        "developer-ux/command-center/spellcaster",
+        "developer-ux/command-center/modes",
+        "developer-ux/command-center/modes/version-control"
+      ]
+    },
+    {
+      "group": "Apps",
+      "pages": [
+        "developer-ux/applications/overview",
+        "developer-ux/applications/arcane-library",
+        "developer-ux/applications/portal-terminal"
+      ]
+    },
+    {
       "group": "Overview",
       "pages": [
         "platform/overview"
