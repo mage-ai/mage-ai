@@ -142,8 +142,13 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
     # Add the originals upstream blocks if the originals are still in the dicts and
     # if the upstream doesn’t reduce output
     for block_uuid, block in pipeline.blocks_by_uuid.items():
-        if block.replicated_block:
-            block_uuid = block.uuid_replicated
+        block_uuid = block.uuid_replicated if block.replicated_block else block_uuid
+        if is_dynamic_block_child(block) and \
+                not should_reduce_output(block) and \
+                block_uuid in block_dicts_by_uuid and \
+                len(block_dicts_by_uuid[block_uuid]['upstream_blocks']) == 0:
+
+            block_dicts_by_uuid.pop(block_uuid, None)
 
         for up_block in block.upstream_blocks:
             up_uuid = up_block.uuid_replicated if up_block.replicated_block else up_block.uuid
