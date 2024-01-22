@@ -65,6 +65,11 @@ const CircleStyle = styled.div<CircleProps>`
     border-width: ${props.borderSize}px;
   `}
 
+  ${props => props.color && props.borderOnly && `
+    background-color: transparent !important;
+    border: 1px solid ${props.color};
+  `}
+
   ${props => props.danger && props.borderOnly && `
     background-color: transparent !important;
     border: 1px solid ${(props.theme.borders || dark.borders).danger};
