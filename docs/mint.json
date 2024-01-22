@@ -796,7 +796,7 @@
       ]
     },
     {
-      "group": "Apps",
+      "group": "Applications",
       "pages": [
         "developer-ux/applications/overview",
         "developer-ux/applications/arcane-library",

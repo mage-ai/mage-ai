@@ -14,6 +14,7 @@ import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl } from '@utils/url';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
+import FileType from '@interfaces/FileType';
 
 
 function FilesPage() {
@@ -32,7 +33,7 @@ function FilesPage() {
     return arr;
   }, [qUrl]);
 
-  const openFile = useCallback((filePath: string) => {
+  const openFile = useCallback((filePath: string, file: FileType) => {
     const filePathEncoded = encodeURIComponent(filePath);
     let filePaths = queryFromUrl()['file_paths[]'] || [];
     if (!Array.isArray(filePaths)) {

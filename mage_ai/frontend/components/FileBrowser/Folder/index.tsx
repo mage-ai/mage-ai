@@ -61,12 +61,12 @@ export type FolderSharedProps = {
       path?: string;
     },
   ) => void;
-  onClickFile?: (path: string) => void;
-  onClickFolder?: (path: string) => void;
-  openFile?: (path: string) => void;
+  onClickFile?: (path: string, file: FileType) => void;
+  onClickFolder?: (path: string, file: FileType) => void;
+  openFile?: (path: string, file: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   renderAfterContent?: (file: FileType) => any;
-  selectFile?: (path: string) => void;
+  selectFile?: (path: string, file: FileType) => void;
   useRootFolder?: boolean;
 };
 
@@ -502,14 +502,14 @@ function Folder({
 
             if (children) {
               if (allowSelectingFolders) {
-                selectFile(filePathToUse);
+                selectFile(filePathToUse, file);
               } else {
                 toggleExpandsion();
               }
-              onClickFolder?.(filePathToUse);
+              onClickFolder?.(filePathToUse, file);
             } else {
               if (onClickFile) {
-                onClickFile(filePathToUse);
+                onClickFile(filePathToUse, file);
               } else if (nonPythonBlockFromFile) {
                 onSelectBlockFile?.(
                   nonPythonBlockFromFile.uuid,
@@ -521,7 +521,7 @@ function Folder({
                   },
                 );
               } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
-                openFile?.(filePathToUse);
+                openFile?.(filePathToUse, file);
               } else {
                 const block = getBlockFromFile(file);
                 if (block) {

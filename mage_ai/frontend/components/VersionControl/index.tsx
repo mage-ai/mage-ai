@@ -269,7 +269,7 @@ function VersionControl() {
           fetchFiles={fetchBranch}
           files={files}
           isFileDisabled={() => false}
-          onClickFile={(path: string) => {
+          onClickFile={(path: string, file: FileType) => {
             // @ts-ignore
             setSelectedFilePath((prev) => {
               if (!prev || prev !== path) {

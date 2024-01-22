@@ -83,8 +83,8 @@ function FileBrowserNavigation({
         <FileBrowser
           fetchFiles={fetch}
           files={files}
-          onClickFile={(path: string) => console.log(path)}
-          onClickFolder={(path: string) => console.log(path, true)}
+          onClickFile={(path: string, file: FileType) => console.log(path)}
+          onClickFolder={(path: string, file: FileType) => console.log(path, true)}
           ref={fileTreeRef}
           showError={showError}
           uuid="FileBrowserNavigation"
