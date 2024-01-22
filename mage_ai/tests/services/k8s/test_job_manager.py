@@ -3,12 +3,14 @@ from unittest.mock import MagicMock, patch
 
 from kubernetes import client
 from kubernetes.client import (
+    V1Affinity,
     V1Container,
     V1EnvFromSource,
     V1EnvVar,
     V1Pod,
     V1PodSpec,
     V1SecretEnvSource,
+    V1Toleration,
 )
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
@@ -288,15 +290,40 @@ class JobManagerTests(TestCase):
                 'namespace': 'test-namespace'
             },
             'pod': {
+                'affinity': {
+                    'nodeAffinity': {
+                        'requiredDuringSchedulingIgnoredDuringExecution': {
+                            'nodeSelectorTerms': [
+                                {
+                                    'matchExpressions': [
+                                        {
+                                            'key': 'kubernetes.io/os',
+                                            'operator': 'In',
+                                            'values': ['linux'],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
                 'service_account_name': 'secretaccount',
                 'image_pull_secrets': 'secret 1',
+                'tolerations': [
+                    {
+                        'key': 'key2',
+                        'operator': 'Equal',
+                        'value': 'value2',
+                        'effect': 'NoSchedule',
+                    },
+                ],
                 'volumes': [
                     {
                         'name': 'data-pvc',
                         'persistent_volume_claim': {
                             'claim_name': 'pvc-name'
-                        }
-                    }
+                        },
+                    },
                 ],
             },
             'container': {
@@ -321,9 +348,9 @@ class JobManagerTests(TestCase):
                     {
                         'mount_path': '/tmp/data',
                         'name': 'data-pvc'
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         }
         mock_getenv.return_value = 'pod_name'
 
@@ -349,9 +376,39 @@ class JobManagerTests(TestCase):
         self.assertEqual(job.spec.template.metadata.namespace, 'test-namespace')
 
         # Pod
+        self.assertEqual(job.spec.template.spec.affinity, V1Affinity(
+            **dict(
+                node_affinity=dict(
+                    required_during_scheduling_ignored_during_execution=dict(
+                        node_selector_terms=[
+                            dict(
+                                match_expressions=[
+                                    dict(
+                                        key='kubernetes.io/os',
+                                        operator='In',
+                                        values=['linux']
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        ))
+
         self.assertEqual(job.spec.template.spec.service_account_name, 'secretaccount')
         self.assertEqual(job.spec.template.spec.image_pull_secrets,
                          client.V1LocalObjectReference('secret 1'))
+        self.assertEqual(job.spec.template.spec.tolerations, [
+            V1Toleration(
+                **{
+                    'key': 'key2',
+                    'operator': 'Equal',
+                    'value': 'value2',
+                    'effect': 'NoSchedule',
+                },
+            )
+        ])
         self.assertEqual(job.spec.template.spec.volumes, [
             client.V1Volume(name='data-pvc', persistent_volume_claim={'claim_name': 'pvc-name'}),
         ])
