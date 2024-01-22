@@ -646,9 +646,9 @@ function FileBrowser({
             );
           },
           onClick: () => onClickFile
-            ? onClickFile?.(selectedFile?.path, file) :
+            ? onClickFile?.(selectedFile?.path, selectedFile) :
             openFile
-              ? openFile?.(selectedFile?.path, file)
+              ? openFile?.(selectedFile?.path, selectedFile)
               : null,
           uuid: 'file_path',
         });
