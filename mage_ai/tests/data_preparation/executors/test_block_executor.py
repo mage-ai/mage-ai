@@ -13,7 +13,7 @@ from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.shared.hash import ignore_keys, merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 from mage_ai.tests.shared.mixins import build_hooks
@@ -173,7 +173,7 @@ class BlockExecutorTest(BaseApiTestCase):
             callback_kwargs=dict(retry=dict(attempts=1)),
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
-            global_vars=ignore_keys(global_vars, ['retry']),
+            global_vars=global_vars,
             logging_tags={
                 'block_type': BlockType.DBT,
                 'block_uuid': self.block_uuid,
