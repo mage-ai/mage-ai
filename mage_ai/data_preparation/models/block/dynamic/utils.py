@@ -236,30 +236,6 @@ def uuid_for_output_variables(
     return (block_uuid, changed)
 
 
-def mock_dynamic_in_real_scenario(block, **kwargs) -> Dict:
-    options = kwargs.copy()
-
-    for upstream_block in block.upstream_blocks:
-        if is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block):
-            if options.get('dynamic_block_index') is None:
-                options['dynamic_block_index'] = 0
-            if options.get('dynamic_block_uuid') is None:
-                dynamic_block_index = options.get('dynamic_block_index')
-                if dynamic_block_index is None:
-                    dynamic_block_index = 0
-
-                options['dynamic_block_uuid'] = build_dynamic_block_uuid(
-                    block.uuid,
-                    index=dynamic_block_index,
-                )
-            if not options.get('dynamic_block_indexes'):
-                options['dynamic_block_indexes'] = {}
-            if upstream_block.uuid not in options['dynamic_block_indexes']:
-                options['dynamic_block_indexes'][upstream_block.uuid] = 0
-
-    return options
-
-
 def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     data = None
     if isinstance(dataframe, pd.DataFrame):

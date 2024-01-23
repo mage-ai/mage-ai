@@ -419,8 +419,10 @@ def execute_custom_code():
     if is_dynamic_child:
         outputs = []
         settings = build_combinations_for_dynamic_child(block, **options)
+        print('WTFFFFFFFFFFFFFFFFFFFFFF settings', settings)
         for dynamic_block_index, config in enumerate(settings):
             output_dict = block.execute_with_callback(**merge_dict(options, config))
+            print(output_dict)
             if output_dict and output_dict.get('output'):
                 outputs.append(output_dict.get('output'))
 

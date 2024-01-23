@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pandas as pd
 
+from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.shared.strings import to_ordinal_integers
 
@@ -176,6 +177,9 @@ def get_outputs_for_dynamic_block(
 ) -> Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]:
     values = get_outputs(block, **kwargs)
 
+    if BlockLanguage.SQL == block.language:
+        return values[0] if len(values) == 1 else values, None
+
     if len(values) >= 2:
         return values[0], values[1]
     elif len(values) >= 1:
@@ -189,6 +193,9 @@ async def get_outputs_for_dynamic_block_async(
     **kwargs
 ) -> Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]:
     values = await get_outputs_async(block, **kwargs)
+
+    if BlockLanguage.SQL == block.language:
+        return values[0] if len(values) == 1 else values, None
 
     if len(values) >= 2:
         return values[0], values[1]
@@ -322,9 +329,13 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
                     child_data = None
                     metadata = None
-                    if child_datas:
+                    if child_datas is not None:
                         index2 = dynamic_block_index % len(child_datas)
-                        child_data = child_datas[index2]
+
+                        if isinstance(child_datas, pd.DataFrame):
+                            child_data = child_datas.iloc[index2]
+                        else:
+                            child_data = child_datas[index2]
                         metadata = metadatas[index2] if index2 < len(metadatas) else {}
                     input_vars.append(child_data)
                     kwargs_vars.append(metadata)
@@ -343,7 +354,8 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             if isinstance(child_data, list):
                 input_vars.append(child_data[index])
             elif isinstance(child_data, pd.DataFrame):
-                input_vars.append(child_data.iloc[index])
+                row = child_data.iloc[index]
+                input_vars.append(row.to_dict() if row is not None else row)
             elif isinstance(child_data, dict):
                 input_vars.append(child_data.get(index))
 

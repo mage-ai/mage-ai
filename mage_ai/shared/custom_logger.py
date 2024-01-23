@@ -54,7 +54,8 @@ def targets():
         # 'uuid_for_output_variables',
         # 'dynamic_block_values_and_metadata',
         # 'store_variables',
-        'nothing',
+        # 'dynamic',
+        # 'nothing',
     ]
 
 
