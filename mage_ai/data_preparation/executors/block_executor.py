@@ -145,6 +145,8 @@ class BlockExecutor:
         Returns:
             The result of the block execution.
         """
+        if global_vars is None:
+            global_vars = {}
         block_run = None
 
         if Project.is_feature_enabled_in_root_or_active_project(
