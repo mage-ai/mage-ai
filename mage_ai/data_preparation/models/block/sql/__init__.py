@@ -691,7 +691,6 @@ def execute_raw_sql(
         fetch_query_at_indexes.append(block.full_table_name)
 
     if should_query:
-        print(queries)
         results = loader.execute_queries(
             queries,
             commit=True,
