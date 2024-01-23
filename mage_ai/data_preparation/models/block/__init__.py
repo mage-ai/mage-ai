@@ -14,12 +14,11 @@ from logging import Logger
 from queue import Queue
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
+import mage_ai.data_preparation.decorators
 import pandas as pd
 import simplejson
 import yaml
 from jinja2 import Template
-
-import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -1071,9 +1070,16 @@ class Block(DataIntegrationMixin, SparkBlock):
 
             if BlockType.CHART != self.type:
                 if analyze_outputs:
-                    self.analyze_outputs(variable_mapping)
+                    self.analyze_outputs(
+                        variable_mapping,
+                        execution_partition=execution_partition,
+                    )
                 else:
-                    self.analyze_outputs(variable_mapping, shape_only=True)
+                    self.analyze_outputs(
+                        variable_mapping,
+                        execution_partition=execution_partition,
+                        shape_only=True,
+                    )
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
@@ -2354,7 +2360,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 logging_tags=logging_tags,
             )
 
-    def analyze_outputs(self, variable_mapping, shape_only: bool = False) -> None:
+    def analyze_outputs(
+        self,
+        variable_mapping,
+        execution_partition: str = None,
+        shape_only: bool = False,
+    ) -> None:
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
@@ -2370,6 +2381,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                                 original_column_count=data.shape[1],
                             ),
                         ),
+                        partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
                     continue
