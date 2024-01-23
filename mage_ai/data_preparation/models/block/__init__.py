@@ -512,8 +512,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         global_vars=variables,
                     )
 
-            print('wwwtffffffffffffffffffffffffff', dynamic_block_index, outputs_from_input_vars)
-
         return hydrate_block_outputs(
             content,
             outputs_from_input_vars=outputs_from_input_vars,

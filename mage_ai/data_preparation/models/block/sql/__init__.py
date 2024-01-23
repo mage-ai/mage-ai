@@ -32,7 +32,6 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.io.base import QUERY_ROW_LIMIT, DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.custom_logger import DX_PRINTER
 
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.CUSTOM,
@@ -692,7 +691,6 @@ def execute_raw_sql(
         fetch_query_at_indexes.append(block.full_table_name)
 
     if should_query:
-        print(queries)
         results = loader.execute_queries(
             queries,
             commit=True,
@@ -715,7 +713,6 @@ class SQLBlock(Block):
         global_vars: Dict = None,
         **kwargs,
     ) -> List:
-        DX_PRINTER.get_callers()
         if custom_code and custom_code.strip():
             query = custom_code
         else:
