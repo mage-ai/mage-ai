@@ -131,6 +131,7 @@ type UseFileComponentsProps = {
   originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   query?: {
+    include_pipeline_count?: boolean;
     pattern?: string;
   };
   selectedFilePath?: string;

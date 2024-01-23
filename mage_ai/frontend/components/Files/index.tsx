@@ -28,6 +28,7 @@ function FilesPageComponent({
     versions,
     versionsVisible,
   } = useFileComponents({
+    query: { include_pipeline_count: true },
     selectedFilePath: query?.file_path,
     showHiddenFilesSetting: true,
     uuid: 'Pages/Files',

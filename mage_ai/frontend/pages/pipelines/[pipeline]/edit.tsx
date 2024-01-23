@@ -1052,6 +1052,7 @@ function PipelineDetailPage({
     onUpdateFileSuccess,
     openSidekickView,
     pipeline,
+    query: { include_pipeline_count: true },
     sendTerminalMessage,
     setDisableShortcuts,
     setSelectedBlock,

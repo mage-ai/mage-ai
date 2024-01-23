@@ -111,6 +111,7 @@ export default interface FileType {
   isNotFolder?: boolean;
   language?: BlockLanguageEnum;
   modified_timestamp?: number;
+  pipeline_count?: number
   name?: string;
   parent?: FileType;
   path?: string;

@@ -11,9 +11,10 @@ import FileType, {
 } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
 import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
-import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
-import { ChevronDown, ChevronRight, build } from '@oracle/icons';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import { ChevronDown, ChevronRight, DiamondShared } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
 import {
   CUSTOM_EVENT_NAME_FOLDER_EXPAND,
@@ -23,23 +24,16 @@ import {
   ICON_SIZE,
   INDENT_WIDTH,
 } from '../index.style';
+import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
-  getBlockUUIDFromFile,
-  getFileExtension,
-  getFullPath,
   getFullPathWithoutRootFolder,
   getNonPythonBlockFromFile,
-  validBlockFileExtension,
-  validBlockFromFilename,
 } from '../utils';
 import { range, sortByKey } from '@utils/array';
-import { singularize } from '@utils/string';
 
 const DEFAULT_NAME = 'default_repo';
 
@@ -195,6 +189,7 @@ function Folder({
     name,
     parent: parentFile,
     path,
+    pipeline_count: pipelineCount,
   } = file;
   const children = useMemo(() =>
     (childrenProp
@@ -618,20 +613,24 @@ function Folder({
               }}
             >
               {(!!folderNameForBlock && !isFolder && !!isBlockFile)
-                ? (
-                  <BlockIcon
-                    color={color}
-                    size={(folderNameForBlock && !isFolder)
-                      ? ICON_SIZE * 0.7
-                      : ICON_SIZE
-                    }
-                    square
-                  />
+                ? (pipelineCount > 1
+                  ?
+                    <DiamondShared fill={dark.accent.cyan} size={ICON_SIZE} />
+                  :
+                    <BlockIcon
+                      borderOnly={!pipelineCount}
+                      color={color}
+                      size={(folderNameForBlock && !isFolder)
+                        ? ICON_SIZE * 0.7
+                        : ICON_SIZE
+                      }
+                      square
+                    />
                 )
                 : (
                   <Icon
-                    fill={iconColor || (isFirstParentFolderForBlock ? color : null)}
                     disabled={disabled}
+                    fill={iconColor || (isFirstParentFolderForBlock ? color : null)}
                     size={ICON_SIZE}
                   />
                 )
@@ -639,8 +638,7 @@ function Folder({
             </div>
 
             <Text
-              // color={folderNameForBlock && isFolder ? color : null}
-              // default={(!folderNameForBlock || !isFolder) && !disabled
+              cyan={pipelineCount > 1}
               default={!disabled}
               disabled={disabled}
               monospace
