@@ -6,6 +6,7 @@ from typing import Dict
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.errors import (
@@ -25,7 +26,7 @@ from mage_ai.version_control.models import Project
 class FileResource(GenericResource):
     @classmethod
     @safe_db_query
-    def collection(self, query, meta, user, **kwargs):
+    async def collection(self, query, meta, user, **kwargs):
         pattern = query.get('pattern', [None])
         if pattern:
             pattern = pattern[0]
@@ -49,6 +50,12 @@ class FileResource(GenericResource):
         project_uuid = query.get('project_uuid', [None])
         if project_uuid:
             project_uuid = project_uuid[0]
+
+        include_pipeline_count = query.get('include_pipeline_count', [False])
+        if include_pipeline_count:
+            include_pipeline_count = include_pipeline_count[0]
+        if include_pipeline_count:
+            await BlockCache.initialize_cache()
 
         exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
         if exclude_dir_pattern:
@@ -109,6 +116,7 @@ class FileResource(GenericResource):
                 exclude_pattern=exclude_pattern,
                 pattern=pattern,
                 check_file_path=check_file_path,
+                include_pipeline_count=include_pipeline_count,
             )],
             user,
             **kwargs,

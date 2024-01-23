@@ -91,6 +91,15 @@ class BlockCache(BaseCache):
 
         return pipelines
 
+    def get_pipeline_count_mapping(self) -> Dict:
+        pipeline_count_mapping = {}
+
+        mapping = self.get(self.cache_key)
+        for k, v in mapping.items():
+            pipeline_count_mapping[k] = len(v.get('pipelines', []))
+
+        return pipeline_count_mapping
+
     def add_pipeline(self, block, pipeline) -> None:
         self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
 
