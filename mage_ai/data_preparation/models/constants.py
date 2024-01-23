@@ -84,6 +84,7 @@ class ExecutorType(str, Enum):
     LOCAL_PYTHON = 'local_python'
     # Force using local python when default executor is set
     LOCAL_PYTHON_FORCE = 'local_python_force'
+    PROCESS = 'process'
     PYSPARK = 'pyspark'
 
     @classmethod

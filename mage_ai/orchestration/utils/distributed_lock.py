@@ -1,4 +1,3 @@
-from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import REDIS_URL
 
 
@@ -10,7 +9,10 @@ class DistributedLock:
     ):
         self.lock_key_prefix = lock_key_prefix
         self.lock_timeout = lock_timeout
-        self.redis_client = init_redis_client(REDIS_URL)
+        self.redis_client = None
+        if REDIS_URL:
+            from mage_ai.services.redis.redis import init_redis_client
+            self.redis_client = init_redis_client(REDIS_URL)
 
     def __lock_key(self, key) -> str:
         return f'{self.lock_key_prefix}_{key}'

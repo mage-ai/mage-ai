@@ -1,7 +1,6 @@
 import os
 import traceback
 import uuid
-from enum import Enum
 from typing import Dict, Optional
 from warnings import warn
 
@@ -10,6 +9,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
+from mage_ai.data_preparation.constants import ProjectType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
@@ -23,12 +23,6 @@ from mage_ai.shared.environments import is_debug
 yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
 yml.indent(mapping=2, sequence=2, offset=0)
-
-
-class ProjectType(str, Enum):
-    MAIN = 'main'
-    SUB = 'sub'
-    STANDALONE = 'standalone'
 
 
 class RepoConfig:

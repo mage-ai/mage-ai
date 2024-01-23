@@ -33,6 +33,9 @@ from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template i
     CustomPipelineTemplate,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipelines.environments import (
+    initialize_pipeline_environment,
+)
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import (
@@ -50,8 +53,8 @@ from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     retry_pipeline_run,
 )
-from mage_ai.server.active_kernel import switch_active_kernel
-from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.active_kernel import switch_active_kernel
+from mage_ai.server.kernels.constants import PIPELINE_TO_KERNEL_NAME, KernelName
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.platform.utils import get_pipeline_from_platform_async
 from mage_ai.settings.repo import get_repo_path
@@ -744,6 +747,8 @@ class PipelineResource(BaseResource):
 
             cache = await PipelineCache.initialize_cache()
             cache.update_model(resource.model)
+
+            await initialize_pipeline_environment(resource.model)
 
         self.on_update_callback = _update_callback
 

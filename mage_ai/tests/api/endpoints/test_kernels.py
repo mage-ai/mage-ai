@@ -1,4 +1,4 @@
-from mage_ai.server.kernels import KernelName, kernel_managers
+from mage_ai.server.kernels.constants import KernelName, kernel_managers
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,

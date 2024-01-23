@@ -1,12 +1,13 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.server.active_kernel import (
+from mage_ai.server.kernels.active_kernel import (
     interrupt_kernel,
     restart_kernel,
     start_kernel,
     switch_active_kernel,
 )
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
+from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.kernels import kernel_managers
 from mage_ai.services.ssh.aws.emr.utils import tunnel
 
 

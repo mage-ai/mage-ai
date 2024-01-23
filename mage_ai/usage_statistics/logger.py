@@ -4,7 +4,6 @@ import platform
 from datetime import datetime
 from typing import Callable, Dict, Union
 
-import aiohttp
 import pytz
 
 from mage_ai.cache.block_action_object.constants import (
@@ -305,6 +304,7 @@ class UsageStatisticLogger():
         )
 
         try:
+            import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     API_ENDPOINT,

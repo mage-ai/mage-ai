@@ -1,12 +1,13 @@
+import os
 from datetime import datetime, timedelta
 from time import sleep
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
 from mage_ai.orchestration.triggers.constants import DEFAULT_POLL_INTERVAL
 
 
@@ -76,6 +77,39 @@ def create_and_cancel_pipeline_run(
         pipeline_scheduler.logger.warning(message, **pipeline_scheduler.build_tags())
     pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
     return pipeline_run
+
+
+def configure_pipeline_run_payload(
+    pipeline_schedule: PipelineSchedule,
+    pipeline_type: PipelineType,
+    payload: Dict = None,
+) -> Tuple[Dict, bool]:
+    if payload is None:
+        payload = dict()
+
+    if not payload.get('variables'):
+        payload['variables'] = {}
+
+    payload['pipeline_schedule_id'] = pipeline_schedule.id
+    payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
+    execution_date = payload.get('execution_date')
+    if execution_date is None:
+        payload['execution_date'] = datetime.utcnow()
+    elif not isinstance(execution_date, datetime):
+        payload['execution_date'] = datetime.fromisoformat(execution_date)
+
+    # Set execution_partition in variables
+    payload['variables']['execution_partition'] = \
+        os.sep.join([
+            str(pipeline_schedule.id),
+            payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f'),
+        ])
+
+    is_integration = PipelineType.INTEGRATION == pipeline_type
+    if is_integration:
+        payload['create_block_runs'] = False
+
+    return payload, is_integration
 
 
 @safe_db_query

@@ -6,7 +6,8 @@ from typing import Dict, Optional
 from mage_ai.cluster_manager.config import LifecycleConfig, WorkspaceConfig
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.errors import WorkspaceExistsError
-from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
+from mage_ai.data_preparation.constants import ProjectType
+from mage_ai.data_preparation.repo_manager import get_project_type
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings.repo import get_repo_path

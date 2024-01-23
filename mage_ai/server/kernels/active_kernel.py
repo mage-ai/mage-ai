@@ -5,7 +5,8 @@ from jupyter_client.kernelspec import NoSuchKernel
 
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
+from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.kernels import kernel_managers
 from mage_ai.server.logger import Logger
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.spark.utils import get_compute_service

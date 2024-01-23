@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
-from mage_ai.server.active_kernel import restart_kernel, start_kernel
+from mage_ai.server.kernels.active_kernel import restart_kernel, start_kernel
 from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,

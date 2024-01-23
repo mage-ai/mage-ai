@@ -4,13 +4,13 @@ from typing import Dict, List, Union
 
 from jupyter_client import KernelClient
 
-from mage_ai.server.active_kernel import (
+from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.server.kernels.active_kernel import (
     get_active_kernel_client,
     get_active_kernel_name,
     switch_active_kernel,
 )
-from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.websockets.constants import ExecutionState, MessageType
 from mage_ai.shared.models import BaseDataClass
 

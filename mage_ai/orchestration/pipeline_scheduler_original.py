@@ -1,9 +1,8 @@
 import asyncio
 import collections
-import os
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 import pytz
 from dateutil.relativedelta import relativedelta
@@ -1150,39 +1149,6 @@ def run_pipeline(
         pipeline_run_id=pipeline_run_id,
         tags=tags,
     )
-
-
-def configure_pipeline_run_payload(
-    pipeline_schedule: PipelineSchedule,
-    pipeline_type: PipelineType,
-    payload: Dict = None,
-) -> Tuple[Dict, bool]:
-    if payload is None:
-        payload = dict()
-
-    if not payload.get('variables'):
-        payload['variables'] = {}
-
-    payload['pipeline_schedule_id'] = pipeline_schedule.id
-    payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
-    execution_date = payload.get('execution_date')
-    if execution_date is None:
-        payload['execution_date'] = datetime.utcnow()
-    elif not isinstance(execution_date, datetime):
-        payload['execution_date'] = datetime.fromisoformat(execution_date)
-
-    # Set execution_partition in variables
-    payload['variables']['execution_partition'] = \
-        os.sep.join([
-            str(pipeline_schedule.id),
-            payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f'),
-        ])
-
-    is_integration = PipelineType.INTEGRATION == pipeline_type
-    if is_integration:
-        payload['create_block_runs'] = False
-
-    return payload, is_integration
 
 
 @safe_db_query

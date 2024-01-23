@@ -1,5 +1,3 @@
-import newrelic.agent
-
 from mage_ai.settings import ENABLE_NEW_RELIC, NEW_RELIC_CONFIG_PATH
 
 
@@ -7,6 +5,7 @@ def initialize_new_relic():
     enable_new_relic = ENABLE_NEW_RELIC
     application = None
     if ENABLE_NEW_RELIC:
+        import newrelic.agent
         try:
             newrelic.agent.initialize(NEW_RELIC_CONFIG_PATH)
             application = newrelic.agent.register_application(timeout=10)

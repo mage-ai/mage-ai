@@ -6,7 +6,8 @@ from mage_ai.cluster_manager.config import KubernetesWorkspaceConfig
 from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
 from mage_ai.cluster_manager.workspace.base import Workspace
-from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
+from mage_ai.data_preparation.constants import ProjectType
+from mage_ai.data_preparation.repo_manager import get_project_type
 from mage_ai.shared.hash import merge_dict
 
 

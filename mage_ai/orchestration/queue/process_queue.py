@@ -6,10 +6,6 @@ from enum import Enum
 from multiprocessing import Manager
 from typing import Callable
 
-import newrelic.agent
-import sentry_sdk
-from sentry_sdk import capture_exception
-
 from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
@@ -209,18 +205,18 @@ class Worker(mp.Process):
         self.job_dict = job_dict
         self.dsn = SENTRY_DSN
         if self.dsn:
+            import sentry_sdk
             sentry_sdk.init(
                 self.dsn,
                 traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             )
-        initialize_new_relic()
+        self.enable_new_relic, self.new_relic_application = initialize_new_relic()
 
         set_logging_format(
             logging_format=SERVER_LOGGING_FORMAT,
             level=SERVER_VERBOSITY,
         )
 
-    @newrelic.agent.background_task(name='worker-run', group='Task')
     def run(self):
         """
         The entry point for the worker process.
@@ -228,22 +224,31 @@ class Worker(mp.Process):
         Fetches a job from the queue, executes it, and updates the job status in the job dictionary.
 
         """
-        if not self.queue.empty():
-            args = self.queue.get()
-            job_id = args[0]
-            print(f'Run worker for job {job_id}')
-            if self.job_dict[job_id] != JobStatus.QUEUED:
-                return
-            self.job_dict[job_id] = self.pid
+        if self.enable_new_relic:
+            import newrelic.agent
+            ctx = newrelic.agent.BackgroundTask(name="mage-run", group='Task')
+        else:
+            from contextlib import nullcontext
+            ctx = nullcontext()
 
-            try:
-                start_session_and_run(args[1], *args[2], **args[3])
-            except Exception as e:
-                if self.dsn:
-                    capture_exception(e)
-                raise
-            finally:
-                self.job_dict[job_id] = JobStatus.COMPLETED
+        with ctx:
+            if not self.queue.empty():
+                args = self.queue.get()
+                job_id = args[0]
+                print(f'Run worker for job {job_id}')
+                if self.job_dict[job_id] != JobStatus.QUEUED:
+                    return
+                self.job_dict[job_id] = self.pid
+
+                try:
+                    start_session_and_run(args[1], *args[2], **args[3])
+                except Exception as e:
+                    from sentry_sdk import capture_exception
+                    if self.dsn:
+                        capture_exception(e)
+                    raise
+                finally:
+                    self.job_dict[job_id] = JobStatus.COMPLETED
 
 
 def poll_job_and_execute(

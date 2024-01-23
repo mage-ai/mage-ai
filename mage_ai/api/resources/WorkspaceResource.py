@@ -4,11 +4,8 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.manage import get_instances, get_workspaces
 from mage_ai.cluster_manager.workspace.base import Workspace
-from mage_ai.data_preparation.repo_manager import (
-    ProjectType,
-    get_project_type,
-    get_repo_config,
-)
+from mage_ai.data_preparation.constants import ProjectType
+from mage_ai.data_preparation.repo_manager import get_project_type, get_repo_config
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query

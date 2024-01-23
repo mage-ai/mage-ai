@@ -28,7 +28,7 @@ from mage_ai.cluster_manager.constants import (
     SERVICE_ACCOUNT_SECRETS_NAME,
 )
 from mage_ai.cluster_manager.errors import ConfigurationError
-from mage_ai.data_preparation.repo_manager import ProjectType
+from mage_ai.data_preparation.constants import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     PG_DB_NAME,

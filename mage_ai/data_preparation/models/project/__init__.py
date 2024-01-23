@@ -1,8 +1,6 @@
 import os
 from typing import Dict, List
 
-import aiohttp
-
 from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_config
@@ -185,6 +183,7 @@ class Project():
         return feature_enabled
 
     async def latest_version(self) -> str:
+        import aiohttp
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(

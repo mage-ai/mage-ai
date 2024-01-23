@@ -12,7 +12,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
     BlockType,
 )
-from mage_ai.server.kernels import KernelName
+from mage_ai.server.kernels.constants import KernelName
 from mage_ai.shared.code import is_pyspark_code
 
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'

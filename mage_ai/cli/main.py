@@ -9,7 +9,7 @@ from rich import print
 from typer.core import TyperGroup
 
 from mage_ai.cli.utils import parse_runtime_variables
-from mage_ai.data_preparation.repo_manager import ProjectType
+from mage_ai.data_preparation.constants import ProjectType
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 
@@ -199,9 +199,6 @@ def run(
 
     from contextlib import nullcontext
 
-    import newrelic.agent
-    import sentry_sdk
-
     from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.sync.git_sync import get_sync_config
@@ -217,14 +214,20 @@ def run(
 
     sentry_dsn = SENTRY_DSN
     if sentry_dsn:
+        import sentry_sdk
         sentry_sdk.init(
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
     (enable_new_relic, application) = initialize_new_relic()
 
-    with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
-         if enable_new_relic else nullcontext():
+    if enable_new_relic:
+        import newrelic.agent
+        ctx = newrelic.agent.BackgroundTask(application, name="mage-run", group='Task')
+    else:
+        ctx = nullcontext()
+
+    with ctx:
         sync_config = get_sync_config()
         if sync_config and sync_config.sync_on_executor_start:
             result = run_git_sync(sync_config=sync_config)

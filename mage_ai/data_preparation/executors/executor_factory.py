@@ -87,6 +87,11 @@ class ExecutorFactory:
                 StreamingPipelineExecutor,
             )
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
+        elif executor_type == ExecutorType.PROCESS:
+            from mage_ai.data_preparation.executors.process_pipeline_executor import (
+                ProcessPipelineExecutor,
+            )
+            return ProcessPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             # Used for local_python or local_python_force
             return PipelineExecutor(pipeline, execution_partition=execution_partition)
@@ -162,6 +167,11 @@ class ExecutorFactory:
                 K8sBlockExecutor,
             )
             return K8sBlockExecutor(**executor_kwargs)
+        elif executor_type == ExecutorType.PROCESS:
+            from mage_ai.data_preparation.executors.process_block_executor import (
+                ProcessBlockExecutor,
+            )
+            return ProcessBlockExecutor(**executor_kwargs)
         else:
             # Used for local_python or local_python_force
             return BlockExecutor(**executor_kwargs)

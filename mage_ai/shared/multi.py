@@ -1,11 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
-from joblib import Parallel, delayed
 from threading import Thread
 
 MAX_WORKERS = 16
 
 
 def execute_parallel(list_of_funcs_and_args, verbose=0):
+    from joblib import Parallel, delayed
     parallel = Parallel(n_jobs=-1, prefer='threads', verbose=verbose)
     return parallel(delayed(func)(*args) for func, args in list_of_funcs_and_args)
 

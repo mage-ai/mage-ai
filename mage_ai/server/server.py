@@ -27,11 +27,11 @@ from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
+from mage_ai.data_preparation.constants import ProjectType
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
-    ProjectType,
     get_cluster_type,
     get_project_type,
     get_project_uuid,
@@ -46,7 +46,6 @@ from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
-from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
 from mage_ai.server.api.downloads import ApiDownloadHandler, ApiResourceDownloadHandler
@@ -66,7 +65,8 @@ from mage_ai.server.api.v1 import (
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
+from mage_ai.server.kernels.active_kernel import switch_active_kernel
+from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME
 from mage_ai.server.logger import Logger
 from mage_ai.server.scheduler_manager import (
     SCHEDULER_AUTO_RESTART_INTERVAL,

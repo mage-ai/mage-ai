@@ -86,6 +86,7 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
+        self.process_config = dict()
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
         self.run_pipeline_in_one_process = False
@@ -167,6 +168,7 @@ class Pipeline:
 
     @property
     def pipeline_variables_dir(self):
+        print('variables dir:', self.variables_dir)
         return os.path.join(
             self.variables_dir,
             PIPELINES_FOLDER,
@@ -612,6 +614,7 @@ class Pipeline:
         self.executor_config = config.get('executor_config') or {}
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
+        self.process_config = config.get('process_config') or {}
         self.retry_config = config.get('retry_config') or {}
         self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', False)
         self.settings = PipelineSettings.load(**config.get('settings') or {})

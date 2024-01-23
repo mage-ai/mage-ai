@@ -6,7 +6,7 @@ import simplejson
 
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.server.kernels import KernelName
+from mage_ai.server.kernels.constants import KernelName
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.spark.utils import get_compute_service

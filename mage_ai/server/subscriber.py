@@ -1,5 +1,6 @@
 from datetime import datetime
-from mage_ai.server.active_kernel import get_active_kernel_client
+
+from mage_ai.server.kernels.active_kernel import get_active_kernel_client
 from mage_ai.server.logger import Logger
 
 logger = Logger().new_server_logger(__name__)

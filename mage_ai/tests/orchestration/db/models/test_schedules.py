@@ -21,7 +21,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
+from mage_ai.orchestration.triggers.utils import configure_pipeline_run_payload
 
 # from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict

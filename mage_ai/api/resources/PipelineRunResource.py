@@ -18,10 +18,8 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.pipeline_scheduler import (
-    configure_pipeline_run_payload,
-    stop_pipeline_run,
-)
+from mage_ai.orchestration.pipeline_scheduler import stop_pipeline_run
+from mage_ai.orchestration.triggers.utils import configure_pipeline_run_payload
 from mage_ai.settings.repo import get_repo_path
 
 
