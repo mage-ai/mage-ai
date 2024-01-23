@@ -579,7 +579,7 @@ class BlockExecutor:
                     def __execute_with_retry():
                         # Update global_vars dictionary without copying it so that 'context' arg
                         # can be shared across blocks
-                        global_vars.update(self.retry_metadata)
+                        global_vars.update(dict(retry=self.retry_metadata))
 
                         return self._execute(
                             analyze_outputs=analyze_outputs,

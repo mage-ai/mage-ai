@@ -43,7 +43,7 @@ def transform(*args, **kwargs):
         raise Exception('upstream block output has wrong value.')
     if kwargs['context'].get('a') != 1:
         raise Exception('kwargs context has wrong value.')
-    if kwargs['attempts'] != 1:
+    if kwargs['retry']['attempts'] != 1:
         raise Exception(f'retry attempts has wrong value.')
     return 'ok2'
             ''')
