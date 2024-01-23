@@ -187,6 +187,7 @@ setuptools.setup(
             'lxml==4.9.4',
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==3.2.1',
+            'sqlglot[rs]==0.1.0',
             'sshtunnel==0.4.0',
             'stomp.py==8.1.0',
             'thefuzz[speedup]==0.19.0',

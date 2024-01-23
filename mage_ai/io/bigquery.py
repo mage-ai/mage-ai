@@ -1,6 +1,12 @@
 from typing import Dict, List, Mapping, Union
 
-from google.cloud.bigquery import Client, LoadJobConfig, SchemaField, WriteDisposition
+from google.cloud.bigquery import (
+    Client,
+    LoadJobConfig,
+    QueryJob,
+    SchemaField,
+    WriteDisposition,
+)
 from google.oauth2 import service_account
 from pandas import DataFrame
 
@@ -353,7 +359,18 @@ WHERE table_id = '{table_name}'
 
             results.append(result)
 
-        return results
+        serialized = []
+
+        for result in results:
+            try:
+                if isinstance(result, QueryJob):
+                    serialized.append(result.to_dataframe())
+                else:
+                    serialized.append(result)
+            except Exception:
+                pass
+
+        return serialized
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'BigQuery':

@@ -40,6 +40,7 @@ sentry-sdk==1.19.1
 simplejson
 six>=1.15.0
 sqlalchemy>=1.4.20, <2.0.0
+sqlglot[rs]==0.1.0
 terminado==0.17.1
 thefuzz[speedup]==0.19.0
 tornado==6.1
