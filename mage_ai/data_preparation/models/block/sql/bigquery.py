@@ -1,5 +1,7 @@
+import sys
 from typing import Dict, List
 
+from jinja2 import Template
 from pandas import DataFrame
 
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
@@ -79,8 +81,18 @@ def create_upstream_block_tables(
                 upstream_block,
                 dynamic_block_index=dynamic_block_index,
             )
-
             database = database_custom or database_default
+
+            if query and sys.version_info >= (3, 9):
+                from sqlglot import exp, parse_one
+                for text in query.split(';'):
+                    try:
+                        text = Template(text).render()
+                        for table in parse_one(text, read='bigquery').find_all(exp.Table):
+                            database = database or table.catalog
+                            schema_name = schema_name or table.db
+                    except Exception:
+                        pass
 
             full_table_name = f'{schema_name}.{table_name}'
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
