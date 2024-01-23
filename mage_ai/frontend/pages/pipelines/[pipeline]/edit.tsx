@@ -1034,6 +1034,7 @@ function PipelineDetailPage({
     filesTouched,
     menu,
     openFile,
+    search: fileSearch,
     selectedFilePath,
     tabs: fileTabs,
     versions,
@@ -3304,7 +3305,15 @@ function PipelineDetailPage({
 
   const beforeToShow = useMemo(() => {
     if (EDIT_BEFORE_TAB_ALL_FILES.uuid === selectedTab?.uuid) {
-      return fileBrowser;
+      return (
+        <>
+          <Spacing m={1}>
+            {fileSearch}
+          </Spacing>
+
+          {fileBrowser}
+        </>
+      );
     } else if (EDIT_BEFORE_TAB_FILES_IN_PIPELINE.uuid === selectedTab?.uuid) {
       return blocksInPipeline;
     }
@@ -3313,6 +3322,7 @@ function PipelineDetailPage({
   }, [
     blocksInPipeline,
     fileBrowser,
+    fileSearch,
     selectedTab,
   ]);
 

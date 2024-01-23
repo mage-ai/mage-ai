@@ -23,6 +23,7 @@ function FilesPageComponent({
     controller,
     filePaths,
     menu,
+    search,
     selectedFilePath,
     tabs,
     versions,
@@ -42,7 +43,15 @@ function FilesPageComponent({
     <Dashboard
       after={versions}
       afterHidden={!(versionsVisible && selectedFilePath)}
-      before={browser}
+      before={
+        <>
+          <Spacing m={1}>
+            {search}
+          </Spacing>
+
+          {browser}
+        </>
+      }
       contained
       headerOffset={headerOffset + HEADER_HEIGHT}
       mainContainerHeader={({ widthOffset }) => (

@@ -7,7 +7,6 @@ import { useMutation } from 'react-query';
 import ApiReloader from '@components/ApiReloader';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Controller from '@components/FileEditor/Controller';
-import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FileBrowser from '@components/FileBrowser';
@@ -25,23 +24,16 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
-import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import useContextMenu from '@utils/useContextMenu';
 import useDelayFetch from '@api/utils/useDelayFetch';
 import useStatus from '@utils/models/status/useStatus';
-import {
-  HeaderStyle,
-  MAIN_CONTENT_TOP_OFFSET,
-  MenuStyle,
-  TabsStyle,
-} from './index.style';
+import { Close, Edit, Save, VisibleEye } from '@oracle/icons';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
-  KEY_CODE_ARROW_DOWN,
-  KEY_CODE_ARROW_UP,
   KEY_CODE_BRACKET_LEFT,
   KEY_CODE_BRACKET_RIGHT,
   KEY_CODE_C,
@@ -58,6 +50,7 @@ import {
   KEY_SYMBOL_META,
   KEY_SYMBOL_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES,
@@ -66,20 +59,18 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
-import { useKeyboardContext } from '@context/Keyboard';
-import { useFileTabs } from '@components/PipelineDetail/FileTabs';
-import { useError } from '@context/Error';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
+import { convertFilePathToRelativeRoot } from '@utils/files';
+import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
+import { filterFiles, getFilenameFromFilePath } from './utils';
+import { get, set } from '@storage/localStorage';
+import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
-import { indexBy } from '@utils/array';
-import { getFilenameFromFilePath } from './utils';
-import { get, set } from '@storage/localStorage';
-import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
-import { convertFilePathToRelativeRoot } from '@utils/files';
-import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { Edit, Save, VisibleEye } from '@oracle/icons';
+import { useError } from '@context/Error';
+import { useFileTabs } from '@components/PipelineDetail/FileTabs';
+import { useKeyboardContext } from '@context/Keyboard';
 
 export const ICON_SIZE = UNIT * 2;
 export const MENU_ICON_SIZE = UNIT * 1.5;
@@ -193,6 +184,7 @@ function useFileComponents({
   const contentByFilePath = useRef(null);
   const selectedFileHistoryRef = useRef([]);
   const selectedFilePathRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
     [filePath: string]: string | number;
@@ -406,6 +398,16 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
+  const [fileSearchText, setFileSearchText] = useState<string>(null);
+  const filteredFiles = useMemo(() => (
+    fileSearchText
+      ? filterFiles(files, fileSearchText)
+      : files
+  ), [
+    fileSearchText,
+    files,
+  ]);
+
   const { data: filesFlattenData, mutate: fetchFilesFLatten } = useDelayFetch(api.files.list, {
     pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
     flatten: true,
@@ -598,7 +600,6 @@ function useFileComponents({
     setSelectedBlock,
     showError,
     showHiddenFiles,
-    toggleShowHiddenFiles,
     uuid,
     widgets,
   ]);
@@ -606,22 +607,44 @@ function useFileComponents({
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      files={filteredFiles}
       onClickFile={(path: string, _: FileType) => openFile(path)}
       onClickFolder={(path: string, _: FileType) => openFile(path, true)}
-      files={files}
     />
   ), [
-    files,
     fileBrowserProps,
+    filteredFiles,
     openFile,
   ]);
+
+  const fileSearchMemo = useMemo(() => (
+    <FlexContainer alignItems="center">
+      <TextInput
+        {...SEARCH_INPUT_PROPS}
+        afterIcon={fileSearchText ? <Close /> : null}
+        afterIconClick={() => {
+          setFileSearchText('');
+          searchInputRef?.current?.focus();
+        }}
+        afterIconSize={ICON_SIZE}
+        beforeIconSize={ICON_SIZE}
+        compact
+        maxWidth={300}
+        onChange={e => setFileSearchText(e.target.value)}
+        paddingVertical={UNIT / 2}
+        placeholder="Search files"
+        ref={searchInputRef}
+        value={fileSearchText}
+      />
+    </FlexContainer>
+  ), [fileSearchText]);
 
   const fileBrowserFlattenMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      files={buildFileTreeByExtension(filesFlatten)}
       onClickFile={(path: string, file: FileType) => openFile(file?.path)}
       onClickFolder={(path: string, file: FileType) => openFile(file?.path, true)}
-      files={buildFileTreeByExtension(filesFlatten)}
     />
   ), [
     fileBrowserProps,
@@ -1003,6 +1026,7 @@ function useFileComponents({
     footer: footerMemo,
     menu: menuMemo,
     openFile,
+    search: fileSearchMemo,
     selectedFilePath,
     tabs: fileTabsMemo,
     versions: fileVersionsMemo,
