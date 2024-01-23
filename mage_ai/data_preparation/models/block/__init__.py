@@ -485,15 +485,34 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             upstream_block_uuids = self.upstream_block_uuids
 
         if outputs_from_input_vars is None:
-            outputs_from_input_vars, _input_vars, _kwargs_vars, upstream_block_uuids = \
-                self.__get_outputs_from_input_vars(
-                    dynamic_block_index=dynamic_block_index,
-                    dynamic_block_indexes=dynamic_block_indexes,
-                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                    execution_partition=execution_partition,
-                    from_notebook=from_notebook,
-                    global_vars=variables,
-                )
+
+            if BlockLanguage.SQL == self.language and any([is_dynamic_block(
+                upstream_block,
+            ) or is_dynamic_block_child(
+                upstream_block,
+            ) for upstream_block in self.upstream_blocks]):
+                outputs_from_input_vars, _kwargs_vars, upstream_block_uuids = \
+                    fetch_input_variables_for_dynamic_upstream_blocks(
+                        self,
+                        None,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_indexes=dynamic_block_indexes,
+                        execution_partition=execution_partition,
+                        from_notebook=from_notebook,
+                        global_vars=variables,
+                    )
+            else:
+                outputs_from_input_vars, _input_vars, _kwargs_vars, upstream_block_uuids = \
+                    self.__get_outputs_from_input_vars(
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_indexes=dynamic_block_indexes,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        execution_partition=execution_partition,
+                        from_notebook=from_notebook,
+                        global_vars=variables,
+                    )
+
+            print('wwwtffffffffffffffffffffffffff', dynamic_block_index, outputs_from_input_vars)
 
         return hydrate_block_outputs(
             content,
