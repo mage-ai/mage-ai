@@ -1,4 +1,3 @@
-import asyncio
 import json
 import traceback
 from datetime import datetime, timedelta
@@ -43,7 +42,6 @@ from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
-from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class BlockExecutor:
@@ -577,15 +575,17 @@ class BlockExecutor:
                         retry_metadata=self.retry_metadata,
                     )
                     def __execute_with_retry():
+                        # Update global_vars dictionary without copying it so that 'context' arg
+                        # can be shared across blocks
+                        global_vars.update(self.retry_metadata)
+
                         return self._execute(
                             analyze_outputs=analyze_outputs,
                             block_run_id=block_run_id,
                             block_run_outputs_cache=block_run_outputs_cache,
                             cache_block_output_in_memory=cache_block_output_in_memory,
                             callback_url=callback_url,
-                            global_vars=merge_dict(global_vars or {}, dict(
-                                retry=self.retry_metadata,
-                            )),
+                            global_vars=global_vars,
                             update_status=update_status,
                             input_from_output=input_from_output,
                             logging_tags=tags,
@@ -696,10 +696,11 @@ class BlockExecutor:
 
             return result
         finally:
-            if not self.block_run and block_run_id:
-                self.block_run = BlockRun.query.get(block_run_id)
-            if self.block_run:
-                asyncio.run(UsageStatisticLogger().block_run_ended(self.block_run))
+            # The code below causes error when running blocks in pipeline_executor
+            # if not self.block_run and block_run_id:
+            #     self.block_run = BlockRun.query.get(block_run_id)
+            # if self.block_run:
+            #     asyncio.run(UsageStatisticLogger().block_run_ended(self.block_run))
             self.logger_manager.output_logs_to_destination()
 
     def _execute(

@@ -1496,15 +1496,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         if logging_tags is None:
             logging_tags = dict()
 
-        # Add pipeline uuid and block uuid to global_vars
-        global_vars = merge_dict(
-            global_vars or dict(),
-            dict(
-                pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
-                block_uuid=self.uuid,
-            ),
-        )
-
         with self._redirect_streams(
             build_block_output_stdout=build_block_output_stdout,
             from_notebook=from_notebook,
@@ -3064,6 +3055,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         global_vars['configuration'] = self.configuration
         if 'context' not in global_vars:
             global_vars['context'] = dict()
+
+        # Add pipeline uuid and block uuid to global_vars
+        global_vars['pipeline_uuid'] = self.pipeline.uuid if self.pipeline else None
+        global_vars['block_uuid'] = self.uuid
 
         self.global_vars = global_vars
 
