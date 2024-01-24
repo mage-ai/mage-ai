@@ -66,6 +66,7 @@ export function getFileExtension(filename: string): FileExtensionEnum {
 
 export function validBlockFileExtension(filename: string): string {
   const extensions = [
+    `\\.${FileExtensionEnum.MD}`,
     `\\.${FileExtensionEnum.PY}`,
     `\\.${FileExtensionEnum.R}`,
     `\\.${FileExtensionEnum.SQL}`,
