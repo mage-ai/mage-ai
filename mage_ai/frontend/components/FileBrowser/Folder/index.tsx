@@ -611,6 +611,13 @@ function Folder({
                 marginLeft: UNIT / 2,
                 marginRight: UNIT / 2,
               }}
+              title={pipelineCount > 1
+                ? 'Used by multiple pipelines'
+                : (pipelineCount === 1
+                  ? 'Used by one pipeline'
+                  : null
+                )
+              }
             >
               {(!!folderNameForBlock && !isFolder && !!isBlockFile)
                 ? (pipelineCount > 1
