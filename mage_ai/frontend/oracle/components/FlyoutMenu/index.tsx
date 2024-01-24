@@ -52,6 +52,7 @@ export type FlyoutMenuItemType = {
 
 export type FlyoutMenuProps = {
   alternateBackground?: boolean;
+  compact?: boolean;
   customSubmenuHeights?: { [key: string]: number };
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
@@ -71,6 +72,7 @@ export type FlyoutMenuProps = {
 
 function FlyoutMenu({
   alternateBackground,
+  compact,
   customSubmenuHeights,
   disableKeyboardShortcuts,
   items,
@@ -262,7 +264,7 @@ function FlyoutMenu({
               highlighted={highlightedIndices[0] === idx0}
               indent={indent}
               key={`${uuid}-${idx0}`}
-              largePadding={roundedStyle}
+              largePadding={roundedStyle && !compact}
               onClick={(e) => {
                 if (!linkProps) {
                   e.preventDefault();

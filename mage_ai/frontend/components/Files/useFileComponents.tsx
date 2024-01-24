@@ -6,6 +6,7 @@ import { useMutation } from 'react-query';
 
 import ApiReloader from '@components/ApiReloader';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Controller from '@components/FileEditor/Controller';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -14,23 +15,35 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
-  OriginalContentMappingType,
-  FILES_QUERY_INCLUDE_HIDDEN_FILES,
-  COMMON_EXCLUDE_PATTERNS,
   COMMON_EXCLUDE_DIR_PATTERNS,
+  COMMON_EXCLUDE_PATTERNS,
+  FileFilterEnum,
+  FILES_QUERY_INCLUDE_HIDDEN_FILES,
+  OriginalContentMappingType,
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
 import useContextMenu from '@utils/useContextMenu';
 import useDelayFetch from '@api/utils/useDelayFetch';
 import useStatus from '@utils/models/status/useStatus';
-import { Close, Edit, Save, VisibleEye } from '@oracle/icons';
+import {
+  Check,
+  Circle,
+  Close,
+  Edit,
+  FilterV2,
+  Save,
+  VisibleEye,
+} from '@oracle/icons';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
+import { ICON_SIZE_DEFAULT } from '@oracle/styles/units/icons';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
@@ -61,9 +74,10 @@ import {
 } from '@storage/files';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { convertFilePathToRelativeRoot } from '@utils/files';
 import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
-import { filterFiles, getFilenameFromFilePath } from './utils';
+import { filterFiles, getFilenameFromFilePath, searchFiles } from './utils';
 import { get, set } from '@storage/localStorage';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -73,7 +87,7 @@ import { useFileTabs } from '@components/PipelineDetail/FileTabs';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export const ICON_SIZE = UNIT * 2;
-export const MENU_ICON_SIZE = UNIT * 1.5;
+export const MENU_ICON_SIZE = ICON_SIZE_DEFAULT;
 const MENU_ICON_PROPS = {
   default: true,
   size: MENU_ICON_SIZE,
@@ -185,6 +199,7 @@ function useFileComponents({
   const selectedFileHistoryRef = useRef([]);
   const selectedFilePathRef = useRef(null);
   const searchInputRef = useRef(null);
+  const filterButtonMenuRef = useRef(null);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
     [filePath: string]: string | number;
@@ -398,12 +413,19 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
+  const [fileFilterMenuOpen, setFileFilterMenuOpen] = useState<boolean>(false);
+  const [fileFilter, setFileFilter] = useState<FileFilterEnum>(FileFilterEnum.ALL_FILES);
   const [fileSearchText, setFileSearchText] = useState<string>(null);
-  const filteredFiles = useMemo(() => (
-    fileSearchText
-      ? filterFiles(files, fileSearchText)
-      : files
-  ), [
+  const filteredFiles = useMemo(() => {
+    let filteredFiles = filterFiles(files, fileFilter);
+
+    if (fileSearchText) {
+      filteredFiles = searchFiles(filteredFiles, fileSearchText);
+    }
+
+    return filteredFiles;
+  }, [
+    fileFilter,
     fileSearchText,
     files,
   ]);
@@ -617,14 +639,74 @@ function useFileComponents({
     openFile,
   ]);
 
+  const closeFilterButtonMenu = useCallback(() => setFileFilterMenuOpen(false), []);
   const fileSearchMemo = useMemo(() => (
     <FlexContainer alignItems="center">
       <TextInput
         {...SEARCH_INPUT_PROPS}
-        afterIcon={fileSearchText ? <Close /> : null}
+        afterIcon={fileSearchText
+          ? <Close />
+          : (
+            <FlyoutMenuWrapper
+              compact
+              disableKeyboardShortcuts
+              items={[
+                {
+                  beforeIcon: fileFilter !== FileFilterEnum.UNUSED_BLOCK_FILES
+                    ? (
+                      <Check
+                        fill={dark.content.default}
+                        size={ICON_SIZE_DEFAULT}
+                      />
+                    ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                  ,
+                  label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.ALL_FILES),
+                  onClick: () => {
+                    setFileFilter(FileFilterEnum.ALL_FILES);
+                  },
+                  uuid: 'Files/Filter/AllFiles',
+                },
+                {
+                  beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
+                    ? (
+                      <Check
+                        fill={dark.content.default}
+                        size={ICON_SIZE_DEFAULT}
+                      />
+                    ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                  ,
+                  label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.UNUSED_BLOCK_FILES),
+                  onClick: () => {
+                    setFileFilter(FileFilterEnum.UNUSED_BLOCK_FILES);
+                  },
+                  uuid: 'Files/Filter/UnusedBlockFiles',
+                },
+              ]}
+              onClickCallback={closeFilterButtonMenu}
+              onClickOutside={closeFilterButtonMenu}
+              open={fileFilterMenuOpen}
+              parentRef={filterButtonMenuRef}
+              rightOffset={0}
+              roundedStyle
+              topOffset={1}
+              uuid="Files/FilterMenu"
+            >
+              <Button
+                basic
+                iconOnly
+                noBackground
+                onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
+              >
+                <FilterV2 />
+              </Button>
+            </FlyoutMenuWrapper>
+          )
+        }
         afterIconClick={() => {
-          setFileSearchText('');
-          searchInputRef?.current?.focus();
+          if (fileSearchText) {
+            setFileSearchText('');
+            searchInputRef?.current?.focus();
+          }
         }}
         afterIconSize={ICON_SIZE}
         beforeIconSize={ICON_SIZE}
@@ -637,7 +719,7 @@ function useFileComponents({
         value={fileSearchText}
       />
     </FlexContainer>
-  ), [fileSearchText]);
+  ), [closeFilterButtonMenu, fileFilter, fileFilterMenuOpen, fileSearchText]);
 
   const fileBrowserFlattenMemo = useMemo(() => (
     <FileBrowser

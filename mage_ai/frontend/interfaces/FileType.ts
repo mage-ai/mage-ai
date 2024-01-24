@@ -29,6 +29,11 @@ export enum FileQueryEnum {
   PATTERN = 'pattern',
 }
 
+export enum FileFilterEnum {
+  ALL_FILES = 'all_files',
+  UNUSED_BLOCK_FILES = 'unused_block_files',
+}
+
 // This is regex for matching nothing (to include all files, including hidden ones)
 export const FILE_PATTERN_NO_MATCHES = 'a^';
 // We exclude no files (e.g. hidden files) by matching no file patterns.
