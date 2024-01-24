@@ -240,8 +240,6 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     data = None
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-        if 1 == len(set(columns_to_display)):
-            columns_to_display = [f'{col}_{idx}' for idx, col in enumerate(columns_to_display)]
         row_count, column_count = dataframe.shape
 
         data = dict(
@@ -415,6 +413,9 @@ def transform_output_for_display_dynamic_child(
             df = pd.concat([df, df_inner], axis=1)
 
     df = limit_output(df, sample_count)
+
+    if 1 == len(set(df.columns)):
+        df.columns = [f'{col}_{idx}' for idx, col in enumerate(df.columns)]
 
     return transform_dataframe_for_display(df)
 
