@@ -153,6 +153,7 @@ export function updateActionFromUpstreamResults(
 export function executeButtonActions({
   application,
   button,
+  closeCommandCenter,
   executeAction,
   fetchItems,
   focusedItemIndex,
@@ -164,6 +165,7 @@ export function executeButtonActions({
   removeApplication,
 }: {
   application: ItemApplicationType;
+  closeCommandCenter: () => void;
   button: ButtonActionType;
   focusedItemIndex: number;
   getItemsActionResults?: () => KeyValueType;
@@ -211,6 +213,18 @@ export function executeButtonActions({
           return;
         } else {
           removeApplication();
+        }
+      };
+    }  else if (ButtonActionTypeEnum.CLOSE_COMMAND_CENTER === actionType) {
+      actionFunction = (result: KeyValueType = {}) => {
+        if (item?.actions?.some(({
+          interaction,
+        }) => CommandCenterActionInteractionTypeEnum.CLOSE_COMMAND_CENTER === interaction?.type)) {
+          // Let the useExecuteAction hook take care of this because that action may have
+          // custom validations and parsers.
+          return;
+        } else {
+          closeCommandCenter();
         }
       };
     } else if (ButtonActionTypeEnum.CUSTOM_ACTIONS === actionType) {

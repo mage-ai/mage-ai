@@ -34,7 +34,9 @@ class PipelineFactory(BaseFactory):
         if self.item and \
                 ObjectType.PIPELINE == self.item.object_type and \
                 self.application and \
-                ApplicationType.DETAIL_LIST == self.application.application_type:
+                ApplicationType.DETAIL_LIST == self.application.application_type and \
+                self.item.metadata and \
+                self.item.metadata.pipeline:
 
             from mage_ai.cache.block import BlockCache
 

@@ -6,6 +6,7 @@ import { DEFAULT_SIZE } from './shared/constants';
 export type BaseIconProps = {
   active?: boolean;
   black?: boolean;
+  className?: string;
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
@@ -164,6 +165,7 @@ export const EllipseStyle = styled.ellipse`
 
 const BaseIcon = ({
   children,
+  className,
   fill,
   opacity,
   size = DEFAULT_SIZE,
@@ -171,6 +173,7 @@ const BaseIcon = ({
   viewBox = '0 0 12 12',
 }: BaseIconProps & BaseIconInternalProps) => (
   <SVGStyle
+    className={className}
     fill={fill}
     height={size}
     opacity={opacity}

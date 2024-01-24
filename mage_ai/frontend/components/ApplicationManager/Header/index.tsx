@@ -2,23 +2,49 @@ import  { forwardRef, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import Circle from '@oracle/elements/Circle';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Tooltip from '@oracle/components/Tooltip';
 import { ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
-import { ArrowsPointingInFromAllCorners, CloseV2, Minimize } from '@oracle/icons';
-import { HeaderStyle, getApplicationColors } from '../index.style';
+import {
+  CloseWindow,
+  CloseWindowFilled,
+  CollapseWindow,
+  CollapseWindowFilled,
+  ExpandWindow,
+  ExpandWindowFilled,
+} from '@oracle/icons';
+import { ButtonStyle, HeaderStyle, getApplicationColors } from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
 const TOOLTIP_PROPS = {
+  appearBefore: true,
   block: true,
   lightBackground: true,
   size: null,
   visibleDelay: 300,
   widthFitContent: true,
+};
+
+const BUTTON_STYLE_PROPS = {
+  onMouseEnter: (e) => {
+    if (e?.currentTarget?.querySelector('.empty')) {
+      e.currentTarget.querySelector('.empty').style.display = 'block';
+    }
+    if (e?.currentTarget?.querySelector('.filled')) {
+      e.currentTarget.querySelector('.filled').style.display = 'none';
+    }
+  },
+  onMouseLeave: (e) => {
+    if (e?.currentTarget?.querySelector('.empty')) {
+      e.currentTarget.querySelector('.empty').style.display = 'none';
+    }
+    if (e?.currentTarget?.querySelector('.filled')) {
+      e.currentTarget.querySelector('.filled').style.display = 'block';
+    }
+  },
 };
 
 function Header({
@@ -69,58 +95,79 @@ function Header({
           <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />
 
           <Tooltip {...TOOLTIP_PROPS} label="Maximize application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                pauseEvent(e);
-                application && maximizeApplication(application?.uuid);
-              }}
-            >
-              <Circle borderOnly success size={1.75 * UNIT}>
-                <ArrowsPointingInFromAllCorners success size={1 * UNIT} />
-              </Circle>
-            </Button>
+            <ButtonStyle {...BUTTON_STYLE_PROPS}>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  pauseEvent(e);
+                  application && maximizeApplication(application?.uuid);
+                }}
+              >
+                <>
+                  <div className="empty" style={{ display: 'none' }}>
+                    <ExpandWindow success size={2 * UNIT} />
+                  </div>
+                  <div className="filled">
+                    <ExpandWindowFilled success size={2 * UNIT} />
+                  </div>
+                </>
+              </Button>
+            </ButtonStyle>
           </Tooltip>
 
-          <div style={{ paddingLeft: 1.25 * UNIT }} />
+          <div style={{ paddingLeft: 1 * UNIT }} />
 
           <Tooltip {...TOOLTIP_PROPS} label="Minimize application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                pauseEvent(e);
-                application && minimizeApplication(application?.uuid);
-              }}
-            >
-              <Circle borderOnly warning size={1.75 * UNIT}>
-                <Minimize warning size={1 * UNIT} />
-              </Circle>
-            </Button>
+            <ButtonStyle {...BUTTON_STYLE_PROPS}>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  pauseEvent(e);
+                  application && minimizeApplication(application?.uuid);
+                }}
+              >
+                <>
+                  <div className="empty" style={{ display: 'none' }}>
+                    <CollapseWindow warning size={2 * UNIT} />
+                  </div>
+                  <div className="filled">
+                    <CollapseWindowFilled warning size={2 * UNIT} />
+                  </div>
+                </>
+              </Button>
+            </ButtonStyle>
           </Tooltip>
 
-          <div style={{ paddingLeft: 1.25 * UNIT }} />
+          <div style={{ paddingLeft: 1 * UNIT }} />
 
           <Tooltip {...TOOLTIP_PROPS} label="Close application">
-            <Button
-              iconOnly
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                pauseEvent(e);
-                application && closeApplication(application?.uuid);
-              }}
-            >
-              <Circle danger borderOnly size={1.75 * UNIT}>
-                <CloseV2 danger size={1 * UNIT} />
-              </Circle>
-            </Button>
+            <ButtonStyle {...BUTTON_STYLE_PROPS}>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  pauseEvent(e);
+                  application && closeApplication(application?.uuid);
+                }}
+              >
+                <>
+                  <div className="empty" style={{ display: 'none' }}>
+                    <CloseWindow danger size={2 * UNIT} />
+                  </div>
+                  <div className="filled">
+                    <CloseWindowFilled danger size={2 * UNIT} />
+                  </div>
+                </>
+              </Button>
+            </ButtonStyle>
           </Tooltip>
 
           <div style={{ paddingLeft: PADDING_UNITS * UNIT }} />

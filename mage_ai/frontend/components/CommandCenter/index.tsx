@@ -117,8 +117,12 @@ import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 
-function CommandCenter() {
-  const router = useRouter();
+function CommandCenter({
+  router: routerProp,
+}: {
+  router?: any;
+}) {
+  const router = routerProp || useRouter();
   const [showError, _, refError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
   });
@@ -310,7 +314,6 @@ function CommandCenter() {
     } = {
       skipAdding: false,
     }) {
-
     const currentApplicationConfig = { ...applicationConfiguration };
 
     if (!opts?.skipAdding) {
@@ -376,6 +379,7 @@ function CommandCenter() {
           {...currentApplicationConfig}
           applicationState={refApplicationState}
           applicationsRef={refApplications}
+          closeCommandCenter={closeCommandCenter}
           fetchItems={fetchItems}
           getItemsActionResults={getItemsActionResults}
           handleSelectItemRow={handleSelectItemRow}
@@ -423,6 +427,7 @@ function CommandCenter() {
         {...currentApplicationConfig}
         applicationState={refApplicationState}
         applicationsRef={refApplications}
+        closeCommandCenter={closeCommandCenter}
         closeOutput={closeOutput}
         fetchItems={fetchItems}
         getItemsActionResults={getItemsActionResults}
@@ -808,6 +813,7 @@ function CommandCenter() {
 
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
+    closeCommandCenter,
     commandCenterState: commandCenterStateRef,
     fetchItems,
     getItems,
@@ -1161,6 +1167,7 @@ function CommandCenter() {
 
               return executeButtonActions({
                 ...currentApplicationConfig,
+                closeCommandCenter,
                 button,
                 fetchItems,
                 getItemsActionResults,
@@ -1290,6 +1297,15 @@ function CommandCenter() {
   useEffect(() => {
     if (refReload?.current === null) {
       setReload(prev => prev === null ? 0 : prev + 1);
+    }
+
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, {
+        detail: {
+          state: CommandCenterStateEnum.MOUNTED,
+        },
+      });
+      window.dispatchEvent(eventCustom);
     }
   }, []);
 

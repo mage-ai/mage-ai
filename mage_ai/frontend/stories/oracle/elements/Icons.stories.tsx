@@ -4,6 +4,14 @@ import { Meta, StoryFn } from '@storybook/react';
 import ThemeBlock from '../../ThemeBlock';
 import {
   AISparkle,
+  ExpandWindow,
+  ExpandWindowFilled,
+  CollapseWindow,
+  CollapseWindowFilled,
+  CloseWindow,
+  CloseWindowFilled,
+  Planet,
+  UFO,
   CloseV2,
   Minimize,
   ArrowsPointingInFromAllCorners,
@@ -183,6 +191,14 @@ import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
   AISparkle,
+  ExpandWindow,
+  ExpandWindowFilled,
+  CollapseWindow,
+  CollapseWindowFilled,
+  CloseWindow,
+  CloseWindowFilled,
+  Planet,
+  UFO,
   CloseV2,
   Minimize,
   ArrowsPointingInFromAllCorners,

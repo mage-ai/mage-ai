@@ -10,6 +10,11 @@ const DEFAULT_KEYS = [KEY_CODE_META, KEY_CODE_PERIOD];
 
 function LaunchKeyboardShortcutText({
   settings,
+  ...props
+}: {
+  compact?: boolean;
+  settings?: any;
+  small?: boolean;
 }) {
   const symbols = [];
 
@@ -27,6 +32,7 @@ function LaunchKeyboardShortcutText({
       addPlusSignBetweenKeys
       keyTextGroups={[symbols]}
       monospace
+      {...props}
     />
   );
 }

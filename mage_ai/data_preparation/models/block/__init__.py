@@ -2008,6 +2008,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 tuples = get_outputs_for_dynamic_child(
                     self,
                     execution_partition=execution_partition,
+                    sample=sample,
                     sample_count=sample_count,
                 )
                 for tup in tuples:
@@ -2021,6 +2022,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 tup = get_outputs_for_dynamic_block(
                     self,
                     execution_partition=execution_partition,
+                    sample=sample,
                     sample_count=sample_count,
                 )
                 pairs.append(tup)
@@ -2048,10 +2050,19 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         execution_partition=execution_partition,
                     )
 
+                    outputs_below_limit = not sample or not sample_count
                     if is_data_product:
-                        data_products.append(data)
+                        outputs_below_limit = \
+                            outputs_below_limit and len(data_products) < sample_count
                     else:
-                        outputs.append(data)
+                        outputs_below_limit = \
+                            outputs_below_limit and len(outputs) < sample_count
+
+                    if outputs_below_limit:
+                        if is_data_product:
+                            data_products.append(data)
+                        else:
+                            outputs.append(data)
         else:
             if self.pipeline is None:
                 return

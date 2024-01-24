@@ -70,6 +70,7 @@ function Breadcrumbs({
         danger={danger}
         default={!bold}
         monospace={monospace}
+        noWrapping
       >
         {title}
       </Text>

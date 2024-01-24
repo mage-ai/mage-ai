@@ -286,6 +286,16 @@ def coerce_into_dataframe(child_data: Union[
     return child_data
 
 
+def limit_output(output: Union[List, pd.DataFrame], sample_count: int) -> Union[List, pd.DataFrame]:
+    if sample_count is not None:
+        if output is not None:
+            if isinstance(output, list):
+                output = output[:sample_count]
+            elif isinstance(output, pd.DataFrame):
+                output = output.iloc[:sample_count]
+    return output
+
+
 def transform_output(
     output: Tuple[
         Union[
@@ -329,8 +339,11 @@ def transform_output_for_display(
         ],
         List[Dict]
     ],
+    sample_count: int = None,
 ) -> List[Dict]:
     child_data, metadata = transform_output(output)
+    child_data = limit_output(child_data, sample_count)
+    metadata = limit_output(metadata, sample_count)
 
     return dict(
         data=dict(
@@ -344,7 +357,12 @@ def transform_output_for_display(
     )
 
 
-def transform_output_for_display_reduce_output(output: List[Any]) -> List[Dict]:
+def transform_output_for_display_reduce_output(
+    output: List[Any],
+    sample_count: int = None,
+) -> List[Dict]:
+    output = limit_output(output, sample_count)
+
     arr = [dict(
         text_data=data,
         type=DataType.TEXT,
@@ -384,6 +402,7 @@ def transform_output_for_display_dynamic_child(
         ]
     ],
     is_dynamic: bool = False,
+    sample_count: int = None,
 ) -> List[Dict]:
     df = None
     for output_from_variable_object in output:
@@ -392,6 +411,9 @@ def transform_output_for_display_dynamic_child(
             df = df_inner
         else:
             df = pd.concat([df, df_inner], axis=1)
+
+    df = limit_output(df, sample_count)
+
     return transform_dataframe_for_display(df)
 
 

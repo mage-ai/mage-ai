@@ -180,8 +180,11 @@ def __custom_output():
                 output_tf = transform_output_for_display_dynamic_child(
                     output,
                     is_dynamic=bool({is_dynamic}),
+                    sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
                 )
                 output_transformed.append(output_tf)
+
+        output_transformed = output_transformed[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
 
         if is_debug():
             print(type(_internal_output_return))
@@ -201,14 +204,20 @@ def __custom_output():
             raise err
     elif bool({is_dynamic}):
         _json_string = simplejson.dumps(
-            transform_output_for_display(_internal_output_return),
+            transform_output_for_display(
+                _internal_output_return,
+                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+            ),
             default=encode_complex,
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
     elif bool({has_reduce_output}):
         _json_string = simplejson.dumps(
-            transform_output_for_display_reduce_output(_internal_output_return),
+            transform_output_for_display_reduce_output(
+                _internal_output_return,
+                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+            ),
             default=encode_complex,
             ignore_nan=True,
         )

@@ -17,36 +17,39 @@ type LoadingProps = {
 };
 
 const LoadingStyleBlocks = styled.div<LoadingProps>`
-${props => `
-  .loader {
-    display: inline-flex;
-    gap: 5px;
-  }
-  .loader:before,
-  .loader:after {
-    content: "";
-    width: ${typeof props.width === 'string'
-      ? props.width
-      : typeof props.width === 'number'
-        ? `${props.width}px`
-        : `${(UNIT * 2)}px`
-    };
-    aspect-ratio: 1;
-    box-shadow: 0 0 0 1px inset ${props?.color || (props.theme || dark).content.active};
-    animation: l4 1.5s infinite;
-  }
-  .loader:after {
-    --s: -1;
-    animation-delay: 0.75s
-  }
-  @keyframes l4 {
-    0%     {transform:scaleX(var(--s,1)) translate(0) rotate(0)}
-    16.67% {transform:scaleX(var(--s,1)) translate(-50%) rotate(0)}
-    33.33% {transform:scaleX(var(--s,1)) translate(-50%) rotate(90deg)}
-    50%,
-    100%   {transform:scaleX(var(--s,1)) translate(0) rotate(90deg)}
-  }
-`}
+  display: flex;
+  align-items: center;
+
+  ${props => `
+    .loader {
+      display: inline-flex;
+      gap: 5px;
+    }
+    .loader:before,
+    .loader:after {
+      content: "";
+      width: ${typeof props.width === 'string'
+        ? props.width
+        : typeof props.width === 'number'
+          ? `${props.width}px`
+          : `${(UNIT * 2)}px`
+      };
+      aspect-ratio: 1;
+      box-shadow: 0 0 0 1px inset ${props?.color || (props.theme || dark).content.active};
+      animation: l4 1.5s infinite;
+    }
+    .loader:after {
+      --s: -1;
+      animation-delay: 0.75s
+    }
+    @keyframes l4 {
+      0%     {transform:scaleX(var(--s,1)) translate(0) rotate(0)}
+      16.67% {transform:scaleX(var(--s,1)) translate(-50%) rotate(0)}
+      33.33% {transform:scaleX(var(--s,1)) translate(-50%) rotate(90deg)}
+      50%,
+      100%   {transform:scaleX(var(--s,1)) translate(0) rotate(90deg)}
+    }
+  `}
 `;
 
 const InfiniteBlocksStyle = styled.div`

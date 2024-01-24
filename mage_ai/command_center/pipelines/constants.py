@@ -42,6 +42,8 @@ ITEMS = [
                         action_types=[
                             ButtonActionType.EXECUTE,
                             ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                            ButtonActionType.CLOSE_COMMAND_CENTER,
                         ],
                     ),
                 ],

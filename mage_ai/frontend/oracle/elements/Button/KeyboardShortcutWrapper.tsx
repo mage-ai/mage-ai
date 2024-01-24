@@ -29,6 +29,7 @@ export type KeyboardShortcutSharedProps = {
   linkProps?: LinkProps;
   onClick?: (e?: Event) => void;
   openNewTab?: boolean;
+  ref?: any;
   requireKeyUp?: boolean;
   uuid: string;
 };

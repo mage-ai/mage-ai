@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useMutation } from 'react-query';
 
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import api from '@api';
@@ -21,10 +22,12 @@ export type UseProjectType = {
     OPERATION_HISTORY: FeatureUUIDEnum;
   };
   fetchProjects: () => any;
+  isLoadingUpdate: boolean;
   project: ProjectType;
   projectPlatformActivated?: boolean;
   rootProject?: ProjectType;
   sparkEnabled: boolean;
+  updateProject: (project: any) => Promise<any>;
 };
 
 type UseProjectProps = {
@@ -81,10 +84,15 @@ function useProject({
   const computeManagementEnabled: boolean =
     featureEnabled(project, FeatureUUIDEnum.COMPUTE_MANAGEMENT);
 
+  const [updateProject, { isLoading: isLoadingUpdate }]: any = useMutation(
+    payload => api.projects.useUpdate(project?.name)({ project: payload }),
+  );
+
   return {
     featureEnabled: (featureUUID: FeatureUUIDEnum): boolean => featureEnabled(project, featureUUID),
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
+    isLoadingUpdate,
     project,
     projectPlatformActivated: project && rootProject && project?.name !== rootProject?.name,
     rootProject,
@@ -94,6 +102,7 @@ function useProject({
         Object.keys(project.spark_config || {})?.length >= 1
           || Object.keys(project.emr_config || {})?.length >= 1
       ),
+    updateProject,
   };
 }
 

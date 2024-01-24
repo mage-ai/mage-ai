@@ -38,7 +38,7 @@ function ServerTimeButton({
       ref={buttonRef}
       transparent
     >
-      <Text inline monospace small>
+      <Text inline monospace noWrapping small>
         {`${time} ${timeZone}`}
       </Text>
     </ButtonStyle>
