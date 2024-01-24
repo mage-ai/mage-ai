@@ -206,6 +206,10 @@ async def get_outputs_for_dynamic_block_async(
     return None, None
 
 
+def __extract_final_output_from_dynamic_child_output(output: List[Any]):
+    return output[0] if len(output) == 1 else output
+
+
 def __preprocess_and_postprocess_dynamic_child_outputs(
     block,
     map_outputs: Callable,
@@ -223,7 +227,7 @@ def __preprocess_and_postprocess_dynamic_child_outputs(
     if is_dynamic:
         return variable_objects_arr
 
-    return [arr[0] if len(arr) == 1 else arr for arr in variable_objects_arr]
+    return [__extract_final_output_from_dynamic_child_output(arr) for arr in variable_objects_arr]
 
 
 def get_outputs_for_dynamic_child(
@@ -378,7 +382,9 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                     index = dynamic_block_index % len(var_objs_arr)
                     var_obj = var_objs_arr[index]
 
-                    input_vars.append(var_obj.read_data())
+                    input_vars.append(__extract_final_output_from_dynamic_child_output(
+                        var_obj.read_data(),
+                    ))
                     kwargs_vars.append({})
 
                     get_memory_usage(

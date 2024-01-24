@@ -240,6 +240,8 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     data = None
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+        if 1 == len(set(columns_to_display)):
+            columns_to_display = [f'{col}_{idx}' for idx, col in enumerate(columns_to_display)]
         row_count, column_count = dataframe.shape
 
         data = dict(
@@ -276,7 +278,7 @@ def coerce_into_dataframe(child_data: Union[
             child_data = pd.DataFrame(child_data)
         else:
             child_data = pd.DataFrame(
-                [dict(col=value) for value in child_data],
+                [{f'col_{idx}': value} for idx, value in enumerate(child_data)],
             )
     elif isinstance(child_data, pd.DataFrame):
         return child_data
