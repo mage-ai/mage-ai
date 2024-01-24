@@ -69,6 +69,7 @@ class GlobalDataProductBlockTest(DBTestCase):
             call(
                 self.block.get_global_data_product(),
                 block=self.block,
+                from_notebook=False,
                 logger=ANY,
                 logging_tags=ANY,
                 variables=dict(mage=3),

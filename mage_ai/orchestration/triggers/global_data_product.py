@@ -5,6 +5,7 @@ from logging import Logger
 from time import sleep
 from typing import Dict, List, Optional
 
+from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import safe_db_query
@@ -103,7 +104,11 @@ def __check_block_runs(
         f': {len(block_runs)}'
     )
     if logger:
-        logger.info(log_message, tags=tags)
+        if isinstance(logger, DictLogger):
+            logger.info(log_message, tags=tags)
+        else:
+            logger.info(log_message)
+            logger.info(json.dumps(tags, indent=2))
     else:
         print(log_message)
         print(json.dumps(tags, indent=2))
@@ -132,6 +137,7 @@ def trigger_and_check_status(
     block=None,
     check_status: bool = True,
     error_on_failure: bool = True,
+    from_notebook: bool = False,
     logger: Logger = None,
     logging_tags: Dict = None,
     poll_interval: float = DEFAULT_POLL_INTERVAL,
@@ -156,7 +162,7 @@ def trigger_and_check_status(
     pipeline_run_created = None
     tries = 0
 
-    if block:
+    if block and not from_notebook:
         __check_block_runs(
             global_data_product,
             block,
