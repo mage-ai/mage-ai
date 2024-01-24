@@ -16,7 +16,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 
 MAX_BLOCKS_FOR_TREE = 100
 
@@ -34,142 +34,98 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
     2. Group blocks together if beyond max amount.
     """
 
-    block_dicts_by_uuid = {}
+    # Group the block runs by their original block
+    block_runs_by_uuid = {}
+    original_by_uuid = {}
+    copies_by_uuid = {}
 
-    block_runs_by_block_uuid = {}
     for block_run in block_runs:
+        block_runs_by_uuid[block_run.block_uuid] = block_run
+
         block = pipeline.get_block(block_run.block_uuid)
-        if block.uuid not in block_runs_by_block_uuid:
-            block_runs_by_block_uuid[block.uuid] = dict(
-                clones=[],
-                original=None,
-            )
-
         if block_run.block_uuid == block.uuid:
-            block_runs_by_block_uuid[block.uuid]['original'] = block_run
+            original_by_uuid[block.uuid] = block_run
         else:
-            block_runs_by_block_uuid[block.uuid]['clones'].append(block_run)
+            if block.uuid not in copies_by_uuid:
+                copies_by_uuid[block.uuid] = []
+            copies_by_uuid[block.uuid].append(block_run)
+            copies_by_uuid[block.uuid] = \
+                [br for br in copies_by_uuid[block.uuid] if br.block_uuid != block.uuid]
 
+    block_dicts_by_uuid = {}
     for block_uuid, block in pipeline.blocks_by_uuid.items():
-        original_block_dict = block.to_dict()
+        block_dict = extract(block.to_dict(), [
+            'color',
+            'configuration',
+            'language',
+            'name',
+            'type',
+        ])
+        block_dict['downstream_blocks'] = []
+        block_dict['upstream_blocks'] = []
 
-        brs = block_runs_by_block_uuid.get(block_uuid) or {}
-        block_runs_inner = brs.get('clones') or []
-        if brs.get('original'):
-            block_runs_inner.append(brs.get('original'))
-
-        for block_run in block_runs_inner:
-            block = pipeline.get_block(block_run.block_uuid)
-            tags = []
-
-            metrics = block_run.metrics or {}
-            dynamic_block_index = (metrics or {}).get('dynamic_block_index')
-            is_dynamic_child = is_dynamic_block_child(block)
-            is_dynamic = is_dynamic_block(block)
-
-            if block.replicated_block:
-                tags.append(TAG_REPLICA)
-            if is_dynamic:
-                tags.append(TAG_DYNAMIC)
-            if is_dynamic_child:
-                tags.append(TAG_DYNAMIC_CHILD)
+        uuids = []
+        if is_dynamic_block_child(block):
             if should_reduce_output(block):
-                tags.append(TAG_REDUCE_OUTPUT)
+                # If an upstream block reduces output, don’t add its copies.
+                uuids.append(block_uuid)
+            else:
+                uuids += [br.block_uuid for br in copies_by_uuid.get(block_uuid) or []]
+        else:
+            uuids.append(block_uuid)
 
-            block_dict = merge_dict(original_block_dict, dict(
-                downstream_blocks=[],
-                tags=tags,
-                upstream_blocks=(metrics or {}).get('upstream_blocks', []) or [],
-                uuid=block_run.block_uuid,
-            ))
+        for uuid in uuids:
+            block_dicts_by_uuid[uuid] = block_dict
 
-            if dynamic_block_index is not None:
-                block_dict['description'] = str(dynamic_block_index)
-
-            for upstream_block in block.upstream_blocks:
-                if is_dynamic_block_child(upstream_block):
-                    up_brs = block_runs_by_block_uuid.get(upstream_block.uuid) or {}
-                    up_block_runs = up_brs.get('clones') or []
-
-                    if should_reduce_output(upstream_block):
-                        block_dict['upstream_blocks'].extend(
-                            [br.block_uuid for br in up_block_runs or []],
-                        )
-                    else:
-                        dynamic_upstream_block_uuids = (metrics or {}).get(
-                            'dynamic_upstream_block_uuids',
-                        ) or []
-                        if dynamic_upstream_block_uuids:
-                            block_dict['upstream_blocks'].extend(list(set(
-                                dynamic_upstream_block_uuids + block_dict['upstream_blocks'],
-                            )))
-                else:
-                    block_dict['upstream_blocks'].append(upstream_block.uuid)
-
-            block_dicts_by_uuid[block_run.block_uuid] = block_dict
-
-    # Remove the originals
+    # Add the copies as upstreams to the block dicts
     for block_uuid, block in pipeline.blocks_by_uuid.items():
-        # If all upstream dynamic child blocks reduce output, remove the original upstream
-        # from its upstream blocks
-        if block.upstream_blocks and all([is_dynamic_block_child(
-            up,
-        ) and should_reduce_output(
-            up,
-        ) for up in block.upstream_blocks]):
-            for upstream_block in block.upstream_blocks:
-                block_dicts_by_uuid[block_uuid]['upstream_blocks'] = list(filter(
-                    lambda x, upstream_block=upstream_block: x != upstream_block.uuid,
-                    block_dicts_by_uuid[block_uuid]['upstream_blocks'],
-                ))
+        uuids = []
+        for upstream_block in block.upstream_blocks:
+            uuid = upstream_block.uuid
+            if is_dynamic_block_child(upstream_block) and not should_reduce_output(upstream_block):
+                for br in (copies_by_uuid.get(uuid) or []):
+                    uuids.append(br.block_uuid)
+            else:
+                uuids.append(uuid)
 
+        uuids_to_update = [block_uuid]
+        uuids_to_update += [br.block_uuid for br in copies_by_uuid.get(block_uuid) or []]
+        for uuid in uuids_to_update:
+            if uuid in block_dicts_by_uuid:
+                block_dicts_by_uuid[uuid]['upstream_blocks'] = uuids
+
+    # Add display information
+    for uuid in block_dicts_by_uuid.keys():
+        block = pipeline.get_block(uuid)
+        block_run = block_runs_by_uuid.get(uuid)
+        metrics = block_run.metrics or {}
+
+        dynamic_block_index = (metrics or {}).get('dynamic_block_index')
         is_dynamic_child = is_dynamic_block_child(block)
         is_dynamic = is_dynamic_block(block)
+        reduce_output = should_reduce_output(block)
 
+        tags = []
+        if block.replicated_block:
+            tags.append(TAG_REPLICA)
+        if is_dynamic:
+            tags.append(TAG_DYNAMIC)
         if is_dynamic_child:
-            upstream_dynamic_childs = \
-                [up for up in block.upstream_blocks if is_dynamic_block_child(up)]
+            tags.append(TAG_DYNAMIC_CHILD)
+        if reduce_output:
+            tags.append(TAG_REDUCE_OUTPUT)
 
-            if not upstream_dynamic_childs or \
-                    not all([should_reduce_output(up) for up in upstream_dynamic_childs]):
+        description = ''
+        if is_dynamic_child and reduce_output:
+            description = ', '.join([br.block_uuid for br in copies_by_uuid.get(block.uuid) or []])
+        elif dynamic_block_index is not None:
+            description = str(dynamic_block_index)
 
-                uuid = block.uuid_replicated if block.replicated_block else block_uuid
-                brs = (block_runs_by_block_uuid.get(uuid) or {}).get('clones') or []
-                if brs and len(brs) >= 1:
-                    if uuid in block_dicts_by_uuid:
-                        block_dicts_by_uuid.pop(uuid, None)
-
-    # Add the originals upstream blocks if the originals are still in the dicts and
-    # if the upstream doesn’t reduce output
-    for block_uuid, block in pipeline.blocks_by_uuid.items():
-        block_uuid = block.uuid_replicated if block.replicated_block else block_uuid
-        if is_dynamic_block_child(block) and \
-                not should_reduce_output(block) and \
-                block_uuid in block_dicts_by_uuid and \
-                len(block_dicts_by_uuid[block_uuid]['upstream_blocks']) == 0:
-
-            block_dicts_by_uuid.pop(block_uuid, None)
-
-        for up_block in block.upstream_blocks:
-            up_uuid = up_block.uuid_replicated if up_block.replicated_block else up_block.uuid
-
-            if is_dynamic_block_child(up_block) and \
-                    should_reduce_output(up_block):
-
-                continue
-
-            if block_uuid in block_dicts_by_uuid:
-                if up_uuid in block_dicts_by_uuid:
-                    block_dicts_by_uuid[block_uuid]['upstream_blocks'].append(up_uuid)
-                elif is_dynamic_block(up_block):
-                    up_brs = []
-                    for block_run in block_runs:
-                        up_block2 = pipeline.get_block(block_run.block_uuid)
-                        if up_block2.uuid == up_uuid and block_run.block_uuid != up_uuid:
-                            up_brs.append(block_run.block_uuid)
-                    block_dicts_by_uuid[block_uuid]['upstream_blocks'].extend(up_brs)
-
-    # De-dupe upstream blocks
+        block_dicts_by_uuid[uuid] = merge_dict(block_dicts_by_uuid[uuid], dict(
+            description=description,
+            tags=tags,
+            uuid=uuid,
+        ))
 
     return block_dicts_by_uuid
 

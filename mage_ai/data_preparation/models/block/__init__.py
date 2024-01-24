@@ -48,7 +48,6 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_block,
     get_outputs_for_dynamic_block_async,
     get_outputs_for_dynamic_child,
-    get_outputs_for_dynamic_child_async,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
@@ -2005,19 +2004,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             pairs = []
 
             if is_dynamic_child:
-                tuples = get_outputs_for_dynamic_child(
+                lazy_variable_controller = get_outputs_for_dynamic_child(
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
                     sample_count=sample_count,
                 )
-                for tup in tuples:
-                    if not is_dynamic:
-                        tup = (list(tup),)
-                    pairs.append(tup)
-
-                if dynamic_block_index is not None:
-                    pairs = [pairs[dynamic_block_index]]
+                pairs = lazy_variable_controller.render(
+                    dynamic_block_index=dynamic_block_index,
+                )
             elif is_dynamic:
                 tup = get_outputs_for_dynamic_block(
                     self,
@@ -2052,11 +2047,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
                     outputs_below_limit = not sample or not sample_count
                     if is_data_product:
-                        outputs_below_limit = \
-                            outputs_below_limit and len(data_products) < sample_count
+                        outputs_below_limit = outputs_below_limit or \
+                            (sample_count is not None and len(data_products) < sample_count)
                     else:
-                        outputs_below_limit = \
-                            outputs_below_limit and len(outputs) < sample_count
+                        outputs_below_limit = outputs_below_limit or \
+                            (sample_count is not None and len(outputs) < sample_count)
 
                     if outputs_below_limit:
                         if is_data_product:
@@ -2129,6 +2124,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         csv_lines_only: bool = False,
         execution_partition: str = None,
         include_print_outputs: bool = True,
+        sample: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
@@ -2144,22 +2140,20 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             pairs = []
 
             if is_dynamic_child:
-                tuples = await get_outputs_for_dynamic_child_async(
+                lazy_variable_controller = get_outputs_for_dynamic_child(
                     self,
                     execution_partition=execution_partition,
+                    sample=sample,
                     sample_count=sample_count,
                 )
-
-                for tup in tuples:
-                    if not is_dynamic:
-                        tup = (list(tup),)
-                    pairs.append(tup)
-                if dynamic_block_index is not None:
-                    pairs = [pairs[dynamic_block_index]]
+                pairs = await lazy_variable_controller.render_async(
+                    dynamic_block_index=dynamic_block_index,
+                )
             elif is_dynamic:
                 tup = await get_outputs_for_dynamic_block_async(
                     self,
                     execution_partition=execution_partition,
+                    sample=sample,
                     sample_count=sample_count,
                 )
                 pairs.append(tup)
