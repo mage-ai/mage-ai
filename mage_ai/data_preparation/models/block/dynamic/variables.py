@@ -240,7 +240,7 @@ def get_outputs_for_dynamic_child(
             results.append(
                 get_memory_usage(
                     message_prefix=f'[Block/Dynamic {block.uuid}.get_outputs',
-                    wrapped_function=lambda: [var_obj.read_data(
+                    wrapped_function=lambda arr=arr: [var_obj.read_data(
                         sample=sample,
                         sample_count=sample_count,
                     ) if read_data else var_obj for var_obj in arr],
