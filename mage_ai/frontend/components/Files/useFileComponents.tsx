@@ -697,7 +697,12 @@ function useFileComponents({
                 noBackground
                 onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
               >
-                <FilterV2 />
+                <FilterV2
+                  fill={fileFilter !== FileFilterEnum.ALL_FILES
+                    ? dark.accent.cyan
+                    : null
+                  }
+                />
               </Button>
             </FlyoutMenuWrapper>
           )
