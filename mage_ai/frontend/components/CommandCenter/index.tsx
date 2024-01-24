@@ -314,7 +314,6 @@ function CommandCenter({
     } = {
       skipAdding: false,
     }) {
-
     const currentApplicationConfig = { ...applicationConfiguration };
 
     if (!opts?.skipAdding) {
@@ -380,6 +379,7 @@ function CommandCenter({
           {...currentApplicationConfig}
           applicationState={refApplicationState}
           applicationsRef={refApplications}
+          closeCommandCenter={closeCommandCenter}
           fetchItems={fetchItems}
           getItemsActionResults={getItemsActionResults}
           handleSelectItemRow={handleSelectItemRow}
@@ -427,6 +427,7 @@ function CommandCenter({
         {...currentApplicationConfig}
         applicationState={refApplicationState}
         applicationsRef={refApplications}
+        closeCommandCenter={closeCommandCenter}
         closeOutput={closeOutput}
         fetchItems={fetchItems}
         getItemsActionResults={getItemsActionResults}
@@ -812,6 +813,7 @@ function CommandCenter({
 
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
+    closeCommandCenter,
     commandCenterState: commandCenterStateRef,
     fetchItems,
     getItems,
@@ -1165,6 +1167,7 @@ function CommandCenter({
 
               return executeButtonActions({
                 ...currentApplicationConfig,
+                closeCommandCenter,
                 button,
                 fetchItems,
                 getItemsActionResults,

@@ -20,6 +20,7 @@ import { pauseEvent } from '@utils/events';
 function ApplicationFooter({
   application,
   applicationsRef,
+  closeCommandCenter,
   closeOutput,
   executeAction,
   fetchItems,
@@ -105,6 +106,7 @@ function ApplicationFooter({
                 onClick={() => executeButtonActions({
                   application,
                   button,
+                  closeCommandCenter,
                   executeAction,
                   fetchItems,
                   focusedItemIndex,

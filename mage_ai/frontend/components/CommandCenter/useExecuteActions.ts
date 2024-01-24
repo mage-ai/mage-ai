@@ -34,6 +34,7 @@ type ActionResultsWithValidation = {
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
+  closeCommandCenter,
   commandCenterState,
   fetchItems,
   getItems,
@@ -47,6 +48,7 @@ export default function useExecuteActions({
   applicationState?: {
     current: KeyValueType;
   };
+  closeCommandCenter: () => void;
   commandCenterState?: {
     current: KeyValueType;
   };
@@ -291,6 +293,16 @@ export default function useExecuteActions({
             removeApplication?.({
               application: item?.metadata?.application,
             });
+
+            return ActionResultEnum.SUCCESS;
+          });
+        } else if (CommandCenterActionInteractionTypeEnum.CLOSE_COMMAND_CENTER === type) {
+          actionFunction = actionFunctionWrapper(({
+            action,
+            item,
+            results,
+          }: ActionResultsWithValidation): ActionResultsWithValidation | ActionResultEnum | Promise<any> => {
+            closeCommandCenter();
 
             return ActionResultEnum.SUCCESS;
           });

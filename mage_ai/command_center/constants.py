@@ -62,6 +62,7 @@ class FileExtension(str, Enum):
 class ButtonActionType(str, Enum):
     ADD_APPLICATION = 'add_application'
     CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
+    CLOSE_COMMAND_CENTER = 'close_command_center'
     CUSTOM_ACTIONS = 'custom_actions'
     EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
     REPLACE_APPLICATION = 'replace_application'

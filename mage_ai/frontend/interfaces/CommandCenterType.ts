@@ -33,6 +33,7 @@ export enum ValidationTypeEnum {
 export enum ButtonActionTypeEnum {
   ADD_APPLICATION = 'add_application',
   CLOSE_APPLICATION = 'close_application',
+  CLOSE_COMMAND_CENTER = 'close_command_center',
   CUSTOM_ACTIONS = 'custom_actions',
   EXECUTE = 'execute',
   REPLACE_APPLICATION = 'replace_application',
@@ -219,6 +220,7 @@ export enum CommandCenterStateEnum {
 export enum CommandCenterActionInteractionTypeEnum {
   CLICK = 'click',
   CLOSE_APPLICATION = 'close_application',
+  CLOSE_COMMAND_CENTER = 'close_command_center',
   FETCH_ITEMS = 'fetch_items',
   OPEN_FILE = 'open_file',
   RESET_FORM = 'reset_form',

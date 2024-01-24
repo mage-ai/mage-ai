@@ -28,6 +28,7 @@ export type ApplicationProps = {
   applicationsRef: {
     current: CurrentType[];
   };
+  closeCommandCenter: () => void;
   closeOutput?: () => void;
   focusedItemIndex: number;
   getItemsActionResults?: () => KeyValueType;

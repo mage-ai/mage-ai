@@ -44,6 +44,7 @@ function ApplicationForm({
   application,
   applicationState,
   applicationsRef,
+  closeCommandCenter,
   executeAction,
   focusedItemIndex,
   item,
@@ -353,6 +354,7 @@ function ApplicationForm({
     showError,
   });
   const executeActionRequests = useExecuteActions({
+    closeCommandCenter,
     fetchItems: null,
     invokeRequest,
     router,
