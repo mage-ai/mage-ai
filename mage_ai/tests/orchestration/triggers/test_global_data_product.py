@@ -96,6 +96,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
                 poll_interval=1,
                 poll_timeout=2,
                 should_schedule=False,
+                round_number=1,
             )
         except Exception as err:
             error = True
@@ -113,7 +114,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
             PipelineRun.query.filter(
                 PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
             ).count(),
-            count + 1,
+            count,
         )
 
     @freeze_time('2023-10-11 12:13:14')

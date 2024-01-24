@@ -76,6 +76,11 @@ class VariableManager:
         variable.delete()
         variable.variable_type = variable_type
         variable.write_data(data)
+        print(
+            f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
+            f'in pipeline {pipeline_uuid} '
+            f'stored in {variable.variable_path}'
+        )
 
     def build_variable(
         self,

@@ -1,7 +1,9 @@
 import os
-from unittest.mock import call, patch
+from unittest.mock import ANY, call, patch
 
-from mage_ai.data_preparation.models.block.global_data_product import GlobalDataProductBlock
+from mage_ai.data_preparation.models.block.global_data_product import (
+    GlobalDataProductBlock,
+)
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -64,5 +66,12 @@ class GlobalDataProductBlockTest(DBTestCase):
     def test_execute_block(self, mock_trigger_and_check_status):
         self.block.execute_block(global_vars=dict(variables=dict(mage=3)))
         mock_trigger_and_check_status.assert_has_calls([
-            call(self.block.get_global_data_product(), dict(mage=3)),
+            call(
+                self.block.get_global_data_product(),
+                block=self.block,
+                from_notebook=False,
+                logger=ANY,
+                logging_tags=ANY,
+                variables=dict(mage=3),
+            ),
         ])

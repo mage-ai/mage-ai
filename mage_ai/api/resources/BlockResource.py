@@ -194,6 +194,7 @@ class BlockResource(GenericResource):
                     block_type = replicated_block.type
                     # You can replicate a replica but it’ll only replicate the original block.
                     replicated_block = replicated_block.get_original_block() or replicated_block
+                    block_attributes['configuration'] = replicated_block.configuration
                     block_attributes['language'] = replicated_block.language
                     block_attributes['replicated_block'] = replicated_block.uuid
                 else:
