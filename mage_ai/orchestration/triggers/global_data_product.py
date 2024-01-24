@@ -154,7 +154,11 @@ def trigger_and_check_status(
 
     def __log(log_message: str, logger=logger, tags=tags):
         if logger:
-            logger.info(log_message, tags=tags)
+            if isinstance(logger, DictLogger):
+                logger.info(log_message, tags=tags)
+            else:
+                logger.info(log_message)
+                logger.info(json.dumps(tags, indent=2))
         else:
             print(log_message)
             print(json.dumps(tags, indent=2))

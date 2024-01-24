@@ -77,9 +77,7 @@ class VariableManager:
         variable.variable_type = variable_type
         variable.write_data(data)
         print(
-            f'Variable {variable_uuid}'
-            f'({variable_type}) ' if variable_type else ' '
-            f'for block {block_uuid} '
+            f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
             f'in pipeline {pipeline_uuid} '
             f'stored in {variable.variable_path}'
         )
