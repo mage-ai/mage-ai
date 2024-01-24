@@ -212,6 +212,7 @@ interface CommandCenterActionBaseType {
 
 export enum CommandCenterStateEnum {
   CLOSED = 'CLOSED',
+  MOUNTED = 'MOUNTED',
   OPEN = 'OPEN',
 }
 

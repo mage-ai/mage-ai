@@ -453,7 +453,7 @@ function KeyboardShortcutButton({
   type = ButtonTypeEnum.BUTTON,
   useModelTheme,
   ...props
-}: KeyboardShortcutButtonProps) {
+}: KeyboardShortcutButtonProps, ref) {
   const {
     as: asHref,
     href: linkHref,
@@ -586,8 +586,9 @@ function KeyboardShortcutButton({
       disabled={disabled || mutedDisabled}
       linkProps={linkProps}
       onClick={onClickProp}
+      ref={ref}
     />
   );
 }
 
-export default KeyboardShortcutButton;
+export default React.forwardRef(KeyboardShortcutButton);

@@ -117,8 +117,12 @@ import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 
-function CommandCenter() {
-  const router = useRouter();
+function CommandCenter({
+  router: routerProp,
+}: {
+  router?: any;
+}) {
+  const router = routerProp || useRouter();
   const [showError, _, refError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
   });
@@ -1290,6 +1294,15 @@ function CommandCenter() {
   useEffect(() => {
     if (refReload?.current === null) {
       setReload(prev => prev === null ? 0 : prev + 1);
+    }
+
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, {
+        detail: {
+          state: CommandCenterStateEnum.MOUNTED,
+        },
+      });
+      window.dispatchEvent(eventCustom);
     }
   }, []);
 

@@ -1,7 +1,6 @@
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
-import { useContext, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -16,10 +15,12 @@ import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import LaunchKeyboardShortcutText from '@components/CommandCenter/LaunchKeyboardShortcutText';
+import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -27,19 +28,22 @@ import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { Branch, Slack } from '@oracle/icons';
+import { BranchAlt, Planet, Slack, UFO } from '@oracle/icons';
 import {
+  ButtonInputStyle,
   CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
   MediaStyle,
 } from './index.style';
+import { CommandCenterStateEnum } from '@interfaces/CommandCenterType';
+import { CustomEventUUID, CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getSetSettings } from '@storage/CommandCenter/utils';
 import { launchCommandCenter } from '@components/CommandCenter/utils';
-import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -74,12 +78,15 @@ function Header({
   const themeContext = useContext(ThemeContext);
   const userFromLocalStorage = getUser();
 
+  const [commandCenterState, setCommandCenterState] = useState<CommandCenterStateEnum>(null);
+  const [enableCommandCenterLoading, setEnableCommandCenterLoading] = useState<boolean>(false);
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState<number>(null);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
 
   const menuRef = useRef(null);
+  const projectRef = useRef(null);
   const refUserMenu = useRef(null);
   const router = useRouter();
 
@@ -109,11 +116,49 @@ function Header({
   const {
     featureEnabled,
     featureUUIDs,
+    isLoadingUpdate,
     project: projectInit,
     rootProject,
+    updateProject,
   } = useProject();
   const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
+  const commandCenterEnabled = useMemo(() =>
+    CommandCenterStateEnum.CLOSED === commandCenterState
+    || CommandCenterStateEnum.OPEN === commandCenterState
+    || featureEnabled?.(featureUUIDs?.COMMAND_CENTER), [
+    commandCenterState,
+    featureEnabled,
+    featureUUIDs,
+  ]);
+  projectRef.current = project;
+
+  const launchCommandCenterWrapper = useCallback(() => {
+    if (commandCenterEnabled) {
+      launchCommandCenter();
+    } else {
+      setEnableCommandCenterLoading(true);
+      updateProject({
+        features: {
+          ...(project?.features || {}),
+          [featureUUIDs?.COMMAND_CENTER]: true,
+        },
+      }).then((response) => {
+        if (response?.data?.error) {
+          setEnableCommandCenterLoading(false);
+          showError({
+            errors: response?.data?.error,
+            response,
+          });
+        } else {
+          if (typeof window !== 'undefined') {
+            const eventCustom = new CustomEvent(CustomEventUUID.COMMAND_CENTER_ENABLED);
+            window.dispatchEvent(eventCustom);
+          }
+        }
+      });
+    }
+  }, [commandCenterEnabled, featureUUIDs, project, updateProject]);
 
   const logout = () => {
     AuthToken.logout(() => {
@@ -126,25 +171,6 @@ function Header({
         });
     });
   };
-
-  const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
-    api.projects.useUpdate(project?.name),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            if (typeof window !== 'undefined') {
-              window.location.reload();
-            }
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
 
   const breadcrumbProjects = [];
   if (rootProject) {
@@ -162,13 +188,22 @@ function Header({
     };
 
     if (rootProject) {
-      crumb.loading = isLoadingUpdateProject;
+      crumb.loading = isLoadingUpdate && !enableCommandCenterLoading;
       crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
         onClick: () => {
           updateProject({
-            project: {
-              activate_project: projectName,
-            },
+            activate_project: projectName,
+          }).then((response) => {
+            if (response?.data?.error) {
+              showError({
+                errors: response?.data?.error,
+                response,
+              });
+            } else {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }
           });
         },
         selected: projectName === project?.name,
@@ -274,7 +309,6 @@ function Header({
     design,
   ]);
 
-
   const userDropdown: FlyoutMenuItemType[] = [
     {
       label: () => 'Settings',
@@ -289,7 +323,7 @@ function Header({
             label: () => 'Launch command center',
             onClick: (e) => {
               pauseEvent(e);
-              launchCommandCenter()
+              launchCommandCenterWrapper();
             },
             uuid: 'Launch command center',
           },
@@ -378,6 +412,39 @@ function Header({
     userFromLocalStorage,
   ]);
 
+  useEffect(() => {
+    const handleState = ({
+      detail,
+    }) => {
+      if (detail?.state) {
+        setCommandCenterState(detail?.state);
+
+        if (CommandCenterStateEnum.MOUNTED === detail?.state) {
+          // Only launch this if it was previously disabled.
+          // The feature can be enabled by clicking the button in the header.
+          if (!projectRef?.current?.features?.[FeatureUUIDEnum.COMMAND_CENTER]) {
+            setTimeout(() => {
+              launchCommandCenter();
+              setEnableCommandCenterLoading(false);
+            }, 1);
+          }
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+      }
+    };
+  }, []);
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -394,10 +461,78 @@ function Header({
             />
           </Flex>
 
+          {!!project && (
+            <Flex flex={1} alignItems="center" justifyContent="center">
+              <Spacing ml={PADDING_UNITS} />
+
+              <Button
+                noBackground
+                noBorder
+                noOutline
+                noPadding
+                onClick={(e) => {
+                  pauseEvent(e);
+                  launchCommandCenterWrapper();
+                }}
+              >
+                <ButtonInputStyle active={CommandCenterStateEnum.OPEN === commandCenterState}>
+                  <FlexContainer alignItems="center">
+                    <>
+                      {CommandCenterStateEnum.OPEN === commandCenterState
+                        ? <UFO muted size={2 * UNIT} />
+                        : <Planet
+                          size={2 * UNIT}
+                          success={!enableCommandCenterLoading && !commandCenterEnabled}
+                          warning={enableCommandCenterLoading}
+                        />
+                      }
+                    </>
+
+                    <div style={{ marginRight: 1.5 * UNIT }} />
+
+                    {CommandCenterStateEnum.OPEN !== commandCenterState && (
+                      <Text default noWrapping weightStyle={4}>
+                        {commandCenterEnabled
+                          ? 'Command Center'
+                          : enableCommandCenterLoading
+                            ? 'Launching Command Center' : 'Launch Command Center'
+                        }
+                      </Text>
+                    )}
+                    {CommandCenterStateEnum.OPEN === commandCenterState && (
+                      <Text muted noWrapping>
+                        Command Center launched
+                      </Text>
+                    )}
+
+                    {enableCommandCenterLoading && (
+                      <>
+                        <div style={{ marginRight: 1.5 * UNIT }} />
+                        <Loading
+                          color={themeContext?.accent?.warning}
+                          loadingStyle={LoadingStyleEnum.BLOCKS}
+                          width={1.5 * UNIT}
+                        />
+                      </>
+                    )}
+
+                    {commandCenterEnabled && (
+                      <>
+                        <div style={{ marginRight: 1.5 * UNIT }} />
+                        <LaunchKeyboardShortcutText compact settings={getSetSettings()} small />
+                      </>
+                    )}
+                  </FlexContainer>
+                </ButtonInputStyle>
+              </Button>
+
+              <Spacing mr={PADDING_UNITS} />
+            </Flex>
+          )}
 
           <Flex alignItems="center">
             {gitIntegrationEnabled && branch && (
-              <Spacing ml={1}>
+              <Spacing mr={1}>
                 <KeyboardShortcutButton
                   compact
                   highlightOnHoverAlt
@@ -409,9 +544,9 @@ function Header({
                   uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
-                    <Branch size={1.5 * UNIT} />
+                    <BranchAlt size={1.5 * UNIT} />
                     <Spacing ml={1} />
-                    <Text monospace small>
+                    <Text monospace noWrapping small>
                       {branchName}
                     </Text>
                   </FlexContainer>
@@ -419,17 +554,30 @@ function Header({
               </Spacing>
             )}
 
-            <Spacing ml={1}>
-              <ServerTimeDropdown
-                projectName={project?.name}
-              />
-            </Spacing>
+            {latestVersion && version && latestVersion !== version && (
+              <Button
+                backgroundColor={YELLOW}
+                borderLess
+                compact
+                linkProps={{
+                  href: 'https://docs.mage.ai/about/releases',
+                }}
+                noHoverUnderline
+                pill
+                sameColorAsText
+                target="_blank"
+                title={`Update to version ${latestVersion}`}
+              >
+                <Text black bold>Update</Text>
+              </Button>
+            )}
 
             {version && typeof(version) !== 'undefined' && (
-              <Spacing ml={2}>
+              <Spacing px={1}>
                 <Link
                   href="https://www.mage.ai/changelog"
                   monospace
+                  noWrapping
                   openNewWindow
                   sameColorAsText
                   small
@@ -439,27 +587,13 @@ function Header({
               </Spacing>
             )}
 
-            {latestVersion && version && latestVersion !== version && (
-              <Spacing ml={1}>
-                <Button
-                  backgroundColor={YELLOW}
-                  borderLess
-                  compact
-                  linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
-                  }}
-                  noHoverUnderline
-                  pill
-                  sameColorAsText
-                  target="_blank"
-                  title={`Update to version ${latestVersion}`}
-                >
-                  <Text black bold>Update</Text>
-                </Button>
-              </Spacing>
-            )}
+            <Spacing ml={1}>
+              <ServerTimeDropdown
+                projectName={project?.name}
+              />
+            </Spacing>
 
-            <Spacing ml={3}>
+            <Spacing ml={1}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
                 compact
@@ -535,7 +669,7 @@ function Header({
 
             {(loggedIn || !REQUIRE_USER_AUTHENTICATION()) && (
               <>
-                <Spacing ml={2} />
+                <Spacing ml={1} />
 
                 <ClickOutside
                   onClickOutside={() => setUserMenuVisible(false)}
@@ -544,10 +678,16 @@ function Header({
                     position: 'relative',
                   }}
                 >
-                  <FlexContainer alignItems="center" flexDirection="row">
-                    <LinkStyle
+                  <FlexContainer alignItems="flex-end" flexDirection="column">
+                    <KeyboardShortcutButton
+                      compact
+                      highlightOnHoverAlt
+                      inline
+                      noBackground
+                      noHoverUnderline
                       onClick={() => setUserMenuVisible(true)}
                       ref={refUserMenu}
+                      uuid="Header/menu"
                     >
                       {hasAvatarEmoji && userFromLocalStorage?.avatar?.length >= 2
                         ? avatarMemo
@@ -560,17 +700,19 @@ function Header({
                           </Circle>
                         )
                       }
-                    </LinkStyle>
+                    </KeyboardShortcutButton>
 
-                    <FlyoutMenu
-                      alternateBackground
-                      items={userDropdown}
-                      onClickCallback={() => setUserMenuVisible(false)}
-                      open={userMenuVisible}
-                      parentRef={refUserMenu}
-                      rightOffset={0}
-                      uuid="shared/Header/user_menu"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <FlyoutMenu
+                        alternateBackground
+                        items={userDropdown}
+                        onClickCallback={() => setUserMenuVisible(false)}
+                        open={userMenuVisible}
+                        parentRef={refUserMenu}
+                        rightOffset={0}
+                        uuid="shared/Header/user_menu"
+                      />
+                    </div>
                   </FlexContainer>
                 </ClickOutside>
               </>
