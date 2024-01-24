@@ -40,9 +40,9 @@ async def initialize_pipeline_environment(pipeline):
         async with aiofiles.tempfile.TemporaryDirectory() as tmpdirname:
             venv.create(tmpdirname, with_pip=True)
             python_path = os.path.join(tmpdirname, 'bin', 'python3')
-            cmd = shlex.join([python_path, '-m', 'pip', 'install', '--no-deps', 'mage-ai'])
-            proc1 = await asyncio.create_subprocess_shell(cmd)
-            await proc1.wait()
+            # cmd = shlex.join([python_path, '-m', 'pip', 'install', '--no-deps', 'mage-ai'])
+            # proc1 = await asyncio.create_subprocess_shell(cmd)
+            # await proc1.wait()
             cmd = shlex.join([python_path, '-m', 'pip', 'install'] + dependencies)
             proc2 = await asyncio.create_subprocess_shell(cmd)
             await proc2.wait()

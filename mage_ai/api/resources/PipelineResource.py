@@ -748,7 +748,7 @@ class PipelineResource(BaseResource):
             cache = await PipelineCache.initialize_cache()
             cache.update_model(resource.model)
 
-            await initialize_pipeline_environment(resource.model)
+            # await initialize_pipeline_environment(resource.model)
 
         self.on_update_callback = _update_callback
 

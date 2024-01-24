@@ -44,6 +44,7 @@ from mage_ai.server.kernels.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.provisioners import ProcessKernelProvisioner
 from mage_ai.server.logger import Logger
 from mage_ai.server.utils.output_display import (
     add_execution_code,
@@ -172,11 +173,20 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def init_kernel_client(self, kernel_name) -> KernelClient:
-        if kernel_name != get_active_kernel_name():
-            switch_active_kernel(kernel_name)
+    def init_kernel_client(self, kernel_name, pipeline=None) -> KernelClient:
+        # if kernel_name != get_active_kernel_name():
+        #     switch_active_kernel(kernel_name)
 
-        return get_active_kernel_client()
+        # return get_active_kernel_client()
+
+        from jupyter_client import KernelManager
+        from jupyter_client.session import Session
+
+        return KernelManager(
+            kernel_name='kernel_separate_process',
+            session=Session(key=bytes()),
+            provisioner=ProcessKernelProvisioner(path=os.path.join(pipeline.pipeline_variables_dir, '.venv'))
+        ).client()
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
@@ -411,7 +421,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         code = custom_code
 
-        client = self.init_kernel_client(kernel_name)
+        client = self.init_kernel_client(kernel_name, pipeline=pipeline)
+
+        print('client:', client)
 
         value = dict(
             block_type=block_type or block.type,

@@ -168,7 +168,6 @@ class Pipeline:
 
     @property
     def pipeline_variables_dir(self):
-        print('variables dir:', self.variables_dir)
         return os.path.join(
             self.variables_dir,
             PIPELINES_FOLDER,

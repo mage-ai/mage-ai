@@ -36,16 +36,19 @@ class ProcessBlockExecutor(BlockExecutor):
             self.block_uuid,
             '--executor-type',
             'local_python',
-            '--execution-partition',
-            self.execution_partition,
-            '--block-run-id',
-            f'{block_run_id}',
         ]
+        if self.execution_partition:
+            command.extend(['--execution-partition', self.execution_partition])
+        if block_run_id:
+            command.extend(['--block-run-id', f'{block_run_id}'])
         if pipeline_run_id:
             command.extend(['--pipeline-run-id', f'{pipeline_run_id}'])
 
+        print('COMMAND:', command)
+
+        env = kwargs.get('env')
         proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env
         )
         out, err = proc.communicate()
         if proc.returncode != 0 and proc.returncode is not None:
