@@ -249,6 +249,10 @@ function Folder({
     useRootFolder,
     uuid,
   });
+  const isBlockFileWithSquareIcon = useMemo(() =>
+    !!folderNameForBlock && !isFolder && !!isBlockFile,
+    [folderNameForBlock, isBlockFile, isFolder],
+  );
 
   const buildChildrenFiles = useCallback((
     arr: FileType[],
@@ -610,6 +614,7 @@ function Folder({
               style={{
                 marginLeft: UNIT / 2,
                 marginRight: UNIT / 2,
+                paddingRight: (isBlockFileWithSquareIcon && !(pipelineCount > 1)) ? UNIT / 2 : 0,
               }}
               title={pipelineCount > 1
                 ? 'Used by multiple pipelines'
@@ -619,7 +624,7 @@ function Folder({
                 )
               }
             >
-              {(!!folderNameForBlock && !isFolder && !!isBlockFile)
+              {isBlockFileWithSquareIcon
                 ? (pipelineCount > 1
                   ?
                     <DiamondShared fill={dark.accent.cyan} size={ICON_SIZE} />
