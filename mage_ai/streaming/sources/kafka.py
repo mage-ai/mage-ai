@@ -50,10 +50,8 @@ class KafkaConfig(BaseConfig):
     serde_config: SerDeConfig = None
     topic: str = None
     topics: List = field(default_factory=list)
-    offset: str = None
-    offset_value: int = None
+    offset: dict = None
     max_partition_fetch_bytes: int = 1048576
-    partitions: dict = None
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -76,7 +74,7 @@ class KafkaSource(BaseSource):
         if not self.config.topic and not self.config.topics:
             raise Exception('Please specify topic or topics in the Kafka config.')
 
-        if self.config.offset and not self.config.partitions:
+        if self.config.offset and self.config.offset.get("partitions") is None:
             raise Exception('Please specify topic partitions')
 
         self._print('Start initializing consumer.')
@@ -177,12 +175,12 @@ class KafkaSource(BaseSource):
         self._print('Configuring consumer offset')
         self.consumer.unsubscribe()
         partitions = [TopicPartition(partition['topic'], partition['partition']) for partition
-                      in self.config.partitions]
+                      in self.config.offset.get('partitions')]
         self._print(f'{partitions}')
         self.consumer.assign(partitions=partitions)
 
-        offset_type = self.config.offset
-        offset_value = self.config.offset_value
+        offset_type = self.config.offset.get('type')
+        offset_value = self.config.offset.get('value')
 
         if offset_type == 'int':
             for partition in partitions:

@@ -16,9 +16,10 @@ batch_size: 100
 timeout_ms: 500
 auto_offset_reset: latest # Optional
 max_partition_fetch_bytes: 1048576 # Optional
-offset: None # Optional
-offset_value: None # Optional
-partitions: # Optional
+offset:  # Optional
+- value: None # Optional
+- type: "int"
+- partitions: # Optional
   - {"topic": "test", "partition": 1}
 ```
 ### Offset Configuration
