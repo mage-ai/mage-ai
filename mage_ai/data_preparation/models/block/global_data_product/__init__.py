@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.block import Block
@@ -25,11 +26,16 @@ class GlobalDataProductBlock(Block):
         self,
         outputs_from_input_vars,
         global_vars: Dict = None,
+        logger: Logger = None,
+        logging_tags: Dict = None,
         **kwargs,
     ) -> List:
         trigger.trigger_and_check_status(
             self.get_global_data_product(),
-            global_vars.get('variables') if global_vars else None,
+            block=self,
+            logger=logger,
+            logging_tags=logging_tags,
+            variables=global_vars.get('variables') if global_vars else None,
         )
 
         return []

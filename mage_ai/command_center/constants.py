@@ -73,6 +73,7 @@ class ButtonActionType(str, Enum):
 class InteractionType(str, Enum):
     CLICK = 'click'
     CLOSE_APPLICATION = ButtonActionType.CLOSE_APPLICATION.value
+    CLOSE_COMMAND_CENTER = ButtonActionType.CLOSE_COMMAND_CENTER.value
     FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
     RESET_FORM = ButtonActionType.RESET_FORM.value
