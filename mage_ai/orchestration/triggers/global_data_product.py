@@ -139,7 +139,6 @@ def trigger_and_check_status(
     round_number: int = 0,
     verbose: bool = True,
     should_schedule: bool = False,
-
 ):
     tags = merge_dict(logging_tags, dict(
         block_uuid=block.uuid if block else None,
@@ -170,7 +169,7 @@ def trigger_and_check_status(
         pipeline_runs = global_data_product.pipeline_runs()
 
         # Check if most recent pipeline run has failed, canceled, or report the status
-        if tries >= 1 and len(pipeline_runs) >= 1:
+        if (tries >= 1 or round_number >= 1) and len(pipeline_runs) >= 1:
             pipeline_run = pipeline_runs[0]
             status = pipeline_run.status.value
             message = (
