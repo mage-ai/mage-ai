@@ -6,6 +6,7 @@ import pandas as pd
 
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.shared.memory import get_memory_usage
 from mage_ai.shared.strings import to_ordinal_integers
 
 
@@ -228,14 +229,25 @@ def __preprocess_and_postprocess_dynamic_child_outputs(
 def get_outputs_for_dynamic_child(
     block,
     execution_partition: str = None,
+    read_data: bool = False,
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
     def __map_outputs(outputs, sample=sample, sample_count=sample_count):
-        return [[var_obj.read_data(
-            sample=sample,
-            sample_count=sample_count,
-        ) for var_obj in arr] for arr in outputs]
+        results = []
+
+        for arr in outputs:
+            results.append(
+                get_memory_usage(
+                    message_prefix=f'[Block/Dynamic {block.uuid}.get_outputs',
+                    wrapped_function=lambda: [var_obj.read_data(
+                        sample=sample,
+                        sample_count=sample_count,
+                    ) if read_data else var_obj for var_obj in arr],
+                ),
+            )
+
+        return results
 
     return __preprocess_and_postprocess_dynamic_child_outputs(
         block,
@@ -247,15 +259,20 @@ def get_outputs_for_dynamic_child(
 async def get_outputs_for_dynamic_child_async(
     block,
     execution_partition: str = None,
+    read_data: bool = False,
     sample: bool = False,
     sample_count: int = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
     async def __map_outputs(outputs, sample=sample, sample_count=sample_count):
         async def __read_pair(arr: List[Variable], sample=sample, sample_count=sample_count):
-            return await asyncio.gather(*[variable_object.read_data_async(
-                sample=sample,
-                sample_count=sample_count,
-            ) for variable_object in arr])
+            get_memory_usage(message_prefix=f'[Block/Dynamic {block.uuid}.get_outputs')
+            if read_data:
+                return await asyncio.gather(*[variable_object.read_data_async(
+                    sample=sample,
+                    sample_count=sample_count,
+                ) for variable_object in arr])
+            else:
+                return arr
 
         return await asyncio.gather(*[__read_pair(arr) for arr in outputs])
 
@@ -281,11 +298,19 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
         should_reduce_output,
     )
 
+    get_memory_usage(message_prefix=f'[Block/Dynamic {block.uuid}.fetch_input_variables]')
+
     input_vars = []
     kwargs_vars = []
     upstream_block_uuids = []
 
     for upstream_block in block.upstream_blocks:
+        get_memory_usage(
+            message_prefix=(
+                f'[Block/Dynamic {block.uuid}.fetch_input_variables '
+                f'for upstream block {upstream_block.uuid}]'
+            ),
+        )
         is_dynamic_child = is_dynamic_block_child(upstream_block)
         is_dynamic = is_dynamic_block(upstream_block)
         reduce_output = should_reduce_output(upstream_block)
@@ -295,6 +320,8 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
         # If an upstream block has all 3, then retrieve the input data as if you’re fetching
         # from an upstream dynamic block
         if is_dynamic_child and (not is_dynamic or not reduce_output):
+            reduce_output = should_reduce_output(upstream_block)
+
             var_objs_arr = get_outputs_for_dynamic_child(
                 upstream_block,
                 execution_partition=execution_partition,
@@ -302,7 +329,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if should_reduce_output(upstream_block):
+            if reduce_output:
                 input_vars.append(var_objs_arr)
                 kwargs_vars.append({})
             else:
@@ -319,9 +346,15 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                     metadatas = {}
                     pair = var_objs_arr[index1]
                     if len(pair) >= 1:
-                        child_datas = pair[0]
+                        child_datas = pair[0].read_data()
                         if len(pair) >= 2:
-                            metadatas = pair[1]
+                            metadatas = pair[1].read_data()
+                    get_memory_usage(
+                        message_prefix=(
+                            f'[Block/Dynamic {block.uuid}.fetch_input_variables '
+                            f'for upstream block {upstream_block.uuid}] after reading data'
+                        ),
+                    )
 
                     child_data = None
                     metadata = None
@@ -337,9 +370,17 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                     kwargs_vars.append(metadata)
                 else:
                     index = dynamic_block_index % len(var_objs_arr)
-                    arr = var_objs_arr[index]
-                    input_vars.append(arr)
+                    var_obj = var_objs_arr[index]
+
+                    input_vars.append(var_obj.read_data())
                     kwargs_vars.append({})
+
+                    get_memory_usage(
+                        message_prefix=(
+                            f'[Block/Dynamic {block.uuid}.fetch_input_variables '
+                            f'for upstream block {upstream_block.uuid}] after reading data'
+                        ),
+                    )
         elif is_dynamic:
             child_data, metadata = get_outputs_for_dynamic_block(
                 upstream_block,

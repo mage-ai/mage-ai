@@ -583,10 +583,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def __outputs_async(self) -> List:
+    async def __outputs_async(self, sample: bool = False) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.__get_outputs_async()
+                self._outputs = await self.__get_outputs_async(sample=sample)
         return self._outputs
 
     @property
@@ -2008,6 +2008,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 tuples = get_outputs_for_dynamic_child(
                     self,
                     execution_partition=execution_partition,
+                    read_data=True,
                     sample=sample,
                     sample_count=sample_count,
                 )
@@ -2052,11 +2053,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
                     outputs_below_limit = not sample or not sample_count
                     if is_data_product:
-                        outputs_below_limit = \
-                            outputs_below_limit and len(data_products) < sample_count
+                        outputs_below_limit = outputs_below_limit or \
+                            (sample_count is not None and len(data_products) < sample_count)
                     else:
-                        outputs_below_limit = \
-                            outputs_below_limit and len(outputs) < sample_count
+                        outputs_below_limit = outputs_below_limit or \
+                            (sample_count is not None and len(outputs) < sample_count)
 
                     if outputs_below_limit:
                         if is_data_product:
@@ -2129,6 +2130,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         csv_lines_only: bool = False,
         execution_partition: str = None,
         include_print_outputs: bool = True,
+        sample: bool = False,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
@@ -2147,6 +2149,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 tuples = await get_outputs_for_dynamic_child_async(
                     self,
                     execution_partition=execution_partition,
+                    read_data=True,
+                    sample=True,
                     sample_count=sample_count,
                 )
 
@@ -2160,6 +2164,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 tup = await get_outputs_for_dynamic_block_async(
                     self,
                     execution_partition=execution_partition,
+                    sample=True,
                     sample_count=sample_count,
                 )
                 pairs.append(tup)
@@ -2566,7 +2571,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 include_outputs_use = include_outputs_use and include_outputs_spark
 
             if include_outputs_use:
-                data['outputs'] = await self.__outputs_async()
+                data['outputs'] = await self.__outputs_async(sample=True)
 
                 if check_if_file_exists and not \
                         self.replicated_block and \
