@@ -322,17 +322,23 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
         if is_dynamic_child and (not is_dynamic or not reduce_output):
             reduce_output = should_reduce_output(upstream_block)
 
-            var_objs_arr = get_outputs_for_dynamic_child(
-                upstream_block,
-                execution_partition=execution_partition,
-            )
-
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
             if reduce_output:
+                var_objs_arr = get_outputs_for_dynamic_child(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                    read_data=True,
+                )
+
                 input_vars.append(var_objs_arr)
                 kwargs_vars.append({})
             else:
+                var_objs_arr = get_outputs_for_dynamic_child(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
+
                 # If is dynamic, the modulus denominator is factored by the number of dynamic
                 # children and the number of actual outputs from the dynamic block
 

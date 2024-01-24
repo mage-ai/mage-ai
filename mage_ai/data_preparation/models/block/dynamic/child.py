@@ -192,8 +192,7 @@ class DynamicChildController:
             block_run = pipeline_run.create_block_run(
                 block_uuid,
                 metrics=block_run_dict,
-                # skip_if_exists=True,
-                raise_if_exists=True,
+                skip_if_exists=True,
             )
             block_runs.append(block_run)
 
