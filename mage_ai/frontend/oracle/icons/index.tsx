@@ -1,6 +1,7 @@
 import BaseIcon, {
   BaseIconProps, CircleStyle, EllipseStyle, PathStyle, RectStyle,
 } from './BaseIcon';
+import { ignoreKeys } from '@utils/hash';
 
 export function build(arrayOfPathProps, iconProps: {
   fill?: string;
@@ -15,21 +16,46 @@ export function build(arrayOfPathProps, iconProps: {
     const arr = arrayOfPathProps.map(({
       Style,
       ...pathProps
-    }, idx) => Style ? (
-      <Style
-        useStroke={iconProps?.useStroke}
-        {...props}
-        {...pathProps}
-        key={idx}
-      />
-    ) : (
-      <PathStyle
-        useStroke={iconProps?.useStroke}
-        {...props}
-        {...pathProps}
-        key={idx}
-      />
-    ));
+    }, idx) => {
+      let itemProps = {
+        ...props,
+        ...pathProps,
+      };
+
+      if (pathProps?.fill) {
+        itemProps = ignoreKeys(itemProps, [
+          'active',
+          'black',
+          'danger',
+          'default',
+          'disabled',
+          'earth',
+          'highlight',
+          'inverted',
+          'neutral',
+          'muted',
+          'pink',
+          'primary',
+          'secondary',
+          'success',
+          'warning',
+        ]);
+      }
+
+      return Style ? (
+        <Style
+          useStroke={iconProps?.useStroke}
+          {...itemProps}
+          key={idx}
+        />
+      ) : (
+        <PathStyle
+          useStroke={iconProps?.useStroke}
+          {...itemProps}
+          key={idx}
+        />
+      );
+    });
 
     if (opts?.withoutBaseIcon) {
       return arr;
@@ -2397,4 +2423,98 @@ export const ArrowsPointingInFromAllCorners = build([
 ], {
   fill: 'none',
   viewBox: '0 0 20 20',
+});
+
+export const ExpandWindow = build([
+  {
+    d: 'M30 52C42.1503 52 52 42.1503 52 30C52 17.8497 42.1503 8 30 8C17.8497 8 8 17.8497 8 30C8 42.1503 17.8497 52 30 52ZM30 55C43.8071 55 55 43.8071 55 30C55 16.1929 43.8071 5 30 5C16.1929 5 5 16.1929 5 30C5 43.8071 16.1929 55 30 55Z',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+  },
+  {
+    d: 'M29.4142 20.5H40C40.5523 20.5 41 20.9477 41 21.5V32.0858C41 32.9767 39.9229 33.4229 39.2929 32.7929L28.7071 22.2071C28.0771 21.5771 28.5233 20.5 29.4142 20.5Z',
+  },
+  {
+    d: 'M31.5858 41.5H21C20.4477 41.5 20 41.0523 20 40.5V29.9142C20 29.0233 21.0771 28.5771 21.7071 29.2071L32.2929 39.7929C32.9229 40.4229 32.4767 41.5 31.5858 41.5Z',
+  },
+], {
+  fill: 'none',
+  viewBox: '3 3 54 54',
+});
+
+export const ExpandWindowFilled = build([
+  {
+    d: 'M55 30C55 43.8071 43.8071 55 30 55C16.1929 55 5 43.8071 5 30C5 16.1929 16.1929 5 30 5C43.8071 5 55 16.1929 55 30Z',
+  },
+  {
+    d: 'M29.4142 20H40C40.5523 20 41 20.4477 41 21V31.5858C41 32.4767 39.9229 32.9229 39.2929 32.2929L28.7071 21.7071C28.0771 21.0771 28.5233 20 29.4142 20Z',
+    fill: 'black',
+  },
+  {
+    d: 'M31.5858 41H21C20.4477 41 20 40.5523 20 40V29.4142C20 28.5233 21.0771 28.0771 21.7071 28.7071L32.2929 39.2929C32.9229 39.9229 32.4767 41 31.5858 41Z',
+    fill: 'black',
+  },
+], {
+  fill: 'none',
+  viewBox: '3 3 54 54',
+});
+
+export const CollapseWindow = build([
+  {
+    d: 'M30 55C43.8071 55 55 43.8071 55 30C55 16.1929 43.8071 5 30 5C16.1929 5 5 16.1929 5 30C5 43.8071 16.1929 55 30 55ZM30 58C45.464 58 58 45.464 58 30C58 14.536 45.464 2 30 2C14.536 2 2 14.536 2 30C2 45.464 14.536 58 30 58Z',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+  },
+  {
+    d: 'M16.5 30C16.5 29.1716 17.1716 28.5 18 28.5H41.5C42.3284 28.5 43 29.1716 43 30C43 30.8284 42.3284 31.5 41.5 31.5H18C17.1716 31.5 16.5 30.8284 16.5 30Z',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+  },
+], {
+  fill: 'none',
+  viewBox: '0 0 60 60',
+});
+
+
+export const CollapseWindowFilled = build([
+  {
+    d: 'M58 30C58 45.464 45.464 58 30 58C14.536 58 2 45.464 2 30C2 14.536 14.536 2 30 2C45.464 2 58 14.536 58 30Z',
+  },
+  {
+    d: 'M16.5 30C16.5 29.1716 17.1716 28.5 18 28.5H41.5C42.3284 28.5 43 29.1716 43 30C43 30.8284 42.3284 31.5 41.5 31.5H18C17.1716 31.5 16.5 30.8284 16.5 30Z',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+    fill: 'black',
+  },
+], {
+  fill: 'none',
+  viewBox: '0 0 60 60',
+});
+
+export const CloseWindow = build([
+  {
+    d: 'M42.0607 17.9393C42.6464 18.5251 42.6464 19.4749 42.0607 20.0607L32.1213 30L42.0607 39.9393C42.6464 40.5251 42.6464 41.4749 42.0607 42.0607C41.4749 42.6464 40.5251 42.6464 39.9393 42.0607L30 32.1213L20.0607 42.0607C19.4749 42.6464 18.5251 42.6464 17.9393 42.0607C17.3536 41.4749 17.3536 40.5251 17.9393 39.9393L27.8787 30L17.9393 20.0607C17.3536 19.4749 17.3536 18.5251 17.9393 17.9393C18.5251 17.3536 19.4749 17.3536 20.0607 17.9393L30 27.8787L39.9393 17.9393C40.5251 17.3536 41.4749 17.3536 42.0607 17.9393Z',
+  },
+  {
+    d: 'M30 58C45.464 58 58 45.464 58 30C58 14.536 45.464 2 30 2C14.536 2 2 14.536 2 30C2 45.464 14.536 58 30 58ZM30 55C43.8071 55 55 43.8071 55 30C55 16.1929 43.8071 5 30 5C16.1929 5 5 16.1929 5 30C5 43.8071 16.1929 55 30 55Z',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+  },
+], {
+  fill: 'none',
+  viewBox: '0 0 60 60',
+});
+
+
+export const CloseWindowFilled = build([
+  {
+    d: 'M58 30C58 45.464 45.464 58 30 58C14.536 58 2 45.464 2 30C2 14.536 14.536 2 30 2C45.464 2 58 14.536 58 30Z',
+  },
+  {
+    d: 'M17.9393 20.0607C17.3536 19.4749 17.3536 18.5251 17.9393 17.9393C18.5251 17.3536 19.4749 17.3536 20.0607 17.9393L30 27.8787L39.9393 17.9393C40.5251 17.3536 41.4749 17.3536 42.0607 17.9393C42.6464 18.5251 42.6464 19.4749 42.0607 20.0607L32.1213 30L42.0607 39.9393C42.6464 40.5251 42.6464 41.4749 42.0607 42.0607C41.4749 42.6464 40.5251 42.6464 39.9393 42.0607L30 32.1213L20.0607 42.0607C19.4749 42.6464 18.5251 42.6464 17.9393 42.0607C17.3536 41.4749 17.3536 40.5251 17.9393 39.9393L27.8787 30L17.9393 20.0607Z',
+    fill: 'black',
+  },
+], {
+  fill: 'none',
+  viewBox: '0 0 60 60',
 });

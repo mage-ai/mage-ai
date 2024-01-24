@@ -219,10 +219,6 @@ def __preprocess_and_postprocess_dynamic_child_outputs(
     )
     variable_objects_arr = map_outputs(variable_objects_arr)
 
-    for idx, arr in enumerate(variable_objects_arr):
-        for idx2, variable_object in enumerate(arr):
-            print(idx, idx2, variable_object)
-
     if is_dynamic:
         return variable_objects_arr
 

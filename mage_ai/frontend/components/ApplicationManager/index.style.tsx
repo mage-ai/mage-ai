@@ -356,3 +356,13 @@ export const ResizeCornerStyle = styled.div<{
     }
   `}
 `;
+
+export const ButtonStyle = styled.div`
+  .emtpy {
+    display: none;
+  }
+
+  .filled {
+    display: block;
+  }
+`;
