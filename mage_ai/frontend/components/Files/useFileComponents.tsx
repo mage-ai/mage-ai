@@ -783,132 +783,123 @@ function useFileComponents({
     updateFile,
   ]);
 
-  const headerMenuGroups = useMemo(() => {
-    return [
-      {
-        uuid: 'File',
-        items: [
-          {
-            beforeIcon: <Save {...MENU_ICON_PROPS} />,
-            uuid: 'Save file and and all changes',
-            onClick: (opts) => {
-              if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
-                saveFile(contentByFilePath.current[selectedFilePath], {
-                  path: selectedFilePath,
-                });
-              }
-            },
+  const headerMenuGroups = useMemo(() => [
+    {
+      uuid: 'File',
+      items: [
+        {
+          beforeIcon: <Save {...MENU_ICON_PROPS} />,
+          uuid: 'Save file and and all changes',
+          onClick: (opts) => {
+            if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
+              saveFile(contentByFilePath.current[selectedFilePath], {
+                path: selectedFilePath,
+              });
+            }
           },
-        ],
-      },
-      {
-        uuid: 'Edit',
-        items: [
-          {
-            beforeIcon: <Edit success={fileVersionsVisible} {...MENU_ICON_PROPS} />,
-            uuid: 'Show previous file versions to undo changes',
-            disabled: fileVersionsVisible,
-            onClick: () => {
-              setFilesVersionsVisible(true);
-            },
+        },
+      ],
+    },
+    {
+      uuid: 'Edit',
+      items: [
+        {
+          beforeIcon: <Edit success={fileVersionsVisible} {...MENU_ICON_PROPS} />,
+          uuid: 'Show previous file versions to undo changes',
+          disabled: fileVersionsVisible,
+          onClick: () => {
+            setFilesVersionsVisible(true);
           },
-          {
-            beforeIcon: <Edit {...MENU_ICON_PROPS} />,
-            uuid: 'Close file versions',
-            disabled: !Edit,
-            onClick: () => {
-              setFilesVersionsVisible(false);
-            },
+        },
+        {
+          beforeIcon: <Edit {...MENU_ICON_PROPS} />,
+          uuid: 'Close file versions',
+          disabled: !Edit,
+          onClick: () => {
+            setFilesVersionsVisible(false);
           },
-        ],
-      },
-      {
-        uuid: 'View',
-        items: [
-          {
-            beforeIcon: <VisibleEye success={showHiddenFiles} {...MENU_ICON_PROPS} />,
-            uuid: 'Show hidden files',
-            disabled: showHiddenFiles,
-            onClick: () => {
-              setShowHiddenFiles(true);
-            },
+        },
+      ],
+    },
+    {
+      uuid: 'View',
+      items: [
+        {
+          beforeIcon: <VisibleEye success={showHiddenFiles} {...MENU_ICON_PROPS} />,
+          onClick: () => {
+            setShowHiddenFiles(prevState => !prevState);
           },
-          {
-            beforeIcon: <VisibleEye {...MENU_ICON_PROPS} />,
-            uuid: 'Hide hidden files',
-            disabled: !showHiddenFiles,
-            onClick: () => {
-              setShowHiddenFiles(false);
-            },
-          },
-        ],
-      },
-      {
-        uuid: 'Keyboard shortcuts',
-        items: [
-          {
-            uuid: 'Next file in tab',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_RIGHT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(1),
-          },
-          {
-            uuid: 'Previous file in tab',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_LEFT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(-1),
-          },
-          {
-            uuid: 'Next file recently viewed',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_RIGHT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(1, true),
-          },
-          {
-            uuid: 'Previously viewed file',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_LEFT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(-1, true),
-          },
-          {
-            uuid: 'Close current file',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_SHIFT, KEY_SYMBOL_C]]}
-                monospace
-              />
-            ),
-            onClick: () => removeOpenFilePaths([selectedFilePath]),
-          },
-        ],
-      },
-    ];
-  }, [
+          uuid: showHiddenFiles ? 'Hide hidden files' : 'Show hidden files',
+        },
+      ],
+    },
+    {
+      uuid: 'Keyboard shortcuts',
+      items: [
+        {
+          uuid: 'Next file in tab',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_RIGHT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(1),
+        },
+        {
+          uuid: 'Previous file in tab',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_LEFT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(-1),
+        },
+        {
+          uuid: 'Next file recently viewed',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_RIGHT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(1, true),
+        },
+        {
+          uuid: 'Previously viewed file',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_LEFT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(-1, true),
+        },
+        {
+          uuid: 'Close current file',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_SHIFT, KEY_SYMBOL_C]]}
+              monospace
+            />
+          ),
+          onClick: () => removeOpenFilePaths([selectedFilePath]),
+        },
+      ],
+    },
+  ], [
     contentByFilePath,
+    fileVersionsVisible,
     removeOpenFilePaths,
     saveFile,
     selectedFilePath,
+    selectItem,
     setShowHiddenFiles,
     showHiddenFiles,
   ]);
