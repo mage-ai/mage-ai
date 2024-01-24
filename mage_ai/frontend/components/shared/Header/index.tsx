@@ -317,19 +317,14 @@ function Header({
       },
       uuid: 'user_settings',
     },
-    ...(featureEnabled(featureUUIDs?.COMMAND_CENTER)
-      ? [
-          {
-            label: () => 'Launch command center',
-            onClick: (e) => {
-              pauseEvent(e);
-              launchCommandCenterWrapper();
-            },
-            uuid: 'Launch command center',
-          },
-        ]
-      : []
-    ),
+    {
+      label: () => 'Launch command center',
+      onClick: (e) => {
+        pauseEvent(e);
+        launchCommandCenterWrapper();
+      },
+      uuid: 'Launch command center',
+    },
   ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
@@ -468,7 +463,6 @@ function Header({
               <Button
                 noBackground
                 noBorder
-                noOutline
                 noPadding
                 onClick={(e) => {
                   pauseEvent(e);
@@ -702,17 +696,15 @@ function Header({
                       }
                     </KeyboardShortcutButton>
 
-                    <div style={{ position: 'relative' }}>
-                      <FlyoutMenu
-                        alternateBackground
-                        items={userDropdown}
-                        onClickCallback={() => setUserMenuVisible(false)}
-                        open={userMenuVisible}
-                        parentRef={refUserMenu}
-                        rightOffset={0}
-                        uuid="shared/Header/user_menu"
-                      />
-                    </div>
+                    <FlyoutMenu
+                      alternateBackground
+                      items={userDropdown}
+                      onClickCallback={() => setUserMenuVisible(false)}
+                      open={userMenuVisible}
+                      parentRef={refUserMenu}
+                      rightOffset={0}
+                      uuid="shared/Header/user_menu"
+                    />
                   </FlexContainer>
                 </ClickOutside>
               </>

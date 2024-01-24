@@ -523,6 +523,7 @@ function KeyboardShortcutButton({
               ? 11    // 11px padding to match size of button with text
               : padding
             }
+            ref={ref}
             type={(asHref || linkHref) ? null : type}
             useModelTheme={useModelTheme}
             withIcon={!!Icon}
