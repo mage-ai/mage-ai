@@ -1,8 +1,8 @@
-import sys
 from typing import Dict, List
 
 from jinja2 import Template
 from pandas import DataFrame
+from sqlglot import exp, parse_one
 
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
@@ -83,8 +83,7 @@ def create_upstream_block_tables(
             )
             database = database_custom or database_default
 
-            if query and sys.version_info >= (3, 9):
-                from sqlglot import exp, parse_one
+            if query:
                 for text in query.split(';'):
                     try:
                         text = Template(text).render()
