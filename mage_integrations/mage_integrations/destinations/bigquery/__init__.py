@@ -720,6 +720,10 @@ WHERE table_id = '{table_name}'
         load_method = 'load_from_dataframe'
         schema_fields = []
         source_format = bigquery.SourceFormat.PARQUET
+
+        # Map column to clean_name
+        column_name_mapping = {col: self.clean_column_name(col) for col in columns}
+
         for col, obj in mapping.items():
             item_type_converted = obj['item_type_converted']
             type_converted = obj['type_converted']
@@ -729,8 +733,10 @@ WHERE table_id = '{table_name}'
             is_array_type = COLUMN_TYPE_ARRAY == obj['type']
             if is_array_type:
                 load_method = 'load_from_json'
+
             schema_field = bigquery.SchemaField(
-                name=col,
+                # Use clean name in schema
+                name=column_name_mapping[col],
                 field_type=item_type_converted if is_array_type else type_converted,
                 mode='REPEATED' if is_array_type else 'NULLABLE',
             )
@@ -741,7 +747,6 @@ WHERE table_id = '{table_name}'
         else:
             convert_json_to_dict = True
 
-        column_name_mapping = {col: self.clean_column_name(col) for col in columns}
         for row in records:
             vals = dict()
             for column in columns:
@@ -768,6 +773,7 @@ WHERE table_id = '{table_name}'
                             column_type_dict,
                             convert_json_to_dict=convert_json_to_dict,
                         )
+                # Use clean name in values
                 vals[column_name_mapping[column]] = value_final
             values.append(vals)
 
