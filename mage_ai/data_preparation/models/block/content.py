@@ -17,24 +17,25 @@ from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.shared.hash import merge_dict
 
 
-def hydrate_block_outputs(
-    content: str,
-    outputs_from_input_vars: Dict = None,
-    upstream_block_uuids: List[str] = None,
-    variables: Dict = None,
-) -> str:
-    include_python_libraries = dict(
+def include_python_libraries() -> Dict:
+    return dict(
         datetime=datetime,
         inflection=inflection,
         json=json,
         math=math,
     )
 
+
+def hydrate_block_outputs(
+    content: str,
+    outputs_from_input_vars: Dict = None,
+    upstream_block_uuids: List[str] = None,
+    variables: Dict = None,
+) -> str:
     def _block_output(
         block_uuid: str = None,
         parse: str = None,
         outputs_from_input_vars=outputs_from_input_vars,
-        include_python_libraries=include_python_libraries,
         upstream_block_uuids=upstream_block_uuids,
         variables=variables,
     ) -> Any:
@@ -92,7 +93,7 @@ def hydrate_block_outputs(
             if groups:
                 function_string = groups[0].strip()
                 results = merge_dict(get_template_vars_no_db(
-                    include_python_libraries=include_python_libraries,
+                    include_python_libraries=include_python_libraries(),
                 ), dict(
                     block_output=_block_output,
                 ))
@@ -100,6 +101,12 @@ def hydrate_block_outputs(
 
                 value_hydrated = results['value_hydrated']
                 content = f'{content[0:si]}{value_hydrated}{content[ei:]}'
+
+    return template_render(content, variables)
+
+
+def template_render(content: str, variables: Dict = None):
+    variables = variables or {}
 
     return Template(content).render(
         variables=lambda x, p=None, v=variables: get_variable_for_template(
@@ -109,6 +116,6 @@ def hydrate_block_outputs(
         ),
         **merge_dict(
             variables,
-            get_template_vars(include_python_libraries=include_python_libraries),
+            get_template_vars(include_python_libraries=include_python_libraries()),
         ),
     )

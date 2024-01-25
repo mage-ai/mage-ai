@@ -65,6 +65,7 @@ jobs:
           pip install -r requirements.txt
           pip install mage_integrations/
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast

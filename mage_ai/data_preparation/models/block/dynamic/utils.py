@@ -413,6 +413,8 @@ def transform_output_for_display_dynamic_child(
             df = pd.concat([df, df_inner], axis=1)
 
     df = limit_output(df, sample_count)
+    if 1 == len(set(df.columns)):
+        df.columns = [f'{col}_{idx}' for idx, col in enumerate(df.columns)]
 
     return transform_dataframe_for_display(df)
 

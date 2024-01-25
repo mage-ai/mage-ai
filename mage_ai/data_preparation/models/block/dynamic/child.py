@@ -1,4 +1,5 @@
 import time
+from logging import Logger
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.block.dynamic.utils import (
@@ -11,6 +12,7 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_child,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun
+from mage_ai.shared.memory import get_memory_usage
 
 
 class DynamicChildController:
@@ -64,6 +66,8 @@ class DynamicChildController:
     def execute_sync(
         self,
         execution_partition: str = None,
+        logger: Logger = None,
+        logging_tags: Dict = None,
         **kwargs,
     ) -> List[Dict]:
         pipeline = self.block.pipeline
@@ -89,11 +93,29 @@ class DynamicChildController:
                 count = 0
                 while tries < 12 and count == 0:
                     # If this block tries to get the data too soon, it’ll return empty.
-                    pairs = get_outputs_for_dynamic_child(
-                        upstream_block,
+                    def __get(
                         execution_partition=execution_partition,
+                        logger=logger,
+                        logging_tags=logging_tags,
+                        upstream_block=upstream_block,
+                    ):
+                        return get_outputs_for_dynamic_child(
+                            upstream_block,
+                            execution_partition=execution_partition,
+                            logger=logger,
+                            logging_tags=logging_tags,
+                        )
+
+                    lazy_variable_controller = get_memory_usage(
+                        logger=logger,
+                        logging_tags=logging_tags,
+                        message_prefix=(
+                            f'DynamicChild {self.block.uuid} '
+                            'execute_sync get_outputs_for_dynamic_child'
+                        ),
+                        wrapped_function=__get,
                     )
-                    count = len(pairs)
+                    count = len(lazy_variable_controller)
                     if count == 0:
                         time.sleep(10)
                         tries += 1
@@ -102,7 +124,7 @@ class DynamicChildController:
 
                 if is_dynamic:
                     metadata_by_upstream_block_uuid[upstream_block.uuid] = \
-                        [tup[1] for tup in pairs if len(tup) >= 2]
+                        [lazy_var_set.read_metadata() for lazy_var_set in lazy_variable_controller]
             elif is_dynamic:
                 tries = 0
                 count = 0
@@ -192,8 +214,7 @@ class DynamicChildController:
             block_run = pipeline_run.create_block_run(
                 block_uuid,
                 metrics=block_run_dict,
-                # skip_if_exists=True,
-                raise_if_exists=True,
+                skip_if_exists=True,
             )
             block_runs.append(block_run)
 
