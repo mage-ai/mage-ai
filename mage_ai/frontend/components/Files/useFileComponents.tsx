@@ -39,6 +39,7 @@ import {
   Close,
   Edit,
   FilterV2,
+  Refresh,
   Save,
   VisibleEye,
 } from '@oracle/icons';
@@ -670,7 +671,7 @@ function useFileComponents({
                   beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
                     ? (
                       <Check
-                        fill={dark.content.default}
+                        fill={dark.accent.cyan}
                         size={ICON_SIZE_DEFAULT}
                       />
                     ) : <Circle muted size={ICON_SIZE_DEFAULT} />
@@ -696,6 +697,7 @@ function useFileComponents({
                 iconOnly
                 noBackground
                 onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
+                title="Filter files"
               >
                 <FilterV2
                   fill={fileFilter !== FileFilterEnum.ALL_FILES
@@ -723,8 +725,23 @@ function useFileComponents({
         ref={searchInputRef}
         value={fileSearchText}
       />
+      <Button
+        basic
+        iconOnly
+        noBackground
+        onClick={fetchFiles}
+        title="Refresh files"
+      >
+        <Refresh />
+      </Button>
     </FlexContainer>
-  ), [closeFilterButtonMenu, fileFilter, fileFilterMenuOpen, fileSearchText]);
+  ), [
+    closeFilterButtonMenu,
+    fetchFiles,
+    fileFilter,
+    fileFilterMenuOpen,
+    fileSearchText,
+  ]);
 
   const fileBrowserFlattenMemo = useMemo(() => (
     <FileBrowser
