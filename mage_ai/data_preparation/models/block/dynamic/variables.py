@@ -106,7 +106,9 @@ class LazyVariableSet(Sequence):
         return self[1]
 
     def read_child_data(self) -> Any:
-        return self.read_lazy_variable(self.lazy_child_data) if self.lazy_child_data else None
+        return self.read_lazy_variable(
+            self.lazy_child_data,
+        ) if self.lazy_child_data is not None else None
 
     def read_metadata(self) -> Any:
         return self.read_lazy_variable(self.lazy_metadata) if self.lazy_metadata else {}
@@ -128,9 +130,12 @@ class LazyVariableSet(Sequence):
         )
 
     def read_data(self) -> Tuple[Any, Any]:
+        metadata = self.read_metadata()
+        if metadata is None:
+            metadata = {}
         return (
-            self.read_child_data() or None,
-            self.read_metadata() or {},
+            self.read_child_data(),
+            metadata,
         )
 
     async def read_data_async(self) -> Tuple[Any, Any]:
