@@ -288,10 +288,11 @@ function BlockSettings({
           },
         }) => {
           let nameEl;
+          const isMultiProject = !!project?.settings;
           const isCurrentProject = pipeline?.uuid === pipelineUUID
-            && project?.settings?.path === repoPath;
+            && (!isMultiProject || project?.settings?.path === repoPath);
 
-          if (isCurrentProject || project?.settings?.path !== repoPath) {
+          if (isCurrentProject || (isMultiProject && project?.settings?.path !== repoPath)) {
             nameEl = (
               <Text key="name" monospace muted>
                 {pipelineName || pipelineUUID}
@@ -326,6 +327,7 @@ function BlockSettings({
     blockPipelines,
     blockPipelinesCount,
     pipeline,
+    project?.settings,
   ]);
 
   const isUsingPipelineRetryConfig: boolean = useMemo(() => pipelineRetryConfig
