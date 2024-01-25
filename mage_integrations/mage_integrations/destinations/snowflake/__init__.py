@@ -516,7 +516,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 for key, value in val.items():
                     if isinstance(value, dict) and len(value) == 0:
                         val[key] = None
-                        return val
             return val
 
         mapping = column_type_mapping(
