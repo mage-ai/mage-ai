@@ -656,12 +656,8 @@ function useFileComponents({
                 items={[
                   {
                     beforeIcon: fileFilter !== FileFilterEnum.UNUSED_BLOCK_FILES
-                      ? (
-                        <Check
-                          fill={dark.content.default}
-                          size={ICON_SIZE_DEFAULT}
-                        />
-                      ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                      ? <Check fill={dark.content.default} />
+                      : <Circle muted />
                     ,
                     label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.ALL_FILES),
                     onClick: () => {
@@ -671,12 +667,8 @@ function useFileComponents({
                   },
                   {
                     beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
-                      ? (
-                        <Check
-                          fill={dark.accent.cyan}
-                          size={ICON_SIZE_DEFAULT}
-                        />
-                      ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                      ? <Check fill={dark.accent.cyan} />
+                      : <Circle muted />
                     ,
                     label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.UNUSED_BLOCK_FILES),
                     onClick: () => {
