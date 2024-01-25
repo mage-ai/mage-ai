@@ -9,4 +9,8 @@ kernel_managers = dict(
         kernel_name='pysparkkernel',
         session=Session(key=bytes()),
     ),
+    pipeline=KernelManager(
+        kernel_name='pipeline',
+        session=Session(key=bytes()),
+    ),
 )

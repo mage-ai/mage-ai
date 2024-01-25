@@ -27,6 +27,7 @@ from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
+    ExecutorType,
     PipelineStatus,
 )
 from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template import (
@@ -486,12 +487,12 @@ class PipelineResource(BaseResource):
         pipeline = await self.__fetch_model(pk, **kwargs)
 
         api_operation_action = kwargs.get('api_operation_action', None)
-        if api_operation_action != DELETE:
-            kernel_name = PIPELINE_TO_KERNEL_NAME[pipeline.type]
-            switch_active_kernel(
-                kernel_name,
-                emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
-            )
+        # if api_operation_action != DELETE:
+        #     kernel_name = PIPELINE_TO_KERNEL_NAME[pipeline.type]
+        #     switch_active_kernel(
+        #         kernel_name,
+        #         emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
+        #     )
 
         if api_operation_action == DETAIL:
             if Project(pipeline.repo_config).is_feature_enabled(
@@ -610,9 +611,15 @@ class PipelineResource(BaseResource):
             if pipeline_doc:
                 await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
 
+        if payload.get('initialize_pipeline_environment'):
+            await initialize_pipeline_environment(self.model)
+
         pipeline_type = self.model.type
         await self.model.update(
-            ignore_keys(payload, ['add_upstream_for_block_uuid']),
+            ignore_keys(
+                payload,
+                ['add_upstream_for_block_uuid', 'initialize_pipeline_environment'],
+            ),
             update_content=update_content,
         )
         try:
@@ -747,8 +754,6 @@ class PipelineResource(BaseResource):
 
             cache = await PipelineCache.initialize_cache()
             cache.update_model(resource.model)
-
-            # await initialize_pipeline_environment(resource.model)
 
         self.on_update_callback = _update_callback
 

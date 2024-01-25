@@ -272,6 +272,7 @@ def add_execution_code(
     kernel_name: str = None,
     output_messages_to_logs: bool = False,
     pipeline_config: Dict = None,
+    pipeline_environment_dir: str = None,
     repo_config: Dict = None,
     run_incomplete_upstream: bool = False,
     run_settings: Dict = None,
@@ -296,7 +297,8 @@ def add_execution_code(
     run_settings_json = json.dumps(run_settings or {})
 
     magic_header = ''
-    spark_session_init = ''
+    session_init = ''
+    session_cleanup = ''
     if kernel_name == KernelName.PYSPARK:
         if block_type == BlockType.CHART or (
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
@@ -308,10 +310,39 @@ def add_execution_code(
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 magic_header = '%%spark -o df --maxrows 10000'
     elif pipeline_config['type'] == 'databricks':
-        spark_session_init = '''
+        session_init = '''
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 '''
+    elif pipeline_config['executor_type'] == 'process':
+        pass
+        session_init = f'''
+import os
+import sys
+
+dir = 'bin'
+if os.name == 'nt':
+    dir = 'Scripts'
+
+activate_this = os.path.join('{pipeline_environment_dir}', dir, 'activate_this.py')
+
+old_os_path = os.environ['PATH']
+prev_sys_path = list(sys.path)
+
+with open(activate_this) as f:
+    code = compile(f.read(), activate_this, 'exec')
+    exec(code, dict(__file__=activate_this))
+'''
+
+#         session_cleanup = '''
+# def cleanup():
+#     os.environ['PATH'] = old_os_path
+#     del os.environ['VIRTUAL_ENV']
+#     del os.environ['VIRTUAL_ENV_PROMPT']
+#     sys.path[:0] = prev_sys_path
+#     sys.prefix = sys.real_prefix
+#     sys.real_prefix = None
+# '''
 
     return f"""{magic_header}
 from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
@@ -330,99 +361,104 @@ import pandas as pd
 
 
 db_connection.start_session()
-{spark_session_init}
+{session_init}
+
+{session_cleanup}
 
 if 'context' not in globals():
     context = dict()
 
 def execute_custom_code():
-    block_uuid=\'{block_uuid}\'
-    run_incomplete_upstream={str(run_incomplete_upstream)}
-    run_upstream={str(run_upstream)}
-    pipeline = Pipeline(
-        uuid=\'{pipeline_uuid}\',
-        config={pipeline_config},
-        repo_config={repo_config},
-    )
-
-    block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
-
-    upstream_blocks = {upstream_blocks}
-    if upstream_blocks and len(upstream_blocks) >= 1:
-        blocks = pipeline.get_blocks({upstream_blocks})
-        block.upstream_blocks = blocks
-
-    code = r\'\'\'
-{escaped_code}
-    \'\'\'
-
-    global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
-
-    if {variables}:
-        global_vars = merge_dict(global_vars, {variables})
-
-    if pipeline.run_pipeline_in_one_process:
-        # Use shared context for blocks
-        global_vars['context'] = context
-
     try:
-        global_vars[\'spark\'] = spark
-    except Exception:
-        pass
-
-    if run_incomplete_upstream or run_upstream:
-        block.run_upstream_blocks(
-            from_notebook=True,
-            global_vars=global_vars,
-            incomplete_only=run_incomplete_upstream,
+        block_uuid=\'{block_uuid}\'
+        run_incomplete_upstream={str(run_incomplete_upstream)}
+        run_upstream={str(run_upstream)}
+        pipeline = Pipeline(
+            uuid=\'{pipeline_uuid}\',
+            config={pipeline_config},
+            repo_config={repo_config},
         )
 
-    logger = logging.getLogger('{block_uuid}_test')
-    logger.setLevel('INFO')
-    if 'logger' not in global_vars:
-        global_vars['logger'] = logger
+        block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
 
-    block_output = dict(output=[])
-    options = dict(
-        custom_code=code,
-        execution_uuid={execution_uuid},
-        from_notebook=True,
-        global_vars=global_vars,
-        logger=logger,
-        output_messages_to_logs={output_messages_to_logs},
-        run_settings=json.loads('{run_settings_json}'),
-        update_status={update_status},
-    )
+        upstream_blocks = {upstream_blocks}
+        if upstream_blocks and len(upstream_blocks) >= 1:
+            blocks = pipeline.get_blocks({upstream_blocks})
+            block.upstream_blocks = blocks
 
-    has_reduce_output = has_reduce_output_from_upstreams(block)
-    is_dynamic_child = is_dynamic_block_child(block)
+        code = r\'\'\'
+{escaped_code}
+        \'\'\'
 
-    if is_dynamic_child:
-        outputs = []
-        settings = build_combinations_for_dynamic_child(block, **options)
-        for config in settings:
-            output_dict = block.execute_with_callback(**merge_dict(options, config))
-            if output_dict and output_dict.get('output'):
-                outputs.append(output_dict.get('output'))
-        block_output['output'] = outputs
-    else:
-        block_output = block.execute_with_callback(**options)
+        global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
 
-    if {run_tests}:
-        block.run_tests(
+        if {variables}:
+            global_vars = merge_dict(global_vars, {variables})
+
+        if pipeline.run_pipeline_in_one_process:
+            # Use shared context for blocks
+            global_vars['context'] = context
+
+        try:
+            global_vars[\'spark\'] = spark
+        except Exception:
+            pass
+
+        if run_incomplete_upstream or run_upstream:
+            block.run_upstream_blocks(
+                from_notebook=True,
+                global_vars=global_vars,
+                incomplete_only=run_incomplete_upstream,
+            )
+
+        logger = logging.getLogger('{block_uuid}_test')
+        logger.setLevel('INFO')
+        if 'logger' not in global_vars:
+            global_vars['logger'] = logger
+
+        block_output = dict(output=[])
+        options = dict(
             custom_code=code,
+            execution_uuid={execution_uuid},
             from_notebook=True,
-            logger=logger,
             global_vars=global_vars,
-            update_tests=False,
+            logger=logger,
+            output_messages_to_logs={output_messages_to_logs},
+            run_settings=json.loads('{run_settings_json}'),
+            update_status={update_status},
         )
 
-    output = block_output['output'] or []
+        has_reduce_output = has_reduce_output_from_upstreams(block)
+        is_dynamic_child = is_dynamic_block_child(block)
 
-    if {widget} or is_dynamic_block(block) or is_dynamic_child or has_reduce_output:
-        return output
-    else:
-        return find(lambda val: val is not None, output)
+        if is_dynamic_child:
+            outputs = []
+            settings = build_combinations_for_dynamic_child(block, **options)
+            for config in settings:
+                output_dict = block.execute_with_callback(**merge_dict(options, config))
+                if output_dict and output_dict.get('output'):
+                    outputs.append(output_dict.get('output'))
+            block_output['output'] = outputs
+        else:
+            block_output = block.execute_with_callback(**options)
+
+        if {run_tests}:
+            block.run_tests(
+                custom_code=code,
+                from_notebook=True,
+                logger=logger,
+                global_vars=global_vars,
+                update_tests=False,
+            )
+
+        output = block_output['output'] or []
+
+        if {widget} or is_dynamic_block(block) or is_dynamic_child or has_reduce_output:
+            return output
+        else:
+            return find(lambda val: val is not None, output)
+    finally:
+        {'cleanup()' if session_cleanup else 'pass'}
 
 df = execute_custom_code()
     """

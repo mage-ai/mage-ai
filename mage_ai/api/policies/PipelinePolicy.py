@@ -100,6 +100,7 @@ PipelinePolicy.allow_write([
     'callbacks',
     'conditionals',
     'extensions',
+    'initialize_pipeline_environment',
     'llm',
     'schedules',
 ] + PipelinePresenter.default_attributes, scopes=[

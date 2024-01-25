@@ -19,6 +19,7 @@ class ActiveKernel():
     def __init__(self):
         self.kernel = kernel_managers[DEFAULT_KERNEL_NAME]
         self.kernel_client = self.kernel.client()
+        self.kernel_config = dict()
 
 
 active_kernel = ActiveKernel()
@@ -27,6 +28,7 @@ active_kernel = ActiveKernel()
 def switch_active_kernel(
     kernel_name: KernelName,
     emr_config: Dict = None,
+    kernel_config: Dict = None,
 ) -> None:
     """
     Switches the active kernel to the specified kernel name, handling its startup and
@@ -65,11 +67,15 @@ def switch_active_kernel(
             logger.info(f'Shut down current kernel {kernel}.')
             kernel.request_shutdown()
 
+    if kernel_config is None:
+        kernel_config = dict()
+
     try:
         new_kernel = kernel_managers[kernel_name]
-        new_kernel.start_kernel()
+        new_kernel.start_kernel(**kernel_config)
         active_kernel.kernel = new_kernel
         active_kernel.kernel_client = new_kernel.client()
+        active_kernel.kernel_config = kernel_config
         if kernel_name == KernelName.PYSPARK:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import (
                 emr_cluster_manager,
@@ -129,6 +135,10 @@ def get_active_kernel_client() -> KernelClient:
     return active_kernel.kernel_client
 
 
+def get_active_kernel_config() -> Dict:
+    return active_kernel.kernel_config
+
+
 def interrupt_kernel() -> None:
     active_kernel.kernel.interrupt_kernel()
 
@@ -138,6 +148,6 @@ def restart_kernel() -> None:
     active_kernel.kernel_client = active_kernel.kernel.client()
 
 
-def start_kernel() -> None:
-    active_kernel.kernel.start_kernel()
+def start_kernel(**kwargs) -> None:
+    active_kernel.kernel.start_kernel(**kwargs)
     active_kernel.kernel_client = active_kernel.kernel.client()

@@ -12,7 +12,12 @@ def get_messages(callback=None):
     while True:
         try:
             client = get_active_kernel_client()
+
+            print(client)
+
             message = client.get_iopub_msg(timeout=1)
+
+            print('message:', message)
 
             if message.get('content'):
                 if callback:

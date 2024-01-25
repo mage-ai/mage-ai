@@ -3,6 +3,7 @@ import KernelOutputType from './KernelOutputType';
 export enum KernelNameEnum {
   PYSPARK = 'pysparkkernel',
   PYTHON3 = 'python3',
+  PIPELINE = 'pipeline',
 }
 
 export default interface KernelType {

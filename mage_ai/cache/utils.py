@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List
 
 from mage_ai.shared.hash import extract, merge_dict
 
@@ -7,6 +7,7 @@ PIPELINE_KEYS = [
     'created_at',
     'description',
     'name',
+    'package_dependencies',
     'tags',
     'type',
     'updated_at',
@@ -22,7 +23,7 @@ BLOCK_KEYS = [
 ]
 
 
-def build_block_dict(block: Union[Dict]) -> Dict:
+def build_block_dict(block: Dict) -> Dict:
     file_path = None
 
     if isinstance(block, dict):
@@ -54,7 +55,7 @@ def build_block_dict(block: Union[Dict]) -> Dict:
 
 
 def build_pipeline_dict(
-    pipeline: Union[Dict],
+    pipeline: Dict,
     added_at: str = None,
     include_details: bool = False,
     repo_path: str = None,

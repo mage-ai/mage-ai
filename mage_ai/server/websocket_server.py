@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.constants import (
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
     BlockType,
+    ExecutorType,
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -40,10 +41,12 @@ from mage_ai.server.execution_manager import (
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels.active_kernel import (
     get_active_kernel_client,
+    get_active_kernel_config,
     get_active_kernel_name,
     switch_active_kernel,
 )
 from mage_ai.server.kernels.constants import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels.kernels import kernel_managers
 from mage_ai.server.kernels.provisioners import ProcessKernelProvisioner
 from mage_ai.server.logger import Logger
 from mage_ai.server.utils.output_display import (
@@ -174,19 +177,19 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         return True
 
     def init_kernel_client(self, kernel_name, pipeline=None) -> KernelClient:
-        # if kernel_name != get_active_kernel_name():
-        #     switch_active_kernel(kernel_name)
+        # if kernel_name != get_active_kernel_name() and (
+        #     not pipeline
+        #     or pipeline.uuid != get_active_kernel_config().get('pipeline_uuid')
+        # ):
+        config = None
+        if pipeline:
+            config = dict(
+                path=pipeline.pipeline_environment_dir,
+                pipeline_uuid=pipeline.uuid,
+            )
+        switch_active_kernel(kernel_name, kernel_config=config)
 
-        # return get_active_kernel_client()
-
-        from jupyter_client import KernelManager
-        from jupyter_client.session import Session
-
-        return KernelManager(
-            kernel_name='kernel_separate_process',
-            session=Session(key=bytes()),
-            provisioner=ProcessKernelProvisioner(path=os.path.join(pipeline.pipeline_variables_dir, '.venv'))
-        ).client()
+        return get_active_kernel_client()
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
@@ -421,9 +424,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         code = custom_code
 
-        client = self.init_kernel_client(kernel_name, pipeline=pipeline)
+        try:
+            # client = self.init_kernel_client('pipeline', pipeline=pipeline)
+            client = self.init_kernel_client(kernel_name)
+        except Exception:
+            print('ERROR!!!!!!')
+            import traceback
+            traceback.print_exc()
 
-        print('client:', client)
+        print('active kernel name:', get_active_kernel_name())
 
         value = dict(
             block_type=block_type or block.type,
@@ -468,6 +477,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
+                    pipeline_environment_dir=pipeline.pipeline_environment_dir,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
                     # repo_config=get_repo_config().to_dict(remote=remote_execution),

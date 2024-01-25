@@ -1,8 +1,12 @@
+import asyncio
 import os
 import subprocess
 from typing import Dict
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
+from mage_ai.data_preparation.models.pipelines.environments import (
+    initialize_pipeline_environment,
+)
 from mage_ai.shared.hash import merge_dict
 
 
@@ -23,8 +27,10 @@ class ProcessBlockExecutor(BlockExecutor):
         global_vars: Dict = None,
         pipeline_run_id: int = None,
         **kwargs,
-    ) -> None:
-        venv_path = os.path.join(self.pipeline.pipeline_variables_dir, '.venv')
+    ) -> Dict:
+        venv_path = self.pipeline.pipeline_environment_dir
+        if not os.path.exists(venv_path):
+            asyncio.run(initialize_pipeline_environment(self.pipeline))
         command = [
             os.path.join(venv_path, 'bin', 'python'),
             '-m',
@@ -44,8 +50,6 @@ class ProcessBlockExecutor(BlockExecutor):
         if pipeline_run_id:
             command.extend(['--pipeline-run-id', f'{pipeline_run_id}'])
 
-        print('COMMAND:', command)
-
         env = kwargs.get('env')
         proc = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env
@@ -63,3 +67,5 @@ class ProcessBlockExecutor(BlockExecutor):
                 else 'ProcessBlockExecutor failed to execute.'
             )
             raise ChildProcessError(message)
+
+        return dict(output=out.decode('UTF-8'))

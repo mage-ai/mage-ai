@@ -175,6 +175,21 @@ class Pipeline:
         )
 
     @property
+    def pipeline_environment_dir(self):
+        return os.path.join(self.pipeline_variables_dir, '.venv')
+
+    @property
+    def package_dependencies(self):
+        requirements_file_path = os.path.join(self.dir_path, 'requirements.txt')
+        dependencies = []
+        if os.path.exists(requirements_file_path):
+            with open(requirements_file_path, 'r') as f:
+                content = f.read()
+                for line in content.splitlines():
+                    dependencies.append(line)
+        return dependencies
+
+    @property
     def remote_variables_dir(self):
         remote_variables_dir = self.repo_config.remote_variables_dir
         if remote_variables_dir == 's3://bucket/path_prefix':

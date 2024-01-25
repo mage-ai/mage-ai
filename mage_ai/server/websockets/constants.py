@@ -7,6 +7,7 @@ class Channel(str, Enum):
 
 class ExecutionState(str, Enum):
     IDLE = 'idle'
+    COMPLETED = 'completed'
 
 
 class MessageType(str, Enum):

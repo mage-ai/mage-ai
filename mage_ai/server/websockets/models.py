@@ -17,8 +17,8 @@ from mage_ai.shared.models import BaseDataClass
 
 def init_kernel_client(kernel_name: KernelName = None) -> KernelClient:
     kernel_name = kernel_name or DEFAULT_KERNEL_NAME
-    if kernel_name != get_active_kernel_name():
-        switch_active_kernel(kernel_name)
+    # if kernel_name != get_active_kernel_name():
+    #     switch_active_kernel(kernel_name)
     return get_active_kernel_client()
 
 
@@ -58,8 +58,8 @@ class Message(BaseDataClass):
 
 @dataclass
 class Client(BaseDataClass):
-    client = KernelClient = None
-    message = Message = None
+    client: KernelClient = None
+    message: Message = None
 
     def __post_init__(self):
         self.serialize_attribute_class('message', Message)

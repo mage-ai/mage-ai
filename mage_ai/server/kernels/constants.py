@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 class KernelName(str, Enum):
     PYSPARK = 'pysparkkernel'
     PYTHON3 = 'python3'
+    PIPELINE = 'pipeline'
 
 
 PIPELINE_TO_KERNEL_NAME = {

@@ -38,6 +38,9 @@ setuptools.setup(
         'console_scripts': [
             'mage=mage_ai.cli.main:app',
         ],
+        'jupyter_client.kernel_provisioners': [
+            'process-provisioner=mage_ai.server.kernels.provisioners:ProcessKernelProvisioner',
+        ],
     },
     extras_require={
         'ai': [

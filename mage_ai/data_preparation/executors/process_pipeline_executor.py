@@ -1,9 +1,13 @@
+import asyncio
 import os
 import subprocess
 from typing import Dict
 
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipelines.environments import (
+    initialize_pipeline_environment,
+)
 from mage_ai.services.k8s.config import K8sExecutorConfig
 
 
@@ -19,7 +23,9 @@ class ProcessPipelineExecutor(PipelineExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-        venv_path = os.path.join(self.pipeline.pipeline_variables_dir, '.venv')
+        venv_path = self.pipeline.pipeline_environment_dir
+        if not os.path.exists(venv_path):
+            asyncio.run(initialize_pipeline_environment(self.pipeline))
         command = [
             os.path.join(venv_path, 'bin', 'python'),
             '-m',
