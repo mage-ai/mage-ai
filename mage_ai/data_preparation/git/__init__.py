@@ -325,6 +325,8 @@ class Git:
                         # Overwrite the submodule URL with git credentials.
                         update_gitmodules(section, 'url', url)
 
+                    repo.git.submodule('sync', '--', path)
+
                     subprocess.run(
                         [
                             'git',
