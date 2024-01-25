@@ -110,6 +110,11 @@ export default interface ProjectType {
   remote_variables_dir?: string;
   repo_path: string;
   root_project?: boolean;
+  settings?: {
+    active: boolean;
+    path: string;
+    uuid: string;
+  }
   spark_config?: SparkConfigType;
   version?: string;
   workspace_config_defaults?: WorkspaceConfigType;

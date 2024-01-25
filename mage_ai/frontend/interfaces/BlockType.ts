@@ -248,8 +248,11 @@ export interface BlockRequestPayloadType {
 export interface BlockPipelineType {
   added_at?: string;
   pipeline: {
+    created_at?: string;
     description?: string;
     name: string;
+    tags?: string[];
+    repo_path?: string;
     type: string;
     updated_at: string;
     uuid: string;

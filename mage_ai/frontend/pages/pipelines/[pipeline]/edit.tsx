@@ -61,7 +61,6 @@ import PipelineInteractionType, {
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
-  PIPELINE_TYPE_TO_KERNEL_NAME,
   PipelineExtensionsType,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
@@ -139,7 +138,7 @@ import {
 } from '@components/PipelineDetail/utils';
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
-import { equals, find, indexBy, removeAtIndex, sortByKey } from '@utils/array';
+import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
