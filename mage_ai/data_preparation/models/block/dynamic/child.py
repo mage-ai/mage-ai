@@ -2,6 +2,8 @@ import time
 from logging import Logger
 from typing import Dict, List
 
+import pandas as pd
+
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
     is_dynamic_block,
@@ -115,7 +117,10 @@ class DynamicChildController:
                         ),
                         wrapped_function=__get,
                     )
-                    count = len(lazy_variable_controller)
+
+                    if lazy_variable_controller is not None:
+                        count = len(lazy_variable_controller)
+
                     if count == 0:
                         time.sleep(10)
                         tries += 1
@@ -134,7 +139,12 @@ class DynamicChildController:
                         upstream_block,
                         execution_partition=execution_partition,
                     )
-                    count = len(values)
+                    if values is not None:
+                        if isinstance(values, pd.DataFrame):
+                            count = len(values.index)
+                        else:
+                            count = len(values)
+
                     if count == 0:
                         time.sleep(10)
                         tries += 1
