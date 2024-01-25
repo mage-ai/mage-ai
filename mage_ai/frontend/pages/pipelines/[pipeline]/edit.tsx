@@ -3306,10 +3306,7 @@ function PipelineDetailPage({
     if (EDIT_BEFORE_TAB_ALL_FILES.uuid === selectedTab?.uuid) {
       return (
         <>
-          <Spacing m={1}>
-            {fileSearch}
-          </Spacing>
-
+          {fileSearch}
           {fileBrowser}
         </>
       );

@@ -45,10 +45,7 @@ function FilesPageComponent({
       afterHidden={!(versionsVisible && selectedFilePath)}
       before={
         <>
-          <Spacing m={1}>
-            {search}
-          </Spacing>
-
+          {search}
           {browser}
         </>
       }

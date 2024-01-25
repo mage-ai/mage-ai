@@ -64,8 +64,6 @@ import {
   KEY_SYMBOL_META,
   KEY_SYMBOL_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES,
   addOpenFilePath as addOpenFilePathLocalStorage,
@@ -73,6 +71,9 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
+import { SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
+import { SearchContainerStyle } from './index.style';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -642,99 +643,101 @@ function useFileComponents({
 
   const closeFilterButtonMenu = useCallback(() => setFileFilterMenuOpen(false), []);
   const fileSearchMemo = useMemo(() => (
-    <FlexContainer alignItems="center">
-      <TextInput
-        {...SEARCH_INPUT_PROPS}
-        afterIcon={fileSearchText
-          ? <Close />
-          : (
-            <FlyoutMenuWrapper
-              compact
-              disableKeyboardShortcuts
-              items={[
-                {
-                  beforeIcon: fileFilter !== FileFilterEnum.UNUSED_BLOCK_FILES
-                    ? (
-                      <Check
-                        fill={dark.content.default}
-                        size={ICON_SIZE_DEFAULT}
-                      />
-                    ) : <Circle muted size={ICON_SIZE_DEFAULT} />
-                  ,
-                  label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.ALL_FILES),
-                  onClick: () => {
-                    setFileFilter(FileFilterEnum.ALL_FILES);
+    <SearchContainerStyle>
+      <FlexContainer alignItems="center">
+        <TextInput
+          {...SEARCH_INPUT_PROPS}
+          afterIcon={fileSearchText
+            ? <Close />
+            : (
+              <FlyoutMenuWrapper
+                compact
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    beforeIcon: fileFilter !== FileFilterEnum.UNUSED_BLOCK_FILES
+                      ? (
+                        <Check
+                          fill={dark.content.default}
+                          size={ICON_SIZE_DEFAULT}
+                        />
+                      ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                    ,
+                    label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.ALL_FILES),
+                    onClick: () => {
+                      setFileFilter(FileFilterEnum.ALL_FILES);
+                    },
+                    uuid: 'Files/Filter/AllFiles',
                   },
-                  uuid: 'Files/Filter/AllFiles',
-                },
-                {
-                  beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
-                    ? (
-                      <Check
-                        fill={dark.accent.cyan}
-                        size={ICON_SIZE_DEFAULT}
-                      />
-                    ) : <Circle muted size={ICON_SIZE_DEFAULT} />
-                  ,
-                  label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.UNUSED_BLOCK_FILES),
-                  onClick: () => {
-                    setFileFilter(FileFilterEnum.UNUSED_BLOCK_FILES);
+                  {
+                    beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
+                      ? (
+                        <Check
+                          fill={dark.accent.cyan}
+                          size={ICON_SIZE_DEFAULT}
+                        />
+                      ) : <Circle muted size={ICON_SIZE_DEFAULT} />
+                    ,
+                    label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.UNUSED_BLOCK_FILES),
+                    onClick: () => {
+                      setFileFilter(FileFilterEnum.UNUSED_BLOCK_FILES);
+                    },
+                    uuid: 'Files/Filter/UnusedBlockFiles',
                   },
-                  uuid: 'Files/Filter/UnusedBlockFiles',
-                },
-              ]}
-              onClickCallback={closeFilterButtonMenu}
-              onClickOutside={closeFilterButtonMenu}
-              open={fileFilterMenuOpen}
-              parentRef={filterButtonMenuRef}
-              rightOffset={0}
-              roundedStyle
-              topOffset={1}
-              uuid="Files/FilterMenu"
-            >
-              <Button
-                basic
-                iconOnly
-                noBackground
-                onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
-                title="Filter files"
+                ]}
+                onClickCallback={closeFilterButtonMenu}
+                onClickOutside={closeFilterButtonMenu}
+                open={fileFilterMenuOpen}
+                parentRef={filterButtonMenuRef}
+                rightOffset={0}
+                roundedStyle
+                topOffset={1}
+                uuid="Files/FilterMenu"
               >
-                <FilterV2
-                  fill={fileFilter !== FileFilterEnum.ALL_FILES
-                    ? dark.accent.cyan
-                    : null
-                  }
-                />
-              </Button>
-            </FlyoutMenuWrapper>
-          )
-        }
-        afterIconClick={() => {
-          if (fileSearchText) {
-            setFileSearchText('');
-            searchInputRef?.current?.focus();
+                <Button
+                  basic
+                  iconOnly
+                  noBackground
+                  onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
+                  title="Filter files"
+                >
+                  <FilterV2
+                    fill={fileFilter !== FileFilterEnum.ALL_FILES
+                      ? dark.accent.cyan
+                      : null
+                    }
+                  />
+                </Button>
+              </FlyoutMenuWrapper>
+            )
           }
-        }}
-        afterIconSize={ICON_SIZE}
-        beforeIconSize={ICON_SIZE}
-        compact
-        maxWidth={300}
-        onChange={e => setFileSearchText(e.target.value)}
-        paddingVertical={UNIT / 2}
-        placeholder="Search files"
-        ref={searchInputRef}
-        value={fileSearchText}
-      />
-      <Button
-        basic
-        iconOnly
-        noBackground
-        onClick={fetchFiles}
-        title="Refresh files"
-      >
-        <Refresh />
-      </Button>
-    </FlexContainer>
+          afterIconClick={() => {
+            if (fileSearchText) {
+              setFileSearchText('');
+              searchInputRef?.current?.focus();
+            }
+          }}
+          afterIconSize={ICON_SIZE}
+          beforeIconSize={ICON_SIZE}
+          compact
+          maxWidth={300}
+          onChange={e => setFileSearchText(e.target.value)}
+          paddingVertical={UNIT / 2}
+          placeholder="Search files"
+          ref={searchInputRef}
+          value={fileSearchText}
+        />
+        <Button
+          basic
+          iconOnly
+          noBackground
+          onClick={fetchFiles}
+          title="Refresh files"
+        >
+          <Refresh />
+        </Button>
+      </FlexContainer>
+    </SearchContainerStyle>
   ), [
     closeFilterButtonMenu,
     fetchFiles,
