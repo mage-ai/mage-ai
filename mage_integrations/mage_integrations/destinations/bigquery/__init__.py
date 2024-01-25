@@ -695,6 +695,22 @@ WHERE table_id = '{table_name}'
         columns: List[str],
         full_table_name: str,
     ):
+        """
+        Run a BigQuery load job using the provided parameters.
+
+        Args:
+            client: The BigQuery client instance.
+            record_data: List of dictionaries containing record data.
+            mapping: Dictionary specifying the mapping of columns to their type configs.
+            columns: List of column names.
+            full_table_name: Full name of the target table.
+
+        Returns:
+            Tuple containing lists of JobResult and LoadJob instances.
+
+        Raises:
+            BadRequest: If there is an error in the BigQuery batch load process.
+        """
         job_results = []
         jobs = []
 
@@ -725,6 +741,7 @@ WHERE table_id = '{table_name}'
         else:
             convert_json_to_dict = True
 
+        column_name_mapping = {col: self.clean_column_name(col) for col in columns}
         for row in records:
             vals = dict()
             for column in columns:
@@ -751,7 +768,7 @@ WHERE table_id = '{table_name}'
                             column_type_dict,
                             convert_json_to_dict=convert_json_to_dict,
                         )
-                vals[column] = value_final
+                vals[column_name_mapping[column]] = value_final
             values.append(vals)
 
         job_config = bigquery.LoadJobConfig(
