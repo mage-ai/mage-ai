@@ -7,7 +7,7 @@ class EventNameType(str, enum.Enum):
     API_ERROR = 'api_error'
     APPLICATION_ERROR = 'application_error'
     BLOCK_RUN_ENDED = 'block_run_ended'
-    EXECUTION_ERROR = 'execution_error'
+    BLOCK_RUN_ERROR = 'block_run_error'
     FRONTEND_ERROR = 'frontend_error'
     PIPELINE_RUN_ENDED = 'pipeline_run_ended'
     USAGE_STATISTIC_CREATE = 'usage_statistic.create'

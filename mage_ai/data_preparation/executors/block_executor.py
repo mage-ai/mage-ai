@@ -1,3 +1,4 @@
+import asyncio
 import json
 import traceback
 from datetime import datetime, timedelta
@@ -42,6 +43,8 @@ from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
+from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class BlockExecutor:
@@ -615,11 +618,22 @@ class BlockExecutor:
                         )),
                     )
 
+                    errors = traceback.format_stack()
                     error_details = dict(
                         error=error,
-                        errors=traceback.format_stack(),
+                        errors=errors,
                         message=traceback.format_exc(),
                     )
+
+                    asyncio.run(UsageStatisticLogger().error(
+                        event_name=EventNameType.BLOCK_RUN_ERROR,
+                        errors='\n'.join(errors or []),
+                        message=str(error),
+                        resource=EventObjectType.BLOCK_RUN,
+                        resource_id=self.block_uuid,
+                        resource_parent=EventObjectType.PIPELINE if self.pipeline else None,
+                        resource_parent_id=self.pipeline.uuid if self.pipeline else None,
+                    ))
 
                     if on_failure is not None:
                         on_failure(
