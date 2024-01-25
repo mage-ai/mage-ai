@@ -20,7 +20,7 @@ itsdangerous~=1.1.0
 joblib>=1.1.0
 jupyter-server-proxy==3.2.1
 jupyter-server==2.11.2
-jupyter_client==7.3.4
+jupyter_client==7.4.4
 ldap3==2.9.1
 newrelic==8.8.0
 numpy>=1.22.0
