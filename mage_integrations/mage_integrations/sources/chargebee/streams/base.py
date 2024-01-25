@@ -127,7 +127,7 @@ class BaseChargebeeStream():
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
         self.logger.info(
             f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.')
-        bookmark_date = get_last_record_value_for_table(self.state, table, 'bookmark_date')
+        bookmark_date = get_last_record_value_for_table(self.state, table, self.REPLICATION_KEY)
 
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
@@ -220,7 +220,7 @@ class BaseChargebeeStream():
             # so, no data will be missed due to API latency
             max_date = min(max_date, to_date)
             self.state = incorporate(
-                self.state, table, 'bookmark_date', max_date)
+                self.state, table, self.REPLICATION_KEY, max_date)
 
             if not response.get('next_offset'):
                 self.logger.info("Final offset reached. Ending sync.")
