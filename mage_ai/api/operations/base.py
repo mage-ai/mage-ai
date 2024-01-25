@@ -666,7 +666,15 @@ class BaseOperation():
             self.resource,
             self.user,
             error,
-            **self.__combined_options(),
+            **merge_dict(
+                self.__combined_options(),
+                dict(
+                    operation=self.action,
+                    resource_parent_id=self.resource_parent_id,
+                    resource_parent=self.resource_parent,
+                    resource_id=self.pk,
+                ),
+            ),
         ).present()
 
     def __classified_class(self):
