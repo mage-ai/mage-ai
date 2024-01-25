@@ -1,9 +1,9 @@
 from typing import Dict, List
 
-from jinja2 import Template
 from pandas import DataFrame
 from sqlglot import exp, parse_one
 
+from mage_ai.data_preparation.models.block.content import template_render
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
     interpolate_input,
@@ -86,12 +86,20 @@ def create_upstream_block_tables(
             if query:
                 for text in query.split(';'):
                     try:
-                        text = Template(text).render()
+                        text = interpolate_input_data(
+                            block,
+                            text,
+                            loader,
+                        )
+                        text = template_render(text)
                         for table in parse_one(text, read='bigquery').find_all(exp.Table):
+                            if table_name == table.name:
+                                continue
+
                             database = database or table.catalog
                             schema_name = schema_name or table.db
-                    except Exception:
-                        pass
+                    except Exception as err:
+                        print(f'\n{err}')
 
             full_table_name = f'{schema_name}.{table_name}'
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
