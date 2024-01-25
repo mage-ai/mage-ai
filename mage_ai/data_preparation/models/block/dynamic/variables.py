@@ -175,15 +175,11 @@ class LazyVariableController(Sequence):
             if self.is_dynamic:
                 if isinstance(child_data, pd.DataFrame):
                     index = child_dynamic_block_index % len(child_data.index)
-                    child_data = child_data.iloc[index]
+                    child_data = child_data.iloc[index:index + 1]
                 else:
                     index = child_dynamic_block_index % len(child_data)
                     child_data = child_data[index]
                 metadata = metadata[index] if len(metadata) > index else {}
-
-            if child_data is not None:
-                if isinstance(child_data, pd.Series):
-                    child_data = child_data.to_frame()
 
             return child_data, metadata
 
@@ -460,8 +456,13 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
             if should_reduce_output(upstream_block):
-                input_vars.append(lazy_variable_controller.render())
-                kwargs_vars.append({})
+                child_data = []
+                metadata = {}
+                for lazy_variable_set in lazy_variable_controller:
+                    child_data.append(lazy_variable_set.read_child_data())
+                    metadata.update(lazy_variable_set.read_metadata() or {})
+                input_vars.append(child_data)
+                kwargs_vars.append(metadata)
             else:
                 # If is dynamic, the modulus denominator is factored by the number of dynamic
                 # children and the number of actual outputs from the dynamic block

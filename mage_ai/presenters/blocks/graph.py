@@ -98,7 +98,7 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
     for uuid in block_dicts_by_uuid.keys():
         block = pipeline.get_block(uuid)
         block_run = block_runs_by_uuid.get(uuid)
-        metrics = block_run.metrics or {}
+        metrics = (block_run.metrics or {}) if block_run else {}
 
         dynamic_block_index = (metrics or {}).get('dynamic_block_index')
         is_dynamic_child = is_dynamic_block_child(block)
