@@ -205,19 +205,12 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
         return block_dicts_by_uuid
 
     block_runs = pipeline_run.block_runs
-
     for block_run in block_runs:
         # Handle dynamic blocks and data integration blocks
         block_run_block_uuid = block_run.block_uuid
         block = pipeline.get_block(block_run_block_uuid)
 
         if not block:
-            continue
-
-        if block.uuid not in [
-            'dynamic_parent_a',
-            'dynamic_child_a',
-        ]:
             continue
 
         metrics = block_run.metrics
