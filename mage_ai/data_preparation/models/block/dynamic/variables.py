@@ -134,10 +134,15 @@ class LazyVariableSet(Sequence):
         )
 
     async def read_data_async(self) -> Tuple[Any, Any]:
-        return (
-            await self.read_lazy_variable_async(self.lazy_child_data),
-            await self.read_lazy_variable_async(self.lazy_metadata) if self.lazy_metadata else {},
-        )
+        pair = tuple()
+        if self.lazy_child_data:
+            pair += (await self.read_lazy_variable_async(self.lazy_child_data),)
+        else:
+            pair += ({},)
+        if self.lazy_metadata:
+            pair += (await self.read_lazy_variable_async(self.lazy_metadata),)
+        else:
+            pair += ({},)
 
 
 class LazyVariableController(Sequence):
