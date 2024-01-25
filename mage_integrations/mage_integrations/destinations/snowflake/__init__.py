@@ -502,7 +502,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                     default=encode_complex,
                     ignore_nan=True,
                 )
-            return val
+            return str(val)
 
         def remove_empty_dicts(val: Dict):
             # Remove empty dicts to avoid
