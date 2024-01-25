@@ -56,7 +56,7 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
       docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
       ```
       ```bash Windows Command Line
-      docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      docker run -it -p 6789:6789 -v "%cd%:/home/src" mageai/mageai /app/run_app.sh mage start [project_name]
       ```
 
       ```bash PowerShell
