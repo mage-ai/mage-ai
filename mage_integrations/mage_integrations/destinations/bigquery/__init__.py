@@ -695,6 +695,22 @@ WHERE table_id = '{table_name}'
         columns: List[str],
         full_table_name: str,
     ):
+        """
+        Run a BigQuery load job using the provided parameters.
+
+        Args:
+            client: The BigQuery client instance.
+            record_data: List of dictionaries containing record data.
+            mapping: Dictionary specifying the mapping of columns to their type configs.
+            columns: List of column names.
+            full_table_name: Full name of the target table.
+
+        Returns:
+            Tuple containing lists of JobResult and LoadJob instances.
+
+        Raises:
+            BadRequest: If there is an error in the BigQuery batch load process.
+        """
         job_results = []
         jobs = []
 
@@ -704,6 +720,10 @@ WHERE table_id = '{table_name}'
         load_method = 'load_from_dataframe'
         schema_fields = []
         source_format = bigquery.SourceFormat.PARQUET
+
+        # Map column to clean_name
+        column_name_mapping = {col: self.clean_column_name(col) for col in columns}
+
         for col, obj in mapping.items():
             item_type_converted = obj['item_type_converted']
             type_converted = obj['type_converted']
@@ -713,8 +733,10 @@ WHERE table_id = '{table_name}'
             is_array_type = COLUMN_TYPE_ARRAY == obj['type']
             if is_array_type:
                 load_method = 'load_from_json'
+
             schema_field = bigquery.SchemaField(
-                name=col,
+                # Use clean name in schema
+                name=column_name_mapping[col],
                 field_type=item_type_converted if is_array_type else type_converted,
                 mode='REPEATED' if is_array_type else 'NULLABLE',
             )
@@ -751,7 +773,8 @@ WHERE table_id = '{table_name}'
                             column_type_dict,
                             convert_json_to_dict=convert_json_to_dict,
                         )
-                vals[column] = value_final
+                # Use clean name in values
+                vals[column_name_mapping[column]] = value_final
             values.append(vals)
 
         job_config = bigquery.LoadJobConfig(
