@@ -6,6 +6,7 @@ import yaml
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.file import FileCache
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import (
@@ -20,6 +21,7 @@ from mage_ai.settings.platform import (
     update_settings,
 )
 from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -56,7 +58,6 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-
         project = await self.member(None, user, **kwargs)
 
         other_projects = []
@@ -200,6 +201,8 @@ class ProjectResource(GenericResource):
         if 'remote_variables_dir' in payload:
             data['remote_variables_dir'] = payload['remote_variables_dir']
 
+        command_center_enabled = (self.model.get('features') or {}).get(FeatureUUID.COMMAND_CENTER)
+
         if len(data.keys()) >= 1:
             repo_config.save(**data)
 
@@ -211,5 +214,17 @@ class ProjectResource(GenericResource):
         project = Project(repo_config=repo_config)
         if project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
             await BlockActionObjectCache.initialize_cache(replace=True)
+
+        if not command_center_enabled and \
+                (self.model.get('features') or {}).get(FeatureUUID.COMMAND_CENTER):
+
+            def __callback(*args, **kwargs):
+                try:
+                    FileCache.initialize_cache_with_settings(replace=True)
+                except Exception as err:
+                    if is_debug():
+                        raise err
+
+            self.on_update_callback = __callback
 
         return self

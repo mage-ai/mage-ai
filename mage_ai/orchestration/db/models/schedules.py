@@ -137,7 +137,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
     @classmethod
     def fetch_latest_pipeline_runs_without_retries(self, ids: List[int]) -> List:
-        query = (
+        sub_query = (
             PipelineRun.
             select(
                 PipelineRun.id,
@@ -151,12 +151,19 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                         partition_by=PipelineRun.execution_date,
                         order_by=desc(PipelineRun.started_at)
                     ).
-                    label('row_number')
+                    label('n_row_number')
                 )
             ).
             filter(
                 PipelineRun.pipeline_schedule_id.in_(ids),
-                text('row_number = 1'),
+            )
+        ).subquery()
+
+        query = (
+            PipelineRun.
+            select(sub_query).
+            where(
+                text('n_row_number = 1'),
             )
         )
 
