@@ -115,7 +115,7 @@ export const getMoreActionsItems = (
     blocksMapping: {
       [uuid: string]: BlockType;
     };
-    fetchFileTree: () => void;
+    fetchFileTree?: () => void;
     fetchPipeline: () => void;
     openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
       addon: AddonBlockTypeEnum,
@@ -327,7 +327,9 @@ export const getMoreActionsItems = (
                 has_callback: !has_callback,
               },
             }).then(() => {
-              fetchFileTree();
+              if (fetchFileTree) {
+                fetchFileTree?.();
+              }
               fetchPipeline();
             });
           } else {

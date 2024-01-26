@@ -225,7 +225,7 @@ type CodeBlockProps = {
   disableShortcuts?: boolean;
   executionState: ExecutionStateEnum;
   extraContent?: any;
-  fetchFileTree: () => void;
+  fetchFileTree?: () => void;
   fetchPipeline: () => void;
   globalDataProducts?: GlobalDataProductType[];
   hideExtraCommandButtons?: boolean;
@@ -1209,7 +1209,9 @@ function CodeBlock({
         {
           callback: (resp) => {
             fetchPipeline();
-            fetchFileTree();
+            if (fetchFileTree) {
+              fetchFileTree?.();
+            }
             setContent(content);
             // Select the newly renamed block
             if (resp?.block) {

@@ -70,7 +70,7 @@ type CommandButtonsProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
   blockContent?: string;
-  fetchFileTree: () => void;
+  fetchFileTree?: () => void;
   fetchPipeline: () => void;
   hideExtraButtons?: boolean;
   isEditingBlock?: boolean;
