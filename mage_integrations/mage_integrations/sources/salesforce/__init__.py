@@ -29,7 +29,7 @@ class Salesforce(Source):
             credentials=parse_credentials(self.config),
             quota_percent_total=self.config.get('quota_percent_total'),
             quota_percent_per_run=self.config.get('quota_percent_per_run'),
-            is_sandbox=self.config.get('domain'),
+            domain=self.config.get('domain'),
             select_fields_by_default=self.config.get('select_fields_by_default'),
             default_start_date=self.config.get('start_date'),
             api_type=self.config.get('api_type')

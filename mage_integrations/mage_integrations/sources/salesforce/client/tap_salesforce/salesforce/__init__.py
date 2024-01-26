@@ -210,7 +210,7 @@ class Salesforce():
                  token=None,
                  quota_percent_per_run=None,
                  quota_percent_total=None,
-                 is_sandbox=None,
+                 domain=None,
                  select_fields_by_default=None,
                  default_start_date=None,
                  api_type=None):
@@ -223,7 +223,7 @@ class Salesforce():
 
         self.quota_percent_per_run = float(quota_percent_per_run) if quota_percent_per_run is not None else 25 # noqa
         self.quota_percent_total = float(quota_percent_total) if quota_percent_total is not None else 80 # noqa
-        self.is_sandbox = is_sandbox
+        self.domain = domain
         self.select_fields_by_default = select_fields_by_default is True or (isinstance(
             select_fields_by_default, str) and select_fields_by_default.lower() == 'true')
         self.default_start_date = default_start_date
@@ -233,7 +233,7 @@ class Salesforce():
         self.pk_chunking = False
         self.login_timer = None
 
-        self.auth = SalesforceAuth.from_credentials(credentials, is_sandbox=self.is_sandbox)
+        self.auth = SalesforceAuth.from_credentials(credentials, domain=self.domain)
 
         # validate start_date
         singer_utils.strptime(default_start_date)
