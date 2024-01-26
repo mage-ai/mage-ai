@@ -7,6 +7,7 @@ from multiprocessing import Manager
 from typing import Callable
 
 import newrelic.agent
+import psutil
 import sentry_sdk
 from sentry_sdk import capture_exception
 
@@ -130,7 +131,7 @@ class ProcessQueue(Queue):
                 # In queue
                 (job == JobStatus.QUEUED and not self.queue.empty()) or
                 # Running
-                isinstance(job, int)
+                isinstance(job, int) and self.__is_process_alive(job)
             )
         )
 
@@ -183,6 +184,9 @@ class ProcessQueue(Queue):
         if self.worker_pool_proc is None:
             return False
         return self.worker_pool_proc.is_alive()
+
+    def __is_process_alive(self, pid: int) -> bool:
+        return psutil.pid_exists(pid)
 
 
 class Worker(mp.Process):
