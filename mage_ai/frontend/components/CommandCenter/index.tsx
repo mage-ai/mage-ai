@@ -119,13 +119,19 @@ import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ab1c904cf (fix merge conflict)
 function CommandCenter({
   router: routerProp,
 }: {
   router?: any;
 }) {
   const router = routerProp || useRouter();
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> ab1c904cf (fix merge conflict)
 function CommandCenter() {
   const controls = useAnimation();
 
@@ -1114,7 +1120,11 @@ function CommandCenter() {
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     function startSequenceValid(): boolean {
+<<<<<<< HEAD
       const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main?.filter(k => k?.length >= 1);
+=======
+    const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main?.filter(k => k?.length >= 1);
+>>>>>>> ab1c904cf (fix merge conflict)
 
       if (ks?.length >= 1) {
         return ks?.every(k => keyMapping?.[k]);
@@ -1144,9 +1154,13 @@ function CommandCenter() {
 
     if (!refActive?.current) {
       return;
+<<<<<<< HEAD
     }
 
     if (refOutputContainerState?.current
+=======
+    } else if (refOutputContainerState?.current
+>>>>>>> ab1c904cf (fix merge conflict)
       && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping, { allowExtraKeys: 0 })
     ) {
       // Close the output
@@ -1182,6 +1196,7 @@ function CommandCenter() {
                 ...currentApplicationConfig,
                 closeCommandCenter,
                 button,
+                closeCommandCenter,
                 fetchItems: fetchItemsRef?.current,
                 getItemsActionResults,
                 handleSelectItemRow,
