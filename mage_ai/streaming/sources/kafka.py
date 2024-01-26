@@ -50,7 +50,7 @@ class KafkaConfig(BaseConfig):
     serde_config: SerDeConfig = None
     topic: str = None
     topics: List = field(default_factory=list)
-    offset: dict = None
+    offset: Dict = None
     max_partition_fetch_bytes: int = 1048576
 
     @classmethod
