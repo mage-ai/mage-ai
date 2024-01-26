@@ -30,11 +30,19 @@ class JobManagerTests(TestCase):
 
     def test_has_block_run_job(self):
         self.job_manager.has_block_run_job(2)
-        self.mock_queue.has_job.assert_called_once_with('block_run_2')
+        self.mock_queue.has_job.assert_called_once_with(
+            'block_run_2',
+            logger=None,
+            logging_tags=None,
+        )
 
     def test_has_pipeline_run_job(self):
         self.job_manager.has_pipeline_run_job(3)
-        self.mock_queue.has_job.assert_called_once_with('pipeline_run_3')
+        self.mock_queue.has_job.assert_called_once_with(
+            'pipeline_run_3',
+            logger=None,
+            logging_tags=None,
+        )
 
     def test_kill_block_run_job(self):
         self.job_manager.kill_block_run_job(4)
