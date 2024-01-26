@@ -4,8 +4,12 @@ import { useMutation } from 'react-query';
 import KernelType from '@interfaces/KernelType';
 import api from '@api';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import useDelayFetch from '@api/utils/useDelayFetch';
 =======
+=======
+import useDelayFetch from '@api/utils/useDelayFetch';
+>>>>>>> 44b7c9a32 (triple style)
 import { ErrorType, ErrorProps, UseErrorOptionsType } from '@context/Error/ErrorContext';
 >>>>>>> 1d279f888 (status check)
 import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
@@ -54,6 +58,7 @@ function useKernel({
     mutate: fetchKernels,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   } = useDelayFetch(api.kernels.list, {}, {
     refreshInterval,
     revalidateOnFocus,
@@ -66,6 +71,9 @@ function useKernel({
     : {},
 =======
   } = api.kernels.list(
+=======
+  } = useDelayFetch(api.kernels.list
+>>>>>>> 44b7c9a32 (triple style)
     // checkExecutionState
     !!caller
     ? {
@@ -79,6 +87,9 @@ function useKernel({
     {
       refreshInterval,
       revalidateOnFocus,
+    },
+    {
+      delay: 5000,
     },
   );
 
