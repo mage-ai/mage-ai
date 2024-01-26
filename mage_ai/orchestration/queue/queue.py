@@ -12,7 +12,7 @@ class Queue(ABC):
         pass
 
     @abstractmethod
-    def has_job(self, job_id: str):
+    def has_job(self, job_id: str, logger=None):
         pass
 
     @abstractmethod
