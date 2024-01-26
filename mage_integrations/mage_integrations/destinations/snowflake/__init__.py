@@ -440,7 +440,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             self.logger.info(f'Columns: {df.columns}')
 
             # Clean dataframe column names and values
-            df = self._clean_df(df, stream)
+            df = self.clean_df(df, stream)
 
             database = self.config.get(self.DATABASE_CONFIG_KEY)
             schema = self.config.get(self.SCHEMA_CONFIG_KEY)
@@ -489,7 +489,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
 
             return results
 
-    def _clean_df(self, df: pd.DataFrame, stream: str):
+    def clean_df(self, df: pd.DataFrame, stream: str):
         # Clean column names in the dataframe
         col_mapping = {col: self.clean_column_name(col) for col in df.columns}
         df = df.rename(columns=col_mapping)
@@ -502,7 +502,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                     default=encode_complex,
                     ignore_nan=True,
                 )
-            return val
+            return str(val)
 
         def remove_empty_dicts(val: Dict):
             # Remove empty dicts to avoid
@@ -516,7 +516,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 for key, value in val.items():
                     if isinstance(value, dict) and len(value) == 0:
                         val[key] = None
-                        return val
             return val
 
         mapping = column_type_mapping(
