@@ -5,7 +5,7 @@ import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
-import ArcaneLibraryConfiguration from '@components/Applications/ArcaneLibrary/configuration';
+import ArcaneLibraryConfiguration from '@components/Applications/ArcaneLibrary/configuration.json';
 import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
@@ -71,7 +71,12 @@ export default function useApplicationManager({
 } = {}): {
   closeApplication: (uuid: ApplicationExpansionUUIDEnum) => void;
   renderApplications: () => JSX.Element;
-  startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
+  startApplication: (
+    applicationConfiguration: ApplicationConfiguration,
+    stateProp?: StateType,
+    applicationUUID?: ApplicationExpansionUUIDEnum,
+    startUpOptions?: KeyValueType,
+  ) => void;
 } {
   const themeContext = useContext(ThemeContext);
   const keyboardContext = useContext(KeyboardContext);
@@ -485,16 +490,14 @@ export default function useApplicationManager({
     );
   }
 
-  // https://stackoverflow.com/questions/20926551/recommended-way-of-making-react-component-div-draggable
-  // Draggable
-
   function startApplication(
-    applicationConfiguration: ApplicationConfiguration | ApplicationExpansionUUIDEnum,
+    applicationConfiguration: ApplicationConfiguration,
     stateProp: StateType = null,
     applicationUUID: ApplicationExpansionUUIDEnum = null,
-    startUpOptions?: KeyValueType,
+    startUpOptions: KeyValueType = null,
   ) {
     if (applicationUUID && ApplicationExpansionUUIDEnum.ArcaneLibrary === applicationUUID) {
+      // @ts-ignore
       applicationConfiguration = ArcaneLibraryConfiguration.applicationConfiguration;
     }
 

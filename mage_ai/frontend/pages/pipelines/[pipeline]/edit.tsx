@@ -62,6 +62,7 @@ import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
   PIPELINE_TYPE_TO_KERNEL_NAME,
+  PipelineExtensionsType,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
