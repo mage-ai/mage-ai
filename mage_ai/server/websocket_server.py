@@ -5,7 +5,7 @@ import os
 import re
 import traceback
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from distutils.file_util import copy_file
 from typing import Dict, List
 
@@ -258,7 +258,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if 'execution_date' not in global_vars:
             now = datetime.now()
             global_vars['execution_date'] = now
-            global_vars['interval_end_datetime'] = None
+            global_vars['interval_end_datetime'] = now + timedelta(days=1)
             global_vars['interval_seconds'] = None
             global_vars['interval_start_datetime'] = now
             global_vars['interval_start_datetime_previous'] = None

@@ -24,6 +24,7 @@ function ArcaneLibrary({
   const {
     containerRef,
     headerOffset: headerOffsetProp,
+    startUpOptions,
   } = props;
 
   const refHeader = useRef(null);
@@ -62,7 +63,8 @@ function ArcaneLibrary({
   } = useFileComponents({
     contained: true,
     containerRef: mainContainerRef,
-    selectedFilePath: query?.file_path,
+    selectedFilePath: query?.file_path
+      || startUpOptions?.selectedFilePath ? String(startUpOptions?.selectedFilePath) : undefined,
     showHiddenFilesSetting: true,
     uuid: ApplicationExpansionUUIDEnum.ArcaneLibrary,
   });

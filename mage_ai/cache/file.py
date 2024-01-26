@@ -5,10 +5,12 @@ from typing import Any, List
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_FILES
 from mage_ai.command_center.models import CommandCenterSettings
+from mage_ai.settings import MAX_FILE_CACHE_SIZE
 from mage_ai.settings.platform import build_repo_path_for_all_projects
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_absolute_paths_from_all_files
+from mage_ai.shared.strings import size_of_string
 
 FILENAME_DELIMITER = '\t'
 
@@ -92,15 +94,25 @@ class FileCache(BaseCache):
 
             return f'{diff},{file_size},{file_modified_time}'
 
-        arr = []
+        arr_init = []
         for absolute_path in absolute_paths:
-            arr.extend(get_absolute_paths_from_all_files(
+            arr_init.extend(get_absolute_paths_from_all_files(
                 absolute_path,
                 parse_values=__parse_values,
             ))
 
-        if arr and len(arr) >= 1:
-            arr.sort()
+        if arr_init and len(arr_init) >= 1:
+            arr_init.sort()
+
+            arr = []
+            file_size = 0
+            for text in arr_init:
+                if file_size >= MAX_FILE_CACHE_SIZE:
+                    break
+
+                file_size += size_of_string(text)
+                arr.append(text)
+
             self._temp_data = arr
 
             self.set(self.cache_key, FILENAME_DELIMITER.join(arr))

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import ApiReloader from '@components/ApiReloader';
 import FileEditor from '@components/FileEditor';
@@ -29,6 +29,12 @@ function Controller({
 }) {
   const [ready, setReady] = useState(false);
 
+  useEffect(() => {
+    if (!ready) {
+      setReady(true);
+    }
+  }, []);
+
   return (
     <>
       <OverlayStyle ready={ready} />
@@ -58,12 +64,12 @@ function Controller({
               onContentChange={(content: string) => setContentByFilePath({
                 [filePath]: content,
               })}
-              onMountCallback={selectedFilePath === filePath ?
-                () => {
-                  setReady(true);
-                }
-                : null
-              }
+              // onMountCallback={selectedFilePath === filePath ?
+              //   () => {
+              //     setReady(true);
+              //   }
+              //   : null
+              // }
               onUpdateFileSuccess={onUpdateFileSuccess}
               openSidekickView={openSidekickView}
               originalContent={originalContent}

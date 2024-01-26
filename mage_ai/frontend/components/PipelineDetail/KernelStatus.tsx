@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+
 import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -142,7 +143,7 @@ function KernelStatus({
   const {
     data: dataClusters,
     mutate: fetchClusters,
-  } = api.clusters.detail(selectedSparkClusterType, {}, { revalidateOnFocus: false });
+  } = api.clusters.detail(sparkEnabled ? selectedSparkClusterType : null, {}, { revalidateOnFocus: false });
   const clustersOld: ClusterType[] = useMemo(
     () => dataClusters?.cluster?.clusters || [],
     [dataClusters],

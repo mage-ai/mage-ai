@@ -1312,7 +1312,9 @@ function CommandCenter({
   useEffect(() => {
     if (reload !== null) {
       renderItems(getCachedItems(), { shouldFilter: true });
-      fetchItems();
+      fetchItems({
+        delay: 5000,
+      });
       refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);

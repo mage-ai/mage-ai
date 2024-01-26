@@ -28,13 +28,19 @@ export function convertFilePathToRelativeRoot(filePath: string, status: StatusTy
     repo_path_relative_root: null,
   };
 
+  let fp = filePath;
+
   if (filePath?.startsWith(repoPathRoot)) {
-    return filePath?.replace(repoPathRoot, repoPathRelativeRoot);
+    fp = filePath?.replace(repoPathRoot, repoPathRelativeRoot);
   } else if (!filePath?.startsWith(repoPathRelativeRoot)) {
-    return [repoPathRelativeRoot, filePath].join(osPath.sep);
+    fp = [repoPathRelativeRoot, filePath].join(osPath.sep);
   }
 
-  return filePath;
+  if (fp?.startsWith(osPath.sep)) {
+    fp = fp?.slice(1);
+  }
+
+  return fp;
 }
 
 export function addRepoPath(filePath: string, status: StatusType): string {

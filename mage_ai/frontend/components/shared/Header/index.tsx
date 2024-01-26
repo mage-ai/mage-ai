@@ -26,6 +26,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { BranchAlt, Planet, Slack, UFO } from '@oracle/icons';
@@ -94,7 +95,7 @@ function Header({
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_branches.detail(
+  } = useDelayFetch(api.git_branches.detail,
     'test',
     {
       _format: 'with_basic_details',
@@ -103,7 +104,11 @@ function Header({
       revalidateOnFocus: false,
     }, {
       pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
-    });
+    },
+    {
+      delay: 11000,
+    },
+  );
   const {
     is_git_integration_enabled: gitIntegrationEnabled,
     name: branch,

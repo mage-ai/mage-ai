@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { ApplicationExpansionUUIDEnum, KeyValueType } from '@interfaces/CommandCenterType';
 
 export type ApplicationBaseType = {
   containerRef: {
@@ -8,6 +8,7 @@ export type ApplicationBaseType = {
   };
   headerOffset: number;
   onMount: () => void;
+  startUpOptions?: KeyValueType;
   uuid: ApplicationExpansionUUIDEnum;
 };
 

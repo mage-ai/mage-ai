@@ -330,6 +330,9 @@ def get_state_data(
     if output_file_paths:
         output_file_path = output_file_paths[-1]
 
+        if not os.path.exists(output_file_path):
+            return None
+
         for line in reverse_readline(output_file_path):
             if line:
                 try:
