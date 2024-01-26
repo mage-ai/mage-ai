@@ -186,10 +186,6 @@ def __custom_output():
 
         output_transformed = output_transformed[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
 
-        if is_debug():
-            print(type(_internal_output_return))
-            print(type(output_transformed))
-
         try:
             _json_string = simplejson.dumps(
                 combine_transformed_output_for_multi_output(output_transformed),

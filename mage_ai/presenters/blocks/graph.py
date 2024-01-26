@@ -117,7 +117,12 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
 
         description = ''
         if is_dynamic_child and reduce_output:
-            description = ', '.join([br.block_uuid for br in copies_by_uuid.get(block.uuid) or []])
+            copies = [br.block_uuid for br in copies_by_uuid.get(block.uuid) or []]
+            count = len(copies)
+            description = ', '.join(copies[:3])
+            diff = count - 3
+            if diff >= 1:
+                description = f'{description} +{diff}'
         elif dynamic_block_index is not None:
             description = str(dynamic_block_index)
 
