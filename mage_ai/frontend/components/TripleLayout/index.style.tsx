@@ -90,6 +90,7 @@ export const TabStyle = styled.div<{
 
 const ASIDE_STYLE = css<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -109,6 +110,10 @@ const ASIDE_STYLE = css<{
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
 
+  ${props => props.dark && `
+    background-color: ${(props.theme || dark).background.blackTransparentDark};
+  `}
+
   ${props => props.autoLayout && `
     display: flex;
     flex-direction: column;
@@ -119,10 +124,11 @@ const ASIDE_STYLE = css<{
 
 const ASIDE_INNER_STYLE = css<{
   heightOffset?: number;
+  hidden?: boolean;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${PlainScrollbarStyledCss}
-
   height: 100%;
   overflow: auto;
   position: relative;
@@ -131,6 +137,16 @@ const ASIDE_INNER_STYLE = css<{
   ${props => typeof props.verticalOffset !== 'undefined' && props.verticalOffset !== null && `
     height: calc(100% - ${props.verticalOffset + (props.heightOffset || 0)}px);
     top: ${props.verticalOffset}px;
+  `}
+
+  ${props => props.hidden && `
+    display: none;
+  `}
+
+  ${props => typeof props.rows !== 'undefined' && `
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
   `}
 `;
 
@@ -151,7 +167,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
   ${props => `
     height: calc(100% + ${props?.top || 0}px);
-    top: -${props?.top || 0}px;
+    top: ${(props?.top || 0) * -1}px;
   `}
 
   ${props => !props.disabled && `
@@ -246,6 +262,7 @@ export const AsideSubheaderStyle = styled.div<{
 
 export const BeforeStyle = styled.aside<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -257,6 +274,8 @@ export const BeforeStyle = styled.aside<{
 export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   contained?: boolean;
   heightOffset?: number;
+  hidden?: boolean;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
@@ -275,6 +294,7 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
 
 export const AfterStyle = styled.aside<{
   autoLayout?: boolean;
+  dark?: boolean;
   heightOffset?: number;
   inline?: boolean;
 }>`
@@ -285,7 +305,9 @@ export const AfterStyle = styled.aside<{
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
   heightMinus?: number;
+  hidden?: boolean;
   overflow?: string;
+  rows?: number;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
