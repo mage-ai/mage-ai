@@ -22,6 +22,7 @@ import ToastWrapper from '@components/Toast/ToastWrapper';
 import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useProject from '@utils/models/project/useProject';
+import useStatus from '@utils/models/status/useStatus';
 import { CustomEventUUID } from '@utils/events/constants';
 import { ErrorProvider } from '@context/Error';
 import { LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING } from '@storage/constants';
@@ -225,12 +226,15 @@ function MyApp(props: MyAppProps & AppProps) {
     || valPermissions === null
     || !REQUIRE_USER_PERMISSIONS();
 
-  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue && !noValuePermissions });
+  const { status } = useStatus({
+    delay: 3000,
+    pauseFetch: !noValue && !noValuePermissions,
+  });
 
   const requireUserAuthentication =
-    useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
+    useMemo(() => status?.require_user_authentication, [status]);
   const requireUserPermissions =
-    useMemo(() => data?.statuses?.[0]?.require_user_permissions, [data]);
+    useMemo(() => status?.require_user_permissions, [status]);
 
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 

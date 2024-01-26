@@ -9,6 +9,7 @@ import Flex from '@oracle/components/Flex';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
+import useFileComponents from '@components/Files/useFileComponents';
 import { Close } from '@oracle/icons';
 import {
   InputRowStyle,
@@ -21,22 +22,40 @@ import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {
   blocks: BlockType[];
-  children: any;
   creatingNewDBTModel?: boolean;
   dbtModelName?: string;
   onClose: () => void;
+  onOpenFile?: (filePath: string, isFolder: boolean) => void;
+  onSelectBlockFile?: (
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => void;
   setDbtModelName?: (name: string) => void;
 };
 
 function FileSelectorPopup({
   blocks,
-  children,
   dbtModelName,
   onClose,
+  onOpenFile,
+  onSelectBlockFile,
   setDbtModelName,
 }: FileSelectorPopupProps) {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+
+  const {
+    browser: fileBrowser,
+  } = useFileComponents({
+    disableContextMenu: true,
+    onOpenFile,
+    onSelectBlockFile,
+    query: {
+      pattern: encodeURIComponent('\\.sql$'),
+    },
+    uuid: 'FileSelectorPopup/dbt',
+  });
 
   const existingModelsByFilePath = useMemo(
     () => indexBy(blocks, ({ configuration }) => configuration.file_path),
@@ -63,7 +82,7 @@ function FileSelectorPopup({
       </WindowHeaderStyle>
 
       <WindowContentStyle>
-        {children}
+        {fileBrowser}
       </WindowContentStyle>
     </WindowContainerStyle>
   );

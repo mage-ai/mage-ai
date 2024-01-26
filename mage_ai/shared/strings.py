@@ -64,3 +64,7 @@ def to_ordinal_integers(word: str) -> List[int]:
         return []
 
     return [ord(char) - 96 for char in word]
+
+
+def size_of_string(string: str) -> float:
+    return len(str(string).encode('utf-8'))

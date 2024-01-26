@@ -28,6 +28,7 @@ import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import useContextMenu from '@utils/useContextMenu';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useStatus from '@utils/models/status/useStatus';
 import {
   HeaderStyle,
@@ -98,6 +99,7 @@ type UseFileComponentsProps = {
   blocks?: BlockType[];
   contained?: boolean;
   containerRef?: any;
+  delayFetch?: number;
   deleteWidget?: (value: BlockType) => void;
   disableContextMenu?: boolean;
   fetchAutocompleteItems?: () => void;
@@ -151,6 +153,7 @@ function useFileComponents({
   fetchPipeline,
   fetchVariables,
   codeEditorMaximumHeightOffset,
+  delayFetch,
   onClickTabClose,
   onCreateFile,
   onOpenFile,
@@ -388,20 +391,26 @@ function useFileComponents({
     set(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, updatedShowHiddenFiles);
   }, [showHiddenFiles]);
 
-  const { data: filesData, mutate: fetchFiles } = api.files.list(
+  const { data: filesData, mutate: fetchFiles } = useDelayFetch(
+    api.files.list,
     (showHiddenFilesSetting && showHiddenFiles)
       ? {
         ...FILES_QUERY_INCLUDE_HIDDEN_FILES,
         ...query,
       } : query,
+    {
+      delay: (typeof delayFetch === 'undefined' || delayFetch === null) ? 0 : delayFetch,
+    },
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  const { data: filesFlattenData, mutate: fetchFilesFLatten } = api.files.list({
+  const { data: filesFlattenData, mutate: fetchFilesFLatten } = useDelayFetch(api.files.list, {
     pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
     flatten: true,
     exclude_pattern: COMMON_EXCLUDE_PATTERNS,
     exclude_dir_pattern: COMMON_EXCLUDE_DIR_PATTERNS,
+  }, {
+    delay: (typeof delayFetch === 'undefined' || delayFetch === null) ? 0 : delayFetch,
   });
   const filesFlatten = useMemo(() => filesFlattenData?.files  || [], [filesFlattenData]);
 

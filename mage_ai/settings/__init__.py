@@ -112,6 +112,8 @@ ENABLE_PROMETHEUS = get_bool_value(os.getenv('ENABLE_PROMETHEUS', 'False'))
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
 
+MAX_FILE_CACHE_SIZE = os.getenv('MAX_FILE_CACHE_SIZE') or (1024 * 1024)  # 1 MB
+
 # All base path variables should not include a leading forward slash
 # e.g. MAGE_BASE_PATH = 'test_prefix' -> localhost:6789/test_prefix/pipelines
 BASE_PATH = os.getenv('MAGE_BASE_PATH')
@@ -170,4 +172,5 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'GHE_CLIENT_ID',
     'GHE_CLIENT_SECRET',
     'GHE_HOSTNAME',
+    'MAX_FILE_CACHE_SIZE',
 ]

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import KernelType from '@interfaces/KernelType';
 import api from '@api';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 
 function useKernel({
@@ -19,9 +20,11 @@ function useKernel({
   const {
     data: dataKernels,
     mutate: fetchKernels,
-  } = api.kernels.list({}, {
+  } = useDelayFetch(api.kernels.list, {}, {
     refreshInterval,
     revalidateOnFocus,
+  }, {
+    delay: 5000,
   });
   const kernel = useMemo(() => {
     const kernels = dataKernels?.kernels;

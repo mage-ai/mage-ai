@@ -26,7 +26,7 @@ from sqlalchemy import (
     or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
-from sqlalchemy.sql import func
+from sqlalchemy.sql import desc, func, text
 from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -137,14 +137,31 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
     @classmethod
     def fetch_latest_pipeline_runs_without_retries(self, ids: List[int]) -> List:
-        query = PipelineRun.query
-        query.cache = True
         query = (
-            query.
-            filter(PipelineRun.pipeline_schedule_id.in_(ids)).
-            group_by(PipelineRun.execution_date).
-            order_by(func.max(PipelineRun.started_at))
+            PipelineRun.
+            select(
+                PipelineRun.id,
+                PipelineRun.execution_date,
+                PipelineRun.started_at,
+                PipelineRun.status,
+                (
+                    func.
+                    row_number().
+                    over(
+                        partition_by=PipelineRun.execution_date,
+                        order_by=desc(PipelineRun.started_at)
+                    ).
+                    label('row_number')
+                )
+            ).
+            filter(
+                PipelineRun.pipeline_schedule_id.in_(ids),
+                text('row_number = 1'),
+            )
         )
+
+        query.cache = True
+
         return query.all()
 
     def get_settings(self) -> 'SettingsConfig':

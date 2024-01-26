@@ -46,10 +46,8 @@ function useComputeService({
   const {
     data: dataComputeService,
     mutate: fetchComputeService,
-  } = api.compute_services.detail('compute-service', {}, {
+  } = api.compute_services.detail((!sparkEnabled || pauseFetch) ? null : 'compute-service', {}, {
     refreshInterval: computeServiceRefreshInterval,
-  }, {
-    pauseFetch: !sparkEnabled || pauseFetch,
   });
   const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
     dataComputeService,
@@ -66,10 +64,8 @@ function useComputeService({
   const {
     data: dataComputeClusters,
     mutate: fetchComputeClusters,
-  } = api.compute_clusters.compute_services.list(computeService?.uuid, computeClustersQuery, {
+  } = api.compute_clusters.compute_services.list((!sparkEnabled || pauseFetch) ? null : computeService?.uuid, computeClustersQuery, {
     refreshInterval: clustersRefreshInterval,
-  }, {
-    pauseFetch: !sparkEnabled || pauseFetch,
   });
 
   const computeClusters: ComputeClusterType[] =

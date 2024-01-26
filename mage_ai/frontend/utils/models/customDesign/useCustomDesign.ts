@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import CustomDesignType from '@interfaces/CustomDesignType';
 import api from '@api';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useProject, { UseProjectType } from '@utils/models/project/useProject';
 import { ClientPageTypeEnum } from '@interfaces/ClientPageType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
@@ -90,7 +91,8 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
   const pathname = router?.pathname?.replace(regex, '');
   const query = router?.query;
 
-  const { data, mutate } = api.custom_designs.detail(
+  const { data, mutate } = useDelayFetch(
+    api.custom_designs.detail,
     encodeURIComponent(pathname),
     selectEntriesWithValues({
       operation: operation,
@@ -105,7 +107,8 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     }),
     {},
     {
-      pauseFetch: !shouldFetch,
+      condition: () => !shouldFetch,
+      delay: 5000,
     },
   );
   const design = useMemo(() => data?.custom_design || [], [data]);

@@ -40,7 +40,6 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import useFileComponents from '@components/Files/useFileComponents';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
@@ -441,6 +440,8 @@ function PipelineDetail({
     show_all: useV2AddNewBlock ? true : false,
   }, {
     revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
   });
   const blockTemplates: BlockTemplateType[] =
     useMemo(() => dataBlockTemplates?.block_templates || [], [
@@ -1234,18 +1235,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       }
   }, [addBlockFromFilePath]);
 
-  const {
-    browser: fileBrowser,
-  } = useFileComponents({
-    disableContextMenu: true,
-    onOpenFile,
-    onSelectBlockFile,
-    query: {
-      pattern: encodeURIComponent('\\.sql$'),
-    },
-    uuid: 'FileSelectorPopup/dbt',
-  });
-
   return (
     <DndProvider backend={HTML5Backend}>
       <PipelineContainerStyle ref={containerRef}>
@@ -1306,9 +1295,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             dbtModelName={dbtModelName}
             onClose={closeAddDBTModelPopup}
             setDbtModelName={setDbtModelName}
-          >
-            {fileBrowser}
-          </FileSelectorPopup>
+          />
         </ClickOutside>
       )}
     </DndProvider>

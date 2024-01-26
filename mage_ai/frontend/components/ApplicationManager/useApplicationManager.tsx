@@ -5,6 +5,7 @@ import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
+import ArcaneLibraryConfiguration from '@components/Applications/ArcaneLibrary/configuration';
 import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
@@ -63,11 +64,11 @@ export default function useApplicationManager({
   applicationState,
   onChangeState,
 }: {
-  applicationState: {
+  applicationState?: {
     current: KeyValueType;
   };
   onChangeState?: (prev: (data: any) => any) => any;
-}): {
+} = {}): {
   closeApplication: (uuid: ApplicationExpansionUUIDEnum) => void;
   renderApplications: () => JSX.Element;
   startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
@@ -488,9 +489,14 @@ export default function useApplicationManager({
   // Draggable
 
   function startApplication(
-    applicationConfiguration: ApplicationConfiguration,
+    applicationConfiguration: ApplicationConfiguration | ApplicationExpansionUUIDEnum,
     stateProp: StateType = null,
+    applicationUUID: ApplicationExpansionUUIDEnum = null,
   ) {
+    if (applicationUUID && ApplicationExpansionUUIDEnum.ArcaneLibrary === applicationUUID) {
+      applicationConfiguration = ArcaneLibraryConfiguration.applicationConfiguration;
+    }
+
     if (!applicationConfiguration?.application) {
       return;
     }

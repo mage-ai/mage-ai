@@ -79,12 +79,14 @@ import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useApplicationManager from '@components/ApplicationManager/useApplicationManager';
 import useFileComponents from '@components/Files/useFileComponents';
 import useKernel from '@utils/models/kernel/useKernel';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import {
   BLOCK_EXISTS_ERROR,
   CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
@@ -284,17 +286,8 @@ function PipelineDetailPage({
   const mainContainerRef = useRef(null);
 
   // Server status
-  const { data: serverStatus } = api.statuses.list({}, {
-    revalidateOnFocus: false,
-  });
-  const disablePipelineEditAccess = useMemo(
-    () => serverStatus?.statuses?.[0]?.disable_pipeline_edit_access,
-    [serverStatus],
-  );
-  const maxPrintOutputLines = useMemo(
-    () => serverStatus?.statuses?.[0]?.max_print_output_lines,
-    [serverStatus],
-  );
+  const disablePipelineEditAccess = useMemo(() => status?.disable_pipeline_edit_access, [status]);
+  const maxPrintOutputLines = useMemo(() => status?.max_print_output_lines, [status]);
 
   // Kernels
   const [messages, setMessages] = useState<{
@@ -338,14 +331,14 @@ function PipelineDetailPage({
   const {
     data: dataPipelineInteraction,
     mutate: fetchPipelineInteraction,
-  } = api.pipeline_interactions.detail(isInteractionsEnabled && pipelineUUID, {}, {
+  } = api.pipeline_interactions.detail(false && isInteractionsEnabled && pipelineUUID, {}, {
     revalidateOnFocus: false,
   });
 
   const {
     data: dataInteractions,
     mutate: fetchInteractions,
-  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID, {}, {
+  } = api.interactions.pipeline_interactions.list(false && isInteractionsEnabled && pipelineUUID, {}, {
     revalidateOnFocus: false,
   });
 
@@ -697,6 +690,8 @@ function PipelineDetailPage({
   // Data providers
   const { data: dataDataProviders } = api.data_providers.list({}, {
     revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
@@ -704,10 +699,12 @@ function PipelineDetailPage({
   const {
     data: dataGlobalVariables,
     mutate: fetchVariables,
-  } = api.variables.pipelines.list(pipelineUUID, {
+  } = api.variables.pipelines.list(null, {
     global_only: true,
   }, {
     revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
   });
   const globalVariables = dataGlobalVariables?.variables;
 
@@ -715,7 +712,11 @@ function PipelineDetailPage({
   const {
     data: dataSecrets,
     mutate: fetchSecrets,
-  } = api.secrets.list({}, { revalidateOnFocus: false });
+  } = api.secrets.list({}, {
+    revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
+  });
   const secrets = dataSecrets?.secrets;
 
   // Blocks
@@ -872,6 +873,8 @@ function PipelineDetailPage({
   } = api.autocomplete_items.list({}, {
     refreshInterval: false,
     revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
@@ -994,11 +997,14 @@ function PipelineDetailPage({
     );
   }, [addNewBlockAtIndex]);
 
+  const {
+    renderApplications,
+    startApplication,
+  } = useApplicationManager();
+
   const onOpenFileCallbackMemo = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
-      setActiveSidekickView(ViewKeyEnum.FILES);
-      setAfterHidden(false);
-      setNotebookVisible(false);
+      startApplication(null, null, ApplicationExpansionUUIDEnum.ArcaneLibrary);
       setSelectedBlock(null);
     }
   }, []);
@@ -1025,6 +1031,7 @@ function PipelineDetailPage({
     addNewBlock: addNewBlockCallback,
     blocks,
     deleteWidget,
+    delayFetch: beforeHidden ? 10000 : 5000,
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
@@ -2647,6 +2654,8 @@ function PipelineDetailPage({
 
   const { data: dataGlobalProducts } = api.global_data_products.list({}, {
     revalidateOnFocus: false,
+  }, {
+    pauseFetch: true,
   });
   const globalDataProducts: GlobalDataProductType[] =
     useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
@@ -2907,36 +2916,6 @@ function PipelineDetailPage({
     updatePipelineMetadata,
     updateWidget,
     widgets,
-  ]);
-
-  const afterMemo = useMemo(() => {
-    return (
-      <>
-        <div
-          style={{
-            height: notebookVisible ? null : 0,
-            opacity: notebookVisible ? null : 0,
-            visibility: notebookVisible ? null : 'hidden',
-          }}
-        >
-          {sideKick}
-        </div>
-
-        <div
-          style={{
-            height: notebookVisible ? 0 : null,
-            opacity: notebookVisible ? 0 : null,
-            visibility: notebookVisible ? 'hidden' : null,
-          }}
-        >
-          {fileController}
-        </div>
-      </>
-    );
-  }, [
-    fileController,
-    notebookVisible,
-    sideKick,
   ]);
 
   const afterHeaderMemo = useMemo(() => {
@@ -3349,7 +3328,7 @@ function PipelineDetailPage({
       <Head title={pipeline?.name} />
 
       <PipelineLayout
-        after={afterMemo}
+        after={sideKick}
         afterHeader={afterHeaderMemo}
         afterHeightOffset={HEADER_HEIGHT}
         afterHidden={afterHidden}
@@ -3432,7 +3411,6 @@ function PipelineDetailPage({
 
         <Spacing
           pb={(
-            // filePathFromUrl ||
             sideBySideEnabled)
             ? 0
             : Math.max(
@@ -3442,6 +3420,8 @@ function PipelineDetailPage({
           }
         />
       </PipelineLayout>
+
+      {renderApplications()}
     </>
   );
 }
