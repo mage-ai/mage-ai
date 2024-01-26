@@ -523,8 +523,16 @@ class PipelineResource(BaseResource):
     @safe_db_query
     async def delete(self, **kwargs):
         async def _on_delete_callback(resource):
-            cache = await PipelineCache.initialize_cache()
-            cache.remove_model(resource.model)
+            pipeline_cache = await PipelineCache.initialize_cache()
+            pipeline_cache.remove_model(resource.model)
+
+            tags = resource.model.tags
+            if tags:
+                from mage_ai.cache.tag import TagCache
+
+                tag_cache = await TagCache.initialize_cache()
+                for tag_uuid in tags:
+                    tag_cache.remove_pipeline(tag_uuid, resource.model.uuid, resource.model.repo_path)
 
         self.on_delete_callback = _on_delete_callback
         return self.model.delete()
