@@ -6,7 +6,6 @@ from enum import Enum
 from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer, TopicPartition
-
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sources.base import BaseSource
@@ -50,7 +49,7 @@ class KafkaConfig(BaseConfig):
     serde_config: SerDeConfig = None
     topic: str = None
     topics: List = field(default_factory=list)
-    offset: dict = None
+    offset: Dict = None
     max_partition_fetch_bytes: int = 1048576
 
     @classmethod
