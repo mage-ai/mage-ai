@@ -183,6 +183,7 @@ function useFileComponents({
     get(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, false),
   );
   const { status } = useStatus({
+    delay: 0,
     refreshInterval: 0,
     revalidateOnFocus: false,
   });

@@ -492,6 +492,7 @@ export default function useApplicationManager({
     applicationConfiguration: ApplicationConfiguration | ApplicationExpansionUUIDEnum,
     stateProp: StateType = null,
     applicationUUID: ApplicationExpansionUUIDEnum = null,
+    startUpOptions?: KeyValueType,
   ) {
     if (applicationUUID && ApplicationExpansionUUIDEnum.ArcaneLibrary === applicationUUID) {
       applicationConfiguration = ArcaneLibraryConfiguration.applicationConfiguration;
@@ -669,6 +670,7 @@ export default function useApplicationManager({
                 }
               }}
               onMount={onMountCallback}
+              startUpOptions={startUpOptions}
               uuid={uuid}
             />
           </InnerStyle>

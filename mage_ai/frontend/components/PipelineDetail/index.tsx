@@ -444,7 +444,7 @@ function PipelineDetail({
     }, {
       revalidateOnFocus: false,
     }, {
-      delay: 5000,
+      delay: 3000,
     },
   );
   const blockTemplates: BlockTemplateType[] =
