@@ -26,7 +26,7 @@ from sqlalchemy import (
     or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
-from sqlalchemy.sql import desc, func, text
+from sqlalchemy.sql import func, text
 from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -149,7 +149,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                     row_number().
                     over(
                         partition_by=PipelineRun.execution_date,
-                        order_by=desc(PipelineRun.started_at)
+                        order_by=(PipelineRun.started_at.desc(), PipelineRun.id.desc())
                     ).
                     label('n_row_number')
                 )
