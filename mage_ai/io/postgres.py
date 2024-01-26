@@ -12,6 +12,7 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import is_port_in_use
 
@@ -310,8 +311,10 @@ class Postgres(BaseSQL):
 
         for col in columns:
             df_col_dropna = df_[col].dropna()
-            if df_col_dropna.count() == 0:
-                continue
+            if isinstance(df_col_dropna, pd.DataFrame):
+                if len(df_col_dropna.index) == 0:
+                    continue
+
             if dtypes[col] == PandasTypes.OBJECT \
                     or (df_[col].dtype == PandasTypes.OBJECT and not
                         isinstance(df_col_dropna.iloc[0], str)):
@@ -356,14 +359,16 @@ class Postgres(BaseSQL):
                 na_rep='',
             )
             buffer.seek(0)
-            cursor.copy_expert(f"""
-COPY {full_table_name} ({insert_columns}) FROM STDIN (
+            query = f"""COPY {full_table_name} ({insert_columns}) FROM STDIN (
     FORMAT csv
     , DELIMITER \',\'
     , NULL \'\'
     , FORCE_NULL({insert_columns})
-);
-        """, buffer)
+);"""
+            if is_debug():
+                print(f'\n{query}\n')
+
+            cursor.copy_expert(query, buffer)
 
     def execute(self, query_string: str, **query_vars) -> None:
         """

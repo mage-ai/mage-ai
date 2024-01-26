@@ -245,8 +245,10 @@ class Trino(BaseSQL):
 
         for col in columns:
             df_col_dropna = df_[col].dropna()
-            if df_col_dropna.count() == 0:
-                continue
+            if isinstance(df_col_dropna, DataFrame):
+                if len(df_col_dropna.index) == 0:
+                    continue
+
             if dtypes[col] == PandasTypes.OBJECT \
                     or (df_[col].dtype == PandasTypes.OBJECT and not
                         isinstance(df_col_dropna.iloc[0], str)):

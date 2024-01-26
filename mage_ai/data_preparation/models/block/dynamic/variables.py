@@ -106,6 +106,9 @@ class LazyVariableSet(Sequence):
         return self[1]
 
     def read_child_data(self) -> Any:
+        if not isinstance(self.lazy_child_data, pd.DataFrame) and not self.lazy_child_data:
+            return None
+
         return self.read_lazy_variable(
             self.lazy_child_data,
         ) if self.lazy_child_data is not None else None
