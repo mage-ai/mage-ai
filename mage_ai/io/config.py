@@ -144,6 +144,11 @@ class ConfigKey(str, Enum):
     TRINO_SCHEMA = 'TRINO_SCHEMA'
     TRINO_USER = 'TRINO_USER'
 
+    WEAVIATE_ENDPOINT = 'WEAVIATE_ENDPOINT'
+    WEAVIATE_INSTANCE_API_KEY = 'WEAVIATE_INSTANCE_API_KEY'
+    WEAVIATE_INFERENCE_API_KEY = 'WEAVIATE_INFERENCE_API_KEY'
+    WEAVIATE_COLLECTION = 'WEAVIATE_COLLECTION'
+
 
 class BaseConfigLoader(ABC):
     """
@@ -339,6 +344,7 @@ class VerboseConfigKey(str, Enum):
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
     QDRANT = 'Qdrant'
+    WEAVIATE = 'Weaviate'
 
 
 class ConfigFileLoader(BaseConfigLoader):
@@ -439,6 +445,14 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.SPARK, 'server_side_parameters'),
         ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SPARK, 'token'),
         ConfigKey.SPARK_USER: (VerboseConfigKey.SPARK, 'user'),
+        ConfigKey.WEAVIATE_ENDPOINT: (
+            VerboseConfigKey.WEAVIATE, 'endpoint'),
+        ConfigKey.WEAVIATE_COLLECTION: (
+            VerboseConfigKey.WEAVIATE, 'collection'),
+        ConfigKey.WEAVIATE_INSTANCE_API_KEY: (
+            VerboseConfigKey.WEAVIATE, 'instance_api_key'),
+        ConfigKey.WEAVIATE_INFERENCE_API_KEY: (
+            VerboseConfigKey.WEAVIATE, 'inference_api_key'),
     }
 
     def __init__(

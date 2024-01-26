@@ -370,7 +370,8 @@
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
-                "integrations/databases/trino"
+                "integrations/databases/trino",
+                "integrations/databases/weaviate"
               ]
             },
             "getting-started/kernels"
