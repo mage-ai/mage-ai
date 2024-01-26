@@ -455,7 +455,7 @@ function TripleLayout({
           : null
         }
       >
-        {after}
+        {!afterHidden && after}
       </AfterInnerStyle>
 
       {afterFooter && !afterHidden && (
