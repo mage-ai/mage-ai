@@ -438,7 +438,7 @@ class PipelineScheduler:
             tags = dict()
         msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
             f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
-        self.logger.info(msg, tags=tags)
+        self.logger.info(msg, **tags)
 
         self.stop()
 
@@ -843,7 +843,7 @@ class PipelineScheduler:
         )
 
         if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
-            self.memory_usage_failure(tags)
+            self.memory_usage_failure(tags=tags)
 
 
 def run_integration_streams(

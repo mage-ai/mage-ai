@@ -36,7 +36,11 @@ class JobManager:
         logging_tags: Dict = None,
     ) -> bool:
         job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
-        return self.queue.has_job(job_id, logger=logger)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
     def has_pipeline_run_job(
         self,
@@ -45,7 +49,11 @@ class JobManager:
         logging_tags: Dict = None,
     ) -> bool:
         job_id = self.__job_id(JobType.PIPELINE_RUN, pipeline_run_id)
-        return self.queue.has_job(job_id, logger=logger)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
     def has_integration_stream_job(
         self,
@@ -55,7 +63,11 @@ class JobManager:
         logging_tags: Dict = None,
     ) -> bool:
         job_id = self.__job_id(JobType.PIPELINE_RUN, f'{pipeline_run_id}_{stream}')
-        return self.queue.has_job(job_id, logger=logger)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
     def kill_block_run_job(self, block_run_id):
         print(f'Kill block run id: {block_run_id}')
