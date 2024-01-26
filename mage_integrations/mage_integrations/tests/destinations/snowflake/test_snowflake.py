@@ -1,5 +1,8 @@
 import unittest
 
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
 from mage_integrations.destinations.snowflake import Snowflake
 from mage_integrations.tests.destinations.sql.mixins import SQLDestinationMixin
 
@@ -7,6 +10,9 @@ SCHEMA = {
     'properties': {
         'ID': {
             'type': ['null', 'string'],
+        },
+        'USER': {
+            'type': ['null', 'object'],
         },
     },
     'type': 'object',
@@ -63,5 +69,28 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
                                                                  DATABASE_NAME)
         self.assertEqual(
             table_commands,
-            ['CREATE TABLE "test_db"."test"."test_table" ("ID" VARCHAR)']
+            ['CREATE TABLE "test_db"."test"."test_table" ("ID" VARCHAR, "_USER" VARIANT)']
         )
+
+    def test_clean_df(self):
+        destination = Snowflake(config=self.config)
+        destination.schemas = {STREAM: SCHEMA}
+        destination.key_properties = {}
+        df = pd.DataFrame(
+            [
+                ['1', {}],
+                [2, {'a': {}, 'b': {}}],
+                [{'c': 2}, {'a': '1', 'b': '2'}],
+            ],
+            columns=['ID', 'USER']
+        )
+        df_clean = destination.clean_df(df, 'swftest')
+        df_expected = pd.DataFrame(
+            [
+                ['1', None],
+                ['2', {'a': None, 'b': None}],
+                ['{"c": 2}', {'a': '1', 'b': '2'}],
+            ],
+            columns=['ID', '_USER']
+        )
+        assert_frame_equal(df_clean, df_expected)
