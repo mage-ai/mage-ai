@@ -83,12 +83,10 @@ function useAside(uuid, refData, {
 >>>>>>> d9e3000fd ([td] Code Matrix application)
 =======
   const [widthState, setWidthState] = useState(
-    Math.min(...[
-      truthy(widthWindow) ? widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH) : null,
-      truthy(widthLocal) ? widthLocal : null,
-      truthy(widthProp)  ? widthProp : null,
-    ].filter(v => v))
-    || DEFAULT_ASIDE_WIDTH
+    typeof widthLocal !== 'undefined'
+        ? widthLocal : typeof widthProp !== 'undefined'
+          ? widthProp
+          : DEFAULT_ASIDE_WIDTH,
   );
 >>>>>>> 2b7ba3462 ([after header buttonms)
 
@@ -105,7 +103,10 @@ function useAside(uuid, refData, {
   const width = useMemo(() => {
     let value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e331b453c (fix usetriple)
     if (typeof widthWindow !== 'undefined') {
       value = Math.min(value, widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH));
     }
