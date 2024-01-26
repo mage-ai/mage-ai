@@ -8,7 +8,7 @@ import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.
 import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar, showScrollBar } from '@oracle/styles/scrollbars';
+import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { getApplicationColors } from '@components/ApplicationManager/index.style';
 
 export const COMPONENT_UUID = 'command-center';
@@ -81,6 +81,22 @@ export const ContainerStyle = styled.div<{
       right: 100%;
       visibility: none;
 >>>>>>> 1c3be6c24 (use terminal)
+    }
+  }
+
+
+  // We have to do this for blur to work on Safari
+  .hide {
+    .command-center {
+      -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+      backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    }
+  }
+  // We have to do this for blur to work on Safari
+  :not(.hide) {
+    .command-center {
+      -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+      backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
     }
   }
 
@@ -180,7 +196,14 @@ const BASE_CONTAINER_STYLES = css`
   max-width: ${MAX_WIDTH}px;
 
   &.inactive:hover {
-    ${showScrollBar}
+    // for Internet Explorer, Edge
+    -ms-overflow-style: block !important;
+    // for Firefox
+    scrollbar-width: block !important;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: block !important;
+    }
   }
 `;
 
