@@ -355,6 +355,7 @@
             {
               "group": "Storage",
               "pages": [
+                "integrations/databases/Algolia",
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
                 "integrations/databases/Chroma",

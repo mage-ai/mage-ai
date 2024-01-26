@@ -16,6 +16,10 @@ class ConfigKey(str, Enum):
     List of configuration settings for use with data IO clients.
     """
 
+    ALGOLIA_APP_ID = 'ALGOLIA_APP_ID'
+    ALGOLIA_API_KEY = 'ALGOLIA_API_KEY'
+    ALGOLIA_INDEX_NAME = 'ALGOLIA_INDEX_NAME'
+
     AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID'
     AWS_ENDPOINT = 'AWS_ENDPOINT'
     AWS_REGION = 'AWS_REGION'
@@ -332,6 +336,7 @@ class VerboseConfigKey(str, Enum):
     Config key headers for the verbose configuration file format.
     """
 
+    ALGOLIA = 'Algolia'
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CHROMA = 'Chroma'
@@ -349,6 +354,12 @@ class VerboseConfigKey(str, Enum):
 
 class ConfigFileLoader(BaseConfigLoader):
     KEY_MAP = {
+        ConfigKey.ALGOLIA_APP_ID: (
+            VerboseConfigKey.ALGOLIA, 'app_id'),
+        ConfigKey.ALGOLIA_API_KEY: (
+            VerboseConfigKey.ALGOLIA, 'api_key'),
+        ConfigKey.ALGOLIA_INDEX_NAME: (
+            VerboseConfigKey.ALGOLIA, 'index_name'),
         ConfigKey.AWS_ACCESS_KEY_ID: (VerboseConfigKey.AWS, 'access_key_id'),
         ConfigKey.AWS_REGION: (VerboseConfigKey.AWS, 'region'),
         ConfigKey.AWS_SECRET_ACCESS_KEY: (VerboseConfigKey.AWS, 'secret_access_key'),

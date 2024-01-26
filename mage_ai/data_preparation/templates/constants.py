@@ -196,6 +196,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='Algolia',
+        path='data_loaders/algolia.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='Chroma',
         path='data_loaders/chroma.py',
     ),
@@ -573,6 +580,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_exporters/snowflake.py',
     ),
     #   Databases
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Algolia',
+        path='data_exporters/algolia.py',
+    ),
     dict(
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATABASES],
