@@ -240,7 +240,7 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def import_from_zip(self, zip_content: str, overwrite: bool = False) -> File:
+    def import_from_zip(self, zip_content: str, overwrite: bool = False) -> Tuple[File, Dict]:
         with tempfile.TemporaryDirectory() as tmp_dir:
             zip_data = BytesIO(zip_content)
             with zipfile.ZipFile(zip_data, 'r') as zipf:
@@ -251,7 +251,7 @@ class Pipeline:
 
                 # Ignore `__MACOSX` for zips created on macOS systems
                 zip_contents = [path for path in zipf.namelist() if not path.startswith('__MACOSX')]
-                # Verify if zip conts are part of a root folder
+                # Verify if zip contents are part of a root folder
                 prefix = os.path.commonpath(zip_contents)
 
                 zipf.extractall(tmp_dir)
@@ -264,7 +264,7 @@ class Pipeline:
                         os.rename(source_path, destination_path)
                     os.removedirs(inner_path)  # remove root folder
 
-            pipeline_files, new_pipeline_name = self.__update_pipeline_yaml(
+            pipeline_files, new_pipeline_uuid, pipeline_config = self.__update_pipeline_yaml(
                 tmp_dir,
                 overwrite,
             )
@@ -278,11 +278,12 @@ class Pipeline:
                 except Exception:
                     raise FileWriteError(f'Failed to write pipeline file to {destination}.')
 
-            # return the pipelin configuration file
+            # return the pipeline configuration file
             config_destination_path = pipeline_files[0][1]  # First item is the pipeline config path
             ret_file = File.from_path(config_destination_path)
-            ret_file.filename = new_pipeline_name
-            return ret_file
+            ret_file.filename = new_pipeline_uuid
+
+            return ret_file, pipeline_config
 
     @classmethod
     def duplicate(
@@ -1303,7 +1304,7 @@ class Pipeline:
             tuple:
                 - files_to_be_written: a list of tuples containing the source and destination paths
                     for each resource needed to be writen at the end of the import process
-                - new_pipeline_name: str
+                - new_pipeline_uuid: str
         """
         config_zip_path = self.__find_pipeline_file(
             tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
@@ -1325,7 +1326,7 @@ class Pipeline:
                     uuid = f'{config["uuid"]}_{index}'
                 config['uuid'] = uuid
                 config['name'] = uuid
-            new_pipeline_name = config['uuid']
+            new_pipeline_uuid = config['uuid']
 
             pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
             config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
@@ -1382,14 +1383,11 @@ class Pipeline:
                 block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
                 block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
 
-            tags = config.get('tags', [])
-            config['tags'] = tags + (['import'] if 'import' not in tags else [])
-
         # dump new config information back in temp folder
         with open(config_zip_path, 'w') as pipeline_config:
             yaml.dump(config, pipeline_config)
 
-        return files_to_be_written, new_pipeline_name
+        return files_to_be_written, new_pipeline_uuid, config
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]

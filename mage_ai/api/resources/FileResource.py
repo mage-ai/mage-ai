@@ -145,12 +145,22 @@ class FileResource(GenericResource):
         error = ApiError.RESOURCE_INVALID.copy()
         try:
             if pipeline_zip:  # pipeline upload
-                pipeline_file = Pipeline.import_from_zip(content, overwrite)  # import from zip
+                pipeline_file, pipeline_config = Pipeline.import_from_zip(content, overwrite)
+                tags = pipeline_config.get('tags', [])
+                pipeline_uuid = pipeline_config.get('uuid')
+                if tags and pipeline_uuid:
+                    from mage_ai.cache.tag import TagCache
+
+                    tag_cache = await TagCache.initialize_cache()
+                    pipeline = Pipeline(pipeline_uuid, config=pipeline_config)
+                    for tag_uuid in tags:
+                        tag_cache.add_pipeline(tag_uuid, pipeline)
+
                 return self(pipeline_file, user, **kwargs)
             else:
                 file_path = File(filename, dir_path, repo_path).file_path
                 ensure_file_is_in_project(file_path)
-                file = File.create(
+                file = await File.create_async(
                     filename,
                     dir_path,
                     repo_path=repo_path,
