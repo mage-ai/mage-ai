@@ -17,7 +17,10 @@ class ProcessQueueTests(TestCase):
     def test_init(self):
         self.assertEqual(self.queue.size, 100)
 
-    def test_clean_up_jobs(self):
+    @patch('mage_ai.orchestration.queue.process_queue.psutil.pid_exists')
+    def test_clean_up_jobs(self, mock_pid_exists):
+        mock_pid_exists.return_value = True
+
         self.queue.job_dict['block_run_1'] = JobStatus.QUEUED
         self.queue.job_dict['block_run_2'] = 100
         self.queue.job_dict['block_run_3'] = JobStatus.COMPLETED
@@ -30,11 +33,15 @@ class ProcessQueueTests(TestCase):
         self.assertFalse('block_run_4' in self.queue.job_dict)
 
     @patch('mage_ai.orchestration.queue.process_queue.poll_job_and_execute')
-    def test_has_job(self, mock_poll_job_and_execute):
+    @patch('mage_ai.orchestration.queue.process_queue.psutil.pid_exists')
+    def test_has_job(self, mock_pid_exists, mock_poll_job_and_execute):
+        mock_pid_exists.return_value = True
+
         self.queue.job_dict['block_run_1'] = JobStatus.QUEUED
         self.queue.job_dict['block_run_2'] = 100
         self.queue.job_dict['block_run_3'] = JobStatus.COMPLETED
         self.queue.job_dict['block_run_4'] = JobStatus.CANCELLED
+
         # Queue is empty, thus return False
         self.assertFalse(self.queue.has_job('block_run_1'))
         # After enqueueing the job, the has_job method returns True
@@ -45,3 +52,8 @@ class ProcessQueueTests(TestCase):
         self.assertFalse(self.queue.has_job('block_run_3'))
         self.assertFalse(self.queue.has_job('block_run_4'))
         self.assertFalse(self.queue.has_job('block_run_5'))
+
+        # Process not exists
+        mock_pid_exists.return_value = False
+        self.assertTrue(self.queue.has_job('block_run_1'))
+        self.assertFalse(self.queue.has_job('block_run_2'))
