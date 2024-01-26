@@ -148,13 +148,20 @@ class FileResource(GenericResource):
                 pipeline_file, pipeline_config = Pipeline.import_from_zip(content, overwrite)
                 tags = pipeline_config.get('tags', [])
                 pipeline_uuid = pipeline_config.get('uuid')
-                if tags and pipeline_uuid:
+                pipeline = Pipeline(pipeline_uuid, config=pipeline_config)
+                if tags:
                     from mage_ai.cache.tag import TagCache
 
                     tag_cache = await TagCache.initialize_cache()
-                    pipeline = Pipeline(pipeline_uuid, config=pipeline_config)
                     for tag_uuid in tags:
                         tag_cache.add_pipeline(tag_uuid, pipeline)
+
+                if pipeline.blocks_by_uuid:
+                    from mage_ai.cache.block import BlockCache
+
+                    block_cache = await BlockCache.initialize_cache()
+                    for block in pipeline.blocks_by_uuid.values():
+                        block_cache.add_pipeline(block, pipeline)
 
                 return self(pipeline_file, user, **kwargs)
             else:
