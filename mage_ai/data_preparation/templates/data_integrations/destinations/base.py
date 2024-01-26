@@ -31,3 +31,8 @@ def config(*args, **kwargs) -> Dict:
 #     return {
 #         'streams': [],
 #     }
+
+
+# @data_integration_query
+# def query(*args, **kwargs) -> Dict:
+#     return {}
