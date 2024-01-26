@@ -30,15 +30,11 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataIntegrationModal from '@components/DataIntegrationModal';
 import DataProviderType from '@interfaces/DataProviderType';
-import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
-import FileBrowser from '@components/FileBrowser';
-import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
-  FileQueryEnum,
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -66,7 +62,6 @@ import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
   PIPELINE_TYPE_TO_KERNEL_NAME,
-  PipelineExtensionsType,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
@@ -80,6 +75,7 @@ import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useApplicationManager from '@components/ApplicationManager/useApplicationManager';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useFileComponents from '@components/Files/useFileComponents';
 import useKernel from '@utils/models/kernel/useKernel';
 import usePrevious from '@utils/usePrevious';
@@ -117,7 +113,6 @@ import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
-import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
@@ -127,12 +122,6 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import {
-  addOpenFilePath as addOpenFilePathLocalStorage,
-  getOpenFilePaths,
-  removeOpenFilePath as removeOpenFilePathLocalStorage,
-  setOpenFilePaths as setOpenFilePathsLocalStorage,
-} from '@storage/files';
 import { buildBlockFromFilePath } from '@components/PipelineDetail/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
@@ -331,16 +320,34 @@ function PipelineDetailPage({
   const {
     data: dataPipelineInteraction,
     mutate: fetchPipelineInteraction,
-  } = api.pipeline_interactions.detail(false && isInteractionsEnabled && pipelineUUID, {}, {
-    revalidateOnFocus: false,
-  });
+  } = useDelayFetch(
+    api.pipeline_interactions.detail,
+    pipelineUUID,
+    {},
+    {
+      revalidateOnFocus: false,
+    },
+    {
+      condition: () => isInteractionsEnabled,
+      delay: 12000,
+    },
+  );
 
   const {
     data: dataInteractions,
     mutate: fetchInteractions,
-  } = api.interactions.pipeline_interactions.list(false && isInteractionsEnabled && pipelineUUID, {}, {
-    revalidateOnFocus: false,
-  });
+  } = useDelayFetch(
+    api.interactions.pipeline_interactions.list,
+    pipelineUUID,
+    {},
+    {
+      revalidateOnFocus: false,
+    },
+    {
+      condition: () => isInteractionsEnabled,
+      delay: 12000,
+    },
+  );
 
   const pipelineInteraction: PipelineInteractionType =
     useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
@@ -687,11 +694,16 @@ function PipelineDetailPage({
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
+  // Blocks
+  const [blocks, setBlocks] = useState<BlockType[]>([]);
+  const [widgets, setWidgets] = useState<BlockType[]>([]);
+
   // Data providers
-  const { data: dataDataProviders } = api.data_providers.list({}, {
+  const { data: dataDataProviders } = useDelayFetch(api.data_providers.list, {}, {
     revalidateOnFocus: false,
   }, {
-    pauseFetch: true,
+    delay: 1000,
+    condition: blocks?.length >= 1,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
@@ -699,12 +711,12 @@ function PipelineDetailPage({
   const {
     data: dataGlobalVariables,
     mutate: fetchVariables,
-  } = api.variables.pipelines.list(null, {
+  } = useDelayFetch(api.variables.pipelines.list, pipelineUUID, {
     global_only: true,
   }, {
     revalidateOnFocus: false,
   }, {
-    pauseFetch: true,
+    delay: ViewKeyEnum.VARIABLES === activeSidekickView ? 0 : 10000,
   });
   const globalVariables = dataGlobalVariables?.variables;
 
@@ -712,16 +724,13 @@ function PipelineDetailPage({
   const {
     data: dataSecrets,
     mutate: fetchSecrets,
-  } = api.secrets.list({}, {
+  } = useDelayFetch(api.secrets.list, {}, {
     revalidateOnFocus: false,
   }, {
-    pauseFetch: true,
+    delay: ViewKeyEnum.SECRETS === activeSidekickView ? 0 : 10000,
   });
   const secrets = dataSecrets?.secrets;
 
-  // Blocks
-  const [blocks, setBlocks] = useState<BlockType[]>([]);
-  const [widgets, setWidgets] = useState<BlockType[]>([]);
   const widgetTempData = useRef({});
   const updateWidget = useCallback((block: BlockType) => {
     setPipelineContentTouched(true);
@@ -870,11 +879,12 @@ function PipelineDetailPage({
   const {
     data: dataAutocompleteItems,
     mutate: fetchAutocompleteItems,
-  } = api.autocomplete_items.list({}, {
+  } = useDelayFetch(api.autocomplete_items.list, {}, {
     refreshInterval: false,
     revalidateOnFocus: false,
   }, {
-    pauseFetch: true,
+    delay: 1000,
+    condition: blocks?.length >= 1,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
@@ -1031,7 +1041,7 @@ function PipelineDetailPage({
     addNewBlock: addNewBlockCallback,
     blocks,
     deleteWidget,
-    delayFetch: beforeHidden ? 10000 : 5000,
+    delayFetch: beforeHidden ? 7000 : 1000,
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
@@ -2652,10 +2662,10 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
-  const { data: dataGlobalProducts } = api.global_data_products.list({}, {
+  const { data: dataGlobalProducts } = useDelayFetch(api.global_data_products.list, {}, {
     revalidateOnFocus: false,
   }, {
-    pauseFetch: true,
+    delay: blocks?.length >= 1 ? 3000 : 10000,
   });
   const globalDataProducts: GlobalDataProductType[] =
     useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);

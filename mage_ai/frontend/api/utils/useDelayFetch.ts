@@ -5,7 +5,6 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
   data: any;
   mutate: () => any;
 } {
-
   let args = argsInit;
   let opts;
 
@@ -20,7 +19,7 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
     delay,
   } = opts || {
     delay: 3000,
-    condition: null,
+    condition: undefined,
   };
 
   const timeoutRef = useRef(null);
@@ -30,7 +29,10 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
     const getReady = () => {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
-        if (!condition || condition?.()) {
+        if (typeof condition === 'undefined' || (condition !== null && typeof condition === 'function'
+          ? condition?.()
+          : condition
+        )) {
           setReady(true);
         } else {
           getReady();
@@ -41,7 +43,7 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
     if (!ready) {
       getReady();
     }
-  }, []);
+  }, [condition]);
 
   const {
     data,

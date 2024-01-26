@@ -8,6 +8,7 @@ import ComputeServiceType, {
   SetupStepStatusEnum,
 } from '@interfaces/ComputeServiceType';
 import api from '@api';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useProject from '@utils/models/project/useProject';
 
 function useComputeService({
@@ -46,8 +47,10 @@ function useComputeService({
   const {
     data: dataComputeService,
     mutate: fetchComputeService,
-  } = api.compute_services.detail((!sparkEnabled || pauseFetch) ? null : 'compute-service', {}, {
+  } = useDelayFetch(api.compute_services.detail, 'compute-service', {}, {
     refreshInterval: computeServiceRefreshInterval,
+  }, {
+    condition: () => sparkEnabled && !pauseFetch,
   });
   const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
     dataComputeService,

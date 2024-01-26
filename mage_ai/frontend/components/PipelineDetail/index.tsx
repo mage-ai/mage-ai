@@ -40,6 +40,7 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
@@ -436,13 +437,16 @@ function PipelineDetail({
     ],
   );
 
-  const { data: dataBlockTemplates } = api.block_templates.list({
-    show_all: useV2AddNewBlock ? true : false,
-  }, {
-    revalidateOnFocus: false,
-  }, {
-    pauseFetch: true,
-  });
+  const { data: dataBlockTemplates } = useDelayFetch(
+    api.block_templates.list,
+    {
+      show_all: useV2AddNewBlock ? true : false,
+    }, {
+      revalidateOnFocus: false,
+    }, {
+      delay: 5000,
+    },
+  );
   const blockTemplates: BlockTemplateType[] =
     useMemo(() => dataBlockTemplates?.block_templates || [], [
       dataBlockTemplates,
