@@ -54,8 +54,9 @@ export type FlyoutMenuProps = {
   alternateBackground?: boolean;
   customSubmenuHeights?: { [key: string]: number };
   disableKeyboardShortcuts?: boolean;
+  fixed?: boolean;
   items: FlyoutMenuItemType[];
-  left?: number;
+  left?: number | string;
   multipleConfirmDialogues?: boolean;
   onClickCallback?: (e?: any) => void;
   open: boolean;
@@ -73,6 +74,7 @@ function FlyoutMenu({
   alternateBackground,
   customSubmenuHeights,
   disableKeyboardShortcuts,
+  fixed,
   items,
   left,
   multipleConfirmDialogues,
@@ -193,6 +195,7 @@ function FlyoutMenu({
 
     return (
       <FlyoutMenuContainerStyle
+        fixed={fixed}
         maxHeight={submenuHeight}
         roundedStyle={roundedStyle}
         style={{

@@ -49,7 +49,7 @@ function useKernel({
   const {
     data: dataKernels,
     mutate: fetchKernels,
-  } = useDelayFetch(api.kernels.list
+  } = useDelayFetch(api.kernels.list,
     // checkExecutionState
     !!caller
     ? {

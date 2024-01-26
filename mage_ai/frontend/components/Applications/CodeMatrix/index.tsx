@@ -515,6 +515,7 @@ function CodeMatrix({
       <Spacing ml={1}>
         <KernelHeader
           compact
+          fixed
           outputs={kernelStatusCheckResults}
           refreshInterval={0}
           revalidateOnFocus={false}
@@ -523,20 +524,21 @@ function CodeMatrix({
       <Spacing ml={1}>
         <Tooltip
           block
-          description={(!open || !shouldConnect) && (
+          label={(
             <>
               {!shouldConnect && (
                 <Text warning small>
                   Turn on the WebSocket connection before coding
                 </Text>
               )}
-              {shouldConnect && !open && (
-                <Text warning small>
-                  WebSocket connection isn’t open yet
+              {shouldConnect && (
+                <Text warning={!open} small success={open}>
+                  {open ? 'Ready' : 'WebSocket connection isn’t open yet'}
                 </Text>
               )}
             </>
           )}
+          fixed
           forceVisible={!(open && shouldConnect)}
           size={null}
           visibleDelay={300}

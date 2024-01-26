@@ -17,12 +17,14 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 function KernelHeader({
   compact,
+  fixed,
   outputs,
   refreshInterval = 12000,
   revalidateOnFocus = true,
   showError,
 }: {
   compact?: boolean;
+  fixed?: boolean;
   outputs?: KernelOutputType[];
 } & UseKernelType) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -125,22 +127,24 @@ function KernelHeader({
           small
         >
           <Text monospace noWrapping small>
-            {kernel?.name} {compact ? '' : limbo
+            {kernel?.name || 'Kernel'} {compact ? '' : limbo
               ? 'status unknown 🤷'
               : kernel?.alive
                 ? 'alive'
                 : 'dead'}
           </Text>
+          <FlyoutMenu
+            fixed={fixed}
+            items={items}
+            left='default'
+            onClickCallback={() => setHighlightedIndex(null)}
+            open={highlightedIndex === 0}
+            parentRef={buttonRef}
+            uuid="KernelHeader"
+            width={180}
+          />
         </Button>
 
-        <FlyoutMenu
-          items={items}
-          onClickCallback={() => setHighlightedIndex(null)}
-          open={highlightedIndex === 0}
-          parentRef={buttonRef}
-          uuid="KernelHeader"
-          width={180}
-        />
       </div>
     </ClickOutside>
   );

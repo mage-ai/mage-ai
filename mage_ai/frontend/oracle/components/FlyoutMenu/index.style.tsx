@@ -18,12 +18,12 @@ type LinkProps = {
 };
 
 export const FlyoutMenuContainerStyle = styled.div<{
+  fixed?: boolean;
   maxHeight?: number;
   roundedStyle?: boolean;
   width?: number;
 }>`
   ${ScrollbarStyledCss}
-  position: absolute;
   max-height: ${UNIT * 58}px;
   z-index: 1;
 
@@ -38,6 +38,7 @@ export const FlyoutMenuContainerStyle = styled.div<{
 
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};
+    position: ${props.fixed ? 'fixed' : 'absolute'};
 
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};

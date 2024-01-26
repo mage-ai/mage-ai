@@ -123,8 +123,6 @@ function CommandCenter({
 }: {
   router?: any;
 }) {
-  const router = routerProp || useRouter();
-function CommandCenter() {
   const controls = useAnimation();
 
   const router = useRouter();
