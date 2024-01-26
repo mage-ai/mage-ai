@@ -10,7 +10,6 @@ import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import { RefType } from '@interfaces/ElementType'
 import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
 import VerticalNavigation from '@components/Dashboard/VerticalNavigation';
@@ -18,7 +17,6 @@ import {
   AFTER_MIN_WIDTH,
   ALL_HEADERS_HEIGHT,
   ASIDE_HEADER_HEIGHT,
-  ASIDE_SUBHEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
   AsideFooterStyle,
@@ -44,8 +42,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  PanelCollapseLeft,
-  PanelCollapseRight,
 } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -62,8 +58,6 @@ import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
-  afterCombinedWithMain?: boolean;
-  afterDark?: boolean;
   afterDividerContrast?: boolean;
   afterFooter?: any;
   afterFooterBottomOffset?: number;
@@ -72,11 +66,9 @@ type TripleLayoutProps = {
   afterHeightOffset?: number;
   afterHidden?: boolean;
   afterInnerHeightMinus?: number;
-  afterInnerRef?: RefType;
   afterMousedownActive?: boolean;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
-  afterRows?: number;
   afterSubheader?: any;
   afterWidth?: number;
   autoLayout?: boolean;
@@ -118,8 +110,6 @@ type TripleLayoutProps = {
 
 function TripleLayout({
   after,
-  afterCombinedWithMain,
-  afterDark,
   afterDividerContrast,
   afterFooter,
   afterFooterBottomOffset,
@@ -128,11 +118,9 @@ function TripleLayout({
   afterHeightOffset,
   afterHidden,
   afterInnerHeightMinus,
-  afterInnerRef,
   afterMousedownActive,
   afterNavigationItems,
   afterOverflow,
-  afterRows,
   afterSubheader,
   afterWidth = 0,
   autoLayout,
@@ -180,7 +168,7 @@ function TripleLayout({
     return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
   }
 
-  const refAfterInner = afterInnerRef || useRef(null);
+  const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
@@ -207,10 +195,6 @@ function TripleLayout({
   useEffect(() => {
     if (setBeforeWidth) {
       const resizeBefore = (e) => {
-        if (e.which !== 1) {
-          return;
-        }
-
         const {
           x,
         } = refBeforeInner?.current?.getBoundingClientRect?.() || {};
@@ -226,10 +210,6 @@ function TripleLayout({
       };
 
       const addMousedown = (e) => {
-        if (e.which !== 1) {
-          return;
-        }
-
         if (e.offsetX >= e.target.offsetWidth - DRAGGABLE_WIDTH
           && e.offsetX <= e.target.offsetWidth + DRAGGABLE_WIDTH
         ) {
@@ -265,10 +245,6 @@ function TripleLayout({
 
   useEffect(() => {
     const resizeAfter = (e) => {
-      if (e.which !== 1) {
-        return;
-      }
-
       if (setAfterWidth) {
         const {
           x,
@@ -286,10 +262,6 @@ function TripleLayout({
     };
 
     const addMousedown = (e) => {
-      if (e.which !== 1) {
-        return;
-      }
-
       if (e.offsetX >= -1 * DRAGGABLE_WIDTH && e.offsetX <= DRAGGABLE_WIDTH) {
         setAfterMousedownActive?.(true);
         e.preventDefault();
@@ -352,6 +324,9 @@ function TripleLayout({
             visible={afterHidden}
           >
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0c652d69d (fix merge)
             <Flex>
               <Spacing pl={afterHidden ? 1 : 2} />
               <Button
@@ -376,6 +351,7 @@ function TripleLayout({
             </Flex>
 
             {!afterHidden && afterHeader}
+<<<<<<< HEAD
 =======
             <FlexContainer
               alignItems="center"
@@ -424,6 +400,8 @@ function TripleLayout({
               {!afterCombinedWithMain && !afterHidden && afterHeader}
             </FlexContainer>
 >>>>>>> d9e3000fd ([td] Code Matrix application)
+=======
+>>>>>>> 0c652d69d (fix merge)
           </AsideHeaderStyle>
 
           {!afterHidden && afterSubheader && (
@@ -443,11 +421,9 @@ function TripleLayout({
 
       <AfterInnerStyle
         heightMinus={afterInnerHeightMinus}
-        hidden={afterHidden}
         noScrollbarTrackBackground
         overflow={afterOverflow}
         ref={refAfterInner}
-        rows={afterRows}
         verticalOffset={afterHeader
           ? afterSubheader
             ? ASIDE_HEADER_HEIGHT + afterHeightOffset
@@ -478,7 +454,6 @@ function TripleLayout({
     </>
   ), [
     after,
-    afterCombinedWithMain,
     afterDividerContrast,
     afterFooter,
     afterFooterBottomOffset,
@@ -487,7 +462,6 @@ function TripleLayout({
     afterHeightOffset,
     afterHidden,
     afterOverflow,
-    afterRows,
     afterSubheader,
     afterWidthFinal,
     contained,
@@ -652,7 +626,6 @@ function TripleLayout({
       return (
         <AfterStyle
           autoLayout={autoLayout}
-          dark={afterDark}
           heightOffset={afterHeightOffset}
           inline={inline}
           style={{
@@ -665,12 +638,7 @@ function TripleLayout({
             disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
-            top={
-              afterCombinedWithMain
-                ? -1 * (ASIDE_SUBHEADER_HEIGHT + 1)
-                : contained
-                  ? 0
-                  : ASIDE_HEADER_HEIGHT}
+            top={contained ? 0 : ASIDE_HEADER_HEIGHT}
           />
 
           {hasAfterNavigationItems && (
@@ -714,9 +682,7 @@ function TripleLayout({
     return null;
   }, [
     after,
-    afterCombinedWithMain,
     afterContent,
-    afterDark,
     afterDividerContrast,
     afterHeightOffset,
     afterHidden,

@@ -2,7 +2,6 @@ import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useStat
 import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-import { motion, useAnimation } from 'framer-motion';
 
 import ApplicationHeaderTitle from './ApplicationHeaderTitle';
 import ApplicationFooter from './ApplicationFooter';
@@ -129,6 +128,7 @@ function CommandCenter({
 }) {
   const router = routerProp || useRouter();
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> ab1c904cf (fix merge conflict)
@@ -137,6 +137,8 @@ function CommandCenter() {
 
   const router = useRouter();
 >>>>>>> 1c3be6c24 (use terminal)
+=======
+>>>>>>> 0c652d69d (fix merge)
   const [showError, _, refError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
   });
@@ -148,7 +150,6 @@ function CommandCenter() {
 
   const refActive = useRef(false);
   const refFocusedElement = useRef(null);
-  const fetchItemsRef = useRef(null);
   const refReload = useRef(null);
   const refSettings = useRef(null);
 
@@ -1019,7 +1020,6 @@ function CommandCenter() {
 
     return fetchItemsInit(fetchOptions);
   }
-  fetchItemsRef.current = fetchItems;
 
   useEffect(() => {
     if (isLoadingFetch) {
@@ -1040,14 +1040,12 @@ function CommandCenter() {
   }
 
   function closeCommandCenter() {
-    controls.start('hidden').then(() => {
-      refContainer.current.className = addClassNames(
-        refContainer?.current?.className || '',
-        [
-          'hide',
-        ],
-      );
-    });
+    refContainer.current.className = addClassNames(
+      refContainer?.current?.className || '',
+      [
+        'hide',
+      ],
+    );
 
     refFocusedElement.current = null;
     refInput?.current?.blur();
@@ -1075,7 +1073,7 @@ function CommandCenter() {
       ],
     );
 
-    // Show the command center and focus on the text input.
+      // Show the command center and focus on the text input.
     refInput?.current?.focus();
     refActive.current = true;
 
@@ -1098,7 +1096,6 @@ function CommandCenter() {
       });
       window.dispatchEvent(eventCustom);
     }
-    controls.start('visible');
   }
 
   const {
@@ -1121,10 +1118,14 @@ function CommandCenter() {
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     function startSequenceValid(): boolean {
 <<<<<<< HEAD
+<<<<<<< HEAD
       const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main?.filter(k => k?.length >= 1);
 =======
     const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main?.filter(k => k?.length >= 1);
 >>>>>>> ab1c904cf (fix merge conflict)
+=======
+      const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main?.filter(k => k?.length >= 1);
+>>>>>>> 0c652d69d (fix merge)
 
       if (ks?.length >= 1) {
         return ks?.every(k => keyMapping?.[k]);
@@ -1155,12 +1156,18 @@ function CommandCenter() {
     if (!refActive?.current) {
       return;
 <<<<<<< HEAD
+<<<<<<< HEAD
     }
 
     if (refOutputContainerState?.current
 =======
     } else if (refOutputContainerState?.current
 >>>>>>> ab1c904cf (fix merge conflict)
+=======
+    }
+
+    if (refOutputContainerState?.current
+>>>>>>> 0c652d69d (fix merge)
       && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping, { allowExtraKeys: 0 })
     ) {
       // Close the output
@@ -1194,10 +1201,14 @@ function CommandCenter() {
 
               return executeButtonActions({
                 ...currentApplicationConfig,
+<<<<<<< HEAD
                 closeCommandCenter,
                 button,
+=======
+>>>>>>> 0c652d69d (fix merge)
                 closeCommandCenter,
-                fetchItems: fetchItemsRef?.current,
+                button,
+                fetchItems,
                 getItemsActionResults,
                 handleSelectItemRow,
                 itemsRef: refItems,
@@ -1317,7 +1328,10 @@ function CommandCenter() {
         }
       }
     }
-  }, []);
+  }, [
+    fetchItems,
+    reload,
+  ]);
 
   useEffect(() => {
     if (refReload?.current === null) {
@@ -1422,194 +1436,161 @@ function CommandCenter() {
         ]?.join(' ')}
         ref={refContainer}
       >
-        <motion.div
-          animate={controls}
-          className="command-center"
-          initial="hidden"
-          variants={{
-            visible: {
-              // y: 0,
-              translateX: '-50%',
-              translateY: '-50%',
-              opacity: 1,
-              transition: {
-                delay: 0,
-                duration: 0.1,
-                ease: [
-                  0.2,
-                  0.81,
-                  0.7,
-                  1.01,
-                ],
-              },
-              scale: 1,
-            },
-            hidden: {
-              translateX: '-50%',
-              translateY: '-40%',
-              // y: enter,
-              opacity: 0,
-              duration: 0.1,
-              scale: 0.7,
-            },
-          }}
-        >
-          <InputContainerStyle id={INPUT_CONTAINER_ID}>
-            <HeaderContainerStyle>
-              <HeaderStyle
-                className="inactive"
-                id={HEADER_ID}
-                ref={refHeader}
-              >
-                <Button
-                  borderLess
-                  iconOnly
-                  noBackground
-                  onClick={() => removeApplication()}
-                  outline
-                >
-                  <ArrowLeft size={2 * UNIT} />
-                </Button>
-
-                <Spacing mr={1} />
-
-                <KeyboardTextGroup
-                  addPlusSignBetweenKeys
-                  keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
-                  monospace
-                />
-
-                <Spacing mr={1} />
-
-                <HeaderTitleStyle id={HEADER_TITLE_ID} ref={refHeaderTitle} />
-              </HeaderStyle>
-
-              <InputStyle
-                autoComplete="off"
-                className="inactive"
-                id={MAIN_TEXT_INPUT_ID}
-                onChange={(e) => {
-                  // There is no need to set refInput.current.value = searchText,
-                  // this is already done when typing in the input element.
-                  const searchText = e.target.value;
-                  const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
-
-                  refInputValuePrevious.current = searchText;
-
-                  renderItems(isCurrentApplicationDetailList()
-                    ? refItemsApplicationDetailList?.current || []
-                    : combineUnique([
-                        refItemsInit?.current || [],
-                        refItems?.current || [],
-                        getCachedItems() || [],
-                      ]),
-                    {
-                      shouldFilter: true,
-                    },
-                  );
-
-                  fetchItems({ delay: 300 });
-
-                  if (isRemoving) {
-                    refSelectedSearchHistoryIndex.current = null;
-                    refFocusedSearchHistoryIndex.current = null;
-                  } else if (refFocusedSearchHistoryIndex?.current !== null) {
-                    refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
-                    refFocusedSearchHistoryIndex.current = null;
-                  }
-                }}
-                onFocus={() => {
-                  refFocusedElement.current = InputElementEnum.MAIN;
-                }}
-                onBlur={() => {
-                  refFocusedElement.current = null;
-                }}
-                placeholder={getInputPlaceholder(getCurrentApplicationConfiguration())}
-                ref={refInput}
-              />
-
-              <KeyboardShortcutStyle
-                className="inactive"
-                ref={refInputKeyboardShortcut}
-              >
-                <LaunchKeyboardShortcutText settings={refSettings?.current} />
-              </KeyboardShortcutStyle>
-            </HeaderContainerStyle>
-          </InputContainerStyle>
-
-          <ItemsContainerStyle
-            className="inactive"
-            id={ITEMS_CONTAINER_UUID}
-            ref={refItemsNodesContainer}
-          >
-          </ItemsContainerStyle>
-
-          <ApplicationContainerStyle
-            className="inactive"
-            id={ITEM_CONTEXT_CONTAINER_ID}
-            ref={refApplicationsNodesContainer}
-          />
-
-          <OutputContainerStyle
-            className="inactive"
-            id={OUTPUT_CONTAINER_ID}
-            ref={refOutputContainer}
-          />
-
-          <FooterWraperStyle>
-            <LoadingStyle
+        <InputContainerStyle id={INPUT_CONTAINER_ID}>
+          <HeaderContainerStyle>
+            <HeaderStyle
               className="inactive"
-              ref={refLoading}
+              id={HEADER_ID}
+              ref={refHeader}
             >
-              <Loading width="100%" />
-            </LoadingStyle>
+              <Button
+                borderLess
+                iconOnly
+                noBackground
+                onClick={() => removeApplication()}
+                outline
+              >
+                <ArrowLeft size={2 * UNIT} />
+              </Button>
 
-            <FooterStyle
-              className="inactive output-inactive"
-              id={FOOTER_ID}
-              ref={refFooter}
-            >
-              <Footer
-                addApplication={(item, application) => addApplication({
-                  application,
-                  executeAction,
-                  focusedItemIndex: refFocusedItemIndex?.current,
-                  invokeRequest,
-                  item,
-                  itemsRef: refItems,
-                })}
-                closeCommandCenter={closeCommandCenter}
-                closeOutput={closeOutput}
-                handleNavigation={(increment: number) => {
-                  if (increment >= 1) {
-                    handleNavigation(Math.min(
-                      refItems?.current?.length - 1,
-                      refFocusedItemIndex?.current + increment,
-                    ));
-                  } else if (increment <= -1) {
-                    handleNavigation(Math.max(
-                      0,
-                      refFocusedItemIndex?.current + increment,
-                    ));
-                  }
-                }}
-                handleSelectItemRow={() => handleSelectItemRow(
-                  refItems?.current?.[refFocusedItemIndex?.current],
-                  refFocusedItemIndex?.current,
-                )}
-                refFooterButtonEnter={refFooterButtonEnter}
-                refFooterButtonEscape={refFooterButtonEscape}
-                refFooterButtonUp={refFooterButtonUp}
+              <Spacing mr={1} />
+
+              <KeyboardTextGroup
+                addPlusSignBetweenKeys
+                keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
+                monospace
               />
-            </FooterStyle>
 
-            <ApplicationFooterStyle
-              className="inactive output-inactive"
-              id={APPLICATION_FOOTER_ID}
-              ref={refApplicationsFooter}
+              <Spacing mr={1} />
+
+              <HeaderTitleStyle id={HEADER_TITLE_ID} ref={refHeaderTitle} />
+            </HeaderStyle>
+
+            <InputStyle
+              autoComplete="off"
+              className="inactive"
+              id={MAIN_TEXT_INPUT_ID}
+              onChange={(e) => {
+                // There is no need to set refInput.current.value = searchText,
+                // this is already done when typing in the input element.
+                const searchText = e.target.value;
+                const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
+
+                refInputValuePrevious.current = searchText;
+
+                renderItems(isCurrentApplicationDetailList()
+                  ? refItemsApplicationDetailList?.current || []
+                  : combineUnique([
+                      refItemsInit?.current || [],
+                      refItems?.current || [],
+                      getCachedItems() || [],
+                    ]),
+                  {
+                    shouldFilter: true,
+                  },
+                );
+
+                fetchItems({ delay: 300 });
+
+                if (isRemoving) {
+                  refSelectedSearchHistoryIndex.current = null;
+                  refFocusedSearchHistoryIndex.current = null;
+                } else if (refFocusedSearchHistoryIndex?.current !== null) {
+                  refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+                  refFocusedSearchHistoryIndex.current = null;
+                }
+              }}
+              onFocus={() => {
+                refFocusedElement.current = InputElementEnum.MAIN;
+              }}
+              onBlur={() => {
+                refFocusedElement.current = null;
+              }}
+              placeholder={getInputPlaceholder(getCurrentApplicationConfiguration())}
+              ref={refInput}
             />
-          </FooterWraperStyle>
-        </motion.div>
+
+            <KeyboardShortcutStyle
+              className="inactive"
+              ref={refInputKeyboardShortcut}
+            >
+              <LaunchKeyboardShortcutText settings={refSettings?.current} />
+            </KeyboardShortcutStyle>
+          </HeaderContainerStyle>
+        </InputContainerStyle>
+
+        <ItemsContainerStyle
+          className="inactive"
+          id={ITEMS_CONTAINER_UUID}
+          ref={refItemsNodesContainer}
+        >
+        </ItemsContainerStyle>
+
+        <ApplicationContainerStyle
+          className="inactive"
+          id={ITEM_CONTEXT_CONTAINER_ID}
+          ref={refApplicationsNodesContainer}
+        />
+
+        <OutputContainerStyle
+          className="inactive"
+          id={OUTPUT_CONTAINER_ID}
+          ref={refOutputContainer}
+        />
+
+        <FooterWraperStyle>
+          <LoadingStyle
+            className="inactive"
+            ref={refLoading}
+          >
+            <Loading width="100%" />
+          </LoadingStyle>
+
+          <FooterStyle
+            className="inactive output-inactive"
+            id={FOOTER_ID}
+            ref={refFooter}
+          >
+            <Footer
+              addApplication={(item, application) => addApplication({
+                application,
+                executeAction,
+                focusedItemIndex: refFocusedItemIndex?.current,
+                invokeRequest,
+                item,
+                itemsRef: refItems,
+              })}
+              closeCommandCenter={closeCommandCenter}
+              closeOutput={closeOutput}
+              handleNavigation={(increment: number) => {
+                if (increment >= 1) {
+                  handleNavigation(Math.min(
+                    refItems?.current?.length - 1,
+                    refFocusedItemIndex?.current + increment,
+                  ));
+                } else if (increment <= -1) {
+                  handleNavigation(Math.max(
+                    0,
+                    refFocusedItemIndex?.current + increment,
+                  ));
+                }
+              }}
+              handleSelectItemRow={() => handleSelectItemRow(
+                refItems?.current?.[refFocusedItemIndex?.current],
+                refFocusedItemIndex?.current,
+              )}
+              refFooterButtonEnter={refFooterButtonEnter}
+              refFooterButtonEscape={refFooterButtonEscape}
+              refFooterButtonUp={refFooterButtonUp}
+            />
+          </FooterStyle>
+
+          <ApplicationFooterStyle
+            className="inactive output-inactive"
+            id={APPLICATION_FOOTER_ID}
+            ref={refApplicationsFooter}
+          />
+        </FooterWraperStyle>
       </ContainerStyle>
 
       {renderApplications()}

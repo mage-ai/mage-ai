@@ -42,6 +42,9 @@ export const ContainerStyle = styled.div<{
   className?: string;
 }>`
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0c652d69d (fix merge)
   border-radius: ${BORDER_RADIUS_XLARGE}px;
   left: 50%;
   overflow: hidden;
@@ -50,6 +53,7 @@ export const ContainerStyle = styled.div<{
   transform: translate(-50%, -50%);
   width: ${MAX_WIDTH + (1 * 2)}px;
   z-index: 100;
+<<<<<<< HEAD
 
   // We have to do this for blur to work on Safari
   .hide {
@@ -84,67 +88,59 @@ export const ContainerStyle = styled.div<{
     }
   }
 
+=======
+>>>>>>> 0c652d69d (fix merge)
 
   // We have to do this for blur to work on Safari
   .hide {
-    .command-center {
-      -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-      backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-    }
+    -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   }
   // We have to do this for blur to work on Safari
   :not(.hide) {
-    .command-center {
-      -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-      backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-    }
+    -webkit-backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   }
 
-  .command-center {
-    backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
-    border-radius: ${BORDER_RADIUS_XLARGE}px;
-    left: 50%;
-    overflow: hidden;
-    position: fixed;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: ${MAX_WIDTH + (1 * 2)}px;
-    z-index: 100;
+  ${props => `
+    background-color: ${(props.theme || dark).background.blackTransparent};
+    box-shadow: ${(props.theme || dark).shadow.window};
+    border: 1px solid ${(props.theme || dark).monotone.grey400};
 
-    ${props => `
-      background-color: ${(props.theme || dark).background.blackTransparent};
-      box-shadow: ${(props.theme || dark).shadow.window};
-      border: 1px solid ${(props.theme || dark).monotone.grey400};
+    #${INPUT_CONTAINER_ID} {
+      border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
+    #${OUTPUT_CONTAINER_ID} {
+      border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
+    &.version_control {
+      border: 1px solid ${getApplicationColors(
+      ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+      props,
+    )?.border};
 
       #${INPUT_CONTAINER_ID} {
-        border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
-      }
-
-      #${OUTPUT_CONTAINER_ID} {
-        border-top: 1px solid ${(props.theme || dark).monotone.grey400};
-      }
-
-      &.version_control {
-        border: 1px solid ${getApplicationColors(
+        border-bottom: 1px solid ${getApplicationColors(
         ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
         props,
       )?.border};
-
-        #${INPUT_CONTAINER_ID} {
-          border-bottom: 1px solid ${getApplicationColors(
-          ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
-          props,
-        )?.border};
-        }
-
-        #${OUTPUT_CONTAINER_ID} {
-          border-top: 1px solid ${getApplicationColors(
-          ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
-          props,
-        )?.border};
-        }
       }
-    `}
+
+      #${OUTPUT_CONTAINER_ID} {
+        border-top: 1px solid ${getApplicationColors(
+        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+        props,
+      )?.border};
+      }
+    }
+  `}
+
+  &.hide {
+    bottom: 100%;
+    opacity: 0;
+    right: 100%;
   }
 `;
 
