@@ -4,8 +4,6 @@ import usePrevious from '@utils/usePrevious';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { get, set, setLocalStorageValue } from '@storage/localStorage';
 import { useWindowSize } from '@utils/sizes';
-import { RefType } from '@interfaces/ElementType';
-import { truthy } from '@utils/obj';
 
 const DEFAULT_ASIDE_WIDTH = 25 * UNIT;
 const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
@@ -31,8 +29,6 @@ function useAside(uuid, refData, {
       widthProp?: number;
     };
   };
-  rows?: number;
-  setRows?: (value: number) => void;
   setWidth?: (value: number) => void;
   width?: number;
   widthOverride?: boolean;
@@ -47,19 +43,13 @@ function useAside(uuid, refData, {
 } {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
   const keyHidden = useMemo(() => `${uuid}_hidden`, [uuid]);
-  const keyRows = useMemo(() => `${uuid}_rows`, [uuid]);
   const hiddenLocal = get(keyHidden);
-  const rowsLocal = get(keyRows);
   const widthLocal = get(key);
 
   const [hidden, setHiddenState] = useState([
     hiddenLocal,
     hiddenProp,
     false,
-  ].find(v => typeof v !== 'undefined' && v !== null));
-  const [rows, setRowsState] = useState([2,
-    rowsLocal,
-    null,
   ].find(v => typeof v !== 'undefined' && v !== null));
   const [mousedownActive, setMousedownActive] = useState(false);
 <<<<<<< HEAD
@@ -95,18 +85,17 @@ function useAside(uuid, refData, {
     set(keyHidden, typeof prev === 'function' ? prev?.() : prev);
   }, [keyHidden]);
 
-  const setRows = useCallback((prev) => {
-    setRowsState(prev);
-    set(keyRows, typeof prev === 'function' ? prev?.() : prev);
-  }, [keyRows]);
-
   const width = useMemo(() => {
     let value = (typeof widthProp !== 'undefined' && widthOverride) ? widthProp : widthState;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> e331b453c (fix usetriple)
+=======
+
+>>>>>>> 78f83a723 (fix merge)
     if (typeof widthWindow !== 'undefined') {
       value = Math.min(value, widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + DEFAULT_ASIDE_WIDTH));
     }
@@ -191,18 +180,14 @@ function useAside(uuid, refData, {
   return {
     hidden,
     mousedownActive,
-    rows,
     setHidden,
     setMousedownActive,
-    setRows,
     setWidth,
     width,
   };
 }
 
 export type UseTripleLayoutType = {
-  afterInnerRef?: RefType;
-  beforeInnerRef?: RefType;
   hiddenAfter?: boolean;
   hiddenBefore?: boolean;
   mainContainerRef: {
@@ -210,14 +195,10 @@ export type UseTripleLayoutType = {
   };
   mousedownActiveAfter: boolean;
   mousedownActiveBefore: boolean;
-  rowsAfter: number;
-  rowsBefore: number;
   setHiddenAfter: (value: boolean) => void;
   setHiddenBefore: (value: boolean) => void;
   setMousedownActiveAfter: (value: boolean) => void;
   setMousedownActiveBefore: (value: boolean) => void;
-  setRowsAfter: (rows: number) => void;
-  setRowsBefore: (rows: number) => void;
   setWidthAfter: (value: number) => void;
   setWidthBefore: (value: number) => void;
   widthAfter: number;
@@ -255,8 +236,6 @@ export default function useTripleLayout(uuid: string, {
   const keyAfter = useMemo(() => `layout_after_${uuid}`, [uuid]);
   const keyBefore = useMemo(() => `layout_before_${uuid}`, [uuid]);
 
-  const afterInnerRef = useRef(null);
-  const beforeInnerRef = useRef(null);
   const mainContainerRef = mainContainerRefProp || useRef(null);
   const [mainContainerWidthInit, setMainContainerWidth] = useState<number>(null);
   const mainContainerWidth = useMemo(() => Math.max(
@@ -280,10 +259,8 @@ export default function useTripleLayout(uuid: string, {
   const {
     hidden: hiddenAfter,
     mousedownActive: mousedownActiveAfter,
-    rows: rowsAfter,
     setHidden: setHiddenAfter,
     setMousedownActive: setMousedownActiveAfter,
-    setRows: setRowsAfter,
     setWidth: setWidthAfter,
     width: widthAfter,
   } = useAside(keyAfter, refAfter, {
@@ -300,10 +277,8 @@ export default function useTripleLayout(uuid: string, {
   const {
     hidden: hiddenBefore,
     mousedownActive: mousedownActiveBefore,
-    rows: rowsBefore,
     setHidden: setHiddenBefore,
     setMousedownActive: setMousedownActiveBefore,
-    setRows: setRowsBefore,
     setWidth: setWidthBefore,
     width: widthBefore,
   } = useAside(keyBefore, refBefore, {
@@ -367,21 +342,15 @@ export default function useTripleLayout(uuid: string, {
   // ]);
 
   return {
-    afterInnerRef,
-    beforeInnerRef,
     hiddenAfter,
     hiddenBefore,
     mainContainerRef,
     mousedownActiveAfter,
     mousedownActiveBefore,
-    rowsAfter,
-    rowsBefore,
     setHiddenAfter,
     setHiddenBefore,
     setMousedownActiveAfter,
     setMousedownActiveBefore,
-    setRowsAfter,
-    setRowsBefore,
     setWidthAfter,
     setWidthBefore,
     widthAfter,
