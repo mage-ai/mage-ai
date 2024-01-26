@@ -8,6 +8,7 @@ class FilePresenter(BasePresenter):
         'modified_timestamp',
         'name',
         'path',
+        'pipeline_count',
         'size',
     ]
 

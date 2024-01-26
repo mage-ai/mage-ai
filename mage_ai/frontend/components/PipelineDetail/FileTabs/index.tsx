@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
 
 import FileTab, { FileTabProps } from './Tab';
@@ -6,7 +6,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
-import { useKeyboardContext } from '@context/Keyboard';
 
 export type TabType = {
   label?: () => string;
@@ -56,6 +55,7 @@ export function useFileTabs({
 
     return (
       <FileTab
+        key={uuidFileTab}
         onClickTab={() => onClick?.({
           onClickTab,
         })}
@@ -66,7 +66,7 @@ export function useFileTabs({
     );
   }) : [], [
       isSelectedFilePath,
-      selectedFilePath,
+      onClickTab,
       selectedFilePath,
       tabsBefore,
       themeContext,
@@ -115,10 +115,13 @@ export function useFileTabs({
     numberOfFilePaths,
     onClickTab,
     onClickTabClose,
+    onContextMenu,
+    renderTabIcon,
     renderTabTitle,
     savePipelineContent,
     selectedFilePath,
     shouldDisableClose,
+    themeContext,
   ]);
 
   return {
@@ -139,7 +142,7 @@ export function FileTabs({
       fullHeight
       justifyContent="flex-start"
     >
-      {useFileTabs(props)}
+      {useFileTabs(props)?.tabs}
 
       {children}
     </FlexContainer>

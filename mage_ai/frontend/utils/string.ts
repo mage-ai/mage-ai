@@ -170,6 +170,10 @@ export function capitalizeRemoveUnderscoreLower(word = '') {
   return capitalize(removeUnderscore(word.toLowerCase()));
 }
 
+export function lowercaseRemoveUnderscore(word = '') {
+  return removeUnderscore(word.toLowerCase());
+}
+
 export function abbreviateNumber(value) {
   let newValue = value;
   if (value >= 1000) {

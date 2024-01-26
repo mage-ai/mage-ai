@@ -23,11 +23,13 @@ function FilesPageComponent({
     controller,
     filePaths,
     menu,
+    search,
     selectedFilePath,
     tabs,
     versions,
     versionsVisible,
   } = useFileComponents({
+    query: { include_pipeline_count: true },
     selectedFilePath: query?.file_path,
     showHiddenFilesSetting: true,
     uuid: 'Pages/Files',
@@ -41,7 +43,12 @@ function FilesPageComponent({
     <Dashboard
       after={versions}
       afterHidden={!(versionsVisible && selectedFilePath)}
-      before={browser}
+      before={
+        <>
+          {search}
+          {browser}
+        </>
+      }
       contained
       headerOffset={headerOffset + HEADER_HEIGHT}
       mainContainerHeader={({ widthOffset }) => (

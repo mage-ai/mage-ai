@@ -2442,7 +2442,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
     def get_pipelines_from_cache(self) -> List[Dict]:
         arr = BlockCache().get_pipelines(self)
-        return unique_by(arr, lambda x: (x.get('pipeline') or {}).get('uuid'))
+
+        return unique_by(
+            arr,
+            lambda x: (f"{(x.get('pipeline') or {}).get('uuid')}_"
+                       f"{(x.get('pipeline') or {}).get('repo_path')}"),
+        )
 
     def to_dict_base(
         self,

@@ -61,7 +61,6 @@ import PipelineInteractionType, {
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, {
-  PIPELINE_TYPE_TO_KERNEL_NAME,
   PipelineExtensionsType,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
@@ -139,7 +138,7 @@ import {
 } from '@components/PipelineDetail/utils';
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
-import { equals, find, indexBy, removeAtIndex, sortByKey } from '@utils/array';
+import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
@@ -1034,6 +1033,7 @@ function PipelineDetailPage({
     filesTouched,
     menu,
     openFile,
+    search: fileSearch,
     selectedFilePath,
     tabs: fileTabs,
     versions,
@@ -1052,6 +1052,7 @@ function PipelineDetailPage({
     onUpdateFileSuccess,
     openSidekickView,
     pipeline,
+    query: { include_pipeline_count: true },
     sendTerminalMessage,
     setDisableShortcuts,
     setSelectedBlock,
@@ -3303,7 +3304,12 @@ function PipelineDetailPage({
 
   const beforeToShow = useMemo(() => {
     if (EDIT_BEFORE_TAB_ALL_FILES.uuid === selectedTab?.uuid) {
-      return fileBrowser;
+      return (
+        <>
+          {fileSearch}
+          {fileBrowser}
+        </>
+      );
     } else if (EDIT_BEFORE_TAB_FILES_IN_PIPELINE.uuid === selectedTab?.uuid) {
       return blocksInPipeline;
     }
@@ -3312,6 +3318,7 @@ function PipelineDetailPage({
   }, [
     blocksInPipeline,
     fileBrowser,
+    fileSearch,
     selectedTab,
   ]);
 

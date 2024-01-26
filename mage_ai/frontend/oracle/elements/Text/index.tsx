@@ -239,7 +239,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.cyan && `
-    color: ${(props.theme || dark).accent.cyan};
+    color: ${(props.theme.accent || dark.accent).cyan};
   `}
 
   ${props => props.dbt && `

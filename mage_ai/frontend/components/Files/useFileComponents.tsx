@@ -6,8 +6,8 @@ import { useMutation } from 'react-query';
 
 import ApiReloader from '@components/ApiReloader';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Controller from '@components/FileEditor/Controller';
-import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FileBrowser from '@components/FileBrowser';
@@ -15,33 +15,39 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
-  OriginalContentMappingType,
-  FILES_QUERY_INCLUDE_HIDDEN_FILES,
-  COMMON_EXCLUDE_PATTERNS,
   COMMON_EXCLUDE_DIR_PATTERNS,
+  COMMON_EXCLUDE_PATTERNS,
+  FileFilterEnum,
+  FILES_QUERY_INCLUDE_HIDDEN_FILES,
+  OriginalContentMappingType,
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
-import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
 import useContextMenu from '@utils/useContextMenu';
 import useDelayFetch from '@api/utils/useDelayFetch';
 import useStatus from '@utils/models/status/useStatus';
 import {
-  HeaderStyle,
-  MAIN_CONTENT_TOP_OFFSET,
-  MenuStyle,
-  TabsStyle,
-} from './index.style';
+  Check,
+  Circle,
+  Close,
+  Edit,
+  FilterV2,
+  Refresh,
+  Save,
+  VisibleEye,
+} from '@oracle/icons';
 import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET } from '@utils/date';
+import { ICON_SIZE_DEFAULT } from '@oracle/styles/units/icons';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
-  KEY_CODE_ARROW_DOWN,
-  KEY_CODE_ARROW_UP,
   KEY_CODE_BRACKET_LEFT,
   KEY_CODE_BRACKET_RIGHT,
   KEY_CODE_C,
@@ -58,7 +64,6 @@ import {
   KEY_SYMBOL_META,
   KEY_SYMBOL_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES,
   addOpenFilePath as addOpenFilePathLocalStorage,
@@ -66,23 +71,25 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
-import { useKeyboardContext } from '@context/Keyboard';
-import { useFileTabs } from '@components/PipelineDetail/FileTabs';
-import { useError } from '@context/Error';
+import { SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
+import { SearchContainerStyle } from './index.style';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { convertFilePathToRelativeRoot } from '@utils/files';
+import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
+import { filterFiles, getFilenameFromFilePath, searchFiles } from './utils';
+import { get, set } from '@storage/localStorage';
+import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
-import { indexBy } from '@utils/array';
-import { getFilenameFromFilePath } from './utils';
-import { get, set } from '@storage/localStorage';
-import { displayPipelineLastSaved } from '@components/PipelineDetail/utils';
-import { convertFilePathToRelativeRoot } from '@utils/files';
-import { buildFileTreeByExtension } from '@components/FileBrowser/utils';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { Edit, Save, VisibleEye } from '@oracle/icons';
+import { useError } from '@context/Error';
+import { useFileTabs } from '@components/PipelineDetail/FileTabs';
+import { useKeyboardContext } from '@context/Keyboard';
 
 export const ICON_SIZE = UNIT * 2;
-export const MENU_ICON_SIZE = UNIT * 1.5;
+export const MENU_ICON_SIZE = ICON_SIZE_DEFAULT;
 const MENU_ICON_PROPS = {
   default: true,
   size: MENU_ICON_SIZE,
@@ -131,6 +138,7 @@ type UseFileComponentsProps = {
   originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   query?: {
+    include_pipeline_count?: boolean;
     pattern?: string;
   };
   selectedFilePath?: string;
@@ -192,6 +200,8 @@ function useFileComponents({
   const contentByFilePath = useRef(null);
   const selectedFileHistoryRef = useRef([]);
   const selectedFilePathRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const filterButtonMenuRef = useRef(null);
 
   const [lastSavedMapping, setSLastSavedMapping] = useState<{
     [filePath: string]: string | number;
@@ -405,6 +415,23 @@ function useFileComponents({
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
+  const [fileFilterMenuOpen, setFileFilterMenuOpen] = useState<boolean>(false);
+  const [fileFilter, setFileFilter] = useState<FileFilterEnum>(FileFilterEnum.ALL_FILES);
+  const [fileSearchText, setFileSearchText] = useState<string>(null);
+  const filteredFiles = useMemo(() => {
+    let filteredFiles = filterFiles(files, fileFilter);
+
+    if (fileSearchText) {
+      filteredFiles = searchFiles(filteredFiles, fileSearchText);
+    }
+
+    return filteredFiles;
+  }, [
+    fileFilter,
+    fileSearchText,
+    files,
+  ]);
+
   const { data: filesFlattenData, mutate: fetchFilesFLatten } = useDelayFetch(api.files.list, {
     pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
     flatten: true,
@@ -597,7 +624,6 @@ function useFileComponents({
     setSelectedBlock,
     showError,
     showHiddenFiles,
-    toggleShowHiddenFiles,
     uuid,
     widgets,
   ]);
@@ -605,22 +631,119 @@ function useFileComponents({
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      files={filteredFiles}
       onClickFile={(path: string, _: FileType) => openFile(path)}
       onClickFolder={(path: string, _: FileType) => openFile(path, true)}
-      files={files}
     />
   ), [
-    files,
     fileBrowserProps,
+    filteredFiles,
     openFile,
+  ]);
+
+  const closeFilterButtonMenu = useCallback(() => setFileFilterMenuOpen(false), []);
+  const fileSearchMemo = useMemo(() => (
+    <SearchContainerStyle>
+      <FlexContainer alignItems="center">
+        <TextInput
+          {...SEARCH_INPUT_PROPS}
+          afterIcon={fileSearchText
+            ? <Close />
+            : (
+              <FlyoutMenuWrapper
+                compact
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    beforeIcon: fileFilter !== FileFilterEnum.UNUSED_BLOCK_FILES
+                      ? <Check fill={dark.content.default} />
+                      : <Circle muted />
+                    ,
+                    label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.ALL_FILES),
+                    onClick: () => {
+                      setFileFilter(FileFilterEnum.ALL_FILES);
+                    },
+                    uuid: 'Files/Filter/AllFiles',
+                  },
+                  {
+                    beforeIcon: fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
+                      ? <Check fill={dark.accent.cyan} />
+                      : <Circle muted />
+                    ,
+                    label: () => capitalizeRemoveUnderscoreLower(FileFilterEnum.UNUSED_BLOCK_FILES),
+                    onClick: () => {
+                      setFileFilter(FileFilterEnum.UNUSED_BLOCK_FILES);
+                    },
+                    uuid: 'Files/Filter/UnusedBlockFiles',
+                  },
+                ]}
+                onClickCallback={closeFilterButtonMenu}
+                onClickOutside={closeFilterButtonMenu}
+                open={fileFilterMenuOpen}
+                parentRef={filterButtonMenuRef}
+                rightOffset={0}
+                roundedStyle
+                topOffset={1}
+                uuid="Files/FilterMenu"
+              >
+                <Button
+                  basic
+                  iconOnly
+                  noBackground
+                  onClick={() => setFileFilterMenuOpen(prevState => !prevState)}
+                  title="Filter files"
+                >
+                  <FilterV2
+                    fill={fileFilter !== FileFilterEnum.ALL_FILES
+                      ? dark.accent.cyan
+                      : null
+                    }
+                  />
+                </Button>
+              </FlyoutMenuWrapper>
+            )
+          }
+          afterIconClick={() => {
+            if (fileSearchText) {
+              setFileSearchText('');
+              searchInputRef?.current?.focus();
+            }
+          }}
+          afterIconSize={ICON_SIZE}
+          beforeIconSize={ICON_SIZE}
+          compact
+          maxWidth={300}
+          onChange={e => setFileSearchText(e.target.value)}
+          paddingVertical={UNIT / 2}
+          placeholder="Search files"
+          ref={searchInputRef}
+          value={fileSearchText}
+        />
+        <Button
+          basic
+          iconOnly
+          noBackground
+          onClick={fetchFiles}
+          title="Refresh files"
+        >
+          <Refresh />
+        </Button>
+      </FlexContainer>
+    </SearchContainerStyle>
+  ), [
+    closeFilterButtonMenu,
+    fetchFiles,
+    fileFilter,
+    fileFilterMenuOpen,
+    fileSearchText,
   ]);
 
   const fileBrowserFlattenMemo = useMemo(() => (
     <FileBrowser
       {...fileBrowserProps}
+      files={buildFileTreeByExtension(filesFlatten)}
       onClickFile={(path: string, file: FileType) => openFile(file?.path)}
       onClickFolder={(path: string, file: FileType) => openFile(file?.path, true)}
-      files={buildFileTreeByExtension(filesFlatten)}
     />
   ), [
     fileBrowserProps,
@@ -677,132 +800,123 @@ function useFileComponents({
     updateFile,
   ]);
 
-  const headerMenuGroups = useMemo(() => {
-    return [
-      {
-        uuid: 'File',
-        items: [
-          {
-            beforeIcon: <Save {...MENU_ICON_PROPS} />,
-            uuid: 'Save file and and all changes',
-            onClick: (opts) => {
-              if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
-                saveFile(contentByFilePath.current[selectedFilePath], {
-                  path: selectedFilePath,
-                });
-              }
-            },
+  const headerMenuGroups = useMemo(() => [
+    {
+      uuid: 'File',
+      items: [
+        {
+          beforeIcon: <Save {...MENU_ICON_PROPS} />,
+          uuid: 'Save file and and all changes',
+          onClick: (opts) => {
+            if (contentByFilePath?.current?.[selectedFilePath]?.length >= 1) {
+              saveFile(contentByFilePath.current[selectedFilePath], {
+                path: selectedFilePath,
+              });
+            }
           },
-        ],
-      },
-      {
-        uuid: 'Edit',
-        items: [
-          {
-            beforeIcon: <Edit success={fileVersionsVisible} {...MENU_ICON_PROPS} />,
-            uuid: 'Show previous file versions to undo changes',
-            disabled: fileVersionsVisible,
-            onClick: () => {
-              setFilesVersionsVisible(true);
-            },
+        },
+      ],
+    },
+    {
+      uuid: 'Edit',
+      items: [
+        {
+          beforeIcon: <Edit success={fileVersionsVisible} {...MENU_ICON_PROPS} />,
+          uuid: 'Show previous file versions to undo changes',
+          disabled: fileVersionsVisible,
+          onClick: () => {
+            setFilesVersionsVisible(true);
           },
-          {
-            beforeIcon: <Edit {...MENU_ICON_PROPS} />,
-            uuid: 'Close file versions',
-            disabled: !Edit,
-            onClick: () => {
-              setFilesVersionsVisible(false);
-            },
+        },
+        {
+          beforeIcon: <Edit {...MENU_ICON_PROPS} />,
+          uuid: 'Close file versions',
+          disabled: !Edit,
+          onClick: () => {
+            setFilesVersionsVisible(false);
           },
-        ],
-      },
-      {
-        uuid: 'View',
-        items: [
-          {
-            beforeIcon: <VisibleEye success={showHiddenFiles} {...MENU_ICON_PROPS} />,
-            uuid: 'Show hidden files',
-            disabled: showHiddenFiles,
-            onClick: () => {
-              setShowHiddenFiles(true);
-            },
+        },
+      ],
+    },
+    {
+      uuid: 'View',
+      items: [
+        {
+          beforeIcon: <VisibleEye success={showHiddenFiles} {...MENU_ICON_PROPS} />,
+          onClick: () => {
+            setShowHiddenFiles(prevState => !prevState);
           },
-          {
-            beforeIcon: <VisibleEye {...MENU_ICON_PROPS} />,
-            uuid: 'Hide hidden files',
-            disabled: !showHiddenFiles,
-            onClick: () => {
-              setShowHiddenFiles(false);
-            },
-          },
-        ],
-      },
-      {
-        uuid: 'Keyboard shortcuts',
-        items: [
-          {
-            uuid: 'Next file in tab',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_RIGHT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(1),
-          },
-          {
-            uuid: 'Previous file in tab',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_LEFT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(-1),
-          },
-          {
-            uuid: 'Next file recently viewed',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_RIGHT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(1, true),
-          },
-          {
-            uuid: 'Previously viewed file',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_LEFT]]}
-                monospace
-              />
-            ),
-            onClick: () => selectItem(-1, true),
-          },
-          {
-            uuid: 'Close current file',
-            beforeIcon: (
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_SHIFT, KEY_SYMBOL_C]]}
-                monospace
-              />
-            ),
-            onClick: () => removeOpenFilePaths([selectedFilePath]),
-          },
-        ],
-      },
-    ];
-  }, [
+          uuid: showHiddenFiles ? 'Hide hidden files' : 'Show hidden files',
+        },
+      ],
+    },
+    {
+      uuid: 'Keyboard shortcuts',
+      items: [
+        {
+          uuid: 'Next file in tab',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_RIGHT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(1),
+        },
+        {
+          uuid: 'Previous file in tab',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_CONTROL, KEY_SYMBOL_ARROW_LEFT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(-1),
+        },
+        {
+          uuid: 'Next file recently viewed',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_RIGHT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(1, true),
+        },
+        {
+          uuid: 'Previously viewed file',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_BRACKET_LEFT]]}
+              monospace
+            />
+          ),
+          onClick: () => selectItem(-1, true),
+        },
+        {
+          uuid: 'Close current file',
+          beforeIcon: (
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_SHIFT, KEY_SYMBOL_C]]}
+              monospace
+            />
+          ),
+          onClick: () => removeOpenFilePaths([selectedFilePath]),
+        },
+      ],
+    },
+  ], [
     contentByFilePath,
+    fileVersionsVisible,
     removeOpenFilePaths,
     saveFile,
     selectedFilePath,
+    selectItem,
     setShowHiddenFiles,
     showHiddenFiles,
   ]);
@@ -1002,6 +1116,7 @@ function useFileComponents({
     footer: footerMemo,
     menu: menuMemo,
     openFile,
+    search: fileSearchMemo,
     selectedFilePath,
     tabs: fileTabsMemo,
     versions: fileVersionsMemo,

@@ -58,7 +58,7 @@ class BlockCache(BaseCache):
             block_language = block.get('language')
             configuration = block.get('configuration') or {}
             block_type_plural = inflection.pluralize(block_type) \
-                if block_type != BlockType.CUSTOM \
+                if block_type != BlockType.CUSTOM and block_type != BlockType.DBT \
                 else block_type
             file_path = os.path.join(
                 repo_path,
@@ -90,6 +90,15 @@ class BlockCache(BaseCache):
                 return (mapping.get(key) or {}).get('pipelines', [])
 
         return pipelines
+
+    def get_pipeline_count_mapping(self) -> Dict:
+        pipeline_count_mapping = {}
+
+        mapping = self.get(self.cache_key)
+        for k, v in mapping.items():
+            pipeline_count_mapping[k] = len(v.get('pipelines', []))
+
+        return pipeline_count_mapping
 
     def add_pipeline(self, block, pipeline) -> None:
         self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
@@ -160,8 +169,8 @@ class BlockCache(BaseCache):
             ) -> bool:
                 pipeline_dict = cache_dict.get('pipeline') or {}
 
-                return pipeline_dict.get('uuid') != pipeline_uuid and \
-                    pipeline_dict.get('repo_path') == repo_path
+                return pipeline_dict.get('uuid') != pipeline_uuid \
+                    or pipeline_dict.get('repo_path') != repo_path
 
             pipelines_arr = list(filter(__filter, pipelines_arr))
             pipelines_arr.append(build_pipeline_dict(
@@ -205,8 +214,8 @@ class BlockCache(BaseCache):
 
         def __filter(cache_dict: Dict, pipeline_uuid=pipeline_uuid, repo_path=repo_path) -> bool:
             pipeline_dict = cache_dict.get('pipeline') or {}
-            return pipeline_dict.get('uuid') != pipeline_uuid and \
-                pipeline_dict.get('repo_path') == repo_path
+            return pipeline_dict.get('uuid') != pipeline_uuid \
+                or pipeline_dict.get('repo_path') != repo_path
 
         pipelines = (mapping.get(key) or {}).get('pipelines', [])
 
