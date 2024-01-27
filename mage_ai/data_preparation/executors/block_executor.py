@@ -119,6 +119,7 @@ class BlockExecutor:
         update_status: bool = False,
         verify_output: bool = True,
         block_run_dicts: List[str] = None,
+        skip_logging: bool = False,
         **kwargs,
     ) -> Dict:
         """
@@ -625,15 +626,16 @@ class BlockExecutor:
                         message=traceback.format_exc(),
                     )
 
-                    asyncio.run(UsageStatisticLogger().error(
-                        event_name=EventNameType.BLOCK_RUN_ERROR,
-                        errors='\n'.join(errors or []),
-                        message=str(error),
-                        resource=EventObjectType.BLOCK_RUN,
-                        resource_id=self.block_uuid,
-                        resource_parent=EventObjectType.PIPELINE if self.pipeline else None,
-                        resource_parent_id=self.pipeline.uuid if self.pipeline else None,
-                    ))
+                    if not skip_logging:
+                        asyncio.run(UsageStatisticLogger().error(
+                            event_name=EventNameType.BLOCK_RUN_ERROR,
+                            errors='\n'.join(errors or []),
+                            message=str(error),
+                            resource=EventObjectType.BLOCK_RUN,
+                            resource_id=self.block_uuid,
+                            resource_parent=EventObjectType.PIPELINE if self.pipeline else None,
+                            resource_parent_id=self.pipeline.uuid if self.pipeline else None,
+                        ))
 
                     if on_failure is not None:
                         on_failure(

@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from datetime import datetime
 from typing import Dict, List
 
@@ -10,6 +11,8 @@ from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManage
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
+from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class PipelineExecutor:
@@ -105,13 +108,30 @@ class PipelineExecutor:
                     block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
 
                 block_run.update(**block_run_data)
-                return BlockExecutor(block_run_id=block_run.id, **executor_kwargs).execute(
-                    block_run_id=block_run.id,
-                    block_run_outputs_cache=block_run_outputs_cache,
-                    cache_block_output_in_memory=self.pipeline.cache_block_output_in_memory,
-                    global_vars=global_vars,
-                    pipeline_run_id=pipeline_run.id,
-                )
+
+                try:
+                    return BlockExecutor(block_run_id=block_run.id, **executor_kwargs).execute(
+                        block_run_id=block_run.id,
+                        block_run_outputs_cache=block_run_outputs_cache,
+                        cache_block_output_in_memory=self.pipeline.cache_block_output_in_memory,
+                        global_vars=global_vars,
+                        pipeline_run_id=pipeline_run.id,
+                        skip_logging=True,
+                    )
+                except Exception as error:
+                    errors = traceback.format_stack()
+
+                    await UsageStatisticLogger().error(
+                        event_name=EventNameType.BLOCK_RUN_ERROR,
+                        errors='\n'.join(errors or []),
+                        message=str(error),
+                        resource=EventObjectType.BLOCK_RUN,
+                        resource_id=block_run.block_uuid,
+                        resource_parent=EventObjectType.PIPELINE if self.pipeline else None,
+                        resource_parent_id=self.pipeline.uuid if self.pipeline else None,
+                    )
+
+                    raise error
 
             return asyncio.create_task(execute_block())
 
