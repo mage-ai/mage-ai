@@ -4,9 +4,10 @@ import signal
 import time
 from enum import Enum
 from multiprocessing import Manager
-from typing import Callable
+from typing import Callable, Dict
 
 import newrelic.agent
+import psutil
 import sentry_sdk
 from sentry_sdk import capture_exception
 
@@ -106,7 +107,7 @@ class ProcessQueue(Queue):
         if not self.is_worker_pool_alive():
             self.start_worker_pool()
 
-    def has_job(self, job_id: str) -> bool:
+    def has_job(self, job_id: str, logger=None, logging_tags: Dict = None) -> bool:
         """
         Checks if a job with the given ID exists in the queue or is currently being executed.
 
@@ -124,15 +125,24 @@ class ProcessQueue(Queue):
             if job_client_id != self.client_id and self.redis_client.get(job_client_id):
                 return True
         job = self.job_dict.get(job_id)
-        return (
-            job is not None and
-            (
-                # In queue
-                (job == JobStatus.QUEUED and not self.queue.empty()) or
-                # Running
-                isinstance(job, int)
-            )
-        )
+        if job is None:
+            return False
+        if job == JobStatus.QUEUED and not self.queue.empty():
+            # Job is in queue
+            return True
+        if isinstance(job, int):
+            # Job is being processed
+            if self.__is_process_alive(job):
+                return True
+            else:
+                # Process is dead
+                if logger is not None:
+                    logger.info(
+                        f'Process {job} is dead for job {job_id}',
+                        **(logging_tags or dict()))
+                return False
+        # Return False if job is in other statuses
+        return False
 
     def kill_job(self, job_id: str):
         """
@@ -183,6 +193,9 @@ class ProcessQueue(Queue):
         if self.worker_pool_proc is None:
             return False
         return self.worker_pool_proc.is_alive()
+
+    def __is_process_alive(self, pid: int) -> bool:
+        return psutil.pid_exists(pid)
 
 
 class Worker(mp.Process):

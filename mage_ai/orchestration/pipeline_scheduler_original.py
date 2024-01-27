@@ -438,7 +438,7 @@ class PipelineScheduler:
             tags = dict()
         msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
             f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
-        self.logger.info(msg, tags=tags)
+        self.logger.info(msg, **tags)
 
         self.stop()
 
@@ -455,12 +455,15 @@ class PipelineScheduler:
                 logging_tags=tags,
             )
 
-    def build_tags(self, **kwargs):
+    def build_tags(self, block_run=None, **kwargs):
         base_tags = dict(
             pipeline_run_id=self.pipeline_run.id,
             pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
             pipeline_uuid=self.pipeline.uuid,
         )
+        if block_run is not None:
+            base_tags['block_run_id'] = block_run.id
+            base_tags['block_uuid'] = block_run.block_uuid
         if HOSTNAME:
             base_tags['hostname'] = HOSTNAME
         return merge_dict(kwargs, base_tags)
@@ -655,12 +658,21 @@ class PipelineScheduler:
             parallel_streams_to_schedule = []
             for stream in parallel_streams:
                 tap_stream_id = stream.get('tap_stream_id')
-                if not job_manager.has_integration_stream_job(self.pipeline_run.id, tap_stream_id):
+                if not job_manager.has_integration_stream_job(
+                    self.pipeline_run.id,
+                    tap_stream_id,
+                    logger=self.logger,
+                    logging_tags=tags,
+                ):
                     parallel_streams_to_schedule.append(stream)
 
             # Stop scheduling if there are no streams to schedule.
-            if (not sequential_streams or job_manager.has_pipeline_run_job(self.pipeline_run.id)) \
-                    and len(parallel_streams_to_schedule) == 0:
+            if (not sequential_streams or
+                    job_manager.has_pipeline_run_job(
+                        self.pipeline_run.id,
+                        logger=self.logger,
+                        logging_tags=tags,
+                    )) and len(parallel_streams_to_schedule) == 0:
                 return
 
             # Generate global variables and runtime arguments for pipeline execution.
@@ -726,8 +738,11 @@ class PipelineScheduler:
                     variables,
                 )
 
-            if job_manager.has_pipeline_run_job(self.pipeline_run.id) or \
-                    len(sequential_streams) == 0:
+            if job_manager.has_pipeline_run_job(
+                self.pipeline_run.id,
+                logger=self.logger,
+                logging_tags=tags,
+            ) or len(sequential_streams) == 0:
                 return
 
             job_manager.add_job(
@@ -754,7 +769,11 @@ class PipelineScheduler:
         Returns:
             None
         """
-        if job_manager.has_pipeline_run_job(self.pipeline_run.id):
+        if job_manager.has_pipeline_run_job(
+            self.pipeline_run.id,
+            logger=self.logger,
+            logging_tags=self.build_tags(),
+        ):
             return
         self.logger.info(
             f'Start a process for PipelineRun {self.pipeline_run.id}',
@@ -791,7 +810,11 @@ class PipelineScheduler:
 
         crashed_runs = []
         for br in running_or_queued_block_runs:
-            if not job_manager.has_block_run_job(br.id):
+            if not job_manager.has_block_run_job(
+                    br.id,
+                    logger=self.logger,
+                    logging_tags=self.build_tags(block_run=br),
+            ):
                 br.update(status=BlockRun.BlockRunStatus.INITIAL)
                 crashed_runs.append(br)
 
@@ -820,7 +843,7 @@ class PipelineScheduler:
         )
 
         if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
-            self.memory_usage_failure(tags)
+            self.memory_usage_failure(tags=tags)
 
 
 def run_integration_streams(

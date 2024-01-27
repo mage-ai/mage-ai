@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Union
+from typing import Callable, Dict, Union
 
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
 
@@ -29,17 +29,45 @@ class JobManager:
     def clean_up_jobs(self):
         self.queue.clean_up_jobs()
 
-    def has_block_run_job(self, block_run_id):
+    def has_block_run_job(
+        self,
+        block_run_id: int,
+        logger=None,
+        logging_tags: Dict = None,
+    ) -> bool:
         job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
-        return self.queue.has_job(job_id)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
-    def has_pipeline_run_job(self, pipeline_run_id):
+    def has_pipeline_run_job(
+        self,
+        pipeline_run_id: int,
+        logger=None,
+        logging_tags: Dict = None,
+    ) -> bool:
         job_id = self.__job_id(JobType.PIPELINE_RUN, pipeline_run_id)
-        return self.queue.has_job(job_id)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
-    def has_integration_stream_job(self, pipeline_run_id, stream):
+    def has_integration_stream_job(
+        self,
+        pipeline_run_id: int,
+        stream: str,
+        logger=None,
+        logging_tags: Dict = None,
+    ) -> bool:
         job_id = self.__job_id(JobType.PIPELINE_RUN, f'{pipeline_run_id}_{stream}')
-        return self.queue.has_job(job_id)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
     def kill_block_run_job(self, block_run_id):
         print(f'Kill block run id: {block_run_id}')
