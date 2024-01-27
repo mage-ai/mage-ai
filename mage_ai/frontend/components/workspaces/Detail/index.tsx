@@ -1,21 +1,20 @@
+import React, { useMemo } from 'react';
+import { useMutation } from 'react-query';
+
+import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import React, { useMemo } from 'react';
+import api from '@api';
 import { ClusterTypeEnum, KUBERNETES_FIELDS, LIFECYCLE_FIELDS } from '../constants';
-import Headline from '@oracle/elements/Headline';
-import Divider from '@oracle/elements/Divider';
 import { ContainerStyle } from './index.style';
 import { Folder } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import ErrorsType from '@interfaces/ErrorsType';
-import { useMutation } from 'react-query';
 import { onSuccess } from '@api/utils/response';
-import api from '@api';
-import Button from '@oracle/elements/Button';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 
 
 type WorkspaceDetailProps = {

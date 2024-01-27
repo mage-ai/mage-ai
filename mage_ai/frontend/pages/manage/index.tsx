@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -8,12 +8,14 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Panel from '@oracle/components/Panel';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
+import WorkspaceDetail from '@components/workspaces/Detail';
 import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 import api from '@api';
 import { Add, Ellipsis, Expand } from '@oracle/icons';
@@ -25,8 +27,6 @@ import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constan
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
-import WorkspaceDetail from '@components/workspaces/Detail';
-import Panel from '@oracle/components/Panel';
 
 function MoreActions({
   clusterType,
@@ -308,6 +308,11 @@ function WorkspacePage() {
     uuid: 'workspace_detail',
   });
 
+  const onClickRow = useCallback((rowIndex: number) => {
+    const workspace = workspaces?.[rowIndex];
+    showDetailModal({ workspace });
+  }, [showDetailModal, workspaces]);
+
   return (
     <WorkspacesDashboard  
       breadcrumbs={[
@@ -351,10 +356,7 @@ function WorkspacePage() {
             uuid: 'Open',
           },
         ]}
-        onClickRow={(rowIndex: number) => {
-          const workspace = workspaces?.[rowIndex];
-          showDetailModal({ workspace });
-        }}
+        onClickRow={['ecs', 'k8s'].includes(clusterType) && onClickRow}
         rows={workspaces?.map(({ instance, url }: WorkspaceType) => {
           const {
             ip,
