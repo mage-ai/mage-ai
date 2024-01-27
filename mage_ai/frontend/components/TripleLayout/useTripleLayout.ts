@@ -36,9 +36,9 @@ function useAside(uuid, refData, {
 }): {
   hidden?: boolean;
   mousedownActive: boolean;
-  setHidden: (value: boolean) => void;
-  setMousedownActive: (value: boolean) => void;
-  setWidth: (value: number) => void;
+  setHidden: (value: boolean | ((value: boolean) => boolean)) => void;
+  setMousedownActive: (value: boolean | ((value: boolean) => boolean)) => void;
+  setWidth: (value: number | ((value: number) => number)) => void;
   width: number;
 } {
   const key = useMemo(() => `${uuid}_width`, [uuid]);
@@ -167,12 +167,12 @@ export type UseTripleLayoutType = {
   };
   mousedownActiveAfter: boolean;
   mousedownActiveBefore: boolean;
-  setHiddenAfter: (value: boolean) => void;
-  setHiddenBefore: (value: boolean) => void;
-  setMousedownActiveAfter: (value: boolean) => void;
-  setMousedownActiveBefore: (value: boolean) => void;
-  setWidthAfter: (value: number) => void;
-  setWidthBefore: (value: number) => void;
+  setHiddenAfter: (value: boolean | ((value: boolean) => boolean)) => void;
+  setHiddenBefore: (value: boolean | ((value: boolean) => boolean)) => void;
+  setMousedownActiveAfter: (value: boolean | ((value: boolean) => boolean)) => void;
+  setMousedownActiveBefore: (value: boolean | ((value: boolean) => boolean)) => void;
+  setWidthAfter: (value: number | ((value: number) => number)) => void;
+  setWidthBefore: (value: number | ((value: number) => number)) => void;
   widthAfter: number;
   widthBefore: number;
 }

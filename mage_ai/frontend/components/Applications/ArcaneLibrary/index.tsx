@@ -49,6 +49,10 @@ function ArcaneLibrary({
     hiddenAfter: true,
   });
 
+  function onFileVersionClick(value: boolean) {
+    setHiddenAfter(!value);
+  }
+
   const {
     browser,
     browserFlatten,
@@ -56,13 +60,12 @@ function ArcaneLibrary({
     filePaths,
     footer,
     menu,
-    selectedFilePath,
     tabs,
     versions,
-    versionsVisible,
   } = useFileComponents({
     contained: true,
     containerRef: mainContainerRef,
+    onFileVersionClick,
     selectedFilePath: query?.file_path
       || startUpOptions?.selectedFilePath ? String(startUpOptions?.selectedFilePath) : undefined,
     showHiddenFilesSetting: true,
