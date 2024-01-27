@@ -223,13 +223,10 @@ function WorkspaceDetail({
           deleteWorkspace();
         }
       }}
-      style={{
-        cursor: 'pointer',
-      }}
     >
       Delete workspace
     </Button>
-  ), [deleteWorkspace, name]);
+  ), [deleteWorkspace, isLoadingDeleteWorkspace, name]);
 
   return (
     <>
@@ -276,9 +273,6 @@ function WorkspaceDetail({
                     <Button
                       {...props}
                       onClick={onClick}
-                      style={{
-                        cursor: 'pointer',
-                      }}
                     >
                       {label}
                     </Button>
