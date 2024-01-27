@@ -115,6 +115,7 @@ type UseFileComponentsProps = {
   codeEditorMaximumHeightOffset?: number;
   onClickTabClose?: (filePath: string) => void;
   onCreateFile?: (file: FileType) => void;
+  onFileVersionClick?: (value: boolean) => void;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
   onSelectBlockFile?: (
     blockUUID: string,
@@ -164,6 +165,7 @@ function useFileComponents({
   delayFetch,
   onClickTabClose,
   onCreateFile,
+  onFileVersionClick,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
@@ -268,7 +270,18 @@ function useFileComponents({
     });
   }, [status]);
 
-  const [fileVersionsVisible, setFilesVersionsVisible] = useState<boolean>(false);
+  const [fileVersionsVisible, setFilesVersionsVisibleState] = useState<boolean>(false);
+  const setFilesVersionsVisible = useCallback((prev) => {
+    setFilesVersionsVisibleState((prev2) => {
+      const val = typeof prev === 'function' ? prev?.(prev2) : prev;
+
+      if (onFileVersionClick) {
+        onFileVersionClick?.(val);
+      }
+
+      return val;
+    });
+  }, [onFileVersionClick]);
   const selectedFile = useMemo(() => filesMapping?.[selectedFilePath], [
     filesMapping,
     selectedFilePath,
