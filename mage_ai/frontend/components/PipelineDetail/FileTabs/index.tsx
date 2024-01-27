@@ -139,7 +139,7 @@ export function FileTabs({
       fullHeight
       justifyContent="flex-start"
     >
-      {useFileTabs(props)}
+      {useFileTabs(props)?.tabs}
 
       {children}
     </FlexContainer>

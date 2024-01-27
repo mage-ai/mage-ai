@@ -25,6 +25,8 @@ import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constan
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
+import WorkspaceDetail from '@components/workspaces/Detail';
+import Panel from '@oracle/components/Panel';
 
 function MoreActions({
   clusterType,
@@ -286,6 +288,26 @@ function WorkspacePage() {
     uuid: 'configure_workspace',
   });
 
+  const [showDetailModal, hideDetailModal] = useModal(({
+    workspace,
+  }) => (
+    <Panel>
+      <div style={{ width: '750px' }}>
+        <WorkspaceDetail
+          clusterType={clusterType}
+          fetchWorkspaces={fetchWorkspaces}
+          onSuccess={hideDetailModal}
+          setErrors={setErrors}
+          workspace={workspace}
+        />
+      </div>
+    </Panel>
+  ), {
+  }, [clusterType, fetchWorkspaces, setErrors, workspaces], {
+    background: true,
+    uuid: 'workspace_detail',
+  });
+
   return (
     <WorkspacesDashboard  
       breadcrumbs={[
@@ -328,11 +350,11 @@ function WorkspacePage() {
           {
             uuid: 'Open',
           },
-          {
-            label: () => '',
-            uuid: 'Actions',
-          },
         ]}
+        onClickRow={(rowIndex: number) => {
+          const workspace = workspaces?.[rowIndex];
+          showDetailModal({ workspace });
+        }}
         rows={workspaces?.map(({ instance, url }: WorkspaceType) => {
           const {
             ip,
@@ -359,7 +381,7 @@ function WorkspacePage() {
               key="status"
               notClickable
               padding="6px"
-              primary={'RUNNING' === status}
+              success={'RUNNING' === status}
               warning={'PENDING' === status}
             >
               {capitalizeRemoveUnderscoreLower(status)}
@@ -387,13 +409,6 @@ function WorkspacePage() {
             >
               <Expand size={2 * UNIT} />
             </Button>,
-            <MoreActions
-              clusterType={clusterType}
-              fetchWorkspaces={fetchWorkspaces}
-              instance={instance}
-              key="more_actions"
-              setErrors={setErrors}
-            />,
           ];
         })}
       />

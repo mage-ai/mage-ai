@@ -12,8 +12,11 @@ import Text from '@oracle/elements/Text';
 import UserType from '@interfaces/UserType';
 import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
-import { find } from '@utils/array';
+import { find, remove } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import PermissionType from '@interfaces/PermissionType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Chip from '@oracle/components/Chip';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
@@ -47,27 +50,40 @@ function UserWorkspacesEdit({
 
     return roles?.reduce(
       (obj, role) => {
-        const projectUUID = role.permissions[0].entity_id;
-        const existingRoles = obj[projectUUID] || [];
-        return {
-          ...obj,
-          [projectUUID]: [...existingRoles, role],
-        };
+        let updatedObj = obj;
+        role?.permissions?.forEach(({ entity_id }: PermissionType) => {
+          const projectUUID = entity_id;
+
+          const existingRoles = updatedObj[projectUUID] || [];
+
+          updatedObj = {
+            ...updatedObj,
+            [projectUUID]: [...existingRoles, role],
+          };
+        });
+        return updatedObj;
       },
       {},
     );
   }, [dataRoles]);
 
-  const userRoleByWorkspace = useMemo(() => {
+  const userRolesByWorkspace = useMemo(() => {
     const u = profile ? profile : user;
     const roles = u?.roles_new;
     return roles?.reduce(
       (obj, role) => {
-        const projectUUID = role?.permissions?.[0]?.entity_id;
-        return {
-          ...obj,
-          [projectUUID]: role,
-        };
+        let updatedObj = obj;
+        role?.permissions?.forEach(({ entity_id }: PermissionType) => {
+          const projectUUID = entity_id;
+
+          const existingRoles = updatedObj[projectUUID] || [];
+
+          updatedObj = {
+            ...updatedObj,
+            [projectUUID]: [...existingRoles, role],
+          };
+        });
+        return updatedObj;
       },
       {},
     );
@@ -136,42 +152,67 @@ function UserWorkspacesEdit({
           project_uuid,
         }: WorkspaceType) => {
           const roles = rolesByWorkspace?.[project_uuid] || [];
-          const userRole = userRoleByWorkspace?.[project_uuid];
+          const userRoles = userRolesByWorkspace?.[project_uuid];
           return [
             <Text bold key="name">
               {name}
             </Text>,
-            <Select
-              key="project_role"
-              // label="Roles"
-              // @ts-ignore
-              onChange={e => {
-                setButtonDisabled(false);
-                const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
-                if (newRole) {
-                  setProfile(prev => {
-                    const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
-                    const updatedProfile: UserType = {
-                      roles_new: [...prevRoles, newRole],
-                    };
-                    return ({
-                      ...prev,
-                      ...updatedProfile,
+            <>
+              <Select
+                key="project_role"
+                label="Roles"
+                // @ts-ignore
+                onChange={e => {
+                  setButtonDisabled(false);
+                  const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
+                  if (newRole) {
+                    setProfile(prev => {
+                      const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
+                      const updatedProfile: UserType = {
+                        roles_new: [...prevRoles, newRole],
+                      };
+                      return ({
+                        ...prev,
+                        ...updatedProfile,
+                      });
                     });
-                  });
-                }
-              }}
-              placeholder="No access"
-              primary
-              setContentOnMount
-              value={userRole?.id}
-            >
-              {roles.map(({ id, name }) => (
-                <option key={name} value={id}>
-                  {name}
-                </option>
-              ))}
-            </Select>,
+                  }
+                }}
+                primary
+                setContentOnMount
+              >
+                {roles.map(({ id, name }) => (
+                  <option key={name} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+              <Spacing mb={1} />
+              <FlexContainer alignItems="center" flexWrap="wrap">
+                {userRoles?.map(({ id, name }: RoleType) => (
+                  <Spacing
+                    key={`user_roles/${name}`}
+                    mb={1}
+                    mr={1}
+                  >
+                    <Chip
+                      label={name}
+                      onClick={() => {
+                        setButtonDisabled(false);
+                        setProfile(prev => ({
+                          ...prev,
+                          roles_new: remove(
+                            userRoles,
+                            ({ id: rid }: RoleType) => rid === id,
+                          ),
+                        }));
+                      }}
+                      primary
+                    />
+                  </Spacing>
+                ))}
+              </FlexContainer>
+            </>,
           ];
         })}
       />
