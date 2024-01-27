@@ -11,4 +11,7 @@ class FileContentPresenter(BasePresenter):
     ]
 
     async def prepare_present(self, **kwargs):
+        if isinstance(self.model, dict):
+            return self.model
+
         return await self.model.to_dict_async(include_content=True)

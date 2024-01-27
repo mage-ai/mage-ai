@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';;
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
-import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
@@ -22,7 +22,15 @@ function getRGBA(color: string, opts?: {
     r,
     g,
     b,
-  } = hexToRgb(color);
+  } = hexToRgb(color) || {
+    r: null,
+    g: null,
+    b: null,
+  };
+
+  if (!(r !== null && g !== null && b !== null)) {
+    return;
+  }
 
   return `rgba(${r}, ${g}, ${b}, ${opts?.transparency || 1})`;
 }
@@ -32,27 +40,38 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
   transparency?: number;
 } = {}): {
   accent: string;
+  accentLight?: string;
   background: string;
   border: string;
 } {
   let accent;
+  let accentLight;
   let background;
   let border;
+  let transparencyOverride;
 
   if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
     accent = (props?.theme || dark)?.accent?.purple;
+    accentLight = (props?.theme || dark)?.accent?.purpleLight;
   } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
     accent = (props?.theme || dark)?.accent?.negative;
-  } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+    accentLight = (props?.theme || dark)?.accent?.negativeTransparent;
+  } else if (ApplicationExpansionUUIDEnum.CodeMatrix === uuid) {
     accent = (props?.theme || dark)?.background?.success;
+    accentLight = (props?.theme || dark)?.background?.successLight;
+  } else if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
+    accent = (props?.theme || dark)?.accent?.yellow;
+    accentLight = (props?.theme || dark)?.accent?.yellowLight;
+    transparencyOverride = 0.7;
   }
 
   return {
     accent,
+    accentLight,
     background: background || getRGBA(accent, props),
     border: border || getRGBA(accent, {
       ...props,
-      transparency: 0.3,
+      transparency: transparencyOverride || 0.3,
     }),
   };
 }

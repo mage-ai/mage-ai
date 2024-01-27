@@ -39,7 +39,6 @@ export default function useAutoScroll({
 
       if (contained) {
         const scrollTop = containerRef?.current?.scrollTop;
-
         // Going down
         const diff = (lineNumberTop + SINGLE_LINE_HEIGHT) - (mainContainerHeight + scrollTop);
         if (diff > 0) {

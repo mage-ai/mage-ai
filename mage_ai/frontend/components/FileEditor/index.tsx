@@ -60,7 +60,8 @@ type FileEditorProps = {
   disableRefreshWarning?: boolean;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
-  filePath: string;
+  file?: FileType;
+  filePath?: string;
   codeEditorMaximumHeightOffset?: number;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
@@ -71,7 +72,7 @@ type FileEditorProps = {
   originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
-  selectedFilePath: string;
+  selectedFilePath?: string;
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
@@ -79,6 +80,7 @@ type FileEditorProps = {
     [path: string]: boolean;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  shortcuts?: ((monaco: any, editor: any) => void)[];
   updateFile?: (payload: { file_content: FileType }) => any;
 };
 
@@ -90,6 +92,7 @@ function FileEditor({
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
+  file: fileDefault,
   filePath,
   codeEditorMaximumHeightOffset,
   hideHeaderButtons,
@@ -107,6 +110,7 @@ function FileEditor({
   setErrors,
   setFilesTouched,
   setSelectedBlock,
+  shortcuts,
   updateFile: updateFileProp,
 }: FileEditorProps) {
   const renderRef = useRef(0);
@@ -116,10 +120,23 @@ function FileEditor({
   });
 
   const [, setApiReloads] = useGlobalState('apiReloads');
-  const [file, setFile] = useState<FileType>(null);
+  const [file, setFile] = useState<FileType>(fileDefault || null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [touched, setTouched] = useState<boolean>(false);
+
   const containerRef = containerRefProp || useRef(null);
   const editorRef = useRef(null);
+
+  const activeRef = useRef(null);
+  const disableRefreshWarningRef = useRef(null);
+  const fileRef = useRef(null);
+  const saveFileRef = useRef(null);
+  const touchedRef = useRef(null);
+  activeRef.current = active;
+  disableRefreshWarningRef.current = disableRefreshWarning;
+  fileRef.current = file;
+  saveFileRef.current = saveFile;
+  touchedRef.current = touched;
 
   const { height: heightTotal } = useWindowSize();
 
@@ -157,7 +174,6 @@ function FileEditor({
       onContentChange?.(content);
     }
   }, [onContentChange]);
-  const [touched, setTouched] = useState<boolean>(false);
 
   const isSelected = useMemo(() => encodeURIComponent(selectedFilePath) === filePath, [
     filePath,
@@ -231,7 +247,6 @@ function FileEditor({
     filePath,
     saveFileProp,
     setFilesTouched,
-    updateFile,
   ]);
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
@@ -257,69 +272,68 @@ function FileEditor({
   });
 
   const codeEditorEl = useMemo(() => {
-    if (file?.path) {
-      const showDiffs = !!originalValues && originalValues?.content_from_base;
+    const showDiffs = !!originalValues && originalValues?.content_from_base;
 
-      return (
-        <CodeEditor
-          autoHeight
-          height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
-          language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
-          onDidChangeCursorPosition={onDidChangeCursorPosition}
-          onChange={(value: string) => {
-            setContent(value);
-            if (setFilesTouched) {
-              // @ts-ignore
-              setFilesTouched((prev: {
-                [path: string]: boolean;
-              }) => {
-                if (prev?.[file?.path]) {
-                  return prev;
-                }
+    return (
+      <CodeEditor
+        autoHeight
+        height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
+        language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
+        onDidChangeCursorPosition={onDidChangeCursorPosition}
+        onChange={(value: string) => {
+          setContent(value);
+          if (setFilesTouched) {
+            // @ts-ignore
+            setFilesTouched((prev: {
+              [path: string]: boolean;
+            }) => {
+              if (prev?.[file?.path]) {
+                return prev;
+              }
 
-                return {
-                  ...prev,
-                  [file?.path]: true,
-                };
-              });
-            }
-            setTouched(true);
-          }}
-          onMountCallback={(editor) => {
-            editorRef.current = editor;
-
-            if (setDisableShortcuts) {
-              editor.onDidFocusEditorWidget = () => {
-                setDisableShortcuts?.(true);
+              return {
+                ...prev,
+                [file?.path]: true,
               };
-            }
-            if (setDisableShortcuts) {
-              editor.onDidBlurEditorWidget = () => {
-                setDisableShortcuts?.(false);
-              };
-            }
-
-            if (onMountCallback) {
-              onMountCallback?.(editor);
-            }
-          }}
-          onSave={(value: string) => {
-            saveFile(value, file);
-          }}
-          originalValue={originalValues?.content_from_base}
-          padding={10}
-          readOnly={!!showDiffs}
-          selected
-          showDiffs={!!showDiffs}
-          textareaFocused
-          value={isJsonString(file?.content)
-            ? JSON.stringify(JSON.parse(file?.content), null, 2)
-            : file?.content
+            });
           }
-          width="100%"
-        />
-      );
-    }
+          setTouched(true);
+        }}
+        onMountCallback={(editor) => {
+          editorRef.current = editor;
+
+          if (setDisableShortcuts) {
+            editor.onDidFocusEditorWidget = () => {
+              setDisableShortcuts?.(true);
+            };
+          }
+          if (setDisableShortcuts) {
+            editor.onDidBlurEditorWidget = () => {
+              setDisableShortcuts?.(false);
+            };
+          }
+
+          if (onMountCallback) {
+            onMountCallback?.(editor);
+          }
+        }}
+        onSave={(value: string) => {
+          saveFile(value, file);
+        }}
+        originalValue={originalValues?.content_from_base}
+        padding={10}
+        readOnly={!!showDiffs}
+        selected
+        shortcuts={shortcuts}
+        showDiffs={!!showDiffs}
+        textareaFocused
+        value={isJsonString(file?.content)
+          ? JSON.stringify(JSON.parse(file?.content), null, 2)
+          : file?.content
+        }
+        width="100%"
+      />
+    );
   }, [
     codeEditorMaximumHeightOffset,
     file,
@@ -330,6 +344,7 @@ function FileEditor({
     saveFile,
     setContent,
     setFilesTouched,
+    shortcuts,
   ]);
 
   const dataExporterBlock: BlockType = pipeline?.blocks
@@ -426,15 +441,15 @@ function FileEditor({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping) => {
-      if (active && !disableRefreshWarning) {
+      if (active?.current && !disableRefreshWarning?.current) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
         ) {
           event.preventDefault();
-          saveFile(content, file);
-        } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
+          saveFile(file?.current);
+        } else if (touched?.current && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
           event.preventDefault();
-          const warning = `${file.path} has changes that are unsaved. ` +
+          const warning = `${file?.current.path} has changes that are unsaved. ` +
             'Click cancel and save your changes before reloading page.';
           if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
             location.reload();
@@ -442,14 +457,7 @@ function FileEditor({
         }
       }
     },
-    [
-      active,
-      content,
-      disableRefreshWarning,
-      file,
-      saveFile,
-      touched,
-    ],
+    [],
   );
 
   return (

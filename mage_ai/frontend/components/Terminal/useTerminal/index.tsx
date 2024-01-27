@@ -162,7 +162,11 @@ export default function useTerminal({
       return;
     }
 
-    const values = pushAtIndex(item, idx || 0, items?.map(i => ({ ...i, selected: false })));
+    const values = pushAtIndex(
+      item || [],
+      idx || 0,
+      items?.map(i => ({ ...i, selected: false })) || [],
+    );
     setItems(values, true);
     setItemsState(() => values);
   }, [items]);

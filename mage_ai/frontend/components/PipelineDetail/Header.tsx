@@ -53,7 +53,6 @@ function Header({
     [queryParams, pipeline],
   );
 
-
   const buttons = useMemo(() => (
     <>
       {headerButtons.map(({ Icon, name, onClick }) => {

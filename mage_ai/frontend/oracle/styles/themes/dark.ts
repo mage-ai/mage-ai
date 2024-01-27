@@ -67,6 +67,7 @@ export default {
     infoTransparent: 'rgba(0, 171, 255, 0.5)',
     negative: '#FF1E59',
     negativeTransparent: 'rgba(255, 30, 89, 0.3)',
+    negativeTransparentMore: 'rgba(255, 30, 89, 0.15)',
     pink: PINK,
     pinkLight: PINK_TRANSPARENT,
     positive: '#00A81A',
@@ -258,7 +259,7 @@ export default {
     frame: '0px 10px 40px rgba(0, 0, 0, 0.26)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
-    small: '0px, 4px, rgba(0, 0, 0, 0.25)',
+    small: '0px 4px rgba(0, 0, 0, 0.25)',
     window: '0px 10px 60px rgba(0, 0, 0, 0.7)',
   },
   status: {

@@ -17,7 +17,6 @@ function TerminalPage() {
         headerOffset={HEADER_HEIGHT}
         onMount={() => true}
         uuid={ApplicationExpansionUUIDEnum.PortalTerminal}
-
       />
     </Dashboard>
   );

@@ -28,25 +28,33 @@ import { roundNumber } from '@utils/string';
 const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
+  children?: JSX.Element;
   inline?: boolean;
   pipelineType?: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
   pipelineLastSaved?: number;
   refreshInterval?: number;
+  revalidateOnFocus?: boolean;
   saveStatus?: string;
   width?: number;
 };
 
 function StatusFooter({
+  children,
   inline,
   pipelineType,
   pipelineContentTouched,
   pipelineLastSaved,
   refreshInterval,
+  revalidateOnFocus,
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
-  const { kernel } = useKernel({ pipelineType, refreshInterval });
+  const { kernel } = useKernel({
+    pipelineType,
+    refreshInterval,
+    revalidateOnFocus,
+  });
   const {
     alive,
     usage,
@@ -84,127 +92,130 @@ function StatusFooter({
       <Divider light />
 
       <Spacing px={PADDING_UNITS} py={1}>
-
-      <FlexContainer alignItems="center" justifyContent="space-between">
-        {usage && (
-          <>
-            <FlexContainer alignItems="center">
-              {cpu !== null && (
-                <>
-                  <Lightning
-                    muted
-                    size={ICON_SIZE}
-                  />
-
-                  <Spacing mr={1} />
-
-                  <Text
-                    monospace
-                    muted
-                    noWrapping
-                    small
-                  >
-                    CPU: <Text
-                      inline
-                      danger={cpu >= 90}
-                      muted={cpu < 50}
-                      small
-                      warning={cpu >= 50 && cpu < 90}
-                    >
-                      {cpu}%
-                    </Text>
-                  </Text>
-                </>
-              )}
-
-              {cpu !== null && kernelMemory !== null && (
-                <Spacing mx={PADDING_UNITS}>
-                  <Spacing mr={1} />
-
-                  <Text
-                    monospace
-                    muted
-                    noWrapping
-                    small
-                  >
-                    /
-                  </Text>
-                </Spacing>
-              )}
-
-              {kernelMemory !== null && (
-                <>
-                  <HexagonAll
-                    muted
-                    size={ICON_SIZE}
-                  />
-
-                  <Spacing mr={1} />
-
-                  <Text monospace muted noWrapping small>
-                    Memory: {kernelMemory}
-                  </Text>
-                </>
-              )}
-
-              <Spacing mx={PADDING_UNITS} />
-            </FlexContainer>
-          </>
-        )}
-
-        <Tooltip
-          appearAbove
-          appearBefore
-          block
-          description={
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          {usage && (
             <>
               <FlexContainer alignItems="center">
-                <Text default inline>Press</Text>&nbsp;<KeyboardText
-                  inline
-                  keyText={isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL}
-                />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
-                  inline
-                  keyText={KEY_SYMBOL_S}
-                />&nbsp;<Text default inline>to save changes.</Text>
-                <br />
+                {cpu !== null && (
+                  <>
+                    <Lightning
+                      muted
+                      size={ICON_SIZE}
+                    />
+
+                    <Spacing mr={1} />
+
+                    <Text
+                      monospace
+                      muted
+                      noWrapping
+                      small
+                    >
+                      CPU: <Text
+                        inline
+                        danger={cpu >= 90}
+                        muted={cpu < 50}
+                        small
+                        warning={cpu >= 50 && cpu < 90}
+                      >
+                        {cpu}%
+                      </Text>
+                    </Text>
+                  </>
+                )}
+
+                {cpu !== null && kernelMemory !== null && (
+                  <Spacing mx={PADDING_UNITS}>
+                    <Spacing mr={1} />
+
+                    <Text
+                      monospace
+                      muted
+                      noWrapping
+                      small
+                    >
+                      /
+                    </Text>
+                  </Spacing>
+                )}
+
+                {kernelMemory !== null && (
+                  <>
+                    <HexagonAll
+                      muted
+                      size={ICON_SIZE}
+                    />
+
+                    <Spacing mr={1} />
+
+                    <Text monospace muted noWrapping small>
+                      Memory: {kernelMemory}
+                    </Text>
+                  </>
+                )}
+
+                <Spacing mx={PADDING_UNITS} />
               </FlexContainer>
-
-              <Spacing mt={1}>
-                <Text default>
-                  Or, go to <Text inline monospace>
-                    File
-                  </Text>{' › '}<Text inline monospace>
-                    Save pipeline
-                  </Text>.
-                </Text>
-              </Spacing>
             </>
-          }
-          size={null}
-          widthFitContent
-        >
-          <FlexContainer alignItems="center">
-            {pipelineContentTouched && (
-              <AlertTriangle
-                size={ICON_SIZE}
-                warning
-              />
-            )}
-            {!pipelineContentTouched && (
-              <FileIcon
-                size={ICON_SIZE}
-                muted
-              />
-            )}
+          )}
 
-            <Spacing mr={1} />
+          {children}
 
-            <Text monospace muted noWrapping small warning={pipelineContentTouched}>
-              {saveStatus}
-            </Text>
-          </FlexContainer>
-        </Tooltip>
-      </FlexContainer>
+          {saveStatus && (
+            <Tooltip
+              appearAbove
+              appearBefore
+              block
+              description={
+                <>
+                  <FlexContainer alignItems="center">
+                    <Text default inline>Press</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL}
+                    />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={KEY_SYMBOL_S}
+                    />&nbsp;<Text default inline>to save changes.</Text>
+                    <br />
+                  </FlexContainer>
+
+                  <Spacing mt={1}>
+                    <Text default>
+                      Or, go to <Text inline monospace>
+                        File
+                      </Text>{' › '}<Text inline monospace>
+                        Save pipeline
+                      </Text>.
+                    </Text>
+                  </Spacing>
+                </>
+              }
+              size={null}
+              widthFitContent
+            >
+              <FlexContainer alignItems="center">
+                {pipelineContentTouched && (
+                  <AlertTriangle
+                    size={ICON_SIZE}
+                    warning
+                  />
+                )}
+                {!pipelineContentTouched && (
+                  <FileIcon
+                    size={ICON_SIZE}
+                    muted
+                  />
+                )}
+
+                <Spacing mr={1} />
+
+                <Text monospace muted noWrapping small warning={pipelineContentTouched}>
+                  {saveStatus}
+                </Text>
+              </FlexContainer>
+            </Tooltip>
+          )}
+        </FlexContainer>
       </Spacing>
     </StatusFooterStyle>
   );

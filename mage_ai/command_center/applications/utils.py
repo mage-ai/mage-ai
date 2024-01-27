@@ -17,11 +17,10 @@ from mage_ai.version_control.models import File
 
 """
 Icons:
-Arcane Library (file browser): ChurnV3
+Arcane Library (file browser): ForecastV3
 Portal Terminal (terminal):    RankingV3
-Version Control (file diffs):  ForecastV3
-
-LTVUseCase
+CodeMatrix (green):            ChurnV3
+Version Control (file diffs):  LTVUseCase
 CategorizationUseCase
 EstimationUseCase
 """

@@ -1,0 +1,108 @@
+import inspect
+import json
+import os
+import pickle
+
+import pandas as pd
+import simplejson
+
+from mage_ai.server.websockets.state_manager.constants import DIR_FILENAME
+from mage_ai.server.websockets.state_manager.constants import STATE_DIRECTORY_NAME
+from mage_ai.server.websockets.state_manager.constants import VARIABLES_DIRECTORY_NAME
+from mage_ai.server.websockets.state_manager.constants import VARIABLES_FILENAME
+from mage_ai.settings.repo import get_repo_path, get_variables_dir
+from mage_ai.shared.parsers import encode_complex
+
+def build_path(repo_path: str, partition: str, filename: str = None) -> str:
+    path = os.path.join(
+        get_variables_dir(repo_path=repo_path),
+        STATE_DIRECTORY_NAME,
+        partition,
+    )
+    if filename:
+        path = os.path.join(path, filename)
+    return path
+
+
+variables = {}
+dir_full_path = build_path(get_repo_path(root_project=True), '__MSG_ID__', DIR_FILENAME)
+if os.path.exists(dir_full_path):
+    with open(dir_full_path, 'r') as f:
+        variables = json.loads(f.read())
+
+
+class Test:
+    def test(self):
+        pass
+
+
+keys = [k for k in locals().keys() if not k.startswith(
+    '__',
+) and not k.endswith('__') and k not in variables]
+
+outputs = {}
+outputs_to_pickle = {}
+
+for key in keys:
+    value = globals().get(key)
+    if value is None:
+        outputs[key] = dict(
+            value=None,
+            value_type=None,
+        )
+        continue
+    # function
+    # method
+    # module
+    # pd.DataFrame
+    value_serialized = value
+    value_type = type(value)
+    if value_type in [
+        type(lambda: 1),  # function
+        type(Test().test),  # method
+        type(inspect),  # module
+    ]:
+        try:
+            outputs[key] = dict(
+                value=inspect.getsource(value),
+                value_type=str(value_type),
+            )
+        except Exception as err:
+            pass
+    elif isinstance(value, pd.DataFrame):
+        outputs[key] = dict(
+            value=value.to_dict('split'),
+            value_type=str(value_type),
+        )
+    else:
+        try:
+            value_serialized = simplejson.dumps(
+                value,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            outputs[key] = dict(
+                value=value_serialized,
+                value_type=str(value_type),
+            )
+        except Exception as err:
+            outputs_to_pickle[key] = value
+
+
+repo_path = get_repo_path(root_project=True)
+
+file_path = build_path(repo_path, '__MSG_ID__', VARIABLES_FILENAME)
+pickle_dir = build_path(repo_path, '__MSG_ID__', VARIABLES_DIRECTORY_NAME)
+os.makedirs(pickle_dir,  exist_ok=True)
+
+for key, value in outputs_to_pickle.items():
+    if not value:
+        continue
+    try:
+        with open(os.path.join(pickle_dir, key), 'wb') as f:
+            pickle.dump(value, f)
+    except Exception as err:
+        pass
+
+with open(file_path, 'w') as f:
+    f.write(json.dumps(outputs))

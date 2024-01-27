@@ -8,6 +8,7 @@ export enum KernelNameEnum {
 export default interface KernelType {
   alive: boolean;
   id: string;
+  latency?: number;
   name: string;
   usage: {
     host_virtual_memory: any;

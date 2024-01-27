@@ -1,0 +1,220 @@
+[
+    {
+        "buffers": [],
+        "content": {
+            "execution_state": "busy"
+        },
+        "data": [],
+        "data_type": null,
+        "data_types": [],
+        "error": null,
+        "executed": false,
+        "execution_metadata": {
+            "date": "2024-01-16T07:21:43.925715+00:00",
+            "initialize_database": false,
+            "execution_count": null,
+            "metadata": {},
+            "reload_modules": false,
+            "session": "7ae331a7-c976fd03aef8f7600538b397",
+            "username": "username",
+            "version": "5.3"
+        },
+        "execution_state": "busy",
+        "parent_message": {
+            "buffers": [],
+            "content": null,
+            "data": null,
+            "data_type": null,
+            "data_types": null,
+            "error": null,
+            "executed": false,
+            "execution_metadata": {
+                "date": "2024-01-16T07:21:43.922494+00:00",
+                "initialize_database": false,
+                "execution_count": null,
+                "metadata": null,
+                "reload_modules": false,
+                "session": "8dc752f4-b25a2a1bebc979d05ed7c6cb",
+                "username": "username",
+                "version": "5.3"
+            },
+            "execution_state": null,
+            "parent_message": null,
+            "message": null,
+            "msg_id": "8dc752f4-b25a2a1bebc979d05ed7c6cb_1_14",
+            "msg_type": "execute_request",
+            "type": null,
+            "uuid": "ab7ac425-489f-4744-be2c-185de40e4c9e"
+        },
+        "message": null,
+        "msg_id": "7ae331a7-c976fd03aef8f7600538b397_1091_2580",
+        "msg_type": "status",
+        "type": null,
+        "uuid": "af329fe1-a450-4c6d-bfd3-d6d67282e409"
+    },
+    {
+        "buffers": [],
+        "content": {
+            "code": "%reset -f\nimport json\nimport os\nfrom mage_ai.settings.repo import get_repo_path, get_variables_dir\ndef build_path(repo_path: str, partition: str, filename: str = None) -> str:\n    path = os.path.join(get_variables_dir(repo_path=repo_path), '.code_state_manager', partition)\n    if filename:\n        path = os.path.join(path, filename)\n    return path\nfile_path = build_path(get_repo_path(root_project=True), '__temp_d7fe25fde865460d9de40b717f24dad6__', 'variables.json')\nos.makedirs(os.path.dirname(file_path), exist_ok=True)\nwith open(file_path, 'w') as f:\n    f.write(json.dumps(list(dir())))\n\nerror = None\n\ntry:\n    import io\n    import pandas as pd\n    import requests\n    \n    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/product_purchases.csv'\n    response = requests.get(url)\n    \n    df = pd.read_csv(io.StringIO(response.text), sep=',')\n    \n    print(df)\n    \n    # df.head()\n    # print(df.head())\n    # print('@@@@@@@@@@@@@@@@@@@@@@@@@@', locals().keys())\n    \n    import time\n    # for i in range(2):\n    #     # time.sleep(0.1)\n    #     print(df.head())\n    #     print('')\n    \n    \n    # time.sleep(5)p\n    # print('wtffffffff')\n    \n    \n    \n    11111111\n    # b\n    \n    \n    val = 11 + 11\n    # print(val)\n    \n    val\n    \n    \n    a = 1\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    print(df.head())\n    \n    print(df.columns)\nexcept Exception as err:\n    error = err\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nimport inspect\nimport json\nimport os\nimport pickle\n\nimport pandas as pd\nimport simplejson\n\nfrom mage_ai.settings.repo import get_repo_path, get_variables_dir\nfrom mage_ai.shared.parsers import encode_complex\n\n# 1. Remove variables that start or end with an underscore\n# 2. Loop through remaining and get its value\n# 3. Attempt to serialize the value\n# 4. If it can’t be done, then move to the next\n# 5. For functions, use inspect.getsource(foo)\n\n\ndef build_path(repo_path: str, partition: str, filename: str = None) -> str:\n    path = os.path.join(\n        get_variables_dir(repo_path=repo_path),\n        '.code_state_manager',\n        partition,\n    )\n    if filename:\n        path = os.path.join(path, filename)\n    return path\n\n\nwith open(build_path(get_repo_path(root_project=True), '__temp_d7fe25fde865460d9de40b717f24dad6__', 'variables.json'), 'r') as f:\n    variables = json.loads(f.read())\n\n\nclass Test:\n    def test(self):\n        pass\n\n\nkeys = [k for k in locals().keys() if not k.startswith(\n    '__',\n) and not k.endswith('__') and k not in variables]\n\noutputs = {}\noutputs_to_pickle = {}\n\nfor key in keys:\n    value = globals().get(key)\n    if value is None:\n        outputs[key] = dict(\n            value=None,\n            value_type=None,\n        )\n        continue\n    # function\n    # method\n    # module\n    # pd.DataFrame\n    value_serialized = value\n    value_type = type(value)\n    if value_type in [\n        type(lambda: 1),  # function\n        type(Test().test),  # method\n        type(inspect),  # module\n    ]:\n        try:\n            outputs[key] = dict(\n                value=inspect.getsource(value),\n                value_type=str(value_type),\n            )\n        except Exception as err:\n            pass\n    elif isinstance(value, pd.DataFrame):\n        outputs[key] = dict(\n            value=value.to_dict('split'),\n            value_type=str(value_type),\n        )\n    else:\n        try:\n            value_serialized = simplejson.dumps(\n                value,\n                default=encode_complex,\n                ignore_nan=True,\n            )\n            outputs[key] = dict(\n                value=value_serialized,\n                value_type=str(value_type),\n            )\n        except Exception as err:\n            outputs_to_pickle[key] = value\n\n\nrepo_path = get_repo_path(root_project=True)\n\nfile_path = build_path(repo_path, '__temp_d7fe25fde865460d9de40b717f24dad6__', 'outputs.json')\npickle_dir = build_path(repo_path, '__temp_d7fe25fde865460d9de40b717f24dad6__', 'outputs')\nos.makedirs(pickle_dir,  exist_ok=True)\n\nfor key, value in outputs_to_pickle.items():\n    if not value:\n        continue\n    try:\n        with open(os.path.join(pickle_dir, key), 'wb') as f:\n            pickle.dump(value, f)\n    except Exception as err:\n        pass\n\nwith open(file_path, 'w') as f:\n    f.write(json.dumps(outputs))\n\nif error:\n    raise error\n",
+            "execution_count": 15
+        },
+        "data": [],
+        "data_type": null,
+        "data_types": [],
+        "error": null,
+        "executed": false,
+        "execution_metadata": {
+            "date": "2024-01-16T07:21:43.926440+00:00",
+            "initialize_database": false,
+            "execution_count": 15,
+            "metadata": {},
+            "reload_modules": false,
+            "session": "7ae331a7-c976fd03aef8f7600538b397",
+            "username": "username",
+            "version": "5.3"
+        },
+        "execution_state": null,
+        "parent_message": {
+            "buffers": [],
+            "content": null,
+            "data": null,
+            "data_type": null,
+            "data_types": null,
+            "error": null,
+            "executed": false,
+            "execution_metadata": {
+                "date": "2024-01-16T07:21:43.922494+00:00",
+                "initialize_database": false,
+                "execution_count": null,
+                "metadata": null,
+                "reload_modules": false,
+                "session": "8dc752f4-b25a2a1bebc979d05ed7c6cb",
+                "username": "username",
+                "version": "5.3"
+            },
+            "execution_state": null,
+            "parent_message": null,
+            "message": null,
+            "msg_id": "8dc752f4-b25a2a1bebc979d05ed7c6cb_1_14",
+            "msg_type": "execute_request",
+            "type": null,
+            "uuid": "0c0ee760-5ebc-475b-a6b6-d3dd05ea098f"
+        },
+        "message": null,
+        "msg_id": "7ae331a7-c976fd03aef8f7600538b397_1091_2581",
+        "msg_type": "execute_input",
+        "type": null,
+        "uuid": "43b44257-6123-469e-88b4-b2386faef39f"
+    },
+    {
+        "buffers": [],
+        "content": {
+            "name": "stdout",
+            "text": "       user ID  purchase ID                   bought at  SKU     product  \\\n0         1642         7000  2022-03-17T03:44:18.820900    1      Laptop   \n1         1135         7001  2022-03-17T03:44:18.821133    2          TV   \n2         1475         7002  2022-03-17T03:44:18.821141    3  Smartphone   \n3         1736         7003  2022-03-17T03:44:18.821149    4          TV   \n4          205         7004  2022-03-17T03:44:18.821155    5  Smartphone   \n...        ...          ...                         ...  ...         ...   \n12995     1111        19995  2022-03-17T03:44:18.894398   96  Smartphone   \n12996     1764        19996  2022-03-17T03:44:18.894402   97  Smartphone   \n12997      303        19997  2022-03-17T03:44:18.894406   98      Camera   \n12998     1614        19998  2022-03-17T03:44:18.894410   99          TV   \n12999      780        19999  2022-03-17T03:44:18.894416  100  Smartphone   \n\n       number of purchases         condition  global ratings  \\\n0                        2       refurbished               4   \n1                        2              used               1   \n2                        3               new               2   \n3                        2       refurbished               4   \n4                        1          like new               3   \n...                    ...               ...             ...   \n12995                    2       refurbished               4   \n12996                    3          like new               3   \n12997                    2  slightly damaged               1   \n12998                    2              used               1   \n12999                    3          like new               3   \n\n       shares on social media  reviews  \n0                           4       55  \n1                           2       40  \n2                           2       89  \n3                           4       71  \n4                           2       20  \n...                       ...      ...  \n12995                       4       74  \n12996                       2       23  \n12997                       2       23  \n12998                       2       34  \n12999                       2       12  \n\n[13000 rows x 10 columns]\n   user ID  purchase ID                   bought at  SKU     product  \\\n0     1642         7000  2022-03-17T03:44:18.820900    1      Laptop   \n1     1135         7001  2022-03-17T03:44:18.821133    2          TV   \n2     1475         7002  2022-03-17T03:44:18.821141    3  Smartphone   \n3     1736         7003  2022-03-17T03:44:18.821149    4          TV   \n4      205         7004  2022-03-17T03:44:18.821155    5  Smartphone   \n\n   number of purchases    condition  global ratings  shares on social media  \\\n0                    2  refurbished               4                       4   \n1                    2         used               1                       2   \n2                    3          new               2                       2   \n3                    2  refurbished               4                       4   \n4                    1     like new               3                       2   \n\n   reviews  \n0       55  \n1       40  \n2       89  \n3       71  \n4       20  \nIndex(['user ID', 'purchase ID', 'bought at', 'SKU', 'product',\n       'number of purchases', 'condition', 'global ratings',\n       'shares on social media', 'reviews'],\n      dtype='object')\n"
+        },
+        "data": [
+            "       user ID  purchase ID                   bought at  SKU     product  \\\n0         1642         7000  2022-03-17T03:44:18.820900    1      Laptop   \n1         1135         7001  2022-03-17T03:44:18.821133    2          TV   \n2         1475         7002  2022-03-17T03:44:18.821141    3  Smartphone   \n3         1736         7003  2022-03-17T03:44:18.821149    4          TV   \n4          205         7004  2022-03-17T03:44:18.821155    5  Smartphone   \n...        ...          ...                         ...  ...         ...   \n12995     1111        19995  2022-03-17T03:44:18.894398   96  Smartphone   \n12996     1764        19996  2022-03-17T03:44:18.894402   97  Smartphone   \n12997      303        19997  2022-03-17T03:44:18.894406   98      Camera   \n12998     1614        19998  2022-03-17T03:44:18.894410   99          TV   \n12999      780        19999  2022-03-17T03:44:18.894416  100  Smartphone   \n\n       number of purchases         condition  global ratings  \\\n0                        2       refurbished               4   \n1                        2              used               1   \n2                        3               new               2   \n3                        2       refurbished               4   \n4                        1          like new               3   \n...                    ...               ...             ...   \n12995                    2       refurbished               4   \n12996                    3          like new               3   \n12997                    2  slightly damaged               1   \n12998                    2              used               1   \n12999                    3          like new               3   \n\n       shares on social media  reviews  \n0                           4       55  \n1                           2       40  \n2                           2       89  \n3                           4       71  \n4                           2       20  \n...                       ...      ...  \n12995                       4       74  \n12996                       2       23  \n12997                       2       23  \n12998                       2       34  \n12999                       2       12  \n\n[13000 rows x 10 columns]\n   user ID  purchase ID                   bought at  SKU     product  \\\n0     1642         7000  2022-03-17T03:44:18.820900    1      Laptop   \n1     1135         7001  2022-03-17T03:44:18.821133    2          TV   \n2     1475         7002  2022-03-17T03:44:18.821141    3  Smartphone   \n3     1736         7003  2022-03-17T03:44:18.821149    4          TV   \n4      205         7004  2022-03-17T03:44:18.821155    5  Smartphone   \n\n   number of purchases    condition  global ratings  shares on social media  \\\n0                    2  refurbished               4                       4   \n1                    2         used               1                       2   \n2                    3          new               2                       2   \n3                    2  refurbished               4                       4   \n4                    1     like new               3                       2   \n\n   reviews  \n0       55  \n1       40  \n2       89  \n3       71  \n4       20  \nIndex(['user ID', 'purchase ID', 'bought at', 'SKU', 'product',\n       'number of purchases', 'condition', 'global ratings',\n       'shares on social media', 'reviews'],\n      dtype='object')\n"
+        ],
+        "data_type": null,
+        "data_types": [
+            "stdout"
+        ],
+        "error": null,
+        "executed": false,
+        "execution_metadata": {
+            "date": "2024-01-16T07:21:44.412427+00:00",
+            "initialize_database": false,
+            "execution_count": null,
+            "metadata": {},
+            "reload_modules": false,
+            "session": "7ae331a7-c976fd03aef8f7600538b397",
+            "username": "username",
+            "version": "5.3"
+        },
+        "execution_state": null,
+        "parent_message": {
+            "buffers": [],
+            "content": null,
+            "data": null,
+            "data_type": null,
+            "data_types": null,
+            "error": null,
+            "executed": false,
+            "execution_metadata": {
+                "date": "2024-01-16T07:21:43.922494+00:00",
+                "initialize_database": false,
+                "execution_count": null,
+                "metadata": null,
+                "reload_modules": false,
+                "session": "8dc752f4-b25a2a1bebc979d05ed7c6cb",
+                "username": "username",
+                "version": "5.3"
+            },
+            "execution_state": null,
+            "parent_message": null,
+            "message": null,
+            "msg_id": "8dc752f4-b25a2a1bebc979d05ed7c6cb_1_14",
+            "msg_type": "execute_request",
+            "type": null,
+            "uuid": "b9906680-a279-4fb3-8d64-5e932fd2174f"
+        },
+        "message": null,
+        "msg_id": "7ae331a7-c976fd03aef8f7600538b397_1091_2582",
+        "msg_type": "stream",
+        "type": null,
+        "uuid": "0b408196-e162-4bf6-84c8-43876fda4377"
+    },
+    {
+        "buffers": [],
+        "content": {
+            "execution_state": "idle"
+        },
+        "data": [],
+        "data_type": null,
+        "data_types": [],
+        "error": null,
+        "executed": false,
+        "execution_metadata": {
+            "date": "2024-01-16T07:21:44.413966+00:00",
+            "initialize_database": false,
+            "execution_count": null,
+            "metadata": {},
+            "reload_modules": false,
+            "session": "7ae331a7-c976fd03aef8f7600538b397",
+            "username": "username",
+            "version": "5.3"
+        },
+        "execution_state": "idle",
+        "parent_message": {
+            "buffers": [],
+            "content": null,
+            "data": null,
+            "data_type": null,
+            "data_types": null,
+            "error": null,
+            "executed": false,
+            "execution_metadata": {
+                "date": "2024-01-16T07:21:43.922494+00:00",
+                "initialize_database": false,
+                "execution_count": null,
+                "metadata": null,
+                "reload_modules": false,
+                "session": "8dc752f4-b25a2a1bebc979d05ed7c6cb",
+                "username": "username",
+                "version": "5.3"
+            },
+            "execution_state": null,
+            "parent_message": null,
+            "message": null,
+            "msg_id": "8dc752f4-b25a2a1bebc979d05ed7c6cb_1_14",
+            "msg_type": "execute_request",
+            "type": null,
+            "uuid": "275901fc-40e3-4749-9ef5-14ae1e18fd5f"
+        },
+        "message": null,
+        "msg_id": "7ae331a7-c976fd03aef8f7600538b397_1091_2584",
+        "msg_type": "status",
+        "type": null,
+        "uuid": "81da7e92-aa67-4c8e-8281-5bca8df161bf"
+    }
+]

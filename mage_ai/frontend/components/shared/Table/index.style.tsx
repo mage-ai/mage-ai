@@ -94,7 +94,7 @@ type SHARED_TABLE_PROPS = {
   selected?: boolean;
 };
 
-const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
+export const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   text-overflow: ellipsis;
   white-space: nowrap;
 

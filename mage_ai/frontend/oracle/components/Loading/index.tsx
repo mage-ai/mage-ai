@@ -3,12 +3,15 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const LOADING_HEIGHT = UNIT / 4;
+
 export enum LoadingStyleEnum {
   DEFAULT = 'default',
   BLOCKS = 'blocks',
 }
 
 type LoadingProps = {
+  className?: string;
   color?: string;
   colorLight?: string;
   height?: number;
@@ -110,7 +113,7 @@ const ScrollingBarsStyle = styled.div`
 const RepeatingBarStyle = styled.div<LoadingProps>`
 ${props => `
   .loader {
-    height: ${props?.height || (UNIT / 4)}px;
+    height: ${props?.height || LOADING_HEIGHT}px;
     width: ${props.width || '100%'};
     --c:no-repeat linear-gradient(${props?.color || (props.theme || dark).background.success} 0 0);
     background: var(--c),var(--c), ${props?.colorLight || (props.theme || dark).background.successLight};

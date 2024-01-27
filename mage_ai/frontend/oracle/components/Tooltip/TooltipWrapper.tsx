@@ -20,6 +20,7 @@ export type TooltipWrapperProps = {
   children?: any;
   default?: boolean;
   description?: any | string;
+  fixed?: boolean;
   forceVisible?: boolean;
   height?: number;
   fullSize?: boolean;
@@ -116,8 +117,15 @@ const HoverStyle = styled.div<TooltipWrapperProps>`
 const BasicStyle = styled.span``;
 
 const ContentStyle = styled.div<TooltipWrapperProps>`
-  position: absolute;
   z-index: 3;
+
+  ${props => !props.fixed && `
+    position: absolute;
+  `}
+
+  ${props => props.fixed && `
+    position: fixed;
+  `}
 
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).base};

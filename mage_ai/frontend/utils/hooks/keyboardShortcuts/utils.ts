@@ -11,6 +11,22 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ignoreKeys } from '@utils/hash';
 
+function getKeyAliases(key) {
+  const metas = [...KEY_CODE_METAS, KEY_CODE_META];
+  return metas.reduce((acc, uuid) => ({
+    ...acc,
+    [uuid]: KEY_CODE_METAS,
+  }))[key] || [key];
+}
+
+function keyInMapping(key, keyMapping) {
+  return getKeyAliases(key)?.some(key => keyMapping[key]);
+}
+
+function keyInHistory(key, keyHistory) {
+  return getKeyAliases(key)?.some(key => keyHistory?.includes(key));
+}
+
 export function keysPresentAndKeysRecent(
   keysPresent: (number | string)[],
   keysRecent: (number | string)[],
@@ -18,12 +34,17 @@ export function keysPresentAndKeysRecent(
     [key: number | string]: boolean;
   },
   keyHistory: (number | string)[],
+  opts: {
+    lookback?: number;
+  } = {
+    lookback: 0,
+  },
 ) {
-  const recentCount = keysRecent?.length || 0;
+  const recentCount = opts?.lookback || keysRecent?.length || 0;
   const history = keyHistory?.slice(0, recentCount);
 
-  return keysPresent?.every(key => keyMapping[key])
-    && keysRecent?.every(key => history?.includes(key));
+  return keysPresent?.every(key => keyInMapping(key, keyMapping))
+    && keysRecent?.every(key => keyInHistory(key, history));
 }
 
 export function onlyKeysPresent(

@@ -36,6 +36,7 @@ KernelPolicy.allow_read(KernelPresenter.default_attributes + [], scopes=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access())
 
+
 KernelPolicy.allow_write([
   'action_type',
 ], scopes=[

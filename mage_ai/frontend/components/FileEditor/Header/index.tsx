@@ -16,10 +16,17 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SHARED_FILE_HEADER_BUTTON_PROPS } from '@components/PipelineDetail/FileHeaderMenu/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { isMac } from '@utils/os';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
+
+export const MENU_ICON_SIZE = UNIT * 1.5;
+export const MENU_ICON_PROPS = {
+  default: true,
+  size: MENU_ICON_SIZE,
+};
 
 export type MenuGroupType = {
   items: FlyoutMenuItemType[];
