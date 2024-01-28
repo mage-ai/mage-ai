@@ -1,10 +1,10 @@
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
-import { enableSettings } from '@utils/testing';
+import { TSettingFeaturesToDisable, enableSettings } from '@utils/testing';
 
 export const test = base.extend<{
   failOnClientError: boolean;
-  settingFeaturesToDisable: Partial<Record<FeatureUUIDEnum, boolean>>,
+  settingFeaturesToDisable: TSettingFeaturesToDisable,
 }>({
   failOnClientError: true,
   settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true },
