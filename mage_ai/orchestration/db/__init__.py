@@ -23,6 +23,9 @@ db_kwargs = dict(
     pool_pre_ping=True,
 )
 
+# Only import if OpenTelemetry is enabled
+if os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
@@ -50,6 +53,10 @@ if db_connection_url.startswith('postgresql'):
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
 try:
+    # if OpenTelemetry is enabled, instrument SQLAlchemy
+    if os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+        SQLAlchemyInstrumentor().instrument(enable_commenter=True, commenter_options={})
+
     engine = create_engine(
         db_connection_url,
         **db_kwargs,
