@@ -17,12 +17,6 @@ enum SettingsToEnableEnum {
 }
 
 test('ensure all pages main pages load', async ({ page }) => {
-  const pageErrors: Error[] = [];
-
-  page.addListener('pageerror', (error) => {
-    pageErrors.push(error);
-  });
-
   await page.goto('/settings');
 
   for (const feature of Object.values(SettingsToEnableEnum)) {
@@ -52,6 +46,4 @@ test('ensure all pages main pages load', async ({ page }) => {
   await navigateToAndWaitTilLoaded('Terminal');
   await navigateToAndWaitTilLoaded('Global hooks (beta)');
   await navigateToAndWaitTilLoaded('Compute management (beta)');
-
-  expect(pageErrors).toHaveLength(0);
 });

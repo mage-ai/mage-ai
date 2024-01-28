@@ -1,7 +1,12 @@
 import { test as base, expect } from '@playwright/test';
 
-export const test = base.extend<{ page: void; }>({
-  page: async ({ page }, use) => {
+export const test = base.extend<{ page: void; failOnClientError: boolean; }>({
+  page: async ({ page, failOnClientError }, use) => {
+    const pageErrors: Error[] = [];
+    page.addListener('pageerror', (error) => {
+      pageErrors.push(error);
+    });
+
     await page.goto('/sign-in');
     await page.getByPlaceholder('Email').click();
     await page.getByRole('textbox').first().fill('admin@admin.com');
@@ -17,6 +22,10 @@ export const test = base.extend<{ page: void; }>({
 
     // Use subsequent tests.
     await use(page);
+
+    if (failOnClientError) {
+      expect(pageErrors).toHaveLength(0);
+    }
   },
 });
 
