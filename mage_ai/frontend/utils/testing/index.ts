@@ -15,9 +15,12 @@ function getSettingsToEnable(
     if (!settingFeaturesToDisable[
       FeatureUUIDEnum[feature as keyof typeof FeatureUUIDEnum]
     ]) {
+      console.log(`ENABLE: ${feature}`);
       settingsToEnable.push(
         FeatureUUIDEnum[feature as keyof typeof FeatureUUIDEnum],
       );
+    } else {
+      console.log(`DISABLE: ${feature}`);
     }
   }
 
@@ -30,13 +33,7 @@ export async function enableSettings(
 ) {
   await page.goto('/settings');
 
-  console.log(settingFeaturesToDisable);
-  
   const features = getSettingsToEnable(settingFeaturesToDisable);
-
-  for (const f of features) {
-    console.log(f);
-  }
 
   for (const feature of features) {
     const f = capitalizeRemoveUnderscoreLower(feature);
