@@ -1,7 +1,15 @@
+import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
+import { enableSettings } from '@utils/testing';
 
-export const test = base.extend<{ page: void; failOnClientError: boolean; }>({
-  page: async ({ page, failOnClientError }, use) => {
+export const test = base.extend<{
+  failOnClientError: boolean;
+  settingFeaturesToDisable: Partial<Record<FeatureUUIDEnum, boolean>>,
+}>({
+  failOnClientError: true,
+  settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true },
+  // eslint-disable-next-line sort-keys
+  page: async ({ page, failOnClientError, settingFeaturesToDisable }, use) => {
     const pageErrors: Error[] = [];
     page.addListener('pageerror', (error) => {
       pageErrors.push(error);
@@ -19,6 +27,8 @@ export const test = base.extend<{ page: void; failOnClientError: boolean; }>({
      * or /pipelines (if no pipeline runs exist), to load after signing in.
      */
     await expect(page.getByRole('button', { name: 'New' })).toBeVisible({ timeout: 10000 });
+
+    await enableSettings(page, settingFeaturesToDisable);
 
     // Use subsequent tests.
     await use(page);
