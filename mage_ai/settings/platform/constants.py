@@ -20,4 +20,4 @@ set_project_platform_activated_flag()
 
 
 def project_platform_activated() -> bool:
-    return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
+    return project_platform_activated_flag
