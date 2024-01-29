@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Chip from '@oracle/components/Chip';
+import FlexContainer from '@oracle/components/FlexContainer';
+import PermissionType from '@interfaces/PermissionType';
 import RoleType from '@interfaces/RoleType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -14,9 +17,6 @@ import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
 import { find, remove } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import PermissionType from '@interfaces/PermissionType';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Chip from '@oracle/components/Chip';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
@@ -45,49 +45,35 @@ function UserWorkspacesEdit({
     entity_ids: workspaceEntityIDs,
   }, {}, {});
 
+  const groupRolesByWorkspace = useCallback((roles: RoleType[]) => roles?.reduce(
+    (obj, role) => {
+      let updatedObj = obj;
+      role?.permissions?.forEach(({ entity_id }: PermissionType) => {
+        const projectUUID = entity_id;
+
+        const existingRoles = updatedObj[projectUUID] || [];
+
+        updatedObj = {
+          ...updatedObj,
+          [projectUUID]: [...existingRoles, role],
+        };
+      });
+      return updatedObj;
+    },
+    {},
+  ), []);
+
   const rolesByWorkspace = useMemo(() => {
     const roles = dataRoles?.roles || [];
 
-    return roles?.reduce(
-      (obj, role) => {
-        let updatedObj = obj;
-        role?.permissions?.forEach(({ entity_id }: PermissionType) => {
-          const projectUUID = entity_id;
-
-          const existingRoles = updatedObj[projectUUID] || [];
-
-          updatedObj = {
-            ...updatedObj,
-            [projectUUID]: [...existingRoles, role],
-          };
-        });
-        return updatedObj;
-      },
-      {},
-    );
-  }, [dataRoles]);
+    return groupRolesByWorkspace(roles);
+  }, [dataRoles, groupRolesByWorkspace]);
 
   const userRolesByWorkspace = useMemo(() => {
     const u = profile ? profile : user;
     const roles = u?.roles_new;
-    return roles?.reduce(
-      (obj, role) => {
-        let updatedObj = obj;
-        role?.permissions?.forEach(({ entity_id }: PermissionType) => {
-          const projectUUID = entity_id;
-
-          const existingRoles = updatedObj[projectUUID] || [];
-
-          updatedObj = {
-            ...updatedObj,
-            [projectUUID]: [...existingRoles, role],
-          };
-        });
-        return updatedObj;
-      },
-      {},
-    );
-  }, [profile, user]);
+    return groupRolesByWorkspace(roles);
+  }, [groupRolesByWorkspace, profile, user]);
 
   const [updateUser, { isLoading }] = useMutation(
     api.users.useUpdate(user?.id),
