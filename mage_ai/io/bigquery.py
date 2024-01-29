@@ -380,7 +380,12 @@ WHERE table_id = '{table_name}'
 
     def _clean_query(self, query_string: str) -> str:
         query_string = super()._clean_query(query_string)
-        query_string = self.__fix_table_names(query_string)
+
+        try:
+            query_string_updated = self.__fix_table_names(query_string)
+            query_string = query_string_updated
+        except Exception as err:
+            print(f'[ERROR] Attempted to complete table names: {err}, will continue...')
 
         return query_string
 

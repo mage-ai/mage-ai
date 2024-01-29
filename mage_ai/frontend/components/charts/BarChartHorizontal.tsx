@@ -232,7 +232,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
 
               if (isNumeric(valueToDisplay)) {
                 if (String(valueToDisplay).split('.').length >= 2) {
-                  valueToDisplay = valueToDisplay.toFixed(4);
+                  if (valueToDisplay && (typeof valueToDisplay === 'string' || typeof valueToDisplay === 'number')) {
+                    valueToDisplay = valueToDisplay?.toFixed(4);
+                  }
                 }
               }
 
