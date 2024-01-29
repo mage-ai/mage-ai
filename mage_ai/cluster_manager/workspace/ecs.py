@@ -8,6 +8,7 @@ from mage_ai.cluster_manager.constants import (
     ECS_CLUSTER_NAME,
     ECS_CONTAINER_NAME,
     ECS_TASK_DEFINITION,
+    ClusterType,
 )
 from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.shared.hash import merge_dict
@@ -15,6 +16,7 @@ from mage_ai.shared.hash import merge_dict
 
 class EcsWorkspace(Workspace):
     config_class = EcsWorkspaceConfig
+    cluster_type = ClusterType.ECS
 
     def __init__(self, name: str):
         super().__init__(name)

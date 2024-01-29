@@ -8,7 +8,8 @@ from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.errors import WorkspaceExistsError
 from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.models.oauth import Permission, User
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
@@ -20,6 +21,7 @@ class classproperty(property):
 
 class Workspace(abc.ABC):
     config_class = None
+    cluster_type = None
 
     def __init__(self, name: str):
         self.name = name
@@ -142,13 +144,22 @@ class Workspace(abc.ABC):
         raise NotImplementedError('Initialize method not implemented')
 
     @abc.abstractmethod
+    @safe_db_query
     def delete(self, **kwargs):
         """
         Delete the workspace. Individual workspace classes should still implement
         this method to delete the cloud instance.
         """
-        if get_project_type() == ProjectType.MAIN and os.path.exists(self.config_path):
-            os.remove(self.config_path)
+        if get_project_type() == ProjectType.MAIN:
+            if os.path.exists(self.config_path):
+                os.remove(self.config_path)
+
+            # delete workspace permissions
+            Permission.query.filter(
+                Permission.entity == Entity.PROJECT,
+                Permission.entity_id == self.project_uuid,
+            ).delete(synchronize_session=False)
+            db_connection.session.commit()
 
     @abc.abstractmethod
     def stop(self):
