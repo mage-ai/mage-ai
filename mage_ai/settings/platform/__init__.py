@@ -6,9 +6,11 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
-from mage_ai.settings.platform.constants import (
+from mage_ai.settings.platform.constants import (  # noqa: F401
     LOCAL_PLATFORM_SETTINGS_FILENAME,
     PLATFORM_SETTINGS_FILENAME,
+    platform_settings_full_path,
+    project_platform_activated,
 )
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
@@ -202,10 +204,6 @@ def build_active_project_repo_path(repo_path: str = None) -> str:
     return repo_path
 
 
-def project_platform_activated() -> bool:
-    return os.path.exists(platform_settings_full_path())
-
-
 def platform_settings(mage_projects_only: bool = False) -> Dict:
     config = __load_platform_settings(platform_settings_full_path()) or {}
     config['projects'] = merge_dict(
@@ -304,10 +302,6 @@ def git_settings(repo_path: str = None) -> Dict:
         git_dict['path'] = build_active_project_repo_path(repo_path=repo_path)
 
     return git_dict
-
-
-def platform_settings_full_path() -> str:
-    return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
 
 
 def __get_projects_of_any_type() -> Dict:
