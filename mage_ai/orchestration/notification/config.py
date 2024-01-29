@@ -7,6 +7,7 @@ from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
+from mage_ai.services.discord.config import DiscordConfig
 from mage_ai.shared.config import BaseConfig
 
 
@@ -44,4 +45,5 @@ class NotificationConfig(BaseConfig):
     opsgenie_config: OpsgenieConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
+    discord_config: DiscordConfig = None
     message_templates: MessageTemplates = None
