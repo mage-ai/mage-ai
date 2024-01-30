@@ -15,6 +15,7 @@ def set_project_platform_activated_flag():
     project_platform_activated_flag = os.path.exists(platform_settings_full_path())
 
 
+# Set the activated flag upon import instead of repeatedly checking the os path
 project_platform_activated_flag = False
 set_project_platform_activated_flag()
 

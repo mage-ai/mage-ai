@@ -1,5 +1,4 @@
 import os
-import shutil
 from unittest.mock import patch
 
 import yaml
@@ -20,6 +19,7 @@ from mage_ai.settings.platform import (
     project_platform_settings,
     repo_path_from_database_query_to_project_repo_path,
 )
+from mage_ai.settings.platform.constants import set_project_platform_activated_flag
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
@@ -60,17 +60,19 @@ SETTINGS = dict(
 class PlatformSettingsTest(ProjectPlatformMixin):
     def setUp(self):
         super().setUp()
+        # Write platform settings to settings.yaml file and set mage_platform to active
         self.initialize_settings(SETTINGS)
         self.__get_settings()
         self.__get_settings_local()
+        set_project_platform_activated_flag()
 
     def tearDown(self):
         try:
-            shutil.rmtree(platform_settings_full_path())
+            os.remove(platform_settings_full_path())
         except Exception:
             pass
         try:
-            shutil.rmtree(local_platform_settings_full_path())
+            os.remove(local_platform_settings_full_path())
         except Exception:
             pass
         super().tearDown()
@@ -137,6 +139,8 @@ class PlatformSettingsTest(ProjectPlatformMixin):
 
     def test_build_active_project_repo_path_no_active_projects(self):
         os.remove(local_platform_settings_full_path())
+        # Reset project_platform_activated_flag
+        set_project_platform_activated_flag()
         self.assertFalse(os.path.exists(local_platform_settings_full_path()))
         self.assertEqual(
             build_active_project_repo_path(),
@@ -146,6 +150,8 @@ class PlatformSettingsTest(ProjectPlatformMixin):
     def test_project_platform_activated(self):
         self.assertTrue(project_platform_activated())
         os.remove(platform_settings_full_path())
+        # Reset project_platform_activated_flag
+        set_project_platform_activated_flag()
         self.assertFalse(project_platform_activated())
 
     def test_platform_settings(self):
