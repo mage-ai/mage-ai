@@ -76,7 +76,7 @@ SELECT
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
-        current_columns = [r[0].lower() for r in results]
+        current_columns = [self.clean_column_name(r[0]) for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if self.clean_column_name(c)
                        not in current_columns]
