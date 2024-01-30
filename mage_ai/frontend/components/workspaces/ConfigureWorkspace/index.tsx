@@ -18,10 +18,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import {
   ACCESS_MODES,
   GENERAL_K8S_FIELDS,
+  PVC_RETENTION_OPTIONS,
   VOLUME_CLAIM_K8S_FIELDS,
   WORKSPACE_FIELDS,
   WorkspaceFieldType,
@@ -242,6 +244,52 @@ function ConfigureWorkspace({
               value={workspaceConfig?.['storage_access_mode']}
             >
               {ACCESS_MODES.map(val => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3}>
+            <Tooltip
+              block
+              description={
+                <Text default inline>
+                  Configure the retention policy for the stateful set PVC.
+                  <br />
+                  Retain will keep the PVC after the workspace is deleted.
+                  <br />
+                  Delete will delete the PVC when the workspace is deleted.
+                </Text>
+              }
+              size={null}
+              widthFitContent
+            >
+              <Text>
+                Retention policy (default: Retain)
+              </Text>
+            </Tooltip>
+          </Flex>
+          <Flex flex={1}>
+            <Select
+              fullWidth
+              label="Retention policy"
+              onChange={(e) => {
+                e.preventDefault();
+                setWorkspaceConfig(prev => ({
+                  ...prev,
+                  pvc_retention_policy: e.target.value,
+                }));
+              }}
+              placeholder="Retention policy"
+              value={workspaceConfig?.['pvc_retention_policy']}
+            >
+              {PVC_RETENTION_OPTIONS.map(val => (
                 <option key={val} value={val}>
                   {val}
                 </option>

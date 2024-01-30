@@ -9,6 +9,11 @@ export const ACCESS_MODES = [
   ACCESS_MODE_READ_ONLY_MANY,
 ];
 
+export const PVC_RETENTION_OPTIONS = [
+  'Retain',
+  'Delete',
+];
+
 export const WORKSPACE_FIELDS = [
   {
     label: 'Workspace name',

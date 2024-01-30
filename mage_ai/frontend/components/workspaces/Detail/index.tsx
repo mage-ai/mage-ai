@@ -85,17 +85,19 @@ function WorkspaceDetail({
   );
 
   const flattenedLifecycleConfig = useMemo(() => {
-    const flattened = {};
-    Object.entries(lifecycleConfig).map(([field, value]) => {
-      if (value && typeof(value) === 'object') {
-        Object.entries(value).map(([subField, subValue]) => {
-          flattened[`${field}.${subField}`] = subValue;
-        });
-      } else {
-        flattened[field] = value;
-      }
-    });
-    return flattened;
+    if (lifecycleConfig) {
+      const flattened = {};
+      Object.entries(lifecycleConfig).map(([field, value]) => {
+        if (value && typeof(value) === 'object') {
+          Object.entries(value).map(([subField, subValue]) => {
+            flattened[`${field}.${subField}`] = subValue;
+          });
+        } else {
+          flattened[field] = value;
+        }
+      });
+      return flattened;
+    }
   }, [lifecycleConfig]);
 
   const actions = useMemo(() => {
@@ -290,14 +292,14 @@ function WorkspaceDetail({
               <>
                 <Spacing key={field} mx={2} my={2}>
                   <FlexContainer alignItems="center" justifyContent="space-between">
-                    <Flex flex={3}>
+                    <Flex flex={4}>
                       <Text muted>
                         {label}
                       </Text>
                     </Flex>
-                    <Flex flex={1} flexDirection="row-reverse">
+                    <Flex flex={2} flexDirection="row-reverse">
                       <Text bold>
-                        {workspace?.[field]}
+                        {workspace?.[field] || 'N/A'}
                       </Text>
                     </Flex>
                   </FlexContainer>
@@ -307,32 +309,36 @@ function WorkspaceDetail({
             ))}
           </ContainerStyle>
         )}
-        <Spacing my={2}>
-          <Headline default level={5}>
-            Lifecycle Properties
-          </Headline>
-        </Spacing>
-        <ContainerStyle>
-          {Object.entries(LIFECYCLE_FIELDS).map(([field, label], index) => (
-            <>
-              <Spacing key={field} mx={2} my={2}>
-                <FlexContainer alignItems="center" justifyContent="space-between">
-                  <Flex flex={3}>
-                    <Text muted>
-                      {label}
-                    </Text>
-                  </Flex>
-                  <Flex flex={1} flexDirection="row-reverse">
-                    <Text bold>
-                      {flattenedLifecycleConfig?.[field]?.toString()}
-                    </Text>
-                  </Flex>
-                </FlexContainer>
-              </Spacing>
-              {index !== Object.entries(LIFECYCLE_FIELDS).length - 1 && <Divider muted/>}
-            </>
-          ))}
-        </ContainerStyle>
+        {flattenedLifecycleConfig && (
+          <>
+            <Spacing my={2}>
+              <Headline default level={5}>
+                Lifecycle Properties
+              </Headline>
+            </Spacing>
+            <ContainerStyle>
+              {Object.entries(LIFECYCLE_FIELDS).map(([field, label], index) => (
+                <>
+                  <Spacing key={field} mx={2} my={2}>
+                    <FlexContainer alignItems="center" justifyContent="space-between">
+                      <Flex flex={3}>
+                        <Text muted>
+                          {label}
+                        </Text>
+                      </Flex>
+                      <Flex flex={1} flexDirection="row-reverse">
+                        <Text bold>
+                          {flattenedLifecycleConfig[field]?.toString()}
+                        </Text>
+                      </Flex>
+                    </FlexContainer>
+                  </Spacing>
+                  {index !== Object.entries(LIFECYCLE_FIELDS).length - 1 && <Divider muted/>}
+                </>
+              ))}
+            </ContainerStyle>
+          </>
+        )}
       </Spacing>
     </>
   )
