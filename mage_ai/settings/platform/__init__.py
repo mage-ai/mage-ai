@@ -6,9 +6,11 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
-from mage_ai.settings.platform.constants import (
+from mage_ai.settings.platform.constants import (  # noqa: F401
     LOCAL_PLATFORM_SETTINGS_FILENAME,
     PLATFORM_SETTINGS_FILENAME,
+    platform_settings_full_path,
+    project_platform_activated,
 )
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
@@ -17,6 +19,23 @@ from mage_ai.shared.io import safe_write
 
 
 def activate_project(project_name: str) -> None:
+    """
+    Activate a specified project and update local platform settings accordingly.
+
+    Args:
+        project_name (str): The name of the project to activate.
+
+    Returns:
+        None
+
+    Note:
+        This function activates the specified project by updating the local platform settings.
+        It sets the 'active' attribute to True for the specified project and False for all other
+        projects, ensuring only one project is active at a time.
+
+        If the specified project does not exist in the local platform settings, it will be
+        added to the 'projects' dictionary with the 'active' attribute set to True.
+    """
     if project_name:
         platform_settings = __local_platform_settings() or {}
         if 'projects' not in platform_settings:
@@ -202,10 +221,6 @@ def build_active_project_repo_path(repo_path: str = None) -> str:
     return repo_path
 
 
-def project_platform_activated() -> bool:
-    return os.path.exists(platform_settings_full_path())
-
-
 def platform_settings(mage_projects_only: bool = False) -> Dict:
     config = __load_platform_settings(platform_settings_full_path()) or {}
     config['projects'] = merge_dict(
@@ -220,6 +235,33 @@ def active_project_settings(
     repo_path: str = None,
     settings: Dict = None,
 ) -> Dict:
+    """
+    Retrieve the settings of the active project or the default project.
+
+    Args:
+        get_default (bool, optional): If True and no active project is found, retrieve settings
+            for the default project.
+        repo_path (str, optional): The path to the repository. If provided, project settings
+            are fetched for the specific repository.
+        settings (Dict, optional): Pre-existing project platform settings. If not provided,
+            settings are fetched using project_platform_settings.
+
+    Returns:
+        Dict: A dictionary containing the settings of the active or default project.
+
+    Note:
+        This function searches for the active project in the specified settings. If an active
+        project is found, its settings are returned. If no active project is found and
+        'get_default' is True, settings for the default project are returned.
+
+        The 'repo_path' parameter allows fetching project settings for a specific repository.
+        If 'settings' are not provided, they are fetched using the project_platform_settings
+        function.
+
+    Example:
+        >>> active_project_settings(get_default=True, repo_path='/path/to/repo')
+        {'uuid': 'default_project_uuid', 'active': 'true', 'path': 'relative/path'}
+    """
     if not settings:
         settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
@@ -233,6 +275,7 @@ def active_project_settings(
     )
 
     if not project_settings_tup and get_default:
+        # Get the first item in the settings by default
         project_settings_tup = items[0]
 
     if project_settings_tup:
@@ -306,10 +349,6 @@ def git_settings(repo_path: str = None) -> Dict:
     return git_dict
 
 
-def platform_settings_full_path() -> str:
-    return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
-
-
 def __get_projects_of_any_type() -> Dict:
     mapping = {}
 
@@ -338,9 +377,29 @@ def __get_projects_of_any_type() -> Dict:
 
 
 def __load_platform_settings(full_path: str) -> Dict:
-    from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+    """
+    Load and parse platform settings from the specified file.
 
-    # default_platform/tons_of_dbt_projects/demo2/models/example/restaurant_user_transactions.sql
+    Args:
+        full_path (str): The full path to the platform settings file.
+
+    Returns:
+        Dict: A dictionary containing the parsed platform settings.
+
+    Note:
+        This private function reads the content of the specified file, renders any template
+        variables using `get_template_vars_no_db`, and parses the YAML content into a dictionary.
+
+        If the file does not exist or if there is an issue during the parsing process, an
+        empty dictionary is returned.
+
+    Example:
+        >>> __load_platform_settings('/path/to/.settings.yaml')
+        {'projects': {'mage_data': {'active': True}, 'mage_platform': {'active': False}}}
+        >>> __load_platform_settings('/path/to/settings.yaml')
+        {'projects': {'mage_data': {'database': {}}, 'mage_platform': {}}}
+    """
+    from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
 
     settings = None
     if os.path.exists(full_path):
@@ -359,6 +418,21 @@ def local_platform_settings_full_path(repo_path: str = None) -> str:
 
 
 def __local_platform_settings(repo_path: str = None) -> Dict:
+    """
+    Retrieve and return the local platform settings.
+    Local platform settings stores project statuses
+
+    Args:
+        repo_path (str, optional): The path to the repository. If provided, the local platform
+            settings for the specific repository will be retrieved.
+
+    Returns:
+        Dict: A dictionary containing the local platform settings.
+
+    Example:
+        >>> __local_platform_settings('/path/to/repo')
+        {'projects': {'mage_data': {'active': True}, 'mage_platform': {'active': False}}}
+    """
     return __load_platform_settings(local_platform_settings_full_path(repo_path=repo_path))
 
 

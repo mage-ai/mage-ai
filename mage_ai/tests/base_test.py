@@ -9,6 +9,7 @@ from faker import Faker
 from mage_ai.data_preparation.repo_manager import init_project_uuid
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
+from mage_ai.settings.platform.constants import set_project_platform_activated_flag
 from mage_ai.settings.repo import get_variables_dir, set_repo_path
 from mage_ai.shared.logger import LoggingLevel
 
@@ -72,6 +73,7 @@ class DBTestCase(unittest.TestCase):
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
         init_project_uuid()
+        set_project_platform_activated_flag()
         database_manager.run_migrations(log_level=LoggingLevel.ERROR)
         db_connection.start_session()
 
@@ -113,6 +115,7 @@ class TestCase(unittest.TestCase):
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
         init_project_uuid()
+        set_project_platform_activated_flag()
 
     @classmethod
     def tearDownClass(self):
