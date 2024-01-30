@@ -8,6 +8,7 @@ export enum ClusterTypeEnum {
 export const KUBERNETES_FIELDS = {
   'ingress_name': 'Ingress',
   'namespace': 'Namespace',
+  'pvc_retention_policy': 'PVC retention policy',
   'service_account_name': 'Service account name',
   'storage_access_mode': 'Storage access mode',
   'storage_class_name': 'Storage class name',

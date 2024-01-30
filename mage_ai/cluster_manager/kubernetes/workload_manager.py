@@ -190,14 +190,13 @@ class WorkloadManager:
         parameters = self.__get_configurable_parameters(workspace_config)
         service_account_name = parameters.get(
             'service_account_name',
-            DEFAULT_SERVICE_ACCOUNT_NAME,
-        )
+        ) or DEFAULT_SERVICE_ACCOUNT_NAME
         storage_class_name = parameters.get(
             'storage_class_name',
-            DEFAULT_STORAGE_CLASS_NAME,
-        )
-        storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
-        storage_request_size = parameters.get('storage_request_size', '2Gi')
+        ) or DEFAULT_STORAGE_CLASS_NAME
+        storage_access_mode = parameters.get('storage_access_mode') or 'ReadWriteMany'
+        storage_request_size = parameters.get('storage_request_size') or '2Gi'
+        pvc_retention_policy = parameters.get('pvc_retention_policy') or 'Retain'
 
         ingress_name = workspace_config.ingress_name
 
@@ -388,6 +387,9 @@ class WorkloadManager:
                         },
                     }
                 ],
+                'persistentVolumeClaimRetentionPolicy': {
+                    'whenDeleted': pvc_retention_policy,
+                },
             },
         }
 
@@ -793,6 +795,7 @@ class WorkloadManager:
             storage_request_size = f'{storage_request_size}Gi'
 
         return dict(
+            pvc_retention_policy=workspace_config.pvc_retention_policy,
             service_account_name=workspace_config.service_account_name
             or default_values.get('service_account_name'),
             storage_class_name=workspace_config.storage_class_name
