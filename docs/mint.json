@@ -777,6 +777,12 @@
               ]
             }
           ]
+        },
+        {
+          "group": "Custom docker image",
+          "pages": [
+            "production/custom-docker-image/non-root-user"
+          ]
         }
       ]
     },
