@@ -7,6 +7,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_VAR
+from mage_ai.settings.platform.constants import set_project_platform_activated_flag
 from mage_ai.settings.platform.utils import project_platform_activated
 from mage_ai.settings.utils import base_repo_dirname, base_repo_path
 from mage_ai.shared.environments import is_test
@@ -35,6 +36,42 @@ def get_repo_path(
     root_project: bool = False,
     absolute_path: bool = True,
 ) -> str:
+    """
+    Retrieve the repository path based on the given parameters.
+
+    Args:
+        file_path (str, optional): The path of a file within the repository.
+        root_project (bool, optional): If True, returns the root project's repository path.
+        absolute_path (bool, optional): If True, returns the absolute repository path;
+            if False, returns the path relative to the base repository directory.
+
+    Returns:
+        str: The repository path as per the specified parameters.
+
+    Note:
+        This function provides flexibility in obtaining the repository path based on different
+        scenarios. If a specific file path is provided, it attempts to determine the repository
+        path for that file. If `root_project` is True, it returns the root project's repository
+        path. The `absolute_path` parameter controls whether the returned path is absolute or
+        relative to the base repository directory.
+
+        If the active project is detected and not in root mode, the active project's repository
+        path is used; otherwise, the base repository path is returned.
+
+        If an absolute path is requested, the full repository path is returned. If a relative
+        path is requested, an attempt is made to compute the path relative to the base repository
+        directory.
+
+    Examples:
+        >>> get_repo_path('/path/to/file.txt')
+        '/path/to/repo'
+
+        >>> get_repo_path(root_project=True)
+        '/path/to/root/project/repo'
+
+        >>> get_repo_path(absolute_path=False)
+        'relative/path/to/repo'
+    """
     repo_path = base_repo_path()
     repo_path_use = None
 
@@ -68,6 +105,7 @@ def get_repo_path(
 def set_repo_path(repo_path: str) -> None:
     os.environ[REPO_PATH_ENV_VAR] = repo_path
     sys.path.append(os.path.dirname(repo_path))
+    set_project_platform_activated_flag()
 
 
 def get_repo_name(repo_path: str = None, root_project: bool = False) -> str:
