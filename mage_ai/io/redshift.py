@@ -135,7 +135,7 @@ class Redshift(BaseSQL):
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
         create_schema: bool = False,
-        overwrite_types: Dict = False,
+        overwrite_types: Dict = None,
     ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
@@ -244,8 +244,6 @@ class Redshift(BaseSQL):
                     values = [f"""({', '.join([format_value(x) for x in v])})""" for v in df.values]
                     values = ', '.join(values)
                     query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
-                    with self.printer.print_msg(query):
-                        print('DONE')
                     cur.execute(query)
 
                 self.conn.commit()
