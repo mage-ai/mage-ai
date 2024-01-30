@@ -59,7 +59,7 @@ type IntegrationPipelineProps = {
   ) => Promise<any>;
   blocks: BlockType[];
   codeBlocks?: any;
-  fetchFileTree: () => void;
+  fetchFileTree?: () => void;
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   globalVariables: PipelineVariableType[];
@@ -324,7 +324,7 @@ function IntegrationPipeline({
 
             savePipelineContent(payload).then(() => {
               fetchPipeline();
-              fetchFileTree();
+              fetchFileTree?.();
             });
           },
           onErrorCallback: (response, errors) => setErrors({

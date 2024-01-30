@@ -246,7 +246,7 @@ function BlockSettings({
           callback: (resp) => {
             setBlockAttributesTouched(false);
 
-            fetchFileTree();
+            fetchFileTree?.();
             fetchPipeline();
 
             // Select the newly renamed block

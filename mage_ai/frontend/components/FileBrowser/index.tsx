@@ -313,7 +313,7 @@ function FileBrowser({
               ...draggingFile,
               path: getFullPath(draggingFile),
             },
-            status.repo_path,
+            status?.repo_path,
             pipeline,
           );
 
