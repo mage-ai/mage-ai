@@ -42,7 +42,7 @@ export type OpenDataIntegrationModalOptionsType = {
     pipeline?: PipelineType;
   }) => Promise<any>;
   setContent?: (content: string) => void;
-}
+};
 
 export type OpenDataIntegrationModalType = {
   showDataIntegrationModal?: (opts?: OpenDataIntegrationModalOptionsType) => void;
