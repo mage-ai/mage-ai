@@ -257,7 +257,7 @@ function Edit({
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
-    settings: settingsInit = {},
+    settings: settingsInit,
     start_time: startTime,
     tags,
     variables: scheduleVariablesInit = {},
@@ -1650,18 +1650,32 @@ function Edit({
         </Spacing>
 
         {ScheduleTypeEnum.TIME === scheduleType && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.skip_if_previous_running}
-                label="Skip run if previous run still in progress"
-                onClick={() => setSettings(prev => ({
-                  ...prev,
-                  skip_if_previous_running: !settings?.skip_if_previous_running,
-                }))}
-              />
-            </FlexContainer>
-          </Spacing>
+          <>
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={settings?.skip_if_previous_running}
+                  label="Skip run if previous run still in progress"
+                  onClick={() => setSettings(prev => ({
+                    ...prev,
+                    skip_if_previous_running: !settings?.skip_if_previous_running,
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={settings?.create_initial_pipeline_run}
+                  label="Create initial pipeline run if start date is before current execution period"
+                  onClick={() => setSettings(prev => ({
+                    ...prev,
+                    create_initial_pipeline_run: !settings?.create_initial_pipeline_run,
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
+          </>
         )}
       </Spacing>
 

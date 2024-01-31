@@ -54,6 +54,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
     SettingsConfig,
     Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -90,6 +91,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     start_time = Column(DateTime(timezone=True), default=None)
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
+    last_enabled_at = Column(DateTime(timezone=True), default=None)
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
@@ -287,20 +289,32 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 traceback.print_exc()
                 continue
 
+            last_enabled_at = trigger_config.last_enabled_at
+            if trigger_config.status == ScheduleStatus.ACTIVE and \
+                    trigger_config.last_enabled_at is None:
+                last_enabled_at = datetime.now(tz=pytz.UTC)
+                trigger_config.last_enabled_at = last_enabled_at
+                add_or_update_trigger_for_pipeline_and_persist(
+                    trigger_config,
+                    trigger_config.pipeline_uuid,
+                )
+
             kwargs = dict(
+                last_enabled_at=last_enabled_at,
                 name=trigger_config.name,
                 pipeline_uuid=trigger_config.pipeline_uuid,
-                schedule_type=trigger_config.schedule_type,
-                start_time=trigger_config.start_time,
                 schedule_interval=trigger_config.schedule_interval,
+                schedule_type=trigger_config.schedule_type,
+                settings=trigger_config.settings,
+                sla=trigger_config.sla,
+                start_time=trigger_config.start_time,
                 status=trigger_config.status,
                 variables=trigger_config.variables,
-                sla=trigger_config.sla,
-                settings=trigger_config.settings,
             )
 
             if existing_trigger:
                 if any([
+                    existing_trigger.last_enabled_at != kwargs.get('last_enabled_at'),
                     existing_trigger.name != kwargs.get('name'),
                     existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
                     existing_trigger.schedule_interval != kwargs.get('schedule_interval'),
@@ -516,13 +530,39 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if current_execution_date is None:
                 return False
 
-            # If the execution date is before start time, don't schedule it
-            if self.start_time is not None and \
-                    compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
+            if self.last_enabled_at is None:
+                """
+                Check if the last_enabled_at attribute has a value (if it does not,
+                it could mean that the pipeline schedule already existed and was active).
+                If there is no value for last_enabled_at, we default to creating an
+                initial pipeline run. Otherwise, no additional pipeline runs would be
+                created for the existing pipeline schedule until it was disabled and
+                re-enabled (so that the last_enabled_at attribute would get updated).
+                """
+                avoid_initial_pipeline_run = False
+            else:
+                """
+                Check if "create_initial_pipeline_run" setting is not enabled. If
+                it is not, check if current execution date is before the datetime
+                that the pipeline schedule was last enabled in order to avoid
+                the initial pipeline run.
+                """
+                create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
+                avoid_initial_pipeline_run = compare(
+                    current_execution_date,
+                    self.last_enabled_at,
+                ) == -1 if not create_initial_pipeline_run else False
+
+            # If the execution date is before start time or date pipeline schedule
+            # was last enabled, don't schedule it.
+            if (
+                self.start_time is not None and
+                compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1
+            ) or avoid_initial_pipeline_run:
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
-            # current_execution_date, then don’t schedule
+            # current_execution_date, then don’t schedule.
             if not find(
                 lambda x: compare(
                     x.execution_date.replace(tzinfo=pytz.UTC),

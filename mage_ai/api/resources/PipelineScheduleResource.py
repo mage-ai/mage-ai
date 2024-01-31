@@ -1,6 +1,8 @@
 import collections
 import uuid
+from datetime import datetime
 
+import pytz
 from sqlalchemy import case
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import func
@@ -8,6 +10,7 @@ from sqlalchemy.sql.expression import func
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
+    ScheduleStatus,
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
     remove_trigger,
@@ -253,6 +256,9 @@ class PipelineScheduleResource(DatabaseResource):
             payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
+        if payload.get('status') == ScheduleStatus.ACTIVE and \
+                payload.get('last_enabled_at') is None:
+            payload['last_enabled_at'] = datetime.now(tz=pytz.UTC)
 
         if pipeline.should_save_trigger_in_code_automatically():
 
@@ -393,12 +399,17 @@ class PipelineScheduleResource(DatabaseResource):
                 tag_associations_updated + tag_associations_to_keep
             )
 
+        updated_status = payload.get('status')
+        if updated_status == ScheduleStatus.ACTIVE and self.model.status == ScheduleStatus.INACTIVE:
+            payload['last_enabled_at'] = datetime.now(tz=pytz.UTC)
+
         resource = super().update(payload)
         updated_model = resource.model
 
         pipeline = Pipeline.get(updated_model.pipeline_uuid)
         if pipeline:
             trigger = Trigger(
+                last_enabled_at=updated_model.last_enabled_at,
                 name=updated_model.name,
                 pipeline_uuid=updated_model.pipeline_uuid,
                 schedule_interval=updated_model.schedule_interval,

@@ -619,30 +619,37 @@ class PipelineSchedulerTests(DBTestCase):
             git_sync_instance.sync_data.assert_called_once()
 
     @freeze_time('2023-05-01 01:20:33')
-    def test_schedule_all_pipeline_run_limit_all_triggers_set(self):
+    def test_schedule_all_pipeline_run_limit_all_triggers_set1(self):
+        # With create_initial_pipeline_run setting enabled
         pipeline = create_pipeline_with_blocks(
             'test pipeline_run_limit_all_triggers',
             self.repo_path,
         )
         ps1 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=True),
             status=ScheduleStatus.ACTIVE,
             start_time=datetime(2023, 4, 5, 1, 20, 33),
             schedule_interval='@hourly',
         )
         ps2 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_2',
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=True),
             status=ScheduleStatus.ACTIVE,
             start_time=datetime(2023, 4, 5, 1, 20, 33),
             schedule_interval='@daily',
         )
         ps3 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_3',
             pipeline_uuid=pipeline.uuid,
+            settings=dict(create_initial_pipeline_run=True),
             schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
             start_time=datetime(2023, 4, 5, 1, 20, 33),
@@ -662,6 +669,11 @@ class PipelineSchedulerTests(DBTestCase):
 
         with patch.object(PipelineScheduler, 'schedule') as _:
             schedule_all()
+        """
+        The pipeline runs are still scheduled even though the last_enabled_at
+        date occurs after the current execution date due to the
+        create_initial_pipeline_run setting being enabled.
+        """
         self.assertEqual(1, len(ps1.pipeline_runs))
         self.assertEqual(
             PipelineRun.PipelineRunStatus.INITIAL, ps1.pipeline_runs[0].status
@@ -674,6 +686,81 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(
             PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status
         )
+
+    @freeze_time('2023-05-01 00:20:33')
+    def test_schedule_all_pipeline_run_limit_all_triggers_set2(self):
+        # With create_initial_pipeline_run setting NOT enabled
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_all_triggers',
+            self.repo_path,
+        )
+        ps1 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        ps2 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        ps3 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+        ps4 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_4',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit_all_triggers=2,
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(
+                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
+                ),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(1, len(ps1.pipeline_runs))
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING, ps1.pipeline_runs[0].status
+        )
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
+        )
+        # The pipeline run for ps3 is not running due to the sorting of
+        # the runs' execution dates (all 3 have the same execution date).
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
+        )
+        # No pipeline run is scheduled for ps4 due to the last_enabled_at date
+        # occurring after the current execution date.
+        self.assertEqual(0, len(ps4.pipeline_runs))
 
     @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_set(self):

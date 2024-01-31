@@ -52,8 +52,9 @@ curl --request PUT \
       },
       "sla": 1000,
       "settings": {
-        "skip_if_previous_running": true,
-        "allow_blocks_to_fail": true
+        "allow_blocks_to_fail": true,
+        "create_initial_pipeline_run": false,
+        "skip_if_previous_running": true
       }
     }
   }'
@@ -79,8 +80,9 @@ curl --request PUT \
     "sla": 1000,
     "token": "67d62ed3e66143839f58945bb7d16387",
     "settings": {
-      "skip_if_previous_running": true,
-      "allow_blocks_to_fail": true
+      "allow_blocks_to_fail": true,
+      "create_initial_pipeline_run": false,
+      "skip_if_previous_running": true
     },
     "event_matchers": []
   }

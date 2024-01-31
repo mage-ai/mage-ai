@@ -144,6 +144,7 @@ PipelineSchedulePolicy.allow_write([
     'description',
     'event_matchers',
     'id',
+    'last_enabled_at',
     'name',
     'repo_path',
     'schedule_interval',
