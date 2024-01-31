@@ -100,6 +100,7 @@ export const ContainerStyle = styled.div<{
     bottom: 100%;
     opacity: 0;
     right: 100%;
+    border: none;
   }
 `;
 
