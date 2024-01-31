@@ -10,6 +10,7 @@ import pandas as pd
 from botocore.config import Config
 
 from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.constants import COLUMN_FORMAT_DATETIME
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 
 
@@ -95,6 +96,13 @@ class AmazonS3(Destination):
             r['record'] = update_record_with_internal_columns(r['record'])
 
         df = pd.DataFrame([d['record'] for d in record_data])
+
+        # Convert data types
+        schema = self.schemas[stream]
+        for column, column_settings in schema['properties'].items():
+            if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                df[column] = pd.to_datetime(df[column])
+
         column_header_format = self.config.get('column_header_format')
         if column_header_format:
             column_mapping = None
