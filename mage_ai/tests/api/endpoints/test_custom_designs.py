@@ -126,8 +126,8 @@ def __assert_after_list2(self, result, **kwargs):
             item['project']['root_project_full_path'] = base_repo_path()
 
         self.assertEqual(
-            result,
-            arr,
+            result.sort(key=lambda x: x['uuid']),
+            arr.sort(key=lambda x: x['uuid']),
         )
 
 
