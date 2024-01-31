@@ -1,7 +1,7 @@
-import pyodbc
-
-from datetime import datetime, timedelta, timezone
 import struct
+from datetime import datetime, timedelta, timezone
+
+import pyodbc
 
 from mage_integrations.connections.sql.base import Connection
 
