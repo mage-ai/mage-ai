@@ -264,10 +264,11 @@ class Pipeline:
                         os.rename(source_path, destination_path)
                     os.removedirs(inner_path)  # remove root folder
 
-            pipeline_files, new_pipeline_uuid, pipeline_config = self.__update_pipeline_yaml(
+            pipeline_files, pipeline_config = self.__update_pipeline_yaml(
                 tmp_dir,
-                overwrite,
+                overwrite=overwrite,
             )
+            new_pipeline_uuid = pipeline_config['uuid']
 
             # write all files in bulk
             for source, destination in pipeline_files:
@@ -1255,7 +1256,12 @@ class Pipeline:
                 cache.add_pipeline(tag_uuid, self)
 
     @classmethod
-    def __find_pipeline_file(self, root_dir, file_name, sub_folder) -> str:
+    def __find_pipeline_file(
+        self,
+        root_dir: str,
+        file_name: str,
+        sub_folder: str = None,
+    ) -> str:
         """
         Searches for a file with a specified name in the provided directory and its subdirectories.
         Used in the pipeline import process for looking up files in the pipeline zip.
@@ -1280,17 +1286,19 @@ class Pipeline:
         """
         file_path = os.path.join(root_dir, file_name)
 
-        if not os.path.exists(file_path):
+        if not os.path.exists(file_path) and sub_folder:
             walk_start = os.path.join(root_dir, sub_folder)
             file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
             file_path = next(
                 (potential_path for potential_path in file_gen if os.path.exists(potential_path)),
-                None
+                None,
             )
         return file_path
 
     @classmethod
-    def __update_pipeline_yaml(self, tmp_dir, overwrite):
+    def __update_pipeline_yaml(
+        self, tmp_dir: str, overwrite: bool = False
+    ) -> Tuple[List[str], Dict]:
         """
         Updates the pipeline config yaml during the import process.
         Modifies pipeline and block names in case of name conflict.
@@ -1298,13 +1306,14 @@ class Pipeline:
         Compiles list of files to be writen in bulk at the end of the import process.
 
         Args:
-            tmp_dir: the temporary directory in which the pipeline files reside
+            tmp_dir (str): the temporary directory in which the pipeline files reside
+            overwrite (bool): whether to overwrite any existing pipelines with the same uuid
 
         Returns:
             tuple:
                 - files_to_be_written: a list of tuples containing the source and destination paths
                     for each resource needed to be writen at the end of the import process
-                - new_pipeline_uuid: str
+                - config (dict): the pipeline config fetched from the zip file
         """
         config_zip_path = self.__find_pipeline_file(
             tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
@@ -1326,7 +1335,6 @@ class Pipeline:
                     uuid = f'{config["uuid"]}_{index}'
                 config['uuid'] = uuid
                 config['name'] = uuid
-            new_pipeline_uuid = config['uuid']
 
             pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
             config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
@@ -1341,10 +1349,10 @@ class Pipeline:
             for b_index, block in enumerate(config['blocks']):
                 name = block['name']
                 uuid = block['uuid']
-                type = block['type']
+                block_type = block['type']
                 language = block.get('language', 'python')
 
-                block_inst = Block(name=name, uuid=uuid, block_type=type, language=language)
+                block_inst = Block(name=name, uuid=uuid, block_type=block_type, language=language)
 
                 # check if block exists with same uuid and generate new one if necessary
                 if not overwrite:
@@ -1387,7 +1395,7 @@ class Pipeline:
         with open(config_zip_path, 'w') as pipeline_config:
             yaml.dump(config, pipeline_config)
 
-        return files_to_be_written, new_pipeline_uuid, config
+        return files_to_be_written, config
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]
