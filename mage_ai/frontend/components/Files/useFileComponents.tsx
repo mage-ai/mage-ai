@@ -393,17 +393,20 @@ function useFileComponents({
         }
       }
 
+      const filtered = arr.filter((fp: string) =>
+        fp.startsWith(status.repo_path) || fp.startsWith(status.repo_path_relative_root));
+
       setSelectedFilePath((prev: string): string => {
         if (fp) {
           return fp;
-        } else if (!prev && arr?.length >= 1) {
-          return arr[0];
+        } else if (!prev && filtered?.length >= 1) {
+          return filtered[0];
         }
 
         return prev;
       });
 
-      setOpenFilePaths(arr);
+      setOpenFilePaths(filtered);
     }
   }, [
     status,
