@@ -30,6 +30,9 @@ class BlockCache(BaseCache):
     ) -> 'BlockCache':
         repo_path = repo_path or get_repo_path(root_project=root_project)
         cache = self(repo_path=repo_path)
+
+        cache.remove_old_cache()
+
         if replace or not cache.exists():
             await cache.initialize_cache_for_all_pipelines(caches=caches, file_path=file_path)
 

@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Union
 
 from mage_ai.cache.constants import (
@@ -79,6 +80,12 @@ class BaseCache():
         path = self.build_path(key or self.cache_key)
         if self.storage.path_exists(path):
             self.storage.remove(path)
+
+    def remove_old_cache(self, days_ago: int = 14) -> None:
+        # Remove cache older than specified # of days (default is 2 weeks) in order to reset it
+        days_ago = datetime.utcnow() - timedelta(days=days_ago)
+        if os.path.getctime(self.file_path) < days_ago.timestamp():
+            os.remove(self.file_path)
 
     @property
     def file_path(self) -> str:
