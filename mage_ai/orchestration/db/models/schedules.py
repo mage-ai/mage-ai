@@ -202,6 +202,10 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     def timeout(self) -> int:
         return (self.settings or {}).get('timeout')
 
+    @property
+    def timeout_status(self) -> 'PipelineRun.PipelineRunStatus':
+        return (self.settings or {}).get('timeout_status')
+
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
         if schedule_interval and schedule_interval not in \

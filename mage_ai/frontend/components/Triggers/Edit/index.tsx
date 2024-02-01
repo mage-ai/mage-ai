@@ -77,6 +77,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { RunStatus } from '@interfaces/BlockRunType';
 import {
   SUBHEADER_TABS,
   SUBHEADER_TAB_CUSTOMIZE,
@@ -1538,23 +1539,51 @@ function Edit({
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           {!isStreamingPipeline && (
-            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Text>
-                Set a timeout for each run of this trigger (optional)
-              </Text>
-              <Spacing mb={1} />
-              <TextInput
-                label="Timeout (in seconds)"
-                onChange={e => setSettings(prev => ({
-                  ...prev,
-                  timeout: e.target.value,
-                }))}
-                primary
-                setContentOnMount
-                type="number"
-                value={settings?.timeout}
-              />
-            </Spacing>
+            <>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  Set a timeout for each run of this trigger (optional)
+                </Text>
+                <Spacing mb={1} />
+                <TextInput
+                  label="Timeout (in seconds)"
+                  onChange={e => setSettings(prev => ({
+                    ...prev,
+                    timeout: e.target.value,
+                  }))}
+                  primary
+                  setContentOnMount
+                  type="number"
+                  value={settings?.timeout}
+                />
+              </Spacing>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  Status for runs that exceed the timeout (default: failed)
+                </Text>
+                <Spacing mb={1} />
+                <Select
+                  fullWidth
+                  monospace
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSettings(s => ({
+                      ...s,
+                      timeout_status: e.target.value,
+                    }));
+                  }}
+                  placeholder="Timeout status"
+                  value={settings?.timeout_status}
+                >
+                  <option value={RunStatus.FAILED}>
+                    Failed
+                  </option>
+                  <option value={RunStatus.CANCELLED}>
+                    Cancelled
+                  </option>
+                </Select>
+              </Spacing>
+            </>
           )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>

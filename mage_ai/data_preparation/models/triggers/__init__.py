@@ -52,6 +52,7 @@ class SettingsConfig(BaseConfig):
     create_initial_pipeline_run: bool = False
     landing_time_enabled: bool = False
     timeout: int = None  # in seconds
+    timeout_status: str = None
 
 
 @dataclass
