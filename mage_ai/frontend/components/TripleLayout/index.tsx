@@ -231,6 +231,8 @@ function TripleLayout({
         removeMousemove();
       };
     }
+  // getOffsetLeft intentionally left out of dependency array
+  // If it was included, the before panel would not resize correctly.
   }, [
     afterHidden,
     afterWidth,
@@ -671,14 +673,15 @@ function TripleLayout({
           inline={inline}
           style={{
             left: leftOffset,
+            paddingRight: DRAGGABLE_WIDTH,
             width: beforeWidthFinal,
           }}
         >
           {setBeforeWidth && (
             <DraggableStyle
               active={beforeMousedownActive}
-              disabled={beforeHidden}
               contrast={beforeDividerContrast}
+              disabled={beforeHidden}
               ref={refBeforeInnerDraggable}
               right={0}
               top={contained ? 0 : ASIDE_HEADER_HEIGHT}
