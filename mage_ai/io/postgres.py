@@ -162,6 +162,24 @@ class Postgres(BaseSQL):
         if self.verbose and self.printer.exists_previous_message:
             print('')
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return f"""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name = '{schema_name}'
+            ) THEN
+                EXECUTE 'CREATE SCHEMA {schema_name}';
+            END IF;
+        END
+        $$;
+        """
+
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             table_name = table_name.replace('"', '')
