@@ -31,9 +31,15 @@ class BlockCache(BaseCache):
         repo_path = repo_path or get_repo_path(root_project=root_project)
         cache = self(repo_path=repo_path)
 
+        # Replace the cache if it is older than 2 weeks (the default if days_ago not passed in).
         cache.remove_old_cache()
 
-        if replace or not cache.exists():
+        """
+        We also check if the cache file does not exist, and if it does not,
+        we create a new cache file, since it is possible for the cache to exist
+        (e.g. as an empty dictionary) but the cache file to not exist at the same time.
+        """
+        if replace or not cache.exists() or not cache.cache_file_exists():
             await cache.initialize_cache_for_all_pipelines(caches=caches, file_path=file_path)
 
         return cache
