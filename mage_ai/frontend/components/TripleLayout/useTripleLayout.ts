@@ -96,7 +96,9 @@ function useAside(uuid, refData, {
         DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
-      let value = prev;
+      // Need to add 72 to previous width so the mouse cursor
+      // doesn't jump when resizing before panel
+      let value = prev + 72;
       if (value < DEFAULT_ASIDE_WIDTH) {
         value = DEFAULT_ASIDE_WIDTH;
       } else if (value > maxWidth) {
