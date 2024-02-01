@@ -381,11 +381,14 @@ WHERE table_id = '{table_name}'
     def _clean_query(self, query_string: str) -> str:
         query_string = super()._clean_query(query_string)
 
-        try:
-            query_string_updated = self.__fix_table_names(query_string)
-            query_string = query_string_updated
-        except Exception as err:
-            print(f'[ERROR] Attempted to complete table names: {err}, will continue...')
+        # This breaks io/bigquery.py:
+        # BadRequest: 400 Syntax error:
+        # Expected keyword ALL or keyword DISTINCT but got keyword SELECT at [3:140]
+        # try:
+        #     query_string_updated = self.__fix_table_names(query_string)
+        #     query_string = query_string_updated
+        # except Exception as err:
+        #     print(f'[ERROR] Attempted to complete table names: {err}, will continue...')
 
         return query_string
 
