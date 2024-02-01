@@ -84,7 +84,7 @@ class BaseCache():
     def remove_old_cache(self, days_ago: int = 14) -> None:
         # Remove cache older than specified # of days (default is 2 weeks) in order to reset it
         days_ago = datetime.utcnow() - timedelta(days=days_ago)
-        if os.path.getctime(self.file_path) < days_ago.timestamp():
+        if self.exists() and os.path.getctime(self.file_path) < days_ago.timestamp():
             os.remove(self.file_path)
 
     @property
