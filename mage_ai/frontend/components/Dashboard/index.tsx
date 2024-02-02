@@ -92,6 +92,7 @@ function Dashboard({
     widthAfter,
     widthBefore,
   } = useTripleLayout(uuid, {
+    resizeOffset: 72,
     setWidthAfter: setAfterWidth,
     setWidthBefore: setBeforeWidth,
     widthAfter: afterWidth,

@@ -13,6 +13,7 @@ function useAside(uuid, refData, {
   hidden: hiddenProp,
   mainContainerWidth,
   refOther,
+  resizeOffset = 0,
   setWidth: setWidthProp,
   width: widthProp,
   widthOverride,
@@ -29,6 +30,7 @@ function useAside(uuid, refData, {
       widthProp?: number;
     };
   };
+  resizeOffset?: number;
   setWidth?: (value: number) => void;
   width?: number;
   widthOverride?: boolean;
@@ -96,9 +98,9 @@ function useAside(uuid, refData, {
         DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
-      // Need to add 72 to previous width so the mouse cursor
-      // doesn't jump when resizing before panel
-      let value = prev + 72;
+      // May need to add a resize offset to previous width so the aside panel
+      // doesn't jump when resizing it. The panel might jump about 72px.
+      let value = prev + resizeOffset;
       if (value < DEFAULT_ASIDE_WIDTH) {
         value = DEFAULT_ASIDE_WIDTH;
       } else if (value > maxWidth) {
@@ -185,6 +187,7 @@ export type UseTripleLayoutProps = {
   hiddenAfter?: boolean;
   hiddenBefore?: boolean;
   mainContainerRef?: any;
+  resizeOffset?: number;
   setWidthAfter?: (value: number) => void;
   setWidthBefore?: (value: number) => void;
   widthAfter?: number;
@@ -199,6 +202,7 @@ export default function useTripleLayout(uuid: string, {
   hiddenAfter: hiddenAfterProp,
   hiddenBefore: hiddenBeforeProp,
   mainContainerRef: mainContainerRefProp,
+  resizeOffset,
   setWidthAfter: setWidthAfterProp,
   setWidthBefore: setWidthBeforeProp,
   widthAfter: widthAfterProp,
@@ -260,6 +264,7 @@ export default function useTripleLayout(uuid: string, {
     hidden: hiddenBeforeProp,
     mainContainerWidth,
     refOther: refAfter,
+    resizeOffset,
     setWidth: setWidthBeforeProp,
     width: widthBeforeProp,
     widthOverride: widthOverrideBeforeProp,
