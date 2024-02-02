@@ -1,8 +1,8 @@
 import asyncio
-import datetime
 import json
 import os
 import shutil
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
@@ -155,6 +155,10 @@ class Pipeline:
         )
 
     @property
+    def updated_at(self):
+        return datetime.fromtimestamp(os.path.getmtime(self.config_path), tz=timezone.utc)
+
+    @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
 
@@ -215,7 +219,7 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
-                created_at=str(datetime.datetime.now(tz=pytz.UTC)),
+                created_at=str(datetime.now(tz=pytz.UTC)),
                 name=name,
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),

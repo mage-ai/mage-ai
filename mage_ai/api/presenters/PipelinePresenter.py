@@ -99,9 +99,7 @@ class PipelinePresenter(BasePresenter):
         if include_schedules:
             data['schedules'] = self.model.schedules
 
-        updated_at_timestamp = os.path.getmtime(self.model.config_path)
-        updated_at = datetime.fromtimestamp(updated_at_timestamp, tz=timezone.utc)
-        data['updated_at'] = updated_at
+        data['updated_at'] = self.model.updated_at
 
         return data
 
