@@ -156,7 +156,8 @@ class Pipeline:
 
     @property
     def updated_at(self):
-        return datetime.fromtimestamp(os.path.getmtime(self.config_path), tz=timezone.utc)
+        if os.path.exists(self.config_path):
+            return datetime.fromtimestamp(os.path.getmtime(self.config_path), tz=timezone.utc)
 
     @property
     def dir_path(self):
