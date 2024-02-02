@@ -25,13 +25,14 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.server.logger import Logger
 from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
 REMOTE_NAME = 'mage-repo'
 
-# Git authentication variables
+logger = Logger().new_server_logger(__name__)
 
 
 class Git:
@@ -305,7 +306,7 @@ class Git:
                 submodule_full_path = os.path.join(repo_path, path)
                 tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
                 try:
-                    print(f'Updating {section}...')
+                    logger.info(f'Updating {section}...')
                     # Create a temporary directory to store the current contents of the submodule
                     # directory because the `git submodule update` command will fail if the
                     # submodule directory already exists and is not empty.
@@ -345,8 +346,9 @@ class Git:
                             tmp_full_path,
                             submodule_full_path,
                         )
+                    logger.exception(f'Failed to update {section}.')
                 else:
-                    print(f'{section} updated!')
+                    logger.info(f'{section} updated!')
                 finally:
                     # Restore the submodule URL.
                     update_gitmodules(section, 'url', submodule_url)
@@ -672,9 +674,9 @@ class Git:
                 if os.path.exists(requirements_file):
                     cmd = f'pip3 install -r {requirements_file}'
                     self._run_command(cmd)
-                print(f'Installing {requirements_file} completed successfully.')
+                logger.info(f'Installing {requirements_file} completed successfully.')
             except Exception as err:
-                print(f'Skip installing {requirements_file} due to error: {str(err)}')
+                logger.warning(f'Skip installing {requirements_file} due to error: {str(err)}')
                 pass
 
     def __create_ssh_keys(self) -> str:
