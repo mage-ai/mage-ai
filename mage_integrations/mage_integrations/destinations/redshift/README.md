@@ -31,6 +31,7 @@ Alternatively, instead of using `password` and `user`, you can use the following
 ### Optional Configs
 | Key | Description | Sample value
 | --- | --- | --- |
+| `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true` |
 | `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
 <br />
 
