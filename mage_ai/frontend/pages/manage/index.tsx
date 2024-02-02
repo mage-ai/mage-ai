@@ -1,248 +1,44 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
-import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
 import ErrorsType from '@interfaces/ErrorsType';
-import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType from '@interfaces/ProjectType';
-import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import WorkspaceDetail from '@components/workspaces/Detail';
-import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
+import WorkspaceType, { WorkspaceQueryEnum } from '@interfaces/WorkspaceType';
 import api from '@api';
-import { Add, Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
-import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
+import { Expand, Refresh } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
-
-function MoreActions({
-  clusterType,
-  fetchWorkspaces,
-  instance,
-  setErrors,
-}: {
-  clusterType: string;
-  fetchWorkspaces: any;
-  instance: InstanceType;
-  setErrors: (errors: ErrorsType) => void;
-}) {
-  const refMoreActions = useRef(null);
-  const [showMoreActions, setShowMoreActions] = useState<boolean>();
-  const [confirmDelete, setConfirmDelete] = useState<boolean>();
-
-  const {
-    name,
-    task_arn,
-  } = instance;
-
-  const query = {
-    cluster_type: clusterType,
-  };
-
-  const [updateWorkspace] = useMutation(
-    api.workspaces.useUpdate(name, query),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchWorkspaces();
-            setShowMoreActions(false);
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const [deleteWorkspace] = useMutation(
-    api.workspaces.useDelete(name, query),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchWorkspaces();
-            setShowMoreActions(false);
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const actions = useMemo(() => {
-    const {
-      status,
-    } = instance;
-
-    const items = [
-      {
-        label: () => <Text>Delete workspace</Text>,
-        onClick: () => setConfirmDelete(true),
-        uuid: 'delete_workspace',
-      },
-    ];
-    
-    if (clusterType === 'ecs') {
-      if (status === 'STOPPED') {
-        items.unshift({
-          label: () => <Text>Resume instance</Text>,
-          // @ts-ignore
-          onClick: () => updateWorkspace({
-            workspace: {
-              action: 'resume',
-              cluster_type: clusterType,
-              name: instance.name,
-              task_arn: instance.task_arn,
-            },
-          }),
-          uuid: 'resume_instance',
-        });
-      } else if (status === 'RUNNING') {
-        items.unshift({
-          label: () => <Text>Stop instance</Text>,
-          // @ts-ignore
-          onClick: () => updateWorkspace({
-            workspace: {
-              action: 'stop',
-              cluster_type: clusterType,
-              name: instance.name,
-              task_arn: instance.task_arn,
-            },
-          }),
-          uuid: 'stop_instance',
-        });
-      }
-    }
-
-    if (clusterType === 'k8s') {
-      if (status === 'STOPPED') {
-        items.unshift({
-          label: () => <Text>Resume instance</Text>,
-          // @ts-ignore
-          onClick: () => updateWorkspace({
-            workspace: {
-              action: 'resume',
-              cluster_type: clusterType,
-              name: instance.name,
-            },
-          }),
-          uuid: 'resume_instance',
-        });
-      } else if (status === 'RUNNING') {
-        items.unshift({
-          label: () => <Text>Stop instance</Text>,
-          // @ts-ignore
-          onClick: () => updateWorkspace({
-            workspace: {
-              action: 'stop',
-              cluster_type: clusterType,
-              name: instance.name,
-            },
-          }),
-          uuid: 'stop_instance',
-        });
-      }
-    }
-    
-    return items;
-  }, [clusterType, instance, updateWorkspace]);
-
-  return (
-    <>
-      {['ecs', 'k8s'].includes(clusterType) && (
-        <div
-          ref={refMoreActions}
-          style={{
-            position: 'relative',
-            zIndex: '1',
-          }}
-        >
-          <Button
-            iconOnly
-            onClick={() => setShowMoreActions(!showMoreActions)}
-          >
-            <Ellipsis size={2 * UNIT} />
-          </Button>
-          <ClickOutside
-            disableEscape
-            onClickOutside={() => {
-              setShowMoreActions(false);
-              setConfirmDelete(false);
-            }}
-            open={showMoreActions}
-          >
-            {confirmDelete ? (
-              <PopupContainerStyle
-                leftOffset={-UNIT * 30}
-                topOffset={-UNIT * 3}
-                width={UNIT * 30}
-              >
-                <Text>
-                  Are you sure you want to delete
-                </Text>
-                <Text>
-                  this instance? You may not be
-                </Text>
-                <Text>
-                  able to recover your data.
-                </Text>
-                <Spacing mt={1} />
-                <FlexContainer>
-                  <Button
-                    danger
-                    onClick={deleteWorkspace}
-                  >
-                    Confirm
-                  </Button>
-                  <Spacing ml={1} />
-                  <Button
-                    default
-                    onClick={() => setConfirmDelete(false)}
-                  >
-                    Cancel
-                  </Button>
-                </FlexContainer>
-              </PopupContainerStyle>
-            ) : (
-              <FlyoutMenu
-                items={actions}
-                left={-UNIT * 25}
-                open={showMoreActions}
-                parentRef={refMoreActions}
-                topOffset={-UNIT * 3}
-                uuid="workspaces/more_actions"
-                width={UNIT * 25}
-              />
-            )}
-          </ClickOutside>
-        </div>
-      )}
-    </>
-  );
-}
+import { getFilters, setFilters } from '@storage/workspaces';
+import { useRouter } from 'next/router';
+import Toolbar from '@components/shared/Table/Toolbar';
+import { filterQuery, queryFromUrl } from '@utils/url';
+import { META_QUERY_KEYS } from '@api/constants';
+import { ClusterTypeEnum } from '@components/workspaces/constants';
+import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
+import { goToWithQuery } from '@utils/routing';
 
 function WorkspacePage() {
+  const router = useRouter();
   const { data: dataStatus } = api.statuses.list();
   const [errors, setErrors] = useState<ErrorsType>(null);
+
+  const q = queryFromUrl();
+  const query = useMemo(() => ({
+    ...filterQuery(q, [
+      WorkspaceQueryEnum.NAMESPACE,
+    ]),
+  }), [q]);
+
   const clusterType = useMemo(
     () => dataStatus?.statuses?.[0]?.instance_type || 'ecs',
     [dataStatus],
@@ -254,10 +50,12 @@ function WorkspacePage() {
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
 
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
-    { cluster_type: clusterType },
     {
-      refreshInterval: 10000,
-      revalidateOnFocus: true,
+      ...query,
+      cluster_type: clusterType,
+    },
+    {
+      revalidateOnFocus: false,
     },
   );
 
@@ -313,6 +111,131 @@ function WorkspacePage() {
     showDetailModal({ workspace });
   }, [showDetailModal, workspaces]);
 
+  useEffect(() => {
+    let queryFinal = {};
+
+    if (isEmptyObject(query)) {
+      const filtersQuery = {};
+      const f = getFilters();
+
+      if (f) {
+        Object.entries(f).forEach(([k, v]) => {
+          if (typeof v !== 'undefined' && v !== null) {
+            // @ts-ignore
+            if (META_QUERY_KEYS.includes(k)) {
+              filtersQuery[k] = v;
+            } else {
+              filtersQuery[k] = [];
+
+              Object.entries(v).forEach(([k2, v2]) => {
+                if (v2) {
+                  filtersQuery[k].push(k2);
+                }
+              });
+            }
+          }
+        });
+      }
+
+      if (!isEmptyObject(filtersQuery)) {
+        queryFinal = {};
+        Object.entries({
+          ...queryFinal,
+          ...filtersQuery,
+        } || {}).forEach(([k, v]) => {
+          if (typeof v !== 'undefined' && v !== null) {
+            queryFinal[k] = v;
+          }
+        });
+      }
+    } else {
+      const f = {};
+      Object.entries(query).forEach(([k, v]) => {
+        f[k] = {};
+
+        let v2 = v;
+
+        if (typeof v !== 'undefined' && v !== null) {
+          // @ts-ignore
+          if (META_QUERY_KEYS.includes(k)) {
+              f[k] = v2;
+          } else {
+            if (!Array.isArray(v2)) {
+              // @ts-ignore
+              v2 = [v2];
+            }
+
+            if (v2 && Array.isArray(v2)) {
+              v2?.forEach((v3) => {
+                f[k][v3] = true;
+              });
+            }
+          }
+        }
+      });
+
+      setFilters(selectEntriesWithValues(f));
+    }
+
+    if (!isEmptyObject(queryFinal)) {
+      goToWithQuery(selectEntriesWithValues(queryFinal), {
+        pushHistory: false,
+      });
+    }
+  }, [
+    query,
+  ]);
+
+  const toolbarEl = useMemo(() => {
+    let filterOptions = {};
+    let filterValueLabelMapping = {};
+    if (clusterType === ClusterTypeEnum.K8S) {
+      filterOptions = {
+        namespace: [WorkspaceQueryEnum.ALL],
+      };
+      filterValueLabelMapping = {
+        namespace: {
+          [WorkspaceQueryEnum.ALL]: 'All namespaces',
+        },
+      };
+    }
+
+    return (
+      <Toolbar
+        addButtonProps={{
+          label: 'Create new workspace',
+          onClick: showModal,
+        }}
+        extraActionButtonProps={{
+          Icon: Refresh,
+          disabled: false,
+          onClick: () => fetchWorkspaces(),
+          tooltip: 'Refresh workspaces',
+        }}
+        filterOptions={filterOptions}
+        filterValueLabelMapping={filterValueLabelMapping}
+        onClickFilterDefaults={() => {
+          setFilters({});
+          router.push('/manage');
+        }}
+        onFilterApply={(query, updatedQuery) => {
+          // @ts-ignore
+          if (Object.values(updatedQuery).every(arr => !arr?.length)) {
+            setFilters({});
+          }
+        }}
+        // @ts-ignore
+        query={query}
+      />
+    );
+  }, [
+    clusterType,
+    fetchWorkspaces,
+    query,
+    router,
+    showModal,
+  ]);
+
   return (
     <WorkspacesDashboard  
       breadcrumbs={[
@@ -324,18 +247,7 @@ function WorkspacePage() {
       errors={errors}
       pageName={WorkspacesPageNameEnum.WORKSPACES}
       setErrors={setErrors}
-      subheaderChildren={
-        <KeyboardShortcutButton
-          background={BUTTON_GRADIENT}
-          beforeElement={<Add size={2.5 * UNIT} />}
-          bold
-          inline
-          onClick={() => showModal()}
-          uuid="workspaces/new"
-        >
-          Create new workspace
-        </KeyboardShortcutButton>
-      }
+      subheaderChildren={toolbarEl}
     >
       <Table
         columnFlex={[2, 4, 2, 3, 1, null]}

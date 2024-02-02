@@ -24,6 +24,11 @@ export const WORKSPACE_FIELDS = [
 
 export const GENERAL_K8S_FIELDS = [
   {
+    label: 'Namespace',
+    labelDescription: 'The namespace where the workspace resources will be deployed. Defaults to the value of the KUBE_NAMESPACE environment variable.',
+    uuid: 'namespace',
+  },
+  {
     label: 'Service account name',
     placeholder: 'default',
     uuid: 'service_account_name',

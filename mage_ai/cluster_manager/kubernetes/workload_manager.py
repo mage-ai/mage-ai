@@ -81,7 +81,6 @@ class WorkloadManager:
 
     def list_workloads(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
-        workloads_list = []
 
         stateful_sets = self.apps_client.list_namespaced_stateful_set(
             self.namespace
@@ -102,6 +101,43 @@ class WorkloadManager:
                 pod_mapping[name] = pod
             except Exception:
                 pass
+        return self.format_workloads(services, stateful_set_mapping, pod_mapping)
+
+    @classmethod
+    def list_all_workloads(cls):
+        cls.load_config()
+        core_client = client.CoreV1Api()
+        apps_client = client.AppsV1Api()
+
+        services = core_client.list_service_for_all_namespaces().items
+
+        stateful_sets = apps_client.list_stateful_set_for_all_namespaces().items
+        stateful_set_mapping = dict()
+        for ss in stateful_sets:
+            try:
+                name = ss.metadata.name
+                stateful_set_mapping[name] = ss
+            except Exception:
+                pass
+
+        pods = core_client.list_pod_for_all_namespaces().items
+        pod_mapping = dict()
+        for pod in pods:
+            try:
+                name = pod.metadata.labels.get('app')
+                pod_mapping[name] = pod
+            except Exception:
+                pass
+        return cls.format_workloads(services, stateful_set_mapping, pod_mapping)
+
+    @classmethod
+    def format_workloads(
+        cls,
+        services,
+        stateful_set_mapping,
+        pod_mapping,
+    ):
+        workloads_list = []
         for service in services:
             try:
                 labels = service.metadata.labels
@@ -124,7 +160,7 @@ class WorkloadManager:
                     if service_type == 'NodePort':
                         try:
                             if node_name:
-                                items = self.core_client.list_node(
+                                items = client.CoreV1Api().list_node(
                                     field_selector=f'metadata.name={node_name}'
                                 ).items
                                 node = items[0]
