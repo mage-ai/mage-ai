@@ -4,6 +4,7 @@ import {
   BatchPipeline,
   DataIntegrationPipeline,
   TemplateShapes,
+  Upload,
 } from '@oracle/icons';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -16,6 +17,7 @@ export const getNewPipelineButtonMenuItems = (
     reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
   ) => void,
   opts?: {
+    showImportPipelineModal?: () => void;
     showAIModal?: () => void;
     showBrowseTemplates?: () => void;
   },
@@ -61,6 +63,15 @@ export const getNewPipelineButtonMenuItems = (
       label: () => 'From a template',
       onClick: () => opts?.showBrowseTemplates?.(),
       uuid: 'Pipelines/NewPipelineMenu/custom_template',
+    });
+  }
+
+  if (opts?.showImportPipelineModal) {
+    arr.push({
+      beforeIcon: <Upload />,
+      label: () => 'Import pipeline zip',
+      onClick: () => opts?.showImportPipelineModal?.(),
+      uuid: 'Pipelines/NewPipelineMenu/upload',
     });
   }
 
