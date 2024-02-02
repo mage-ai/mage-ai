@@ -57,7 +57,7 @@ function ScheduleLayout({
     pipelineScheduleId,
     pipelineSchedules,
     pipelineUUID,
-  ])
+  ]);
 
   return (
     <PipelineLayout

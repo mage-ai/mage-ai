@@ -83,6 +83,7 @@ import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import {
   BLOCK_EXISTS_ERROR,
   CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
@@ -3406,6 +3407,7 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         before={beforeToShow}
+        beforeDraggableTopOffset={HEADER_HEIGHT + ASIDE_HEADER_HEIGHT}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeHidden={beforeHidden}

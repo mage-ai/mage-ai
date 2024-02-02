@@ -10,7 +10,7 @@ export const AFTER_DEFAULT_WIDTH = UNIT * 64;
 export const AFTER_MIN_WIDTH = UNIT * 30;
 export const BEFORE_MIN_WIDTH = UNIT * 21.25;
 export const BEFORE_DEFAULT_WIDTH = UNIT * 35;
-export const DRAGGABLE_WIDTH = UNIT * 2;
+export const DRAGGABLE_WIDTH = UNIT;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
@@ -136,8 +136,10 @@ const ASIDE_INNER_STYLE = css<{
 
 const ASIDE_DRAGGABLE_STYLE = css<{
   active?: boolean;
+  left?: number;
   disabled?: boolean;
   top?: number;
+  topOffset?: number;
 }>`
   position: absolute;
   width: ${DRAGGABLE_WIDTH}px;
@@ -151,7 +153,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
   ${props => `
     height: calc(100% + ${props?.top || 0}px);
-    top: -${props?.top || 0}px;
+    top: ${-(props?.top || 0) + (props.topOffset || 0)}px;
   `}
 
   ${props => !props.disabled && `
@@ -306,6 +308,7 @@ export const DraggableStyle = styled.div<{
   left?: number;
   right?: number;
   top?: number;
+  topOffset?: number;
 }>`
   ${ASIDE_DRAGGABLE_STYLE}
 

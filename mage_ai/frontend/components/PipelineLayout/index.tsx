@@ -10,7 +10,6 @@ import Head from '@oracle/elements/Head';
 import Header, { BreadcrumbType } from '@components/shared/Header';
 import PipelineType from '@interfaces/PipelineType';
 import TripleLayout from '@components/TripleLayout';
-import api from '@api';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
@@ -39,6 +38,7 @@ type PipelineLayoutProps = {
   afterOverflow?: 'hidden';
   afterSubheader?: any;
   before?: any;
+  beforeDraggableTopOffset?: number;
   beforeHeader?: any;
   beforeHeightOffset?: number;
   beforeHidden?: boolean;
@@ -70,6 +70,7 @@ function PipelineLayout({
   afterOverflow,
   afterSubheader,
   before,
+  beforeDraggableTopOffset,
   beforeHeader,
   beforeHeightOffset,
   beforeHidden: beforeHiddenProp,
@@ -211,6 +212,7 @@ function PipelineLayout({
         afterSubheader={afterSubheader}
         afterWidth={afterWidth}
         before={before}
+        beforeDraggableTopOffset={beforeDraggableTopOffset}
         beforeHeader={beforeHeader}
         beforeHeightOffset={beforeHeightOffset}
         beforeHidden={beforeHidden}
