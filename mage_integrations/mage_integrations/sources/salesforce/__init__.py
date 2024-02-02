@@ -29,7 +29,7 @@ class Salesforce(Source):
             credentials=parse_credentials(self.config),
             quota_percent_total=self.config.get('quota_percent_total'),
             quota_percent_per_run=self.config.get('quota_percent_per_run'),
-            is_sandbox=self.config.get('domain'),
+            domain=self.config.get('domain'),
             select_fields_by_default=self.config.get('select_fields_by_default'),
             default_start_date=self.config.get('start_date'),
             api_type=self.config.get('api_type')
@@ -53,21 +53,7 @@ class Salesforce(Source):
         catalog = Catalog(do_discover(self.client,
                                       streams=self.config.get('streams', None),
                                       logger=self.logger)['streams'])
-        self.__finally_clean_up()
         return catalog
-
-    def __finally_clean_up(self):
-        if self.client:
-            if self.client.rest_requests_attempted > 0:
-                self.logger.info(
-                    f"This job used {self.client.rest_requests_attempted} REST requests \
-                    towards the Salesforce quota.")
-            if self.client.jobs_completed > 0:
-                self.logger.info(
-                    f"Replication used {self.client.jobs_completed} Bulk API jobs \
-                    towards the Salesforce quota.")
-            if self.client.login_timer:
-                self.client.login_timer.cancel()
 
     def test_connection(self):
         try:
