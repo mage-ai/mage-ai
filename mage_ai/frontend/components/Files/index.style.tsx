@@ -43,6 +43,7 @@ export const TabsStyle = styled.div`
 
 export const SearchContainerStyle = styled.div`
   margin: ${UNIT}px;
+  margin-right: 0;
   // position: fixed;
   // width: 100%;
 
