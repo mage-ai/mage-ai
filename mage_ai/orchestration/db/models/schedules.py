@@ -69,7 +69,6 @@ from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -189,14 +188,33 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_in_progress_runs_count_project_platform
 
-        return len(PipelineRun.in_progress_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                ),
+                (coalesce(PipelineRun.passed_sla, False).is_(False)),
+            )
+            .scalar()
+        )
 
     @property
     def pipeline_runs_count(self) -> int:
         if project_platform_activated():
             return self.pipeline_runs_count_project_platform
 
-        return len(self.fetch_pipeline_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .scalar()
+        )
 
     @property
     def timeout(self) -> int:
@@ -216,9 +234,21 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.last_pipeline_run_status_project_platform
 
-        if len(self.fetch_pipeline_runs([self.id])) == 0:
+        query_result = (
+            PipelineRun.select(PipelineRun.id, PipelineRun.status)
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .order_by(
+                PipelineRun.created_at.desc(),
+            )
+            .first()
+        )
+
+        if query_result is None:
             return None
-        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
+
+        return query_result.status
 
     @property
     def tag_associations(self):
@@ -510,7 +540,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
+            pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -518,7 +548,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.fetch_pipeline_runs([self.id])) == 0:
+            if self.pipeline_runs_count == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
@@ -562,14 +592,15 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
-            # current_execution_date, then don’t schedule.
-            if not find(
-                lambda x: compare(
-                    x.execution_date.replace(tzinfo=pytz.UTC),
-                    current_execution_date,
-                ) == 0,
-                self.fetch_pipeline_runs([self.id])
-            ):
+            # current_execution_date, then don’t schedule
+            run_exists = PipelineRun.select(
+                PipelineRun.query.filter(
+                    PipelineRun.pipeline_schedule_id == self.id,
+                    PipelineRun.execution_date == current_execution_date,
+                ).exists()
+            ).scalar()
+
+            if not run_exists:
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:
                         return True
