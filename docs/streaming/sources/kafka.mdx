@@ -54,12 +54,24 @@ ssl_config:
 
 ## SASL authentication
 
+SASL_PLAINTEXT config:
 ```yaml
-security_protocol: "SASL_SSL"
+security_protocol: "SASL_PLAINTEXT"
 sasl_config:
   mechanism: "PLAIN"
   username: username
   password: password
+```
+
+SASL_SSL config:
+```yaml
+security_protocol: "SASL_SSL"
+sasl_config:
+  mechanism: "SCRAM-SHA-512"
+  username: username
+  password: password
+ssl_config:
+  cafile: "pemfilename.pem"
 ```
 
 ## Data format
