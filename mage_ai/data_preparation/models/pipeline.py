@@ -93,7 +93,6 @@ class Pipeline:
         self.settings = {}
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
         self.use_repo_path = use_repo_path
         self.uuid = uuid
         self.widget_configs = []
@@ -603,9 +602,6 @@ class Pipeline:
         except Exception:
             pass
         self.created_at = config.get('created_at')
-        self.updated_at = config.get('updated_at')
-        if self.updated_at and isinstance(self.updated_at, str):
-            self.updated_at = dateutil.parser.parse(self.updated_at).replace(tzinfo=pytz.UTC)
         self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks') or []
@@ -738,10 +734,6 @@ class Pipeline:
         return blocks_by_uuid
 
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
-        updated_at = self.updated_at
-        if updated_at and hasattr(updated_at, 'isoformat'):
-            updated_at = updated_at.isoformat()
-
         base = dict(
             cache_block_output_in_memory=self.cache_block_output_in_memory,
             concurrency_config=self.concurrency_config,
@@ -759,7 +751,6 @@ class Pipeline:
             settings=self.settings.to_dict() if self.settings else self.settings,
             tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
-            updated_at=updated_at,
             uuid=self.uuid,
             variables_dir=self.variables_dir,
         )
@@ -970,7 +961,6 @@ class Pipeline:
         for key in [
             'description',
             'type',
-            'updated_at',
         ]:
             if key in data and data.get(key) != getattr(self, key):
                 setattr(self, key, data.get(key))
