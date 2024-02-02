@@ -168,7 +168,6 @@ class PipelineCacheTest(BaseApiTestCase):
             name=uuid.uuid4().hex,
             tags=[uuid.uuid4().hex, uuid.uuid4().hex],
             type=uuid.uuid4().hex,
-            updated_at=uuid.uuid4().hex,
             uuid=uuid.uuid4().hex,
         )
 
