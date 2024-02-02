@@ -326,9 +326,14 @@ class Git:
                         # Overwrite the submodule URL with git credentials.
                         update_gitmodules(section, 'url', url)
 
+                    env = {}
+                    if self.auth_type == AuthType.SSH:
+                        private_key_file = self.__create_ssh_keys()
+                        env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
+
                     repo.git.submodule('sync', '--', path)
 
-                    subprocess.run(
+                    proc = subprocess.Popen(
                         [
                             'git',
                             'submodule',
@@ -336,9 +341,16 @@ class Git:
                             '--init',
                             path,
                         ],
-                        check=True,
                         cwd=repo_path,
-                        timeout=20,
+                        env=env,
+                    )
+
+                    asyncio.run(
+                        poll_process_with_timeout(
+                            proc,
+                            error_message=f'Error updating submodule {section}.',
+                            timeout=20,
+                        )
                     )
                 except Exception:
                     if os.path.exists(tmp_full_path):
