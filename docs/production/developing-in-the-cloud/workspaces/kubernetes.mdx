@@ -5,6 +5,13 @@ sidebarTitle: "Kubernetes"
 
 ## Setup
 
+<Note>
+We recommend creating your ingress separately from the Mage Helm chart if you are planning
+to add your workspaces to the ingress. You can either create the ingress manually through
+[the Kubernetes CLI](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+or use [the mageai-ingress Helm chart](https://github.com/mage-ai/helm-charts/tree/master/charts/ingress).
+</Note>
+
 We recommend using Helm to set up your Kubernetes cluster. You can find our Mage Helm
 documentation [here](/production/deploying-to-cloud/using-helm). You will need to create
 a persistent volume for your cluster.
@@ -42,8 +49,8 @@ You will need to first install an ingress controller in your kubernetes cluster 
 The most common ingress controller is the Ingress-Nginx Controller . You
 can find instructions on how to install the controller [here](https://kubernetes.github.io/ingress-nginx/deploy/).
 
-Once the ingress controller is installed, you can create an ingress through the Mage Helm charts. You can create
-an ingress by setting the following fields in the `values.yaml` file:
+Once the ingress controller is installed, you can add an ingress to your Kubernetes cluster. If you're
+using the mageai-ingress Helm chart, you can add the following configuration to your `values.yaml` file:
 
 ```yaml
 ingress:
