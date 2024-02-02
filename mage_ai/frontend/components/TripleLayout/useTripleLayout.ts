@@ -7,6 +7,7 @@ import { useWindowSize } from '@utils/sizes';
 
 const DEFAULT_ASIDE_WIDTH = 25 * UNIT;
 const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
+export const DEFAULT_BEFORE_RESIZE_OFFSET = 72;
 
 function useAside(uuid, refData, {
   disable,
@@ -125,7 +126,9 @@ function useAside(uuid, refData, {
   }, [
     disable,
     key,
+    refData,
     refOther,
+    resizeOffset,
     setWidthProp,
     widthWindow,
   ]);
@@ -179,15 +182,15 @@ export type UseTripleLayoutType = {
   setWidthBefore: (value: number | ((value: number) => number)) => void;
   widthAfter: number;
   widthBefore: number;
-}
+};
 
 export type UseTripleLayoutProps = {
+  beforeResizeOffset?: number;
   disableAfter?: boolean;
   disableBefore?: boolean;
   hiddenAfter?: boolean;
   hiddenBefore?: boolean;
   mainContainerRef?: any;
-  resizeOffset?: number;
   setWidthAfter?: (value: number) => void;
   setWidthBefore?: (value: number) => void;
   widthAfter?: number;
@@ -197,12 +200,12 @@ export type UseTripleLayoutProps = {
 };
 
 export default function useTripleLayout(uuid: string, {
+  beforeResizeOffset,
   disableAfter,
   disableBefore,
   hiddenAfter: hiddenAfterProp,
   hiddenBefore: hiddenBeforeProp,
   mainContainerRef: mainContainerRefProp,
-  resizeOffset,
   setWidthAfter: setWidthAfterProp,
   setWidthBefore: setWidthBeforeProp,
   widthAfter: widthAfterProp,
@@ -264,7 +267,7 @@ export default function useTripleLayout(uuid: string, {
     hidden: hiddenBeforeProp,
     mainContainerWidth,
     refOther: refAfter,
-    resizeOffset,
+    resizeOffset: beforeResizeOffset,
     setWidth: setWidthBeforeProp,
     width: widthBeforeProp,
     widthOverride: widthOverrideBeforeProp,
