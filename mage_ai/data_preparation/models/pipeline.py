@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
-import dateutil.parser
 import pytz
 import yaml
 from jinja2 import Template
