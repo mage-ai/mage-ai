@@ -91,7 +91,7 @@ import {
   randomNameGenerator,
   removeUnderscore,
 } from '@utils/string';
-import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
@@ -1406,7 +1406,10 @@ function PipelineListPage() {
             title={updatedAt ? utcStringToElapsedTime(updatedAt) : null}
           >
             {updatedAt
-              ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
+              ? datetimeInLocalTimezone(
+                dateFormatLong(updatedAt, { includeSeconds: true, utcFormat: true }),
+                displayLocalTimezone,
+              )
               : <>&#8212;</>}
           </Text>,
           <Text
