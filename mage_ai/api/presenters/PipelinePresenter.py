@@ -96,6 +96,8 @@ class PipelinePresenter(BasePresenter):
         if include_schedules:
             data['schedules'] = self.model.schedules
 
+        data['updated_at'] = self.model.updated_at
+
         return data
 
 

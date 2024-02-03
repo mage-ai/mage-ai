@@ -129,7 +129,6 @@ class PipelineTest(AsyncDBTestCase):
             conditionals=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
-            updated_at=None,
             widgets=[
                 dict(
                     language='python',
@@ -278,7 +277,6 @@ class PipelineTest(AsyncDBTestCase):
             conditionals=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
-            updated_at=None,
             widgets=[],
         ))
 
@@ -389,7 +387,6 @@ class PipelineTest(AsyncDBTestCase):
             conditionals=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
-            updated_at=None,
             widgets=[],
         ))
 
@@ -557,7 +554,6 @@ class PipelineTest(AsyncDBTestCase):
             conditionals=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
-            updated_at=None,
             widgets=[],
         ))
 
@@ -684,7 +680,6 @@ class PipelineTest(AsyncDBTestCase):
                     run_pipeline_in_one_process=False,
                     spark_config={},
                     type='integration',
-                    updated_at=None,
                     uuid='test_pipeline_9',
                     remote_variables_dir=None,
                     variables_dir=self.repo_path,

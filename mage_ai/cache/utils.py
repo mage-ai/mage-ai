@@ -9,7 +9,6 @@ PIPELINE_KEYS = [
     'name',
     'tags',
     'type',
-    'updated_at',
     'uuid',
 ]
 BLOCK_KEYS = [
@@ -65,7 +64,6 @@ def build_pipeline_dict(
         name=None,
         tags=None,
         type=None,
-        updated_at=None,
         uuid=None,
     )
 

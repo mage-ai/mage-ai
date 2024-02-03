@@ -150,7 +150,6 @@ import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/u
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
-import { utcNowDate } from '@utils/date';
 
 type PipelineDetailPageProps = {
   newPipelineSchedule: boolean;
@@ -543,6 +542,7 @@ function PipelineDetailPage({
     data?.pipeline?.updated_at,
     pipelineLastSaved,
     pipelineLastSavedState,
+    showStalePipelineMessageModal,
   ]);
 
   const qUrl = queryFromUrl();
@@ -551,13 +551,6 @@ function PipelineDetailPage({
     block_uuid: blockUUIDFromUrl,
     // file_path: filePathFromUrl,
   } = qUrl;
-  const filePathsFromUrl = useMemo(() => {
-    let arr = qUrl['file_paths[]'] || [];
-    if (!Array.isArray(arr)) {
-      arr = [arr];
-    }
-    return arr;
-  }, [qUrl]);
 
   function setActiveSidekickView(
     newView: ViewKeyEnum,
@@ -990,6 +983,7 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
+  // eslint-disable-next-line prefer-const
   let addNewBlockAtIndex;
 
   const addNewBlockCallback = useCallback((
@@ -1006,7 +1000,7 @@ function PipelineDetailPage({
       b.name,
       opts,
     );
-  }, [addNewBlockAtIndex]);
+  }, [addNewBlockAtIndex, blocks.length]);
 
   const {
     renderApplications,
@@ -1094,6 +1088,7 @@ function PipelineDetailPage({
             fetchPipeline().then(({
               pipeline: pipelineServer,
             }) => {
+              setPipelineLastSavedState(moment().utc().unix());
               const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
               const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
               const changed = !equals(blockUUIDsPrevious || [], blockUUIDsServer || []);
@@ -1147,8 +1142,6 @@ function PipelineDetailPage({
       showStalePipelineMessageModal();
       return;
     }
-    const utcNowDateString = utcNowDate();
-    setPipelineLastSavedState(moment().utc().unix());
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
@@ -1312,72 +1305,73 @@ function PipelineDetailPage({
     });
 
     setOuputsToSaveByBlockUUID({});
+    const updatedPipeline = {
+      ...pipeline,
+      ...pipelineOverride,
+      blocks: blocksToSave,
+      callbacks: callbacksToSave,
+      conditionals: conditionalsToSave,
+      extensions: extensionsToSave,
+      widgets: widgets.map((block: BlockType) => {
+        let contentToSave = contentByWidgetUUID.current[block.uuid];
+        const tempData = widgetTempData.current[block.uuid] || {};
+
+        if (typeof contentToSave === 'undefined') {
+          contentToSave = block.content;
+        }
+
+        let outputs;
+        const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
+        const hasError = messagesForBlock?.find(({ error }) => error);
+
+        if (messagesForBlock) {
+          const arr2 = [];
+
+          messagesForBlock.forEach((d: KernelOutputType) => {
+            const {
+              data,
+              type,
+            } = d;
+
+            if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+              if (Array.isArray(data)) {
+                d.data = data.reduce((acc, text: string) => {
+                  if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                    return acc;
+                  }
+
+                  return acc.concat(text);
+                }, []);
+              }
+
+              arr2.push(d);
+            }
+          });
+
+          // @ts-ignore
+          outputs = arr2.map((d: KernelOutputType, idx: number) => ({
+            text_data: JSON.stringify(d),
+            variable_uuid: `${block.uuid}_${idx}`,
+          }));
+        }
+
+        return {
+          ...block,
+          ...tempData,
+          configuration: {
+            ...block.configuration,
+            ...tempData.configuration,
+          },
+          content: contentToSave,
+          outputs,
+        };
+      }),
+    };
+    delete updatedPipeline.updated_at;
 
     // @ts-ignore
     return updatePipeline({
-      pipeline: {
-        ...pipeline,
-        ...pipelineOverride,
-        blocks: blocksToSave,
-        callbacks: callbacksToSave,
-        conditionals: conditionalsToSave,
-        extensions: extensionsToSave,
-        updated_at: utcNowDateString,
-        widgets: widgets.map((block: BlockType) => {
-          let contentToSave = contentByWidgetUUID.current[block.uuid];
-          const tempData = widgetTempData.current[block.uuid] || {};
-
-          if (typeof contentToSave === 'undefined') {
-            contentToSave = block.content;
-          }
-
-          let outputs;
-          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
-          const hasError = messagesForBlock?.find(({ error }) => error);
-
-          if (messagesForBlock) {
-            const arr2 = [];
-
-            messagesForBlock.forEach((d: KernelOutputType) => {
-              const {
-                data,
-                type,
-              } = d;
-
-              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
-                if (Array.isArray(data)) {
-                  d.data = data.reduce((acc, text: string) => {
-                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
-                      return acc;
-                    }
-
-                    return acc.concat(text);
-                  }, []);
-                }
-
-                arr2.push(d);
-              }
-            });
-
-            // @ts-ignore
-            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
-              text_data: JSON.stringify(d),
-              variable_uuid: `${block.uuid}_${idx}`,
-            }));
-          }
-
-          return {
-            ...block,
-            ...tempData,
-            configuration: {
-              ...block.configuration,
-              ...tempData.configuration,
-            },
-            content: contentToSave,
-            outputs,
-          };
-        }),
-      },
+      pipeline: updatedPipeline,
     });
   }, [
     blocks,
@@ -1388,6 +1382,7 @@ function PipelineDetailPage({
     pipelineLastSaved,
     pipelineLastSavedState,
     runningBlocks,
+    showStalePipelineMessageModal,
     sparkEnabled,
     updatePipeline,
     widgets,
@@ -1497,7 +1492,9 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+    openFile,
     selectedBlockDetails,
+    setSelectedBlock,
     widgets,
   ]);
 
@@ -2918,6 +2915,7 @@ function PipelineDetailPage({
     setHiddenBlocks,
     setInteractionsMapping,
     setPermissions,
+    setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
@@ -2955,6 +2953,7 @@ function PipelineDetailPage({
     activeSidekickView,
     fileTabs,
     globalVariables,
+    notebookVisible,
     pipeline,
     project,
     secrets,
@@ -2966,34 +2965,32 @@ function PipelineDetailPage({
     blockIndex,
   }: {
     blockIndex?: number;
-  }) => {
-    return (
-      <ErrorProvider>
-        <Browser
-          contained
-          defaultBlockType={BlockTypeEnum.DBT}
-          onClickAction={opts => {
-            addNewBlockAtIndex(
-              buildBlockFromFilePath({
-                blockIndex,
-                blocks,
-                filePath: opts?.row?.fullPath,
-                repoPathRelativeRoot: status?.repo_path_relative_root,
-              }),
-              (typeof blockIndex === 'undefined' || blockIndex === null
-                ? blocks?.length
-                : blockIndex + 1
-              ) - (sideBySideEnabled ? 1 : 0),
-              (block: BlockType) => {
-                setSelectedBlock(block),
-                hideBlockBrowserModal();
-              },
-            );
-          }}
-        />
-      </ErrorProvider>
-    );
-  }, {}, [
+  }) => (
+    <ErrorProvider>
+      <Browser
+        contained
+        defaultBlockType={BlockTypeEnum.DBT}
+        onClickAction={opts => {
+          addNewBlockAtIndex(
+            buildBlockFromFilePath({
+              blockIndex,
+              blocks,
+              filePath: opts?.row?.fullPath,
+              repoPathRelativeRoot: status?.repo_path_relative_root,
+            }),
+            (typeof blockIndex === 'undefined' || blockIndex === null
+              ? blocks?.length
+              : blockIndex + 1
+            ) - (sideBySideEnabled ? 1 : 0),
+            (block: BlockType) => {
+              setSelectedBlock(block),
+              hideBlockBrowserModal();
+            },
+          );
+        }}
+      />
+    </ErrorProvider>
+  ), {}, [
     addNewBlockAtIndex,
     sideBySideEnabled,
     status,
@@ -3200,7 +3197,6 @@ function PipelineDetailPage({
     restartKernel,
     savePipelineContent,
     scrollTogether,
-    selectedFilePath,
     setMessages,
     setScrollTogether,
     setSideBySideEnabled,
@@ -3232,7 +3228,6 @@ function PipelineDetailPage({
     }
   }, [
     beforeHeader,
-    fileTabs,
     page,
     pipeline,
     restartKernel,
