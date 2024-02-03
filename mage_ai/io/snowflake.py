@@ -281,15 +281,21 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
 """, timeout=self.timeout)
 
                 else:
+                    write_kwargs = merge_dict(
+                        dict(
+                            auto_create_table=should_create_table,
+                            database=database,
+                            schema=schema,
+                            # This param makes sure datetime column is written correctly
+                            use_logical_type=True,
+                        ),
+                        kwargs or dict(),
+                    )
                     write_pandas(
                         self.conn,
                         df,
                         table_name,
-                        auto_create_table=should_create_table,
-                        database=database,
-                        schema=schema,
-                        use_logical_type=True,
-                        **kwargs,
+                        **write_kwargs,
                     )
 
         if verbose:
