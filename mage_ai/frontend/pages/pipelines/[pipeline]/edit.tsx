@@ -535,9 +535,9 @@ function PipelineDetailPage({
       // This assumes datetime is saved without a timezone offset e.g.'2023-11-16 10:37:35'
       setPipelineLastSaved(moment(data.pipeline.updated_at).unix());
     }
-    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-      showStalePipelineMessageModal();
-    }
+    // if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
+    //   showStalePipelineMessageModal();
+    // }
   }, [
     data?.pipeline?.updated_at,
     pipelineLastSaved,
@@ -1088,7 +1088,6 @@ function PipelineDetailPage({
             fetchPipeline().then(({
               pipeline: pipelineServer,
             }) => {
-              setPipelineLastSavedState(moment().utc().unix());
               const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
               const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
               const changed = !equals(blockUUIDsPrevious || [], blockUUIDsServer || []);
@@ -1138,10 +1137,10 @@ function PipelineDetailPage({
     } = payload || {};
     const { contentOnly } = opts || {};
 
-    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-      showStalePipelineMessageModal();
-      return;
-    }
+    // if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
+    //   showStalePipelineMessageModal();
+    //   return;
+    // }
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
