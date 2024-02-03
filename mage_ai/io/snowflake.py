@@ -285,9 +285,10 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
                         self.conn,
                         df,
                         table_name,
+                        auto_create_table=should_create_table,
                         database=database,
                         schema=schema,
-                        auto_create_table=should_create_table,
+                        use_logical_type=True,
                         **kwargs,
                     )
 
