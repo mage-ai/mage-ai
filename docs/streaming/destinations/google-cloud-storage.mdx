@@ -17,7 +17,7 @@ path_to_credentials_json_file: /path/to/your/service/account/key.json
 * `bucket`: The Google Cloud Storage bucket you want to use to store the data.
 * `prefix`: The Google Cloud Storage path prefix. The whole S3 path will be `s3://{bucket}/{prefix}`.
 * `file_type`: `parquet` or `csv`
-* `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to S3.
+* `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to Google Cloud Storage.
   You can configure the size and timeout of the buffer to control the file size and the delay.
 * `path_to_credentials_json_file`: Google service account credential json file. If Mage is running on GCP, you can leave this value null and then Mage will use the instance service account to authenticate.
 
