@@ -1075,6 +1075,57 @@ class PipelineSchedulerTests(DBTestCase):
 
     @freeze_time('2023-05-01 01:20:33')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
+    def test_pipeline_run_timeout_cancel(self, mock_job_manager):
+        mock_job_manager.add_job = MagicMock()
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline run timeout pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_timeout_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(
+                timeout=600,
+                timeout_status=PipelineRun.PipelineRunStatus.CANCELLED,
+            ),
+        )
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            started_at=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            started_at=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=1),
+            started_at=now_time - timedelta(seconds=1),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        PipelineScheduler(pipeline_run=pipeline_run).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run2).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run3).schedule()
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.CANCELLED)
+        self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
+        self.assertEqual(pipeline_run3.status, PipelineRun.PipelineRunStatus.RUNNING)
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
     def test_block_run_timeout(self, mock_job_manager):
         mock_job_manager.add_job = MagicMock()
         pipeline = create_pipeline_with_blocks(

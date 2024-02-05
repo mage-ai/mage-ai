@@ -63,6 +63,7 @@ export interface PipelineScheduleSettingsType {
   create_initial_pipeline_run?: boolean;
   skip_if_previous_running?: boolean;
   timeout?: number;
+  timeout_status?: string;
   invalid_schedule_interval?: boolean; // Used to detect triggers with invalid cron expressions
 }
 

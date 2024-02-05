@@ -283,9 +283,15 @@ class PipelineScheduler:
                             schedule.schedule_interval == ScheduleInterval.ONCE:
 
                         schedule.update(status=ScheduleStatus.INACTIVE)
-            elif self.__check_pipeline_run_timeout() or \
-                    (self.pipeline_run.any_blocks_failed() and
-                     not self.allow_blocks_to_fail):
+            elif self.__check_pipeline_run_timeout():
+                status = (
+                    self.pipeline_schedule.timeout_status
+                    or PipelineRun.PipelineRunStatus.FAILED
+                )
+                self.pipeline_run.update(status=status)
+
+                self.on_pipeline_run_failure('Pipeline run timed out.')
+            elif self.pipeline_run.any_blocks_failed() and not self.allow_blocks_to_fail:
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
 
@@ -303,21 +309,11 @@ class PipelineScheduler:
                             status=Backfill.Status.FAILED,
                         )
 
-                asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
-
                 failed_block_runs = self.pipeline_run.failed_block_runs
-                if len(failed_block_runs) > 0:
-                    error_msg = 'Failed blocks: '\
-                                f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
-                else:
-                    error_msg = 'Pipeline run timed out.'
-                self.notification_sender.send_pipeline_run_failure_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                    error=error_msg,
-                )
-                # Cancel block runs that are still in progress for the pipeline run.
-                cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
+                error_msg = 'Failed blocks: '\
+                            f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
+
+                self.on_pipeline_run_failure(error_msg)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_streams(block_runs)
             elif self.pipeline.run_pipeline_in_one_process:
@@ -325,6 +321,17 @@ class PipelineScheduler:
             else:
                 if not self.__check_block_run_timeout():
                     self.__schedule_blocks(block_runs)
+
+    @safe_db_query
+    def on_pipeline_run_failure(self, error: str) -> None:
+        asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+        self.notification_sender.send_pipeline_run_failure_message(
+            pipeline=self.pipeline,
+            pipeline_run=self.pipeline_run,
+            error=error,
+        )
+        # Cancel block runs that are still in progress for the pipeline run.
+        cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
 
     @safe_db_query
     def on_block_complete(
@@ -484,7 +491,7 @@ class PipelineScheduler:
             bool: True if the pipeline run has timed out, False otherwise.
         """
         try:
-            pipeline_run_timeout = self.pipeline_run.pipeline_schedule.timeout
+            pipeline_run_timeout = self.pipeline_schedule.timeout
 
             if self.pipeline_run.started_at and pipeline_run_timeout:
                 time_difference = datetime.now(tz=pytz.UTC).timestamp() - \
