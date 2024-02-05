@@ -23,7 +23,10 @@ offset:  # Optional
   - {"topic": "test", "partition": 1}
 ```
 ### Offset Configuration
-If using the `offset` config, the `partitions` config is required.
+<Note>
+    Available in versions `>= 0.9.61`
+</Note>
+The `offset` config allows you to reset offset when starting the streaming pipeline. If using the `offset` config, the `partitions` config is required.
 
 `offset` config has 4 optional values:
   1. beginning
