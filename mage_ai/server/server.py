@@ -39,8 +39,6 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
-from mage_ai.data_preparation.sync import GitConfig
-from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
@@ -447,9 +445,11 @@ async def main(
     # Git sync if option is enabled
     preferences = get_preferences()
     if preferences.sync_config:
+        from mage_ai.data_preparation.sync import GitConfig
         sync_config = GitConfig.load(config=preferences.sync_config)
         if sync_config.sync_on_start:
             try:
+                from mage_ai.data_preparation.sync.git_sync import GitSync
                 sync = GitSync(sync_config)
                 sync.sync_data()
                 logger.info(
