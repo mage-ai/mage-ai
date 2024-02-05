@@ -364,6 +364,7 @@
                 "integrations/databases/GoogleSheets",
                 "integrations/databases/MicrosoftSQLServer",
                 "integrations/databases/MongoDB",
+                "integrations/databases/MotherDuck",
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
