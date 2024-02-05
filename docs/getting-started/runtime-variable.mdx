@@ -56,10 +56,39 @@ You can edit the variable name and/or value, and press Enter to save.
 
 ### In code
 
-You can also create or edit global variables in code by editing the pipeline
-`metadata.yaml` file.
+You can also create pipeline-level variables in code by editing the pipeline's `metadata.yaml` file.
 
-![Create Global Variables in Code](https://github.com/mage-ai/assets/blob/main/configure-variables-in-code.png?raw=True)
+![Create Pipeline Variables](https://github.com/mage-ai/assets/blob/main/configure-variables-in-code.png?raw=True)
+
+If you'd like to create environment specific pipeline variables, you can format the `variables` arguments as follows:
+
+```yaml
+variables:
+   Sharedvar1: value1
+   sharedvar2: value2
+   dev:
+      var: value1
+   staging:
+      var: value2
+   prod:
+      var: value3
+```
+
+This create dictionaries of runtime variables as the blocks are executed. 
+
+In your execution environment, you may then set variables for each environment `ENV=dev, ENV=staging, ENV=prod` which can be leveraged to indicate the execution environment. 
+
+A simple python fucntion can then be used to access the variables:
+
+```python
+import os
+
+def testfunc(**kwargs):
+    env = os.environ.get('ENV')
+    myyvar = kwargs[env][var]
+```
+
+A big thanks to community member [Preston Dotsey](https://mageai.slack.com/team/U061CMVAJH1) for their contribution!
 
 ### In Python code
 You can also save the variable in Python code. One example usage is to save checkpoint data. 
