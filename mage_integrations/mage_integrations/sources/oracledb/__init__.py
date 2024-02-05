@@ -28,7 +28,7 @@ class OracleDB(Source):
 
     @property
     def mode(self) -> str:
-        return self.config['mode'] or 'thin'
+        return self.config.get('mode') or 'thin'
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))

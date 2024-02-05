@@ -90,8 +90,6 @@ x-app_settings: &app_settings
 services:
   server:
     <<: *server_settings
-    networks:
-      - oracle-network
   app:
     <<: *app_settings
   server_spark:
@@ -108,7 +106,3 @@ services:
       dockerfile: ./dev.spark.Dockerfile
     depends_on:
       - server_spark
-networks:
-  oracle-network:
-    name: mage-app
-    external: true
