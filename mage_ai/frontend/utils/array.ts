@@ -1,4 +1,5 @@
 import { dig } from '@utils/hash';
+import { isNumeric } from './string';
 
 export function insertAtIndex(item, idx, arr) {
   const copy1 = arr.slice(0, idx);
@@ -218,7 +219,10 @@ export function arrayIncludesArray(arr1, arr2) {
 }
 
 export function range(numberOfItems) {
-  return Array(numberOfItems).fill(0);
+  if (isNumeric(numberOfItems) && numberOfItems >= 1) {
+    return Array(numberOfItems).fill(0);
+  }
+  return [];
 }
 
 export function rangeSequential(numberOfItems, startingIndex = 0) {

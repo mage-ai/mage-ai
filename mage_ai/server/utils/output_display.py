@@ -2,6 +2,11 @@ import json
 import re
 from typing import Dict, List
 
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    has_reduce_output_from_upstreams,
+    is_dynamic_block,
+    is_dynamic_block_child,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -84,7 +89,7 @@ def get_content_inside_triple_quotes(parts):
     return None, None
 
 
-def add_internal_output_info(code: str) -> str:
+def add_internal_output_info(block, code: str) -> str:
     if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
         return code
     code_lines = remove_comments(code.split('\n'))
@@ -129,18 +134,33 @@ def add_internal_output_info(code: str) -> str:
         else:
             end_index = -1
         code_without_last_line = '\n'.join(code_lines[:end_index])
+
+        has_reduce_output = has_reduce_output_from_upstreams(block) if block else False
+        is_dynamic = is_dynamic_block(block) if block else False
+        is_dynamic_child = is_dynamic_block_child(block) if block else False
+
         internal_output = f"""
 # Post processing code below (source: output_display.py)
 
 
 def __custom_output():
-    from datetime import datetime
-    from mage_ai.shared.parsers import encode_complex, sample_output
     import json
+    import warnings
+    from datetime import datetime
+
     import pandas as pd
     import polars as pl
     import simplejson
-    import warnings
+
+    from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
+    from mage_ai.data_preparation.models.block.dynamic.utils import (
+        combine_transformed_output_for_multi_output,
+        transform_output_for_display_dynamic_child,
+        transform_output_for_display_reduce_output,
+    )
+    from mage_ai.shared.environments import is_debug
+    from mage_ai.shared.parsers import encode_complex, sample_output
+
 
     if pd.__version__ < '1.5.0':
         from pandas.core.common import SettingWithCopyWarning
@@ -151,12 +171,62 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, pd.DataFrame) and (
+    # Dynamic block child logic always takes precedence over dynamic block logic
+    if bool({is_dynamic_child}):
+        output_transformed = []
+
+        if _internal_output_return and isinstance(_internal_output_return, list):
+            for output in _internal_output_return:
+                output_tf = transform_output_for_display_dynamic_child(
+                    output,
+                    is_dynamic=bool({is_dynamic}),
+                    sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                )
+                output_transformed.append(output_tf)
+
+        output_transformed = output_transformed[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+
+        try:
+            _json_string = simplejson.dumps(
+                combine_transformed_output_for_multi_output(output_transformed),
+                default=encode_complex,
+                ignore_nan=True,
+            )
+
+            return print(f'[__internal_output__]{{_json_string}}')
+        except Exception as err:
+            print(type(_internal_output_return))
+            print(type(output_transformed))
+            raise err
+    elif bool({is_dynamic}):
+        _json_string = simplejson.dumps(
+            transform_output_for_display(
+                _internal_output_return,
+                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+            ),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif bool({has_reduce_output}):
+        _json_string = simplejson.dumps(
+            transform_output_for_display_reduce_output(
+                _internal_output_return,
+                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+            ),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif isinstance(_internal_output_return, pd.DataFrame) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
-        _rows = json.loads(_sample[_columns].to_json(default_handler=str, orient='split'))['data']
+        _rows = simplejson.loads(_sample[_columns].fillna('').to_json(
+            default_handler=str,
+            orient='split',
+        ))['data']
         _shape = _internal_output_return.shape
         _index = _sample.index.tolist()
 
@@ -268,6 +338,10 @@ spark = SparkSession.builder.getOrCreate()
 '''
 
     return f"""{magic_header}
+from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
+from mage_ai.data_preparation.models.block.dynamic.utils import has_reduce_output_from_upstreams
+from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block_child
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
@@ -331,7 +405,9 @@ def execute_custom_code():
     logger.setLevel('INFO')
     if 'logger' not in global_vars:
         global_vars['logger'] = logger
-    block_output = block.execute_with_callback(
+
+    block_output = dict(output=[])
+    options = dict(
         custom_code=code,
         execution_uuid={execution_uuid},
         from_notebook=True,
@@ -341,17 +417,44 @@ def execute_custom_code():
         run_settings=json.loads('{run_settings_json}'),
         update_status={update_status},
     )
-    if {run_tests}:
-        block.run_tests(
-            custom_code=code,
-            from_notebook=True,
-            logger=logger,
-            global_vars=global_vars,
-            update_tests=False,
-        )
+
+    has_reduce_output = has_reduce_output_from_upstreams(block)
+    is_dynamic_child = is_dynamic_block_child(block)
+
+    if is_dynamic_child:
+        outputs = []
+        settings = build_combinations_for_dynamic_child(block, **options)
+        for dynamic_block_index, config in enumerate(settings):
+            output_dict = block.execute_with_callback(**merge_dict(options, config))
+            if output_dict and output_dict.get('output'):
+                outputs.append(output_dict.get('output'))
+
+            if {run_tests}:
+                block.run_tests(
+                    custom_code=code,
+                    dynamic_block_index=dynamic_block_index,
+                    from_notebook=True,
+                    logger=logger,
+                    global_vars=global_vars,
+                    update_tests=False,
+                )
+
+        block_output['output'] = outputs
+    else:
+        block_output = block.execute_with_callback(**options)
+
+        if {run_tests}:
+            block.run_tests(
+                custom_code=code,
+                from_notebook=True,
+                logger=logger,
+                global_vars=global_vars,
+                update_tests=False,
+            )
+
     output = block_output['output'] or []
 
-    if {widget}:
+    if {widget} or is_dynamic_block(block) or is_dynamic_child or has_reduce_output:
         return output
     else:
         return find(lambda val: val is not None, output)

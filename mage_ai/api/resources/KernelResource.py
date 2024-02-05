@@ -30,6 +30,7 @@ class KernelResource(GenericResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
+        kernel_fallback = None
         kernels_by_id = {}
 
         for kernel_name in KernelName:
@@ -37,7 +38,14 @@ class KernelResource(GenericResource):
             if kernel.has_kernel:
                 kernels_by_id[kernel.kernel_id] = kernel
 
-        kernel = kernels_by_id.get(pk) or kernel_managers[DEFAULT_KERNEL_NAME]
+                if not kernel_fallback:
+                    kernel_fallback = kernel
+
+        kernel = kernels_by_id.get(pk)
+        if not kernel:
+            kernel = kernel_fallback
+        if not kernel:
+            kernel = kernel_managers[DEFAULT_KERNEL_NAME]
 
         return self(kernel, user, **kwargs)
 

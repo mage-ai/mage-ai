@@ -1,9 +1,16 @@
+from datetime import datetime
+from typing import Dict, Generator, List
+
+import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from datetime import datetime
+from singer.schema import Schema
+
+# TODO: refactor this common row_to_singer_record function
+# to util file to share between different sources.
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
-from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.sources.constants import (
     COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
@@ -11,12 +18,7 @@ from mage_integrations.sources.constants import (
     DATABASE_TYPE_DYNAMODB,
     REPLICATION_METHOD_FULL_TABLE,
 )
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import boto3
-# TODO: refactor this common row_to_singer_record function
-# to util file to share between different sources.
-import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
+from mage_integrations.sources.utils import get_standard_metadata
 
 ATTRIBUTE_DEFINITIONS = 'AttributeDefinitions'
 ATTRIBUTE_NAME = 'AttributeName'
@@ -131,6 +133,32 @@ class DynamoDb(Source):
            },
         )
 
+        if (
+            not self.config.get('aws_access_key_id') and
+            not self.config.get('aws_secret_access_key') and
+            self.config.get('role_arn')
+        ):
+            # Assume IAM role and get credentials
+            role_session_name = self.config.get('role_session_name', 'mage-data-integration')
+            sts_session = boto3.Session()
+            sts_connection = sts_session.client('sts')
+            assume_role_object = sts_connection.assume_role(
+                RoleArn=self.config.get('role_arn'),
+                RoleSessionName=role_session_name,
+            )
+
+            session = boto3.Session(
+                aws_access_key_id=assume_role_object['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assume_role_object['Credentials']['SecretAccessKey'],
+                aws_session_token=assume_role_object['Credentials']['SessionToken'],
+            )
+
+            return session.client(
+                'dynamodb',
+                config=config,
+                region_name=self.region,
+            )
+
         return boto3.client(
             'dynamodb',
             aws_access_key_id=self.config[AWS_ACCESS_KEY_ID],
@@ -171,7 +199,7 @@ class DynamoDb(Source):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,

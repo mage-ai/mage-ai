@@ -1,11 +1,13 @@
+import os
+import time
+from typing import Any
+
 from google.cloud import run_v2
 from google.iam.v1 import iam_policy_pb2, policy_pb2
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from typing import Any
 
-import os
-import time
+from mage_ai.cluster_manager.constants import GCP_SERVICE_NAME
 
 
 class CloudRunServiceManager:
@@ -29,6 +31,7 @@ class CloudRunServiceManager:
 
         self.services_client = run_v2.ServicesClient(credentials=credentials)
         self.compute_service = build('compute', 'v1', credentials=credentials)
+        self.existing_service_name = os.getenv(GCP_SERVICE_NAME)
 
     def list_services(self) -> Any:
         response = self.services_client.list_services(
@@ -62,10 +65,9 @@ class CloudRunServiceManager:
 
     def create_service(self, service_id) -> None:
         resource_prefix = f'projects/{self.project_id}/locations/{self.region}'
-        existing_service_name = os.getenv('GCP_SERVICE_NAME')
         existing_service = self.services_client.get_service(
             run_v2.GetServiceRequest(
-                name=f'{resource_prefix}/services/{existing_service_name}'
+                name=f'{resource_prefix}/services/{self.existing_service_name}'
             )
         )
         existing_service.name = None
@@ -80,6 +82,7 @@ class CloudRunServiceManager:
             )
         )
         existing_service.template.containers[0].env = env_vars
+        existing_service.traffic = None
 
         service_request = run_v2.CreateServiceRequest(
             parent=resource_prefix,
@@ -129,7 +132,7 @@ class CloudRunServiceManager:
             'backends': [{'group': group_url}],
             'enableCDN': False,
             # TODO: create a new security policy
-            'securityPolicy': f"{os.getenv('GCP_SERVICE_NAME')}-security-policy",
+            'securityPolicy': f'{self.existing_service_name}-security-policy',
             'iap': {
                 'enable': False,
                 'oauth2ClientId': '',

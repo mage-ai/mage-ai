@@ -1,0 +1,210 @@
+{
+  "applicationConfiguration": {
+    "application": {
+      "actions": [
+        {
+          "interaction": {
+            "item": {
+              "uuid": ""
+            },
+            "type": "fetch_items"
+          },
+          "upstream_action_value_key_mapping": {
+            "action": {}
+          },
+          "uuid": "fetch_items"
+        }
+      ],
+      "application_type": "expansion",
+      "expansion_settings": {
+        "uuid": "ArcaneLibrary"
+      },
+      "settings": [],
+      "uuid": "File_application"
+    },
+    "focusedItemIndex": 0,
+    "item": {
+      "applications": [
+        {
+          "actions": [
+            {
+              "interaction": {
+                "item": {
+                  "uuid": ""
+                },
+                "type": "fetch_items"
+              },
+              "upstream_action_value_key_mapping": {
+                "action": {}
+              },
+              "uuid": "fetch_items"
+            }
+          ],
+          "application_type": "expansion",
+          "expansion_settings": {
+            "uuid": "ArcaneLibrary"
+          },
+          "settings": [],
+          "uuid": "File_application"
+        }
+      ],
+      "description": "browse and edit files across all projects",
+      "display_settings_by_attribute": {
+        "description": {
+          "text_styles": {
+            "monospace": false,
+            "regular": false,
+            "small": true
+          }
+        },
+        "icon": {
+          "icon_uuid": "RankingV3"
+        },
+        "subtitle": {
+          "text_styles": {
+            "monospace": true,
+            "regular": false,
+            "small": false
+          }
+        }
+      },
+      "item_type": "detail",
+      "object_type": "file",
+      "score": 67,
+      "settings": {
+        "cache_expires_at": 0
+      },
+      "subtitle": "Browser / Editor",
+      "title": "Arcane Library",
+      "uuid": "detail_file_File_Arcane Library_Browser / Editor_browse and edit files across all projects"
+    },
+    "itemsRef": {
+      "current": [
+        {
+          "applications": [
+            {
+              "actions": [
+                {
+                  "interaction": {
+                    "item": {
+                      "uuid": ""
+                    },
+                    "type": "fetch_items"
+                  },
+                  "upstream_action_value_key_mapping": {
+                    "action": {}
+                  },
+                  "uuid": "fetch_items"
+                }
+              ],
+              "application_type": "expansion",
+              "expansion_settings": {
+                "uuid": "ArcaneLibrary"
+              },
+              "settings": [],
+              "uuid": "File_application"
+            }
+          ],
+          "description": "browse and edit files across all projects",
+          "display_settings_by_attribute": {
+            "description": {
+              "text_styles": {
+                "monospace": false,
+                "regular": false,
+                "small": true
+              }
+            },
+            "icon": {
+              "icon_uuid": "RankingV3"
+            },
+            "subtitle": {
+              "text_styles": {
+                "monospace": true,
+                "regular": false,
+                "small": false
+              }
+            }
+          },
+          "item_type": "detail",
+          "object_type": "file",
+          "score": 67,
+          "settings": {
+            "cache_expires_at": 0
+          },
+          "subtitle": "Browser / Editor",
+          "title": "Arcane Library",
+          "uuid": "detail_file_File_Arcane Library_Browser / Editor_browse and edit files across all projects"
+        },
+        {
+          "actions": [
+            {
+              "interaction": {
+                "options": {
+                  "file_path": "project3/dbt/demo/packages.yml"
+                },
+                "type": "open_file"
+              },
+              "uuid": "open_file"
+            }
+          ],
+          "applications": [
+            {
+              "actions": [
+                {
+                  "request": {
+                    "operation": "detail",
+                    "resource": "file_contents",
+                    "resource_id": "project3%2Fdbt%2Fdemo%2Fpackages.yml",
+                    "response_resource_key": "file_content"
+                  },
+                  "uuid": "file_content_detail"
+                }
+              ],
+              "application_type": "detail",
+              "buttons": [
+                {
+                  "action_types": [
+                    "execute"
+                  ],
+                  "keyboard_shortcuts": [
+                    [
+                      13
+                    ]
+                  ],
+                  "label": "Open file"
+                }
+              ],
+              "settings": [],
+              "uuid": "model_detail"
+            }
+          ],
+          "description": "",
+          "display_settings_by_attribute": {
+            "description": {
+              "text_styles": {
+                "monospace": true,
+                "regular": false,
+                "small": true
+              }
+            }
+          },
+          "item_type": "detail",
+          "metadata": {
+            "file": {
+              "extension": "yml",
+              "full_path": "project3/dbt/demo/packages.yml",
+              "modified_at": "2023-12-20T21:51:08",
+              "modified_timestamp": "1703109068",
+              "size": "58"
+            }
+          },
+          "object_type": "file",
+          "score": 53,
+          "title": "packages.yml",
+          "uuid": "project3/dbt/demo/packages.yml"
+        }
+      ]
+    }
+  },
+  "uuid": "ArcaneLibrary"
+}

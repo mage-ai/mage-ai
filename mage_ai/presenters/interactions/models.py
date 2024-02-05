@@ -19,14 +19,15 @@ from mage_ai.presenters.interactions.constants import (
 from mage_ai.presenters.interactions.utils import interpolate_content
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class InteractionInputOption:
+class InteractionInputOption(BaseDataClass):
     label: str = None
     value: Union[bool, float, int, str] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return dict(
             label=self.label,
             value=self.value,
@@ -36,6 +37,7 @@ class InteractionInputOption:
 @dataclass
 class InteractionInputStyle:
     input_type: InteractionInputStyleInputType = None
+    language: str = None
     multiline: bool = None
 
     def __post_init__(self):
@@ -65,10 +67,10 @@ class InteractionInput:
         if self.type and isinstance(self.type, str):
             self.type = InteractionInputType(self.type)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return dict(
-            options=[i.to_dict() for i in self.options],
-            style=self.style.to_dict() if self.style else None,
+            options=[i.to_dict(**kwargs) for i in self.options],
+            style=self.style.to_dict(**kwargs) if self.style else None,
             type=self.type.value if self.type else None,
         )
 

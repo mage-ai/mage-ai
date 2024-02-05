@@ -1,3 +1,4 @@
+import React from 'react';
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
@@ -33,6 +34,7 @@ export type TextProps = {
   cyan?: boolean;
   cursor?: string;
   danger?: boolean;
+  dbt?: boolean;
   default?: boolean;
   disableWordBreak?: boolean;
   disabled?: boolean;
@@ -237,11 +239,15 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.cyan && `
-    color: ${(props.theme || dark).accent.cyan};
+    color: ${(props.theme.accent || dark.accent).cyan};
+  `}
+
+  ${props => props.dbt && `
+    color: ${(props.theme || dark).accent.dbt};
   `}
 
   ${props => props.sky && `
-    color: ${(props.theme || dark).interactive.linkTextLight};
+    color: ${(props.theme || dark)?.interactive?.linkTextLight};
   `}
 
   ${props => props.black && `
@@ -375,8 +381,9 @@ const Text = ({
   children,
   muted: mutedProp,
   raw,
+  weightStyle = 3,
   ...props
-}: TextProps) => {
+}: TextProps, ref) => {
   let muted = false;
 
   if (mutedProp === true) {
@@ -388,6 +395,7 @@ const Text = ({
     ...props,
     ...({}),
     muted,
+    weightStyle,
   };
 
   if (raw) {
@@ -395,19 +403,17 @@ const Text = ({
       <El
         {...combinedProps}
         dangerouslySetInnerHTML={{ __html: children }}
+        ref={ref}
       />
     );
   }
 
   return (
-    <El {...combinedProps}>
+    <El {...combinedProps} ref={ref}>
       {children}
     </El>
   );
 };
 
-Text.defaultProps = {
-  weightStyle: 3,
-};
 
-export default Text;
+export default React.forwardRef(Text);

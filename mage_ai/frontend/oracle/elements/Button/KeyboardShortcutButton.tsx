@@ -49,6 +49,7 @@ export enum ButtonTypeEnum {
 
 export type KeyboardShortcutButtonProps = {
   Icon?: any;
+  addPlusSignBetweenKeys?: boolean;
   afterElement?: any;
   beforeElement?: any;
   background?: string;
@@ -62,6 +63,7 @@ export type KeyboardShortcutButtonProps = {
   centerText?: boolean;
   children?: any;
   compact?: boolean;
+  default?: boolean;
   earth?: boolean;
   fitContentWidth?: boolean;
   fire?: boolean;
@@ -192,7 +194,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
+    padding: ${UNIT * 0.75}px ${UNIT * 1}px;
   `}
 
   ${props => props.withIcon && `
@@ -273,6 +275,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     color: ${(props.theme.monotone || dark.monotone).grey300};
   `}
 
+  ${props => props.default && `
+    color: ${(props.theme.content || dark.content).default};
+  `}
+
   ${props => props.warning && `
     color: ${(props.theme.brand || dark.brand).energy400};
   `}
@@ -296,7 +302,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
   `}
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && props.pill && !props.spacious && `
@@ -424,6 +430,7 @@ const AnchorStyle = styled.a<KeyboardShortcutButtonProps>`
 
 function KeyboardShortcutButton({
   Icon,
+  addPlusSignBetweenKeys,
   afterElement,
   beforeElement,
   bold,
@@ -446,7 +453,7 @@ function KeyboardShortcutButton({
   type = ButtonTypeEnum.BUTTON,
   useModelTheme,
   ...props
-}: KeyboardShortcutButtonProps) {
+}: KeyboardShortcutButtonProps, ref) {
   const {
     as: asHref,
     href: linkHref,
@@ -456,17 +463,28 @@ function KeyboardShortcutButton({
   const keyTextsRender = useMemo(() => {
     if (!keyTextGroups) return null;
 
-    const spacingProps = { [keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? 'ml' : 'mr']: children ? 1 : 0 };
+    const spacingProps = {
+      [keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? 'ml' : 'mr']: children ? 1 : 0
+    };
 
     return (
-      <Spacing {...spacingProps}>
+      <div
+        style={{
+          ...(keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? {
+            marginLeft: 4,
+          } : {
+            marginRight: 4,
+          }),
+        }}
+      >
         <KeyboardTextGroup
+          addPlusSignBetweenKeys={addPlusSignBetweenKeys}
           borderless={inverted}
           disabled={disabled}
           keyTextGroups={keyTextGroups}
           mutedDisabled={mutedDisabled}
         />
-      </Spacing>
+      </div>
     );
   }, [children, disabled, inverted, keyTextGroups, keyTextsPosition, mutedDisabled]);
 
@@ -505,6 +523,7 @@ function KeyboardShortcutButton({
               ? 11    // 11px padding to match size of button with text
               : padding
             }
+            ref={ref}
             type={(asHref || linkHref) ? null : type}
             useModelTheme={useModelTheme}
             withIcon={!!Icon}
@@ -512,7 +531,7 @@ function KeyboardShortcutButton({
             {beforeElement && !loading && (
               <>
                 {beforeElement}
-                <Spacing mr={1}/>
+                <div style={{ marginRight: 4 }} />
               </>
             )}
 
@@ -526,7 +545,7 @@ function KeyboardShortcutButton({
                 />
               )}
 
-              {Icon && children && <Spacing mr={1} />}
+              {Icon && children && <div style={{ marginRight: 4 }} />}
 
               {loading && (
                 <Spinner
@@ -538,14 +557,14 @@ function KeyboardShortcutButton({
             </Flex>
 
             {keyTextsPosition === KeyTextsPostitionEnum.RIGHT && keyTextsRender && (
-              <Spacing ml={1}>
+              <div style={{ marginLeft: 4 }}>
                 {keyTextsRender}
-              </Spacing>
+              </div>
             )}
 
             {afterElement && !loading && (
               <>
-                <Spacing ml={afterElement ? 1 : 0} />
+                <div style={{ marginLeft: afterElement ? 4 : 0 }} />
                 {afterElement}
               </>
             )}
@@ -568,8 +587,9 @@ function KeyboardShortcutButton({
       disabled={disabled || mutedDisabled}
       linkProps={linkProps}
       onClick={onClickProp}
+      ref={ref}
     />
   );
 }
 
-export default KeyboardShortcutButton;
+export default React.forwardRef(KeyboardShortcutButton);

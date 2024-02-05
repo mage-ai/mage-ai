@@ -417,13 +417,15 @@ function Table({
       } else {
         val += BASE_ROW_HEIGHT - REGULAR_LINE_HEIGHT;
       }
-    } else {
+    } else if (height) {
       val = height;
       if (columnHeaderHeight) {
         val -= columnHeaderHeight;
       } else {
         val -= BASE_ROW_HEIGHT;
       }
+    } else {
+      return 0;
     }
 
     return val;

@@ -4,6 +4,22 @@ import re
 from functools import reduce
 from typing import Any, Dict, List
 
+from mage_ai.shared.strings import camel_to_snake_case
+
+
+def camel_case_keys_to_snake_case(d):
+    if not isinstance(d, dict):
+        return d
+    snake_dict = {}
+    for key, value in d.items():
+        snake_key = camel_to_snake_case(key)
+        if isinstance(value, dict):
+            value = camel_case_keys_to_snake_case(value)
+        elif isinstance(value, list):
+            value = [camel_case_keys_to_snake_case(item) for item in value]
+        snake_dict[snake_key] = value
+    return snake_dict
+
 
 def dig(obj_arg, arr_or_string):
     if type(arr_or_string) is str:
@@ -146,3 +162,12 @@ def set_value(obj: Dict, keys: List[str], value) -> Dict:
     exec(expression, results)
 
     return results['__obj_to_set_value']
+
+
+def combine_into(child: Dict, parent: Dict) -> None:
+    # Child will merge into parent and override parent values.
+    for k, v in child.items():
+        if isinstance(v, dict):
+            combine_into(v, parent.setdefault(k, {}))
+        else:
+            parent[k] = v

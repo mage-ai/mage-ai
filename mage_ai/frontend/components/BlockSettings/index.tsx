@@ -23,6 +23,7 @@ import Link from '@oracle/elements/Link';
 import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
 import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
 import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Select from '@oracle/elements/Inputs/Select';
 import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
@@ -39,7 +40,6 @@ import { Add, DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
-import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import {
   PADDING_UNITS,
@@ -88,6 +88,7 @@ type BlockSettingsProps = {
   globalDataProducts?: GlobalDataProductType[];
   contentByBlockUUID?: any;
   pipeline: PipelineType;
+  project?: ProjectType;
   setSelectedBlock: (block: BlockType) => void;
   showUpdateBlockModal?: (
     block: BlockType,
@@ -104,6 +105,7 @@ function BlockSettings({
   fetchPipeline,
   globalDataProducts,
   pipeline,
+  project,
   setSelectedBlock,
   showDataIntegrationModal,
   showUpdateBlockModal,
@@ -157,6 +159,10 @@ function BlockSettings({
   } = api.pipelines.detail(
     GlobalDataProductObjectTypeEnum.PIPELINE === globalDataProduct?.object_type
       && globalDataProduct?.object_uuid,
+    {},
+    {
+      revalidateOnFocus: false,
+    },
   );
   const globalDataProductPipeline = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
 
@@ -183,6 +189,7 @@ function BlockSettings({
     ignoreKeys(blockAttributes?.configuration || configuration, [
       'data_integration',
       'file_path',
+      'file_source',
       'global_data_product',
     ]),
     [blockAttributes?.configuration, configuration],
@@ -223,10 +230,10 @@ function BlockSettings({
     },
   );
   const blockDetails: {
-    pipelines: BlockPipelineType;
+    pipelines: BlockPipelineType[];
   } = useMemo(() => dataBlock?.block || {}, [dataBlock]);
   const blockPipelines: BlockPipelineType[] = useMemo(() => blockDetails?.pipelines
-    ? Object.values(blockDetails?.pipelines)
+    ? blockDetails?.pipelines
     : []
   , [blockDetails]);
   const blockPipelinesCount = blockPipelines?.length || 1;
@@ -239,7 +246,7 @@ function BlockSettings({
           callback: (resp) => {
             setBlockAttributesTouched(false);
 
-            fetchFileTree();
+            fetchFileTree?.();
             fetchPipeline();
 
             // Select the newly renamed block
@@ -270,22 +277,26 @@ function BlockSettings({
             uuid: 'Name',
           },
           {
-            uuid: 'Description',
+            uuid: 'Project path',
           },
         ]}
         rows={blockPipelines.map(({
           pipeline: {
-            description,
             name: pipelineName,
+            repo_path: repoPath,
             uuid: pipelineUUID,
           },
         }) => {
           let nameEl;
+          const isMultiProject = !!project?.settings;
+          const isCurrentProject = pipeline?.uuid === pipelineUUID
+            && (!isMultiProject || project?.settings?.path === repoPath);
 
-          if (pipeline?.uuid === pipelineUUID) {
+          if (isCurrentProject || (isMultiProject && project?.settings?.path !== repoPath)) {
             nameEl = (
               <Text key="name" monospace muted>
-                {pipelineName || pipelineUUID} (current)
+                {pipelineName || pipelineUUID}
+                {isCurrentProject && ' (current)'}
               </Text>
             );
           } else {
@@ -304,8 +315,8 @@ function BlockSettings({
 
           return [
             nameEl,
-            <Text default key="description" monospace>
-              {description || '-'}
+            <Text default key="project_path" monospace>
+              {repoPath || '-'}
             </Text>,
           ];
         })}
@@ -316,6 +327,7 @@ function BlockSettings({
     blockPipelines,
     blockPipelinesCount,
     pipeline,
+    project?.settings,
   ]);
 
   const isUsingPipelineRetryConfig: boolean = useMemo(() => pipelineRetryConfig

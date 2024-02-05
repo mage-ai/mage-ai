@@ -33,6 +33,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
   [BlockLanguageEnum.YAML]: 'YAML',
 };
 
+// Consider using the one from interfaces/FileType.ts
 export const LANGUAGE_DISPLAY_MAPPING = {
   [BlockLanguageEnum.MARKDOWN]: 'Markdown',
   [BlockLanguageEnum.PYTHON]: 'Python',
@@ -56,6 +57,16 @@ export enum BlockTypeEnum {
   MARKDOWN = 'markdown',
   TRANSFORMER = 'transformer',
 }
+
+export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
+  [BlockTypeEnum.CUSTOM]: BlockTypeEnum.CUSTOM,
+  [BlockTypeEnum.DBT]: BlockTypeEnum.DBT,
+};
+
+export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce((acc, [k, v]) => ({
+  ...acc,
+  [v]: k,
+}), {});
 
 export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.CALLBACK,
@@ -147,6 +158,7 @@ export interface SampleDataType {
 }
 
 export interface OutputType {
+  multi_output?: boolean;
   sample_data: SampleDataType;
   shape: number[];
   text_data: string;
@@ -176,7 +188,7 @@ export interface AnalysisType {
   variable_uuid: string;
 }
 
-enum ObjectType {
+export enum ObjectType {
   BLOCK_FILE = 'block_file',
   CUSTOM_BLOCK_TEMPLATE = 'custom_block_template',
   MAGE_TEMPLATE = 'mage_template',
@@ -236,8 +248,11 @@ export interface BlockRequestPayloadType {
 export interface BlockPipelineType {
   added_at?: string;
   pipeline: {
+    created_at?: string;
     description?: string;
     name: string;
+    tags?: string[];
+    repo_path?: string;
     type: string;
     updated_at: string;
     uuid: string;
@@ -307,9 +322,7 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
-  pipelines?: {
-    [uuid: string]: BlockPipelineType;
-  };
+  pipelines?: BlockPipelineType[];
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;

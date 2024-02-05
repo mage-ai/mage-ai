@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -8,11 +8,14 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Panel from '@oracle/components/Panel';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
+import WorkspaceDetail from '@components/workspaces/Detail';
 import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 import api from '@api';
 import { Add, Ellipsis, Expand } from '@oracle/icons';
@@ -245,6 +248,11 @@ function WorkspacePage() {
     [dataStatus],
   );
 
+  const { data } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  });
+  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     { cluster_type: clusterType },
     {
@@ -266,17 +274,44 @@ function WorkspacePage() {
         fetchWorkspaces();
         hideModal();
       }}
+      project={project}
     />
   ), {
   }, [
     clusterType,
     fetchWorkspaces,
+    project,
   ], {
     background: true,
     disableClickOutside: true,
     disableEscape: true,
     uuid: 'configure_workspace',
   });
+
+  const [showDetailModal, hideDetailModal] = useModal(({
+    workspace,
+  }) => (
+    <Panel>
+      <div style={{ width: '750px' }}>
+        <WorkspaceDetail
+          clusterType={clusterType}
+          fetchWorkspaces={fetchWorkspaces}
+          onSuccess={hideDetailModal}
+          setErrors={setErrors}
+          workspace={workspace}
+        />
+      </div>
+    </Panel>
+  ), {
+  }, [clusterType, fetchWorkspaces, setErrors, workspaces], {
+    background: true,
+    uuid: 'workspace_detail',
+  });
+
+  const onClickRow = useCallback((rowIndex: number) => {
+    const workspace = workspaces?.[rowIndex];
+    showDetailModal({ workspace });
+  }, [showDetailModal, workspaces]);
 
   return (
     <WorkspacesDashboard  
@@ -315,27 +350,29 @@ function WorkspacePage() {
             uuid: 'Type',
           },
           {
-            uuid: 'Public IP address',
+            uuid: 'URL/IP',
           },
           {
             uuid: 'Open',
           },
-          {
-            label: () => '',
-            uuid: 'Actions',
-          },
         ]}
-        rows={workspaces?.map(({ instance }: WorkspaceType) => {
+        onClickRow={['ecs', 'k8s'].includes(clusterType) && onClickRow}
+        rows={workspaces?.map(({ instance, url }: WorkspaceType) => {
           const {
             ip,
             name,
             status,
             type,
           } = instance;
-
-          let link = `http://${ip}`;
-          if (clusterType === 'ecs') {
-            link = `http://${ip}:6789`;
+          
+          const ipOrUrl = url || ip;
+          
+          let link = ipOrUrl;
+          if (ipOrUrl && !ipOrUrl.includes('http')) {
+            link = `http://${ipOrUrl}`;
+            if (clusterType === 'ecs') {
+              link = `http://${ipOrUrl}:6789`;
+            }
           }
 
           return [
@@ -346,7 +383,7 @@ function WorkspacePage() {
               key="status"
               notClickable
               padding="6px"
-              primary={'RUNNING' === status}
+              success={'RUNNING' === status}
               warning={'PENDING' === status}
             >
               {capitalizeRemoveUnderscoreLower(status)}
@@ -364,23 +401,16 @@ function WorkspacePage() {
             <Text
               key="ip"
             >
-              {ip}
+              {ipOrUrl || 'N/A'}
             </Text>,
             <Button
-              disabled={!ip}
+              disabled={!ipOrUrl}
               iconOnly
               key="open_button"
               onClick={() => window.open(link)}
             >
               <Expand size={2 * UNIT} />
             </Button>,
-            <MoreActions
-              clusterType={clusterType}
-              fetchWorkspaces={fetchWorkspaces}
-              instance={instance}
-              key="more_actions"
-              setErrors={setErrors}
-            />,
           ];
         })}
       />

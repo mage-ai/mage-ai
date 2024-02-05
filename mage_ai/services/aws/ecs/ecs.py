@@ -1,12 +1,12 @@
 import json
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from mage_ai.services.aws import get_aws_boto3_client
 from mage_ai.services.aws.ecs.config import EcsConfig
 
 
 def run_task(
-    command: str,
+    command: Union[str, Dict],
     ecs_config: EcsConfig,
     wait_for_completion: bool = True,
 ) -> None:

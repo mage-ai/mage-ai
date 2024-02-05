@@ -125,3 +125,9 @@ export const ExtraInfoBorderStyle = styled.div`
     border-top: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;
+
+export const MultiOutputStyle = styled.div`
+  .inactive {
+    display: none;
+  }
+`;

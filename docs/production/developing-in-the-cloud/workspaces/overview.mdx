@@ -1,5 +1,5 @@
 ---
-title: "Workspace management (in Beta)"
+title: "Workspace management"
 sidebarTitle: "Overview"
 description: "Use Mage in multiple workspaces in the cloud"
 ---
@@ -15,7 +15,6 @@ can set workspace level permissions for users. The current additional features s
 
 still to come...
 
-* common workspace metadata file
 * customizable permissions and roles
 
 ## Setup
@@ -36,6 +35,9 @@ you will need to set the `REQUIRE_USER_AUTHENTICATION` variable.
 | `REQUIRE_USER_AUTHENTICATION` | `1` |
 | `MAGE_DATABASE_CONNECTION_URL` | `postgresql+psycopg2://...` |
 
+If you run into issues deploying your infrastructure, feel free to reach out in our
+[Slack](https://www.mage.ai/chat).
+
 Depending on your cloud environment, Mage may expect additional environment variables.
 Mage currently natively supports creating workspaces in these cloud providers:
 
@@ -46,8 +48,48 @@ still to come...
 * Amazon ECS
 * Google Cloud Run
 
-If you run into issues deploying your infrastructure, feel free to reach out in our
-[Slack](https://www.mage.ai/chat).
+### Project metadata
+
+There are a few additional settings that can be configured for a main project. You can access the project
+metadata in the "Settings" tab on the left hand side of the Workspaces UI.
+
+#### Workspace config defaults
+
+<Note>
+
+Available in version >= 0.9.56
+
+</Note>
+
+You can set default values for the workspace config. This will be the default config that is populated
+in the UI when creating a new workspace. When creating the workspace, you can manually override the
+default values as needed. All fields in the workspace config defaults are optional.
+
+```yaml
+# <your_project_name>/metadata.yaml
+
+...
+workspace_config_defaults:
+  name: str
+  lifecycle_config:
+    termination_policy:
+      enable_auto_termination: bool
+      max_idle_seconds: int
+    pre_start_script_path: str
+    post_start:
+      command: str
+      hook_path: str
+  k8s:
+    namespace: str
+    ingress_name: str
+    service_account_name: str
+    storage_access_mode: str
+    storage_class_name: str
+    storage_request_size: int
+
+...
+
+```
 
 ## User management
 

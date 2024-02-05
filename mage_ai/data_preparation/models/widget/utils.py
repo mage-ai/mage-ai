@@ -51,6 +51,9 @@ def calculate_metric_for_series(series, aggregation):
     series = clean_series(series)
     value = 0
 
+    if len(series) == 0:
+        return value
+
     if AggregationFunction.AVERAGE == aggregation:
         count = len(series)
         if count > 0:

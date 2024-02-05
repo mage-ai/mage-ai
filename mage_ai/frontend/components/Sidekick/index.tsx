@@ -526,6 +526,7 @@ function Sidekick({
       fetchPipeline={fetchPipeline}
       globalDataProducts={globalDataProducts}
       pipeline={pipeline}
+      project={project}
       setSelectedBlock={setSelectedBlock}
       showDataIntegrationModal={showDataIntegrationModal}
       showUpdateBlockModal={showUpdateBlockModal}
@@ -537,6 +538,7 @@ function Sidekick({
     fetchPipeline,
     globalDataProducts,
     pipeline,
+    project,
     selectedBlock,
     setSelectedBlock,
     showDataIntegrationModal,

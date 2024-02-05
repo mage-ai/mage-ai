@@ -56,3 +56,25 @@ FilePolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
+
+
+FilePolicy.allow_query(
+    [
+        'exclude_dir_pattern',
+        'exclude_pattern',
+        'flatten',
+        'include_pipeline_count',
+        'pattern',
+        'project_uuid',
+        'repo_path',
+        'version_control_files',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
+    override_permission_condition=lambda _policy: True,
+)

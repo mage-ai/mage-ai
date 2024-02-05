@@ -1,12 +1,14 @@
+from typing import Dict, Generator, List
+
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.chargebee.client import ChargebeeClient
 from mage_integrations.sources.chargebee.streams import (
-    STREAMS,
     ITEM_MODEL_AVAILABLE_STREAMS,
     PLAN_MODEL_AVAILABLE_STREAMS,
+    STREAMS,
 )
-from singer.schema import Schema
-from typing import Dict, Generator, List
 
 
 class Chargebee(Source):
@@ -19,15 +21,18 @@ class Chargebee(Source):
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query is None:
+            query = {}
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](
             self.config,
             self.state,
             stream,
-            self.client
+            self.client,
+            logger=self.logger,
         )
 
         return stream_obj.load_data()
@@ -51,9 +56,10 @@ class Chargebee(Source):
         site_configurations = response['configurations']
         self.logger.info(f'Configurations API response {response}')
         product_catalog_version = next(
-                                    iter(config['product_catalog_version'] for config in site_configurations
-                                         if config['domain'].lower() == site_name.lower()),
-                                    None)
+            iter(config['product_catalog_version'] for config in site_configurations
+                 if config['domain'].lower() == site_name.lower()),
+            None,
+        )
         if product_catalog_version == 'v2':
             available_streams = ITEM_MODEL_AVAILABLE_STREAMS
             self.config['item_model'] = True

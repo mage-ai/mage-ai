@@ -12,8 +12,10 @@ from mage_ai.data_preparation.models.block.errors import HasDownstreamDependenci
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_integration_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class BlockTest(DBTestCase):
@@ -75,16 +77,14 @@ def remove_duplicate_rows(df):
             'output_0',
             variable_type='dataframe'
         )
-        analysis = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'output_0',
-            variable_type='dataframe_analysis',
-        )
+        # analysis = variable_manager.get_variable(
+        #     pipeline.uuid,
+        #     block2.uuid,
+        #     'output_0',
+        #     variable_type='dataframe_analysis',
+        # )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
         assert_frame_equal(data, df_final)
-
-        analysis
         # TODO (Xiaoyou Wang): uncomment this one serialization of block output is fixed.
         # self.assertEqual(
         #     analysis['metadata']['column_types'],
@@ -733,3 +733,33 @@ def test_output(output, *args) -> None:
         })
         output_variables = block.output_variables()
         self.assertTrue('output_sample_data_stream1' in output_variables)
+
+    def test_file_path(self):
+        block = Block.create('test_transformer', 'transformer', self.repo_path)
+        self.assertEqual(block.file_path, os.path.join(
+            self.repo_path,
+            'transformers',
+            f'{block.uuid}.py',
+        ))
+
+
+class BlockProjectPlatformTests(ProjectPlatformMixin):
+    def test_file_path(self):
+        path = os.path.join('mage_platform', 'transformers', 'test_transformer.py')
+
+        with patch(
+            'mage_ai.data_preparation.models.block.project_platform_activated',
+            lambda: True,
+        ):
+            with patch(
+                'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+                lambda: True,
+            ):
+                block = Block.create(
+                    'test_transformer',
+                    'transformer',
+                    self.repo_path,
+                    configuration=dict(file_source=dict(path=path))
+                )
+
+                self.assertEqual(block.file_path, add_root_repo_path_to_relative_path(path))

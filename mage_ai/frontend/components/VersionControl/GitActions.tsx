@@ -298,7 +298,7 @@ function GitActions({
                       git_branch: {
                         action_type: 'commit',
                         ...payload,
-                      }
+                      },
                     }).then(() => {
                       updateStatus();
                       setPayload(null);

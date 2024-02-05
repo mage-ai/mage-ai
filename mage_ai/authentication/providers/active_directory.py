@@ -8,32 +8,45 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import (
     ACTIVE_DIRECTORY_CLIENT_ID as ACTIVE_DIRECTORY_MAGE_CLIENT_ID,
 )
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_ACTIVE_DIRECTORY
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
+from mage_ai.server.logger import Logger
 from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
 from mage_ai.settings.sso import (
     ACTIVE_DIRECTORY_CLIENT_ID,
     ACTIVE_DIRECTORY_CLIENT_SECRET,
+    ACTIVE_DIRECTORY_ROLES_MAPPING,
 )
+
+logger = Logger().new_server_logger(__name__)
 
 
 class ADProvider(SsoProvider, OauthProvider):
-    provider = OAUTH_PROVIDER_ACTIVE_DIRECTORY
+    provider = ProviderName.ACTIVE_DIRECTORY
 
     def __init__(self):
         self.__validate()
+
+        self.roles_mapping = {}
+        if ACTIVE_DIRECTORY_ROLES_MAPPING:
+            try:
+                self.roles_mapping = json.loads(ACTIVE_DIRECTORY_ROLES_MAPPING)
+            except Exception:
+                logger.exception('Failed to parse roles mapping.')
 
     def __validate(self):
         if not ACTIVE_DIRECTORY_DIRECTORY_ID:
             raise Exception(
                 'AD directory id is empty. '
-                'Make sure the ACTIVE_DIRECTORY_DIRECTORY_ID environment variable is set.')
+                'Make sure the ACTIVE_DIRECTORY_DIRECTORY_ID environment variable is set.'
+            )
         if ACTIVE_DIRECTORY_CLIENT_ID and not ACTIVE_DIRECTORY_CLIENT_SECRET:
             raise Exception(
                 'AD client secret is empty. '
-                'Make sure the ACTIVE_DIRECTORY_CLIENT_SECRET environment variable is set.')
+                'Make sure the ACTIVE_DIRECTORY_CLIENT_SECRET environment variable is set.'
+            )
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
         """
@@ -116,9 +129,13 @@ class ADProvider(SsoProvider, OauthProvider):
 
         return data
 
-    async def get_user_info(self, access_token: str = None, **kwargs) -> Awaitable[Dict]:
+    async def get_user_info(
+        self, access_token: str = None, **kwargs
+    ) -> Awaitable[Dict]:
         if access_token is None:
             raise Exception('Access token is required to fetch user info.')
+
+        mage_roles = []
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 'https://graph.microsoft.com/v1.0/me',
@@ -130,7 +147,57 @@ class ADProvider(SsoProvider, OauthProvider):
             ) as response:
                 userinfo_resp = await response.json()
 
+            if self.roles_mapping:
+                try:
+                    async with session.get(
+                        f'https://graph.microsoft.com/v1.0/servicePrincipals?$filter=appId eq \'{ACTIVE_DIRECTORY_CLIENT_ID}\'&$select=id',  # noqa: E501
+                        headers={
+                            'Content-Type': 'application\\json',
+                            'Authorization': f'Bearer {access_token}',
+                        },
+                        timeout=10,
+                    ) as response:
+                        service_principals = await response.json()
+
+                    resource_id = service_principals.get('value')[0].get('id')
+
+                    async with session.get(
+                        f'https://graph.microsoft.com/v1.0/servicePrincipals/{resource_id}/appRoles',  # noqa: E501
+                        headers={
+                            'Content-Type': 'application\\json',
+                            'Authorization': f'Bearer {access_token}',
+                        },
+                        timeout=10,
+                    ) as response:
+                        app_roles = await response.json()
+
+                    app_role_mapping = {
+                        app_role.get('id'): app_role.get('value')
+                        for app_role in app_roles.get('value')
+                    }
+
+                    async with session.get(
+                        f'https://graph.microsoft.com/v1.0/me/appRoleAssignments?$filter=resourceId eq {resource_id}',  # noqa: E501
+                        headers={
+                            'Content-Type': 'application\\json',
+                            'Authorization': f'Bearer {access_token}',
+                        },
+                        timeout=10,
+                    ) as response:
+                        app_role_assignments = await response.json()
+
+                    for assignment in app_role_assignments.get('value'):
+                        app_role_id = assignment.get('appRoleId')
+                        app_role = app_role_mapping.get(app_role_id)
+                        if app_role and app_role in self.roles_mapping:
+                            mage_roles.append(self.roles_mapping[app_role])
+                except Exception:
+                    logger.exception(
+                        'Failed to map Active Directory roles to Mage roles.'
+                    )
+
         return dict(
             email=userinfo_resp.get('userPrincipalName'),
             username=userinfo_resp.get('userPrincipalName'),
+            user_roles=mage_roles,
         )

@@ -89,6 +89,12 @@ in `ClickHouse` can involve numerous details, it is strongly advised to
 create the destination table manually before loading data to ensure it
 meets specific requirements.
 
+If generating the destination table via Mage export method, one can ovewrite specific column types
+by using the `overwrite_types` dict setting.
+
+Example:
+overwrite_types = {'column_name': 'VARCHAR(255)'}
+
 Here is the ClickHouse data exporter code snippet that you can use:
 
 ```python

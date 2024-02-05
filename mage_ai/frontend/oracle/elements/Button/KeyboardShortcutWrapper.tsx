@@ -19,6 +19,7 @@ export type LinkProps = {
 };
 
 export type KeyboardShortcutSharedProps = {
+  className?: string;
   disabled?: boolean;
   eventActionName?: string;
   eventComponentName?: string;
@@ -28,6 +29,7 @@ export type KeyboardShortcutSharedProps = {
   linkProps?: LinkProps;
   onClick?: (e?: Event) => void;
   openNewTab?: boolean;
+  ref?: any;
   requireKeyUp?: boolean;
   uuid: string;
 };

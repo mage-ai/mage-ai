@@ -31,10 +31,11 @@ export default interface KernelOutputType {
   data?: string | string[];
   block_type?: BlockTypeEnum;
   error?: string;
-  execution_state: ExecutionStateEnum;
+  execution_state?: ExecutionStateEnum;
   metadata?: {
     [key: string]: string;
   };
+  multi_output?: boolean;
   msg_id?: string;
   msg_type?: MsgType;
   pipeline_uuid?: string;

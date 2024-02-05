@@ -8,7 +8,7 @@ from mage_ai.authentication.operation_history.models import (
 )
 
 
-async def record_create_async(
+def record_create(
     resource_type: ResourceType,
     resource_uuid: str,
     user: str = None,
@@ -20,20 +20,20 @@ async def record_create_async(
         resource_uuid=resource_uuid,
         user=user,
     )
-    await reader.save_async(model)
+    reader.save(model)
 
     return model
 
 
-async def record_create_pipeline_async(resource_uuid: str, user: str = None) -> OperationHistory:
-    return await record_create_async(
+def record_create_pipeline(resource_uuid: str, user: str = None) -> OperationHistory:
+    return record_create(
         resource_type=ResourceType.PIPELINE.value,
         resource_uuid=resource_uuid,
         user=user,
     )
 
 
-async def record_detail_async(
+def record_detail(
     resource_type: ResourceType,
     resource_uuid: str,
     user: str = None,
@@ -45,20 +45,20 @@ async def record_detail_async(
         resource_uuid=resource_uuid,
         user=user,
     )
-    await reader.save_async(model)
+    reader.save(model)
 
     return model
 
 
-async def record_detail_pipeline_async(resource_uuid: str, user: str = None) -> OperationHistory:
-    return await record_detail_async(
+def record_detail_pipeline(resource_uuid: str, user: str = None) -> OperationHistory:
+    return record_detail(
         resource_type=ResourceType.PIPELINE.value,
         resource_uuid=resource_uuid,
         user=user,
     )
 
 
-async def load_records_async(
+def load_records(
     operation: OperationType = None,
     resource_type: ResourceType = None,
     timestamp_end: int = None,
@@ -66,7 +66,7 @@ async def load_records_async(
 ) -> List[OperationHistory]:
     reader = OperationHistoryReader()
 
-    return await reader.load_all_history_async(
+    return reader.load_all_history(
         operation=operation,
         resource_type=resource_type,
         timestamp_end=timestamp_end,
@@ -74,12 +74,12 @@ async def load_records_async(
     )
 
 
-async def load_pipelines_async(
+def load_pipelines(
     operation: OperationType = None,
     timestamp_end: int = None,
     timestamp_start: int = None,
 ) -> List[OperationHistory]:
-    return await load_records_async(
+    return load_records(
         operation=operation,
         resource_type=ResourceType.PIPELINE,
         timestamp_end=timestamp_end,
@@ -87,11 +87,11 @@ async def load_pipelines_async(
     )
 
 
-async def load_pipelines_detail_async(
+def load_pipelines_detail(
     timestamp_end: int = None,
     timestamp_start: int = None,
 ) -> List[OperationHistory]:
-    return await load_pipelines_async(
+    return load_pipelines(
         operation=OperationType.DETAIL,
         timestamp_end=timestamp_end,
         timestamp_start=timestamp_start,

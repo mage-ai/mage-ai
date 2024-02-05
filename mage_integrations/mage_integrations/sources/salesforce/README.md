@@ -11,13 +11,29 @@ You must enter the following settings when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `api_type` | The `api_type` is used to switch the behavior of the tap between using Salesforce's "REST" and "BULK" APIs. When new fields are discovered in Salesforce objects, the `select_fields_by_default` key describes whether or not the tap will select those fields by default. | `REST`, `BULK` |
+| `domain` | Your Salesforce instance domain. Use 'login' (default) or 'test' (sandbox), or Salesforce My domain.| `test`, `login`|
+| `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
+| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SSZ`. | `2022-11-30T21:31:20Z` |
+
+If using `OAuth` based authentication:
+| Key | Description | Sample value
+| --- | --- | --- |
 | `client_id` | OAuth Salesforce App secrets. | `ABC1...` |
 | `client_secret` | OAuth Salesforce App secrets. | `ABC1...` |
-| `is_sandbox` | If `true`, then the sandbox account will be used to load dat from. | `true`, `false` |
-| `lookback_window` | The `lookback_window` (in seconds) subtracts the desired amount of seconds from the bookmark to sync past data. Recommended value: 10 seconds. | `10` |
 | `refresh_token` | The `refresh_token` is a secret created during the OAuth flow | `ABC1...` |
-| `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
-| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SS.000000Z`. | `2022-11-30T21:31:20.000000Z` |
+
+If using `Password` based authentication:
+| Key | Description | Sample value
+| --- | --- | --- |
+| `username` | Salesforce account username | `ABC1...` |
+| `password` | Salesforce account password | `ABC1...` |
+| `security_token` | Salesforce account security token | `ABC1...` |
+
+Optional settings:
+| Key | Description | Sample value
+| --- | --- | --- |
+| `threshold` | When running `INCREMENTAL` sync runs, threshold is used to throttle how often STATE messages are generated (in `REST` api_type).This can be useful to minimize the amount of `STATE` messages being generated. | Defaults to 1000
+| `streams` | List of stream names to be discovered inside the salesforce tap. if none is given, the tap will search for all avaliable streams, which can take several minutes. | ["Account"]
 
 <br />
 

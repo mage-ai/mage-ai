@@ -162,8 +162,27 @@ class Postgres(BaseSQL):
         if self.verbose and self.printer.exists_previous_message:
             print('')
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return f"""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name = '{schema_name}'
+            ) THEN
+                EXECUTE 'CREATE SCHEMA {schema_name}';
+            END IF;
+        END
+        $$;
+        """
+
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
+            table_name = table_name.replace('"', '')
             cur.execute(
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
                 f'tablename = \'{table_name}\''
@@ -363,3 +382,16 @@ COPY {full_table_name} ({insert_columns}) FROM STDIN (
     , FORCE_NULL({insert_columns})
 );
         """, buffer)
+
+    def execute(self, query_string: str, **query_vars) -> None:
+        """
+        Sends query to the connected database.
+
+        Args:
+            query_string (str): SQL query string to apply on the connected database.
+            query_vars: Variable values to fill in when using format strings in query.
+        """
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
+            with self.conn.cursor() as cur:
+                cur.execute(query_string, query_vars)

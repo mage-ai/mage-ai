@@ -117,3 +117,8 @@ If Mage terminal or "Run block" button doesn't work, it usually means there's a 
           proxy_set_header Host $host;
         }
 ```
+
+## Server fails to start or keeps restarting due to healthcheck failures
+
+When deploying your Mage server on Cloud (Kubernetes, AWS, GCP, Azure, etc.) with Terraform scripts or Helm chart, there're health checks set up for the
+cloud services. If you notice the server keeps restarting, one possible reason is the health check keeps failing due to timeout. You can try increasing the timeout or the initial delay of the health checks to resolve the issue.

@@ -59,7 +59,7 @@ type IntegrationPipelineProps = {
   ) => Promise<any>;
   blocks: BlockType[];
   codeBlocks?: any;
-  fetchFileTree: () => void;
+  fetchFileTree?: () => void;
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   globalVariables: PipelineVariableType[];
@@ -324,7 +324,7 @@ function IntegrationPipeline({
 
             savePipelineContent(payload).then(() => {
               fetchPipeline();
-              fetchFileTree();
+              fetchFileTree?.();
             });
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -485,7 +485,10 @@ function IntegrationPipeline({
   ]);
 
   const [updateDestinationBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(dataExporterBlock?.uuid),
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

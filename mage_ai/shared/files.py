@@ -1,4 +1,11 @@
+import glob
 import os
+from pathlib import Path
+from typing import Callable, List, Tuple
+
+import aiofiles
+
+from mage_ai.shared.environments import is_debug
 
 
 def reverse_readline(filename, buf_size=8192):
@@ -45,3 +52,82 @@ def read_last_line(filename: str) -> str:
         last_line = f.readline().decode()
 
         return last_line
+
+
+def get_full_file_paths_containing_item(root_full_path: str, comparator: Callable) -> List[str]:
+    configfiles = [os.path.join(
+        dirpath,
+        f,
+    ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
+
+    return configfiles
+
+
+def find_directory(top_level_path: str, comparator: Callable) -> str:
+    for path, _subdirs, files in os.walk(top_level_path):
+        for name in files:
+            full_path = os.path.join(path, name)
+            if comparator(full_path):
+                return full_path
+
+
+def get_absolute_paths_from_all_files(
+    starting_full_path_directory: str,
+    comparator: Callable = None,
+    include_hidden_files: bool = False,
+    parse_values: Callable = None,
+) -> List[Tuple[str, int, str]]:
+    dir_path = os.path.join(starting_full_path_directory, './**/*')
+
+    arr = []
+    for filename in glob.iglob(dir_path, recursive=True):
+        absolute_path = os.path.abspath(filename)
+
+        if os.path.isfile(absolute_path) and \
+                (not include_hidden_files or not absolute_path.startswith('.')) and \
+                (not comparator or comparator(absolute_path)):
+
+            value = (absolute_path, os.path.getsize(filename), round(os.path.getmtime(filename)))
+            arr.append(parse_values(value) if parse_values else value)
+
+    return arr
+
+
+def find_file_from_another_file_path(file_path: str, comparator) -> str:
+    if not file_path or not comparator:
+        return
+
+    if not os.path.isdir(file_path):
+        file_path = os.path.dirname(file_path)
+
+    parts = Path(file_path).parts
+
+    absolute_file_path = None
+
+    while len(parts) > 1 and absolute_file_path is None:
+        if len(parts) == 0:
+            return
+
+        fp = os.path.join(*parts)
+        for fn in os.listdir(fp):
+            afp = os.path.join(fp, fn)
+            if afp is not None and comparator(afp):
+                absolute_file_path = afp
+                break
+
+        parts = parts[:-1]
+
+    return absolute_file_path
+
+
+async def read_async(file_path: str) -> str:
+    dirname = os.path.dirname(file_path)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+
+    async with aiofiles.open(file_path, mode='r') as file:
+        try:
+            return await file.read()
+        except Exception as err:
+            if is_debug():
+                print(f'[ERROR] files.read_async: {err}.')

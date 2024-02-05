@@ -88,6 +88,9 @@ class ClickHouse(BaseSQLDatabase):
 
         return result
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        return self.client.command(query)
+
     def execute_queries(
         self,
         queries: List[str],
@@ -164,15 +167,25 @@ class ClickHouse(BaseSQLDatabase):
         df: DataFrame,
         table_name: str,
         database: str,
+        overwrite_types: Dict = None,
     ):
+
         dtypes = infer_dtypes(df)
         db_dtypes = {
             col: self.get_type(df[col], dtypes[col])
             for col in dtypes
         }
         fields = []
-        for cname in db_dtypes:
-            fields.append(f'{cname} {db_dtypes[cname]}')
+        if overwrite_types is not None:
+
+            for cname in db_dtypes:
+                if cname in overwrite_types.keys():
+                    db_dtypes[cname] = overwrite_types[cname]
+
+                fields.append(f'{cname} {db_dtypes[cname]}')
+        else:
+            for cname in db_dtypes:
+                fields.append(f'{cname} {db_dtypes[cname]}')
 
         command = f'CREATE TABLE {database}.{table_name} (' + \
             ', '.join(fields) + ') ENGINE = Memory'
@@ -188,6 +201,7 @@ class ClickHouse(BaseSQLDatabase):
         query_string: Union[str, None] = None,
         create_table_statement: Union[str, None] = None,
         verbose: bool = True,
+        overwrite_types: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -261,6 +275,7 @@ INSERT INTO {database}.{table_name}
                             df=df,
                             table_name=table_name,
                             database=database,
+                            overwrite_types=overwrite_types,
                         )
                     with self.printer.print_msg(
                            f'Creating a new table: {create_table_stmt}'):

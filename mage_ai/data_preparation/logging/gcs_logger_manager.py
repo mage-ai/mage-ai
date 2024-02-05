@@ -64,8 +64,7 @@ class GCSLoggerManager(LoggerManager):
         """
         return self.get_logs()
 
-    def output_logs_to_destination(self):
-        key = self.get_log_filepath()
+    def upload_logs(self, key: str, logs: str):
         bucket = self.gcs_client.get_bucket(self.gcs_config.bucket)
         blob = bucket.blob(key)
-        blob.upload_from_string(self.stream.getvalue())
+        blob.upload_from_string(logs)

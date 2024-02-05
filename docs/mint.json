@@ -46,12 +46,20 @@
       "url": "guides"
     },
     {
+      "name": "Dev UX",
+      "url": "developer-ux"
+    },
+    {
       "name": "API",
       "url": "api-reference"
     },
     {
       "name": "Deploy",
       "url": "production"
+    },
+    {
+      "name": "Platform",
+      "url": "platform"
     },
     {
       "name": "Contribute",
@@ -222,7 +230,8 @@
                 "dbt/snapshots",
                 "dbt/running-dbt-tests"
               ]
-            }
+            },
+            "dbt/developer-experience"
           ]
         },
         "orchestration/global-data-products/overview",
@@ -267,12 +276,14 @@
                 "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
-                "streaming/sources/nats"
+                "streaming/sources/nats",
+                "streaming/sources/rabbitmq"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
+                "streaming/destinations/activemq",
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/bigquery",
                 "streaming/destinations/clickhouse",
@@ -280,6 +291,7 @@
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
                 "streaming/destinations/google-cloud-pubsub",
+                "streaming/destinations/google-cloud-storage",
                 "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
@@ -343,6 +355,7 @@
             {
               "group": "Storage",
               "pages": [
+                "integrations/databases/Algolia",
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
                 "integrations/databases/Chroma",
@@ -354,10 +367,12 @@
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
+                "integrations/databases/Qdrant",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
-                "integrations/databases/trino"
+                "integrations/databases/trino",
+                "integrations/databases/weaviate"
               ]
             },
             "getting-started/kernels"
@@ -512,6 +527,7 @@
             "guides/blocks/markdown-blocks",
             "guides/blocks/r-blocks",
             "guides/blocks/replicate-blocks",
+            "guides/blocks/reorder-blocks",
             "guides/blocks/detach-blocks"
           ]
         },
@@ -611,7 +627,8 @@
           "icon": "pipe-circle-check",
           "pages": [
             "api-reference/pipeline-schedules/overview",
-            "api-reference/pipeline-schedules/read-pipeline-schedules"
+            "api-reference/pipeline-schedules/read-pipeline-schedules",
+            "api-reference/pipeline-schedules/create-pipeline-schedule"
           ]
         },
         {
@@ -760,7 +777,57 @@
               ]
             }
           ]
+        },
+        {
+          "group": "Custom docker image",
+          "pages": [
+            "production/custom-docker-image/non-root-user"
+          ]
         }
+      ]
+    },
+    {
+      "group": "Features",
+      "pages": [
+        "developer-ux/overview",
+        "developer-ux/personalize",
+        "developer-ux/file-browser",
+        "developer-ux/code-editor",
+        "developer-ux/block-dependency-tree",
+        "developer-ux/sidekick"
+      ]
+    },
+    {
+      "group": "Command Center",
+      "pages": [
+        "developer-ux/command-center/spellcaster",
+        "developer-ux/command-center/modes/version-control"
+      ]
+    },
+    {
+      "group": "Applications",
+      "pages": [
+        "developer-ux/applications/overview",
+        "developer-ux/applications/arcane-library",
+        "developer-ux/applications/portal-terminal"
+      ]
+    },
+    {
+      "group": "Overview",
+      "pages": [
+        "platform/overview"
+      ]
+    },
+    {
+      "group": "Designs",
+      "pages": [
+        "platform/designs/setup"
+      ]
+    },
+    {
+      "group": "Projects",
+      "pages": [
+        "platform/projects/management"
       ]
     },
     {
@@ -769,9 +836,10 @@
         "contributing/overview",
         "contributing/development-environment"
       ]
-    },{
+    },
+    {
       "group": "Components",
-      "pages":[
+      "pages": [
         {
           "group": "Backend",
           "icon": "server",
@@ -810,7 +878,8 @@
           "icon": "browser",
           "pages": [
             "contributing/frontend/overview",
-            "contributing/charts/how-to-add"
+            "contributing/charts/how-to-add",
+            "contributing/frontend/testing"
           ]
         },
         {

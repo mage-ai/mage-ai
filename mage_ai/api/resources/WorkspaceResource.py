@@ -4,6 +4,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.manage import get_instances, get_workspaces
 from mage_ai.cluster_manager.workspace.base import Workspace
+from mage_ai.cluster_manager.workspace.kubernetes import KubernetesWorkspace
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
@@ -61,28 +62,6 @@ class WorkspaceResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def member(self, pk, user, **kwargs):
-        cluster_type = self.verify_project(pk)
-        if not cluster_type:
-            query = kwargs.get('query', {})
-            cluster_type = query.get('cluster_type')[0]
-
-        instances = get_instances(cluster_type)
-        instance_map = {instance.get('name'): instance for instance in instances}
-
-        workspace = Workspace.get_workspace(cluster_type, pk)
-
-        return self(
-            dict(
-                workspace=workspace,
-                instance=instance_map[pk],
-            ),
-            user,
-            **kwargs,
-        )
-
-    @classmethod
-    @safe_db_query
     def create(self, payload, user, **kwargs):
         cluster_type = self.verify_project()
         if not cluster_type:
@@ -106,6 +85,28 @@ class WorkspaceResource(GenericResource):
 
         return self(dict(success=True), user, **kwargs)
 
+    @classmethod
+    @safe_db_query
+    def member(self, pk, user, **kwargs):
+        cluster_type = self.verify_project(pk)
+        if not cluster_type:
+            query = kwargs.get('query', {})
+            cluster_type = query.get('cluster_type')[0]
+
+        instances = get_instances(cluster_type)
+        instance_map = {instance.get('name'): instance for instance in instances}
+
+        workspace = Workspace.get_workspace(cluster_type, pk)
+
+        return self(
+            dict(
+                workspace=workspace,
+                instance=instance_map[pk],
+            ),
+            user,
+            **kwargs,
+        )
+
     def update(self, payload, **kwargs):
         workspace = self.model.get('workspace')
 
@@ -117,6 +118,11 @@ class WorkspaceResource(GenericResource):
                 workspace.stop(**args)
             elif action == 'resume':
                 workspace.resume(**args)
+            elif action == 'add_to_ingress':
+                if isinstance(workspace, KubernetesWorkspace):
+                    workspace.add_to_ingress(**args)
+                else:
+                    raise Exception('This workspace does not support ingress.')
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)

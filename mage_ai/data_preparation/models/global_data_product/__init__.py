@@ -1,8 +1,11 @@
 import os
-import yaml
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Dict, List
+
+import yaml
 from dateutil.relativedelta import relativedelta
+
 from mage_ai.data_preparation.models.global_data_product.constants import (
     GlobalDataProductObjectType,
 )
@@ -14,7 +17,6 @@ from mage_ai.shared.dates import week_of_month
 from mage_ai.shared.hash import extract, index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
-from typing import Dict, List
 
 
 @dataclass
@@ -73,7 +75,7 @@ class GlobalDataProduct:
 
         return self._object
 
-    def get_outputs(self) -> Dict:
+    def get_outputs(self, from_notebook: bool = False, global_vars: Dict = None, **kwargs) -> Dict:
         data = {}
 
         if not self.settings or len(self.settings) == 0:
@@ -101,16 +103,23 @@ class GlobalDataProduct:
                         pipeline_schedule_id=row.pipeline_schedule_id,
                         variables=row.variables,
                     )
-                    output_variable_objects = block.output_variable_objects(
+
+                    output_variables = block.output_variables(
                         execution_partition=pipeline_run.execution_partition,
+                        global_vars=global_vars,
+                        from_notebook=from_notebook,
                     )
 
-                    for v in output_variable_objects:
-                        data[block_uuid].append(self.pipeline.variable_manager.get_variable(
-                            self.pipeline.uuid,
-                            block.uuid,
-                            v.uuid,
-                        ))
+                    for variable_name in output_variables:
+                        result = self.pipeline.get_block_variable(
+                            block_uuid=block.uuid,
+                            variable_name=variable_name,
+                            raise_exception=True,
+                            partition=pipeline_run.execution_partition,
+                            global_vars=global_vars,
+                            from_notebook=from_notebook,
+                        )
+                        data[block_uuid].append(result)
 
         return data
 

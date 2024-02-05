@@ -1,12 +1,14 @@
+import os
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class ProfilesTest(TestCase):
+class ProfilesTest(AsyncDBTestCase):
     """
     Tests the Profiles class, which is an interface with dbt profiles.yml files
     """
@@ -58,25 +60,49 @@ target: dev
         - checking the file contents
         - cleaning up the interpolated profiles.yml
         """
-        with Profiles(self.repo_path, self.variables) as profiles:
-            self.assertNotEquals(
-                profiles.profiles_dir,
-                self.repo_path
-            )
+        value = 'mage'
 
-            interpolated_profiles_full_path = Path(profiles.profiles_dir) / 'profiles.yml'
-            with interpolated_profiles_full_path.open('r') as f:
-                interpolated_profiles = yaml.safe_load(f.read())
-            self.assertEqual(
-                self.interpolated_profiles,
-                interpolated_profiles
-            )
+        file_path = os.path.join(
+            self.repo_path,
+            f'.mage_temp_profiles_{value}',
+            'profiles.yml',
+        )
 
-            self.assertTrue(interpolated_profiles_full_path.exists())
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as f:
+            f.write('')
 
-            profiles.clean()
+        class MockUUID:
+            def __str__(self):
+                return value
 
-            self.assertFalse(interpolated_profiles_full_path.exists())
+            @property
+            def hex(self) -> str:
+                return value
+
+        with patch(
+            'mage_ai.data_preparation.models.block.dbt.profiles.uuid.uuid4',
+            lambda: MockUUID(),
+        ):
+            with Profiles(self.repo_path, self.variables) as profiles:
+                self.assertNotEquals(
+                    profiles.profiles_dir,
+                    self.repo_path
+                )
+
+                interpolated_profiles_full_path = Path(profiles.profiles_dir) / 'profiles.yml'
+                with interpolated_profiles_full_path.open('r') as f:
+                    interpolated_profiles = yaml.safe_load(f.read())
+                self.assertEqual(
+                    self.interpolated_profiles,
+                    interpolated_profiles
+                )
+
+                self.assertTrue(interpolated_profiles_full_path.exists())
+
+                profiles.clean()
+
+                self.assertFalse(interpolated_profiles_full_path.exists())
 
     def test_profiles(self):
         profiles = Profiles(self.repo_path, self.variables)

@@ -19,6 +19,7 @@ description: "Triggers for a pipeline."
   "schedule_type": "time",
   "settings": {
     "allow_blocks_to_fail": true,
+    "create_initial_pipeline_run": true,
     "skip_if_previous_running": false
   },
   "sla": 950400,
@@ -90,6 +91,18 @@ description: "Triggers for a pipeline."
   <Expandable title="properties" defaultOpen="true">
     <ResponseField name="allow_blocks_to_fail" type="boolean">
       If `true`, then blocks in the pipeline will continue to run even if unrelated blocks fail.
+    </ResponseField>
+
+    <ResponseField name="create_initial_pipeline_run" type="boolean">
+      If `true`, then an initial pipeline run will be created immediately after enabling the
+      trigger if the trigger's current execution date is after its start date time but before
+      current time.
+
+      For example, if the current time is `1/4/24 12:00 UTC` and you create a daily trigger, the
+      current execution date would be `2024-01-04 00:00`. If the start date was set to
+      `1/3/24 12:00 UTC`, which is before the current execution date, and the `create_initial_pipeline_run`
+      setting was enabled, a pipeline run with execution date `2024-01-04 00:00` would get created
+      immediately.
     </ResponseField>
 
     <ResponseField name="skip_if_previous_running" type="boolean">

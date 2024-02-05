@@ -1,5 +1,5 @@
 ---
-title: "Using data integrations in batch pipelines"
+title: "Using data integrations in batch pipelines (in Beta)"
 sidebarTitle: "Batch pipelines"
 description: "Load data from data integration sources and export to data integration destinations as blocks inside batch pipelines."
 "og:image": "https://img.wattpad.com/5ea336f507cf05c821ffbba96cf6c7739fe8dc3e/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f4672554e706c504b46744b7469413d3d2d313038313931343836362e313638396434663466313232653937363936373434323438363033362e676966"
@@ -66,7 +66,7 @@ dynamic capabilities of a batch pipeline.
 - Dynamically build the source and destination catalog schema at runtime.
 - Source blocks can output its fetched data to any downstream block.
 - Any block can output its data to a destination block and have it exported to that destination.
-- `[Coming soon]` *Support incremental sync*.
+- Support incremental sync
 - `[Coming soon]` *Support log based sync*.
 - `[Coming soon]` *Replicate source and destination blocks*.
 - `[Coming soon]` *Support source and destination blocks as dynamic blocks*.
@@ -973,5 +973,52 @@ streams at once in the <b>Overview</b> section:
             alt="Streams overview with bulk editing"
             src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/overview.png?raw=true"
         />
+    </p>
+</Frame>
+
+---
+
+## Incremental sync
+
+Synchronize your data incrementally after the 1st sync. 
+
+When you choose 1 or more bookmark values in a stream, the value from that property will be
+saved after each successful sync. The next sync will use that value to compare to the next
+batch of records that need to be synced.
+
+### Override bookmark values
+
+If you want to change the last saved bookmark value for the next sync, you can do this in 2 ways:
+
+<AccordionGroup>
+    <Accordion title="Trigger pipeline to run once" icon="repeat-1" iconType="duotone">
+        <Frame>
+            <video
+                controls
+                className="w-full aspect-video"
+                src="https://github.com/mage-ai/assets/raw/main/batch-pipelines/data-integrations/incremental/triggers-once.mp4"
+            />
+        </Frame>
+    </Accordion>
+
+    <Accordion title="New trigger or edit an existing trigger" icon="bolt" iconType="duotone">
+        <Frame>
+            <video
+                controls
+                className="w-full aspect-video"
+                src="https://github.com/mage-ai/assets/raw/main/batch-pipelines/data-integrations/incremental/triggers-edit.mp4"
+            />
+        </Frame>
+    </Accordion>
+</AccordionGroup>
+
+### Example of bookmark values editor
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Override bookmark values."
+        src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/incremental/bookmark-values.png?raw=true"
+    />
     </p>
 </Frame>

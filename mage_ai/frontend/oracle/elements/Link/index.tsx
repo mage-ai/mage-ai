@@ -28,6 +28,7 @@ export type LinkProps = {
   fullWidth?: boolean;
   height?: number;
   href?: string;
+  hoverBackground?: boolean;
   inline?: boolean;
   large?: boolean;
   minWidth?: number;
@@ -50,6 +51,9 @@ export type LinkProps = {
   selected?: boolean;
   small?: boolean;
   sky?: boolean;
+  style?: {
+    [key: string]: string | number;
+  };
   tabIndex?: number;
   target?: string;
   textOverflow?: string;
@@ -147,6 +151,12 @@ export const SHARED_LINK_STYLES = css<any>`
   ${props => props.selected && `
     background: ${(props.theme.interactive || dark.monotone.black)};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).focusBorder};
+  `}
+
+  ${props => props.hoverBackground && `
+    &:hover {
+      background: ${(props.theme.interactive || dark.interactive).hoverBackgroundTransparent};
+    }
   `}
 
   ${props => props.transparentBorder && `
@@ -303,7 +313,11 @@ const Link = ({
         e.preventDefault();
       }
       if (onClick && !disabled) {
-        onClick(e);
+        try {
+          onClick(e);
+        } catch(err) {
+          console.log(err);
+        }
       }
     }}
     onDoubleClick={(e) => {

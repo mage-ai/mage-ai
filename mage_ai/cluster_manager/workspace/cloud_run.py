@@ -3,7 +3,7 @@ import os
 import yaml
 
 from mage_ai.cluster_manager.config import CloudRunWorkspaceConfig
-from mage_ai.cluster_manager.constants import GCP_PROJECT_ID
+from mage_ai.cluster_manager.constants import GCP_PROJECT_ID, ClusterType
 from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
 from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.shared.hash import merge_dict
@@ -11,6 +11,7 @@ from mage_ai.shared.hash import merge_dict
 
 class CloudRunWorkspace(Workspace):
     config_class = CloudRunWorkspaceConfig
+    cluster_type = ClusterType.CLOUD_RUN
 
     def __init__(self, name: str):
         super().__init__(name)
@@ -62,3 +63,9 @@ class CloudRunWorkspace(Workspace):
 
     def update(self, **kwargs):
         raise NotImplementedError('Update not implemented for Cloud Run')
+
+    def stop(self):
+        raise NotImplementedError('Stop not implemented for Cloud Run')
+
+    def resume(self, **kwargs):
+        raise NotImplementedError('Resume not implemented for Cloud Run')

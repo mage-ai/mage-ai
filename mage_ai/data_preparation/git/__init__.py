@@ -9,21 +9,29 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
+from mage_ai.data_preparation.git.constants import (
+    DEFAULT_KNOWN_HOSTS_FILE,
+    DEFAULT_SSH_KEY_DIRECTORY,
+    GIT_ACCESS_TOKEN_VAR,
+    GIT_SSH_PRIVATE_KEY_VAR,
+    GIT_SSH_PUBLIC_KEY_VAR,
+)
+from mage_ai.data_preparation.git.utils import (
+    build_authenticated_remote_url,
+    check_connection,
+    poll_process_with_timeout,
+)
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
-DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser(os.path.join('~', '.ssh'))
-DEFAULT_KNOWN_HOSTS_FILE = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
 REMOTE_NAME = 'mage-repo'
 
 # Git authentication variables
-GIT_SSH_PUBLIC_KEY_VAR = 'GIT_SSH_PUBLIC_KEY'
-GIT_SSH_PRIVATE_KEY_VAR = 'GIT_SSH_PRIVATE_KEY'
-GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
@@ -41,7 +49,13 @@ class Git:
         self.origin = None
         self.remote_repo_link = None
         self.repo = None
+
         self.repo_path = os.getcwd()
+
+        if project_platform_activated():
+            git_dict = git_settings()
+            if git_dict and git_dict.get('path'):
+                self.repo_path = git_dict.get('path')
 
         if self.git_config:
             self.remote_repo_link = self.git_config.remote_repo_link
@@ -55,16 +69,13 @@ class Git:
         os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
-            url = None
-            if self.remote_repo_link:
-                url = urlsplit(self.remote_repo_link)
-
             token = self.get_access_token()
-
-            if self.git_config and url:
-                user = self.git_config.username
-                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-                self.remote_repo_link = urlunsplit(url)
+            if self.git_config and self.remote_repo_link and token:
+                self.remote_repo_link = build_authenticated_remote_url(
+                    self.remote_repo_link,
+                    self.git_config.username,
+                    token,
+                )
 
         try:
             self.repo = git.Repo(self.repo_path)
@@ -75,7 +86,7 @@ class Git:
         if self.repo and self.git_config:
             self.__set_git_config()
 
-        if self.remote_repo_link:
+        if self.remote_repo_link and self.repo:
             try:
                 self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
             except git.exc.GitCommandError:
@@ -93,11 +104,17 @@ class Git:
         user: User = None,
         setup_repo: bool = True,
         auth_type: str = None,
+        config_overwrite: Dict = None,
     ) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
-        if preferences and preferences.sync_config:
-            git_config = GitConfig.load(config=preferences.sync_config)
+        config = preferences.sync_config if preferences and preferences.sync_config else {}
+
+        if config_overwrite:
+            config.update(**config_overwrite)
+
+        git_config = GitConfig.load(config=config)
+
         return Git(
             auth_type=auth_type,
             git_config=git_config,
@@ -132,7 +149,7 @@ class Git:
                 as_process=True,
             )
             try:
-                stdout = await self.__poll_process_with_timeout(
+                stdout = await poll_process_with_timeout(
                     proc,
                     error_message='Error fetching untracked files',
                     timeout=10,
@@ -156,7 +173,7 @@ class Git:
             untracked_files=untracked_files,
         )
         try:
-            stdout = await self.__poll_process_with_timeout(
+            stdout = await poll_process_with_timeout(
                 proc,
                 error_message='Error fetching untracked files',
                 timeout=10,
@@ -199,7 +216,7 @@ class Git:
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
-        await self.__poll_process_with_timeout(
+        await poll_process_with_timeout(
             proc,
             error_message='Error connecting to remote, make sure your access token or SSH key is ' +
             'set up properly.',
@@ -272,15 +289,18 @@ class Git:
             repo = self.repo
             repo_path = self.repo_path
 
-        parser = GitConfigParser(
-            os.path.join(repo_path, '.gitmodules'),
-            read_only=True,
-        )
+        gitmodules_path = os.path.join(repo_path, '.gitmodules')
+
+        def update_gitmodules(section: str, option: str, value: Any):
+            gitmodules_parser = GitConfigParser(gitmodules_path, read_only=False)
+            gitmodules_parser.set(section, option, value)
+            gitmodules_parser.release()
+
+        parser = GitConfigParser(gitmodules_path)
         sections = parser.sections()
         for section in sections:
             path = parser.get(section, 'path', fallback=None)
             submodule_url = parser.get(section, 'url', fallback=None)
-            parser.release()
             if path and submodule_url:
                 submodule_full_path = os.path.join(repo_path, path)
                 tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
@@ -303,8 +323,9 @@ class Git:
                         url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                         url = urlunsplit(url)
                         # Overwrite the submodule URL with git credentials.
-                        repo.config_writer().set_value(
-                            f'submodule.{path}', 'url', url).release()
+                        update_gitmodules(section, 'url', url)
+
+                    repo.git.submodule('sync', '--', path)
 
                     subprocess.run(
                         [
@@ -327,11 +348,15 @@ class Git:
                 else:
                     print(f'{section} updated!')
                 finally:
+                    # Restore the submodule URL.
+                    update_gitmodules(section, 'url', submodule_url)
                     if os.path.exists(tmp_full_path):
                         shutil.rmtree(tmp_full_path)
                     repo_config_writer = repo.config_writer()
-                    repo_config_writer.remove_section(f'submodule.{path}')
+                    repo_config_writer.remove_section(section)
                     repo_config_writer.release()
+
+        parser.release()
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -443,6 +468,13 @@ class Git:
         if message:
             self.repo.index.commit(message)
 
+    def update_config(self, settings: Dict) -> None:
+        for key, value in settings.items():
+            self.repo.config_writer().set_value(
+                *key.split('.'),
+                value,
+            ).release()
+
     def remotes(self, limit: int = 40, user: User = None) -> List[Dict]:
         arr = []
 
@@ -476,7 +508,7 @@ class Git:
                         if remote_exists:
                             token = access_token.token
                             username = api.get_username(token)
-                            url = api.build_authenticated_remote_url(
+                            url = build_authenticated_remote_url(
                                 remote_url,
                                 username,
                                 token,
@@ -486,7 +518,7 @@ class Git:
 
                             authenticated = False
                             try:
-                                api.check_connection(self.repo, url)
+                                check_connection(self.repo.git, url)
                                 authenticated = True
                             except Exception as err:
                                 print('WARNING (mage_ai.data_preparation.git.remotes):')
@@ -719,7 +751,7 @@ class Git:
             )
 
             asyncio.run(
-                self.__poll_process_with_timeout(
+                poll_process_with_timeout(
                     proc,
                     error_message='Error cloning repo.',
                     timeout=20,
@@ -746,7 +778,7 @@ class Git:
             return True
         return False
 
-    async def __poll_process_with_timeout(
+    async def poll_process_with_timeout(
         self,
         proc: subprocess.Popen,
         error_message: str = None,

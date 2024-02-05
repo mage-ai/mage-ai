@@ -67,7 +67,8 @@ export const FileTabStyle = styled.div<{
 }>`
   border-right: 1px solid transparent;
   height: 100%;
-  padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
+  padding: ${1 * UNIT}px ${1.5 * UNIT}px;
+  position: relative;
 
   ${props => `
     &:hover {
@@ -81,7 +82,7 @@ export const FileTabStyle = styled.div<{
   `}
 
   ${props => props.selected && `
-    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
   ${props => !props.selected && !props.last && `

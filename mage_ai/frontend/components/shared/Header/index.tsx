@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
-import { useContext, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -15,28 +15,40 @@ import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import LaunchKeyboardShortcutText from '@components/CommandCenter/LaunchKeyboardShortcutText';
+import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
-import ProjectType from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
+import useDelayFetch from '@api/utils/useDelayFetch';
+import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { Branch, Slack } from '@oracle/icons';
+import { BranchAlt, Planet, Slack, UFO } from '@oracle/icons';
 import {
+  ButtonInputStyle,
+  CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
+  MediaStyle,
 } from './index.style';
+import { CommandCenterStateEnum } from '@interfaces/CommandCenterType';
+import { CustomEventUUID, CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { getUser } from '@utils/session';
+import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
+import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getSetSettings } from '@storage/CommandCenter/utils';
+import { launchCommandCenter } from '@components/CommandCenter/utils';
+import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
+import { useError } from '@context/Error';
 
 export type BreadcrumbType = BreadcrumbTypeOrig;
 
@@ -60,44 +72,102 @@ function Header({
   project: projectProp,
   version: versionProp,
 }: HeaderProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'shared/Header',
+  });
+
   const themeContext = useContext(ThemeContext);
   const userFromLocalStorage = getUser();
 
+  const [commandCenterState, setCommandCenterState] = useState<CommandCenterStateEnum>(null);
+  const [enableCommandCenterLoading, setEnableCommandCenterLoading] = useState<boolean>(false);
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState<number>(null);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
 
   const menuRef = useRef(null);
+  const projectRef = useRef(null);
   const refUserMenu = useRef(null);
   const router = useRouter();
 
+  const loggedIn = AuthToken.isLoggedIn();
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_branches.detail(
+  } = useDelayFetch(api.git_branches.detail,
     'test',
     {
       _format: 'with_basic_details',
     },
     {
       revalidateOnFocus: false,
-    });
+    }, {
+      pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
+    },
+    {
+      delay: 11000,
+    },
+  );
   const {
     is_git_integration_enabled: gitIntegrationEnabled,
     name: branch,
   } = useMemo(() => dataGitBranch?.['git_branch'] || {}, [dataGitBranch]);
 
   const {
-    data: dataProjects,
-  } = api.projects.list({}, { revalidateOnFocus: false }, { pauseFetch: !!projectProp });
-  const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
-  const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
+    design,
+  } = useCustomDesign();
 
-  const loggedIn = AuthToken.isLoggedIn();
+  const {
+    featureEnabled,
+    featureUUIDs,
+    isLoadingUpdate,
+    project: projectInit,
+    rootProject,
+    updateProject,
+  } = useProject();
+  const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
+  const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
+  const commandCenterEnabled = useMemo(() =>
+    CommandCenterStateEnum.CLOSED === commandCenterState
+    || CommandCenterStateEnum.OPEN === commandCenterState
+    || featureEnabled?.(featureUUIDs?.COMMAND_CENTER), [
+    commandCenterState,
+    featureEnabled,
+    featureUUIDs,
+  ]);
+  projectRef.current = project;
+
+  const launchCommandCenterWrapper = useCallback(() => {
+    if (commandCenterEnabled) {
+      launchCommandCenter();
+    } else {
+      setEnableCommandCenterLoading(true);
+      updateProject({
+        features: {
+          ...(project?.features || {}),
+          [featureUUIDs?.COMMAND_CENTER]: true,
+        },
+      }).then((response) => {
+        if (response?.data?.error) {
+          setEnableCommandCenterLoading(false);
+          showError({
+            errors: response?.data?.error,
+            response,
+          });
+        } else {
+          if (typeof window !== 'undefined') {
+            const eventCustom = new CustomEvent(CustomEventUUID.COMMAND_CENTER_ENABLED);
+            window.dispatchEvent(eventCustom);
+          }
+        }
+      });
+    }
+  }, [commandCenterEnabled, featureUUIDs, project, updateProject]);
+
   const logout = () => {
     AuthToken.logout(() => {
-      api.sessions.updateAsync(null, 1)
+      api.sessions.updateAsyncServer(null, 1)
         .then(() => {
           redirectToUrl('/sign-in');
         })
@@ -107,34 +177,142 @@ function Header({
     });
   };
 
-  const breadcrumbs = useMemo(() => breadcrumbsProp || [{
-    bold: true,
-    label: () => project?.name,
-    linkProps: {
-      href: '/',
-      sameColorText: true,
-    },
-  }], [breadcrumbsProp, project]);
+  const breadcrumbProjects = [];
+  if (rootProject) {
+    breadcrumbProjects.push({
+      label: () => rootProject?.name,
+      linkProps: {
+        href: '/',
+      },
+    });
+  }
+
+  if (project) {
+    const crumb: BreadcrumbType = {
+      label: () => project?.name,
+    };
+
+    if (rootProject) {
+      crumb.loading = isLoadingUpdate && !enableCommandCenterLoading;
+      crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
+        onClick: () => {
+          updateProject({
+            activate_project: projectName,
+          }).then((response) => {
+            if (response?.data?.error) {
+              showError({
+                errors: response?.data?.error,
+                response,
+              });
+            } else {
+              if (typeof window !== 'undefined') {
+                window.location.reload();
+              }
+            }
+          });
+        },
+        selected: projectName === project?.name,
+        uuid: projectName,
+      }));
+    } else {
+      crumb.linkProps = {
+        href: '/',
+      };
+    }
+
+    breadcrumbProjects.push(crumb);
+  }
+
+  const breadcrumbs = useMemo(() => {
+    // breadcrumbsProp || [{
+    //   bold: true,
+    //   label: () => project?.name,
+    //   linkProps: {
+    //     href: '/',
+    //     sameColorText: true,
+    //   },
+    // }]
+
+    return [
+      ...breadcrumbProjects,
+      ...(breadcrumbsProp || []),
+    ];
+  }, [
+    breadcrumbProjects,
+    breadcrumbsProp,
+    project,
+  ]);
   const { pipeline: pipelineUUID } = router.query;
 
   const { latest_version: latestVersion } = project || {};
 
-  const logoLink = useMemo(() => (
-    <NextLink
-      as="/"
-      href="/"
-      passHref
-    >
-      <Link
-        block
-        height={LOGO_HEIGHT}
-        noHoverUnderline
-        noOutline
+  const [customMediaSize, setCustomMediaSize] = useState<{
+    height?: number;
+    width?: number;
+  }>(null);
+
+  const customDesignMedia = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const media = design?.components?.header?.media;
+      if (media) {
+        const image = new Image();
+        const imageSrc = media?.url || media?.file_path;
+
+        if (typeof imageSrc !== 'undefined' && imageSrc !== null) {
+          image.src = imageSrc;
+          image.onload = () => {
+            setCustomMediaSize(image);
+          };
+
+          return image;
+        }
+      }
+    }
+  }, [
+    design,
+    setCustomMediaSize,
+  ]);
+
+  const logoLink = useMemo(() => {
+    let logoHeight = LOGO_HEIGHT;
+    let logoEl = <GradientLogoIcon height={LOGO_HEIGHT} />;
+
+    if (design?.components?.header?.media) {
+      const media = design?.components?.header?.media;
+      if (customMediaSize !== null) {
+        const ratio = (customMediaSize?.width || 1) / (customMediaSize?.height || 1);
+
+        logoHeight = CUSTOM_LOGO_HEIGHT;
+        logoEl = (
+          <MediaStyle
+            height={CUSTOM_LOGO_HEIGHT}
+            width={CUSTOM_LOGO_HEIGHT * ratio}
+            url={media?.url || media?.file_path}
+          />
+        );
+      }
+    }
+
+    return (
+      <NextLink
+        as="/"
+        href="/"
+        passHref
       >
-        <GradientLogoIcon height={LOGO_HEIGHT} />
-      </Link>
-    </NextLink>
-  ), []);
+        <Link
+          block
+          height={logoHeight}
+          noHoverUnderline
+          noOutline
+        >
+          {logoEl}
+        </Link>
+      </NextLink>
+    );
+  }, [
+    customMediaSize,
+    design,
+  ]);
 
   const userDropdown: FlyoutMenuItemType[] = [
     {
@@ -144,7 +322,16 @@ function Header({
       },
       uuid: 'user_settings',
     },
+    {
+      label: () => 'Launch command center',
+      onClick: (e) => {
+        pauseEvent(e);
+        launchCommandCenterWrapper();
+      },
+      uuid: 'Launch command center',
+    },
   ];
+
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
     {
@@ -225,6 +412,39 @@ function Header({
     userFromLocalStorage,
   ]);
 
+  useEffect(() => {
+    const handleState = ({
+      detail,
+    }) => {
+      if (detail?.state) {
+        setCommandCenterState(detail?.state);
+
+        if (CommandCenterStateEnum.MOUNTED === detail?.state) {
+          // Only launch this if it was previously disabled.
+          // The feature can be enabled by clicking the button in the header.
+          if (!projectRef?.current?.features?.[FeatureUUIDEnum.COMMAND_CENTER]) {
+            setTimeout(() => {
+              launchCommandCenter();
+              setEnableCommandCenterLoading(false);
+            }, 1);
+          }
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+      }
+    };
+  }, []);
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -234,28 +454,84 @@ function Header({
           justifyContent="space-between"
         >
           <Flex alignItems="center">
-            {version && (
-              <Tooltip
-                height={LOGO_HEIGHT}
-                label={`Version ${version}`}
-                size={null}
-                visibleDelay={300}
-                widthFitContent
-              >
-                {logoLink}
-              </Tooltip>
-            )}
-
-            {!version && logoLink}
+            {logoLink}
 
             <Breadcrumbs
               breadcrumbs={breadcrumbs}
             />
           </Flex>
 
+          {!!project && (
+            <Flex flex={1} alignItems="center" justifyContent="center">
+              <Spacing ml={PADDING_UNITS} />
+
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={(e) => {
+                  pauseEvent(e);
+                  launchCommandCenterWrapper();
+                }}
+              >
+                <ButtonInputStyle active={CommandCenterStateEnum.OPEN === commandCenterState}>
+                  <FlexContainer alignItems="center">
+                    <>
+                      {CommandCenterStateEnum.OPEN === commandCenterState
+                        ? <UFO muted size={2 * UNIT} />
+                        : <Planet
+                          size={2 * UNIT}
+                          success={!enableCommandCenterLoading && !commandCenterEnabled}
+                          warning={enableCommandCenterLoading}
+                        />
+                      }
+                    </>
+
+                    <div style={{ marginRight: 1.5 * UNIT }} />
+
+                    {CommandCenterStateEnum.OPEN !== commandCenterState && (
+                      <Text default noWrapping weightStyle={4}>
+                        {commandCenterEnabled
+                          ? 'Command Center'
+                          : enableCommandCenterLoading
+                            ? 'Launching Command Center' : 'Launch Command Center'
+                        }
+                      </Text>
+                    )}
+                    {CommandCenterStateEnum.OPEN === commandCenterState && (
+                      <Text muted noWrapping>
+                        Command Center launched
+                      </Text>
+                    )}
+
+                    {enableCommandCenterLoading && (
+                      <>
+                        <div style={{ marginRight: 1.5 * UNIT }} />
+                        <Loading
+                          color={themeContext?.accent?.warning}
+                          loadingStyle={LoadingStyleEnum.BLOCKS}
+                          width={1.5 * UNIT}
+                        />
+                      </>
+                    )}
+
+                    {commandCenterEnabled && (
+                      <>
+                        <div style={{ marginRight: 1.5 * UNIT }} />
+                        <LaunchKeyboardShortcutText compact settings={getSetSettings()} small />
+                      </>
+                    )}
+                  </FlexContainer>
+                </ButtonInputStyle>
+              </Button>
+
+              <Spacing mr={PADDING_UNITS} />
+            </Flex>
+          )}
+
           <Flex alignItems="center">
             {gitIntegrationEnabled && branch && (
-              <Spacing ml={1}>
+              <Spacing mr={1}>
                 <KeyboardShortcutButton
                   compact
                   highlightOnHoverAlt
@@ -267,9 +543,9 @@ function Header({
                   uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
-                    <Branch size={1.5 * UNIT} />
+                    <BranchAlt size={1.5 * UNIT} />
                     <Spacing ml={1} />
-                    <Text monospace small>
+                    <Text monospace noWrapping small>
                       {branchName}
                     </Text>
                   </FlexContainer>
@@ -277,17 +553,30 @@ function Header({
               </Spacing>
             )}
 
-            <Spacing ml={1}>
-              <ServerTimeDropdown
-                projectName={project?.name}
-              />
-            </Spacing>
+            {latestVersion && version && latestVersion !== version && (
+              <Button
+                backgroundColor={YELLOW}
+                borderLess
+                compact
+                linkProps={{
+                  href: 'https://docs.mage.ai/about/releases',
+                }}
+                noHoverUnderline
+                pill
+                sameColorAsText
+                target="_blank"
+                title={`Update to version ${latestVersion}`}
+              >
+                <Text black bold>Update</Text>
+              </Button>
+            )}
 
             {version && typeof(version) !== 'undefined' && (
-              <Spacing ml={2}>
+              <Spacing px={1}>
                 <Link
                   href="https://www.mage.ai/changelog"
                   monospace
+                  noWrapping
                   openNewWindow
                   sameColorAsText
                   small
@@ -297,27 +586,13 @@ function Header({
               </Spacing>
             )}
 
-            {latestVersion && version && latestVersion !== version && (
-              <Spacing ml={1}>
-                <Button
-                  backgroundColor={YELLOW}
-                  borderLess
-                  compact
-                  linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
-                  }}
-                  noHoverUnderline
-                  pill
-                  sameColorAsText
-                  target="_blank"
-                  title={`Update to version ${latestVersion}`}
-                >
-                  <Text black bold>Update</Text>
-                </Button>
-              </Spacing>
-            )}
+            <Spacing ml={1}>
+              <ServerTimeDropdown
+                projectName={project?.name}
+              />
+            </Spacing>
 
-            <Spacing ml={3}>
+            <Spacing ml={1}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
                 compact
@@ -393,7 +668,7 @@ function Header({
 
             {(loggedIn || !REQUIRE_USER_AUTHENTICATION()) && (
               <>
-                <Spacing ml={2} />
+                <Spacing ml={1} />
 
                 <ClickOutside
                   onClickOutside={() => setUserMenuVisible(false)}
@@ -402,10 +677,16 @@ function Header({
                     position: 'relative',
                   }}
                 >
-                  <FlexContainer alignItems="center" flexDirection="row">
-                    <LinkStyle
+                  <FlexContainer alignItems="flex-end" flexDirection="column">
+                    <KeyboardShortcutButton
+                      compact
+                      highlightOnHoverAlt
+                      inline
+                      noBackground
+                      noHoverUnderline
                       onClick={() => setUserMenuVisible(true)}
                       ref={refUserMenu}
+                      uuid="Header/menu"
                     >
                       {hasAvatarEmoji && userFromLocalStorage?.avatar?.length >= 2
                         ? avatarMemo
@@ -418,7 +699,7 @@ function Header({
                           </Circle>
                         )
                       }
-                    </LinkStyle>
+                    </KeyboardShortcutButton>
 
                     <FlyoutMenu
                       alternateBackground

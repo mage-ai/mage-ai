@@ -21,6 +21,7 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     STRING_SERIALIZABLE_COLUMN_TYPES,
     apply_transform_pandas,
     cast_column_types,
+    cast_column_types_polars,
     deserialize_columns,
     serialize_columns,
     should_deserialize_pandas,
@@ -35,6 +36,8 @@ DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
 DATAFRAME_PARQUET_FILE = 'data.parquet'
 DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
 DATAFRAME_CSV_FILE = 'data.csv'
+
+METADATA_FILE = 'type.json'
 
 JSON_FILE = 'data.json'
 JSON_SAMPLE_FILE = 'sample_data.json'
@@ -87,26 +90,43 @@ class Variable:
     def variable_path(self):
         return os.path.join(self.variable_dir_path, self.uuid or '')
 
+    @property
+    def metadata_path(self):
+        return os.path.join(self.variable_path, METADATA_FILE)
+
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
         return os.path.join(pipeline_path, VARIABLE_DIR, clean_name(block_uuid))
 
     def check_variable_type(self, spark=None):
         """
-        Infer variable type based on data in the storage.
+        If the variable has a metadata file, read the variable type from the metadata file.
+        Fallback to inferring variable type based on data in the storage.
         """
+        if self.variable_type is None:
+            try:
+                if self.storage.path_exists(self.metadata_path):
+                    metadata = self.storage.read_json_file(self.metadata_path, raise_exception=True)
+                    self.variable_type = metadata.get('type')
+            except Exception:
+                traceback.print_exc()
+
         if self.variable_type is None and self.storage.path_exists(
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
-        elif ((self.variable_type == VariableType.DATAFRAME or self.variable_type is None)
-                and os.path.exists(
-                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
+        elif (
+            self.variable_type == VariableType.DATAFRAME or self.variable_type is None
+        ) and os.path.exists(
+            os.path.join(self.variable_path, f'{self.uuid}', 'data.sh')
+        ):
             self.variable_type = VariableType.GEO_DATAFRAME
-        elif self.variable_type is None and \
-                len(self.storage.listdir(self.variable_path, suffix='.parquet')) > 0 and \
-                spark is not None:
+        elif (
+            self.variable_type is None
+            and len(self.storage.listdir(self.variable_path, suffix='.parquet')) > 0
+            and spark is not None
+        ):
             self.variable_type = VariableType.SPARK_DATAFRAME
 
     def convert_parquet_to_csv(self):
@@ -164,6 +184,12 @@ class Variable:
                 sample=sample,
                 sample_count=sample_count,
             )
+        elif self.variable_type == VariableType.POLARS_DATAFRAME:
+            return self.__read_polars_parquet(
+                raise_exception=raise_exception,
+                sample=sample,
+                sample_count=sample_count,
+            )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
@@ -193,6 +219,11 @@ class Variable:
         """
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.POLARS_DATAFRAME:
+            return self.__read_polars_parquet(
+                sample=sample,
+                sample_count=sample_count,
+            )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
@@ -222,6 +253,9 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
+        if isinstance(data, pd.Series):
+            data = data.to_list()
+
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
         elif self.variable_type is None and type(data) is pl.DataFrame:
@@ -231,6 +265,12 @@ class Variable:
         elif is_geo_dataframe(data):
             self.variable_type = VariableType.GEO_DATAFRAME
 
+        # Dataframe analysis variables share the same uuid as the original dataframe variable
+        # so we won't write the metadata file for them
+        if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            self.__write_dataframe_analysis(data)
+            return
+
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
@@ -239,10 +279,10 @@ class Variable:
             self.__write_spark_parquet(data)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             self.__write_geo_dataframe(data)
-        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            self.__write_dataframe_analysis(data)
         else:
             self.__write_json(data)
+
+        self.write_metadata()
 
     async def write_data_async(self, data: Any) -> None:
         """
@@ -260,6 +300,10 @@ class Variable:
         elif is_geo_dataframe(data):
             self.variable_type = VariableType.GEO_DATAFRAME
 
+        if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            self.__write_dataframe_analysis(data)
+            return
+
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
@@ -268,10 +312,21 @@ class Variable:
             self.__write_spark_parquet(data)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             self.__write_geo_dataframe(data)
-        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            self.__write_dataframe_analysis(data)
         else:
             await self.__write_json_async(data)
+
+        self.write_metadata()
+
+    def write_metadata(self) -> None:
+        """
+        Write metadata to the persistent storage.
+        """
+        metadata = dict(
+            type=self.variable_type.value
+            if isinstance(self.variable_type, VariableType)
+            else self.variable_type,
+        )
+        self.storage.write_json_file(self.metadata_path, metadata)
 
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
@@ -300,7 +355,7 @@ class Variable:
         self,
         default_value: Dict = None,
         raise_exception: bool = False,
-        sample: bool = False
+        sample: bool = False,
     ) -> Dict:
         if default_value is None:
             default_value = {}
@@ -443,6 +498,51 @@ class Variable:
             df = cast_column_types(df, column_types)
         return df
 
+    def __read_polars_parquet(
+        self,
+        sample: bool = False,
+        sample_count: int = None,
+        raise_exception: bool = False,
+    ) -> pl.DataFrame:
+        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+        sample_file_path = os.path.join(
+            self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE
+        )
+
+        read_sample_success = False
+        if sample:
+            try:
+                df = self.storage.read_polars_parquet(sample_file_path, use_pyarrow=True)
+                read_sample_success = True
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(
+                        f'Failed to read parquet file: {sample_file_path}'
+                    ) from ex
+                else:
+                    traceback.print_exc()
+        if not read_sample_success:
+            try:
+                df = self.storage.read_polars_parquet(file_path, use_pyarrow=True)
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
+                else:
+                    traceback.print_exc()
+                df = pl.DataFrame()
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if df.shape[0] > sample_count:
+                df = df.head(sample_count)
+
+        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        if self.storage.path_exists(column_types_filename):
+            column_types = self.storage.read_json_file(column_types_filename)
+            # No Mage specific code to serialize columns for polars when writing a variable,
+            # so no need to deserialize columns here
+            df = cast_column_types_polars(df, column_types)
+        return df
+
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
         if spark is None:
             return None
@@ -514,7 +614,7 @@ class Variable:
                     pl_df = pl.from_pandas(df_output)
                     self.__write_polars_dataframe(pl_df)
                     # Test read dataframe from parquet
-                    self. __read_parquet(sample=True, raise_exception=True)
+                    self.__read_parquet(sample=True, raise_exception=True)
 
                     return
                 except Exception:
@@ -536,7 +636,7 @@ class Variable:
         try:
             df_sample_output = df_output_serialized.iloc[
                 :DATAFRAME_SAMPLE_COUNT,
-                :DATAFRAME_SAMPLE_MAX_COLUMNS
+                :DATAFRAME_SAMPLE_MAX_COLUMNS,
             ]
 
             self.storage.write_parquet(
@@ -616,7 +716,8 @@ class Variable:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
             result[k] = await self.storage.read_json_file_async(
-                os.path.join(self.variable_path, f'{k}.json'))
+                os.path.join(self.variable_path, f'{k}.json')
+            )
         return result
 
     def __write_dataframe_analysis(self, data: Dict[str, Dict]) -> None:

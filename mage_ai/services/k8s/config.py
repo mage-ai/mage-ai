@@ -2,19 +2,21 @@ from dataclasses import dataclass
 from typing import Dict
 
 from kubernetes.client import (
+    V1Affinity,
     V1Container,
     V1EnvVar,
     V1LocalObjectReference,
     V1ObjectMeta,
     V1PodSpec,
     V1ResourceRequirements,
+    V1Toleration,
     V1Volume,
     V1VolumeMount,
 )
 
 from mage_ai.services.k8s.constants import CONFIG_FILE, DEFAULT_NAMESPACE
 from mage_ai.shared.config import BaseConfig
-from mage_ai.shared.hash import get_safe_value
+from mage_ai.shared.hash import camel_case_keys_to_snake_case, get_safe_value
 
 # import traceback
 
@@ -50,12 +52,20 @@ class K8sExecutorConfig(BaseConfig):
         executor_config = super().load(config_path=config_path, config=config)
 
         service_account_name = DEFAULT_SERVICE_ACCOUNT_NAME
+        affinity = None
+        tolerations = []
         volumes = []
         image_pull_secrets = {}
         if executor_config.pod:
             service_account_name = (
                 executor_config.pod.get('service_account_name') or DEFAULT_SERVICE_ACCOUNT_NAME
             )
+            if executor_config.pod.get('affinity'):
+                affinity = V1Affinity(
+                    **camel_case_keys_to_snake_case(executor_config.pod['affinity']))
+
+            if executor_config.pod.get('tolerations'):
+                tolerations += [V1Toleration(**e) for e in executor_config.pod['tolerations']]
 
             if executor_config.pod.get('volumes'):
                 volumes += [V1Volume(**e) for e in executor_config.pod['volumes']]
@@ -101,11 +111,13 @@ class K8sExecutorConfig(BaseConfig):
             resources=resources)
 
         executor_config.pod_config = V1PodSpec(
-            volumes=volumes,
-            service_account_name=service_account_name,
+            affinity=affinity,
             containers=[container],
-            restart_policy='Never',
             image_pull_secrets=image_pull_secrets,
+            restart_policy='Never',
+            service_account_name=service_account_name,
+            tolerations=tolerations,
+            volumes=volumes,
         )
         return executor_config
 

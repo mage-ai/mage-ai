@@ -11,6 +11,9 @@ x-server_settings: &server_settings
     - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
     - AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
     - DEBUG=$DEBUG
+    - DEUS_EX_MACHINA=$DEUS_EX_MACHINA
+    - DISABLE_API_TERMINAL_OUTPUT=$DISABLE_API_TERMINAL_OUTPUT
+    - DISABLE_DATABASE_TERMINAL_OUTPUT=$DISABLE_DATABASE_TERMINAL_OUTPUT
     - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
     - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
     - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
@@ -29,6 +32,7 @@ x-server_settings: &server_settings
     - LDAP_BIND_PASSWORD=$LDAP_BIND_PASSWORD
     - LDAP_SERVER=$LDAP_SERVER
     - MAGE_BASE_PATH=$MAGE_BASE_PATH
+    - MAGE_DATA_DIR=$MAGE_DATA_DIR
     - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
     - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
     - NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
@@ -58,6 +62,7 @@ x-app_settings: &app_settings
   ports:
     - 3000:3000
   volumes:
+    - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
     - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
     - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
     - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api

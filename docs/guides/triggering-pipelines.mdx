@@ -62,6 +62,13 @@ payload.
 * (Schedule triggers only) Skip run if previous run still in progress
   * Enabling this setting will tell the scheduler to not initialize the current run if any
     previous run for this trigger is still in progress.
+* (Schedule triggers only) [available starting in v0.9.62] Create initial pipeline run if start date is before current execution period
+  * Enabling this setting will create an initial pipeline run if the pipeline schedule's current
+    execution date is after its start datetime but before the current time.
+  * For example, if the current time is `1/4/24 12:00 UTC` and you create a daily trigger with a start date of `1/3/24 12:00 UTC` and
+    then enable it, a pipeline run with execution date `2024-01-04 00:00` (after the start date time but before the current time) gets
+    immediately created, even though the "next run date" is `2024-01-05 00:00`, which is the next pipeline run date in the future
+    after `1/4/24 12:00`.
 * Allow blocks to fail
   * Enabling this setting will tell the scheduler to continue running the trigger even if 
     a block in the pipeline fails during the execution. The pipeline will continue to run 

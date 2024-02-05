@@ -28,6 +28,7 @@ class KubernetesWorkspaceConfig(WorkspaceConfig):
     namespace: str = None
     container_config: str = None
     ingress_name: str = None
+    pvc_retention_policy: str = None
     service_account_name: str = None
     storage_access_mode: str = None
     storage_class_name: str = None

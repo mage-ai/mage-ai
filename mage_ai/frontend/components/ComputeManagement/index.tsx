@@ -3,13 +3,6 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Clusters from './Clusters';
-import ComputeServiceType, {
-  ComputeServiceUUIDEnum,
-  SetupStepStatusEnum,
-  SetupStepType,
-} from '@interfaces/ComputeServiceType';
-import ConnectionSettings from './ConnectionSettings';
-import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -24,17 +17,15 @@ import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
 import System from './System';
 import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import useComputeService from '@utils/models/computeService/useComputeService'
-import { CardStyle, NavigationStyle } from './index.style';
 import {
   AlertTriangle,
-  Check,
-  Info,
   PowerOnOffButton,
 } from '@oracle/icons';
+import { CardStyle, NavigationStyle } from './index.style';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import {
   COMPUTE_SERVICES,
   COMPUTE_SERVICE_DISPLAY_NAME,
@@ -47,6 +38,7 @@ import {
   TabType,
   buildTabs,
 } from './constants';
+import { DEFAULT_BEFORE_RESIZE_OFFSET } from '@components/TripleLayout/useTripleLayout';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   SparkApplicationType,
@@ -56,14 +48,10 @@ import {
 import {
   PADDING_UNITS,
   UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-  UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { selectKeys } from '@utils/hash';
@@ -150,7 +138,8 @@ function ComputeManagement({
     UNIT * 20,
   ));
   const setBeforeWidth = useCallback((width: number) => {
-    setBeforeWidthState(width || UNIT * 20);
+    // If the DEFAULT_BEFORE_RESIZE_OFFSET is not subtracted, the before panel jumps forward a bit when resizing.
+    setBeforeWidthState((width || UNIT * 20) - DEFAULT_BEFORE_RESIZE_OFFSET);
     set(localStorageKeyBefore, width || UNIT * 20);
   }, [
     localStorageKeyBefore,
@@ -231,7 +220,7 @@ function ComputeManagement({
       setObjectAttributes,
     ]);
 
-  const { data } = api.projects.list({}, {
+  const { data, mutate: fetchProjects } = api.projects.list({}, {
     revalidateOnFocus: false,
   });
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
@@ -286,6 +275,7 @@ function ComputeManagement({
             setAttributesTouched({});
             setObjectAttributesState(objectServer);
             fetchAll();
+            fetchProjects();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -458,7 +448,7 @@ function ComputeManagement({
                 <Button
                   compact
                   onClick={() => {
-                    setSelectedComputeService(null)
+                    setSelectedComputeService(null);
                     setSelectedTab(null);
                   }}
                   secondary
@@ -532,10 +522,11 @@ function ComputeManagement({
       );
     }
   }, [
+    buttonTabsRect?.height,
     computeService,
     containerHeight,
     selectedSql,
-    setupComplete,
+    setSelectedTab,
   ]);
 
   const setupMemo = useMemo(() => (

@@ -284,6 +284,7 @@ class DataIntegrationMixin:
 
         catalog = None
         config = None
+        query = None
         selected_streams = None
 
         key = 'source' if self.is_source() else 'destination'
@@ -356,6 +357,8 @@ class DataIntegrationMixin:
                 for k, v in config.items():
                     if v and isinstance(v, str):
                         config[k] = v.strip()
+            query = settings.get('query')
+
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(
@@ -374,6 +377,7 @@ class DataIntegrationMixin:
             data_integration_uuid = results_from_block_code.get(key)
 
             catalog = results_from_block_code.get('catalog')
+            query = results_from_block_code.get('query')
             selected_streams = results_from_block_code.get('selected_streams')
 
             if not selected_streams and catalog and catalog.get('streams'):
@@ -399,6 +403,7 @@ class DataIntegrationMixin:
                 'catalog': catalog,
                 'config': config,
                 'data_integration_uuid': data_integration_uuid,
+                'query': query,
                 'selected_streams': selected_streams,
                 key: data_integration_uuid,
             }
@@ -419,6 +424,7 @@ class DataIntegrationMixin:
         upstream_block_uuids: List[str] = None,
         all_catalogs: bool = False,
         all_streams: bool = False,
+        **kwargs,
     ) -> Tuple[List, List, List]:
         block_uuids_to_fetch = upstream_block_uuids or self.upstream_block_uuids_for_inputs
 
@@ -453,13 +459,13 @@ class DataIntegrationMixin:
         # Get the output as inputs for this block
         input_vars_fetched, kwargs_vars, up_block_uuids = self.fetch_input_variables(
             input_vars,
-            execution_partition,
-            global_vars,
+            data_integration_settings_mapping=data_integration_settings_mapping,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
             from_notebook=from_notebook,
+            global_vars=global_vars,
             upstream_block_uuids=block_uuids_to_fetch,
-            data_integration_settings_mapping=data_integration_settings_mapping,
         )
 
         if block_uuids_to_fetch and is_debug():
@@ -515,13 +521,13 @@ class DataIntegrationMixin:
                             kwargs_vars_inner, \
                             _up_block_uuids = self.fetch_input_variables(
                                 None,
-                                execution_partition,
-                                global_vars,
+                                data_integration_settings_mapping=data_integration_settings_mapping,
                                 dynamic_block_index=dynamic_block_index,
                                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                                execution_partition=execution_partition,
                                 from_notebook=from_notebook,
+                                global_vars=global_vars,
                                 upstream_block_uuids=[up_uuid],
-                                data_integration_settings_mapping=data_integration_settings_mapping,
                             )
 
                         if input_vars_inner:
@@ -608,6 +614,7 @@ class DataIntegrationMixin:
         decorated_functions_catalog = []
         decorated_functions_config = []
         decorated_functions_destination = []
+        decorated_functions_query = []
         decorated_functions_selected_streams = []
         decorated_functions_source = []
         test_functions = []
@@ -616,6 +623,7 @@ class DataIntegrationMixin:
             'data_integration_catalog': self.__block_decorator_catalog(decorated_functions_catalog),
             'data_integration_config': self._block_decorator(decorated_functions_config),
             'data_integration_destination': self._block_decorator(decorated_functions_destination),
+            'data_integration_query': self._block_decorator(decorated_functions_query),
             'data_integration_selected_streams': self.__block_decorator_selected_streams(
                 decorated_functions_selected_streams,
             ),
@@ -766,6 +774,23 @@ class DataIntegrationMixin:
                     )
             elif catalog_from_file:
                 self._data_integration['catalog'] = catalog_from_file
+
+            if decorated_functions_query:
+                self._data_integration['query'] = {}
+                for decorated_function in decorated_functions_query:
+                    self._data_integration['query'].update(
+                        self.execute_block_function(
+                            decorated_function,
+                            input_vars_use,
+                            from_notebook=from_notebook,
+                            global_vars=merge_dict({
+                                'config': config,
+                                'selected_streams': self._data_integration.get('selected_streams'),
+                                key: data_integration_uuid,
+                            }, global_vars),
+                            initialize_decorator_modules=False,
+                        ),
+                    )
 
         _print_time()
 

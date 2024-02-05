@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Dict
+from typing import Dict, List
 
 from mage_ai.extensions.great_expectations.constants import (
     EXTENSION_UUID as EXTENSION_UUID_GREAT_EXPECTATIONS,
@@ -9,7 +9,10 @@ from mage_ai.shared.hash import index_by
 
 def handle_run_tests(
     block,
+    dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_block_uuid: str = None,
+    dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
     global_vars: Dict = None,
     logger: Logger = None,
@@ -34,7 +37,10 @@ def handle_run_tests(
 
     for extension_block in extension_blocks:
         extension_block.execute_sync(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_block_uuid=dynamic_block_uuid,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             execution_partition=execution_partition,
             global_vars=global_vars,
             logger=logger,

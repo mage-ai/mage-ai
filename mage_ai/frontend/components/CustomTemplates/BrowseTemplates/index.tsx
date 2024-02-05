@@ -6,6 +6,7 @@ import {
 import { ThemeContext } from 'styled-components';
 import { useRouter } from 'next/router';
 
+import BlockNavigation from './Navigation/BlockNavigation';
 import Breadcrumbs, { BreadcrumbType } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -138,47 +139,6 @@ function BrowseTemplates({
   }, [
     dataCustomPipelineTemplates,
     selectedLink,
-  ]);
-
-  const linksBlocks = useMemo(() => NAV_LINKS.map((navLink: NavLinkType) => {
-    const {
-      Icon,
-      label,
-      selectedBackgroundColor,
-      selectedIconProps,
-      uuid,
-    } = navLink;
-    const isSelected = selectedLink?.uuid === uuid;
-    const IconProps = {
-      size: ICON_SIZE,
-      ...(isSelected && selectedIconProps ? selectedIconProps : {}),
-    };
-
-    return (
-      <NavLinkStyle
-        key={uuid}
-        onClick={() => setSelectedLink(navLink)}
-        selected={isSelected}
-      >
-        <FlexContainer alignItems="center">
-          <IconStyle
-            backgroundColor={isSelected && selectedBackgroundColor
-              ? selectedBackgroundColor(themeContext)
-              : null
-            }
-          >
-            {Icon ? <Icon {...IconProps} /> : <BlocksStacked {...IconProps} />}
-          </IconStyle>
-
-          <Text bold large>
-            {label ? label() : uuid}
-          </Text>
-        </FlexContainer>
-      </NavLinkStyle>
-    );
-  }), [
-    selectedLink,
-    themeContext,
   ]);
 
   const linksPipelines = useMemo(() => NAV_LINKS_PIPELINES.map((navLink: NavLinkType) => {
@@ -471,7 +431,13 @@ function BrowseTemplates({
           contained={contained}
           heightOffset={heightOffset}
         >
-          {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && linksBlocks}
+          {NAV_TAB_BLOCKS.uuid === selectedTab?.uuid && (
+            <BlockNavigation
+              navLinks={NAV_LINKS}
+              selectedLink={selectedLink}
+              setSelectedLink={setSelectedLink}
+            />
+          )}
           {NAV_TAB_PIPELINES.uuid === selectedTab?.uuid && linksPipelines}
         </LinksContainerStyle>
       </NavigationStyle>

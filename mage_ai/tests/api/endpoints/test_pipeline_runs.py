@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import (
@@ -6,6 +7,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_create_endpoint_tests,
@@ -15,6 +17,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_update_endpoint_tests,
 )
 from mage_ai.tests.factory import create_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def get_pipeline(self):
@@ -80,6 +83,57 @@ class PipelineRunAPIEndpointTest(BaseAPIEndpointTest):
         }
 
 
+@patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
+@patch(
+    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+    lambda: True,
+)
+class PipelineRunProjectPlatformTests(ProjectPlatformMixin, BaseAPIEndpointTest):
+    async def test_collection_project_platform_activated(self):
+        pipelines = []
+        pipeline_schedules = []
+        pipeline_runs = []
+
+        for settings in self.repo_paths.values():
+            pipeline = create_pipeline_with_blocks(
+                self.faker.unique.name(),
+                settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+            pipeline_schedule = PipelineSchedule.create(
+                name=self.faker.unique.name(),
+                pipeline_uuid=pipeline.uuid,
+                repo_path=settings['full_path'],
+            )
+            pipeline_schedules.append(pipeline_schedule)
+
+            pipeline_run = PipelineRun.create(
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            )
+            pipeline_runs.append(pipeline_run)
+
+        results = await self.build_test_list_endpoint(
+            resource='pipeline_runs',
+            authentication=1,
+            list_count=2,
+            patch_function_settings=[
+                ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+                (
+                    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+                    lambda: True,
+                ),
+            ],
+        )
+
+        for pipeline_run in pipeline_runs:
+            self.assertIn(
+                pipeline_run.id,
+                [result['id'] for result in results],
+            )
+
+
 # No parent
 build_list_endpoint_tests(
     PipelineRunAPIEndpointTest,
@@ -108,6 +162,51 @@ build_list_endpoint_tests(
         'updated_at',
         'variables',
     ],
+)
+
+
+def __assert_after(test_case, results, mocks, mock_objects):
+    mocks[0].assert_called_once_with(get_repo_path())
+
+
+# Project platform
+build_list_endpoint_tests(
+    PipelineRunAPIEndpointTest,
+    list_count=3,
+    build_query=lambda self: {
+        'include_pipeline_uuids': [
+            True,
+        ],
+    },
+    test_uuid='include_pipeline_uuids',
+    resource='pipeline_run',
+    result_keys_to_compare=[
+        'backfill_id',
+        'block_runs',
+        'block_runs_count',
+        'completed_at',
+        'completed_block_runs_count',
+        'created_at',
+        'event_variables',
+        'execution_date',
+        'executor_type',
+        'id',
+        'metrics',
+        'passed_sla',
+        'pipeline_schedule_id',
+        'pipeline_schedule_name',
+        'pipeline_schedule_token',
+        'pipeline_schedule_type',
+        'pipeline_uuid',
+        'started_at',
+        'status',
+        'updated_at',
+        'variables',
+    ],
+    patch_function_settings=[
+        ('mage_ai.api.resources.PipelineRunResource.Pipeline.get_all_pipelines_all_projects',),
+    ],
+    assert_after=__assert_after,
 )
 
 

@@ -11,7 +11,13 @@ from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
-from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+from mage_ai.settings import (
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+    SERVER_LOGGING_FORMAT,
+    SERVER_VERBOSITY,
+)
+from mage_ai.shared.logger import set_logging_format
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
@@ -34,10 +40,16 @@ def run_scheduler():
             database_manager.run_migrations()
     except Exception:
         traceback.print_exc()
+
+    set_logging_format(
+        logging_format=SERVER_LOGGING_FORMAT,
+        level=SERVER_VERBOSITY,
+    )
+
     try:
         LoopTimeTrigger().start()
     except Exception as e:
-        traceback.print_exc()
+        logger.exception('Failed to run scheduler.')
         raise e
 
 

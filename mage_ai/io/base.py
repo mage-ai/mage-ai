@@ -2,7 +2,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import IO, Any, Callable, Union
+from typing import IO, Any, Callable, Dict, Union
 
 import pandas as pd
 from pandas import DataFrame
@@ -14,6 +14,7 @@ QUERY_ROW_LIMIT = 10_000_000
 
 
 class DataSource(str, Enum):
+    ALGOLIA = 'algolia'
     API = 'api'
     BIGQUERY = 'bigquery'
     CHROMA = 'chroma'
@@ -29,11 +30,13 @@ class DataSource(str, Enum):
     OPENSEARCH = 'opensearch'
     PINOT = 'pinot'
     POSTGRES = 'postgres'
+    QDRANT = 'qdrant'
     REDSHIFT = 'redshift'
     S3 = 's3'
     SNOWFLAKE = 'snowflake'
     SPARK = 'spark'
     TRINO = 'trino'
+    WEAVIATE = 'weaviate'
 
 
 class FileFormat(str, Enum):
@@ -294,6 +297,9 @@ class BaseSQLDatabase(BaseIO):
         if not allow_reserved_words and col_new.upper() in SQL_RESERVED_WORDS:
             col_new = f'_{col_new}'
         return col_new
+
+    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs) -> None:
+        pass
 
 
 class BaseSQLConnection(BaseSQLDatabase):

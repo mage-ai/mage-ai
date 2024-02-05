@@ -8,7 +8,11 @@ from mage_ai.authentication.passwords import verify_password
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role, User
-from mage_ai.settings import AUTHENTICATION_MODE, LDAP_DEFAULT_ACCESS
+from mage_ai.settings import (
+    AUTHENTICATION_MODE,
+    LDAP_DEFAULT_ACCESS,
+    OAUTH_DEFAULT_ACCESS,
+)
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -34,7 +38,8 @@ class SessionResource(BaseResource):
                 email = user_info.get('email')
                 username = user_info.get('username')
                 if 'user_roles' in user_info:
-                    roles = user_info.get('user_roles')
+                    user_roles = user_info.get('user_roles')
+                    roles = Role.query.filter(Role.name.in_(user_roles)).all()
 
             if not email:
                 error = ApiError.RESOURCE_NOT_FOUND
@@ -44,6 +49,8 @@ class SessionResource(BaseResource):
                 user = User.query.filter(User.email == email).first()
                 if not user:  # noqa: E712
                     print('first user login, creating user.')
+                    if not roles and OAUTH_DEFAULT_ACCESS:
+                        roles = Role.query.filter(Role.name == OAUTH_DEFAULT_ACCESS).all()
                     user = User.create(
                         username=username,
                         email=email,
@@ -71,8 +78,10 @@ class SessionResource(BaseResource):
             conn = new_ldap_connection()
             auth, user_dn, user_attributes = conn.authenticate(email, password)
             if not auth:
-                if user_dn != "":
-                    error.update({'message': 'wrong password.'})
+                if not user_dn:
+                    error.update({'message': 'LDAP user not found.'})
+                else:
+                    error.update({'message': 'LDAP password invalid.'})
                 raise ApiError(error)
 
             authz = conn.authorize(user_dn)

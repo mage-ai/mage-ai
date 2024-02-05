@@ -71,24 +71,24 @@ export const isActivePort = (
 };
 
 export function getParentNodeID(uuid: string): string {
-  return `parent:${uuid}`;
+  return `parent→${uuid}`;
 }
 
 export function getParentNodeIDShared(uuids: string[]): string {
-  return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join(':');
+  return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join('→');
 }
 
 export function buildEdgeID(blockUUID: string, upstreamUUID: string): string {
-  return `${upstreamUUID}:${blockUUID}`
+  return `${upstreamUUID}→${blockUUID}`
 }
 
 export function buildEdge(blockUUID: string, upstreamUUID: string): EdgeType {
   return {
     from: upstreamUUID,
-    fromPort: `${upstreamUUID}:${blockUUID}:from`,
+    fromPort: `${upstreamUUID}→${blockUUID}:from`,
     id: buildEdgeID(blockUUID, upstreamUUID),
     to: blockUUID,
-    toPort: `${upstreamUUID}:${blockUUID}:to`,
+    toPort: `${upstreamUUID}→${blockUUID}:to`,
   };
 }
 
@@ -97,7 +97,7 @@ export function buildPortIDDownstream(upstreamBlockUUID: string, downstreamBlock
     upstreamBlockUUID,
     downstreamBlockUUID,
     'from',
-  ].filter(n => n).join(':');
+  ].filter(n => n).join('→');
 }
 
 export function buildPortsDownstream(
@@ -153,7 +153,7 @@ export function buildPortIDUpstream(downstreamBlockUUID: string, upstreamBlockUU
     upstreamBlockUUID,
     downstreamBlockUUID,
     'to',
-  ].filter(n => n).join(':');
+  ].filter(n => n).join('→');
 }
 
 export function buildPortsUpstream(
@@ -302,7 +302,7 @@ export function buildNodesEdgesPorts({
   blocks?.forEach((block: BlockType) => {
     if (block?.upstream_blocks?.length >= 1) {
       const arr = block?.upstream_blocks || [];
-      const key = sortByKey(arr, uuid => uuid).join(',');
+      const key = sortByKey([...arr], uuid => uuid).join(',');
 
       if (!(key in mappingUpstreamBlockSet)) {
         mappingUpstreamBlockSet[key] = {

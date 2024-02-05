@@ -15,3 +15,7 @@ You must enter the following credentials when configuring this source:
 | `request_timeout` | (Optional) Set timeout for requests to the Chargebee API, defaults to 300 seconds | `300` |
 
 <br />
+
+## Streams
+
+Here are all the streams supported in Chargebee source: https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/chargebee/streams

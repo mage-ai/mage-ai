@@ -7,6 +7,13 @@ export enum ClientPageCategoryEnum {
   COMMUNITY = 'community',
 }
 
+export enum ClientPageTypeEnum {
+  DETAIL = 'detail',
+  EDIT = 'edit',
+  LIST = 'list',
+  NEW = 'new',
+}
+
 export default interface ClientPageType {
   category?: ClientPageCategoryEnum;
   components?: PageComponentType[];

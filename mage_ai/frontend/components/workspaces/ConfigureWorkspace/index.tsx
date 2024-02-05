@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -12,15 +12,18 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel/v2';
+import ProjectType, { WorkspaceConfigType } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import {
   ACCESS_MODES,
   GENERAL_K8S_FIELDS,
+  PVC_RETENTION_OPTIONS,
   VOLUME_CLAIM_K8S_FIELDS,
   WORKSPACE_FIELDS,
   WorkspaceFieldType,
@@ -39,17 +42,37 @@ type ConfigureWorkspaceProps = {
   clusterType: string;
   onCancel: () => void;
   onCreate: () => void;
+  project?: ProjectType;
 };
 
 function ConfigureWorkspace({
   clusterType,
   onCancel,
   onCreate,
+  project,
 }: ConfigureWorkspaceProps) {
   const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [workspaceConfig, setWorkspaceConfig] = useState(null);
   const [lifecycleConfig, setLifecycleConfig] = useState(null);
+
+  const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(
+    () => project?.workspace_config_defaults, [project]);
+
+  useEffect(() => {
+    if (defaultWorkspaceConfig) {
+      if (!lifecycleConfig) {
+        setLifecycleConfig(defaultWorkspaceConfig?.lifecycle_config);
+      }
+      if (!workspaceConfig) {
+        const config = {
+          ...defaultWorkspaceConfig?.k8s,
+          name: defaultWorkspaceConfig?.name,
+        };
+        setWorkspaceConfig(config);
+      }
+    }
+  }, [defaultWorkspaceConfig, lifecycleConfig, workspaceConfig]);
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),
@@ -89,7 +112,7 @@ function ConfigureWorkspace({
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
   const [showFileSelector, hideFileSelector] = useModal((opts: {
-    onFileOpen: (filePath: string) => void; 
+    onFileOpen: (filePath: string, file?: any) => void;
     isFileDisabled?: (filePath: string, children: any) => boolean;
   }) => (
     <WindowContainerStyle>
@@ -112,10 +135,11 @@ function ConfigureWorkspace({
       <WindowContentStyle>
         <FileBrowser
           disableContextMenu
-          fetchFileTree={fetchFileTree}
+          fetchFiles={fetchFileTree}
           files={files}
           isFileDisabled={opts?.isFileDisabled}
           openFile={opts.onFileOpen}
+          uuid="ConfigureWorkspace/FileBrowser"
         />
       </WindowContentStyle>
     </WindowContainerStyle>
@@ -220,6 +244,52 @@ function ConfigureWorkspace({
               value={workspaceConfig?.['storage_access_mode']}
             >
               {ACCESS_MODES.map(val => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3}>
+            <Tooltip
+              block
+              description={
+                <Text default inline>
+                  Configure the retention policy for the stateful set PVC.
+                  <br />
+                  Retain will keep the PVC after the workspace is deleted.
+                  <br />
+                  Delete will delete the PVC when the workspace is deleted.
+                </Text>
+              }
+              size={null}
+              widthFitContent
+            >
+              <Text>
+                Retention policy (default: Retain)
+              </Text>
+            </Tooltip>
+          </Flex>
+          <Flex flex={1}>
+            <Select
+              fullWidth
+              label="Retention policy"
+              onChange={(e) => {
+                e.preventDefault();
+                setWorkspaceConfig(prev => ({
+                  ...prev,
+                  pvc_retention_policy: e.target.value,
+                }));
+              }}
+              placeholder="Retention policy"
+              value={workspaceConfig?.['pvc_retention_policy']}
+            >
+              {PVC_RETENTION_OPTIONS.map(val => (
                 <option key={val} value={val}>
                   {val}
                 </option>
@@ -364,7 +434,7 @@ function ConfigureWorkspace({
                   showFileSelector({
                     isFileDisabled: (filePath, children) => 
                       !children && !filePath.endsWith('.py'),
-                    onFileOpen: (filePath) => {
+                    onFileOpen: (filePath, _) => {
                       setLifecycleConfig(prev => ({
                         ...prev,
                         pre_start_script_path: filePath,
@@ -443,7 +513,7 @@ function ConfigureWorkspace({
                 noBorder
                 onClick={() => 
                   showFileSelector({
-                    onFileOpen: (filePath) => {
+                    onFileOpen: (filePath, _) => {
                       setLifecycleConfig(prev => ({
                         ...prev,
                         post_start: {

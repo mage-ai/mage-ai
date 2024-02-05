@@ -26,6 +26,27 @@ class PipelineExecutorTest(DBTestCase):
             'test pipeline 2',
             self.repo_path,
         )
+        data_loader_block = pipeline.get_block('block1')
+        transformer_block = pipeline.get_block('block2')
+        with open(data_loader_block.file_path, 'w') as file:
+            file.write('''
+@data_loader
+def load_data(**kwargs):
+    kwargs['context']['a'] = 1
+    return 'ok1'
+            ''')
+        with open(transformer_block.file_path, 'w') as file:
+            file.write('''
+@transformer
+def transform(*args, **kwargs):
+    if args[0] != 'ok1':
+        raise Exception('upstream block output has wrong value.')
+    if kwargs['context'].get('a') != 1:
+        raise Exception('kwargs context has wrong value.')
+    if kwargs['retry']['attempts'] != 1:
+        raise Exception(f'retry attempts has wrong value.')
+    return 'ok2'
+            ''')
         execution_date = datetime.now()
         pipeline_run = create_pipeline_run_with_schedule(
             pipeline_uuid='test_pipeline_2',

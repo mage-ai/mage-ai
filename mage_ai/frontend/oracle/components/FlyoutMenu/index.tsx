@@ -35,27 +35,30 @@ export type FlyoutMenuItemType = {
   items?: FlyoutMenuItemType[];
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
-  label: () => string | any;
+  label?: () => string | any;
   leftAligned?: boolean;
   linkProps?: {
     as?: string;
     href: string;
+    openNewWindow?: boolean;
   };
   openConfirmationDialogue?: boolean;
+  render?: (el: any) => any;
   isGroupingTitle?: boolean;
-  onClick?: () => void;
+  onClick?: (opts?: any) => void;
   tooltip?: () => string;
   uuid: string;
 };
 
 export type FlyoutMenuProps = {
   alternateBackground?: boolean;
+  compact?: boolean;
   customSubmenuHeights?: { [key: string]: number };
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
   multipleConfirmDialogues?: boolean;
-  onClickCallback?: () => void;
+  onClickCallback?: (e?: any) => void;
   open: boolean;
   parentRef: any;
   rightOffset?: number;
@@ -69,6 +72,7 @@ export type FlyoutMenuProps = {
 
 function FlyoutMenu({
   alternateBackground,
+  compact,
   customSubmenuHeights,
   disableKeyboardShortcuts,
   items,
@@ -138,12 +142,16 @@ function FlyoutMenu({
         const item = items[currentIndex];
         if (item) {
           if (item?.onClick) {
-            item?.onClick?.();
+            item?.onClick?.(event);
           } else if (item?.linkProps) {
-            router.push(item?.linkProps?.href, item?.linkProps?.as);
+            if (item?.linkProps?.openNewWindow && typeof window !== 'undefined') {
+              window.open(item?.linkProps?.href, '_blank');
+            } else {
+              router.push(item?.linkProps?.href, item?.linkProps?.as);
+            }
           }
         }
-        onClickCallback?.();
+        onClickCallback?.(event);
       } else {
         items?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
@@ -224,17 +232,18 @@ function FlyoutMenu({
           openConfirmationDialogue,
           tooltip,
           uuid,
+          render,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
 
           const ElToUse = linkProps ? LinkAnchorStyle : LinkStyle;
 
-          const labelToRender = label();
+          const labelToRender = label ? label?.() : uuid;
 
           if (isGroupingTitle) {
             return (
               <TitleContainerStyle
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 roundedStyle={roundedStyle}
               >
                 {typeof labelToRender === 'string' && (
@@ -254,8 +263,8 @@ function FlyoutMenu({
               disabled={disabled}
               highlighted={highlightedIndices[0] === idx0}
               indent={indent}
-              key={uuid}
-              largePadding={roundedStyle}
+              key={`${uuid}-${idx0}`}
+              largePadding={roundedStyle && !compact}
               onClick={(e) => {
                 if (!linkProps) {
                   e.preventDefault();
@@ -264,10 +273,10 @@ function FlyoutMenu({
                 if (openConfirmationDialogue && !disabled) {
                   setConfirmationDialogueOpen?.(multipleConfirmDialogues ? uuid : true);
                   setConfirmationAction?.(() => onClick);
-                  onClickCallback?.();
+                  onClickCallback?.(e);
                 } else if (onClick && !disabled) {
-                  onClick?.();
-                  onClickCallback?.();
+                  onClick?.(e);
+                  onClickCallback?.(e);
                 }
               }}
               onMouseEnter={() => {
@@ -290,9 +299,14 @@ function FlyoutMenu({
                 }));
               }}
               ref={refArg.current[uuid]}
+              target={linkProps && linkProps?.openNewWindow
+                ? '_blank'
+                : null
+              }
             >
               <FlexContainer
                 alignItems="center"
+                style={{ gridAutoRows: 'auto' }}
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
@@ -310,7 +324,7 @@ function FlyoutMenu({
                         disabled={disabled}
                         noWrapping
                       >
-                        <div role="menuitem">{labelToRender}</div>
+                        <span role="menuitem">{labelToRender}</span>
                       </Text>
                     )}
                   </Flex>
@@ -349,6 +363,7 @@ function FlyoutMenu({
                 block
                 center
                 description={tooltip()}
+                key={`${uuid}-${idx0}`}
                 size={null}
                 widthFitContent
               >
@@ -358,15 +373,21 @@ function FlyoutMenu({
           }
 
           if (linkProps) {
-            return (
+            el = (
               <NextLink
                 {...linkProps}
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 passHref
               >
                 {el}
               </NextLink>
             );
+          }
+
+          if (render) {
+            el = React.cloneElement(render(el), {
+              key: `${uuid}-${idx0}`,
+            });
           }
 
           return el;

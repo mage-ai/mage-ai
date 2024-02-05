@@ -75,7 +75,7 @@ function ConfigureBlock({
   });
 
   // @ts-ignore
-  const sharedPipelinesCount = Object.keys(block?.pipelines || {}).length;
+  const sharedPipelinesCount = (block?.pipelines || [])?.length;
 
   const refTextInput = useRef(null);
   const [blockAttributes, setBlockAttributes] = useState<{
@@ -96,8 +96,9 @@ function ConfigureBlock({
       ...blockAttributes,
       name: blockAttributes?.name || defaultName,
     });
-  }, [blockAttributes, defaultName, onSave]);
-
+    onClose();
+  }, [blockAttributes, defaultName, onClose, onSave]);
+    
   useEffect(() => {
     const handleKeyDown = (event) => {
       event.stopPropagation();
@@ -167,6 +168,7 @@ function ConfigureBlock({
           }) => {
             const {
               block_type: blockType,
+              code, // Raw code without block template
               configuration,
               content,
               language,
@@ -176,7 +178,7 @@ function ConfigureBlock({
               ...prev,
               block_action_object: null,
               configuration: configuration,
-              content,
+              content: content,
               language,
               type: blockType,
             }));
@@ -196,11 +198,19 @@ function ConfigureBlock({
     if (isGenerateBlock && generateBlockCommand && !llm) {
       // @ts-ignore
       createLLM({
+        // llm: {
+        //   request: {
+        //     block_description: generateBlockCommand,
+        //   },
+        //   use_case: LLMUseCaseEnum.GENERATE_CODE,
+        // },
         llm: {
           request: {
             block_description: generateBlockCommand,
+            block_type: BlockTypeEnum.TRANSFORMER,
+            code_language: BlockLanguageEnum.PYTHON,
           },
-          use_case: LLMUseCaseEnum.GENERATE_BLOCK_WITH_DESCRIPTION,
+          use_case: LLMUseCaseEnum.GENERATE_CODE,
         },
       });
     }
@@ -558,7 +568,7 @@ function ConfigureBlock({
               : (isReplacingBlock
                 ? 'replace'
                 : 'add')
-            } block
+            }
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>

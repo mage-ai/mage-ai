@@ -1,18 +1,26 @@
 import hashlib
 import json
 import platform
+import socket
 from datetime import datetime
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, List, Union
 
 import aiohttp
 import pytz
 
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_BLOCK_FILE,
     OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE,
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+    is_replicated_block,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -24,8 +32,8 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.shared.environments import get_env, is_test
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.environments import get_env, is_debug, is_test
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
@@ -138,6 +146,59 @@ class UsageStatisticLogger():
             ),
             event_properties,
         ))
+
+    async def project_deny_improve_mage(self, project_uuid) -> bool:
+        return await self.__send_message(
+            data=dict(
+                object=EventObjectType.PROJECT,
+                action=EventActionType.DENY,
+            ),
+            override_validation=True,
+            project_uuid=project_uuid,
+        )
+
+    async def error(
+        self,
+        event_name: EventNameType,
+        code: int = None,
+        errors: List[str] = None,
+        message: str = None,
+        type: str = None,
+        operation: OperationType = None,
+        resource: str = None,
+        resource_id: str = None,
+        resource_parent: str = None,
+        resource_parent_id: str = None,
+    ) -> bool:
+        resource_id_hashed = None
+        if resource_id is not None:
+            resource_id_hashed = hash(str(resource_id))
+
+        resource_parent_id_hashed = None
+        if resource_parent_id is not None:
+            resource_parent_id_hashed = hash(str(resource_parent_id))
+
+        if message and str(resource_id) in message:
+            message = message.replace(str(resource_id), str(resource_id_hashed))
+        if message and str(resource_parent_id) in message:
+            message = message.replace(str(resource_parent_id), str(resource_parent_id_hashed))
+
+        return await self.__send_message(
+            data=dict(
+                object=EventObjectType.ERROR,
+                action=EventActionType.IMPRESSION,
+                operation=operation,
+                resource=resource,
+                resource_id=resource_id_hashed,
+                resource_parent=resource_parent,
+                resource_parent_id=resource_parent_id_hashed,
+                code=code,
+                errors=errors,
+                message=message,
+                type=type,
+            ),
+            event_name=event_name,
+        )
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -285,16 +346,90 @@ class UsageStatisticLogger():
             event_name=EventNameType.PIPELINE_RUN_ENDED,
         )
 
+    @safe_db_query
+    async def block_run_ended(self, block_run: BlockRun) -> bool:
+        if not self.help_improve_mage:
+            return False
+
+        pipeline_run = block_run.pipeline_run
+        pipeline = pipeline_run.pipeline
+
+        if pipeline.type == PipelineType.INTEGRATION:
+            pipeline_type = 'integration'
+        elif pipeline.type == PipelineType.STREAMING:
+            pipeline_type = 'streaming'
+        else:
+            pipeline_type = 'batch'
+
+        started_at = pipeline_run.started_at \
+            if pipeline_run.started_at else pipeline_run.execution_date
+        completed_at = pipeline_run.completed_at \
+            if pipeline_run.completed_at else datetime.now(tz=pytz.UTC)
+        run_time_seconds = completed_at.timestamp() - started_at.timestamp()
+
+        block_configs = pipeline.all_block_configs
+
+        encoded_block_uuid = block_run.block_uuid.encode('utf-8')
+        block_language = None
+        block_type = None
+        dynamic_block = False
+        dynamic_block_child = False
+        replicated_block = False
+        reduce_output = False
+
+        block = pipeline.get_block(block_run.block_uuid)
+        if block:
+            block_language = block.language
+            block_type = block.type
+            dynamic_block = is_dynamic_block(block)
+            dynamic_block_child = is_dynamic_block_child(block)
+            replicated_block = is_replicated_block(block)
+            reduce_output = should_reduce_output(block)
+
+        encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        data = dict(
+            action=EventActionType.EXECUTE,
+            object=EventObjectType.BLOCK_RUN,
+            landing_time_enabled=1 if pipeline_schedule.landing_time_enabled() else 0,
+            num_pipeline_blocks=len(block_configs),
+            block_uuid=hashlib.sha256(encoded_block_uuid).hexdigest(),
+            block_language=block_language,
+            block_type=block_type,
+            block_dynamic_block=dynamic_block,
+            block_dynamic_block_child=dynamic_block_child,
+            block_replicated_block=replicated_block,
+            block_reduce_output=reduce_output,
+            block_run_status=block_run.status,
+            block_run_uuid=block_run.id,
+            pipeline_run_uuid=pipeline_run.id,
+            pipeline_status=pipeline_run.status,
+            pipeline_type=pipeline_type,
+            pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
+            run_time_seconds=run_time_seconds,
+            trigger_method=pipeline_schedule.schedule_type,
+            unique_block_types=list(set([b.get('type') for b in block_configs])),
+            unique_languages=list(set([b.get('language') for b in block_configs])),
+        )
+
+        return await self.__send_message(
+            data,
+            event_name=EventNameType.BLOCK_RUN_ENDED,
+        )
+
     async def __send_message(
         self,
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
+        override_validation: bool = False,
+        project_uuid: str = None,
     ) -> bool:
-        if is_test():
-            return False
+        if not override_validation:
+            if is_test():
+                return False
 
-        if not self.help_improve_mage:
-            return False
+            if not self.help_improve_mage:
+                return False
 
         if data is None:
             data = {}
@@ -303,6 +438,9 @@ class UsageStatisticLogger():
             self.__shared_metadata(),
             data,
         )
+
+        if project_uuid and not data_to_send.get('project_uuid'):
+            data_to_send['project_uuid'] = project_uuid
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -317,17 +455,24 @@ class UsageStatisticLogger():
                 ) as response:
                     response_json = await response.json()
                     if response_json.get('success'):
-                        print(json.dumps(data_to_send, indent=2))
+                        if is_debug():
+                            print(json.dumps(data_to_send, indent=2))
                         return True
         except Exception as err:
-            print(f'Error: {err}')
-
+            print(f'[Statistics] Message: {err}')
         return False
 
     def __shared_metadata(self) -> Dict:
         return dict(
             environment=get_env(),
+            hostname=self.__get_host(),
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
             version=self.project.version,
         )
+
+    def __get_host(self):
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return 'unknown'

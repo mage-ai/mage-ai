@@ -22,7 +22,7 @@ import {
   ACTION_PUSH,
   TAB_FILES,
 } from '../constants';
-import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
+import { Branch, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
   UNIT,
@@ -110,7 +110,16 @@ function Commit({
     },
   );
 
+  const repositoryUrl = useMemo(
+    () => repositories?.find(({ name }) => name === repositoryName)?.url,
+    [
+      repositories,
+      repositoryName,
+    ],
+  );
+
   const { data: dataPullRequests, mutate: fetchPullRequests } = api.pull_requests.list({
+    remote_url: repositoryUrl,
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,
@@ -173,6 +182,7 @@ function Commit({
   ), [pullRequests]);
 
   const { data: dataGitBranches } = api.git_custom_branches.list({
+    remote_url: repositoryUrl,
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,
@@ -286,11 +296,11 @@ function Commit({
                 // @ts-ignore
                 actionGitBranch({
                   git_custom_branch: {
-                    action_type: ACTION_PUSH,
-                    [ACTION_PUSH]: {
+                    action_payload: {
                       branch: actionBranchName,
                       remote: actionRemoteName,
                     },
+                    action_type: ACTION_PUSH,
                   },
                 });
               }}
@@ -338,8 +348,6 @@ function Commit({
                   </Spacing>
 
                   <Select
-                    beforeIcon={<GitHubIcon />}
-                    beforeIconSize={UNIT * 1.5}
                     monospace
                     onChange={e => setRepositoryName(e.target.value)}
                     placeholder="Choose repository"
@@ -467,6 +475,7 @@ function Commit({
                     createPullRequest({
                       pull_request: {
                         ...pullRequest,
+                        remote_url: repositoryUrl,
                         repository: repositoryName,
                       },
                     });

@@ -1,7 +1,7 @@
 ---
-title: "GitHub integration"
-sidebarTitle: "GitHub integration"
-description: "Authenticate with GitHub then pull from a remote repository, push local changes to a remote repository, and create pull requests for a remote repository."
+title: "Version control"
+sidebarTitle: "Version control app"
+description: "Authenticate with a Git provider then pull from a remote repository, push local changes to a remote repository, and create pull requests for a remote repository."
 "og:image": "https://wallpapercave.com/dwp2x/wp3082268.jpg"
 ---
 
@@ -28,14 +28,18 @@ The URL could look something like this: http://localhost:6789/version-control.
     <img alt="Setup" src="https://github.com/mage-ai/assets/blob/main/version-control/setup.png?raw=true" />
 </Frame>
 
-### Authenticate with GitHub
+### Set Git directory
 
-<Note>
+The Git directory is the local folder that will be linked to your remote repository.
 
-If you need to connect to a GitHub Enterprise repository, you will need to first authorize
-Mage to connect to your GHE host.
+### Authentication
 
-<Accordion title="Configure Mage to authenticate with GHE">
+You will be able to authenticate with GitHub by default, but if you need to authenticate with
+GitHub Enterprise (GHE) or BitBucket, you will need to follow the steps below.
+
+<AccordionGroup>
+
+<Accordion title='Authenticate with GHE'>
 
 <Steps>
 
@@ -69,9 +73,46 @@ You should now be able to authenticate with GHE and follow the rest of the steps
 
 </Accordion>
 
-</Note>
+<Accordion title="Authenticate with BitBucket">
 
-Click the button labeled <b>Authenticate with GitHub</b> to authenticate with GitHub.
+<Steps>
+
+<Step title="Add Mage as an OAuth consumer">
+
+In order for Mage to authenticate with your BitBucket, you will need to add Mage as an
+OAuth consumer. You can follow the steps [here](https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/)
+to set it up.
+
+Make sure you copy the key and secret after the consumer is created.
+
+</Step>
+
+<Step title="Update environment variables">
+
+You will need to set the following environment variables in your Mage environment:
+
+1. BITBUCKET_OAUTH_KEY: the key you retrieved in the previous step
+2. BITBUCKET_OAUTH_SECRET: the secret you retrieved in the previous step
+
+</Step>
+
+<Step title="Authenticate with BitBucket">
+
+You should now be able to authenticate with Bitbucket and follow the rest of the steps in this document.
+
+</Step>
+
+</Steps>
+
+</Accordion>
+
+</AccordionGroup>
+
+Click the Authenticate button next to your Git Provider to start the authentication process.
+
+<Frame>
+    <img alt="Authenticate" src="https://github.com/mage-ai/assets/blob/main/version-control/authentication.png?raw=true" />
+</Frame>
 
 After authorizing Mage, you’ll be redirected back to the initial page and an access token will
 be in the URL as a parameter. This access token is saved in your application’s database;
@@ -89,6 +130,26 @@ Note that a remote added via HTTPS/SSH authentication _will not_ work— only a 
 Once you fill in both input text fields, click the button labeled <b>Create new remote</b>.
 
 ### Actions
+
+#### Clone remote repository
+
+<Warning>
+
+Cloning will copy all the files and folders from the remote repository and put them into the Git directory you specified above.
+
+Cloning won’t automatically create a folder that is named after the remote repository.
+
+For example, if you have a file named `magic.py` in a remote repository named `project_romeo`
+then that file will be cloned here `<your git directory>/magic.py`
+as opposed to `<your git directory>/project_romeo/magic.py`.
+
+If you want to clone the content of a remote repository into a folder named after the remote repository, then change the Git init directory above to
+`<your git directory>/[remote repository name]`
+
+</Warning>
+
+1. Under the Actions dropdown, select the option labeled <b>Clone</b>.
+1. Under the Remote dropdown, select the name of the remote you want to clone from (e.g. origin).
 
 #### Pull remote branch
 

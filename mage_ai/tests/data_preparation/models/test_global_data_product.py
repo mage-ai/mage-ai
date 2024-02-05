@@ -125,7 +125,7 @@ class GlobalDataProductTest(DBTestCase):
             status=PipelineRun.PipelineRunStatus.COMPLETED,
         )
 
-        def output_variable_objects(self, execution_partition: str):
+        def output_variables(self, execution_partition: str, **kwargs):
             if pipeline_run1.execution_partition == execution_partition:
                 return [
                     Variable(
@@ -133,7 +133,7 @@ class GlobalDataProductTest(DBTestCase):
                         'test',
                         self.uuid,
                         partition=execution_partition,
-                    ),
+                    ).uuid,
                 ]
             elif pipeline_run2.execution_partition == execution_partition:
                 return [
@@ -142,12 +142,12 @@ class GlobalDataProductTest(DBTestCase):
                         'test',
                         self.uuid,
                         partition=execution_partition,
-                    ),
+                    ).uuid,
                 ]
 
             return None
 
-        def get_variable(pipeline_uuid, block_uuid, variable_uuid):
+        def get_variable(pipeline_uuid, block_uuid, variable_uuid, **kwargs):
             if block_uuid == 'data_loader':
                 if 'variable_uuid1' == variable_uuid:
                     return 0
@@ -166,8 +166,8 @@ class GlobalDataProductTest(DBTestCase):
 
         with patch.object(
             Block,
-            'output_variable_objects',
-            output_variable_objects,
+            'output_variables',
+            output_variables,
         ):
             with patch.object(
                 self.global_data_product.pipeline.variable_manager,

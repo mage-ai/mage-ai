@@ -342,7 +342,7 @@ function PipelineRunsTable({
 
   const getRunRowIndex = useCallback((run: PipelineRunType) => {
     if (!run) return null;
-    
+
     const rowIndex = pipelineRuns.findIndex(pipelineRun => pipelineRun.id === run.id);
     return rowIndex >= 0 ? rowIndex : null;
   }, [pipelineRuns]);
@@ -386,11 +386,11 @@ function PipelineRunsTable({
               return pipelineRuns[newRowIndex];
             }
           }
-  
+
           return prevSelectedRun;
         });
       }
-    }, 
+    },
     [pipelineRuns, setSelectedRun],
   );
 
@@ -406,10 +406,21 @@ function PipelineRunsTable({
   }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [null, 1];
+  const columnFlex = [null, null, null, null, 1];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
+    },
+    {
+      center: true,
+      uuid: 'Logs',
+    },
+    {
+      center: true,
+      uuid: 'ID',
+    },
+    {
+      uuid: 'Block runs',
     },
     {
       uuid: 'Pipeline',
@@ -446,12 +457,6 @@ function PipelineRunsTable({
     },
     {
       uuid: 'Execution time',
-    },
-    {
-      uuid: 'Block runs',
-    },
-    {
-      uuid: 'Logs',
     },
   ]);
 
@@ -582,6 +587,40 @@ function PipelineRunsTable({
                       </Button>
                     </FlexContainer>
                   </Spacing>,
+                  <Button
+                    default
+                    iconOnly
+                    key="row_logs"
+                    noBackground
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
+                  >
+                    <Logs default size={ICON_SIZE_SMALL} />
+                  </Button>,
+                  <Text center default key="row_id" monospace muted>
+                    {pipelineRun?.id}
+                  </Text>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                    href={'/pipelines/[pipeline]/runs/[run]'}
+                    key="row_block_runs"
+                    passHref
+                  >
+                    <Link
+                      bold
+                      block
+                      centerAlign
+                      muted
+                      title={blockRunCountTooltipMessage}
+                    >
+                      {`${completedBlockRunsCount} / ${blockRunsCount}`}
+                    </Link>
+                  </NextLink>,
                   <Text default key="row_pipeline_uuid" monospace muted>
                     {pipelineUUID}
                   </Text>,
@@ -641,35 +680,6 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
-                  <NextLink
-                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
-                    href={'/pipelines/[pipeline]/runs/[run]'}
-                    key="row_block_runs"
-                    passHref
-                  >
-                    <Link
-                      bold
-                      muted
-                      title={blockRunCountTooltipMessage}
-                    >
-                      {`${completedBlockRunsCount} / ${blockRunsCount}`}
-                    </Link>
-                  </NextLink>,
-                  <Button
-                    default
-                    iconOnly
-                    key="row_logs"
-                    noBackground
-                    onClick={(e) => {
-                      // Stop table row from being highlighted as well
-                      e.stopPropagation();
-                      router.push(
-                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                      );
-                    }}
-                  >
-                    <Logs default size={ICON_SIZE_SMALL} />
-                  </Button>,
                 ]);
               } else {
                 arr = [
@@ -686,6 +696,42 @@ function PipelineRunsTable({
                     setShowConfirmationId={setShowConfirmationId}
                     showConfirmationId={showConfirmationId}
                   />,
+                  <Button
+                    default
+                    disabled={disabled}
+                    iconOnly
+                    key="row_logs"
+                    noBackground
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
+                  >
+                    <Logs default size={ICON_SIZE_SMALL} />
+                  </Button>,
+                  <Text center default key="row_id" monospace muted>
+                    {pipelineRun?.id}
+                  </Text>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                    href={'/pipelines/[pipeline]/runs/[run]'}
+                    key="row_block_runs"
+                    passHref
+                  >
+                    <Link
+                      bold
+                      block
+                      centerAlign
+                      disabled={disabled}
+                      sky
+                      title={blockRunCountTooltipMessage}
+                    >
+                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
+                    </Link>
+                  </NextLink>,
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
                   </Text>,
@@ -760,37 +806,6 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
-                  <NextLink
-                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
-                    href={'/pipelines/[pipeline]/runs/[run]'}
-                    key="row_block_runs"
-                    passHref
-                  >
-                    <Link
-                      bold
-                      disabled={disabled}
-                      sky
-                      title={blockRunCountTooltipMessage}
-                    >
-                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
-                    </Link>
-                  </NextLink>,
-                  <Button
-                    default
-                    disabled={disabled}
-                    iconOnly
-                    key="row_logs"
-                    noBackground
-                    onClick={(e) => {
-                      // Stop table row from being highlighted as well
-                      e.stopPropagation();
-                      router.push(
-                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                      );
-                    }}
-                  >
-                    <Logs default size={ICON_SIZE_SMALL} />
-                  </Button>,
                 ]);
               }
 

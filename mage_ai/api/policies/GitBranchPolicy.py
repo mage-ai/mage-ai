@@ -41,13 +41,21 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
+    'add',
+    'add_remote',
+    'checkout',
+    'clone',
+    'commit',
     'delete',
+    'fetch',
     'merge',
     'pull',
     'push',
     'rebase',
     'remote',
+    'remove_remote',
     'reset',
+    'status',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
@@ -57,8 +65,17 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
 GitBranchPolicy.allow_query([
     'include_remote_branches',
     'repository',
+    'remote_url',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+GitBranchPolicy.allow_query([
+    'remote_url',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role())

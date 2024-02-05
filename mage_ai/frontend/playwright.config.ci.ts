@@ -44,6 +44,7 @@ export default defineConfig({
     cwd: '../../',
     env: {
       PYTHONPATH: '.',
+      REQUIRE_USER_AUTHENTICATION: '1',
     },
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:6789',

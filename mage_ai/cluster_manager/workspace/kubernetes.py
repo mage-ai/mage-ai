@@ -12,6 +12,7 @@ from mage_ai.shared.hash import merge_dict
 
 class KubernetesWorkspace(Workspace):
     config_class = KubernetesWorkspaceConfig
+    cluster_type = ClusterType.K8S
 
     def __init__(self, name: str):
         super().__init__(name)
@@ -80,12 +81,42 @@ class KubernetesWorkspace(Workspace):
         return cls(name)
 
     def delete(self, **kwargs):
-        self.workload_manager.delete_workload(self.name)
-
-        super().delete(**kwargs)
+        try:
+            self.workload_manager.delete_workload(
+                self.name, ingress_name=self.config.ingress_name
+            )
+        finally:
+            super().delete(**kwargs)
 
     def stop(self, **kwargs):
         self.workload_manager.scale_down_workload(self.name)
 
     def resume(self, **kwargs):
         self.workload_manager.restart_workload(self.name)
+
+    def add_to_ingress(self, **kwargs):
+        if self.config.ingress_name:
+            self.workload_manager.add_service_to_ingress_paths(
+                self.config.ingress_name,
+                f'{self.name}-service',
+                self.name,
+            )
+
+    def to_dict(self):
+        config = dict(
+            name=self.name,
+            **self.config.to_dict(),
+        )
+
+        ingress_name = config.get('ingress_name')
+        try:
+            if ingress_name:
+                url = self.workload_manager.get_url_from_ingress(
+                    ingress_name,
+                    self.name,
+                )
+                config['url'] = url
+        except Exception:
+            pass
+
+        return config

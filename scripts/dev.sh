@@ -102,7 +102,7 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --require-user-authentication)
+    --require-user-permissions)
     REQUIRE_USER_PERMISSIONS=1
     shift # past argument
     shift # past value
@@ -114,6 +114,11 @@ case $key in
     ;;
     --spark)
     SPARK=1
+    shift # past argument
+    shift # past value
+    ;;
+    --data_dir)
+    MAGE_DATA_DIR=1
     shift # past argument
     shift # past value
     ;;
@@ -146,12 +151,16 @@ export GCP_REGION=$GCP_REGION
 export HUGGINGFACE_API=$HUGGINGFACE_API
 export HUGGINGFACE_INFERENCE_API_TOKEN=$HUGGINGFACE_INFERENCE_API_TOKEN
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+export DEUS_EX_MACHINA=$DEUS_EX_MACHINA
+export DISABLE_API_TERMINAL_OUTPUT=$DISABLE_API_TERMINAL_OUTPUT
+export DISABLE_DATABASE_TERMINAL_OUTPUT=$DISABLE_DATABASE_TERMINAL_OUTPUT
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export DEBUG=$DEBUG
+export MAGE_DATA_DIR=$MAGE_DATA_DIR
 
 UP_SERVICES="server app"
 

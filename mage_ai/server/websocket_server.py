@@ -5,7 +5,7 @@ import os
 import re
 import traceback
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from distutils.file_util import copy_file
 from typing import Dict, List
 
@@ -13,7 +13,10 @@ import tornado.websocket
 from jupyter_client import KernelClient
 
 from mage_ai.api.errors import ApiError
-from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
+from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.resources.PipelineResource import PipelineResource
+from mage_ai.api.resources.ProjectResource import ProjectResource
+from mage_ai.api.utils import authenticate_client_and_token
 from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
     PIPELINE_CONFIG_FILE,
@@ -22,9 +25,8 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_project_uuid, get_repo_config
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
@@ -56,6 +58,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
 )
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.hash import merge_dict
@@ -175,13 +178,21 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         return get_active_kernel_client()
 
-    def on_message(self, raw_message):
+    async def on_message(self, raw_message):
         message = json.loads(raw_message)
 
         api_key = message.get('api_key')
         token = message.get('token')
 
         pipeline_uuid = message.get('pipeline_uuid')
+        pipeline = None
+        if pipeline_uuid:
+            pipeline = Pipeline.get(
+                pipeline_uuid,
+                repo_path=get_repo_path(),
+                all_projects=project_platform_activated(),
+            )
+
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = not REQUIRE_USER_AUTHENTICATION
 
@@ -192,18 +203,28 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
                     if valid and oauth_token and oauth_token.user:
-                        if pipeline_uuid:
-                            valid = has_at_least_editor_role(
-                                oauth_token.user,
-                                Entity.PIPELINE,
-                                pipeline_uuid,
-                            )
-                        else:
-                            valid = has_at_least_editor_role(
-                                oauth_token.user,
-                                Entity.PROJECT,
-                                get_project_uuid(),
-                            )
+                        try:
+                            if pipeline_uuid:
+                                await PipelineResource.policy_class()(
+                                    PipelineResource(
+                                        pipeline,
+                                        oauth_token.user,
+                                    ),
+                                    oauth_token.user,
+                                ).authorize_action(action=OperationType.UPDATE)
+                            else:
+                                await ProjectResource.policy_class()(
+                                    ProjectResource(
+                                        {},
+                                        oauth_token.user,
+                                    ),
+                                    oauth_token.user,
+                                ).authorize_action(action=OperationType.UPDATE)
+                            valid = True
+                        except ApiError as err:
+                            print(f'[WARNING] WebSocketServer.on_message: {err}.')
+                            valid = False
+
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
@@ -225,9 +246,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execute_pipeline = message.get('execute_pipeline')
         check_if_pipeline_running = message.get('check_if_pipeline_running')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
-        pipeline = None
-        if pipeline_uuid:
-            pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
 
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = {}
@@ -240,7 +258,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if 'execution_date' not in global_vars:
             now = datetime.now()
             global_vars['execution_date'] = now
-            global_vars['interval_end_datetime'] = None
+            global_vars['interval_end_datetime'] = now + timedelta(days=1)
             global_vars['interval_seconds'] = None
             global_vars['interval_start_datetime'] = now
             global_vars['interval_start_datetime_previous'] = None
@@ -271,7 +289,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 global_vars,
             )
         else:
-            self.__execute_block(
+            await self.__execute_block(
                 message,
                 pipeline,
                 kernel_name,
@@ -355,7 +373,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             for client in cls.clients:
                 client.write_message(json.dumps(message_final))
 
-    def __execute_block(
+    async def __execute_block(
         self,
         message: Dict[str, any],
         pipeline: Pipeline,
@@ -441,7 +459,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
                     pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
+                    # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
                     # The UI can execute a block and send run_settings to control the behavior
                     # of the block run while executing it from the notebook.
@@ -466,7 +485,7 @@ db_connection.start_session()
 """
                 client.execute(initialize_db_connection)
 
-            msg_id = client.execute(add_internal_output_info(code))
+            msg_id = client.execute(add_internal_output_info(block, code))
 
             WebSocketServer.running_executions_mapping[msg_id] = value
 
@@ -485,7 +504,7 @@ db_connection.start_session()
                     if BlockType.CHART != downstream_block.type:
                         continue
 
-                    self.on_message(json.dumps(dict(
+                    await self.on_message(json.dumps(dict(
                         api_key=message.get('api_key'),
                         code=downstream_block.file.content(),
                         pipeline_uuid=pipeline_uuid,

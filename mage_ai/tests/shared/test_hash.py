@@ -1,8 +1,51 @@
-from mage_ai.shared.hash import get_json_value, set_value
+from mage_ai.shared.hash import (
+    camel_case_keys_to_snake_case,
+    combine_into,
+    get_json_value,
+    set_value,
+)
 from mage_ai.tests.base_test import TestCase
 
 
 class HashTests(TestCase):
+    def test_camel_case_keys_to_snake_case(self):
+        self.assertEqual(
+            camel_case_keys_to_snake_case(dict(
+                nodeAffinity=dict(
+                    requiredDuringSchedulingIgnoredDuringExecution=dict(
+                        nodeSelectorTerms=[
+                            dict(
+                                matchExpressions=[
+                                    dict(
+                                        key='kubernetes.io/os',
+                                        operator='In',
+                                        values=['linux']
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )),
+            dict(
+                node_affinity=dict(
+                    required_during_scheduling_ignored_during_execution=dict(
+                        node_selector_terms=[
+                            dict(
+                                match_expressions=[
+                                    dict(
+                                        key='kubernetes.io/os',
+                                        operator='In',
+                                        values=['linux']
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                )
+            )
+        )
+
     def test_get_json_value(self):
         self.assertEqual(
             get_json_value('{"k1": "v1", "k2": "v2"}', 'k1'),
@@ -36,3 +79,31 @@ class HashTests(TestCase):
                 ),
             ),
         )
+
+    def test_combine_into(self):
+        parent = dict(
+            mage=dict(power=2, level=2),
+            fire=dict(
+                power=3,
+                water=dict(
+                    level=3,
+                ),
+            ),
+        )
+        child = dict(
+            mage=dict(power=1),
+            fire=dict(power=2),
+            ice=3,
+        )
+        combine_into(child, parent)
+
+        self.assertEqual(parent, dict(
+            mage=dict(power=1, level=2),
+            fire=dict(
+                power=2,
+                water=dict(
+                    level=3,
+                ),
+            ),
+            ice=3,
+        ))

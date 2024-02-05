@@ -33,7 +33,7 @@ class WidgetResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def create(self, payload: Dict, user, **kwargs) -> 'WidgetResource':
+    async def create(self, payload: Dict, user, **kwargs) -> 'WidgetResource':
         pipeline = kwargs['parent_model']
 
         resource = Widget.create(
@@ -48,7 +48,7 @@ class WidgetResource(GenericResource):
         )
 
         if payload.get('content'):
-            resource.update_content(payload['content'], widget=True)
+            await resource.update_content_async(payload['content'], widget=True)
 
         if payload.get('configuration'):
             resource.configuration = payload['configuration']

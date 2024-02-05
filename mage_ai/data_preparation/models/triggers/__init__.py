@@ -29,6 +29,13 @@ class ScheduleType(str, enum.Enum):
     TIME = 'time'
 
 
+SCHEDULE_TYPE_TO_LABEL = {
+  ScheduleType.API: 'API',
+  ScheduleType.EVENT: 'Event',
+  ScheduleType.TIME: 'Schedule',
+}
+
+
 class ScheduleInterval(str, enum.Enum):
     ONCE = '@once'
     HOURLY = '@hourly'
@@ -42,6 +49,7 @@ class ScheduleInterval(str, enum.Enum):
 class SettingsConfig(BaseConfig):
     skip_if_previous_running: bool = False
     allow_blocks_to_fail: bool = False
+    create_initial_pipeline_run: bool = False
     landing_time_enabled: bool = False
     timeout: int = None  # in seconds
 
@@ -54,6 +62,7 @@ class Trigger(BaseConfig):
     start_time: datetime
     schedule_interval: str
     status: ScheduleStatus = ScheduleStatus.INACTIVE
+    last_enabled_at: datetime = None
     variables: Dict = field(default_factory=dict)
     sla: int = None     # in seconds
     settings: Dict = field(default_factory=dict)
@@ -81,6 +90,7 @@ class Trigger(BaseConfig):
     def to_dict(self) -> Dict:
         return dict(
             envs=self.envs,
+            last_enabled_at=self.last_enabled_at,
             name=self.name,
             pipeline_uuid=self.pipeline_uuid,
             schedule_interval=self.schedule_interval,

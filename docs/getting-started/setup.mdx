@@ -56,15 +56,19 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
       docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
       ```
       ```bash Windows Command Line
-      docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      docker run -it -p 6789:6789 -v "%cd%:/home/src" mageai/mageai /app/run_app.sh mage start [project_name]
       ```
 
       ```bash PowerShell
       docker run -it -p 6789:6789 -v ${PWD}:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
       ```
+
+      ```bash GCP VM Instance
+      sudo docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+      ```
    </CodeGroup>
 
-   Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
+   Once the server is running, open `http://localhost:6789` in your browser and explore! If using any cloud provider use external IP address with the port eg 123.456.78:6789. We recommend one of our [guides](/guides/overview) for inspiration.
 
    ### What's happening?
 

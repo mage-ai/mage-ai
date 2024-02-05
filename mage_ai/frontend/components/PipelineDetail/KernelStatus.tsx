@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+
 import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -42,6 +43,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useComputeService from '@utils/models/computeService/useComputeService'
+import useKernel from '@utils/models/kernel/useKernel';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import {
@@ -54,9 +56,7 @@ import { ComputeConnectionStateEnum } from '@interfaces/ComputeConnectionType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
-  KEY_CODE_META,
   KEY_SYMBOL_CONTROL,
-  KEY_SYMBOL_META,
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import {
@@ -81,16 +81,10 @@ import { useModal } from '@context/Modal';
 
 type KernelStatusProps = {
   children?: any;
-  filePaths: string[];
-  filesTouched: {
-    [path: string]: boolean;
-  };
   isBusy: boolean;
-  kernel: KernelType;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
-  selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
@@ -98,19 +92,16 @@ type KernelStatusProps = {
 
 function KernelStatus({
   children,
-  filePaths: filePathsProp,
-  filesTouched,
   isBusy,
-  kernel,
   pipeline,
   restartKernel,
   savePipelineContent,
-  selectedFilePath,
   setErrors,
   setRunningBlocks,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const router = useRouter();
+  const { kernel } = useKernel({ pipelineType: pipeline?.type });
   const {
     featureEnabled,
     featureUUIDs,
@@ -131,6 +122,7 @@ function KernelStatus({
     clustersRefreshInterval: 5000,
     computeServiceRefreshInterval: 5000,
     connectionsRefreshInterval: 5000,
+    pauseFetch: !sparkEnabled,
   });
 
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -138,8 +130,6 @@ function KernelStatus({
     alive,
     usage,
   } = kernel || {};
-  const [isEditingPipeline, setIsEditingPipeline] = useState(false);
-  const [newPipelineName, setNewPipelineName] = useState('');
   const [selectedSparkClusterType, setSelectedSparkClusterType] =
     useState(CloudProviderSparkClusterEnum.EMR);
   const [showSelectCluster, setShowSelectCluster] = useState(false);
@@ -153,7 +143,7 @@ function KernelStatus({
   const {
     data: dataClusters,
     mutate: fetchClusters,
-  } = api.clusters.detail(selectedSparkClusterType, {}, { revalidateOnFocus: false });
+  } = api.clusters.detail(sparkEnabled ? selectedSparkClusterType : null, {}, { revalidateOnFocus: false });
   const clustersOld: ClusterType[] = useMemo(
     () => dataClusters?.cluster?.clusters || [],
     [dataClusters],
@@ -190,12 +180,6 @@ function KernelStatus({
       dataSparkApplications,
     ]);
 
-  useEffect(() => {
-    if (pipeline?.uuid) {
-      setNewPipelineName(pipeline.uuid);
-    }
-  }, [pipeline?.uuid]);
-
   const uuidKeyboard = 'KernelStatus';
   const {
     registerOnKeyDown,
@@ -205,29 +189,6 @@ function KernelStatus({
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
-
-  registerOnKeyDown(
-    uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
-      if (isEditingPipeline
-        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
-        && String(keyHistory[1]) !== String(KEY_CODE_META)
-      ) {
-        if (pipeline?.uuid === newPipelineName) {
-          event.target.blur();
-        } else {
-          updatePipelineMetadata(newPipelineName);
-          setIsEditingPipeline(false);
-        }
-      }
-    },
-    [
-      isEditingPipeline,
-      newPipelineName,
-      setIsEditingPipeline,
-      updatePipelineMetadata,
-    ],
-  );
 
   const kernelPid = useMemo(() => usage?.pid, [usage?.pid]);
   const kernelPidPrevious = usePrevious(kernelPid);
@@ -795,79 +756,39 @@ function KernelStatus({
 
 
   return (
-    <PipelineHeaderStyle relativePosition>
+    <FlexContainer
+      alignItems="center"
+      fullHeight
+      justifyContent="space-between"
+    >
       <FlexContainer
         alignItems="center"
         fullHeight
-        justifyContent="space-between"
+        justifyContent="flex-start"
       >
-        <FlexContainer
-          alignItems="center"
-          fullHeight
-          justifyContent="flex-start"
-        >
-          <Spacing px={PADDING_UNITS}>
-            {selectedFilePath && (
-              <Link
-                noHoverUnderline
-                noOutline
-                onClick={selectedFilePath
-                  ? () => goToWithQuery({ file_path: null })
-                  : null
-                }
-                preventDefault
-              >
-                {children}
-              </Link>
-            )}
-
-            {!selectedFilePath && (
-              <FlexContainer alignItems="center">
-                {children}
-                {isEditingPipeline && (
-                  <>
-                    <Spacing ml={1} />
-                    <Link
-                      onClick={() => {
-                        updatePipelineMetadata(newPipelineName);
-                        setIsEditingPipeline(false);
-                      }}
-                      preventDefault
-                      sameColorAsText
-                      small
-                    >
-                      Update name
-                    </Link>
-                  </>
-                )}
-              </FlexContainer>
-            )}
-          </Spacing>
-
-
-        </FlexContainer>
-
-        <Spacing px={PADDING_UNITS}>
-          <Flex alignItems="center">
-            <FlexContainer alignItems="center">
-              {kernelStatusMemo}
-
-              {computeConnectionStatusMemo && (
-                <Spacing ml={1}>
-                  {computeConnectionStatusMemo}
-                </Spacing>
-              )}
-
-              {computeStatusMemo && (
-                <Spacing ml={1}>
-                  {computeStatusMemo}
-                </Spacing>
-              )}
-            </FlexContainer>
-          </Flex>
-        </Spacing>
+        {children}
       </FlexContainer>
-    </PipelineHeaderStyle>
+
+      <Spacing px={PADDING_UNITS}>
+        <Flex alignItems="center">
+          <FlexContainer alignItems="center">
+            {kernelStatusMemo}
+
+            {computeConnectionStatusMemo && (
+              <Spacing ml={1}>
+                {computeConnectionStatusMemo}
+              </Spacing>
+            )}
+
+            {computeStatusMemo && (
+              <Spacing ml={1}>
+                {computeStatusMemo}
+              </Spacing>
+            )}
+          </FlexContainer>
+        </Flex>
+      </Spacing>
+    </FlexContainer>
   );
 }
 

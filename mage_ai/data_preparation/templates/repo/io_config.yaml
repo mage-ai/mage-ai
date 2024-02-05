@@ -7,6 +7,10 @@ default:
   AWS_SECRET_ACCESS_KEY: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
   AWS_SESSION_TOKEN: session_token (Used to generate Redshift credentials)
   AWS_REGION: region
+  # Algolia
+  ALGOLIA_APP_ID: app_id
+  ALGOLIA_API_KEY: api_key
+  ALGOLIA_INDEX_NAME: index_name
   # Azure
   AZURE_CLIENT_ID: "{{ env_var('AZURE_CLIENT_ID') }}"
   AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
@@ -83,6 +87,9 @@ default:
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
   POSTGRES_PORT: 5432
+  # Qdrant
+  QDRANT_COLLECTION: collection
+  QDRANT_PATH: path
   # Redshift
   REDSHIFT_SCHEMA: public # Optional
   REDSHIFT_DBNAME: redshift_db_name
@@ -120,3 +127,8 @@ default:
     source: trino-cli                         # Optional
     user: admin
     verify: /path/to/your/ca.crt              # Optional
+  # Weaviate
+  WEAVIATE_ENDPOINT: https://some-endpoint.weaviate.network
+  WEAVIATE_INSTANCE_API_KEY: YOUR-WEAVIATE-API-KEY
+  WEAVIATE_INFERENCE_API_KEY: YOUR-OPENAI-API-KEY
+  WEAVIATE_COLLECTION: collectionn_name

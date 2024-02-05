@@ -16,6 +16,10 @@ class ConfigKey(str, Enum):
     List of configuration settings for use with data IO clients.
     """
 
+    ALGOLIA_APP_ID = 'ALGOLIA_APP_ID'
+    ALGOLIA_API_KEY = 'ALGOLIA_API_KEY'
+    ALGOLIA_INDEX_NAME = 'ALGOLIA_INDEX_NAME'
+
     AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID'
     AWS_ENDPOINT = 'AWS_ENDPOINT'
     AWS_REGION = 'AWS_REGION'
@@ -87,6 +91,9 @@ class ConfigKey(str, Enum):
     PINOT_SCHEME = 'PINOT_SCHEME'
     PINOT_USER = 'PINOT_USER'
 
+    QDRANT_COLLECTION = 'QDRANT_COLLECTION'
+    QDRANT_PATH = 'QDRANT_PATH'
+
     POSTGRES_CONNECTION_METHOD = 'POSTGRES_CONNECTION_METHOD'
     POSTGRES_CONNECT_TIMEOUT = 'POSTGRES_CONNECT_TIMEOUT'
     POSTGRES_DBNAME = 'POSTGRES_DBNAME'
@@ -140,6 +147,11 @@ class ConfigKey(str, Enum):
     TRINO_PORT = 'TRINO_PORT'
     TRINO_SCHEMA = 'TRINO_SCHEMA'
     TRINO_USER = 'TRINO_USER'
+
+    WEAVIATE_ENDPOINT = 'WEAVIATE_ENDPOINT'
+    WEAVIATE_INSTANCE_API_KEY = 'WEAVIATE_INSTANCE_API_KEY'
+    WEAVIATE_INFERENCE_API_KEY = 'WEAVIATE_INFERENCE_API_KEY'
+    WEAVIATE_COLLECTION = 'WEAVIATE_COLLECTION'
 
 
 class BaseConfigLoader(ABC):
@@ -324,6 +336,7 @@ class VerboseConfigKey(str, Enum):
     Config key headers for the verbose configuration file format.
     """
 
+    ALGOLIA = 'Algolia'
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CHROMA = 'Chroma'
@@ -335,10 +348,18 @@ class VerboseConfigKey(str, Enum):
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
+    QDRANT = 'Qdrant'
+    WEAVIATE = 'Weaviate'
 
 
 class ConfigFileLoader(BaseConfigLoader):
     KEY_MAP = {
+        ConfigKey.ALGOLIA_APP_ID: (
+            VerboseConfigKey.ALGOLIA, 'app_id'),
+        ConfigKey.ALGOLIA_API_KEY: (
+            VerboseConfigKey.ALGOLIA, 'api_key'),
+        ConfigKey.ALGOLIA_INDEX_NAME: (
+            VerboseConfigKey.ALGOLIA, 'index_name'),
         ConfigKey.AWS_ACCESS_KEY_ID: (VerboseConfigKey.AWS, 'access_key_id'),
         ConfigKey.AWS_REGION: (VerboseConfigKey.AWS, 'region'),
         ConfigKey.AWS_SECRET_ACCESS_KEY: (VerboseConfigKey.AWS, 'secret_access_key'),
@@ -410,6 +431,8 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
         ConfigKey.POSTGRES_SCHEMA: (VerboseConfigKey.POSTGRES, 'schema'),
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
+        ConfigKey.QDRANT_COLLECTION: (VerboseConfigKey.QDRANT, 'collection'),
+        ConfigKey.QDRANT_PATH: (VerboseConfigKey.QDRANT, 'path'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
@@ -433,6 +456,14 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.SPARK, 'server_side_parameters'),
         ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SPARK, 'token'),
         ConfigKey.SPARK_USER: (VerboseConfigKey.SPARK, 'user'),
+        ConfigKey.WEAVIATE_ENDPOINT: (
+            VerboseConfigKey.WEAVIATE, 'endpoint'),
+        ConfigKey.WEAVIATE_COLLECTION: (
+            VerboseConfigKey.WEAVIATE, 'collection'),
+        ConfigKey.WEAVIATE_INSTANCE_API_KEY: (
+            VerboseConfigKey.WEAVIATE, 'instance_api_key'),
+        ConfigKey.WEAVIATE_INFERENCE_API_KEY: (
+            VerboseConfigKey.WEAVIATE, 'inference_api_key'),
     }
 
     def __init__(

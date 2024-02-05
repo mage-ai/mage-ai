@@ -42,5 +42,13 @@ class Generator:
             return await LLMPipelineWizard().async_generate_comment_for_block(
                 request.get('block_code'),
             )
+        elif LLMUseCase.GENERATE_CODE == use_case:
+            from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
+
+            return await LLMPipelineWizard().generate_code_async(
+                request.get('block_description'),
+                request.get('code_language'),
+                block_type=request.get('block_type'),
+            )
 
         raise Exception(f'Use case {use_case} is not supported yet.')

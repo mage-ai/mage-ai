@@ -14,7 +14,10 @@ class BaseOperationsWithUserAuthenticationAndPermissionsTest(Base):
     def setUp(self):
         self.set_up()
 
-        self.user.save()
+        try:
+            self.user.save()
+        except Exception as err:
+            print(err)
 
         role = Role.create(name=self.faker.unique.name())
         permission = Permission.create(

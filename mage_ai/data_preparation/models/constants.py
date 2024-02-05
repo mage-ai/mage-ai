@@ -52,8 +52,10 @@ class BlockType(str, Enum):
     DATA_EXPORTER = 'data_exporter'
     DATA_LOADER = 'data_loader'
     DBT = 'dbt'
+    DYNAMIC_CHILD = 'dynamic_child'
     EXTENSION = 'extension'
     GLOBAL_DATA_PRODUCT = 'global_data_product'
+    HOOK = 'hook'
     MARKDOWN = 'markdown'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
@@ -146,3 +148,18 @@ NON_PIPELINE_EXECUTABLE_BLOCK_TYPES = [
 ]
 
 PYTHON_COMMAND = 'python3'
+
+
+SINGULAR_FOLDER_BLOCK_TYPES = [
+    BlockType.CUSTOM,
+]
+
+BLOCK_TYPE_DIRECTORY_NAME = \
+    {v: f'{v.value}s' for v in BlockType if v not in SINGULAR_FOLDER_BLOCK_TYPES}
+
+
+PIPELINE_TYPE_DISPLAY_NAME_MAPPING = {
+    PipelineType.INTEGRATION: 'Data integration',
+    PipelineType.PYTHON: 'Batch',
+    PipelineType.STREAMING: 'Streaming',
+}

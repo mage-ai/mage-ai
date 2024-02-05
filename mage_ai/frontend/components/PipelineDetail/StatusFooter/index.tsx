@@ -10,6 +10,7 @@ import KeyboardText from '@oracle/elements/KeyboardText';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import useKernel from '@utils/models/kernel/useKernel';
 import { AlertTriangle, File as FileIcon, HexagonAll, Lightning } from '@oracle/icons';
 import {
   KEY_CODE_ENTER,
@@ -19,6 +20,7 @@ import {
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { StatusFooterStyle } from './index.style';
 import { isMac } from '@utils/os';
 import { roundNumber } from '@utils/string';
@@ -26,20 +28,25 @@ import { roundNumber } from '@utils/string';
 const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
-  kernel: KernelType;
+  inline?: boolean;
+  pipelineType?: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
   pipelineLastSaved?: number;
+  refreshInterval?: number;
   saveStatus?: string;
   width?: number;
 };
 
 function StatusFooter({
-  kernel,
+  inline,
+  pipelineType,
   pipelineContentTouched,
   pipelineLastSaved,
+  refreshInterval,
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
+  const { kernel } = useKernel({ pipelineType, refreshInterval });
   const {
     alive,
     usage,
@@ -70,6 +77,7 @@ function StatusFooter({
 
   return (
     <StatusFooterStyle
+      inline={inline}
       ref={ref}
       width={width}
     >
@@ -93,6 +101,7 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    noWrapping
                     small
                   >
                     CPU: <Text
@@ -115,6 +124,7 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    noWrapping
                     small
                   >
                     /
@@ -131,7 +141,7 @@ function StatusFooter({
 
                   <Spacing mr={1} />
 
-                  <Text monospace muted small>
+                  <Text monospace muted noWrapping small>
                     Memory: {kernelMemory}
                   </Text>
                 </>
@@ -189,7 +199,7 @@ function StatusFooter({
 
             <Spacing mr={1} />
 
-            <Text monospace muted small warning={pipelineContentTouched}>
+            <Text monospace muted noWrapping small warning={pipelineContentTouched}>
               {saveStatus}
             </Text>
           </FlexContainer>

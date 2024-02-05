@@ -22,16 +22,19 @@ export type AccordionPanelProps = {
   first?: boolean;
   hideScrollbar?: boolean;
   highlighted?: boolean;
+  id?: string;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
   noBorderRadius?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  refContainer?: any;
   singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
   titleYPadding?: number;
+  unboundedTitle?: boolean;
   visible?: boolean;
   visibleCount?: number;
   visibleHighlightDisabled?: boolean;
@@ -113,20 +116,20 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     background-color: ${(props.theme.background || dark.background).table};
 
     &:hover {
-      background-color: ${(props.theme || dark).background.page};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
 
     &:active {
-      background-color: ${(props.theme || dark).background.page};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
   `}
 
   ${props => props.visible && `
-    border-bottom: 1px solid ${(props.theme || dark).borders.medium2};
+    border-bottom: 1px solid ${(props.theme || dark)?.borders?.medium2};
   `}
 
   ${props => !props.first && props.visible && `
-    border-top: 1px solid ${(props.theme || dark).borders.medium2};
+    border-top: 1px solid ${(props.theme || dark)?.borders?.medium2};
   `}
 
   ${props => !props.noBorderRadius && props.first && `
@@ -216,11 +219,13 @@ const AccordionPanel = ({
   onClick,
   onEntered,
   onExited,
+  refContainer,
   singlePanel,
   smallTitle,
   title,
   titleXPadding,
   titleYPadding,
+  unboundedTitle,
   visible,
   visibleCount,
   visibleHighlightDisabled,
@@ -229,6 +234,7 @@ const AccordionPanel = ({
   <AccordionPanelStyle
     {...props}
     maxHeight={maxHeight}
+    ref={refContainer}
   >
     <TitleStyle
       first={first}
@@ -255,24 +261,29 @@ const AccordionPanel = ({
       visible={visible && !visibleHighlightDisabled}
     >
       <FlexContainer alignItems="center" justifyContent="space-between">
-        <FlexContainer alignItems="center">
-          {beforeTitleElement}
+        {unboundedTitle && beforeTitleElement}
 
-          {beforeTitleElement && <Spacing ml={1} />}
+        {!unboundedTitle && (
+          <FlexContainer alignItems="center">
+            {beforeTitleElement}
 
-          {typeof title !== 'string' && title}
+            {beforeTitleElement && <Spacing ml={1} />}
 
-          {typeof title === 'string' && (
-            <Text
-              bold
-              default={!visible}
-              large={!smallTitle}
-              wind={highlighted}
-            >
-              {title}
-            </Text>
-          )}
-        </FlexContainer>
+            {typeof title !== 'string' && title}
+
+            {typeof title === 'string' && (
+              <Text
+                bold
+                default={!visible}
+                large={!smallTitle}
+                wind={highlighted}
+              >
+                {title}
+              </Text>
+            )}
+          </FlexContainer>
+        )}
+        {unboundedTitle && title}
 
         <Spacing mr={1} />
 

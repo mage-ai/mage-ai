@@ -21,12 +21,13 @@ import PipelineRunType, {
  } from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
+  ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
   VARIABLE_BOOKMARK_VALUES_KEY,
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -43,17 +44,19 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   Alphabet,
   CalendarDate,
+  Edit,
   Info,
   Lightning,
+  LightningOff,
   MultiShare,
   MusicNotes,
-  Pause,
-  PlayButtonFilled,
+  Once,
   PlugAPI,
   Schedule,
   Sun,
   Switch,
 } from '@oracle/icons';
+import { ICON_SIZE_DEFAULT, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
 import {
   PADDING_UNITS,
@@ -78,7 +81,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
-import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -118,11 +121,13 @@ function TriggerDetail({
 
   const {
     uuid: pipelineUUID,
+    type: pipelineType,
   } = pipeline || {};
   const {
     description,
     id: pipelineScheduleID,
     event_matchers: eventMatchers,
+    last_enabled_at: lastEnabledAt,
     name: pipelineScheduleName,
     next_pipeline_run_date: nextRunDate,
     schedule_interval: scheduleInterval,
@@ -227,7 +232,7 @@ function TriggerDetail({
           callback: () => {
             fetchPipelineSchedule();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -258,7 +263,24 @@ function TriggerDetail({
           callback: () => {
             fetchPipelineTriggers();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [createPipelineRun, { isLoading: isLoadingCreatePipelineRun }]: any = useMutation(
+      api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineRuns();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -268,6 +290,11 @@ function TriggerDetail({
   );
 
   const isActive = useMemo(() => ScheduleStatusEnum.ACTIVE === status, [status]);
+  const disabledRunOnce = useMemo(() => !isActive
+    && !(scheduleType === ScheduleTypeEnum.TIME
+      && scheduleInterval === ScheduleIntervalEnum.ONCE),
+    [isActive, scheduleInterval, scheduleType],
+  );
 
   const detailsMemo = useMemo(() => {
     const iconProps = {
@@ -437,6 +464,30 @@ function TriggerDetail({
       ]);
     }
 
+    if (lastEnabledAt) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_last_enabled_at_label"
+        >
+          <CalendarDate {...iconProps} />
+          <Spacing mr={1} />
+          <Text default>
+            Last enabled at
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_last_enabled_at"
+          monospace
+        >
+          {displayLocalTimezone
+            ? datetimeInLocalTimezone(lastEnabledAt, displayLocalTimezone)
+            : dateFormatLong(lastEnabledAt, { includeSeconds: true })
+          }
+        </Text>,
+      ]);
+    }
+
     if (ScheduleTypeEnum.API === scheduleType) {
       const url = getTriggerApiEndpoint(pipelineSchedule);
       rows.push([
@@ -472,7 +523,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Timeout set for runs of this trigger"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -497,7 +548,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Skip current run if any previous runs are still in progress"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -522,7 +573,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Trigger runs will continue running blocks if other unrelated blocks fail"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -535,6 +586,31 @@ function TriggerDetail({
           monospace
         >
           {settings.allow_blocks_to_fail.toString()}
+        </Text>,
+      ]);
+    }
+    if (settings?.create_initial_pipeline_run) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_create_initial_pipeline_run"
+        >
+          <Tooltip
+            default
+            label="Create initial pipeline run if start date is before current execution period"
+            maxWidth={UNIT * 32}
+            size={ICON_SIZE_DEFAULT}
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Create initial run
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_create_initial_pipeline_run_label"
+          monospace
+        >
+          {settings.create_initial_pipeline_run?.toString()}
         </Text>,
       ]);
     }
@@ -626,7 +702,7 @@ function TriggerDetail({
 
           return (
             <Spacing key={blockUUID} mt={1}>
-              <Spacing px={PADDING_UNITS} pb={1}>
+              <Spacing pb={1} px={PADDING_UNITS}>
                 <Text
                   color={getColorsForBlockType(
                     block?.type,
@@ -643,46 +719,46 @@ function TriggerDetail({
 
               <Divider light />
 
-              {Object.entries(streams || {})?.map(([streamID, keyValues]) => {
-                return (
-                  <div key={streamID}>
-                    <Table
-                      columnFlex={[null, 1]}
-                      rows={[
-                        [
-                          <Text
-                            default
-                            monospace
-                          >
-                            Stream
-                          </Text>,
-                          <Text
-                            monospace
-                            rightAligned
-                          >
-                            {streamID}
-                          </Text>,
-                        ],
-                      ].concat(Object.entries(keyValues || {}).map(([uuid, value]) => [
+              {Object.entries(streams || {})?.map(([streamID, keyValues], idx) => (
+                <div key={streamID}>
+                  <Table
+                    columnFlex={[null, 1]}
+                    rows={[
+                      [
                         <Text
                           default
-                          key={`settings_variable_label_${uuid}`}
+                          key={`stream_title_${idx}`}
                           monospace
                         >
-                          {uuid}
+                          Stream
                         </Text>,
                         <Text
-                          key={`settings_variable_${uuid}`}
+                          key={`stream_id_${idx}`}
                           monospace
                           rightAligned
                         >
-                          {value}
+                          {streamID}
                         </Text>,
-                      ]))}
-                    />
-                  </div>
-                );
-              })}
+                      ],
+                    ].concat(Object.entries(keyValues || {}).map(([uuid, value]) => [
+                      <Text
+                        default
+                        key={`settings_variable_label_${uuid}`}
+                        monospace
+                      >
+                        {uuid}
+                      </Text>,
+                      <Text
+                        key={`settings_variable_${uuid}`}
+                        monospace
+                        rightAligned
+                      >
+                        {value}
+                      </Text>,
+                    ]))}
+                  />
+                </div>
+              ))}
             </Spacing>
           );
         })}
@@ -690,10 +766,8 @@ function TriggerDetail({
     );
   }, [
     blocksMapping,
-    scheduleType,
     scheduleVariables,
     themeContext,
-    variables,
   ]);
 
   const dbtSettingsTable = useMemo(() => {
@@ -1027,11 +1101,11 @@ function TriggerDetail({
           <Button
             beforeIcon={isActive
               ?
-                <Pause size={2 * UNIT} />
+                <LightningOff size={ICON_SIZE_SMALL} />
               :
-                <PlayButtonFilled
+                <Lightning
                   inverted={!isViewerRole}
-                  size={2 * UNIT}
+                  size={ICON_SIZE_SMALL}
                 />
             }
             danger={isActive && !isViewerRole}
@@ -1049,16 +1123,44 @@ function TriggerDetail({
             success={!isActive && !isViewerRole}
           >
             {isActive
-              ? 'Pause trigger'
-              : 'Start trigger'
+              ? 'Disable trigger'
+              : 'Enable trigger'
             }
           </Button>
 
           <Spacing mr={PADDING_UNITS} />
 
+          {pipelineType !== PipelineTypeEnum.STREAMING &&
+            <>
+              <Button
+                beforeIcon={<Once size={ICON_SIZE_SMALL} />}
+                disabled={disabledRunOnce}
+                loading={isLoadingCreatePipelineRun}
+                onClick={() => createPipelineRun({
+                  pipeline_run: {
+                    pipeline_schedule_id: pipelineScheduleID,
+                    pipeline_uuid: pipelineUUID,
+                    variables: scheduleVariables,
+                  },
+                })}
+                outline
+                title={disabledRunOnce
+                  ? 'Trigger must be enabled to run@once'
+                  : 'Manually run pipeline once immediately'
+                }
+              >
+                <Text disabled={disabledRunOnce}>
+                  Run@once
+                </Text>
+              </Button>
+              <Spacing mr={PADDING_UNITS} />
+            </>
+          }
+
           {!isViewerRole &&
             <>
               <Button
+                beforeIcon={<Edit size={ICON_SIZE_SMALL} />}
                 linkProps={{
                   as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}/edit`,
                   href: '/pipelines/[pipeline]/triggers/[...slug]',

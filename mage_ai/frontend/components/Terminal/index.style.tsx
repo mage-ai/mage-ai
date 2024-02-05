@@ -29,7 +29,7 @@ export const ContainerStyle = styled.div<{
   position: absolute;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).codeTextarea};
+    background-color: ${(props.theme.background || dark.background).blackTransparentDark};
   `}
 `;
 
@@ -51,12 +51,21 @@ const TerminalCursorStyleCss = css<{
     0% {
       opacity: 0;
     }
+
+    100% {
+      opacity: 1;
+    }
   }
 
   ::before {
+    animation-iteration-count: infinite;
+    animation-name: cursor-blink;
+    animation-duration: 0.5s;
+    animation-direction: alternate;
+
     ${props => props.focusBeginning && `
       position: absolute;
-      background-color: ${(props.theme.accent || dark.accent).warning};
+      background-color: ${(props.theme.accent || dark.accent).yellow};
       content: "";
       display: inline-block;
       height: ${ROW_HEIGHT}px;
@@ -66,8 +75,13 @@ const TerminalCursorStyleCss = css<{
   }
 
   ::after {
+    animation-iteration-count: infinite;
+    animation-name: cursor-blink;
+    animation-duration: 0.5s;
+    animation-direction: alternate;
+
     ${props => props.focused && `
-      background-color: ${(props.theme.accent || dark.accent).warning};
+      background-color: ${(props.theme.accent || dark.accent).yellow};
       content: "";
       display: inline-block;
       height: ${ROW_HEIGHT}px;

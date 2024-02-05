@@ -377,6 +377,7 @@ class Destination(BaseDestination):
         return self.records_inserted, self.records_updated
 
     def _wrap_with_quotes(self, name):
+        name = name.replace('"', '')
         return f'{self.quote}{name}{self.quote}'
 
 

@@ -38,6 +38,7 @@ export const DATE_FORMAT_SPARK = 'YYYY-MM-DDTHH:mm:ss.SSSGMT';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
 export const TIME_FORMAT = 'HH:mm:ss';
 export const TIME_FORMAT_NO_SEC = 'HH:mm';
+export const HUMAN_READABLE = 'MMMM D, YYYY HH:mmZ';
 export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const TIME_ZONE_NAMES: {
@@ -97,6 +98,19 @@ export function datetimeInLocalTimezone(
   }
 
   return datetime;
+}
+
+export function momentInLocalTimezone(
+  momentObj,
+  enableLocalTimezoneConversion?: boolean,
+): moment.Moment {
+  if (enableLocalTimezoneConversion) {
+    return momentObj
+      .utc()
+      .local();
+  }
+
+  return momentObj;
 }
 
 /**

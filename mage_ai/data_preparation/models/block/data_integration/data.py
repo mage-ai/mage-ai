@@ -35,6 +35,7 @@ def convert_dataframe_to_output(
                 type=OUTPUT_TYPE_RECORD,
             ),
             default=encode_complex,
+            ignore_nan=True,
         )
         return f'{text}\n'
 

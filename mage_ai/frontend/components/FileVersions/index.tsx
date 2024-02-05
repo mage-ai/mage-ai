@@ -24,6 +24,7 @@ import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { pushAtIndex } from '@utils/array';
+import { isObject, selectEntriesWithValues } from '@utils/hash';
 
 type FileVersionsProps = {
   onActionCallback?: (file: FileType, opts?: {
@@ -58,10 +59,10 @@ function FileVersions({
 
   const { data: dataFileVersions1, mutate: fetchFileVersions1 } =
     api.file_versions.files.list(urlID,
-    {
+    selectEntriesWithValues({
       block_uuid: selectedBlock?.uuid,
       pipeline_uuid: pipeline?.uuid,
-    },
+    }),
   );
   const fileVersions: FileType[] = useMemo(() => dataFileVersions1?.file_versions || [], [
     dataFileVersions1,
@@ -82,7 +83,10 @@ function FileVersions({
   ]);
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
-  const fileExtension = useMemo(() => selectedFilePath?.match(regex)?.[0]?.split('.')?.[1], [
+  const fileExtension = useMemo(() => ((typeof selectedFilePath !== 'string' && isObject(selectedFilePath))
+    ? (selectedFilePath as FileType)?.path || (selectedFilePath as FileType)?.name
+    : selectedFilePath
+  )?.match(regex)?.[0]?.split('.')?.[1], [
     selectedFilePath,
     regex,
   ]);
@@ -201,7 +205,7 @@ function FileVersions({
         </Spacing>
       );
 
-      if (fileContent && fileContent?.path === selectedFileVersion?.path) {
+      if (fileContent && fileContent?.path?.includes(selectedFileVersion?.path)) {
         const { content = '' } = fileContent;
         el = (
           <CodeEditor

@@ -1,16 +1,16 @@
-import datetime
 import re
-import threading
 
 import backoff
 import requests
 import singer
 import singer.utils as singer_utils
-from requests.exceptions import RequestException
 from singer import metadata, metrics
 
 from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.bulk import (
     Bulk,
+)
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.credentials import (
+    SalesforceAuth,
 )
 from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.exceptions import (
     TapSalesforceException,
@@ -21,9 +21,6 @@ from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.rest 
 )
 
 LOGGER = singer.get_logger()
-
-# The minimum expiration setting for SF Refresh Tokens is 15 minutes
-REFRESH_TOKEN_EXPIRATION_PERIOD = 900
 
 BULK_API_TYPE = "BULK"
 REST_API_TYPE = "REST"
@@ -42,7 +39,8 @@ STRING_TYPES = set([
     'email',
     'complexvalue',  # TODO: Unverified
     'masterrecord',
-    'datacategorygroupreference'
+    'datacategorygroupreference',
+    'base64'
 ])
 
 NUMBER_TYPES = set([
@@ -57,7 +55,6 @@ DATE_TYPES = set([
 ])
 
 BINARY_TYPES = set([
-    'base64',
     'byte'
 ])
 
@@ -148,7 +145,7 @@ def log_backoff_attempt(details):
     LOGGER.info("ConnectionError detected, triggering backoff: %d try", details.get("tries"))
 
 
-def field_to_property_schema(field, mdata):  # pylint:disable=too-many-branches
+def field_to_property_schema(field, mdata):
     property_schema = {}
 
     field_name = field['name']
@@ -209,52 +206,41 @@ def field_to_property_schema(field, mdata):  # pylint:disable=too-many-branches
 class Salesforce():
     # pylint: disable=too-many-instance-attributes,too-many-arguments
     def __init__(self,
-                 refresh_token=None,
+                 credentials=None,
                  token=None,
-                 sf_client_id=None,
-                 sf_client_secret=None,
                  quota_percent_per_run=None,
                  quota_percent_total=None,
-                 is_sandbox=None,
+                 domain=None,
                  select_fields_by_default=None,
                  default_start_date=None,
-                 api_type=None,
-                 lookback_window=None):
+                 api_type=None):
         self.api_type = api_type.upper() if api_type else None
-        self.refresh_token = refresh_token
-        self.token = token
-        self.sf_client_id = sf_client_id
-        self.sf_client_secret = sf_client_secret
         self.session = requests.Session()
-        self.access_token = None
-        self.instance_url = None
         if isinstance(quota_percent_per_run, str) and quota_percent_per_run.strip() == '':
             quota_percent_per_run = None
         if isinstance(quota_percent_total, str) and quota_percent_total.strip() == '':
             quota_percent_total = None
-        self.quota_percent_per_run = float(
-            quota_percent_per_run) if quota_percent_per_run is not None else 25
-        self.quota_percent_total = float(
-            quota_percent_total) if quota_percent_total is not None else 80
-        self.is_sandbox = is_sandbox is True or (isinstance(is_sandbox, str) and is_sandbox.lower() == 'true') # noqa
-        self.select_fields_by_default = select_fields_by_default is True or (isinstance(select_fields_by_default, str) and select_fields_by_default.lower() == 'true') # noqa
+
+        self.quota_percent_per_run = float(quota_percent_per_run) if quota_percent_per_run is not None else 25 # noqa
+        self.quota_percent_total = float(quota_percent_total) if quota_percent_total is not None else 80 # noqa
+        self.domain = domain
+        self.select_fields_by_default = select_fields_by_default is True or (isinstance(
+            select_fields_by_default, str) and select_fields_by_default.lower() == 'true')
         self.default_start_date = default_start_date
         self.rest_requests_attempted = 0
         self.jobs_completed = 0
-        self.login_timer = None
-        self.data_url = "{}/services/data/v52.0/{}"
+        self.data_url = "{}/services/data/v53.0/{}"
         self.pk_chunking = False
-        self.lookback_window = lookback_window
+        self.login_timer = None
+
+        self.auth = SalesforceAuth.from_credentials(credentials, domain=self.domain)
 
         # validate start_date
-        singer_utils.strptime_to_utc(default_start_date)
-
-    def _get_standard_headers(self):
-        return {"Authorization": "Bearer {}".format(self.access_token)}
+        singer_utils.strptime(default_start_date)
 
     # pylint: disable=anomalous-backslash-in-string,line-too-long
     def check_rest_quota_usage(self, headers):
-        match = re.search('^api-usage=(\d+)/(\d+)$', headers.get('Sforce-Limit-Info')) # noqa W605
+        match = re.search('^api-usage=(\d+)/(\d+)$', headers.get('Sforce-Limit-Info'))
 
         if match is None:
             return
@@ -281,45 +267,34 @@ class Salesforce():
                                "quota of {}% per replication.").format(
                                    self.rest_requests_attempted,
                                    (self.rest_requests_attempted / allotted) * 100,
-                                   self.quota_percent_per_run)
-
+                                   self.quota_percent_per_run
+                                    )
             raise TapSalesforceQuotaExceededException(partial_message)
+
+    def login(self):
+        self.auth.login()
+
+    @property
+    def instance_url(self):
+        return self.auth.instance_url
 
     # pylint: disable=too-many-arguments
     @backoff.on_exception(backoff.expo,
-                          (requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+                          requests.exceptions.ConnectionError,
                           max_tries=10,
                           factor=2,
                           on_backoff=log_backoff_attempt)
     def _make_request(self, http_method, url, headers=None, body=None, stream=False, params=None):
-        request_timeout = 5 * 60  # 5 minute request timeout
-        try:
-            if http_method == "GET":
-                LOGGER.info("Making %s request to %s with params: %s", http_method, url, params)
-                resp = self.session.get(url,
-                                        headers=headers,
-                                        stream=stream,
-                                        params=params,
-                                        timeout=request_timeout,)
-            elif http_method == "POST":
-                LOGGER.info("Making %s request to %s with body %s", http_method, url, body)
-                resp = self.session.post(url,
-                                         headers=headers,
-                                         data=body,
-                                         timeout=request_timeout,)
-            else:
-                raise TapSalesforceException("Unsupported HTTP method")
-        except requests.exceptions.ConnectionError as connection_err:
-            LOGGER.error('Took longer than %s seconds to connect to the server', request_timeout)
-            raise connection_err
-        except requests.exceptions.Timeout as timeout_err:
-            LOGGER.error('Took longer than %s seconds to hear from the server', request_timeout)
-            raise timeout_err
+        if http_method == "GET":
+            LOGGER.info("Making %s request to %s with params: %s", http_method, url, params)
+            resp = self.session.get(url, headers=headers, stream=stream, params=params)
+        elif http_method == "POST":
+            LOGGER.info("Making %s request to %s with body %s", http_method, url, body)
+            resp = self.session.post(url, headers=headers, data=body)
+        else:
+            raise TapSalesforceException("Unsupported HTTP method")
 
-        try:
-            resp.raise_for_status()
-        except RequestException as ex:
-            raise ex
+        resp.raise_for_status()
 
         if resp.headers.get('Sforce-Limit-Info') is not None:
             self.rest_requests_attempted += 1
@@ -327,54 +302,18 @@ class Salesforce():
 
         return resp
 
-    def login(self):
-        if self.is_sandbox:
-            login_url = 'https://test.salesforce.com/services/oauth2/token'
-        else:
-            login_url = 'https://login.salesforce.com/services/oauth2/token'
-
-        login_body = {'grant_type': 'refresh_token', 'client_id': self.sf_client_id,
-                      'client_secret': self.sf_client_secret, 'refresh_token': self.refresh_token}
-
-        LOGGER.info("Attempting login via OAuth2")
-
-        resp = None
-        try:
-            resp = self._make_request("POST", login_url, body=login_body,
-                                      headers={"Content-Type": "application/x-www-form-urlencoded"})
-
-            LOGGER.info("OAuth2 login successful")
-
-            auth = resp.json()
-
-            self.access_token = auth['access_token']
-            self.instance_url = auth['instance_url']
-        except Exception as e:
-            error_message = str(e)
-            if resp is None and hasattr(e, 'response') and e.response is not None:
-                resp = e.response  # pylint:disable=no-member
-            # NB: requests.models.Response is always falsy here. It is false if status code >= 400
-            if isinstance(resp, requests.models.Response):
-                error_message = error_message + ", Response from Salesforce: {}".format(resp.text)
-            raise Exception(error_message) from e
-        finally:
-            LOGGER.info("Starting new login timer")
-            self.login_timer = threading.Timer(REFRESH_TOKEN_EXPIRATION_PERIOD, self.login)
-            # The timer should be a daemon thread so the process exits.
-            self.login_timer.daemon = True
-            self.login_timer.start()
-
     def describe(self, sobject=None):
         """Describes all objects or a specific object"""
-        headers = self._get_standard_headers()
+        headers = self.auth.rest_headers
+        instance_url = self.auth.instance_url
         if sobject is None:
             endpoint = "sobjects"
             endpoint_tag = "sobjects"
-            url = self.data_url.format(self.instance_url, endpoint)
+            url = self.data_url.format(instance_url, endpoint)
         else:
             endpoint = "sobjects/{}/describe".format(sobject)
             endpoint_tag = sobject
-            url = self.data_url.format(self.instance_url, endpoint)
+            url = self.data_url.format(instance_url, endpoint)
 
         with metrics.http_request_timer("describe") as timer:
             timer.tags['endpoint'] = endpoint_tag
@@ -382,6 +321,7 @@ class Salesforce():
 
         return resp.json()
 
+    # pylint: disable=no-self-use
     def _get_selected_properties(self, catalog_entry):
         mdata = metadata.to_map(catalog_entry['metadata'])
         properties = catalog_entry['schema'].get('properties', {})
@@ -392,24 +332,14 @@ class Salesforce():
                                             self.select_fields_by_default)]
 
     def get_start_date(self, state, catalog_entry):
-        """
-            return start date if state is not provided
-            else return bookmark from the state by subtracting lookback if provided
-        """
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
         replication_key = catalog_metadata.get((), {}).get('replication-key')
 
-        # get bookmark value from the state
-        bookmark_value = singer.get_bookmark(state, catalog_entry['tap_stream_id'], replication_key)
-        sync_start_date = bookmark_value or self.default_start_date
+        return (singer.get_bookmark(state,
+                                    catalog_entry['tap_stream_id'],
+                                    replication_key) or self.default_start_date)
 
-        # if the state contains a bookmark, subtract the lookback window from the bookmark
-        if bookmark_value and self.lookback_window:
-            sync_start_date = singer_utils.strftime(singer_utils.strptime_with_tz(sync_start_date) - datetime.timedelta(seconds=self.lookback_window)) # noqa
-
-        return sync_start_date
-
-    def _build_query_string(self, catalog_entry, start_date, end_date=None, order_by_clause=True,):
+    def _build_query_string(self, catalog_entry, start_date, end_date=None, order_by_clause=True):
         selected_properties = self._get_selected_properties(catalog_entry)
 
         query = "SELECT {} FROM {}".format(",".join(selected_properties), catalog_entry['stream'])
@@ -434,15 +364,12 @@ class Salesforce():
         else:
             return query
 
-    def _add_limit(self, query):
-        return query + " LIMIT 10"
-
-    def query(self, catalog_entry, state, limit=False):
+    def query(self, catalog_entry, state):
         if self.api_type == BULK_API_TYPE:
-            bulk = Bulk(self, limit)
+            bulk = Bulk(self)
             return bulk.query(catalog_entry, state)
         elif self.api_type == REST_API_TYPE:
-            rest = Rest(self, limit)
+            rest = Rest(self)
             return rest.query(catalog_entry, state)
         else:
             raise TapSalesforceException(
@@ -463,25 +390,13 @@ class Salesforce():
     # pylint: disable=line-too-long
     def get_blacklisted_fields(self):
         if self.api_type == BULK_API_TYPE:
-            return {('EntityDefinition', 'RecordTypesSupported'):
-                    "this field is unsupported by the Bulk API."}
+            return {
+                ('EntityDefinition', 'RecordTypesSupported'):
+                "this field is unsupported by the Bulk API."
+            }
         elif self.api_type == REST_API_TYPE:
             return {}
         else:
             raise TapSalesforceException(
                 "api_type should be REST or BULK was: {}".format(
                     self.api_type))
-
-    def get_window_end_date(self, start_date, end_date):
-        # to update end_date, substract 'half_day_range' (i.e. half of the days between start_date
-        # and end_date)
-        #
-        # when the 'half_day_range' is an odd number, we will round down to the nearest integer
-        # because of the '//'
-        half_day_range = (end_date - start_date) // 2
-
-        if half_day_range.days == 0:
-            raise TapSalesforceException(
-                "Attempting to query by 0 day range, this would cause infinite looping.")
-
-        return end_date - half_day_range

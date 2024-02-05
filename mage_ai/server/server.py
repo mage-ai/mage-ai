@@ -21,6 +21,9 @@ from tornado.options import options
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.dbt.cache import DBTCache
+from mage_ai.cache.file import FileCache
+from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
@@ -32,7 +35,6 @@ from mage_ai.data_preparation.repo_manager import (
     get_cluster_type,
     get_project_type,
     get_project_uuid,
-    get_variables_dir,
     init_project_uuid,
     init_repo,
 )
@@ -40,7 +42,7 @@ from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -91,6 +93,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     REQUIRE_USER_PERMISSIONS,
     ROUTES_BASE_PATH,
+    SERVER_LOGGING_FORMAT,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
@@ -100,11 +103,13 @@ from mage_ai.settings.repo import (
     MAGE_CLUSTER_TYPE_ENV_VAR,
     MAGE_PROJECT_TYPE_ENV_VAR,
     get_repo_name,
+    get_variables_dir,
     set_repo_path,
 )
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
-from mage_ai.shared.logger import LoggingLevel
+from mage_ai.shared.logger import LoggingLevel, set_logging_format
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -335,9 +340,9 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/global-data-products', MainPageHandler),
         (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
         (r'/global-hooks', MainPageHandler),
-        (r'/global-hooks/(?P<uuid>\w+)', MainPageHandler),
+        (r'/global-hooks/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/templates', MainPageHandler),
-        (r'/templates/(?P<uuid>\w+)', MainPageHandler),
+        (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
 
@@ -451,10 +456,10 @@ async def main(
                     f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
                     f', branch: {sync_config.branch}'
                 )
-            except Exception as err:
-                logger.info(
+            except Exception:
+                logger.exception(
                     f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                    f', branch: {sync_config.branch} with error: {str(err)}'
+                    f', branch: {sync_config.branch}'
                 )
 
     if REQUIRE_USER_AUTHENTICATION:
@@ -516,8 +521,14 @@ async def main(
     if REQUIRE_USER_PERMISSIONS:
         logger.info('User permissions requirement is enabled.')
 
-    logger.info('Initializing block cache.')
-    await BlockCache.initialize_cache(replace=True)
+    try:
+        logger.info('Initializing block cache.')
+        logger.info('Initializing pipeline cache.')
+        await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
+    except Exception as err:
+        print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+        if is_debug():
+            raise err
 
     logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)
@@ -525,12 +536,35 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+    project_model = Project(root_project=True)
+    if project_model:
+        if project_model.spark_config and \
+                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-        Application.clear_cache()
+            Application.clear_cache()
+
+        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+            try:
+                logger.info('Initializing dbt cache.')
+                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
+                logger.info(f'dbt cached in {dbt_cache.file_path}')
+            except Exception as err:
+                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                if is_debug():
+                    raise err
+
+        if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+            try:
+                logger.info('Initializing file cache.')
+                file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                count = len(file_cache._temp_data) if file_cache._temp_data else 0
+                logger.info(
+                    f'{count} files cached in {file_cache.file_path}.',
+                )
+            except Exception as err:
+                print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
+                if is_debug():
+                    raise err
 
     try:
         from mage_ai.services.ssh.aws.emr.models import create_tunnel
@@ -594,13 +628,23 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    init_project_uuid(overwrite_uuid=project_uuid)
+    init_project_uuid(overwrite_uuid=project_uuid, root_project=True)
 
     asyncio.run(UsageStatisticLogger().project_impression())
+
+    set_logging_format(
+        logging_format=SERVER_LOGGING_FORMAT,
+        level=SERVER_VERBOSITY,
+    )
+
+    if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
+        options.logging = SERVER_VERBOSITY
+    enable_pretty_logging()
 
     if dbt_docs:
         run_docs_server()
     else:
+        set_db_schema()
         run_web_server = True
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
@@ -625,10 +669,6 @@ def start_server(
                 traceback.print_exc()
 
         if run_web_server:
-            if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
-                options.logging = SERVER_VERBOSITY
-            enable_pretty_logging()
-
             # Start web server
             asyncio.run(
                 main(

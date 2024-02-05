@@ -228,9 +228,14 @@ def interpolate_input(
     return query
 
 
-def interpolate_vars(query, global_vars=None):
+def interpolate_vars(query, global_vars=None, block=None, dynamic_block_index: int = None):
     if global_vars is None:
         global_vars = dict()
+
+    if block:
+        query = block.interpolate_content(
+            query, variables=global_vars, dynamic_block_index=dynamic_block_index,
+        )
 
     return Template(
         query,
@@ -370,8 +375,8 @@ def create_upstream_block_tables(
 
     input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
         None,
-        execution_partition,
-        None,
+        execution_partition=execution_partition,
+        global_vars=None,
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )

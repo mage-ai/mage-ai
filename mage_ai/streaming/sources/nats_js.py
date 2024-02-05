@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import json
 import ssl
 import threading
@@ -6,11 +7,11 @@ from dataclasses import dataclass
 from typing import Callable, Dict, Optional
 
 import nats
-from nats.errors import NoServersError
+from nats.errors import NoServersError, TimeoutError
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
-from mage_ai.streaming.sources.base import BaseSource
+from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
 
 
 @dataclass
@@ -19,6 +20,11 @@ class SSLConfig:
     certfile: str = None
     keyfile: str = None
     check_hostname: bool = False
+
+
+class ConsumerType(str, enum.Enum):
+    PULL = "PULL"
+    PUSH = "PUSH"
 
 
 @dataclass
@@ -32,9 +38,11 @@ class NATSConfig(BaseConfig):
     consumer_name: Optional[str] = None
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout: int = DEFAULT_TIMEOUT_MS / 1000  # Convert to seconds
+    consumer_type: ConsumerType = ConsumerType.PULL
+    use_queue_group: bool = True
 
     @classmethod
-    def parse_config(self, config: Dict) -> Dict:
+    def parse_config(self, config: Dict = None) -> Dict:
         ssl_config = config.get('ssl_config')
         if ssl_config and type(ssl_config) is dict:
             config['ssl_config'] = SSLConfig(**ssl_config)
@@ -49,6 +57,13 @@ class NATSSource(BaseSource):
         self.thread = threading.Thread(target=self.start_loop, daemon=True)
         self.thread.start()
         super().__init__(config)
+        self.set_consumer_type()
+
+    def set_consumer_type(self):
+        if self.config.consumer_type == ConsumerType.PUSH:
+            self.consume_method = SourceConsumeMethod.READ
+        else:
+            self.consume_method = SourceConsumeMethod.BATCH_READ
 
     def start_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -88,9 +103,6 @@ class NATSSource(BaseSource):
             self.nc = await nats.connect(**connect_opts)
             self.js = self.nc.jetstream()
 
-            # Default consumer_name to stream_name if not provided
-            consumer_name = self.config.consumer_name or self.config.stream_name
-
             # Check if the stream exists, and create it if it doesn't
             try:
                 await self.js.stream_info(self.config.stream_name)
@@ -102,12 +114,31 @@ class NATSSource(BaseSource):
                         subjects=[self.config.subject],
                     )
 
-            self.psub = await self.js.pull_subscribe(self.config.subject, consumer_name)
+            # Default consumer_name to stream_name if not provided
+            consumer_name = self.config.consumer_name or self.config.stream_name
+            if self.config.consumer_type == ConsumerType.PULL:
+                self.sub = await self.js.pull_subscribe(self.config.subject, consumer_name)
+                return
+
+            subs_options = {
+                "stream": self.config.stream_name,
+                "subject": self.config.subject,
+                "durable": consumer_name,
+                "manual_ack": True,
+            }
+
+            # nats-py requires the value of 'queue' to be the same as 'durable'
+            if self.config.use_queue_group:
+                subs_options["queue"] = consumer_name
+
+            self.sub = await self.js.subscribe(**subs_options)
 
         except NoServersError as e:
             self._print(f'Caught NoServersError while connecting to NATS server: {e}')
         except Exception as e:
             self._print(f'Caught exception while connecting to NATS server: {e}')
+        finally:
+            self._print(f'Connected to NATS server at {self.nc.connected_url.netloc}')
 
     # Define callback methods
     async def disconnected_cb(self):
@@ -165,24 +196,36 @@ class NATSSource(BaseSource):
             self.stop_loop()
 
     def read(self, handler: Callable):
-        self.init_client()
-
         try:
             while True:
-                messages = self.fetch_messages()
-                if messages:
-                    for data, msg in messages:
-                        handler(data)  # Process each decoded message
-
-                        # Acknowledge the original message
-                        asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+                self._print("Fetching messages...")
+                msg = self.fetch_message()
+                if not msg:
+                    self._print("No message fetched, re-fetching...")
+                    break
+                handler(msg)    # Process decoded message
         finally:
             self.close_client()
             self.stop_loop()
 
+    # fetch message from queue subscribe asynchronously
+    async def afetch_message(self):
+        try:
+            msg = await self.sub.next_msg(self.config.timeout)
+            # Acknowledge message before return decoded message
+            await msg.ack()
+            return msg.data.decode()
+        except TimeoutError:
+            return None
+
+    # fetch message from queue subscribe synchronously
+    def fetch_message(self):
+        future = asyncio.run_coroutine_threadsafe(self.afetch_message(), self.loop)
+        return future.result()
+
     async def afetch_messages(self):
         try:
-            msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout)
+            msgs = await self.sub.fetch(self.config.batch_size, timeout=self.config.timeout)
             # Return a tuple of (decoded_message, message)
             return [(json.loads(msg.data.decode()), msg) for msg in msgs]
         except nats.errors.TimeoutError:

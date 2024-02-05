@@ -1,4 +1,3 @@
-
 import Col from '@components/shared/Grid/Col';
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';

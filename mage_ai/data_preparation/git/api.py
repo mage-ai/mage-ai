@@ -1,22 +1,18 @@
-import asyncio
 import os
 import shutil
-import subprocess
 import uuid
 from typing import Dict
-from urllib.parse import urlsplit, urlunsplit
 
-import requests
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 
-from mage_ai.authentication.oauth.constants import (
-    DEFAULT_GITHUB_HOSTNAME,
-    OAUTH_PROVIDER_GHE,
-    OAUTH_PROVIDER_GITHUB,
-    get_ghe_hostname,
-)
+from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
+from mage_ai.data_preparation.git.clients.base import Client as GitClient
+from mage_ai.data_preparation.git.utils import (
+    build_authenticated_remote_url,
+    get_provider_from_remote_url,
+)
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
 
@@ -29,7 +25,7 @@ def get_oauth_client_id(provider: str) -> str:
 
 def get_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessToken:
     if not provider:
-        provider = OAUTH_PROVIDER_GHE if get_ghe_hostname() else OAUTH_PROVIDER_GITHUB
+        provider = ProviderName.GHE if get_ghe_hostname() else ProviderName.GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]
@@ -40,14 +36,16 @@ def fetch(
     remote_url: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
-    username = get_username(token, user=user)
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -73,14 +71,16 @@ def pull(
     branch_name: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
-    username = get_username(token, user=user)
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -100,22 +100,22 @@ def pull(
     return custom_progress
 
 
-def push(
+def push_raw(
+    repo,
     remote_name: str,
     remote_url: str,
     branch_name: str,
     token: str,
     user: User = None,
+    **kwargs,
 ) -> RemoteProgress:
-    from mage_ai.data_preparation.git import Git
-
     custom_progress = RemoteProgress()
-    username = get_username(token, user=user)
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
 
-    remote = git_manager.repo.remotes[remote_name]
+    remote = repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
     remote.set_url(url)
 
@@ -133,19 +133,44 @@ def push(
     return custom_progress
 
 
+def push(
+    remote_name: str,
+    remote_url: str,
+    branch_name: str,
+    token: str,
+    user: User = None,
+    config_overwrite: Dict = None,
+) -> RemoteProgress:
+    from mage_ai.data_preparation.git import Git
+
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
+
+    return push_raw(
+        git_manager.repo,
+        remote_name=remote_name,
+        remote_url=remote_url,
+        branch_name=branch_name,
+        token=token,
+        user=user,
+        config_overwrite=config_overwrite,
+    )
+
+
 def reset_hard(
     remote_name: str,
     remote_url: str,
     branch_name: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
-    username = get_username(token, user=user)
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -167,13 +192,15 @@ def clone(
     remote_url: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
-    username = get_username(token, user=user)
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -218,81 +245,21 @@ def clone(
                 pass
 
 
-def build_authenticated_remote_url(remote_url: str, username: str, token: str) -> str:
-    # https://[username]:[token]@github.com/[remote_url]
-    url = urlsplit(remote_url)
-    url = url._replace(netloc=f'{username}:{token}@{url.netloc}')
-    return urlunsplit(url)
-
-
-def get_username(token: str, user: User = None) -> str:
-    resp = get_user(token)
-    if resp.get('login') is None:
+def get_username(token: str, user: User = None, provider: str = ProviderName.GITHUB) -> str:
+    resp = get_user(token, provider=provider)
+    if resp.get('username') is None:
         from mage_ai.data_preparation.git import Git
         git_manager = Git.get_manager(user=user, setup_repo=False)
         return git_manager.git_config.username
     else:
-        return resp['login']
+        return resp['username']
 
 
-def get_user(token: str) -> Dict:
+def get_user(token: str, provider: str = ProviderName.GITHUB) -> Dict:
     """
     https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-the-authenticated-user
     """
-    ghe_hostname = get_ghe_hostname()
-    endpoint = f'{API_ENDPOINT}/user'
-    if ghe_hostname and ghe_hostname != DEFAULT_GITHUB_HOSTNAME:
-        endpoint = f'{ghe_hostname}/api/v3/user'
-    resp = requests.get(
-        endpoint,
-        headers={
-            'Accept': 'application/vnd.github+json',
-            'Authorization': f'Bearer {token}',
-            'X-GitHub-Api-Version': '2022-11-28',
-        },
-        timeout=10,
-    )
-
-    return resp.json()
-
-
-def check_connection(repo: Repo, remote_url: str) -> None:
-    asyncio.run(validate_authentication_for_remote_url(repo, remote_url))
-
-
-async def validate_authentication_for_remote_url(repo: Repo, remote_url: str) -> None:
-    proc = repo.git.ls_remote(remote_url, as_process=True)
-
-    asyncio.run(
-        __poll_process_with_timeout(
-            proc,
-            error_message='Error connecting to remote, make sure your access is valid.',
-        )
-    )
-
-
-async def __poll_process_with_timeout(
-    proc: subprocess.Popen,
-    error_message: str = None,
-    timeout: int = 10,
-):
-    ct = 0
-    while ct < timeout * 2:
-        return_code = proc.poll()
-        if return_code is not None:
-            proc.kill()
-            break
-        ct += 1
-        await asyncio.sleep(0.5)
-
-    if error_message is None:
-        error_message = 'Error running Git process'
-
-    if return_code is not None and return_code != 0:
-        _, err = proc.communicate()
-        message = err.decode('UTF-8') if err else error_message
-        raise ChildProcessError(message)
-
-    if return_code is None:
-        proc.kill()
-        raise TimeoutError(error_message)
+    try:
+        return GitClient.get_client_for_provider(provider)(token).get_user()
+    except Exception:
+        return dict()

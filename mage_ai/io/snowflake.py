@@ -75,6 +75,10 @@ class Snowflake(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, timeout=self.timeout, **kwargs).fetchall()
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        with self.conn.cursor() as cur:
+            return cur.execute(query, timeout=self.timeout).fetchall()
+
     def execute_queries(
         self,
         queries: List[str],
@@ -277,14 +281,21 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
 """, timeout=self.timeout)
 
                 else:
+                    write_kwargs = merge_dict(
+                        dict(
+                            auto_create_table=should_create_table,
+                            database=database,
+                            schema=schema,
+                            # This param makes sure datetime column is written correctly
+                            use_logical_type=True,
+                        ),
+                        kwargs or dict(),
+                    )
                     write_pandas(
                         self.conn,
                         df,
                         table_name,
-                        database=database,
-                        schema=schema,
-                        auto_create_table=should_create_table,
-                        **kwargs,
+                        **write_kwargs,
                     )
 
         if verbose:

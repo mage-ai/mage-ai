@@ -14,6 +14,9 @@ export enum PipelineTypeEnum {
   STREAMING = 'streaming',
 }
 
+// Invalid pipeline type used for pipelines with invalid configuration
+export const PIPELINE_TYPE_INVALID = 'invalid';
+
 export const PIPELINE_TYPE_DISPLAY_NAME = {
   [PipelineTypeEnum.INTEGRATION]: 'Integration',
   [PipelineTypeEnum.PYTHON]: 'Python',
@@ -60,6 +63,7 @@ export enum PipelineQueryEnum {
   GROUP = 'group_by',
   HISTORY_DAYS = 'from_history_days',
   NO_TAGS = 'no_tags',
+  SEARCH = 'search',
   STATUS = 'status[]',
   TAG = 'tag[]',
   TYPE = 'type[]',

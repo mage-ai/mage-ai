@@ -8,6 +8,7 @@ import ComputeServiceType, {
   SetupStepStatusEnum,
 } from '@interfaces/ComputeServiceType';
 import api from '@api';
+import useDelayFetch from '@api/utils/useDelayFetch';
 import useProject from '@utils/models/project/useProject';
 
 function useComputeService({
@@ -15,11 +16,13 @@ function useComputeService({
   computeServiceRefreshInterval,
   connectionsRefreshInterval,
   includeAllStates,
+  pauseFetch,
 }: {
   clustersRefreshInterval?: number;
   computeServiceRefreshInterval?: number;
   connectionsRefreshInterval?: number;
   includeAllStates?: boolean;
+  pauseFetch?: boolean;
 } = {}): {
   activeCluster?: AWSEMRClusterType;
   clusters?: AWSEMRClusterType[];
@@ -44,10 +47,10 @@ function useComputeService({
   const {
     data: dataComputeService,
     mutate: fetchComputeService,
-  } = api.compute_services.detail('compute-service', {}, {
+  } = useDelayFetch(api.compute_services.detail, 'compute-service', {}, {
     refreshInterval: computeServiceRefreshInterval,
   }, {
-    pauseFetch: !sparkEnabled,
+    condition: () => sparkEnabled && !pauseFetch,
   });
   const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
     dataComputeService,
@@ -64,10 +67,8 @@ function useComputeService({
   const {
     data: dataComputeClusters,
     mutate: fetchComputeClusters,
-  } = api.compute_clusters.compute_services.list(computeService?.uuid, computeClustersQuery, {
+  } = api.compute_clusters.compute_services.list((!sparkEnabled || pauseFetch) ? null : computeService?.uuid, computeClustersQuery, {
     refreshInterval: clustersRefreshInterval,
-  }, {
-    pauseFetch: !sparkEnabled,
   });
 
   const computeClusters: ComputeClusterType[] =
@@ -103,7 +104,7 @@ function useComputeService({
   } = api.compute_connections.compute_services.list(computeService?.uuid, {}, {
     refreshInterval: connectionsRefreshInterval,
   }, {
-    pauseFetch: !sparkEnabled,
+    pauseFetch: !sparkEnabled || pauseFetch,
   });
   const computeConnections: ComputeConnectionType[] =
     useMemo(() => dataComputeConnections?.compute_connections || [], [

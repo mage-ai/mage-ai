@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 const MENU_HEIGHT = 36;
@@ -21,7 +22,7 @@ export const HeaderStyle = styled.div`
 `;
 
 export const MenuStyle = styled.div`
-  height: ${MENU_HEIGHT}px;
+  // height: ${MENU_HEIGHT}px;
   position: relative;
   z-index: 1;
 
@@ -38,4 +39,15 @@ export const TabsStyle = styled.div`
   position: sticky;
   width: 100%;
   z-index: 0;
+`;
+
+export const SearchContainerStyle = styled.div`
+  margin: ${UNIT}px;
+  margin-right: 0;
+  // position: fixed;
+  // width: 100%;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+  `}
 `;

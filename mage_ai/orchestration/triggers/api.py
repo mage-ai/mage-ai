@@ -13,6 +13,7 @@ from mage_ai.orchestration.triggers.utils import (
     check_pipeline_run_status,
     create_and_start_pipeline_run,
 )
+from mage_ai.settings.platform import project_platform_activated
 
 
 def trigger_pipeline(
@@ -28,7 +29,8 @@ def trigger_pipeline(
 ) -> PipelineRun:
     if variables is None:
         variables = {}
-    pipeline = Pipeline.get(pipeline_uuid)
+
+    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
 
     pipeline_schedule = __fetch_or_create_pipeline_schedule(pipeline, schedule_name=schedule_name)
 

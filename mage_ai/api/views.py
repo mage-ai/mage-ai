@@ -139,7 +139,10 @@ def __meta(request) -> Dict:
                 pass
             arr.append(val)
 
-        meta[k] = arr[0]
+        if len(arr) >= 2:
+            meta[k] = arr
+        else:
+            meta[k] = arr[0]
 
     return meta
 

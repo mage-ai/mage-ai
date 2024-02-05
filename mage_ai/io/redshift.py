@@ -1,6 +1,6 @@
 import json
 import warnings
-from typing import Union
+from typing import Dict, Union
 
 from pandas import DataFrame
 from redshift_connector import connect
@@ -135,6 +135,7 @@ class Redshift(BaseSQL):
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
         create_schema: bool = False,
+        overwrite_types: Dict = None,
     ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
@@ -144,8 +145,6 @@ class Redshift(BaseSQL):
             table_name (str): Name of the table to export the data to.
             Table must already exist.
         """
-        # TODO: Add support for creating new tables if table doesn't exist
-
         # CREATE TABLE predictions_dev.test_v01 AS
         # SELECT *
         # FROM experimentation.assignments_dev
@@ -227,9 +226,17 @@ class Redshift(BaseSQL):
                     cur.execute(query)
                 else:
                     if should_create_table:
-                        col_with_types = ', '.join(
-                            [f'{col} {col_type}' for col, col_type in columns_with_type],
-                        )
+                        if overwrite_types is not None:
+                            for index, col in enumerate(columns_with_type):
+                                # col is a tuple with (col_name, col_type)
+                                # so we access col_name using col[0]
+                                if col[0] in overwrite_types.keys():
+                                    columns_with_type[index] = (col[0], overwrite_types[col[0]])
+
+                        col_with_types = [f'{col} {col_type}' for col, col_type in
+                                          columns_with_type]
+
+                        col_with_types = ', '.join(col_with_types)
                         query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
                         cur.execute(query)
 

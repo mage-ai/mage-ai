@@ -264,6 +264,38 @@ class LLMPipelineWizard:
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
         return block_code
 
+    async def generate_code_async(
+        self,
+        block_description: str,
+        code_language: BlockLanguage,
+        block_type: BlockType = None,
+    ) -> Dict:
+        resp = await self.client.inference_with_prompt(
+            dict(
+                code_description=block_description,
+                code_language=code_language,
+            ),
+            PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE,
+        )
+
+        if not block_type:
+            return resp
+
+        code = resp.get('code')
+        if code:
+            block_code = fetch_template_source(
+                block_type=block_type,
+                config=dict(existing_code='\n'.join([f'    {line}' for line in code.split('\n')])),
+                language=code_language,
+            )
+
+            return dict(
+                code=code,
+                content=block_code,
+                block_type=block_type,
+                language=code_language,
+            )
+
     async def async_generate_block_with_description(
             self,
             block_description: str,

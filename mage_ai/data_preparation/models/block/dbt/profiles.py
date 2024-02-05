@@ -13,6 +13,8 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.errors.base import MageBaseException
+from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.environments import is_debug
 
 PROFILES_FILE_NAME = 'profiles.yml'
 
@@ -121,28 +123,33 @@ class Profiles(object):
             Union[str, os.PathLike]: the profiles_dir of the interpolated profiles.yml
         """
         # create dir for temporary interpolated profiles.yml
-        interpolated_profiles_dir = (
-            Path(self.__raw_profiles_dir) /
-            ('.mage_temp_profiles_' + str(uuid.uuid4()))
+        interpolated_profiles_dir = os.path.join(
+            base_repo_path(),
+            f'.profiles_interpolated_temp_{uuid.uuid4()}',
         )
-        try:
-            interpolated_profiles_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            raise ProfilesError(
-                f'Failed to create temporary dir `{interpolated_profiles_dir}`' +
-                f' for interpolated `{PROFILES_FILE_NAME}`: {e}'
-            )
+        if not os.path.exists(interpolated_profiles_dir):
+            os.makedirs(interpolated_profiles_dir, exist_ok=True)
 
         # write interpolated profiles.yml
-        interpoalted_profiles_full_path = interpolated_profiles_dir / PROFILES_FILE_NAME
+        interpoalted_profiles_full_path = os.path.join(
+            interpolated_profiles_dir, PROFILES_FILE_NAME,
+        )
+        if not os.path.exists(interpoalted_profiles_full_path):
+            os.makedirs(os.path.dirname(interpoalted_profiles_full_path), exist_ok=True)
+
         try:
-            with interpoalted_profiles_full_path.open('w') as f:
+            with open(interpoalted_profiles_full_path, 'w') as f:
                 yaml.safe_dump(self.profiles, f)
         except Exception as e:
-            raise ProfilesError(
-                f'Failed to write interpolated `{PROFILES_FILE_NAME}`' +
-                f' to `{interpolated_profiles_dir}`: {e}'
+            msg = (
+                f'Failed to write interpolated `{PROFILES_FILE_NAME}` to '
+                f'`{interpolated_profiles_dir}`: {e}'
             )
+
+            if is_debug():
+                raise ProfilesError(msg)
+            else:
+                print(f'[DBTProfiles] interpolate: {msg}')
 
         self.__interpolated_profiles_dir = str(interpolated_profiles_dir)
         self.is_interpolated = True

@@ -239,3 +239,193 @@ a.id = b.user_id LIMIT 1
 | `id` | `username`         |
 | :--- | :----------------- |
 | `1`  | `Sorcerer supreme` |
+
+---
+
+## Variable interpolation
+
+<Note>
+    Available in versions >= `0.9.59`
+</Note>
+
+Interpolate values in the block’s code using data from:
+
+1. Upstream block output
+1. Variables
+    1. Global variables
+    1. Pipeline variables
+    1. Runtime variables
+1. Environment variables
+
+### Upstream block output
+
+Use the data from 1 or more upstream block’s output by using the `block_output` function.
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Interpolate block output dataz"
+        src="https://github.com/mage-ai/assets/blob/main/blocks/interpolate-block-output.png?raw=true"
+    />
+    </p>
+</Frame>
+
+#### `block_uuid`
+
+The UUID of the upstream block to get data from.
+If argument isn’t present, data from all upstream blocks will be fetched.
+
+| | |
+| --- | --- |
+| Optional | ✅ |
+| Type | `str` |
+| Example | `'data_loader_block'` |
+
+#### `parse`
+
+A lambda function to parse the data from an upstream block’s output.
+If the `parse` argument isn’t present, then the fetched data from the upstream block’s output
+will be interpolated as is.
+
+| | |
+| --- | --- |
+| Optional | ✅ |
+| Type | `function` |
+| Example | `lambda data, variables: data['runtime'] * variables['tries']` |
+
+<b>Arguments</b>
+- `data`
+
+    If the `block_uuid` argument isn’t present, then the 1st argument in the lambda function is
+    a list of objects.
+
+    The list of objects contain the data from an upstream block’s output.
+    The positional order of the data in the list corresponds to the current block’s upstream blocks
+    order.
+
+    For example, if the current block has the following upstream blocks with the following output:
+
+    1. `load_api_data`: `[1, 2, 3]`
+    1. `load_users_data`: `{ 'mage': 'powerful' }`
+
+    Then the 1st argument in the lambda function will be the following list:
+
+    ```python
+    [
+        [1, 2, 3],
+        { 'mage': 'powerful' },
+    ]
+    ```
+
+    | | |
+    | --- | --- |
+    | Optional | ❌ |
+    | Type | If `block_uuid` argument is present, then the type depends on the output from that block. If `block_uuid` isn’t present, then the type is `list`.  |
+    | Example | `{ 'mage': 'powerful' }` |
+
+- `variables`
+    A dictionary containing pipeline variables and runtime variables.
+
+    | | |
+    | --- | --- |
+    | Optional | ❌ |
+    | Type | `dict` |
+    | Example | `{ 'fire': 40 }` |
+
+#### Example
+
+With `block_uuid`
+
+```sql
+SELECT 
+    '{{ block_output("magic_config", parse=lambda data, _vars: data["power"]) }}' AS power
+    , '{{ block_output("magic_config", parse=lambda data, _vars: data["spell"]) }}' AS spell
+FROM mage.core_spells
+```
+
+```sql
+SELECT 
+    '{{ block_output("data_loader_block", parse=lambda data, variables: data["runtime"] * variables["tries"]) }}' AS data
+FROM mage.core_spells
+```
+
+```sql
+SELECT
+    '{{ block_output("load_recent_user", parse=lambda user, _variables: user["id"]) }}'
+FROM mage.core_spells
+```
+
+Without `block_uuid`
+
+```sql
+SELECT 
+    '{{ block_output(parse=lambda data, _vars: data[0]["power"]) }}' AS power
+    , '{{ block_output(parse=lambda data, _vars: data[0]["spell"]) }}' AS spell
+FROM mage.core_spells    
+```
+
+```sql
+SELECT 
+    '{{ block_output(parse=lambda data, variables: data[0]["runtime"] * variables[0]["tries"]) }}' AS data
+FROM mage.core_spells
+```
+
+```sql
+SELECT
+    '{{ block_output(parse=lambda user, _variables: user[0]["id"]) }}'
+FROM mage.core_spells
+```
+
+### Variables
+
+Interpolate values from a dictionary containing keys and values from:
+
+1. Global variables
+1. Pipeline variables
+1. Runtime variables
+
+#### Example
+
+```sql
+SELECT
+    '{{ variables("mana") }}' AS mana
+FROM mage.dual_lands
+```
+
+### Environment variables
+
+Interpolate values from the environment variables.
+
+#### Example
+
+```sql
+SELECT
+    '{{ env_var("ALLOW_POWER_9") }}' AS vintage
+FROM mage.mox
+```
+
+---
+
+## Executing pure SQL
+
+<Note>
+    Available in versions >= `0.9.59`
+</Note>
+
+Mage automatically pre-processes your SQL command before sending it to the final destination.
+
+The pre-process extracts and structures the command so that Mage can build upstream tables and
+properly display preview data.
+
+However, there are scenarios where the SQL command you write must be executed as is. 
+You can disable Mage’s pre-processing by opening a SQL block and checking the box labeled
+<b>Use raw SQL</b> and <b>Disable query preprocessing</b>.
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Execute pure SQl commands"
+        src="https://github.com/mage-ai/assets/blob/main/blocks/execute-pure-sql.gif?raw=true"
+    />
+    </p>
+</Frame>
