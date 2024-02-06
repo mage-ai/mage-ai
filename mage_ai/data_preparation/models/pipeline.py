@@ -65,6 +65,7 @@ from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
+from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 
@@ -1351,6 +1352,7 @@ class Pipeline:
                 uuid = block['uuid']
                 block_type = block['type']
                 language = block.get('language', 'python')
+                configuration = block.get('configuration', {})
 
                 block_inst = Block(name=name, uuid=uuid, block_type=block_type, language=language)
 
@@ -1375,6 +1377,10 @@ class Pipeline:
                 files_to_be_written.append((block_zip_path, block_destination_path))
 
                 # save new block parameters
+                file_path = (configuration.get('file_source') or {}).get('path')
+                if file_path:
+                    file_path = remove_base_repo_path(block_destination_path)
+                    block['configuration']['file_source']['path'] = file_path
                 block['uuid'] = block_inst.uuid
                 block['name'] = block_inst.uuid
                 config['blocks'][b_index] = block
