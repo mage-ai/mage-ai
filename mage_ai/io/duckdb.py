@@ -57,8 +57,9 @@ class DuckDB(BaseSQL):
             )
             if self.settings.get('motherduck_token'):
                 conn_kwargs['config'] = dict(
-                    motherduck_token=self.settings.get('motherduck_token'),
+                    autoload_known_extensions=False,
                     custom_user_agent='MAGE',
+                    motherduck_token=self.settings.get('motherduck_token'),
                 )
             self._ctx = duckdb.connect(
                 self.settings['database'],
