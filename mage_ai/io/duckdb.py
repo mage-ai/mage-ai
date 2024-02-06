@@ -55,14 +55,17 @@ class DuckDB(BaseSQL):
             conn_kwargs = dict(
                 read_only=False,
             )
-            if self.settings.get('motherduck_token'):
-                conn_kwargs['config'] = dict(
+            database_url = self.settings['database']
+            if database_url and database_url.startswith('md:'):
+                config = dict(
                     autoload_known_extensions=False,
                     custom_user_agent='MAGE',
-                    motherduck_token=self.settings.get('motherduck_token'),
                 )
+                if self.settings.get('motherduck_token'):
+                    config['motherduck_token'] = self.settings.get('motherduck_token')
+                conn_kwargs['config'] = config
             self._ctx = duckdb.connect(
-                self.settings['database'],
+                database_url,
                 **conn_kwargs,
             )
 
