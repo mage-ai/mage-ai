@@ -235,7 +235,6 @@ function Remote({
     expires_in: expiresIn,
   } = queryFromUrl() || {};
   useEffect(() => {
-    console.log('refresh token:', refreshTokenFromURL);
     if (accessTokenFromURL) {
       // @ts-ignore
       createOauth({

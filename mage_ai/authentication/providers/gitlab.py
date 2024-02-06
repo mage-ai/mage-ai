@@ -99,6 +99,4 @@ class GitlabProvider(OauthProvider):
             ) as response:
                 data = await response.json()
 
-        print('refresh token data:', data)
-
         return data
