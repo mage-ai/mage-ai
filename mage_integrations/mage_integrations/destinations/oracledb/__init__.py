@@ -45,10 +45,14 @@ class OracleDB(Destination):
     def database(self) -> str:
         return self.config['database']
 
+    @property
+    def mode(self) -> str:
+        return self.config.get('mode') or 'thin'
+
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
             host=self.host, password=self.password,
-            user=self.user, port=self.port, service=self.service)
+            user=self.user, port=self.port, service=self.service, mode=self.mode)
 
     def build_create_schema_commands(
         self,
@@ -214,7 +218,7 @@ END;
         database_name: str = None,
     ) -> bool:
         oracledb_connection = self.build_connection()
-        connection = oracledb_connection.uild_connection()
+        connection = oracledb_connection.build_connection()
         cursor = connection.cursor()
         cursor.execute(
             f'SELECT COUNT(*) FROM user_tables WHERE table_name = \'{table_name.upper()}\'')

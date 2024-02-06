@@ -802,6 +802,7 @@ ORACLEDB_PASSWORD: OracleDB password
 ORACLEDB_HOST: OracleDB host
 ORACLEDB_PORT: OracleDB port
 ORACLEDB_SERVICE: OracleDB service
+ORACLEDB_MODE: OracleDB mode
 ```
 
 <h3> Constructor </h3>
@@ -816,8 +817,11 @@ Initializes the OracleDB data loading client.
     -   `host (str)`: Host address for database.
     -   `port (int)`: Port on which the database is running Defaults to 3306.
     -   `service (str)`: OracleDB service
+    -   `mode (str)`: switch between OracleDB mode of `thin` or `thick`
     -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
     -   `**kwargs`: Additional settings for creating psycopg2 connection
+
+To switch OracleDB mode to `thick`, it is required to use the customized oracle Dockerfile in `integrations/oracle/Dockerfile`.
 
 <h3> Factory Methods </h3>
 

@@ -11,6 +11,7 @@ class OracleDB(Connection):
         user: str,
         port: int = None,
         service: str = None,
+        mode: str = 'thin',
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -19,10 +20,14 @@ class OracleDB(Connection):
         self.port = port or 1521
         self.service = service
         self.user = user
+        self.mode = mode
 
     def make_dsn(self):
         return "{}:{}/{}".format(self.host, self.port, self.service)
 
     def build_connection(self):
+        if self.mode and self.mode.lower() == 'thick':
+            self.logger.info('Initializing Oracle thick mode.')
+            oracledb.init_oracle_client()
         return oracledb.connect(
             user=self.user, password=self.password, dsn=self.make_dsn())

@@ -4,6 +4,7 @@
     "service": "",
     "password": "",
     "user": "",
-    "database": ""
+    "database": "",
+    "mode": "thin"
 }
 
