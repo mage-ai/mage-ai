@@ -9,7 +9,7 @@ def send_discord_message(config: DiscordConfig, message: str) -> None:
     message = message.replace("\\n", "\n")
     payload = {
                 {
-                "content": message
+                    "content": message
                 }
         }
 
