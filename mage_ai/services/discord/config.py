@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from mage_ai.shared.config import BaseConfig
 
 
