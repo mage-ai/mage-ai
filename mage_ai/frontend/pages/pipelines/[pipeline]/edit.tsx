@@ -511,15 +511,18 @@ function PipelineDetailPage({
   ]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
-  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const [multipleTabsOpen, setMultipleTabsOpen] = useState<boolean>(false);
 
   const [showStalePipelineMessageModal, hideStalePipelineMessageModal] = useModal(() => (
     <PopupMenu
       centerOnScreen
       neutral
       onClick={hideStalePipelineMessageModal}
-      subtitle="Please refresh your page to have the most up-to-date data before making any changes."
+      subtitle={
+        'This pipeline may be open on another tab. Saving changes here could overwrite'
+        + ' any changes made to this pipeline on a separate tab. Proceed with caution.'
+      }
       title="Your pipeline may be stale."
       width={UNIT * 34}
     />
@@ -529,20 +532,43 @@ function PipelineDetailPage({
   });
 
   useEffect(() => {
+    const channel = new BroadcastChannel(`${pipelineUUID}_pipeline_editor_tabs`);
+    channel.addEventListener('message', (event) => {
+      if (event.data === 'new_tab_same_page_opened') {
+        setMultipleTabsOpen(true);
+      }
+    });
+    /*
+     * Send message to this pipeline’s broadcast channel when the component mounts
+     * so that we can detect if there are multiple tabs open for the same pipeline,
+     * which could cause issues with the pipeline's block files being overwritten
+     * unexpectedly.
+     */
+    channel.postMessage('new_tab_same_page_opened');
+
+    return () => {
+      channel.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (multipleTabsOpen) {
+      showStalePipelineMessageModal();
+      setMultipleTabsOpen(false);
+    }
+  }, [multipleTabsOpen, showStalePipelineMessageModal]);
+
+  useEffect(() => {
     if (data?.pipeline?.updated_at
       && pipelineLastSaved !== moment().utc().unix()
     ) {
       // This assumes datetime is saved without a timezone offset e.g.'2023-11-16 10:37:35'
       setPipelineLastSaved(moment(data.pipeline.updated_at).unix());
     }
-    // if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-    //   showStalePipelineMessageModal();
-    // }
   }, [
     data?.pipeline?.updated_at,
     pipelineLastSaved,
-    pipelineLastSavedState,
-    showStalePipelineMessageModal,
   ]);
 
   const qUrl = queryFromUrl();
@@ -1136,12 +1162,6 @@ function PipelineDetailPage({
       },
     } = payload || {};
     const { contentOnly } = opts || {};
-
-    // if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-    //   showStalePipelineMessageModal();
-    //   return;
-    // }
-
     const blocksByExtensions = {};
     const blocksByUUID = {};
     const callbacksByUUID = {};
@@ -1378,10 +1398,7 @@ function PipelineDetailPage({
     messages,
     ouputsToSaveByBlockUUID,
     pipeline,
-    // pipelineLastSaved,
-    // pipelineLastSavedState,
     runningBlocks,
-    // showStalePipelineMessageModal,
     sparkEnabled,
     updatePipeline,
     widgets,
