@@ -228,13 +228,21 @@ function Remote({
       ),
     },
   );
-  const { access_token: accessTokenFromURL, provider: providerFromURL } = queryFromUrl() || {};
+  const {
+    access_token: accessTokenFromURL,
+    provider: providerFromURL,
+    refresh_token: refreshTokenFromURL,
+    expires_in: expiresIn,
+  } = queryFromUrl() || {};
   useEffect(() => {
+    console.log('refresh token:', refreshTokenFromURL);
     if (accessTokenFromURL) {
       // @ts-ignore
       createOauth({
         oauth: {
+          expires_in: expiresIn,
           provider: providerFromURL || OauthProviderEnum.GITHUB,
+          refresh_token: refreshTokenFromURL,
           token: accessTokenFromURL,
         },
       });
@@ -242,7 +250,9 @@ function Remote({
   }, [
     accessTokenFromURL,
     createOauth,
+    expiresIn,
     providerFromURL,
+    refreshTokenFromURL,
   ]);
 
   const remotesMemo = useMemo(() => remotes?.map(({

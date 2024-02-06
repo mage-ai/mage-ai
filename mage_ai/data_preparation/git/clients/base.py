@@ -17,6 +17,10 @@ class Client(ABC):
             from mage_ai.data_preparation.git.clients.bitbucket import BitbucketClient
 
             return BitbucketClient
+        elif provider == ProviderName.GITLAB:
+            from mage_ai.data_preparation.git.clients.gitlab import GitlabClient
+
+            return GitlabClient
         elif provider == ProviderName.GHE:
             from mage_ai.data_preparation.git.clients.ghe import GHEClient
 
