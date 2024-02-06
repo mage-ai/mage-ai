@@ -50,6 +50,7 @@ class ConfigKey(str, Enum):
 
     DUCKDB_DATABASE = 'DUCKDB_DATABASE'
     DUCKDB_SCHEMA = 'DUCKDB_SCHEMA'
+    MOTHERDUCK_TOKEN = 'MOTHERDUCK_TOKEN'
 
     GOOGLE_LOCATION = 'GOOGLE_LOCATION'
     GOOGLE_SERVICE_ACC_KEY = 'GOOGLE_SERVICE_ACC_KEY'
@@ -419,6 +420,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.DRUID_USER: (VerboseConfigKey.DRUID, 'user'),
         ConfigKey.DUCKDB_DATABASE: (VerboseConfigKey.DUCKDB, 'database'),
         ConfigKey.DUCKDB_SCHEMA: (VerboseConfigKey.DUCKDB, 'schema'),
+        ConfigKey.MOTHERDUCK_TOKEN: (VerboseConfigKey.DUCKDB, 'motherduck_token'),
         ConfigKey.PINOT_HOST: (VerboseConfigKey.PINOT, 'host'),
         ConfigKey.PINOT_USER: (VerboseConfigKey.PINOT, 'password'),
         ConfigKey.PINOT_PATH: (VerboseConfigKey.PINOT, 'path'),

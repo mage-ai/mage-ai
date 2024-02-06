@@ -17,6 +17,7 @@ class DuckDB(BaseSQL):
     def __init__(
             self,
             database: str,
+            motherduck_token: str = None,
             schema: str = None,
             verbose: bool = True,
             **kwargs,) -> None:
@@ -25,20 +26,18 @@ class DuckDB(BaseSQL):
         """
         super().__init__(
             database=database,
+            motherduck_token=motherduck_token,
             schema=schema,
             verbose=verbose,
             **kwargs
         )
-        with self.printer.print_msg('Opening connection to DuckDB'):
-            self._ctx = duckdb.connect(
-                database=self.settings['database'],
-                read_only=False
-            )
+        self.open()
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'DuckDB':
         return cls(
             database=config[ConfigKey.DUCKDB_DATABASE],
+            motherduck_token=config[ConfigKey.MOTHERDUCK_TOKEN],
             schema=config[ConfigKey.DUCKDB_SCHEMA],
         )
 
@@ -53,9 +52,17 @@ class DuckDB(BaseSQL):
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to DuckDB'):
+            conn_kwargs = dict(
+                read_only=False,
+            )
+            if self.settings.get('motherduck_token'):
+                conn_kwargs['config'] = dict(
+                    motherduck_token=self.settings.get('motherduck_token'),
+                    custom_user_agent='MAGE',
+                )
             self._ctx = duckdb.connect(
-                database=self.settings['database'],
-                read_only=False
+                self.settings['database'],
+                **conn_kwargs,
             )
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
