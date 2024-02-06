@@ -10,11 +10,15 @@ from mage_ai.orchestration.db.models.oauth import (
     Oauth2Application,
     User,
 )
+from mage_ai.server.logger import Logger
+
+logger = Logger().new_server_logger(__name__)
 
 
 @safe_db_query
 def access_tokens_for_client(
-    client_id: str, user: User = None,
+    client_id: str,
+    user: User = None,
 ) -> List[Oauth2AccessToken]:
     query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
     query.cache = True
@@ -37,7 +41,9 @@ def access_tokens_for_client(
 
 @safe_db_query
 async def refresh_token_for_client(
-    client_id: str, provider_instance: OauthProvider, user: User = None,
+    client_id: str,
+    provider_instance: OauthProvider,
+    user: User = None,
 ) -> Awaitable[Optional[Oauth2AccessToken]]:
     query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
     query.cache = True
@@ -58,12 +64,11 @@ async def refresh_token_for_client(
     new_token = None
     if refreshable_tokens:
         # Try a limited number of tokens just in case there are too many
-        for token in refreshable_tokens[:5]:
+        tokens = refreshable_tokens[:5]
+        for idx, token in enumerate(tokens):
             try:
-                data = (
-                    await provider_instance.get_refresh_token_response(
-                        token.refresh_token
-                    )
+                data = await provider_instance.get_refresh_token_response(
+                    token.refresh_token
                 )
                 if 'access_token' in data:
                     expire_duration = int(
@@ -80,9 +85,19 @@ async def refresh_token_for_client(
                         refresh_token=data.get('refresh_token'),
                         token=data.get('access_token'),
                     )
+                    logger.info(
+                        'Access token refreshed for client %s, expires on %s',
+                        oauth_client.name,
+                        new_token.expires.isoformat(),
+                    )
                     break
             except Exception:
-                pass
+                logger.exception(
+                    'Token refresh failed for client %s, attempt %d of %d',
+                    oauth_client.name,
+                    idx,
+                    len(tokens),
+                )
             finally:
                 token.delete()
 
@@ -130,11 +145,18 @@ def add_access_token_to_query(data: Dict, query: Dict) -> Dict:
         error_uri = data.get('error_uri')
 
         if error:
-            error = '. '.join(list(filter(lambda x: x, [
-                error,
-                error_description,
-                error_uri,
-            ])))
+            error = '. '.join(
+                list(
+                    filter(
+                        lambda x: x,
+                        [
+                            error,
+                            error_description,
+                            error_uri,
+                        ],
+                    )
+                )
+            )
         else:
             error = 'Access token was not created.'
 
