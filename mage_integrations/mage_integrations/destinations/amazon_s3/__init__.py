@@ -10,7 +10,10 @@ import pandas as pd
 from botocore.config import Config
 
 from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.constants import COLUMN_FORMAT_DATETIME
+from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_STRING,
+)
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 
 
@@ -102,6 +105,8 @@ class AmazonS3(Destination):
         for column, column_settings in schema['properties'].items():
             if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
                 df[column] = pd.to_datetime(df[column])
+            elif COLUMN_TYPE_STRING == column_settings.get(''):
+                df[column] = df[column].astype(str)
 
         column_header_format = self.config.get('column_header_format')
         if column_header_format:
@@ -115,7 +120,7 @@ class AmazonS3(Destination):
 
         buffer = BytesIO()
         if self.file_type == 'parquet':
-            df.to_parquet(buffer)
+            df.to_parquet(buffer, timestamp_unit='ms')
         elif self.file_type == 'csv':
             df.to_csv(buffer, index=False)
         else:
