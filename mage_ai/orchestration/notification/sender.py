@@ -6,12 +6,12 @@ from mage_ai.orchestration.notification.config import (
     MessageTemplate,
     NotificationConfig,
 )
+from mage_ai.services.discord.discord import send_discord_message
 from mage_ai.services.email.email import send_email
 from mage_ai.services.google_chat.google_chat import send_google_chat_message
 from mage_ai.services.opsgenie.opsgenie import send_opsgenie_alert
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
-from mage_ai.services.discord.discord import send_discord_message
 from mage_ai.settings import DEFAULT_LOCALHOST_URL, MAGE_PUBLIC_HOST
 
 DEFAULT_MESSAGES = dict(
