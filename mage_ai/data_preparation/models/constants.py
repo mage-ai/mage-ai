@@ -18,6 +18,7 @@ DATAFRAME_SAMPLE_MAX_COLUMNS = 1000
 LOGS_DIR = '.logs'
 MAX_PRINT_OUTPUT_LINES = int(os.getenv('MAX_PRINT_OUTPUT_LINES', 1000) or 1000)
 PIPELINE_CONFIG_FILE = 'metadata.yaml'
+PIPELINE_MAX_FILE_SIZE = 500000  # maximum size of a pipeline import zip in kb (500Mb)
 PIPELINES_FOLDER = 'pipelines'
 PREFERENCES_FILE = '.preferences.yaml'
 REPO_CONFIG_FILE = 'metadata.yaml'

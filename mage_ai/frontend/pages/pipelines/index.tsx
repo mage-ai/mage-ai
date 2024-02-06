@@ -38,6 +38,7 @@ import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
+import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useProject from '@utils/models/project/useProject';
@@ -569,6 +570,19 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
+    <UploadPipeline
+      fetchPipelines={fetchPipelines}
+      onCancel={hideImportPipelineModal}
+    />
+  ), {
+  }, [
+    fetchPipelines,
+  ], {
+    background: true,
+    uuid: 'upload_pipeline',
+  });
+
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
     <ErrorProvider>
       <BrowseTemplates
@@ -672,6 +686,7 @@ function PipelineListPage() {
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -691,6 +706,7 @@ function PipelineListPage() {
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showImportPipelineModal,
   ]);
 
   const { data: dataTags } = api.tags.list();
