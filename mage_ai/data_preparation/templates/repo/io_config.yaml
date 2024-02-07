@@ -26,6 +26,14 @@ default:
   CLICKHOUSE_PASSWORD: null
   CLICKHOUSE_PORT: 8123
   CLICKHOUSE_USERNAME: null
+  # CrateDB
+  CRATEDB_CONNECT_TIMEOUT: 10
+  CRATEDB_DBNAME: crate
+  CRATEDB_SCHEMA: doc # Optional
+  CRATEDB_USER: username
+  CRATEDB_PASSWORD: password
+  CRATEDB_HOST: hostname
+  CRATEDB_PORT: 5432
   # Druid
   DRUID_HOST: hostname
   DRUID_PASSWORD: password

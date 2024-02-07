@@ -41,6 +41,20 @@ class ConfigKey(str, Enum):
     CLICKHOUSE_PORT = 'CLICKHOUSE_PORT'
     CLICKHOUSE_USERNAME = 'CLICKHOUSE_USERNAME'
 
+    CRATEDB_CONNECTION_METHOD = 'CRATEDB_CONNECTION_METHOD'
+    CRATEDB_CONNECT_TIMEOUT = 'CRATEDB_CONNECT_TIMEOUT'
+    CRATEDB_DBNAME = 'CRATEDB_DBNAME'
+    CRATEDB_HOST = 'CRATEDB_HOST'
+    CRATEDB_PASSWORD = 'CRATEDB_PASSWORD'
+    CRATEDB_PORT = 'CRATEDB_PORT'
+    CRATEDB_SCHEMA = 'CRATEDB_SCHEMA'
+    CRATEDB_SSH_HOST = 'CRATEDB_SSH_HOST'
+    CRATEDB_SSH_PASSWORD = 'CRATEDB_SSH_PASSWORD'
+    CRATEDB_SSH_PKEY = 'CRATEDB_SSH_PKEY'
+    CRATEDB_SSH_PORT = 'CRATEDB_SSH_PORT'
+    CRATEDB_SSH_USERNAME = 'CRATEDB_SSH_USERNAME'
+    CRATEDB_USER = 'CRATEDB_USER'
+
     DRUID_HOST = 'DRUID_HOST'
     DRUID_PASSWORD = 'DRUID_PASSWORD'
     DRUID_PATH = 'DRUID_PATH'
@@ -343,6 +357,7 @@ class VerboseConfigKey(str, Enum):
     BIGQUERY = 'BigQuery'
     CHROMA = 'Chroma'
     CLICKHOUSE = 'ClickHouse'
+    CRATEDB = "CrateDB"
     DRUID = 'Druid'
     DUCKDB = 'Duck DB'
     PINOT = 'Pinot'
@@ -413,6 +428,12 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.CLICKHOUSE, 'port'),
         ConfigKey.CLICKHOUSE_USERNAME: (
             VerboseConfigKey.CLICKHOUSE, 'username'),
+        ConfigKey.CRATEDB_DBNAME: (VerboseConfigKey.CRATEDB, 'database'),
+        ConfigKey.CRATEDB_HOST: (VerboseConfigKey.CRATEDB, 'host'),
+        ConfigKey.CRATEDB_PASSWORD: (VerboseConfigKey.CRATEDB, 'password'),
+        ConfigKey.CRATEDB_PORT: (VerboseConfigKey.CRATEDB, 'port'),
+        ConfigKey.CRATEDB_SCHEMA: (VerboseConfigKey.CRATEDB, 'schema'),
+        ConfigKey.CRATEDB_USER: (VerboseConfigKey.CRATEDB, 'user'),
         ConfigKey.DRUID_HOST: (VerboseConfigKey.DRUID, 'host'),
         ConfigKey.DRUID_PASSWORD: (VerboseConfigKey.DRUID, 'password'),
         ConfigKey.DRUID_PATH: (VerboseConfigKey.DRUID, 'path'),

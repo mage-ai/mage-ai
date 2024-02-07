@@ -210,6 +210,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='CrateDB',
+        path='data_loaders/cratedb.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='DuckDB',
         path='data_loaders/duckdb.py',
     ),
@@ -593,6 +600,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Chroma',
         path='data_exporters/chroma.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='CrateDB',
+        path='data_exporters/cratedb.py',
     ),
     dict(
         block_type=BlockType.DATA_EXPORTER,

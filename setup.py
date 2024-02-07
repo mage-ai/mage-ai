@@ -63,6 +63,11 @@ setuptools.setup(
         'clickhouse': [
             'clickhouse-connect~=0.6.23',
         ],
+        'cratedb': [
+            'psycopg2==2.9.3',
+            'psycopg2-binary==2.9.3',
+            'sshtunnel==0.4.0',
+        ],
         'dbt': [
             'dbt-bigquery==1.7.2',
             'dbt-clickhouse==1.7.1',

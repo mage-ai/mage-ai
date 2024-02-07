@@ -19,6 +19,7 @@ class DataSource(str, Enum):
     BIGQUERY = 'bigquery'
     CHROMA = 'chroma'
     CLICKHOUSE = 'clickhouse'
+    CRATEDB = 'cratedb'
     DRUID = 'druid'
     DUCKDB = 'duckdb'
     FILE = 'file'

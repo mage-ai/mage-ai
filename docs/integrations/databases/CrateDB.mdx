@@ -1,0 +1,57 @@
+---
+title: "CrateDB"
+sidebarTitle: "CrateDB"
+---
+
+## Credentials
+
+Open the file named `io_config.yaml` at the root of your Mage project and enter cratedb required fields:
+
+```yaml
+version: 0.1.1
+default:
+  CRATEDB_COLLECTION: collection_name
+  CRATEDB_PATH: path of the cratedb persisitant storage
+```
+
+## Dependencies
+
+The dependency libraries are not installed in the docker image by default. You'll need to add the libraries to
+project `requirements.txt` file manually and install them.
+
+```
+cratedb-client==1.6.9
+sentence-transformers==2.2.2
+```
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader, transformer, or data exporter block (the code snippet
+   below is for a data loader).
+3. Select `Generic (no template)`.
+4. Enter this code snippet (note: change the `config_profile` from `default` if
+   you have a different profile):
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.postgres import Postgres
+from os import path
+from pandas import DataFrame
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_postgres(**kwargs) -> DataFrame:
+    query = 'SELECT 1'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        return loader.load(query)
+```
+
+5. Run the block.
