@@ -62,12 +62,21 @@ WorkspacePolicy.allow_write([
 ], condition=lambda policy: policy.is_owner())
 
 WorkspacePolicy.allow_query([
+    'namespace[]',
+    'cluster_type',
+    'user_id',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+WorkspacePolicy.allow_query([
     'cluster_type',
     'user_id',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,
-    constants.LIST,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

@@ -15,15 +15,18 @@ from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.settings.repo import get_repo_path
 
 
-def get_instances(cluster_type: str) -> List[Dict]:
+def get_instances(cluster_type: str, **kwargs) -> List[Dict]:
     instances = []
     if cluster_type == ClusterType.K8S:
         from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+        namespaces = kwargs.get('namespaces') or []
+        if '__all__' in namespaces:
+            instances = WorkloadManager.list_all_workloads()
+        else:
+            namespace = namespaces[0] if namespaces else os.getenv(KUBE_NAMESPACE)
+            workload_manager = WorkloadManager(namespace)
 
-        namespace = os.getenv(KUBE_NAMESPACE)
-        workload_manager = WorkloadManager(namespace)
-
-        instances = workload_manager.list_workloads()
+            instances = workload_manager.list_workloads()
     elif cluster_type == ClusterType.ECS:
         from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
 
@@ -47,7 +50,7 @@ def get_instances(cluster_type: str) -> List[Dict]:
     return instances
 
 
-def get_workspaces(cluster_type: ClusterType) -> List[Workspace]:
+def get_workspaces(cluster_type: ClusterType, **kwargs) -> List[Workspace]:
     """
     Retrieve a list of workspaces based on the cluster type and project type.
 
@@ -73,7 +76,7 @@ def get_workspaces(cluster_type: ClusterType) -> List[Workspace]:
             if not f.is_dir() and f.name.endswith('.yaml')
         ]
     else:
-        instances = get_instances(cluster_type)
+        instances = get_instances(cluster_type, **kwargs)
         projects = [instance.get('name') for instance in instances]
 
     workspaces = []

@@ -475,13 +475,13 @@ async def main(
                 entity_id=get_project_uuid(),
                 prefix=get_repo_name(),
             )
+            default_owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
         else:
             Role.create_default_roles()
+            default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
 
         # Fetch legacy owner user to check if we need to batch update the users with new roles.
         legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
-
-        default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
         owner_users = default_owner_role.users if default_owner_role else []
         if not legacy_owner_user and len(owner_users) == 0:
             logger.info('User with owner permission doesn’t exist, creating owner user.')

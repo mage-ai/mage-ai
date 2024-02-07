@@ -17,9 +17,8 @@ class KubernetesWorkspace(Workspace):
     def __init__(self, name: str):
         super().__init__(name)
         self.cluster_type = ClusterType.K8S
-        self.workload_manager = WorkloadManager(
-            self.config.namespace or os.getenv(KUBE_NAMESPACE)
-        )
+        self.namespace = self.config.namespace or os.getenv(KUBE_NAMESPACE)
+        self.workload_manager = WorkloadManager(self.namespace)
 
     @classmethod
     def initialize(

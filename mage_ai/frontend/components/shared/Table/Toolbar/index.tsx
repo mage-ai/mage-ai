@@ -47,6 +47,7 @@ type ToolbarProps = {
     Icon: any;
     confirmationDescription?: string;
     confirmationMessage?: string;
+    disabled?: boolean;
     isLoading?: boolean;
     label?: string;
     onClick: () => void;
@@ -139,6 +140,7 @@ function Toolbar({
     Icon: extraActionIcon,
     confirmationDescription: extraActionConfirmDescription,
     confirmationMessage: extraActionConfirmMessage,
+    disabled: disabledExtraAction = disabledActions,
     isLoading: isLoadingExtraAction,
     label: extraActionLabel,
     onClick: onExtraActionClick,
@@ -391,7 +393,7 @@ function Toolbar({
             <KeyboardShortcutButton
               Icon={!isLoadingExtraAction && extraActionIcon}
               bold
-              disabled={disabledActions}
+              disabled={disabledExtraAction}
               greyBorder
               loading={isLoadingExtraAction}
               onClick={openExtraActionConfirmDialogue
