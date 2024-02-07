@@ -140,11 +140,13 @@ When creating a new Kubernetes workspace, you can configure the following Kubern
 | Field | Description |
 | --- | --- |
 | Workspace name | Name of workspace. This name will be used to create all resources for the workspace. |
+| Namespace | Kubernetes namespace to create workspace resources. Defaults to the value of the `KUBE_NAMESPACE` environment variable or `default` if empty. |
 | Service account name | Kubernetes service account to use to create the resources. Defaults to current pod's service account name. |
 | Ingress name | Name of ingress to add the new workspace to. See more information about the ingress set up below. |
 | Storage class name | Name of storage class to provision storage from for the stateful set. Defaults to current pvc's storage class name. |
 | Storage request size | Amount of storage to provision for the persistent volume claim (in GB). Defaults to current pvc's storage request. |
 | Access mode | Access mode for persistent volume claim. [More info in Kubernetes docs.](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) Defaults to current pvc's access mode. |
+| Retention policy | Retention policy for the stateful set PVC. Defaults to "Retain". |
 | Configure container | Customize the configuration for the container. [Configuration options](https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md) |
 
 ### Lifecycle management
