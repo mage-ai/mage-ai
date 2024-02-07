@@ -267,6 +267,7 @@ def run(
             ExecutorFactory.get_block_executor(
                 pipeline,
                 block_uuid,
+                block_run_id=block_run_id,
                 execution_partition=execution_partition,
                 executor_type=executor_type,
             ).execute(
