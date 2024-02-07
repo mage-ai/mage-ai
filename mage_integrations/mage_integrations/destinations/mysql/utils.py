@@ -19,13 +19,9 @@ from mage_integrations.sources.constants import (
 )
 
 
-def clean_column_name(
-    col,
-    lower_case: bool = True,
-    allow_reserved_words: bool = False
-):
+def clean_column_name(col, lower_case: bool = True):
     col_new = clean_column_name_orig(col, lower_case=lower_case)
-    if allow_reserved_words is False and col_new.upper() in (RESERVED_WORDS + SQL_RESERVED_WORDS):
+    if col_new.upper() in (RESERVED_WORDS + SQL_RESERVED_WORDS):
         col_new = f'_{col_new}'
     return col_new
 
