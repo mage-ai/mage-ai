@@ -56,7 +56,6 @@ class OauthProvider(ABC):
         """
         pass
 
-    @abstractmethod
     async def get_refresh_token_response(self, refresh_token: str) -> Awaitable[Dict]:
         """
         This method should call the oauth provider with the refresh token and return
