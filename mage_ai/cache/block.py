@@ -40,7 +40,7 @@ class BlockCache(BaseCache):
         we create a new cache file, since it is possible for the cache to exist
         (e.g. as an empty dictionary) but the cache file to not exist at the same time.
         """
-        if not cache.exists() or not cache.cache_file_exists():
+        if replace or not cache.exists() or not cache.cache_file_exists():
             await cache.initialize_cache_for_all_pipelines(caches=caches, file_path=file_path)
 
         return cache
