@@ -60,11 +60,14 @@ class BlockCache(BaseCache):
             block_type_plural = inflection.pluralize(block_type) \
                 if block_type != BlockType.CUSTOM and block_type != BlockType.DBT \
                 else block_type
-            file_path = os.path.join(
-                repo_path,
-                block_type_plural,
-                block_uuid,
-            )
+            try:
+                file_path = os.path.join(
+                    repo_path,
+                    block_type_plural,
+                    block_uuid,
+                )
+            except Exception:
+                return None
         else:
             block_type = block.type
             block_uuid = block.uuid
