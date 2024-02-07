@@ -770,7 +770,7 @@ function ChartBlock({
     updateConfiguration,
   ]);
 
-  const [updateBlock] = useMutation(
+  const [updateBlock]: any = useMutation(
     api.widgets.pipelines.useUpdate(pipeline?.uuid, block.uuid),
     {
       onSuccess: (response: any) => onSuccess(
@@ -778,7 +778,7 @@ function ChartBlock({
           callback: () => {
             setIsEditingBlock(false);
             fetchPipeline();
-            fetchFileTree();
+            fetchFileTree?.();
           },
           onErrorCallback: (response, errors) => setErrors?.({
             errors,
@@ -806,7 +806,6 @@ function ChartBlock({
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
-        // @ts-ignore
         updateBlock({
           widget: {
             ...block,
@@ -862,7 +861,6 @@ function ChartBlock({
 
                   <Link
                     noWrapping
-                    // @ts-ignore
                     onClick={() => updateBlock({
                       widget: {
                         ...block,

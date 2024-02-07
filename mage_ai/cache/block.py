@@ -96,6 +96,8 @@ class BlockCache(BaseCache):
 
         mapping = self.get(self.cache_key)
         for k, v in mapping.items():
+            if not v:
+                continue
             pipeline_count_mapping[k] = len(v.get('pipelines', []))
 
         return pipeline_count_mapping
