@@ -136,6 +136,11 @@ function Authentication({
     oauthGitHub,
   ]);
 
+  const anyOauthAuthenticated = useMemo(
+    () => Object.values(providerMapping).some((oauth) => oauth?.['authenticated']),
+    [providerMapping],
+  );
+
   return (
     <>
       <Headline>
@@ -143,7 +148,7 @@ function Authentication({
       </Headline>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-        {accessTokenExists && (
+        {accessTokenExists && !anyOauthAuthenticated && (
           <Spacing mb={2}>
             <Button
               disabled
