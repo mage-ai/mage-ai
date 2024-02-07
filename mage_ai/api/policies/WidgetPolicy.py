@@ -61,6 +61,7 @@ WidgetPolicy.allow_write([
     'priority',
     'retry_config',
     'status',
+    'timeout',
     'type',
     'upstream_blocks',
     'uuid',
