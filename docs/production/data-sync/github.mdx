@@ -35,7 +35,9 @@ The Git directory is the local folder that will be linked to your remote reposit
 ### Authentication
 
 You will be able to authenticate with GitHub by default, but if you need to authenticate with
-GitHub Enterprise (GHE) or BitBucket, you will need to follow the steps below.
+GitHub Enterprise (GHE) or other providers, you will need to follow the steps below. You can
+authenticate with multiple git providers if you need to. Mage will attempt to use the oauth provider
+based on the URL of the remote.
 
 <AccordionGroup>
 
@@ -92,13 +94,54 @@ Make sure you copy the key and secret after the consumer is created.
 You will need to set the following environment variables in your Mage environment:
 
 1. BITBUCKET_OAUTH_KEY: the key you retrieved in the previous step
-2. BITBUCKET_OAUTH_SECRET: the secret you retrieved in the previous step
+2. BITBUCKET_OAUTH_SECRET: the secret you retrieved in the previous step 
 
 </Step>
 
-<Step title="Authenticate with BitBucket">
+<Step title="Authenticate Mage with Bitbucket">
 
 You should now be able to authenticate with Bitbucket and follow the rest of the steps in this document.
+
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Authenticate with GitLab">
+
+<Note>
+
+Mage will request `read_user`, `write_repository`, and `api` scopes from GitLab in order
+to perform the necessary git actions.
+
+</Note>
+
+<Steps>
+
+<Step title="Add Mage Oauth application">
+
+In order for Mage to authenticate with your GitLab, you will need to add a Mage oauth application.
+You can follow the steps [here](https://docs.gitlab.com/ee/integration/oauth_provider.html#create-an-instance-wide-application)
+to set it up.
+
+Make sure you copy the Application ID and Secret after the oauth app is created.
+
+</Step>
+
+<Step title="Update environment variables">
+
+You will need to set the following environment variables in your Mage environment:
+
+1. GITLAB_CLIENT_ID: the application ID you retrieved in the previous step
+2. GITLAB_CLIENT_SECRET: the secret you retrieved in the previous step
+3. GITLAB_HOST (optional): hostname for your GitLab instance. Defaults to `https://gitlab.com`
+
+</Step>
+
+<Step title="Authenticate Mage with GitLab">
+
+You should now be able to authenticate with GitLab and follow the rest of the steps in this document.
 
 </Step>
 
