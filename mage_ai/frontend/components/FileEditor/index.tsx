@@ -43,9 +43,6 @@ import {
   getBlockType,
 } from './utils';
 import { find } from '@utils/array';
-import { getBlockFromFile } from '../FileBrowser/utils';
-import { getFullPath } from '@utils/files';
-import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { isJsonString } from '@utils/string';
 import { errorOrSuccess, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';

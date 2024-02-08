@@ -88,19 +88,23 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.DBT,
+  BlockTypeEnum.MARKDOWN,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.SENSOR,
-  BlockTypeEnum.MARKDOWN,
   BlockTypeEnum.TRANSFORMER,
 ];
 
 export const DRAGGABLE_BLOCK_TYPES = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CONDITIONAL,
   BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.DBT,
+  BlockTypeEnum.MARKDOWN,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.SENSOR,
-  BlockTypeEnum.MARKDOWN,
   BlockTypeEnum.TRANSFORMER,
 ];
 

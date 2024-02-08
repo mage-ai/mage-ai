@@ -411,7 +411,7 @@ function FileBrowser({
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
     selectedFile,
   ]);
-  const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile), [
+  const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile, null, true), [
     draggingFile,
   ]);
 
