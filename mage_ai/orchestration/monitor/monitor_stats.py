@@ -42,7 +42,7 @@ class MonitorStats:
         **kwargs,
     ) -> Dict:
         if end_time is None:
-            end_time = datetime.now()
+            end_time = datetime.utcnow()
         else:
             end_time = dateutil.parser.parse(end_time)
         if start_time is None:
