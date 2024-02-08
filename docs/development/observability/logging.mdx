@@ -8,6 +8,34 @@ The server logger can be configured to adjust the amount of detail that is inclu
 
 The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `WARNING`, `ERROR` and `CRITICAL`.
 
+## Server logging format
+
+By default, the server will log messages in the following format:
+```
+[%(levelname)s]:[%(name)s]:%(message)s
+```
+
+You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable.
+
+### JSON format
+
+To use JSON logging format, set `SERVER_LOGGING_FORMAT=json`.
+
+JSON formatted logs will have the following fields:
+```json
+{
+  "timestamp": "...",
+  "level": "...",
+  "message": "...",
+  "logger": "...",
+  "module": "...",
+  "function": "...",
+  "line_number": "..."
+}
+```
+
+More logging formats/customization to come...
+
 ## Pipelines logging
 By default, logs for each pipeline run will be stored in the
 `<path_to_project>/pipelines/<pipeline_name>/.logs` folder.
