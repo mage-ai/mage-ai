@@ -7,6 +7,7 @@ export enum ReplicationMethodEnum {
   FULL_TABLE = 'FULL_TABLE',
   INCREMENTAL = 'INCREMENTAL',
   LOG_BASED = 'LOG_BASED',
+  FULL_REFRESH = 'FULL_REFRESH',
 }
 
 export const REPLICATION_METHODS_BATCH_PIPELINE = [

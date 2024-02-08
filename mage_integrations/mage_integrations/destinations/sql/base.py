@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     MAX_QUERY_STRING_SIZE,
+    REPLICATION_METHOD_FULL_REFRESH,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
@@ -195,6 +196,56 @@ class Destination(BaseDestination):
                     unique_constraints=unique_constraints,
                 )
                 self.attempted_create_table = True
+
+        elif replication_method == REPLICATION_METHOD_FULL_REFRESH:
+            friendly_table_name = '.'.join([x for x in [
+                database_name,
+                schema_name,
+                table_name,
+            ] if x])
+
+            self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
+
+            table_exists = self.does_table_exist(
+                database_name=database_name,
+                schema_name=schema_name,
+                table_name=table_name,
+            )
+
+            if table_exists:
+                self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
+                """
+                If table exists, that means we will continue with FULL REFRESH.
+                FULL REFRESH steps are:
+                    1. Check if table exits.
+                    2. If table does exists, the code generates the same table as it would
+                    with a FULL_TABLE method (with a 'temp_' prefix),
+                    ensuring the table is fully refreshed.
+                """
+                # Check if a temp table already exists
+                # if a table with this name exists, full refresh
+                # can be compromised
+                temp_table_exists = self.does_table_exist(
+                    database_name=database_name,
+                    schema_name=schema_name,
+                    table_name='temp_' + table_name,
+                )
+
+                if temp_table_exists:
+                    raise Exception('Temp table already exists')
+
+                # If not, create a temp table
+                # process_queries method will execute
+                # table creation
+                query_strings += self.build_create_table_commands(
+                    database_name=database_name,
+                    schema=schema,
+                    schema_name=schema_name,
+                    stream=stream,
+                    table_name='temp_' + table_name,
+                    unique_constraints=unique_constraints
+                )
+                self.attempted_create_table = True
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
@@ -223,6 +274,10 @@ class Destination(BaseDestination):
 
         tags2 = merge_dict(tags, dict(index=idx))
         self.logger.info(f'Build insert commands for batch {idx} started.', tags=tags2)
+
+        replication_method = self.replication_methods[stream]
+        if replication_method == REPLICATION_METHOD_FULL_REFRESH:
+            table_name = 'temp_' + table_name
 
         cmds = self.build_insert_commands(
             database_name=database_name,
