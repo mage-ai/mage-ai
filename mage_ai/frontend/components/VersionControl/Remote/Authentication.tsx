@@ -13,7 +13,7 @@ import OauthType, { OauthProviderEnum } from '@interfaces/OauthType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { GitHubWithTextIcon } from '@oracle/icons';
+import { GitHubWithTextIcon, GitLabWithTextIcon } from '@oracle/icons';
 import { UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
@@ -21,6 +21,7 @@ import { set } from '@storage/localStorage';
 
 const PROVIDER_TO_ICON_MAPPING = {
   [OauthProviderEnum.GITHUB]: GitHubWithTextIcon,
+  [OauthProviderEnum.GITLAB]: GitLabWithTextIcon,
   [OauthProviderEnum.BITBUCKET]: BitbucketWithText,
 };
 
@@ -135,6 +136,11 @@ function Authentication({
     oauthGitHub,
   ]);
 
+  const anyOauthAuthenticated = useMemo(
+    () => Object.values(providerMapping).some((oauth) => oauth?.['authenticated']),
+    [providerMapping],
+  );
+
   return (
     <>
       <Headline>
@@ -142,7 +148,7 @@ function Authentication({
       </Headline>
 
       <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-        {accessTokenExists && (
+        {accessTokenExists && !anyOauthAuthenticated && (
           <Spacing mb={2}>
             <Button
               disabled

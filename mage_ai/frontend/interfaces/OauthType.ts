@@ -6,6 +6,7 @@ export enum OauthProviderEnum {
   ACTIVE_DIRECTORY = 'active_directory',
   BITBUCKET = 'bitbucket',
   GITHUB = 'github',
+  GITLAB = 'gitlab',
   GOOGLE = 'google',
   OKTA = 'okta',
 }

@@ -16,6 +16,8 @@ from mage_ai.authentication.oauth.constants import (
 from mage_ai.authentication.oauth.utils import (
     access_tokens_for_client,
     add_access_token_to_query,
+    get_default_expire_time,
+    refresh_token_for_client,
 )
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.data_preparation.git.api import get_oauth_client_id
@@ -48,19 +50,32 @@ class OauthResource(GenericResource):
                 )
                 model = dict(provider=provider)
                 authenticated = len(access_tokens) >= 1
-                if authenticated:
+                new_token = None
+                if not authenticated:
+                    provider_class = NAME_TO_PROVIDER.get(provider)
+                    provider_instance = provider_class()
+
+                    new_token = await refresh_token_for_client(
+                        get_oauth_client_id(provider),
+                        provider_instance,
+                        user=user,
+                    )
+
+                    if not new_token:
+                        auth_url_response = provider_instance.get_auth_url_response(
+                            redirect_uri=redirect_uri
+                        )
+                        if auth_url_response:
+                            model.update(**auth_url_response)
+
+                if authenticated or new_token:
                     model['authenticated'] = authenticated
+                    if new_token:
+                        access_tokens = [new_token]
                     model['expires'] = max(
                         [access_token.expires for access_token in access_tokens]
                     )
-                else:
-                    provider_class = NAME_TO_PROVIDER.get(provider)
-                    provider_instance = provider_class()
-                    auth_url_response = provider_instance.get_auth_url_response(
-                        redirect_uri=redirect_uri
-                    )
-                    if auth_url_response:
-                        model.update(**auth_url_response)
+
                 oauths.append(model)
             except Exception:
                 continue
@@ -73,7 +88,9 @@ class OauthResource(GenericResource):
         error = ApiError.RESOURCE_INVALID.copy()
 
         provider = payload.get('provider')
+        expires_in = payload.get('expires_in')
         token = payload.get('token')
+        refresh_token = payload.get('refresh_token')
 
         if not provider or provider not in VALID_OAUTH_PROVIDERS:
             error.update(dict(message='Invalid provider.'))
@@ -100,11 +117,10 @@ class OauthResource(GenericResource):
             Oauth2AccessToken.token == token,
         ).first()
 
-        expire_timedelta = timedelta(days=30)
-        # TODO: BitBucket tokens expire after an hour. We need to add logic to refresh them in the
-        # future.
-        if provider == ProviderName.BITBUCKET:
-            expire_timedelta = timedelta(hours=1)
+        if expires_in:
+            expire_timedelta = timedelta(seconds=int(expires_in))
+        else:
+            expire_timedelta = get_default_expire_time(provider)
         if access_token:
             access_token.expires = datetime.utcnow() + expire_timedelta
             access_token.save()
@@ -113,6 +129,7 @@ class OauthResource(GenericResource):
                 user,
                 application=oauth_client,
                 duration=int(expire_timedelta.total_seconds()),
+                refresh_token=refresh_token,
                 token=token,
             )
 

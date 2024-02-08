@@ -510,7 +510,7 @@ function GitFiles({
             afterIcon={<PaginateArrowRight />}
             linkProps={noFilesASelected
               ? {
-                href: `/version-control?tab=${TAB_PUSH.uuid}`,
+                href: `/version-control?tab=${encodeURIComponent(TAB_PUSH.uuid)}`,
               }
               : null
             }

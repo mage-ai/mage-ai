@@ -50,11 +50,23 @@ class OauthProvider(ABC):
             redirect_uri (str): the redirect uri to be used after the access token is fetched
 
         Returns:
-            Dict: a dict with the following keys:
-                url: auth url to redirect to start oauth flow
-                redirect_query_params (optional): query params to be added to the redirect url
-                    after the oauth provider returns the authorization code. This is used when
-                    the provider expects an exact redirect_uri match and query params cannot
-                    be included in the url.
+            Dict: a dict with at least the following keys:
+                access_token: the access token for the user
+                refresh_token (optional): the refresh token for the user
         """
         pass
+
+    async def get_refresh_token_response(self, refresh_token: str) -> Awaitable[Dict]:
+        """
+        This method should call the oauth provider with the refresh token and return
+        a dictionary containing an access token for the user.
+
+        Args:
+            refresh_token (str): the refresh token to use to try to get a new access token
+
+        Returns:
+            Dict: a dict with the following keys:
+                access_token: the access token for the user
+                refresh_token (optional): the refresh token for the user
+        """
+        raise NotImplementedError()

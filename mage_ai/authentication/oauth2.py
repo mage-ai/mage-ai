@@ -17,6 +17,7 @@ JWT_ALGORITHM = 'HS256'
 def generate_access_token(
     user: User,
     application: Oauth2Application = None,
+    refresh_token: str = None,
     token: str = None,
     duration: int = None,
 ) -> Oauth2AccessToken:
@@ -36,6 +37,9 @@ def generate_access_token(
         token=token,
         user_id=user.id if user else None,
     )
+
+    if refresh_token:
+        attributes_data['refresh_token'] = refresh_token
 
     if application:
         attributes_data['oauth2_application_id'] = application.id

@@ -12,6 +12,7 @@ class ProviderName(str, Enum):
     ACTIVE_DIRECTORY = 'active_directory'
     BITBUCKET = 'bitbucket'
     GITHUB = 'github'
+    GITLAB = 'gitlab'
     GHE = 'ghe'
     GOOGLE = 'google'
     OKTA = 'okta'
@@ -23,6 +24,10 @@ GHE_CLIENT_ID_ENV_VAR = 'GHE_CLIENT_ID'
 GHE_CLIENT_SECRET_ENV_VAR = 'GHE_CLIENT_SECRET'
 GHE_HOSTNAME_ENV_VAR = 'GHE_HOSTNAME'
 
+GITLAB_HOST = os.getenv('GITLAB_HOST')
+GITLAB_CLIENT_ID = os.getenv('GITLAB_CLIENT_ID')
+GITLAB_CLIENT_SECRET = os.getenv('GITLAB_CLIENT_SECRET')
+
 BITBUCKET_HOST = os.getenv('BITBUCKET_HOST')
 BITBUCKET_OAUTH_KEY = os.getenv('BITBUCKET_OAUTH_KEY')
 BITBUCKET_OAUTH_SECRET = os.getenv('BITBUCKET_OAUTH_SECRET')
@@ -31,6 +36,7 @@ DEFAULT_GITHUB_HOSTNAME = 'https://github.com'
 
 GIT_OAUTH_PROVIDERS = [
     ProviderName.BITBUCKET,
+    ProviderName.GITLAB,
 ]
 
 
