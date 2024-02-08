@@ -539,7 +539,8 @@
             "guides/streaming-pipeline",
             "guides/streaming/magic-devcontainer",
             "guides/streaming-pipeline-rabbitmq",
-            "guides/train-model"
+            "guides/train-model",
+            "guides/pipelines/importing-pipelines"
           ]
         },
         "guides/dbt/developing-dbt-in-mage",
