@@ -723,7 +723,7 @@ class Git:
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pk_secret_name}'
             )
-            if not os.path.exists(public_key_file) or overwrite:
+            if not os.path.exists(custom_private_key_file) or overwrite:
                 try:
                     private_key = get_secret_value(
                         pk_secret_name,

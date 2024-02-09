@@ -86,8 +86,6 @@ function Remote({
 
   const gitInitialized = useMemo(() => !!branch?.name, [branch]);
 
-  const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
-
   useEffect(() => {
     if (!repoPath && (branch?.sync_config?.repo_path || project?.repo_path)) {
       setRepoPath(branch?.sync_config?.repo_path || project?.repo_path);
@@ -117,21 +115,6 @@ function Remote({
             fetchBranch();
             setEditRepoPathActive(false);
           },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const [updateOauth, { isLoading: isLoadingUpdateOauth }] = useMutation(
-    api.oauths.useUpdate('github'),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => window.location.href = window.location.href.split('?')[0],
           onErrorCallback: (response, errors) => showError({
             errors,
             response,
