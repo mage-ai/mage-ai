@@ -86,6 +86,7 @@ from mage_ai.settings import (
     ENABLE_PROMETHEUS,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
+    OTEL_EXPORTER_OTLP_ENDPOINT,
     REDIS_URL,
     REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
@@ -343,6 +344,43 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if ENABLE_PROMETHEUS or OTEL_EXPORTER_OTLP_ENDPOINT:
+        from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+        TornadoInstrumentor().instrument()
+        logger.info('OpenTelemetry instrumentation enabled.')
+
+    if OTEL_EXPORTER_OTLP_ENDPOINT:
+        logger.info(f'OTEL_EXPORTER_OTLP_ENDPOINT: {OTEL_EXPORTER_OTLP_ENDPOINT}')
+
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+        service_name = "mage-ai-server"
+        resource = Resource(attributes={
+            "service.name": service_name,
+        })
+
+        # Set up a TracerProvider and attach an OTLP exporter to it
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+        tracer_provider = trace.get_tracer_provider()
+
+        # Configure OTLP exporter
+        otlp_exporter = OTLPSpanExporter(
+            # Endpoint of your OpenTelemetry Collector
+            endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+            # Use insecure channel if your collector does not support TLS
+            insecure=True
+        )
+
+        # Attach the OTLP exporter to the TracerProvider
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        tracer_provider.add_span_processor(span_processor)
 
     if ENABLE_PROMETHEUS:
         from opentelemetry import metrics
