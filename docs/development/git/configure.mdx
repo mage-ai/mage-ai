@@ -62,6 +62,9 @@ To use the Mage Git integration, you will need to first configure Git settings. 
             </Step>
             <Step title="Fill out the remaining fields.">
             Filling out these fields will allow Mage to recreate your git and SSH settings if they are deleted (i.e. if your container restarts):
+            <Note>
+            If you are using a AWS CodeCommit repository, you will need to set the username to the SSH Key ID of the SSH public key added to your AWS IAM user.
+            </Note>
                 - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
                 - `Email`: Your git email. Used for the same purpose as your username.
                 - `SSH public key in base64`, `SSH public key in base64`: Enter your SSH public and private key encoded in base64. You can follow the instructions in the field description if you want to Mage to save your SSH keys.
