@@ -1,5 +1,6 @@
 import * as osPath from 'path';
 import BlockType, {
+  ADD_ON_BLOCK_TYPES,
   ALL_BLOCK_TYPES,
   ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS,
   BlockColorEnum,
@@ -122,7 +123,7 @@ export function buildAddBlockRequestPayload(
     blockReqPayload.color = BlockColorEnum.TEAL;
   }
 
-  if (isIntegrationPipeline) {
+  if (isIntegrationPipeline && !ADD_ON_BLOCK_TYPES.includes(blockType)) {
     const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
     const transformerBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type);
     const upstreamBlocks = [];

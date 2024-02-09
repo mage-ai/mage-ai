@@ -74,6 +74,11 @@ export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.EXTENSION,
 ];
 
+export const ADD_ON_BLOCK_TYPES = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CONDITIONAL,
+];
+
 export enum BlockColorEnum {
   BLUE = 'blue',
   GREY = 'grey',
