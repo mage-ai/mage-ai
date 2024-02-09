@@ -515,6 +515,9 @@ class WorkloadManager:
         rule = ingress.spec.rules[0]
         host = rule.host
 
+        if host is None:
+            return None
+
         tls_enabled = False
         try:
             tls = ingress.spec.tls[0]
