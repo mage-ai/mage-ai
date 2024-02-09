@@ -596,7 +596,7 @@ class ReportStream(BaseStream):
             "type": ["null", "object"],
             "is_report": True,
             "properties": {
-                "_sdc_record_hash": {"type": "string"}
+                "_sdc_record_hash": {"type": ["string"]}
             },
         }
 
