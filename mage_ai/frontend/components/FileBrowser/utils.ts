@@ -22,7 +22,6 @@ import FileType, {
 } from '@interfaces/FileType';
 import { groupBy, prependArray, removeAtIndex, sortByKey } from '@utils/array';
 import { getBlockType } from '@components/FileEditor/utils';
-import { dig } from '@utils/hash';
 import { cleanName, singularize } from '@utils/string';
 
 export function getFullPath(
@@ -123,7 +122,7 @@ export function getBlockFromFile(
   }
 
   const blockTypesToInclude = draggableBlockTypesOnly ? DRAGGABLE_BLOCK_TYPES : BLOCK_TYPES;
-  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && validBlockFileExtension(fileName)) {
+  if (blockTypesToInclude.includes(blockType) && validBlockFileExtension(fileName)) {
     const idx = fileName.lastIndexOf('.');
     const extension = fileName.slice(idx + 1);
 

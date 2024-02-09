@@ -13,7 +13,11 @@ import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 import { createPortal } from 'react-dom';
 
-import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  ADD_ON_BLOCK_TYPES,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import FileHeaderMenu from './FileHeaderMenu';
 import FileType from '@interfaces/FileType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -323,7 +327,10 @@ function FileBrowser({
               require_unique_name: false,
             },
             block => {
-              if (isIntegrationPipeline && dataExporterBlock) {
+              if (isIntegrationPipeline
+                && dataExporterBlock
+                && !ADD_ON_BLOCK_TYPES.includes(block.type)
+              ) {
                 // @ts-ignore
                 updateDestinationBlock({
                   block: {
@@ -411,7 +418,7 @@ function FileBrowser({
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
     selectedFile,
   ]);
-  const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile), [
+  const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile, null, true), [
     draggingFile,
   ]);
 

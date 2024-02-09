@@ -42,9 +42,7 @@ def filter_results(result: Dict) -> bool:
         return False
 
     if block_type in [
-        BlockType.CALLBACK,
         BlockType.CHART,
-        BlockType.CONDITIONAL,
         BlockType.EXTENSION,
     ]:
         return False
