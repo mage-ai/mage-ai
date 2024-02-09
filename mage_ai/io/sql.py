@@ -213,18 +213,21 @@ class BaseSQL(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
+        # Optional configs but commonly used
         schema_name: str = None,
         table_name: str = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
-        query_string: Union[str, None] = None,
-        drop_table_on_replace: bool = False,
-        cascade_on_drop: bool = False,
+        # Other optional configs
         allow_reserved_words: bool = False,
+        case_sensitive: bool = False,
+        cascade_on_drop: bool = False,
+        drop_table_on_replace: bool = False,
+        overwrite_types: Dict = None,
+        query_string: Union[str, None] = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
-        overwrite_types: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -272,7 +275,8 @@ class BaseSQL(BaseSQLConnection):
             # Clean column names
             col_mapping = {col: self._clean_column_name(
                                         col,
-                                        allow_reserved_words=allow_reserved_words)
+                                        allow_reserved_words=allow_reserved_words,
+                                        case_sensitive=case_sensitive)
                            for col in df.columns}
             df = df.rename(columns=col_mapping)
             dtypes = infer_dtypes(df)
