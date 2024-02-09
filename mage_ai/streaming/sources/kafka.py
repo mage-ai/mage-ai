@@ -2,18 +2,18 @@ import importlib
 import json
 import time
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer, TopicPartition
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sources.base import BaseSource
 from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
-class SecurityProtocol(str, Enum):
+class SecurityProtocol(StrEnum):
     SASL_PLAINTEXT = 'SASL_PLAINTEXT'
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'

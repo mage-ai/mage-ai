@@ -1,6 +1,6 @@
-import enum
+from mage_ai.shared.enum import StrEnum
 
 
-class GlobalDataProductObjectType(str, enum.Enum):
+class GlobalDataProductObjectType(StrEnum):
     BLOCK = 'block'
     PIPELINE = 'pipeline'

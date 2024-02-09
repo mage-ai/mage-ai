@@ -1,16 +1,16 @@
 import inspect
 import os
 from dataclasses import dataclass
-from enum import Enum
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 
 GIT_ACCESS_TOKEN_SECRET_NAME = 'mage_git_access_token'
 GIT_SSH_PRIVATE_KEY_SECRET_NAME = 'mage_git_ssh_private_key_b64'
 GIT_SSH_PUBLIC_KEY_SECRET_NAME = 'mage_git_ssh_public_key_b64'
 
 
-class AuthType(str, Enum):
+class AuthType(StrEnum):
     SSH = 'ssh'
     HTTPS = 'https'
     OAUTH = 'oauth'

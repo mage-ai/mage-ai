@@ -1,7 +1,8 @@
-from enum import Enum
-from mage_integrations.connections.couchbase import (
-    Couchbase as CouchbaseConnection
-)
+from typing import Any, Dict, List
+
+from singer import catalog
+
+from mage_integrations.connections.couchbase import Couchbase as CouchbaseConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
@@ -14,13 +15,12 @@ from mage_integrations.sources.couchbase.utils import (
     wrap_column_in_quotes,
 )
 from mage_integrations.sources.sql.base import Source
-from singer import catalog
-from typing import Any, Dict, List
+from mage_integrations.utils.enum import StrEnum
 
 DEFAULT_COLUMN_NAME = '_document'
 
 
-class SchemaStrategy(str, Enum):
+class SchemaStrategy(StrEnum):
     INFER = 'infer'
     COMBINE = 'combine'
 
@@ -42,21 +42,21 @@ class Couchbase(Source):
         catalog_entries = []
         for stream_id in collection_names:
             properties = dict()
-            
+
             infer_query = f"""
 INFER `{stream_id}`
 WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}}
             """
 
             infer_result = connection.load(infer_query)[0]
-            
+
             def get_infer_result_doc_count(result):
                 props = result.get('properties', {})
                 doc_count = props.get('#docs', 0)
                 if type(doc_count) is list:
                     doc_count = sum(doc_count)
                 return doc_count
-            
+
             strategy = self.config.get('strategy')
             if strategy == SchemaStrategy.INFER or \
                     (strategy is None and len(infer_result) == 1):
@@ -79,7 +79,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}
                     dict(
                         type=[COLUMN_TYPE_NULL, COLUMN_TYPE_OBJECT],
                         additionalProperties=True
-                    )
+                )
 
             schema = catalog.Schema.from_dict(dict(
                 properties=properties,
@@ -96,7 +96,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}
         column_type = dtype
         if dtype == 'missing':
             column_type = COLUMN_TYPE_STRING
-        
+
         return column_type
 
     def _build_comparison_statement(

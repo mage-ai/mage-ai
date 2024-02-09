@@ -1,13 +1,14 @@
 import base64
 import logging
 import os
-from enum import Enum
 from typing import Optional
+
+from mage_ai.shared.enum import StrEnum
 
 logger = logging.getLogger(__name__)
 
 
-class BackendType(str, Enum):
+class BackendType(StrEnum):
     """
     Enum for the different types of settings backends.
     """

@@ -1,7 +1,7 @@
-from enum import Enum
+from mage_integrations.utils.enum import StrEnum
 
 
-class PredicateOperator(str, Enum):
+class PredicateOperator(StrEnum):
     EQUALS = 'EQUALS'
     GREATER_THAN = 'GREATER_THAN'
     GREATER_THAN_OR_EQUALS = 'GREATER_THAN_OR_EQUALS'

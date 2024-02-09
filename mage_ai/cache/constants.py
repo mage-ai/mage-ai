@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING = 'blocks_to_pipeline_mapping'
 CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING = 'block_action_objects_mapping'
@@ -11,5 +11,5 @@ MAGE_CACHE_DIRECTORY_DEFAULT = '.cache'
 MAGE_CACHE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME = 'MAGE_CACHE_DIRECTORY'
 
 
-class CacheItemType(str, Enum):
+class CacheItemType(StrEnum):
     DBT = 'dbt'

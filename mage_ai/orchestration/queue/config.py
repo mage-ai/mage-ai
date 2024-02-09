@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 
 
-class QueueType(str, Enum):
+class QueueType(StrEnum):
     CELERY = 'celery'
     PROCESS = 'process'
 

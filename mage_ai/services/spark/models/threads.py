@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List
 
 from mage_ai.services.spark.models.base import BaseSparkModel
+from mage_ai.shared.enum import StrEnum
 
 
-class ThreadState(str, Enum):
+class ThreadState(StrEnum):
     RUNNABLE = 'RUNNABLE'
     TIMED_WAITING = 'TIMED_WAITING'
     WAITING = 'WAITING'

@@ -1,14 +1,14 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 SETTINGS_FILENAME = '.command_center.yaml'
 
 
-class ItemTagEnum(str, Enum):
+class ItemTagEnum(StrEnum):
     PINNED = 'pinned'
     RECENT = 'recent'
 
 
-class ItemType(str, Enum):
+class ItemType(StrEnum):
     ACTION = 'action'  # Cast spell
     CREATE = 'create'  # Conjure
     DELETE = 'delete'
@@ -22,7 +22,7 @@ class ItemType(str, Enum):
     UPDATE = 'update'
 
 
-class ObjectType(str, Enum):
+class ObjectType(StrEnum):
     APPLICATION = 'application'
     APPLICATION_EXPANSION = 'application_expansion'
     AUTHENTICATION = 'authentication'
@@ -42,11 +42,11 @@ class ObjectType(str, Enum):
     VERSION_CONTROL_FILE = 'version_control_file'
 
 
-class ModeType(str, Enum):
+class ModeType(StrEnum):
     VERSION_CONTROL = 'version_control'
 
 
-class FileExtension(str, Enum):
+class FileExtension(StrEnum):
     CSV = 'csv'
     JSON = 'json'
     MD = 'md'
@@ -59,7 +59,7 @@ class FileExtension(str, Enum):
     YML = 'yml'
 
 
-class ButtonActionType(str, Enum):
+class ButtonActionType(StrEnum):
     ADD_APPLICATION = 'add_application'
     CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
     CLOSE_COMMAND_CENTER = 'close_command_center'
@@ -70,7 +70,7 @@ class ButtonActionType(str, Enum):
     SELECT_ITEM_FROM_REQUEST = 'select_item_from_request'
 
 
-class InteractionType(str, Enum):
+class InteractionType(StrEnum):
     CLICK = 'click'
     CLOSE_APPLICATION = ButtonActionType.CLOSE_APPLICATION.value
     CLOSE_COMMAND_CENTER = ButtonActionType.CLOSE_COMMAND_CENTER.value
@@ -81,7 +81,7 @@ class InteractionType(str, Enum):
     SELECT_ITEM = 'select_item'
 
 
-class ApplicationType(str, Enum):
+class ApplicationType(StrEnum):
     DETAIL = 'detail'
     DETAIL_LIST = 'detail_list'
     EXPANSION = 'expansion'
@@ -89,22 +89,22 @@ class ApplicationType(str, Enum):
     LIST = 'list'
 
 
-class ValidationType(str, Enum):
+class ValidationType(StrEnum):
     CONFIRMATION = 'confirmation'
     CUSTOM_VALIDATION_PARSERS = 'custom_validation_parsers'
 
 
-class RenderLocationType(str, Enum):
+class RenderLocationType(StrEnum):
     ITEMS_CONTAINER_AFTER = 'items_container_after'
 
 
-class ApplicationExpansionUUID(str, Enum):
+class ApplicationExpansionUUID(StrEnum):
     ArcaneLibrary = 'ArcaneLibrary'
     PortalTerminal = 'PortalTerminal'
     VersionControlFileDiffs = 'VersionControlFileDiffs'
 
 
-class ApplicationExpansionStatus(str, Enum):
+class ApplicationExpansionStatus(StrEnum):
     ACTIVE = 'ACTIVE'
     CLOSED = 'CLOSED'
     INACTIVE = 'INACTIVE'

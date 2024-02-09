@@ -1,6 +1,5 @@
 import os
 import socket
-from enum import Enum
 from typing import List
 
 import requests
@@ -26,6 +25,7 @@ from mage_ai.services.compute.models import (
     SetupStepStatus,
 )
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import extract, merge_dict
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
@@ -53,7 +53,7 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 )
 
 
-class SetupStepUUID(str, Enum):
+class SetupStepUUID(StrEnum):
     ACTIVATE_CLUSTER = 'activate_cluster'
     AWS_ACCESS_KEY_ID = CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY = CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY

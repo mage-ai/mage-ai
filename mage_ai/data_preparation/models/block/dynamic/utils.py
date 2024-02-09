@@ -1,7 +1,6 @@
 import json
 import os
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
@@ -16,11 +15,12 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 
 
-class DynamicBlockFlag(str, Enum):
+class DynamicBlockFlag(StrEnum):
     CLONE_OF_ORIGINAL = 'clone_of_original'
     DYNAMIC = 'dynamic'
     DYNAMIC_CHILD = 'dynamic_child'

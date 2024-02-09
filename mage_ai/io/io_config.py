@@ -1,12 +1,13 @@
 import os
-from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
 import yaml
 
+from mage_ai.shared.enum import StrEnum
 
-class IOConfigKeys(str, Enum):
+
+class IOConfigKeys(StrEnum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'

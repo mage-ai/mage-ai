@@ -1,7 +1,7 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class FeatureUUID(str, Enum):
+class FeatureUUID(StrEnum):
     ADD_NEW_BLOCK_V2 = 'add_new_block_v2'
     CODE_BLOCK_V2 = 'code_block_v2'
     COMMAND_CENTER = 'command_center'

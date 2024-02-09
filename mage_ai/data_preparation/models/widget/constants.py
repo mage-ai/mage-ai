@@ -1,6 +1,6 @@
-from enum import Enum
-
 from dateutil.relativedelta import relativedelta
+
+from mage_ai.shared.enum import StrEnum
 
 VARIABLE_NAME_BUCKETS = 'buckets'
 VARIABLE_NAME_GROUP_BY = 'group_by'
@@ -12,7 +12,7 @@ VARIABLE_NAME_X = 'x'
 VARIABLE_NAME_Y = 'y'
 
 
-class AggregationFunction(str, Enum):
+class AggregationFunction(StrEnum):
     AVERAGE = 'average'
     COUNT = 'count'
     COUNT_DISTINCT = 'count_distinct'
@@ -23,7 +23,7 @@ class AggregationFunction(str, Enum):
     SUM = 'sum'
 
 
-class TimeInterval(str, Enum):
+class TimeInterval(StrEnum):
     DAY = 'day'
     HOUR = 'hour'
     MINUTE = 'minute'
@@ -34,7 +34,7 @@ class TimeInterval(str, Enum):
     YEAR = 'year'
 
 
-class ChartType(str, Enum):
+class ChartType(StrEnum):
     BAR_CHART = 'bar chart'
     CUSTOM = 'custom'
     HISTOGRAM = 'histogram'

@@ -1,7 +1,6 @@
 import os
 import traceback
 from contextlib import contextmanager
-from enum import Enum
 from typing import Any, Dict, List
 
 import numpy as np
@@ -30,6 +29,7 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.parsers import sample_output
 from mage_ai.shared.utils import clean_name
 
@@ -44,7 +44,7 @@ JSON_FILE = 'data.json'
 JSON_SAMPLE_FILE = 'sample_data.json'
 
 
-class VariableType(str, Enum):
+class VariableType(StrEnum):
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
     GEO_DATAFRAME = 'geo_dataframe'
