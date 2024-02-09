@@ -13,6 +13,7 @@ if 'test' not in globals():
 def load_data_from_api(**kwargs) -> DataFrame:
     """
     Template for loading data from API
+    test
     """
     url = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv?raw=True'
 
