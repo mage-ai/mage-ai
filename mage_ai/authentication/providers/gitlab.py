@@ -45,8 +45,8 @@ class GitlabProvider(OauthProvider):
                 f'{base_url}/oauth',
             ),
             response_type='code',
-            state=uuid.uuid4().hex,
             scope='read_user+write_repository+api',
+            state=uuid.uuid4().hex,
         )
         query_strings = []
         for k, v in query.items():
