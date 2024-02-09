@@ -29,7 +29,7 @@ def build_file_object(obj):
 class GitBranchResource(GenericResource):
     @classmethod
     def get_git_manager(
-        self, user, setup_repo: bool = True, config_overwrite: Dict = None
+        self, user, setup_repo: bool = False, config_overwrite: Dict = None
     ) -> Git:
         return Git.get_manager(setup_repo=setup_repo, user=user)
 

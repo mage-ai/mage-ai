@@ -7,7 +7,11 @@ from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 
 
-def run_git_sync(lock: DistributedLock = None, sync_config: GitConfig = None) -> Dict:
+def run_git_sync(
+    lock: DistributedLock = None,
+    sync_config: GitConfig = None,
+    setup_repo: bool = False,
+) -> Dict:
     if sync_config is None:
         preferences = get_preferences()
         if preferences.sync_config:
@@ -17,7 +21,7 @@ def run_git_sync(lock: DistributedLock = None, sync_config: GitConfig = None) ->
     git_sync_lock_key = 'git_sync'
     if not lock or lock.try_acquire_lock(git_sync_lock_key):
         try:
-            GitSync(sync_config).sync_data()
+            GitSync(sync_config, setup_repo=setup_repo).sync_data()
             result = dict(
                 status='success',
                 remote_repo_link=sync_config.remote_repo_link,
@@ -52,7 +56,6 @@ def log_git_sync(result: Dict, logger: DictLogger, tags: Dict = None) -> None:
     elif git_sync_status == 'failed':
         logger.warning(
             f'Failed to sync data from git repo: {result.get("remote_repo_link")}'
-            f', branch: {result.get("branch")} with error: ' +
-            str(result.get("error")),
+            f', branch: {result.get("branch")} with error: ' + str(result.get("error")),
             **tags,
         )

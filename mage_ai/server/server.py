@@ -445,22 +445,25 @@ async def main(
     # Git sync if option is enabled
     preferences = get_preferences()
     if preferences.sync_config:
-        from mage_ai.data_preparation.sync import GitConfig
-        sync_config = GitConfig.load(config=preferences.sync_config)
-        if sync_config.sync_on_start:
-            try:
-                from mage_ai.data_preparation.sync.git_sync import GitSync
-                sync = GitSync(sync_config)
-                sync.sync_data()
-                logger.info(
-                    f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
-                    f', branch: {sync_config.branch}'
-                )
-            except Exception:
-                logger.exception(
-                    f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
-                    f', branch: {sync_config.branch}'
-                )
+        try:
+            from mage_ai.data_preparation.sync import GitConfig
+            from mage_ai.data_preparation.sync.git_sync import GitSync
+            sync_config = GitConfig.load(config=preferences.sync_config)
+            sync = GitSync(sync_config, setup_repo=True)
+            if sync_config.sync_on_start:
+                try:
+                    sync.sync_data()
+                    logger.info(
+                        f'Successfully synced data from git repo: {sync_config.remote_repo_link}'
+                        f', branch: {sync_config.branch}'
+                    )
+                except Exception:
+                    logger.exception(
+                        f'Failed to sync data from git repo: {sync_config.remote_repo_link}'
+                        f', branch: {sync_config.branch}'
+                    )
+        except Exception:
+            logger.exception('Failed to set up git repo')
 
     if REQUIRE_USER_AUTHENTICATION:
         logger.info('User authentication is enabled.')
