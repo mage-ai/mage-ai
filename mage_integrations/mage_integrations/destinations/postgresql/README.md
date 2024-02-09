@@ -24,6 +24,7 @@ You must enter the following credentials when configuring this source:
 | --- | --- | --- |
 | `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`
 | `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
+| `allow_reserved_words` | If `true`, Mage will ignore SQL reserved words. Default is `false`| `true`, `false`|
 <br />
 
 <br />

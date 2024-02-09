@@ -17,9 +17,13 @@ from mage_integrations.destinations.utils import (
 )
 
 
-def clean_column_name(col, lower_case: bool = True):
+def clean_column_name(
+        col,
+        lower_case: bool = True,
+        allow_reserved_words: bool = False
+):
     col_new = clean_column_name_orig(col, lower_case=lower_case)
-    if col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
+    if allow_reserved_words is False and col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
         col_new = f'_{col_new}'
     return col_new
 
@@ -35,22 +39,24 @@ def build_create_table_command(
     if_not_exists: bool = False,
     key_properties: List[str] = None,
     use_lowercase: bool = True,
+    allow_reserved_words: bool = False,
 ) -> str:
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}" +
+        f"{column_identifier}{clean_column_name(col, use_lowercase, allow_reserved_words)}" +
+        f"{column_identifier}" +
         f" {column_type_mapping[col]['type_converted']}"
         for col in columns
     ]
 
     if unique_constraints:
-        unique_constraints_clean = [clean_column_name(col, use_lowercase)
+        unique_constraints_clean = [clean_column_name(col, use_lowercase, allow_reserved_words)
                                     for col in unique_constraints]
 
         unique_constraints_escaped = [f'{column_identifier}{col}{column_identifier}'
                                       for col in unique_constraints_clean]
 
         index_name = '_'.join([
-            clean_column_name(full_table_name, use_lowercase),
+            clean_column_name(full_table_name, use_lowercase, allow_reserved_words),
         ] + unique_constraints_clean)
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(
@@ -59,7 +65,8 @@ def build_create_table_command(
 
     if key_properties and len(key_properties) >= 1:
         key_properties_clean = [
-            f'{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}'
+            f'{column_identifier}{clean_column_name(col, use_lowercase, allow_reserved_words)}' +
+            f'{column_identifier}'
             for col in key_properties
         ]
         columns_and_types.append(f"PRIMARY KEY ({', '.join(key_properties_clean)})")
@@ -88,7 +95,7 @@ def build_alter_table_command(
         return None
 
     columns_and_types = [
-        f"ADD COLUMN {column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}" + # noqa
+        f"ADD COLUMN {column_identifier}{clean_column_name(col, use_lowercase, allow_reserved_words)}{column_identifier}" + # noqa
         f" {column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
@@ -235,8 +242,10 @@ def build_insert_columns(
     columns: List[str],
     column_identifier: str = '',
     use_lowercase: bool = True,
+    allow_reserved_words: bool = False,
 ):
-    return [f'{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}'
+    return [f'{column_identifier}{clean_column_name(col, use_lowercase, allow_reserved_words)}' +
+            f'{column_identifier}'
             for col in columns]
 
 
@@ -252,6 +261,7 @@ def build_insert_command(
     convert_column_types: bool = True,
     column_identifier: str = '',
     use_lowercase: bool = True,
+    allow_reserved_words: bool = False,
 ) -> List[str]:
     values = []
     for row in records:
@@ -301,6 +311,7 @@ def build_insert_command(
     return [
         build_insert_columns(columns,
                              column_identifier=column_identifier,
-                             use_lowercase=use_lowercase),
+                             use_lowercase=use_lowercase,
+                             allow_reserved_words=allow_reserved_words),
         values,
     ]
