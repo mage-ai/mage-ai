@@ -10,6 +10,7 @@ def success_callback(parent_block_data, **kwargs):
 @callback('failure')
 def failure_callback(parent_block_data, **kwargs):
     """
-    test 3:47
+    The error that caused the block to fail is passed in as keyword
+    argument __error.
     """
     pass

@@ -49,7 +49,22 @@ blocks:
   - fill_in_missing_values
   uuid: export_titanic_clean
 cache_block_output_in_memory: false
-callbacks: []
+callbacks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: spectacular aspen
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: callback
+  upstream_blocks: []
+  uuid: spectacular_aspen
 concurrency_config: {}
 conditionals: []
 created_at: null
