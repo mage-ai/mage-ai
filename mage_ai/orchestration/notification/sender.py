@@ -6,6 +6,7 @@ from mage_ai.orchestration.notification.config import (
     MessageTemplate,
     NotificationConfig,
 )
+from mage_ai.services.discord.discord import send_discord_message
 from mage_ai.services.email.email import send_email
 from mage_ai.services.google_chat.google_chat import send_google_chat_message
 from mage_ai.services.opsgenie.opsgenie import send_opsgenie_alert
@@ -63,6 +64,9 @@ class NotificationSender:
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, summary)
+
+        if self.config.discord_config is not None and self.config.discord_config.is_valid:
+            send_discord_message(self.config.discord_config, summary)
 
         if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
             send_google_chat_message(self.config.google_chat_config, summary)

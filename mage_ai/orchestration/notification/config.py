@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List
 
+from mage_ai.services.discord.config import DiscordConfig
 from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.services.opsgenie.config import OpsgenieConfig
@@ -44,4 +45,5 @@ class NotificationConfig(BaseConfig):
     opsgenie_config: OpsgenieConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
+    discord_config: DiscordConfig = None
     message_templates: MessageTemplates = None
