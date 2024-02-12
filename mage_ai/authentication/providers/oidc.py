@@ -42,7 +42,7 @@ class OidcProvider(OauthProvider, SsoProvider):
         """
         try:
             response = requests.get(
-                self.discovery_url.replace('localhost', 'host.docker.internal'),
+                self.discovery_url,
                 headers={
                     'Accept': 'application/json',
                 },
