@@ -194,6 +194,7 @@ function BlockSettings({
     ]),
     [blockAttributes?.configuration, configuration],
   );
+
   const updateBlockVariable = useCallback(
     (variable:  { [key: string]: string }) => setBlockAttributes(prev => ({
       ...prev,

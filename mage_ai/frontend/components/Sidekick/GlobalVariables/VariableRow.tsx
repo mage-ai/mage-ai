@@ -218,7 +218,7 @@ function VariableRow({
                 </Text>
               ) : (
                 <Text monospace small>
-                  {value}
+                  {value.toString()}
                 </Text>
               )}
               <Flex>
