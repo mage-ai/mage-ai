@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -10,7 +11,6 @@ from mage_ai.data_preparation.repo_manager import init_project_uuid
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.settings.repo import get_variables_dir, set_repo_path
-from mage_ai.shared.logger import LoggingLevel
 
 if sys.version_info.major <= 3 and sys.version_info.minor <= 7:
     class AsyncDBTestCase():
@@ -42,7 +42,7 @@ else:
             if not Path(self.repo_path).exists():
                 Path(self.repo_path).mkdir()
             init_project_uuid()
-            database_manager.run_migrations(log_level=LoggingLevel.ERROR)
+            database_manager.run_migrations(log_level=logging.ERROR)
             db_connection.start_session()
 
         @classmethod
@@ -72,7 +72,7 @@ class DBTestCase(unittest.TestCase):
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
         init_project_uuid()
-        database_manager.run_migrations(log_level=LoggingLevel.ERROR)
+        database_manager.run_migrations(log_level=logging.ERROR)
         db_connection.start_session()
 
     @classmethod
