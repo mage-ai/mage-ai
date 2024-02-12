@@ -2,6 +2,7 @@ from mage_ai.shared.hash import (
     camel_case_keys_to_snake_case,
     combine_into,
     get_json_value,
+    safe_dig,
     set_value,
 )
 from mage_ai.tests.base_test import TestCase
@@ -107,3 +108,48 @@ class HashTests(TestCase):
             ),
             ice=3,
         ))
+
+    def test_safe_dig_dict_navigation(self):
+        data = {
+            'foo': {
+                'bar': {
+                    'baz': 42
+                }
+            }
+        }
+        self.assertEqual(safe_dig(data, 'foo.bar.baz'), 42)
+
+    def test_safe_dig_list_navigation(self):
+        data = {
+            'foo': [
+                {'bar': 42},
+                {'bar': 43}
+            ]
+        }
+        self.assertEqual(safe_dig(data, 'foo[0].bar'), 42)
+        self.assertEqual(safe_dig(data, 'foo[1].bar'), 43)
+        self.assertEqual(safe_dig(data, ['foo[0]', 'bar']), 42)
+        self.assertEqual(safe_dig(data, ['foo[1]', 'bar']), 43)
+
+    def test_safe_dig_missing_key(self):
+        data = {
+            'foo': {
+                'bar': {
+                    'baz': 42
+                }
+            }
+        }
+        self.assertIsNone(safe_dig(data, 'foo.bar.baz.qux'))
+        self.assertIsNone(safe_dig(data, ['foo', 'bar', 'baz', 'qux']))
+
+    def test_safe_dig_none_value(self):
+        data = None
+        self.assertIsNone(safe_dig(data, 'foo.bar.baz'))
+        self.assertIsNone(safe_dig(data, ['foo', 'bar', 'baz']))
+
+    def test_safe_dig_invalid_index(self):
+        data = {
+            'foo': [1, 2, 3]
+        }
+        self.assertIsNone(safe_dig(data, 'foo[3]'))
+        self.assertIsNone(safe_dig(data, ['foo[3]']))

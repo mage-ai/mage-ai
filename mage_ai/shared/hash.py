@@ -60,8 +60,9 @@ def safe_dig(obj_arg, arr_or_string):
     arr = list(map(str.strip, arr_or_string))
 
     def _build(obj, key):
-        if obj is None:
-            return None  # Return None if the object is None
+        # Return None if the object is None or not a dictionary
+        if obj is None or not isinstance(obj, dict) and not isinstance(obj, list):
+            return None
 
         tup = re.split(r'\[(\d+)\]$', key)
         if len(tup) >= 2:
@@ -79,10 +80,10 @@ def safe_dig(obj_arg, arr_or_string):
                 return (
                     obj[index] if isinstance(obj, list) and len(obj) > index else None
                 )
-        elif obj:
+        elif isinstance(obj, dict):
             return obj.get(key)
         else:
-            return obj
+            return None
 
     return reduce(_build, arr, obj_arg)
 
