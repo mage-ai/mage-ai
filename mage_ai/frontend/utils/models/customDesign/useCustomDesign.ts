@@ -107,7 +107,7 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     }),
     {},
     {
-      condition: () => !shouldFetch,
+      condition: () => shouldFetch,
       delay: 5000,
     },
   );
