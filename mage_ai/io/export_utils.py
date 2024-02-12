@@ -140,7 +140,9 @@ def gen_table_creation_query(
         full_table_name = table_name
 
     if unique_constraints:
-        unique_constraints_clean = [clean_name(col) for col in unique_constraints]
+        unique_constraints_clean = []
+        for col in unique_constraints:
+            unique_constraints_clean.append(clean_name(col, case_sensitive=case_sensitive))
         unique_constraints_escaped = [f'"{col}"'
                                       for col in unique_constraints_clean]
         index_name = '_'.join([

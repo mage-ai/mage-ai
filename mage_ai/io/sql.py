@@ -352,6 +352,7 @@ class BaseSQL(BaseSQLConnection):
                         full_table_name,
                         allow_reserved_words=allow_reserved_words,
                         buffer=buffer,
+                        case_sensitive=case_sensitive,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
                         **kwargs,
