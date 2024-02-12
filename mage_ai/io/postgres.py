@@ -283,8 +283,9 @@ class Postgres(BaseSQL):
         db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None,
         allow_reserved_words: bool = False,
+        buffer: Union[IO, None] = None,
+        case_sensitive: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -349,16 +350,27 @@ class Postgres(BaseSQL):
                 f'VALUES ({values_placeholder})',
             ]
 
-            unique_constraints = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in unique_constraints]
-            columns_cleaned = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in columns]
+            cleaned_unique_constraints = []
+            for col in unique_constraints:
+                cleaned_col = self._clean_column_name(
+                    col,
+                    allow_reserved_words=allow_reserved_words,
+                    case_sensitive=case_sensitive,
+                )
+                cleaned_unique_constraints.append(f'"{cleaned_col}"')
 
-            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            cleaned_columns = []
+            for col in columns:
+                cleaned_col = self._clean_column_name(
+                    col,
+                    allow_reserved_words=allow_reserved_words,
+                    case_sensitive=case_sensitive,
+                )
+                cleaned_columns.append(f'"{cleaned_col}"')
+
+            commands.append(f"ON CONFLICT ({', '.join(cleaned_unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                update_command = [f'{col} = EXCLUDED.{col}' for col in cleaned_columns]
                 commands.append(
                     f"DO UPDATE SET {', '.join(update_command)}",
                 )
