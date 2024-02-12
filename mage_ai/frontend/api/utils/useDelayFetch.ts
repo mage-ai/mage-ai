@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { range } from '@utils/array';
 
 export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit): {
   data: any;
@@ -8,7 +7,7 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
   let args = argsInit;
   let opts;
 
-  const lastArg = argsInit?.slice(-1)?.[0]
+  const lastArg = argsInit?.slice(-1)?.[0];
   if ('condition' in lastArg || 'delay' in lastArg) {
     args = args.slice(0, args?.length - 1);
     opts = lastArg;
@@ -18,8 +17,8 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
     condition,
     delay,
   } = opts || {
-    delay: 3000,
     condition: undefined,
+    delay: 3000,
   };
 
   const timeoutRef = useRef(null);
