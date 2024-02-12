@@ -52,6 +52,7 @@ class BaseSQL(BaseSQLConnection):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
+        case_sensitive: bool = False,
         unique_constraints: List[str] = None,
         overwrite_types: Dict = None,
     ) -> str:
@@ -61,6 +62,7 @@ class BaseSQL(BaseSQLConnection):
             dtypes,
             schema_name,
             table_name,
+            case_sensitive=case_sensitive,
             unique_constraints=unique_constraints,
             overwrite_types=overwrite_types,
         )
@@ -337,19 +339,19 @@ class BaseSQL(BaseSQLConnection):
                             db_dtypes,
                             schema_name,
                             table_name,
+                            case_sensitive=case_sensitive,
                             unique_constraints=unique_constraints,
                             overwrite_types=overwrite_types,
                         )
                         cur.execute(query)
-
                     self.upload_dataframe(
                         cur,
                         df,
                         db_dtypes,
                         dtypes,
                         full_table_name,
-                        buffer,
                         allow_reserved_words=allow_reserved_words,
+                        buffer=buffer,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
                         **kwargs,
