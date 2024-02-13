@@ -43,6 +43,7 @@ from mage_ai.services.k8s.constants import (
 )
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import safe_dig
 
 
 class WorkloadManager:
@@ -183,7 +184,6 @@ class WorkloadManager:
                             pass
                         if ip:
                             workload['ip'] = f'{ip}:{port}'
-
                 elif stateful_set and stateful_set.spec.replicas == 0:
                     workload['status'] = 'STOPPED'
                 else:
@@ -514,6 +514,18 @@ class WorkloadManager:
         )
         rule = ingress.spec.rules[0]
         host = rule.host
+
+        if host is None:
+            ingress_dict = ingress.to_dict()
+            lb_ingress = safe_dig(ingress_dict, ['status', 'load_balancer', 'ingress[0]']) or {}
+            if 'hostname' in lb_ingress:
+                host = lb_ingress['hostname']
+            # Alternatively, check for `ip` if `hostname` is not available
+            elif 'ip' in lb_ingress:
+                host = lb_ingress['ip']
+
+        if host is None:
+            return None
 
         tls_enabled = False
         try:
