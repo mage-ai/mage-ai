@@ -473,7 +473,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added
                 # to results
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
-                self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+                self.write_dataframe_to_table(
+                    df,
+                    database,
+                    schema,
+                    f'temp_{table}',
+                    temp_table=True,
+                )
                 self.logger.info(
                     f'write_dataframe_to_table completed to: {full_table_name_temp}')
 
