@@ -60,6 +60,7 @@ class Snowflake(Destination):
         schema_name: str,
         stream: str,
         table_name: str,
+        temp_table: bool = False,
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
@@ -69,14 +70,15 @@ class Snowflake(Destination):
                 convert_column_type,
                 lambda item_type_converted: 'ARRAY',
             ),
+            column_identifier=self.quote,
             columns=schema['properties'].keys(),
             full_table_name=self.full_table_name(
                 database_name,
                 schema_name,
                 table_name,
             ),
+            create_temporary_table=temp_table,
             unique_constraints=unique_constraints,
-            column_identifier=self.quote,
             use_lowercase=self.use_lowercase,
         )
 
@@ -341,7 +343,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         database: str,
         schema: str,
         table: str,
-        temp_table: bool = False,
     ) -> List[List[tuple]]:
         """
         Write a Pandas DataFrame to a table in a Snowflake database.
@@ -368,19 +369,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         connection = snowflake_connection.build_connection()
         if self.disable_double_quotes:
             df.columns = [col.upper() for col in df.columns]
-
-        kwargs = dict(
-            database=database.upper() if self.disable_double_quotes else database,
-            schema=schema.upper() if self.disable_double_quotes else schema,
-            auto_create_table=False,
-        )
-        if temp_table:
-            kwargs['table_type'] = 'temp'
         success, num_chunks, num_rows, output = write_pandas(
             connection,
             df,
             table.upper() if self.disable_double_quotes else table,
-            **kwargs,
+            database=database.upper() if self.disable_double_quotes else database,
+            schema=schema.upper() if self.disable_double_quotes else schema,
+            auto_create_table=False,
         )
         snowflake_connection.close_connection(connection)
         self.logger.info(
@@ -463,6 +458,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                                 schema_name=schema,
                                 stream=None,
                                 table_name=f'temp_{table}',
+                                temp_table=True,
                                 database_name=database,
                                 unique_constraints=unique_constraints,
                             )
@@ -473,13 +469,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added
                 # to results
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
-                self.write_dataframe_to_table(
-                    df,
-                    database,
-                    schema,
-                    f'temp_{table}',
-                    temp_table=True,
-                )
+                self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
                 self.logger.info(
                     f'write_dataframe_to_table completed to: {full_table_name_temp}')
 
