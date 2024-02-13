@@ -19,8 +19,6 @@ LOGGER = singer.get_logger()
 def do_discover(config, logger=LOGGER):
     logger.info("Starting discover")
     streams = discover_streams(config)
-    if not streams:
-        raise Exception("No streams found")
     catalog = {"streams": streams}
     logger.info("Finished discover")
     return catalog
