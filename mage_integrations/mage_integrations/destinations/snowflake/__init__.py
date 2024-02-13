@@ -464,7 +464,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                             )
 
                 results += self.build_connection().execute(
-                    drop_temp_table_command + create_temp_table_command, commit=True)
+                    drop_temp_table_command + create_temp_table_command, commit=False)
 
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added
                 # to results
