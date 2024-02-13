@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
@@ -8,24 +9,25 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType from '@interfaces/ProjectType';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Toolbar from '@components/shared/Table/Toolbar';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import WorkspaceDetail from '@components/workspaces/Detail';
 import WorkspaceType, { WorkspaceQueryEnum } from '@interfaces/WorkspaceType';
 import api from '@api';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
+import { ClusterTypeEnum } from '@components/workspaces/constants';
 import { Expand, Refresh } from '@oracle/icons';
+import { META_QUERY_KEYS } from '@api/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { useModal } from '@context/Modal';
-import { getFilters, setFilters } from '@storage/workspaces';
-import { useRouter } from 'next/router';
-import Toolbar from '@components/shared/Table/Toolbar';
 import { filterQuery, queryFromUrl } from '@utils/url';
-import { META_QUERY_KEYS } from '@api/constants';
-import { ClusterTypeEnum } from '@components/workspaces/constants';
-import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
+import { getFilters, setFilters } from '@storage/workspaces';
 import { goToWithQuery } from '@utils/routing';
+import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
+import { useModal } from '@context/Modal';
+import { set } from 'local-storage';
+import usePrevious from '@utils/usePrevious';
 
 function WorkspacePage() {
   const router = useRouter();
@@ -49,6 +51,8 @@ function WorkspacePage() {
   });
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     {
       ...query,
@@ -58,6 +62,15 @@ function WorkspacePage() {
       revalidateOnFocus: false,
     },
   );
+  
+  const dataWorkspacesPrev = usePrevious(dataWorkspaces);
+  useEffect(() => {
+    if (dataWorkspaces == null) {
+      setIsRefreshing(true);
+    } else if (dataWorkspacesPrev == null) {
+      setIsRefreshing(false);
+    }
+  }, [dataWorkspaces, dataWorkspacesPrev]);
 
   const workspaces = useMemo(
     () => dataWorkspaces?.workspaces?.filter(({ name }) => name),
@@ -209,7 +222,11 @@ function WorkspacePage() {
         extraActionButtonProps={{
           Icon: Refresh,
           disabled: false,
-          onClick: () => fetchWorkspaces(),
+          isLoading: isRefreshing,
+          onClick: () => {
+            setIsRefreshing(true);
+            fetchWorkspaces().then(() => setIsRefreshing(false));
+          },
           tooltip: 'Refresh workspaces',
         }}
         filterOptions={filterOptions}
@@ -231,6 +248,7 @@ function WorkspacePage() {
   }, [
     clusterType,
     fetchWorkspaces,
+    isRefreshing,
     query,
     router,
     showModal,
