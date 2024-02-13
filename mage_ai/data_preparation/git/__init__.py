@@ -40,7 +40,7 @@ class Git:
         self,
         auth_type: AuthType = None,
         git_config: GitConfig = None,
-        setup_repo: bool = True,
+        setup_repo: bool = False,
     ) -> None:
         import git
         import git.exc
@@ -77,6 +77,8 @@ class Git:
                     self.git_config.username,
                     token,
                 )
+        elif self.auth_type == AuthType.SSH and setup_repo:
+            self.__create_ssh_keys(overwrite=True)
 
         try:
             self.repo = git.Repo(self.repo_path)
@@ -103,7 +105,7 @@ class Git:
     def get_manager(
         self,
         user: User = None,
-        setup_repo: bool = True,
+        setup_repo: bool = False,
         auth_type: str = None,
         config_overwrite: Dict = None,
     ) -> 'Git':
@@ -691,7 +693,7 @@ class Git:
                 logger.warning(f'Skip installing {requirements_file} due to error: {str(err)}')
                 pass
 
-    def __create_ssh_keys(self) -> str:
+    def __create_ssh_keys(self, overwrite: bool = False) -> str:
         if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
             os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
         pubk_secret_name = self.git_config.ssh_public_key_secret_name
@@ -700,7 +702,7 @@ class Git:
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pubk_secret_name}.pub'
             )
-            if not os.path.exists(public_key_file):
+            if not os.path.exists(public_key_file) or overwrite:
                 try:
                     public_key = get_secret_value(
                         pubk_secret_name,
@@ -721,7 +723,7 @@ class Git:
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pk_secret_name}'
             )
-            if not os.path.exists(custom_private_key_file):
+            if not os.path.exists(custom_private_key_file) or overwrite:
                 try:
                     private_key = get_secret_value(
                         pk_secret_name,
@@ -738,6 +740,22 @@ class Git:
                     pass
             else:
                 private_key_file = custom_private_key_file
+
+        url = self.git_config.remote_repo_link
+        if not url.startswith('ssh://'):
+            url = f'ssh://{url}'
+        hostname = urlparse(url).hostname
+
+        # Codecommit requires additional configuration for SSH connection
+        config_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config')
+        if hostname.startswith('git-codecommit'):
+            if not os.path.exists(config_file) or overwrite:
+                config = f'''Host {hostname}
+User {self.git_config.username}
+IdentityFile {private_key_file}
+'''
+                with open(os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config'), 'w') as f:
+                    f.write(config)
 
         return private_key_file
 
@@ -784,7 +802,10 @@ class Git:
             shutil.rmtree(tmp_path)
 
     def __add_host_to_known_hosts(self):
-        url = f'ssh://{self.git_config.remote_repo_link}'
+        url = self.git_config.remote_repo_link
+        if not url.startswith('ssh://'):
+            url = f'ssh://{url}'
+
         hostname = urlparse(url).hostname
         if hostname:
             cmd = f'ssh-keyscan -t rsa {hostname} >> {DEFAULT_KNOWN_HOSTS_FILE}'

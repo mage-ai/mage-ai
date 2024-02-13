@@ -227,7 +227,7 @@ def run(
          if enable_new_relic else nullcontext():
         sync_config = get_sync_config()
         if sync_config and sync_config.sync_on_executor_start:
-            result = run_git_sync(sync_config=sync_config)
+            result = run_git_sync(sync_config=sync_config, setup_repo=True)
             log_git_sync(result, logger)
 
         runtime_variables = dict()

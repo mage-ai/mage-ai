@@ -165,7 +165,7 @@ function SyncData() {
                 <Text small>
                   Run <Link
                     onClick={() => {
-                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n | echo');
+                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n && echo');
                       toast.success(
                         'Successfully copied to clipboard.',
                         {
@@ -176,7 +176,7 @@ function SyncData() {
                     }}
                     small
                   >
-                    cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n | echo
+                    cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n && echo
                   </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.
                 </Text>
               </Spacing>
