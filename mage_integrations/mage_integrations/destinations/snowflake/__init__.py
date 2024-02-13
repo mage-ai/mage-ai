@@ -343,6 +343,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         database: str,
         schema: str,
         table: str,
+        temp_table: bool = False,
     ) -> List[List[tuple]]:
         """
         Write a Pandas DataFrame to a table in a Snowflake database.
@@ -369,13 +370,19 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         connection = snowflake_connection.build_connection()
         if self.disable_double_quotes:
             df.columns = [col.upper() for col in df.columns]
+
+        kwargs = dict(
+            database=database.upper() if self.disable_double_quotes else database,
+            schema=schema.upper() if self.disable_double_quotes else schema,
+            auto_create_table=False,
+        )
+        if temp_table:
+            kwargs['table_type'] = 'temp'
         success, num_chunks, num_rows, output = write_pandas(
             connection,
             df,
             table.upper() if self.disable_double_quotes else table,
-            database=database.upper() if self.disable_double_quotes else database,
-            schema=schema.upper() if self.disable_double_quotes else schema,
-            auto_create_table=False,
+            **kwargs,
         )
         snowflake_connection.close_connection(connection)
         self.logger.info(
@@ -469,7 +476,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added
                 # to results
                 # results += self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
-                self.write_dataframe_to_table(df, database, schema, f'temp_{table}')
+                self.write_dataframe_to_table(
+                    df,
+                    database,
+                    schema,
+                    f'temp_{table}',
+                    temp_table=True,
+                )
                 self.logger.info(
                     f'write_dataframe_to_table completed to: {full_table_name_temp}')
 
