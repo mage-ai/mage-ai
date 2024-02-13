@@ -16,6 +16,7 @@ class ProviderName(str, Enum):
     GHE = 'ghe'
     GOOGLE = 'google'
     OKTA = 'okta'
+    OIDC_GENERIC = 'oidc_generic'
 
 
 VALID_OAUTH_PROVIDERS = [e.value for e in ProviderName]
