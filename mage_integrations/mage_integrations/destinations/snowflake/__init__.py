@@ -343,6 +343,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         database: str,
         schema: str,
         table: str,
+        connection=None,
         temp_table: bool = False,
     ) -> List[List[tuple]]:
         """
@@ -366,8 +367,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         """
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
-        snowflake_connection = self.build_connection()
-        connection = snowflake_connection.build_connection()
+
+        new_connection_created = False
+        snowflake_connection = None
+        if connection is None:
+            snowflake_connection = self.build_connection()
+            connection = snowflake_connection.build_connection()
+            new_connection_created
         if self.disable_double_quotes:
             df.columns = [col.upper() for col in df.columns]
 
@@ -384,7 +390,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             table.upper() if self.disable_double_quotes else table,
             **kwargs,
         )
-        snowflake_connection.close_connection(connection)
+        if new_connection_created and snowflake_connection is not None:
+            snowflake_connection.close_connection(connection)
         self.logger.info(
             f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
         self.logger.info(f'write_pandas output: {output}')
@@ -469,9 +476,14 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                                 database_name=database,
                                 unique_constraints=unique_constraints,
                             )
-
-                results += self.build_connection().execute(
-                    drop_temp_table_command + create_temp_table_command, commit=False)
+                # Run commands in one Snowflake session to leverage TEMP table
+                snowflake_connection = self.build_connection()
+                connection = snowflake_connection.build_connection()
+                results += snowflake_connection.execute(
+                    drop_temp_table_command + create_temp_table_command,
+                    commit=False,
+                    connection=connection,
+                )
 
                 # Outputs of write_dataframe_to_table are for temporary table only, thus not added
                 # to results
@@ -481,6 +493,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                     database,
                     schema,
                     f'temp_{table}',
+                    connection=connection,
                     temp_table=True,
                 )
                 self.logger.info(
@@ -496,8 +509,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
 
                 self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
                 self.logger.info(f'Dropping temporary table: {full_table_name_temp}')
-                results += self.build_connection().execute(
-                    merge_command + drop_temp_table_command, commit=True)
+                results += snowflake_connection.execute(
+                    merge_command + drop_temp_table_command,
+                    commit=True,
+                    connection=connection,
+                )
+                # Close connection after finishing running all commands
+                snowflake_connection.close_connection(connection)
                 self.logger.info(f'Merged and dropped temporary table: {full_table_name_temp}')
             else:
                 results += self.write_dataframe_to_table(df, database, schema, table)
