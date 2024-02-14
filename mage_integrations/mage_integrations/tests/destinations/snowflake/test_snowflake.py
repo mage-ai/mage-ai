@@ -66,7 +66,7 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
                                                                  SCHEMA_NAME,
                                                                  STREAM,
                                                                  TABLE_NAME,
-                                                                 DATABASE_NAME)
+                                                                 database_name=DATABASE_NAME)
         self.assertEqual(
             table_commands,
             ['CREATE TABLE "test_db"."test"."test_table" ("ID" VARCHAR, "_USER" VARIANT)']
