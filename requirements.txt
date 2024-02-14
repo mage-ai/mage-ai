@@ -65,6 +65,7 @@ google-cloud-storage~=2.5.0
 gspread==5.7.2
 kubernetes>=28.1.0
 langchain>=0.0.222; python_version >= '3.8'
+langchain_community<0.0.20
 mysql-connector-python~=8.2.0
 openai>=0.27.8, <1.0.0
 opentelemetry-exporter-prometheus==0.43b0
