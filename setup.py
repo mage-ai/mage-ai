@@ -42,7 +42,7 @@ setuptools.setup(
     extras_require={
         'ai': [
             'astor>=0.8.1',
-            'langchain>=0.0.222',
+            'langchain>=0.0.222, <0.1.7',
             'openai>=0.27.8, <1.0.0',
         ],
         'azure': [
@@ -165,7 +165,7 @@ setuptools.setup(
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes>=28.1.0',
-            'langchain>=0.0.222',
+            'langchain>=0.0.222, <0.1.7',
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.1.0',
