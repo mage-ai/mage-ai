@@ -23,6 +23,7 @@ from mage_integrations.sources.messages import write_state
 from mage_integrations.sources.postgresql.decoders import (
     Delete,
     Insert,
+    Relation,
     Update,
     decode_message,
 )
@@ -153,6 +154,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 raise Exception(f'Unable to start replication with logical replication slot {slot}')
 
             columns = self.get_columns(tap_stream_id)
+            # Map from relation id to relation name
+            relations = dict()
             while True:
                 poll_duration = (datetime.datetime.now() - begin_ts).total_seconds()
                 if poll_duration > poll_total_seconds:
@@ -166,12 +169,24 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     if msg.data_start > end_lsn:
                         self.logger.info(f'Gone past end_lsn {end_lsn} for run. breaking')
                         break
-
                     decoded_payload = decode_message(msg.payload)
+
+                    if type(decoded_payload) is Relation:
+                        relations[decoded_payload.relation_id] = decoded_payload.relation_name
+
                     if msg.data_start < start_lsn:
                         self.logger.info(
                             f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}')
                         continue
+
+                    if not type(decoded_payload) in [Delete, Insert, Update]:
+                        continue
+
+                    relation_name = relations.get(decoded_payload.relation_id)
+                    # Skip if the relation name doesn't match the stream name
+                    if not relation_name or relation_name != stream.tap_stream_id:
+                        continue
+
                     if type(decoded_payload) in [Insert, Update]:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
                         payload = dict(zip(columns, values))
