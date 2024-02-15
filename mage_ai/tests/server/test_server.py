@@ -128,6 +128,25 @@ class ServerTests(AsyncDBTestCase):
         owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
         self.assertIsNotNone(owner_user)
 
+    def test_initialize_user_authentication_standalone_project_with_existing_owner(self):
+        password_salt = generate_salt()
+        Role.create_default_roles()
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        User.create(
+            email='admin@admin.com',
+            password_hash=create_bcrypt_hash('admin', password_salt),
+            password_salt=password_salt,
+            roles_new=[owner_role],
+            username='admin',
+        )
+        initialize_user_authentication(ProjectType.STANDALONE)
+
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        self.assertTrue(len(owner_role.users) > 0)
+
+        owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
+        self.assertIsNotNone(owner_user)
+
     def test_initialize_user_authentication_subproject(self):
         initialize_user_authentication(ProjectType.SUB)
 
