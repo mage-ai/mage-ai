@@ -427,6 +427,66 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     )
 
 
+def initialize_user_authentication(project_type: ProjectType) -> Oauth2Application:
+    logger.info('User authentication is enabled.')
+    # We need to sleep for a few seconds after creating all the tables or else there
+    # may be an error trying to create users.
+    sleep(5)
+
+    # Create new roles on existing users. This should only need to be run once.
+    if project_type == ProjectType.SUB:
+        Role.create_default_roles(
+            entity=Entity.PROJECT,
+            entity_id=get_project_uuid(),
+            prefix=get_repo_name(),
+        )
+        default_owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+    else:
+        Role.create_default_roles()
+        default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
+
+    # Fetch legacy owner user to check if we need to batch update the users with new roles.
+    legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
+    global_owner_role = Role.get_role(Role.DefaultRole.OWNER)
+    owner_users = global_owner_role.users if global_owner_role else []
+    if not legacy_owner_user and len(owner_users) == 0:
+        logger.info('User with owner permission doesn’t exist, creating owner user.')
+        if AUTHENTICATION_MODE.lower() == 'ldap':
+            user = User.create(
+                roles_new=[default_owner_role],
+                username=LDAP_ADMIN_USERNAME,
+            )
+        else:
+            password_salt = generate_salt()
+            user = User.create(
+                email='admin@admin.com',
+                password_hash=create_bcrypt_hash('admin', password_salt),
+                password_salt=password_salt,
+                roles_new=[default_owner_role],
+                username='admin',
+            )
+        owner_user = user
+    else:
+        if legacy_owner_user and not legacy_owner_user.roles_new:
+            User.batch_update_user_roles()
+        owner_user = next(iter(owner_users), None) or legacy_owner_user
+
+    oauth_client = Oauth2Application.query.filter(
+        Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
+    ).first()
+    if not oauth_client:
+        logger.info(
+            'OAuth2 application doesn’t exist for frontend, creating OAuth2 application.')
+        oauth_client = Oauth2Application.create(
+            client_id=OAUTH2_APPLICATION_CLIENT_ID,
+            client_type=Oauth2Application.ClientType.PUBLIC,
+            name='frontend',
+            user_id=owner_user.id,
+        )
+
+    return oauth_client
+
+
 async def main(
     host: Union[str, None] = None,
     port: Union[str, None] = None,
@@ -504,60 +564,7 @@ async def main(
             logger.exception('Failed to set up git repo')
 
     if REQUIRE_USER_AUTHENTICATION:
-        logger.info('User authentication is enabled.')
-        # We need to sleep for a few seconds after creating all the tables or else there
-        # may be an error trying to create users.
-        sleep(5)
-
-        # Create new roles on existing users. This should only need to be run once.
-        if project_type == ProjectType.SUB:
-            Role.create_default_roles(
-                entity=Entity.PROJECT,
-                entity_id=get_project_uuid(),
-                prefix=get_repo_name(),
-            )
-            default_owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
-        else:
-            Role.create_default_roles()
-            default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
-
-        # Fetch legacy owner user to check if we need to batch update the users with new roles.
-        legacy_owner_user = User.query.filter(User._owner == True).first()  # noqa: E712
-        owner_users = default_owner_role.users if default_owner_role else []
-        if not legacy_owner_user and len(owner_users) == 0:
-            logger.info('User with owner permission doesn’t exist, creating owner user.')
-            if AUTHENTICATION_MODE.lower() == 'ldap':
-                user = User.create(
-                    roles_new=[default_owner_role],
-                    username=LDAP_ADMIN_USERNAME,
-                )
-            else:
-                password_salt = generate_salt()
-                user = User.create(
-                    email='admin@admin.com',
-                    password_hash=create_bcrypt_hash('admin', password_salt),
-                    password_salt=password_salt,
-                    roles_new=[default_owner_role],
-                    username='admin',
-                )
-            owner_user = user
-        else:
-            if legacy_owner_user and not legacy_owner_user.roles_new:
-                User.batch_update_user_roles()
-            owner_user = next(iter(owner_users), None) or legacy_owner_user
-
-        oauth_client = Oauth2Application.query.filter(
-            Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
-        ).first()
-        if not oauth_client:
-            logger.info(
-                'OAuth2 application doesn’t exist for frontend, creating OAuth2 application.')
-            oauth_client = Oauth2Application.create(
-                client_id=OAUTH2_APPLICATION_CLIENT_ID,
-                client_type=Oauth2Application.ClientType.PUBLIC,
-                name='frontend',
-                user_id=owner_user.id,
-            )
+        initialize_user_authentication(project_type)
 
     if REQUIRE_USER_PERMISSIONS:
         logger.info('User permissions requirement is enabled.')
