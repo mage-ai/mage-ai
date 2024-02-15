@@ -373,4 +373,4 @@ Then, follow the steps below to set up EKS cluster and deploy Mage.
 4. Run command `kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"` to install efs csi driver
 5. Run `kubectl apply -f kube/` to deploy app
 6. Whitelist IP in EKS node's security group
-7. Get the node IP via command `kubectl get nodes -o wide` and access Mage with `http://[ip]:31479`
+7. Get the node IP via command `kubectl get nodes -o wide` and access Mage with `http://[ip]:{node_port}`
