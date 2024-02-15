@@ -626,9 +626,18 @@ class Git:
     def commit_message(self, message: str) -> None:
         self.repo.index.commit(message)
 
-    def switch_branch(self, branch) -> None:
+    def switch_branch(self, branch, remote: str = None) -> None:
         if branch in self.repo.heads:
             self.repo.git.switch(branch)
+        elif remote:
+            # For remote branches, switch to the local branch if it exists. Otherwise create a new
+            # branch using the remote branch as the starting point.
+            if branch.startswith(remote):
+                branch = branch[len(remote) + 1:]
+            if branch in self.repo.heads:
+                self.repo.git.switch(branch)
+            else:
+                self.repo.git.switch('-c', branch, f'{remote}/{branch}')
         else:
             self.repo.git.switch('-c', branch)
 

@@ -75,8 +75,9 @@ class GitBranchResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         branch = payload.get('name')
+        remote = payload.get('remote')
         git_manager = self.get_git_manager(user=user)
-        git_manager.switch_branch(branch)
+        git_manager.switch_branch(branch, remote=remote)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
 
