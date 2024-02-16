@@ -1,4 +1,8 @@
-export const DEMO_GA_MEASUREMENT_ID = 'G-XXX';
+import { EventParametersType } from '@interfaces/EventPropertiesType';
+import { getBrowser, getOS } from './os';
+import { screenSizeName } from '@styles/theme';
+
+export const DEMO_GA_MEASUREMENT_ID = 'G-E4T0WX8MSQ';
 
 /*
  * NOTE: Google Analytics must be initialized in the _app.tsx file in
@@ -7,7 +11,7 @@ export const DEMO_GA_MEASUREMENT_ID = 'G-XXX';
  */
 
 // https://developers.google.com/analytics/devguides/collection/ga4/views
-export const pageview = (params?: {
+export const logGAPageview = (params?: {
   href?: string,
   title?: string,
 }) => {
@@ -18,18 +22,23 @@ export const pageview = (params?: {
   });
 };
 
-type GTagEvent = {
-  action: string;
-  category: string;
-  label: string;
-  url?: string;
+// https://developers.google.com/tag-platform/gtagjs/reference#event
+export const logGAEvent = (
+  eventName: string,
+  eventParameters: EventParametersType,
+) => {
+  window.gtag?.('event', eventName, {
+    ...eventParameters,
+  });
 };
 
-// https://developers.google.com/tag-platform/gtagjs/reference#event
-export const event = ({ action, category, label, url }: GTagEvent) => {
-  window.gtag?.('event', action, {
-    event_category: category,
-    event_label: label,
-    page_path: url,
+export const logUserOS = () => {
+  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : null;
+  const screenSize = screenSizeName(screenWidth);
+  window.gtag?.('event', 'os', {
+    browser: getBrowser(),
+    os: getOS(),
+    screen_size: screenSize,
+    width: screenWidth,
   });
 };
