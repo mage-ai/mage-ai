@@ -1,7 +1,6 @@
 import { getGroup, getUser } from '@utils/session';
 
 export default interface UserPropertiesType {
-  groupId?: number | string;
   id?: number | string;
 }
 

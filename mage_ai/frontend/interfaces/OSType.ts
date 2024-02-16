@@ -7,4 +7,13 @@ export enum OSEnum {
   WINDOWS = 'Windows',
 }
 
+export enum BrowserEnum {
+  CHROME = 'Chrome',
+  EDGE = 'Edge',
+  FIREFOX = 'Firefox',
+  OPERA = 'Opera',
+  SAFARI = 'Safari',
+  UNKNOWN = 'unknown',
+}
+
 export default OSEnum;
