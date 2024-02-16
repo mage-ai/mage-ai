@@ -53,9 +53,17 @@ You can quickly add blocks of code to your pipeline with these methods:
 
 <AccordionGroup>
     <Accordion title="Drag blocks from the file browser and drop it on the pipeline" icon="dragon" iconType="duotone" defaultOpen>
-        1. Open the file browser.
-        1. Click a file and keep holding down.
-        1. Drag the file into the center of the page.
+        <Note>
+            **Supported block type directories:** `callbacks`, `conditionals`, `custom`, `data_exporters`, `data_loaders`, `dbt`,
+            `dbts`, `markdowns`, `scratchpads`, `sensors`, and `transformers`
+
+            Version 0.9.64 or greater is required to add `callback` and `conditional`
+            blocks from the file browser.
+        </Note>
+
+        1. Open the file browser on the Pipeline Editor page.
+        1. Click a block file and keep holding down.
+        1. Drag the block file into the center of the page.
         1. Release the button and it’ll be added to the pipeline.
 
         <Frame>
@@ -74,9 +82,13 @@ You can quickly add blocks of code to your pipeline with these methods:
         <Note>
             You must 1st enable the feature named <b>Add new block v2</b> in your
             [project settings](http://localhost:6789/settings/workspace/preferences).
+            This feature is available in standard (batch) pipelines.
 
             If you just recently enabled the feature <b>Add new block v2</b>, you must restart Mage
             so that your blocks can be indexed.
+
+            Version 0.9.64 or greater is required to add `callback` and `conditional`
+            blocks from the block search.
         </Note>
 
         Instead of clicking a button to add a new block, type in the search bar to find an
