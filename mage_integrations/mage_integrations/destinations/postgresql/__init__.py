@@ -46,6 +46,7 @@ class PostgreSQL(Destination):
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
+        allow_reserved_words: bool = False,
     ) -> List[str]:
         return [
             build_create_table_command(
@@ -57,6 +58,7 @@ class PostgreSQL(Destination):
                 column_identifier=self.quote,
                 key_properties=self.key_properties.get(stream),
                 use_lowercase=self.use_lowercase,
+                allow_reserved_words=self.allow_reserved_words
             ),
         ]
 
@@ -76,7 +78,7 @@ SELECT
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
-        current_columns = [r[0].lower() for r in results]
+        current_columns = [self.clean_column_name(r[0]) for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if self.clean_column_name(c)
                        not in current_columns]
@@ -114,6 +116,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             string_parse_func=self.string_parse_func,
             column_identifier=self.quote,
             use_lowercase=self.use_lowercase,
+            allow_reserved_words=self.allow_reserved_words
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)

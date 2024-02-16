@@ -11,6 +11,7 @@ You must enter the following credentials when configuring this source:
 | `service` | Listener service runs on the database server listing for client connection. | `xepdb1` |
 | `password` | Password of the user. | `xyz123` |
 | `user` | User name with connection and query access to db. | `xyz123` |
+| `mode` | Mode for oracle client. Value can be thin or thick. | `thick` |
 
 ### Optional Configs
 

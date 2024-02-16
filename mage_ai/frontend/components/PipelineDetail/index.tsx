@@ -1041,12 +1041,12 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           setHiddenBlocks={setHiddenBlocks}
           setMountedBlocks={setMountedBlocks}
           setOutputBlocks={setOutputBlocks}
+          setScrollTogether={setScrollTogether}
           setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
           setSelectedBlock={setSelectedBlock}
           setSelectedOutputBlock={setSelectedOutputBlock}
-          setTextareaFocused={setTextareaFocused}
-          setScrollTogether={setScrollTogether}
           setSideBySideEnabled={setSideBySideEnabled}
+          setTextareaFocused={setTextareaFocused}
           showBlockBrowserModal={showBlockBrowserModal}
           showBrowseTemplates={showBrowseTemplates}
           showConfigureProjectModal={showConfigureProjectModal}
@@ -1069,7 +1069,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               {addNewBlocksMemo}
             </div>
           )}
-        </CodeBlock>
+        </CodeBlock>,
       );
     });
 

@@ -786,10 +786,11 @@ WHERE table_id = '{table_name}'
             # Convert the records to dataframe to speed up the BigQuery load job
             df = pd.DataFrame.from_records(values)
             for column in columns:
+                column_cleaned = column_name_mapping[column]
                 column_type_dict = mapping[column]
                 column_settings = column_type_dict['column_settings']
                 if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                    df[column] = pd.to_datetime(df[column])
+                    df[column_cleaned] = pd.to_datetime(df[column_cleaned])
             job = client.load_table_from_dataframe(
                 df,
                 full_table_name,

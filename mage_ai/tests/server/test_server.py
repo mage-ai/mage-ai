@@ -7,20 +7,43 @@ import tornado.httputil
 import tornado.ioloop
 
 import mage_ai.server.server as server_module
-from mage_ai.server.server import make_app, replace_base_path
-from mage_ai.tests.base_test import TestCase
+from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.data_preparation.repo_manager import ProjectType
+from mage_ai.orchestration.db.models.oauth import (
+    Oauth2Application,
+    Permission,
+    Role,
+    User,
+    UserRole,
+)
+from mage_ai.server.server import (
+    initialize_user_authentication,
+    make_app,
+    replace_base_path,
+)
+from mage_ai.settings.repo import get_repo_name
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class ServerTests(TestCase):
+class ServerTests(AsyncDBTestCase):
     def setUp(self):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        return super().setUp()
+
+        super().setUp()
 
     def tearDown(self):
         self.loop.close()
         tornado.ioloop.IOLoop.instance().stop()
-        return super().tearDown()
+
+        # clean up oauth models
+        Oauth2Application.query.delete()
+        Permission.query.delete()
+        UserRole.query.delete()
+        Role.query.delete()
+        User.query.delete()
+
+        super().tearDown()
 
     def test_make_app(self):
         app = make_app()
@@ -95,3 +118,59 @@ class ServerTests(TestCase):
 
         self.assertTrue(len(os.listdir(os.path.join(test_dir, 'test'))) > 0)
         shutil.rmtree(test_dir)
+
+    def test_initialize_user_authentication_standalone_project(self):
+        initialize_user_authentication(ProjectType.STANDALONE)
+
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        self.assertTrue(len(owner_role.users) > 0)
+
+        owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
+        self.assertIsNotNone(owner_user)
+
+    def test_initialize_user_authentication_standalone_project_with_existing_owner(self):
+        password_salt = generate_salt()
+        Role.create_default_roles()
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        User.create(
+            email='admin@admin.com',
+            password_hash=create_bcrypt_hash('admin', password_salt),
+            password_salt=password_salt,
+            roles_new=[owner_role],
+            username='admin',
+        )
+        initialize_user_authentication(ProjectType.STANDALONE)
+
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        self.assertTrue(len(owner_role.users) > 0)
+
+        owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
+        self.assertIsNotNone(owner_user)
+
+    def test_initialize_user_authentication_subproject(self):
+        initialize_user_authentication(ProjectType.SUB)
+
+        owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        self.assertTrue(len(owner_role.users) > 0)
+
+        owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
+        self.assertIsNotNone(owner_user)
+
+    def test_initialize_user_authentication_subproject_with_existing_owner(self):
+        password_salt = generate_salt()
+        Role.create_default_roles()
+        owner_role = Role.get_role(Role.DefaultRole.OWNER)
+        User.create(
+            email='admin@admin.com',
+            password_hash=create_bcrypt_hash('admin', password_salt),
+            password_salt=password_salt,
+            roles_new=[owner_role],
+            username='admin',
+        )
+        initialize_user_authentication(ProjectType.SUB)
+
+        owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        self.assertTrue(len(owner_role.users) == 0)
+
+        owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
+        self.assertIsNotNone(owner_user)

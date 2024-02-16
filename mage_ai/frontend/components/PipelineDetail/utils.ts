@@ -20,6 +20,7 @@ import {
 } from '@storage/localStorage';
 import { addUnderscores, isJsonString, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import {
+  dateFormatLong,
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
   momentInLocalTimezone,
@@ -252,7 +253,7 @@ export function displayPipelineLastSaved(
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const isPipelineUpdating = opts?.isPipelineUpdating;
   const pipelineContentTouched = opts?.pipelineContentTouched;
-  const pipelineLastSaved = opts?.pipelineLastSaved
+  const pipelineLastSaved = opts?.pipelineLastSaved;
 
   let saveStatus;
   if (pipelineContentTouched) {
@@ -268,7 +269,10 @@ export function displayPipelineLastSaved(
       let lastSavedDate = dateFormatLongFromUnixTimestamp(pipelineLastSaved / 1000);
 
       if (pipeline?.updated_at) {
-        lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
+        lastSavedDate = datetimeInLocalTimezone(
+          dateFormatLong(pipeline?.updated_at, { includeSeconds: true, utcFormat: true }),
+          displayLocalTimezone,
+        );
       }
       saveStatus = `Last saved ${lastSavedDate}`;
     }

@@ -19,15 +19,37 @@ class Connection(BaseConnection):
         self,
         query_strings: List[str],
         commit=False,
+        connection=None,
     ) -> List[List[tuple]]:
-        connection = self.build_connection()
+        """
+        Execute the provided SQL queries using the given connection, or create a new one if not
+        provided. If a new connection is created, it'll be closed automatically at the end.
+
+        Args:
+            query_strings (List[str]): List of SQL queries to execute.
+            commit (bool, optional): Whether to commit the transaction. Defaults to False.
+            connection (Optional[Any], optional): An existing connection to use. If None, a new
+                connection will be created. Defaults to None.
+
+        Returns:
+            List[List[Tuple]]: A list of result sets for each query executed. Each result set is
+                represented as a list of tuples.
+
+        Raises:
+            Any exceptions raised during the execution process may propagate upward.
+        """
+        new_connection_created = False
+        if connection is None:
+            connection = self.build_connection()
+            new_connection_created = True
 
         data = self.execute_with_connection(connection, query_strings)
 
         if commit:
             connection.commit()
 
-        self.close_connection(connection)
+        if new_connection_created:
+            self.close_connection(connection)
 
         return data
 

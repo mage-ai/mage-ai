@@ -37,8 +37,14 @@ class Destination(BaseDestination):
     def use_lowercase(self) -> bool:
         return self.config.get('lower_case', True)
 
+    @property
+    def allow_reserved_words(self) -> bool:
+        return self.config.get('allow_reserved_words', False)
+
     def clean_column_name(self, col):
-        return clean_column_name(col, lower_case=self.use_lowercase)
+        return clean_column_name(col,
+                                 lower_case=self.use_lowercase,
+                                 allow_reserved_words=self.allow_reserved_words)
 
     def test_connection(self) -> None:
         sql_connection = self.build_connection()

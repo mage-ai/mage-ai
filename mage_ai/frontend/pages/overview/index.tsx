@@ -85,6 +85,7 @@ import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
+import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -289,6 +290,18 @@ function OverviewPage({
     uuid: 'browse_templates',
   });
 
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
+    <UploadPipeline
+      onCancel={hideImportPipelineModal}
+    />
+  ), {
+  }, [
+    ,
+  ], {
+    background: true,
+    uuid: 'import_pipeline',
+  });
+
   const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
     cancelButtonText,
     header,
@@ -366,6 +379,7 @@ function OverviewPage({
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -385,6 +399,7 @@ function OverviewPage({
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showImportPipelineModal,
   ]);
 
   const addButtonEl = useMemo(() => (
@@ -625,7 +640,7 @@ def d(df):
             </Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
-                setSelectedTab(() => TIME_PERIOD_TABS.find(t => uuid === t.uuid))
+                setSelectedTab(() => allTabs.find(t => uuid === t.uuid))
               }}
               regularSizeText
               selectedTabUUID={timePeriod}

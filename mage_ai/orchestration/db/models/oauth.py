@@ -883,6 +883,7 @@ class Oauth2AccessToken(BaseModel):
     token = Column(String(255), index=True, unique=True)
     user = relationship(User, back_populates='oauth2_access_tokens')
     user_id = Column(Integer, ForeignKey('user.id'))
+    refresh_token = Column(String(255))
 
     def is_valid(self) -> bool:
         return self.token and \

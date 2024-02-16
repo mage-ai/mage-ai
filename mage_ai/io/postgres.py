@@ -12,7 +12,6 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
-from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import is_port_in_use
 
@@ -163,6 +162,24 @@ class Postgres(BaseSQL):
         if self.verbose and self.printer.exists_previous_message:
             print('')
 
+    def build_create_schema_command(
+        self,
+        schema_name: str
+    ) -> str:
+        return f"""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name = '{schema_name}'
+            ) THEN
+                EXECUTE 'CREATE SCHEMA {schema_name}';
+            END IF;
+        END
+        $$;
+        """
+
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             table_name = table_name.replace('"', '')
@@ -266,8 +283,9 @@ class Postgres(BaseSQL):
         db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None,
         allow_reserved_words: bool = False,
+        buffer: Union[IO, None] = None,
+        case_sensitive: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -311,10 +329,8 @@ class Postgres(BaseSQL):
 
         for col in columns:
             df_col_dropna = df_[col].dropna()
-            if isinstance(df_col_dropna, pd.DataFrame):
-                if len(df_col_dropna.index) == 0:
-                    continue
-
+            if df_col_dropna.count() == 0:
+                continue
             if dtypes[col] == PandasTypes.OBJECT \
                     or (df_[col].dtype == PandasTypes.OBJECT and not
                         isinstance(df_col_dropna.iloc[0], str)):
@@ -334,16 +350,27 @@ class Postgres(BaseSQL):
                 f'VALUES ({values_placeholder})',
             ]
 
-            unique_constraints = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in unique_constraints]
-            columns_cleaned = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in columns]
+            cleaned_unique_constraints = []
+            for col in unique_constraints:
+                cleaned_col = self._clean_column_name(
+                    col,
+                    allow_reserved_words=allow_reserved_words,
+                    case_sensitive=case_sensitive,
+                )
+                cleaned_unique_constraints.append(f'"{cleaned_col}"')
 
-            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            cleaned_columns = []
+            for col in columns:
+                cleaned_col = self._clean_column_name(
+                    col,
+                    allow_reserved_words=allow_reserved_words,
+                    case_sensitive=case_sensitive,
+                )
+                cleaned_columns.append(f'"{cleaned_col}"')
+
+            commands.append(f"ON CONFLICT ({', '.join(cleaned_unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                update_command = [f'{col} = EXCLUDED.{col}' for col in cleaned_columns]
                 commands.append(
                     f"DO UPDATE SET {', '.join(update_command)}",
                 )
@@ -359,16 +386,14 @@ class Postgres(BaseSQL):
                 na_rep='',
             )
             buffer.seek(0)
-            query = f"""COPY {full_table_name} ({insert_columns}) FROM STDIN (
+            cursor.copy_expert(f"""
+COPY {full_table_name} ({insert_columns}) FROM STDIN (
     FORMAT csv
     , DELIMITER \',\'
     , NULL \'\'
     , FORCE_NULL({insert_columns})
-);"""
-            if is_debug():
-                print(f'\n{query}\n')
-
-            cursor.copy_expert(query, buffer)
+);
+        """, buffer)
 
     def execute(self, query_string: str, **query_vars) -> None:
         """

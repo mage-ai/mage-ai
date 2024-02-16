@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -9,7 +9,6 @@ import Header, { BreadcrumbType, MenuItemType } from '@components/shared/Header'
 import Subheader from './Subheader';
 import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
-import api from '@api';
 import useProject from '@utils/models/project/useProject';
 import {
   ContainerStyle,
@@ -17,8 +16,9 @@ import {
   VerticalNavigationStyle,
 } from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
-import useTripleLayout from '@components/TripleLayout/useTripleLayout';
+import useTripleLayout, {
+  DEFAULT_BEFORE_RESIZE_OFFSET,
+} from '@components/TripleLayout/useTripleLayout';
 
 export type DashboardSharedProps = {
   after?: any;
@@ -92,6 +92,7 @@ function Dashboard({
     widthAfter,
     widthBefore,
   } = useTripleLayout(uuid, {
+    beforeResizeOffset: DEFAULT_BEFORE_RESIZE_OFFSET,
     setWidthAfter: setAfterWidth,
     setWidthBefore: setBeforeWidth,
     widthAfter: afterWidth,

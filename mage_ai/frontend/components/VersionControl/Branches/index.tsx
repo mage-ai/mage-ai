@@ -68,6 +68,7 @@ function Branches({
     actionRemoteName,
     remotes,
   ]);
+
   const allBranches = useMemo(() => branches?.concat(selectedRemote?.refs || []) || [], [
     branches,
     selectedRemote,
@@ -96,6 +97,7 @@ function Branches({
         response, {
           callback: () => {
             fetchBranch();
+            window.location.reload();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -186,11 +188,12 @@ function Branches({
                     onChange={e => changeGitBranch({
                       git_custom_branch: {
                         name: e.target.value,
+                        remote: actionRemoteName,
                       },
                     })}
                     value={branch?.name}
                   >
-                    {branch?.name && branches?.map(({ name }) => (
+                    {branch?.name && allBranches?.map(({ name }) => (
                       <option key={name} value={name}>
                         {name}
                       </option>

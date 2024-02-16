@@ -29,7 +29,7 @@ def build_file_object(obj):
 class GitBranchResource(GenericResource):
     @classmethod
     def get_git_manager(
-        self, user, setup_repo: bool = True, config_overwrite: Dict = None
+        self, user, setup_repo: bool = False, config_overwrite: Dict = None
     ) -> Git:
         return Git.get_manager(setup_repo=setup_repo, user=user)
 
@@ -75,8 +75,9 @@ class GitBranchResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         branch = payload.get('name')
+        remote = payload.get('remote')
         git_manager = self.get_git_manager(user=user)
-        git_manager.switch_branch(branch)
+        git_manager.switch_branch(branch, remote=remote)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
 

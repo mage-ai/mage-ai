@@ -90,33 +90,31 @@ export function buildNavigationItems(
     });
   }
 
-  if (!isViewer()) {
+  // @ts-ignore
+  navigationItems.unshift({
+    Icon: Code,
     // @ts-ignore
-    navigationItems.unshift({
-      Icon: Code,
-      // @ts-ignore
-      disabled: !pipelineUUID,
-      id: PageNameEnum.EDIT,
-      isSelected: () => PageNameEnum.EDIT === pageName,
-      label: () => 'Edit pipeline',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/edit`,
-        href: '/pipelines/[pipeline]/edit',
-      },
-    });
+    disabled: !pipelineUUID,
+    id: PageNameEnum.EDIT,
+    isSelected: () => PageNameEnum.EDIT === pageName,
+    label: () => isViewer() ? 'View pipeline': 'Edit pipeline',
+    linkProps: {
+      as: `/pipelines/${pipelineUUID}/edit`,
+      href: '/pipelines/[pipeline]/edit',
+    },
+  });
 
-    // @ts-ignore
-    navigationItems.push({
-      Icon: SettingsWithKnobs,
-      id: PageNameEnum.SETTINGS,
-      isSelected: () => PageNameEnum.SETTINGS === pageName,
-      label: () => 'Pipeline settings',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/settings`,
-        href: '/pipelines/[pipeline]/settings',
-      },
-    });
-  }
+  // @ts-ignore
+  navigationItems.push({
+    Icon: SettingsWithKnobs,
+    id: PageNameEnum.SETTINGS,
+    isSelected: () => PageNameEnum.SETTINGS === pageName,
+    label: () => 'Pipeline settings',
+    linkProps: {
+      as: `/pipelines/${pipelineUUID}/settings`,
+      href: '/pipelines/[pipeline]/settings',
+    },
+  });
 
   navigationItems.unshift({
     Icon: NavDashboard,

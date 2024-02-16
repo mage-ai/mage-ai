@@ -150,7 +150,7 @@ function LogsTable({
       uuid,
     } = logData || {};
 
-    let displayText = message || content;
+    let displayText = message == null ? content : message;
     if (Array.isArray(displayText)) {
       displayText = displayText.join(' ');
     } else if (typeof displayText === 'object') {

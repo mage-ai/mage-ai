@@ -77,6 +77,7 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { RunStatus } from '@interfaces/BlockRunType';
 import {
   SUBHEADER_TABS,
   SUBHEADER_TAB_CUSTOMIZE,
@@ -257,7 +258,7 @@ function Edit({
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
-    settings: settingsInit = {},
+    settings: settingsInit,
     start_time: startTime,
     tags,
     variables: scheduleVariablesInit = {},
@@ -1538,23 +1539,51 @@ function Edit({
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           {!isStreamingPipeline && (
-            <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Text>
-                Set a timeout for each run of this trigger (optional)
-              </Text>
-              <Spacing mb={1} />
-              <TextInput
-                label="Timeout (in seconds)"
-                onChange={e => setSettings(prev => ({
-                  ...prev,
-                  timeout: e.target.value,
-                }))}
-                primary
-                setContentOnMount
-                type="number"
-                value={settings?.timeout}
-              />
-            </Spacing>
+            <>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  Set a timeout for each run of this trigger (optional)
+                </Text>
+                <Spacing mb={1} />
+                <TextInput
+                  label="Timeout (in seconds)"
+                  onChange={e => setSettings(prev => ({
+                    ...prev,
+                    timeout: e.target.value,
+                  }))}
+                  primary
+                  setContentOnMount
+                  type="number"
+                  value={settings?.timeout}
+                />
+              </Spacing>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  Status for runs that exceed the timeout (default: failed)
+                </Text>
+                <Spacing mb={1} />
+                <Select
+                  fullWidth
+                  monospace
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSettings(s => ({
+                      ...s,
+                      timeout_status: e.target.value,
+                    }));
+                  }}
+                  placeholder="Timeout status"
+                  value={settings?.timeout_status}
+                >
+                  <option value={RunStatus.FAILED}>
+                    Failed
+                  </option>
+                  <option value={RunStatus.CANCELLED}>
+                    Cancelled
+                  </option>
+                </Select>
+              </Spacing>
+            </>
           )}
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
@@ -1650,18 +1679,32 @@ function Edit({
         </Spacing>
 
         {ScheduleTypeEnum.TIME === scheduleType && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.skip_if_previous_running}
-                label="Skip run if previous run still in progress"
-                onClick={() => setSettings(prev => ({
-                  ...prev,
-                  skip_if_previous_running: !settings?.skip_if_previous_running,
-                }))}
-              />
-            </FlexContainer>
-          </Spacing>
+          <>
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={settings?.skip_if_previous_running}
+                  label="Skip run if previous run still in progress"
+                  onClick={() => setSettings(prev => ({
+                    ...prev,
+                    skip_if_previous_running: !settings?.skip_if_previous_running,
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={settings?.create_initial_pipeline_run}
+                  label="Create initial pipeline run if start date is before current execution period"
+                  onClick={() => setSettings(prev => ({
+                    ...prev,
+                    create_initial_pipeline_run: !settings?.create_initial_pipeline_run,
+                  }))}
+                />
+              </FlexContainer>
+            </Spacing>
+          </>
         )}
       </Spacing>
 

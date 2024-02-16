@@ -25,13 +25,14 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.server.logger import Logger
 from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
 REMOTE_NAME = 'mage-repo'
 
-# Git authentication variables
+logger = Logger().new_server_logger(__name__)
 
 
 class Git:
@@ -39,7 +40,7 @@ class Git:
         self,
         auth_type: AuthType = None,
         git_config: GitConfig = None,
-        setup_repo: bool = True,
+        setup_repo: bool = False,
     ) -> None:
         import git
         import git.exc
@@ -76,6 +77,8 @@ class Git:
                     self.git_config.username,
                     token,
                 )
+        elif self.auth_type == AuthType.SSH and setup_repo:
+            self.__create_ssh_keys(overwrite=True)
 
         try:
             self.repo = git.Repo(self.repo_path)
@@ -102,7 +105,7 @@ class Git:
     def get_manager(
         self,
         user: User = None,
-        setup_repo: bool = True,
+        setup_repo: bool = False,
         auth_type: str = None,
         config_overwrite: Dict = None,
     ) -> 'Git':
@@ -305,7 +308,7 @@ class Git:
                 submodule_full_path = os.path.join(repo_path, path)
                 tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
                 try:
-                    print(f'Updating {section}...')
+                    logger.info(f'Updating {section}...')
                     # Create a temporary directory to store the current contents of the submodule
                     # directory because the `git submodule update` command will fail if the
                     # submodule directory already exists and is not empty.
@@ -325,9 +328,14 @@ class Git:
                         # Overwrite the submodule URL with git credentials.
                         update_gitmodules(section, 'url', url)
 
+                    env = {}
+                    if self.auth_type == AuthType.SSH:
+                        private_key_file = self.__create_ssh_keys()
+                        env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
+
                     repo.git.submodule('sync', '--', path)
 
-                    subprocess.run(
+                    proc = subprocess.Popen(
                         [
                             'git',
                             'submodule',
@@ -335,9 +343,16 @@ class Git:
                             '--init',
                             path,
                         ],
-                        check=True,
                         cwd=repo_path,
-                        timeout=20,
+                        env=env,
+                    )
+
+                    asyncio.run(
+                        poll_process_with_timeout(
+                            proc,
+                            error_message=f'Error updating submodule {section}.',
+                            timeout=20,
+                        )
                     )
                 except Exception:
                     if os.path.exists(tmp_full_path):
@@ -345,8 +360,9 @@ class Git:
                             tmp_full_path,
                             submodule_full_path,
                         )
+                    logger.exception(f'Failed to update {section}.')
                 else:
-                    print(f'{section} updated!')
+                    logger.info(f'{section} updated!')
                 finally:
                     # Restore the submodule URL.
                     update_gitmodules(section, 'url', submodule_url)
@@ -610,9 +626,18 @@ class Git:
     def commit_message(self, message: str) -> None:
         self.repo.index.commit(message)
 
-    def switch_branch(self, branch) -> None:
+    def switch_branch(self, branch, remote: str = None) -> None:
         if branch in self.repo.heads:
             self.repo.git.switch(branch)
+        elif remote:
+            # For remote branches, switch to the local branch if it exists. Otherwise create a new
+            # branch using the remote branch as the starting point.
+            if branch.startswith(remote):
+                branch = branch[len(remote) + 1:]
+            if branch in self.repo.heads:
+                self.repo.git.switch(branch)
+            else:
+                self.repo.git.switch('-c', branch, f'{remote}/{branch}')
         else:
             self.repo.git.switch('-c', branch)
 
@@ -672,12 +697,12 @@ class Git:
                 if os.path.exists(requirements_file):
                     cmd = f'pip3 install -r {requirements_file}'
                     self._run_command(cmd)
-                print(f'Installing {requirements_file} completed successfully.')
+                logger.info(f'Installing {requirements_file} completed successfully.')
             except Exception as err:
-                print(f'Skip installing {requirements_file} due to error: {str(err)}')
+                logger.warning(f'Skip installing {requirements_file} due to error: {str(err)}')
                 pass
 
-    def __create_ssh_keys(self) -> str:
+    def __create_ssh_keys(self, overwrite: bool = False) -> str:
         if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
             os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
         pubk_secret_name = self.git_config.ssh_public_key_secret_name
@@ -686,7 +711,7 @@ class Git:
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pubk_secret_name}.pub'
             )
-            if not os.path.exists(public_key_file):
+            if not os.path.exists(public_key_file) or overwrite:
                 try:
                     public_key = get_secret_value(
                         pubk_secret_name,
@@ -707,7 +732,7 @@ class Git:
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pk_secret_name}'
             )
-            if not os.path.exists(custom_private_key_file):
+            if not os.path.exists(custom_private_key_file) or overwrite:
                 try:
                     private_key = get_secret_value(
                         pk_secret_name,
@@ -724,6 +749,22 @@ class Git:
                     pass
             else:
                 private_key_file = custom_private_key_file
+
+        url = self.git_config.remote_repo_link
+        if not url.startswith('ssh://'):
+            url = f'ssh://{url}'
+        hostname = urlparse(url).hostname
+
+        # Codecommit requires additional configuration for SSH connection
+        config_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config')
+        if hostname.startswith('git-codecommit'):
+            if not os.path.exists(config_file) or overwrite:
+                config = f'''Host {hostname}
+User {self.git_config.username}
+IdentityFile {private_key_file}
+'''
+                with open(os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config'), 'w') as f:
+                    f.write(config)
 
         return private_key_file
 
@@ -770,7 +811,10 @@ class Git:
             shutil.rmtree(tmp_path)
 
     def __add_host_to_known_hosts(self):
-        url = f'ssh://{self.git_config.remote_repo_link}'
+        url = self.git_config.remote_repo_link
+        if not url.startswith('ssh://'):
+            url = f'ssh://{url}'
+
         hostname = urlparse(url).hostname
         if hostname:
             cmd = f'ssh-keyscan -t rsa {hostname} >> {DEFAULT_KNOWN_HOSTS_FILE}'

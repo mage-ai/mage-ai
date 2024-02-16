@@ -121,6 +121,62 @@ This can help optimize vertical screen space while writing code.
 
 ---
 
+## Block files used/unused by pipelines
+
+<Note>Requires version `0.9.63` or greater.</Note>
+
+You can tell if a block is being used by a pipeline (or not used by any pipelines)
+by looking at the related block file's icon in the file browser. This is a quick way
+for users to see which block files are currently being used by *any* pipeline; the specific
+pipeline using a block file is not indicated in the file browser.
+
+You need to be viewing the file browser in the Files (`/files`) and Pipeline Editor
+(`/pipelines/[pipeline_uuid]/edit`) pages specifically. Other pages, modals, or
+components that have a file browser may not have this feature.
+
+**Applicable block directories:** `callbacks`, `conditionals`, `custom`, `data_exporters`,
+`data_loaders`, `dbt`, `extensions`, `markdowns`, `scratchpads`, `sensors`, and `transformers`
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Block files with shared pipeline icons"
+            src="https://github.com/mage-ai/assets/blob/main/dev-ux/file-browser/all-block-files.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Block file states
+
+There are three different states for a block file in the file browser that can affect the
+icon in front of the block filename and the filename font color. Note that the square icons
+can be different colors depending on which block directory it is.
+1. **Used by exactly one pipeline** - Filled square icon. For example in the screenshot
+above, `aged_sea.py` and `api_load_data.py` are used by a single pipeline.
+2. **Used by more than one pipeline** - Unfilled cyan diamond icon and filename with cyan
+font color. In the screenshot above, `amazon_s3.yaml` and `ancient_pine.yaml` are used by
+multiple pipelines.
+3. **Not used by any pipeline** - Unfilled square icon. For example in the screenshot above,
+`bigquery_loader.py` is not used by any pipeline.
+
+### Unused block files
+
+If you specifically want to view the block files that are not being used by any pipeline,
+you can apply the "Unused block files" filter found in the file search input at the top of
+the file browser. Non-block files may still be visible when this filter is applied.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Unused block files"
+            src="https://github.com/mage-ai/assets/blob/main/dev-ux/file-browser/unused-block-files.png?raw=true"
+        />
+    </p>
+</Frame>
+
+
+---
+
 ## Display files by type
 
 <Note>

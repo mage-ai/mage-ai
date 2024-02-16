@@ -60,11 +60,14 @@ class BlockCache(BaseCache):
             block_type_plural = inflection.pluralize(block_type) \
                 if block_type != BlockType.CUSTOM and block_type != BlockType.DBT \
                 else block_type
-            file_path = os.path.join(
-                repo_path,
-                block_type_plural,
-                block_uuid,
-            )
+            try:
+                file_path = os.path.join(
+                    repo_path,
+                    block_type_plural,
+                    block_uuid,
+                )
+            except Exception:
+                return None
         else:
             block_type = block.type
             block_uuid = block.uuid
@@ -96,6 +99,8 @@ class BlockCache(BaseCache):
 
         mapping = self.get(self.cache_key)
         for k, v in mapping.items():
+            if not v:
+                continue
             pipeline_count_mapping[k] = len(v.get('pipelines', []))
 
         return pipeline_count_mapping

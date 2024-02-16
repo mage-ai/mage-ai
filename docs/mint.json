@@ -364,6 +364,7 @@
                 "integrations/databases/GoogleSheets",
                 "integrations/databases/MicrosoftSQLServer",
                 "integrations/databases/MongoDB",
+                "integrations/databases/MotherDuck",
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
@@ -432,7 +433,8 @@
                     "integrations/observability/metaplane",
                     "integrations/observability/newrelic",
                     "integrations/observability/sentry",
-                    "integrations/observability/prometheus"
+                    "integrations/observability/prometheus",
+                    "integrations/observability/opentelemetry"
                   ]
                 },
                 {
@@ -538,7 +540,8 @@
             "guides/streaming-pipeline",
             "guides/streaming/magic-devcontainer",
             "guides/streaming-pipeline-rabbitmq",
-            "guides/train-model"
+            "guides/train-model",
+            "guides/pipelines/importing-pipelines"
           ]
         },
         "guides/dbt/developing-dbt-in-mage",
@@ -776,6 +779,12 @@
                 "production/developing-in-the-cloud/workspaces/kubernetes"
               ]
             }
+          ]
+        },
+        {
+          "group": "Custom docker image",
+          "pages": [
+            "production/custom-docker-image/non-root-user"
           ]
         }
       ]

@@ -7,6 +7,7 @@ from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.authentication.oauth.constants import (
     BITBUCKET_HOST,
+    GITLAB_HOST,
     ProviderName,
     get_ghe_hostname,
 )
@@ -39,6 +40,8 @@ def get_provider_from_remote_url(remote_url: str) -> str:
 
     if BITBUCKET_HOST and BITBUCKET_HOST in remote_url or 'bitbucket.org' in remote_url:
         return ProviderName.BITBUCKET
+    elif GITLAB_HOST and GITLAB_HOST in remote_url or 'gitlab.com' in remote_url:
+        return ProviderName.GITLAB
     elif ghe_hostname and ghe_hostname in remote_url:
         return ProviderName.GHE
     else:

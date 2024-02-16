@@ -5,6 +5,7 @@ import pyodbc
 import simplejson
 from pandas import DataFrame, Series
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
@@ -148,8 +149,20 @@ class MSSQL(BaseSQL):
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
 
     ):
+        connection_url = URL.create(
+            'mssql+pyodbc',
+            username=self.settings['user'],
+            password=self.settings['password'],
+            host=self.settings['server'],
+            database=self.settings['database'],
+            query=dict(
+                driver=self.settings['driver'],
+                ENCRYPT='yes',
+                TrustServerCertificate='yes',
+            ),
+        )
         engine = create_engine(
-            f'mssql+pyodbc://?odbc_connect={self.connection_string}',
+            connection_url,
             fast_executemany=True,
         )
         df.to_sql(table_name, engine, schema=schema_name, if_exists=if_exists, index=False)

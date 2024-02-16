@@ -465,8 +465,14 @@ class UsageStatisticLogger():
     def __shared_metadata(self) -> Dict:
         return dict(
             environment=get_env(),
-            hostname=socket.gethostbyname(socket.gethostname()),
+            hostname=self.__get_host(),
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
             version=self.project.version,
         )
+
+    def __get_host(self):
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return 'unknown'

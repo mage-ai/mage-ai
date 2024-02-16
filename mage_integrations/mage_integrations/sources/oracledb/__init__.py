@@ -26,6 +26,10 @@ class OracleDB(Source):
     def password(self) -> str:
         return self.config['password']
 
+    @property
+    def mode(self) -> str:
+        return self.config.get('mode') or 'thin'
+
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
 
@@ -81,7 +85,7 @@ from selected_items where row_id = 1
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
             host=self.host, password=self.password, user=self.user,
-            port=self.port, service=self.service)
+            port=self.port, service=self.service, mode=self.mode)
 
     def test_connection(self):
         oracledb_connection = self.build_connection()

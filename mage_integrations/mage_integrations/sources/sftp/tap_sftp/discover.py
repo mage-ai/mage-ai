@@ -12,7 +12,7 @@ def discover_streams(config):
 
     conn = client.connection(config)
 
-    tables = config['tables']
+    tables = config.get('tables', [])
     for table_spec in tables:
         LOGGER.info('Sampling records to determine table JSON schema "%s".',
                     table_spec['table_name'])

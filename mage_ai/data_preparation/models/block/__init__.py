@@ -568,6 +568,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         return {}
 
+    def exists(self) -> bool:
+        return self.file.exists()
+
     @property
     def executable(self) -> bool:
         return (
@@ -1763,9 +1766,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         return block_function
 
-    def exists(self) -> bool:
-        return os.path.exists(self.file_path)
-
     def fetch_input_variables(
         self,
         input_args,
@@ -2302,7 +2302,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     sample_data=dict(
                         columns=columns_to_display,
                         rows=json.loads(
-                            data[columns_to_display].to_json(orient='split')
+                            data[columns_to_display].to_json(orient='split', date_format='iso'),
                         )['data']
                     ),
                     shape=[row_count, column_count],
@@ -2378,7 +2378,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data = dict(
                 sample_data=dict(
                     columns=columns_to_display,
-                    rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                    rows=json.loads(
+                        df[columns_to_display].to_json(orient='split', date_format='iso'),
+                    )['data']
                 ),
                 type=DataType.TABLE,
                 variable_uuid=variable_uuid,

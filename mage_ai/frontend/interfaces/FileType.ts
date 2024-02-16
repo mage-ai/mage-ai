@@ -78,7 +78,7 @@ export const FILE_EXTENSION_PRIORITY = {
   [FileExtensionEnum.JSON]: 6,
   [FileExtensionEnum.CSV]: 7,
   [FileExtensionEnum.SH]: 8,
-}
+};
 
 export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
   new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));

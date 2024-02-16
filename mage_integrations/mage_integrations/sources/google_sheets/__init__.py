@@ -1,6 +1,13 @@
 from collections import OrderedDict
-from mage_integrations.connections.google_sheets import \
-    GoogleSheets as GoogleSheetsConnection
+from typing import Dict, Generator, List
+
+import singer
+from singer.schema import Schema
+
+import mage_integrations.sources.google_sheets.transform as internal_transform
+from mage_integrations.connections.google_sheets import (
+    GoogleSheets as GoogleSheetsConnection,
+)
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
@@ -9,11 +16,6 @@ from mage_integrations.sources.constants import (
 )
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import mage_integrations.sources.google_sheets.transform as internal_transform
-import singer
-
 
 LOGGER = singer.get_logger()
 
@@ -27,7 +29,10 @@ class GoogleSheets(Source):
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
-        streams = []
+        if streams is None:
+            streams = []
+
+        catalog_entries = []
 
         spreadsheet_metadata = self.connection.get_spreadsheet_metadata(
             spreadsheet_id=self.config['spreadsheet_id'],
@@ -39,8 +44,16 @@ class GoogleSheets(Source):
 
         # Loop through each worksheet in spreadsheet
         for sheet in sheets:
+            sheet_title = sheet.get('properties', {}).get('title')
+            if streams and sheet_title not in streams:
+                # If the sheet title is not in selected stream ids, skip it
+                continue
+
             # GET sheet_json_schema for each worksheet
-            sheet_json_schema, columns = self.__get_sheet_metadata(sheet, self.config['spreadsheet_id'])
+            sheet_json_schema, columns = self.__get_sheet_metadata(
+                sheet,
+                self.config['spreadsheet_id'],
+            )
 
             # SKIP empty sheets (where sheet_json_schema and columns are None)
             if sheet_json_schema and columns:
@@ -64,25 +77,25 @@ class GoogleSheets(Source):
                     unique_constraints=[],
                 )
 
-                streams.append(catalog_entry)
+                catalog_entries.append(catalog_entry)
 
-        return Catalog(streams)
+        return Catalog(catalog_entries)
 
     def load_data(
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         # # get the stream object
         # stream_obj = stream_obj(client, config.get("spreadsheet_id"), config.get("start_date"))
 
         stream_name = stream.tap_stream_id
-        LOGGER.info('STARTED Syncing Sheet {}'.format(stream_name))
+        self.logger.info(f'STARTED Syncing Sheet {stream_name}')
 
         columns = extract_selected_columns(stream.metadata)
-        LOGGER.info('Stream: {}, selected_fields: {}'.format(stream_name, columns))
+        self.logger.info(f'Stream: {stream_name}, selected_fields: {columns}')
 
         spreadsheet_id = self.config['spreadsheet_id']
         spreadsheet_metadata = self.connection.get_spreadsheet_metadata(
@@ -180,13 +193,30 @@ class GoogleSheets(Source):
         return string
 
     def __pad_default_effective_values(self, headers, first_values):
-        for i in range(len(headers) - len(first_values)):
+        for _ in range(len(headers) - len(first_values)):
             first_values.append(OrderedDict())
 
     def __get_sheet_metadata(self, sheet, spreadsheet_id):
+        """
+        Retrieves metadata for a given sheet in a Google Spreadsheet.
+
+        Args:
+            sheet (dict): The metadata of the sheet obtained from the Google Sheets API.
+            spreadsheet_id (str): The ID of the Google Spreadsheet containing the sheet.
+
+        Returns:
+            tuple: A tuple containing the JSON schema representing the sheet's data
+                   structure for discovery/catalog purposes and a list of column names.
+                   Returns (None, None) if the sheet is malformed or inaccessible.
+
+        Raises:
+            Any exceptions raised during the process are logged as warnings, and
+            the function attempts to proceed. If the sheet is malformed or
+            inaccessible, it logs a warning and returns (None, None).
+        """
         sheet_id = sheet.get('properties', {}).get('sheetId')
         sheet_title = sheet.get('properties', {}).get('title')
-        LOGGER.info('sheet_id = {}, sheet_title = {}'.format(sheet_id, sheet_title))
+        self.logger.info(f'Get sheet metadata sheet_id = {sheet_id}, sheet_title = {sheet_title}')
 
         sheet_metadata = self.connection.get_spreadsheet_metadata(
             spreadsheet_id=spreadsheet_id,
@@ -197,8 +227,8 @@ class GoogleSheets(Source):
         try:
             sheet_json_schema, columns = self.__get_sheet_schema_columns(sheet_metadata)
         except Exception as err:
-            LOGGER.warning('{}'.format(err))
-            LOGGER.warning('SKIPPING Malformed sheet: {}'.format(sheet_title))
+            self.logger.warning(f'{err}')
+            self.logger.warning(f'SKIPPING Malformed sheet: {sheet_title}')
             sheet_json_schema, columns = None, None
 
         return sheet_json_schema, columns
@@ -210,7 +240,7 @@ class GoogleSheets(Source):
         row_data = data.get('rowData', [])
         if row_data == [] or len(row_data) == 1:
             # Empty sheet or empty first row, SKIP
-            LOGGER.info('SKIPPING Empty Sheet: {}'.format(sheet_title))
+            self.logger.info(f'SKIPPING Empty Sheet: {sheet_title}')
             return None, None
 
         # spreadsheet is an OrderedDict, with orderd sheets and rows in the repsonse
@@ -237,7 +267,7 @@ class GoogleSheets(Source):
         }
 
         # used for checking uniqueness
-        header_list = [] 
+        header_list = []
         columns = []
         prior_header = None
         i = 0
@@ -245,7 +275,7 @@ class GoogleSheets(Source):
 
         # if no headers are present, log the message that sheet is skipped
         if not headers:
-            LOGGER.warning('SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {}'.format(sheet_title))
+            self.logger.warning(f'SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {sheet_title}')
 
         # Read column headers until end or 2 consecutive skipped headers
         for header in headers:
@@ -267,8 +297,8 @@ class GoogleSheets(Source):
                 try:
                     first_value = first_values[i]
                 except IndexError as err:
-                    LOGGER.info('NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2. {}'.format(
-                        sheet_title, column_name, column_letter, err))
+                    self.logger.info(f'NO VALUE IN 2ND ROW FOR HEADER. SHEET: {sheet_title}, '
+                                     f'COL: {column_name}, CELL: {column_letter}2. {err}')
                     first_value = {}
                     first_values.append(first_value)
                     pass
@@ -280,16 +310,18 @@ class GoogleSheets(Source):
                         column_effective_value_type = "numberValue"
                     else:
                         column_effective_value_type = 'stringValue'
-                        LOGGER.info('WARNING: NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2.'.format(
-                            sheet_title, column_name, column_letter))
-                        LOGGER.info('   Setting column datatype to STRING')
+                        self.logger.info(
+                            'WARNING: NO VALUE IN 2ND ROW FOR HEADER. SHEET: '
+                            f'{sheet_title}, COL: {column_name}, CELL: {column_letter}2.')
+                        self.logger.info('   Setting column datatype to STRING')
                 else:
-                    for key, val in column_effective_value.items():
+                    for key, _ in column_effective_value.items():
                         if key in ('numberValue', 'stringValue', 'boolValue'):
                             column_effective_value_type = key
                         elif key in ('errorType', 'formulaType'):
-                            raise Exception('DATA TYPE ERROR 2ND ROW VALUE: SHEET: {}, COL: {}, CELL: {}2, TYPE: {}'.format(
-                                sheet_title, column_name, column_letter, key))
+                            raise Exception(
+                                f'DATA TYPE ERROR 2ND ROW VALUE: SHEET: {sheet_title}, COL: '
+                                f'{column_name}, CELL: {column_letter}2, TYPE: {key}')
 
                 column_number_format = first_values[i].get('effectiveFormat', {}).get(
                     'numberFormat', {})
@@ -350,11 +382,12 @@ class GoogleSheets(Source):
                 else:
                     col_properties = {'type': ['null', 'string']}
                     column_gs_type = 'unsupportedValue'
-                    LOGGER.info(
+                    self.logger.info(
                         f'WARNING: UNSUPPORTED 2ND ROW VALUE: SHEET: {sheet_title}, '
-                        f'COL: {column_name}, CELL: {column_letter}2, TYPE: {column_effective_value_type}',
+                        f'COL: {column_name}, CELL: {column_letter}2, TYPE: '
+                        f'{column_effective_value_type}',
                     )
-                    LOGGER.info('Converting to string.')
+                    self.logger.info('Converting to string.')
             else:
                 # if the column is to be skipped
                 column_is_skipped = True
@@ -364,14 +397,15 @@ class GoogleSheets(Source):
                 # unsupported field description if the field is to be skipped
                 col_properties = {
                     'type': ['null', 'string'],
-                    'description': 'Column is unsupported and would be skipped because header is not available',
+                    'description': 'Column is unsupported and would be skipped because header is '
+                                   'not available',
                 }
                 column_gs_type = 'stringValue'
-                LOGGER.info(
+                self.logger.info(
                     f'WARNING: SKIPPED COLUMN; NO COLUMN HEADER. SHEET: {sheet_title}, ',
-                    'COL: {column_name}, CELL: {column_letter}1',
+                    f'COL: {column_name}, CELL: {column_letter}1',
                 )
-                LOGGER.info('  This column will be skipped during data loading.')
+                self.logger.info('  This column will be skipped during data loading.')
 
             if skipped >= 2:
                 # skipped = 2 consecutive skipped headers
@@ -381,16 +415,18 @@ class GoogleSheets(Source):
                 # prior index is the index of the column prior to the currently column
                 prior_index = column_index - 1
                 # added a new boolean key `prior_column_skipped` to check if the column is
-                # one of the two columns with consecutive headers as due to consecutive empty headers
-                # both the columns should not be included in the schema as well as the metadata
-                columns[prior_index-1]['prior_column_skipped'] = True
-                LOGGER.info('TWO CONSECUTIVE SKIPPED COLUMNS. STOPPING SCAN AT: SHEET: {}, COL: {}, CELL {}1'.format(
-                    sheet_title, column_name, column_letter))
+                # one of the two columns with consecutive headers as due to consecutive empty
+                # headers both the columns should not be included in the schema as well as the
+                # metadata
+                columns[prior_index - 1]['prior_column_skipped'] = True
+                self.logger.info(
+                    f'TWO CONSECUTIVE SKIPPED COLUMNS. STOPPING SCAN AT: SHEET: {sheet_title}, '
+                    f'COL: {column_name}, CELL {column_letter}1')
                 break
 
             else:
-                # skipped < 2 prepare `columns` dictionary with index, letter, column name, column type and 
-                # if the column is to be skipped or not for each column in the list
+                # skipped < 2 prepare `columns` dictionary with index, letter, column name, column
+                # type and if the column is to be skipped or not for each column in the list
                 column = {}
                 column = {
                     'columnIndex': column_index,
@@ -401,14 +437,17 @@ class GoogleSheets(Source):
                 }
                 columns.append(column)
 
-                if column_gs_type in {'numberType.DATE_TIME', 'numberType.DATE', 'numberType.TIME', 'numberType'}:
+                if column_gs_type in {
+                        'numberType.DATE_TIME', 'numberType.DATE', 'numberType.TIME', 'numberType'}:
                     col_properties = {
                         'anyOf': [
                             col_properties,
-                            {'type': ['null', 'string']} # all the date, time has string types in schema
+                            # all the date, time has string types in schema
+                            {'type': ['null', 'string']},
                         ]
                     }
-                # add the column properties in the `properties` in json schema for the respective column name
+                # add the column properties in the `properties` in json schema for the respective
+                # column name
                 sheet_json_schema['properties'][column_name] = col_properties
 
             prior_header = column_name

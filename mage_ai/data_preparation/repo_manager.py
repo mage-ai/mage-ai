@@ -22,6 +22,7 @@ from mage_ai.shared.environments import is_debug
 
 yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
+yml.width = float('inf')
 yml.indent(mapping=2, sequence=2, offset=0)
 
 

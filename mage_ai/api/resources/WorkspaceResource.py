@@ -4,6 +4,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.manage import get_instances, get_workspaces
 from mage_ai.cluster_manager.workspace.base import Workspace
+from mage_ai.cluster_manager.workspace.kubernetes import KubernetesWorkspace
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
@@ -37,10 +38,16 @@ class WorkspaceResource(GenericResource):
             if user_id:
                 query_user = User.query.get(user_id)
 
-        instances = get_instances(cluster_type)
+        namespaces = query_arg.get('namespace[]', [])
+        if namespaces and len(namespaces) == 1:
+            namespaces = namespaces[0]
+        if namespaces and isinstance(namespaces, str):
+            namespaces = namespaces.split(',')
+
+        instances = get_instances(cluster_type, namespaces=namespaces)
         instance_map = {instance.get('name'): instance for instance in instances}
 
-        workspaces = get_workspaces(cluster_type)
+        workspaces = get_workspaces(cluster_type, namespaces=namespaces)
 
         result_set = [
             dict(
@@ -58,28 +65,6 @@ class WorkspaceResource(GenericResource):
         ]
 
         return self.build_result_set(result_set, user, **kwargs)
-
-    @classmethod
-    @safe_db_query
-    def member(self, pk, user, **kwargs):
-        cluster_type = self.verify_project(pk)
-        if not cluster_type:
-            query = kwargs.get('query', {})
-            cluster_type = query.get('cluster_type')[0]
-
-        instances = get_instances(cluster_type)
-        instance_map = {instance.get('name'): instance for instance in instances}
-
-        workspace = Workspace.get_workspace(cluster_type, pk)
-
-        return self(
-            dict(
-                workspace=workspace,
-                instance=instance_map[pk],
-            ),
-            user,
-            **kwargs,
-        )
 
     @classmethod
     @safe_db_query
@@ -106,6 +91,32 @@ class WorkspaceResource(GenericResource):
 
         return self(dict(success=True), user, **kwargs)
 
+    @classmethod
+    @safe_db_query
+    def member(self, pk, user, **kwargs):
+        cluster_type = self.verify_project(pk)
+        if not cluster_type:
+            query = kwargs.get('query', {})
+            cluster_type = query.get('cluster_type')[0]
+
+        workspace = Workspace.get_workspace(cluster_type, pk)
+
+        kw = dict()
+        if isinstance(workspace, KubernetesWorkspace):
+            kw['namespaces'] = [workspace.namespace]
+
+        instances = get_instances(cluster_type, **kw)
+        instance_map = {instance.get('name'): instance for instance in instances}
+
+        return self(
+            dict(
+                workspace=workspace,
+                instance=instance_map.get(pk),
+            ),
+            user,
+            **kwargs,
+        )
+
     def update(self, payload, **kwargs):
         workspace = self.model.get('workspace')
 
@@ -117,6 +128,11 @@ class WorkspaceResource(GenericResource):
                 workspace.stop(**args)
             elif action == 'resume':
                 workspace.resume(**args)
+            elif action == 'add_to_ingress':
+                if isinstance(workspace, KubernetesWorkspace):
+                    workspace.add_to_ingress(**args)
+                else:
+                    raise Exception('This workspace does not support ingress.')
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)
@@ -125,7 +141,7 @@ class WorkspaceResource(GenericResource):
 
     def delete(self, **kwargs):
         workspace = self.model.get('workspace')
-        instance = self.model.get('instance')
+        instance = self.model.get('instance') or {}
 
         error = ApiError.RESOURCE_ERROR.copy()
 

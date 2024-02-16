@@ -113,6 +113,8 @@ OauthPolicy.allow_write(
     [
         'provider',
         'token',
+        'refresh_token',
+        'expires_in',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

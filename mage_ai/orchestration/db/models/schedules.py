@@ -54,6 +54,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
     SettingsConfig,
     Trigger,
+    add_or_update_trigger_for_pipeline_and_persist,
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -68,7 +69,6 @@ from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -90,6 +90,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     start_time = Column(DateTime(timezone=True), default=None)
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
+    last_enabled_at = Column(DateTime(timezone=True), default=None)
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
@@ -187,18 +188,41 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_in_progress_runs_count_project_platform
 
-        return len(PipelineRun.in_progress_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                ),
+                (coalesce(PipelineRun.passed_sla, False).is_(False)),
+            )
+            .scalar()
+        )
 
     @property
     def pipeline_runs_count(self) -> int:
         if project_platform_activated():
             return self.pipeline_runs_count_project_platform
 
-        return len(self.fetch_pipeline_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .scalar()
+        )
 
     @property
     def timeout(self) -> int:
         return (self.settings or {}).get('timeout')
+
+    @property
+    def timeout_status(self) -> 'PipelineRun.PipelineRunStatus':
+        return (self.settings or {}).get('timeout_status')
 
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
@@ -214,9 +238,21 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.last_pipeline_run_status_project_platform
 
-        if len(self.fetch_pipeline_runs([self.id])) == 0:
+        query_result = (
+            PipelineRun.select(PipelineRun.id, PipelineRun.status)
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .order_by(
+                PipelineRun.created_at.desc(),
+            )
+            .first()
+        )
+
+        if query_result is None:
             return None
-        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
+
+        return query_result.status
 
     @property
     def tag_associations(self):
@@ -287,20 +323,32 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 traceback.print_exc()
                 continue
 
+            last_enabled_at = trigger_config.last_enabled_at
+            if trigger_config.status == ScheduleStatus.ACTIVE and \
+                    trigger_config.last_enabled_at is None:
+                last_enabled_at = datetime.now(tz=pytz.UTC)
+                trigger_config.last_enabled_at = last_enabled_at
+                add_or_update_trigger_for_pipeline_and_persist(
+                    trigger_config,
+                    trigger_config.pipeline_uuid,
+                )
+
             kwargs = dict(
+                last_enabled_at=last_enabled_at,
                 name=trigger_config.name,
                 pipeline_uuid=trigger_config.pipeline_uuid,
-                schedule_type=trigger_config.schedule_type,
-                start_time=trigger_config.start_time,
                 schedule_interval=trigger_config.schedule_interval,
+                schedule_type=trigger_config.schedule_type,
+                settings=trigger_config.settings,
+                sla=trigger_config.sla,
+                start_time=trigger_config.start_time,
                 status=trigger_config.status,
                 variables=trigger_config.variables,
-                sla=trigger_config.sla,
-                settings=trigger_config.settings,
             )
 
             if existing_trigger:
                 if any([
+                    existing_trigger.last_enabled_at != kwargs.get('last_enabled_at'),
                     existing_trigger.name != kwargs.get('name'),
                     existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
                     existing_trigger.schedule_interval != kwargs.get('schedule_interval'),
@@ -496,7 +544,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
+            pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -504,7 +552,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.fetch_pipeline_runs([self.id])) == 0:
+            if self.pipeline_runs_count == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
@@ -516,20 +564,47 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if current_execution_date is None:
                 return False
 
-            # If the execution date is before start time, don't schedule it
-            if self.start_time is not None and \
-                    compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
+            if self.last_enabled_at is None:
+                """
+                Check if the last_enabled_at attribute has a value (if it does not,
+                it could mean that the pipeline schedule already existed and was active).
+                If there is no value for last_enabled_at, we default to creating an
+                initial pipeline run. Otherwise, no additional pipeline runs would be
+                created for the existing pipeline schedule until it was disabled and
+                re-enabled (so that the last_enabled_at attribute would get updated).
+                """
+                avoid_initial_pipeline_run = False
+            else:
+                """
+                Check if "create_initial_pipeline_run" setting is not enabled. If
+                it is not, check if current execution date is before the datetime
+                that the pipeline schedule was last enabled in order to avoid
+                the initial pipeline run.
+                """
+                create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
+                avoid_initial_pipeline_run = compare(
+                    current_execution_date,
+                    self.last_enabled_at,
+                ) == -1 if not create_initial_pipeline_run else False
+
+            # If the execution date is before start time or date pipeline schedule
+            # was last enabled, don't schedule it.
+            if (
+                self.start_time is not None and
+                compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1
+            ) or avoid_initial_pipeline_run:
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
             # current_execution_date, then don’t schedule
-            if not find(
-                lambda x: compare(
-                    x.execution_date.replace(tzinfo=pytz.UTC),
-                    current_execution_date,
-                ) == 0,
-                self.fetch_pipeline_runs([self.id])
-            ):
+            run_exists = PipelineRun.select(
+                PipelineRun.query.filter(
+                    PipelineRun.pipeline_schedule_id == self.id,
+                    PipelineRun.execution_date == current_execution_date,
+                ).exists()
+            ).scalar()
+
+            if not run_exists:
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:
                         return True

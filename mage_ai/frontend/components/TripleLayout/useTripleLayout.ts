@@ -7,12 +7,14 @@ import { useWindowSize } from '@utils/sizes';
 
 const DEFAULT_ASIDE_WIDTH = 25 * UNIT;
 const MINIMUM_WIDTH_MAIN_CONTAINER = DEFAULT_ASIDE_WIDTH * 2;
+export const DEFAULT_BEFORE_RESIZE_OFFSET = 72;
 
 function useAside(uuid, refData, {
   disable,
   hidden: hiddenProp,
   mainContainerWidth,
   refOther,
+  resizeOffset = 0,
   setWidth: setWidthProp,
   width: widthProp,
   widthOverride,
@@ -29,6 +31,7 @@ function useAside(uuid, refData, {
       widthProp?: number;
     };
   };
+  resizeOffset?: number;
   setWidth?: (value: number) => void;
   width?: number;
   widthOverride?: boolean;
@@ -96,7 +99,9 @@ function useAside(uuid, refData, {
         DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
-      let value = prev;
+      // May need to add a resize offset to previous width so the aside panel
+      // doesn't jump when resizing it. The panel might jump about 72px.
+      let value = prev + resizeOffset;
       if (value < DEFAULT_ASIDE_WIDTH) {
         value = DEFAULT_ASIDE_WIDTH;
       } else if (value > maxWidth) {
@@ -121,7 +126,9 @@ function useAside(uuid, refData, {
   }, [
     disable,
     key,
+    refData,
     refOther,
+    resizeOffset,
     setWidthProp,
     widthWindow,
   ]);
@@ -175,9 +182,10 @@ export type UseTripleLayoutType = {
   setWidthBefore: (value: number | ((value: number) => number)) => void;
   widthAfter: number;
   widthBefore: number;
-}
+};
 
 export type UseTripleLayoutProps = {
+  beforeResizeOffset?: number;
   disableAfter?: boolean;
   disableBefore?: boolean;
   hiddenAfter?: boolean;
@@ -192,6 +200,7 @@ export type UseTripleLayoutProps = {
 };
 
 export default function useTripleLayout(uuid: string, {
+  beforeResizeOffset,
   disableAfter,
   disableBefore,
   hiddenAfter: hiddenAfterProp,
@@ -258,6 +267,7 @@ export default function useTripleLayout(uuid: string, {
     hidden: hiddenBeforeProp,
     mainContainerWidth,
     refOther: refAfter,
+    resizeOffset: beforeResizeOffset,
     setWidth: setWidthBeforeProp,
     width: widthBeforeProp,
     widthOverride: widthOverrideBeforeProp,

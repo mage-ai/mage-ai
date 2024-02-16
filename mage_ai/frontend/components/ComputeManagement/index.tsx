@@ -38,6 +38,7 @@ import {
   TabType,
   buildTabs,
 } from './constants';
+import { DEFAULT_BEFORE_RESIZE_OFFSET } from '@components/TripleLayout/useTripleLayout';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   SparkApplicationType,
@@ -137,7 +138,8 @@ function ComputeManagement({
     UNIT * 20,
   ));
   const setBeforeWidth = useCallback((width: number) => {
-    setBeforeWidthState(width || UNIT * 20);
+    // If the DEFAULT_BEFORE_RESIZE_OFFSET is not subtracted, the before panel jumps forward a bit when resizing.
+    setBeforeWidthState((width || UNIT * 20) - DEFAULT_BEFORE_RESIZE_OFFSET);
     set(localStorageKeyBefore, width || UNIT * 20);
   }, [
     localStorageKeyBefore,

@@ -17,6 +17,7 @@ class OracleDB(BaseSQL):
                  port,
                  service_name,
                  verbose: bool = False,
+                 mode: str = 'thin',
                  **kwargs) -> None:
         super().__init__(user=user,
                          password=password,
@@ -24,6 +25,7 @@ class OracleDB(BaseSQL):
                          port=port,
                          service_name=service_name,
                          verbose=verbose,
+                         mode=mode,
                          **kwargs)
 
     @classmethod
@@ -33,7 +35,8 @@ class OracleDB(BaseSQL):
             password=config[ConfigKey.ORACLEDB_PASSWORD],
             host=config[ConfigKey.ORACLEDB_HOST],
             port=config[ConfigKey.ORACLEDB_PORT],
-            service_name=config[ConfigKey.ORACLEDB_SERVICE]
+            service_name=config[ConfigKey.ORACLEDB_SERVICE],
+            mode=config[ConfigKey.ORACLEDB_MODE],
         )
 
     def open(self) -> None:

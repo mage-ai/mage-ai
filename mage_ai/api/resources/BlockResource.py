@@ -284,7 +284,12 @@ class BlockResource(GenericResource):
         if file_path:
             file_path = file_path[0]
         if file_path:
-            block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+            try:
+                block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+            except Exception as err:
+                print(f'[ERROR] BlockResource.member: {err}')
+                block = None
+
             if block:
                 return self(block, user, **kwargs)
             else:

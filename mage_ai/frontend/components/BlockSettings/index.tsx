@@ -194,6 +194,7 @@ function BlockSettings({
     ]),
     [blockAttributes?.configuration, configuration],
   );
+
   const updateBlockVariable = useCallback(
     (variable:  { [key: string]: string }) => setBlockAttributes(prev => ({
       ...prev,
@@ -246,7 +247,7 @@ function BlockSettings({
           callback: (resp) => {
             setBlockAttributesTouched(false);
 
-            fetchFileTree();
+            fetchFileTree?.();
             fetchPipeline();
 
             // Select the newly renamed block

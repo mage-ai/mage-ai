@@ -77,3 +77,23 @@ class BitbucketProvider(OauthProvider):
                 data = await response.json()
 
         return data
+
+    async def get_refresh_token_response(self, refresh_token: str) -> Awaitable[Dict]:
+        data = dict()
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f'{self.hostname}/site/oauth2/access_token',
+                headers={
+                    'Accept': 'application/json',
+                },
+                data=dict(
+                    grant_type='refresh_token',
+                    refresh_token=refresh_token,
+                ),
+                auth=BasicAuth(BITBUCKET_OAUTH_KEY, BITBUCKET_OAUTH_SECRET),
+                timeout=20,
+            ) as response:
+                data = await response.json()
+
+        return data

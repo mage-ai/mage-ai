@@ -80,7 +80,7 @@ class SyncResource(GenericResource):
 
         preferences.update_preferences(dict(sync_config=updated_config))
 
-        GitSync(sync_config)
+        GitSync(sync_config, setup_repo=True)
 
         return self(get_preferences(repo_path=repo_name).sync_config, user, **kwargs)
 

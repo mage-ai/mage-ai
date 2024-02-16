@@ -83,6 +83,7 @@ import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import {
   BLOCK_EXISTS_ERROR,
   CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
@@ -149,7 +150,6 @@ import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/u
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
-import { utcNowDate } from '@utils/date';
 
 type PipelineDetailPageProps = {
   newPipelineSchedule: boolean;
@@ -511,15 +511,18 @@ function PipelineDetailPage({
   ]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
-  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const [multipleTabsOpen, setMultipleTabsOpen] = useState<boolean>(false);
 
   const [showStalePipelineMessageModal, hideStalePipelineMessageModal] = useModal(() => (
     <PopupMenu
       centerOnScreen
       neutral
       onClick={hideStalePipelineMessageModal}
-      subtitle="Please refresh your page to have the most up-to-date data before making any changes."
+      subtitle={
+        'This pipeline may be open on another tab. Saving changes here could overwrite'
+        + ' any changes made to this pipeline on a separate tab. Proceed with caution.'
+      }
       title="Your pipeline may be stale."
       width={UNIT * 34}
     />
@@ -529,19 +532,43 @@ function PipelineDetailPage({
   });
 
   useEffect(() => {
+    const channel = new BroadcastChannel(`${pipelineUUID}_pipeline_editor_tabs`);
+    channel.addEventListener('message', (event) => {
+      if (event.data === 'new_tab_same_page_opened') {
+        setMultipleTabsOpen(true);
+      }
+    });
+    /*
+     * Send message to this pipeline’s broadcast channel when the component mounts
+     * so that we can detect if there are multiple tabs open for the same pipeline,
+     * which could cause issues with the pipeline's block files being overwritten
+     * unexpectedly.
+     */
+    channel.postMessage('new_tab_same_page_opened');
+
+    return () => {
+      channel.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (multipleTabsOpen) {
+      showStalePipelineMessageModal();
+      setMultipleTabsOpen(false);
+    }
+  }, [multipleTabsOpen, showStalePipelineMessageModal]);
+
+  useEffect(() => {
     if (data?.pipeline?.updated_at
       && pipelineLastSaved !== moment().utc().unix()
     ) {
       // This assumes datetime is saved without a timezone offset e.g.'2023-11-16 10:37:35'
       setPipelineLastSaved(moment(data.pipeline.updated_at).unix());
     }
-    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-      showStalePipelineMessageModal();
-    }
   }, [
     data?.pipeline?.updated_at,
     pipelineLastSaved,
-    pipelineLastSavedState,
   ]);
 
   const qUrl = queryFromUrl();
@@ -550,13 +577,6 @@ function PipelineDetailPage({
     block_uuid: blockUUIDFromUrl,
     // file_path: filePathFromUrl,
   } = qUrl;
-  const filePathsFromUrl = useMemo(() => {
-    let arr = qUrl['file_paths[]'] || [];
-    if (!Array.isArray(arr)) {
-      arr = [arr];
-    }
-    return arr;
-  }, [qUrl]);
 
   function setActiveSidekickView(
     newView: ViewKeyEnum,
@@ -989,6 +1009,7 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
+  // eslint-disable-next-line prefer-const
   let addNewBlockAtIndex;
 
   const addNewBlockCallback = useCallback((
@@ -1005,7 +1026,7 @@ function PipelineDetailPage({
       b.name,
       opts,
     );
-  }, [addNewBlockAtIndex]);
+  }, [addNewBlockAtIndex, blocks.length]);
 
   const {
     renderApplications,
@@ -1141,14 +1162,6 @@ function PipelineDetailPage({
       },
     } = payload || {};
     const { contentOnly } = opts || {};
-
-    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
-      showStalePipelineMessageModal();
-      return;
-    }
-    const utcNowDateString = utcNowDate();
-    setPipelineLastSavedState(moment().utc().unix());
-
     const blocksByExtensions = {};
     const blocksByUUID = {};
     const callbacksByUUID = {};
@@ -1311,72 +1324,73 @@ function PipelineDetailPage({
     });
 
     setOuputsToSaveByBlockUUID({});
+    const updatedPipeline = {
+      ...pipeline,
+      ...pipelineOverride,
+      blocks: blocksToSave,
+      callbacks: callbacksToSave,
+      conditionals: conditionalsToSave,
+      extensions: extensionsToSave,
+      widgets: widgets.map((block: BlockType) => {
+        let contentToSave = contentByWidgetUUID.current[block.uuid];
+        const tempData = widgetTempData.current[block.uuid] || {};
+
+        if (typeof contentToSave === 'undefined') {
+          contentToSave = block.content;
+        }
+
+        let outputs;
+        const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
+        const hasError = messagesForBlock?.find(({ error }) => error);
+
+        if (messagesForBlock) {
+          const arr2 = [];
+
+          messagesForBlock.forEach((d: KernelOutputType) => {
+            const {
+              data,
+              type,
+            } = d;
+
+            if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+              if (Array.isArray(data)) {
+                d.data = data.reduce((acc, text: string) => {
+                  if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                    return acc;
+                  }
+
+                  return acc.concat(text);
+                }, []);
+              }
+
+              arr2.push(d);
+            }
+          });
+
+          // @ts-ignore
+          outputs = arr2.map((d: KernelOutputType, idx: number) => ({
+            text_data: JSON.stringify(d),
+            variable_uuid: `${block.uuid}_${idx}`,
+          }));
+        }
+
+        return {
+          ...block,
+          ...tempData,
+          configuration: {
+            ...block.configuration,
+            ...tempData.configuration,
+          },
+          content: contentToSave,
+          outputs,
+        };
+      }),
+    };
+    delete updatedPipeline.updated_at;
 
     // @ts-ignore
     return updatePipeline({
-      pipeline: {
-        ...pipeline,
-        ...pipelineOverride,
-        blocks: blocksToSave,
-        callbacks: callbacksToSave,
-        conditionals: conditionalsToSave,
-        extensions: extensionsToSave,
-        updated_at: utcNowDateString,
-        widgets: widgets.map((block: BlockType) => {
-          let contentToSave = contentByWidgetUUID.current[block.uuid];
-          const tempData = widgetTempData.current[block.uuid] || {};
-
-          if (typeof contentToSave === 'undefined') {
-            contentToSave = block.content;
-          }
-
-          let outputs;
-          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
-          const hasError = messagesForBlock?.find(({ error }) => error);
-
-          if (messagesForBlock) {
-            const arr2 = [];
-
-            messagesForBlock.forEach((d: KernelOutputType) => {
-              const {
-                data,
-                type,
-              } = d;
-
-              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
-                if (Array.isArray(data)) {
-                  d.data = data.reduce((acc, text: string) => {
-                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
-                      return acc;
-                    }
-
-                    return acc.concat(text);
-                  }, []);
-                }
-
-                arr2.push(d);
-              }
-            });
-
-            // @ts-ignore
-            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
-              text_data: JSON.stringify(d),
-              variable_uuid: `${block.uuid}_${idx}`,
-            }));
-          }
-
-          return {
-            ...block,
-            ...tempData,
-            configuration: {
-              ...block.configuration,
-              ...tempData.configuration,
-            },
-            content: contentToSave,
-            outputs,
-          };
-        }),
-      },
+      pipeline: updatedPipeline,
     });
   }, [
     blocks,
@@ -1384,8 +1398,6 @@ function PipelineDetailPage({
     messages,
     ouputsToSaveByBlockUUID,
     pipeline,
-    pipelineLastSaved,
-    pipelineLastSavedState,
     runningBlocks,
     sparkEnabled,
     updatePipeline,
@@ -1496,7 +1508,9 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+    openFile,
     selectedBlockDetails,
+    setSelectedBlock,
     widgets,
   ]);
 
@@ -2781,7 +2795,7 @@ function PipelineDetailPage({
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       executePipeline={executePipeline}
-      fetchFiles={fetchFiles}
+      fetchFileTree={fetchFiles}
       fetchPipeline={fetchPipeline}
       fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
@@ -2917,6 +2931,7 @@ function PipelineDetailPage({
     setHiddenBlocks,
     setInteractionsMapping,
     setPermissions,
+    setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
     showBrowseTemplates,
@@ -2954,6 +2969,7 @@ function PipelineDetailPage({
     activeSidekickView,
     fileTabs,
     globalVariables,
+    notebookVisible,
     pipeline,
     project,
     secrets,
@@ -2965,34 +2981,32 @@ function PipelineDetailPage({
     blockIndex,
   }: {
     blockIndex?: number;
-  }) => {
-    return (
-      <ErrorProvider>
-        <Browser
-          contained
-          defaultBlockType={BlockTypeEnum.DBT}
-          onClickAction={opts => {
-            addNewBlockAtIndex(
-              buildBlockFromFilePath({
-                blockIndex,
-                blocks,
-                filePath: opts?.row?.fullPath,
-                repoPathRelativeRoot: status?.repo_path_relative_root,
-              }),
-              (typeof blockIndex === 'undefined' || blockIndex === null
-                ? blocks?.length
-                : blockIndex + 1
-              ) - (sideBySideEnabled ? 1 : 0),
-              (block: BlockType) => {
-                setSelectedBlock(block),
-                hideBlockBrowserModal();
-              },
-            );
-          }}
-        />
-      </ErrorProvider>
-    );
-  }, {}, [
+  }) => (
+    <ErrorProvider>
+      <Browser
+        contained
+        defaultBlockType={BlockTypeEnum.DBT}
+        onClickAction={opts => {
+          addNewBlockAtIndex(
+            buildBlockFromFilePath({
+              blockIndex,
+              blocks,
+              filePath: opts?.row?.fullPath,
+              repoPathRelativeRoot: status?.repo_path_relative_root,
+            }),
+            (typeof blockIndex === 'undefined' || blockIndex === null
+              ? blocks?.length
+              : blockIndex + 1
+            ) - (sideBySideEnabled ? 1 : 0),
+            (block: BlockType) => {
+              setSelectedBlock(block),
+              hideBlockBrowserModal();
+            },
+          );
+        }}
+      />
+    </ErrorProvider>
+  ), {}, [
     addNewBlockAtIndex,
     sideBySideEnabled,
     status,
@@ -3058,7 +3072,7 @@ function PipelineDetailPage({
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       disableShortcuts={disableShortcuts}
-      fetchFiles={fetchFiles}
+      fetchFileTree={fetchFiles}
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
@@ -3199,7 +3213,6 @@ function PipelineDetailPage({
     restartKernel,
     savePipelineContent,
     scrollTogether,
-    selectedFilePath,
     setMessages,
     setScrollTogether,
     setSideBySideEnabled,
@@ -3231,7 +3244,6 @@ function PipelineDetailPage({
     }
   }, [
     beforeHeader,
-    fileTabs,
     page,
     pipeline,
     restartKernel,
@@ -3406,6 +3418,7 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         before={beforeToShow}
+        beforeDraggableTopOffset={HEADER_HEIGHT + ASIDE_HEADER_HEIGHT}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeHidden={beforeHidden}

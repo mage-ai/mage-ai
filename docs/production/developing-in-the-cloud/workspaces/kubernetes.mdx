@@ -5,6 +5,13 @@ sidebarTitle: "Kubernetes"
 
 ## Setup
 
+<Note>
+We recommend creating your ingress separately from the Mage Helm chart if you are planning
+to add your workspaces to the ingress. You can either create the ingress manually through
+[the Kubernetes CLI](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+or use [the mageai-ingress Helm chart](https://github.com/mage-ai/helm-charts/tree/master/charts/ingress).
+</Note>
+
 We recommend using Helm to set up your Kubernetes cluster. You can find our Mage Helm
 documentation [here](/production/deploying-to-cloud/using-helm). You will need to create
 a persistent volume for your cluster.
@@ -42,8 +49,8 @@ You will need to first install an ingress controller in your kubernetes cluster 
 The most common ingress controller is the Ingress-Nginx Controller . You
 can find instructions on how to install the controller [here](https://kubernetes.github.io/ingress-nginx/deploy/).
 
-Once the ingress controller is installed, you can create an ingress through the Mage Helm charts. You can create
-an ingress by setting the following fields in the `values.yaml` file:
+Once the ingress controller is installed, you can add an ingress to your Kubernetes cluster. If you're
+using the mageai-ingress Helm chart, you can add the following configuration to your `values.yaml` file:
 
 ```yaml
 ingress:
@@ -133,11 +140,13 @@ When creating a new Kubernetes workspace, you can configure the following Kubern
 | Field | Description |
 | --- | --- |
 | Workspace name | Name of workspace. This name will be used to create all resources for the workspace. |
+| Namespace | Kubernetes namespace to create workspace resources. Defaults to the value of the `KUBE_NAMESPACE` environment variable or `default` if empty. |
 | Service account name | Kubernetes service account to use to create the resources. Defaults to current pod's service account name. |
 | Ingress name | Name of ingress to add the new workspace to. See more information about the ingress set up below. |
 | Storage class name | Name of storage class to provision storage from for the stateful set. Defaults to current pvc's storage class name. |
 | Storage request size | Amount of storage to provision for the persistent volume claim (in GB). Defaults to current pvc's storage request. |
 | Access mode | Access mode for persistent volume claim. [More info in Kubernetes docs.](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) Defaults to current pvc's access mode. |
+| Retention policy | Retention policy for the stateful set PVC. Defaults to "Retain". |
 | Configure container | Customize the configuration for the container. [Configuration options](https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md) |
 
 ### Lifecycle management

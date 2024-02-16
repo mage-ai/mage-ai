@@ -38,6 +38,53 @@ def dig(obj_arg, arr_or_string):
             return obj.get(key)
         else:
             return obj
+
+    return reduce(_build, arr, obj_arg)
+
+
+def safe_dig(obj_arg, arr_or_string):
+    """
+    Safely retrieves nested values from a dictionary or list using a dot-separated path.
+
+    Args:
+        obj_arg: The object (dictionary or list) to navigate.
+        arr_or_string (str or list): A dot-separated path string or a list of
+            keys/indexes.
+
+    Returns:
+        The value retrieved from the nested structure, or None if any intermediate
+            key/index is missing or the object is None.
+    """
+    if isinstance(arr_or_string, str):
+        arr_or_string = arr_or_string.split('.')
+    arr = list(map(str.strip, arr_or_string))
+
+    def _build(obj, key):
+        # Return None if the object is None or not a dictionary
+        if obj is None or not isinstance(obj, dict) and not isinstance(obj, list):
+            return None
+
+        tup = re.split(r'\[(\d+)\]$', key)
+        if len(tup) >= 2:
+            key, index = filter(lambda x: x, tup)
+            index = int(index) if index else None
+            if key and index is not None:
+                if key not in obj:
+                    return None  # Return None if the key is not present
+                return (
+                    obj[key][index]
+                    if isinstance(obj[key], list) and len(obj[key]) > index
+                    else None
+                )
+            elif index is not None:
+                return (
+                    obj[index] if isinstance(obj, list) and len(obj) > index else None
+                )
+        elif isinstance(obj, dict):
+            return obj.get(key)
+        else:
+            return None
+
     return reduce(_build, arr, obj_arg)
 
 
@@ -93,6 +140,7 @@ def extract(d, keys, include_blank_values: bool = False):
         if include_blank_values or val is not None:
             obj[key] = val
         return obj
+
     return reduce(_build, keys, {})
 
 
@@ -111,6 +159,7 @@ def group_by(func, arr):
             obj[val] = []
         obj[val].append(item)
         return obj
+
     return reduce(_build, arr, {})
 
 
@@ -141,6 +190,7 @@ def replace_dict_nan_value(d):
         if isinstance(v, float) and math.isnan(v):
             return None
         return v
+
     return {k: _replace_nan_value(v) for k, v in d.items()}
 
 

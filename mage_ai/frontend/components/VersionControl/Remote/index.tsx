@@ -86,8 +86,6 @@ function Remote({
 
   const gitInitialized = useMemo(() => !!branch?.name, [branch]);
 
-  const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
-
   useEffect(() => {
     if (!repoPath && (branch?.sync_config?.repo_path || project?.repo_path)) {
       setRepoPath(branch?.sync_config?.repo_path || project?.repo_path);
@@ -117,21 +115,6 @@ function Remote({
             fetchBranch();
             setEditRepoPathActive(false);
           },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const [updateOauth, { isLoading: isLoadingUpdateOauth }] = useMutation(
-    api.oauths.useUpdate('github'),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => window.location.href = window.location.href.split('?')[0],
           onErrorCallback: (response, errors) => showError({
             errors,
             response,
@@ -228,13 +211,20 @@ function Remote({
       ),
     },
   );
-  const { access_token: accessTokenFromURL, provider: providerFromURL } = queryFromUrl() || {};
+  const {
+    access_token: accessTokenFromURL,
+    provider: providerFromURL,
+    refresh_token: refreshTokenFromURL,
+    expires_in: expiresIn,
+  } = queryFromUrl() || {};
   useEffect(() => {
     if (accessTokenFromURL) {
       // @ts-ignore
       createOauth({
         oauth: {
+          expires_in: expiresIn,
           provider: providerFromURL || OauthProviderEnum.GITHUB,
+          refresh_token: refreshTokenFromURL,
           token: accessTokenFromURL,
         },
       });
@@ -242,7 +232,9 @@ function Remote({
   }, [
     accessTokenFromURL,
     createOauth,
+    expiresIn,
     providerFromURL,
+    refreshTokenFromURL,
   ]);
 
   const remotesMemo = useMemo(() => remotes?.map(({

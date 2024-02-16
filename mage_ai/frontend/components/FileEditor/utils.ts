@@ -1,5 +1,6 @@
 import * as osPath from 'path';
 import BlockType, {
+  ADD_ON_BLOCK_TYPES,
   ALL_BLOCK_TYPES,
   ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS,
   BlockColorEnum,
@@ -27,7 +28,7 @@ export const getBlockType = (path: string[]): BlockTypeEnum => {
       let part2 = part?.toLowerCase();
 
       if (part2 in ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS) {
-        value = part2
+        value = part2;
       } else {
         part2 = singularize(part2);
         if (part2 in ALL_BLOCK_TYPES) {
@@ -50,7 +51,8 @@ export const getBlockType = (path: string[]): BlockTypeEnum => {
     const extensionRegex = new RegExp(`${extensions}$`);
     const fileName = path.join(osPath.sep);
 
-    if (fileName.match(extensionRegex)) {
+    if (fileName.match(extensionRegex)
+      && (path.includes(BlockTypeEnum.DBT) || path.includes('dbts'))) {
       return BlockTypeEnum.DBT;
     }
   }
@@ -121,7 +123,7 @@ export function buildAddBlockRequestPayload(
     blockReqPayload.color = BlockColorEnum.TEAL;
   }
 
-  if (isIntegrationPipeline) {
+  if (isIntegrationPipeline && !ADD_ON_BLOCK_TYPES.includes(blockType)) {
     const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
     const transformerBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type);
     const upstreamBlocks = [];

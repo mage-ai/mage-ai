@@ -43,6 +43,7 @@ from mage_ai.services.k8s.constants import (
 )
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import safe_dig
 
 
 class WorkloadManager:
@@ -81,7 +82,6 @@ class WorkloadManager:
 
     def list_workloads(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
-        workloads_list = []
 
         stateful_sets = self.apps_client.list_namespaced_stateful_set(
             self.namespace
@@ -102,6 +102,43 @@ class WorkloadManager:
                 pod_mapping[name] = pod
             except Exception:
                 pass
+        return self.format_workloads(services, stateful_set_mapping, pod_mapping)
+
+    @classmethod
+    def list_all_workloads(cls):
+        cls.load_config()
+        core_client = client.CoreV1Api()
+        apps_client = client.AppsV1Api()
+
+        services = core_client.list_service_for_all_namespaces().items
+
+        stateful_sets = apps_client.list_stateful_set_for_all_namespaces().items
+        stateful_set_mapping = dict()
+        for ss in stateful_sets:
+            try:
+                name = ss.metadata.name
+                stateful_set_mapping[name] = ss
+            except Exception:
+                pass
+
+        pods = core_client.list_pod_for_all_namespaces().items
+        pod_mapping = dict()
+        for pod in pods:
+            try:
+                name = pod.metadata.labels.get('app')
+                pod_mapping[name] = pod
+            except Exception:
+                pass
+        return cls.format_workloads(services, stateful_set_mapping, pod_mapping)
+
+    @classmethod
+    def format_workloads(
+        cls,
+        services,
+        stateful_set_mapping,
+        pod_mapping,
+    ):
+        workloads_list = []
         for service in services:
             try:
                 labels = service.metadata.labels
@@ -124,7 +161,7 @@ class WorkloadManager:
                     if service_type == 'NodePort':
                         try:
                             if node_name:
-                                items = self.core_client.list_node(
+                                items = client.CoreV1Api().list_node(
                                     field_selector=f'metadata.name={node_name}'
                                 ).items
                                 node = items[0]
@@ -147,7 +184,6 @@ class WorkloadManager:
                             pass
                         if ip:
                             workload['ip'] = f'{ip}:{port}'
-
                 elif stateful_set and stateful_set.spec.replicas == 0:
                     workload['status'] = 'STOPPED'
                 else:
@@ -190,14 +226,13 @@ class WorkloadManager:
         parameters = self.__get_configurable_parameters(workspace_config)
         service_account_name = parameters.get(
             'service_account_name',
-            DEFAULT_SERVICE_ACCOUNT_NAME,
-        )
+        ) or DEFAULT_SERVICE_ACCOUNT_NAME
         storage_class_name = parameters.get(
             'storage_class_name',
-            DEFAULT_STORAGE_CLASS_NAME,
-        )
-        storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
-        storage_request_size = parameters.get('storage_request_size', '2Gi')
+        ) or DEFAULT_STORAGE_CLASS_NAME
+        storage_access_mode = parameters.get('storage_access_mode') or 'ReadWriteMany'
+        storage_request_size = parameters.get('storage_request_size') or '2Gi'
+        pvc_retention_policy = parameters.get('pvc_retention_policy') or 'Retain'
 
         ingress_name = workspace_config.ingress_name
 
@@ -388,6 +423,9 @@ class WorkloadManager:
                         },
                     }
                 ],
+                'persistentVolumeClaimRetentionPolicy': {
+                    'whenDeleted': pvc_retention_policy,
+                },
             },
         }
 
@@ -476,6 +514,18 @@ class WorkloadManager:
         )
         rule = ingress.spec.rules[0]
         host = rule.host
+
+        if host is None:
+            ingress_dict = ingress.to_dict()
+            lb_ingress = safe_dig(ingress_dict, ['status', 'load_balancer', 'ingress[0]']) or {}
+            if 'hostname' in lb_ingress:
+                host = lb_ingress['hostname']
+            # Alternatively, check for `ip` if `hostname` is not available
+            elif 'ip' in lb_ingress:
+                host = lb_ingress['ip']
+
+        if host is None:
+            return None
 
         tls_enabled = False
         try:
@@ -793,6 +843,7 @@ class WorkloadManager:
             storage_request_size = f'{storage_request_size}Gi'
 
         return dict(
+            pvc_retention_policy=workspace_config.pvc_retention_policy,
             service_account_name=workspace_config.service_account_name
             or default_values.get('service_account_name'),
             storage_class_name=workspace_config.storage_class_name

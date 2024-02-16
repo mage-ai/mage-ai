@@ -9,6 +9,11 @@ export const ACCESS_MODES = [
   ACCESS_MODE_READ_ONLY_MANY,
 ];
 
+export const PVC_RETENTION_OPTIONS = [
+  'Retain',
+  'Delete',
+];
+
 export const WORKSPACE_FIELDS = [
   {
     label: 'Workspace name',
@@ -18,6 +23,11 @@ export const WORKSPACE_FIELDS = [
 ];
 
 export const GENERAL_K8S_FIELDS = [
+  {
+    label: 'Namespace',
+    labelDescription: 'The namespace where the workspace resources will be deployed. Defaults to the value of the KUBE_NAMESPACE environment variable.',
+    uuid: 'namespace',
+  },
   {
     label: 'Service account name',
     placeholder: 'default',

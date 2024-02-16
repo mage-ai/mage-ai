@@ -12,13 +12,13 @@ from mage_ai.shared.hash import merge_dict
 
 class KubernetesWorkspace(Workspace):
     config_class = KubernetesWorkspaceConfig
+    cluster_type = ClusterType.K8S
 
     def __init__(self, name: str):
         super().__init__(name)
         self.cluster_type = ClusterType.K8S
-        self.workload_manager = WorkloadManager(
-            self.config.namespace or os.getenv(KUBE_NAMESPACE)
-        )
+        self.namespace = self.config.namespace or os.getenv(KUBE_NAMESPACE)
+        self.workload_manager = WorkloadManager(self.namespace)
 
     @classmethod
     def initialize(
@@ -92,6 +92,14 @@ class KubernetesWorkspace(Workspace):
 
     def resume(self, **kwargs):
         self.workload_manager.restart_workload(self.name)
+
+    def add_to_ingress(self, **kwargs):
+        if self.config.ingress_name:
+            self.workload_manager.add_service_to_ingress_paths(
+                self.config.ingress_name,
+                f'{self.name}-service',
+                self.name,
+            )
 
     def to_dict(self):
         config = dict(

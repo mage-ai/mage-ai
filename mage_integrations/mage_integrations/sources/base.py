@@ -1,4 +1,19 @@
+import inspect
+import json
+import os
+import sys
+import traceback
 from datetime import datetime
+from os.path import isfile
+from typing import Dict, Generator, List
+
+import dateutil.parser
+import pandas as pd
+import simplejson
+import singer
+from singer import utils
+from singer.schema import Schema
+
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
@@ -6,30 +21,13 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.messages import write_records, write_schema, write_state
-from mage_integrations.sources.utils import (
-    get_standard_metadata,
-    parse_args,
-)
+from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, group_by, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-
-from os.path import isfile
-from singer import utils
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import dateutil.parser
-import inspect
-import json
-import os
-import pandas as pd
-import simplejson
-import singer
-import sys
-import traceback
 
 LOGGER = singer.get_logger()
 
@@ -47,7 +45,7 @@ class Source:
         load_sample_data: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
-        query: Dict = {},
+        query: Dict = None,
         schemas_folder: str = 'schemas',
         selected_streams: List[str] = None,
         settings: Dict = None,
@@ -56,6 +54,8 @@ class Source:
         test_connection: bool = False,
         verbose: int = 1,
     ):
+        if query is None:
+            query = {}
         args = parse_args([])
         if args:
             if args.catalog:
@@ -231,7 +231,8 @@ class Source:
             elif self.count_records_mode:
                 arr = []
                 selected_streams_arr = self.catalog.get_selected_streams(self.state or {}) or []
-                streams = [stream for stream in selected_streams_arr if stream.tap_stream_id in self.selected_streams]
+                streams = [stream for stream in selected_streams_arr
+                           if stream.tap_stream_id in self.selected_streams]
                 for stream in streams:
                     tap_stream_id = stream.tap_stream_id
                     count = self.count_records(
@@ -443,9 +444,10 @@ class Source:
 
                 write_state(state)
 
-        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-            records=record_count,
-        )))
+        self.logger.info(
+            f'Load data for stream {tap_stream_id} completed.',
+            tags=merge_dict(tags, dict(records=record_count)),
+        )
 
         return record_count
 
@@ -491,7 +493,7 @@ class Source:
                 if self.is_sorted:
                     state = {}
 
-                    for idx, col in enumerate(bookmark_properties):
+                    for _, col in enumerate(bookmark_properties):
                         singer.write_bookmark(
                             state,
                             tap_stream_id,
@@ -534,9 +536,10 @@ class Source:
             self.process_stream(stream, properties)
             record_count = self.sync_stream(stream, properties)
 
-            self.logger.info(f'Sync for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-                records=record_count,
-            )))
+            self.logger.info(
+                f'Sync for stream {tap_stream_id} completed.',
+                tags=merge_dict(tags, dict(records=record_count)),
+            )
 
         self.logger.info('Sync completed.')
 
@@ -566,7 +569,8 @@ class Source:
             replication_method=replication_method or self.get_forced_replication_method(stream_id),
             schema=schema.to_dict(),
             stream_id=stream_id,
-            valid_replication_keys=bookmark_properties or self.get_valid_replication_keys(stream_id),
+            valid_replication_keys=bookmark_properties or
+            self.get_valid_replication_keys(stream_id),
         )
 
         idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
@@ -582,11 +586,13 @@ class Source:
                 database=None,
                 disable_column_type_check=None,
                 is_view=None,
-                key_properties=key_properties or [],  # User customizes this after creating catalog from discover.
+                # User customizes this after creating catalog from discover.
+                key_properties=key_properties or [],
                 metadata=metadata,
                 partition_keys=None,
                 replication_key=replication_key or '',
-                replication_method=replication_method or self.get_forced_replication_method(stream_id),
+                replication_method=replication_method or
+                self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,
                 stream=stream_id,
@@ -611,7 +617,7 @@ class Source:
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> int:
         return 0
@@ -620,7 +626,7 @@ class Source:
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,
