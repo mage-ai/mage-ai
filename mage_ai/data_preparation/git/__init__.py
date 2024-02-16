@@ -69,15 +69,7 @@ class Git:
 
         os.makedirs(self.repo_path, exist_ok=True)
 
-        if self.auth_type == AuthType.HTTPS:
-            token = self.get_access_token()
-            if self.git_config and self.remote_repo_link and token:
-                self.remote_repo_link = build_authenticated_remote_url(
-                    self.remote_repo_link,
-                    self.git_config.username,
-                    token,
-                )
-        elif self.auth_type == AuthType.SSH and setup_repo:
+        if self.auth_type == AuthType.SSH and setup_repo:
             self.__create_ssh_keys(overwrite=True)
 
         try:
@@ -255,7 +247,7 @@ class Git:
                             if hostname:
                                 add_host_to_known_hosts()
                         else:
-                            raise err
+                            raise
                     except TimeoutError:
                         if hostname:
                             add_host_to_known_hosts()
@@ -265,10 +257,22 @@ class Git:
                                 " and your repository host is added as a known host. More information here:"  # noqa: E501
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     return func(self, *args, **kwargs)
-            else:
-                asyncio.run(self.check_connection())
-                return func(self, *args, **kwargs)
-
+            elif self.auth_type == AuthType.HTTPS:
+                token = self.get_access_token()
+                url_original = list(self.origin.urls)[0]
+                if self.git_config and self.remote_repo_link and token:
+                    self.remote_repo_link = build_authenticated_remote_url(
+                        self.remote_repo_link,
+                        self.git_config.username,
+                        token,
+                    )
+                    self.origin.set_url(self.remote_repo_link)
+                try:
+                    asyncio.run(self.check_connection())
+                    return func(self, *args, **kwargs)
+                finally:
+                    self.origin.set_url(url_original)
+                    self.remote_repo_link = url_original
         return wrapper
 
     @_remote_command
@@ -778,14 +782,23 @@ IdentityFile {private_key_file}
             # Clone the remote repo and copy over the .git folder
             # to initialize the local repository.
             env = {}
+            remote_repo_link = self.remote_repo_link
             if self.auth_type == AuthType.SSH:
                 private_key_file = self.__create_ssh_keys()
                 env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
                 if not self.__add_host_to_known_hosts():
                     raise Exception('Could not add host to known_hosts')
+            if self.auth_type == AuthType.HTTPS:
+                token = self.get_access_token()
+                if self.git_config and self.remote_repo_link and token:
+                    remote_repo_link = build_authenticated_remote_url(
+                        self.remote_repo_link,
+                        self.git_config.username,
+                        token,
+                    )
             repo_git.update_environment(**env)
             proc = repo_git.clone(
-                self.remote_repo_link,
+                remote_repo_link,
                 tmp_path,
                 origin=REMOTE_NAME,
                 as_process=True,
