@@ -45,7 +45,7 @@ class Git:
         import git
         import git.exc
 
-        self.auth_type = auth_type if auth_type else AuthType.SSH
+        self.auth_type = auth_type or AuthType.SSH
         self.git_config = git_config
         self.origin = None
         self.remote_repo_link = None
@@ -751,7 +751,7 @@ class Git:
                 private_key_file = custom_private_key_file
 
         url = self.git_config.remote_repo_link
-        if not url.startswith('ssh://'):
+        if url and not url.startswith('ssh://'):
             url = f'ssh://{url}'
         hostname = urlparse(url).hostname
 
