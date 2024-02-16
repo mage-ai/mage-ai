@@ -85,17 +85,20 @@ notification_config:
     ...
   message_templates:
     failure:
-      details: >
+      title: 'Failed to execute pipeline {pipeline_uuid} at {execution_time}'
+      summary: >
         Failed to execute pipeline {pipeline_run_url}.
         Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
         Test custom message."
     success:
-      details: ...
+      title: ...
+      summary: ...
     passed_sla:
-      details: ...
+      title: ...
+      summary: ...
 ```
 You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
-you can specify the sentence on `summary` .
+you can specify the sentence on `summary` and the `title`.
 
 To interpolate variables in the messaget template, you can use `{variable_name}` syntax.
 Hare are the supported variables: `error`, `execution_time`, `pipeline_run_url`, `pipeline_schedule_id`,
@@ -110,3 +113,9 @@ the host url you want to use in the notification messages.
 
 Whenever a pipeline run is successfully completed or fails, a Discord Channel message will
 appear in the channel you configured the webhook URL for.
+
+Here is an example of what that message could look like:
+
+|                                                                                                        |
+| ------------------------------------------------------------------------------------------------------ |
+| ![Discord](https://github.com/mage-ai/assets/blob/main/third-party/discord-message-run-alert.jpg?raw=true) |

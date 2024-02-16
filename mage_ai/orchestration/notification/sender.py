@@ -66,7 +66,7 @@ class NotificationSender:
             send_teams_message(self.config.teams_config, summary)
 
         if self.config.discord_config is not None and self.config.discord_config.is_valid:
-            send_discord_message(self.config.discord_config, summary)
+            send_discord_message(self.config.discord_config, summary, title)
 
         if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
             send_google_chat_message(self.config.google_chat_config, summary)
