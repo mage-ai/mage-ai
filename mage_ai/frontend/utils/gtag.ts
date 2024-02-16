@@ -2,7 +2,7 @@ import { EventParametersType } from '@interfaces/EventPropertiesType';
 import { getBrowser, getOS } from './os';
 import { screenSizeName } from '@styles/theme';
 
-export const DEMO_GA_MEASUREMENT_ID = 'G-E4T0WX8MSQ';
+export const DEMO_GA_MEASUREMENT_ID = 'G-2KDJWL94EN';
 
 /*
  * NOTE: Google Analytics must be initialized in the _app.tsx file in
