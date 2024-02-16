@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import api from '@api';
+import { logUserOS } from '@utils/gtag';
 
 const Home = () => {
   const router = useRouter();
@@ -16,6 +17,10 @@ const Home = () => {
     dataPipelineRuns?.metadata?.count,
   ]);
   const homepageRedirectPath = pipelineRunCount === 0 ? '/pipelines' : '/overview';
+
+  useEffect(() => {
+    logUserOS();
+  }, []);
 
   useEffect(() => {
     if (dataStatus) {
