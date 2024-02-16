@@ -515,7 +515,13 @@ function KeyboardShortcutButton({
             inverted={inverted}
             noHover={(!onClick || noHover) && !(asHref || linkHref) && type === ButtonTypeEnum.BUTTON}
             onClick={(event) => {
-              logEventCustom(eventName, eventParameters);
+              const updatedEventParameters = {
+                ...eventParameters,
+              };
+              if (typeof children === 'string') {
+                updatedEventParameters.label = children;
+              }
+              logEventCustom(eventName, updatedEventParameters);
               onClick?.(event);
             }}
             padding={(smallIcon && !children)

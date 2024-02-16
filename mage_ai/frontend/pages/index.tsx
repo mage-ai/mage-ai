@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import api from '@api';
+import { isDemo } from '@utils/environment';
 import { logUserOS } from '@utils/gtag';
 
 const Home = () => {
@@ -19,7 +20,9 @@ const Home = () => {
   const homepageRedirectPath = pipelineRunCount === 0 ? '/pipelines' : '/overview';
 
   useEffect(() => {
-    logUserOS();
+    if (isDemo()) {
+      logUserOS();
+    }
   }, []);
 
   useEffect(() => {

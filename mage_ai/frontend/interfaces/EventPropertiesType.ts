@@ -17,6 +17,7 @@ export interface EventParametersType {
   browser?: string;
   component_type?: string;
   href?: string;
+  label?: string;
   page?: string;
   page_path?: string;
   pipeline_uuid?: string;

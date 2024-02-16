@@ -96,7 +96,10 @@ function KeyboardShortcutWrapper({
   } = buildEventData({
     actionType: eventActionType,
     componentType: eventComponentType,
-    parameters: defaultEventParameters,
+    parameters: {
+      ...defaultEventParameters,
+      uuid,
+    },
   });
 
   if (keyboardShortcutValidation && onClick) {
