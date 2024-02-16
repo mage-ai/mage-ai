@@ -314,7 +314,7 @@ const Link = ({
   children: any;
 } & LinkProps, ref) => {
   const router = useRouter();
-  const query = router.query;
+  const query = router?.query;
 
   const {
     eventActionType = EVENT_ACTION_TYPE_CLICK,

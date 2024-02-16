@@ -50,7 +50,7 @@ function KeyboardShortcutWrapper({
   uuid,
 }: KeyboardShortcutWrapperProps) {
   const router = useRouter();
-  const query = router.query;
+  const query = router?.query;
 
   const {
     registerOnKeyDown,

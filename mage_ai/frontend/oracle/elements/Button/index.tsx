@@ -388,7 +388,7 @@ const Button = ({
   ...props
 }: ButtonProps, ref) => {
   const router = useRouter();
-  const query = router.query;
+  const query = router?.query;
   const iconProps = {
     disabled,
     size: UNIT * 1.5,
