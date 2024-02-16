@@ -8,13 +8,11 @@ import KeyboardShortcutWrapper, {
   KeyboardShortcutSharedProps,
 } from './KeyboardShortcutWrapper';
 import ModelThemeContext from '@context/ModelTheme';
-import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
 import { BLUE_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
-  BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
   OUTLINE_OFFSET,
@@ -463,10 +461,6 @@ function KeyboardShortcutButton({
   const keyTextsRender = useMemo(() => {
     if (!keyTextGroups) return null;
 
-    const spacingProps = {
-      [keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? 'ml' : 'mr']: children ? 1 : 0
-    };
-
     return (
       <div
         style={{
@@ -486,7 +480,14 @@ function KeyboardShortcutButton({
         />
       </div>
     );
-  }, [children, disabled, inverted, keyTextGroups, keyTextsPosition, mutedDisabled]);
+  }, [
+    addPlusSignBetweenKeys,
+    disabled,
+    inverted,
+    keyTextGroups,
+    keyTextsPosition,
+    mutedDisabled,
+  ]);
 
   const {
     sharedProps,
@@ -496,11 +497,9 @@ function KeyboardShortcutButton({
     <KeyboardShortcutWrapper
       {...props}
       buildChildren={({
-        eventProperties,
-        eventType,
-        logEvent,
+        eventParameters,
+        eventName,
         onClick,
-        userProperties,
       }) => {
         const El = (
           // @ts-ignore
@@ -516,7 +515,13 @@ function KeyboardShortcutButton({
             inverted={inverted}
             noHover={(!onClick || noHover) && !(asHref || linkHref) && type === ButtonTypeEnum.BUTTON}
             onClick={(event) => {
-              logEventCustom(logEvent, eventType, { eventProperties, userProperties });
+              const updatedEventParameters = {
+                ...eventParameters,
+              };
+              if (typeof children === 'string') {
+                updatedEventParameters.label = children;
+              }
+              logEventCustom(eventName, updatedEventParameters);
               onClick?.(event);
             }}
             padding={(smallIcon && !children)

@@ -1,6 +1,14 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import { useRouter } from 'next/router';
 
+import EventPropertiesType, {
+  buildEventData,
+  EVENT_ACTION_TYPE_CLICK,
+  EVENT_COMPONENT_TYPE_LINK,
+  getDefaultEventParameters,
+  logEventCustom,
+} from '@interfaces/EventPropertiesType';
 import dark from '@oracle/styles/themes/dark';
 import {
   BORDER_STYLE,
@@ -21,6 +29,7 @@ export type LinkProps = {
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
+  eventProperties?: EventPropertiesType;
   flex?: number;
   fitContentHeight?: boolean;
   fitContentWidth?: boolean;
@@ -288,6 +297,7 @@ const LinkStyle = styled.a`
 const Link = ({
   children,
   disabled,
+  eventProperties,
   href = '#',
   onClick,
   onDoubleClick,
@@ -302,44 +312,72 @@ const Link = ({
   ...props
 }: {
   children: any;
-} & LinkProps, ref) => (
-  <LinkStyle
-    {...props}
-    {...({})}
-    disabled={disabled}
-    href={href}
-    onClick={(e) => {
-      if (disabled || preventDefault) {
-        e.preventDefault();
-      }
-      if (onClick && !disabled) {
-        try {
-          onClick(e);
-        } catch(err) {
-          console.log(err);
+} & LinkProps, ref) => {
+  const router = useRouter();
+  const query = router?.query;
+
+  const {
+    eventActionType = EVENT_ACTION_TYPE_CLICK,
+    eventComponentType = EVENT_COMPONENT_TYPE_LINK,
+    eventParameters: eventParametersProp = {},
+  } = eventProperties || {};
+  const defaultEventParameters = getDefaultEventParameters(eventParametersProp, query);
+  const {
+    eventName,
+    eventParameters,
+  } = buildEventData({
+    actionType: eventActionType,
+    componentType: eventComponentType,
+    parameters: defaultEventParameters,
+  });
+  const updatedEventParameters = {
+    ...eventParameters,
+  };
+  if (typeof children === 'string') {
+    updatedEventParameters.label = children;
+  }
+
+  return (
+    <LinkStyle
+      {...props}
+      {...({})}
+      disabled={disabled}
+      href={href}
+      onClick={(e) => {
+        if (disabled || preventDefault) {
+          e.preventDefault();
         }
-      }
-    }}
-    onDoubleClick={(e) => {
-      if (disabled || preventDefault) {
-        e.preventDefault();
-      }
-      if (onDoubleClick && !disabled) {
-        onDoubleClick(e);
-      }
-    }}
-    onFocus={e => onFocus?.(e)}
-    preventDefault={preventDefault}
-    ref={ref}
-    rel={openNewWindow ? 'noopener noreferrer' : null}
-    sameColorAsText={sameColorAsText}
-    selected={selected}
-    target={target || (openNewWindow ? '_blank' : null)}
-    transparentBorder={transparentBorder}
-    weightStyle={weightStyle}
-  >
-    {children}
-  </LinkStyle>
-);
+        if (onClick && !disabled) {
+          try {
+            logEventCustom(eventName, updatedEventParameters);
+            onClick(e);
+          } catch(err) {
+            console.log(err);
+          }
+        }
+      }}
+      onDoubleClick={(e) => {
+        if (disabled || preventDefault) {
+          e.preventDefault();
+        }
+        if (onDoubleClick && !disabled) {
+          logEventCustom(eventName, updatedEventParameters);
+          onDoubleClick(e);
+        }
+      }}
+      onFocus={e => onFocus?.(e)}
+      preventDefault={preventDefault}
+      ref={ref}
+      rel={openNewWindow ? 'noopener noreferrer' : null}
+      sameColorAsText={sameColorAsText}
+      selected={selected}
+      target={target || (openNewWindow ? '_blank' : null)}
+      transparentBorder={transparentBorder}
+      weightStyle={weightStyle}
+    >
+      {children}
+    </LinkStyle>
+  );
+};
 
 export default React.forwardRef(Link);

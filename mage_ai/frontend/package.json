@@ -19,8 +19,8 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
-    "@amplitude/react-amplitude": "^1.0.0",
     "@monaco-editor/react": "^4.6.0",
+    "@next/third-parties": "^14.1.0",
     "@types/moment-duration-format": "^2.2.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "2.14.0",

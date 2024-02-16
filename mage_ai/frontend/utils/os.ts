@@ -1,4 +1,4 @@
-import OSEnum from '@interfaces/OSType';
+import OSEnum, { BrowserEnum } from '@interfaces/OSType';
 
 export function getOS() {
   let os: OSEnum = OSEnum.MAC;
@@ -44,6 +44,32 @@ export function getOS() {
 
 export function isMac() {
   return getOS() === OSEnum.MAC;
+}
+
+// This may not be a completely reliable way to detect what browser the user is using,
+// but it can give a general idea of the proportion of browser types used.
+export function getBrowser() {
+  let browser: BrowserEnum = BrowserEnum.UNKNOWN;
+  if (typeof window === 'undefined') {
+    return browser;
+  }
+
+  const userAgent = window?.navigator?.userAgent;
+  if (userAgent) {
+    if (userAgent.includes('Opera') || userAgent.includes('Opr')) {
+      browser = BrowserEnum.OPERA;
+    } else if (userAgent.includes('Edg')) {
+      browser = BrowserEnum.EDGE;
+    } else if (userAgent.includes('Chrome')) {
+      browser = BrowserEnum.CHROME;
+    } else if (userAgent.includes('Safari')) {
+      browser = BrowserEnum.SAFARI;
+    } else if (userAgent.includes('Firefox')) {
+      browser = BrowserEnum.FIREFOX;
+    }
+  }
+
+  return browser;
 }
 
 export default OSEnum;

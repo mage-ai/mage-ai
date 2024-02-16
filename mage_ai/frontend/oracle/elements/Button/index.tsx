@@ -1,7 +1,15 @@
 import React from 'react';
 import NextLink from 'next/link';
 import styled, { css } from 'styled-components';
+import { useRouter } from 'next/router';
 
+import EventPropertiesType, {
+  buildEventData,
+  EVENT_ACTION_TYPE_CLICK,
+  EVENT_COMPONENT_TYPE_BUTTON,
+  getDefaultEventParameters,
+  logEventCustom,
+} from '@interfaces/EventPropertiesType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -49,6 +57,7 @@ export type ButtonProps = {
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
+  eventProperties?: EventPropertiesType;
   fullWidth?: boolean;
   iconOnly?: boolean;
   id?: string;
@@ -369,6 +378,7 @@ const Button = ({
   compact,
   danger,
   disabled,
+  eventProperties,
   iconOnly,
   id,
   linkProps,
@@ -377,10 +387,27 @@ const Button = ({
   secondary,
   ...props
 }: ButtonProps, ref) => {
+  const router = useRouter();
+  const query = router?.query;
   const iconProps = {
     disabled,
     size: UNIT * 1.5,
   };
+
+  const {
+    eventActionType = EVENT_ACTION_TYPE_CLICK,
+    eventComponentType = EVENT_COMPONENT_TYPE_BUTTON,
+    eventParameters: eventParametersProp = {},
+  } = eventProperties || {};
+  const defaultEventParameters = getDefaultEventParameters(eventParametersProp, query);
+  const {
+    eventName,
+    eventParameters,
+  } = buildEventData({
+    actionType: eventActionType,
+    componentType: eventComponentType,
+    parameters: defaultEventParameters,
+  });
 
   const {
     as: asHref,
@@ -389,6 +416,7 @@ const Button = ({
   const ElToUse = (asHref || linkHref) ? AnchorStyle : ButtonStyle;
 
   const el = (
+    // @ts-ignore
     <ElToUse
       {...props}
       compact={compact}
@@ -400,6 +428,13 @@ const Button = ({
       onClick={onClick
         ? (e) => {
           e?.preventDefault();
+          const updatedEventParameters = {
+            ...eventParameters,
+          };
+          if (typeof children === 'string') {
+            updatedEventParameters.label = children;
+          }
+          logEventCustom(eventName, eventParameters);
           onClick?.(e);
         }
         : null

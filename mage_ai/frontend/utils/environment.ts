@@ -20,4 +20,8 @@ export const DEBUG = (func?: () => any): boolean => {
   }
 
   return val;
+};
+
+export function isDemo() {
+  return typeof window !== 'undefined' && window.location.hostname === 'demo.mage.ai';
 }
