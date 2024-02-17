@@ -493,7 +493,8 @@ async def main(
     project: Union[str, None] = None,
     project_type: ProjectType = ProjectType.STANDALONE,
 ):
-    switch_active_kernel(DEFAULT_KERNEL_NAME)
+    if project_type != ProjectType.MAIN:
+        switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     # Update base path if environment variable is set
     update_routes = False
@@ -511,11 +512,13 @@ async def main(
             )
             logger.warning('Continuing with default routes...')
 
+    print('Initializing tornado app....')
     app = make_app(
         template_dir=template_dir,
         update_routes=update_routes,
     )
 
+    print('Checking port in use....')
     port = int(port)
     max_port = port + 100
     while is_port_in_use(port):
@@ -525,6 +528,7 @@ async def main(
             )
         port += 1
 
+    print(f'Setting app to listen on port {port}')
     app.listen(
         port,
         address=host if host != 'localhost' else None,
