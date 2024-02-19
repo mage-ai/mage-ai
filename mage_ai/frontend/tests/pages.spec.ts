@@ -1,10 +1,11 @@
 import { test, expect } from './base';
 
-test('ensure all pages main pages load', async ({ page }) => {
+test('ensure all main pages load properly', async ({ page }) => {
   async function navigateToAndWaitTilLoaded(name: string) {
     await page.locator('div[class*="indexstyle__VerticalNavigationStyleComponent"] > div').hover();
-    await page.getByRole('link', { name: name }).click();
-    await page.waitForLoadState('domcontentloaded');
+    await page.getByRole('link', { name: name }).first().click();
+    await page.waitForLoadState();
+    await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
   }
 
   await navigateToAndWaitTilLoaded('Overview');
