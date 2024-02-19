@@ -13,9 +13,9 @@ empty pipelines, triggers, etc. Set up your
 - Make sure [user authentication](https://docs.mage.ai/production/authentication/overview) is enabled.
 - Make sure your development server is running.
 
-## Configurating
+## Configuration
 
-- Tests are default to fail if a client error occurs. Adding the following to the top of the test file to disable the check.
+- Tests default to "fail" if a client error occurs. Add the following to the top of the test file to disable this check.
 
 ```ts
 test.use({ failOnClientError: false });
