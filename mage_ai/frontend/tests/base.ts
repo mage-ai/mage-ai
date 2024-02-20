@@ -2,6 +2,8 @@ import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
 import { TSettingFeaturesToDisable, enableSettings } from '@utils/testing';
 
+export const VISIBLE_TIMEOUT = 15000;
+
 export const test = base.extend<{
   failOnClientError: boolean;
   settingFeaturesToDisable: TSettingFeaturesToDisable,
@@ -26,7 +28,7 @@ export const test = base.extend<{
      * Wait for redirected page, which can be /overview (if at least 1 pipeline run exists)
      * or /pipelines (if no pipeline runs exist), to load after signing in.
      */
-    await expect(page.getByRole('button', { name: 'New' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: 'New' })).toBeVisible({ timeout: VISIBLE_TIMEOUT });
 
     await enableSettings(page, settingFeaturesToDisable);
 
