@@ -10,6 +10,7 @@ You must enter the following credentials when configuring this source:
 | --- | --- | --- |
 | `path_to_credentials_json_file` | Google service account credential json file. | `/path/to/service_account_credentials.json` |
 | `spreadsheet_id` | The unique identifier of a spreadsheet. You can find it in the spreadsheet URL after `/spreadsheets/d/` | `abcdefg123456` |
+| `selected_sheet_names` | A list of sheet names to filter by | `["sheet1", "sheet2"]` |
 
 <br />
 

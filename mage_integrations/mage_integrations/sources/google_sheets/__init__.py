@@ -30,7 +30,7 @@ class GoogleSheets(Source):
 
     def discover(self, streams: List[str] = None) -> Catalog:
         if streams is None:
-            streams = []
+            streams = self.config.get('selected_sheet_names') or []
 
         catalog_entries = []
 
@@ -227,8 +227,8 @@ class GoogleSheets(Source):
         try:
             sheet_json_schema, columns = self.__get_sheet_schema_columns(sheet_metadata)
         except Exception as err:
-            self.logger.warning(f'{err}')
-            self.logger.warning(f'SKIPPING Malformed sheet: {sheet_title}')
+            self.logger.error(f'{err}')
+            self.logger.error(f'SKIPPING Malformed sheet: {sheet_title}')
             sheet_json_schema, columns = None, None
 
         return sheet_json_schema, columns
@@ -275,7 +275,7 @@ class GoogleSheets(Source):
 
         # if no headers are present, log the message that sheet is skipped
         if not headers:
-            self.logger.warning(f'SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {sheet_title}')
+            self.logger.info(f'SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {sheet_title}')
 
         # Read column headers until end or 2 consecutive skipped headers
         for header in headers:
