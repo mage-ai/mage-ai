@@ -100,13 +100,13 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = Fal
 
     url = git_config.remote_repo_link
     if url:
-        if url.startswith('ssh://'):
+        if not url.startswith('ssh://'):
             url = f'ssh://{url}'
         hostname = urlparse(url).hostname
 
         # Codecommit requires additional configuration for SSH connection
         config_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config')
-        if hostname.startswith('git-codecommit'):
+        if hostname and hostname.startswith('git-codecommit'):
             if not os.path.exists(config_file) or overwrite:
                 config = f'''Host {hostname}
 User {git_config.username}
