@@ -88,7 +88,7 @@ class SyncResource(GenericResource):
         except Exception as err:
             error = ApiError.RESOURCE_ERROR.copy()
             message = str(err)
-            if 'access_token' in payload:
+            if payload.get('access_token'):
                 message = filter_out_values(message, [payload.get('access_token')])
             error.update(dict(message=message))
             raise ApiError(error)

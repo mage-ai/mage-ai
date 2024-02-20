@@ -29,7 +29,11 @@ class GitSync(BaseSync):
         self.sync_submodules = sync_config.sync_submodules
         self.branch = sync_config.branch or 'main'
         self.remote_repo_link = sync_config.remote_repo_link
-        self.git_manager = Git(git_config=sync_config, setup_repo=setup_repo)
+        self.git_manager = Git(
+            auth_type=sync_config.auth_type,
+            git_config=sync_config,
+            setup_repo=setup_repo,
+        )
 
     def sync_data(self):
         with PreserveGitConfig():

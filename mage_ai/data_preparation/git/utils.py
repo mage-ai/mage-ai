@@ -48,22 +48,21 @@ def get_provider_from_remote_url(remote_url: str) -> str:
         return ProviderName.GITHUB
 
 
-def create_ssh_keys(git_config: GitConfig, repo_path: str) -> str:
+def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = False) -> str:
     if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
         os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
-
     pubk_secret_name = git_config.ssh_public_key_secret_name
     if pubk_secret_name:
         public_key_file = os.path.join(
             DEFAULT_SSH_KEY_DIRECTORY,
             f'id_rsa_{pubk_secret_name}.pub'
         )
-
-        if not os.path.exists(public_key_file):
+        if not os.path.exists(public_key_file) or overwrite:
             try:
                 public_key = get_secret_value(
                     pubk_secret_name,
                     repo_name=repo_path,
+                    suppress_warning=True,
                 )
                 if os.getenv(GIT_SSH_PUBLIC_KEY_VAR):
                     public_key = os.getenv(GIT_SSH_PUBLIC_KEY_VAR)
@@ -73,7 +72,6 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str) -> str:
                     os.chmod(public_key_file, 0o600)
             except Exception:
                 pass
-
     pk_secret_name = git_config.ssh_private_key_secret_name
     private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
     if pk_secret_name:
@@ -81,16 +79,15 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str) -> str:
             DEFAULT_SSH_KEY_DIRECTORY,
             f'id_rsa_{pk_secret_name}'
         )
-        if not os.path.exists(custom_private_key_file):
+        if not os.path.exists(custom_private_key_file) or overwrite:
             try:
                 private_key = get_secret_value(
                     pk_secret_name,
                     repo_name=repo_path,
+                    suppress_warning=True,
                 )
-
                 if os.getenv(GIT_SSH_PRIVATE_KEY_VAR):
                     private_key = os.getenv(GIT_SSH_PRIVATE_KEY_VAR)
-
                 if private_key:
                     with open(custom_private_key_file, 'w') as f:
                         f.write(base64.b64decode(private_key).decode('utf-8'))
@@ -101,16 +98,36 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str) -> str:
         else:
             private_key_file = custom_private_key_file
 
+    url = git_config.remote_repo_link
+    if url:
+        if not url.startswith('ssh://'):
+            url = f'ssh://{url}'
+        hostname = urlparse(url).hostname
+
+        # Codecommit requires additional configuration for SSH connection
+        config_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config')
+        if hostname and hostname.startswith('git-codecommit'):
+            if not os.path.exists(config_file) or overwrite:
+                config = f'''Host {hostname}
+User {git_config.username}
+IdentityFile {private_key_file}
+                '''
+                with open(os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config'), 'w') as f:
+                    f.write(config)
+
     return private_key_file
 
 
-def run_command(self, command: str) -> None:
+def run_command(command: str) -> None:
     proc = subprocess.Popen(args=command, shell=True)
     proc.wait()
 
 
 def add_host_to_known_hosts(remote_repo_link: str):
-    url = f'ssh://{remote_repo_link}'
+    url = remote_repo_link
+    if url and not url.startswith('ssh://'):
+        url = f'ssh://{url}'
+
     hostname = urlparse(url).hostname
     if hostname:
         cmd = f'ssh-keyscan -t rsa {hostname} >> {DEFAULT_KNOWN_HOSTS_FILE}'
