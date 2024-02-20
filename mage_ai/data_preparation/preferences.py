@@ -44,6 +44,7 @@ BOOLEAN_ENV_VARS = set(
         GIT_SYNC_ON_START_VAR,
         GIT_SYNC_ON_EXECUTOR_START_VAR,
         GIT_SYNC_SUBMODULES_VAR,
+        GIT_ENABLE_GIT_INTEGRATION_VAR,
     ]
 )
 
@@ -81,11 +82,9 @@ def build_sync_config(project_sync_config: Dict) -> Dict:
         sync_config = project_sync_config
 
     # Set the enable_git_integration field from environment variables
-    enable_git_integration = get_value_for_sync_config(
-        GIT_ENABLE_GIT_INTEGRATION_VAR
-    )
+    enable_git_integration = os.getenv(GIT_ENABLE_GIT_INTEGRATION_VAR)
     if enable_git_integration is not None:
-        sync_config['enable_git_integration'] = enable_git_integration
+        sync_config['enable_git_integration'] = get_bool_value(enable_git_integration)
 
     return sync_config
 
