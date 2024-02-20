@@ -1029,7 +1029,6 @@ function PipelineDetailPage({
   }, [addNewBlockAtIndex, blocks.length]);
 
   const {
-    renderApplications,
     startApplication,
   } = useApplicationManager();
 
@@ -3451,8 +3450,6 @@ function PipelineDetailPage({
           }
         />
       </PipelineLayout>
-
-      {renderApplications()}
     </>
   );
 }

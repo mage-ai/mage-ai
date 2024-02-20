@@ -1,27 +1,28 @@
-import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeContext } from 'styled-components';
 import { ThemeProvider } from 'styled-components';
-import { createRef, useEffect, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { createRef, useEffect, useContext, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
 import ArcaneLibraryConfiguration from '@components/Applications/ArcaneLibrary/configuration.json';
-import ElementType, { RefType } from '@interfaces/ElementType';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
 import PortalTerminal from '@components/Applications/PortalTerminal';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
-import dark from '@oracle/styles/themes/dark';
-import useAutoResizer, { DimensionDataType, RectType} from '@utils/useAutoResizer';
+import useAutoResizer, { DimensionDataType, RectType } from '@utils/useAutoResizer';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
-import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
 import { ErrorProvider } from '@context/Error';
-import { LayoutType, StatusEnum, StateType, ApplicationManagerApplication } from '@storage/ApplicationManager/constants';
+import {
+  LayoutType,
+  StatusEnum,
+  StateType,
+  ApplicationManagerApplication,
+} from '@storage/ApplicationManager/constants';
 import {
   ContainerStyle,
   ContentStyle,
@@ -34,7 +35,6 @@ import {
   ResizeCornerStyle,
   ResizeLeftStyle,
   ResizeRightStyle,
-  ResizeTopStyle,
   RootApplicationStyle,
 } from './index.style';
 import { KEY_CODE_ALT_STRING, KEY_CODE_TAB } from '@utils/hooks/keyboardShortcuts/constants';
@@ -132,7 +132,9 @@ export default function useApplicationManager({
       uuid: uuidApp,
     }, idx: number) => {
       const z = DEFAULT_Z_INDEX + idx;
-      element.current.style.zIndex = z;
+      if (element && element.current) {
+        element.current.style.zIndex = z;
+      }
 
       updateApplicationLayoutAndState(uuidApp, {
         layout: {
@@ -221,7 +223,7 @@ export default function useApplicationManager({
     }
 
     let app;
-    if (element) {
+    if (element && element.current) {
       app = updateApplication({
         ...data,
         uuid,
@@ -254,7 +256,14 @@ export default function useApplicationManager({
     });
 
     const refExpansion = refExpansions?.current?.[uuid];
-    const refContainer = refContainers?.current?.[uuid];
+    let refContainer = refContainers?.current?.[uuid];
+
+    if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
+      const arcaneLibraryContainerNode = document.getElementById(uuid);
+      if (arcaneLibraryContainerNode) {
+        refContainer = { current: arcaneLibraryContainerNode };
+      }
+    }
 
     if (refExpansion?.current) {
       if (reverse) {
@@ -474,7 +483,7 @@ export default function useApplicationManager({
               refContainers.current = {};
             }
 
-            const ref = refContainers?.current?.[uuid] || createRef()
+            const ref = refContainers?.current?.[uuid] || createRef();
             refContainers.current[uuid] = ref;
 
             return (
@@ -499,6 +508,13 @@ export default function useApplicationManager({
     if (applicationUUID && ApplicationExpansionUUIDEnum.ArcaneLibrary === applicationUUID) {
       // @ts-ignore
       applicationConfiguration = ArcaneLibraryConfiguration.applicationConfiguration;
+
+      const arcaneLibraryNode = document.getElementById(applicationUUID);
+      // Check if the ArcaneLibrary app is already open. If it is, we do NOT open a second instance
+      // of it, otherwise it will cause UI flickering issues when hovering over the window.
+      if (arcaneLibraryNode && arcaneLibraryNode.hasChildNodes()) {
+        return;
+      }
     }
 
     if (!applicationConfiguration?.application) {
@@ -520,7 +536,9 @@ export default function useApplicationManager({
 
     if (!refRoots?.current?.[uuid]) {
       const domNode = document.getElementById(uuid);
-      refRoots.current[uuid] = createRoot(domNode);
+      if (domNode) {
+        refRoots.current[uuid] = createRoot(domNode);
+      }
     }
 
     const ref = refExpansions?.current?.[uuid] || createRef();
