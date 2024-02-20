@@ -165,10 +165,10 @@ def convert_python_type_to_clickhouse_type(python_type):
     return 'Nullable(String)'
 
 
-def is_port_in_use(port: int) -> bool:
-    print(f'Checking port {port}...')
+def is_port_in_use(port: int, host: str = 'localhost') -> bool:
+    print(f'Checking port {port} on host {host}...')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
+        return s.connect_ex((host, port)) == 0
 
 
 def is_spark_env():
