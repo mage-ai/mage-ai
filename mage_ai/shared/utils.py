@@ -166,6 +166,7 @@ def convert_python_type_to_clickhouse_type(python_type):
 
 
 def is_port_in_use(port: int, host: str = 'localhost') -> bool:
+    host = host or 'localhost'
     print(f'Checking port {port} on host {host}...')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex((host, port)) == 0
