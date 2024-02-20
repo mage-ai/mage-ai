@@ -508,6 +508,13 @@ export default function useApplicationManager({
     if (applicationUUID && ApplicationExpansionUUIDEnum.ArcaneLibrary === applicationUUID) {
       // @ts-ignore
       applicationConfiguration = ArcaneLibraryConfiguration.applicationConfiguration;
+
+      const arcaneLibraryNode = document.getElementById(applicationUUID);
+      // Check if the ArcaneLibrary app is already open. If it is, we do NOT open a second instance
+      // of it, otherwise it will cause UI flickering issues when hovering over the window.
+      if (arcaneLibraryNode && arcaneLibraryNode.hasChildNodes()) {
+        return;
+      }
     }
 
     if (!applicationConfiguration?.application) {
