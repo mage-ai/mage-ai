@@ -81,9 +81,11 @@ def build_sync_config(project_sync_config: Dict) -> Dict:
         sync_config = project_sync_config
 
     # Set the enable_git_integration field from environment variables
-    sync_config['enable_git_integration'] = get_value_for_sync_config(
+    enable_git_integration = get_value_for_sync_config(
         GIT_ENABLE_GIT_INTEGRATION_VAR
     )
+    if enable_git_integration is not None:
+        sync_config['enable_git_integration'] = enable_git_integration
 
     return sync_config
 

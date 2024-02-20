@@ -1,6 +1,7 @@
 import os
 from typing import Dict
 
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import create_secret
@@ -8,6 +9,7 @@ from mage_ai.data_preparation.sync import (
     GIT_ACCESS_TOKEN_SECRET_NAME,
     GIT_SSH_PRIVATE_KEY_SECRET_NAME,
     GIT_SSH_PUBLIC_KEY_SECRET_NAME,
+    AuthType,
     GitConfig,
     UserGitConfig,
 )
@@ -16,6 +18,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.secrets import Secret
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.security import filter_out_values
 
 
 def get_ssh_public_key_secret_name(user: User = None) -> str:
@@ -50,9 +53,9 @@ class SyncResource(GenericResource):
 
         user_settings = payload.pop('user_git_settings', dict())
 
-        payload = self.update_user_settings(payload, repo_name=repo_name)
+        updated_payload = self.update_user_settings(payload, repo_name=repo_name)
         preferences = get_preferences(repo_path=repo_name)
-        updated_config = dict(preferences.sync_config, **payload)
+        updated_config = dict(preferences.sync_config, **updated_payload)
         # default repo_path to os.getcwd()
         if not updated_config.get('repo_path', None):
             updated_config['repo_path'] = os.getcwd()
@@ -80,7 +83,15 @@ class SyncResource(GenericResource):
 
         preferences.update_preferences(dict(sync_config=updated_config))
 
-        GitSync(sync_config, setup_repo=True)
+        try:
+            GitSync(sync_config, setup_repo=True)
+        except Exception as err:
+            error = ApiError.RESOURCE_ERROR.copy()
+            message = str(err)
+            if 'access_token' in payload:
+                message = filter_out_values(message, [payload.get('access_token')])
+            error.update(dict(message=message))
+            raise ApiError(error)
 
         return self(get_preferences(repo_path=repo_name).sync_config, user, **kwargs)
 
@@ -93,11 +104,22 @@ class SyncResource(GenericResource):
         self.model.pop('user_git_settings')
         config = GitConfig.load(config=self.model)
         sync = GitSync(config)
+        git_manager = sync.git_manager
         action_type = payload.get('action_type')
-        if action_type == 'sync_data':
-            sync.sync_data()
-        elif action_type == 'reset':
-            sync.reset()
+        try:
+            if action_type == 'sync_data':
+                sync.sync_data()
+            elif action_type == 'reset':
+                sync.reset()
+        except Exception as err:
+            error = ApiError.RESOURCE_ERROR.copy()
+            message = str(err)
+            if git_manager.auth_type == AuthType.HTTPS:
+                token = git_manager.get_access_token()
+                if token:
+                    message = filter_out_values(message, [token])
+            error.update(dict(message=message))
+            raise ApiError(error)
 
         return self
 
