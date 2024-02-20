@@ -120,7 +120,8 @@ class Trino(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
-        overwrite_types: Dict = None
+        overwrite_types: Dict = None,
+        **kwargs,
     ):
         if unique_constraints is None:
             unique_constraints = []

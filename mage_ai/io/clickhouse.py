@@ -168,6 +168,7 @@ class ClickHouse(BaseSQLDatabase):
         table_name: str,
         database: str,
         overwrite_types: Dict = None,
+        **kwargs,
     ):
 
         dtypes = infer_dtypes(df)
