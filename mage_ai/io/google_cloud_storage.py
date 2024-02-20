@@ -1,10 +1,12 @@
 from io import BytesIO
+from typing import Union
+
 from google.cloud import storage
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
-from typing import Union
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseFile, FileFormat
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
 class GoogleCloudStorage(BaseFile):
@@ -101,7 +103,7 @@ class GoogleCloudStorage(BaseFile):
 
     def export(
         self,
-        df: DataFrame,
+        data: Union[DataFrame, str],
         bucket_name: str,
         object_key: str,
         format: Union[FileFormat, str, None] = None,
@@ -111,7 +113,7 @@ class GoogleCloudStorage(BaseFile):
         Exports data frame to a Google Cloud Storage bucket.
 
         Args:
-            df (DataFrame): Data frame to export
+            data (DataFrame): Data frame or file path to export
             bucket_name (str): Name of the bucket to export data frame to.
             object_key (str): Object key in GoogleCloudStorage bucket to export data frame to.
             format (FileFormat, optional): Format of the file to export data frame to.
@@ -121,14 +123,20 @@ class GoogleCloudStorage(BaseFile):
             format = self._get_file_format(object_key)
 
         with self.printer.print_msg(
-            f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
+            f'Exporting data to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
             bucket = self.client.get_bucket(bucket_name)
             blob = bucket.blob(object_key)
-            buffer = BytesIO()
-            self._write(df, format, buffer, **kwargs)
-            buffer.seek(0)
-            blob.upload_from_string(buffer.read())
+            if isinstance(data, DataFrame):
+                buffer = BytesIO()
+                self._write(data, format, buffer, **kwargs)
+                buffer.seek(0)
+                blob.upload_from_string(buffer.read())
+            elif isinstance(data, str):
+                blob.upload_from_filename(data)
+            else:
+                raise Exception(
+                    'Please provide a pandas DataFrame or a valid file path as the input.')
 
     def exists(
         self, bucket_name: str, prefix: str
