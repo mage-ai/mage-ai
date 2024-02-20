@@ -308,7 +308,7 @@ If the format is HDF5, the default key under which the data frame is stored is t
 
 -   **Args**:
 
-    -   `df (DataFrame)`: Data frame to export.
+    -   `data (Union[DataFrame, str])`: Data frame or file path to export.
     -   `bucket_name (str)`: Name of the bucket to export data frame to.
     -   `object_key (str)`: Object key in S3 bucket to export data frame to.
     -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.
@@ -463,7 +463,7 @@ Exports data frame to a GoogleCloudStorage bucket.
 
 -   **Args**:
 
-    -   `df (DataFrame)`: Data frame to export.
+    -   `data (Union[DataFrame, str])`: Data frame or file path to export.
     -   `bucket_name (str)`: Name of the bucket to export data frame to.
     -   `object_key (str)`: Object key in GoogleCloudStorage bucket to export data frame to.
     -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.

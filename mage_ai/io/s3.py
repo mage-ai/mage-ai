@@ -83,7 +83,7 @@ class S3(BaseFile):
 
     def export(
         self,
-        df: DataFrame,
+        data: Union[DataFrame, str],
         bucket_name: str,
         object_key: str,
         format: Union[FileFormat, str, None] = None,
@@ -93,7 +93,7 @@ class S3(BaseFile):
         Exports data frame to an S3 bucket.
 
         Args:
-            df (DataFrame): Data frame to export
+            data (DataFrame): Data frame or file path to export
             write_config (Mapping, optional): Configuration settings for writing data frame to
             specified format. Defaults to None.
             export_config (Mapping, optional): Configuration settings for exporting data frame
@@ -103,20 +103,26 @@ class S3(BaseFile):
             format = self._get_file_format(object_key)
 
         with self.printer.print_msg(
-            f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
+            f'Exporting data to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
-            if format == FileFormat.HDF5:
-                name = os.path.splitext(os.path.basename(object_key))[0]
-                with self.open_temporary_directory() as temp_dir:
-                    obj_loc = temp_dir / f'{name}.hdf5'
-                    self._write(df, format, obj_loc, **kwargs)
-                    with obj_loc.open('rb') as fin:
-                        self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
+            if isinstance(data, DataFrame):
+                if format == FileFormat.HDF5:
+                    name = os.path.splitext(os.path.basename(object_key))[0]
+                    with self.open_temporary_directory() as temp_dir:
+                        obj_loc = temp_dir / f'{name}.hdf5'
+                        self._write(data, format, obj_loc, **kwargs)
+                        with obj_loc.open('rb') as fin:
+                            self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
+                else:
+                    buffer = BytesIO()
+                    self._write(data, format, buffer, **kwargs)
+                    buffer.seek(0)
+                    self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+            elif isinstance(data, str) and os.path.exists(data):
+                self.client.upload_file(data, bucket_name, object_key)
             else:
-                buffer = BytesIO()
-                self._write(df, format, buffer, **kwargs)
-                buffer.seek(0)
-                self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+                raise Exception(
+                    'Please provide a pandas DataFrame or a valid file path as the input.')
 
     def exists(
         self, bucket_name: str, prefix: str
