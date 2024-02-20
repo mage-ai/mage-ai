@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 
 from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS
@@ -54,6 +55,24 @@ def convert_column_to_type(value, column_type) -> str:
     return f"CAST('{value}' AS {column_type})"
 
 
+def is_valid_datetime_format(date_string, date_format):
+    try:
+        datetime.strptime(date_string, date_format)
+        return True
+    except ValueError:
+        return False
+
+
+def convert_datetime(value: str, column_type_dict: Dict) -> str:
+    if is_valid_datetime_format(value, "%Y-%m-%d %H:%M:%S.%f"):
+        # Oracle stores only the fractions up to second in a DATE field.
+        # Use TO_TIMESTAMP for milliseconds and microseconds.
+        return f"TO_TIMESTAMP('{value}', 'yyyy-mm-dd hh24:mi:ss.ff6')"
+    if is_valid_datetime_format(value, "%Y-%m-%d"):
+        return f"TO_DATE('{value}', 'yyyy-mm-dd')"
+    return 'CHAR(255)'
+
+
 def build_create_table_command(
     column_type_mapping: Dict,
     columns: List[str],
@@ -108,7 +127,8 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
         return 'NCLOB'
     elif COLUMN_TYPE_STRING == column_type:
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-            # Twice as long as the number of characters in ISO date format
-            return 'CHAR(52)'
+            return 'DATE'
+    elif COLUMN_FORMAT_DATETIME == column_type:
+        return 'DATE'
 
     return 'CHAR(255)'
