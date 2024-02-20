@@ -54,6 +54,7 @@ class MySQL(BaseSQL):
         table_name: str,
         unique_constraints: List[str] = None,
         overwrite_types: Dict = None,
+        **kwargs,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
@@ -131,7 +132,9 @@ class MySQL(BaseSQL):
         for _, row in df_.iterrows():
             values.append(tuple([str(val) if type(val) is pd.Timestamp else val for val in row]))
 
-        sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
+        insert_columns = ', '.join([f'`{col}`'for col in columns])
+
+        sql = f'INSERT INTO {full_table_name} ({insert_columns}) VALUES ({values_placeholder})'
         cursor.executemany(sql, values)
 
     def get_type(self, column: Series, dtype: str) -> str:

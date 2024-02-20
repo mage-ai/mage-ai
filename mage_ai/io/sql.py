@@ -55,6 +55,7 @@ class BaseSQL(BaseSQLConnection):
         case_sensitive: bool = False,
         unique_constraints: List[str] = None,
         overwrite_types: Dict = None,
+        **kwargs,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
