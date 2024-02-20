@@ -518,7 +518,7 @@ async def main(
 
     port = int(port)
     max_port = port + 100
-    while is_port_in_use(port):
+    while is_port_in_use(port, host=host):
         if port > max_port:
             raise Exception(
                 'Unable to find an open port, please clear your running processes if possible.'
