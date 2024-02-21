@@ -83,6 +83,7 @@ from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    DISABLE_AUTO_BROWSER_OPEN,
     ENABLE_PROMETHEUS,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -518,12 +519,15 @@ async def main(
 
     port = int(port)
     max_port = port + 100
-    while is_port_in_use(port, host=host):
-        if port > max_port:
-            raise Exception(
-                'Unable to find an open port, please clear your running processes if possible.'
-            )
-        port += 1
+    try:
+        while is_port_in_use(port, host=host):
+            if port > max_port:
+                raise Exception(
+                    'Unable to find an open port, please clear your running processes if possible.'
+                )
+            port += 1
+    except OSError:
+        logger.error(f'Socket error while trying to find an open port. Defaulting to port {port}')
 
     app.listen(
         port,
@@ -534,7 +538,9 @@ async def main(
     url = f'http://{host}:{port}'
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
-    webbrowser.open_new_tab(url)
+
+    if not DISABLE_AUTO_BROWSER_OPEN:
+        webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
