@@ -3,7 +3,7 @@ import collections
 import os
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, Generator, List, Set, Tuple
 
 import pytz
 from dateutil.relativedelta import relativedelta
@@ -49,6 +49,11 @@ from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.settings import HOSTNAME
+from mage_ai.settings.platform import (
+    project_platform_activated,
+    repo_path_from_database_query_to_project_repo_path,
+)
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
@@ -70,8 +75,10 @@ class PipelineScheduler:
     ) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline_schedule = pipeline_run.pipeline_schedule
-        self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-
+        self.pipeline = get_pipeline_from_platform(
+            pipeline_run.pipeline_uuid,
+            repo_path=self.pipeline_schedule.repo_path if self.pipeline_schedule else None,
+        )
         # Get the list of integration stream if the pipeline is data integration pipeline
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
@@ -1110,6 +1117,7 @@ def run_block(
     block_run.update(**block_run_data)
 
     pipeline_scheduler = PipelineScheduler(pipeline_run)
+    pipeline_schedule = pipeline_run.pipeline_schedule
     pipeline = pipeline_scheduler.pipeline
 
     pipeline_scheduler.logger.info(
@@ -1127,8 +1135,13 @@ def run_block(
     block = pipeline.get_block(block_uuid)
 
     if block and retry_config is None:
+        repo_path = None
+        if project_platform_activated() and pipeline_schedule and pipeline_schedule.repo_path:
+            repo_path = pipeline_schedule.repo_path
+        else:
+            repo_path = get_repo_path()
         retry_config = merge_dict(
-            get_repo_config(get_repo_path()).retry_config or dict(),
+            get_repo_config(repo_path).retry_config or dict(),
             block.retry_config or dict(),
         )
 
@@ -1335,7 +1348,10 @@ def cancel_block_runs_and_jobs(
 
 
 def check_sla():
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(Pipeline.get_all_pipelines_all_projects(
+        get_repo_path(),
+        disable_pipelines_folder_creation=True,
+    ))
     pipeline_schedules_results = PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
     pipeline_schedules_mapping = index_by(lambda x: x.id, pipeline_schedules_results)
 
@@ -1399,13 +1415,17 @@ def schedule_all():
     """
     db_connection.session.expire_all()
 
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(Pipeline.get_all_pipelines_all_projects(
+        get_repo_path(),
+        disable_pipelines_folder_creation=True,
+    ))
 
     # Sync schedules from yaml file to DB
     sync_schedules(list(repo_pipelines))
 
-    active_pipeline_schedules = \
-        list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
+    active_pipeline_schedules = list(PipelineSchedule.active_schedules(
+        pipeline_uuids=repo_pipelines,
+    ))
 
     backfills = Backfill.filter(pipeline_schedule_ids=[ps.id for ps in active_pipeline_schedules])
 
@@ -1449,19 +1469,18 @@ def schedule_all():
     active_pipeline_uuids = list(set([s.pipeline_uuid for s in active_pipeline_schedules]))
     pipeline_runs_by_pipeline = PipelineRun.active_runs_for_pipelines_grouped(active_pipeline_uuids)
 
-    pipeline_schedules_by_pipeline = collections.defaultdict(list)
-    for schedule in active_pipeline_schedules:
-        pipeline_schedules_by_pipeline[schedule.pipeline_uuid].append(schedule)
+    if project_platform_activated():
+        gen_pipeline_with_schedules = gen_pipeline_with_schedules_project_platform
+    else:
+        gen_pipeline_with_schedules = gen_pipeline_with_schedules_single_project
 
-    # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
-    # each pipeline.
-    for pipeline_uuid, active_pipeline_schedules in pipeline_schedules_by_pipeline.items():
-        pipeline = Pipeline.get(pipeline_uuid)
+    for pipeline_uuid, pipeline, active_schedules in gen_pipeline_with_schedules(
+        active_pipeline_schedules,
+    ):
         concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
-
         pipeline_runs_to_start = []
         pipeline_runs_excluded_by_limit = []
-        for pipeline_schedule in active_pipeline_schedules:
+        for pipeline_schedule in active_schedules:
             lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
             if not lock.try_acquire_lock(lock_key):
                 continue
@@ -1479,7 +1498,8 @@ def schedule_all():
 
                 # Decide whether to schedule any pipeline runs
                 should_schedule = pipeline_schedule.should_schedule(
-                    previous_runtimes=previous_runtimes
+                    previous_runtimes=previous_runtimes,
+                    pipeline=pipeline,
                 )
                 initial_pipeline_runs = [
                     r for r in pipeline_schedule.pipeline_runs
@@ -1613,6 +1633,97 @@ def schedule_all():
             traceback.print_exc()
             continue
     job_manager.clean_up_jobs()
+
+
+def gen_pipeline_with_schedules_single_project(
+    active_pipeline_schedules: List[PipelineSchedule],
+) -> Generator[Tuple[str, Pipeline, List[PipelineSchedule]], None, None]:
+    """
+    Generate pipelines with associated schedules for a single project.
+
+    Args:
+        active_pipeline_schedules (List[PipelineSchedule]): A list of active pipeline schedules.
+
+    Yields:
+        Tuple[str, Pipeline, List[PipelineSchedule]]: A tuple containing:
+            - The UUID of the pipeline.
+            - The pipeline object.
+            - A list of active schedules associated with the pipeline.
+    """
+    pipeline_schedules_by_pipeline = collections.defaultdict(list)
+    for schedule in active_pipeline_schedules:
+        pipeline_schedules_by_pipeline[schedule.pipeline_uuid].append(schedule)
+
+    # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
+    # each pipeline.
+    for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
+        pipeline = Pipeline.get(pipeline_uuid)
+        yield pipeline_uuid, pipeline, active_schedules
+
+
+def gen_pipeline_with_schedules_project_platform(
+    active_pipeline_schedules: List[PipelineSchedule],
+) -> Generator[Tuple[str, Pipeline, List[PipelineSchedule]], None, None]:
+    """
+    Generate pipelines with associated schedules for project platform.
+
+    Args:
+        active_pipeline_schedules (List[PipelineSchedule]): All active pipeline schedules.
+
+    Yields:
+        Tuple[str, Pipeline, List[PipelineSchedule]]: A tuple containing:
+            - The UUID of the pipeline.
+            - The pipeline object.
+            - A list of active schedules associated with the pipeline.
+    """
+    pipeline_schedules_by_pipeline_by_repo_path = collections.defaultdict(list)
+    for schedule in active_pipeline_schedules:
+        repo_path = schedule.repo_path if schedule.repo_path else None
+
+        if repo_path not in pipeline_schedules_by_pipeline_by_repo_path:
+            pipeline_schedules_by_pipeline_by_repo_path[repo_path] = {}
+
+        if schedule.pipeline_uuid not in pipeline_schedules_by_pipeline_by_repo_path[repo_path]:
+            pipeline_schedules_by_pipeline_by_repo_path[repo_path][schedule.pipeline_uuid] = []
+
+        pipeline_schedules_by_pipeline_by_repo_path[repo_path][schedule.pipeline_uuid].append(
+            schedule,
+        )
+
+    """
+    {
+      "/home/src/repo/default_platform2/project1": "/home/src/repo/default_platform2/project1",
+      "/home/src/repo/default_platform2/project2": "/home/src/repo/default_platform2/project2"
+    }
+    """
+    pipeline_schedule_repo_paths_to_repo_path_mapping = \
+        repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
+
+    # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
+    # each pipeline.
+    """
+    {
+      '/home/src/repo/default_platform2/project1': {
+        'test1': [
+          <mage_ai.orchestration.db.models.schedules.PipelineSchedule object at 0xffff85a0ef80>,
+        ],
+      },
+      '/home/src/repo/default_platform2/project2': {
+        'test2_pipeline': [
+          <mage_ai.orchestration.db.models.schedules.PipelineSchedule object at 0xffff85a0f190>,
+        ],
+      },
+    }
+    """
+    for pair in pipeline_schedules_by_pipeline_by_repo_path.items():
+        repo_path, pipeline_schedules_by_pipeline = pair
+        for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
+            pipeline = get_pipeline_from_platform(
+                pipeline_uuid,
+                repo_path=repo_path,
+                mapping=pipeline_schedule_repo_paths_to_repo_path_mapping,
+            )
+            yield pipeline_uuid, pipeline, active_schedules
 
 
 def schedule_with_event(event: Dict = None):
