@@ -33,6 +33,10 @@ type PipelineRunDateType = {
   hr: string;
 };
 
+export interface BackfillSettingsType {
+  pipeline_run_limit: number;
+}
+
 export default interface BackfillType {
   block_uuid?: string;
   completed_at?: string;
@@ -49,6 +53,7 @@ export default interface BackfillType {
   pipeline_run_dates?: PipelineRunDateType[];
   pipeline_schedule_id?: number;
   pipeline_uuid: string;
+  settings?: BackfillSettingsType;
   start_datetime?: string;
   started_at?: string;
   status?: RunStatus;

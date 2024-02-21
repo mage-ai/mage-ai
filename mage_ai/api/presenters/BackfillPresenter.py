@@ -16,6 +16,7 @@ class BackfillPresenter(BasePresenter):
         'name',
         'pipeline_schedule_id',
         'pipeline_uuid',
+        'settings',
         'start_datetime',
         'started_at',
         'status',

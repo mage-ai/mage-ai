@@ -20,11 +20,11 @@ function BackfillDetailPage({
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const {
-    data: dataGlobalVariables,
+    data: dataVariables,
   } = api.variables.pipelines.list(pipelineUUID, {}, {
     revalidateOnFocus: false,
   });
-  const globalVariables = useMemo(() => dataGlobalVariables?.variables, [dataGlobalVariables]);
+  const globalVariables = useMemo(() => dataVariables?.variables, [dataVariables]);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,

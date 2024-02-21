@@ -30,6 +30,7 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
             schedule_interval=ScheduleInterval.ONCE,
             start_time=datetime.utcnow(),
             variables=backfill_variables,
+            settings=backfill.settings,
         )
 
     for backfill_run_variables in variables_list:

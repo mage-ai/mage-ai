@@ -15,6 +15,7 @@ ALLOWED_PAYLOAD_KEYS = [
     'interval_type',
     'interval_units',
     'name',
+    'settings',
     'start_datetime',
     'variables',
 ]
