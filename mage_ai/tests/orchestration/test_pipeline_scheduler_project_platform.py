@@ -9,7 +9,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.pipeline_scheduler_project_platform import (
+from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     check_sla,
     run_block,
@@ -21,7 +21,7 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 @patch(
-    'mage_ai.orchestration.pipeline_scheduler.project_platform_activated',
+    'mage_ai.orchestration.pipeline_scheduler_original.project_platform_activated',
     lambda: True,
 )
 @patch(
@@ -31,7 +31,7 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
     def test_init(self):
         with patch(
-            'mage_ai.orchestration.pipeline_scheduler_project_platform.project_platform_activated',
+            'mage_ai.orchestration.pipeline_scheduler_original.project_platform_activated',
             lambda: True,
         ):
             with patch(
@@ -62,11 +62,11 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
 
     def test_run_block(self):
         with patch(
-            'mage_ai.orchestration.pipeline_scheduler_project_platform.project_platform_activated',
+            'mage_ai.orchestration.pipeline_scheduler_original.project_platform_activated',
             lambda: True,
         ):
             with patch(
-                'mage_ai.orchestration.pipeline_scheduler_project_platform.'
+                'mage_ai.orchestration.pipeline_scheduler_original.'
                 'project_platform_activated',
                 lambda: True,
             ):
@@ -145,12 +145,12 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                                     return fake_repo_config
 
                                 with patch(
-                                    'mage_ai.orchestration.pipeline_scheduler_project_platform.'
+                                    'mage_ai.orchestration.pipeline_scheduler_original.'
                                     'ExecutorFactory',
                                     FakeExecutorFactory,
                                 ):
                                     with patch(
-                                        'mage_ai.orchestration.pipeline_scheduler_project_platform.'
+                                        'mage_ai.orchestration.pipeline_scheduler_original.'
                                         'get_repo_config',
                                         __get_repo_config,
                                     ):
@@ -163,7 +163,7 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
 
     def test_check_sla(self):
         with patch(
-            'mage_ai.orchestration.pipeline_scheduler_project_platform.project_platform_activated',
+            'mage_ai.orchestration.pipeline_scheduler_original.project_platform_activated',
             lambda: True,
         ):
             with patch(
@@ -197,7 +197,7 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
         PipelineRunMock = MagicMock()
 
         with patch(
-            'mage_ai.orchestration.pipeline_scheduler_project_platform.PipelineRun',
+            'mage_ai.orchestration.pipeline_scheduler_original.PipelineRun',
             PipelineRunMock,
         ):
             with patch(
@@ -215,11 +215,11 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
     @freeze_time('2023-11-11 12:30:00')
     def test_schedule_all(self):
         with patch(
-            'mage_ai.orchestration.pipeline_scheduler_project_platform.project_platform_activated',
+            'mage_ai.orchestration.pipeline_scheduler_original.project_platform_activated',
             lambda: True,
         ):
             with patch(
-                'mage_ai.orchestration.pipeline_scheduler_project_platform.'
+                'mage_ai.orchestration.pipeline_scheduler_original.'
                 'project_platform_activated',
                 lambda: True,
             ):
@@ -264,7 +264,7 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                                 pass
 
                         with patch(
-                            'mage_ai.orchestration.pipeline_scheduler_project_platform.'
+                            'mage_ai.orchestration.pipeline_scheduler_original.'
                             'PipelineScheduler',
                             PipelineSchedulerMock,
                         ):
