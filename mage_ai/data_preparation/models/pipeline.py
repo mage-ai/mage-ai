@@ -1205,12 +1205,23 @@ class Pipeline:
                             cache_block_action_object = \
                                 await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)
-                        block.update(
+
+                        block_update_payload = dict(
                             extract(block_data, ['name']),
                             detach=block_data.get('detach', False)
                         )
+                        configuration = block_data.get('configuration', {})
+                        file_path = (configuration.get('file_source') or {}).get('path')
+                        if file_path:
+                            # Check for block name with period to avoid replacing a directory name
+                            new_file_path = file_path.replace(f'{block.name}.', f'{name}.')
+                            configuration['file_source']['path'] = new_file_path
+                            block_update_payload['configuration'] = configuration
+                        block.update(block_update_payload)
+
                         cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
+                        should_update_block_cache = True
                         should_save_async = should_save_async or True
 
                 if should_save_async:
