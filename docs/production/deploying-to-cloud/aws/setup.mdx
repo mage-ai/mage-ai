@@ -367,10 +367,59 @@ Similar with deploying to ECS cluster, you need to set up the [environment varia
 
 
 Then, follow the steps below to set up EKS cluster and deploy Mage.
-1. Run `terraform apply` to provision the EKS cluster
-2. Configure `kubectl` with command `aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)`
-3. Update the `EFS_VOLUME_ID` in [kube/efs-pvc.yaml](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml) to the efs id in terraform output
-4. Run command `kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"` to install efs csi driver
-5. Run `kubectl apply -f kube/` to deploy app
-6. Whitelist IP in EKS node's security group
-7. Get the node IP via command `kubectl get nodes -o wide` and access Mage with `http://[ip]:{node_port}`
+
+<Steps>
+
+<Step title="Apply terraform">
+Run `terraform apply` to provision the EKS cluster
+</Step>
+
+<Step title="Configure kubectl">
+Configure `kubectl` with command `aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)`
+</Step>
+
+<Step title="Configure PVC">
+
+<Note>
+If you are planning to use workspaces in EFS, you will need to add additional configurations to the StorageClass.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+# needed for EFS CSI driver dynamic provisioning
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: <EFS_VOLUME_ID>
+  directoryPerms: "700"
+```
+</Note>
+
+Update the `EFS_VOLUME_ID` in [kube/efs-pvc.yaml](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml) to the efs id in terraform output
+</Step>
+
+<Step title="Install EFS CSI Driver">
+
+<Note>
+
+For workspaces support, you may need to install the EFS CSI driver add-on directly from the AWS console. Make sure
+to use a driver version that supports dynamic provisioning.
+
+</Note>
+
+Run command `kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"` to install efs csi driver
+</Step>
+
+<Step title="Deploy app to EKS">
+Run `kubectl apply -f kube/` to deploy app or use Helm to deploy Mage.
+</Step>
+
+<Step title="Whitelist IP in EKS node's security group" />
+
+<Step title="Access Mage on EKS">
+Get the node IP via command `kubectl get nodes -o wide` and access Mage with `http://[ip]:{node_port}`
+</Step>
+
+</Steps>
