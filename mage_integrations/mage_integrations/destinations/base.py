@@ -12,6 +12,7 @@ from typing import Dict, List
 import singer
 import yaml
 from jsonschema.validators import Draft4Validator
+from singer.utils import load_json
 
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
@@ -588,7 +589,18 @@ class Destination(ABC):
 
     def _emit_state(self, state):
         if state:
-            line = json.dumps(state)
+            if self.state_file_path:
+                current_state = load_json(self.state_file_path)
+            else:
+                current_state = dict()
+            updated_state = dict()
+            for k, v in state.items():
+                if k in current_state and isinstance(v, dict) and \
+                        isinstance(current_state[k], dict):
+                    updated_state[k] = merge_dict(current_state[k], v)
+                else:
+                    updated_state[k] = v
+            line = json.dumps(updated_state)
             text = f'{line}\n'
             if self.state_file_path:
                 with open(self.state_file_path, 'w') as f:
