@@ -289,7 +289,7 @@ class Pipeline:
             return ret_file, pipeline_config
 
     @classmethod
-    def duplicate(
+    async def duplicate(
         cls,
         source_pipeline: 'Pipeline',
         duplicate_pipeline_name: str = None,
@@ -324,6 +324,21 @@ class Pipeline:
             duplicate_pipeline.config_path,
             yaml.dump(duplicate_pipeline_dict)
         )
+
+        tags = duplicate_pipeline_dict.get('tags')
+        blocks = duplicate_pipeline_dict.get('blocks')
+        if tags:
+            from mage_ai.cache.tag import TagCache
+
+            tag_cache = await TagCache.initialize_cache()
+            for tag_uuid in tags:
+                tag_cache.add_pipeline(tag_uuid, duplicate_pipeline)
+        if blocks:
+            from mage_ai.cache.block import BlockCache
+
+            block_cache = await BlockCache.initialize_cache()
+            for block in blocks:
+                block_cache.add_pipeline(block, duplicate_pipeline)
 
         return cls.get(
             duplicate_pipeline_uuid,
