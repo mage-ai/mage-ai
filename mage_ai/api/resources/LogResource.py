@@ -17,8 +17,10 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.server.logger import Logger
 
 MAX_LOG_FILES = 20
+server_logger = Logger().new_server_logger(__name__)
 
 
 class LogResource(GenericResource):
@@ -148,10 +150,11 @@ class LogResource(GenericResource):
                 model.pipeline_uuid = row.pipeline_uuid
                 model.variables = row.variables
                 logs = await model.logs_async()
-                pipeline_log_file_path = logs.get('path')
-                if pipeline_log_file_path not in processed_pipeline_run_log_files:
-                    pipeline_run_logs.append(logs)
-                    processed_pipeline_run_log_files.add(pipeline_log_file_path)
+                for logs_item in logs:
+                    pipeline_log_file_path = logs_item.get('path')
+                    if pipeline_log_file_path not in processed_pipeline_run_log_files:
+                        pipeline_run_logs.append(logs_item)
+                        processed_pipeline_run_log_files.add(pipeline_log_file_path)
                 if len(pipeline_run_logs) >= MAX_LOG_FILES:
                     break
 
@@ -264,7 +267,7 @@ class LogResource(GenericResource):
                     if end_timestamp:
                         should_add = should_add and dsts <= end_timestamp
                 except ValueError as err:
-                    print(f'[WARNING] LogResource.__filter: {err}')
+                    server_logger.warning(f'__filter: {err}')
                     should_add = False
 
                 return should_add
