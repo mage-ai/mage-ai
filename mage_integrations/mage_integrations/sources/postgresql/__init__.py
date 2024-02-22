@@ -247,6 +247,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
     def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             return [INTERNAL_COLUMN_LSN]
+        elif REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+            # Initial sync for LOG_BASED replication
+            return self._get_replication_key(stream)
         else:
             return super()._get_bookmark_properties_for_stream(stream)
 
@@ -256,6 +259,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         # Ues full table sync for the initial sync of log based replcation
         if not bookmarks or not bookmarks.get(INTERNAL_COLUMN_LSN):
             if self._get_replication_key(stream):
+                # If bookmark columns are selected, use incremental sync as the initial sync
                 return REPLICATION_METHOD_INCREMENTAL
             else:
                 return REPLICATION_METHOD_FULL_TABLE
