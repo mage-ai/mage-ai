@@ -1551,12 +1551,19 @@ class PipelineRunTests(DBTestCase):
             execution_date=execution_date,
         )
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
-        expected_file_path = os.path.join(
+        execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
+        expected_file_path1 = os.path.join(
             get_repo_config(self.repo_path).variables_dir,
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
-        self.assertEqual(pipeline_run.logs.get('path'), expected_file_path)
+        expected_file_path2 = os.path.join(
+            get_repo_config(self.repo_path).variables_dir,
+            'pipelines/test_pipeline/.logs',
+            f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/scheduler.log',
+        )
+        self.assertEqual(pipeline_run.logs[0].get('path'), expected_file_path1)
+        self.assertEqual(pipeline_run.logs[1].get('path'), expected_file_path2)
 
     def test_active_runs_for_pipelines(self):
         create_pipeline_with_blocks(
@@ -1832,9 +1839,10 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
             @classmethod
             def get_logger_manager(
                 cls,
-                pipeline_uuid: str,
-                partition: str,
-                repo_config: str,
+                pipeline_uuid: str = None,
+                filename: str = None,
+                partition: str = None,
+                repo_config: str = None,
             ):
                 self.assertEqual(pipeline_uuid, pipeline_run.pipeline_uuid)
                 self.assertEqual(partition, pipeline_run.execution_partition)

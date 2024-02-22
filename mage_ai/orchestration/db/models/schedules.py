@@ -831,6 +831,13 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
     @property
     def logs(self) -> List[Dict]:
+        """
+        Retrieves logs for the pipeline and scheduler.
+
+        Returns:
+            List[Dict]: A list containing dictionaries of logs for the pipeline and scheduler.
+                Each dictionary represents logs for a specific component.
+        """
         pipeline_logs = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
@@ -882,6 +889,19 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         return pipeline_runs
 
     async def logs_async(self) -> List[Dict]:
+        """
+        Asynchronously retrieves logs for the pipeline and scheduler.
+
+        If the project platform is activated, it asynchronously retrieves logs using
+        the specific method for project platform.
+
+        Otherwise, it asynchronously retrieves logs for the pipeline and scheduler
+        separately.
+
+        Returns:
+            List[Dict]: A list containing dictionaries of logs for the pipeline and scheduler.
+                Each dictionary represents logs for a specific component.
+        """
         if project_platform_activated():
             return await self.logs_async_project_platform()
 
