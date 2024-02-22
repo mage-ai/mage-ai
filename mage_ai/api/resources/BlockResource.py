@@ -233,7 +233,7 @@ class BlockResource(GenericResource):
 
         if pipeline:
             cache = await BlockCache.initialize_cache()
-            cache.add_pipeline(block, pipeline)
+            cache.add_pipeline(block.to_dict(), pipeline)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(block)
@@ -359,7 +359,7 @@ class BlockResource(GenericResource):
 
         for block in blocks_to_delete:
             if pipeline:
-                cache.remove_pipeline(block, pipeline.uuid, pipeline.repo_path)
+                cache.remove_pipeline(block.to_dict(), pipeline.uuid, pipeline.repo_path)
             cache_block_action_object.update_block(block, remove=True)
             block.delete(force=force)
 
