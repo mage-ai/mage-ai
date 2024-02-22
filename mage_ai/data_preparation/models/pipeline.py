@@ -973,6 +973,7 @@ class Pipeline:
         )
 
         old_uuid = None
+        renaming_block = False
         should_update_block_cache = False
         should_update_tag_cache = False
 
@@ -1206,10 +1207,7 @@ class Pipeline:
                                 await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)
 
-                        block_update_payload = dict(
-                            extract(block_data, ['name']),
-                            detach=block_data.get('detach', False)
-                        )
+                        block_update_payload = extract(block_data, ['name'])
                         configuration = block_data.get('configuration', {})
                         file_path = (configuration.get('file_source') or {}).get('path')
                         if file_path:
@@ -1217,11 +1215,15 @@ class Pipeline:
                             new_file_path = file_path.replace(f'{block.name}.', f'{name}.')
                             configuration['file_source']['path'] = new_file_path
                             block_update_payload['configuration'] = configuration
-                        block.update(block_update_payload)
+                        block.update(
+                            block_update_payload,
+                            detach=block_data.get('detach', False)
+                        )
 
                         cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
                         should_update_block_cache = True
+                        renaming_block = True
                         should_save_async = should_save_async or True
 
                 if should_save_async:
@@ -1253,8 +1255,12 @@ class Pipeline:
             cache = await BlockCache.initialize_cache()
 
             for block in self.blocks_by_uuid.values():
-                if old_uuid:
-                    cache.remove_pipeline(block, old_uuid, self.repo_path)
+                if old_uuid or renaming_block:
+                    cache.remove_pipeline(
+                        block,
+                        old_uuid or self.uuid,
+                        self.repo_path,
+                    )
                 cache.update_pipeline(block, self)
 
         if should_update_tag_cache:

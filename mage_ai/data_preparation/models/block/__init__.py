@@ -3429,7 +3429,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         old_file_path = self.file_path
         block_content = self.content
 
-        # load_titanic
         new_uuid = clean_name(name)
         self.name = name
         self.uuid = new_uuid
