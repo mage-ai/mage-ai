@@ -582,9 +582,9 @@ class PipelineTest(AsyncDBTestCase):
         self.assertFalse(os.access(block4.file_path, os.F_OK))
         self.assertFalse(os.access(block5.file_path, os.F_OK))
 
-    def test_duplicate_standard_pipeline(self):
+    async def test_duplicate_standard_pipeline(self):
         pipeline = self.__create_pipeline_with_blocks('test_pipeline_7a')
-        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate_pipeline')
+        duplicate_pipeline = await Pipeline.duplicate(pipeline, 'duplicate_pipeline')
         for block_uuid in pipeline.blocks_by_uuid:
             original = pipeline.blocks_by_uuid[block_uuid]
             duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
@@ -605,9 +605,9 @@ class PipelineTest(AsyncDBTestCase):
             )
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
 
-    def test_duplicate_integration_pipeline(self):
+    async def test_duplicate_integration_pipeline(self):
         pipeline = self.__create_pipeline_with_integration('test_pipeline_7b')
-        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate_pipeline_2')
+        duplicate_pipeline = await Pipeline.duplicate(pipeline, 'duplicate_pipeline_2')
         for block_uuid in pipeline.blocks_by_uuid:
             original = pipeline.blocks_by_uuid[block_uuid]
             duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
