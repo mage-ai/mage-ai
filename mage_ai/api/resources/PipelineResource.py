@@ -371,7 +371,7 @@ class PipelineResource(BaseResource):
             pipeline = custom_template.create_pipeline(name)
         elif clone_pipeline_uuid is not None:
             source = Pipeline.get(clone_pipeline_uuid)
-            pipeline = Pipeline.duplicate(source, name)
+            pipeline = await Pipeline.duplicate(source, name)
         else:
             pipeline = Pipeline.create(
                 name,
