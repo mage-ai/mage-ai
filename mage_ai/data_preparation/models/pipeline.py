@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import os
 import shutil
@@ -973,7 +974,8 @@ class Pipeline:
         )
 
         old_uuid = None
-        renaming_block = False
+        blocks_to_remove_from_cache = []
+        block_uuids_to_add_to_cache = []
         should_update_block_cache = False
         should_update_tag_cache = False
 
@@ -1208,22 +1210,23 @@ class Pipeline:
                         cache_block_action_object.update_block(block, remove=True)
 
                         block_update_payload = extract(block_data, ['name'])
-                        configuration = block_data.get('configuration', {})
+                        configuration = copy.deepcopy(block_data).get('configuration', {})
                         file_path = (configuration.get('file_source') or {}).get('path')
                         if file_path:
                             # Check for block name with period to avoid replacing a directory name
                             new_file_path = file_path.replace(f'{block.name}.', f'{name}.')
                             configuration['file_source']['path'] = new_file_path
                             block_update_payload['configuration'] = configuration
+                        blocks_to_remove_from_cache.append(block.to_dict())
                         block.update(
                             block_update_payload,
                             detach=block_data.get('detach', False)
                         )
 
+                        block_uuids_to_add_to_cache.append(block.uuid)
                         cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
                         should_update_block_cache = True
-                        renaming_block = True
                         should_save_async = should_save_async or True
 
                 if should_save_async:
@@ -1254,14 +1257,24 @@ class Pipeline:
 
             cache = await BlockCache.initialize_cache()
 
+            for block_dict in blocks_to_remove_from_cache:
+                cache.remove_pipeline(
+                    block_dict,
+                    self.uuid,
+                    self.repo_path,
+                )
+
             for block in self.blocks_by_uuid.values():
-                if old_uuid or renaming_block:
+                if block.uuid not in block_uuids_to_add_to_cache:
+                    continue
+
+                if old_uuid:
                     cache.remove_pipeline(
-                        block,
-                        old_uuid or self.uuid,
+                        block.to_dict(),
+                        old_uuid,
                         self.repo_path,
                     )
-                cache.update_pipeline(block, self)
+                cache.update_pipeline(block.to_dict(), self)
 
         if should_update_tag_cache:
             from mage_ai.cache.tag import TagCache
