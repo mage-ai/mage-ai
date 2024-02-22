@@ -1494,10 +1494,6 @@ def schedule_all():
             pipeline_runs_to_start = []
             pipeline_runs_excluded_by_limit = []
             for pipeline_schedule in active_pipeline_schedules:
-                lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
-                if not lock.try_acquire_lock(lock_key):
-                    continue
-
                 pipeline = get_pipeline_from_platform(
                     pipeline_uuid,
                     repo_path=pipeline_schedule.repo_path,
@@ -1506,11 +1502,9 @@ def schedule_all():
 
                 concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
 
-                trigger_pipeline_run_limit = pipeline_schedule.get_settings().pipeline_run_limit
-                if trigger_pipeline_run_limit is None:
-                    trigger_pipeline_run_limit = concurrency_config.pipeline_run_limit
-                if trigger_pipeline_run_limit is not None:
-                    trigger_pipeline_run_limit = int(trigger_pipeline_run_limit)
+                lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
+                if not lock.try_acquire_lock(lock_key):
+                    continue
 
                 try:
                     previous_runtimes = []
@@ -1594,8 +1588,8 @@ def schedule_all():
 
                     # Enforce pipeline concurrency limit
                     pipeline_run_quota = None
-                    if trigger_pipeline_run_limit is not None:
-                        pipeline_run_quota = trigger_pipeline_run_limit - \
+                    if concurrency_config.pipeline_run_limit is not None:
+                        pipeline_run_quota = concurrency_config.pipeline_run_limit - \
                             len(running_pipeline_runs)
 
                     if pipeline_run_quota is None:
