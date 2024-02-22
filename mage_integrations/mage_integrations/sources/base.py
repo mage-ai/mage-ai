@@ -708,11 +708,14 @@ class Source:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            if stream.replication_key:
-                bookmark_properties = [stream.replication_key]
-            else:
-                bookmark_properties = stream.to_dict().get('bookmark_properties', [])
+            bookmark_properties = self._get_replication_key(stream)
         return bookmark_properties
+
+    def _get_replication_key(self, stream) -> List[str]:
+        if stream.replication_key:
+            return [stream.replication_key]
+        else:
+            return stream.to_dict().get('bookmark_properties', [])
 
     def __get_bookmarks_for_stream(self, stream) -> Dict:
         if stream.replication_method in [
