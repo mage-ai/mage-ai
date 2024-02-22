@@ -189,10 +189,10 @@ You will need to have created your own application and have app roles in order f
 
 </Note>
 
-You can map Active Directory roles to Mage roles by setting the `ACTIVE_DIRECTORY_ROLE_MAPPING` environment variable.
+You can map Active Directory roles to Mage roles by setting the `ACTIVE_DIRECTORY_ROLES_MAPPING` environment variable.
 The value should be a JSON object with the AD role as the key and the name of the Mage role as the value. For example:
 
-`export ACTIVE_DIRECTORY_ROLE_MAPPING='{"Mage.Edit": "Editor", "Mage.Admin": "Admin"}'`
+`export ACTIVE_DIRECTORY_ROLES_MAPPING='{"Mage.Edit": "Editor", "Mage.Admin": "Admin"}'`
 
 You can find the AD role value in the App roles section of your application in the Azure Portal.
 
