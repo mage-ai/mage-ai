@@ -1265,7 +1265,7 @@ class Pipeline:
                 )
 
             for block in self.blocks_by_uuid.values():
-                if block.uuid not in block_uuids_to_add_to_cache:
+                if block_uuids_to_add_to_cache and block.uuid not in block_uuids_to_add_to_cache:
                     continue
 
                 if old_uuid:
