@@ -95,6 +95,7 @@ class PipelineScheduler:
         # Initialize the logger
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
+            filename='scheduler.log',
             partition=self.pipeline_run.execution_partition,
             repo_config=self.pipeline.repo_config,
         )

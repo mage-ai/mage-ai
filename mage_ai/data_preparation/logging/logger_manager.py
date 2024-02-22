@@ -25,6 +25,7 @@ class LoggerManager:
         logs_dir: str = None,
         pipeline_uuid: str = None,
         block_uuid: str = None,
+        filename: str = None,
         partition: str = None,
         repo_config: RepoConfig = None,
         subpartition: str = None,
@@ -45,6 +46,7 @@ class LoggerManager:
         self.logs_dir = logs_dir
         self.pipeline_uuid = pipeline_uuid
         self.block_uuid = block_uuid
+        self.filename = filename
         self.partition = partition
         self.subpartition = subpartition
 
@@ -201,7 +203,9 @@ class LoggerManager:
         if create_dir:
             self.create_log_filepath_dir(prefix)
 
-        if self.block_uuid is None:
+        if self.filename is not None:
+            log_filepath = os.path.join(prefix, self.filename)
+        elif self.block_uuid is None:
             log_filepath = os.path.join(prefix, 'pipeline.log')
         else:
             log_filepath = os.path.join(prefix, f'{self.block_uuid}.log')

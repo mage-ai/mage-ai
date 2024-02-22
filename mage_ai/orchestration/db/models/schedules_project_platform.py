@@ -329,7 +329,7 @@ class PipelineRunProjectPlatformMixin:
 
         return variables
 
-    async def logs_async_project_platform(self):
+    async def logs_async_project_platform(self) -> List[Dict]:
         repo_path = None
         if self.pipeline_schedule:
             repo_path = self.pipeline_schedule.repo_path
@@ -339,11 +339,18 @@ class PipelineRunProjectPlatformMixin:
             repo_path=repo_path,
         )
 
-        return await LoggerManagerFactory.get_logger_manager(
+        pipeline_logs = await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
             repo_config=pipeline.repo_config,
         ).get_logs_async()
+        scheduler_logs = await LoggerManagerFactory.get_logger_manager(
+            pipeline_uuid=self.pipeline_uuid,
+            filename='scheduler.log',
+            partition=self.execution_partition,
+            repo_config=pipeline.repo_config,
+        ).get_logs_async()
+        return [pipeline_logs, scheduler_logs]
 
 
 class BlockRunProjectPlatformMixin:

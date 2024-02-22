@@ -426,6 +426,7 @@ class File:
         update_file_cache()
 
     def to_dict(self, include_content: bool = False, include_metadata: bool = False):
+        file_exists = self.exists()
         data = dict(
             name=self.filename,
             path=os.path.join(self.dir_path, self.filename),
@@ -436,21 +437,23 @@ class File:
         if include_content:
             data['content'] = self.content()
 
-        if include_metadata:
+        if include_metadata and file_exists:
             data['size'] = self.size
             data['modified_timestamp'] = self.modified_timestamp
 
         return data
 
     async def to_dict_async(self, include_content=False):
+        file_exists = self.exists()
         data = dict(
             name=self.filename,
             path=os.path.join(self.dir_path, self.filename),
-            size=self.size,
-            modified_timestamp=self.modified_timestamp,
+            size=self.size if file_exists else None,
+            modified_timestamp=self.modified_timestamp if file_exists else None,
         )
         if include_content:
             data['content'] = await self.content_async()
+
         return data
 
 
