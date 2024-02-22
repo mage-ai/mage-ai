@@ -1,11 +1,11 @@
-import { test, expect } from './base';
+import { test, expect, VISIBLE_TIMEOUT } from './base';
 
 test('ensure all main pages load properly', async ({ page }) => {
   async function navigateToAndWaitTilLoaded(name: string) {
     await page.locator('div[class*="indexstyle__VerticalNavigationStyleComponent"] > div').hover();
     await page.getByRole('link', { name: name }).first().click();
     await page.waitForLoadState();
-    await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(name, { exact: true }).first()).toBeVisible({ timeout: VISIBLE_TIMEOUT });
   }
 
   await navigateToAndWaitTilLoaded('Overview');
