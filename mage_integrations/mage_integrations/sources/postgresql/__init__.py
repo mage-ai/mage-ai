@@ -17,6 +17,7 @@ from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_FORMAT_UUID,
     REPLICATION_METHOD_FULL_TABLE,
+    REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.messages import write_state
@@ -254,7 +255,10 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             return stream.replication_method
         # Ues full table sync for the initial sync of log based replcation
         if not bookmarks or not bookmarks.get(INTERNAL_COLUMN_LSN):
-            return REPLICATION_METHOD_FULL_TABLE
+            if self._get_replication_key(stream):
+                return REPLICATION_METHOD_INCREMENTAL
+            else:
+                return REPLICATION_METHOD_FULL_TABLE
 
         return stream.replication_method
 

@@ -103,7 +103,7 @@ class IntegrationBlock(Block):
                 pipeline=self.pipeline,
             ) or dict()
 
-            if stream_catalog.get('replication_method') == 'INCREMENTAL':
+            if stream_catalog.get('replication_method') in ['INCREMENTAL', 'LOG_BASED']:
                 from mage_integrations.sources.utils import (
                     update_source_state_from_destination_state,
                 )
@@ -123,7 +123,10 @@ class IntegrationBlock(Block):
                 )
                 batch_fetch_limit = get_batch_fetch_limit(config)
 
-                if stream_catalog.get('replication_method') != 'INCREMENTAL':
+                if stream_catalog.get('replication_method') == 'FULL_TABLE' or (
+                    stream_catalog.get('replication_method') == 'LOG_BASED' and
+                    not stream_catalog.get('bookmark_properties')
+                ):
                     query_data['_offset'] = batch_fetch_limit * index
                 if not is_last_block_run:
                     query_data['_limit'] = batch_fetch_limit
