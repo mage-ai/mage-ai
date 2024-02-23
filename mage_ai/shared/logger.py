@@ -84,6 +84,8 @@ class JSONFormatter(logging.Formatter):
 
 
 def set_logging_format(logging_format: str = None, level: str = None) -> None:
+    logging.basicConfig()
+
     handler = logging.StreamHandler()
     handler.setFormatter(JSONFormatter())
 
