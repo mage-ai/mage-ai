@@ -870,6 +870,7 @@ function PipelineListPage() {
         setFilters({});
         setSearchTextState('');
         goToWithQuery({
+          [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
           [PipelineQueryEnum.SEARCH]: '',
         }, {
           replaceParams: true,
