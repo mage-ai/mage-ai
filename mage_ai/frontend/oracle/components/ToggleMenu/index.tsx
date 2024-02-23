@@ -18,6 +18,7 @@ import {
 import { ChevronRight } from '@oracle/icons';
 import { GoToWithFiltersProps, goToWithFilters } from '@utils/routing';
 import { MetaQueryEnum } from '@api/constants';
+import { ROW_LIMIT } from '@components/shared/Paginate';
 import { capitalize, removeUnderscore } from '@utils/string';
 
 type ToggleMenuProps = {
@@ -163,6 +164,7 @@ function ToggleMenu({
 
                 const filterQueryOptions: GoToWithFiltersProps = {
                   addingMultipleValues: true,
+                  itemsPerPage: ROW_LIMIT,
                   pushHistory: true,
                   resetLimitParams: resetLimitOnApply,
                   resetPage: resetPageOnApply,
