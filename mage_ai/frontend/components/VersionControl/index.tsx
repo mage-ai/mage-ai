@@ -21,7 +21,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useFileComponents from '@components/Files/useFileComponents';
 import usePrevious from '@utils/usePrevious';
-import useStatus from '@utils/models/status/useStatus';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   LOCAL_STORAGE_GIT_REMOTE_NAME,
