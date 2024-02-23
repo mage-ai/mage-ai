@@ -868,7 +868,12 @@ function PipelineListPage() {
       ]}
       onClickFilterDefaults={() => {
         setFilters({});
-        router.push('/pipelines');
+        setSearchTextState('');
+        goToWithQuery({
+          [PipelineQueryEnum.SEARCH]: '',
+        }, {
+          replaceParams: true,
+        });
       }}
       onFilterApply={(query, updatedQuery) => {
         // @ts-ignore
@@ -895,7 +900,6 @@ function PipelineListPage() {
     isLoadingDelete,
     newPipelineButtonMenuItems,
     query,
-    router,
     searchText,
     selectedPipeline,
     setSearchText,
