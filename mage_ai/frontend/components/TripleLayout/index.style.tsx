@@ -138,6 +138,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
   active?: boolean;
   left?: number;
   disabled?: boolean;
+  subtractTopFromHeight?: boolean;
   top?: number;
   topOffset?: number;
 }>`
@@ -154,6 +155,10 @@ const ASIDE_DRAGGABLE_STYLE = css<{
   ${props => `
     height: calc(100% + ${props?.top || 0}px);
     top: ${-(props?.top || 0) + (props.topOffset || 0)}px;
+  `}
+
+  ${props => props.subtractTopFromHeight && `
+    height: calc(100% - ${props?.top || 0}px);
   `}
 
   ${props => !props.disabled && `
@@ -307,6 +312,7 @@ export const DraggableStyle = styled.div<{
   disabled?: boolean;
   left?: number;
   right?: number;
+  subtractTopFromHeight?: boolean;
   top?: number;
   topOffset?: number;
 }>`

@@ -32,12 +32,14 @@ import TriggerEdit from '@components/Triggers/Edit';
 import Toolbar from '@components/shared/Table/Toolbar';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
+import {
+  ContainerStyle as RuntimeVariablesContainerStyle,
+} from '@components/RuntimeVariables/index.style';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import {
   Interactions as InteractionsIcon,
   Once,
 } from '@oracle/icons';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
@@ -242,7 +244,11 @@ function PipelineSchedules({
             />
           )}
           {!hasVariables && (
-            <Spacing p={PADDING_UNITS}>
+            <RuntimeVariablesContainerStyle
+              height={runtimeVariablesHeight}
+              includePadding
+              overflow
+            >
               <Text>
                 This pipeline has no runtime variables.
               </Text>
@@ -262,7 +268,7 @@ function PipelineSchedules({
                   </Text>
                 </Spacing>
               }
-            </Spacing>
+            </RuntimeVariablesContainerStyle>
           )}
         </>
       );
