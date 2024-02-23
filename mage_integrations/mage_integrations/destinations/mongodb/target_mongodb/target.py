@@ -92,10 +92,12 @@ class TargetMongoDb(Target):
         stats: dict[str, int] = defaultdict(int)
         for line in file_input.readlines():
 
-            if line.startswith('INFO'):
+            if line.startswith('{') is False:
                 continue
-
-            line_dict = json.loads(line)
+            try:
+                line_dict = json.loads(line)
+            except:
+                continue
 
             self._assert_line_requires(line_dict, requires={"type"})
 
