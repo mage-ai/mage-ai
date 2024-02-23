@@ -232,6 +232,7 @@ function PipelineLayout({
         setBeforeHidden={setBeforeHidden}
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
+        subtractTopFromBeforeDraggableHeight
       >
         {children}
       </TripleLayout>

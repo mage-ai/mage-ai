@@ -106,6 +106,7 @@ type TripleLayoutProps = {
   setBeforeHidden?: (value: boolean) => void;
   setBeforeMousedownActive?: (value: boolean) => void;
   setBeforeWidth?: (width: number) => void;
+  subtractTopFromBeforeDraggableHeight?: boolean;
   uuid?: string;
 };
 
@@ -159,6 +160,7 @@ function TripleLayout({
   setBeforeHidden,
   setBeforeMousedownActive,
   setBeforeWidth,
+  subtractTopFromBeforeDraggableHeight,
   uuid,
 }: TripleLayoutProps) {
   const { width: widthWindow } = useWindowSize();
@@ -235,6 +237,7 @@ function TripleLayout({
     }
   // getOffsetLeft intentionally left out of dependency array
   // If it was included, the before panel would not resize correctly.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     afterHidden,
     afterWidth,
@@ -284,6 +287,9 @@ function TripleLayout({
       document?.removeEventListener?.('mouseup', removeMousemove, false);
       removeMousemove();
     };
+  // getOffsetLeft intentionally left out of dependency array
+  // If it was included, the after panel would not resize correctly.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     afterHidden,
     beforeHidden,
@@ -410,6 +416,7 @@ function TripleLayout({
     afterHeaderOffset,
     afterHeightOffset,
     afterHidden,
+    afterInnerHeightMinus,
     afterOverflow,
     afterSubheader,
     afterWidthFinal,
@@ -721,6 +728,7 @@ function TripleLayout({
               disabled={beforeHidden}
               left={beforeWidthFinal + leftOffset}
               ref={refBeforeInnerDraggable}
+              subtractTopFromHeight={subtractTopFromBeforeDraggableHeight}
               top={contained ? 0 : ASIDE_HEADER_HEIGHT}
               topOffset={beforeDraggableTopOffset}
             />
@@ -755,11 +763,11 @@ function TripleLayout({
 
         <MainContentStyle
           autoLayout={autoLayout}
+          footerOffset={footerOffset}
           headerOffset={contained
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
           }
-          footerOffset={footerOffset}
           inline={inline}
           style={{
             width: inline ? null : mainWidth,
@@ -789,6 +797,7 @@ function TripleLayout({
     before,
     beforeContent,
     beforeDividerContrast,
+    beforeDraggableTopOffset,
     beforeHeightOffset,
     beforeHidden,
     beforeMousedownActive,
@@ -810,6 +819,7 @@ function TripleLayout({
     noBackground,
     refBeforeInnerDraggable,
     setBeforeWidth,
+    subtractTopFromBeforeDraggableHeight,
   ]);
 
   return (

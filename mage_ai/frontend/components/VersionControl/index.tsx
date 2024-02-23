@@ -1,5 +1,3 @@
-import * as osPath from 'path';
-import { DiffEditor } from '@monaco-editor/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -10,14 +8,11 @@ import Dashboard from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
 import MultiColumnController from '@components/MultiColumnController';
 import Remote from './Remote';
-import StyledScrollbarContainer from '@components/shared/StyledScrollbarContainer';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -27,10 +22,6 @@ import api from '@api';
 import useFileComponents from '@components/Files/useFileComponents';
 import usePrevious from '@utils/usePrevious';
 import useStatus from '@utils/models/status/useStatus';
-import {
-  DIFF_STYLES,
-  DiffContainerStyle,
-} from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   LOCAL_STORAGE_GIT_REMOTE_NAME,
@@ -46,7 +37,7 @@ import { get, set } from '@storage/localStorage';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
-import { fileInMapping, filePathRelativeToRepoPath } from './utils';
+import { fileInMapping } from './utils';
 import { queryFromUrl } from '@utils/url';
 import { unique } from '@utils/array';
 import { useError } from '@context/Error';
@@ -54,10 +45,6 @@ import { useError } from '@context/Error';
 function VersionControl() {
   const fileTreeRef = useRef(null);
   const refSelectBaseBranch = useRef(null);
-
-  const {
-    status,
-  } = useStatus();
 
   const [showError] = useError(null, {}, [], {
     uuid: 'VersionControlPage',
