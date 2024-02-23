@@ -105,14 +105,12 @@ export default function({
   return (
     <>
       {showTabs && (
-        <Spacing py={PADDING_UNITS}>
-          <ButtonTabs
-            onClickTab={setSelectedTab}
-            selectedTabUUID={selectedTab?.uuid}
-            tabs={TABS}
-            underlineStyle
-          />
-        </Spacing>
+        <ButtonTabs
+          onClickTab={setSelectedTab}
+          selectedTabUUID={selectedTab?.uuid}
+          tabs={TABS}
+          underlineStyle
+        />
       )}
 
       {(!showTabs || TAB_TREE.uuid === selectedTab?.uuid) && (
