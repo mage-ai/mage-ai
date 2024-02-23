@@ -41,6 +41,9 @@ import { queryFromUrl } from '@utils/url';
 import { unique } from '@utils/array';
 import { useError } from '@context/Error';
 
+const VERSION_CONTROL_PAGE_UUID = 'version_control/index';
+const DEFAULT_ASIDE_WIDTH = 30 * UNIT;
+
 function VersionControl() {
   const fileTreeRef = useRef(null);
   const refSelectBaseBranch = useRef(null);
@@ -50,8 +53,11 @@ function VersionControl() {
   });
 
   const [afterHidden, setAfterHidden] = useState(true);
-  const [afterWidth, setAfterWidth] = useState(30 * UNIT);
-  const [beforeWidth, setBeforeWidth] = useState(30 * UNIT);
+  const [afterWidth, setAfterWidth] = useState(DEFAULT_ASIDE_WIDTH);
+
+  const beforeWidthStorageKey = `layout_before_${VERSION_CONTROL_PAGE_UUID}_width`;
+  const defaultBeforeWidth = get(beforeWidthStorageKey, DEFAULT_ASIDE_WIDTH);
+  const [beforeWidth, setBeforeWidth] = useState(defaultBeforeWidth);
 
   const [originalContent, setOriginalContent] = useState({});
 
@@ -627,6 +633,7 @@ function VersionControl() {
       />
     );
   }, [
+    branchBase,
     branches,
     browser,
     beforeWidth,
@@ -648,7 +655,7 @@ function VersionControl() {
       setAfterWidth={setAfterWidth}
       setBeforeWidth={setBeforeWidth}
       title="Version control"
-      uuid="Version control/index"
+      uuid={VERSION_CONTROL_PAGE_UUID}
     >
       <Spacing p={PADDING_UNITS}>
         {!dataBranch && <Spinner inverted />}
