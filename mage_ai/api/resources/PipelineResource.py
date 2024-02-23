@@ -231,10 +231,12 @@ class PipelineResource(BaseResource):
 
         if pipeline_types:
             for pipeline_dict in cache.get_models(types=pipeline_types):
-                pipelines.append(Pipeline(
-                    pipeline_dict['pipeline']['uuid'],
-                    config=pipeline_dict['pipeline'],
-                ))
+                pipeline_uuid_from_cache = pipeline_dict['pipeline']['uuid']
+                if pipeline_uuid_from_cache in pipeline_uuids:
+                    pipelines.append(Pipeline(
+                        pipeline_uuid_from_cache,
+                        config=pipeline_dict['pipeline'],
+                    ))
         else:
             for uuid in pipeline_uuids:
                 pipeline_dict = cache.get_model(dict(uuid=uuid))
@@ -262,8 +264,6 @@ class PipelineResource(BaseResource):
         mapping = {}
         if include_schedules:
             mapping = query_pipeline_schedules(pipeline_uuids)
-        if pipeline_types:
-            pipelines = [p for p in pipelines if p.type in pipeline_types]
 
         filtered_pipelines = []
         for pipeline in pipelines:

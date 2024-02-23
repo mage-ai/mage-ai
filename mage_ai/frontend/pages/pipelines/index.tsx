@@ -156,6 +156,7 @@ function PipelineListPage() {
     clearTimeout(timeout.current);
 
     timeout.current = setTimeout(() => goToWithQuery({
+      [MetaQueryEnum.OFFSET]: 0,
       [PipelineQueryEnum.SEARCH]: searchQuery,
     }), 500);
   }, [
@@ -867,7 +868,13 @@ function PipelineListPage() {
       ]}
       onClickFilterDefaults={() => {
         setFilters({});
-        router.push('/pipelines');
+        setSearchTextState('');
+        goToWithQuery({
+          [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
+          [PipelineQueryEnum.SEARCH]: '',
+        }, {
+          replaceParams: true,
+        });
       }}
       onFilterApply={(query, updatedQuery) => {
         // @ts-ignore
@@ -894,7 +901,6 @@ function PipelineListPage() {
     isLoadingDelete,
     newPipelineButtonMenuItems,
     query,
-    router,
     searchText,
     selectedPipeline,
     setSearchText,
