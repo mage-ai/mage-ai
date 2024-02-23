@@ -156,6 +156,7 @@ function PipelineListPage() {
     clearTimeout(timeout.current);
 
     timeout.current = setTimeout(() => goToWithQuery({
+      [MetaQueryEnum.OFFSET]: 0,
       [PipelineQueryEnum.SEARCH]: searchQuery,
     }), 500);
   }, [
