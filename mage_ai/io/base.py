@@ -209,12 +209,18 @@ class BaseFile(BaseIO):
             format (Union[FileFormat, str]): Format to write the data frame as.
             output (Union[IO, os.PathLike]): Output stream/filepath to write data frame to.
         """
+        if format is None:
+            format = FileFormat.PARQUET
         writer = self.__get_writer(df, format)
         if format == FileFormat.HDF5:
             if isinstance(output, IO):
                 raise ValueError('Cannot write HDF5 file to buffer of any type.')
             name = os.path.splitext(os.path.basename(output))[0]
             kwargs.setdefault('key', name)
+        elif format == FileFormat.PARQUET:
+            if 'coerce_timestamps' not in kwargs:
+                kwargs['coerce_timestamps'] = 'ms'
+                kwargs['allow_truncated_timestamps'] = True
         writer(output, **kwargs)
 
     def __get_writer(

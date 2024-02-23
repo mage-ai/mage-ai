@@ -115,7 +115,11 @@ class AmazonS3(Destination):
 
         buffer = BytesIO()
         if self.file_type == 'parquet':
-            df.to_parquet(buffer)
+            df.to_parquet(
+                buffer,
+                coerce_timestamps='ms',
+                allow_truncated_timestamps=True,
+            )
         elif self.file_type == 'csv':
             df.to_csv(buffer, index=False)
         else:
