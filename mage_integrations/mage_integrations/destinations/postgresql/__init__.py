@@ -70,6 +70,7 @@ class PostgreSQL(Destination):
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
+        allow_reserved_words: bool = False,
     ) -> List[str]:
         results = self.build_connection().load(f"""
 SELECT
@@ -93,7 +94,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 columns=new_columns,
                 full_table_name=self.full_table_name(schema_name, table_name),
                 column_identifier=self.quote,
-                use_lowercase=self.use_lowercase
+                use_lowercase=self.use_lowercase,
+                allow_reserved_words=self.allow_reserved_words
             ),
         ]
 
