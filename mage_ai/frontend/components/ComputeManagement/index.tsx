@@ -751,6 +751,7 @@ function ComputeManagement({
     <TripleLayout
       after={after}
       afterDividerContrast
+      afterDraggableTopOffset={HEADER_HEIGHT}
       afterHeightOffset={HEADER_HEIGHT}
       afterHidden={afterHidden && !selectedSql}
       afterMousedownActive={afterMousedownActive}
