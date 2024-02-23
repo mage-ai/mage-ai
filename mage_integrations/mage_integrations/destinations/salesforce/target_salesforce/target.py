@@ -144,10 +144,13 @@ class TargetSalesforce(Target):
         stats: dict[str, int] = defaultdict(int)
         for line in file_input.readlines():
 
-            if line.startswith('INFO'):
+            if line.startswith('{') is False:
+                continue
+            try:
+                line_dict = json.loads(line)
+            except:
                 continue
 
-            line_dict = json.loads(line)
             if line_dict.get('stream') is not None and \
                self.config['table_name'] is not None:
 
