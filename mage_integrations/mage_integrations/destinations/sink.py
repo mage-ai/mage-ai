@@ -439,7 +439,7 @@ class Sink(metaclass=abc.ABCMeta):
             new_version: The version number to activate.
         """
         _ = new_version
-        self.logger.warning(
+        self.logger.info(
             "ACTIVATE_VERSION message received but not implemented by this target. "
             "Ignoring.",
         )

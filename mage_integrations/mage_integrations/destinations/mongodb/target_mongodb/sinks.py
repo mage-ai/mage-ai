@@ -93,7 +93,7 @@ class MongoDbSink(BatchSink):
                     try:
                         find_id = ObjectId(find_id)
                     except Exception:
-                        self.logger.warn(f"Malformed id: {find_id}.\
+                        self.logger.info(f"Malformed id: {find_id}.\
                                          Skipping this record.")
                         continue
 
