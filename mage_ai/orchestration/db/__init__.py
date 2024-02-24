@@ -11,6 +11,7 @@ from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
 from mage_ai.orchestration.db.cache import CachingQuery, SessionWithCaching
 from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
+from mage_ai.settings import OTEL_EXPORTER_OTLP_ENDPOINT
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.shared.environments import is_dev, is_test
 
@@ -24,7 +25,7 @@ db_kwargs = dict(
 )
 
 # Only import if OpenTelemetry is enabled
-if os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+if OTEL_EXPORTER_OTLP_ENDPOINT:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 if is_test():

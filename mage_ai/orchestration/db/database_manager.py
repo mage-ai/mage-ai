@@ -33,11 +33,11 @@ class DatabaseManager:
 
         # Manually configure loggers so that the root logger does not get overwritten
         # by the alembic env.py file
-        alembic_logger = logging.getLogger('alembic')
+        alembic_logger = logging.getLogger('alembic.runtime.migration')
         if log_level is not None:
             alembic_logger.setLevel(log_level)
         elif alembic_logger.level == logging.NOTSET:
-            alembic_logger.setLevel(logging.WARN)
+            alembic_logger.setLevel(logging.INFO)
 
         sqlalchemy_engine_logger = logging.getLogger('sqlalchemy.engine')
         if sqlalchemy_engine_logger.level == logging.NOTSET:
