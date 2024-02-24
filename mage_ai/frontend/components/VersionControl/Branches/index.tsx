@@ -383,7 +383,7 @@ function Branches({
           <Button
             beforeIcon={<PaginateArrowLeft />}
             linkProps={{
-              href: `/version-control?tab=${TAB_REMOTE.uuid}`,
+              href: `/version-control?tab=${encodeURIComponent(TAB_REMOTE.uuid)}`,
             }}
             noBackground
             noHoverUnderline
