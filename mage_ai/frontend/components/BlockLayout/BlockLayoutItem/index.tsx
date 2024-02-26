@@ -295,6 +295,7 @@ function BlockLayoutItem({
                   >
                     {(isHovering || menuVisible) && (
                       <Button
+                        disabled={isLoading}
                         iconOnly
                         loading={isLoading}
                         noBackground
