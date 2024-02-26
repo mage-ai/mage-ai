@@ -959,13 +959,25 @@ function BlockLayout({
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-          <Text default>
-            Number of columns from data source: {typeof blockForChartConfigurations?.data?.columns !== 'undefined' ? (
-              <Text bold inline monospace>
-                {blockForChartConfigurations?.data?.columns?.length}
+          {!blockForChartConfigurations?.data_source
+            ? (
+              <Text default>
+                Please select a data source type above.
               </Text>
-            ) : <Spacing mt={1}><Spinner inverted small /></Spacing>}
-          </Text>
+            ): (
+              <Text default>
+                Number of columns from data source: {
+                  typeof blockForChartConfigurations?.data?.columns !== 'undefined'
+                  ? (
+                    <Text bold inline monospace>
+                      {blockForChartConfigurations?.data?.columns?.length}
+                    </Text>
+                  ): (
+                    <Spacing mt={1}><Spinner inverted small /></Spacing>
+                )}
+              </Text>
+            )
+          }
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
