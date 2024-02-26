@@ -5,8 +5,8 @@ import BackfillEdit from '@components/Backfills/Edit';
 import ErrorsType from '@interfaces/ErrorsType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import api from '@api';
-import { queryFromUrl } from '@utils/url';
 import usePrevious from '@utils/usePrevious';
+import { queryFromUrl } from '@utils/url';
 
 const LIMIT = 40;
 

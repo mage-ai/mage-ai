@@ -8,11 +8,11 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BackfillType, {
+  BackfillSettingsType,
   BACKFILL_TYPE_CODE,
   BACKFILL_TYPE_DATETIME,
   IntervalTypeEnum,
   INTERVAL_TYPES,
-  BackfillSettingsType,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
