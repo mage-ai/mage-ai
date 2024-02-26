@@ -88,6 +88,7 @@ type TripleLayoutProps = {
   children?: any;
   contained?: boolean;
   containerRef?: any;
+  excludeOffsetFromBeforeDraggableLeft?: boolean;
   footerOffset?: number;
   header?: any;
   headerOffset?: number;
@@ -143,6 +144,7 @@ function TripleLayout({
   children,
   contained,
   containerRef,
+  excludeOffsetFromBeforeDraggableLeft,
   footerOffset,
   header,
   headerOffset = 0,
@@ -210,7 +212,7 @@ function TripleLayout({
             newWidth = (width - (afterHidden ? 0 : afterWidth)) - MAIN_MIN_WIDTH;
           }
           // Not sure why we need to multiply by 2, but we do.
-          newWidth -= (leftOffset * 2);
+          newWidth -= (leftOffset * (excludeOffsetFromBeforeDraggableLeft ? 1 : 2));
           setBeforeWidth(Math.max(newWidth, BEFORE_MIN_WIDTH));
         }
       };
@@ -730,7 +732,7 @@ function TripleLayout({
               active={beforeMousedownActive}
               contrast={beforeDividerContrast}
               disabled={beforeHidden}
-              left={beforeWidthFinal + leftOffset}
+              left={beforeWidthFinal + (excludeOffsetFromBeforeDraggableLeft ? 0 : leftOffset)}
               ref={refBeforeInnerDraggable}
               subtractTopFromHeight={subtractTopFromBeforeDraggableHeight}
               top={contained ? 0 : ASIDE_HEADER_HEIGHT}
@@ -809,6 +811,7 @@ function TripleLayout({
     beforeWidthFinal,
     children,
     contained,
+    excludeOffsetFromBeforeDraggableLeft,
     footerOffset,
     hasBeforeNavigationItems,
     header,

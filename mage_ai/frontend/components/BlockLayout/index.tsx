@@ -1102,6 +1102,7 @@ function BlockLayout({
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
+      excludeOffsetFromBeforeDraggableLeft
       headerOffset={topOffset || 0}
       hideAfterCompletely
       hideBeforeCompletely
