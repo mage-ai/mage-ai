@@ -90,6 +90,7 @@ function BlockLayout({
   const windowSize = useWindowSize();
 
   const [selectedBlockItem, setSelectedBlockItemState] = useState<BlockLayoutItemType>(null);
+  const [deletingBlockUUID, setDeletingBlockUUID] = useState<string>(null);
 
   const refreshInterval = useMemo(() => selectedBlockItem?.data_source?.refresh_interval, [
     selectedBlockItem,
@@ -193,6 +194,7 @@ function BlockLayout({
               setSelectedBlockItem(blockItemNew);
             }
 
+            setDeletingBlockUUID(null);
             fetchBlockLayoutItem();
           },
           onErrorCallback: (response, errors) => showError({
@@ -314,6 +316,8 @@ function BlockLayout({
     } else {
       newLayout[rowIndex] = newRow;
     }
+
+    setDeletingBlockUUID(blockUUID);
 
     // @ts-ignore
     updateBlockLayoutItem({
@@ -484,6 +488,7 @@ function BlockLayout({
               createNewBlockItem={createNewBlockItem}
               first={0 === idx2}
               height={height}
+              isLoading={deletingBlockUUID === blockUUID && isLoadingUpdateBlockLayoutItem}
               onDrop={({
                 columnIndex,
                 rowIndex,
@@ -541,6 +546,8 @@ function BlockLayout({
     blocks,
     containerRect,
     createNewBlockItem,
+    deletingBlockUUID,
+    isLoadingUpdateBlockLayoutItem,
     layout,
     moveBlockLayoutItem,
     removeBlockLayoutItem,
