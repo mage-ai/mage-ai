@@ -1036,6 +1036,7 @@ function BlockLayout({
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeDraggableTopOffset={topOffset ? (topOffset - ASIDE_HEADER_HEIGHT) : 0}
       beforeFooter={!beforeHidden && (
         <Spacing p={PADDING_UNITS}>
           <FlexContainer>

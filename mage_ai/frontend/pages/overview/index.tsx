@@ -640,7 +640,7 @@ def d(df):
             </Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
-                setSelectedTab(() => allTabs.find(t => uuid === t.uuid))
+                setSelectedTab(() => allTabs.find(t => uuid === t.uuid));
               }}
               regularSizeText
               selectedTabUUID={timePeriod}
