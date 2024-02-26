@@ -74,7 +74,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/local-kube')
         except Exception:
             pass
 
@@ -199,6 +199,7 @@ class WorkloadManager:
         self,
         name: str,
         workspace_config: KubernetesWorkspaceConfig,
+        initial_metadata: Dict = None,
         project_type: str = ProjectType.STANDALONE,
     ):
         """
@@ -245,6 +246,7 @@ class WorkloadManager:
             project_uuid=workspace_config.project_uuid,
             container_config=container_config,
             set_base_path=ingress_name is not None,
+            initial_metadata=initial_metadata,
         )
         container_config['env'] = env_vars
 
@@ -713,6 +715,7 @@ class WorkloadManager:
         project_type: str = 'standalone',
         project_uuid: str = None,
         container_config: Dict = None,
+        initial_metadata: Dict = None,
         set_base_path: bool = False,
     ) -> List:
         env_vars = [
@@ -740,6 +743,13 @@ class WorkloadManager:
                 {
                     'name': 'PROJECT_UUID',
                     'value': project_uuid,
+                }
+            )
+        if initial_metadata:
+            env_vars.append(
+                {
+                    'name': 'INITIAL_METADATA',
+                    'value': json.dumps(initial_metadata),
                 }
             )
 

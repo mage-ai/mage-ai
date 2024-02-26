@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from mage_ai.cluster_manager.config import LifecycleConfig, WorkspaceConfig
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.errors import WorkspaceExistsError
-from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
+from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type, get_repo_config
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, User
@@ -115,6 +115,7 @@ class Workspace(abc.ABC):
 
             project_uuid = uuid.uuid4().hex
             data['project_uuid'] = project_uuid
+            data['workspace_metadata'] = get_repo_config().workspace_shared_config
 
         workspace_class = cls.workspace_class_from_type(cluster_type)
 
