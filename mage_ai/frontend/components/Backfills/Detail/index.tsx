@@ -144,7 +144,10 @@ function BackfillDetail({
       showPreviewRuns,
     ],
   );
-  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(
+    () => showPreviewRuns ? totalRunCount : dataPipelineRuns?.metadata?.count,
+    [dataPipelineRuns, showPreviewRuns, totalRunCount],
+  );
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => {

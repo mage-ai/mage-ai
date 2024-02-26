@@ -51,6 +51,7 @@ class SettingsConfig(BaseConfig):
     allow_blocks_to_fail: bool = False
     create_initial_pipeline_run: bool = False
     landing_time_enabled: bool = False
+    pipeline_run_limit: int = None
     timeout: int = None  # in seconds
     timeout_status: str = None
 

@@ -8,6 +8,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BackfillType, {
+  BackfillSettingsType,
   BACKFILL_TYPE_CODE,
   BACKFILL_TYPE_DATETIME,
   IntervalTypeEnum,
@@ -76,6 +77,7 @@ function BackfillEdit({
   const router = useRouter();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const [model, setModel] = useState<BackfillType>();
+  const [settings, setSettings] = useState<BackfillSettingsType>();
   const {
     block_uuid: blockUUID,
     id: modelID,
@@ -96,7 +98,7 @@ function BackfillEdit({
     variables,
   ]);
 
-  const [enableVariablesOverwrite, setEnableVariablesOverwrite] = useState<boolean>(false);
+  const [enableVariablesOverwrite, setEnableVariablesOverwrite] = useState<boolean>(true);
   const [runtimeVariables, setRuntimeVariables] = useState<{
     [ variable: string ]: string
   }>(runtimeVariablesInit);
@@ -137,6 +139,15 @@ function BackfillEdit({
       }
     }
   }, [displayLocalTimezone, modelProp]);
+
+  useEffect(() => {
+    if (!settings && model?.settings) {
+      setSettings(model.settings);
+    }
+  }, [
+    settings,
+    model?.settings,
+  ]);
 
   const detailsMemo = useMemo(() => {
     const rows = [
@@ -355,6 +366,30 @@ function BackfillEdit({
       ]);
     }
 
+    rows.push([
+      <FlexContainer
+        alignItems="center"
+        key="concurrency"
+      >
+        <Text default>
+          Max concurrent runs
+        </Text>
+      </FlexContainer>,
+      <TextInput
+        key="concurrency_input"
+        monospace
+        onChange={(e) => {
+          e.preventDefault();
+          setSettings(s => ({
+            ...s,
+            pipeline_run_limit: e.target.value,
+          }));
+        }}
+        type="number"
+        value={settings?.pipeline_run_limit}
+      />,
+    ]);
+
     return (
       <>
         <Spacing mb={2} px={PADDING_UNITS}>
@@ -381,6 +416,7 @@ function BackfillEdit({
     name,
     runtimeVariables,
     runtimeVariablesInit,
+    settings?.pipeline_run_limit,
     setupType,
     showCalendarStart,
     showCalendarEnd,
@@ -417,6 +453,7 @@ function BackfillEdit({
       end_datetime: null,
       interval_type: null,
       interval_units: null,
+      settings,
       start_datetime: null,
       variables: enableVariablesOverwrite ? parseVariables(runtimeVariables) : {},
     };
@@ -459,6 +496,7 @@ function BackfillEdit({
     intervalUnits,
     model,
     runtimeVariables,
+    settings,
     setupType,
     timeEnd,
     timeStart,

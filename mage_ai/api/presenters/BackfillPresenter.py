@@ -1,3 +1,4 @@
+from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 from mage_ai.orchestration.backfills.service import preview_run_dates
 
@@ -16,6 +17,7 @@ class BackfillPresenter(BasePresenter):
         'name',
         'pipeline_schedule_id',
         'pipeline_uuid',
+        'settings',
         'start_datetime',
         'started_at',
         'status',
@@ -25,6 +27,10 @@ class BackfillPresenter(BasePresenter):
 
     def present(self, **kwargs):
         query = kwargs.get('query', {})
+        meta = kwargs.get('meta', {})
+
+        limit = int((meta or {}).get(META_KEY_LIMIT, 40))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
         data = self.model.to_dict()
 
@@ -44,6 +50,8 @@ class BackfillPresenter(BasePresenter):
             pipeline_run_dates = preview_run_dates(self.model)
             data['total_run_count'] = len(pipeline_run_dates)
             if include_preview_runs:
-                data['pipeline_run_dates'] = pipeline_run_dates
+                start_idx = offset
+                end_idx = start_idx + limit
+                data['pipeline_run_dates'] = pipeline_run_dates[start_idx:(end_idx + 1)]
 
         return data

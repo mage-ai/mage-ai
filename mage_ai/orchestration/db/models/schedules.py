@@ -1865,6 +1865,7 @@ class Backfill(BaseModel):
     pipeline_schedule = relationship(PipelineSchedule, back_populates='backfills')
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
     pipeline_uuid = Column(String(255))
+    settings = Column(JSON, default=None)
     start_datetime = Column(DateTime(timezone=True), default=None)
     started_at = Column(DateTime(timezone=True), default=None)
     status = Column(Enum(Status), default=None)
