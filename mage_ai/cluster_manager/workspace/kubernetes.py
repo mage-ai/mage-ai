@@ -73,7 +73,7 @@ class KubernetesWorkspace(Workspace):
                 'project_type': ProjectType.SUB,
                 'initial_metadata': workspace_initial_metadata,
             }
-        
+
         workload_manager.create_workload(
             name,
             workspace_config,

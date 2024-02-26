@@ -1,3 +1,5 @@
+import json
+import logging
 import os
 import traceback
 import uuid
@@ -5,8 +7,6 @@ from enum import Enum
 from typing import Dict, Optional
 from warnings import warn
 
-import json
-import logging
 import ruamel.yaml
 import yaml
 from jinja2 import Template

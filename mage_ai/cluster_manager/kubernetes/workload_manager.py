@@ -74,7 +74,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/local-kube')
+            config.load_kube_config()
         except Exception:
             pass
 
