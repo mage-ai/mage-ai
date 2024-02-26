@@ -60,7 +60,7 @@ class WorkloadManager:
         try:
             self.pod_config = self.core_client.read_namespaced_pod(
                 name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-                namespace=self.namespace,
+                namespace=os.getenv(KUBE_NAMESPACE, self.namespace),
             )
         except Exception:
             self.pod_config = None
@@ -324,7 +324,7 @@ class WorkloadManager:
                         },
                         {
                             'name': KUBE_NAMESPACE,
-                            'value': os.getenv(KUBE_NAMESPACE, 'default'),
+                            'value': self.namespace,
                         },
                     ],
                 }
@@ -717,9 +717,13 @@ class WorkloadManager:
     ) -> List:
         env_vars = [
             {
+                'name': 'KUBE_NAMESPACE',
+                'value': self.namespace,
+            },
+            {
                 'name': 'USER_CODE_PATH',
                 'value': name,
-            }
+            },
         ]
         if set_base_path:
             env_vars.append(
@@ -759,7 +763,6 @@ class WorkloadManager:
 
         for var in MAGE_SETTINGS_ENVIRONMENT_VARIABLES + [
             DATABASE_CONNECTION_URL_ENV_VAR,
-            KUBE_NAMESPACE,
         ]:
             if os.getenv(var) is not None:
                 env_vars.append(
