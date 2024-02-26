@@ -1175,6 +1175,8 @@ function BlockLayout({
         {!selectedBlockItem && !isEmpty && rowsEl}
         {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
+
+      <Spacing mb={2} />
     </TripleLayout>
   );
 }
