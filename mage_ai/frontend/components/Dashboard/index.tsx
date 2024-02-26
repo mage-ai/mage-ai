@@ -170,7 +170,6 @@ function Dashboard({
             setAfterWidth={setWidthAfter}
             setBeforeMousedownActive={setMousedownActiveBefore}
             setBeforeWidth={setWidthBefore}
-            // beforeWidth={VERTICAL_NAVIGATION_WIDsTH + (before ? beforeWidth : 0)}
           >
             {subheaderChildren && (
               <Subheader noPadding={subheaderNoPadding}>

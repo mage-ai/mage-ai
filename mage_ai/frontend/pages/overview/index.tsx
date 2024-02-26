@@ -28,7 +28,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import Widget from '@components/PipelineRun/Widget';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import usePrevious from '@utils/usePrevious';
 import {
   AggregationFunctionEnum,
   ChartStyleEnum,
@@ -50,7 +49,7 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DataSourceEnum } from '@interfaces/BlockLayoutItemType';
 import { ErrorProvider } from '@context/Error';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { MonitorStatsEnum, RunCountStatsType } from '@interfaces/MonitorStatsType';
+import { MonitorStatsEnum } from '@interfaces/MonitorStatsType';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
@@ -69,7 +68,8 @@ import {
   TAB_DASHBOARD,
   TAB_TODAY,
 } from '@components/Dashboard/constants';
-import { UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import {
   capitalize,
   cleanName,
@@ -652,7 +652,7 @@ def d(df):
 
       {TAB_DASHBOARD.uuid === selectedTab?.uuid && (
         <BlockLayout
-          leftOffset={9 * UNIT}
+          leftOffset={VERTICAL_NAVIGATION_WIDTH - 1}
           pageBlockLayoutTemplate={pageBlockLayoutTemplate}
           topOffset={HEADER_HEIGHT + refSubheader?.current?.getBoundingClientRect()?.height}
           uuid="overview/dashboard"
