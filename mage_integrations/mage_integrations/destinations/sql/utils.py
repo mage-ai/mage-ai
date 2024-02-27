@@ -90,6 +90,7 @@ def build_alter_table_command(
     full_table_name: str,
     column_identifier: str = '',
     use_lowercase: bool = True,
+    allow_reserved_words: bool = False
 ) -> str:
     if not columns:
         return None
