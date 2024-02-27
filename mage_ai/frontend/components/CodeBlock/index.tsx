@@ -34,7 +34,6 @@ import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor, {
   CodeEditorSharedProps,
-  OnDidChangeCursorPositionParameterType,
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
@@ -151,7 +150,6 @@ import {
   TAB_SPARK_OUTPUT,
   TAB_SPARK_SQLS,
   TAB_SPARK_STAGES,
-  TAB_SPARK_TASKS,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -164,7 +162,6 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { RunBlockAndTrackProps } from '@components/CodeBlockV2/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';

@@ -360,11 +360,18 @@ function ChartBlock({
     selected,
   ]);
 
+  const widthPercentage =
+    useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
+
   const isEditingPrevious = usePrevious(isEditing);
   const widthPrevious = usePrevious(width);
+  const widthPercentagePrevious = usePrevious(configuration?.[VARIABLE_NAME_WIDTH_PERCENTAGE]);
   useEffect(() => {
     const rect = refChartContainer?.current?.getBoundingClientRect();
-    if (isEditingPrevious !== isEditing || widthPrevious !== width) {
+    if (isEditingPrevious !== isEditing
+      || widthPrevious !== width
+      || widthPercentagePrevious !== widthPercentage
+    ) {
       setChartWidth(0);
       setTimeout(() => {
         const w = refChartContainer?.current?.getBoundingClientRect()?.width;
@@ -382,6 +389,8 @@ function ChartBlock({
     setChartWidth,
     width,
     widthPrevious,
+    widthPercentage,
+    widthPercentagePrevious,
   ]);
 
   const availableVariables = useMemo(() => {
@@ -525,9 +534,6 @@ function ChartBlock({
     upstreamBlocks,
     upstreamBlocksPrevious,
   ]);
-
-  const widthPercentage =
-    useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
 
   const {
     code: configurationOptionsElsForCode,
@@ -823,7 +829,7 @@ function ChartBlock({
   );
 
   return (
-    <Col sm={12} md={12 * widthPercentage}>
+    <Col md={12 * widthPercentage} sm={12}>
       <ChartBlockStyle ref={ref}>
         <Spacing mt={1} pt={1} px={1}>
           <FlexContainer
@@ -836,6 +842,10 @@ function ChartBlock({
                 bold={false}
                 fullWidth
                 inputValue={newBlockUuid}
+                inputWidth={ref?.current?.getBoundingClientRect()?.width < 265
+                  ? (UNIT * 7)
+                  : null
+                }
                 notRequired
                 onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
                 onChange={(e) => {

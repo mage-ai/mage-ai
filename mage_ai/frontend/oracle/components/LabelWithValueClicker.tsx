@@ -115,6 +115,7 @@ function LabelWithValueClicker({
             disableWordBreak={disableWordBreak}
             monospace={monospace}
             small={small}
+            title={inputWidth ? value : null}
             width={inputWidth}
           >
             {value}
