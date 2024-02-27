@@ -2008,7 +2008,7 @@ function PipelineDetailPage({
               setErrors(() => ({
                 errors,
                 links: [{
-                  label: 'View existing block file contents and optionally add to pipeline (if applicable).',
+                  label: 'View existing block file contents.',
                   onClick: () => {
                     openFile(filePath);
                     setErrors(null);

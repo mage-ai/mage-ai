@@ -105,7 +105,10 @@ function ConfigureBlock({
       if (event.key === 'Escape') {
         onClose();
       } else if (event.key === 'Enter') {
-        handleOnSave();
+        const buttonText = event.target.innerText;
+        if (!buttonText.startsWith('Save and') && buttonText !== 'Cancel') {
+          handleOnSave();
+        }
       }
     };
 
