@@ -443,7 +443,9 @@
                     "integrations/observability/alerting-email",
                     "integrations/observability/alerting-opsgenie",
                     "integrations/observability/alerting-slack",
-                    "integrations/observability/alerting-teams"
+                    "integrations/observability/alerting-teams",
+                    "integrations/observability/alerting-discord",
+                    "integrations/observability/alerting-telegram"
                   ]
                 }
               ]
@@ -1029,6 +1031,14 @@
     {
       "source": "/production/observability/alerting-teams",
       "destination": "/integrations/observability/alerting-teams"
+    },
+    {
+      "source": "/production/observability/alerting-discord",
+      "destination": "/integrations/observability/alerting-discord"
+    },
+    {
+      "source": "/production/observability/alerting-telegram",
+      "destination": "/integrations/observability/alerting-telegram"
     },
     {
       "source": "/production/observability/datadog",

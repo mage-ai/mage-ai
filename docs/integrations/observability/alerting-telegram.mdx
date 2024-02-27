@@ -1,39 +1,44 @@
 ---
-title: "Alerting status updates in Discord"
-sidebarTitle: "Discord"
-description: "Get status updates in your Discord channel."
+title: "Alerting status updates in Telegram"
+sidebarTitle: "Telegram"
+description: "Get status updates in your Telegram Group."
 ---
 
 <img
-  alt="Discord"
-  src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png"
+  alt="Telegram"
+  src="https://cdn0.iconfinder.com/data/icons/social-media-2092/100/social-56-512.png"
   width="300"
 />
 
 ## Overview of steps
 
-1. Set up webhooks for Discord
-2. Update Mage project settings
+1. Set Bot with **BotFather** for Telegram
+2. Get the chat_id of your Telegram Group
+3. Update Mage project settings
 
 ---
 
-## Set up webhooks for Discord
+## Set Bot with BotFather for Telegram
 
 Follow these
-[instructions on Discord](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
-to setup incoming webhooks for your workspace.
+[Tutorial](https://www.directual.com/lesson-library/how-to-create-a-telegram-bot)
+to setup Bot with BotFather and **Don't Forget to add your Bot to the Group**.
 
 ---
+
+## Get the chat_id of your Telegram Group
+
+1. Open https://web.telegram.org/ and Follow the instructions
+2. Click your Telegram Group and your Group chat_id is on your url like `https://web.telegram.org/a/#-7222xxxxxx`
 
 ## Update Mage project settings
 
-Once you’ve set up webhooks for Discord, you should have a webhook URL that Discord
-provides.
+Once you’ve set up the **Bot** and get the `chat_id` of your group, you need to set the webhook like example below:
 
 Here is an example webhook (yours may vary):
 
 ```
-https://discordapp.com/api/webhooks/XXX3514XXXXX/MHhahaduwa183-ccgfxcgv88kladJkjBJKB78CHCfds
+https://api.telegram.org/bot{your_token:from_botfather}/sendMessage?chat_id=-7222xxxxxx
 ```
 
 Follow these steps to add that webhook URL to your project settings:
@@ -69,11 +74,11 @@ Follow these steps to add that webhook URL to your project settings:
     notification_config:
       alert_on:
         ...
-      discord_config:
+      telegram_config:
         webhook_url: ...
     ```
 
-    Change the `webhook_url` value to be the webhook URL you created from Discord.
+    Change the `webhook_url` value to be the webhook URL like mentioned above.
 
 ## Customize message templates
 You can customize message templates in `notification_config`. Here is an example config:
@@ -81,7 +86,7 @@ You can customize message templates in `notification_config`. Here is an example
 notification_config:
   alert_on:
     ...
-  discord_config:
+  telegram_config:
     ...
   message_templates:
     failure:
@@ -111,11 +116,11 @@ the host url you want to use in the notification messages.
 
 ## What next?
 
-Whenever a pipeline run is successfully completed or fails, a Discord Channel message will
-appear in the channel you configured the webhook URL for.
+Whenever a pipeline run is successfully completed or fails, a Telegram Group message will
+appear in the group you configured the webhook URL for.
 
 Here is an example of what that message could look like:
 
 |                                                                                                        |
 | ------------------------------------------------------------------------------------------------------ |
-| ![Discord](https://github.com/mage-ai/assets/blob/main/third-party/discord-message-run-alert.jpg?raw=true) |
+| ![Telegram](https://github.com/mage-ai/assets/blob/main/third-party/telegram-message-run-alert.jpg?raw=true) |
