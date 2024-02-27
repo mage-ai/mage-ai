@@ -26,7 +26,9 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (dataStatus) {
+    if (dataPipelineRuns?.error?.code === 403) {
+      router.replace('/sign-in');
+    } else if (dataStatus) {
       const manage = dataStatus?.is_instance_manager;
       let pathname = completePath;
       if (basePath === '/') {
