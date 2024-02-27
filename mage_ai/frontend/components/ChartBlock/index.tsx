@@ -829,7 +829,7 @@ function ChartBlock({
   );
 
   return (
-    <Col sm={12} md={12 * widthPercentage}>
+    <Col md={12 * widthPercentage} sm={12}>
       <ChartBlockStyle ref={ref}>
         <Spacing mt={1} pt={1} px={1}>
           <FlexContainer
@@ -842,6 +842,10 @@ function ChartBlock({
                 bold={false}
                 fullWidth
                 inputValue={newBlockUuid}
+                inputWidth={ref?.current?.getBoundingClientRect()?.width < 265
+                  ? (UNIT * 7)
+                  : null
+                }
                 notRequired
                 onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
                 onChange={(e) => {
