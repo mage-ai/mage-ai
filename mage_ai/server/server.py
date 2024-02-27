@@ -17,6 +17,7 @@ from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 from tornado.options import options
+from watchdog.observers import Observer
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
@@ -37,6 +38,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_uuid,
     init_project_uuid,
     init_repo,
+    update_settings_on_metadata_change,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.constants import Entity
@@ -63,6 +65,7 @@ from mage_ai.server.api.v1 import (
 )
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
+from mage_ai.server.file_observer import MetadataEventHandler
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
 from mage_ai.server.logger import Logger
@@ -102,6 +105,7 @@ from mage_ai.settings.repo import (
     DEFAULT_MAGE_DATA_DIR,
     MAGE_CLUSTER_TYPE_ENV_VAR,
     MAGE_PROJECT_TYPE_ENV_VAR,
+    get_metadata_path,
     get_repo_name,
     get_variables_dir,
     set_repo_path,
@@ -629,13 +633,6 @@ async def main(
     except Exception as err:
         print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
 
-    # Check scheduler status periodically
-    periodic_callback = PeriodicCallback(
-        check_scheduler_status,
-        SCHEDULER_AUTO_RESTART_INTERVAL,
-    )
-    periodic_callback.start()
-
     if ProjectType.MAIN == project_type:
         # Check scheduler status periodically
         auto_termination_callback = PeriodicCallback(
@@ -643,6 +640,19 @@ async def main(
             60_000,
         )
         auto_termination_callback.start()
+    else:
+        # Check scheduler status periodically
+        periodic_callback = PeriodicCallback(
+            check_scheduler_status,
+            SCHEDULER_AUTO_RESTART_INTERVAL,
+        )
+        periodic_callback.start()
+
+    update_settings_on_metadata_change()
+    observer = Observer()
+    event_handler = MetadataEventHandler()
+    observer.schedule(event_handler, path=get_metadata_path(root_project=True))
+    observer.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

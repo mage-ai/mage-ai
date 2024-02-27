@@ -4,25 +4,26 @@ from typing import Awaitable, Dict
 
 import aiohttp
 
-from mage_ai.authentication.oauth.constants import (
+from mage_ai.authentication.oauth.constants import ProviderName
+from mage_ai.authentication.providers.oauth import OauthProvider
+from mage_ai.authentication.providers.utils import get_base_url
+from mage_ai.settings import (
     GITLAB_CLIENT_ID,
     GITLAB_CLIENT_SECRET,
     GITLAB_HOST,
-    ProviderName,
+    get_settings_value,
 )
-from mage_ai.authentication.providers.oauth import OauthProvider
-from mage_ai.authentication.providers.utils import get_base_url
 
 
 class GitlabProvider(OauthProvider):
     provider = ProviderName.GITLAB
 
     def __init__(self):
-        self.hostname = GITLAB_HOST or 'https://gitlab.com'
+        self.hostname = get_settings_value(GITLAB_HOST) or 'https://gitlab.com'
         if not self.hostname.startswith('http'):
             self.hostname = f'https://{self.hostname}'
-        self.client_id = GITLAB_CLIENT_ID
-        self.client_secret = GITLAB_CLIENT_SECRET
+        self.client_id = get_settings_value(GITLAB_CLIENT_ID)
+        self.client_secret = get_settings_value(GITLAB_CLIENT_SECRET)
         self.__validate()
 
     def __validate(self):

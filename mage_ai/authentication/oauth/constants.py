@@ -2,6 +2,8 @@ import os
 from enum import Enum
 from typing import Optional
 
+from mage_ai.settings import GHE_HOSTNAME, get_settings_value
+
 ACTIVE_DIRECTORY_CLIENT_ID = '51aec820-9d49-40a9-b046-17c1f28f620d'
 
 GITHUB_CLIENT_ID = '8577f13ddc81e2848b07'
@@ -42,7 +44,7 @@ GIT_OAUTH_PROVIDERS = [
 
 
 def get_ghe_hostname() -> Optional[str]:
-    ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
+    ghe_hostname = get_settings_value(GHE_HOSTNAME)
     if ghe_hostname and not ghe_hostname.startswith('http'):
         ghe_hostname = f'https://{ghe_hostname}'
 

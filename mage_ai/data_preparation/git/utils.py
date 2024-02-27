@@ -14,12 +14,15 @@ from mage_ai.authentication.oauth.constants import (
 from mage_ai.data_preparation.git.constants import (
     DEFAULT_KNOWN_HOSTS_FILE,
     DEFAULT_SSH_KEY_DIRECTORY,
-    GIT_ACCESS_TOKEN_VAR,
-    GIT_SSH_PRIVATE_KEY_VAR,
-    GIT_SSH_PUBLIC_KEY_VAR,
 )
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
+from mage_ai.settings import (
+    GIT_ACCESS_TOKEN,
+    GIT_SSH_PRIVATE_KEY,
+    GIT_SSH_PUBLIC_KEY,
+    get_settings_value,
+)
 from mage_ai.settings.repo import get_repo_path
 
 
@@ -59,13 +62,13 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = Fal
         )
         if not os.path.exists(public_key_file) or overwrite:
             try:
-                public_key = get_secret_value(
-                    pubk_secret_name,
-                    repo_name=repo_path,
-                    suppress_warning=True,
-                )
-                if os.getenv(GIT_SSH_PUBLIC_KEY_VAR):
-                    public_key = os.getenv(GIT_SSH_PUBLIC_KEY_VAR)
+                public_key = get_settings_value(GIT_SSH_PUBLIC_KEY)
+                if not public_key:
+                    public_key = get_secret_value(
+                        pubk_secret_name,
+                        repo_name=repo_path,
+                        suppress_warning=True,
+                    )
                 if public_key:
                     with open(public_key_file, 'w') as f:
                         f.write(base64.b64decode(public_key).decode('utf-8'))
@@ -81,13 +84,13 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = Fal
         )
         if not os.path.exists(custom_private_key_file) or overwrite:
             try:
-                private_key = get_secret_value(
-                    pk_secret_name,
-                    repo_name=repo_path,
-                    suppress_warning=True,
-                )
-                if os.getenv(GIT_SSH_PRIVATE_KEY_VAR):
-                    private_key = os.getenv(GIT_SSH_PRIVATE_KEY_VAR)
+                private_key = get_settings_value(GIT_SSH_PRIVATE_KEY)
+                if not private_key:
+                    private_key = get_secret_value(
+                        pk_secret_name,
+                        repo_name=repo_path,
+                        suppress_warning=True,
+                    )
                 if private_key:
                     with open(custom_private_key_file, 'w') as f:
                         f.write(base64.b64decode(private_key).decode('utf-8'))
@@ -137,10 +140,8 @@ def add_host_to_known_hosts(remote_repo_link: str):
 
 
 def get_access_token(git_config, repo_path: str = None) -> str:
-    token = None
-    if os.getenv(GIT_ACCESS_TOKEN_VAR):
-        token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-    elif git_config and git_config.access_token_secret_name:
+    token = get_settings_value(GIT_ACCESS_TOKEN)
+    if not token and git_config and git_config.access_token_secret_name:
         token = get_secret_value(
             git_config.access_token_secret_name,
             repo_name=repo_path or get_repo_path(),

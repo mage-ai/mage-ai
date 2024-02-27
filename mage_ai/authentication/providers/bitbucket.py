@@ -5,23 +5,24 @@ from typing import Awaitable, Dict
 import aiohttp
 from aiohttp import BasicAuth
 
-from mage_ai.authentication.oauth.constants import (
+from mage_ai.authentication.oauth.constants import ProviderName
+from mage_ai.authentication.providers.oauth import OauthProvider
+from mage_ai.authentication.providers.utils import get_base_url
+from mage_ai.settings import (
     BITBUCKET_HOST,
     BITBUCKET_OAUTH_KEY,
     BITBUCKET_OAUTH_SECRET,
-    ProviderName,
+    get_settings_value,
 )
-from mage_ai.authentication.providers.oauth import OauthProvider
-from mage_ai.authentication.providers.utils import get_base_url
 
 
 class BitbucketProvider(OauthProvider):
     provider = ProviderName.BITBUCKET
 
     def __init__(self):
-        self.hostname = BITBUCKET_HOST or 'https://bitbucket.org'
-        self.key = BITBUCKET_OAUTH_KEY
-        self.secret = BITBUCKET_OAUTH_SECRET
+        self.hostname = get_settings_value(BITBUCKET_HOST) or 'https://bitbucket.org'
+        self.key = get_settings_value(BITBUCKET_OAUTH_KEY)
+        self.secret = get_settings_value(BITBUCKET_OAUTH_SECRET)
         self.__validate()
 
     def __validate(self):
@@ -71,7 +72,7 @@ class BitbucketProvider(OauthProvider):
                     code=code,
                     redirect_uri=f'{base_url}/oauth',
                 ),
-                auth=BasicAuth(BITBUCKET_OAUTH_KEY, BITBUCKET_OAUTH_SECRET),
+                auth=BasicAuth(self.key, self.secret),
                 timeout=20,
             ) as response:
                 data = await response.json()
@@ -91,7 +92,7 @@ class BitbucketProvider(OauthProvider):
                     grant_type='refresh_token',
                     refresh_token=refresh_token,
                 ),
-                auth=BasicAuth(BITBUCKET_OAUTH_KEY, BITBUCKET_OAUTH_SECRET),
+                auth=BasicAuth(self.key, self.secret),
                 timeout=20,
             ) as response:
                 data = await response.json()

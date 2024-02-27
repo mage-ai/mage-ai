@@ -13,11 +13,12 @@ from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.server.logger import Logger
-from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
-from mage_ai.settings.sso import (
+from mage_ai.settings import (
     ACTIVE_DIRECTORY_CLIENT_ID,
     ACTIVE_DIRECTORY_CLIENT_SECRET,
+    ACTIVE_DIRECTORY_DIRECTORY_ID,
     ACTIVE_DIRECTORY_ROLES_MAPPING,
+    get_settings_value,
 )
 
 logger = Logger().new_server_logger(__name__)
@@ -28,21 +29,24 @@ class ADProvider(SsoProvider, OauthProvider):
 
     def __init__(self):
         self.__validate()
+        self.directory_id = get_settings_value(ACTIVE_DIRECTORY_DIRECTORY_ID)
+        self.client_id = get_settings_value(ACTIVE_DIRECTORY_CLIENT_ID)
+        self.client_secret = get_settings_value(ACTIVE_DIRECTORY_CLIENT_SECRET)
 
-        self.roles_mapping = {}
-        if ACTIVE_DIRECTORY_ROLES_MAPPING:
+        self.roles_mapping = get_settings_value(ACTIVE_DIRECTORY_ROLES_MAPPING)
+        if self.roles_mapping:
             try:
-                self.roles_mapping = json.loads(ACTIVE_DIRECTORY_ROLES_MAPPING)
+                self.roles_mapping = json.loads(self.roles_mapping)
             except Exception:
                 logger.exception('Failed to parse roles mapping.')
 
     def __validate(self):
-        if not ACTIVE_DIRECTORY_DIRECTORY_ID:
+        if not self.directory_id:
             raise Exception(
                 'AD directory id is empty. '
                 'Make sure the ACTIVE_DIRECTORY_DIRECTORY_ID environment variable is set.'
             )
-        if ACTIVE_DIRECTORY_CLIENT_ID and not ACTIVE_DIRECTORY_CLIENT_SECRET:
+        if self.client_id and not self.client_secret:
             raise Exception(
                 'AD client secret is empty. '
                 'Make sure the ACTIVE_DIRECTORY_CLIENT_SECRET environment variable is set.'
@@ -55,15 +59,15 @@ class ADProvider(SsoProvider, OauthProvider):
         set up in Azure. They can additionally set the ACTIVE_DIRECTORY_CLIENT_ID and
         ACTIVE_DIRECTORY_CLIENT_SECRET which will use their own Mage application in Azure.
         """
-        ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
-        if ACTIVE_DIRECTORY_CLIENT_ID:
+        ad_directory_id = self.directory_id
+        if self.client_id:
             base_url = get_base_url(redirect_uri)
             redirect_uri_query = dict(
                 provider=self.provider,
                 redirect_uri=redirect_uri,
             )
             query = dict(
-                client_id=ACTIVE_DIRECTORY_CLIENT_ID,
+                client_id=self.client_id,
                 redirect_uri=quote_plus(
                     f'{base_url}/oauth',
                 ),
@@ -116,12 +120,12 @@ class ADProvider(SsoProvider, OauthProvider):
                     'Accept': 'application/json',
                 },
                 data=dict(
-                    client_id=ACTIVE_DIRECTORY_CLIENT_ID,
-                    client_secret=ACTIVE_DIRECTORY_CLIENT_SECRET,
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
                     code=code,
                     grant_type='authorization_code',
                     redirect_uri=f'{base_url}/oauth',
-                    tenant=ACTIVE_DIRECTORY_DIRECTORY_ID,
+                    tenant=self.directory_id,
                 ),
                 timeout=20,
             ) as response:
@@ -150,7 +154,7 @@ class ADProvider(SsoProvider, OauthProvider):
             if self.roles_mapping:
                 try:
                     async with session.get(
-                        f'https://graph.microsoft.com/v1.0/servicePrincipals?$filter=appId eq \'{ACTIVE_DIRECTORY_CLIENT_ID}\'&$select=id',  # noqa: E501
+                        f'https://graph.microsoft.com/v1.0/servicePrincipals?$filter=appId eq \'{self.client_id}\'&$select=id',  # noqa: E501
                         headers={
                             'Content-Type': 'application\\json',
                             'Authorization': f'Bearer {access_token}',

@@ -8,18 +8,20 @@ from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings.sso import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from mage_ai.settings import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, get_settings_value
 
 
 class GoogleProvider(SsoProvider, OauthProvider):
     provider = ProviderName.GOOGLE
 
     def __init__(self):
-        if not GOOGLE_CLIENT_ID:
+        self.client_id = get_settings_value(GOOGLE_CLIENT_ID)
+        self.client_secret = get_settings_value(GOOGLE_CLIENT_SECRET)
+        if not self.client_id:
             raise Exception(
                 'Google client id is empty. '
                 'Make sure the GOOGLE_CLIENT_ID environment variable is set.')
-        if not GOOGLE_CLIENT_SECRET:
+        if not self.client_secret:
             raise Exception(
                 'Google client secret is empty. '
                 'Make sure the GOOGLE_CLIENT_SECRET environment variable is set.')
@@ -31,7 +33,7 @@ class GoogleProvider(SsoProvider, OauthProvider):
             redirect_uri=redirect_uri,
         )
         query = dict(
-            client_id=GOOGLE_CLIENT_ID,
+            client_id=self.client_id,
             prompt='select_account',
             redirect_uri=urllib.parse.quote_plus(
                 f'{base_url}/oauth',
@@ -58,8 +60,8 @@ class GoogleProvider(SsoProvider, OauthProvider):
                 'https://oauth2.googleapis.com/token',
                 data=dict(
                     code=code,
-                    client_id=GOOGLE_CLIENT_ID,
-                    client_secret=GOOGLE_CLIENT_SECRET,
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
                     redirect_uri=f'{base_url}/oauth',
                     grant_type='authorization_code',
                 ),
