@@ -360,11 +360,18 @@ function ChartBlock({
     selected,
   ]);
 
+  const widthPercentage =
+    useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
+
   const isEditingPrevious = usePrevious(isEditing);
   const widthPrevious = usePrevious(width);
+  const widthPercentagePrevious = usePrevious(configuration?.[VARIABLE_NAME_WIDTH_PERCENTAGE]);
   useEffect(() => {
     const rect = refChartContainer?.current?.getBoundingClientRect();
-    if (isEditingPrevious !== isEditing || widthPrevious !== width) {
+    if (isEditingPrevious !== isEditing
+      || widthPrevious !== width
+      || widthPercentagePrevious !== widthPercentage
+    ) {
       setChartWidth(0);
       setTimeout(() => {
         const w = refChartContainer?.current?.getBoundingClientRect()?.width;
@@ -382,6 +389,8 @@ function ChartBlock({
     setChartWidth,
     width,
     widthPrevious,
+    widthPercentage,
+    widthPercentagePrevious,
   ]);
 
   const availableVariables = useMemo(() => {
@@ -525,9 +534,6 @@ function ChartBlock({
     upstreamBlocks,
     upstreamBlocksPrevious,
   ]);
-
-  const widthPercentage =
-    useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
 
   const {
     code: configurationOptionsElsForCode,
