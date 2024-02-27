@@ -35,6 +35,7 @@ type BlockLayoutItemProps = {
   detail?: boolean;
   disableDrag?: boolean;
   height?: number;
+  isLoading?: boolean;
   first?: boolean;
   onDrop?: (opts: {
     blockLayoutItem: BlockLayoutItemType;
@@ -62,6 +63,7 @@ function BlockLayoutItem({
   disableDrag,
   first,
   height,
+  isLoading,
   onDrop,
   onSave,
   pageBlockLayoutUUID,
@@ -293,7 +295,9 @@ function BlockLayoutItem({
                   >
                     {(isHovering || menuVisible) && (
                       <Button
+                        disabled={isLoading}
                         iconOnly
+                        loading={isLoading}
                         noBackground
                         onClick={() => {
                           setMenuVisible(true);

@@ -17,7 +17,6 @@ import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Headline from '@oracle/elements/Headline';
 import LayoutDivider from './LayoutDivider';
 import Link from '@oracle/elements/Link';
@@ -91,6 +90,7 @@ function BlockLayout({
   const windowSize = useWindowSize();
 
   const [selectedBlockItem, setSelectedBlockItemState] = useState<BlockLayoutItemType>(null);
+  const [deletingBlockUUID, setDeletingBlockUUID] = useState<string>(null);
 
   const refreshInterval = useMemo(() => selectedBlockItem?.data_source?.refresh_interval, [
     selectedBlockItem,
@@ -194,6 +194,7 @@ function BlockLayout({
               setSelectedBlockItem(blockItemNew);
             }
 
+            setDeletingBlockUUID(null);
             fetchBlockLayoutItem();
           },
           onErrorCallback: (response, errors) => showError({
@@ -315,6 +316,8 @@ function BlockLayout({
     } else {
       newLayout[rowIndex] = newRow;
     }
+
+    setDeletingBlockUUID(blockUUID);
 
     // @ts-ignore
     updateBlockLayoutItem({
@@ -485,6 +488,7 @@ function BlockLayout({
               createNewBlockItem={createNewBlockItem}
               first={0 === idx2}
               height={height}
+              isLoading={deletingBlockUUID === blockUUID && isLoadingUpdateBlockLayoutItem}
               onDrop={({
                 columnIndex,
                 rowIndex,
@@ -542,6 +546,8 @@ function BlockLayout({
     blocks,
     containerRect,
     createNewBlockItem,
+    deletingBlockUUID,
+    isLoadingUpdateBlockLayoutItem,
     layout,
     moveBlockLayoutItem,
     removeBlockLayoutItem,
@@ -653,329 +659,345 @@ function BlockLayout({
     selectedBlockItem,
   ]);
 
-  const before = useMemo(() => (
-    <div
-      style={{
-        paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
-        paddingTop: typeof topOffset === 'undefined' ? ASIDE_HEADER_HEIGHT : 0,
-      }}
-    >
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Spacing mb={1}>
-          <Text bold>
-            Chart name
-          </Text>
-          <Text muted small>
-            Human readable name for your chart.
-          </Text>
-        </Spacing>
-
-        <TextInput
-          // @ts-ignore
-          onChange={e => setObjectAttributes(prev => ({
-            ...prev,
-            name_new: e.target.value,
-          }))}
-          placeholder="Type name for chart..."
-          primary
-          setContentOnMount
-          value={objectAttributes?.name_new || ''}
-        />
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Spacing mb={1}>
-          <Text bold>
-            Chart type
-          </Text>
-          <Text muted small>
-            Choose how you want to display your data.
-          </Text>
-        </Spacing>
-
-        <Select
-          onChange={e => setObjectAttributes(prev => ({
-            ...prev,
-            configuration: {
-              chart_type: e.target.value,
-            },
-          }))}
-          placeholder="Select chart type"
-          primary
-          value={objectAttributes?.configuration?.chart_type || ''}
-        >
-          {CHART_TYPES.concat(ChartTypeEnum.CUSTOM).map(val => (
-            <option key={val} value={val}>
-              {capitalize(val)}
-            </option>
-          ))}
-        </Select>
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-        <Divider light />
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Headline>
-          Data source
-        </Headline>
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Spacing mb={1}>
-          <Text bold>
-            Data source type
-          </Text>
-          <Text muted small>
-            Configure where the data for this chart comes from.
-          </Text>
-        </Spacing>
-
-        <Select
-          onChange={e => setObjectAttributes(prev => ({
-            ...prev,
-            data_source: {
-              ...prev?.data_source,
-              type: e.target.value,
-            },
-          }))}
-          placeholder="Select data source type"
-          primary
-          value={objectAttributes?.data_source?.type || ''}
-        >
-          {DATA_SOURCES.map(val => (
-            <option key={val} value={val}>
-              {capitalize(DATA_SOURCES_HUMAN_READABLE_MAPPING[val])}
-            </option>
-          ))}
-        </Select>
-      </Spacing>
-
-      {[
-        DataSourceEnum.BLOCK,
-        DataSourceEnum.BLOCK_RUNS,
-        DataSourceEnum.PIPELINE_RUNS,
-        DataSourceEnum.PIPELINE_SCHEDULES,
-      ].includes(objectAttributes?.data_source?.type) && (
-        <>
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-            <Spacing mb={1}>
-              <Text bold>
-                Pipeline UUID
-              </Text>
-              <Text muted small>
-                Select the pipeline the data source comes from.
-              </Text>
-            </Spacing>
-
-            <Select
-              monospace
-              // @ts-ignore
-              onChange={e => setObjectAttributes(prev => ({
-                ...prev,
-                data_source: {
-                  ...prev?.data_source,
-                  block_uuid: null,
-                  pipeline_schedule_id: null,
-                  pipeline_uuid: e.target.value,
-                },
-              }))}
-              primary
-              value={objectAttributes?.data_source?.pipeline_uuid || ''}
-            >
-              <option value={null} />
-
-              {pipelines?.map(({ uuid }) => (
-                <option key={uuid} value={uuid}>
-                  {uuid}
-                </option>
-              ))}
-            </Select>
-          </Spacing>
-        </>
-      )}
-
-      {[
-        DataSourceEnum.PIPELINE_RUNS,
-      ].includes(objectAttributes?.data_source?.type) && (
-        <>
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-            <Spacing mb={1}>
-              <Text bold>
-                Trigger
-              </Text>
-              <Text muted small>
-                Select the trigger that the pipeline runs should belong to.
-              </Text>
-            </Spacing>
-
-            <Select
-              monospace
-              // @ts-ignore
-              onChange={e => setObjectAttributes(prev => ({
-                ...prev,
-                data_source: {
-                  ...prev?.data_source,
-                  pipeline_schedule_id: e.target.value,
-                },
-              }))}
-              primary
-              value={objectAttributes?.data_source?.pipeline_schedule_id || ''}
-            >
-              <option value={null} />
-
-              {pipelineSchedules?.map(({ id, name }) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-          </Spacing>
-        </>
-      )}
-
-      {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
-        <>
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-            <Spacing mb={1}>
-              <Text bold>
-                Block UUID
-              </Text>
-              <Text muted small>
-                Select the block the data source comes from.
-              </Text>
-            </Spacing>
-
-            <Select
-              monospace
-              // @ts-ignore
-              onChange={e => setObjectAttributes(prev => ({
-                ...prev,
-                data_source: {
-                  ...prev?.data_source,
-                  block_uuid: e.target.value,
-                },
-              }))}
-              primary
-              value={objectAttributes?.data_source?.block_uuid || ''}
-            >
-              <option value={null} />
-
-              {blocksFromPipeline?.map(({ uuid }) => (
-                <option key={uuid} value={uuid}>
-                  {uuid}
-                </option>
-              ))}
-            </Select>
-          </Spacing>
-
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-            <Spacing mb={1}>
-              <Text bold>
-                Partitions
-              </Text>
-              <Text muted small>
-                Enter a positive or a negative number.
-                If positive, then data from the block will be the most recent N partitions.
-                If negative, then data from the block will be the oldest N partitions.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text muted small>
-                  Leave blank if you want the chart to execute the block and display the data
-                  produced from that ad hoc block execution.
-                </Text>
-              </Spacing>
-            </Spacing>
-
-            <TextInput
-              monospace
-              // @ts-ignore
-              onChange={e => setObjectAttributes(prev => ({
-                ...prev,
-                data_source: {
-                  ...prev?.data_source,
-                  partitions: typeof e.target.value !== 'undefined'
-                    ? Number(e.target.value)
-                    : e.target.value,
-                },
-              }))}
-              placeholder="Enter number of partitions"
-              primary
-              setContentOnMount
-              type="number"
-              value={objectAttributes?.data_source?.partitions || ''}
-            />
-          </Spacing>
-        </>
-      )}
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Spacing mb={1}>
-          <Text bold>
-            Refresh interval
-          </Text>
-          <Text muted small>
-            How frequent do you want this chart to automatically fetch new data from its
-            data source? Enter a number in milliseconds (e.g. 1000ms is 1 second).
-          </Text>
-        </Spacing>
-
-        <TextInput
-          monospace
-          // @ts-ignore
-          onChange={e => setObjectAttributes(prev => ({
-            ...prev,
-            data_source: {
-              ...prev?.data_source,
-              refresh_interval: e.target.value,
-            },
-          }))}
-          placeholder="Enter number for refresh interval"
-          primary
-          setContentOnMount
-          type="number"
-          value={objectAttributes?.data_source?.refresh_interval || 60000}
-        />
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-        <Divider light />
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Headline>
-          Chart display settings
-        </Headline>
-      </Spacing>
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <Text default>
-          Number of columns from data source: {typeof blockForChartConfigurations?.data?.columns !== 'undefined' ? (
-            <Text bold inline monospace>
-              {blockForChartConfigurations?.data?.columns?.length}
+  const before = useMemo(() => (beforeHidden
+    ? null
+    : (
+      <div
+        style={{
+          paddingBottom: UNITS_BETWEEN_ITEMS_IN_SECTIONS * UNIT,
+          paddingTop: typeof topOffset === 'undefined' ? ASIDE_HEADER_HEIGHT : 0,
+        }}
+      >
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Text bold>
+              Chart name
             </Text>
-          ) : <Spacing mt={1}><Spinner inverted small /></Spacing>}
-        </Text>
-      </Spacing>
+            <Text muted small>
+              Human readable name for your chart.
+            </Text>
+          </Spacing>
 
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-        <ChartConfigurations
-          block={blockForChartConfigurations}
-          updateConfiguration={(configuration) => {
-            setObjectAttributes(prev => ({
+          <TextInput
+            // @ts-ignore
+            onChange={e => setObjectAttributes(prev => ({
+              ...prev,
+              name_new: e.target.value,
+            }))}
+            placeholder="Type name for chart..."
+            primary
+            setContentOnMount
+            value={objectAttributes?.name || ''}
+          />
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Text bold>
+              Chart type
+            </Text>
+            <Text muted small>
+              Choose how you want to display your data.
+            </Text>
+          </Spacing>
+
+          <Select
+            onChange={e => setObjectAttributes(prev => ({
               ...prev,
               configuration: {
-                ...prev?.configuration,
-                ...configuration,
+                chart_type: e.target.value,
               },
-            }));
-          }}
-        />
-      </Spacing>
-    </div>
+            }))}
+            placeholder="Select chart type"
+            primary
+            value={objectAttributes?.configuration?.chart_type || ''}
+          >
+            {CHART_TYPES.concat(ChartTypeEnum.CUSTOM).map(val => (
+              <option key={val} value={val}>
+                {capitalize(val)}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Divider light />
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Headline>
+            Data source
+          </Headline>
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Text bold>
+              Data source type
+            </Text>
+            <Text muted small>
+              Configure where the data for this chart comes from.
+            </Text>
+          </Spacing>
+
+          <Select
+            onChange={e => setObjectAttributes(prev => ({
+              ...prev,
+              data_source: {
+                ...prev?.data_source,
+                type: e.target.value,
+              },
+            }))}
+            placeholder="Select data source type"
+            primary
+            value={objectAttributes?.data_source?.type || ''}
+          >
+            {DATA_SOURCES.map(val => (
+              <option key={val} value={val}>
+                {capitalize(DATA_SOURCES_HUMAN_READABLE_MAPPING[val])}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+
+        {[
+          DataSourceEnum.BLOCK,
+          DataSourceEnum.BLOCK_RUNS,
+          DataSourceEnum.PIPELINE_RUNS,
+          DataSourceEnum.PIPELINE_SCHEDULES,
+        ].includes(objectAttributes?.data_source?.type) && (
+          <>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Pipeline UUID
+                </Text>
+                <Text muted small>
+                  Select the pipeline the data source comes from.
+                </Text>
+              </Spacing>
+
+              <Select
+                monospace
+                // @ts-ignore
+                onChange={e => setObjectAttributes(prev => ({
+                  ...prev,
+                  data_source: {
+                    ...prev?.data_source,
+                    block_uuid: null,
+                    pipeline_schedule_id: null,
+                    pipeline_uuid: e.target.value,
+                  },
+                }))}
+                primary
+                value={objectAttributes?.data_source?.pipeline_uuid || ''}
+              >
+                <option value={null} />
+
+                {pipelines?.map(({ uuid }) => (
+                  <option key={uuid} value={uuid}>
+                    {uuid}
+                  </option>
+                ))}
+              </Select>
+            </Spacing>
+          </>
+        )}
+
+        {[
+          DataSourceEnum.PIPELINE_RUNS,
+        ].includes(objectAttributes?.data_source?.type) && (
+          <>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Trigger
+                </Text>
+                <Text muted small>
+                  Select the trigger that the pipeline runs should belong to.
+                </Text>
+              </Spacing>
+
+              <Select
+                monospace
+                // @ts-ignore
+                onChange={e => setObjectAttributes(prev => ({
+                  ...prev,
+                  data_source: {
+                    ...prev?.data_source,
+                    pipeline_schedule_id: e.target.value,
+                  },
+                }))}
+                primary
+                value={objectAttributes?.data_source?.pipeline_schedule_id || ''}
+              >
+                <option value={null} />
+
+                {pipelineSchedules?.map(({ id, name }) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </Spacing>
+          </>
+        )}
+
+        {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
+          <>
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Block UUID
+                </Text>
+                <Text muted small>
+                  Select the block the data source comes from.
+                </Text>
+              </Spacing>
+
+              <Select
+                monospace
+                // @ts-ignore
+                onChange={e => setObjectAttributes(prev => ({
+                  ...prev,
+                  data_source: {
+                    ...prev?.data_source,
+                    block_uuid: e.target.value,
+                  },
+                }))}
+                primary
+                value={objectAttributes?.data_source?.block_uuid || ''}
+              >
+                <option value={null} />
+
+                {blocksFromPipeline?.map(({ uuid }) => (
+                  <option key={uuid} value={uuid}>
+                    {uuid}
+                  </option>
+                ))}
+              </Select>
+            </Spacing>
+
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Partitions
+                </Text>
+                <Text muted small>
+                  Enter a positive or a negative number.
+                  If positive, then data from the block will be the most recent N partitions.
+                  If negative, then data from the block will be the oldest N partitions.
+                </Text>
+
+                <Spacing mt={1}>
+                  <Text muted small>
+                    Leave blank if you want the chart to execute the block and display the data
+                    produced from that ad hoc block execution.
+                  </Text>
+                </Spacing>
+              </Spacing>
+
+              <TextInput
+                monospace
+                // @ts-ignore
+                onChange={e => setObjectAttributes(prev => ({
+                  ...prev,
+                  data_source: {
+                    ...prev?.data_source,
+                    partitions: typeof e.target.value !== 'undefined'
+                      ? Number(e.target.value)
+                      : e.target.value,
+                  },
+                }))}
+                placeholder="Enter number of partitions"
+                primary
+                setContentOnMount
+                type="number"
+                value={objectAttributes?.data_source?.partitions || ''}
+              />
+            </Spacing>
+          </>
+        )}
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Text bold>
+              Refresh interval
+            </Text>
+            <Text muted small>
+              How frequent do you want this chart to automatically fetch new data from its
+              data source? Enter a number in milliseconds (e.g. 1000ms is 1 second).
+            </Text>
+          </Spacing>
+
+          <TextInput
+            monospace
+            // @ts-ignore
+            onChange={e => setObjectAttributes(prev => ({
+              ...prev,
+              data_source: {
+                ...prev?.data_source,
+                refresh_interval: e.target.value,
+              },
+            }))}
+            placeholder="Enter number for refresh interval"
+            primary
+            setContentOnMount
+            type="number"
+            value={objectAttributes?.data_source?.refresh_interval || 60000}
+          />
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Divider light />
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <Headline>
+            Chart display settings
+          </Headline>
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          {!blockForChartConfigurations?.data_source
+            ? (
+              <Text default>
+                Please select a data source type above.
+              </Text>
+            ): (
+              <Text default>
+                Number of columns from data source: {
+                  typeof blockForChartConfigurations?.data?.columns !== 'undefined'
+                  ? (
+                    <Text bold inline monospace>
+                      {blockForChartConfigurations?.data?.columns?.length}
+                    </Text>
+                  ): (
+                    <Spacing mt={1}><Spinner inverted small /></Spacing>
+                )}
+              </Text>
+            )
+          }
+        </Spacing>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
+          <ChartConfigurations
+            block={blockForChartConfigurations}
+            updateConfiguration={(configuration) => {
+              setObjectAttributes(prev => ({
+                ...prev,
+                configuration: {
+                  ...prev?.configuration,
+                  ...configuration,
+                },
+              }));
+            }}
+          />
+        </Spacing>
+      </div>
+    )
   ), [
+    beforeHidden,
     blockForChartConfigurations,
     blocksFromPipeline,
     objectAttributes,
@@ -1033,6 +1055,7 @@ function BlockLayout({
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeDraggableTopOffset={topOffset ? (topOffset - ASIDE_HEADER_HEIGHT) : 0}
       beforeFooter={!beforeHidden && (
         <Spacing p={PADDING_UNITS}>
           <FlexContainer>
@@ -1079,6 +1102,7 @@ function BlockLayout({
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
+      excludeOffsetFromBeforeDraggableLeft
       headerOffset={topOffset || 0}
       hideAfterCompletely
       hideBeforeCompletely
@@ -1172,6 +1196,8 @@ function BlockLayout({
         {!selectedBlockItem && !isEmpty && rowsEl}
         {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
+
+      <Spacing mb={2} />
     </TripleLayout>
   );
 }

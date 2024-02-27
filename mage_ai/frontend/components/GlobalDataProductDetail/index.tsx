@@ -333,6 +333,7 @@ function GlobalDataProductDetail({
       )}
       beforeHidden={beforeHidden}
       beforeWidth={beforeWidth}
+      excludeOffsetFromBeforeDraggableLeft
       leftOffset={VERTICAL_NAVIGATION_WIDTH}
       setBeforeHidden={setBeforeHidden}
       setBeforeWidth={setBeforeWidth}
