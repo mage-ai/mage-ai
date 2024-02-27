@@ -19,6 +19,7 @@ class MySQL(Source):
             port=self.config.get('port', 3306),
             username=self.config['username'],
             connection_method=self.config.get('connection_method', ConnectionMethod.DIRECT),
+            conn_kwargs=self.config.get('conn_kwargs'),
             ssh_host=self.config.get('ssh_host'),
             ssh_port=self.config.get('ssh_port', 22),
             ssh_username=self.config.get('ssh_username'),
