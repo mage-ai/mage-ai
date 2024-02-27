@@ -34,6 +34,7 @@ class MySQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
         port=None,
         username='username',
         connection_method='direct',
+        conn_kwargs=None,
         ssh_host=None,
         ssh_port=22,
         ssh_username=None,

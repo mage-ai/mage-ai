@@ -16,6 +16,7 @@ You must enter the following credentials when configuring this source:
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `root` |
 | `password` | Password for the user to access the database. | `abc123...` |
 | `connection_method` | The method used to connect to MySQL server, either "direct" or "ssh_tunnel". | `direct` or `ssh_tunnel` |
+| `conn_kwargs` | (Optional) Extra [connection keyword arguments](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html) in dictionary format. | `{"ssl_ca": "CARoot.pem", "ssl_cert": "certificate.pem", "ssl_key: "key.pem"'}` |
 | `ssh_host` | (Optional) The host of the intermediate bastion server. | `123.45.67.89` |
 | `ssh_port` | (Optional) The port of the intermediate bastion server. Default value: 22 | `22` |
 | `ssh_username` | (Optional) The username used to connect to the bastion server. | `username` |

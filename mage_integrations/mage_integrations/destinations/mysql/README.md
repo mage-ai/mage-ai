@@ -22,6 +22,7 @@ You must enter the following credentials when configuring this source:
 | `ssh_username` | (Optional) The username used to connect to the bastion server. | `username` |
 | `ssh_password` | (Optional) The password used to connect to the bastion server. It should be set if you authenticate with the bastion server with password. | `password` |
 | `ssh_pkey` | (Optional) The path to the private key used to connect to the bastion server or the content of the key file. It should be set if you authenticate with the bastion server with private key. | `/path/to/private/key` |
+| `conn_kwargs` | (Optional) Extra [connection keyword arguments](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html) in dictionary format. | `{"ssl_ca": "CARoot.pem", "ssl_cert": "certificate.pem", "ssl_key: "key.pem"'}` |
 | `use_lowercase` | (Optional) Whether to use lower case for column names. | `true` or `false` |
 
 ### Optional Configs

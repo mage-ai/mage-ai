@@ -1,10 +1,13 @@
-from mage_integrations.connections.sql.base import Connection
-from mysql.connector import connect
-from sshtunnel import SSHTunnelForwarder
 import enum
 import io
 import os
+from typing import Dict
+
 import paramiko
+from mysql.connector import connect
+from sshtunnel import SSHTunnelForwarder
+
+from mage_integrations.connections.sql.base import Connection
 
 
 class ConnectionMethod(str, enum.Enum):
@@ -21,6 +24,7 @@ class MySQL(Connection):
         username: str,
         port: int = None,
         connection_method: ConnectionMethod = ConnectionMethod.DIRECT,
+        conn_kwargs: Dict = None,
         ssh_host: str = None,
         ssh_port: int = 22,
         ssh_username: str = None,
@@ -40,6 +44,7 @@ class MySQL(Connection):
         self.ssh_username = ssh_username
         self.ssh_password = ssh_password
         self.ssh_pkey = ssh_pkey
+        self.conn_kwargs = conn_kwargs or dict()
 
         self.ssh_tunnel = None
 
@@ -74,6 +79,7 @@ class MySQL(Connection):
             password=self.password,
             port=port,
             user=self.username,
+            **self.conn_kwargs,
         )
 
     def close_connection(self, connection):
