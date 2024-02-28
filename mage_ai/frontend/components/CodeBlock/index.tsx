@@ -1584,7 +1584,7 @@ function CodeBlock({
           }
           textareaFocused={isReplicated ? null : textareaFocused}
           uuid={`${block?.uuid}/${block?.type}`}
-          value={content}
+          value={isReplicated ? block?.content : content}
           width="100%"
         />
       );
