@@ -9,12 +9,8 @@ from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings import (
-    OKTA_CLIENT_ID,
-    OKTA_CLIENT_SECRET,
-    OKTA_DOMAIN_URL,
-    get_settings_value,
-)
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
 
 
 class OktaProvider(SsoProvider, OauthProvider):

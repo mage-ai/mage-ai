@@ -6,7 +6,8 @@ from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.settings import (
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import (
     LDAP_AUTHENTICATION_FILTER,
     LDAP_AUTHORIZATION_FILTER,
     LDAP_BASE_DN,
@@ -120,14 +121,23 @@ class LDAPConnection(LDAPAuthenticator):
 
 def new_ldap_connection() -> LDAPConnection:
     ldap_config_from_env_vars = dict(
-        server_url=LDAP_SERVER,
-        bind_dn=LDAP_BIND_DN,
-        bind_password=LDAP_BIND_PASSWORD,
-        base_dn=LDAP_BASE_DN,
-        authentication_filter=LDAP_AUTHENTICATION_FILTER,
-        authorization_filter=LDAP_AUTHORIZATION_FILTER,
-        group_field=LDAP_GROUP_FIELD,
-        roles_mapping=LDAP_ROLES_MAPPING,
+        server_url=get_settings_value(LDAP_SERVER, 'ldaps://127.0.0.1:1636'),
+        bind_dn=get_settings_value(LDAP_BIND_DN, 'cd=admin,dc=example,dc=org'),
+        bind_password=get_settings_value(LDAP_BIND_PASSWORD, 'admin_password'),
+        base_dn=get_settings_value(LDAP_BASE_DN, 'dc=example,dc=org'),
+        authentication_filter=get_settings_value(
+            LDAP_AUTHENTICATION_FILTER,
+            '(&(|(objectClass=Pers)(objectClass=gro))(cn={username}))'
+        ),
+        authorization_filter=get_settings_value(
+            LDAP_AUTHORIZATION_FILTER,
+            '(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))'
+        ),
+        group_field=get_settings_value(
+            LDAP_GROUP_FIELD,
+            'memberOf',
+        ),
+        roles_mapping=get_settings_value(LDAP_ROLES_MAPPING),
     )
     try:
         ldap_config = get_repo_config().ldap_config

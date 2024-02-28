@@ -10,11 +10,11 @@ from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.server.logger import Logger
-from mage_ai.settings import (
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import (
     OIDC_CLIENT_ID,
     OIDC_CLIENT_SECRET,
     OIDC_DISCOVERY_URL,
-    get_settings_value,
 )
 
 logger = Logger().new_server_logger(__name__)

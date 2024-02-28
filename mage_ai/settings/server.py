@@ -1,6 +1,6 @@
 import os
 
-from mage_ai.settings.secret_generation import generate_jwt_secret
+from .secret_generation import generate_jwt_secret
 
 # If you add a new environment variable, make sure to check if it should be added to
 # the `MAGE_SETTINGS_ENVIRONMENT_VARIABLES` list at the bottom of this file. Also, update
@@ -67,26 +67,6 @@ except ValueError:
 # Default access level to give to users created when authenticated through OAuth
 # for the first time. value should be the name of a Mage role (e.g. Viewer, Editor, Admin)
 OAUTH_DEFAULT_ACCESS = os.getenv('OAUTH_DEFAULT_ACCESS')
-LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldaps://127.0.0.1:1636')
-LDAP_BIND_DN = os.getenv('LDAP_BIND_DN', 'cd=admin,dc=example,dc=org')
-LDAP_BIND_PASSWORD = os.getenv('LDAP_BIND_PASSWORD', 'admin_password')
-LDAP_BASE_DN = os.getenv('LDAP_BASE_DN', 'dc=example,dc=org')
-LDAP_AUTHENTICATION_FILTER = os.getenv(
-    'LDAP_AUTHENTICATION_FILTER',
-    '(&(|(objectClass=Pers)(objectClass=gro))(cn={username}))',
-)
-LDAP_AUTHORIZATION_FILTER = os.getenv(
-    'LDAP_AUTHORIZATION_FILTER',
-    '(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))',
-)
-LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
-# Default access level to give to users created when authenticated through LDAP
-# for the first time. value should be the name of a Mage role (e.g. Viewer, Editor, Admin)
-LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
-LDAP_GROUP_FIELD = os.getenv('LDAP_GROUP_FIELD', 'memberOf')
-LDAP_ROLES_MAPPING = os.getenv('LDAP_ROLES_MAPPING', None)
-
-ACTIVE_DIRECTORY_DIRECTORY_ID = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID', None)
 
 # ----------------------------------------------------------
 
@@ -181,6 +161,7 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
     'ACTIVE_DIRECTORY_CLIENT_ID',
     'ACTIVE_DIRECTORY_CLIENT_SECRET',
+    'ACTIVE_DIRECTORY_ROLES_MAPPING',
     'OKTA_DOMAIN_URL',
     'OKTA_CLIENT_ID',
     'OKTA_CLIENT_SECRET',

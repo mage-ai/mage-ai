@@ -5,25 +5,22 @@ import subprocess
 from typing import Callable
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
-from mage_ai.authentication.oauth.constants import (
-    BITBUCKET_HOST,
-    GITLAB_HOST,
-    ProviderName,
-    get_ghe_hostname,
-)
+from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.data_preparation.git.constants import (
     DEFAULT_KNOWN_HOSTS_FILE,
     DEFAULT_SSH_KEY_DIRECTORY,
 )
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
-from mage_ai.settings import (
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.values import (
+    BITBUCKET_HOST,
     GIT_ACCESS_TOKEN,
     GIT_SSH_PRIVATE_KEY,
     GIT_SSH_PUBLIC_KEY,
-    get_settings_value,
+    GITLAB_HOST,
 )
-from mage_ai.settings.repo import get_repo_path
 
 
 def get_auth_type_from_url(remote_url: str) -> AuthType:
@@ -41,9 +38,11 @@ def get_provider_from_remote_url(remote_url: str) -> str:
     if not remote_url:
         return ProviderName.GITHUB
 
-    if BITBUCKET_HOST and BITBUCKET_HOST in remote_url or 'bitbucket.org' in remote_url:
+    bitbucket_host = get_settings_value(BITBUCKET_HOST)
+    gitlab_host = get_settings_value(GITLAB_HOST)
+    if bitbucket_host and bitbucket_host in remote_url or 'bitbucket.org' in remote_url:
         return ProviderName.BITBUCKET
-    elif GITLAB_HOST and GITLAB_HOST in remote_url or 'gitlab.com' in remote_url:
+    elif gitlab_host and gitlab_host in remote_url or 'gitlab.com' in remote_url:
         return ProviderName.GITLAB
     elif ghe_hostname and ghe_hostname in remote_url:
         return ProviderName.GHE

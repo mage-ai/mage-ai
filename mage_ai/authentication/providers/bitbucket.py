@@ -8,11 +8,11 @@ from aiohttp import BasicAuth
 from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings import (
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import (
     BITBUCKET_HOST,
     BITBUCKET_OAUTH_KEY,
     BITBUCKET_OAUTH_SECRET,
-    get_settings_value,
 )
 
 

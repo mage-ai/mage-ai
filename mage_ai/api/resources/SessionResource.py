@@ -10,9 +10,10 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
-    LDAP_DEFAULT_ACCESS,
     OAUTH_DEFAULT_ACCESS,
+    get_settings_value,
 )
+from mage_ai.settings.values import LDAP_DEFAULT_ACCESS
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -97,10 +98,11 @@ class SessionResource(BaseResource):
                 role_names = conn.get_user_roles(user_attributes)
                 if role_names:
                     roles = Role.query.filter(Role.name.in_(role_names)).all()
+                ldap_default_access = get_settings_value(LDAP_DEFAULT_ACCESS)
                 if not roles and \
-                        LDAP_DEFAULT_ACCESS is not None and \
-                        LDAP_DEFAULT_ACCESS in [r for r in Role.DefaultRole]:
-                    default_role = Role.get_role(LDAP_DEFAULT_ACCESS)
+                        ldap_default_access is not None and \
+                        ldap_default_access in [r for r in Role.DefaultRole]:
+                    default_role = Role.get_role(ldap_default_access)
                     if default_role:
                         roles.append(default_role)
                 user = User.create(

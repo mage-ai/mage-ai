@@ -7,7 +7,8 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings import GHE_CLIENT_ID, GHE_CLIENT_SECRET, get_settings_value
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import GHE_CLIENT_ID, GHE_CLIENT_SECRET
 
 
 class GHEProvider(OauthProvider):

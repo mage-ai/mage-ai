@@ -3,9 +3,7 @@ from mage_ai.settings.backends import (
     BackendType,
     SettingsBackend,
 )
-from mage_ai.settings.values.auth import *  # noqa: F401, F403
-from mage_ai.settings.values.server import *  # noqa: F401, F403
-from mage_ai.settings.values.sso import *  # noqa: F401, F403
+from mage_ai.settings.server import *  # noqa: F401, F403
 
 
 class Settings():

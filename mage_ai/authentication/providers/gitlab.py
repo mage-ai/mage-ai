@@ -7,12 +7,8 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings import (
-    GITLAB_CLIENT_ID,
-    GITLAB_CLIENT_SECRET,
-    GITLAB_HOST,
-    get_settings_value,
-)
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.values import GITLAB_CLIENT_ID, GITLAB_CLIENT_SECRET, GITLAB_HOST
 
 
 class GitlabProvider(OauthProvider):

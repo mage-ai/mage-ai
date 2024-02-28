@@ -88,7 +88,6 @@ from mage_ai.settings import (
     AUTHENTICATION_MODE,
     DISABLE_AUTO_BROWSER_OPEN,
     ENABLE_PROMETHEUS,
-    LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
     OTEL_EXPORTER_OTLP_ENDPOINT,
     REDIS_URL,
@@ -100,6 +99,7 @@ from mage_ai.settings import (
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
+    get_settings_value,
 )
 from mage_ai.settings.repo import (
     DEFAULT_MAGE_DATA_DIR,
@@ -110,6 +110,7 @@ from mage_ai.settings.repo import (
     get_variables_dir,
     set_repo_path,
 )
+from mage_ai.settings.values import LDAP_ADMIN_USERNAME
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
@@ -459,7 +460,7 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
         if AUTHENTICATION_MODE.lower() == 'ldap':
             user = User.create(
                 roles_new=[default_owner_role],
-                username=LDAP_ADMIN_USERNAME,
+                username=get_settings_value(LDAP_ADMIN_USERNAME, 'admin'),
             )
         else:
             password_salt = generate_salt()
