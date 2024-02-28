@@ -5,7 +5,7 @@ test('ensure all main pages load properly', async ({ page }) => {
     await page.locator('div[class*="indexstyle__VerticalNavigationStyleComponent"] > div').hover();
     await page.getByRole('link', { name: name }).first().click();
     await page.waitForLoadState();
-    await expect(page.getByText(name, { exact: true }).first()).toBeVisible({ timeout: VISIBLE_TIMEOUT });
+    await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
   }
 
   await navigateToAndWaitTilLoaded('Overview');
@@ -17,6 +17,6 @@ test('ensure all main pages load properly', async ({ page }) => {
   await navigateToAndWaitTilLoaded('Templates');
   await navigateToAndWaitTilLoaded('Version control');
   await navigateToAndWaitTilLoaded('Terminal');
-  await navigateToAndWaitTilLoaded('Global hooks (beta)');
-  await navigateToAndWaitTilLoaded('Compute management (beta)');
+  await navigateToAndWaitTilLoaded('Global hooks');
+  await navigateToAndWaitTilLoaded('Compute management');
 });
