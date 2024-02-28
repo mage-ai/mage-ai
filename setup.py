@@ -172,6 +172,7 @@ setuptools.setup(
             'nkeys~=0.1.0',
             'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
+            'opentelemetry-api==1.22.0',
             'opentelemetry-exporter-prometheus==0.43b0',
             'opentelemetry-instrumentation-tornado~=0.43b0',
             'opentelemetry-exporter-otlp~=1.22.0',
