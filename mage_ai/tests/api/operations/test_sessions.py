@@ -20,15 +20,19 @@ class SessionOperationTests(BaseApiTestCase):
 
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=user.email,
-                password=password,
-            )),
+            payload=dict(
+                session=dict(
+                    email=user.email,
+                    password=password,
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
 
-        access_token = Oauth2AccessToken.query.filter(Oauth2AccessToken.user_id == user.id).first()
+        access_token = Oauth2AccessToken.query.filter(
+            Oauth2AccessToken.user_id == user.id
+        ).first()
 
         self.assertEqual(
             response['session']['token'],
@@ -41,22 +45,32 @@ class SessionOperationTests(BaseApiTestCase):
         user = create_user(password=password)
 
         with patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1):
-            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
-                with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0):
+            with patch(
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1
+            ):
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0
+                ):
                     operation = self.build_operation(
                         action=constants.CREATE,
-                        payload=dict(session=dict(
-                            email=user.email,
-                            password=password,
-                        )),
+                        payload=dict(
+                            session=dict(
+                                email=user.email,
+                                password=password,
+                            )
+                        ),
                         resource='sessions',
                         user=None,
                     )
                     response = await operation.execute()
 
-                    access_token = Oauth2AccessToken.query.filter(
-                        Oauth2AccessToken.user_id == user.id
-                    ).order_by(Oauth2AccessToken.created_at.desc()).first()
+                    access_token = (
+                        Oauth2AccessToken.query.filter(
+                            Oauth2AccessToken.user_id == user.id
+                        )
+                        .order_by(Oauth2AccessToken.created_at.desc())
+                        .first()
+                    )
 
                     self.assertEqual(
                         response['session']['token'],
@@ -69,10 +83,12 @@ class SessionOperationTests(BaseApiTestCase):
 
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=user.email,
-                password='not password',
-            )),
+            payload=dict(
+                session=dict(
+                    email=user.email,
+                    password='not password',
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -89,10 +105,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "novachrono"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="Wizard King",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="Wizard King",
+                )
+            ),
             resource='sessions',
         )
         await operation.execute()
@@ -111,10 +129,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "licht"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="Golden Dawn",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="Golden Dawn",
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -134,10 +154,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "yami"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="black bull",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="black bull",
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -148,11 +170,18 @@ class SessionOperationTests(BaseApiTestCase):
         self.assertIsNotNone(response['error'])
 
     @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
-    @patch('mage_ai.authentication.ldap.LDAP_ROLES_MAPPING', json.dumps(dict(Admin=['Admin'])))
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
-    async def test_ldap_login_with_role_mapping(self, mock_authenticate, mock_authorize):
-        mock_authenticate.return_value = (True, "Yami_Sukehiro", dict(memberOf=['Admin']))
+    async def test_ldap_login_with_role_mapping(
+        self, mock_authenticate, mock_authorize, monkeypatch
+    ):
+        monkeypatch.setenv('LDAP_ROLES_MAPPING', json.dumps(dict(Admin=['Admin'])))
+
+        mock_authenticate.return_value = (
+            True,
+            "Yami_Sukehiro",
+            dict(memberOf=['Admin']),
+        )
         mock_authorize.return_value = True
 
         Role.create_default_roles()
@@ -160,10 +189,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = self.faker.email()
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="black bull",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="black bull",
+                )
+            ),
             resource='sessions',
         )
         await operation.execute()
