@@ -14,6 +14,15 @@ default:
   CHROMA_PATH: path of the chroma persisitant storage
 ```
 
+## Dependencies
+
+The dependency libraries are not installed in the docker image by default. You'll need to add the libraries to
+project `requirements.txt` file manually and install them.
+
+```
+chromadb>=0.4.17
+```
+
 ## Using Python block
 
 1. Create a new pipeline or open an existing pipeline.
