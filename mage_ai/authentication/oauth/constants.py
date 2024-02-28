@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 
 from mage_ai.settings import get_settings_value
-from mage_ai.settings.values import GHE_HOSTNAME
+from mage_ai.settings.keys import GHE_HOSTNAME
 
 ACTIVE_DIRECTORY_CLIENT_ID = '51aec820-9d49-40a9-b046-17c1f28f620d'
 

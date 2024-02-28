@@ -13,14 +13,14 @@ from mage_ai.data_preparation.git.constants import (
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.settings import get_settings_value
-from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.values import (
+from mage_ai.settings.keys import (
     BITBUCKET_HOST,
     GIT_ACCESS_TOKEN,
     GIT_SSH_PRIVATE_KEY,
     GIT_SSH_PUBLIC_KEY,
     GITLAB_HOST,
 )
+from mage_ai.settings.repo import get_repo_path
 
 
 def get_auth_type_from_url(remote_url: str) -> AuthType:

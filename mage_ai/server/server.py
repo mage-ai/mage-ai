@@ -101,6 +101,7 @@ from mage_ai.settings import (
     USE_UNIQUE_TERMINAL,
     get_settings_value,
 )
+from mage_ai.settings.keys import LDAP_ADMIN_USERNAME
 from mage_ai.settings.repo import (
     DEFAULT_MAGE_DATA_DIR,
     MAGE_CLUSTER_TYPE_ENV_VAR,
@@ -110,7 +111,6 @@ from mage_ai.settings.repo import (
     get_variables_dir,
     set_repo_path,
 )
-from mage_ai.settings.values import LDAP_ADMIN_USERNAME
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod

@@ -7,7 +7,7 @@ from ldap3.core.exceptions import LDAPException
 
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.settings import get_settings_value
-from mage_ai.settings.values import (
+from mage_ai.settings.keys import (
     LDAP_AUTHENTICATION_FILTER,
     LDAP_AUTHORIZATION_FILTER,
     LDAP_BASE_DN,

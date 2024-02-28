@@ -14,7 +14,7 @@ from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.server.logger import Logger
 from mage_ai.settings import get_settings_value
-from mage_ai.settings.values import (
+from mage_ai.settings.keys import (
     ACTIVE_DIRECTORY_CLIENT_ID,
     ACTIVE_DIRECTORY_CLIENT_SECRET,
     ACTIVE_DIRECTORY_DIRECTORY_ID,

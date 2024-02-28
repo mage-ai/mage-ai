@@ -13,7 +13,7 @@ from mage_ai.settings import (
     OAUTH_DEFAULT_ACCESS,
     get_settings_value,
 )
-from mage_ai.settings.values import LDAP_DEFAULT_ACCESS
+from mage_ai.settings.keys import LDAP_DEFAULT_ACCESS
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
