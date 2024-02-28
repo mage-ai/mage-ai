@@ -7,7 +7,7 @@ from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 
 
 class OperationTests(BaseApiTestCase):
-    @patch('mage_ai.settings.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
+    @patch('mage_ai.settings.server.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0)
@@ -25,7 +25,7 @@ class OperationTests(BaseApiTestCase):
 
         self.assertIsNotNone(response['error'])
 
-    @patch('mage_ai.settings.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
+    @patch('mage_ai.settings.server.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
     @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
