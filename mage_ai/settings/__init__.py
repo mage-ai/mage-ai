@@ -1,4 +1,8 @@
-from mage_ai.settings.backends import AWSSecretsManagerBackend, SettingsBackend
+from mage_ai.settings.backends import (
+    AWSSecretsManagerBackend,
+    BackendType,
+    SettingsBackend,
+)
 from mage_ai.settings.values.auth import *  # noqa: F401, F403
 from mage_ai.settings.values.server import *  # noqa: F401, F403
 from mage_ai.settings.values.sso import *  # noqa: F401, F403
@@ -19,7 +23,7 @@ class Settings():
         Returns:
             SettingsBackend: A settings backend instance of the specified type
         """
-        if backend_type == 'aws_secrets_manager':
+        if backend_type == BackendType.AWS_SECRETS_MANAGER:
             self.settings_backend = AWSSecretsManagerBackend(**kwargs)
         else:
             self.settings_backend = SettingsBackend(**kwargs)

@@ -1,6 +1,14 @@
 import base64
 import os
+from enum import Enum
 from typing import Optional
+
+
+class BackendType(str, Enum):
+    """
+    Enum for the different types of settings backends.
+    """
+    AWS_SECRETS_MANAGER = 'aws_secrets_manager'
 
 
 class SettingsBackend:
@@ -50,7 +58,7 @@ class AWSSecretsManagerBackend(SettingsBackend):
     """
     Settings backend that loads configuration settings from AWS Secrets Manager.
     """
-    backend_type = 'aws_secrets_manager'
+    backend_type = BackendType.AWS_SECRETS_MANAGER
 
     def __init__(self, **kwargs) -> None:
         import boto3
