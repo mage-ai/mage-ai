@@ -636,7 +636,7 @@ export function removeTypesFromProperty(
 ) {
   const {
     format,
-    type: types,
+    type: types = [],
     typesDerived: typesDerived1,
   } = property || {};
   const property2 = {
