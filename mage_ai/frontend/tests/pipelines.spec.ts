@@ -24,6 +24,7 @@ test.afterEach(async ({ page }, testInfo) => {
   // Search for pipeline name in case it is on a different page.
   await page.getByRole('textbox').first().fill(pipelineName);
 
+  await expect(page.getByText('All pipelines › 1')).toBeVisible();
   await expect(page.getByRole('cell', { name: pipelineName })).toBeVisible();
   await page.getByRole('cell', { name: pipelineName }).click({ button: 'right' });
   await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
