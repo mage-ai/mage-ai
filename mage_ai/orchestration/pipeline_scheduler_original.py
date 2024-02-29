@@ -240,6 +240,10 @@ class PipelineScheduler:
                     failed_block_runs = self.pipeline_run.failed_block_runs
                     error_msg = 'Failed blocks: '\
                                 f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
+                    for br in failed_block_runs:
+                        message = br.metrics.get('error', {}).get('message')
+                        if message:
+                            error_msg = message
                     self.notification_sender.send_pipeline_run_failure_message(
                         error=error_msg,
                         pipeline=self.pipeline,
@@ -312,6 +316,10 @@ class PipelineScheduler:
                 failed_block_runs = self.pipeline_run.failed_block_runs
                 error_msg = 'Failed blocks: '\
                             f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
+                for br in failed_block_runs:
+                    message = br.metrics.get('error', {}).get('message')
+                    if message:
+                        error_msg = message
 
                 self.on_pipeline_run_failure(error_msg)
             elif PipelineType.INTEGRATION == self.pipeline.type:
