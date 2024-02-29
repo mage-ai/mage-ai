@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -6,18 +7,6 @@ from mage_ai.authentication.providers.active_directory import ADProvider
 
 
 class ADProviderTest(unittest.IsolatedAsyncioTestCase):
-    @patch(
-        'mage_ai.authentication.providers.active_directory.ACTIVE_DIRECTORY_DIRECTORY_ID',
-        'test_directory_id',
-    )
-    @patch(
-        'mage_ai.authentication.providers.active_directory.ACTIVE_DIRECTORY_CLIENT_ID',
-        'test_client_id',
-    )
-    @patch(
-        'mage_ai.authentication.providers.active_directory.ACTIVE_DIRECTORY_CLIENT_SECRET',
-        'test_client_secret',
-    )
     @patch('aiohttp.ClientSession')
     async def test_map_ad_roles_to_mage_roles(self, mock_client_session):
         roles_mapping = json.dumps(
@@ -27,9 +16,14 @@ class ADProviderTest(unittest.IsolatedAsyncioTestCase):
             }
         )
 
-        with patch(
-            'mage_ai.authentication.providers.active_directory.ACTIVE_DIRECTORY_ROLES_MAPPING',
-            roles_mapping,
+        with patch.dict(
+            os.environ,
+            dict(
+                ACTIVE_DIRECTORY_DIRECTORY_ID='test_directory_id',
+                ACTIVE_DIRECTORY_CLIENT_ID='test_client_id',
+                ACTIVE_DIRECTORY_CLIENT_SECRET='test_client_secret',
+                ACTIVE_DIRECTORY_ROLES_MAPPING=roles_mapping,
+            ),
         ):
 
             def side_effect(*args, **kwargs):
