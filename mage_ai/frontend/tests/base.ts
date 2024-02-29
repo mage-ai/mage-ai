@@ -28,6 +28,12 @@ export const test = base.extend<{
      */
     await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
 
+    const improveMageModalCloseButton = page.getByTestId('help_mage_close_button');
+    const improveMageModalCloseButtonIsVisible = await improveMageModalCloseButton.isVisible();
+    if (improveMageModalCloseButtonIsVisible) {
+      await improveMageModalCloseButton.click();
+    }
+
     await enableSettings(page, settingFeaturesToDisable);
 
     // Use subsequent tests.

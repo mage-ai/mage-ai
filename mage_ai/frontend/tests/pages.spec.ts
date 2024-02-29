@@ -3,7 +3,9 @@ import { expect, test } from './base';
 test('ensure all main pages load properly', async ({ page }) => {
   async function navigateToAndWaitTilLoaded(name: string) {
     await page.locator('div[class*="indexstyle__VerticalNavigationStyleComponent"] > div').hover();
-    await page.getByRole('link', { name }).first().click();
+    await page.getByRole('link', { name })
+      .and(page.getByTestId('navigation_link'))
+      .click();
     await page.waitForLoadState();
 
     /*

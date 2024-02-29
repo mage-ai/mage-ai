@@ -1019,6 +1019,7 @@ function PipelineListPage() {
       </Spacing>
 
       <Button
+        data-testid="help_mage_close_button"
         onClick={() => updateProject({
           help_improve_mage: true,
         }).then(() => hideHelpMageModal())}
