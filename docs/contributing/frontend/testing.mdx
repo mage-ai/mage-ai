@@ -13,6 +13,20 @@ empty pipelines, triggers, etc. Set up your
 - Make sure [user authentication](https://docs.mage.ai/production/authentication/overview) is enabled.
 - Make sure your development server is running.
 
+## Configuration
+
+- Tests default to "fail" if a client error occurs. Add the following to the top of the test file to disable this check.
+
+```ts
+test.use({ failOnClientError: false });
+```
+
+- Certain setting features are enabled by default. Refer to `base.ts` for more information, and use the following snippet when needed.
+
+```ts
+test.use({ settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true } });
+```
+
 ## Running the tests
 
 You have the option to just run one specific test or all tests at once. There are

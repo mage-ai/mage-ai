@@ -1,7 +1,20 @@
+import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
+import { TSettingFeaturesToDisable, enableSettings } from '@utils/testing';
 
-export const test = base.extend<{ page: void; }>({
-  page: async ({ page }, use) => {
+export const test = base.extend<{
+  failOnClientError: boolean;
+  settingFeaturesToDisable: TSettingFeaturesToDisable,
+}>({
+  failOnClientError: true,
+  settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true },
+  // eslint-disable-next-line sort-keys
+  page: async ({ page, failOnClientError, settingFeaturesToDisable }, use) => {
+    const pageErrors: Error[] = [];
+    page.addListener('pageerror', (error) => {
+      pageErrors.push(error);
+    });
+
     await page.goto('/sign-in');
     await page.getByPlaceholder('Email').click();
     await page.getByRole('textbox').first().fill('admin@admin.com');
@@ -13,10 +26,22 @@ export const test = base.extend<{ page: void; }>({
      * Wait for redirected page, which can be /overview (if at least 1 pipeline run exists)
      * or /pipelines (if no pipeline runs exist), to load after signing in.
      */
-    await expect(page.getByRole('button', { name: 'New' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
+
+    const improveMageModalCloseButton = page.getByTestId('help_mage_close_button');
+    const improveMageModalCloseButtonIsVisible = await improveMageModalCloseButton.isVisible();
+    if (improveMageModalCloseButtonIsVisible) {
+      await improveMageModalCloseButton.click();
+    }
+
+    await enableSettings(page, settingFeaturesToDisable);
 
     // Use subsequent tests.
     await use(page);
+
+    if (failOnClientError) {
+      expect(pageErrors).toHaveLength(0);
+    }
   },
 });
 

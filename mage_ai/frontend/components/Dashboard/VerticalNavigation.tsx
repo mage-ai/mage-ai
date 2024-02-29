@@ -352,6 +352,7 @@ function VerticalNavigation({
 
     let clickEl = (
       <NavigationLinkStyle
+        data-testid="navigation_link"
         href="#"
         onClick={onClick}
         selected={selected}
