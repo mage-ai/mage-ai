@@ -28,10 +28,10 @@ class ADProvider(SsoProvider, OauthProvider):
     provider = ProviderName.ACTIVE_DIRECTORY
 
     def __init__(self):
-        self.__validate()
         self.directory_id = get_settings_value(ACTIVE_DIRECTORY_DIRECTORY_ID)
         self.client_id = get_settings_value(ACTIVE_DIRECTORY_CLIENT_ID)
         self.client_secret = get_settings_value(ACTIVE_DIRECTORY_CLIENT_SECRET)
+        self.__validate()
 
         self.roles_mapping = get_settings_value(ACTIVE_DIRECTORY_ROLES_MAPPING)
         if self.roles_mapping:
