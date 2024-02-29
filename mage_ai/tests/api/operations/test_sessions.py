@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from unittest.mock import patch
 
@@ -27,6 +28,7 @@ class SessionOperationTests(BaseApiTestCase):
                 )
             ),
             resource='sessions',
+            user=None,
         )
         response = await operation.execute()
 
@@ -90,6 +92,7 @@ class SessionOperationTests(BaseApiTestCase):
                 )
             ),
             resource='sessions',
+            user=None,
         )
         response = await operation.execute()
 
@@ -112,6 +115,7 @@ class SessionOperationTests(BaseApiTestCase):
                 )
             ),
             resource='sessions',
+            user=None,
         )
         await operation.execute()
 
@@ -136,6 +140,7 @@ class SessionOperationTests(BaseApiTestCase):
                 )
             ),
             resource='sessions',
+            user=None,
         )
         response = await operation.execute()
 
@@ -161,6 +166,7 @@ class SessionOperationTests(BaseApiTestCase):
                 )
             ),
             resource='sessions',
+            user=None,
         )
         response = await operation.execute()
 
@@ -172,11 +178,7 @@ class SessionOperationTests(BaseApiTestCase):
     @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
-    async def test_ldap_login_with_role_mapping(
-        self, mock_authenticate, mock_authorize, monkeypatch
-    ):
-        monkeypatch.setenv('LDAP_ROLES_MAPPING', json.dumps(dict(Admin=['Admin'])))
-
+    async def test_ldap_login_with_role_mapping(self, mock_authenticate, mock_authorize):
         mock_authenticate.return_value = (
             True,
             "Yami_Sukehiro",
@@ -186,21 +188,23 @@ class SessionOperationTests(BaseApiTestCase):
 
         Role.create_default_roles()
 
-        username = self.faker.email()
-        operation = self.build_operation(
-            action=constants.CREATE,
-            payload=dict(
-                session=dict(
-                    email=username,
-                    password="black bull",
-                )
-            ),
-            resource='sessions',
-        )
-        await operation.execute()
+        with patch.dict(os.environ, dict(LDAP_ROLES_MAPPING=json.dumps(dict(Admin=['Admin'])))):
+            username = self.faker.email()
+            operation = self.build_operation(
+                action=constants.CREATE,
+                payload=dict(
+                    session=dict(
+                        email=username,
+                        password="black bull",
+                    )
+                ),
+                resource='sessions',
+                user=None,
+            )
+            await operation.execute()
 
-        mock_authenticate.assert_called_once_with(username, "black bull")
-        mock_authorize.assert_called_once_with("Yami_Sukehiro")
-        user = User.query.filter(User.username == username).first()
-        self.assertIsNotNone(user)
-        self.assertEqual(user.roles_new[0].name, 'Admin')
+            mock_authenticate.assert_called_once_with(username, "black bull")
+            mock_authorize.assert_called_once_with("Yami_Sukehiro")
+            user = User.query.filter(User.username == username).first()
+            self.assertIsNotNone(user)
+            self.assertEqual(user.roles_new[0].name, 'Admin')
