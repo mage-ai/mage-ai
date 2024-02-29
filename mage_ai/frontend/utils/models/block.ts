@@ -598,7 +598,7 @@ export function addTypesToProperty(
   property: PropertyColumnMoreType,
 ) {
   const {
-    type: types,
+    type: types = [],
     typesDerived: typesDerived1,
   } = property || {};
   const property2 = {
