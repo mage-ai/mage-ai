@@ -1,7 +1,10 @@
 import base64
+import logging
 import os
 from enum import Enum
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class BackendType(str, Enum):
@@ -18,9 +21,6 @@ class SettingsBackend:
     are environment variables.
     """
     backend_type = None
-
-    def __init__(self, **kwargs):
-        self.config = kwargs
 
     def get(self, key: str, **kwargs) -> Optional[str]:
         """
@@ -65,21 +65,31 @@ class AWSSecretsManagerBackend(SettingsBackend):
 
         self.client = boto3.client('secretsmanager')
         self.prefix = kwargs.get('prefix', '')
+        self.use_cache = kwargs.get('use_cache', False)
+        self.cache = None
+        if self.use_cache:
+            from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
+            cache_config_arg = kwargs.get('cache_config', {})
+            cache_config = SecretCacheConfig(**cache_config_arg)
+            self.cache = SecretCache(config=cache_config, client=self.client)
 
     def _get(self, key: str, **kwargs) -> Optional[str]:
         from botocore.exceptions import ClientError
         if self.prefix:
             key = f'{self.prefix}{key}'
-        try:
-            secret_response = self.client.get_secret_value(
-                SecretId=key,
-            )
-        except ClientError as error:
-            if error.response['Error']['Code'] == 'ResourceNotFoundException':
-                return None
-            raise
-        if 'SecretBinary' in secret_response:
-            binary = secret_response['SecretBinary']
-            return base64.b64decode(binary)
+        if self.cache is not None:
+            return self.cache.get_secret_string(key)
         else:
-            return secret_response['SecretString']
+            try:
+                secret_response = self.client.get_secret_value(
+                    SecretId=key,
+                )
+                if 'SecretBinary' in secret_response:
+                    binary = secret_response['SecretBinary']
+                    return base64.b64decode(binary)
+                else:
+                    return secret_response['SecretString']
+            except ClientError as error:
+                if error.response['Error']['Code'] != 'ResourceNotFoundException':
+                    logger.exception('Failed to get secret %s from AWS Secrets Manager.', key)
+                return None

@@ -317,8 +317,6 @@ def set_project_uuid_from_metadata() -> None:
 
 
 def update_settings_on_metadata_change() -> None:
-    global project_uuid
-
     repo_config = get_repo_config(root_project=True)
     settings.set_settings_backend(**repo_config.settings_backend)
 
