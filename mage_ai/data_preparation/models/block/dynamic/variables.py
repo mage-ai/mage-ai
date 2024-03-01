@@ -522,9 +522,8 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 global_vars=global_vars,
                 **kwargs,
             )
-
             input_vars.append(ir[0])
-            kwargs_vars.append(kr[0])
+            kwargs_vars.append(kr[0] if len(kr) > 0 else None)
             upstream_block_uuids.append(up[0])
 
     return input_vars, kwargs_vars, upstream_block_uuids
