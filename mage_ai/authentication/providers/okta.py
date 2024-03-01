@@ -46,7 +46,7 @@ class OktaProvider(SsoProvider, OauthProvider):
             redirect_uri=redirect_uri,
         )
         query = dict(
-            client_id=OKTA_CLIENT_ID,
+            client_id=self.client_id,
             redirect_uri=urllib.parse.quote_plus(
                 f'{base_url}/oauth',
             ),
@@ -78,7 +78,7 @@ class OktaProvider(SsoProvider, OauthProvider):
                     code=code,
                     redirect_uri=f'{base_url}/oauth',
                 ),
-                auth=BasicAuth(OKTA_CLIENT_ID, OKTA_CLIENT_SECRET),
+                auth=BasicAuth(self.client_id, self.client_secret),
                 timeout=20,
             ) as response:
                 data = await response.json()
