@@ -80,6 +80,7 @@ class SalesforceAuthOAuth(SalesforceAuth):
         return f"https://{self.domain}.salesforce.com/services/oauth2/token"
 
     def login(self):
+        resp = None
         try:
             LOGGER.info("Attempting login via OAuth2")
 
