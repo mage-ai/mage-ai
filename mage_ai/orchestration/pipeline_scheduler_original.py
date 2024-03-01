@@ -320,7 +320,6 @@ class PipelineScheduler:
                     message = br.metrics.get('error', {}).get('message')
                     if message:
                         error_msg = message
-
                 self.on_pipeline_run_failure(error_msg)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_streams(block_runs)
