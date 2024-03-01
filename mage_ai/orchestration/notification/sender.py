@@ -50,7 +50,6 @@ class NotificationSender:
         title: str = None,
         summary: str = None,
         details: str = None,
-        error: str = None,
     ) -> None:
         """Send messages to the notification channels.
 
@@ -221,7 +220,6 @@ class NotificationSender:
                 pipeline_run,
                 error=error,
             ),
-            error=error,
         )
 
     def __with_pipeline_run_url(self, text, pipeline, pipeline_run):
