@@ -72,7 +72,6 @@ def build_fields(
     """
     schemas = {}
     if stream_name in mapping:
-        logger.debug(INDEX_TEMPLATE_FIELDS, ": ", mapping[stream_name])
         for k, v in mapping[stream_name].items():
             match = jsonpath_ng.parse(v).find(record)
             if len(match) == 0:
@@ -81,7 +80,7 @@ def build_fields(
                 )
                 schemas[k] = v
             else:
-                if len(match) < 1:
+                if len(match) > 1:
                     logger.warning(
                         f"schema key {k} with json path {v} has multiple \
                         associated fields, may cause side effects"
