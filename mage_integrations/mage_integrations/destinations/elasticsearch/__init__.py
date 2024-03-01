@@ -13,18 +13,18 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.target im
 class Elasticsearch(Destination):
     def _process(self, input_buffer) -> None:
         self.config['state_path'] = self.state_file_path
-        TargetElasticsearch(config=self.config,
-                            logger=self.logger).listen_override(
-                            file_input=open(self.input_file_path, 'r')
+        TargetElasticsearch(config=self.config, logger=self.logger).listen_override(
+            file_input=open(self.input_file_path, 'r')
         )
 
     def test_connection(self) -> None:
-        target = TargetElasticsearch(config=self.config,
-                                     logger=self.logger)
-        client = ElasticSink(target=target,
-                             stream_name='test',
-                             schema={},
-                             key_properties=None,).client
+        target = TargetElasticsearch(config=self.config, logger=self.logger)
+        client = ElasticSink(
+            target=target,
+            stream_name='test',
+            schema={},
+            key_properties=None,
+        ).client
         client.cat.health()
         client.close()
 

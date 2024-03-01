@@ -268,7 +268,7 @@ class Sink(metaclass=abc.ABCMeta):
         Record metadata specs documented at:
         https://sdk.meltano.com/en/latest/implementation/record_metadata.md
         """
-        properties_dict = self.schema["properties"]
+        properties_dict = self.schema.get("properties", {})
         for col in {
             "_sdc_extracted_at",
             "_sdc_received_at",
