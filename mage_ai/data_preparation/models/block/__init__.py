@@ -2161,6 +2161,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
                 pairs.append(tup)
 
+            if len(pairs) > 10:
+                # Limit the number of dynamic block children we display output for in the UI
+                pairs = pairs[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
             for pair in pairs:
                 child_data = None
                 metadata = None
