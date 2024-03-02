@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
@@ -1675,6 +1675,38 @@ class PipelineRunTests(DBTestCase):
         self.assertEqual(
             set([r.id for r in results3['test_active_run_grouped_2']]),
             set([pipeline_run2.id, pipeline_run4.id]),
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_get_variables_intervals_for_cron(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.unique.name(),
+            pipeline_uuid=self.pipeline.uuid,
+            schedule_interval='*/10 * * * *',
+            schedule_type=ScheduleType.TIME,
+        )
+
+        pipeline_run = PipelineRun.create(
+            pipeline_uuid=self.pipeline.uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+            create_block_runs=False,
+            execution_date=pipeline_schedule.current_execution_date(),
+        )
+
+        variables = pipeline_run.get_variables(pipeline_uuid=pipeline_run.pipeline_uuid)
+
+        self.assertEqual(
+            datetime(2023, 10, 11, 12, 20, 0) - variables['interval_end_datetime'],
+            timedelta(0),
+        )
+        self.assertEqual(600, variables['interval_seconds'])
+        self.assertEqual(
+            datetime(2023, 10, 11, 12, 10, 0) - variables['interval_start_datetime'],
+            timedelta(0),
+        )
+        self.assertEqual(
+            datetime(2023, 10, 11, 12, 0, 0) - variables['interval_start_datetime_previous'],
+            timedelta(0),
         )
 
 
