@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import dateutil.parser
 import pytz
+from croniter import croniter
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
 from sqlalchemy.sql import func
@@ -298,7 +299,12 @@ class PipelineRunProjectPlatformMixin:
             interval_start_datetime = self.execution_date
             interval_start_datetime_previous = None
 
-            if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
+            if (
+                ScheduleInterval.ONCE == self.pipeline_schedule.schedule_interval
+                or ScheduleInterval.ALWAYS_ON == self.pipeline_schedule.schedule_interval
+            ):
+                pass
+            elif ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 24
             elif ScheduleInterval.HOURLY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 1
@@ -309,6 +315,18 @@ class PipelineRunProjectPlatformMixin:
                 )
             elif ScheduleInterval.WEEKLY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 24 * 7
+            else:
+                cron_itr = croniter(
+                    self.pipeline_schedule.schedule_interval,
+                    self.execution_date,
+                )
+                interval_start_datetime_previous = cron_itr.get_prev(datetime)
+                cron_itr.get_next()
+                interval_end_datetime = cron_itr.get_next(datetime)
+                interval_seconds = (
+                    interval_end_datetime.timestamp()
+                    - interval_start_datetime.timestamp()
+                )
 
             if interval_seconds and not interval_end_datetime:
                 interval_end_datetime = interval_start_datetime + timedelta(
