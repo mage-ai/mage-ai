@@ -224,6 +224,7 @@ class BaseSQL(BaseSQLConnection):
         verbose: bool = True,
         # Other optional configs
         allow_reserved_words: bool = False,
+        auto_clean_name: bool = True,
         case_sensitive: bool = False,
         cascade_on_drop: bool = False,
         drop_table_on_replace: bool = False,
@@ -276,12 +277,13 @@ class BaseSQL(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
             # Clean column names
-            col_mapping = {col: self._clean_column_name(
-                                        col,
-                                        allow_reserved_words=allow_reserved_words,
-                                        case_sensitive=case_sensitive)
-                           for col in df.columns}
-            df = df.rename(columns=col_mapping)
+            if auto_clean_name:
+                col_mapping = {col: self._clean_column_name(
+                                            col,
+                                            allow_reserved_words=allow_reserved_words,
+                                            case_sensitive=case_sensitive)
+                               for col in df.columns}
+                df = df.rename(columns=col_mapping)
             dtypes = infer_dtypes(df)
 
         def __process():
@@ -354,6 +356,7 @@ class BaseSQL(BaseSQLConnection):
                         allow_reserved_words=allow_reserved_words,
                         buffer=buffer,
                         case_sensitive=case_sensitive,
+                        auto_clean_name=auto_clean_name,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
                         **kwargs,
