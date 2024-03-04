@@ -141,13 +141,22 @@ class TargetElasticsearch(Target):
     ).to_dict()
     default_sink_class = sinks.ElasticSink
 
-    def __init__(self, *, config=None, parse_env_config: bool = False,
-                 validate_config: bool = True, logger=None) -> None:
+    def __init__(
+        self,
+        *,
+        config=None,
+        parse_env_config: bool = False,
+        validate_config: bool = True,
+        logger=None,
+    ) -> None:
 
         self._logger = logger if logger is not None else LOGGER
 
-        super().__init__(config=config, parse_env_config=parse_env_config,
-                         validate_config=validate_config)
+        super().__init__(
+            config=config,
+            parse_env_config=parse_env_config,
+            validate_config=validate_config,
+        )
 
     @property
     def logger(self):
@@ -177,8 +186,7 @@ class TargetElasticsearch(Target):
         Returns:
             A counter object for the processed lines.
         """
-        self.logger.info(
-            f"Target {self.name} is listening for input from tap.")
+        self.logger.info(f"Target {self.name} is listening for input from tap.")
         counter = self._process_lines_internal(file_input)
 
         line_count = sum(counter.values())
@@ -206,29 +214,32 @@ class TargetElasticsearch(Target):
         """
         stats: dict[str, int] = defaultdict(int)
         for line in file_input.readlines():
-
-            if line.startswith('INFO'):
+            row = None
+            try:
+                row = json.loads(line)
+            except json.decoder.JSONDecodeError:
+                self.logger.warning(f'Unable to parse: {line}')
                 continue
 
-            line_dict = json.loads(line)
+            if not row:
+                self.logger.warning(f'No valid row data {row} for line: {line}')
+                continue
 
-            self._assert_line_requires(line_dict, requires={"type"})
-
-            record_type: SingerMessageType = line_dict["type"]
+            record_type: SingerMessageType = row.get('type')
             if record_type == SingerMessageType.SCHEMA:
-                self._process_schema_message(line_dict)
+                self._process_schema_message(row)
 
             elif record_type == SingerMessageType.RECORD:
-                self._process_record_message(line_dict)
+                self._process_record_message(row)
 
             elif record_type == SingerMessageType.ACTIVATE_VERSION:
-                self._process_activate_version_message(line_dict)
+                self._process_activate_version_message(row)
 
             elif record_type == SingerMessageType.STATE:
-                self._process_state_message(line_dict)
+                self._process_state_message(row)
 
             elif record_type == SingerMessageType.BATCH:
-                self._process_batch_message(line_dict)
+                self._process_batch_message(row)
 
             else:
                 continue
