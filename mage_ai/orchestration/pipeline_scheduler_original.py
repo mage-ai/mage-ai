@@ -1358,7 +1358,7 @@ def check_sla():
 
     pipeline_schedules = set([s.id for s in pipeline_schedules_results])
 
-    pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
+    pipeline_runs = PipelineRun.running_runs(pipeline_schedules)
 
     if pipeline_runs:
         current_time = datetime.now(tz=pytz.UTC)
@@ -1373,8 +1373,8 @@ def check_sla():
             if not sla:
                 continue
             start_date = \
-                pipeline_run.execution_date \
-                if pipeline_run.execution_date is not None \
+                pipeline_run.started_at \
+                if pipeline_run.started_at is not None \
                 else pipeline_run.created_at
             if compare(start_date + timedelta(seconds=sla), current_time) == -1:
                 # passed SLA for pipeline_run
