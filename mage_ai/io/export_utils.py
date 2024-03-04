@@ -104,6 +104,7 @@ def gen_table_creation_query(
     dtypes: Mapping[str, str],
     schema_name: str,
     table_name: str,
+    auto_clean_name: bool = True,
     case_sensitive: bool = False,
     unique_constraints: List[str] = None,
     overwrite_types: Dict = None,
@@ -123,16 +124,16 @@ def gen_table_creation_query(
     if unique_constraints is None:
         unique_constraints = []
     query = []
-    if overwrite_types is not None:
+    for cname in dtypes:
+        if overwrite_types is not None and cname in overwrite_types.keys():
+            dtypes[cname] = overwrite_types[cname]
 
-        for cname in dtypes:
-            if cname in overwrite_types.keys():
-                dtypes[cname] = overwrite_types[cname]
+        if auto_clean_name:
+            cleaned_col_name = clean_name(cname, case_sensitive=case_sensitive)
+        else:
+            cleaned_col_name = cname
 
-            query.append(f'"{clean_name(cname, case_sensitive=case_sensitive)}" {dtypes[cname]}')
-    else:
-        for cname in dtypes:
-            query.append(f'"{clean_name(cname, case_sensitive=case_sensitive)}" {dtypes[cname]}')
+        query.append(f'"{cleaned_col_name}" {dtypes[cname]}')
 
     if schema_name:
         full_table_name = f'{schema_name}.{table_name}'
@@ -142,7 +143,11 @@ def gen_table_creation_query(
     if unique_constraints:
         unique_constraints_clean = []
         for col in unique_constraints:
-            unique_constraints_clean.append(clean_name(col, case_sensitive=case_sensitive))
+            if auto_clean_name:
+                cleaned_col_name = clean_name(col, case_sensitive=case_sensitive)
+            else:
+                cleaned_col_name = col
+            unique_constraints_clean.append(cleaned_col_name)
         unique_constraints_escaped = [f'"{col}"'
                                       for col in unique_constraints_clean]
         index_name = '_'.join([
