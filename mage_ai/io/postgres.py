@@ -284,6 +284,7 @@ class Postgres(BaseSQL):
         dtypes: List[str],
         full_table_name: str,
         allow_reserved_words: bool = False,
+        auto_clean_name: bool = True,
         buffer: Union[IO, None] = None,
         case_sensitive: bool = False,
         unique_conflict_method: str = None,
@@ -355,6 +356,7 @@ class Postgres(BaseSQL):
                 cleaned_col = self._clean_column_name(
                     col,
                     allow_reserved_words=allow_reserved_words,
+                    auto_clean_name=auto_clean_name,
                     case_sensitive=case_sensitive,
                 )
                 cleaned_unique_constraints.append(f'"{cleaned_col}"')
@@ -364,6 +366,7 @@ class Postgres(BaseSQL):
                 cleaned_col = self._clean_column_name(
                     col,
                     allow_reserved_words=allow_reserved_words,
+                    auto_clean_name=auto_clean_name,
                     case_sensitive=case_sensitive,
                 )
                 cleaned_columns.append(f'"{cleaned_col}"')

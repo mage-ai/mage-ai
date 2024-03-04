@@ -160,7 +160,6 @@ class MSSQL(BaseSQL):
         schema_name: str,
         table_name: str,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
-
     ):
         connection_url = URL.create(
             'mssql+pyodbc',
