@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { randomSimpleHashGenerator } from '@utils/string';
+
 export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit): {
   data: any;
   mutate: () => any;
@@ -21,13 +23,15 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
     delay: 3000,
   };
 
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef({});
+  const simpleHash = randomSimpleHashGenerator();
+  timeoutRef.current[simpleHash] = null;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const getReady = () => {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
+      clearTimeout(timeoutRef.current?.[simpleHash]);
+      timeoutRef.current[simpleHash] = setTimeout(() => {
         if (typeof condition === 'undefined' || (condition !== null && typeof condition === 'function'
           ? condition?.()
           : condition
