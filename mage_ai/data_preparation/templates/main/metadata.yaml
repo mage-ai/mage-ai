@@ -3,6 +3,12 @@ project_type: main
 variables_dir: ~/.mage_data
 # remote_variables_dir: s3://bucket/path_prefix
 
+# Project metadata that will be prepopulated for workspaces created from this project.
+workspace_initial_metadata: {}
+
+# Default workspace configuration. 
+workspace_default_config: {}
+
 variables_retention_period: '90d'
 
 emr_config:

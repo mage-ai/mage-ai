@@ -49,6 +49,7 @@ class KubernetesWorkspace(Workspace):
             Workspace: An initialized Workspace object.
         """
         namespace = kwargs.pop('namespace', os.getenv(KUBE_NAMESPACE))
+        workspace_initial_metadata = kwargs.pop('workspace_initial_metadata', {})
         workspace_config = KubernetesWorkspaceConfig.load(
             config=merge_dict(
                 kwargs,
@@ -70,7 +71,9 @@ class KubernetesWorkspace(Workspace):
         if get_project_type() == ProjectType.MAIN:
             extra_args = {
                 'project_type': ProjectType.SUB,
+                'initial_metadata': workspace_initial_metadata,
             }
+
         workload_manager.create_workload(
             name,
             workspace_config,

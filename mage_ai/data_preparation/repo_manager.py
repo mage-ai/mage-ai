@@ -1,3 +1,5 @@
+import json
+import logging
 import os
 import traceback
 import uuid
@@ -11,6 +13,7 @@ from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.settings import INITIAL_METADATA
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
@@ -24,6 +27,8 @@ yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
 yml.width = float('inf')
 yml.indent(mapping=2, sequence=2, offset=0)
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectType(str, Enum):
@@ -67,6 +72,8 @@ class RepoConfig:
         self.logging_config = None
         self.variables_dir = None
         self.variables_retention_period = None
+        self.workspace_initial_metadata = None
+        self.workspace_shared_config = None
 
         from mage_ai.data_preparation.shared.utils import get_template_vars
         try:
@@ -125,6 +132,7 @@ class RepoConfig:
             self.pipelines = repo_config.get('pipelines')
             self.retry_config = repo_config.get('retry_config')
             self.workspace_config_defaults = repo_config.get('workspace_config_defaults')
+            self.workspace_initial_metadata = repo_config.get('workspace_initial_metadata')
 
             self.ldap_config = repo_config.get('ldap_config')
 
@@ -233,6 +241,11 @@ def init_repo(
         raise FileExistsError(f'Repository {repo_path} already exists')
 
     new_config = dict()
+    if INITIAL_METADATA:
+        try:
+            new_config = json.loads(INITIAL_METADATA)
+        except Exception:
+            logger.exception('Error loading initial metadata.')
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
         new_config.update(
