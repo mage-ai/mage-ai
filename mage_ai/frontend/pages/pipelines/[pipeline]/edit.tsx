@@ -329,7 +329,7 @@ function PipelineDetailPage({
     },
     {
       condition: () => isInteractionsEnabled,
-      delay: 12000,
+      delay: 6000,
     },
   );
 
@@ -345,7 +345,7 @@ function PipelineDetailPage({
     },
     {
       condition: () => isInteractionsEnabled,
-      delay: 12000,
+      delay: 6000,
     },
   );
 
@@ -371,6 +371,10 @@ function PipelineDetailPage({
           callback: (resp) => {
             fetchPipelineInteraction();
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -390,6 +394,10 @@ function PipelineDetailPage({
             fetchInteractions();
             fetchPipelineInteraction();
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -903,8 +911,8 @@ function PipelineDetailPage({
     refreshInterval: false,
     revalidateOnFocus: false,
   }, {
-    delay: 1000,
     condition: blocks?.length >= 1,
+    delay: 1000,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
@@ -3104,11 +3112,11 @@ function PipelineDetailPage({
       setIntegrationStreams={setIntegrationStreams}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
+      setScrollTogether={setScrollTogether}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
       setSideBySideEnabled={setSideBySideEnabled}
-      setScrollTogether={setScrollTogether}
       setTextareaFocused={setTextareaFocused}
       showBlockBrowserModal={showBlockBrowserModal}
       showBrowseTemplates={showBrowseTemplates}
@@ -3256,9 +3264,9 @@ function PipelineDetailPage({
     if (page === PAGE_NAME_EDIT) {
       return (
         <StatusFooter
-          pipelineType={pipeline?.type}
           pipelineContentTouched={pipelineContentTouched}
           pipelineLastSaved={pipelineLastSaved}
+          pipelineType={pipeline?.type}
           ref={mainContainerFooterRef}
           saveStatus={saveStatus}
           width={mainContainerWidth}
