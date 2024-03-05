@@ -218,11 +218,11 @@ class TargetElasticsearch(Target):
             try:
                 row = json.loads(line)
             except json.decoder.JSONDecodeError:
-                self.logger.warning(f'Unable to parse: {line}')
+                self.logger.info(f'Unable to parse: {line}')
                 continue
 
             if not row:
-                self.logger.warning(f'No valid row data {row} for line: {line}')
+                self.logger.info(f'No valid row data {row} for line: {line}')
                 continue
 
             record_type: SingerMessageType = row.get('type')
