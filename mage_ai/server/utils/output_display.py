@@ -223,7 +223,12 @@ def __custom_output():
     ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
-        _rows = simplejson.loads(_sample[_columns].fillna('').to_json(
+        for col in _columns:
+            try:
+                _sample[col] = _sample[col].fillna('')
+            except Exception:
+                pass
+        _rows = simplejson.loads(_sample[_columns].to_json(
             date_format='iso',
             default_handler=str,
             orient='split',
