@@ -1548,7 +1548,12 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             interval_start_datetime = self.execution_date
             interval_start_datetime_previous = None
 
-            if ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
+            if (
+                ScheduleInterval.ONCE == self.pipeline_schedule.schedule_interval
+                or ScheduleInterval.ALWAYS_ON == self.pipeline_schedule.schedule_interval
+            ):
+                pass
+            elif ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 24
             elif ScheduleInterval.HOURLY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 1
@@ -1559,6 +1564,23 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                 )
             elif ScheduleInterval.WEEKLY == self.pipeline_schedule.schedule_interval:
                 interval_seconds = 60 * 60 * 24 * 7
+            else:
+                try:
+                    cron_itr = croniter(
+                        self.pipeline_schedule.schedule_interval,
+                        self.execution_date,
+                    )
+                    current = cron_itr.get_current(datetime)
+                    interval_start_datetime_previous = cron_itr.get_prev(datetime)
+                    # get_prev and get_next changes the state of the cron iterator, so we need
+                    # to call get_next again to go back to the original state
+                    cron_itr.get_next()
+                    interval_end_datetime = cron_itr.get_next(datetime)
+                    interval_seconds = (
+                        interval_end_datetime.timestamp() - current.timestamp()
+                    )
+                except Exception:
+                    pass
 
             if interval_seconds and not interval_end_datetime:
                 interval_end_datetime = interval_start_datetime + timedelta(
