@@ -296,6 +296,8 @@ class BaseSQL(BaseSQLConnection):
                     schema_name,
                     table_name,
                     if_exists=if_exists,
+                    unique_conflict_method=unique_conflict_method,
+                    unique_constraints=unique_constraints,
                 )
                 return
 
