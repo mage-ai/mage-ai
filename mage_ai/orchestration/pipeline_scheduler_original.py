@@ -319,15 +319,13 @@ class PipelineScheduler:
 
     @safe_db_query
     def on_pipeline_run_failure(self, error_msg: str) -> None:
-        error = None
         failed_block_runs = self.pipeline_run.failed_block_runs
         for br in failed_block_runs:
             if br.metrics:
                 message = br.metrics.get('error', {}).get('message')
                 if message:
-                    error = message
-        if error:
-            error_msg += f'\nError details: \n{error}'
+                    error_msg += f'\nError for block {br.block_uuid}:\n{message}'
+                    break
 
         asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
         self.notification_sender.send_pipeline_run_failure_message(
