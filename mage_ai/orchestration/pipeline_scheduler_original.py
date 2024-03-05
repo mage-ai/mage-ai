@@ -240,27 +240,14 @@ class PipelineScheduler:
                     failed_block_runs = self.pipeline_run.failed_block_runs
                     error_msg = 'Failed blocks: '\
                                 f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
-                    error = None
-                    for br in failed_block_runs:
-                        if br.metrics:
-                            message = br.metrics.get('error', {}).get('message')
-                            if message:
-                                error = message
-                    if error:
-                        error_msg += f'\nError details: \n{error}'
-                    self.notification_sender.send_pipeline_run_failure_message(
-                        error=error_msg,
-                        pipeline=self.pipeline,
-                        pipeline_run=self.pipeline_run,
-                    )
+                    self.on_pipeline_run_failure(error_msg)
                 else:
                     self.pipeline_run.complete()
                     self.notification_sender.send_pipeline_run_success_message(
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
                     )
-
-                asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+                    asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
 
                 self.logger_manager.output_logs_to_destination()
 
@@ -320,14 +307,7 @@ class PipelineScheduler:
                 failed_block_runs = self.pipeline_run.failed_block_runs
                 error_msg = 'Failed blocks: '\
                             f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
-                error = None
-                for br in failed_block_runs:
-                    if br.metrics:
-                        message = br.metrics.get('error', {}).get('message')
-                        if message:
-                            error = message
-                if error:
-                    error_msg += f'\nError details: \n{error}'
+
                 self.on_pipeline_run_failure(error_msg)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_streams(block_runs)
@@ -338,12 +318,22 @@ class PipelineScheduler:
                     self.__schedule_blocks(block_runs)
 
     @safe_db_query
-    def on_pipeline_run_failure(self, error: str) -> None:
+    def on_pipeline_run_failure(self, error_msg: str) -> None:
+        error = None
+        failed_block_runs = self.pipeline_run.failed_block_runs
+        for br in failed_block_runs:
+            if br.metrics:
+                message = br.metrics.get('error', {}).get('message')
+                if message:
+                    error = message
+        if error:
+            error_msg += f'\nError details: \n{error}'
+
         asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
-            error=error,
+            error=error_msg,
         )
         # Cancel block runs that are still in progress for the pipeline run.
         cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
