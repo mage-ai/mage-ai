@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
+import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
@@ -27,6 +28,8 @@ from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import find_file_from_another_file_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.path_fixer import add_absolute_path
+from mage_ai.shared.strings import remove_extension_from_filename
+from mage_ai.shared.utils import clean_name
 
 
 class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
@@ -135,6 +138,167 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         node_path_type_part = node_path_parts[1]
 
         return search_paths.get(node_path_type_part)
+
+    def upstream_dbt_blocks(self, read_only=False) -> List['DBTBlockSQL']:
+        """
+        Get an up to date list, which represents the upstream dbt graph.
+        It is using `dbt list` to generate the list.
+        Args:
+            read_only (bool):
+                If True it does not read the Blocks from the model. Defaults to False
+        Returns:
+            List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
+        """
+        # Get upstream nodes via dbt list
+        with Profiles(
+            self.project_path,
+            self.pipeline.variables if self.pipeline else {},
+        ) as profiles:
+            try:
+                args = [
+                    'list',
+                    # project-dir
+                    # /home/src/default_repo/default_platform/default_repo/dbt/demo
+                    '--project-dir', self.project_path,
+                    '--profiles-dir', str(profiles.profiles_dir),
+                    '--select', '+' + Path(self.file_path).stem,
+                    '--output', 'json',
+                    '--output-keys', 'unique_id original_file_path depends_on',
+                    '--resource-type', 'model',
+                    '--resource-type', 'snapshot'
+                ]
+                res = DBTCli().invoke(args)
+
+                if res:
+                    nodes_init = [simplejson.loads(node) for node in res.result]
+                else:
+                    return []
+            except Exception as err:
+                print(f'[ERROR] DBTBlockSQL.upstream_dbt_blocks: {err}.')
+                return [
+                    self.build_dbt_block(
+                        block_class=DBTBlock,
+                        block_dict=dict(
+                            block_type=self.type,
+                            configuration=self.configuration,
+                            language=self.language,
+                            name=self.uuid,
+                            pipeline=self.pipeline,
+                            uuid=self.uuid,
+                        ),
+                        hydrate_configuration=False,
+                    )
+                ]
+
+        # transform List into dict and remove unnecessary fields
+        file_path = self.file_path
+        path_parts = file_path.split(os.sep)
+        project_dir = path_parts[0]
+
+        nodes_default = {
+            node['unique_id']: {
+                # file_path:
+                # default_repo/dbt/demo/models/example/model.sql
+                # default_platform/default_repo/dbt/demo/models/example/model.sql
+                'file_path': os.path.join(project_dir, node['original_file_path']),
+                'original_file_path': node['original_file_path'],
+                'upstream_nodes': set(node['depends_on']['nodes'])
+            }
+            for node in nodes_init
+        }
+
+        nodes = self.hydrate_dbt_nodes(nodes_default, nodes_init)
+
+        # calculate downstream_nodes
+        for unique_id, node in nodes.items():
+            for upstream_node in node['upstream_nodes']:
+                if nodes.get(upstream_node):
+                    downstream_nodes = nodes[upstream_node].get('downstream_nodes', set())
+                    downstream_nodes.add(unique_id)
+                    nodes[upstream_node]['downstream_nodes'] = downstream_nodes
+
+        # map dbt unique_id to mage uuid
+        uuids_default = {
+            unique_id: clean_name(
+                remove_extension_from_filename(node['file_path']),
+                allow_characters=[os.sep]
+            )
+            for unique_id, node in nodes.items()
+        }
+        uuids = self.node_uuids_mapping(uuids_default, nodes)
+
+        # replace dbt unique_ids with mage uuids
+        nodes = {
+            uuids[unique_id]: {
+                'file_path': node['file_path'],
+                'original_file_path': node['original_file_path'],
+                'upstream_nodes': {
+                    uuids[upstream_node]
+                    for upstream_node in node.get('upstream_nodes', set())
+                    if uuids.get(upstream_node)
+                },
+                'downstream_nodes': {
+                    uuids[downstream_node]
+                    for downstream_node in node.get('downstream_nodes', set())
+                    if uuids.get(downstream_node)
+                }
+            }
+            for unique_id, node in nodes.items()
+        }
+
+        # create dict of blocks
+        blocks = {}
+        for uuid, node in nodes.items():
+            block = None
+            if not read_only:
+                if uuid == self.uuid:
+                    block = self
+                elif self.pipeline:
+                    block = self.pipeline.get_block(
+                        uuid,
+                        self.type,
+                    )
+            # if not found create the block
+            block = block or self.build_dbt_block(
+                block_class=DBTBlock,
+                block_dict=dict(
+                    block_type=self.type,
+                    configuration=dict(file_path=node['file_path']),
+                    language=self.language,
+                    name=uuid,
+                    pipeline=self.pipeline,
+                    uuid=uuid,
+                ),
+                node=node,
+            )
+            # reset upstream dbt blocks
+            block.upstream_blocks = [
+                block
+                for block in block.upstream_blocks
+                # there must not be any other upstream dbt blocks that are not part of
+                # the upstream nodes, therefore delete all upstream dbt blocks
+                if not isinstance(block, DBTBlockSQL)
+            ]
+            # reset downstream dbt blocks
+            block.downstream_blocks = [
+                block
+                for block in block.downstream_blocks
+                # remove all downstream dbt block, which are part of the upstream nodes,
+                # in order to fix errors
+                if block.uuid not in nodes.keys()
+            ]
+            blocks[uuid] = block
+
+        # Update upstream and downstream dbt blocks
+        for uuid, node in nodes.items():
+            for upstream_node in node.get('upstream_nodes', set()):
+                blocks[uuid].upstream_blocks.append(blocks[upstream_node])
+            for downstream_node in node.get('downstream_nodes', set()):
+                blocks[uuid].downstream_blocks.append(blocks[downstream_node])
+
+        # transform into list
+        blocks = [block for _, block in blocks.items()]
+        return blocks
 
     def _execute_block(
         self,
