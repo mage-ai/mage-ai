@@ -371,6 +371,10 @@ function PipelineDetailPage({
           callback: (resp) => {
             fetchPipelineInteraction();
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -390,6 +394,10 @@ function PipelineDetailPage({
             fetchInteractions();
             fetchPipelineInteraction();
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },

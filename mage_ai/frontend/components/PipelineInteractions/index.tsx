@@ -92,8 +92,8 @@ function PipelineInteractions({
   const refNewInteractionUUID = useRef(null);
   const refMostRecentlyAddedInteraction = useRef(null);
 
-  const [lastSaved, setLastSaved] = useState<Number>(null);
-  const [lastUpdated, setLastUpdated] = useState<Number>(null);
+  const [lastSaved, setLastSaved] = useState<number>(null);
+  const [lastUpdated, setLastUpdated] = useState<number>(null);
   const [touched, setTouched] = useState<boolean>(false);
 
   const [newInteractionUUID, setNewInteractionUUID] = useState<string>(null);
@@ -565,10 +565,12 @@ function PipelineInteractions({
                   variables: {},
                 // @ts-ignore
                 }).then(({
-                  data: {
-                    interaction,
-                  },
+                  data,
                 }) => {
+                  if (data?.error) {
+                    return;
+                  }
+                  const interaction = data?.interaction;
                   const interactionUUID = interaction?.uuid;
 
                   updateBlockInteractionAtIndex(
