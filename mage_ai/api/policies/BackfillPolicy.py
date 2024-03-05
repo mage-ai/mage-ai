@@ -62,6 +62,7 @@ BackfillPolicy.allow_write([
     'interval_type',
     'interval_units',
     'name',
+    'settings',
     'start_datetime',
     'status',
     'variables',
