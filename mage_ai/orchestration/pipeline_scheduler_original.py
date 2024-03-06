@@ -1422,7 +1422,10 @@ def schedule_all():
     ))
 
     # Sync schedules from yaml file to DB
-    sync_schedules(list(repo_pipelines))
+    try:
+        sync_schedules(list(repo_pipelines))
+    except Exception:
+        logger.exception('Failed to sync schedules')
 
     active_pipeline_schedules = list(PipelineSchedule.active_schedules(
         pipeline_uuids=repo_pipelines,
