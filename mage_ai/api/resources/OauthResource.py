@@ -110,12 +110,20 @@ class OauthResource(GenericResource):
                 client_id=client_id,
                 client_type=Oauth2Application.ClientType.PRIVATE,
                 name=provider,
-                user_id=user.id if user else None,
             )
 
-        access_token = Oauth2AccessToken.query.filter(
+        access_token_query = Oauth2AccessToken.query.filter(
             Oauth2AccessToken.token == token,
-        ).first()
+        )
+        if user:
+            access_token_query = access_token_query.filter(
+                Oauth2AccessToken.user_id == user.id,
+            )
+        else:
+            access_token_query = access_token_query.filter(
+                Oauth2AccessToken.user_id.is_(None),
+            )
+        access_token = access_token_query.first()
 
         if expires_in:
             expire_timedelta = timedelta(seconds=int(expires_in))

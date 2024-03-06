@@ -22,8 +22,6 @@ def access_tokens_for_client(
 ) -> List[Oauth2AccessToken]:
     query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
     query.cache = True
-    if user:
-        query.filter(Oauth2Application.user_id == user.id)
 
     oauth_client = query.first()
 
@@ -31,10 +29,18 @@ def access_tokens_for_client(
     if oauth_client:
         access_tokens_query = Oauth2AccessToken.query
         access_tokens_query.cache = True
-        access_tokens = access_tokens_query.filter(
+        access_tokens_query = access_tokens_query.filter(
             Oauth2AccessToken.expires > datetime.utcnow(),
             Oauth2AccessToken.oauth2_application_id == oauth_client.id,
         )
+        if user:
+            access_tokens = access_tokens_query.filter(
+                Oauth2AccessToken.user_id == user.id
+            )
+        else:
+            access_tokens = access_tokens_query.filter(
+                Oauth2AccessToken.user_id.is_(None)
+            )
 
     return [row for row in access_tokens]
 
@@ -47,8 +53,6 @@ async def refresh_token_for_client(
 ) -> Awaitable[Optional[Oauth2AccessToken]]:
     query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
     query.cache = True
-    if user:
-        query.filter(Oauth2Application.user_id == user.id)
 
     oauth_client = query.first()
 
@@ -56,10 +60,18 @@ async def refresh_token_for_client(
     if oauth_client:
         access_tokens_query = Oauth2AccessToken.query
         access_tokens_query.cache = True
-        refreshable_tokens = access_tokens_query.filter(
+        access_tokens_query = access_tokens_query.filter(
             Oauth2AccessToken.refresh_token.is_not(None),
             Oauth2AccessToken.oauth2_application_id == oauth_client.id,
         )
+        if user:
+            refreshable_tokens = access_tokens_query.filter(
+                Oauth2AccessToken.user_id == user.id
+            )
+        else:
+            refreshable_tokens = access_tokens_query.filter(
+                Oauth2AccessToken.user_id.is_(None)
+            )
 
     new_token = None
     if refreshable_tokens:
