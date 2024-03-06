@@ -687,7 +687,7 @@ function BlockLayout({
             placeholder="Type name for chart..."
             primary
             setContentOnMount
-            value={objectAttributes?.name || ''}
+            value={objectAttributes?.name_new || ''}
           />
         </Spacing>
 
