@@ -29,6 +29,7 @@ DEFAULT_GITHUB_HOSTNAME = 'https://github.com'
 # Github and GHE don't need to be added to this list because they are handled
 # separately for now.
 GIT_OAUTH_PROVIDERS = [
+    ProviderName.AZURE_DEVOPS,
     ProviderName.BITBUCKET,
     ProviderName.GITLAB,
 ]
