@@ -1,12 +1,9 @@
-from mage_ai.authentication.oauth.constants import (
-    AZURE_DEVOPS_INSTANCE,
-    OAUTH_PROVIDER_AZURE_DEVOPS,
-)
+from mage_ai.authentication.oauth.constants import AZURE_DEVOPS_INSTANCE, ProviderName
 from mage_ai.authentication.providers.active_directory import ADProvider
 
 
 class AzureDevopsProvider(ADProvider):
-    provider = OAUTH_PROVIDER_AZURE_DEVOPS
+    provider = ProviderName.AZURE_DEVOPS
     scope = 'vso.tokenadministration vso.code_write vso.profile'  # noqa: E501
 
     def __init__(self):
