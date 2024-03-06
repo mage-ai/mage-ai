@@ -20,6 +20,7 @@ import { Ellipsis } from '@oracle/icons';
 import { ItemStyle, WIDTH_OFFSET } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VARIABLE_NAME_HEIGHT } from '@interfaces/ChartBlockType';
+import { useError } from '@context/Error';
 
 type BlockLayoutItemProps = {
   block?: BlockLayoutItemType;
@@ -91,6 +92,10 @@ function BlockLayoutItem({
     dataState,
   ]);
 
+  const [showError] = useError(null, {}, [], {
+    uuid: `BlockLayoutItem/${pageBlockLayoutUUID}/${blockUUID}`,
+  });
+
   // Minimum 1000ms refresh interval
   const refreshInterval = useMemo(() => {
     const ri = blockLayoutItem?.data_source?.refresh_interval;
@@ -115,6 +120,17 @@ function BlockLayoutItem({
       revalidateOnFocus: !refreshInterval,
     },
   );
+
+  useEffect(() => {
+    if (dataBlockLayoutItem?.error) {
+      showError({
+        response: dataBlockLayoutItem,
+      });
+    }
+  }, [
+    dataBlockLayoutItem,
+    showError,
+]);
 
   useEffect(() => {
     if (!blockLayoutItem) {
