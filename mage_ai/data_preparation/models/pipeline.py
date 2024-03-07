@@ -1443,7 +1443,7 @@ class Pipeline:
                 block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
 
         # dump new config information back in temp folder
-        with open(config_zip_path, 'w') as pipeline_config:
+        with open(config_zip_path, 'w', encoding='utf-8') as pipeline_config:
             yaml.dump(config, pipeline_config)
 
         return files_to_be_written, config
@@ -2141,12 +2141,12 @@ class Pipeline:
         content = yaml.dump(pipeline_dict)
 
         test_path = f'{self.config_path}.test'
-        async with aiofiles.open(test_path, mode='w') as fp:
+        async with aiofiles.open(test_path, mode='w', encoding='utf-8') as fp:
             await fp.write(content)
 
         if os.path.isfile(test_path):
             success = True
-            with open(test_path, mode='r') as fp:
+            with open(test_path, mode='r', encoding='utf-8') as fp:
                 try:
                     yaml.full_load(fp)
                 except yaml.scanner.ScannerError:
