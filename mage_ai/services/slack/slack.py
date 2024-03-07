@@ -6,18 +6,18 @@ from mage_ai.services.slack.config import SlackConfig
 
 
 def send_slack_message(config: SlackConfig, message: str, title: str = None) -> None:
-    message = message.replace("\\n", "\n")
+    message = message.replace('\\n', '\n')
     payload = {
-        "blocks": [
+        'blocks': [
             {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": title if title else "Mage Notification",
+                'type': 'header',
+                'text': {
+                    'type': 'plain_text',
+                    'text': title if title else 'Mage Notification',
                 },
             },
-            {"type": "divider"},
-            {"type": "section", "text": {"type": "mrkdwn", "text": message}},
+            {'type': 'divider'},
+            {'type': 'section', 'text': {'type': 'mrkdwn', 'text': message}},
         ]
     }
 
