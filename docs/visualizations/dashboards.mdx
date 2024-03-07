@@ -228,8 +228,8 @@ from typing import List
 def filter_data(block_data_ouput: List, **kwargs) -> List:
     df_partition_1, df_partition_2 = block_data_ouput
 
-    df_1 = df_partition_1[df_partition_1['age'] >= 21]
-    df_2 = df_partition_2[df_partition_2['age'] >= 21]
+    df_1 = df_partition_1[df_partition_1['Age'] >= 21]
+    df_2 = df_partition_2[df_partition_2['Age'] >= 21]
 
     return [df_1, df_2]
 ```
