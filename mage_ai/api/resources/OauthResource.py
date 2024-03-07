@@ -69,7 +69,7 @@ class OauthResource(GenericResource):
                             model.update(**auth_url_response)
 
                 if authenticated or new_token:
-                    model['authenticated'] = authenticated
+                    model['authenticated'] = True
                     if new_token:
                         access_tokens = [new_token]
                     model['expires'] = max(
@@ -78,7 +78,8 @@ class OauthResource(GenericResource):
 
                 oauths.append(model)
             except Exception:
-                continue
+                import traceback
+                traceback.print_exc()
 
         return self.build_result_set(oauths, user, **kwargs)
 

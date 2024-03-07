@@ -25,6 +25,12 @@ class Client(ABC):
             from mage_ai.data_preparation.git.clients.ghe import GHEClient
 
             return GHEClient
+        elif provider == ProviderName.AZURE_DEVOPS:
+            from mage_ai.data_preparation.git.clients.azure_devops import (
+                AzureDevopsClient,
+            )
+
+            return AzureDevopsClient
         else:
             raise NotImplementedError()
 

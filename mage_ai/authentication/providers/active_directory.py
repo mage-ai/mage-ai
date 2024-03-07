@@ -93,7 +93,7 @@ class ADProvider(SsoProvider, OauthProvider):
                 client_id=ACTIVE_DIRECTORY_MAGE_CLIENT_ID,
                 redirect_uri=f'https://api.mage.ai/v1/oauth/{self.provider}',
                 response_type='code',
-                scope='User.Read',
+                scope=self.scope,
                 state=quote_plus(
                     json.dumps(
                         dict(
