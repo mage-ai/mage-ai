@@ -137,7 +137,6 @@ function BlockLayout({
   const setSelectedBlockItem = useCallback((prev1) => {
     setObjectAttributes((prev2) => {
       const data = {
-        ...prev2,
         ...prev1,
       };
 
@@ -687,7 +686,7 @@ function BlockLayout({
             placeholder="Type name for chart..."
             primary
             setContentOnMount
-            value={objectAttributes?.name || ''}
+            value={objectAttributes?.name_new || ''}
           />
         </Spacing>
 
