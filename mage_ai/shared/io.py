@@ -39,7 +39,7 @@ def safe_write(filepath: str, content: str, write_func: Callable = None):
 
     success = False
     try:
-        with open(filepath, 'w') as fp:
+        with open(filepath, 'w', encoding='utf-8') as fp:
             if write_func is not None:
                 write_func(fp, content)
             else:
@@ -67,7 +67,7 @@ async def safe_write_async(filepath: str, content: str, write_func: Callable = N
 
     success = False
     try:
-        async with aiofiles.open(filepath, mode='w') as fp:
+        async with aiofiles.open(filepath, mode='w', encoding='utf-8') as fp:
             if write_func is not None:
                 await write_func(fp, content)
             else:
