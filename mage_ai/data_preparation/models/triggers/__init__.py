@@ -69,6 +69,7 @@ class Trigger(BaseConfig):
     sla: int = None     # in seconds
     settings: Dict = field(default_factory=dict)
     envs: List = field(default_factory=list)
+    repo_path: str = None
 
     def __post_init__(self):
         if self.schedule_type and type(self.schedule_type) is str:
@@ -163,6 +164,7 @@ def build_triggers(
     trigger_configs: Dict,
     pipeline_uuid: str = None,
     raise_exception: bool = False,
+    repo_path: str = None,
 ) -> List[Trigger]:
     triggers = []
     for trigger_config in trigger_configs:
@@ -170,6 +172,8 @@ def build_triggers(
             trigger_config['pipeline_uuid'] = pipeline_uuid
         try:
             trigger = Trigger.load(config=trigger_config)
+            if trigger.repo_path is None:
+                trigger.repo_path = repo_path
 
             # Add flag to settings so frontend can detect triggers with invalid cron expressions
             if not trigger.has_valid_schedule_interval:
@@ -194,7 +198,8 @@ def load_trigger_configs(
     yaml_config = yaml.safe_load(content) or {}
     trigger_configs = yaml_config.get('triggers') or {}
 
-    return build_triggers(trigger_configs, pipeline_uuid, raise_exception)
+    return build_triggers(
+        trigger_configs, pipeline_uuid, raise_exception, repo_path=get_repo_path())
 
 
 def add_or_update_trigger_for_pipeline_and_persist(
