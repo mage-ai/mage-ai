@@ -45,7 +45,6 @@ def fetch(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    print('azure devops url:', url)
     git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]

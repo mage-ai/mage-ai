@@ -78,8 +78,7 @@ class OauthResource(GenericResource):
 
                 oauths.append(model)
             except Exception:
-                import traceback
-                traceback.print_exc()
+                pass
 
         return self.build_result_set(oauths, user, **kwargs)
 

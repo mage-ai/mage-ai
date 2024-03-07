@@ -53,9 +53,6 @@ class GitBranchResource(GenericResource):
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
-            print('provider:', provider)
-            print('repository:', repository)
-
             access_token = api.get_access_token_for_user(user, provider=provider)
             if access_token:
                 branches = GitClient.get_client_for_provider(provider)(

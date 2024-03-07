@@ -8,7 +8,9 @@ from mage_ai.settings.keys import AZURE_DEVOPS_ORGANIZATION
 
 class AzureDevopsProvider(ADProvider):
     provider = ProviderName.AZURE_DEVOPS
-    scope = '499b84ac-1321-427f-aa17-267ca6975798/.default'  # noqa: E501
+    # This is a hardcoded scope value that is used to get Git access to the Azure DevOps project.
+    # This should not be changed unless this scope stops working properly.
+    scope = '499b84ac-1321-427f-aa17-267ca6975798/.default'
 
     def __init__(self):
         super().__init__()
