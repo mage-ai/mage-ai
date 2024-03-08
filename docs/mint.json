@@ -241,7 +241,8 @@
           "icon": "pipe-circle-check",
           "pages": [
             "orchestration/pipeline-runs/retrying-block-runs",
-            "orchestration/pipeline-runs/saving-block-output-as-csv"
+            "orchestration/pipeline-runs/saving-block-output-as-csv",
+            "orchestration/pipeline-runs/database-query"
           ]
         },
         {
@@ -258,7 +259,8 @@
             },
             "orchestration/triggers/trigger-pipeline",
             "orchestration/triggers/trigger-pipeline-api",
-            "orchestration/triggers/schedule-pipelines"
+            "orchestration/triggers/schedule-pipelines",
+            "orchestration/triggers/database-query"
           ]
         },
         {
