@@ -13,7 +13,7 @@ from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.settings import settings, INITIAL_METADATA
+from mage_ai.settings import INITIAL_METADATA, settings
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
