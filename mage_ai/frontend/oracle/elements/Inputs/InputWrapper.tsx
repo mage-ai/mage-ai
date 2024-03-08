@@ -74,6 +74,7 @@ export type InputWrapperProps = {
   maxWidth?: number;
   meta?: MetaType;
   minWidth?: number;
+  minValue?: number;
   monospace?: boolean;
   name?: string;
   negative?: boolean;
@@ -708,6 +709,7 @@ const InputWrapper = ({
   labelFixed,
   maxWidth,
   meta,
+  minValue,
   name,
   onChange,
   onClick,
@@ -869,6 +871,7 @@ const InputWrapper = ({
         hasContent: !!content,
         isFocused: showLabel,
         label: (label === 0 ? '0' : label),
+        min: (typeProp === 'number' && typeof minValue === 'number') ? minValue : null,
         name,
         onBlur: (e) => {
           if (props.onBlur) {
