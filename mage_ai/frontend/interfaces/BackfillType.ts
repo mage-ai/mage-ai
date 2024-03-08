@@ -17,14 +17,12 @@ export enum IntervalTypeEnum {
 }
 
 export const INTERVAL_TYPES = [
-  // IntervalTypeEnum.SECOND,
   IntervalTypeEnum.MINUTE,
   IntervalTypeEnum.HOUR,
   IntervalTypeEnum.DAY,
   IntervalTypeEnum.WEEK,
   IntervalTypeEnum.MONTH,
   IntervalTypeEnum.YEAR,
-  IntervalTypeEnum.CUSTOM,
 ];
 
 type PipelineRunDateType = {

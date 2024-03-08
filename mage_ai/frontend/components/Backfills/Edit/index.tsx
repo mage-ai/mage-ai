@@ -323,12 +323,14 @@ function BackfillEdit({
           <TextInput
             disabled={!intervalType}
             key="interval_unit_input"
+            minValue={1}
             monospace
             onChange={(e) => {
               e.preventDefault();
+              const updatedUnitValue = +e.target.value;
               setModel(s => ({
                 ...s,
-                interval_units: e.target.value,
+                interval_units: updatedUnitValue < 1 ? 1 : updatedUnitValue,
               }));
             }}
             placeholder={intervalType
@@ -377,6 +379,7 @@ function BackfillEdit({
       </FlexContainer>,
       <TextInput
         key="concurrency_input"
+        minValue={1}
         monospace
         onChange={(e) => {
           e.preventDefault();

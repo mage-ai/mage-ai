@@ -35,7 +35,8 @@ function PipelineBackfills({
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
   const {
-    data: dataPipelineRuns,
+    data: dataBackfills,
+    mutate: fetchBackfills,
   } = api.backfills.list({
     _limit: 20,
     _offset: 0,
@@ -44,7 +45,7 @@ function PipelineBackfills({
   }, {
     refreshInterval: 60000,
   });
-  const models = useMemo(() => dataPipelineRuns?.backfills || [], [dataPipelineRuns]);
+  const models = useMemo(() => dataBackfills?.backfills || [], [dataBackfills]);
 
   const q = queryFromUrl();
 
@@ -173,10 +174,11 @@ function PipelineBackfills({
       )}
       {models?.length >= 1 && (
         <BackfillsTable
+          fetchBackfills={fetchBackfills}
           models={models}
-          onClickRow={({ id }: BackfillType) => goToWithQuery({
-            backfill_id: id,
-          })}
+          // onClickRow={({ id }: BackfillType) => goToWithQuery({
+          //   backfill_id: id,
+          // })}
           pipeline={pipeline}
           selectedRow={selectedRow}
         />
