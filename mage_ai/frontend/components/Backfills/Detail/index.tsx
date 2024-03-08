@@ -157,7 +157,7 @@ function BackfillDetail({
       <>
         <PipelineRunsTable
           disableRowSelect={showPreviewRuns}
-          emptyMessage={!q?.status
+          emptyMessage={(!q?.status && !status)
             ? 'No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
             : 'No runs available'
           }
