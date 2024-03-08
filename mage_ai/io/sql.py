@@ -56,6 +56,7 @@ class BaseSQL(BaseSQLConnection):
         case_sensitive: bool = False,
         unique_constraints: List[str] = None,
         overwrite_types: Dict = None,
+        skip_semicolon_at_end: bool = False,
         **kwargs,
     ) -> str:
         if unique_constraints is None:
@@ -68,6 +69,7 @@ class BaseSQL(BaseSQLConnection):
             case_sensitive=case_sensitive,
             unique_constraints=unique_constraints,
             overwrite_types=overwrite_types,
+            skip_semicolon_at_end=skip_semicolon_at_end,
         )
 
     def build_create_table_as_command(
@@ -234,6 +236,7 @@ class BaseSQL(BaseSQLConnection):
         query_string: Union[str, None] = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        skip_semicolon_at_end: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -350,6 +353,7 @@ class BaseSQL(BaseSQLConnection):
                             case_sensitive=case_sensitive,
                             unique_constraints=unique_constraints,
                             overwrite_types=overwrite_types,
+                            skip_semicolon_at_end=skip_semicolon_at_end,
                         )
                         cur.execute(query)
                     self.upload_dataframe(
