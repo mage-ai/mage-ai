@@ -5,9 +5,12 @@ import BackfillType, {
   BACKFILL_TYPE_CODE,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import api from '@api';
+import useDeleteConfirmDialogue from '@components/shared/Table/useDeleteConfirmDialogue';
 import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
 import {
@@ -21,15 +24,17 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { utcStringToElapsedTime } from '@utils/date';
 
 type BackfillsTableProps = {
+  fetchBackfills: () => void;
   pipeline: {
     uuid: string;
   };
   models: BackfillType[];
-  onClickRow: (backfill: BackfillType) => void;
+  onClickRow?: (backfill: BackfillType) => void;
   selectedRow?: BackfillType;
 };
 
 function BackfillsTable({
+  fetchBackfills,
   models,
   onClickRow,
   pipeline,
@@ -39,6 +44,14 @@ function BackfillsTable({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
+
+  const { deleteButton } = useDeleteConfirmDialogue({
+    fetchItems: fetchBackfills,
+    mutationFn: api.backfills.useDelete,
+    path: 'backfills',
+    pipelineUUID,
+  });
+
   const columnFlex = [null, 1, null, null, null, 1, 1, null];
   const columns: ColumnType[] = [
     {
@@ -69,7 +82,7 @@ function BackfillsTable({
   if (!isViewerRole) {
     columns.push({
       label: () => '',
-      uuid: 'edit',
+      uuid: 'edit_delete_backfill',
     });
   }
 
@@ -78,7 +91,7 @@ function BackfillsTable({
       columnFlex={columnFlex}
       columns={columns}
       isSelectedRow={(rowIndex: number) => models[rowIndex].id === selectedRow?.id}
-      onClickRow={(rowIndex: number) => onClickRow(models[rowIndex])}
+      onClickRow={(rowIndex: number) => onClickRow?.(models[rowIndex])}
       rows={models.map(({
         block_uuid: blockUUID,
         completed_at: completedAt,
@@ -148,20 +161,27 @@ function BackfillsTable({
         ];
         if (!isViewerRole) {
           arr.push(
-            <Button
-              default
-              disabled={status === RunStatus.COMPLETED}
-              iconOnly
-              key={`${idx}_edit_button`}
-              linkProps={{
-                as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
-                href: '/pipelines/[pipeline]/backfills/[...slug]',
-              }}
-              noBackground
-              title="Edit"
-            >
-              <Edit default size={2 * UNIT} />
-            </Button>,
+            <FlexContainer key={`edit_delete_backfill_${idx}`}>
+              <Button
+                default
+                disabled={status === RunStatus.COMPLETED}
+                iconOnly
+                key={`${idx}_edit_button`}
+                linkProps={{
+                  as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
+                  href: '/pipelines/[pipeline]/backfills/[...slug]',
+                }}
+                noBackground
+                title="Edit"
+              >
+                <Edit default size={2 * UNIT} />
+              </Button>
+              {deleteButton(
+                id,
+                idx,
+                `Are you sure you want to delete the backfill "${name}?"`,
+              )}
+            </FlexContainer>,
           );
         }
 

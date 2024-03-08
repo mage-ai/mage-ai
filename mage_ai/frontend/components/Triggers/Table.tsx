@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { createRef, useMemo, useRef, useState } from 'react';
+import { createRef, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
