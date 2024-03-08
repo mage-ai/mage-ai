@@ -124,6 +124,8 @@ def export_data_to_mssql(df: DataFrame, **kwargs) -> None:
             index=False,  # Specifies whether to include index in exported table
             if_exists='replace',  # Specify resolution policy if table name already exists
             fast_execute=True,  # Use fast_executemany option to speed up bulk inserting rows
+            unique_conflict_method='UPDATE',  # Specify method to resolve row conflicts
+            unique_constraints=['col'],
         )
 ```
 
