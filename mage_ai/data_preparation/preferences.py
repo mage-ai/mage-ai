@@ -6,51 +6,49 @@ import yaml
 
 from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.settings import get_bool_value
+from mage_ai.settings import get_bool_value, get_settings_value
+from mage_ai.settings.keys import (
+    GIT_AUTH_TYPE,
+    GIT_BRANCH,
+    GIT_EMAIL,
+    GIT_ENABLE_GIT_INTEGRATION,
+    GIT_OVERWRITE_WITH_PROJECT_SETTINGS,
+    GIT_REPO_LINK,
+    GIT_REPO_PATH,
+    GIT_SYNC_ON_EXECUTOR_START,
+    GIT_SYNC_ON_PIPELINE_RUN,
+    GIT_SYNC_ON_START,
+    GIT_SYNC_SUBMODULES,
+    GIT_USERNAME,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
-# Git environment variables
-GIT_REPO_LINK_VAR = 'GIT_REPO_LINK'
-GIT_REPO_PATH_VAR = 'GIT_REPO_PATH'
-GIT_USERNAME_VAR = 'GIT_USERNAME'
-GIT_EMAIL_VAR = 'GIT_EMAIL'
-GIT_AUTH_TYPE_VAR = 'GIT_AUTH_TYPE'
-GIT_BRANCH_VAR = 'GIT_BRANCH'
-GIT_SYNC_ON_PIPELINE_RUN_VAR = 'GIT_SYNC_ON_PIPELINE_RUN'
-GIT_SYNC_ON_START_VAR = 'GIT_SYNC_ON_START'
-GIT_SYNC_ON_EXECUTOR_START_VAR = 'GIT_SYNC_ON_EXECUTOR_START'
-GIT_SYNC_SUBMODULES_VAR = 'GIT_SYNC_SUBMODULES'
-
-GIT_ENABLE_GIT_INTEGRATION_VAR = 'GIT_ENABLE_GIT_INTEGRATION'
-GIT_OVERWRITE_WITH_PROJECT_SETTINGS_VAR = 'GIT_OVERWRITE_WITH_PROJECT_SETTINGS'
-
 ENV_VAR_TO_CONFIG_KEY = {
-    GIT_REPO_LINK_VAR: 'remote_repo_link',
-    GIT_REPO_PATH_VAR: 'repo_path',
-    GIT_USERNAME_VAR: 'username',
-    GIT_EMAIL_VAR: 'email',
-    GIT_AUTH_TYPE_VAR: 'auth_type',
-    GIT_BRANCH_VAR: 'branch',
-    GIT_SYNC_ON_PIPELINE_RUN_VAR: 'sync_on_pipeline_run',
-    GIT_SYNC_ON_START_VAR: 'sync_on_start',
-    GIT_SYNC_ON_EXECUTOR_START_VAR: 'sync_on_executor_start',
-    GIT_SYNC_SUBMODULES_VAR: 'sync_submodules',
+    GIT_REPO_LINK: 'remote_repo_link',
+    GIT_REPO_PATH: 'repo_path',
+    GIT_USERNAME: 'username',
+    GIT_EMAIL: 'email',
+    GIT_AUTH_TYPE: 'auth_type',
+    GIT_BRANCH: 'branch',
+    GIT_SYNC_ON_PIPELINE_RUN: 'sync_on_pipeline_run',
+    GIT_SYNC_ON_START: 'sync_on_start',
+    GIT_SYNC_ON_EXECUTOR_START: 'sync_on_executor_start',
+    GIT_SYNC_SUBMODULES: 'sync_submodules',
 }
 
 BOOLEAN_ENV_VARS = set(
     [
-        GIT_SYNC_ON_PIPELINE_RUN_VAR,
-        GIT_SYNC_ON_START_VAR,
-        GIT_SYNC_ON_EXECUTOR_START_VAR,
-        GIT_SYNC_SUBMODULES_VAR,
-        GIT_ENABLE_GIT_INTEGRATION_VAR,
+        GIT_SYNC_ON_PIPELINE_RUN,
+        GIT_SYNC_ON_START,
+        GIT_SYNC_ON_EXECUTOR_START,
+        GIT_SYNC_SUBMODULES,
+        GIT_ENABLE_GIT_INTEGRATION,
     ]
 )
 
 
-def get_value_for_sync_config(env_var) -> bool:
-    value = os.getenv(env_var)
+def get_value_for_sync_config(env_var, value) -> bool:
     return get_bool_value(value) if env_var in BOOLEAN_ENV_VARS else value
 
 
@@ -68,21 +66,28 @@ def build_sync_config(project_sync_config: Dict) -> Dict:
         if v is not None and (not isinstance(v, str) or v)
     }
 
-    if any([k in os.environ for k in ENV_VAR_TO_CONFIG_KEY]):
+    # Read settings from settings backend
+    config_from_settings = {
+        k: get_settings_value(k)
+        for k in ENV_VAR_TO_CONFIG_KEY.keys()
+    }
+
+    if any([v is not None for v in config_from_settings.values()]):
+        # Map sync config keys to settings values
         sync_config = {
-            v: get_value_for_sync_config(k)
+            v: get_value_for_sync_config(k, config_from_settings.get(k))
             for k, v in ENV_VAR_TO_CONFIG_KEY.items()
         }
 
         # If the GIT_OVERWRITE_WITH_PROJECT_SETTINGS environment variable is set to true,
         # overwrite the sync_config with the config from the project preferences file.
-        if get_bool_value(os.getenv(GIT_OVERWRITE_WITH_PROJECT_SETTINGS_VAR)):
+        if get_bool_value(get_settings_value(GIT_OVERWRITE_WITH_PROJECT_SETTINGS)):
             sync_config = merge_dict(sync_config, project_sync_config)
     else:
         sync_config = project_sync_config
 
     # Set the enable_git_integration field from environment variables
-    enable_git_integration = os.getenv(GIT_ENABLE_GIT_INTEGRATION_VAR)
+    enable_git_integration = get_settings_value(GIT_ENABLE_GIT_INTEGRATION)
     if enable_git_integration is not None:
         sync_config['enable_git_integration'] = get_bool_value(enable_git_integration)
 
