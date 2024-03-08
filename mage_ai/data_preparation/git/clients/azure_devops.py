@@ -2,9 +2,9 @@ import json
 
 import requests
 
+from mage_ai.data_preparation.git.clients.base import Client
 from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import AZURE_DEVOPS_ORGANIZATION
-from mage_ai.data_preparation.git.clients.base import Client
 
 
 class AzureDevopsClient(Client):

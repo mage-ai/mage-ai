@@ -1,6 +1,4 @@
-from mage_ai.authentication.oauth.constants import (
-    ProviderName,
-)
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.active_directory import ADProvider
 from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import AZURE_DEVOPS_ORGANIZATION
