@@ -1,3 +1,5 @@
+import os
+
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,
@@ -5,7 +7,17 @@ from mage_ai.tests.api.endpoints.mixins import (
 
 
 class OauthAPIEndpointTest(BaseAPIEndpointTest):
-    pass
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        os.environ['GOOGLE_CLIENT_ID'] = 'test'
+        os.environ['GOOGLE_CLIENT_SECRET'] = 'test secret'
+
+    @classmethod
+    def tearDownClass(self):
+        super().tearDownClass()
+        del os.environ['GOOGLE_CLIENT_ID']
+        del os.environ['GOOGLE_CLIENT_SECRET']
 
 
 build_list_endpoint_tests(
@@ -18,8 +30,4 @@ build_list_endpoint_tests(
         'url',
         'redirect_query_params',
     ],
-    patch_function_settings=[
-        ('mage_ai.settings.sso.GOOGLE_CLIENT_ID', lambda: 'test'),
-        ('mage_ai.settings.sso.GOOGLE_CLIENT_SECRET', lambda: 'test secret'),
-    ]
 )

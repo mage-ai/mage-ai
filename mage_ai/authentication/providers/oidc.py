@@ -10,7 +10,8 @@ from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.server.logger import Logger
-from mage_ai.settings.sso import OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_DISCOVERY_URL
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.keys import OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_DISCOVERY_URL
 
 logger = Logger().new_server_logger(__name__)
 
@@ -19,9 +20,9 @@ class OidcProvider(OauthProvider, SsoProvider):
     provider = ProviderName.OIDC_GENERIC
 
     def __init__(self):
-        self.discovery_url = OIDC_DISCOVERY_URL
-        self.client_id = OIDC_CLIENT_ID
-        self.client_secret = OIDC_CLIENT_SECRET
+        self.discovery_url = get_settings_value(OIDC_DISCOVERY_URL)
+        self.client_id = get_settings_value(OIDC_CLIENT_ID)
+        self.client_secret = get_settings_value(OIDC_CLIENT_SECRET)
         self.__validate()
 
         self.discover()

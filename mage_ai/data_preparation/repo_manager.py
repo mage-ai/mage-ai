@@ -13,7 +13,7 @@ from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.settings import INITIAL_METADATA
+from mage_ai.settings import INITIAL_METADATA, settings
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
@@ -69,6 +69,7 @@ class RepoConfig:
         self.ldap_config = None
         self.s3_bucket = None
         self.s3_path_prefix = None
+        self.settings_backend = None
         self.logging_config = None
         self.variables_dir = None
         self.variables_retention_period = None
@@ -143,6 +144,8 @@ class RepoConfig:
                 path_parts = self.remote_variables_dir.replace('s3://', '').split('/')
                 self.s3_bucket = path_parts.pop(0)
                 self.s3_path_prefix = '/'.join(path_parts)
+
+            self.settings_backend = repo_config.get('settings_backend', dict())
 
             self.logging_config = repo_config.get('logging_config', dict())
 
@@ -311,6 +314,11 @@ def set_project_uuid_from_metadata() -> None:
         with open(get_metadata_path(), 'r', encoding='utf-8') as f:
             config = yml.load(f) or {}
             project_uuid = config.get('project_uuid')
+
+
+def update_settings_on_metadata_change() -> None:
+    repo_config = get_repo_config(root_project=True)
+    settings.set_settings_backend(**repo_config.settings_backend)
 
 
 def init_project_uuid(overwrite_uuid: str = None, root_project: bool = False) -> None:

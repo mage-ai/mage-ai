@@ -9,14 +9,17 @@ from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
-from mage_ai.settings.sso import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.keys import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
 
 
 class OktaProvider(SsoProvider, OauthProvider):
     provider = ProviderName.OKTA
 
     def __init__(self):
-        self.hostname = OKTA_DOMAIN_URL
+        self.hostname = get_settings_value(OKTA_DOMAIN_URL)
+        self.client_id = get_settings_value(OKTA_CLIENT_ID)
+        self.client_secret = get_settings_value(OKTA_CLIENT_SECRET)
         self.__validate()
 
         if not self.hostname.startswith('https'):
@@ -27,11 +30,11 @@ class OktaProvider(SsoProvider, OauthProvider):
             raise Exception(
                 'Okta hostname is empty. '
                 'Make sure the OKTA_DOMAIN_URL environment variable is set.')
-        if not OKTA_CLIENT_ID:
+        if not self.client_id:
             raise Exception(
                 'Okta client id is empty. '
                 'Make sure the OKTA_CLIENT_ID environment variable is set.')
-        if not OKTA_CLIENT_SECRET:
+        if not self.client_secret:
             raise Exception(
                 'Okta client secret is empty. '
                 'Make sure the OKTA_CLIENT_SECRET environment variable is set.')
@@ -43,7 +46,7 @@ class OktaProvider(SsoProvider, OauthProvider):
             redirect_uri=redirect_uri,
         )
         query = dict(
-            client_id=OKTA_CLIENT_ID,
+            client_id=self.client_id,
             redirect_uri=urllib.parse.quote_plus(
                 f'{base_url}/oauth',
             ),
@@ -75,7 +78,7 @@ class OktaProvider(SsoProvider, OauthProvider):
                     code=code,
                     redirect_uri=f'{base_url}/oauth',
                 ),
-                auth=BasicAuth(OKTA_CLIENT_ID, OKTA_CLIENT_SECRET),
+                auth=BasicAuth(self.client_id, self.client_secret),
                 timeout=20,
             ) as response:
                 data = await response.json()

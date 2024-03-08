@@ -1,18 +1,14 @@
-import os
 import urllib.parse
 import uuid
 from typing import Awaitable, Dict
 
 import aiohttp
 
-from mage_ai.authentication.oauth.constants import (
-    GHE_CLIENT_ID_ENV_VAR,
-    GHE_CLIENT_SECRET_ENV_VAR,
-    ProviderName,
-    get_ghe_hostname,
-)
+from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.keys import GHE_CLIENT_ID, GHE_CLIENT_SECRET
 
 
 class GHEProvider(OauthProvider):
@@ -20,8 +16,8 @@ class GHEProvider(OauthProvider):
 
     def __init__(self):
         self.hostname = get_ghe_hostname()
-        self.client_id = os.getenv(GHE_CLIENT_ID_ENV_VAR)
-        self.client_secret = os.getenv(GHE_CLIENT_SECRET_ENV_VAR)
+        self.client_id = get_settings_value(GHE_CLIENT_ID)
+        self.client_secret = get_settings_value(GHE_CLIENT_SECRET)
         self.__validate()
 
     def __validate(self):
