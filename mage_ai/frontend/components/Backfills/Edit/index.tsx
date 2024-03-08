@@ -379,6 +379,7 @@ function BackfillEdit({
       </FlexContainer>,
       <TextInput
         key="concurrency_input"
+        minValue={1}
         monospace
         onChange={(e) => {
           e.preventDefault();
