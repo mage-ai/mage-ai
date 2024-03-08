@@ -734,7 +734,8 @@
           "icon": "gear",
           "pages": [
             "production/configuring-production-settings/overview",
-            "production/configuring-production-settings/compute-resource"
+            "production/configuring-production-settings/compute-resource",
+            "production/configuring-production-settings/settings-backend"
           ]
         },
         "production/databases/default",
