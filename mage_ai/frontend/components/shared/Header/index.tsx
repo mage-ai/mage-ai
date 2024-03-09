@@ -42,7 +42,7 @@ import { CustomEventUUID, CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from 
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
-import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getSetSettings } from '@storage/CommandCenter/utils';
 import { launchCommandCenter } from '@components/CommandCenter/utils';
 import { pauseEvent } from '@utils/events';
@@ -163,7 +163,13 @@ function Header({
         }
       });
     }
-  }, [commandCenterEnabled, featureUUIDs, project, updateProject]);
+  }, [
+    commandCenterEnabled,
+    featureUUIDs?.COMMAND_CENTER,
+    project?.features,
+    showError,
+    updateProject,
+  ]);
 
   const logout = () => {
     AuthToken.logout(() => {
