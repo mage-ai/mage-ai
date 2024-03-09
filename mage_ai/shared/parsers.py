@@ -59,6 +59,9 @@ def encode_complex(obj):
         return obj.to_dict(orient='records')
     elif isinstance(obj, pd.Series):
         return obj.to_list()
+    # Convert pandas._libs.missing.NAType to None
+    elif isinstance(obj, pd._libs.missing.NAType):
+        return None
 
     return obj
 
