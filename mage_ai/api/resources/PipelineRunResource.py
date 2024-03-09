@@ -12,7 +12,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleStatus,
     ScheduleType,
 )
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
@@ -240,6 +240,15 @@ class PipelineRunResource(DatabaseResource):
         results_size = len(results)
         has_next = results_size > limit
         final_end_idx = results_size - 1 if has_next else results_size
+
+        # Expire pipeline runs that are in progress so that the latest status is returned
+        # the next time they are fetched.
+        for run in results:
+            if run.status in (
+                PipelineRun.PipelineRunStatus.RUNNING,
+                PipelineRun.PipelineRunStatus.INITIAL,
+            ):
+                db_connection.session.expire(run)
 
         result_set = self.build_result_set(
             results[0:final_end_idx],
