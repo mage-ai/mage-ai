@@ -21,9 +21,10 @@ api: "POST /api/pipelines/:pipeline_uuid/backfills"
 
 <RequestExample>
 ```curl cURL
-curl --request PUT \
-  --url 'http://localhost:6789/api/pipelines/example_pipeline/backfills?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+curl --request POST \
+  --url 'http://localhost:6789/api/pipelines/example_pipeline/backfills' \
   --header 'OAUTH-TOKEN=some_really_long_string' \
+  --header 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --data '{
     "backfill": {
       "name": "fire wind"
