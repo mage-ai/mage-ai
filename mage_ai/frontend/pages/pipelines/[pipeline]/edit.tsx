@@ -1037,6 +1037,7 @@ function PipelineDetailPage({
   }, [addNewBlockAtIndex, blocks.length]);
 
   const {
+    renderApplications,
     startApplication,
   } = useApplicationManager();
 
@@ -3458,6 +3459,11 @@ function PipelineDetailPage({
           }
         />
       </PipelineLayout>
+
+      {(!!project && !featureEnabled?.(featureUUIDs?.COMMAND_CENTER))
+        ? renderApplications()
+        : null
+      }
     </>
   );
 }
