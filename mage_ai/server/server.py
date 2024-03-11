@@ -225,7 +225,11 @@ def replace_base_path(base_path: str) -> str:
     return dst
 
 
-def make_app(template_dir: str = None, update_routes: bool = False):
+def make_app(
+    template_dir: str = None,
+    update_routes: bool = False,
+    status_only: bool = False,
+):
     shell_command = SHELL_COMMAND
     if shell_command is None:
         shell_command = 'bash'
@@ -238,7 +242,20 @@ def make_app(template_dir: str = None, update_routes: bool = False):
 
     if template_dir is None:
         template_dir = os.path.join(os.path.dirname(__file__), EXPORTS_FOLDER)
-    routes = [
+
+    routes_base = [
+        # API v1 routes
+        (
+            r'/api/status(?:es)?',
+            ApiListHandler,
+            {
+                'resource': 'statuses',
+                'bypass_oauth_check': True,
+                'is_health_check': True,
+            },
+        ),
+    ]
+    routes_full = routes_base + [
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
@@ -315,17 +332,6 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             r'/api/downloads/(?P<token>[\w/%.-]+)',
             ApiResourceDownloadHandler
         ),
-
-        # API v1 routes
-        (
-            r'/api/status(?:es)?',
-            ApiListHandler,
-            {
-                'resource': 'statuses',
-                'bypass_oauth_check': True,
-                'is_health_check': True,
-            },
-        ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
             r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
@@ -350,6 +356,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if status_only:
+        routes = routes_base
+    else:
+        routes = routes_full
 
     if ENABLE_PROMETHEUS or OTEL_EXPORTER_OTLP_ENDPOINT:
         from opentelemetry.instrumentation.tornado import TornadoInstrumentor
@@ -498,6 +509,7 @@ async def main(
     port: Union[str, None] = None,
     project: Union[str, None] = None,
     project_type: ProjectType = ProjectType.STANDALONE,
+    status_only: bool = False,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
@@ -520,6 +532,7 @@ async def main(
     app = make_app(
         template_dir=template_dir,
         update_routes=update_routes,
+        status_only=status_only,
     )
 
     port = int(port)
@@ -544,7 +557,7 @@ async def main(
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
 
-    if not DISABLE_AUTO_BROWSER_OPEN:
+    if not DISABLE_AUTO_BROWSER_OPEN and not status_only:
         webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
@@ -710,7 +723,7 @@ def start_server(
         run_docs_server()
     else:
         set_db_schema()
-        run_web_server = True
+        run_web_server_with_status_only = False
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
             os.environ[MANAGE_ENV_VAR] = '1'
@@ -719,13 +732,13 @@ def start_server(
                 database_manager.run_migrations()
             except Exception:
                 traceback.print_exc()
-        elif instance_type == InstanceType.SERVER_AND_SCHEDULER:
+        elif instance_type in InstanceType.SERVER_AND_SCHEDULER:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
         elif instance_type == InstanceType.SCHEDULER:
             # Start a subprocess for scheduler
-            scheduler_manager.start_scheduler(foreground=True)
-            run_web_server = False
+            scheduler_manager.start_scheduler()
+            run_web_server_with_status_only = True
         elif instance_type == InstanceType.WEB_SERVER:
             # run migrations to enable user authentication
             try:
@@ -733,16 +746,16 @@ def start_server(
             except Exception:
                 traceback.print_exc()
 
-        if run_web_server:
-            # Start web server
-            asyncio.run(
-                main(
-                    host=host,
-                    port=port,
-                    project=project,
-                    project_type=project_type,
-                )
+        # Start web server
+        asyncio.run(
+            main(
+                host=host,
+                port=port,
+                project=project,
+                project_type=project_type,
+                status_only=run_web_server_with_status_only,
             )
+        )
 
 
 if __name__ == '__main__':
