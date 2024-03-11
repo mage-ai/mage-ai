@@ -87,7 +87,7 @@ export const RootApplicationStyle = styled.div`
 
       &:hover {
         ${transition()}
-        transform: translateY(-38px);
+        transform: translateY(-56px);
       }
 
       .minimized {
@@ -134,7 +134,7 @@ export const DockStyle = styled.div`
 
   bottom: 0;
   display: flex;
-  height: 20px;
+  height: 2px;
   justify-content: center;
   position: fixed;
   width: 100%;
