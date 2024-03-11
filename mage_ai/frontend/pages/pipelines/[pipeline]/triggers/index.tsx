@@ -237,7 +237,7 @@ function PipelineSchedules({
           />
           {hasVariables && (
             <RuntimeVariables
-              height={runtimeVariablesHeight}
+              height={runtimeVariablesHeight + 1}
               scheduleType={selectedSchedule?.schedule_type}
               variables={variablesOrig}
               variablesOverride={variablesOverride}
@@ -245,7 +245,7 @@ function PipelineSchedules({
           )}
           {!hasVariables && (
             <RuntimeVariablesContainerStyle
-              height={runtimeVariablesHeight}
+              height={runtimeVariablesHeight + 1}
               includePadding
               overflow
             >
