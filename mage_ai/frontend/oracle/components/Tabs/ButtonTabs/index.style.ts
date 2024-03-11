@@ -10,9 +10,8 @@ export const UNDERLINE_HEIGHT = 2;
 export const TabsContainerStyle = styled.div<{
   allowScroll?: boolean;
   noPadding?: boolean;
+  showScrollbar?: boolean;
 }>`
-  ${hideScrollBar()}
-
   padding-left: ${PADDING_UNITS * UNIT}px;
   padding-right: ${PADDING_UNITS * UNIT}px;
 
@@ -22,6 +21,14 @@ export const TabsContainerStyle = styled.div<{
 
   ${props => props.allowScroll && `
     overflow: auto;
+  `}
+
+  ${({ showScrollbar }) => !showScrollbar && `
+    ${hideScrollBar()}
+  `}
+
+  ${({ showScrollbar }) => showScrollbar && `
+    padding-bottom: ${UNIT / 2}px;
   `}
 
   ${ScrollbarStyledCss}

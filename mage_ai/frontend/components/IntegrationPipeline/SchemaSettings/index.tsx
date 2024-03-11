@@ -201,6 +201,7 @@ function SchemaSettings({
           setSelectedStream(tab.uuid);
         }}
         selectedTabUUID={selectedTab?.uuid}
+        showScrollbar
         tabs={tabs}
       />
 
