@@ -3368,9 +3368,12 @@ function PipelineDetailPage({
       <PipelineLayout
         after={sideKick}
         afterHeader={afterHeaderMemo}
-        afterHeightOffset={HEADER_HEIGHT}
+        afterHeightOffset={HEADER_HEIGHT - 1}
         afterHidden={afterHidden}
-        afterInnerHeightMinus={afterFooterBottomOffset}
+        afterInnerHeightMinus={ViewKeyEnum.INTERACTIONS === activeSidekickView
+          ? afterFooterBottomOffset
+          : null
+        }
         afterNavigationItems={buildNavigationItemsSidekick({
           activeView: activeSidekickView,
           pipeline,
