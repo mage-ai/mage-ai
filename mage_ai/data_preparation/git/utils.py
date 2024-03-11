@@ -44,6 +44,8 @@ def get_provider_from_remote_url(remote_url: str) -> str:
         return ProviderName.BITBUCKET
     elif gitlab_host and gitlab_host in remote_url or 'gitlab.com' in remote_url:
         return ProviderName.GITLAB
+    elif 'dev.azure.com' in remote_url:
+        return ProviderName.AZURE_DEVOPS
     elif ghe_hostname and ghe_hostname in remote_url:
         return ProviderName.GHE
     else:

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git.constants import DEFAULT_KNOWN_HOSTS_FILE
 from mage_ai.data_preparation.git.utils import (
     add_host_to_known_hosts as add_host_to_known_hosts_util,
@@ -18,6 +19,7 @@ from mage_ai.data_preparation.git.utils import (
     check_connection_async,
     create_ssh_keys,
     get_access_token,
+    get_provider_from_remote_url,
     poll_process_with_timeout,
     run_command,
 )
@@ -622,7 +624,14 @@ class Git:
             try:
                 for url in remote.urls:
                     if url.lower().startswith('https'):
-                        repository_names.append('/'.join(url.split('/')[-2:]).replace('.git', ''))
+                        provider = get_provider_from_remote_url(url)
+                        if provider == ProviderName.AZURE_DEVOPS:
+                            updated_url = url.replace('/_git', '')
+                            repository_names.append('/'.join(updated_url.split('/')[-2:]))
+                        else:
+                            repository_names.append(
+                                '/'.join(url.split('/')[-2:]).replace('.git', '')
+                            )
 
                         # Remove the token from the URL
                         # e.g. https://[user]:[token]@[netloc]

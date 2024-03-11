@@ -26,6 +26,7 @@ logger = Logger().new_server_logger(__name__)
 
 class ADProvider(SsoProvider, OauthProvider):
     provider = ProviderName.ACTIVE_DIRECTORY
+    scope = 'User.Read'
 
     def __init__(self):
         self.directory_id = get_settings_value(ACTIVE_DIRECTORY_DIRECTORY_ID)
@@ -72,7 +73,7 @@ class ADProvider(SsoProvider, OauthProvider):
                     f'{base_url}/oauth',
                 ),
                 response_type='code',
-                scope='User.Read',
+                scope=self.scope,
                 state=uuid.uuid4().hex,
             )
             query_strings = []
@@ -92,7 +93,7 @@ class ADProvider(SsoProvider, OauthProvider):
                 client_id=ACTIVE_DIRECTORY_MAGE_CLIENT_ID,
                 redirect_uri=f'https://api.mage.ai/v1/oauth/{self.provider}',
                 response_type='code',
-                scope='User.Read',
+                scope=self.scope,
                 state=quote_plus(
                     json.dumps(
                         dict(
