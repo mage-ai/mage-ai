@@ -131,39 +131,52 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         ]
 
         if unique_constraints and UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+            self.logger.info(f'Test Vikas Code for UNIQUE_CONFLICT_METHOD_UPDATE')
             full_table_name_temp = self.full_table_name(schema_name, table_name, prefix='temp_')
-            full_table_name_old = self.full_table_name(schema_name, table_name, prefix='old_')
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
-            drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
             unique_constraints_clean = [
                 f'{self.clean_column_name(col)}'
                 for col in unique_constraints
             ]
+
+            create_temp_table_command = (f'CREATE TABLE {full_table_name_temp} '
+                                         f'AS SELECT * FROM {full_table_name} where 1=0')
+
+            drop_duplicate_records_from_temp = f'DELETE FROM {full_table_name_temp} '
+            f'where ({", ".join(unique_constraints_clean)},_mage_created_at) '
+            f'IN ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at '
+            f'FROM ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at, ROW_NUMBER() '
+            f'OVER (PARTITION BY {", ".join(unique_constraints_clean)} '
+            f'ORDER BY _mage_created_at DESC) as row_num '
+            f'FROM {full_table_name_temp} ) AS subquery_alias WHERE row_num > 1); '
+
+            delete_records_from_full_table = (f'DELETE FROM {full_table_name} '
+                                              f'where ({", ".join(unique_constraints_clean)}) '
+                                              f'in (SELECT {", ".join(unique_constraints_clean)} '
+                                              f'from {full_table_name_temp})')
+
+            insert_records_from_temp_table = f'INSERT INTO {full_table_name} SELECT * FROM {full_table_name_temp}'
+
+            truncate_records_from_temp_table = f'TRUNCATE table {full_table_name_temp}'
+
+            commands = [
+                '\n'.join([
+                    f'INSERT INTO {full_table_name_temp} ({insert_columns})',
+                    f'VALUES {insert_values}',
+                ]),
+            ]
+            # This is temp as need to know the best way to create table programmatically i will change it properly */
             commands = commands + [
-                drop_temp_table_command,
-                drop_old_table_command,
-            ] + ['\n'.join([
-                    f'CREATE TABLE {full_table_name_temp} AS '
-                    f'SELECT {insert_columns} FROM ('
-                    f'  SELECT *,'
-                    f'      ROW_NUMBER() OVER ('
-                    f'          PARTITION BY {", ".join(unique_constraints_clean)} ORDER BY _mage_created_at DESC'  # noqa: E501
-                    f'      ) as row_num'
-                    f'  FROM {full_table_name})'
-                    f'WHERE row_num = 1'
-                ])
-            ] + [
-                f'ALTER TABLE {full_table_name} rename to old_{table_name}',
-                f'ALTER TABLE {full_table_name_temp} rename to {table_name}',
-                drop_temp_table_command,
-                drop_old_table_command,
+                delete_records_from_full_table,
+                insert_records_from_temp_table,
+                truncate_records_from_temp_table
             ]
 
         if not self.is_redshift_serverless:
             commands.append(
                 '\n'.join([
                     'WITH last_queryid_for_table AS (',
-                    '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',   # noqa: E501
+                    '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',  # noqa: E501
                     '    FROM stl_insert si, SVV_TABLE_INFO sti',
                     f'    WHERE sti.table_id=si.tbl AND sti."table"=\'{table_name}\'',
                     ')',
