@@ -123,6 +123,7 @@ class OidcProvider(OauthProvider, SsoProvider):
                 },
                 timeout=10,
             ) as response:
+                response.raise_for_status()
                 userinfo_resp = await response.json()
 
         email = userinfo_resp.get('email')
