@@ -11,7 +11,7 @@ import { transition } from '@oracle/styles/mixins';
 
 const SCALE_PERCENTAGE = 0.1;
 export const HEADER_HEIGHT = 6 * UNIT;
-export const OVERLAY_ID = 'application-minimized-overlay'
+export const OVERLAY_ID = 'application-minimized-overlay';
 const RESIZE_SIZE = 1 * UNIT;
 const RESIZE_SIZE_CORNER = 2 * UNIT;
 
@@ -66,7 +66,7 @@ function minimizedDimensions(): {
       height,
       width,
     },
-  } = buildDefaultLayout()
+  } = buildDefaultLayout();
 
   return {
     height: height * SCALE_PERCENTAGE,
@@ -87,7 +87,7 @@ export const RootApplicationStyle = styled.div`
 
       &:hover {
         ${transition()}
-        transform: translateY(-38px);
+        transform: translateY(-56px);
       }
 
       .minimized {
@@ -134,7 +134,7 @@ export const DockStyle = styled.div`
 
   bottom: 0;
   display: flex;
-  height: 20px;
+  height: 2px;
   justify-content: center;
   position: fixed;
   width: 100%;

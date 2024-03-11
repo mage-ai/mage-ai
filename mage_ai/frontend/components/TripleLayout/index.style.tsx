@@ -14,7 +14,7 @@ export const DRAGGABLE_WIDTH = UNIT;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
-export const ASIDE_SUBHEADER_HEIGHT = 44;
+export const ASIDE_SUBHEADER_HEIGHT = 47;
 export const ALL_HEADERS_HEIGHT = 2 * PADDING_UNITS * 3 * UNIT;
 
 type ScrollbarTrackType = {

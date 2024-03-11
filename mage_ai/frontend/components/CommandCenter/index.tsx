@@ -1,6 +1,5 @@
-import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createRef, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import ApplicationHeaderTitle from './ApplicationHeaderTitle';
@@ -14,9 +13,6 @@ import ItemRow from './ItemRow';
 import LaunchKeyboardShortcutText from './LaunchKeyboardShortcutText';
 import Loading from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import api from '@api';
 import useApplicationManager from '@components/ApplicationManager/useApplicationManager';
 import useCache from '@storage/CommandCenter/useCache';
 import useExecuteActions from './useExecuteActions';
@@ -71,8 +67,6 @@ import {
 } from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
-  KEY_CODE_ARROW_LEFT,
-  KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
   KEY_CODE_BACKSPACE,
   KEY_CODE_C,
@@ -80,7 +74,6 @@ import {
   KEY_CODE_DELETE,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
-  KEY_CODE_KEY_SYMBOL_MAPPING,
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
   KEY_CODE_PERIOD,
@@ -109,7 +102,6 @@ import {
   rankItems,
   updateActionFromUpstreamResults,
 } from './utils';
-import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { mergeDeep, setNested } from '@utils/hash';
