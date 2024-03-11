@@ -225,7 +225,11 @@ def replace_base_path(base_path: str) -> str:
     return dst
 
 
-def make_app(template_dir: str = None, update_routes: bool = False):
+def make_app(
+    template_dir: str = None,
+    update_routes: bool = False,
+    status_only: bool = False,
+):
     shell_command = SHELL_COMMAND
     if shell_command is None:
         shell_command = 'bash'
@@ -238,7 +242,20 @@ def make_app(template_dir: str = None, update_routes: bool = False):
 
     if template_dir is None:
         template_dir = os.path.join(os.path.dirname(__file__), EXPORTS_FOLDER)
-    routes = [
+
+    routes_base = [
+        # API v1 routes
+        (
+            r'/api/status(?:es)?',
+            ApiListHandler,
+            {
+                'resource': 'statuses',
+                'bypass_oauth_check': True,
+                'is_health_check': True,
+            },
+        ),
+    ]
+    routes_full = routes_base + [
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
@@ -315,17 +332,6 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             r'/api/downloads/(?P<token>[\w/%.-]+)',
             ApiResourceDownloadHandler
         ),
-
-        # API v1 routes
-        (
-            r'/api/status(?:es)?',
-            ApiListHandler,
-            {
-                'resource': 'statuses',
-                'bypass_oauth_check': True,
-                'is_health_check': True,
-            },
-        ),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
             r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
@@ -350,6 +356,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if status_only:
+        routes = routes_base
+    else:
+        routes = routes_full
 
     if ENABLE_PROMETHEUS or OTEL_EXPORTER_OTLP_ENDPOINT:
         from opentelemetry.instrumentation.tornado import TornadoInstrumentor
@@ -498,8 +509,10 @@ async def main(
     port: Union[str, None] = None,
     project: Union[str, None] = None,
     project_type: ProjectType = ProjectType.STANDALONE,
+    status_only: bool = False,
 ):
-    switch_active_kernel(DEFAULT_KERNEL_NAME)
+    if not status_only:
+        switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     # Update base path if environment variable is set
     update_routes = False
@@ -520,6 +533,7 @@ async def main(
     app = make_app(
         template_dir=template_dir,
         update_routes=update_routes,
+        status_only=status_only,
     )
 
     port = int(port)
@@ -544,7 +558,7 @@ async def main(
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
 
-    if not DISABLE_AUTO_BROWSER_OPEN:
+    if not DISABLE_AUTO_BROWSER_OPEN and not status_only:
         webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
@@ -574,65 +588,70 @@ async def main(
         except Exception:
             logger.exception('Failed to set up git repo')
 
-    if REQUIRE_USER_AUTHENTICATION:
-        initialize_user_authentication(project_type)
+    if not status_only:
+        # Initialize web server related settings and cache
+        if REQUIRE_USER_AUTHENTICATION:
+            initialize_user_authentication(project_type)
 
-    if REQUIRE_USER_PERMISSIONS:
-        logger.info('User permissions requirement is enabled.')
+        if REQUIRE_USER_PERMISSIONS:
+            logger.info('User permissions requirement is enabled.')
 
-    try:
-        logger.info('Initializing block cache.')
-        logger.info('Initializing pipeline cache.')
-        await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
-    except Exception as err:
-        print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
-        if is_debug():
-            raise err
+        try:
+            logger.info('Initializing block cache.')
+            logger.info('Initializing pipeline cache.')
+            await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
+        except Exception as err:
+            print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+            if is_debug():
+                raise err
 
-    logger.info('Initializing tag cache.')
-    await TagCache.initialize_cache(replace=True)
+        logger.info('Initializing tag cache.')
+        await TagCache.initialize_cache(replace=True)
 
-    logger.info('Initializing block action object cache.')
-    await BlockActionObjectCache.initialize_cache(replace=True)
+        logger.info('Initializing block action object cache.')
+        await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project(root_project=True)
-    if project_model:
-        if project_model.spark_config and \
-                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+        project_model = Project(root_project=True)
+        if project_model:
+            if project_model.spark_config and \
+                    project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-            Application.clear_cache()
+                Application.clear_cache()
 
-        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
-            try:
-                logger.info('Initializing dbt cache.')
-                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
-                logger.info(f'dbt cached in {dbt_cache.file_path}')
-            except Exception as err:
-                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
-                if is_debug():
-                    raise err
+            if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+                try:
+                    logger.info('Initializing dbt cache.')
+                    dbt_cache = await DBTCache.initialize_cache_async(
+                        replace=True,
+                        root_project=True,
+                    )
+                    logger.info(f'dbt cached in {dbt_cache.file_path}')
+                except Exception as err:
+                    print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                    if is_debug():
+                        raise err
 
-        if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
-            try:
-                logger.info('Initializing file cache.')
-                file_cache = FileCache.initialize_cache_with_settings(replace=True)
-                count = len(file_cache._temp_data) if file_cache._temp_data else 0
-                logger.info(
-                    f'{count} files cached in {file_cache.file_path}.',
-                )
-            except Exception as err:
-                print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
-                if is_debug():
-                    raise err
+            if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+                try:
+                    logger.info('Initializing file cache.')
+                    file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                    count = len(file_cache._temp_data) if file_cache._temp_data else 0
+                    logger.info(
+                        f'{count} files cached in {file_cache.file_path}.',
+                    )
+                except Exception as err:
+                    print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
+                    if is_debug():
+                        raise err
 
-    try:
-        from mage_ai.services.ssh.aws.emr.models import create_tunnel
+        try:
+            from mage_ai.services.ssh.aws.emr.models import create_tunnel
 
-        tunnel = create_tunnel(clean_up_on_failure=True)
-        if tunnel:
-            print(f'SSH tunnel active: {tunnel.is_active()}')
-    except Exception as err:
-        print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
+            tunnel = create_tunnel(clean_up_on_failure=True)
+            if tunnel:
+                print(f'SSH tunnel active: {tunnel.is_active()}')
+        except Exception as err:
+            print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
 
     if ProjectType.MAIN == project_type:
         # Check scheduler status periodically
@@ -710,7 +729,7 @@ def start_server(
         run_docs_server()
     else:
         set_db_schema()
-        run_web_server = True
+        run_web_server_with_status_only = False
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
             os.environ[MANAGE_ENV_VAR] = '1'
@@ -724,8 +743,8 @@ def start_server(
             scheduler_manager.start_scheduler()
         elif instance_type == InstanceType.SCHEDULER:
             # Start a subprocess for scheduler
-            scheduler_manager.start_scheduler(foreground=True)
-            run_web_server = False
+            scheduler_manager.start_scheduler()
+            run_web_server_with_status_only = True
         elif instance_type == InstanceType.WEB_SERVER:
             # run migrations to enable user authentication
             try:
@@ -733,16 +752,16 @@ def start_server(
             except Exception:
                 traceback.print_exc()
 
-        if run_web_server:
-            # Start web server
-            asyncio.run(
-                main(
-                    host=host,
-                    port=port,
-                    project=project,
-                    project_type=project_type,
-                )
+        # Start web server
+        asyncio.run(
+            main(
+                host=host,
+                port=port,
+                project=project,
+                project_type=project_type,
+                status_only=run_web_server_with_status_only,
             )
+        )
 
 
 if __name__ == '__main__':
