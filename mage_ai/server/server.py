@@ -511,7 +511,8 @@ async def main(
     project_type: ProjectType = ProjectType.STANDALONE,
     status_only: bool = False,
 ):
-    switch_active_kernel(DEFAULT_KERNEL_NAME)
+    if not status_only:
+        switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     # Update base path if environment variable is set
     update_routes = False
@@ -737,7 +738,7 @@ def start_server(
                 database_manager.run_migrations()
             except Exception:
                 traceback.print_exc()
-        elif instance_type in InstanceType.SERVER_AND_SCHEDULER:
+        elif instance_type == InstanceType.SERVER_AND_SCHEDULER:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
         elif instance_type == InstanceType.SCHEDULER:
