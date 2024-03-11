@@ -587,65 +587,70 @@ async def main(
         except Exception:
             logger.exception('Failed to set up git repo')
 
-    if REQUIRE_USER_AUTHENTICATION:
-        initialize_user_authentication(project_type)
+    if not status_only:
+        # Initialize web server related settings and cache
+        if REQUIRE_USER_AUTHENTICATION:
+            initialize_user_authentication(project_type)
 
-    if REQUIRE_USER_PERMISSIONS:
-        logger.info('User permissions requirement is enabled.')
+        if REQUIRE_USER_PERMISSIONS:
+            logger.info('User permissions requirement is enabled.')
 
-    try:
-        logger.info('Initializing block cache.')
-        logger.info('Initializing pipeline cache.')
-        await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
-    except Exception as err:
-        print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
-        if is_debug():
-            raise err
+        try:
+            logger.info('Initializing block cache.')
+            logger.info('Initializing pipeline cache.')
+            await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
+        except Exception as err:
+            print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+            if is_debug():
+                raise err
 
-    logger.info('Initializing tag cache.')
-    await TagCache.initialize_cache(replace=True)
+        logger.info('Initializing tag cache.')
+        await TagCache.initialize_cache(replace=True)
 
-    logger.info('Initializing block action object cache.')
-    await BlockActionObjectCache.initialize_cache(replace=True)
+        logger.info('Initializing block action object cache.')
+        await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project(root_project=True)
-    if project_model:
-        if project_model.spark_config and \
-                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+        project_model = Project(root_project=True)
+        if project_model:
+            if project_model.spark_config and \
+                    project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-            Application.clear_cache()
+                Application.clear_cache()
 
-        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
-            try:
-                logger.info('Initializing dbt cache.')
-                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
-                logger.info(f'dbt cached in {dbt_cache.file_path}')
-            except Exception as err:
-                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
-                if is_debug():
-                    raise err
+            if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+                try:
+                    logger.info('Initializing dbt cache.')
+                    dbt_cache = await DBTCache.initialize_cache_async(
+                        replace=True,
+                        root_project=True,
+                    )
+                    logger.info(f'dbt cached in {dbt_cache.file_path}')
+                except Exception as err:
+                    print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                    if is_debug():
+                        raise err
 
-        if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
-            try:
-                logger.info('Initializing file cache.')
-                file_cache = FileCache.initialize_cache_with_settings(replace=True)
-                count = len(file_cache._temp_data) if file_cache._temp_data else 0
-                logger.info(
-                    f'{count} files cached in {file_cache.file_path}.',
-                )
-            except Exception as err:
-                print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
-                if is_debug():
-                    raise err
+            if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+                try:
+                    logger.info('Initializing file cache.')
+                    file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                    count = len(file_cache._temp_data) if file_cache._temp_data else 0
+                    logger.info(
+                        f'{count} files cached in {file_cache.file_path}.',
+                    )
+                except Exception as err:
+                    print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
+                    if is_debug():
+                        raise err
 
-    try:
-        from mage_ai.services.ssh.aws.emr.models import create_tunnel
+        try:
+            from mage_ai.services.ssh.aws.emr.models import create_tunnel
 
-        tunnel = create_tunnel(clean_up_on_failure=True)
-        if tunnel:
-            print(f'SSH tunnel active: {tunnel.is_active()}')
-    except Exception as err:
-        print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
+            tunnel = create_tunnel(clean_up_on_failure=True)
+            if tunnel:
+                print(f'SSH tunnel active: {tunnel.is_active()}')
+        except Exception as err:
+            print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
 
     if ProjectType.MAIN == project_type:
         # Check scheduler status periodically
