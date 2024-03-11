@@ -30,6 +30,7 @@ type ButtonTabsProps = {
   selectedTabUUIDs?: {
     [tabUUID: string]: TabType;
   };
+  showScrollbar?: boolean;
   small?: boolean;
   tabs: TabType[];
   underlineColor?: string;
@@ -47,6 +48,7 @@ function ButtonTabs({
   regularSizeText,
   selectedTabUUID,
   selectedTabUUIDs,
+  showScrollbar,
   small,
   tabs,
   underlineColor,
@@ -211,6 +213,7 @@ function ButtonTabs({
       allowScroll={allowScroll}
       noPadding={noPadding}
       ref={ref}
+      showScrollbar={showScrollbar}
     >
       {el}
     </TabsContainerStyle>

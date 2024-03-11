@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { PADDING } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ContainerStyle = styled.div<{
   height: number;
@@ -20,4 +21,6 @@ export const ContainerStyle = styled.div<{
   ${({ overflow }) => overflow && `
     overflow: auto;
   `}
+
+  ${ScrollbarStyledCss}
 `;
