@@ -354,7 +354,7 @@ function PipelineDetailPage({
       dataPipelineInteraction,
     ]);
   const interactions: InteractionType[] =
-    useMemo(() => dataInteractions?.interactions || {}, [
+    useMemo(() => dataInteractions?.interactions || [], [
       dataInteractions,
     ]);
 
