@@ -64,7 +64,7 @@ class TrinoConnector(Destination):
         # if the location is specified during table creation as they are considered external tables
         # We want to be able to delete the underlying data when dropping a table
         # so we need to ignore the location for temp tables
-        breakpoint()
+
         ignore_location_for_temp_tables = self.config.get('ignore_location_for_temp_tables', False)
         if temp_table and ignore_location_for_temp_tables:
             location = None
