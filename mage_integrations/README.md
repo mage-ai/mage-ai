@@ -131,6 +131,16 @@ For each stream in `TEST_CATALOG.json`, find the nested `metadata` key and add a
 ...
 ```
 
+Additonally, also add to add ```"selected": true``` to at least one column in each field for SQL sources.
+
+```json
+{
+  "stream": "commits",
+  "tap_stream_id": "commits",
+  "selected": true
+}
+```
+
 ## Test stream execution and save to output file
 
 Finally! It's time to test our stream execution. Run the following command to execute the stream and save the output to a file:
