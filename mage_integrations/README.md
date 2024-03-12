@@ -131,7 +131,7 @@ For each stream in `TEST_CATALOG.json`, find the nested `metadata` key and add a
 ...
 ```
 
-Additonally, also add to add ```"selected": true``` to at least one column in each field for SQL sources.
+Additonally, also add to add ```"selected": true``` to at least one column in each stream for SQL sources.
 
 ```json
 {
