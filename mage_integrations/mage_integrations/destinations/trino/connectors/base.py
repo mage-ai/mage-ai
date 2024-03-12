@@ -60,8 +60,9 @@ class TrinoConnector(Destination):
         Build create table commands for Trino
         """
 
-        # Trino delta lake with glue matastore does not delete the underlying data when dropping a table
-        # if the location is specified during table creation as they are considered external tables
+        # Trino delta lake with glue matastore does not delete the underlying data 
+        # when dropping a table if the location is specified during table creation 
+        # as they are considered external tables
         # We want to be able to delete the underlying data when dropping a table
         # so we need to ignore the location for temp tables
 
