@@ -236,9 +236,10 @@ concurrency_config:
   block_run_limit: 5
   pipeline_run_limit: 3
 ```
-* `block_run_limit` is to limit the concurrent blocks runs in one pipeline run.
-* `pipeline_run_limit` is to limit the concurrent pipeline runs in one pipeline trigger.
-
+* `block_run_limit`: limit the concurrent blocks runs in one pipeline run.
+* `pipeline_run_limit`: limit the concurrent pipeline runs in one pipeline trigger.
+* `pipeline_run_limit_all_triggers`: limit the concurrent pipeline runs across all trigers in a pipeline.
+* `on_pipeline_run_limit_reached`: choose whether to `wait` or `skip` when the pipeline run limit is reached.
 
 ## Variable storage
 Mage automatically persists the output of block runs on disk. You can specify the path or the storage for block output variables
