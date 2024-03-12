@@ -99,6 +99,7 @@ function PipelineInteractions({
   const [newInteractionUUID, setNewInteractionUUID] = useState<string>(null);
   const [isAddingNewInteraction, setIsAddingNewInteraction] = useState<boolean>(false);
   const [mostRecentlyAddedInteractionUUID, setMostRecentlyAddedInteractionUUID] = useState<string>(null);
+  const isLoadingInteractions = !blockInteractionsMappingProp;
 
   const [interactionsMappingState, setInteractionsMappingState] = useState<{
     [interactionUUID: string]: InteractionType;
@@ -363,7 +364,7 @@ function PipelineInteractions({
         uuid: blockUUID,
       } = block || {
         uuid: null,
-      }
+      };
 
       const blockInteractions = blockInteractionsMapping?.[blockUUID] || [];
       const hasBlockInteractions = blockInteractions?.length >= 1;
@@ -372,6 +373,7 @@ function PipelineInteractions({
         <Button
           beforeIcon={hasBlockInteractions ? <Edit /> : <Add />}
           compact
+          disabled={isLoadingInteractions}
           onClick={(e) => {
             pauseEvent(e);
             setSelectedBlock(block);
@@ -391,8 +393,6 @@ function PipelineInteractions({
           key={blockUUID}
           noBorderRadius={idx >= 1}
           noPaddingContent
-          titleXPadding={PADDING_UNITS * UNIT}
-          titleYPadding={1.5 * UNIT}
           title={(
             <FlexContainer
               alignItems="center"
@@ -411,6 +411,8 @@ function PipelineInteractions({
               )}
             </FlexContainer>
           )}
+          titleXPadding={PADDING_UNITS * UNIT}
+          titleYPadding={1.5 * UNIT}
         >
           <ContainerStyle
             noBackground
@@ -426,8 +428,8 @@ function PipelineInteractions({
                 >
                   <BlockInteractionController
                     blockInteraction={blockInteraction}
-                    containerWidth={containerWidth}
                     containerRef={containerRef}
+                    containerWidth={containerWidth}
                     interaction={interactionsMapping?.[blockInteraction?.uuid]}
                     setInteractionsMapping={setInteractionsMapping}
                     showVariableUUID
@@ -436,17 +438,18 @@ function PipelineInteractions({
               ))}
             </Spacing>
           </ContainerStyle>
-        </AccordionPanel>
+        </AccordionPanel>,
       );
     });
 
     return arr;
   }, [
+    blockInteractionsMapping,
     blocks,
     containerRef,
     containerWidth,
     interactionsMapping,
-    setBlockInteractionsMapping,
+    isLoadingInteractions,
     setInteractionsMapping,
     setSelectedBlock,
   ]);
@@ -623,6 +626,7 @@ function PipelineInteractions({
       </FlexContainer>
     );
   }, [
+    createInteraction,
     editingBlock,
     editingBlockInteractions,
     isAddingNewInteraction,
@@ -665,7 +669,8 @@ function PipelineInteractions({
                   <Button
                     beforeIcon={<Add />}
                     compact
-                    onClick={() => setPermissions(prev => prev.concat([{
+                    disabled={isLoadingInteractions}
+                    onClick={() => setPermissions(prev => prev?.concat([{
                       roles: [],
                       triggers: [],
                     }]))}
@@ -863,7 +868,8 @@ function PipelineInteractions({
           <FlexContainer alignItems="center">
             <Button
               beforeIcon={<Save />}
-              loading={isLoadingUpdatePipelineInteraction}
+              disabled={isLoadingInteractions}
+              loading={isLoadingUpdatePipelineInteraction || isLoadingInteractions}
               onClick={() => savePipelineInteraction()}
               primary={touched}
               secondary={!touched}

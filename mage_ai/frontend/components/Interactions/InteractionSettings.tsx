@@ -72,7 +72,7 @@ function InteractionSettings({
   const [newVariableUUID, setNewVariableUUID] = useState<string>(null);
   const [visibleMappingForced, setVisibleMappingForced] = useState<{
     [index: string]: boolean;
-  }>({})
+  }>({});
 
   const {
     inputs,
@@ -158,7 +158,7 @@ function InteractionSettings({
 
       row?.forEach((layoutItem) => {
         if (!shouldDelete || variableUUID !== layoutItem?.variable) {
-          arr.push(layoutItem)
+          arr.push(layoutItem);
         }
       });
 

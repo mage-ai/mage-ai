@@ -329,7 +329,7 @@ function PipelineDetailPage({
     },
     {
       condition: () => isInteractionsEnabled,
-      delay: 6000,
+      delay: 3000,
     },
   );
 
@@ -345,7 +345,7 @@ function PipelineDetailPage({
     },
     {
       condition: () => isInteractionsEnabled,
-      delay: 6000,
+      delay: 3000,
     },
   );
 
@@ -354,7 +354,7 @@ function PipelineDetailPage({
       dataPipelineInteraction,
     ]);
   const interactions: InteractionType[] =
-    useMemo(() => dataInteractions?.interactions || {}, [
+    useMemo(() => dataInteractions?.interactions || [], [
       dataInteractions,
     ]);
 
