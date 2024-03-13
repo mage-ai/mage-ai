@@ -519,10 +519,12 @@ def get_bookmark_for_stream(stream_name, replication_key):
     # so kept `date` in bookmarking for Invoices and Invoice line Items as it has to respect
     # bookmark of active connection too.
     if stream_name in ['invoices', 'invoice_line_items']:
-        stream_bookmark = singer.get_bookmark(Context.state, stream_name, 'date') or \
+        stream_bookmark = singer.get_bookmark(Context.state or {}, stream_name, 'date') or \
             int(utils.strptime_to_utc(Context.config["start_date"]).timestamp())
     else:
-        stream_bookmark = singer.get_bookmark(Context.state, stream_name, replication_key) or \
+        stream_bookmark = singer.get_bookmark(
+            Context.state or {}, stream_name, replication_key
+        ) or \
             int(utils.strptime_to_utc(Context.config["start_date"]).timestamp())
     return stream_bookmark
 
@@ -563,12 +565,12 @@ def write_bookmark_for_stream(stream_name, replication_key, stream_bookmark):
     # so kept `date` in bookmarking for Invoices and Invoice line Items as it has to respect
     # bookmark of active connection too.
     if stream_name in ['invoices', 'invoice_line_items']:
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               stream_name,
                               'date',
                               stream_bookmark)
     else:
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               stream_name,
                               replication_key,
                               stream_bookmark)
@@ -995,13 +997,13 @@ def sync_event_updates(stream_name, is_sub_stream):
 
     sub_stream_name = SUB_STREAMS.get(stream_name)
 
-    parent_bookmark_value = singer.get_bookmark(Context.state,
+    parent_bookmark_value = singer.get_bookmark(Context.state or {},
                                                 stream_name,
                                                 'updates_created') or start_date
 
     # Get the bookmark value of the sub_stream if its selected and present
     if sub_stream_name:
-        sub_stream_bookmark_value = singer.get_bookmark(Context.state,
+        sub_stream_bookmark_value = singer.get_bookmark(Context.state or {},
                                                         sub_stream_name,
                                                         'updates_created') or start_date
     # If only child stream is selected, update bookmark to sub-stream bookmark value
@@ -1141,14 +1143,14 @@ def write_bookmark_for_event_updates(is_sub_stream, stream_name, sub_stream_name
     """
     # Write the parent bookmark value only when the parent is selected
     if not is_sub_stream:
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               stream_name,
                               'updates_created',
                               max_created)
 
     # Write the child bookmark value only when the child is selected
     if sub_stream_name and Context.is_selected(sub_stream_name):
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               sub_stream_name,
                               'updates_created',
                               max_created)
@@ -1163,7 +1165,7 @@ def reset_bookmark_for_event_updates(is_sub_stream, stream_name, sub_stream_name
     """
     # Write the parent bookmark value only when the parent is selected
     if not is_sub_stream:
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               stream_name,
                               STREAM_REPLICATION_KEY.get(stream_name),
                               start_date)
@@ -1171,7 +1173,7 @@ def reset_bookmark_for_event_updates(is_sub_stream, stream_name, sub_stream_name
 
     # Write the child bookmark value only when the child is selected
     if sub_stream_name and Context.is_selected(sub_stream_name):
-        singer.write_bookmark(Context.state,
+        singer.write_bookmark(Context.state or {},
                               sub_stream_name,
                               STREAM_REPLICATION_KEY.get(sub_stream_name),
                               start_date)
