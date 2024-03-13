@@ -7,14 +7,17 @@ from faker import Faker
 from pandas.testing import assert_frame_equal
 
 # from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_preparation.models.block import Block, BlockType
+from mage_ai.data_preparation.models.block import Block, BlockType, CallbackBlock
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
 from mage_ai.tests.base_test import DBTestCase
-from mage_ai.tests.factory import create_integration_pipeline_with_blocks
+from mage_ai.tests.factory import (
+    create_integration_pipeline_with_blocks,
+    create_pipeline,
+)
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
@@ -763,3 +766,37 @@ class BlockProjectPlatformTests(ProjectPlatformMixin):
                 )
 
                 self.assertEqual(block.file_path, add_root_repo_path_to_relative_path(path))
+
+
+class CallbackBlockTest(DBTestCase):
+    def setUp(self):
+        self.pipeline = create_pipeline('callback_pipeline', self.repo_path)
+
+    def tearDown(self):
+        self.pipeline.delete()
+
+    def test_create_global_vars_from_parent_block(self):
+        parent_block = Block.create(
+            'test_data_loader',
+            'data_loader',
+            self.repo_path,
+            pipeline=self.pipeline,
+        )
+        callback_block = CallbackBlock.create(parent_block.name)
+        self.pipeline.add_block(callback_block)
+        parent_block = parent_block.update(
+            dict(callback_blocks=[callback_block.uuid])
+        )
+        parent_block.global_vars = dict(
+            configuration=dict(table_name='load_data_table')
+        )
+
+        global_vars = dict(
+            random_var=1,
+        )
+        new_vars = callback_block._create_global_vars(
+            global_vars,
+            parent_block=parent_block,
+        )
+
+        self.assertIsNotNone(new_vars.get('configuration'))
