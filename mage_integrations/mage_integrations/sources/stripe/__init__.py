@@ -522,7 +522,9 @@ def get_bookmark_for_stream(stream_name, replication_key):
         stream_bookmark = singer.get_bookmark(Context.state or {}, stream_name, 'date') or \
             int(utils.strptime_to_utc(Context.config["start_date"]).timestamp())
     else:
-        stream_bookmark = singer.get_bookmark(Context.state or {}, stream_name, replication_key) or \
+        stream_bookmark = singer.get_bookmark(
+            Context.state or {}, stream_name, replication_key
+        ) or \
             int(utils.strptime_to_utc(Context.config["start_date"]).timestamp())
     return stream_bookmark
 
