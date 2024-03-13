@@ -35,13 +35,15 @@ import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 3, 4, 5];
+// The DEFAULT_SORTABLE_BR_COL_INDEXES and COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING
+// must be updated if the columns in the Block Runs table are rearranged.
+export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 2, 4, 5, 6];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
   0: 'status',
-  1: 'block_uuid',
-  3: 'created_at',
-  4: 'started_at',
-  5: 'completed_at',
+  2: 'block_uuid',
+  4: 'created_at',
+  5: 'started_at',
+  6: 'completed_at',
 };
 
 type BlockRunsTableProps = {
