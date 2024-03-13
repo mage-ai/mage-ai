@@ -106,7 +106,7 @@ FROM {database_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         """
         results = self.build_connection().load(query)
-        current_columns = [r[0].lower() for r in results]
+        current_columns = [r[0].lower() if self.use_lowercase else r[0] for r in results]
         schema_columns = schema['properties'].keys()
 
         new_columns = [c for c in schema_columns
