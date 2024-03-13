@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createElement, isValidElement, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -18,6 +18,7 @@ import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp } from '@utils/models/log';
 import { isJsonString } from '@utils/string';
+import { isObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 
 const MESSAGE_KEY = 'message';
@@ -158,6 +159,14 @@ function LogDetail({
             } else if (isMessageKey && showFullLogMessage && isJsonString(v)) {
               valueTitle = JSON.stringify(JSON.parse(v), null, 2);
               valueToDisplay = <pre>{valueTitle}</pre>;
+              if (!isValidElement(valueToDisplay)
+                && isObject(valueToDisplay)
+                && valueToDisplay['_owner'] === null
+                && valueToDisplay.type === 'pre'
+                && typeof valueToDisplay?.props?.children === 'string'
+              ) {
+                valueToDisplay = createElement('pre', null, valueToDisplay.props.children);
+              }
             }
             if (typeof valueToDisplay === 'object') {
               try {
