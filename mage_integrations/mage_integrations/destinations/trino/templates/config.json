@@ -9,5 +9,6 @@
   "ssl": false,
   "table": "",
   "username": "",
-  "location": ""
+  "location": "",
+  "ignore_location_for_temp_tables": "false"
 }

@@ -21,6 +21,9 @@ You must enter the following credentials when configuring this source:
 | `query_max_length` | The maximum number of characters allowed for the SQL query text. | `1000000` (default value) |
 | `ssl` | In order to disable SSL verification, set the verify parameter to `false`. | `false` (default value) |
 | `location` | Used by deltalake connector to specify the location of the data. | `s3://[bucket]/` |
+| `ignore_location_for_temp_tables` | Ignore 'with location' property for temp tables. | `false` (default value) |
+
+Trino delta lake setup with glue metastore cannot delete underlying data from storage when table is created as an external table (i.e. tables created with property `with location`). Mage creates temp tables with `with location` property by default. To avoid this, set `ignore_location_for_temp_tables` to `true`.
 
 ### Connectors
 

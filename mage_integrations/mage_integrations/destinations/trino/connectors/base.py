@@ -54,7 +54,24 @@ class TrinoConnector(Destination):
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
+        temp_table: bool = False,
     ) -> List[str]:
+        """
+        Build create table commands for Trino
+        """
+
+        # Trino delta lake with glue matastore does not delete the underlying data
+        # when dropping a table if the location is specified during table creation
+        # as they are considered external tables
+        # We want to be able to delete the underlying data when dropping a table
+        # so we need to ignore the location for temp tables
+
+        ignore_location_for_temp_tables = self.config.get('ignore_location_for_temp_tables', False)
+        if temp_table and ignore_location_for_temp_tables:
+            location = None
+        else:
+            location = self.table_location(table_name)
+
         return [
             build_create_table_command(
                 column_identifier='"',
@@ -62,7 +79,7 @@ class TrinoConnector(Destination):
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
-                location=self.table_location(table_name),
+                location=location,
                 # Unique constraint is not supported
                 # https://trino.io/docs/current/sql/create-table.html
                 unique_constraints=None,
@@ -131,6 +148,7 @@ DESCRIBE {schema_name}.{table_name}
                 table_name=f'temp_{table_name}',
                 database_name=database_name,
                 unique_constraints=unique_constraints,
+                temp_table=True,
             ) + self.wrap_insert_commands([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
                 'VALUES {insert_values}',
