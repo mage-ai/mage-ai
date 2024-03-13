@@ -179,7 +179,7 @@ playwright-report/
 **/TEST_CONFIG_S.json
 **/TEST_OUTPUT
 **/TEST_STATE.json
-
+**/TEST_CONFIG*.json
 package-lock.json
 package.json
 yarn.lock
