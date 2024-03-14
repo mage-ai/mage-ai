@@ -32,8 +32,7 @@ class LocalStorage(BaseStorage):
         if max_results is not None:
             with os.scandir(path) as it:
                 for idx, entry in enumerate(it):
-                    if entry.is_dir():
-                        paths.append(entry.name)
+                    paths.append(entry.name)
                     if idx >= max_results - 1:
                         break
         else:
