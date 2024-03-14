@@ -19,12 +19,28 @@ class LocalStorage(BaseStorage):
     def isdir(self, path: str) -> bool:
         return os.path.isdir(path)
 
-    def listdir(self, path: str, suffix: str = None) -> List[str]:
+    def listdir(
+        self,
+        path: str,
+        suffix: str = None,
+        max_results: int = None,
+    ) -> List[str]:
+        paths = []
         if not os.path.exists(path):
-            return []
-        paths = os.listdir(path)
+            return paths
+
+        if max_results is not None:
+            with os.scandir(path) as it:
+                for idx, entry in enumerate(it):
+                    if entry.is_dir():
+                        paths.append(entry.name)
+                    if idx >= max_results - 1:
+                        break
+        else:
+            paths = os.listdir(path)
         if suffix is not None:
             paths = [p for p in paths if p.endswith(suffix)]
+
         return paths
 
     def makedirs(self, path: str, **kwargs) -> None:

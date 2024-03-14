@@ -29,11 +29,16 @@ class GCSStorage(BaseStorage):
             path += '/'
         return self.path_exists(path)
 
-    def listdir(self, path: str, suffix: str = None) -> List[str]:
+    def listdir(
+        self,
+        path: str,
+        suffix: str = None,
+        max_results: int = None,
+    ) -> List[str]:
         if not path.endswith('/'):
             path += '/'
         path = gcs_url_path(path)
-        blobs = self.bucket.list_blobs(prefix=path)
+        blobs = self.bucket.list_blobs(prefix=path, max_results=max_results)
         keys = []
         for blob in blobs:
             # Avoid finding files recursevively in the dir path.

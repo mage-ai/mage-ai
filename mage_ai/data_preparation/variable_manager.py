@@ -271,6 +271,7 @@ class VariableManager:
         block_uuid: str,
         partition: str = None,
         clean_block_uuid: bool = True,
+        max_results: int = None,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),
@@ -280,7 +281,7 @@ class VariableManager:
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
-        variables = self.storage.listdir(variable_dir_path)
+        variables = self.storage.listdir(variable_dir_path, max_results=max_results)
         return sorted([v.split('.')[0] for v in variables])
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
