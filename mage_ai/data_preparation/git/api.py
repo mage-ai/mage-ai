@@ -264,5 +264,5 @@ def get_user(token: str, provider: str = ProviderName.GITHUB) -> Dict:
     try:
         return GitClient.get_client_for_provider(provider)(token).get_user()
     except Exception:
-        logger.exception('Error fetch user from git provider.')
+        logger.exception('Error fetching user from git provider.')
         return dict()
