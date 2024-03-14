@@ -26,11 +26,3 @@ def get_memory() -> Tuple[float, float, float]:
         print(err)
 
     return free_memory, used_memory, total_memory
-
-
-def get_process_metrics(pid) -> Tuple[float, float]:
-    process = psutil.Process(pid)
-    cpu_percent = process.cpu_percent()
-    memory_percent = process.memory_percent()
-
-    return cpu_percent, memory_percent
