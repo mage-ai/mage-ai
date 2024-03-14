@@ -339,7 +339,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
-        self.global_vars = {}
         self.template_runtime_configuration = {}
 
         self.dynamic_block_index = None
@@ -1198,7 +1197,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         f'Please run upstream blocks {upstream_block_uuids} '
                         'before running the current block.'
                     )
-            global_vars = self.__enrich_global_vars(
+            global_vars = self.enrich_global_vars(
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
             )
@@ -3037,7 +3036,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_mapping = merge_dict(output_variables, consolidated_print_variables)
         return variable_mapping
 
-    def __enrich_global_vars(
+    def enrich_global_vars(
         self,
         global_vars: Dict = None,
         dynamic_block_index: int = None,
@@ -3658,6 +3657,12 @@ class AddonBlock(Block):
             global_vars['dynamic_block_index'] = dynamic_block_index
 
         if parent_block:
+            if parent_block.global_vars is None:
+                global_vars_copy = global_vars.copy()
+                parent_block.enrich_global_vars(
+                    global_vars=global_vars_copy,
+                    dynamic_block_index=dynamic_block_index,
+                )
             global_vars = merge_dict(parent_block.global_vars, global_vars)
             global_vars['parent_block_uuid'] = parent_block.uuid
 

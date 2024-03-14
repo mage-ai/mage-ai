@@ -43,6 +43,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 export type AddonBlockProps = {
   addOnBlocks: BlockType[];
   addOnBlockType: BlockTypeEnum;
+  description: string;
   displayBlockName: string;
 } & ExtensionProps;
 
@@ -55,6 +56,7 @@ function AddonBlock({
   blocks,
   blocksInNotebook,
   deleteBlock,
+  description,
   displayBlockName,
   fetchFileTree,
   fetchPipeline,
@@ -356,7 +358,7 @@ function AddonBlock({
     <>
       <Spacing mb={PADDING_UNITS}>
         <Text default>
-          Run 1 or more {lowercase(displayBlockName)} block functions whenever another block succeeds or fails.
+          {description}
         </Text>
         <Spacing mt={1}>
           <Text default>
