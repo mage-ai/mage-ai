@@ -12,7 +12,8 @@ These variables are accessible throughout your dbt profiles, and pipelines by us
 | Syntax                   | Description                     | Example                             |
 | ------------------------ | ------------------------------- | ----------------------------------- |
 | `{{ env_var('...') }}`   | Get from environment variables. | `{{ env_var('ENV') }}`              |
-| `{{ variables('...') }}` | Get from runtime variables.     | `{{ variables('execution_date') }}` |
+| `{{ variables('...') }}` | Get from runtime variables (used in YAML).     | `{{ variables('execution_date') }}` |
+| `{{ var('...') }}` | Get from runtime variables (used in SQL).     | `{{ var('execution_date') }}` |
 
 DBT also comes with variable and environment variable support. By default we forward
 [pipeline](/getting-started/runtime-variable)
