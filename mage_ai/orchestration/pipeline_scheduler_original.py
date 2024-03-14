@@ -121,6 +121,8 @@ class PipelineScheduler:
             if self.pipeline_schedule else False
         )
 
+        self.processes_to_track = dict()
+
     @safe_db_query
     def start(self, should_schedule: bool = True) -> bool:
         """Start the pipeline run.
@@ -839,8 +841,12 @@ class PipelineScheduler:
         return crashed_runs
 
     def __run_heartbeat(self) -> None:
+        import time
+
+        import psutil
         load1, load5, load15, cpu_count = get_compute()
-        cpu_usage = load15 / cpu_count if cpu_count else None
+        cpu_count = cpu_count or 1
+        cpu_usage = load15 / cpu_count
 
         free_memory, used_memory, total_memory = get_memory()
         memory_usage = used_memory / total_memory if total_memory else None
@@ -854,14 +860,98 @@ class PipelineScheduler:
             memory_usage=memory_usage,
         )
 
+        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
+            self.memory_usage_failure(tags=tags)
+
+        job_ids = []
+        if self.pipeline and (
+            self.pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]
+            or self.pipeline.run_pipeline_in_one_process
+        ):
+            if job_manager.has_pipeline_run_job(self.pipeline_run.id):
+                job_id = job_manager.job_id(JobType.PIPELINE_RUN, self.pipeline_run.id)
+                job_ids.append(job_id)
+            if self.pipeline.type == PipelineType.INTEGRATION:
+                for stream in self.pipeline.streams():
+                    job_id = job_manager.job_id(
+                        JobType.INTEGRATION_STREAM, f'{self.pipeline_run.id}_{stream}'
+                    )
+                    job_ids.append(job_id)
+        else:
+            for b in self.pipeline_run.block_runs:
+                if b.status == BlockRun.BlockRunStatus.RUNNING:
+                    job_id = job_manager.job_id(JobType.BLOCK_RUN, b.id)
+                    job_ids.append(job_id)
+
+        metrics = self.pipeline_run.metrics or {}
+
+        prev_cpu_usage_metrics = metrics.get('cpu_usage', {})
+        prev_time_ns = prev_cpu_usage_metrics.get('time')
+        prev_cpu_usage_metrics = {
+            int(k): v for k, v in prev_cpu_usage_metrics.items() if k != 'time'
+        }
+
+        pr_cpu_usage = 0
+        pr_memory_usage = 0
+        curr_time_ns = time.monotonic_ns()
+        pr_cpu_usage_metrics = dict(time=curr_time_ns)
+
+        pids = []
+        for job_id in job_ids:
+            pid = job_manager.queue.job_dict.get(job_id)
+            if pid and isinstance(pid, int):
+                proc = psutil.Process(pid)
+                if proc.is_running():
+                    pids.append(pid)
+                    memory = proc.memory_percent()
+                    pr_memory_usage += memory
+
+                    cpu_times = proc.cpu_times()
+
+                    pr_cpu_usage_metrics[pid] = dict(
+                        user=cpu_times.user,
+                        system=cpu_times.system,
+                    )
+
+        curr_time = float(curr_time_ns) / 1e9
+        if prev_time_ns:
+            prev_time = float(prev_time_ns) / 1e9
+
+            for pid in pids:
+                if pid in pr_cpu_usage_metrics and pid in prev_cpu_usage_metrics:
+                    curr = pr_cpu_usage_metrics[pid]
+                    prev = prev_cpu_usage_metrics[pid]
+
+                    if curr_time > prev_time:
+                        k = (curr['user'] - prev['user']) + (
+                            curr['system'] - prev['system']
+                        ) / ((curr_time - prev_time) * cpu_count)
+                        pr_cpu_usage += round((k * 100 / cpu_count), 1)
+
+        if not prev_time_ns or curr_time - prev_time > 9:
+            self.pipeline_run.update(
+                metrics={
+                    **metrics,
+                    'cpu_usage': pr_cpu_usage_metrics,
+                    'recorded_cpu_usages': [
+                        *metrics.get('recorded_cpu_usages', []),
+                        pr_cpu_usage,
+                    ],
+                    'recorded_memory_usages': [
+                        *metrics.get('recorded_memory_usages', []),
+                        pr_memory_usage,
+                    ],
+                }
+            )
+
+        tags['pipeline_run_cpu_usage'] = pr_cpu_usage
+        tags['pipeline_run_memory_usage'] = pr_memory_usage
+
         self.logger.info(
             f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
             f'in schedule {self.pipeline_run.pipeline_schedule_id} is alive.',
             **tags,
         )
-
-        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
-            self.memory_usage_failure(tags=tags)
 
 
 def run_integration_streams(
