@@ -15,8 +15,10 @@ from mage_ai.data_preparation.git.utils import (
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
+from mage_ai.server.logger import Logger
 
 API_ENDPOINT = 'https://api.github.com'
+logger = Logger().new_server_logger(__name__)
 
 
 def get_oauth_client_id(provider: str) -> str:
@@ -262,4 +264,5 @@ def get_user(token: str, provider: str = ProviderName.GITHUB) -> Dict:
     try:
         return GitClient.get_client_for_provider(provider)(token).get_user()
     except Exception:
+        logger.exception('Error fetching user from git provider.')
         return dict()
