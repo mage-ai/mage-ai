@@ -3,14 +3,15 @@ from urllib.parse import quote_plus
 
 import requests
 
-from mage_ai.authentication.oauth.constants import GITLAB_HOST
 from mage_ai.data_preparation.git.clients.base import Client
+from mage_ai.settings import get_settings_value
+from mage_ai.settings.keys import GITLAB_HOST
 
 
 class GitlabClient(Client):
     def __init__(self, access_token: str):
         super().__init__(access_token)
-        self.hostname = GITLAB_HOST or 'https://gitlab.com'
+        self.hostname = get_settings_value(GITLAB_HOST, 'https://gitlab.com')
 
     def get_user(self):
         # For GitLab, we don't need to make a request to the API to get the username
