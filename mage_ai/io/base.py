@@ -51,6 +51,7 @@ class ExportWritePolicy(str, Enum):
     APPEND = 'append'
     FAIL = 'fail'
     REPLACE = 'replace'
+    UPSERT = 'upsert'
 
 
 class BaseIO(ABC):

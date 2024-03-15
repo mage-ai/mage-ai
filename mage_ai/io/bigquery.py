@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, List, Mapping, Union
 
 import numpy as np
@@ -14,6 +15,7 @@ from sqlglot import exp, parse_one
 
 from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import is_debug
@@ -200,6 +202,8 @@ WHERE TABLE_NAME = '{table_name}'
         overwrite_types: Dict = None,
         query_string: Union[str, None] = None,
         verbose: bool = True,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
         **configuration_params,
     ) -> None:
         """
@@ -231,23 +235,22 @@ WHERE TABLE_NAME = '{table_name}'
             df = DataFrame(df)
 
         def __process(database: Union[str, None]):
-            if query_string:
-                parts = table_id.split('.')
-                if len(parts) == 2:
-                    schema, table_name = parts
-                elif len(parts) == 3:
-                    database, schema, table_name = parts
+            parts = table_id.split('.')
+            if len(parts) == 2:
+                schema, table_name = parts
+            elif len(parts) == 3:
+                database, schema, table_name = parts
 
-                df_existing = self.client.query(f"""
+            df_existing = self.client.query(f"""
 SELECT 1
 FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
 """).to_dataframe()
 
-                full_table_name = f'`{database}.{schema}.{table_name}`'
+            full_table_name = f'`{database}.{schema}.{table_name}`'
 
-                table_doesnt_exist = df_existing.empty
-
+            table_doesnt_exist = df_existing.empty
+            if query_string:
                 if ExportWritePolicy.FAIL == if_exists and not table_doesnt_exist:
                     raise ValueError(
                         f'Table \'{full_table_name}\' already exists in database.',
@@ -267,60 +270,107 @@ WHERE table_id = '{table_name}'
 """
                 self.client.query(sql)
 
-            else:
-                config = LoadJobConfig(**configuration_params)
-                if overwrite_types is not None:
-                    config.schema = [SchemaField(k, v) for k, v in overwrite_types.items()]
-                if 'write_disposition' not in configuration_params:
-                    if if_exists == 'replace':
-                        config.write_disposition = WriteDisposition.WRITE_TRUNCATE
-                    elif if_exists == 'append':
-                        config.write_disposition = WriteDisposition.WRITE_APPEND
-                    elif if_exists == 'fail':
-                        config.write_disposition = WriteDisposition.WRITE_EMPTY
-                    else:
-                        raise ValueError(
-                            f'Invalid policy specified for handling existence of '
-                            f'table: \'{if_exists}\''
+            elif if_exists == ExportWritePolicy.UPSERT:
+                if table_doesnt_exist:
+                    self.__write_table(
+                        df, table_id, overwrite_types=overwrite_types, **configuration_params
+                    )
+                elif unique_constraints and unique_conflict_method:
+                    temp_table_id = f'{table_id}_{uuid.uuid4().hex}'
+
+                    try:
+                        self.__write_table(
+                            df,
+                            temp_table_id,
+                            overwrite_types=overwrite_types,
+                            **configuration_params,
                         )
-                parts = table_id.split('.')
-                if len(parts) == 2:
-                    schema = parts[0]
-                    table_name = parts[1]
-                elif len(parts) == 3:
-                    schema = parts[1]
-                    table_name = parts[2]
 
-                self.client.create_dataset(dataset=schema, exists_ok=True)
+                        on_conditions = []
+                        for col in unique_constraints:
+                            on_conditions.append(
+                                f'((a.{col} IS NULL AND b.{col} IS NULL) OR a.{col} = b.{col})',
+                            )
 
-                column_types = self.get_column_types(schema, table_name)
+                        columns_cleaned = df.columns.str.replace(' ', '_')
+                        insert_columns = ', '.join([f'`{col}`' for col in columns_cleaned])
 
-                if df is not None:
-                    df.fillna(value=np.NaN, inplace=True)
-                    for col in df.columns:
-                        col_type = column_types.get(col)
-                        if not col_type:
-                            continue
+                        merge_commands = [
+                            f'MERGE INTO `{table_id}` AS a',
+                            f'USING (SELECT * FROM `{temp_table_id}`) AS b',
+                            f"ON {' AND '.join(on_conditions)}",
+                        ]
 
-                        null_rows = df[col].isnull()
-                        if col_type.startswith('ARRAY<STRUCT'):
-                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
-                        elif col_type.startswith('ARRAY'):
-                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
-                        elif col_type.startswith('STRUCT'):
-                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
+                        if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                            set_command = ', '.join(
+                                [f'a.`{col}` = b.`{col}`' for col in columns_cleaned],
+                            )
+                            merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
 
-                    # Clean column names
-                    if type(df) is DataFrame:
-                        df.columns = df.columns.str.replace(' ', '_')
+                        merge_values = f"({', '.join([f'b.`{col}`' for col in columns_cleaned])})"
+                        merge_commands.append(
+                            f'WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}',  # noqa: E501
+                        )
 
-                    self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+                        merge_command = '\n'.join(merge_commands)
+
+                        self.client.query(merge_command).result()
+                    finally:
+                        self.client.query(f'DROP TABLE IF EXISTS {temp_table_id}').result()
+            else:
+                self.__write_table(
+                    df, table_id, overwrite_types=overwrite_types, **configuration_params
+                )
 
         if verbose:
             with self.printer.print_msg(f'Exporting data to table \'{table_id}\''):
                 __process(database=database)
         else:
             __process(database=database)
+
+    def __write_table(
+        self,
+        df: DataFrame,
+        table_id: str,
+        overwrite_types: Dict = None,
+        **configuration_params,
+    ):
+        config = LoadJobConfig(**configuration_params)
+        if overwrite_types is not None:
+            config.schema = [SchemaField(k, v) for k, v in overwrite_types.items()]
+        config.write_disposition = WriteDisposition.WRITE_APPEND
+        parts = table_id.split('.')
+        if len(parts) == 2:
+            schema = parts[0]
+            table_name = parts[1]
+        elif len(parts) == 3:
+            schema = parts[1]
+            table_name = parts[2]
+
+        self.client.create_dataset(dataset=schema, exists_ok=True)
+
+        column_types = self.get_column_types(schema, table_name)
+
+        if df is not None:
+            df.fillna(value=np.NaN, inplace=True)
+            for col in df.columns:
+                col_type = column_types.get(col)
+                if not col_type:
+                    continue
+
+                null_rows = df[col].isnull()
+                if col_type.startswith('ARRAY<STRUCT'):
+                    df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
+                elif col_type.startswith('ARRAY'):
+                    df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
+                elif col_type.startswith('STRUCT'):
+                    df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
+
+            # Clean column names
+            if type(df) is DataFrame:
+                df.columns = df.columns.str.replace(' ', '_')
+
+            return self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
