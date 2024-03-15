@@ -140,19 +140,23 @@ def __fetch_data_loader_templates(
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     data_source = config.get('data_source')
+    default_template_name = None
     file_extension = 'py'
     if pipeline_type == PipelineType.PYSPARK:
         template_folder = 'data_loaders/pyspark'
     elif pipeline_type == PipelineType.STREAMING:
         template_folder = 'data_loaders/streaming'
-        file_extension = 'yaml'
+        if language == BlockLanguage.YAML:
+            file_extension = 'yaml'
+        else:
+            default_template_name = 'generic_python.py'
     elif language == BlockLanguage.R:
         template_folder = 'data_loaders/r'
         file_extension = 'r'
     else:
         template_folder = 'data_loaders'
 
-    default_template = template_folder + '/' + 'default.jinja'
+    default_template = template_folder + '/' + (default_template_name or 'default.jinja')
     if data_source is None:
         template_path = default_template
     else:

@@ -31,6 +31,7 @@ const getDataSourceTypes = (
   if (pipelineType === PipelineTypeEnum.STREAMING) {
     return {
       [BlockTypeEnum.DATA_LOADER]: [
+        DataSourceTypeEnum.GENERIC,
         DataSourceTypeEnum.ACTIVEMQ,
         DataSourceTypeEnum.AMAZON_SQS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
@@ -92,7 +93,7 @@ export const createDataSourceMenuItems = (
           config: {
             data_source: (sourceType === DataSourceTypeEnum.GENERIC) ? null : sourceType,
           },
-          language: requiresConfigFile
+          language: (requiresConfigFile && sourceType !== DataSourceTypeEnum.GENERIC)
             ? BlockLanguageEnum.YAML
             : BlockLanguageEnum.PYTHON,
           type: blockType,
