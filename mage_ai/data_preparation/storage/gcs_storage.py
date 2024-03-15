@@ -40,28 +40,24 @@ class GCSStorage(BaseStorage):
         path = gcs_url_path(path)
 
         """
-        NOTE: The delimiter is added specifically when the "max_results" parameter
-        is included for limiting the number of variables block output folders fetched.
-        The delimiter excludes .json files inside of the output folders. Otherwise,
-        those json files would be counted towards the "max_results" limit because the
-        GCS bucket list_blobs method recursively fetches files inside of subdirectories
-        at the path specified, not just the directories themselves at the top level of
-        the path.
+        NOTE: The number of results returned by the GCS bucket list_blobs method may
+        be lower than the number entered for the max_results argument, since this
+        method recursively fetches files inside of subdirectories at the path
+        specified, not just the directories themselves at the top level of the path.
+
+        As a result, when fetching block output folders in a remote variables directory,
+        the json files inside of the block output folders (e.g. the "data.json" file in
+        folder "output_0") are counted towards the "max_results" limit. If max_results is
+        set to 10, only 3 output folders may be returned due to there being 3 json files
+        in each output folder. We do not increase the max_results or include a "delimiter"
+        argument because it would increase load times to unacceptable levels.
 
         Example block output path in GCS:
             gs://mage_demo/pipelines/example_pipeline/.variables/example_block/output_0/
-
-        In order to accurately fetch the number of output folders, 1 is added to
-        max_results because the root block output directory in the .variables folder
-        (e.g. "example_block" in the example above) counts towards the number of results,
-        but it is excluded from the list of output folders returned.
         """
-        max_results_defined = max_results is not None
         blobs = self.bucket.list_blobs(
-            delimiter='.json' if max_results_defined else None,
             prefix=path,
-            # max_results=max_results,
-            max_results=max_results + 1 if max_results_defined else None,
+            max_results=max_results,
         )
         keys = []
         for blob in blobs:
