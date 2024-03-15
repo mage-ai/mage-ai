@@ -103,3 +103,18 @@ def data_integration_query(function):
 
 def preprocesser_functions(function):
     return function
+
+
+def streaming_source(cls):
+    return cls
+
+
+def collect_decorated_objs(decorated_objs):
+    """
+    Method to collect the decorated objects (function or class)
+    """
+    def custom_code(obj):
+        decorated_objs.append(obj)
+        return obj
+
+    return custom_code
