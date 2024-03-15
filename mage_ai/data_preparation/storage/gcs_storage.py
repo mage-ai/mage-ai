@@ -38,7 +38,31 @@ class GCSStorage(BaseStorage):
         if not path.endswith('/'):
             path += '/'
         path = gcs_url_path(path)
-        blobs = self.bucket.list_blobs(prefix=path, max_results=max_results)
+
+        """
+        NOTE: The delimiter is added specifically when the "max_results" parameter
+        is included for limiting the number of variables block output folders fetched.
+        The delimiter excludes .json files inside of the output folders. Otherwise,
+        those json files would be counted towards the "max_results" limit because the
+        GCS bucket list_blobs method recursively fetches files inside of subdirectories
+        at the path specified, not just the directories themselves at the top level of
+        the path.
+
+        Example block output path in GCS:
+            gs://mage_demo/pipelines/example_pipeline/.variables/example_block/output_0/
+
+        In order to accurately fetch the number of output folders, 1 is added to
+        max_results because the root block output directory in the .variables folder
+        (e.g. "example_block" in the example above) counts towards the number of results,
+        but it is excluded from the list of output folders returned.
+        """
+        max_results_defined = max_results is not None
+        blobs = self.bucket.list_blobs(
+            delimiter='.json' if max_results_defined else None,
+            prefix=path,
+            # max_results=max_results,
+            max_results=max_results + 1 if max_results_defined else None,
+        )
         keys = []
         for blob in blobs:
             # Avoid finding files recursevively in the dir path.
