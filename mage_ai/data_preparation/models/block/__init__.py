@@ -2204,6 +2204,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 self.pipeline.uuid,
                 block_uuid,
                 partition=execution_partition,
+                max_results=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
 
             if not include_print_outputs:

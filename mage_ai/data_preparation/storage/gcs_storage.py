@@ -29,11 +29,36 @@ class GCSStorage(BaseStorage):
             path += '/'
         return self.path_exists(path)
 
-    def listdir(self, path: str, suffix: str = None) -> List[str]:
+    def listdir(
+        self,
+        path: str,
+        suffix: str = None,
+        max_results: int = None,
+    ) -> List[str]:
         if not path.endswith('/'):
             path += '/'
         path = gcs_url_path(path)
-        blobs = self.bucket.list_blobs(prefix=path)
+
+        """
+        NOTE: The number of results returned by the GCS bucket list_blobs method may
+        be lower than the number entered for the max_results argument, since this
+        method recursively fetches files inside of subdirectories at the path
+        specified, not just the directories themselves at the top level of the path.
+
+        As a result, when fetching block output folders in a remote variables directory,
+        the json or parquet files inside of the block output folders (e.g. the "type.json"
+        file in folder "output_0") are counted towards the "max_results" limit. If max_results
+        is set to 10, less than 10 output folders may be returned due to there being multiple
+        json or other files in each output folder. We do not increase the max_results or
+        include a "delimiter" argument because it would increase load times to unacceptable levels.
+
+        Example block output path in GCS:
+            gs://mage_demo/pipelines/example_pipeline/.variables/example_block/output_0/
+        """
+        blobs = self.bucket.list_blobs(
+            prefix=path,
+            max_results=max_results,
+        )
         keys = []
         for blob in blobs:
             # Avoid finding files recursevively in the dir path.

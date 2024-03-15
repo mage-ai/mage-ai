@@ -45,11 +45,17 @@ class Client:
             },
         )
 
-    def listdir(self, prefix: str, delimiter: str = '/', suffix: str = None):
+    def listdir(
+        self,
+        prefix: str,
+        delimiter: str = '/',
+        suffix: str = None,
+        max_results: int = None,
+    ):
         keys = []
         response = self.client.list_objects_v2(
             Bucket=self.bucket,
-            MaxKeys=MAX_KEYS,
+            MaxKeys=max_results or MAX_KEYS,
             Prefix=prefix,
             Delimiter=delimiter,
         )

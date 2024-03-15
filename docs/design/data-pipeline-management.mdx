@@ -263,6 +263,10 @@ in the following ways.
     variables_dir: /home/src/mage_data
     remote_variables_dir: gs://bucket/path_prefix
     ```
+    When using GCS for your remote variables directory, if you run into a "Your default credentials were not found"
+    error, you may need to set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of your
+    `application_default_credentials.json` file with your Google Cloud credentials and the `GOOGLE_CLOUD_PROJECT`
+    environment variable to your Google Cloud project ID.
 
 ## Variable retention
 If you want to clean up the old variables in your variable storage, you can set the `variables_retention_period`
