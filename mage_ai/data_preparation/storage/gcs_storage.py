@@ -46,11 +46,11 @@ class GCSStorage(BaseStorage):
         specified, not just the directories themselves at the top level of the path.
 
         As a result, when fetching block output folders in a remote variables directory,
-        the json files inside of the block output folders (e.g. the "data.json" file in
-        folder "output_0") are counted towards the "max_results" limit. If max_results is
-        set to 10, only 3 output folders may be returned due to there being 3 json files
-        in each output folder. We do not increase the max_results or include a "delimiter"
-        argument because it would increase load times to unacceptable levels.
+        the json or parquet files inside of the block output folders (e.g. the "type.json"
+        file in folder "output_0") are counted towards the "max_results" limit. If max_results
+        is set to 10, less than 10 output folders may be returned due to there being multiple
+        json or other files in each output folder. We do not increase the max_results or
+        include a "delimiter" argument because it would increase load times to unacceptable levels.
 
         Example block output path in GCS:
             gs://mage_demo/pipelines/example_pipeline/.variables/example_block/output_0/
