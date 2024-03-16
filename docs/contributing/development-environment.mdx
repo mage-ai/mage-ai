@@ -80,3 +80,10 @@ it is using CRLFs (carriage return line feeds), and if it is, change it to LFs (
 and save the file. Then try running the `docker-compose` command again.
 
 <img src="https://github.com/mage-ai/assets/blob/main/development/windows/update-crlf-to-lf-vscode.gif?raw=True"/>
+
+### ModuleNotFoundError: No module named 'x'
+
+If there were added new libraries you should manually handle new dependencies. It can be done in 2 ways:
+
+1. `docker-compose build` from project root will fully rebuild an image with new dependencies - it can take lots of time
+2. `pip install x` from inside the container will only install the required dependency - it should be much faster
