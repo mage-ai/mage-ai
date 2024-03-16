@@ -5,6 +5,7 @@ from contextlib import contextmanager, redirect_stdout
 from enum import Enum
 from typing import Callable, List
 
+from mage_ai.settings import SERVER_LOGGING_TEMPLATE
 from mage_ai.shared.hash import merge_dict
 
 logger = logging.getLogger(__name__)
@@ -90,10 +91,18 @@ def set_logging_format(logging_format: str = None, level: str = None) -> None:
     root_logger = logging.getLogger()
     if isinstance(logging_format, str):
         logging_format = logging_format.lower()
+
+    if len(root_logger.handlers) > 0:
+        root_logger.removeHandler(root_logger.handlers[0])
+
+    handler = logging.StreamHandler()
     if logging_format == 'json':
-        if len(root_logger.handlers) > 0:
-            root_logger.removeHandler(root_logger.handlers[0])
+        handler.setFormatter(JSONFormatter())
         root_logger.addHandler(handler)
+    else:
+        handler.setFormatter(logging.Formatter(SERVER_LOGGING_TEMPLATE))
+        root_logger.addHandler(handler)
+
     if level:
         try:
             root_logger.setLevel(level.upper())

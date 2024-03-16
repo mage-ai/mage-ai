@@ -10,12 +10,24 @@ The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `
 
 ## Server logging format
 
+You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable. By default it is set as
+`SERVER_LOGGING_FORMAT=plaintext`. If it is set to unknown format it will use default value instead.
+
+### Plaintext format
+
+The plaintext logging format will be used by default. Or it can be set explicitly by setting the
+`SERVER_LOGGING_FORMAT=plaintext` environment variable.
+
 By default, the server will log messages in the following format:
 ```
 [%(levelname)s]:[%(name)s]:%(message)s
 ```
 
-You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable.
+It can be customized by setting the `SERVER_LOGGING_FORMAT` environment variable.
+Example:
+```
+SERVER_LOGGING_FORMAT=%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s
+```
 
 ### JSON format
 
