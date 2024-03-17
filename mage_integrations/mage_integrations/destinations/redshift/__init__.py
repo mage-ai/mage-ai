@@ -149,7 +149,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             ]
 
             drop_duplicate_records_from_temp = (f'DELETE FROM {full_table_name_temp} '
-            f'where ({", ".join(unique_constraints_clean)},_mage_created_at) '
+            f'WHERE ({", ".join(unique_constraints_clean)},_mage_created_at) '
             f'IN ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at '
             f'FROM ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at, ROW_NUMBER() '
             f'OVER (PARTITION BY {", ".join(unique_constraints_clean)} '
@@ -157,12 +157,12 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             f'FROM {full_table_name_temp} ) AS subquery_alias WHERE row_num > 1);')
 
             delete_records_from_full_table = (f'DELETE FROM {full_table_name} '
-                                              f'where ({", ".join(unique_constraints_clean)}) '
-                                              f'in (SELECT {", ".join(unique_constraints_clean)} '
-                                              f'from {full_table_name_temp})')
+                                              f'WHERE ({", ".join(unique_constraints_clean)}) '
+                                              f'IN (SELECT {", ".join(unique_constraints_clean)} '
+                                              f'FROM {full_table_name_temp})')
 
             insert_records_from_temp_table = f'INSERT INTO {full_table_name} SELECT * FROM {full_table_name_temp}'
-            truncate_records_from_temp_table = f'TRUNCATE table {full_table_name_temp}'
+            truncate_records_from_temp_table = f'TRUNCATE TABLE {full_table_name_temp}'
 
             commands = [
                 '\n'.join([
@@ -175,7 +175,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 drop_duplicate_records_from_temp,
                 delete_records_from_full_table,
                 insert_records_from_temp_table,
-                truncate_records_from_temp_table
+                truncate_records_from_temp_table,
             ]
 
         # Not query data from stl_insert table anymore since it's inefficient.
