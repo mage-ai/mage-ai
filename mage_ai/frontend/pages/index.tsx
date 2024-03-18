@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
 import api from '@api';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { isDemo } from '@utils/environment';
 import { logUserOS } from '@utils/gtag';
 
