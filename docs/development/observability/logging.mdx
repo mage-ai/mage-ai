@@ -26,8 +26,19 @@ By default, the server will log messages in the following format:
 It can be customized by setting the `SERVER_LOGGING_FORMAT` environment variable.
 Example:
 ```
-SERVER_LOGGING_FORMAT=%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s
+SERVER_LOGGING_FORMAT=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'
 ```
+
+**Important!**
+
+Format string with special characters like `\t`, `\n`, etc. can't be passed through `.env` file as they are getting
+escaped.
+
+To pass such string you can
+1. Use `export SERVER_LOGGING_FORMAT=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'` syntax for local
+python deployment or docker compose with exported env variables
+2. Use combination of `.env` file and `-e` flag for plain docker deployment
+`docker run -d --env-file .env -e SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t\t[%(name)25.25s]\t%(levelname)5s: %(message)s' mageai/mageai:latest`
 
 ### JSON format
 
