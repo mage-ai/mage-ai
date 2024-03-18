@@ -28,17 +28,20 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const loggedIn = AuthToken.isLoggedIn();
-    if (REQUIRE_USER_AUTHENTICATION() && !loggedIn) {
-      router.replace('/sign-in');
-    } else if (dataStatus) {
-      const manage = dataStatus?.is_instance_manager;
-      let pathname = completePath;
-      if (basePath === '/') {
-        pathname = manage ? '/manage' : homepageRedirectPath;
-      }
-      if (dataPipelineRuns) {
-        router.replace(pathname);
+    if (dataStatus) {
+      const requireUserAuthentication = dataStatus?.require_user_authentication;
+      const loggedIn = AuthToken.isLoggedIn();
+      if (requireUserAuthentication && !loggedIn) {
+        router.replace('/sign-in');
+      } else {
+        const manage = dataStatus?.is_instance_manager;
+        let pathname = completePath;
+        if (basePath === '/') {
+          pathname = manage ? '/manage' : homepageRedirectPath;
+        }
+        if (dataPipelineRuns) {
+          router.replace(pathname);
+        }
       }
     }
   }, [
