@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
 import api from '@api';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { isDemo } from '@utils/environment';
 import { logUserOS } from '@utils/gtag';
 
@@ -28,17 +27,20 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const loggedIn = AuthToken.isLoggedIn();
-    if (REQUIRE_USER_AUTHENTICATION() && !loggedIn) {
-      router.replace('/sign-in');
-    } else if (dataStatus) {
-      const manage = dataStatus?.is_instance_manager;
-      let pathname = completePath;
-      if (basePath === '/') {
-        pathname = manage ? '/manage' : homepageRedirectPath;
-      }
-      if (dataPipelineRuns) {
-        router.replace(pathname);
+    if (dataStatus) {
+      const requireUserAuthentication = dataStatus?.require_user_authentication;
+      const loggedIn = AuthToken.isLoggedIn();
+      if (requireUserAuthentication && !loggedIn) {
+        router.replace('/sign-in');
+      } else {
+        const manage = dataStatus?.is_instance_manager;
+        let pathname = completePath;
+        if (basePath === '/') {
+          pathname = manage ? '/manage' : homepageRedirectPath;
+        }
+        if (dataPipelineRuns) {
+          router.replace(pathname);
+        }
       }
     }
   }, [
