@@ -76,7 +76,7 @@ SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 SERVER_LOGGING_FORMAT = os.getenv('SERVER_LOGGING_FORMAT', 'plaintext')
 SERVER_LOGGING_TEMPLATE = os.getenv(
     'SERVER_LOGGING_TEMPLATE',
-    '[%(levelname)s]:[%(name)s]:%(message)s',
+    '%(levelname)s:%(name)s:%(message)s',
 )
 
 INITIAL_METADATA = os.getenv('INITIAL_METADATA', '{{}}')
