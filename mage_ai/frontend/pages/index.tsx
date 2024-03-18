@@ -1,7 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
+import AuthToken from '@api/utils/AuthToken';
 import api from '@api';
+import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { isDemo } from '@utils/environment';
 import { logUserOS } from '@utils/gtag';
 
@@ -26,7 +28,10 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (dataStatus) {
+    const loggedIn = AuthToken.isLoggedIn();
+    if (REQUIRE_USER_AUTHENTICATION() && !loggedIn) {
+      router.replace('/sign-in');
+    } else if (dataStatus) {
       const manage = dataStatus?.is_instance_manager;
       let pathname = completePath;
       if (basePath === '/') {
