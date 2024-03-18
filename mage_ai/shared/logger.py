@@ -85,13 +85,10 @@ class JSONFormatter(logging.Formatter):
 
 
 def set_logging_format(logging_format: str = None, level: str = None) -> None:
-    handler = logging.StreamHandler()
-    handler.setFormatter(JSONFormatter())
-
-    root_logger = logging.getLogger()
     if isinstance(logging_format, str):
         logging_format = logging_format.lower()
 
+    root_logger = logging.getLogger()
     if len(root_logger.handlers) > 0:
         root_logger.removeHandler(root_logger.handlers[0])
 
