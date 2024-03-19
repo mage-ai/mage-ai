@@ -1,8 +1,8 @@
-import StreamingPipeline from '@oracle/icons/custom/StreamingPipeline';
 import {
   AISparkle,
   BatchPipeline,
-  DataIntegrationPipeline,
+  IntegrationPipeline,
+  StreamingPipeline,
   TemplateShapes,
   Upload,
 } from '@oracle/icons';
@@ -34,7 +34,7 @@ export const getNewPipelineButtonMenuItems = (
       uuid: 'Pipelines/NewPipelineMenu/standard',
     },
     {
-      beforeIcon: <DataIntegrationPipeline />,
+      beforeIcon: <IntegrationPipeline />,
       label: () => 'Data integration',
       onClick: () => createPipeline({
         pipeline: {
