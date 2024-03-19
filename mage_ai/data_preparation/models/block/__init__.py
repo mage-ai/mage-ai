@@ -339,7 +339,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
-        self.global_vars = {}
         self.template_runtime_configuration = {}
 
         self.dynamic_block_index = None
@@ -1198,7 +1197,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         f'Please run upstream blocks {upstream_block_uuids} '
                         'before running the current block.'
                     )
-            global_vars = self.__enrich_global_vars(
+            global_vars = self.enrich_global_vars(
                 global_vars,
                 dynamic_block_index=dynamic_block_index,
             )
@@ -3038,7 +3037,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_mapping = merge_dict(output_variables, consolidated_print_variables)
         return variable_mapping
 
-    def __enrich_global_vars(
+    def enrich_global_vars(
         self,
         global_vars: Dict = None,
         dynamic_block_index: int = None,
@@ -3659,23 +3658,29 @@ class AddonBlock(Block):
             global_vars['dynamic_block_index'] = dynamic_block_index
 
         if parent_block:
+            if parent_block.global_vars is None:
+                global_vars_copy = global_vars.copy()
+                parent_block.enrich_global_vars(
+                    global_vars=global_vars_copy,
+                    dynamic_block_index=dynamic_block_index,
+                )
+            global_vars = merge_dict(parent_block.global_vars, global_vars)
             global_vars['parent_block_uuid'] = parent_block.uuid
 
-        if parent_block and \
-                parent_block.pipeline and \
-                PipelineType.INTEGRATION == parent_block.pipeline.type:
+            if parent_block.pipeline and \
+                    PipelineType.INTEGRATION == parent_block.pipeline.type:
 
-            template_runtime_configuration = parent_block.template_runtime_configuration
-            index = template_runtime_configuration.get('index', None)
-            is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
-            selected_streams = template_runtime_configuration.get('selected_streams', [])
-            stream = selected_streams[0] if len(selected_streams) >= 1 else None
-            destination_table = template_runtime_configuration.get('destination_table', stream)
+                template_runtime_configuration = parent_block.template_runtime_configuration
+                index = template_runtime_configuration.get('index', None)
+                is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
+                selected_streams = template_runtime_configuration.get('selected_streams', [])
+                stream = selected_streams[0] if len(selected_streams) >= 1 else None
+                destination_table = template_runtime_configuration.get('destination_table', stream)
 
-            global_vars['index'] = index
-            global_vars['is_last_block_run'] = is_last_block_run
-            global_vars['stream'] = stream
-            global_vars['destination_table'] = destination_table
+                global_vars['index'] = index
+                global_vars['is_last_block_run'] = is_last_block_run
+                global_vars['stream'] = stream
+                global_vars['destination_table'] = destination_table
 
         return global_vars
 
