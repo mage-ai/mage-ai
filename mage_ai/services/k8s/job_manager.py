@@ -24,6 +24,14 @@ class JobManager():
         logger=None,
         logging_tags: Dict = None,
     ):
+        """Initialize the kubernetes job manager.
+
+        Args:
+            job_name (str, optional): The name of the job.
+            namespace (str, optional): The namespace of the executor pod.
+            logger (None, optional): Logger to log the messages.
+            logging_tags (Dict, optional): Logging tags to be included in the log messages.
+        """
         self.job_name = job_name
         self.namespace = namespace
         self.logger = logger
