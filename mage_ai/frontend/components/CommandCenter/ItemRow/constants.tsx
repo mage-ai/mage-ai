@@ -6,24 +6,19 @@ import {
   BlockGeneric,
   HexagonAll,
   BranchAlt,
-  CategorizationUseCase,
   Chat,
   ChurnV3,
   Code,
   DocumentIcon,
-  EstimationUseCase,
   File as FileIcon,
   FolderOutline,
-  LTVUseCase,
-  Lightning,
   NavDashboard,
   PipelineV3,
   PlugAPI,
-  RankingV3,
   Schedule,
   ScheduleClockWithBorderDots,
   SettingsWithKnobs,
-  Streaming,
+  StreamingPipeline,
 } from '@oracle/icons';
 
 export function getIcon(item: CommandCenterItemType) {
@@ -64,7 +59,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.FILE]: FileIcon,
     [ObjectTypeEnum.FOLDER]: FolderOutline,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
-    [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
+    [ObjectTypeEnum.PIPELINE_RUN]: StreamingPipeline,
     [ObjectTypeEnum.PROJECT]: HexagonAll,
     [ObjectTypeEnum.REMOTE]: PlugAPI,
     [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
@@ -72,4 +67,4 @@ export function getIcon(item: CommandCenterItemType) {
   };
 
   return mapping[item?.object_type];
-};
+}
