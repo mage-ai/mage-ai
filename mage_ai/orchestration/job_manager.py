@@ -1,3 +1,4 @@
+import traceback
 from enum import Enum
 from typing import Callable, Dict, Union
 
@@ -89,4 +90,8 @@ class JobManager:
         return f'{job_type}_{uid}'
 
 
-job_manager = JobManager()
+try:
+    job_manager = JobManager()
+except Exception:
+    traceback.print_exc()
+    job_manager = None
