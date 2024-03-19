@@ -188,6 +188,18 @@ function PipelineSettings({
         />
 
         <SetupSectionRow
+          textInput={{
+            onChange: e => setPipelineAttributes(prev => ({
+              ...prev,
+              description: e.target.value,
+            })),
+            placeholder: 'Enter description...',
+            value: pipelineAttributes?.description || '',
+          }}
+          title="Pipeline description"
+        />
+
+        <SetupSectionRow
           description="When enabled, this setting allows sharing of objects and memory space across blocks within a single pipeline."
           title="Run pipeline in a single process"
           toggleSwitch={{
@@ -430,6 +442,7 @@ function PipelineSettings({
             loading={isPipelineUpdating}
             // @ts-ignore
             onClick={() => updatePipeline({
+              description: pipelineAttributes?.description,
               executor_type: pipelineAttributes?.executor_type,
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,
