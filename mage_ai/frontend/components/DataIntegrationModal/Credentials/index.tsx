@@ -15,13 +15,14 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { CodeEditorStyle} from '@components/IntegrationPipeline/index.style';
+import usePrevious from '@utils/usePrevious';
+import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import { ConfigurationDataIntegrationType } from '@interfaces/ChartBlockType';
 import { ErrorRunTimeProps } from '@context/Error/ErrorContext';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PlugAPI } from '@oracle/icons';
 import { SubTabEnum } from '../constants';
-import { buildInputsFromUpstreamBlocks } from '@utils/models/block'
+import { buildInputsFromUpstreamBlocks } from '@utils/models/block';
 import { onSuccess } from '@api/utils/response';
 
 export type CredentialsProps = {
@@ -82,13 +83,17 @@ function Credentials({
     blockLanguage,
   ]);
 
+  const blockConfigStringPrev = usePrevious(blockConfigString);
+  
   useEffect(() => {
-    if (blockContentParsed && !blockConfigString) {
+    if (blockContentParsed && !blockConfigString && !blockConfigStringPrev) {
       setBlockConfigString(stringify(blockContentParsed?.config));
     }
   }, [
     blockConfigString,
+    blockConfigStringPrev,
     blockContentParsed,
+    setBlockConfigString,
   ]);
 
   const [connectionSuccessful, setConnectionSuccessful] = useState<boolean>(false);
