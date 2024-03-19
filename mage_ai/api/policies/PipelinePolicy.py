@@ -85,9 +85,11 @@ PipelinePolicy.allow_write([
     'conditionals',
     'clone_pipeline_uuid',
     'custom_template_uuid',
+    'description',
     'extensions',
     'llm',
     'name',
+    'tags',
     'type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
