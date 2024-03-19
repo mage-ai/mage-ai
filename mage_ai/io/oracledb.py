@@ -7,6 +7,9 @@ from pandas import DataFrame, read_sql
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.sql import BaseSQL
+from mage_ai.server.logger import Logger
+
+logger = Logger().new_server_logger(__name__)
 
 
 class OracleDB(BaseSQL):
@@ -40,8 +43,17 @@ class OracleDB(BaseSQL):
         )
 
     def open(self) -> None:
-        with self.printer.print_msg('Opening connection to OracleDB database (thin mode)'):
-            self._ctx = oracledb.connect(**self.settings)
+        if self.settings['mode'] and self.settings['mode'].lower() == 'thick':
+            logger.info('Initializing Oracle thick mode.')
+            oracledb.init_oracle_client()
+        with self.printer.print_msg(f'Opening connection to OracleDB database \
+                                    ({self.settings["mode"]} mode)'):
+            connection_dsn = "{}:{}/{}".format(
+                self.settings['host'],
+                self.settings['port'],
+                self.settings['service_name'])
+            self._ctx = oracledb.connect(
+                user=self.settings['user'], password=self.settings['password'], dsn=connection_dsn)
 
     def load(
         self,
