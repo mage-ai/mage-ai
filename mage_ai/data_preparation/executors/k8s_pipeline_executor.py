@@ -1,8 +1,11 @@
 import traceback
 from typing import Dict
 
+from jinja2 import Template
+
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
@@ -62,7 +65,11 @@ class K8sPipelineExecutor(PipelineExecutor):
             job_name_prefix = self.executor_config.job_name_prefix
 
         if self.executor_config.namespace:
-            namespace = self.executor_config.namespace
+            global_vars = kwargs.get('global_vars', dict())
+            namespace = Template(self.executor_config.namespace).render(
+                variables=lambda x: global_vars.get(x) if global_vars else None,
+                **get_template_vars()
+            )
         else:
             namespace = DEFAULT_NAMESPACE
 
