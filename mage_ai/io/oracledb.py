@@ -1,4 +1,3 @@
-import logging
 import warnings
 from typing import Union
 
@@ -8,8 +7,9 @@ from pandas import DataFrame, read_sql
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.sql import BaseSQL
+from mage_ai.server.logger import Logger
 
-LOGGER = logging.getLogger(__name__)
+logger = Logger().new_server_logger(__name__)
 
 
 class OracleDB(BaseSQL):
@@ -44,7 +44,7 @@ class OracleDB(BaseSQL):
 
     def open(self) -> None:
         if self.settings['mode'] and self.settings['mode'].lower() == 'thick':
-            LOGGER.info('Initializing Oracle thick mode.')
+            logger.info('Initializing Oracle thick mode.')
             oracledb.init_oracle_client()
         with self.printer.print_msg(f'Opening connection to OracleDB database \
                                     ({self.settings["mode"]} mode)'):
