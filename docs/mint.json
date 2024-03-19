@@ -279,7 +279,8 @@
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
                 "streaming/sources/nats",
-                "streaming/sources/rabbitmq"
+                "streaming/sources/rabbitmq",
+                "streaming/sources/mongodb"
               ]
             },
             {
