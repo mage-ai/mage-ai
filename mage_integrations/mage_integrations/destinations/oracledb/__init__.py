@@ -178,6 +178,20 @@ WHERE TABLE_NAME = '{table_name.upper()}'
             if unique_constraints and unique_conflict_method:
                 if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                     # Build update command
+                    # Convert insert_value from format:
+                    # CAST('1' AS NUMBER), TO_DATE('2023-09-10', 'yyyy-mm-dd'),
+                    # to_nclob('{\"customer\": \"John Doe\", \"items\": {\"product\": \"Beer\"}'),
+
+                    # to format:
+                    # ["col1 = CAST('1' AS NUMBER)", "col2 =  TO_DATE('2023-09-10', 'yyyy-mm-dd')",
+                    # 'col3 =  to_nclob(\'{"customer": "John Doe", "items":
+                    # {"product": "Beer"}}\')']
+
+                    # Steps:
+                    # - First remove unnecessary punctuation
+                    # (1) ( at beginning (2) ) at the end (3), at the end
+                    # - split by "),"
+                    # -  Add back ) at the end of each value
                     insert_value_without_left_parenthesis = re.sub(r"^\(", "", insert_value)
                     insert_value_strip = re.sub(r"\)$", "", insert_value_without_left_parenthesis)
                     insert_value_strip = re.sub(r"\,$", "", insert_value_strip)
