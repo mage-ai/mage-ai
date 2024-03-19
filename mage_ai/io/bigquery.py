@@ -1,5 +1,6 @@
 from typing import Dict, List, Mapping, Union
 
+import numpy as np
 from google.cloud.bigquery import (
     Client,
     LoadJobConfig,
@@ -295,6 +296,7 @@ WHERE table_id = '{table_name}'
                 column_types = self.get_column_types(schema, table_name)
 
                 if df is not None:
+                    df.fillna(value=np.NaN, inplace=True)
                     for col in df.columns:
                         col_type = column_types.get(col)
                         if not col_type:
