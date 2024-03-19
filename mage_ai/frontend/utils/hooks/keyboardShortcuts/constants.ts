@@ -132,7 +132,7 @@ export const KEY_SYMBOL_BRACKET_RIGHT = ']';
 export const KEY_SYMBOL_CONTROL = '^ ctrl';
 export const KEY_SYMBOL_DELETE = 'del';
 export const KEY_SYMBOL_ENTER = '⌅ enter';
-export const KEY_SYMBOL_RETURN = '↵ return'
+export const KEY_SYMBOL_RETURN = '↵ return';
 export const KEY_SYMBOL_ESCAPE = '⎋ esc';
 export const KEY_SYMBOL_FORWARD_SLASH = '/';
 export const KEY_SYMBOL_META = '⌘';
@@ -144,6 +144,7 @@ export const KEY_SYMBOL_ARROW_LEFT = '⬅';
 export const KEY_SYMBOL_ARROW_RIGHT = '➡';
 export const KEY_SYMBOL_ARROW_UP = '⬆';
 export const KEY_ENTER = 'Enter';
+export const KEY_ESCAPE = 'Escape';
 
 export const KEY_CODE_KEY_SYMBOL_MAPPING = {
   [KEY_CODE_A]: KEY_SYMBOL_A,

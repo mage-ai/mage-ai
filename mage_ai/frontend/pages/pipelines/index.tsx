@@ -8,6 +8,7 @@ import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
 import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
 import Chip from '@oracle/components/Chip';
+import ConfigurePipeline from '@components/PipelineDetail/ConfigurePipeline';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -521,6 +522,38 @@ function PipelineListPage() {
     },
   );
 
+  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(({
+    pipelineType,
+  }: {
+    pipelineType: PipelineTypeEnum,
+  }) => (
+    <ConfigurePipeline
+      onClose={hideCreatePipelineModal}
+      onSave={({
+        name,
+        description,
+        tags,
+      }) => {
+        createPipeline({
+          pipeline: {
+            description,
+            name,
+            tags,
+            type: pipelineType,
+          },
+        });
+      }}
+      pipelineType={pipelineType}
+    />
+  ), {
+  }, [
+    createPipeline,
+  ], {
+    background: true,
+    disableEscape: true,
+    uuid: 'overview/create_pipeline',
+  });
+
   const [showInputModal, hideInputModal] = useModal(({
     pipeline,
     pipelineDescription,
@@ -687,7 +720,6 @@ function PipelineListPage() {
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
-      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -700,6 +732,8 @@ function PipelineListPage() {
         }
       },
       showBrowseTemplates,
+      showCreatePipelineModal,
+      showImportPipelineModal,
     },
   ), [
     createPipeline,
@@ -707,6 +741,7 @@ function PipelineListPage() {
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showCreatePipelineModal,
     showImportPipelineModal,
   ]);
 
