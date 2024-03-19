@@ -2,6 +2,7 @@ import { expect, test } from './base';
 
 test.afterEach(async ({ page }, testInfo) => {
   await page.getByRole('menuitem', { name: 'Standard (batch)' }).click();
+  await page.getByRole('button', { exact: true, name: 'Create' }).click();
   await page.waitForURL('**/pipelines/**');
 
   const pathStr = await page.evaluate(() => document.location.pathname);
