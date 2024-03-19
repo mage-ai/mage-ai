@@ -42,6 +42,7 @@ class K8sPipelineExecutor(PipelineExecutor):
     ) -> None:
         job_manager = self.get_job_manager(
             pipeline_run_id=pipeline_run_id,
+            global_vars=global_vars,
             **kwargs,
         )
         cmd = self._run_commands(
@@ -57,15 +58,18 @@ class K8sPipelineExecutor(PipelineExecutor):
     def get_job_manager(
         self,
         pipeline_run_id: int = None,
+        global_vars: Dict = None,
         **kwargs,
     ) -> K8sJobManager:
+        if global_vars is None:
+            global_vars = dict()
         if not self.executor_config.job_name_prefix:
             job_name_prefix = 'data-prep'
         else:
             job_name_prefix = self.executor_config.job_name_prefix
 
         if self.executor_config.namespace:
-            global_vars = kwargs.get('global_vars', dict())
+
             namespace = Template(self.executor_config.namespace).render(
                 variables=lambda x: global_vars.get(x) if global_vars else None,
                 **get_template_vars()
