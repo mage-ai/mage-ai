@@ -6,6 +6,11 @@ import api from '@api';
 import { isDemo } from '@utils/environment';
 import { logUserOS } from '@utils/gtag';
 
+const PATHS_TO_IGNORE_AUTH_CHECK = [
+  '/sign-in',
+  '/oauth',
+];
+
 const Home = () => {
   const router = useRouter();
   const completePath = router.asPath;
@@ -27,7 +32,9 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (dataStatus) {
+    if (PATHS_TO_IGNORE_AUTH_CHECK.includes(basePath)) {
+      router.replace(completePath);
+    } else if (dataStatus) {
       const requireUserAuthentication = dataStatus?.require_user_authentication;
       const loggedIn = AuthToken.isLoggedIn();
       if (requireUserAuthentication && !loggedIn) {
