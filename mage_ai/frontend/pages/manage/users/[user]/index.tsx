@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import ErrorsType from '@interfaces/ErrorsType';
@@ -11,7 +11,7 @@ import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
-import { displayErrorFromReadResponse } from '@api/utils/response';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 
 type ManageUserDetailProps = {
   user: { id: number };
@@ -43,7 +43,6 @@ function ManageUserDetail({
       user_id: userID,
     },
     {
-      refreshInterval: 5000,
       revalidateOnFocus: true,
     },
   );

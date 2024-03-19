@@ -17,6 +17,8 @@ import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
 import { find, remove } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { set } from 'yaml/dist/schema/yaml-1.1/set';
+import Spinner from '@oracle/components/Spinner';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
@@ -39,11 +41,21 @@ function UserWorkspacesEdit({
     }
   }, [user]);
 
+  const [isLoadingRoles, setIsLoadingRoles] = useState<boolean>(false);
+
   const workspaceEntityIDs = workspaces?.map(({ project_uuid }: WorkspaceType) => project_uuid);
-  const { data: dataRoles, mutate: fetchRoles } = api.roles.list({
+  const { data: dataRoles, loading, mutate: fetchRoles } = api.roles.list({
     entity: 'project',
     entity_ids: workspaceEntityIDs,
-  }, {}, {});
+  }, {}, {
+    onSuccess: () => setIsLoadingRoles(false),
+    pauseFetch: !workspaces,
+  });
+
+  const refreshRoles = useCallback(() => {
+    setIsLoadingRoles(true);
+    fetchRoles();
+  }, [setIsLoadingRoles, fetchRoles]);
 
   const groupRolesByWorkspace = useCallback((roles: RoleType[]) => roles?.reduce(
     (obj, role) => {
@@ -123,85 +135,89 @@ function UserWorkspacesEdit({
           Update workspace roles
         </Button>
       </Spacing>
-      <Table
-        columnFlex={[1, 1]}
-        columns={[
-          {
-            uuid: 'Workspace',
-          },
-          {
-            uuid: 'Role',
-          },
-        ]}
-        rows={workspaces?.map(({
-          name,
-          project_uuid,
-        }: WorkspaceType) => {
-          const roles = rolesByWorkspace?.[project_uuid] || [];
-          const userRoles = userRolesByWorkspace?.[project_uuid];
-          return [
-            <Text bold key="name">
-              {name}
-            </Text>,
-            <>
-              <Select
-                key="project_role"
-                label="Roles"
-                // @ts-ignore
-                onChange={e => {
-                  setButtonDisabled(false);
-                  const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
-                  if (newRole) {
-                    setProfile(prev => {
-                      const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
-                      const updatedProfile: UserType = {
-                        roles_new: [...prevRoles, newRole],
-                      };
-                      return ({
-                        ...prev,
-                        ...updatedProfile,
-                      });
-                    });
-                  }
-                }}
-                primary
-                setContentOnMount
-              >
-                {roles.map(({ id, name }) => (
-                  <option key={name} value={id}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
-              <Spacing mb={1} />
-              <FlexContainer alignItems="center" flexWrap="wrap">
-                {userRoles?.map(({ id, name }: RoleType) => (
-                  <Spacing
-                    key={`user_roles/${name}`}
-                    mb={1}
-                    mr={1}
-                  >
-                    <Chip
-                      label={name}
-                      onClick={() => {
-                        setButtonDisabled(false);
-                        setProfile(prev => ({
+      {isLoadingRoles || loading ? (
+        <Spinner />
+      ) : (
+        <Table
+          columnFlex={[1, 1]}
+          columns={[
+            {
+              uuid: 'Workspace',
+            },
+            {
+              uuid: 'Role',
+            },
+          ]}
+          rows={workspaces?.map(({
+            name,
+            project_uuid,
+          }: WorkspaceType) => {
+            const roles = rolesByWorkspace?.[project_uuid] || [];
+            const userRoles = userRolesByWorkspace?.[project_uuid];
+            return [
+              <Text bold key="name">
+                {name}
+              </Text>,
+              <>
+                <Select
+                  key="project_role"
+                  label="Roles"
+                  // @ts-ignore
+                  onChange={e => {
+                    setButtonDisabled(false);
+                    const newRole = find(roles, (({ id }: RoleType) => id == e.target.value));
+                    if (newRole) {
+                      setProfile(prev => {
+                        const prevRoles = prev?.roles_new?.filter(role => role.id != newRole?.id) || [];
+                        const updatedProfile: UserType = {
+                          roles_new: [...prevRoles, newRole],
+                        };
+                        return ({
                           ...prev,
-                          roles_new: remove(
-                            userRoles,
-                            ({ id: rid }: RoleType) => rid === id,
-                          ),
-                        }));
-                      }}
-                      primary
-                    />
-                  </Spacing>
-                ))}
-              </FlexContainer>
-            </>,
-          ];
-        })}
-      />
+                          ...updatedProfile,
+                        });
+                      });
+                    }
+                  }}
+                  primary
+                  setContentOnMount
+                >
+                  {roles.map(({ id, name }) => (
+                    <option key={name} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+                <Spacing mb={1} />
+                <FlexContainer alignItems="center" flexWrap="wrap">
+                  {userRoles?.map(({ id, name }: RoleType) => (
+                    <Spacing
+                      key={`user_roles/${name}`}
+                      mb={1}
+                      mr={1}
+                    >
+                      <Chip
+                        label={name}
+                        onClick={() => {
+                          setButtonDisabled(false);
+                          setProfile(prev => ({
+                            ...prev,
+                            roles_new: remove(
+                              userRoles,
+                              ({ id: rid }: RoleType) => rid === id,
+                            ),
+                          }));
+                        }}
+                        primary
+                      />
+                    </Spacing>
+                  ))}
+                </FlexContainer>
+              </>,
+            ];
+          })}
+        />
+      )}
     </>
   );
 }

@@ -51,7 +51,7 @@ function WorkspacePage() {
   });
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(true);
 
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     {
@@ -59,18 +59,10 @@ function WorkspacePage() {
       cluster_type: clusterType,
     },
     {
+      onSuccess: () => setIsRefreshing(false),
       revalidateOnFocus: false,
     },
   );
-  
-  const dataWorkspacesPrev = usePrevious(dataWorkspaces);
-  useEffect(() => {
-    if (dataWorkspaces == null) {
-      setIsRefreshing(true);
-    } else if (dataWorkspacesPrev == null) {
-      setIsRefreshing(false);
-    }
-  }, [dataWorkspaces, dataWorkspacesPrev]);
 
   const workspaces = useMemo(
     () => dataWorkspaces?.workspaces?.filter(({ name }) => name),
@@ -225,7 +217,7 @@ function WorkspacePage() {
           isLoading: isRefreshing,
           onClick: () => {
             setIsRefreshing(true);
-            fetchWorkspaces().then(() => setIsRefreshing(false));
+            fetchWorkspaces();
           },
           tooltip: 'Refresh workspaces',
         }}
