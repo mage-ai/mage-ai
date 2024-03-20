@@ -58,7 +58,7 @@ function SignForm({
           }) => {
             setUser(user);
             AuthToken.storeToken(token, () => {
-              let url: string = '/';
+              let url: string = `${router.basePath}/`;
               const query = queryFromUrl(window.location.href);
 
               if (typeof window !== 'undefined') {
