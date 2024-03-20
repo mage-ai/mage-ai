@@ -18,6 +18,7 @@ class MongoDBConfig(BaseConfig):
     pipeline: Optional[_Pipeline] = None
     operation_time: Optional[Timestamp] = None
     start_after: Optional[Mapping[str, Any]] = None
+    full_document: Optional[str] = None
 
 
 class MongoSource(BaseSource):
@@ -45,6 +46,9 @@ class MongoSource(BaseSource):
 
         if hasattr(self.config, 'start_after') and self.config.start_after is not None:
             watch_args['start_after'] = self.config.start_after
+
+        if hasattr(self.config, 'full_document'):
+            watch_args['full_document'] = self.config.full_documentd
 
         return watch_args
 
