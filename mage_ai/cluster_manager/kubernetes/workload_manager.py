@@ -74,7 +74,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/local-kube')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -236,13 +236,6 @@ class WorkloadManager:
         pvc_retention_policy = parameters.get('pvc_retention_policy') or 'Retain'
 
         ingress_name = workspace_config.ingress_name
-
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
 
         volumes = []
         volume_mounts = [{'name': 'mage-data', 'mountPath': '/home/src'}]

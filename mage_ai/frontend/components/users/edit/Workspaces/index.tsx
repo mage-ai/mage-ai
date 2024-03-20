@@ -19,17 +19,21 @@ import { find, remove } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { set } from 'yaml/dist/schema/yaml-1.1/set';
 import Spinner from '@oracle/components/Spinner';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
+import { queryFromUrl, queryString } from '@utils/url';
 
 type UserWorkspacesEditProps = {
   fetchUser: () => void;
+  isLoadingWorkspaces: boolean;
   user: UserType;
   workspaces: WorkspaceType[];
 };
 
 function UserWorkspacesEdit({
   fetchUser,
+  isLoadingWorkspaces,
   user,
-  workspaces,
+  workspaces: allWorkspaces,
 }: UserWorkspacesEditProps) {
   const router = useRouter();
   const [profile, setProfile] = useState<UserType>();
@@ -41,21 +45,33 @@ function UserWorkspacesEdit({
     }
   }, [user]);
 
-  const [isLoadingRoles, setIsLoadingRoles] = useState<boolean>(false);
+  const q = queryFromUrl();
+  const page = q?.page ? q.page : 0;
+  const totalWorkspaces = allWorkspaces?.length || 0;
 
-  const workspaceEntityIDs = workspaces?.map(({ project_uuid }: WorkspaceType) => project_uuid);
-  const { data: dataRoles, loading, mutate: fetchRoles } = api.roles.list({
+  const workspaces = useMemo(
+    () => allWorkspaces?.slice(page * 10, page * 10 + 10),
+    [allWorkspaces, page],
+  );
+
+  const workspaceEntityIDs = useMemo(
+    () => workspaces?.map(({ project_uuid }: WorkspaceType) => project_uuid),
+    [workspaces],
+  );
+
+  const { data: dataRoles, isValidating, mutate: fetchRoles } = api.roles.list({
     entity: 'project',
     entity_ids: workspaceEntityIDs,
-  }, {}, {
-    onSuccess: () => setIsLoadingRoles(false),
+  }, {
+    revalidateOnFocus: false,
+  }, {
     pauseFetch: !workspaces,
   });
 
-  const refreshRoles = useCallback(() => {
-    setIsLoadingRoles(true);
-    fetchRoles();
-  }, [setIsLoadingRoles, fetchRoles]);
+  // const refreshRoles = useCallback(() => {
+  //   setIsLoadingRoles(true);
+  //   fetchRoles();
+  // }, [setIsLoadingRoles, fetchRoles]);
 
   const groupRolesByWorkspace = useCallback((roles: RoleType[]) => roles?.reduce(
     (obj, role) => {
@@ -135,8 +151,10 @@ function UserWorkspacesEdit({
           Update workspace roles
         </Button>
       </Spacing>
-      {isLoadingRoles || loading ? (
-        <Spinner />
+      {isValidating || isLoadingWorkspaces ? (
+        <Spacing p={2}>
+          <Spinner color="white" />
+        </Spacing>
       ) : (
         <Table
           columnFlex={[1, 1]}
@@ -203,7 +221,7 @@ function UserWorkspacesEdit({
                           setProfile(prev => ({
                             ...prev,
                             roles_new: remove(
-                              userRoles,
+                              prev?.roles_new || [],
                               ({ id: rid }: RoleType) => rid === id,
                             ),
                           }));
@@ -218,6 +236,24 @@ function UserWorkspacesEdit({
           })}
         />
       )}
+      <Spacing p={2}>
+        <Paginate
+          maxPages={MAX_PAGES}
+          onUpdate={(p) => {
+            const newPage = Number(p);
+            const updatedQuery = {
+              ...q,
+              page: newPage >= 0 ? newPage : 0,
+            };
+            router.push(
+              '/manage/users/[user]',
+              `/manage/users/${user.id}?${queryString(updatedQuery)}`,
+            );
+          }}
+          page={Number(page)}
+          totalPages={Math.ceil(totalWorkspaces / 10)}
+        />
+      </Spacing>
     </>
   );
 }

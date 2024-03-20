@@ -37,13 +37,13 @@ function ManageUserDetail({
     displayErrorFromReadResponse(dataUser, setErrors);
   }, [dataUser]);
 
-  const { data: dataWorkspaces } = api.workspaces.list(
+  const { data: dataWorkspaces, isValidating } = api.workspaces.list(
     {
       cluster_type: clusterType,
       user_id: userID,
     },
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
     },
   );
 
@@ -94,6 +94,7 @@ function ManageUserDetail({
       <UserWorkspacesEdit
         fetchUser={fetchUser}
         user={user}
+        isLoadingWorkspaces={isValidating}
         workspaces={workspaces}
       />
     </WorkspacesDashboard>
