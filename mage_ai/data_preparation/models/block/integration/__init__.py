@@ -416,9 +416,10 @@ class SourceBlock(IntegrationBlock):
 class DestinationBlock(IntegrationBlock):
     def to_dict(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        include_block_pipelines: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
         destination_table: str = None,
         state_stream: str = None,
@@ -444,6 +445,7 @@ class DestinationBlock(IntegrationBlock):
             super().to_dict(
                 include_content=include_content,
                 include_outputs=include_outputs,
+                include_block_pipelines=include_block_pipelines,
                 sample_count=sample_count,
                 check_if_file_exists=check_if_file_exists,
             ),
@@ -452,9 +454,10 @@ class DestinationBlock(IntegrationBlock):
 
     async def to_dict_async(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        include_block_pipelines: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
         destination_table: str = None,
         state_stream: str = None,
@@ -463,6 +466,7 @@ class DestinationBlock(IntegrationBlock):
         return self.to_dict(
             include_content=include_content,
             include_outputs=include_outputs,
+            include_block_pipelines=include_block_pipelines,
             sample_count=sample_count,
             check_if_file_exists=check_if_file_exists,
             destination_table=destination_table,
