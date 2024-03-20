@@ -2497,6 +2497,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     def to_dict(
         self,
         include_block_catalog: bool = False,
+        include_block_pipelines: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
@@ -2514,6 +2515,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         if include_block_catalog and self.is_data_integration() and self.pipeline:
             data['catalog'] = self.get_catalog_from_file()
+
+        if include_block_pipelines:
+            data['pipelines'] = self.get_pipelines_from_cache()
 
         if include_outputs:
             include_outputs_use = include_outputs
