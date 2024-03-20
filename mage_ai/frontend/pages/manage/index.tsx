@@ -26,8 +26,6 @@ import { getFilters, setFilters } from '@storage/workspaces';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 import { useModal } from '@context/Modal';
-import { set } from 'local-storage';
-import usePrevious from '@utils/usePrevious';
 
 function WorkspacePage() {
   const router = useRouter();
@@ -51,15 +49,12 @@ function WorkspacePage() {
   });
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
 
-  const [isRefreshing, setIsRefreshing] = useState(true);
-
-  const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
+  const { data: dataWorkspaces, isValidating, mutate: fetchWorkspaces } = api.workspaces.list(
     {
       ...query,
       cluster_type: clusterType,
     },
     {
-      onSuccess: () => setIsRefreshing(false),
       revalidateOnFocus: false,
     },
   );
@@ -214,11 +209,8 @@ function WorkspacePage() {
         extraActionButtonProps={{
           Icon: Refresh,
           disabled: false,
-          isLoading: isRefreshing,
-          onClick: () => {
-            setIsRefreshing(true);
-            fetchWorkspaces();
-          },
+          isLoading: isValidating,
+          onClick: fetchWorkspaces,
           tooltip: 'Refresh workspaces',
         }}
         filterOptions={filterOptions}
@@ -240,7 +232,7 @@ function WorkspacePage() {
   }, [
     clusterType,
     fetchWorkspaces,
-    isRefreshing,
+    isValidating,
     query,
     router,
     showModal,

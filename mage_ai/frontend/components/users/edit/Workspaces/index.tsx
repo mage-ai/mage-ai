@@ -6,10 +6,12 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Paginate, { MAX_PAGES } from '@components/shared/Paginate';
 import PermissionType from '@interfaces/PermissionType';
 import RoleType from '@interfaces/RoleType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import UserType from '@interfaces/UserType';
@@ -17,9 +19,6 @@ import WorkspaceType from '@interfaces/WorkspaceType';
 import api from '@api';
 import { find, remove } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { set } from 'yaml/dist/schema/yaml-1.1/set';
-import Spinner from '@oracle/components/Spinner';
-import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import { queryFromUrl, queryString } from '@utils/url';
 
 type UserWorkspacesEditProps = {
