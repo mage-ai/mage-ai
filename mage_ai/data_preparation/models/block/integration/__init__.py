@@ -469,7 +469,7 @@ class DestinationBlock(IntegrationBlock):
             state_stream=state_stream,
         )
 
-    def update(self, data, update_state=False):
+    def update(self, data, update_state=False, **kwargs):
         if update_state:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
@@ -493,7 +493,7 @@ class DestinationBlock(IntegrationBlock):
                     bookmark_values=bookmark_values
                 )
 
-        return super().update(data)
+        return super().update(data, **kwargs)
 
     def output_variables(self, execution_partition: str = None) -> List[str]:
         return []
