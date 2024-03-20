@@ -272,7 +272,7 @@ function CodeBlockOutput({
             width,
           }) => (
             <DataTable
-              columns={data?.columns}
+              columns={data?.columns || []}
               disableScrolling={!selected}
               index={data?.index}
               key={`data-table-${data?.index}`}
@@ -284,7 +284,7 @@ function CodeBlockOutput({
               noBorderLeft
               noBorderRight
               noBorderTop={!data?.borderTop}
-              rows={data?.rows}
+              rows={data?.rows || []}
               width={columnWidth}
             />
           ),
