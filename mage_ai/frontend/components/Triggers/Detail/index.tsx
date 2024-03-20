@@ -162,10 +162,12 @@ function TriggerDetail({
     mutate: fetchPipelineRuns,
   } = api.pipeline_runs.pipeline_schedules.list(
     pipelineScheduleID,
-    pipelineRunsRequestQuery, {
-    refreshInterval: 3000,
-    revalidateOnFocus: true,
-  });
+    pipelineRunsRequestQuery,
+    {
+      refreshInterval: 3000,
+      revalidateOnFocus: true,
+    },
+  );
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
