@@ -11,6 +11,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { CodeEditorStyle } from './index.style';
 import { onSuccess } from '@api/utils/response';
 import { singularize } from '@utils/string';
@@ -32,11 +33,13 @@ function SourceConfig({
 }: SourceConfigProps) {
   const [blockConfig, setBlockConfig] = useState(null);
 
+  const blockConfigPrev = usePrevious(blockConfig);
+
   useEffect(() => {
-    if (blockContent && !blockConfig) {
+    if (blockContent && !blockConfig && !blockConfigPrev) {
       setBlockConfig(stringify(blockContent?.config));
     }
-  }, [blockConfig, blockContent]);
+  }, [blockConfig, blockConfigPrev, blockContent]);
 
 
   const [connected, setConnected] = useState<boolean>(null);
