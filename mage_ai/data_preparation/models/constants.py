@@ -62,6 +62,9 @@ class BlockType(str, Enum):
     SENSOR = 'sensor'
     TRANSFORMER = 'transformer'
 
+    def __str__(self):
+        return self.value
+
 
 class BlockColor(str, Enum):
     BLUE = 'blue'
