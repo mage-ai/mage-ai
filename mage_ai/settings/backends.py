@@ -77,10 +77,10 @@ class AWSSecretsManagerBackend(SettingsBackend):
         from botocore.exceptions import ClientError
         if self.prefix:
             key = f'{self.prefix}{key}'
-        if self.cache is not None:
-            return self.cache.get_secret_string(key)
-        else:
-            try:
+        try:
+            if self.cache is not None:
+                return self.cache.get_secret_string(key)
+            else:
                 secret_response = self.client.get_secret_value(
                     SecretId=key,
                 )
@@ -89,7 +89,7 @@ class AWSSecretsManagerBackend(SettingsBackend):
                     return base64.b64decode(binary)
                 else:
                     return secret_response['SecretString']
-            except ClientError as error:
-                if error.response['Error']['Code'] != 'ResourceNotFoundException':
-                    logger.exception('Failed to get secret %s from AWS Secrets Manager.', key)
-                return None
+        except ClientError as error:
+            if error.response['Error']['Code'] != 'ResourceNotFoundException':
+                logger.exception('Failed to get secret %s from AWS Secrets Manager.', key)
+            return None
