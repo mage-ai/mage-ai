@@ -92,7 +92,7 @@ function ConfigurePipeline({
   }, [handleOnSave, onClose]);
 
   return (
-    <ContainerStyle width={50 * UNIT}>
+    <ContainerStyle width={55 * UNIT}>
       <HeaderStyle lightBackground>
         <FlexContainer
           alignItems="center"
@@ -131,7 +131,8 @@ function ConfigurePipeline({
         <Text default>
           Description
         </Text>
-        <Spacing px={2} py={1}>
+        <Spacing ml={9} />
+        <Spacing fullWidth px={2} py={1}>
           <TextArea
             onChange={e => {
               setPipelineAttributes((prev) => ({
