@@ -37,6 +37,7 @@ import {
   RowStyle,
 } from './index.style';
 import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
+import { KEY_ENTER, KEY_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import { ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import {
@@ -102,9 +103,9 @@ function ConfigureBlock({
   useEffect(() => {
     const handleKeyDown = (event) => {
       event.stopPropagation();
-      if (event.key === 'Escape') {
+      if (event.key === KEY_ESCAPE) {
         onClose();
-      } else if (event.key === 'Enter') {
+      } else if (event.key === KEY_ENTER) {
         const buttonText = event.target.innerText;
         if (!buttonText.startsWith('Save and') && buttonText !== 'Cancel') {
           handleOnSave();

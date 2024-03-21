@@ -1,8 +1,8 @@
-import StreamingPipeline from '@oracle/icons/custom/StreamingPipeline';
 import {
   AISparkle,
   BatchPipeline,
-  DataIntegrationPipeline,
+  IntegrationPipeline,
+  StreamingPipeline,
   TemplateShapes,
   Upload,
 } from '@oracle/icons';
@@ -17,42 +17,61 @@ export const getNewPipelineButtonMenuItems = (
     reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
   ) => void,
   opts?: {
-    showImportPipelineModal?: () => void;
     showAIModal?: () => void;
     showBrowseTemplates?: () => void;
+    showCreatePipelineModal?: (opts: { pipelineType: PipelineTypeEnum }) => void;
+    showImportPipelineModal?: () => void;
   },
 ) => {
   const arr = [
     {
       beforeIcon: <BatchPipeline />,
       label: () => 'Standard (batch)',
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-        },
-      }),
+      onClick: () => {
+        if (opts?.showCreatePipelineModal) {
+          opts?.showCreatePipelineModal?.({ pipelineType: PipelineTypeEnum.PYTHON });
+        } else {
+          createPipeline({
+            pipeline: {
+              name: randomNameGenerator(),
+            },
+          });
+        }
+      },
       uuid: 'Pipelines/NewPipelineMenu/standard',
     },
     {
-      beforeIcon: <DataIntegrationPipeline />,
+      beforeIcon: <IntegrationPipeline />,
       label: () => 'Data integration',
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-          type: PipelineTypeEnum.INTEGRATION,
-        },
-      }),
+      onClick: () => {
+        if (opts?.showCreatePipelineModal) {
+          opts?.showCreatePipelineModal?.({ pipelineType: PipelineTypeEnum.INTEGRATION });
+        } else {
+          createPipeline({
+            pipeline: {
+              name: randomNameGenerator(),
+              type: PipelineTypeEnum.INTEGRATION,
+            },
+          });
+        }
+      },
       uuid: 'Pipelines/NewPipelineMenu/integration',
     },
     {
       beforeIcon: <StreamingPipeline size={ICON_SIZE} />,
       label: () => 'Streaming',
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-          type: PipelineTypeEnum.STREAMING,
-        },
-      }),
+      onClick: () => {
+        if (opts?.showCreatePipelineModal) {
+          opts?.showCreatePipelineModal?.({ pipelineType: PipelineTypeEnum.STREAMING });
+        } else {
+          createPipeline({
+            pipeline: {
+              name: randomNameGenerator(),
+              type: PipelineTypeEnum.STREAMING,
+            },
+          });
+        }
+      },
       uuid: 'Pipelines/NewPipelineMenu/streaming',
     },
   ];

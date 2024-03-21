@@ -82,6 +82,8 @@ class Pipeline:
         repo_config=None,
         catalog=None,
         use_repo_path: bool = False,
+        description: str = None,
+        tags: List[str] = None,
     ):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -90,7 +92,7 @@ class Pipeline:
         self.concurrency_config = dict()
         self.created_at = None
         self.data_integration = None
-        self.description = None
+        self.description = description
         self.executor_config = dict()
         self.executor_type = None
         self.extensions = {}
@@ -101,7 +103,7 @@ class Pipeline:
         self.run_pipeline_in_one_process = False
         self.schedules = []
         self.settings = {}
-        self.tags = []
+        self.tags = tags or []
         self.type = PipelineType.PYTHON
         self.use_repo_path = use_repo_path
         self.uuid = uuid
@@ -215,7 +217,14 @@ class Pipeline:
             self.widget_configs
 
     @classmethod
-    def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
+    def create(
+        self,
+        name: str,
+        description: str = None,
+        pipeline_type: PipelineType = PipelineType.PYTHON,
+        repo_path: str = None,
+        tags: List[str] = None,
+    ):
         """
         1. Create a new folder for pipeline
         2. Create a new yaml file to store pipeline config
@@ -231,14 +240,20 @@ class Pipeline:
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
             yaml.dump(dict(
                 created_at=str(datetime.now(tz=pytz.UTC)),
+                description=description,
                 name=name,
+                tags=tags or [],
                 uuid=uuid,
                 type=format_enum(pipeline_type or PipelineType.PYTHON),
             ), fp)
+
         pipeline = Pipeline(
             uuid,
+            description=description,
             repo_path=repo_path,
+            tags=tags or [],
         )
+
         return pipeline
 
     @classmethod

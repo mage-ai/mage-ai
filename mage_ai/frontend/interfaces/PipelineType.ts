@@ -1,7 +1,12 @@
 import BlockType from './BlockType';
 import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
-import { Batch, HexagonAll, Integration, Streaming } from '@oracle/icons';
+import {
+  BatchPipeline,
+  HexagonAll,
+  IntegrationPipeline,
+  StreamingPipeline,
+} from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { KernelNameEnum } from './KernelType';
@@ -41,9 +46,9 @@ export const PIPELINE_TYPES_TO_DISPLAY = [
 
 export const PIPELINE_TYPE_ICON_MAPPING = {
   [ALL_PIPELINE_RUNS_TYPE]: HexagonAll,
-  [PipelineTypeEnum.INTEGRATION]: Integration,
-  [PipelineTypeEnum.PYTHON]: Batch,
-  [PipelineTypeEnum.STREAMING]: Streaming,
+  [PipelineTypeEnum.INTEGRATION]: IntegrationPipeline,
+  [PipelineTypeEnum.PYTHON]: BatchPipeline,
+  [PipelineTypeEnum.STREAMING]: StreamingPipeline,
 };
 
 /*

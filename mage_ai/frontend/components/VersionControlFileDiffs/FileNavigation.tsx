@@ -7,7 +7,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
+import { AlertTriangle, Check, IntegrationPipeline } from '@oracle/icons';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VersionControlFileType } from '@interfaces/VersionControlType';
@@ -68,7 +68,7 @@ function FileNavigation({
           >
             <Flex alignItems="center">
               {staged && !unstaged && <Check size={ICON_SIZE} success />}
-              {unstaged && <DataIntegrationPipeline size={ICON_SIZE} warning />}
+              {unstaged && <IntegrationPipeline size={ICON_SIZE} warning />}
               {untracked && <AlertTriangle size={ICON_SIZE} danger />}
 
               <div style={{ paddingRight: 1.5 * UNIT }} />

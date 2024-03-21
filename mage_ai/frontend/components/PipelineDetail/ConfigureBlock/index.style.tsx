@@ -1,9 +1,8 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { transition } from '@oracle/styles/mixins';
 
 type ContainerProps = {
   width?: number;
@@ -19,7 +18,9 @@ export const ContainerStyle = styled.div<ContainerProps>`
   `}
 `;
 
-export const HeaderStyle = styled.div`
+export const HeaderStyle = styled.div<{
+  lightBackground?: boolean;
+}>`
   padding: ${2.5 * UNIT}px;
 
   ${(props: any) => `
@@ -30,10 +31,15 @@ export const HeaderStyle = styled.div`
     border-top-right-radius: ${BORDER_RADIUS}px;
     border-top: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme.background || dark.background).panel}
+  `}
 `;
 
 export const RowStyle = styled.div<{
   display?: string;
+  lightBackground?: boolean;
   paddingVerticalAddition?: number;
 }>`
   align-items: center;
@@ -49,9 +55,15 @@ export const RowStyle = styled.div<{
     padding-left: ${PADDING_UNITS * UNIT}px;
     padding-top: ${1 * UNIT + (props?.paddingVerticalAddition || 0)}px;
   `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme.background || dark.background).panel}
+  `}
 `;
 
-export const FooterStyle = styled.div`
+export const FooterStyle = styled.div<{
+  topBorder?: boolean;
+}>`
   padding: ${2.5 * UNIT}px ${2 * UNIT}px;
 
   ${(props: any) => `
@@ -61,5 +73,9 @@ export const FooterStyle = styled.div`
     border-bottom: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
     border-left: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
     border-right: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
+  `}
+
+  ${props => props.topBorder && `
+    border-top: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 `;

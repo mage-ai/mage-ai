@@ -9,6 +9,7 @@ import BarStackChart from '@components/charts/BarStack';
 import BlockLayout from '@components/BlockLayout';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ConfigurePipeline from '@components/PipelineDetail/ConfigurePipeline';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -265,6 +266,38 @@ function OverviewPage({
     [project?.features],
   );
 
+  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(({
+    pipelineType,
+  }: {
+    pipelineType: PipelineTypeEnum,
+  }) => (
+    <ConfigurePipeline
+      onClose={hideCreatePipelineModal}
+      onSave={({
+        name,
+        description,
+        tags,
+      }) => {
+        createPipeline({
+          pipeline: {
+            description,
+            name,
+            tags,
+            type: pipelineType,
+          },
+        });
+      }}
+      pipelineType={pipelineType}
+    />
+  ), {
+  }, [
+    createPipeline,
+  ], {
+    background: true,
+    disableEscape: true,
+    uuid: 'overview/create_pipeline',
+  });
+
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
     <ErrorProvider>
       <BrowseTemplates
@@ -379,7 +412,6 @@ function OverviewPage({
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
-      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -392,6 +424,8 @@ function OverviewPage({
         }
       },
       showBrowseTemplates,
+      showCreatePipelineModal,
+      showImportPipelineModal,
     },
   ), [
     createPipeline,
@@ -399,6 +433,7 @@ function OverviewPage({
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showCreatePipelineModal,
     showImportPipelineModal,
   ]);
 

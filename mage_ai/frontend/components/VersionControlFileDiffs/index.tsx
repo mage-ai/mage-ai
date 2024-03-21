@@ -17,7 +17,7 @@ import VersionControlFileBrowser, {
 } from '@components/CommandCenter/ApplicationItemDetail//VersionControlFileBrowser';
 import api from '@api';
 import useApplicationBase, { ApplicationBaseType } from '@components/Applications/useApplicationBase';
-import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
+import { AlertTriangle, Check, IntegrationPipeline } from '@oracle/icons';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { ContainerStyle } from './index.style';
@@ -176,7 +176,7 @@ function VersionControlFileDiffs({
               beforeTitleElement={(
                 <FlexContainer alignItems="center">
                   {staged && !unstaged && <Check success />}
-                  {unstaged && <DataIntegrationPipeline warning />}
+                  {unstaged && <IntegrationPipeline warning />}
                   {untracked && <AlertTriangle danger />}
 
                   <div style={{ paddingRight: 1.5 * UNIT }} />

@@ -362,6 +362,8 @@ class PipelineResource(BaseResource):
         clone_pipeline_uuid = payload.get('clone_pipeline_uuid')
         template_uuid = payload.get('custom_template_uuid')
         name = payload.get('name')
+        description = payload.get('description')
+        tags = payload.get('tags')
         pipeline_type = payload.get('type')
         llm_payload = payload.get('llm')
         pipeline = None
@@ -375,8 +377,10 @@ class PipelineResource(BaseResource):
         else:
             pipeline = Pipeline.create(
                 name,
+                description=description,
                 pipeline_type=pipeline_type,
                 repo_path=get_repo_path(),
+                tags=tags,
             )
 
             if llm_payload:
@@ -450,6 +454,15 @@ class PipelineResource(BaseResource):
         async def _on_create_callback(resource):
             cache = await PipelineCache.initialize_cache()
             cache.add_model(resource.model)
+
+            tags = resource.model.tags
+            if tags:
+                from mage_ai.cache.tag import TagCache
+
+                cache = await TagCache.initialize_cache()
+
+                for tag_uuid in tags:
+                    cache.add_pipeline(tag_uuid, resource.model)
 
         self.on_create_callback = _on_create_callback
 

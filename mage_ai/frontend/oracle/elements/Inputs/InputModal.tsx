@@ -56,7 +56,6 @@ function InputModal({
           monospace
           onChange={e => setInputValue(e.target.value)}
           ref={refTextInput}
-          // @ts-ignore
           rows={textArea ? 7 : null}
           value={inputValue}
         />
