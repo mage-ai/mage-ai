@@ -456,7 +456,7 @@ class PipelineResource(BaseResource):
             cache.add_model(resource.model)
 
             tags = resource.model.tags
-            if tags is not None:
+            if tags:
                 from mage_ai.cache.tag import TagCache
 
                 cache = await TagCache.initialize_cache()
