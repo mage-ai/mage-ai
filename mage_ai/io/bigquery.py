@@ -204,6 +204,7 @@ WHERE TABLE_NAME = '{table_name}'
         verbose: bool = True,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        write_disposition: str = None,
         **configuration_params,
     ) -> None:
         """
@@ -270,7 +271,15 @@ WHERE table_id = '{table_name}'
 """
                 self.client.query(sql)
 
-            elif if_exists == ExportWritePolicy.UPSERT:
+            else:
+                if not write_disposition:
+                    if if_exists == ExportWritePolicy.APPEND:
+                        write_disposition = WriteDisposition.WRITE_APPEND
+                    elif if_exists == ExportWritePolicy.REPLACE:
+                        write_disposition = WriteDisposition.WRITE_TRUNCATE
+                    elif if_exists == ExportWritePolicy.FAIL:
+                        write_disposition = WriteDisposition.WRITE_EMPTY
+                if unique_constraints and unique_conflict_method:
                 if table_doesnt_exist:
                     self.__write_table(
                         df, table_id, overwrite_types=overwrite_types, **configuration_params
@@ -283,6 +292,7 @@ WHERE table_id = '{table_name}'
                             df,
                             temp_table_id,
                             overwrite_types=overwrite_types,
+                            write_disposition=write_disposition,
                             **configuration_params,
                         )
 
@@ -338,7 +348,8 @@ WHERE table_id = '{table_name}'
         config = LoadJobConfig(**configuration_params)
         if overwrite_types is not None:
             config.schema = [SchemaField(k, v) for k, v in overwrite_types.items()]
-        config.write_disposition = WriteDisposition.WRITE_APPEND
+        if not config.write_disposition:
+            config.write_disposition = WriteDisposition.WRITE_APPEND
         parts = table_id.split('.')
         if len(parts) == 2:
             schema = parts[0]
