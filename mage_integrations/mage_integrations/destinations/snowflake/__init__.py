@@ -222,14 +222,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             commands = [
                 drop_temp_table_command,
-            ] + self.build_create_table_commands(
-                schema=schema,
-                schema_name=schema_name,
-                stream=None,
-                table_name=f'temp_{table_name}',
-                database_name=database_name,
-                unique_constraints=unique_constraints,
-            ) + ['\n'.join([
+                f'CREATE TEMP TABLE {full_table_name_temp} LIKE {full_table_name};'
+            ] + ['\n'.join([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
                 f'SELECT {select_values}',
                 f'FROM VALUES {insert_values}',
