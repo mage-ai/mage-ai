@@ -1,7 +1,5 @@
 from mage_ai.data_preparation.models.block import Block, CallbackBlock, ConditionalBlock
 from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
-from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
 from mage_ai.data_preparation.models.block.integration import (
     DestinationBlock,
     SourceBlock,
@@ -16,6 +14,12 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.widget import Widget
+
+try:
+    from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
+    from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
+except Exception:
+    print('DBT library not installed.')
 
 
 class BlockFactory:
