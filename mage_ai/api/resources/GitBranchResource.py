@@ -152,14 +152,10 @@ class GitBranchResource(GenericResource):
         )
         http_access_token = git_manager.get_access_token()
 
+        config_overwrite = None
         token = None
         if access_token:
             token = access_token.token
-        elif http_access_token:
-            token = http_access_token
-
-        config_overwrite = None
-        if token:
             user_from_api = api.get_user(token, provider=provider)
             # Default to mage user email if no email is returned from API
             email = user_from_api.get(
@@ -169,6 +165,8 @@ class GitBranchResource(GenericResource):
                 username=user_from_api.get('username'),
                 email=email,
             )
+        elif http_access_token:
+            token = http_access_token
 
         # Recreate git manager with updated config
         git_manager = self.get_git_manager(
