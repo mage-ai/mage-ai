@@ -1,5 +1,4 @@
 import * as osPath from 'path';
-import { useCallback } from 'react';
 
 import BlockType, { BlockTypeEnum, BlockLanguageEnum, StatusTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
@@ -8,15 +7,10 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Lineage from './Lineage';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
-  AISparkle,
-  AlertTriangle,
   Alphabet,
-  ArrowsAdjustingFrameSquare,
-  BatchPipeline,
   BatchSquaresStacked,
   BlocksCombined,
   Callback,
@@ -26,7 +20,6 @@ import {
   ChevronUp,
   Close,
   Conditional,
-  Copy,
   DocumentIcon,
   Edit,
   Filter,
@@ -34,10 +27,8 @@ import {
   LayoutSplit,
   LayoutStacked,
   Monitor,
-  PauseV2,
   PlayButtonFilled,
   PowerUps,
-  Save,
   SettingsWithKnobs,
   Trash,
   TreeWithArrowsDown,
@@ -45,7 +36,6 @@ import {
   VisibleEye,
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockPropsReturnType, UseCodeBlockPropsType } from '../constants';
-import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { HeaderTabEnum, buildHeaderTabs, buildOutputTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
 import {
@@ -59,7 +49,6 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { validate } from './utils';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -77,6 +66,7 @@ export default function useCodeBlockProps({
   allowCodeBlockShortcuts,
   block,
   codeCollapsed,
+  dbtConfigurationOptions,
   deleteBlock,
   disableShortcuts,
   executionState,
@@ -154,7 +144,7 @@ export default function useCodeBlockProps({
     }
 
     return true;
-  };
+  }
 
   const headerTabs = buildHeaderTabs({
     block,
@@ -638,6 +628,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         return (
           <Configuration
             block={block}
+            dbtConfigurationOptions={dbtConfigurationOptions}
             pipeline={pipeline}
             savePipelineContent={savePipelineContent}
           />
@@ -645,7 +636,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       // } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
       //   return;
       } else if (HeaderTabEnum.LINEAGE === tab?.uuid) {
-        return <Lineage block={block} />
+        return <Lineage block={block} />;
       }
 
       return defaultContent;

@@ -217,6 +217,7 @@ type CodeBlockProps = {
   cursorHeight2?: number;
   cursorHeight3?: number;
   dataProviders?: DataProviderType[];
+  dbtConfigurationOptions?: ConfigurationOptionType[]
   defaultValue?: string;
   disableDrag?: boolean;
   disableShortcuts?: boolean;
@@ -348,6 +349,7 @@ function CodeBlock({
   cursorHeight2,
   cursorHeight3,
   dataProviders,
+  dbtConfigurationOptions,
   defaultValue = '',
   deleteBlock,
   disableDrag,
@@ -755,19 +757,8 @@ function CodeBlock({
     drop: (item: BlockType) => onDrop?.(block, item),
   }), [block]);
 
-  const { data: dataConfigurationOptions } = api.configuration_options.pipelines.list(isDBT ? pipelineUUID : null, {
-    configuration_type: ConfigurationTypeEnum.DBT,
-    option_type: OptionTypeEnum.PROJECTS,
-    resource_type: ResourceTypeEnum.Block,
-    resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
-  }, {
-    revalidateOnFocus: false,
-  });
-  const configurationOptions: ConfigurationOptionType[] =
-    useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
-
-  const dbtProjects = useMemo(() => indexBy(configurationOptions || [], ({ uuid }) => uuid), [
-    configurationOptions,
+  const dbtProjects = useMemo(() => indexBy(dbtConfigurationOptions || [], ({ uuid }) => uuid), [
+    dbtConfigurationOptions,
   ]);
 
   const dbtProjectName =
@@ -776,7 +767,7 @@ function CodeBlock({
     ]);
 
   const dbtProfileData = useMemo(() => {
-    if (!configurationOptions) {
+    if (!dbtConfigurationOptions) {
       return [
         dbtProjects[dbtProjectName] || {
           target: null,
@@ -785,13 +776,13 @@ function CodeBlock({
       ];
     }
 
-    const configOpts = configurationOptions?.length === 1
-      ? configurationOptions?.[0]
-      : configurationOptions?.find(({ uuid }) => dbtProjectName === uuid);
+    const configOpts = dbtConfigurationOptions?.length === 1
+      ? dbtConfigurationOptions?.[0]
+      : dbtConfigurationOptions?.find(({ uuid }) => dbtProjectName === uuid);
 
     return configOpts?.option?.profiles || [];
   }, [
-    configurationOptions,
+    dbtConfigurationOptions,
     dbtProjectName,
     dbtProjects,
   ]);
@@ -1388,6 +1379,7 @@ function CodeBlock({
     blocks,
     codeCollapsed,
     content,
+    dbtConfigurationOptions,
     deleteBlock: deleteBlockCallback,
     disableShortcuts,
     executionState,

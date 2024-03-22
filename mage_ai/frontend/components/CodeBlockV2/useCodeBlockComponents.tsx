@@ -271,6 +271,7 @@ export default function useCodeBlockComponents({
     blocks,
     codeBlockProps,
     collapsed,
+    enabled,
     errorMessages,
     executionState,
     isHidden,
