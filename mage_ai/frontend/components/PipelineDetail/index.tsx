@@ -455,22 +455,22 @@ function PipelineDetail({
       dataBlockTemplates,
     ]);
 
-    const { data: dataDbtConfigurationOptions } = api.configuration_options.pipelines.list(
-      hasDbtBlock ? pipeline?.uuid : null,
-      {
-        configuration_type: ConfigurationTypeEnum.DBT,
-        option_type: OptionTypeEnum.PROJECTS,
-        resource_type: ResourceTypeEnum.Block,
-        resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
-          && BlockTypeEnum.DBT === selectedBlock?.type)
-            ? selectedBlock?.uuid
-            : null,
-      }, {
-        revalidateOnFocus: false,
-      },
-    );
-    const dbtConfigurationOptions: ConfigurationOptionType[] =
-      useMemo(() => dataDbtConfigurationOptions?.configuration_options, [dataDbtConfigurationOptions]);
+  const { data: dataDbtConfigurationOptions } = api.configuration_options.pipelines.list(
+    (hasDbtBlock && selectedBlock) ? pipeline?.uuid : null,
+    {
+      configuration_type: ConfigurationTypeEnum.DBT,
+      option_type: OptionTypeEnum.PROJECTS,
+      resource_type: ResourceTypeEnum.Block,
+      resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
+        && BlockTypeEnum.DBT === selectedBlock?.type)
+          ? selectedBlock?.uuid
+          : null,
+    }, {
+      revalidateOnFocus: false,
+    },
+  );
+  const dbtConfigurationOptions: ConfigurationOptionType[] =
+    useMemo(() => dataDbtConfigurationOptions?.configuration_options, [dataDbtConfigurationOptions]);
 
   const addNewBlock = useCallback((newBlock: BlockRequestPayloadType, newBlockIndex?: number) => {
       const block = blocks[blocks.length - 1];
