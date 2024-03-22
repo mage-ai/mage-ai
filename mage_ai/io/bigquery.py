@@ -235,7 +235,7 @@ WHERE TABLE_NAME = '{table_name}'
         elif type(df) is list:
             df = DataFrame(df)
 
-        def __process(database: Union[str, None]):
+        def __process(database: Union[str, None], write_disposition: str = None):
             parts = table_id.split('.')
             if len(parts) == 2:
                 schema, table_name = parts
@@ -272,19 +272,12 @@ WHERE table_id = '{table_name}'
                 self.client.query(sql)
 
             else:
-                if not write_disposition:
-                    if if_exists == ExportWritePolicy.APPEND:
-                        write_disposition = WriteDisposition.WRITE_APPEND
-                    elif if_exists == ExportWritePolicy.REPLACE:
-                        write_disposition = WriteDisposition.WRITE_TRUNCATE
-                    elif if_exists == ExportWritePolicy.FAIL:
-                        write_disposition = WriteDisposition.WRITE_EMPTY
-                if unique_constraints and unique_conflict_method:
-                if table_doesnt_exist:
-                    self.__write_table(
-                        df, table_id, overwrite_types=overwrite_types, **configuration_params
-                    )
-                elif unique_constraints and unique_conflict_method:
+                if (
+                    if_exists == ExportWritePolicy.APPEND
+                    and not table_doesnt_exist
+                    and unique_constraints
+                    and unique_conflict_method
+                ):
                     temp_table_id = f'{table_id}_{uuid.uuid4().hex}'
 
                     try:
@@ -292,7 +285,6 @@ WHERE table_id = '{table_name}'
                             df,
                             temp_table_id,
                             overwrite_types=overwrite_types,
-                            write_disposition=write_disposition,
                             **configuration_params,
                         )
 
@@ -327,14 +319,25 @@ WHERE table_id = '{table_name}'
                         self.client.query(merge_command).result()
                     finally:
                         self.client.query(f'DROP TABLE IF EXISTS {temp_table_id}').result()
-            else:
-                self.__write_table(
-                    df, table_id, overwrite_types=overwrite_types, **configuration_params
-                )
+                else:
+                    if not write_disposition:
+                        if if_exists == ExportWritePolicy.APPEND:
+                            write_disposition = WriteDisposition.WRITE_APPEND
+                        elif if_exists == ExportWritePolicy.REPLACE:
+                            write_disposition = WriteDisposition.WRITE_TRUNCATE
+                        elif if_exists == ExportWritePolicy.FAIL:
+                            write_disposition = WriteDisposition.WRITE_EMPTY
+                    self.__write_table(
+                        df,
+                        table_id,
+                        overwrite_types=overwrite_types,
+                        write_disposition=write_disposition,
+                        **configuration_params,
+                    )
 
         if verbose:
             with self.printer.print_msg(f'Exporting data to table \'{table_id}\''):
-                __process(database=database)
+                __process(database=database, write_disposition=write_disposition)
         else:
             __process(database=database)
 

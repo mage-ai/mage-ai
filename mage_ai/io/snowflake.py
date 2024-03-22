@@ -202,6 +202,8 @@ class Snowflake(BaseSQLConnection):
         schema: str = None,
         if_exists: str = 'append',
         query_string: Union[str, None] = None,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
         verbose: bool = True,
         **kwargs,
     ) -> None:
@@ -266,7 +268,7 @@ class Snowflake(BaseSQLConnection):
                         cur.execute(f'DROP TABLE "{schema}"."{table_name}"', timeout=self.timeout)
                         should_create_table = True
 
-                if ExportWritePolicy.UPSERT == if_exists and df is not None:
+                if unique_constraints and unique_conflict_method and df is not None:
                     self.__upsert_df_into_table(
                         table_name,
                         df,
@@ -274,6 +276,8 @@ class Snowflake(BaseSQLConnection):
                         database,
                         schema,
                         should_create_table=should_create_table,
+                        unique_conflict_method=unique_conflict_method,
+                        unique_constraints=unique_constraints,
                         **kwargs,
                     )
                 else:
