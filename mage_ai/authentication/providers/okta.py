@@ -6,7 +6,9 @@ from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
 
 
-class OktaProvider(OidcProvider): # Okta configuration uses OIDC so we can just subclass the OidcProvider
+class OktaProvider(
+    OidcProvider
+):  # Okta configuration uses OIDC so we can just subclass the OidcProvider
     provider = ProviderName.OKTA
 
     def __init__(self):
@@ -18,19 +20,24 @@ class OktaProvider(OidcProvider): # Okta configuration uses OIDC so we can just 
             self.parsed_url = urlparse(unquote(f"https://{self.hostname}"))
         self.__validate()
 
-        self.discovery_url = f"https://{self.parsed_url.netloc}/.well-known/openid-configuration"
+        self.discovery_url = (
+            f"https://{self.parsed_url.netloc}/.well-known/openid-configuration"
+        )
         self.discover()
 
     def __validate(self):
         if not self.parsed_url.netloc:
-            raise Exception(
-                'Okta hostname is empty. '
-                'Make sure the OKTA_DOMAIN_URL environment variable is set.')
+            raise ValueError(
+                "Okta hostname is empty. "
+                "Make sure the OKTA_DOMAIN_URL environment variable is set."
+            )
         if not self.client_id:
-            raise Exception(
-                'Okta client id is empty. '
-                'Make sure the OKTA_CLIENT_ID environment variable is set.')
+            raise ValueError(
+                "Okta client id is empty. "
+                "Make sure the OKTA_CLIENT_ID environment variable is set."
+            )
         if not self.client_secret:
-            raise Exception(
-                'Okta client secret is empty. '
-                'Make sure the OKTA_CLIENT_SECRET environment variable is set.')
+            raise ValueError(
+                "Okta client secret is empty. "
+                "Make sure the OKTA_CLIENT_SECRET environment variable is set."
+            )
