@@ -1,4 +1,3 @@
-import * as path from 'path';
 import NextLink from 'next/link';
 import React, {
   createRef,
@@ -23,12 +22,17 @@ import BlockType, {
   SetEditingBlockType,
 } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
-import CodeBlock, { DEFAULT_SQL_CONFIG_KEY_LIMIT } from '@components/CodeBlock';
-import ColumnScroller, { StartDataType } from './ColumnScroller';
+import CodeBlock from '@components/CodeBlock';
+import ColumnScroller from './ColumnScroller';
+import ConfigurationOptionType, {
+  ConfigurationTypeEnum,
+  OptionTypeEnum,
+  ResourceTypeEnum,
+} from '@interfaces/ConfigurationOptionType';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
-import FileType, { BlockFolderNameEnum, FileExtensionEnum } from '@interfaces/FileType';
+import FileType from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import InteractionType from '@interfaces/InteractionType';
@@ -85,14 +89,12 @@ import { SIDE_BY_SIDE_VERTICAL_PADDING } from '@components/CodeBlock/index.style
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
-import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { buildBlockRefKey, buildBlockFromFilePath } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { isInputElement } from '@context/shared/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import { groupBy, pushAtIndex, range, removeAtIndex } from '@utils/array';
-import { removeRootFromFilePath } from '@components/FileBrowser/utils';
+import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
@@ -303,6 +305,7 @@ function PipelineDetail({
 
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
+  const hasDbtBlock = useMemo(() => blocks?.some(({ type }) => BlockTypeEnum.DBT === type), [blocks]);
 
   const blocksFiltered =
     useMemo(() => blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type), [
@@ -451,6 +454,24 @@ function PipelineDetail({
     useMemo(() => dataBlockTemplates?.block_templates || [], [
       dataBlockTemplates,
     ]);
+
+  const { data: dataDbtConfigurationOptions } = api.configuration_options.pipelines.list(
+    hasDbtBlock ? pipeline?.uuid : null,
+    {
+      configuration_type: ConfigurationTypeEnum.DBT,
+      option_type: OptionTypeEnum.PROJECTS,
+      resource_type: ResourceTypeEnum.Block,
+      // Leaving out the resource_uuid query param in order to minimize # of requests made
+      // resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
+      //   && BlockTypeEnum.DBT === selectedBlock?.type)
+      //     ? selectedBlock?.uuid
+      //     : null,
+    }, {
+      revalidateOnFocus: false,
+    },
+  );
+  const dbtConfigurationOptions: ConfigurationOptionType[] =
+    useMemo(() => dataDbtConfigurationOptions?.configuration_options, [dataDbtConfigurationOptions]);
 
   const addNewBlock = useCallback((newBlock: BlockRequestPayloadType, newBlockIndex?: number) => {
       const block = blocks[blocks.length - 1];
@@ -998,6 +1019,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           cursorHeight2={cursorHeight2}
           cursorHeight3={cursorHeight3}
           dataProviders={dataProviders}
+          dbtConfigurationOptions={dbtConfigurationOptions}
           defaultValue={block.content}
           deleteBlock={deleteBlockCallbackMemo}
           disableShortcuts={disableShortcuts}

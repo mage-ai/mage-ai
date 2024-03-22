@@ -1,96 +1,76 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
-import ConfigurationOptionType, {
-  ConfigurationTypeEnum,
-  OptionTypeEnum,
-  ResourceTypeEnum,
-} from '@interfaces/ConfigurationOptionType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 import {
-  CONFIG_KEY_DBT,
-  CONFIG_KEY_DBT_COMMAND,
   CONFIG_KEY_DBT_PROFILES_FILE_PATH,
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
-import { Info } from '@oracle/icons';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 type ConfigurationProps = {
   block: BlockType;
+  dbtConfigurationOptions: ConfigurationOptionType[];
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
-}
+};
 
 function Configuration({
   block,
+  dbtConfigurationOptions,
   pipeline,
   savePipelineContent,
 }: ConfigurationProps) {
   const [attributes, setAttributes] = useState(block);
   const [attributesManuallyEnter, setAttributesManuallyEnter] = useState({});
 
-  const {
-    data: dataConfigurationOptions,
-  } = api.configuration_options.pipelines.list(pipeline?.uuid,
-    {
-      configuration_type: ConfigurationTypeEnum.DBT,
-      option_type: OptionTypeEnum.PROJECTS,
-      resource_type: ResourceTypeEnum.Block,
-      resource_uuid: BlockLanguageEnum.SQL === block?.language ? block?.uuid : null,
-    }, {
-      revalidateOnFocus: false,
-    });
-  const configurationOptions: ConfigurationOptionType[] =
-    useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
-
-  const project = useMemo(() => configurationOptions?.find(({
+  const project = useMemo(() => dbtConfigurationOptions?.find(({
     option,
   }) => attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME] === option?.project?.uuid)?.option, [
     attributes,
-    configurationOptions,
+    dbtConfigurationOptions,
   ]);
-  const projects = useMemo(() => sortByKey(configurationOptions || [], ({ project }) => project?.uuid)?.map(({
+  const projects = useMemo(() => sortByKey(dbtConfigurationOptions || [], ({ project }) => project?.uuid)?.map(({
     option,
-  }) => option?.project), [configurationOptions]);
+  }) => option?.project), [dbtConfigurationOptions]);
 
   const profiles = useMemo(() => project?.profiles || [], [
     project,
   ]);
-  const profilesAll = useMemo(() => configurationOptions?.reduce((acc, { option }) => acc.concat(option?.profiles || []), []), [
-    projects
-  ]);
+  const profilesAll = useMemo(
+    () => dbtConfigurationOptions?.reduce((acc, { option }) => acc.concat(option?.profiles || []), []),
+    [dbtConfigurationOptions],
+  );
 
   const profile = useMemo(() => profiles?.find(({
     full_path: uuid,
   }) => uuid === attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]), [
     attributes,
     profiles,
-  ])
+  ]);
 
   const targets = useMemo(() => profile?.targets || [], [profile]);
-  const targetsAll = useMemo(() => configurationOptions?.reduce((acc, { option }) => acc.concat(
+  const targetsAll = useMemo(() => dbtConfigurationOptions?.reduce((acc, { option }) => acc.concat(
     option?.profiles?.reduce((acc2, pro) => acc2.concat(pro.targets), []) || [],
-  ), []), [
-    projects
-  ]);
-  const target = useMemo(() => targets?.find(targetName => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === targetName), [
-    targets,
-  ]);
+  ), []), [dbtConfigurationOptions]);
+  const target = useMemo(
+    () => targets?.find(targetName => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === targetName),
+    [attributes?.configuration, targets],
+  );
 
   useEffect(() => {
     const projectNamePath = attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME];
@@ -162,11 +142,10 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     projects,
   ]);
 
@@ -209,11 +188,10 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     profiles,
   ]);
 
@@ -253,11 +231,10 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     targets,
   ]);
 

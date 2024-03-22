@@ -1,4 +1,5 @@
 import BlockType from '@interfaces/BlockType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import ErrorsType from '@interfaces/ErrorsType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
@@ -76,6 +77,7 @@ export type UseCodeBlockComponentProps = {
   blocks?: BlockType[];
   codeCollapsed?: boolean;
   content?: string;
+  dbtConfigurationOptions?: ConfigurationOptionType[];
   deleteBlock?: (block: BlockType) => void,
   disableShortcuts?: boolean;
   executionState?: ExecutionStateEnum;
