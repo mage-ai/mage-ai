@@ -837,7 +837,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     language,
                 )
 
-        block = BlockFactory.block_class_from_type(block_type, pipeline=pipeline)(
+        block = BlockFactory.block_class_from_type(
+            block_type,
+            language=language,
+            pipeline=pipeline,
+        )(
             name,
             uuid,
             block_type,

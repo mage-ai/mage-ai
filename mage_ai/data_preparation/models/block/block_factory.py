@@ -24,7 +24,6 @@ class BlockFactory:
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
-
             if language == BlockLanguage.YAML:
                 return DBTBlockYAML
             return DBTBlockSQL
