@@ -456,15 +456,16 @@ function PipelineDetail({
     ]);
 
   const { data: dataDbtConfigurationOptions } = api.configuration_options.pipelines.list(
-    (hasDbtBlock && selectedBlock) ? pipeline?.uuid : null,
+    hasDbtBlock ? pipeline?.uuid : null,
     {
       configuration_type: ConfigurationTypeEnum.DBT,
       option_type: OptionTypeEnum.PROJECTS,
       resource_type: ResourceTypeEnum.Block,
-      resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
-        && BlockTypeEnum.DBT === selectedBlock?.type)
-          ? selectedBlock?.uuid
-          : null,
+      // Leaving out the resource_uuid query param in order to minimize # of requests made
+      // resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
+      //   && BlockTypeEnum.DBT === selectedBlock?.type)
+      //     ? selectedBlock?.uuid
+      //     : null,
     }, {
       revalidateOnFocus: false,
     },
