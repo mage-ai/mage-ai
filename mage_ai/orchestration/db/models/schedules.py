@@ -934,9 +934,9 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
     @property
     def pipeline_tags(self):
-        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+        pipeline_config = Pipeline.get_config(self.pipeline_uuid)
 
-        return pipeline.tags if pipeline is not None else []
+        return pipeline_config.get('tags') if pipeline_config is not None else []
 
     def executable_block_runs(
         self,

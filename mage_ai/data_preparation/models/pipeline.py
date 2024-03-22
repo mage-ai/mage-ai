@@ -383,6 +383,54 @@ class Pipeline:
             IntegrationPipeline,
         )
 
+        config_path, repo_path = self._get_config_path(
+            uuid,
+            repo_path=repo_path,
+            all_projects=all_projects,
+            use_repo_path=use_repo_path,
+        )
+
+        if check_if_exists and not os.path.exists(config_path):
+            return None
+
+        pipeline = self(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
+        if PipelineType.INTEGRATION == pipeline.type:
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+
+        return pipeline
+
+    @classmethod
+    def get_config(
+        self,
+        uuid,
+        repo_path: str = None,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
+        config_path, _ = self._get_config_path(
+            uuid,
+            repo_path=repo_path,
+            all_projects=all_projects,
+            use_repo_path=use_repo_path,
+        )
+
+        metadata_path = os.path.join(config_path, PIPELINE_CONFIG_FILE)
+
+        if not os.path.exists(metadata_path):
+            return None
+
+        with open(metadata_path) as fp:
+            config = yaml.full_load(fp) or {}
+        return config
+
+    @classmethod
+    def _get_config_path(
+        self,
+        uuid,
+        repo_path: str = None,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ) -> Tuple[str, str]:
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
@@ -394,15 +442,7 @@ class Pipeline:
                 PIPELINES_FOLDER,
                 uuid,
             )
-
-        if check_if_exists and not os.path.exists(config_path):
-            return None
-
-        pipeline = self(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
-        if PipelineType.INTEGRATION == pipeline.type:
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
-
-        return pipeline
+        return config_path, repo_path
 
     @classmethod
     async def load_metadata(
