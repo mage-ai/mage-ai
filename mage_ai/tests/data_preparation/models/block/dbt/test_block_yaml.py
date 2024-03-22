@@ -18,7 +18,7 @@
 
 
 # def build_block(pipeline, content: str) -> DBTBlock:
-#     return DBTBlock(
+#     return DBTBlock.create(
 #         name='test_dbt_block_yaml',
 #         uuid='test_dbt_block_yaml',
 #         block_type=BlockType.DBT,

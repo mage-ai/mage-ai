@@ -233,7 +233,7 @@ class ProjectPlatformAccessible:
                 ),
             )
 
-        return block_class(
+        return block_class.create(
             name,
             uuid,
             block_type,

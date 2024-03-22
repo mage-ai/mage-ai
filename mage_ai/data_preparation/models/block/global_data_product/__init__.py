@@ -2,12 +2,15 @@ from logging import Logger
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
-from mage_ai.orchestration.triggers import global_data_product as trigger
 
 
 class GlobalDataProductBlock(Block):
-    def get_global_data_product(self) -> GlobalDataProduct:
+    def get_global_data_product(self):
+        # Avoid circular dependency of Pipeline class
+        from mage_ai.data_preparation.models.global_data_product import (
+            GlobalDataProduct,
+        )
+
         override_configuration = (self.configuration or {}).get('global_data_product', {})
         global_data_product = GlobalDataProduct.get(override_configuration.get('uuid'))
 
@@ -31,6 +34,9 @@ class GlobalDataProductBlock(Block):
         logging_tags: Dict = None,
         **kwargs,
     ) -> List:
+        # Avoid circular dependency of Pipeline class
+        from mage_ai.orchestration.triggers import global_data_product as trigger
+
         trigger.trigger_and_check_status(
             self.get_global_data_product(),
             block=self,

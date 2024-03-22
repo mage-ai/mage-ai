@@ -23,7 +23,7 @@
 #     pipeline.repo_path = 'test_repo_path'
 #     pipeline.get_block.return_value = None
 
-#     return DBTBlock(
+#     return DBTBlock.create(
 #         name='test_dbt_block_sql',
 #         uuid='test_dbt_block_sql',
 #         block_type=BlockType.DBT,

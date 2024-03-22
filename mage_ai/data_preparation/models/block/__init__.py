@@ -724,41 +724,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
 
     @classmethod
-    def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
-        from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.integration import (
-            DestinationBlock,
-            SourceBlock,
-            TransformerBlock,
-        )
-        from mage_ai.data_preparation.models.block.r import RBlock
-        from mage_ai.data_preparation.models.block.sql import SQLBlock
-        from mage_ai.data_preparation.models.widget import Widget
-
-        if BlockType.CHART == block_type:
-            return Widget
-        elif BlockType.DBT == block_type:
-            from mage_ai.data_preparation.models.block.dbt import DBTBlock
-
-            return DBTBlock
-        elif pipeline and PipelineType.INTEGRATION == pipeline.type:
-            if BlockType.CALLBACK == block_type:
-                return CallbackBlock
-            elif BlockType.CONDITIONAL == block_type:
-                return ConditionalBlock
-            elif BlockType.DATA_LOADER == block_type:
-                return SourceBlock
-            elif BlockType.DATA_EXPORTER == block_type:
-                return DestinationBlock
-            else:
-                return TransformerBlock
-        elif BlockLanguage.SQL == language:
-            return SQLBlock
-        elif BlockLanguage.R == language:
-            return RBlock
-        return BLOCK_TYPE_TO_CLASS.get(block_type)
-
-    @classmethod
     def create(
         self,
         name: str,
@@ -777,6 +742,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         widget: bool = False,
         downstream_block_uuids: List[str] = None,
     ) -> 'Block':
+        from mage_ai.data_preparation.models.block.block_factory import BlockFactory
+
         """
         1. Create a new folder for block_type if not exist
         2. Create a new python file with code template
@@ -870,7 +837,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     language,
                 )
 
-        block = self.block_class_from_type(block_type, pipeline=pipeline)(
+        block = BlockFactory.block_class_from_type(
+            block_type,
+            language=language,
+            pipeline=pipeline,
+        )(
             name,
             uuid,
             block_type,
@@ -930,34 +901,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 if (f.endswith('.py') or f.endswith('.sql')) and f != '__init__.py':
                     block_uuids[t.value].append(f.split('.')[0])
         return block_uuids
-
-    @classmethod
-    def get_block(
-        self,
-        name,
-        uuid,
-        block_type,
-        configuration=None,
-        content=None,
-        language=None,
-        pipeline=None,
-        status=BlockStatus.NOT_EXECUTED,
-    ) -> 'Block':
-        block_class = self.block_class_from_type(
-            block_type,
-            language=language,
-            pipeline=pipeline,
-        ) or Block
-        return block_class(
-            name,
-            uuid,
-            block_type,
-            configuration=configuration,
-            content=content,
-            language=language,
-            pipeline=pipeline,
-            status=status,
-        )
 
     @classmethod
     def get_block_from_file_path(self, file_path: str) -> 'Block':

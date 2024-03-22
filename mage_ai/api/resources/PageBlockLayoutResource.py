@@ -3,7 +3,7 @@ import urllib.parse
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.presenters.block_layout.page import PageBlockLayout
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.utils import clean_name
@@ -52,7 +52,7 @@ class PageBlockLayoutResource(GenericResource):
                     if len(parts) >= 2:
                         block_uuid_use = os.path.join(*parts[1:])
 
-                block = Block.get_block(
+                block = BlockFactory.get_block(
                     block_uuid_use,
                     block_uuid_use,
                     block_type,

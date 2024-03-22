@@ -38,7 +38,7 @@ class DBTBlockTest(AsyncDBTestCase):
         self.block_sql.language = BlockLanguage.SQL
         self.block_sql.pipeline = pipeline
 
-        self.dbt_block_sql = DBTBlock(
+        self.dbt_block_sql = DBTBlock.create(
             name='test_dbt_block_sql',
             uuid='test_dbt_block_sql',
             block_type=BlockType.DBT,
@@ -50,7 +50,7 @@ class DBTBlockTest(AsyncDBTestCase):
             pipeline=pipeline,
         )
 
-        self.dbt_block_yaml = DBTBlock(
+        self.dbt_block_yaml = DBTBlock.create(
             name='test_dbt_block_yaml',
             uuid='test_dbt_block_yaml',
             block_type=BlockType.DBT,
