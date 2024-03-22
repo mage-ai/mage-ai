@@ -461,9 +461,10 @@ function PipelineDetail({
         configuration_type: ConfigurationTypeEnum.DBT,
         option_type: OptionTypeEnum.PROJECTS,
         resource_type: ResourceTypeEnum.Block,
-        resource_uuid: BlockLanguageEnum.SQL === selectedBlock?.language
-          ? selectedBlock?.uuid
-          : null,
+        resource_uuid: (BlockLanguageEnum.SQL === selectedBlock?.language
+          && BlockTypeEnum.DBT === selectedBlock?.type)
+            ? selectedBlock?.uuid
+            : null,
       }, {
         revalidateOnFocus: false,
       },
