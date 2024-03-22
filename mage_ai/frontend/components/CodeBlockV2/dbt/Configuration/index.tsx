@@ -1,13 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
-import ConfigurationOptionType, {
-  ConfigurationTypeEnum,
-  OptionTypeEnum,
-  ResourceTypeEnum,
-} from '@interfaces/ConfigurationOptionType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
