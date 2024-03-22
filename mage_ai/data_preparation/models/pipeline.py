@@ -17,6 +17,7 @@ from jinja2 import Template
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
@@ -732,7 +733,8 @@ class Pipeline:
                 )
 
             language = c.get('language')
-            return Block.block_class_from_type(block_type, language=language, pipeline=self)(
+
+            return BlockFactory.block_class_from_type(block_type, language=language, pipeline=self)(
                 c.get('name'),
                 c.get('uuid'),
                 block_type,

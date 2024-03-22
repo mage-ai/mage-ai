@@ -6,7 +6,7 @@ import urllib.parse
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.widget.constants import ChartType
 from mage_ai.data_preparation.variable_manager import get_global_variables
@@ -73,7 +73,7 @@ class BlockLayoutItemResource(GenericResource):
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
 
-                block = Block.get_block(
+                block = BlockFactory.get_block(
                     block_config.get('name') or file_path or uuid,
                     block_uuid,
                     block_type,

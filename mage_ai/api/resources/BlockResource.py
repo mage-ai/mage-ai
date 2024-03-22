@@ -12,6 +12,7 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.block.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
@@ -163,7 +164,7 @@ class BlockResource(GenericResource):
             if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
                 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
-                dbt_block = DBTBlock(
+                dbt_block = DBTBlock.create(
                     name,
                     clean_name(name),
                     BlockType.DBT,
@@ -323,7 +324,7 @@ class BlockResource(GenericResource):
         if BlockType.DBT == block_type:
             from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
-            block = DBTBlock(
+            block = DBTBlock.create(
                 block_uuid,
                 block_uuid,
                 block_type,
@@ -331,7 +332,7 @@ class BlockResource(GenericResource):
                 language=language,
             )
         else:
-            block = Block.get_block(block_uuid, block_uuid, block_type, language=language)
+            block = BlockFactory.get_block(block_uuid, block_uuid, block_type, language=language)
 
         if not block.exists():
             error.update(ApiError.RESOURCE_NOT_FOUND)

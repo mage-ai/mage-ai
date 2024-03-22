@@ -29,6 +29,9 @@ def add_absolute_path(file_path: str, add_base_repo_path: bool = True) -> str:
                 full_path = os.path.join(repo_path, parts[0])
                 if os.path.exists(full_path):
                     full_path = os.path.join(repo_path, file_path)
+                elif os.path.exists(os.path.join(repo_path, 'dbt', parts[0])):
+                    # DBT v1 paths
+                    full_path = os.path.join(repo_path, 'dbt', file_path)
                 else:
                     full_path = find_directory(repo_path, lambda x: x.endswith(file_path))
 
