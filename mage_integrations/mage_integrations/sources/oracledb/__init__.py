@@ -1,8 +1,11 @@
-from typing import List
+from datetime import datetime
+from typing import Any, Dict, List
 
 from mage_integrations.connections.oracledb import OracleDB as OracleDBConnection
 from mage_integrations.sources.base import main
+from mage_integrations.sources.constants import COLUMN_FORMAT_DATETIME, COLUMN_TYPE_NULL
 from mage_integrations.sources.sql.base import Source
+from mage_integrations.utils.array import find
 
 
 class OracleDB(Source):
@@ -99,6 +102,50 @@ from selected_items where row_id = 1
         finally:
             oracledb_connection.close_connection(conn)
         return
+
+    def is_valid_datetime_format(self, date_string, date_format):
+        try:
+            datetime.strptime(date_string, date_format)
+            return True
+        except ValueError:
+            return False
+
+    def convert_datetime(self, value: str) -> str:
+        if self.is_valid_datetime_format(value, "%Y-%m-%d %H:%M:%S.%f"):
+            # Oracle stores only the fractions up to second in a DATE field.
+            # Use TO_TIMESTAMP for milliseconds and microseconds.
+            return f"TO_TIMESTAMP('{value}', 'yyyy-mm-dd hh24:mi:ss.ff6')"
+        if self.is_valid_datetime_format(value, "%Y-%m-%d"):
+            return f"TO_DATE('{value}', 'yyyy-mm-dd')"
+        if self.is_valid_datetime_format(value, "%Y-%m-%dT%H:%M:%S"):
+            return f"TO_TIMESTAMP('{value}', 'YYYY-MM-DD\"T\"HH24:MI:SS')"
+        return 'CHAR(255)'
+
+    def _build_comparison_statement(
+        self,
+        col: str,
+        val: Any,
+        properties: Dict,
+        operator: str = '=',
+    ) -> str:
+        column_cleaned = self.wrap_column_in_quotes(col)
+        column_properties = properties.get(col)
+        if not column_properties:
+            raise Exception(f'There are no properties in the schema for column {col}.')
+
+        column_type = find(lambda x: COLUMN_TYPE_NULL != x, column_properties['type'])
+        column_format = column_properties.get('format')
+        col_type = self.column_type_mapping(column_type, column_format)
+
+        if column_format == COLUMN_FORMAT_DATETIME:
+            val = self.convert_datetime(val)
+            return f"{column_cleaned if column_cleaned else col} {operator} {val}"
+
+        if col_type:
+            comparison_value = f"CAST('{val}' AS {col_type})"
+        else:
+            comparison_value = f"'{val}'"
+        return f"{column_cleaned if column_cleaned else col} {operator} {comparison_value}"
 
 
 if __name__ == '__main__':
