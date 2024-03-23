@@ -1,7 +1,7 @@
 import glob
 import os
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import aiofiles
 
@@ -60,6 +60,24 @@ def get_full_file_paths_containing_item(root_full_path: str, comparator: Callabl
         f,
     ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
 
+    return configfiles
+
+
+def get_full_file_paths_containing_multi_items(
+    root_full_path: str,
+    comparators: Dict[str, Callable],
+    exclude_hidden_dir: bool = False,
+) -> Dict[str, List]:
+    configfiles = dict()
+    for key, _ in comparators.items():
+        configfiles[key] = []
+    for dirpath, dirnames, files in os.walk(root_full_path):
+        if exclude_hidden_dir:
+            dirnames[:] = [d for d in dirnames if not d.startswith('.')]
+        for f in files:
+            for key, comparator in comparators.items():
+                if comparator(f):
+                    configfiles[key].append(os.path.join(dirpath, f))
     return configfiles
 
 
