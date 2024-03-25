@@ -90,7 +90,7 @@ from mage_ai.data_preparation.templates.data_integrations.utils import get_templ
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
-from mage_ai.services.spark.spark import get_spark_session
+from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import unique_by
@@ -3044,6 +3044,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         return global_vars
 
     def get_spark_session(self):
+        if not SPARK_ENABLED:
+            return None
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
             return self.spark
