@@ -5,7 +5,7 @@ import elasticsearch
 import jinja2
 import jsonpath_ng
 import singer_sdk.io_base
-from elasticsearch.helpers import bulk
+from elasticsearch.helpers import bulk, parallel_bulk
 from singer_sdk import PluginBase
 
 from mage_integrations.destinations.elasticsearch.target_elasticsearch.common import (
@@ -92,8 +92,6 @@ def build_fields(
 class ElasticSink(BatchSink):
     """ElasticSink target sink class."""
 
-    max_size = 1000  # Max records to write in one batch
-
     def __init__(
         self,
         target: PluginBase,
@@ -103,6 +101,14 @@ class ElasticSink(BatchSink):
     ):
         super().__init__(target, stream_name, schema, key_properties)
         self.client = self.authenticated_client()
+
+    @property
+    def max_size(self) -> int:
+        if self.config:
+            bulk_kwargs = self.config.get('bulk_kwargs', {})
+            return bulk_kwargs.get('chunk_size', 1000)
+        else:
+            return 1000
 
     def build_request_body_and_distinct_indices(
         self, records: List[Dict[str, Union[str, Dict[str, str], int]]]
@@ -199,13 +205,37 @@ class ElasticSink(BatchSink):
         @param records:
         """
         records = self.build_body(records)
-        self.logger.debug(records)
+        self.logger.debug(f'Number of records to write: {len(records)}')
+        bulk_kwargs = self.config.get('bulk_kwargs', {}).copy()
+        self.logger.debug(f'Config: {self.config}')
+        use_parallel = bulk_kwargs.pop('use_parallel', False)
+        self.logger.debug(f'Use parallel: {use_parallel}')
+        if 'max_chunk_bytes' not in bulk_kwargs:
+            bulk_kwargs['max_chunk_bytes'] = 5 * 1024 * 1024  # 5MB
         try:
-            success, fail = bulk(self.client, records, request_timeout=60)
-            self.logger.info(f'Success: {success}')
-            self.logger.info(f'Fail: {fail}')
+            if use_parallel:
+                for ok, item in parallel_bulk(
+                    self.client,
+                    records,
+                    **bulk_kwargs,  # type: ignore[misc]
+                ):
+                    # go through request-response pairs and detect failures
+                    if ok:
+                        self.logger.info('Parallel bulk success')
+                    else:
+                        self.logger.info(f'Parallel bulk failed with error: {item}')
+            else:
+                success, fail = bulk(
+                    self.client,
+                    records,
+                    request_timeout=60,
+                    **bulk_kwargs,
+                )
+                self.logger.info(f'Bulk success: {success}/{len(records)}')
+                if fail:
+                    self.logger.info(f'Bulk fail: {fail}')
         except elasticsearch.helpers.BulkIndexError as e:
-            self.logger.error(e.errors)
+            self.logger.error('ES bulk index failed with errors:', e.errors)
 
     def process_batch(self, context: Dict[str, Any]) -> None:
         """
@@ -215,6 +245,13 @@ class ElasticSink(BatchSink):
         records = context["records"]
         self.write_output(records)
         self.tally_record_written(len(records))
+
+    def _after_process_record(self, context: dict) -> None:
+        # printing after every record is too verbose, so commenting it out for now
+        # records = context.get('records', [])
+        # if len(records) > 0:
+        #     self.logger.debug(f'Processed record: {records[-1]}')
+        pass
 
     def clean_up(self) -> None:
         """
