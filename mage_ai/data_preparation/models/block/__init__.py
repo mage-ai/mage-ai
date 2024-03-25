@@ -2388,8 +2388,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             return Template(self.executor_type).render(**get_template_vars())
         return self.executor_type
 
-    def get_pipelines_from_cache(self) -> List[Dict]:
-        arr = BlockCache().get_pipelines(self)
+    def get_pipelines_from_cache(self, block_cache: BlockCache = None) -> List[Dict]:
+        if block_cache is None:
+            block_cache = BlockCache()
+        arr = block_cache.get_pipelines(self)
 
         return unique_by(
             arr,
@@ -2446,6 +2448,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         include_outputs: bool = False,
         include_outputs_spark: bool = False,
         sample_count: int = None,
+        block_cache: BlockCache = None,
         check_if_file_exists: bool = False,
         **kwargs,
     ) -> Dict:
@@ -2460,7 +2463,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data['catalog'] = self.get_catalog_from_file()
 
         if include_block_pipelines:
-            data['pipelines'] = self.get_pipelines_from_cache()
+            data['pipelines'] = self.get_pipelines_from_cache(block_cache=block_cache)
 
         if include_outputs:
             include_outputs_use = include_outputs
@@ -2498,6 +2501,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         include_outputs: bool = False,
         include_outputs_spark: bool = False,
         sample_count: int = None,
+        block_cache: BlockCache = None,
         check_if_file_exists: bool = False,
         **kwargs,
     ) -> Dict:
@@ -2543,7 +2547,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data['tags'] = self.tags()
 
         if include_block_pipelines:
-            data['pipelines'] = self.get_pipelines_from_cache()
+            data['pipelines'] = self.get_pipelines_from_cache(block_cache=block_cache)
 
         return data
 

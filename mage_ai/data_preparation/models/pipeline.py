@@ -15,6 +15,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.cache.block import BlockCache
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.block_factory import BlockFactory
@@ -988,6 +989,8 @@ class Pipeline:
             include_outputs=include_outputs,
             sample_count=sample_count,
         )
+        if include_block_pipelines:
+            shared_kwargs['block_cache'] = BlockCache()
         blocks_data = await asyncio.gather(
             *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
                 include_block_catalog=include_block_catalog,
