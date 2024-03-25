@@ -648,12 +648,17 @@ function useFileComponents({
     <FileBrowser
       {...fileBrowserProps}
       files={filteredFiles}
-      onClickFile={(path: string, _: FileType) => openFile(path)}
+      onClickFile={(!onOpenFile && onSelectBlockFile)
+        ? null
+        : (path: string, _: FileType) => openFile(path)
+      }
       onClickFolder={(path: string, _: FileType) => openFile(path, true)}
     />
   ), [
     fileBrowserProps,
     filteredFiles,
+    onOpenFile,
+    onSelectBlockFile,
     openFile,
   ]);
 
