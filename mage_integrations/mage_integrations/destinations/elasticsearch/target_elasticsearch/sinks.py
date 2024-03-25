@@ -212,15 +212,17 @@ class ElasticSink(BatchSink):
         use_parallel = bulk_kwargs.pop('use_parallel', False)
         try:
             if use_parallel:
+                success = 0
+                fail = []
                 for ok, item in parallel_bulk(
                     self.client,
                     records,
                     **bulk_kwargs,
                 ):
                     if ok:
-                        self.logger.info('Parallel bulk success')
+                        success += 1
                     else:
-                        self.logger.info(f'Parallel bulk failed with error: {item}')
+                        fail.append(item)
             else:
                 success, fail = bulk(
                     self.client,
@@ -228,9 +230,9 @@ class ElasticSink(BatchSink):
                     request_timeout=60,
                     **bulk_kwargs,
                 )
-                self.logger.info(f'Bulk success: {success}/{len(records)}')
-                if fail:
-                    self.logger.info(f'Bulk fail: {fail}')
+            self.logger.info(f'Bulk success: {success}/{len(records)}')
+            if fail:
+                self.logger.info(f'Bulk fail: {fail}')
         except elasticsearch.helpers.BulkIndexError as e:
             self.logger.error('ES bulk index failed with errors:', e.errors)
 
