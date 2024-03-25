@@ -34,4 +34,12 @@ class TrinoDeltalake(TrinoConnector):
         if len(value) == 0:
             return 'NULL'
         item_type_converted = column_type_dict['item_type_converted']
-        return f"CAST(JSON '{json.dumps(value)}' AS ARRAY<{item_type_converted}>)"
+
+        if item_type_converted == 'VARCHAR':
+            if len(value) > 0 and (type(value[0]) is dict or type(value[0]) is list):
+                value_serialized = json.dumps([json.dumps(i) for i in value])
+            else:
+                value_serialized = json.dumps(value)
+        else:
+            value_serialized = json.dumps(value)
+        return f"CAST(JSON '{value_serialized}' AS ARRAY<{item_type_converted}>)"
