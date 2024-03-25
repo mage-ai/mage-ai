@@ -1,13 +1,14 @@
-from mage_integrations.destinations.constants import (
-    COLUMN_TYPE_OBJECT,
-)
+import json
+from typing import Dict
+
+from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
+)
+from mage_integrations.destinations.sql.utils import (
     convert_column_type as convert_column_type_orig,
 )
 from mage_integrations.destinations.trino.connectors.base import TrinoConnector
-import json
-from typing import Dict
 
 
 def convert_column_type(
@@ -33,5 +34,4 @@ class TrinoDeltalake(TrinoConnector):
         if len(value) == 0:
             return 'NULL'
         item_type_converted = column_type_dict['item_type_converted']
-
-        return f"CAST('{json.dumps(value)}' AS {item_type_converted})"
+        return f"CAST(JSON '{json.dumps(value)}' AS ARRAY<{item_type_converted}>)"
