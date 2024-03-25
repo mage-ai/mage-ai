@@ -108,6 +108,7 @@ class NotificationSender:
         pipeline,
         pipeline_run,
         error: str = None,
+        stacktrace: str = None,
         summary: str = None,
     ) -> None:
         if AlertOn.PIPELINE_RUN_FAILURE in self.config.alert_on:
@@ -122,6 +123,7 @@ class NotificationSender:
                 pipeline_run,
                 error=error,
                 message_template=message_template,
+                stacktrace=stacktrace,
                 summary=summary,
             )
 
@@ -145,6 +147,7 @@ class NotificationSender:
         pipeline,
         pipeline_run,
         error: str = None,
+        stacktrace: str = None,
     ):
         if text is None or pipeline is None or pipeline_run is None:
             return text
@@ -155,6 +158,7 @@ class NotificationSender:
             pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
             pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
             pipeline_uuid=pipeline.uuid,
+            stacktrace=stacktrace,
         )
 
     def __send_pipeline_run_message(
@@ -164,6 +168,7 @@ class NotificationSender:
         pipeline_run,
         error: str = None,
         message_template: MessageTemplate = None,
+        stacktrace: str = None,
         summary: str = None,
     ):
         """Shared method to send pipeline run message of multiple types (success, failure, etc.).
@@ -207,18 +212,21 @@ class NotificationSender:
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
             summary=self.__interpolate_vars(
                 summary or default_summary,
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
             details=self.__interpolate_vars(
                 details or default_details,
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
         )
 
