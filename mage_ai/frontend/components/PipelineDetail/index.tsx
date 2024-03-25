@@ -1117,6 +1117,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     cursorHeight2,
     cursorHeight3,
     dataProviders,
+    dbtConfigurationOptions,
     deleteBlock,
     disableShortcuts,
     fetchFileTree,
@@ -1249,15 +1250,20 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
   useEffect(() => {
     if (entered && project) {
-      setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION)
+      setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION);
     }
   }, [entered, project]);
 
-  const onSelectBlockFile = useCallback((blockUUID: string, blockType: BlockTypeEnum, filePath: string) => addBlockFromFilePath(filePath), [addBlockFromFilePath]) ;
+  const onSelectBlockFile = useCallback(
+    (blockUUID: string, blockType: BlockTypeEnum, filePath: string) => {
+      addBlockFromFilePath(filePath);
+    },
+    [addBlockFromFilePath],
+  ) ;
 
   const onOpenFile = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
-        addBlockFromFilePath(filePath)
+        addBlockFromFilePath(filePath);
       }
   }, [addBlockFromFilePath]);
 
@@ -1317,10 +1323,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           open
         >
           <FileSelectorPopup
-            blocks={blocks}
-            dbtModelName={dbtModelName}
             onClose={closeAddDBTModelPopup}
-            setDbtModelName={setDbtModelName}
+            onSelectBlockFile={onSelectBlockFile}
           />
         </ClickOutside>
       )}
