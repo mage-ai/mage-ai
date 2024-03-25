@@ -30,6 +30,8 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
 )
 from mage_integrations.destinations.sink import BatchSink
 
+DEFAULT_CHUNK_SIZE = 1000
+
 
 def template_index(stream_name: str, index_format: str, schemas: Dict) -> str:
     """
@@ -106,9 +108,9 @@ class ElasticSink(BatchSink):
     def max_size(self) -> int:
         if self.config:
             bulk_kwargs = self.config.get('bulk_kwargs', {})
-            return bulk_kwargs.get('chunk_size', 1000)
+            return bulk_kwargs.get('chunk_size', DEFAULT_CHUNK_SIZE)
         else:
-            return 1000
+            return DEFAULT_CHUNK_SIZE
 
     def build_request_body_and_distinct_indices(
         self, records: List[Dict[str, Union[str, Dict[str, str], int]]]
@@ -207,19 +209,14 @@ class ElasticSink(BatchSink):
         records = self.build_body(records)
         self.logger.debug(f'Number of records to write: {len(records)}')
         bulk_kwargs = self.config.get('bulk_kwargs', {}).copy()
-        self.logger.debug(f'Config: {self.config}')
         use_parallel = bulk_kwargs.pop('use_parallel', False)
-        self.logger.debug(f'Use parallel: {use_parallel}')
-        if 'max_chunk_bytes' not in bulk_kwargs:
-            bulk_kwargs['max_chunk_bytes'] = 5 * 1024 * 1024  # 5MB
         try:
             if use_parallel:
                 for ok, item in parallel_bulk(
                     self.client,
                     records,
-                    **bulk_kwargs,  # type: ignore[misc]
+                    **bulk_kwargs,
                 ):
-                    # go through request-response pairs and detect failures
                     if ok:
                         self.logger.info('Parallel bulk success')
                     else:

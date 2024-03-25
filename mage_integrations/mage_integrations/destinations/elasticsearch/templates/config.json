@@ -3,7 +3,6 @@
     "host": "localhost",
     "port": 9200,
     "bulk_kwargs": {
-        "chunk_size": 500,
-        "max_chunk_bytes": 5242880
+        "chunk_size": 500
     }
 }
