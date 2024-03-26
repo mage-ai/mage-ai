@@ -283,6 +283,7 @@ export function useList(
   const {
     data,
     error,
+    isValidating,
     mutate,
   } = useSWR(
     pauseFetch ? null : buildUrl(resource, null, null, null, query),
@@ -294,6 +295,7 @@ export function useList(
     data,
     error,
     loading: !data && !error,
+    isValidating,
     mutate,
   };
 }

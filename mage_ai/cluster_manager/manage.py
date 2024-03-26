@@ -70,11 +70,14 @@ def get_workspaces(cluster_type: ClusterType, **kwargs) -> List[Workspace]:
     repo_path = get_repo_path()
     projects_folder = os.path.join(repo_path, 'projects')
     if is_main_project:
+        # sort by file last modified time
         projects = [
-            f.name.split('.')[0]
+            f
             for f in os.scandir(projects_folder)
             if not f.is_dir() and f.name.endswith('.yaml')
         ]
+        projects.sort(key=lambda f: os.path.getmtime(f.path), reverse=True)
+        projects = [os.path.splitext(f.name)[0] for f in projects]
     else:
         instances = get_instances(cluster_type, **kwargs)
         projects = [instance.get('name') for instance in instances]
