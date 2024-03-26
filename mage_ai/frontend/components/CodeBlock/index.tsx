@@ -37,11 +37,7 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
-import ConfigurationOptionType, {
-  ConfigurationTypeEnum,
-  OptionTypeEnum,
-  ResourceTypeEnum,
-} from '@interfaces/ConfigurationOptionType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import DataIntegrationBlock from './DataIntegrationBlock';
 import DataProviderType, {
   DataProviderEnum,
@@ -177,7 +173,7 @@ import {
 import { capitalize, pluralize } from '@utils/string';
 import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
-import { find, indexBy, sum } from '@utils/array';
+import { find, indexBy, sum, uniqueArray } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
@@ -424,7 +420,12 @@ function CodeBlock({
   } = useProject();
   const { status } = useStatus();
 
-  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+  /*
+   * Currently, only the dbt blocks are using V2 of the code block.
+   * Change "featureUUIDs.DBT_V2" for the featureEnabled property below
+   * to "featureUUIDs.CODE_BLOCK_V2" when all block types are using V2.
+   */
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.DBT_V2), [
     featureEnabled,
     featureUUIDs,
   ]);
@@ -787,9 +788,15 @@ function CodeBlock({
     dbtProjects,
   ]);
 
-  const dbtProfileTargets = useMemo(() => {
-    return (dbtProfileData || [])?.reduce((acc, { targets }) => acc.concat(targets || []), []);
-  }, [dbtProfileData]);
+  const dbtProfileTargets = useMemo(() =>
+    uniqueArray(
+      (dbtProfileData || [])?.reduce(
+        (acc, { targets }) => acc.concat(targets || []),
+        [],
+      ),
+    ),
+    [dbtProfileData],
+  );
 
   const dbtProfileTarget = useMemo(() => dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET], [
     dataProviderConfig,

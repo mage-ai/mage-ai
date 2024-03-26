@@ -7,7 +7,10 @@ export const test = base.extend<{
   settingFeaturesToDisable: TSettingFeaturesToDisable,
 }>({
   failOnClientError: true,
-  settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true },
+  settingFeaturesToDisable: {
+    [FeatureUUIDEnum.CODE_BLOCK_V2]: true,
+    [FeatureUUIDEnum.LOCAL_TIMEZONE]: true,
+  },
   // eslint-disable-next-line sort-keys
   page: async ({ page, failOnClientError, settingFeaturesToDisable }, use) => {
     const pageErrors: Error[] = [];

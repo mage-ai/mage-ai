@@ -12,6 +12,7 @@ import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 interface InputType {
+  compact?: boolean;
   fullWidth?: boolean;
   monospace?: boolean;
   multiline?: boolean;
@@ -24,6 +25,7 @@ interface InputType {
 type SetupSectionRowProps = {
   children?: any;
   description?: any | string;
+  inputFlex?: number;
   invalid?: boolean;
   large?: boolean;
   selectInput?: InputType & {
@@ -44,6 +46,7 @@ type SetupSectionRowProps = {
 function SetupSectionRow({
   children,
   description,
+  inputFlex = 3,
   invalid,
   large = true,
   selectInput,
@@ -109,7 +112,7 @@ function SetupSectionRow({
           {description && typeof description !== 'string' && description}
         </FlexContainer>
 
-        <Flex flex={3} justifyContent="flex-end">
+        <Flex flex={inputFlex} justifyContent="flex-end">
           {children}
 
           {textInputMemo}

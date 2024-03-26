@@ -1,6 +1,15 @@
 import BlockType from '@interfaces/BlockType';
-import { AlertTriangle, Code, NavDashboard, SettingsWithKnobs, TreeWithArrowsUp } from '@oracle/icons';
+import { AlertTriangle } from '@oracle/icons';
 import { validate } from './utils';
+
+export const SHARED_SETUP_ROW_PROPS = {
+  inputFlex: 1,
+  large: false,
+};
+export const SHARED_INPUT_PROPS = {
+  compact: true,
+  monospace: true,
+};
 
 export enum HeaderTabEnum {
   CODE = 'code',
