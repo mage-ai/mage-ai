@@ -173,7 +173,7 @@ import {
 import { capitalize, pluralize } from '@utils/string';
 import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
-import { find, indexBy, sum } from '@utils/array';
+import { find, indexBy, sum, uniqueArray } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
@@ -788,9 +788,15 @@ function CodeBlock({
     dbtProjects,
   ]);
 
-  const dbtProfileTargets = useMemo(() => {
-    return (dbtProfileData || [])?.reduce((acc, { targets }) => acc.concat(targets || []), []);
-  }, [dbtProfileData]);
+  const dbtProfileTargets = useMemo(() =>
+    uniqueArray(
+      (dbtProfileData || [])?.reduce(
+        (acc, { targets }) => acc.concat(targets || []),
+        [],
+      ),
+    ),
+    [dbtProfileData],
+  );
 
   const dbtProfileTarget = useMemo(() => dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET], [
     dataProviderConfig,
