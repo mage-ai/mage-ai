@@ -327,7 +327,7 @@ class PipelineScheduler:
                 if message:
                     message_split = message.split('\n')
                     # Truncate the error message if it has too many lines, set max
-                    # liens at 50
+                    # lines at 50
                     if len(message_split) > 50:
                         message_split = message_split[-50:]
                         message_split.insert(0, '... (error truncated)')
