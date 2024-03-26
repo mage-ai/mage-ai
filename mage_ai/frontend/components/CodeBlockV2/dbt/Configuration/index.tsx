@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
@@ -10,13 +10,15 @@ import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import {
+  CONFIG_KEY_DBT,
+  CONFIG_KEY_DBT_COMMAND,
   CONFIG_KEY_DBT_PROFILES_FILE_PATH,
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { SHARED_SETUP_ROW_PROPS } from '../constants';
+import { SHARED_INPUT_PROPS, SHARED_SETUP_ROW_PROPS } from '../constants';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -110,8 +112,7 @@ function Configuration({
   const inputProject = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      compact: true,
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -154,8 +155,7 @@ function Configuration({
   const inputProfile = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      compact: true,
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -201,8 +201,7 @@ function Configuration({
   const inputTarget = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      compact: true,
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -367,9 +366,8 @@ function Configuration({
           {...SHARED_SETUP_ROW_PROPS}
           description="Limit the number of rows that are fetched when compiling and previewing."
           textInput={{
-            compact: true,
+            ...SHARED_INPUT_PROPS,
             fullWidth: true,
-            monospace: true,
             onChange: e => setAttributes(prev => ({
               ...prev,
               configuration: {
@@ -383,6 +381,30 @@ function Configuration({
           }}
           title="Preview query result limit"
         />
+
+        {BlockLanguageEnum.YAML === block?.language && (
+          <SetupSectionRow
+            {...SHARED_SETUP_ROW_PROPS}
+            description="Enter which dbt command to run."
+            textInput={{
+              ...SHARED_INPUT_PROPS,
+              fullWidth: true,
+              onChange: e => setAttributes(prev => ({
+                ...prev,
+                configuration: {
+                  ...(prev?.configuration || {}),
+                  [CONFIG_KEY_DBT]: {
+                    ...(prev?.configuration || {})?.[CONFIG_KEY_DBT],
+                    [CONFIG_KEY_DBT_COMMAND]: e.target.value,
+                  },
+                },
+              })),
+              placeholder: 'e.g. run, seed',
+              value: attributes?.configuration?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND],
+            }}
+            title="dbt command"
+          />
+        )}
       </SetupSection>
 
       <Spacing mt={PADDING_UNITS}>

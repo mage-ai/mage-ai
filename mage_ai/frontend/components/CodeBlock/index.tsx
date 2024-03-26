@@ -37,11 +37,7 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
-import ConfigurationOptionType, {
-  ConfigurationTypeEnum,
-  OptionTypeEnum,
-  ResourceTypeEnum,
-} from '@interfaces/ConfigurationOptionType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import DataIntegrationBlock from './DataIntegrationBlock';
 import DataProviderType, {
   DataProviderEnum,
