@@ -420,7 +420,12 @@ function CodeBlock({
   } = useProject();
   const { status } = useStatus();
 
-  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+  /*
+   * Currently, only the dbt blocks are using V2 of the code block.
+   * Change "featureUUIDs.DBT_V2" for the featureEnabled property below
+   * to "featureUUIDs.CODE_BLOCK_V2" when all block types are using V2.
+   */
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.DBT_V2), [
     featureEnabled,
     featureUUIDs,
   ]);

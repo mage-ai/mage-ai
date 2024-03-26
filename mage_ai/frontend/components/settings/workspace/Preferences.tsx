@@ -255,7 +255,7 @@ function Preferences({
           </Spacing>
 
           {Object.entries(ignoreKeys(projectAttributes?.features, [
-            {/*FeatureUUIDEnum.GLOBAL_HOOKS,*/}
+            FeatureUUIDEnum.CODE_BLOCK_V2,
           ]) || {}).map(([k, v], idx) => {
             const overrideFromRootProject = projectPlatformActivated
               && !rootProjectUse
