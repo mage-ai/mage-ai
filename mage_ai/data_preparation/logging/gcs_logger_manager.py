@@ -10,9 +10,9 @@ from mage_ai.shared.config import BaseConfig
 
 @dataclass
 class GCSConfig(BaseConfig):
-    path_to_credentials: str
     bucket: str
     prefix: str
+    path_to_credentials: str = None
 
 
 class GCSLoggerManager(LoggerManager):
@@ -23,9 +23,12 @@ class GCSLoggerManager(LoggerManager):
     ):
         super().__init__(repo_config=repo_config, **kwargs)
         self.gcs_config = GCSConfig.load(config=self.logging_config.destination_config)
-        credentials = service_account.Credentials.from_service_account_file(
-            self.gcs_config.path_to_credentials
-        )
+        if self.gcs_config.path_to_credentials:
+            credentials = service_account.Credentials.from_service_account_file(
+                self.gcs_config.path_to_credentials
+            )
+        else:
+            credentials = None
         self.gcs_client = storage.Client(credentials=credentials)
 
     def create_log_filepath_dir(self, path):
