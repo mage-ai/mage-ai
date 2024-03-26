@@ -48,7 +48,7 @@ class MongoSource(BaseSource):
             watch_args['start_after'] = self.config.start_after
 
         if hasattr(self.config, 'full_document'):
-            watch_args['full_document'] = self.config.full_documentd
+            watch_args['full_document'] = self.config.full_document
 
         return watch_args
 
