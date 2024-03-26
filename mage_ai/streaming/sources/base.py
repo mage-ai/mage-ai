@@ -22,6 +22,7 @@ class BaseSource(ABC):
         self.checkpoint_path = kwargs.get('checkpoint_path')
         self.checkpoint = self.read_checkpoint()
         self.init_client()
+        self.test_connection()
 
     @abstractmethod
     def init_client(self):
