@@ -24,8 +24,6 @@ class BaseMonitor:
         if self.error.type:
             data['type'] = self.error.type
 
-        loop = asyncio.get_event_loop()
-
         kwargs = dict(
             resource=self.resource,
             **extract(
@@ -48,6 +46,7 @@ class BaseMonitor:
             ),
         )
 
+        loop = asyncio.get_event_loop()
         if loop is not None:
             loop.create_task(
                 UsageStatisticLogger().error(

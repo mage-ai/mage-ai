@@ -320,11 +320,19 @@ class PipelineScheduler:
     @safe_db_query
     def on_pipeline_run_failure(self, error_msg: str) -> None:
         failed_block_runs = self.pipeline_run.failed_block_runs
+        stacktrace = None
         for br in failed_block_runs:
             if br.metrics:
                 message = br.metrics.get('error', {}).get('message')
                 if message:
-                    error_msg += f'\nError for block {br.block_uuid}:\n{message}'
+                    message_split = message.split('\n')
+                    # Truncate the error message if it has too many lines, set max
+                    # lines at 50
+                    if len(message_split) > 50:
+                        message_split = message_split[-50:]
+                        message_split.insert(0, '... (error truncated)')
+                    message = '\n'.join(message_split)
+                    stacktrace = f'Error for block {br.block_uuid}:\n{message}'
                     break
 
         asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
@@ -332,6 +340,7 @@ class PipelineScheduler:
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
             error=error_msg,
+            stacktrace=stacktrace,
         )
         # Cancel block runs that are still in progress for the pipeline run.
         cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
