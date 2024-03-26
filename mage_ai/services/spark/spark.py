@@ -119,7 +119,7 @@ def get_spark_session(spark_config: SparkConfig):
         SparkSession: The Spark session.
     """
     if not SPARK_ENABLED:
-        raise Exception('Spark is not supported in current environment.')
+        raise ImportError('Spark is not supported in current environment.')
 
     if spark_config:
         active_session = SparkSession.getActiveSession()
