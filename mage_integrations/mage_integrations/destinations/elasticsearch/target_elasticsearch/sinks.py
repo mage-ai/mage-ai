@@ -30,7 +30,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
 )
 from mage_integrations.destinations.sink import BatchSink
 
-DEFAULT_CHUNK_SIZE = 1000
+DEFAULT_CHUNK_SIZE = 500
 
 
 def template_index(stream_name: str, index_format: str, schemas: Dict) -> str:
