@@ -16,6 +16,7 @@ import {
   CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SHARED_SETUP_ROW_PROPS } from '../constants';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -109,6 +110,7 @@ function Configuration({
   const inputProject = useMemo(() => {
     let key = 'selectInput';
     let opts = {
+      compact: true,
       monospace: true,
       onChange: e => setAttributes(prev => ({
         ...prev,
@@ -152,6 +154,7 @@ function Configuration({
   const inputProfile = useMemo(() => {
     let key = 'selectInput';
     let opts = {
+      compact: true,
       monospace: true,
       onChange: e => setAttributes(prev => ({
         ...prev,
@@ -198,6 +201,7 @@ function Configuration({
   const inputTarget = useMemo(() => {
     let key = 'selectInput';
     let opts = {
+      compact: true,
       monospace: true,
       onChange: e => setAttributes(prev => ({
         ...prev,
@@ -244,8 +248,7 @@ function Configuration({
         title="Configuration"
       >
         <SetupSectionRow
-          title="Project"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -261,28 +264,29 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
+                <Text inline muted small>
                   Manually enter the full path from the root directory of the current project,
-                  to the dbt project directory that contains the <Text muted inline monospace small>
+                  to the dbt project directory that contains the <Text inline monospace muted small>
                     dbt_project.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME]}
+          title="Project"
           {...inputProject}
         />
 
         <SetupSectionRow
-          title="Profile"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -298,31 +302,32 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
-                  Manually enter the full path with the filename <Text muted inline monospace small>
+                <Text inline muted small>
+                  Manually enter the full path with the filename <Text inline monospace muted small>
                     profiles.yml
                   </Text>
                   from the root directory of the current project,
-                  to the dbt project directory that contains the <Text muted inline monospace small>
+                  to the dbt project directory that contains the <Text inline monospace muted small>
                     profiles.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]}
+          title="Profile"
           {...inputProfile}
         />
 
         <SetupSectionRow
-          title="Target"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -338,28 +343,31 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
-                  Manually enter the target name from the <Text muted inline monospace small>
+                <Text inline muted small>
+                  Manually enter the target name from the <Text inline monospace muted small>
                     dbt_project.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET]}
+          title="Target"
           {...inputTarget}
         />
 
         <SetupSectionRow
-          title="Preview query result limit"
+          {...SHARED_SETUP_ROW_PROPS}
           description="Limit the number of rows that are fetched when compiling and previewing."
           textInput={{
+            compact: true,
             fullWidth: true,
             monospace: true,
             onChange: e => setAttributes(prev => ({
@@ -369,10 +377,11 @@ function Configuration({
                 [CONFIG_KEY_LIMIT]: e.target.value,
               },
             })),
-            type: 'number',
             placeholder: 'e.g. 1000',
+            type: 'number',
             value: attributes?.configuration?.[CONFIG_KEY_LIMIT],
           }}
+          title="Preview query result limit"
         />
       </SetupSection>
 
