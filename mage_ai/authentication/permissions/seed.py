@@ -224,20 +224,22 @@ async def attribute_rules(policy_class, rules):
     return mapping
 
 
-async def bootstrap_permissions():
+async def bootstrap_permissions(policy_names: str = None):
     action_rules_mapping = {}
     query_rules_mapping = {}
     read_rules_mapping = {}
     write_rules_mapping = {}
 
-    policy_names = []
-    for n in os.listdir(policies.__path__[0]):
-        if n.endswith('Policy.py') and n not in [
-            'BasePolicy.py',
-            'SeedPolicy.py',
-            'UserPolicy.py',
-        ]:
-            policy_names.append(n.replace('Policy.py', ''))
+    if policy_names is None:
+        policy_names = []
+        for n in os.listdir(policies.__path__[0]):
+            if n.endswith('Policy.py') and n not in [
+                'AsyncBasePolicy.py',
+                'BasePolicy.py',
+                'SeedPolicy.py',
+                'UserPolicy.py',
+            ]:
+                policy_names.append(n.replace('Policy.py', ''))
 
     for policy_name in policy_names:
         policy_class = getattr(
