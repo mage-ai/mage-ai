@@ -17,27 +17,27 @@ class OktaProvider(
         self.client_secret = get_settings_value(OKTA_CLIENT_SECRET)
         self.parsed_url = urlparse(unquote(self.hostname))
         if not self.parsed_url.scheme:
-            self.parsed_url = urlparse(unquote(f"https://{self.hostname}"))
+            self.parsed_url = urlparse(unquote(f'https://{self.hostname}'))
         self.__validate()
 
         self.discovery_url = (
-            f"https://{self.parsed_url.netloc}/.well-known/openid-configuration"
+            f'https://{self.parsed_url.netloc}/.well-known/openid-configuration'
         )
         self.discover()
 
     def __validate(self):
         if not self.parsed_url.netloc:
             raise ValueError(
-                "Okta hostname is empty. "
-                "Make sure the OKTA_DOMAIN_URL environment variable is set."
+                'Okta hostname is empty. '
+                'Make sure the OKTA_DOMAIN_URL environment variable is set.'
             )
         if not self.client_id:
             raise ValueError(
-                "Okta client id is empty. "
-                "Make sure the OKTA_CLIENT_ID environment variable is set."
+                'Okta client id is empty. '
+                'Make sure the OKTA_CLIENT_ID environment variable is set.'
             )
         if not self.client_secret:
             raise ValueError(
-                "Okta client secret is empty. "
-                "Make sure the OKTA_CLIENT_SECRET environment variable is set."
+                'Okta client secret is empty. '
+                'Make sure the OKTA_CLIENT_SECRET environment variable is set.'
             )
