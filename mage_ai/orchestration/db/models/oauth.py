@@ -1,7 +1,7 @@
 import enum
 import re
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 from sqlalchemy import (
     JSON,
@@ -327,7 +327,7 @@ class Role(BaseModel):
         self,
         entity: Entity = None,
         entity_id: str = None,
-        prefix: str = None,
+        name_func: Callable[[str], str] = None,
     ) -> None:
         """
         Create default roles with associated permissions for a given entity and entity_id.
@@ -349,8 +349,8 @@ class Role(BaseModel):
         }
         for name, access in mapping.items():
             role_name = name
-            if prefix is not None:
-                role_name = f'{prefix}_{name}'
+            if name_func is not None:
+                role_name = name_func(name)
             role = self.query.filter(self.name == role_name).first()
             if not role:
                 self.create(

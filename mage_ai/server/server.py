@@ -452,12 +452,14 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
 
     # Create new roles on existing users. This should only need to be run once.
     if project_type == ProjectType.SUB:
+        project_uuid = get_project_uuid()
+        project_uuid_truncated = project_uuid[:8]
         Role.create_default_roles(
             entity=Entity.PROJECT,
-            entity_id=get_project_uuid(),
-            prefix=get_repo_name(),
+            entity_id=project_uuid,
+            name_func=lambda role: f'{role}_{project_uuid_truncated}',
         )
-        default_owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        default_owner_role = Role.get_role(f'{Role.DefaultRole.OWNER}_{project_uuid_truncated}')
     else:
         Role.create_default_roles()
         default_owner_role = Role.get_role(Role.DefaultRole.OWNER)

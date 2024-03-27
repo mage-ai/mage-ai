@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
-import Headline from '@oracle/elements/Headline';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RoleType from '@interfaces/RoleType';
 import SettingsDashboard from '@components/settings/Dashboard';
@@ -11,21 +10,14 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import UserDetail from '@components/users/UserDetail';
-import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
 import api from '@api';
-import usePrevious from '@utils/usePrevious';
 import { AddUserSmileyFace } from '@oracle/icons';
 import { BreadcrumbType } from '@components/Breadcrumbs';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
-import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
 import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
-import { goToWithQuery } from '@utils/routing';
-import { isEqual } from '@utils/hash';
-import { pauseEvent } from '@utils/events';
-import { queryFromUrl } from '@utils/url';
 
 function UsersListPage() {
   const router = useRouter();
@@ -37,7 +29,7 @@ function UsersListPage() {
     owner: isOwner,
   } = getUser() || {};
 
-  const { data} = api.users.list({}, {
+  const { data } = api.users.list({}, {
     revalidateOnFocus: false,
   });
   const users = useMemo(() => data?.users || [], [data?.users]);
@@ -57,7 +49,7 @@ function UsersListPage() {
     });
   } else {
     breadcrumbs[0].linkProps = {
-      href: '/settings/workspace/users'
+      href: '/settings/workspace/users',
     };
   }
 
@@ -122,7 +114,6 @@ function UsersListPage() {
               created_at: createdAt,
               email,
               first_name: firstName,
-              id,
               last_name: lastName,
               roles_display,
               roles_new,
@@ -132,7 +123,7 @@ function UsersListPage() {
               sortedRoles.sort((a: RoleType, b: RoleType) => a.id - b.id);
 
               return [
-                <Text large key="avatar" rightAligned>
+                <Text key="avatar" large rightAligned>
                   {avatar}
                 </Text>,
                 <Text key="username">
@@ -150,7 +141,7 @@ function UsersListPage() {
                 <Text default key="roles">
                   {sortedRoles.length > 0 ? sortedRoles[0].name : roles_display}
                 </Text>,
-                <Text monospace default key="created">
+                <Text default key="created" monospace>
                   {createdAt && dateFormatLong(createdAt)}
                 </Text>,
               ];

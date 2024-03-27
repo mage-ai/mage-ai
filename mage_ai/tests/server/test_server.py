@@ -8,7 +8,7 @@ import tornado.ioloop
 
 import mage_ai.server.server as server_module
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
-from mage_ai.data_preparation.repo_manager import ProjectType
+from mage_ai.data_preparation.repo_manager import ProjectType, get_project_uuid
 from mage_ai.orchestration.db.models.oauth import (
     Oauth2Application,
     Permission,
@@ -21,7 +21,6 @@ from mage_ai.server.server import (
     make_app,
     replace_base_path,
 )
-from mage_ai.settings.repo import get_repo_name
 from mage_ai.tests.base_test import AsyncDBTestCase
 
 
@@ -150,7 +149,10 @@ class ServerTests(AsyncDBTestCase):
     def test_initialize_user_authentication_subproject(self):
         initialize_user_authentication(ProjectType.SUB)
 
-        owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        project_uuid = get_project_uuid()
+        project_uuid_truncated = project_uuid[:8]
+
+        owner_role = Role.get_role(f'{Role.DefaultRole.OWNER}_{project_uuid_truncated}')
         self.assertTrue(len(owner_role.users) > 0)
 
         owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
@@ -169,7 +171,9 @@ class ServerTests(AsyncDBTestCase):
         )
         initialize_user_authentication(ProjectType.SUB)
 
-        owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        project_uuid = get_project_uuid()
+        project_uuid_truncated = project_uuid[:8]
+        owner_role = Role.get_role(f'{Role.DefaultRole.OWNER}_{project_uuid_truncated}')
         self.assertTrue(len(owner_role.users) == 0)
 
         owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
