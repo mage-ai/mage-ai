@@ -23,8 +23,8 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
     with MySQL.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         loader.export(
             df,
-            None,
-            table_name,
+            schema_name=None,
+            table_name=table_name,
             index=False,  # Specifies whether to include index in exported table
             if_exists='replace',  # Specify resolution policy if table name already exists
         )
