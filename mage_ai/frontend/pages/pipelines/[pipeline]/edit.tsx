@@ -228,13 +228,24 @@ function PipelineDetailPage({
     };
   }>(null);
 
+  const qUrl = queryFromUrl();
+  const {
+    [VIEW_QUERY_PARAM]: activeSidekickView,
+    block_uuid: blockUUIDFromUrl,
+  } = qUrl;
+
   const setSelectedBlock = useCallback((block: BlockType) => {
     setSelectedBlockState(block);
     if (block && disableShortcuts) {
       setDisableShortcuts(false);
     }
     setSelectedBlockDetails(null);
-  }, [disableShortcuts]);
+    if (blockUUIDFromUrl && blockUUIDFromUrl?.split(':')?.[0] !== block?.uuid) {
+      goToWithQuery({
+        block_uuid: null,
+      });
+    }
+  }, [blockUUIDFromUrl, disableShortcuts]);
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
@@ -578,13 +589,6 @@ function PipelineDetailPage({
     data?.pipeline?.updated_at,
     pipelineLastSaved,
   ]);
-
-  const qUrl = queryFromUrl();
-  const {
-    [VIEW_QUERY_PARAM]: activeSidekickView,
-    block_uuid: blockUUIDFromUrl,
-    // file_path: filePathFromUrl,
-  } = qUrl;
 
   function setActiveSidekickView(
     newView: ViewKeyEnum,
