@@ -7,7 +7,7 @@ from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 
-from mage_ai.ai.ai_client import AIClient
+from mage_ai.ai.ai_client import AIClient, InferenceType
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -83,7 +83,8 @@ class OpenAIClient(AIClient):
             self,
             variable_values: Dict[str, str],
             prompt_template: str,
-            is_json_response: bool = True
+            is_json_response: bool = True,
+            inference_type: InferenceType = InferenceType.DEFAULT
     ):
         """Generic function to call OpenAI LLM and return JSON response by default.
 
