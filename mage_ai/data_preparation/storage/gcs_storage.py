@@ -148,7 +148,7 @@ class GCSStorage(BaseStorage):
         df.write_parquet(buffer)
         buffer.seek(0)
         blob = self.bucket.blob(gcs_url_path(file_path))
-        blob.upload_from_string(buffer)
+        blob.upload_from_string(buffer.getvalue())
 
     @contextmanager
     def open_to_write(self, file_path: str) -> None:
