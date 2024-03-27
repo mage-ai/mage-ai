@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict
 
@@ -287,6 +288,7 @@ def active_project_settings(
         )
 
 
+@lru_cache(maxsize=20)
 def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
     mapping = (__combined_platform_settings(
         repo_path=repo_path,
@@ -317,6 +319,7 @@ def update_settings(settings: Dict) -> Dict:
     content = yaml.dump(settings)
 
     safe_write(platform_settings_full_path(), content)
+    project_platform_settings.cache_clear()
 
 
 def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
@@ -417,6 +420,7 @@ def local_platform_settings_full_path(repo_path: str = None) -> str:
     return os.path.join(variables_dir, LOCAL_PLATFORM_SETTINGS_FILENAME)
 
 
+@lru_cache(maxsize=20)
 def __local_platform_settings(repo_path: str = None) -> Dict:
     """
     Retrieve and return the local platform settings.
@@ -450,3 +454,5 @@ def __update_local_platform_settings(
     full_path = local_platform_settings_full_path(repo_path=repo_path)
     content = yaml.dump(platform_settings)
     safe_write(full_path, content)
+
+    __local_platform_settings.cache_clear()
