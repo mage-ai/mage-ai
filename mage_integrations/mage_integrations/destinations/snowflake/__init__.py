@@ -222,14 +222,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             commands = [
                 drop_temp_table_command,
-            ] + self.build_create_table_commands(
-                schema=schema,
-                schema_name=schema_name,
-                stream=None,
-                table_name=f'temp_{table_name}',
-                database_name=database_name,
-                unique_constraints=unique_constraints,
-            ) + ['\n'.join([
+                f'CREATE TEMP TABLE {full_table_name_temp} LIKE {full_table_name};'
+            ] + ['\n'.join([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
                 f'SELECT {select_values}',
                 f'FROM VALUES {insert_values}',
@@ -467,15 +461,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 full_table_name_temp = self.full_table_name_temp(database, schema, table)
                 drop_temp_table_command = [f'DROP TABLE IF EXISTS {full_table_name_temp}']
 
-                create_temp_table_command = self.build_create_table_commands(
-                                schema=self.schemas[stream],
-                                schema_name=schema,
-                                stream=None,
-                                table_name=f'temp_{table}',
-                                temp_table=True,
-                                database_name=database,
-                                unique_constraints=unique_constraints,
-                            )
+                create_temp_table_command = \
+                    [f'CREATE TEMP TABLE {full_table_name_temp} LIKE {full_table_name};']
                 # Run commands in one Snowflake session to leverage TEMP table
                 snowflake_connection = self.build_connection()
                 connection = snowflake_connection.build_connection()

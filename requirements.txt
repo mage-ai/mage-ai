@@ -82,7 +82,7 @@ pydruid==0.6.5
 pyodbc==4.0.35
 redshift-connector==2.0.915
 lxml==4.9.4
-snowflake-connector-python==3.4.0
+snowflake-connector-python==3.5.0
 sshtunnel==0.4.0
 tables==3.7.0
 trino~=0.326
