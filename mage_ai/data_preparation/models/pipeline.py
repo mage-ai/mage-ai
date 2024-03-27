@@ -1051,6 +1051,7 @@ class Pipeline:
         old_uuid = None
         blocks_to_remove_from_cache = []
         block_uuids_to_add_to_cache = []
+        tags_to_remove_from_cache = []
         should_update_block_cache = False
         should_update_tag_cache = False
 
@@ -1103,6 +1104,10 @@ class Pipeline:
             old_tags = self.tags or []
 
             if sorted(new_tags) != sorted(old_tags):
+                tags_diff = set(old_tags).symmetric_difference(set(new_tags))
+                for tag in tags_diff:
+                    if tag in old_tags:
+                        tags_to_remove_from_cache.append(tag)
                 self.tags = new_tags
                 should_save = True
                 should_update_tag_cache = True
@@ -1356,6 +1361,8 @@ class Pipeline:
 
             cache = await TagCache.initialize_cache()
 
+            for tag_uuid in tags_to_remove_from_cache:
+                cache.remove_pipeline(tag_uuid, self.uuid, self.repo_path)
             for tag_uuid in self.tags:
                 if old_uuid:
                     cache.remove_pipeline(tag_uuid, old_uuid, self.repo_path)
