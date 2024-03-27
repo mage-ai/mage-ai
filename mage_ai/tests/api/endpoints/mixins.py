@@ -813,7 +813,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                             validation = assert_after_create_count(self)
                         self.assertTrue(validation)
                     else:
-                        after_count = len(get_resource().model_class.all())
+                        after_count = len(get_resource(resource).model_class.all())
                         self.assertEqual(
                             after_count,
                             before_count + 1 if after_create_count is None else after_create_count,
@@ -1096,7 +1096,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
 
                         self.assertTrue(validation)
                     else:
-                        after_count = len(get_resource().model_class.all())
+                        after_count = len(get_resource(resource).model_class.all())
                         self.assertEqual(
                             after_count,
                             before_count - 1 if after_delete_count is None else after_delete_count,
@@ -1132,15 +1132,16 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
                 RolePermission.create(permission_id=permission.id, role_id=role.id)
             else:
-                permission = Permission.create(
-                    access=access_for_permissions,
-                    entity_name=EntityName(entity_name(resource)),
-                    options=permission_options,
-                )
+                e_name = entity_name(resource)
+                if getattr(EntityName, e_name, None) is not None:
+                    permission = Permission.create(
+                        access=access_for_permissions,
+                        entity_name=EntityName(e_name),
+                        options=permission_options,
+                    )
+                    RolePermission.create(permission_id=permission.id, role_id=role.id)
 
                 if permission_settings:
                     for permission_setting in permission_settings:
                         permission_more = Permission.create(**permission_setting)
                         RolePermission.create(permission_id=permission_more.id, role_id=role.id)
-
-            RolePermission.create(permission_id=permission.id, role_id=role.id)
