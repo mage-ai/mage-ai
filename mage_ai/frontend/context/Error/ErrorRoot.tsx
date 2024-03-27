@@ -8,6 +8,7 @@ import {
   ErrorObjectType,
   ErrorType,
 } from './ErrorContext';
+import { VisibleEye } from '@oracle/icons';
 
 interface ErrorRootProps {
   component?: React.ComponentType<any>;
@@ -28,6 +29,7 @@ const ErrorRenderer = memo(({
   component,
   onClose,
   runtimeProps,
+  setMinimized,
   ...rest
 }: ErrorRendererProps) => {
   if (component) {
@@ -44,6 +46,7 @@ const ErrorRenderer = memo(({
         ...runtimeProps,
       }}
       onClose={onClose}
+      setMinimized={setMinimized}
     />
   );
 });
@@ -54,6 +57,8 @@ export const ErrorRoot = memo(
     container,
     errors,
     hideError,
+    minimized,
+    setMinimized,
   }: ErrorRootProps) => {
     const [mountNode, setMountNode] = useState<Element | undefined>(undefined);
     const [visibleMapping, setVisibleMapping] = useState({});
@@ -122,6 +127,7 @@ export const ErrorRoot = memo(
                 component={component}
                 onClose={hide}
                 runtimeProps={runtimeProps}
+                setMinimized={setMinimized}
               />
             </ClickOutside>
           );
