@@ -13,6 +13,9 @@ You must enter the following credentials when configuring this source:
 | `connection_string` | Connection string for your Couchbase database. For more information see [here](https://docs.couchbase.com/kotlin-sdk/current/howtos/connecting.html#connection-string-scheme). | `couchbase://my_instance.cloud.couchbase.com` |
 | `username` | Name of the user that will access the database (must have permissions to read from specified bucket and scope) | `username` |
 | `password` | Password for the user to access the database.  | `password` |
+| `cert_path` | Path to the certificate trust store public key accessible to the SDK.  | `cert_path` |
+| `trust_store_path` | Path to the certificate trust store public key on the server.  | `trust_store_path` |
+| `key_path` | Path to the private key accessible to the SDK.  | `key_path` |
 | `bucket` | Name of Couchbase bucket that contains your data | `my_bucket` |
 | `scope` | Name of Couchbase scope that contains your data. Only collections within this scope will be available in Mage. | `my_scope` |
 | `strategy` | (Optional) See below for more info. | `infer` |
