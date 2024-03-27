@@ -1,7 +1,7 @@
 from typing import Dict, Generator, List
 
 
-class BaseStream():
+class BaseStream:
     KEY_PROPERTIES = []
 
     URL_PATH = None
