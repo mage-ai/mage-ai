@@ -585,3 +585,10 @@ class BatchSink(Sink):
         Args:
             context: Stream partition or context dictionary.
         """
+
+    def _after_process_record(self, context: dict) -> None:
+        # printing after every record is too verbose for batch sinks, so commenting it out for now
+        # records = context.get('records', [])
+        # if len(records) > 0:
+        #     self.logger.debug(f'Processed record: {records[-1]}')
+        pass

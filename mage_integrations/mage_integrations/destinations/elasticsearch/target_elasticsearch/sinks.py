@@ -245,13 +245,6 @@ class ElasticSink(BatchSink):
         self.write_output(records)
         self.tally_record_written(len(records))
 
-    def _after_process_record(self, context: dict) -> None:
-        # printing after every record is too verbose, so commenting it out for now
-        # records = context.get('records', [])
-        # if len(records) > 0:
-        #     self.logger.debug(f'Processed record: {records[-1]}')
-        pass
-
     def clean_up(self) -> None:
         """
         clean_up closes the elasticsearch client

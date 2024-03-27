@@ -91,31 +91,32 @@ class TargetMongoDb(Target):
         """
         stats: dict[str, int] = defaultdict(int)
         for line in file_input.readlines():
-
-            if line.startswith('{') is False:
-                continue
+            row = None
             try:
-                line_dict = json.loads(line)
-            except:
+                row = json.loads(line)
+            except json.decoder.JSONDecodeError:
+                self.logger.info(f'Unable to parse: {line}')
                 continue
 
-            self._assert_line_requires(line_dict, requires={"type"})
+            if not row:
+                self.logger.info(f'No valid row data {row} for line: {line}')
+                continue
 
-            record_type: SingerMessageType = line_dict["type"]
+            record_type: SingerMessageType = row.get('type')
             if record_type == SingerMessageType.SCHEMA:
-                self._process_schema_message(line_dict)
+                self._process_schema_message(row)
 
             elif record_type == SingerMessageType.RECORD:
-                self._process_record_message_mongo(line_dict)
+                self._process_record_message_mongo(row)
 
             elif record_type == SingerMessageType.ACTIVATE_VERSION:
-                self._process_activate_version_message(line_dict)
+                self._process_activate_version_message(row)
 
             elif record_type == SingerMessageType.STATE:
-                self._process_state_message(line_dict)
+                self._process_state_message(row)
 
             elif record_type == SingerMessageType.BATCH:
-                self._process_batch_message(line_dict)
+                self._process_batch_message(row)
 
             else:
                 continue
