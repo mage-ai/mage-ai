@@ -171,13 +171,17 @@ async def action_rules(policy_class):
             if scope not in operations_mapping:
                 operations_mapping[scope] = {}
 
-            condition = config2.get('condition')
-            key = await get_key(policy_class, condition)
+            if not isinstance(config2, list):
+                config2 = [config2]
 
-            if key not in operations_mapping[scope]:
-                operations_mapping[scope][key] = []
+            for c in config2:
+                condition = c.get('condition')
+                key = await get_key(policy_class, condition)
 
-            operations_mapping[scope][key].append(operation)
+                if key not in operations_mapping[scope]:
+                    operations_mapping[scope][key] = []
+
+                operations_mapping[scope][key].append(operation)
 
     return operations_mapping
 
@@ -202,16 +206,20 @@ async def attribute_rules(policy_class, rules):
                 if config2 is None:
                     continue
 
-                condition = config2.get('condition') if config2 else None
-                key = await get_key(policy_class, condition)
+                if not isinstance(config2, list):
+                    config2 = [config2]
 
-                if key not in mapping[scope]:
-                    mapping[scope][key] = {}
+                for c in config2:
+                    condition = c.get('condition')
+                    key = await get_key(policy_class, condition)
 
-                if operation not in mapping[scope][key]:
-                    mapping[scope][key][operation] = []
+                    if key not in mapping[scope]:
+                        mapping[scope][key] = {}
 
-                mapping[scope][key][operation].append(attribute)
+                    if operation not in mapping[scope][key]:
+                        mapping[scope][key][operation] = []
+
+                    mapping[scope][key][operation].append(attribute)
 
     return mapping
 
@@ -238,6 +246,7 @@ async def bootstrap_permissions():
         )
 
         model_name = policy_class.model_name()
+        print(f'Processing {model_name}...')
         action_rules_mapping[model_name] = await action_rules(policy_class)
         query_rules_mapping[model_name] = await attribute_rules(
             policy_class,
