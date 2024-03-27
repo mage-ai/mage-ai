@@ -904,11 +904,13 @@ function PipelineListPage() {
       onClickFilterDefaults={() => {
         setFilters({});
         setSearchTextState('');
-        goToWithQuery({
-          [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
-          [PipelineQueryEnum.SEARCH]: '',
-        }, {
-          replaceParams: true,
+        fetchPipelines?.().then(() => {
+          goToWithQuery({
+            [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
+            [PipelineQueryEnum.SEARCH]: '',
+          }, {
+            replaceParams: true,
+          });
         });
       }}
       onFilterApply={(query, updatedQuery) => {
@@ -930,6 +932,7 @@ function PipelineListPage() {
   ), [
     clonePipeline,
     deletePipeline,
+    fetchPipelines,
     groupByQuery,
     isLoadingClone,
     isLoadingCreate,
