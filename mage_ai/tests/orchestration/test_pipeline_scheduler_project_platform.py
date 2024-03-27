@@ -208,7 +208,7 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                     'mage_ai.orchestration.db.models.schedules.project_platform_activated',
                     lambda: True,
                 ):
-                    with patch.object(PipelineRunMock, 'in_progress_runs') as mock:
+                    with patch.object(PipelineRunMock, 'running_runs') as mock:
                         check_sla()
                         mock.assert_called_once_with(set([s.id for s in pipeline_schedules]))
 

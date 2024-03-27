@@ -546,6 +546,7 @@ function PipelineRunsTable({
                 completed_at: completedAt,
                 execution_date: executionDate,
                 id,
+                passed_sla: passedSla,
                 pipeline_schedule_id: pipelineScheduleId,
                 pipeline_schedule_name: pipelineScheduleName,
                 pipeline_tags: pipelineTags,
@@ -722,8 +723,8 @@ function PipelineRunsTable({
                     passHref
                   >
                     <Link
-                      bold
                       block
+                      bold
                       centerAlign
                       disabled={disabled}
                       sky
@@ -795,8 +796,13 @@ function PipelineRunsTable({
                     default
                     key="row_execution_time"
                     title={(startedAt && completedAt)
-                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      ? `${timeDifference({
+                          endDatetime: completedAt,
+                          showFullFormat: true,
+                          startDatetime: startedAt,
+                        })}${passedSla ? ' (exceeded SLA time threshold)' : ''}`
                       : null}
+                    warning={passedSla}
                   >
                     {(startedAt && completedAt)
                       ? (
