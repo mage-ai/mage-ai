@@ -192,13 +192,14 @@ function Terminal({
 
   const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
     if (typeof outputs !== 'undefined') {
-      return outputs;
+      // Limit the terminal output in the UI; otherwise, typing in the terminal becomes very laggy.
+      return (outputs || []).slice(-1500);
     }
 
     if (!stdout) {
       return [];
     }
-    
+
     // Filter out commands to configure settings
     const splitStdout =
       stdout
@@ -517,7 +518,7 @@ in the context menu that appears.
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}
                     focused={
-                      focus && 
+                      focus &&
                         (cursorIndex === idx + 1 ||
                           cursorIndex >= arr.length && idx === arr.length - 1)
                     }
