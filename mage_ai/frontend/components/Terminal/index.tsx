@@ -465,7 +465,7 @@ in the context menu that appears.
               let displayElement;
               if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
                 // Replace difficult-to-read blue font with cyan font
-                const dataReplacedBlueFont = data.replace('[34;', '[36;');
+                const dataReplacedBlueFont = (data || '').replace('[34;', '[36;');
                 displayElement = (
                   <Text
                     monospace
