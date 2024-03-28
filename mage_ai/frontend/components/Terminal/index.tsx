@@ -33,6 +33,8 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export const DEFAULT_TERMINAL_UUID = 'terminal';
+// Limit the number of lines for the terminal output; otherwise, typing in the terminal can become laggy.
+const TERMINAL_OUTPUT_LIMIT = 2500;
 
 type TerminalProps = {
   command?: string;
@@ -192,8 +194,7 @@ function Terminal({
 
   const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
     if (typeof outputs !== 'undefined') {
-      // Limit the terminal output in the UI; otherwise, typing in the terminal becomes laggy.
-      return (outputs || []).slice(-2500);
+      return (outputs || []).slice(-TERMINAL_OUTPUT_LIMIT);
     }
 
     if (!stdout) {
@@ -204,6 +205,7 @@ function Terminal({
     const splitStdout =
       stdout
         .split('\n')
+        .slice(-TERMINAL_OUTPUT_LIMIT)
         .filter(d => !d.includes('# Mage terminal settings command'));
 
     return splitStdout.map(d => ({
