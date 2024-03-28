@@ -464,6 +464,8 @@ in the context menu that appears.
             dataArray.forEach((data: string, idxInner: number) => {
               let displayElement;
               if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+                // Replace difficult-to-read blue font with cyan font
+                const dataReplacedBlueFont = data.replace('[34;', '[36;');
                 displayElement = (
                   <Text
                     monospace
@@ -473,7 +475,7 @@ in the context menu that appears.
                   >
                     {data && (
                       <Ansi>
-                        {data}
+                        {dataReplacedBlueFont}
                       </Ansi>
                     )}
                   </Text>
