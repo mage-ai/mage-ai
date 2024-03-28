@@ -24,10 +24,9 @@ import { cleanName, randomNameGenerator } from '@utils/string';
 import { getItems, setItems } from './storage';
 import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
-import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pushAtIndex } from '@utils/array';
 import { useFileTabs } from '@components/PipelineDetail/FileTabs';
-import { useKeyboardContext } from '@context/Keyboard';
 
 const UUID_MAIN = 'Main Mage';
 const DEFAULT_ITEM = { selected: true, uuid: UUID_MAIN };

@@ -33,6 +33,8 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export const DEFAULT_TERMINAL_UUID = 'terminal';
+// Limit the number of lines for the terminal output; otherwise, typing in the terminal can become laggy.
+const TERMINAL_OUTPUT_LIMIT = 2500;
 
 type TerminalProps = {
   command?: string;
@@ -192,17 +194,18 @@ function Terminal({
 
   const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
     if (typeof outputs !== 'undefined') {
-      return outputs;
+      return (outputs || []).slice(-TERMINAL_OUTPUT_LIMIT);
     }
 
     if (!stdout) {
       return [];
     }
-    
+
     // Filter out commands to configure settings
     const splitStdout =
       stdout
         .split('\n')
+        .slice(-TERMINAL_OUTPUT_LIMIT)
         .filter(d => !d.includes('# Mage terminal settings command'));
 
     return splitStdout.map(d => ({
@@ -464,6 +467,8 @@ in the context menu that appears.
             dataArray.forEach((data: string, idxInner: number) => {
               let displayElement;
               if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+                // Replace difficult-to-read blue font with cyan font
+                const dataReplacedBlueFont = (data || '').replaceAll('[34;', '[36;');
                 displayElement = (
                   <Text
                     monospace
@@ -473,7 +478,7 @@ in the context menu that appears.
                   >
                     {data && (
                       <Ansi>
-                        {data}
+                        {dataReplacedBlueFont}
                       </Ansi>
                     )}
                   </Text>
@@ -515,7 +520,7 @@ in the context menu that appears.
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}
                     focused={
-                      focus && 
+                      focus &&
                         (cursorIndex === idx + 1 ||
                           cursorIndex >= arr.length && idx === arr.length - 1)
                     }
