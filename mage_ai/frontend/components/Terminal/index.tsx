@@ -192,8 +192,8 @@ function Terminal({
 
   const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
     if (typeof outputs !== 'undefined') {
-      // Limit the terminal output in the UI; otherwise, typing in the terminal becomes very laggy.
-      return (outputs || []).slice(-1000);
+      // Limit the terminal output in the UI; otherwise, typing in the terminal becomes laggy.
+      return (outputs || []).slice(-2500);
     }
 
     if (!stdout) {
