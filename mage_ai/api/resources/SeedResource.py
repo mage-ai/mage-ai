@@ -6,6 +6,7 @@ class SeedResource(GenericResource):
     @classmethod
     async def create(self, payload, user, **kwargs):
         if payload.get('roles') and payload.get('permissions'):
-            await bootstrap_permissions()
+            policy_names = payload.get('policy_names')
+            await bootstrap_permissions(policy_names=policy_names)
 
         return self({}, user, **kwargs)
