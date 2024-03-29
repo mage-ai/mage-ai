@@ -13,6 +13,7 @@ class ProcessQueueTests(TestCase):
     def setUp(self):
         queue_config = QueueConfig.load(config=dict(concurrency=100))
         self.queue = ProcessQueue(queue_config=queue_config)
+        self.queue.start()
 
     def test_init(self):
         self.assertEqual(self.queue.size, 100)

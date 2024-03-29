@@ -36,6 +36,11 @@ class JobStatus(str, Enum):
     CANCELLED = 'cancelled'
 
 
+class QueueStatus(str, Enum):
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+
 class ProcessQueue(Queue):
     def __init__(self, queue_config: QueueConfig):
         """
@@ -53,6 +58,7 @@ class ProcessQueue(Queue):
                 jobs.
 
         """
+        self.status = QueueStatus.INACTIVE
         self.queue_config = queue_config
         self.process_queue_config = self.queue_config.process_queue_config
         self.queue = mp.Queue()
@@ -94,6 +100,9 @@ class ProcessQueue(Queue):
             **kwargs: Keyword arguments for the target function.
 
         """
+        if self.status != QueueStatus.ACTIVE:
+            self._print('Cannot enqueue a job to an inactive queue.')
+            return
         if self.has_job(job_id):
             self._print(f'Job {job_id} exists. Skip enqueue.')
             return
@@ -181,6 +190,28 @@ class ProcessQueue(Queue):
             ],
         )
         self.worker_pool_proc.start()
+
+    def start(self):
+        self.status = QueueStatus.ACTIVE
+
+    def stop(self):
+        """
+        1. Stop enqueueing new jobs
+        2. Clear the queue
+        3. Kill all the running jobs
+        """
+        self.status = QueueStatus.INACTIVE
+        while not self.queue.empty():
+            try:
+                self.queue.get_nowait()
+            except self.queue.Empty:
+                break
+        job_ids = self.job_dict.keys()
+        for job_id in job_ids:
+            if job_id in self.job_dict:
+                if isinstance(self.job_dict.get(job_id), int):
+                    self.kill_job(job_id)
+                del self.job_dict[job_id]
 
     def is_worker_pool_alive(self) -> bool:
         """
