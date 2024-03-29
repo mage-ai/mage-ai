@@ -907,10 +907,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         parts = get_path_parts(file_path)
 
         if parts and len(parts) >= 3:
+            from mage_ai.data_preparation.models.block.block_factory import BlockFactory
+
             # If file_path == transformers/test4.py
             # parts ==
             # ('/home/src/default_repo/default_platform2/project3', 'transformers', 'test4.py')
-
             # If project platform platform activated, then parts ==
             # ('/home/src', 'default_repo', 'data_loaders/astral_violet.py')
 
@@ -929,7 +930,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             configuration = dict(file_path=file_path, file_source=dict(path=file_path))
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(extension)
 
-            return self.get_block(
+            return BlockFactory.get_block(
                 block_uuid,
                 block_uuid,
                 block_type,
