@@ -562,6 +562,67 @@ class WorkloadManager:
             ingress_name, self.namespace, ingress
         )
 
+    def create_http_route(
+            self,
+            gateway_name: str,
+            gateway_namespace: str,
+            hostname: str,
+            service_name: str,
+            workload_name: str,
+    ) -> None:
+        _ = self.custom_object_client.get_namespaced_custom_object(
+            group="gateway.networking.k8s.io",
+            version="v1",
+            namespace="ingress",
+            plural="gateways",
+            name=gateway_name
+        )
+        http_route = {
+            'apiVersion': 'gateway.networking.k8s.io/v1',
+            'kind': 'HTTPRoute',
+            'metadata': {
+                'name': workload_name,
+                'namespace': self.namespace,
+            },
+            'spec': {
+                'parentRefs': [
+                    {
+                        'name': gateway_name,
+                        'namespace': gateway_namespace
+                    }
+                ],
+                'hostnames': [
+                    hostname
+                ],
+                'rules': [
+                    {
+                        'matches': [
+                            {
+                                'path': {
+                                    'type': 'PathPrefix',
+                                    'path': f'{workload_name}'
+                                }
+                            }
+                        ],
+                        'backendRefs': [
+                            {
+                                'kind': 'Service',
+                                'name': service_name,
+                                'port': 6789,
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        _ = self.custom_object_client.create_namespaced_custom_object(
+            group="networking.k8s.io",
+            version="v1",
+            namespace="default",
+            plural="httproutes",
+            body=http_route
+        )
+
     def get_url_from_ingress(self, ingress_name: str, workload_name: str) -> str:
         ingress = self.networking_client.read_namespaced_ingress(
             ingress_name,
