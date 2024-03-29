@@ -696,7 +696,24 @@ class WorkloadManager:
             ingress_name, self.namespace, ingress
         )
 
-    def delete_workload(self, name: str, ingress_name: str = None):
+    def delete_http_route(
+        self,
+        workload_name: str,
+    ) -> None:
+        self.custom_object_client.delete_namespaced_custom_object(
+            group="networking.k8s.io",
+            version="v1",
+            namespace="default",
+            plural="httproutes",
+            name=workload_name
+        )
+
+    def delete_workload(
+            self,
+            name: str,
+            ingress_name: str = None,
+            gateway_name: str = None
+    ):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
         try:
