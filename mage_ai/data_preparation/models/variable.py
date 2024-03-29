@@ -579,12 +579,17 @@ class Variable:
             else:
                 series_non_null = df_col.dropna()
                 if len(series_non_null) > 0:
-                    coltype = type(series_non_null.iloc[0])
+                    sample_element = series_non_null.iloc[0]
+                    coltype = type(sample_element)
                     coltype_inferred = infer_dtype(series_non_null)
                     if is_object_dtype(series_non_null.dtype):
-                        if (
-                            coltype.__name__ in STRING_SERIALIZABLE_COLUMN_TYPES
-                            or coltype_inferred in AMBIGUOUS_COLUMN_TYPES
+                        if coltype.__name__ in STRING_SERIALIZABLE_COLUMN_TYPES:
+                            cast_coltype = str
+                        # If the column is a "primitive" type, i.e. int/bool/etc and there is
+                        # a mix of types in the column, cast to string
+                        elif (
+                            not hasattr(sample_element, '__dict__')
+                            and coltype_inferred in AMBIGUOUS_COLUMN_TYPES
                         ):
                             cast_coltype = str
                         else:

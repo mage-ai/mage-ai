@@ -21,7 +21,6 @@ STRING_SERIALIZABLE_COLUMN_TYPES = set([
 
 AMBIGUOUS_COLUMN_TYPES = set([
     'mixed-integer',
-    'mixed',
     'complex',
     'unknown-array',
 ])
