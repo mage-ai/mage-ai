@@ -1,10 +1,12 @@
 import asyncio
 import collections
 import os
+import time
 import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, Generator, List, Set, Tuple
 
+import psutil
 import pytz
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import desc, func
@@ -849,7 +851,8 @@ class PipelineScheduler:
 
     def __run_heartbeat(self) -> None:
         load1, load5, load15, cpu_count = get_compute()
-        cpu_usage = load15 / cpu_count if cpu_count else None
+        cpu_count = cpu_count or 1
+        cpu_usage = load15 / cpu_count
 
         free_memory, used_memory, total_memory = get_memory()
         memory_usage = used_memory / total_memory if total_memory else None
@@ -863,14 +866,124 @@ class PipelineScheduler:
             memory_usage=memory_usage,
         )
 
+        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
+            self.memory_usage_failure(tags=tags)
+
+        try:
+            pr_cpu_usage, pr_memory_usage = self.__measure_and_record_usage()
+            tags['pipeline_run_cpu_usage'] = pr_cpu_usage
+            tags['pipeline_run_memory_usage'] = pr_memory_usage
+        except Exception:
+            logger.warning('Failed to measure and record pipeline run usage.', **tags)
+
         self.logger.info(
             f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
             f'in schedule {self.pipeline_run.pipeline_schedule_id} is alive.',
             **tags,
         )
 
-        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
-            self.memory_usage_failure(tags=tags)
+    def __measure_and_record_usage(self) -> Tuple[float, float]:
+        """
+        Measure pipeline run cpu and memory usage
+
+        Returns:
+            Tuple[float, float]: A tuple of pipeline run cpu and memory usage percent.
+        """
+        # Get all job_ids for the pipeline run so that we can get the pids for the jobs
+        job_ids = []
+        if self.pipeline and (
+            self.pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]
+            or self.pipeline.run_pipeline_in_one_process
+        ):
+            if job_manager.has_pipeline_run_job(self.pipeline_run.id):
+                job_id = job_manager.job_id(JobType.PIPELINE_RUN, self.pipeline_run.id)
+                job_ids.append(job_id)
+            if self.pipeline.type == PipelineType.INTEGRATION:
+                for stream in self.pipeline.streams():
+                    job_id = job_manager.job_id(
+                        JobType.INTEGRATION_STREAM, f'{self.pipeline_run.id}_{stream}'
+                    )
+                    job_ids.append(job_id)
+        else:
+            for b in self.pipeline_run.block_runs:
+                if b.status == BlockRun.BlockRunStatus.RUNNING:
+                    job_id = job_manager.job_id(JobType.BLOCK_RUN, b.id)
+                    job_ids.append(job_id)
+        metrics = self.pipeline_run.metrics or {}
+
+        prev_cpu_usage_metrics = metrics.get('cpu_usage', {})
+        prev_time_ns = prev_cpu_usage_metrics.get('time')
+
+        # Sometimes the keys will be converted to strings when the metrics are serialized and
+        # deserialized from the database. This will convert the pid keys back to integers.
+        prev_cpu_usage_metrics = {
+            int(k): v for k, v in prev_cpu_usage_metrics.items() if k != 'time'
+        }
+
+        pr_cpu_usage = 0
+        pr_memory_usage = 0
+        curr_time_ns = time.monotonic_ns()
+        pr_cpu_usage_metrics = dict(time=curr_time_ns)
+
+        pids = []
+        for job_id in job_ids:
+            pid = job_manager.queue.job_dict.get(job_id)
+            if pid and isinstance(pid, int):
+                proc = psutil.Process(pid)
+                if proc.is_running():
+                    pids.append(pid)
+                    memory = proc.memory_percent()
+                    pr_memory_usage += memory
+
+                    cpu_times = proc.cpu_times()
+
+                    pr_cpu_usage_metrics[pid] = dict(
+                        user=cpu_times.user,
+                        system=cpu_times.system,
+                    )
+
+        # The cpu_usage calculation is based on the psutil.cpu_percent method calculation.
+        # The reason we can't use the psutil.Process.cpu_percent method directly is because the
+        # psutil.Process method needs to be persisted in between cpu_percent calls. The
+        # PipelineScheduler object is recreated every time the LoopTimeTrigger is run.
+        curr_time = float(curr_time_ns) / 1e9
+        if prev_time_ns:
+            prev_time = float(prev_time_ns) / 1e9
+            cpu_count = os.cpu_count() or 1
+            for pid in pids:
+                if pid in pr_cpu_usage_metrics and pid in prev_cpu_usage_metrics:
+                    curr = pr_cpu_usage_metrics[pid]
+                    prev = prev_cpu_usage_metrics[pid]
+
+                    if curr_time > prev_time:
+                        k = (
+                            (curr['user'] - prev['user'])
+                            + (curr['system'] - prev['system'])
+                        ) / (curr_time - prev_time)
+                        pr_cpu_usage += round((k * 100 / cpu_count), 1)
+
+        # In order to calculate cpu usage for a specific process, we need to compare the cpu usage
+        # from one point in time to another. Therefore, we need to store what the CPU usage was
+        # for a process at a specific time and compare that to the CPU usage at a later time. This
+        # is why we store the CPU usage for each process in the metrics for the pipeline run. This
+        # check ensures that the cpu_usage is only recorded roughly every 10 seconds.
+        if not prev_time_ns or curr_time - prev_time > 9:
+            self.pipeline_run.update(
+                metrics={
+                    **metrics,
+                    'cpu_usage': pr_cpu_usage_metrics,
+                    'recorded_cpu_usages': [
+                        *metrics.get('recorded_cpu_usages', []),
+                        pr_cpu_usage,
+                    ],
+                    'recorded_memory_usages': [
+                        *metrics.get('recorded_memory_usages', []),
+                        pr_memory_usage,
+                    ],
+                }
+            )
+
+        return (pr_cpu_usage, pr_memory_usage)
 
 
 def run_integration_streams(
