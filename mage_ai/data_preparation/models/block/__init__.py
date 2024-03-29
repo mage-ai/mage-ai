@@ -908,6 +908,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if parts and len(parts) >= 3:
             from mage_ai.data_preparation.models.block.block_factory import BlockFactory
+
             # If file_path == transformers/test4.py
             # parts ==
             # ('/home/src/default_repo/default_platform2/project3', 'transformers', 'test4.py')
