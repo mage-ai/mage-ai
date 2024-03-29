@@ -912,7 +912,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             # If file_path == transformers/test4.py
             # parts ==
             # ('/home/src/default_repo/default_platform2/project3', 'transformers', 'test4.py')
-
             # If project platform platform activated, then parts ==
             # ('/home/src', 'default_repo', 'data_loaders/astral_violet.py')
 
