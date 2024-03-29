@@ -52,6 +52,7 @@ class WorkloadManager:
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
         self.networking_client = client.NetworkingV1Api()
+        self.custom_object_client = client.CustomObjectsApi()
 
         self.namespace = namespace
         if not self.namespace:
