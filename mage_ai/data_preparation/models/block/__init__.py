@@ -3473,12 +3473,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
             cache = BlockCache()
             if detach:
+                from mage_ai.data_preparation.models.block.block_factory import BlockFactory
                 """"
                 New block added to pipeline, so it must be added to the block cache.
                 Old block no longer in pipeline, so it must be removed from block cache.
                 """
                 cache.add_pipeline(self, self.pipeline)
-                old_block = self.get_block(
+                old_block = BlockFactory.get_block(
                     old_uuid,
                     old_uuid,
                     self.type,
