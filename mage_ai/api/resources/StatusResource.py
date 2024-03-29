@@ -53,8 +53,8 @@ class StatusResource(GenericResource):
 
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
-            'repo_path': get_repo_path(root_project=False),
-            'repo_path_relative': get_repo_path(root_project=False, absolute_path=False),
+            'repo_path': get_repo_path(root_project=False, user=user),
+            'repo_path_relative': get_repo_path(root_project=False, absolute_path=False, user=user),
             'repo_path_relative_root': get_repo_path(root_project=True, absolute_path=False),
             'repo_path_root': get_repo_path(root_project=True),
             'server_process_id': os.getpid(),

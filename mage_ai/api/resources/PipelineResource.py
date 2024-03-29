@@ -123,7 +123,7 @@ class PipelineResource(BaseResource):
         if repo_path:
             repo_path = repo_path[0]
         if not repo_path:
-            repo_path = get_repo_path(root_project=False)
+            repo_path = get_repo_path(root_project=False, user=user)
 
         search_query = query.get('search', [None])
         if search_query:
@@ -221,6 +221,8 @@ class PipelineResource(BaseResource):
                     print(err_message)
                     return None
 
+        repo_path = get_repo_path(user=user)
+
         def get_pipeline_with_config(uuid, config: Dict) -> Pipeline:
             try:
                 return Pipeline(uuid, config=config, repo_path=repo_path)
@@ -242,6 +244,7 @@ class PipelineResource(BaseResource):
                     pipelines.append(Pipeline(
                         pipeline_uuid_from_cache,
                         config=pipeline_dict['pipeline'],
+                        repo_path=repo_path
                     ))
         else:
             for uuid in pipeline_uuids:
@@ -256,6 +259,7 @@ class PipelineResource(BaseResource):
                         pipelines.append(Pipeline(
                             uuid,
                             config=dict(type='invalid'),
+                            repo_path=repo_path,
                         ))
                 else:
                     pipeline_uuids_miss.append(uuid)
@@ -375,7 +379,10 @@ class PipelineResource(BaseResource):
         pipeline = None
 
         if template_uuid:
-            custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
+            custom_template = CustomPipelineTemplate.load(
+                repo_path=get_repo_path(user=user),
+                template_uuid=template_uuid,
+            )
             pipeline = custom_template.create_pipeline(name)
         elif clone_pipeline_uuid is not None:
             source = Pipeline.get(clone_pipeline_uuid)
@@ -385,7 +392,7 @@ class PipelineResource(BaseResource):
                 name,
                 description=description,
                 pipeline_type=pipeline_type,
-                repo_path=get_repo_path(),
+                repo_path=get_repo_path(user=user),
                 tags=tags,
             )
 

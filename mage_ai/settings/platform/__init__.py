@@ -18,7 +18,7 @@ from mage_ai.shared.hash import combine_into, dig, extract, merge_dict
 from mage_ai.shared.io import safe_write
 
 
-def activate_project(project_name: str) -> None:
+def activate_project(project_name: str, user=None) -> None:
     """
     Activate a specified project and update local platform settings accordingly.
 
@@ -37,25 +37,31 @@ def activate_project(project_name: str) -> None:
         added to the 'projects' dictionary with the 'active' attribute set to True.
     """
     if project_name:
-        platform_settings = __local_platform_settings() or {}
-        if 'projects' not in platform_settings:
-            platform_settings['projects'] = {}
+        if user:
+            from mage_ai.orchestration.db.models.utils import activate_project_for_user
+            from mage_ai.data_preparation.repo_manager import get_project_uuid
+            activate_project_for_user(user, get_project_uuid(), project_name)
+        
+        else:
+            platform_settings = __local_platform_settings() or {}
+            if 'projects' not in platform_settings:
+                platform_settings['projects'] = {}
 
-        platform_settings['projects'][project_name] = merge_dict(
-            platform_settings['projects'].get(project_name) or {},
-            dict(active=True),
-        )
-
-        projects = platform_settings['projects'] or {}
-        for key in projects.keys():
-            if key == project_name:
-                continue
-            platform_settings['projects'][key] = merge_dict(
-                platform_settings['projects'].get(key) or {},
-                dict(active=False),
+            platform_settings['projects'][project_name] = merge_dict(
+                platform_settings['projects'].get(project_name) or {},
+                dict(active=True),
             )
 
-        __update_local_platform_settings(platform_settings)
+            projects = platform_settings['projects'] or {}
+            for key in projects.keys():
+                if key == project_name:
+                    continue
+                platform_settings['projects'][key] = merge_dict(
+                    platform_settings['projects'].get(key) or {},
+                    dict(active=False),
+                )
+
+            __update_local_platform_settings(platform_settings)
 
 
 def build_repo_path_for_all_projects(
@@ -185,12 +191,12 @@ def get_repo_paths_for_file_path(
     return result
 
 
-def build_active_project_repo_path(repo_path: str = None) -> str:
+def build_active_project_repo_path(repo_path: str = None, user=None) -> str:
     if not repo_path:
         repo_path = base_repo_path()
 
     settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
-    active_project = active_project_settings(settings=settings)
+    active_project = active_project_settings(settings=settings, user=user)
     no_active_project = not active_project
 
     items = list(settings.items() or [])
@@ -234,6 +240,7 @@ def active_project_settings(
     get_default: bool = False,
     repo_path: str = None,
     settings: Dict = None,
+    user=None,
 ) -> Dict:
     """
     Retrieve the settings of the active project or the default project.
@@ -262,6 +269,8 @@ def active_project_settings(
         >>> active_project_settings(get_default=True, repo_path='/path/to/repo')
         {'uuid': 'default_project_uuid', 'active': 'true', 'path': 'relative/path'}
     """
+    from mage_ai.orchestration.db.models.utils import get_active_project_for_user
+    from mage_ai.data_preparation.repo_manager import get_project_uuid
     if not settings:
         settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
@@ -269,10 +278,18 @@ def active_project_settings(
     if not items:
         return
 
-    project_settings_tup = find(
-        lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
-        items,
-    )
+    user_active_project = get_active_project_for_user(user, get_project_uuid())
+    if user_active_project:
+        key = user_active_project.project_name
+        project_settings_tup = find(
+            lambda tup: tup and tup[0] == key,
+            items,
+        )
+    else:
+        project_settings_tup = find(
+            lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
+            items,
+        )
 
     if not project_settings_tup and get_default:
         # Get the first item in the settings by default

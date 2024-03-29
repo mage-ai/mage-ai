@@ -34,7 +34,7 @@ class CustomPipelineTemplate(BaseConfig):
     user: Dict = field(default_factory=dict)
 
     @classmethod
-    def load(self, template_uuid: str = None, uuid: str = None):
+    def load(self, repo_path: str = None, template_uuid: str = None, uuid: str = None):
         uuid_use = uuid
         template_uuid_use = template_uuid
 
@@ -49,8 +49,9 @@ class CustomPipelineTemplate(BaseConfig):
             )
 
         try:
+            repo_path = repo_path or get_repo_path()
             config_path_metadata = os.path.join(
-                get_repo_path(),
+                repo_path,
                 uuid_use,
                 METADATA_FILENAME_WITH_EXTENSION,
             )

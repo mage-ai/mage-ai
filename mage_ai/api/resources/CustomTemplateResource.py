@@ -23,6 +23,7 @@ from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.shared.hash import ignore_keys
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+from mage_ai.settings.repo import get_repo_path
 
 OBJECT_TYPE_KEY = 'object_type'
 
@@ -125,7 +126,10 @@ class CustomTemplateResource(GenericResource):
                 return self(CustomBlockTemplate.load(template_uuid=template_uuid), user, **kwargs)
             elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
                 return self(
-                    CustomPipelineTemplate.load(template_uuid=template_uuid),
+                    CustomPipelineTemplate.load(
+                        repo_path=get_repo_path(user=user),
+                        template_uuid=template_uuid,
+                    ),
                     user,
                     **kwargs,
                 )

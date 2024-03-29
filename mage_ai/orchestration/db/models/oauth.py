@@ -1,7 +1,7 @@
 import enum
 import re
 from datetime import datetime
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Union
 
 from sqlalchemy import (
     JSON,
@@ -30,7 +30,7 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.orchestration.db.models.projects import UserProject
 from mage_ai.shared.array import find
 from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import group_by, merge_dict
@@ -157,14 +157,8 @@ class User(BaseModel):
 
         return False
 
-    @property
-    def git_settings(self) -> Union[Dict, None]:
-        return self.get_git_settings()
-
-    def get_git_settings(self, repo_path: str = None):
+    def get_git_settings(self, repo_path: str):
         preferences = self.preferences or dict()
-        if not repo_path:
-            repo_path = get_repo_path()
         pref = preferences.get(repo_path)
         if pref:
             return (pref or {}).get('git_settings')

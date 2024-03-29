@@ -143,7 +143,7 @@ class ProjectResource(GenericResource):
     @safe_db_query
     async def update(self, payload, **kwargs):
         if payload.get('activate_project'):
-            activate_project(payload.get('activate_project'))
+            activate_project(payload.get('activate_project'), user=self.current_user)
 
         platform_settings = payload.get('platform_settings')
         root_project = payload.get('root_project')

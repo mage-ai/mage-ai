@@ -56,7 +56,7 @@ class SecretResource(DatabaseResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
-        repo_path = get_repo_path()
+        repo_path = get_repo_path(user=user)
         model = Secret.query.filter(Secret.repo_name == repo_path, Secret.name == pk).first()
 
         if not model:

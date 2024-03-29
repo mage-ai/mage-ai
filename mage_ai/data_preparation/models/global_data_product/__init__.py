@@ -26,6 +26,7 @@ class GlobalDataProduct:
     object_uuid: str = None
     outdated_after: Dict = field(default_factory=dict)
     outdated_starting_at: Dict = field(default_factory=dict)
+    repo_path: str = None
     settings: Dict = field(default_factory=dict)
 
     def __init__(self, uuid: str, **kwargs):
@@ -33,13 +34,15 @@ class GlobalDataProduct:
         self.object_uuid = kwargs.get('object_uuid')
         self.outdated_after = kwargs.get('outdated_after')
         self.outdated_starting_at = kwargs.get('outdated_starting_at')
+        self.repo_path = kwargs.get('repo_path')
         self.settings = kwargs.get('settings')
         self.uuid = clean_name(uuid) if uuid else uuid
         self._object = None
 
     @classmethod
     def file_path(self) -> str:
-        return os.path.join(get_repo_path(), 'global_data_products.yaml')
+        repo_path = self.repo_path or get_repo_path()
+        return os.path.join(repo_path, 'global_data_products.yaml')
 
     @classmethod
     def load_all(self, file_path: str = None) -> List['GlobalDataProduct']:

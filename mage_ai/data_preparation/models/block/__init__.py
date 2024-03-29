@@ -92,7 +92,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
 from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -818,8 +818,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if not configuration.get('file_source'):
                 configuration['file_source'] = {}
             if not configuration['file_source'].get('path'):
+                relative_path = str(Path(repo_path).relative_to(base_repo_path_directory_name()))
                 configuration['file_source']['path'] = self.__build_file_path(
-                    get_repo_path(absolute_path=False, root_project=False),
+                    relative_path,
                     uuid,
                     block_type,
                     language,
@@ -2606,7 +2607,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
-                CallbackBlock.create(self.uuid)
+                CallbackBlock.create(self.uuid, repo_path=self.repo_path)
             self.__update_pipeline_block()
 
         if 'retry_config' in data and data['retry_config'] != self.retry_config:
@@ -3703,11 +3704,11 @@ class ConditionalBlock(AddonBlock):
 
 class CallbackBlock(AddonBlock):
     @classmethod
-    def create(cls, orig_block_name) -> 'CallbackBlock':
+    def create(cls, orig_block_name, repo_path: str = None) -> 'CallbackBlock':
         return Block.create(
             f'{clean_name_orig(orig_block_name)}_callback',
             BlockType.CALLBACK,
-            get_repo_path(),
+            repo_path or get_repo_path(),
             language=BlockLanguage.PYTHON,
         )
 

@@ -221,7 +221,7 @@ class BlockResource(GenericResource):
                 block = Block.create(
                     block_name,
                     block_type,
-                    get_repo_path(),
+                    get_repo_path(user=user),
                     require_unique_name=require_unique_name,
                     **block_attributes,
                 )
