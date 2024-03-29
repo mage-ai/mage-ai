@@ -282,7 +282,9 @@ class Variable:
         else:
             self.__write_json(data)
 
-        self.write_metadata()
+        if self.variable_type != VariableType.SPARK_DATAFRAME:
+            # Not write json file in spark data directory to avoid read error
+            self.write_metadata()
 
     async def write_data_async(self, data: Any) -> None:
         """
@@ -315,7 +317,9 @@ class Variable:
         else:
             await self.__write_json_async(data)
 
-        self.write_metadata()
+        if self.variable_type != VariableType.SPARK_DATAFRAME:
+            # Not write json file in spark data directory to avoid read error
+            self.write_metadata()
 
     def write_metadata(self) -> None:
         """
