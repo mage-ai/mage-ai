@@ -733,6 +733,14 @@ class WorkloadManager:
                 'Failed to delete workspace path from ingress, you may need to manually delete it'
             ) from ex
 
+        try:
+            if gateway_name:
+                self.delete_http_route(name)
+        except Exception as ex:
+            raise Exception(
+                f'Failed to delete workspace http route ({self.namespace}/{name})'
+            ) from ex
+
     def get_workload_activity(self, name: str) -> Dict:
         pods = self.core_client.list_namespaced_pod(self.namespace).items
         pod_name = None
