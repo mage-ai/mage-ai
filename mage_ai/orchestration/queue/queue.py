@@ -19,5 +19,13 @@ class Queue(ABC):
     def kill_job(self, job_id: str):
         pass
 
+    @abstractmethod
+    def start(self):
+        pass
+
+    @abstractmethod
+    def stop(self):
+        pass
+
     def _print(self, msg):
         print(f'[{self.__class__.__name__}] {msg}')

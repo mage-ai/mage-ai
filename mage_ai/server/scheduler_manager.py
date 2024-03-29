@@ -9,6 +9,7 @@ import sentry_sdk
 
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
+from mage_ai.orchestration.job_manager import job_manager
 from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.settings import (
@@ -47,8 +48,12 @@ def run_scheduler():
     )
 
     try:
+        if job_manager is not None:
+            job_manager.start()
         LoopTimeTrigger().start()
     except Exception as e:
+        if job_manager is not None:
+            job_manager.stop()
         logger.exception('Failed to run scheduler.')
         raise e
 

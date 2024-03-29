@@ -86,6 +86,12 @@ class JobManager:
         job_id = self.__job_id(JobType.INTEGRATION_STREAM, id)
         return self.queue.kill_job(job_id)
 
+    def start(self):
+        self.queue.start()
+
+    def stop(self):
+        self.queue.stop()
+
     def __job_id(self, job_type: JobType, uid: Union[str, int]):
         return f'{job_type}_{uid}'
 
