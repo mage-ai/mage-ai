@@ -3,12 +3,10 @@ import { useMutation } from 'react-query';
 
 import AutocompleteDropdown from '@components/AutocompleteDropdown';
 import BlockActionObjectType, { ObjectType } from '@interfaces/BlockActionObjectType';
-import Button from '@oracle/elements/Button';
 import ButtonItems, { ButtonItemsProps } from './ButtonItems';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
@@ -17,35 +15,20 @@ import SearchResultType, { SearchResultTypeEnum } from '@interfaces/SearchResult
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
-  BLOCK_TYPE_NAME_MAPPING,
-  BlockLanguageEnum,
-  BlockRequestPayloadType,
-  BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
   AISparkle,
   AlertTriangle,
-  ArrowsAdjustingFrameSquare,
-  BlockBlank,
   BlockCubePolygon,
-  BlockGeneric,
-  CircleWithArrowUp,
-  CubeWithArrowDown,
-  DBT as DBTIcon,
   File as FileIcon,
-  FrameBoxSelection,
-  HexagonAll,
-  Sensor,
   TemplateShapes,
 } from '@oracle/icons';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import {
-  ButtonWrapper,
   ContainerStyle,
   DividerStyle,
   DropdownStyle,
@@ -61,8 +44,6 @@ import {
   KEY_CODE_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_SETUP_AI_LATER } from '@storage/constants';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { UNITS_BETWEEN_SECTIONS, UNIT } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -102,8 +83,6 @@ function AddNewBlocksV2({
   showConfigureProjectModal,
   showGlobalDataProducts,
 }: AddNewBlocksV2Props) {
-  const buttonRefTemplates = useRef(null);
-  const buttonRefCustom = useRef(null);
   const timeoutRef = useRef(null);
   const refTextInputInit = useRef(null);
   const refTextInput =
