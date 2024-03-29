@@ -212,7 +212,10 @@ class WorkloadManager:
         4. Create config map for lifecycle hooks if provided.
         5. Create stateful set
         6. Create service
-        7. Update ingress if ingress_name provided
+        7.
+            a) Update ingress if ingress_name provided
+            or
+            b) Create httproute if gateway name/namespace/hostname are provided
 
         Args:
             name (str): name of the workload
@@ -237,6 +240,8 @@ class WorkloadManager:
         pvc_retention_policy = parameters.get('pvc_retention_policy') or 'Retain'
 
         ingress_name = workspace_config.ingress_name
+        gateway_name = workspace_config.gateway_name
+        gateway_namespace = workspace_config.gateway_namespace
 
         volumes = []
         volume_mounts = [{'name': 'mage-data', 'mountPath': '/home/src'}]
@@ -246,7 +251,10 @@ class WorkloadManager:
             project_type=project_type,
             project_uuid=workspace_config.project_uuid,
             container_config=container_config,
-            set_base_path=ingress_name is not None,
+            set_base_path=(
+                    ingress_name is not None or
+                    (gateway_name is not None and gateway_namespace is not None)
+            ),
             initial_metadata=initial_metadata,
         )
         container_config['env'] = env_vars
@@ -470,9 +478,19 @@ class WorkloadManager:
             self.namespace, service
         )
 
+        hostname = workspace_config.hostname
+
         try:
             if ingress_name:
                 self.add_service_to_ingress_paths(ingress_name, service_name, name)
+            if gateway_name and gateway_namespace and hostname:
+                self.create_http_route(
+                    gateway_name,
+                    gateway_namespace,
+                    hostname,
+                    service_name,
+                    name
+                )
         except Exception as err:
             self.delete_workload(name)
             raise err
