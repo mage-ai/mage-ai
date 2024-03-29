@@ -111,6 +111,9 @@ function TagsAutocompleteInputField({
           topOffset={refTextInput?.current?.getBoundingClientRect().height}
         >
           <AutocompleteDropdown
+            eventProperties={{
+              eventParameters: { item_type: 'tag' },
+            }}
             itemGroups={[
               {
                 items: focused ? autocompleteItemsWithExtra : [],

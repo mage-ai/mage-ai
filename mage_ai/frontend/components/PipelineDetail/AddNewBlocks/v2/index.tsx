@@ -327,6 +327,9 @@ function AddNewBlocksV2({
                 )}
               >
                 <AutocompleteDropdown
+                  eventProperties={{
+                    eventParameters: { item_type: 'block_search' },
+                  }}
                   itemGroups={[
                     {
                       items: focused ? autocompleteItems : [],

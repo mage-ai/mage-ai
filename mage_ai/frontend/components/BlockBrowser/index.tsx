@@ -411,6 +411,7 @@ function Browser({
             setSelectedLinks={setSelectedLinks}
           />
         )}
+        beforeContentHeightOffset={beforeHeaderHeight}
         beforeDividerContrast
         beforeHeader={(
           <div ref={refHeaderBefore}>
@@ -432,7 +433,6 @@ function Browser({
           </div>
         )}
         beforeHeightOffset={0}
-        beforeContentHeightOffset={beforeHeaderHeight}
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         contained
@@ -469,95 +469,95 @@ function Browser({
                   onFocus={() => setFocused(true)}
                   placeholder="Search a file..."
                   primary
-                  small
                   ref={refSearch}
+                  small
                 />
 
-                  <DropdownStyle
-                    maxHeight={UNIT * 100}
-                    topOffset={refSearch?.current?.getBoundingClientRect().height}
-                  >
-                    <AutocompleteDropdown
-                      itemGroups={[
-                        {
-                          items: focused ? autocompleteItems : [],
-                          renderItem: (
-                            {
-                              itemObject: {
-                                cacheItem,
-                                model,
-                              },
-                            }: ItemType,
-                            opts: RenderItemProps,
-                          ) => {
-                            const {
-                              filePath,
-                              project,
-                            } = model;
-                            const Icon = Database;
+                <DropdownStyle
+                  maxHeight={UNIT * 100}
+                  topOffset={refSearch?.current?.getBoundingClientRect().height}
+                >
+                  <AutocompleteDropdown
+                    itemGroups={[
+                      {
+                        items: focused ? autocompleteItems : [],
+                        renderItem: (
+                          {
+                            itemObject: {
+                              cacheItem,
+                              model,
+                            },
+                          }: ItemType,
+                          opts: RenderItemProps,
+                        ) => {
+                          const {
+                            filePath,
+                            project,
+                          } = model;
+                          const Icon = Database;
 
-                            return (
-                              <RowStyle
-                                {...opts}
-                                onClick={(e) => {
-                                  pauseEvent(e);
-                                  opts?.onClick?.(e);
-                                }}
+                          return (
+                            <RowStyle
+                              {...opts}
+                              onClick={(e) => {
+                                pauseEvent(e);
+                                opts?.onClick?.(e);
+                              }}
+                            >
+                              <Flex
+                                alignItems="center"
+                                flex={1}
+                                justifyContent="space-between"
                               >
-                                <Flex
-                                  alignItems="center"
-                                  flex={1}
-                                  justifyContent="space-between"
-                                >
-                                  <FlexContainer alignItems="center">
-                                    <Icon default />
+                                <FlexContainer alignItems="center">
+                                  <Icon default />
 
-                                    <Spacing mr={1} />
+                                  <Spacing mr={1} />
 
-                                    <Text default monospace overflowWrap small textOverflow>
-                                      {filePath}
-                                    </Text>
-                                  </FlexContainer>
+                                  <Text default monospace overflowWrap small textOverflow>
+                                    {filePath}
+                                  </Text>
+                                </FlexContainer>
 
-                                  <FlexContainer alignItems="center">
-                                    <Spacing mr={1} />
+                                <FlexContainer alignItems="center">
+                                  <Spacing mr={1} />
 
-                                    <Text monospace muted overflowWrap small textOverflow>
-                                      {project?.name}
-                                    </Text>
-                                  </FlexContainer>
-                                </Flex>
-                              </RowStyle>
-                            );
-                          },
+                                  <Text monospace muted overflowWrap small textOverflow>
+                                    {project?.name}
+                                  </Text>
+                                </FlexContainer>
+                              </Flex>
+                            </RowStyle>
+                          );
                         },
-                      ]}
-                      maxResults={12}
-                      onSelectItem={({
-                        itemObject,
-                      }: ItemType) => {
-                        const arr = [];
-                        const cacheItem =  itemObject?.cacheItem;
+                      },
+                    ]}
+                    maxResults={12}
+                    onSelectItem={({
+                      itemObject,
+                    }: ItemType) => {
+                      const arr = [];
+                      const cacheItem =  itemObject?.cacheItem;
 
-                        if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
-                          arr.push(buildNavLinkModels([itemObject?.model])?.[0]);
-                          arr.push(buildNavLinks(cacheItems)?.find(({
-                            uuid,
-                          }) => uuid === cacheItem?.item?.project?.uuid));
-                          arr.push(NAV_LINKS?.find(({
-                            uuid,
-                          }) => ((uuid as unknown) as BlockTypeEnum) === BlockTypeEnum.DBT));
-                        }
+                      if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
+                        arr.push(buildNavLinkModels([itemObject?.model])?.[0]);
+                        arr.push(buildNavLinks(cacheItems)?.find(({
+                          uuid,
+                        }) => uuid === cacheItem?.item?.project?.uuid));
+                        arr.push(NAV_LINKS?.find(({
+                          uuid,
+                        }) => ((uuid as unknown) as BlockTypeEnum) === BlockTypeEnum.DBT));
+                      }
 
-                        setSelectedLinks(arr);
-                        setSearchText(null);
-                        setFocused(false);
-                        refSearch?.current?.blur();
-                      }}
-                      searchQuery={searchText}
-                      uuid={`${componentUUID}/AutocompleteDropdown`}
-                    />
-                  </DropdownStyle>
+                      setSelectedLinks(arr);
+                      setSearchText(null);
+                      setFocused(false);
+                      refSearch?.current?.blur();
+                    }}
+                    searchQuery={searchText}
+                    uuid={`${componentUUID}/AutocompleteDropdown`}
+                  />
+                </DropdownStyle>
               </SearchStyle>
             </BrowserHeader>
 
