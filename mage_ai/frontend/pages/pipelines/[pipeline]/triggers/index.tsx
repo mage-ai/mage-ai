@@ -118,12 +118,12 @@ function PipelineSchedules({
   const globalVariables = dataGlobalVariables?.variables;
 
   const q = queryFromUrl();
-  const query = filterQuery(q, [
+  const query = useMemo(() => filterQuery(q, [
     PipelineScheduleFilterQueryEnum.INTERVAL,
     PipelineScheduleFilterQueryEnum.STATUS,
     PipelineScheduleFilterQueryEnum.TAG,
     PipelineScheduleFilterQueryEnum.TYPE,
-  ]);
+  ]), [q]);
   const apiFilterQuery = getPipelineScheduleApiFilterQuery(query);
   const page = q?.page ? q.page : 0;
   const {
@@ -413,7 +413,10 @@ function PipelineSchedules({
     >
       {newTriggerFromInteractionsButtonMemo}
     </Toolbar>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [
+    // The "query" dependency is intentionally excluded to avoid the filters
+    // being reset every time pipeline triggers are fetched.
     createNewSchedule,
     isCreateDisabled,
     isLoadingCreateNewSchedule,
@@ -421,7 +424,6 @@ function PipelineSchedules({
     isViewerRole,
     newTriggerFromInteractionsButtonMemo,
     pipelineUUID,
-    query,
     router,
     showModal,
     tags,

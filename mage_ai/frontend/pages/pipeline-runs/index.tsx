@@ -28,11 +28,11 @@ function RunListPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
-  const query = filterQuery(q, [
+  const query = useMemo(() => filterQuery(q, [
     PipelineRunFilterQueryEnum.PIPELINE_UUID,
     PipelineRunFilterQueryEnum.STATUS,
     PipelineRunFilterQueryEnum.TAG,
-  ]);
+  ]), [q]);
 
   const { data: dataProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
@@ -75,8 +75,8 @@ function RunListPage() {
   const toolbarEl = useMemo(() => (
     <Toolbar
       filterOptions={{
-        pipeline_uuid: pipelineUUIDs,
         pipeline_tag: tags.map(({ uuid }) => uuid),
+        pipeline_uuid: pipelineUUIDs,
         status: PIPELINE_RUN_STATUSES,
       }}
       filterValueLabelMapping={{
@@ -92,7 +92,14 @@ function RunListPage() {
       query={query}
       resetPageOnFilterApply
     />
-  ), [pipelineUUIDs, query, router, tags]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [
+    // The "query" dependency is intentionally excluded to avoid the filters
+    // being reset every time pipeline runs are fetched.
+    pipelineUUIDs,
+    router,
+    tags,
+  ]);
 
   return (
     <Dashboard
