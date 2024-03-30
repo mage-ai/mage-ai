@@ -111,10 +111,8 @@ function KeyboardShortcutWrapper({
           logEventCustom(
             eventName,
             {
-              eventParameters: {
-                ...eventParameters,
-                usedKeyboardShortcut: true,
-              },
+              ...eventParameters,
+              used_keyboard_shortcut: true,
             },
           );
           onClick(event);
