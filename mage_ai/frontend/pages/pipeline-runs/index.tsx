@@ -95,7 +95,7 @@ function RunListPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [
     // The "query" dependency is intentionally excluded to avoid the filters
-    // being reset everytime pipeline runs are fetched.
+    // being reset every time pipeline runs are fetched.
     pipelineUUIDs,
     router,
     tags,

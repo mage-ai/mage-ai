@@ -416,7 +416,7 @@ function PipelineSchedules({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [
     // The "query" dependency is intentionally excluded to avoid the filters
-    // being reset everytime pipeline triggers are fetched.
+    // being reset every time pipeline triggers are fetched.
     createNewSchedule,
     isCreateDisabled,
     isLoadingCreateNewSchedule,
