@@ -160,7 +160,7 @@ setuptools.setup(
             'google-cloud-pubsub~=2.19.0',
             'google-cloud-run~=0.10.1',
             'google-cloud-storage~=2.5.0',
-            'great_expectations==0.15.50',
+            'great-expectations==0.18.12',
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
