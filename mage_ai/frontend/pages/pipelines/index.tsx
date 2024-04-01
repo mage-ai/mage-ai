@@ -13,7 +13,6 @@ import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
 import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
@@ -37,7 +36,6 @@ import Table, { SortedColumnType } from '@components/shared/Table';
 import TagType from '@interfaces/TagType';
 import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 import api from '@api';
@@ -55,7 +53,6 @@ import {
   PipelineV3,
   PlayButtonFilled,
   Save,
-  Secrets,
   Schedule,
 } from '@oracle/icons';
 import { ErrorProvider } from '@context/Error';
@@ -103,7 +100,6 @@ import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { range, sortByKey } from '@utils/array';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
-import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 import { initiateDownload } from '@utils/downloads';
 
@@ -293,7 +289,7 @@ function PipelineListPage() {
               response,
             }),
         }),
-    }
+    },
   );
 
   useEffect(() => {
@@ -944,169 +940,6 @@ function PipelineListPage() {
     setSearchText,
     showInputModal,
     tags,
-  ]);
-
-  const [showError] = useError(null, {}, [], {
-    uuid: 'pipelines/list',
-  });
-  const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
-    api.projects.useUpdate(project?.name),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchProjects();
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-  const updateProject = useCallback((payload: {
-    deny_improve_mage?: boolean;
-    help_improve_mage?: boolean;
-  }) => updateProjectBase({
-    project: payload,
-  }), [updateProjectBase]);
-
-  const [showHelpMageModal, hideHelpMageModal] = useModal(() => (
-    <Panel maxWidth={UNIT * 60}>
-      <Spacing mb={1}>
-        <Headline>
-          Help improve Mage
-        </Headline>
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <Text default>
-          Please contribute usage statistics to help improve the developer experience
-          for you and everyone in the community 🤝.
-        </Text>
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <Panel success>
-          <FlexContainer alignItems="center">
-            <Secrets size={UNIT * 5} success />
-            <Spacing mr={1} />
-            <Flex>
-              <Text>
-                All usage statistics are completely anonymous.
-                It’s impossible for Mage to know which statistics belongs to whom.
-              </Text>
-            </Flex>
-          </FlexContainer>
-        </Panel>
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <Text default>
-          By opting into sending usage statistics to <Link
-            href="https://www.mage.ai"
-            openNewWindow
-          >
-            Mage
-          </Link>, it’ll help the team and community of contributors (<Link
-            href="https://www.mage.ai/chat"
-            openNewWindow
-          >
-            Magers
-          </Link>)
-          learn what’s going wrong with the tool and what improvements can be made.
-        </Text>
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <Text default>
-          In addition to helping reduce potential errors,
-          you’ll help inform which features are useful and which need work.
-        </Text>
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <FlexContainer
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Text bold>
-            I want to help make Mage more powerful for everyone
-          </Text>
-
-          <Spacing mr={PADDING_UNITS} />
-
-          <ToggleSwitch
-            checked
-            onCheck={() => {
-              if (typeof window !== 'undefined') {
-                if (window.confirm(
-                  'Are you sure you don’t want to help everyone in the community?',
-                )) {
-                  updateProject({
-                    deny_improve_mage: true,
-                    help_improve_mage: false,
-                  }).then(() => hideHelpMageModal());
-                }
-              } else {
-                updateProject({
-                  deny_improve_mage: true,
-                  help_improve_mage: false,
-                }).then(() => hideHelpMageModal());
-              }
-            }}
-          />
-        </FlexContainer>
-      </Spacing>
-
-      {isLoadingUpdateProject && (
-        <Spacing mb={PADDING_UNITS}>
-          <Spinner inverted />
-        </Spacing>
-      )}
-
-      <Spacing mb={PADDING_UNITS}>
-        <Text muted small>
-          To learn more about how this works, please check out the <Link
-            href="https://docs.mage.ai/contributing/statistics/overview"
-            openNewWindow
-            small
-          >
-            documentation
-          </Link>.
-        </Text>
-      </Spacing>
-
-      <Button
-        data-testid="help_mage_close_button"
-        onClick={() => updateProject({
-          help_improve_mage: true,
-        }).then(() => hideHelpMageModal())}
-        secondary
-      >
-        Close
-      </Button>
-    </Panel>
-  ), {}, [
-    project,
-  ], {
-    background: true,
-    hideCallback: () => {
-      updateProject({
-        help_improve_mage: true,
-      });
-    },
-    uuid: 'help_mage',
-  });
-
-  useEffect(() => {
-    if (project && project?.help_improve_mage === null) {
-      showHelpMageModal();
-    }
-  }, [
-    project,
-    showHelpMageModal,
   ]);
 
   const buildRowGroupInfo = useCallback((pipelinesInner: PipelineType[]) => {
