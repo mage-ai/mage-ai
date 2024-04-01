@@ -78,6 +78,10 @@ class PipelineScheduleResource(DatabaseResource):
 
         if project_platform_activated():
             query = PipelineSchedule.query
+            if pipeline:
+                query = query.filter(PipelineSchedule.repo_path == pipeline.repo_path)
+            elif user:
+                query = query.filter(PipelineSchedule.repo_path == get_repo_path(user=user))
         else:
             query = PipelineSchedule.repo_query
 

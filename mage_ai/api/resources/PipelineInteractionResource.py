@@ -14,7 +14,8 @@ class PipelineInteractionResource(GenericResource):
     @safe_db_query
     async def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
-        repo_path = kwargs.get('repo_path')
+        user = kwargs.get('user')
+        repo_path = get_repo_path(user=user)
         pipeline = await Pipeline.get_async(uuid, repo_path)
         return PipelineInteractions(pipeline)
 
