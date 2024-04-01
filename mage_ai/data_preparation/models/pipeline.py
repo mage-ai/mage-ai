@@ -339,7 +339,7 @@ class Pipeline:
         duplicate_pipeline_dict['name'] = duplicate_pipeline_uuid
         safe_write(
             duplicate_pipeline.config_path,
-            yaml.dump(duplicate_pipeline_dict)
+            yaml.dump(duplicate_pipeline_dict),
         )
 
         tags = duplicate_pipeline_dict.get('tags')
@@ -514,7 +514,7 @@ class Pipeline:
 
         if not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
-        async with aiofiles.open(config_path, mode='r') as f:
+        async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
             config = yaml.safe_load(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
@@ -715,7 +715,7 @@ class Pipeline:
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist in repo_path {self.repo_path}.')
-        with open(self.config_path) as fp:
+        with open(self.config_path, encoding='utf-8') as fp:
             config = yaml.full_load(fp) or {}
         return config
 
@@ -2132,7 +2132,7 @@ class Pipeline:
                 'Blocks cannot be added or removed when saving content, please try again.',
             )
 
-        content = yaml.dump(pipeline_dict)
+        content = yaml.dump(pipeline_dict, allow_unicode=True)
 
         safe_write(self.config_path, content)
 
@@ -2205,7 +2205,7 @@ class Pipeline:
                 'Blocks cannot be added or removed when saving content, please try again.',
             )
 
-        content = yaml.dump(pipeline_dict)
+        content = yaml.dump(pipeline_dict, allow_unicode=True)
 
         test_path = f'{self.config_path}.test'
         async with aiofiles.open(test_path, mode='w', encoding='utf-8') as fp:
