@@ -36,8 +36,12 @@ def activate_project(project_name: str, user=None) -> None:
         If the specified project does not exist in the local platform settings, it will be
         added to the 'projects' dictionary with the 'active' attribute set to True.
     """
+    from mage_ai.data_preparation.models.project import Project
+    from mage_ai.data_preparation.models.project.constants import FeatureUUID
     if project_name:
-        if user:
+        if user and Project.is_feature_enabled_in_root_or_active_project(
+            FeatureUUID.PROJECT_PLATFORM_USER_PROJECTS
+        ):
             from mage_ai.data_preparation.repo_manager import get_project_uuid
             from mage_ai.orchestration.db.models.utils import activate_project_for_user
             activate_project_for_user(user, get_project_uuid(), project_name)
@@ -270,6 +274,8 @@ def active_project_settings(
         >>> active_project_settings(get_default=True, repo_path='/path/to/repo')
         {'uuid': 'default_project_uuid', 'active': 'true', 'path': 'relative/path'}
     """
+    from mage_ai.data_preparation.models.project import Project
+    from mage_ai.data_preparation.models.project.constants import FeatureUUID
     from mage_ai.data_preparation.repo_manager import get_project_uuid
     from mage_ai.orchestration.db.models.utils import get_active_project_for_user
     if not settings:
@@ -280,7 +286,9 @@ def active_project_settings(
         return
 
     user_active_project = None
-    if user:
+    if user and Project.is_feature_enabled_in_root_or_active_project(
+        FeatureUUID.PROJECT_PLATFORM_USER_PROJECTS
+    ):
         user_active_project = get_active_project_for_user(user, get_project_uuid())
     if user_active_project:
         key = user_active_project.project_name
