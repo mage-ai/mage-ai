@@ -361,7 +361,9 @@ function Preferences({
               openai_api_key: projectAttributes?.openai_api_key,
               pipelines: projectAttributes?.pipelines,
             };
-            if (projectAttributes?.help_improve_mage === false) {
+            if (project?.help_improve_mage === true
+              && projectAttributes?.help_improve_mage === false
+            ) {
               updateProjectPayload.deny_improve_mage = true;
             }
             updateProject(updateProjectPayload);
