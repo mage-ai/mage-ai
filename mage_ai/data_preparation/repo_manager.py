@@ -62,7 +62,7 @@ class RepoConfig:
         self.spark_config = None
         self.notification_config = None
         self.queue_config = None
-        self.help_improve_mage = None
+        self.help_improve_mage = True
         self.openai_api_key = None
         self._pipelines = None
         self.retry_config = None

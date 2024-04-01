@@ -86,6 +86,16 @@ export interface ProjectPipelinesType {
   settings?: PipelineSettingsType;
 }
 
+export type ProjectRequestPayloadType = {
+  deny_improve_mage?: boolean;
+  features?: {
+    [key: string]: boolean;
+  };
+  help_improve_mage?: boolean;
+  openai_api_key?: string;
+  pipelines?: ProjectPipelinesType;
+};
+
 export default interface ProjectType {
   emr_config?: EMRConfigType;
   features?: {
