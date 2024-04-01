@@ -83,8 +83,7 @@ jobs:
         if: matrix.python-version == '3.10'
       - name: Create Mage test project
         run: |
-          python mage_ai/cli/main.py init test_project &&
-          echo 'help_improve_mage: false' >> test_project/metadata.yaml
+          python mage_ai/cli/main.py init test_project
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:.
         if: matrix.python-version == '3.10'
