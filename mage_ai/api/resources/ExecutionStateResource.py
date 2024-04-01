@@ -1,6 +1,7 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.settings.repo import get_repo_path
 
 
 class ExecutionStateResource(GenericResource):
@@ -16,8 +17,10 @@ class ExecutionStateResource(GenericResource):
         if block_uuid:
             block_uuid = block_uuid[0]
 
+        repo_path = get_repo_path(user=user)
+
         if pipeline_uuid and block_uuid:
-            pipeline = await Pipeline.get_async(pipeline_uuid)
+            pipeline = await Pipeline.get_async(pipeline_uuid, repo_path)
             if pipeline and pipeline.type in [PipelineType.PYTHON, PipelineType.PYSPARK]:
                 block = pipeline.get_block(block_uuid)
                 if block and block.compute_management_enabled() and block.is_using_spark():

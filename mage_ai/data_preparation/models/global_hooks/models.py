@@ -247,7 +247,7 @@ class Hook(BaseDataClass):
                     repo_path = self.pipeline_settings.get('repo_path')
                 self._pipeline = Pipeline.get(
                     self.pipeline_settings.get('uuid'),
-                    repo_path=repo_path,
+                    repo_path,
                     all_projects=False if repo_path else True,
                 )
                 self._pipeline.run_pipeline_in_one_process = True
@@ -421,6 +421,7 @@ class Hook(BaseDataClass):
             if with_trigger or (self.run_settings and self.run_settings.with_trigger):
                 pipeline_run = trigger_pipeline(
                     self.pipeline.uuid,
+                    repo_path=self.pipeline.repo_path,
                     variables=variables,
                     check_status=check_status and not asynchronous,
                     error_on_failure=error_on_failure,

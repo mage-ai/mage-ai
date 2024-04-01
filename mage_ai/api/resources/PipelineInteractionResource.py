@@ -5,6 +5,7 @@ from mage_ai.api.resources.InteractionResource import InteractionResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import extract, merge_dict
 
 
@@ -13,13 +14,15 @@ class PipelineInteractionResource(GenericResource):
     @safe_db_query
     async def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
-        pipeline = await Pipeline.get_async(uuid)
+        repo_path = kwargs.get('repo_path')
+        pipeline = await Pipeline.get_async(uuid, repo_path)
         return PipelineInteractions(pipeline)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        model = await self.get_model(pk)
+        repo_path = get_repo_path(user=user)
+        model = await self.get_model(pk, repo_path=repo_path)
 
         query = kwargs.get('query', {})
         filter_for_permissions = query.get('filter_for_permissions', [False])

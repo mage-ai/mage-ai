@@ -13,7 +13,6 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import group_by, merge_dict
 
@@ -138,9 +137,8 @@ class MonitorStats:
             try:
                 pipeline = Pipeline.get(
                     uuid,
-                    all_projects=project_platform_activated(),
+                    self.repo_path,
                     check_if_exists=False,
-                    repo_path=self.repo_path,
                 )
                 pipelines_mapping[pipeline.uuid] = pipeline
             except Exception as err:

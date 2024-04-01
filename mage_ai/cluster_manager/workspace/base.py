@@ -33,7 +33,7 @@ class Workspace(abc.ABC):
 
     @classproperty
     def project_folder(self) -> str:
-        return os.path.join(get_repo_path(), 'projects')
+        return os.path.join(get_repo_path(root_project=True), 'projects')
 
     @property
     def config_path(self) -> str:

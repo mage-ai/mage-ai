@@ -182,7 +182,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_project_platform
 
-        return Pipeline.get(self.pipeline_uuid)
+        return Pipeline.get(self.pipeline_uuid, get_repo_path())
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
@@ -538,7 +538,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             return False
 
         try:
-            Pipeline.get(self.pipeline_uuid)
+            Pipeline.get(self.pipeline_uuid, get_repo_path())
         except Exception:
             print(
                 f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
@@ -824,13 +824,11 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_project_platform
 
-        return Pipeline.get(self.pipeline_uuid)
+        return Pipeline.get(self.pipeline_uuid, get_repo_path())
 
     @property
     def pipeline_type(self) -> PipelineType:
-        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
-
-        return pipeline.type if pipeline is not None else None
+        return self.pipeline.type if self.pipeline is not None else None
 
     @property
     def logs(self) -> List[Dict]:
@@ -1633,7 +1631,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
 
     @property
     def logs(self):
-        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        pipeline = self.pipeline_run.pipeline_schedule.pipeline
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
             block_uuid=clean_name(self.block_uuid),
@@ -1645,7 +1643,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return await self.logs_async_project_platform(repo_path=repo_path)
 
-        pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
+        pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid, repo_path)
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
             block_uuid=clean_name(self.block_uuid),
@@ -1681,7 +1679,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
         return None
 
     def get_outputs(self, sample_count: int = None) -> List[Dict]:
-        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        pipeline = self.pipeline_run.pipeline_schedule.pipeline
         block = pipeline.get_block(self.block_uuid)
         block_uuid = self.block_uuid
 

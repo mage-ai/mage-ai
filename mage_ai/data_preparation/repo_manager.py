@@ -14,13 +14,18 @@ from jinja2 import Template
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings import INITIAL_METADATA, settings
-from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
+from mage_ai.settings.repo import (
+    DEFAULT_MAGE_DATA_DIR,
+    MAGE_DATA_DIR_ENV_VAR,
+    PROJECT_METADATA_FILENAME,
+)
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
 from mage_ai.settings.repo import get_repo_name as get_repo_name_new
 from mage_ai.settings.repo import get_repo_path as get_repo_path_new
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_debug
 
 yml = ruamel.yaml.YAML()
@@ -310,7 +315,7 @@ def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
 
 def set_project_uuid_from_metadata() -> None:
     global project_uuid
-    metadata_path = get_metadata_path(root_project=True)
+    metadata_path = os.path.join(base_repo_path(), PROJECT_METADATA_FILENAME)
     if os.path.exists(metadata_path):
         with open(metadata_path, 'r', encoding='utf-8') as f:
             config = yml.load(f) or {}

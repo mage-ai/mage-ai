@@ -38,10 +38,10 @@ def activate_project(project_name: str, user=None) -> None:
     """
     if project_name:
         if user:
-            from mage_ai.orchestration.db.models.utils import activate_project_for_user
             from mage_ai.data_preparation.repo_manager import get_project_uuid
+            from mage_ai.orchestration.db.models.utils import activate_project_for_user
             activate_project_for_user(user, get_project_uuid(), project_name)
-        
+
         else:
             platform_settings = __local_platform_settings() or {}
             if 'projects' not in platform_settings:
@@ -64,6 +64,7 @@ def activate_project(project_name: str, user=None) -> None:
             __update_local_platform_settings(platform_settings)
 
 
+# default repo_path will be the root project repo path if not provided downstream
 def build_repo_path_for_all_projects(
     repo_path: str = None,
     mage_projects_only: bool = False
@@ -269,8 +270,8 @@ def active_project_settings(
         >>> active_project_settings(get_default=True, repo_path='/path/to/repo')
         {'uuid': 'default_project_uuid', 'active': 'true', 'path': 'relative/path'}
     """
-    from mage_ai.orchestration.db.models.utils import get_active_project_for_user
     from mage_ai.data_preparation.repo_manager import get_project_uuid
+    from mage_ai.orchestration.db.models.utils import get_active_project_for_user
     if not settings:
         settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
@@ -278,7 +279,9 @@ def active_project_settings(
     if not items:
         return
 
-    user_active_project = get_active_project_for_user(user, get_project_uuid())
+    user_active_project = None
+    if user:
+        user_active_project = get_active_project_for_user(user, get_project_uuid())
     if user_active_project:
         key = user_active_project.project_name
         project_settings_tup = find(
@@ -304,7 +307,11 @@ def active_project_settings(
         )
 
 
-def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
+def project_platform_settings(
+    repo_path: str = None,
+    mage_projects_only: bool = False,
+    user=None,
+) -> Dict:
     mapping = (__combined_platform_settings(
         repo_path=repo_path,
         mage_projects_only=mage_projects_only,
@@ -348,10 +355,10 @@ def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool
     return parent
 
 
-def git_settings(repo_path: str = None) -> Dict:
+def git_settings(repo_path: str = None, user=None) -> Dict:
     git_dict = {}
 
-    settings = active_project_settings(get_default=True, repo_path=repo_path)
+    settings = active_project_settings(get_default=True, repo_path=repo_path, user=user)
     if settings and settings.get('git'):
         git_dict = settings.get('git') or {}
 
@@ -361,7 +368,7 @@ def git_settings(repo_path: str = None) -> Dict:
             git_dict['path'],
         )
     else:
-        git_dict['path'] = build_active_project_repo_path(repo_path=repo_path)
+        git_dict['path'] = build_active_project_repo_path(repo_path=repo_path, user=user)
 
     return git_dict
 

@@ -21,7 +21,7 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def get_pipeline(self):
-    return Pipeline.get(self.pipeline.uuid)
+    return Pipeline.get(self.pipeline.uuid, get_repo_path())
 
 
 class PipelineRunAPIEndpointTest(BaseAPIEndpointTest):

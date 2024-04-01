@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.server.api.integration_sources import get_collection
+from mage_ai.settings.repo import get_repo_path
 
 
 def get_state_data_for_blocks(
@@ -140,13 +141,14 @@ class IntegrationSourceResource(GenericResource):
         success = False
         streams = []
 
+        repo_path = get_repo_path(user=user)
         action_type = payload['action_type']
         if 'test_connection' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
             block_uuid = payload.get('block_uuid')
 
             if block_uuid:
-                pipeline = Pipeline.get(pipeline_uuid)
+                pipeline = Pipeline.get(pipeline_uuid, repo_path)
                 block = pipeline.get_block(block_uuid)
                 try:
                     test_connection(block)
@@ -155,7 +157,7 @@ class IntegrationSourceResource(GenericResource):
                     traceback.print_exc()
                     error_message = str(e)
             else:
-                pipeline = IntegrationPipeline.get(pipeline_uuid)
+                pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path)
                 config = payload['config']
 
                 try:
@@ -166,7 +168,7 @@ class IntegrationSourceResource(GenericResource):
                     error_message = str(e)
         elif 'sample_data' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
-            pipeline = IntegrationPipeline.get(pipeline_uuid)
+            pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path)
 
             streams_updated = pipeline.preview_data(
                 BlockType.DATA_LOADER,
@@ -222,4 +224,6 @@ class IntegrationSourceResource(GenericResource):
 
             return self(state_data, user, **kwargs)
 
-        return self(IntegrationPipeline.get(pk), user, **kwargs)
+        repo_path = get_repo_path(user=user)
+
+        return self(IntegrationPipeline.get(pk, repo_path), user, **kwargs)

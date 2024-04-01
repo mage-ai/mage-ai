@@ -324,7 +324,11 @@ def get_global_variables(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    pipeline = pipeline or Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    pipeline = pipeline or Pipeline.get(
+        pipeline_uuid,
+        get_repo_path(),
+        all_projects=project_platform_activated(),
+    )
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:
@@ -349,7 +353,11 @@ def get_global_variable(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        get_repo_path(),
+        all_projects=project_platform_activated(),
+    )
     if pipeline.variables is not None:
         return pipeline.variables.get(key)
     else:
@@ -382,12 +390,14 @@ def set_global_variable(
     pipeline_uuid: str,
     key: str,
     value: Any,
+    repo_path: str = None,
 ) -> None:
     """
     Set global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+    repo_path = repo_path or get_repo_path()
+    pipeline = Pipeline.get(pipeline_uuid, repo_path)
 
     if pipeline.variables is None:
         pipeline.variables = get_global_variables(pipeline_uuid)
@@ -397,12 +407,14 @@ def set_global_variable(
 def delete_global_variable(
     pipeline_uuid: str,
     key: str,
+    repo_path: str = None,
 ) -> None:
     """
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+    repo_path = repo_path or get_repo_path()
+    pipeline = Pipeline.get(pipeline_uuid, repo_path)
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)
     else:

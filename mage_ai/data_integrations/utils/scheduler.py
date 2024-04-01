@@ -41,14 +41,13 @@ def get_extra_variables(pipeline: IntegrationPipeline) -> Dict:
 
 def clear_source_output_files(
     pipeline_run: PipelineRun,
+    integration_pipeline,
     logger: DictLogger,
 ) -> None:
     tags = dict(
         pipeline_run_id=pipeline_run.id,
         pipeline_uuid=pipeline_run.pipeline_uuid,
     )
-
-    integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
     for stream in integration_pipeline.streams():
         tap_stream_id = stream['tap_stream_id']
@@ -66,6 +65,7 @@ def clear_source_output_files(
 
 def initialize_state_and_runs(
     pipeline_run: PipelineRun,
+    pipeline,
     logger: DictLogger,
     variables: Dict,
 ) -> List[BlockRun]:
@@ -75,12 +75,13 @@ def initialize_state_and_runs(
     )
 
     try:
-        update_stream_states(pipeline_run, logger, variables)
+        update_stream_states(pipeline_run, pipeline, logger, variables)
 
-        block_runs = create_block_runs(pipeline_run, logger, variables=variables)
+        block_runs = create_block_runs(pipeline_run, pipeline, logger, variables=variables)
 
         calculate_pipeline_run_metrics(
             pipeline_run,
+            pipeline,
             logger=logger,
             logging_tags=tags,
         )
@@ -100,13 +101,14 @@ def initialize_state_and_runs(
 
 def create_block_runs(
     pipeline_run: PipelineRun,
+    pipeline,
     logger: DictLogger,
     variables: Dict = None,
 ) -> List[BlockRun]:
     if variables is None:
         variables = dict()
 
-    integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+    integration_pipeline = pipeline
 
     blocks = integration_pipeline.get_executable_blocks()
     executable_blocks = []
@@ -195,14 +197,17 @@ def create_block_runs(
     return arr
 
 
-def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variables: Dict) -> None:
+def update_stream_states(
+    pipeline_run: PipelineRun,
+    pipeline,
+    logger: DictLogger,
+    variables: Dict,
+) -> None:
     from mage_integrations.sources.utils import (
         update_source_state_from_destination_state,
     )
 
-    integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
-
-    for stream in integration_pipeline.streams(variables):
+    for stream in pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
         destination_table = stream.get('destination_table', tap_stream_id)
 
@@ -218,11 +223,11 @@ def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variable
             f'{tap_stream_id} and table {destination_table}.',
             tags=tags,
         )
-        source_state_file_path = integration_pipeline.source_state_file_path(
+        source_state_file_path = pipeline.source_state_file_path(
             destination_table=destination_table,
             stream=tap_stream_id,
         )
-        destination_state_file_path = integration_pipeline.destination_state_file_path(
+        destination_state_file_path = pipeline.destination_state_file_path(
             destination_table=destination_table,
             stream=tap_stream_id,
         )

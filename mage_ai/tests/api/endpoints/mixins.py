@@ -631,7 +631,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
 
     def tearDown(self):
         for pipeline_uuid in Pipeline.get_all_pipelines(self.repo_path):
-            pipeline = Pipeline.get(pipeline_uuid)
+            pipeline = Pipeline.get(pipeline_uuid, self.repo_path)
             if pipeline:
                 pipeline.delete()
 

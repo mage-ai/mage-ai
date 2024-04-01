@@ -44,11 +44,11 @@ class PipelineFactory(BaseFactory):
             metadata = self.item.metadata.pipeline
             pipeline = await Pipeline.get_async(
                 metadata.uuid,
-                all_projects=True,
-                repo_path=os.path.join(
+                os.path.join(
                     base_repo_dirname(),
                     metadata.repo_path,
                 ) if metadata.repo_path else base_repo_path(),
+                all_projects=True,
             )
 
             item_dict = self.item.to_dict()

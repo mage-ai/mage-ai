@@ -725,14 +725,14 @@ class PipelineTest(AsyncDBTestCase):
                     widgets=[],
                 ),
             )
-        pipeline_load = Pipeline.get('test_pipeline_9')
+        pipeline_load = Pipeline.get('test_pipeline_9', self.repo_path)
         self.assertEqual(pipeline_load.to_dict()['data_integration'], expected_catalog_config)
 
     def test_save_and_get_integration_pipeline_async(self):
         pipeline = self.__create_pipeline_with_integration('test_pipeline_10')
         asyncio.run(pipeline.save_async())
 
-        pipeline_load = asyncio.run(Pipeline.get_async('test_pipeline_10'))
+        pipeline_load = asyncio.run(Pipeline.get_async('test_pipeline_10', self.repo_path))
         self.assertEqual(
             pipeline_load.to_dict()['data_integration'],
             {
@@ -941,14 +941,17 @@ def export_data(df, *args):
             self.faker.unique.name(),
             repo_path=self.repo_path,
         )
-        self.assertEqual(Pipeline.get(pipeline.uuid).uuid, pipeline.uuid)
+        self.assertEqual(Pipeline.get(pipeline.uuid, self.repo_path).uuid, pipeline.uuid)
 
     async def test_get_async(self):
         pipeline = Pipeline.create(
             self.faker.unique.name(),
             repo_path=self.repo_path,
         )
-        self.assertEqual((await Pipeline.get_async(pipeline.uuid)).uuid, pipeline.uuid)
+        self.assertEqual(
+            (await Pipeline.get_async(pipeline.uuid, self.repo_path)).uuid,
+            pipeline.uuid,
+        )
 
     def test_get_all_pipelines_all_projects(self):
         with patch('mage_ai.data_preparation.models.pipeline.Pipeline.get_all_pipelines') as mock:
@@ -996,7 +999,7 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
         )
 
         self.assertEqual(
-            Pipeline.get(pipeline1.uuid, repo_path=base_repo_path()).uuid,
+            Pipeline.get(pipeline1.uuid, base_repo_path()).uuid,
             pipeline1.uuid,
         )
 
@@ -1010,7 +1013,7 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
 
         for pipeline in pipelines:
             self.assertIsNone(
-                Pipeline.get(pipeline.uuid, check_if_exists=True, repo_path=base_repo_path()),
+                Pipeline.get(pipeline.uuid, base_repo_path(), check_if_exists=True),
             )
 
         with patch(
@@ -1021,9 +1024,9 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(
                     Pipeline.get(
                         pipeline.uuid,
+                        base_repo_path(),
                         all_projects=True,
                         check_if_exists=True,
-                        repo_path=base_repo_path(),
                     ).uuid,
                     pipeline.uuid,
                 )
@@ -1066,8 +1069,8 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(
                     (await Pipeline.get_async(
                         pipeline.uuid,
+                        base_repo_path(),
                         all_projects=True,
-                        repo_path=base_repo_path(),
                     )).uuid,
                     pipeline.uuid,
                 )

@@ -15,10 +15,12 @@ from mage_ai.orchestration.triggers.utils import (
     create_and_start_pipeline_run,
 )
 from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.repo import get_repo_path
 
 
 def trigger_pipeline(
     pipeline_uuid: str,
+    repo_path: str = None,
     variables: Dict = None,
     check_status: bool = False,
     error_on_failure: bool = False,
@@ -41,7 +43,13 @@ def trigger_pipeline(
             arr.append(remote_block.to_dict())
         variables['remote_blocks'] = arr
 
-    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    repo_path_use = repo_path or get_repo_path()
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        repo_path_use,
+        all_projects=project_platform_activated(),
+        use_repo_path=repo_path is not None,
+    )
 
     pipeline_schedule = __fetch_or_create_pipeline_schedule(pipeline, schedule_name=schedule_name)
 

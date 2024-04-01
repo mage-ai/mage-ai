@@ -20,7 +20,7 @@ class GlobalDataProductBlockTest(DBTestCase):
                 repo_path=self.repo_path,
             )
         except Exception:
-            self.pipeline = Pipeline.get('test_pipeline')
+            self.pipeline = Pipeline.get('test_pipeline', self.repo_path)
 
         self.block = GlobalDataProductBlock(
             'GDP',

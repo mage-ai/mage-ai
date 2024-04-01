@@ -63,16 +63,16 @@ class PipelineCache(BaseCache):
             return pipeline_uuid
 
         if not repo_path:
-            repo_path = get_repo_path(root_project=False)
+            repo_path = get_repo_path()
 
         return ':'.join([remove_base_repo_path_or_name(repo_path), pipeline_uuid])
 
-    def get_model(self, model) -> Dict:
+    def get_model(self, model, repo_path: str = None) -> Dict:
         model_dict = {}
 
         mapping = self.get(self.cache_key)
         if mapping is not None:
-            key = self.build_key(model)
+            key = self.build_key(model, repo_path=repo_path)
             if key:
                 model_dict = mapping.get(key, {})
 
@@ -92,6 +92,7 @@ class PipelineCache(BaseCache):
     def update_models(
         self,
         pipelines,
+        repo_path: str,
         added_at: str = None,
     ) -> None:
         mapping = self.get(self.cache_key)
@@ -99,7 +100,7 @@ class PipelineCache(BaseCache):
             mapping = {}
 
         for pipeline in pipelines:
-            key = self.build_key(pipeline)
+            key = self.build_key(pipeline, repo_path=repo_path)
             if not key:
                 continue
 
@@ -114,19 +115,20 @@ class PipelineCache(BaseCache):
     def update_model(
         self,
         pipeline,
+        repo_path: str,
         added_at: str = None,
     ) -> None:
-        self.update_models([pipeline], added_at)
+        self.update_models([pipeline], repo_path, added_at=added_at)
 
-    def add_model(self, model) -> None:
-        self.update_model(model, added_at=datetime.utcnow().timestamp())
+    def add_model(self, model, repo_path: str) -> None:
+        self.update_model(model, repo_path, added_at=datetime.utcnow().timestamp())
 
-    def move_model(self, new_model, old_model) -> None:
-        new_key = self.build_key(new_model)
+    def move_model(self, new_model, old_model, repo_path: str) -> None:
+        new_key = self.build_key(new_model, repo_path=repo_path)
         if not new_key:
             return
 
-        old_key = self.build_key(old_model)
+        old_key = self.build_key(old_model, repo_path=repo_path)
         if not old_key:
             return
 
@@ -140,8 +142,8 @@ class PipelineCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    def remove_model(self, model) -> None:
-        key = self.build_key(model)
+    def remove_model(self, model, repo_path: str) -> None:
+        key = self.build_key(model, repo_path=repo_path)
         if not key:
             return
 

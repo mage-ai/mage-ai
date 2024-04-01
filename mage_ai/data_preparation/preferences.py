@@ -161,13 +161,3 @@ def get_preferences(repo_path=None, user: User = None) -> Preferences:
             return Preferences(user=user, repo_path=repo_path)
     else:
         return default_preferences
-
-
-from mage_ai.settings.repo import get_repo_path
-print(get_repo_path())
-
-from mage_ai.data_preparation.preferences import get_preferences
-print(get_preferences().sync_config)
-
-from mage_ai.settings import get_settings_value
-print(get_settings_value('GIT_REPO_LINK'))

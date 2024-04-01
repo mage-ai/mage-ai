@@ -20,7 +20,7 @@ def create_dag(
     if globals_dict is None:
         globals_dict = dict()
 
-    pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+    pipeline = Pipeline(pipeline_uuid, project_path)
 
     tasks = []
 

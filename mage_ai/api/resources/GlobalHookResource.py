@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys
@@ -190,6 +191,8 @@ class GlobalHookResource(AsyncBaseResource):
 
 
 async def __load_pipelines(resource: GlobalHookResource):
+    repo_path = get_repo_path(resource.current_user)
+
     pipeline_uuids = []
     for res in resource.result_set():
         if res.model.pipeline_settings and res.model.pipeline_settings.get('uuid'):
@@ -199,7 +202,7 @@ async def __load_pipelines(resource: GlobalHookResource):
 
     async def get_pipeline(uuid):
         try:
-            return await Pipeline.get_async(uuid)
+            return await Pipeline.get_async(uuid, repo_path)
         except Exception as err:
             err_message = f'Error loading pipeline {uuid}: {err}.'
             if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:

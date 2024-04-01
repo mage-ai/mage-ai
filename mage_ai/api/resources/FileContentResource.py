@@ -19,10 +19,11 @@ class FileContentResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         file = None
 
+        repo_path = get_repo_path(user=user)
         if 'payload' in kwargs and 'file_content' in kwargs['payload']:
             payload = kwargs['payload']['file_content']
             if 'block_uuid' in payload and 'pipeline_uuid' in payload:
-                pipeline = await Pipeline.get_async(payload.get('pipeline_uuid'))
+                pipeline = await Pipeline.get_async(payload.get('pipeline_uuid'), repo_path)
                 if pipeline:
                     block = pipeline.get_block(payload.get('block_uuid'))
                     if block:

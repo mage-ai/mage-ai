@@ -33,7 +33,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
             self.pipeline.add_block(
                 Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
-            self.pipeline = Pipeline.get('test_pipeline')
+            self.pipeline = Pipeline.get('test_pipeline', self.repo_path)
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',

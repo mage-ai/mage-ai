@@ -18,6 +18,7 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
     PredicateValueType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig, ignore_keys, merge_dict, set_value
 from mage_ai.tests.base_test import AsyncDBTestCase
@@ -39,6 +40,7 @@ def build_operation_resource_settings(
     first_object_key=first_object_key,
     repo_path: str = None,
 ) -> Dict:
+    repo_path = repo_path or get_repo_path()
     settings = {
         BaseResource.__name__: dict(
             right_object_keys=[first_object_key],
@@ -62,7 +64,7 @@ def build_operation_resource_settings(
         ),
         Pipeline.__name__: dict(
             right_object_keys=['variables', first_object_key],
-            operation_resource=Pipeline(uuid.uuid4().hex, config=dict(variables={
+            operation_resource=Pipeline(uuid.uuid4().hex, repo_path, config=dict(variables={
                 first_object_key: right_value,
             })),
         ),

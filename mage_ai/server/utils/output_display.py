@@ -296,6 +296,7 @@ def add_execution_code(
     block_uuid: str,
     code: str,
     global_vars,
+    repo_path: str,
     block_type: BlockType = None,
     execution_uuid: str = None,
     extension_uuid: str = None,
@@ -371,6 +372,7 @@ def execute_custom_code():
     run_upstream={str(run_upstream)}
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
+        repo_path=\'{repo_path}\',
         config={pipeline_config},
         repo_config={repo_config},
     )
@@ -472,6 +474,7 @@ df = execute_custom_code()
 def get_block_output_process_code(
     pipeline_uuid: str,
     block_uuid: str,
+    repo_path: str,
     block_type: BlockType = None,
     kernel_name: str = None,
 
@@ -488,6 +491,7 @@ import pandas
 block_uuid=\'{block_uuid}\'
 pipeline = Pipeline(
     uuid=\'{pipeline_uuid}\',
+    repo_path=\'{repo_path}\',
 )
 block = pipeline.get_block(block_uuid)
 variable_mapping = dict(df=df)
@@ -499,6 +503,7 @@ block.update_status(BlockStatus.EXECUTED)
 
 def get_pipeline_execution_code(
     pipeline_uuid: str,
+    repo_path: str,
     global_vars: Dict = None,
     kernel_name: str = None,
     pipeline_config: Dict = None,
@@ -522,6 +527,7 @@ import asyncio
 def execute_pipeline():
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
+        repo_path=\'{repo_path}\',
         config={pipeline_config},
         repo_config={repo_config},
     )

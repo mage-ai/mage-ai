@@ -19,15 +19,22 @@ from mage_ai.shared.hash import dig
 
 
 class Project():
-    def __init__(self, repo_config=None, repo_path: str = None, root_project: bool = False):
+    def __init__(
+        self,
+        repo_config=None,
+        repo_path: str = None,
+        root_project: bool = False,
+        user=None,
+    ):
         self.root_project = root_project
-        self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
+        self.repo_path = repo_path or get_repo_path(root_project=self.root_project, user=user)
+        self.user = user
 
         self.name = os.path.basename(self.repo_path)
         self.settings = None
 
         if not root_project and project_platform_activated():
-            self.settings = active_project_settings(get_default=True)
+            self.settings = active_project_settings(get_default=True, user=user)
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')
 

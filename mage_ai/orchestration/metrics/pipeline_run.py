@@ -4,9 +4,6 @@ from copy import deepcopy
 from typing import Dict, List, Tuple
 
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-    IntegrationPipeline,
-)
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.hash import merge_dict
 
@@ -40,6 +37,7 @@ KEY_TO_METRICS = {
 
 def calculate_pipeline_run_metrics(
     pipeline_run: PipelineRun,
+    pipeline,
     logger=None,
     logging_tags: Dict = None,
 ) -> Dict:
@@ -54,7 +52,7 @@ def calculate_pipeline_run_metrics(
             **logging_tags,
         )
     try:
-        __calculate_metrics(pipeline_run)
+        __calculate_metrics(pipeline_run, pipeline)
         if logger:
             logger.info(
                 f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
@@ -72,6 +70,7 @@ def calculate_pipeline_run_metrics(
 def calculate_source_metrics(
     pipeline_run: PipelineRun,
     block_run: BlockRun,
+    pipeline,
     stream: str,
     logger=None,
     logging_tags: Dict = None,
@@ -79,6 +78,7 @@ def calculate_source_metrics(
     return __calculate_block_metrics(
         pipeline_run,
         block_run,
+        pipeline,
         stream,
         KEY_SOURCE,
         logger=logger,
@@ -89,6 +89,7 @@ def calculate_source_metrics(
 def calculate_destination_metrics(
     pipeline_run: PipelineRun,
     block_run: BlockRun,
+    pipeline,
     stream: str,
     logger=None,
     logging_tags: Dict = None,
@@ -96,6 +97,7 @@ def calculate_destination_metrics(
     return __calculate_block_metrics(
         pipeline_run,
         block_run,
+        pipeline,
         stream,
         KEY_DESTINATION,
         logger=logger,
@@ -106,6 +108,7 @@ def calculate_destination_metrics(
 def __calculate_block_metrics(
     pipeline_run: PipelineRun,
     block_run: BlockRun,
+    pipeline,
     stream: str,
     key: str,
     logger=None,
@@ -135,8 +138,6 @@ def __calculate_block_metrics(
             **logging_tags,
         )
     try:
-        pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
-
         logs_arr = block_run.logs['content'].split('\n')
         logs_by_uuid = {key: [logs_arr]}
         metrics = get_metrics(
@@ -192,7 +193,7 @@ def __calculate_block_metrics(
             )
 
 
-def __calculate_metrics(pipeline_run: PipelineRun) -> Dict:
+def __calculate_metrics(pipeline_run: PipelineRun, pipeline) -> Dict:
     """
     Calculate metrics for an integration pipeline run. Only the "pipeline" field
     in the metrics will be updated by calling this method.
@@ -205,8 +206,6 @@ def __calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     Returns:
         Dict: The calculated metrics.
     """
-    pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
-
     if PipelineType.INTEGRATION != pipeline.type:
         return
 

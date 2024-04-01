@@ -74,7 +74,7 @@ class GlobalDataProduct:
             if self._object:
                 return self._object
             else:
-                self._object = Pipeline.get(self.object_uuid)
+                self._object = Pipeline.get(self.object_uuid, self.repo_path)
 
         return self._object
 

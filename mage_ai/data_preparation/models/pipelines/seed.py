@@ -29,8 +29,8 @@ def seed(
 
     pipeline_models = [Pipeline.get(
         uuid,
-        repo_path=repo_path,
-    ) for uuid in Pipeline.get_all_pipelines(repo_path=repo_path)]
+        repo_path,
+    ) for uuid in Pipeline.get_all_pipelines(repo_path)]
     for i1 in range(pipelines - len(pipeline_models)):
         i = i1 + len(pipeline_models)
         model = Pipeline.create(name=f'Pipeline {i}', repo_path=repo_path)

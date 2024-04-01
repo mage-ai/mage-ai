@@ -1,13 +1,18 @@
 import os
 import shutil
-import yaml
 from dataclasses import dataclass, field
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from typing import Dict, List
+
+import yaml
+
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_PIPELINE_TEMPLATES,
     METADATA_FILENAME_WITH_EXTENSION,
 )
-from mage_ai.data_preparation.models.custom_templates.utils import custom_templates_directory
+from mage_ai.data_preparation.models.custom_templates.utils import (
+    custom_templates_directory,
+)
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     TRIGGER_FILE_NAME,
     Trigger,
@@ -21,7 +26,6 @@ from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.utils import clean_name
-from typing import Dict, List
 
 
 @dataclass
@@ -29,6 +33,7 @@ class CustomPipelineTemplate(BaseConfig):
     description: str = None
     name: str = None
     pipeline: Dict = field(default_factory=dict)
+    repo_path: str = None
     tags: List = field(default_factory=list)
     template_uuid: str = None
     user: Dict = field(default_factory=dict)
@@ -49,9 +54,9 @@ class CustomPipelineTemplate(BaseConfig):
             )
 
         try:
-            repo_path = repo_path or get_repo_path()
+            self.repo_path = repo_path or get_repo_path()
             config_path_metadata = os.path.join(
-                repo_path,
+                self.repo_path,
                 uuid_use,
                 METADATA_FILENAME_WITH_EXTENSION,
             )
@@ -133,10 +138,10 @@ class CustomPipelineTemplate(BaseConfig):
         )
 
     def build_pipeline(self) -> Pipeline:
-        return Pipeline(clean_name(self.template_uuid), config=self.pipeline)
+        return Pipeline(clean_name(self.template_uuid), self.repo_path, config=self.pipeline)
 
     def create_pipeline(self, name: str) -> Pipeline:
-        pipeline = Pipeline(clean_name(name), config=self.pipeline)
+        pipeline = Pipeline(clean_name(name), self.repo_path, config=self.pipeline)
         os.makedirs(os.path.dirname(pipeline.config_path), exist_ok=True)
         pipeline.save()
 

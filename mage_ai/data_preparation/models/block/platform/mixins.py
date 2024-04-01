@@ -12,7 +12,6 @@ from mage_ai.settings.platform import (
     get_repo_paths_for_file_path,
     project_platform_activated,
 )
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
     add_absolute_path,
@@ -137,7 +136,7 @@ class ProjectPlatformAccessible:
         if val:
             return os.path.dirname(val)
 
-    def build_file(self) -> File:
+    def build_file(self, repo_path: str = None) -> File:
         if not self.project_platform_activated:
             return
 
@@ -257,8 +256,6 @@ class ProjectPlatformAccessible:
             paths = get_repo_paths_for_file_path(file_path)
             if paths:
                 return paths.get('full_path')
-
-        return get_repo_path(root_project=False)
 
     def __file_source(self) -> str:
         return self.configuration.get('file_source') if self.configuration else None

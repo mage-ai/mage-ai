@@ -90,6 +90,9 @@ function useProject({
       rootProject2 = null;
     }
 
+    console.log('project2', project2);
+    console.log('rootProject2', rootProject2);
+
     return {
       project: project2,
       rootProject: rootProject2,
