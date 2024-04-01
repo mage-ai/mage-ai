@@ -82,12 +82,16 @@ class ProcessQueue(Queue):
 
     def clean_up_jobs(self):
         """
-        Cleans up completed jobs from the job dictionary.
+        1. Cleans up completed jobs from the job dictionary.
+        2. Check whether there're jobs need to be killed.
         """
         job_ids = self.job_dict.keys()
         for job_id in job_ids:
-            if job_id in self.job_dict and not self.has_job(job_id):
-                del self.job_dict[job_id]
+            if job_id in self.job_dict:
+                if not self.has_job(job_id):
+                    del self.job_dict[job_id]
+                elif self.__should_kill_job(job_id):
+                    self.kill_job(job_id)
 
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
         """
@@ -164,6 +168,7 @@ class ProcessQueue(Queue):
         print(f'Kill job {job_id}, job_dict {self.job_dict}')
         job = self.job_dict.get(job_id)
         if not job:
+            self.__set_kill_job(job_id)
             return
         if isinstance(job, int):
             if job == os.getpid():
@@ -174,6 +179,7 @@ class ProcessQueue(Queue):
             except Exception as err:
                 print(err)
         self.job_dict[job_id] = JobStatus.CANCELLED
+        self.__unset_kill_job(job_id)
 
     def start_worker_pool(self):
         """
@@ -227,6 +233,31 @@ class ProcessQueue(Queue):
 
     def __is_process_alive(self, pid: int) -> bool:
         return psutil.pid_exists(pid)
+
+    def __redis_key_kill_job(self, job_id):
+        return f'kill_job_{job_id}'
+
+    def __set_kill_job(self, job_id):
+        if not self.redis_client:
+            return
+        return self.redis_client.set(
+            self.__redis_key_kill_job(job_id),
+            '1',
+            ex=LIVENESS_TIMEOUT_SECONDS,
+        )
+
+    def __unset_kill_job(self, job_id):
+        if not self.redis_client:
+            return
+        key = self.__redis_key_kill_job(job_id)
+        if self.redis_client.get(key):
+            self.redis_client.delete(key)
+
+    def __should_kill_job(self, job_id):
+        if not self.redis_client:
+            return False
+        value = self.redis_client.get(self.__redis_key_kill_job(job_id))
+        return value is not None
 
 
 class Worker(mp.Process):
