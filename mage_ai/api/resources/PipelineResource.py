@@ -182,19 +182,11 @@ class PipelineResource(BaseResource):
 
             if NO_TAGS_QUERY in tags:
                 pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
-<<<<<<< HEAD
-                all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path))
-                pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
-                pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
-        else:
-            pipeline_uuids = Pipeline.get_all_pipelines(repo_path)
-=======
                 all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path=repo_path))
                 pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
                 pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(repo_path=repo_path)
->>>>>>> 3c2c07a96 ([dy] Update multi project platform to support multiple users)
 
         if search_query:
             pipeline_uuids = list(filter(
@@ -258,11 +250,7 @@ class PipelineResource(BaseResource):
                     ))
         else:
             for uuid in pipeline_uuids:
-<<<<<<< HEAD
                 pipeline_dict = cache.get_model(dict(uuid=uuid, repo_path=repo_path))
-=======
-                pipeline_dict = cache.get_model(dict(uuid=uuid), repo_path=repo_path)
->>>>>>> 3c2c07a96 ([dy] Update multi project platform to support multiple users)
                 if pipeline_dict and pipeline_dict.get('pipeline'):
                     pipeline = get_pipeline_with_config(uuid, pipeline_dict['pipeline'])
                     if pipeline:

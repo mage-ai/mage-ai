@@ -191,7 +191,7 @@ class GlobalHookResource(AsyncBaseResource):
 
 
 async def __load_pipelines(resource: GlobalHookResource):
-    repo_path = get_repo_path(resource.current_user)
+    repo_path = get_repo_path(user=resource.current_user)
 
     pipeline_uuids = []
     for res in resource.result_set():

@@ -21,7 +21,7 @@ class BlockOutputResource(GenericResource):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         outputs = []
-        repo_path = get_repo_path(user)
+        repo_path = get_repo_path(user=user)
         if pipeline_uuid is not None:
             pipeline = Pipeline.get(pipeline_uuid, repo_path)
             block = pipeline.get_block(block_uuid)
