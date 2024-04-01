@@ -1,8 +1,8 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
-from mage_ai.shared.hash import ignore_keys
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import ignore_keys
 
 
 class GlobalDataProductResource(GenericResource):

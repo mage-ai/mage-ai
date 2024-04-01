@@ -30,7 +30,6 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
-from mage_ai.orchestration.db.models.projects import UserProject
 from mage_ai.shared.array import find
 from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import group_by, merge_dict
