@@ -337,10 +337,11 @@ def poll_job_and_execute(
         job_dict: The shared job dictionary.
 
     """
+    pid = os.getpid()
     workers = []
     while True:
         workers = [w for w in workers if w.is_alive()]
-        print(f'Worker pool size: {len(workers)}')
+        print(f'[Process {pid}] Worker pool size: {len(workers)}')
         if not workers and queue.empty():
             break
         while not queue.empty():
