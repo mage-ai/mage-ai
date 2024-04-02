@@ -1,6 +1,6 @@
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
-import { TSettingFeaturesToDisable, enableSettings } from '@utils/testing';
+import { TSettingFeaturesToDisable, enableSettings } from './utils';
 
 export const test = base.extend<{
   failOnClientError: boolean;

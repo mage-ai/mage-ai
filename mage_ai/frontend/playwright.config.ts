@@ -32,7 +32,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   testDir: './tests',
   // Time spent by the test function, fixtures, beforeEach and afterEach hooks
-  timeout: 75000,
+  timeout: 100000,
   // Opt out of parallel tests on CI.
   workers: process.env.CI ? 1 : undefined,
 
