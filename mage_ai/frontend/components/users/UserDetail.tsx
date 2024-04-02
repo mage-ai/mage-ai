@@ -402,83 +402,83 @@ function UserDetail({
     enableClickRow?: boolean,
     disableEdit?: boolean,
   ) => (
-   <Table
-      columnFlex={[null, 2, 1, 1, 6]}
-      columns={[
-        {
-          uuid: 'ID',
-        },
-        {
-          uuid: 'Entity',
-        },
-        {
-          uuid: 'Subtype',
-        },
-        {
-          uuid: 'Entity ID',
-        },
-        {
-          rightAligned: true,
-          uuid: 'Access',
-        },
-      ]}
-      onClickRow={(enableClickRow && !disableEdit)
-        ? (rowIndex: number) => {
-          const object = objectArray[rowIndex];
-          if (object && typeof window !== 'undefined') {
-            window.open(`/settings/workspace/permissions/${object?.id}`, '_blank').focus();
+    <Table
+        columnFlex={[null, 2, 1, 1, 6]}
+        columns={[
+          {
+            uuid: 'ID',
+          },
+          {
+            uuid: 'Entity',
+          },
+          {
+            uuid: 'Subtype',
+          },
+          {
+            uuid: 'Entity ID',
+          },
+          {
+            rightAligned: true,
+            uuid: 'Access',
+          },
+        ]}
+        onClickRow={(enableClickRow && !disableEdit)
+          ? (rowIndex: number) => {
+            const object = objectArray[rowIndex];
+            if (object && typeof window !== 'undefined') {
+              window.open(`/settings/workspace/permissions/${object?.id}`, '_blank').focus();
+            }
           }
+          : null
         }
-        : null
-      }
-      rows={objectArray?.map(({
-        access,
-        entity,
-        entity_id: entityID,
-        entity_name: entityName,
-        entity_type: entityType,
-        id,
-      }) => {
-        const accessDisplayNames = access ? displayNames(access) : [];
-        const accessDisplayNamesCount = accessDisplayNames?.length || 0;
+        rows={objectArray?.map(({
+          access,
+          entity,
+          entity_id: entityID,
+          entity_name: entityName,
+          entity_type: entityType,
+          id,
+        }) => {
+          const accessDisplayNames = access ? displayNames(access) : [];
+          const accessDisplayNamesCount = accessDisplayNames?.length || 0;
 
-        return [
-          <Text default key="id" monospace>
-            {id}
-          </Text>,
-          <Text key="entityName" monospace>
-            {entityName || entity}
-          </Text>,
-          <Text default key="entityType" monospace={!!entityType}>
-            {entityType || '-'}
-          </Text>,
-          <Text default key="entityID" monospace={!!entityID}>
-            {entityID || '-'}
-          </Text>,
-          <div key="access">
-            {accessDisplayNamesCount >= 1 && (
-              <FlexContainer alignItems="center" flexWrap="wrap" justifyContent="flex-end">
-                {accessDisplayNames?.map((displayName: string, idx: number) => (
-                  <div key={displayName}>
-                    <Text default monospace small>
-                      {displayName}{accessDisplayNamesCount >= 2
-                        && idx < accessDisplayNamesCount - 1
-                        && (
-                          <Text inline muted small>
-                            ,&nbsp;
-                          </Text>
-                        )
-                      }
-                    </Text>
-                  </div>
-                ))}
-              </FlexContainer>
-            )}
-          </div>,
-        ];
-      })}
-      uuid="permissions"
-    />
+          return [
+            <Text default key="id" monospace>
+              {id}
+            </Text>,
+            <Text key="entityName" monospace>
+              {entityName || entity}
+            </Text>,
+            <Text default key="entityType" monospace={!!entityType}>
+              {entityType || '-'}
+            </Text>,
+            <Text default key="entityID" monospace={!!entityID}>
+              {entityID || '-'}
+            </Text>,
+            <div key="access">
+              {accessDisplayNamesCount >= 1 && (
+                <FlexContainer alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+                  {accessDisplayNames?.map((displayName: string, idx: number) => (
+                    <div key={displayName}>
+                      <Text default monospace small>
+                        {displayName}{accessDisplayNamesCount >= 2
+                          && idx < accessDisplayNamesCount - 1
+                          && (
+                            <Text inline muted small>
+                              ,&nbsp;
+                            </Text>
+                          )
+                        }
+                      </Text>
+                    </div>
+                  ))}
+                </FlexContainer>
+              )}
+            </div>,
+          ];
+        })}
+        uuid="permissions"
+      />
   ), []);
 
   const afterRoles = useMemo(() => buildTable(rolesAll), [
@@ -492,8 +492,14 @@ function UserDetail({
     roles,
   ]);
 
-  const permissionsMemo = useMemo(() => buildTablePermissions(permissions, true, (disableFields || [])?.includes(ObjectTypeEnum.PERMISSIONS)), [
+  const permissionsMemo = useMemo(
+    () => buildTablePermissions(
+      permissions,
+      true,
+      (disableFields || [])?.includes(ObjectTypeEnum.PERMISSIONS),
+    ), [
     buildTablePermissions,
+    disableFields,
     permissions,
   ]);
 

@@ -79,7 +79,7 @@ SERVER_LOGGING_TEMPLATE = os.getenv(
     '%(levelname)s:%(name)s:%(message)s',
 )
 
-INITIAL_METADATA = os.getenv('INITIAL_METADATA', '{{}}')
+INITIAL_METADATA = os.getenv('INITIAL_METADATA')
 
 DISABLE_AUTO_BROWSER_OPEN = get_bool_value(os.getenv('DISABLE_AUTO_BROWSER_OPEN', 'False'))
 
