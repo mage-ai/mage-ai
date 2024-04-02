@@ -1,6 +1,7 @@
 import { expect, test } from './base';
 
-test('ensure `example_pipeline` runs smoothly', async ({ page }) => {
+test('ensure pipeline "example_pipeline" runs successfully', async ({ page }) => {
+  // This test assumes the "example_pipeline" pipeline exists in a new project.
   await page.goto('/pipelines');
 
   // Go to pipeline's trigger page.
