@@ -671,7 +671,12 @@ async def main(
     update_settings_on_metadata_change()
     observer = Observer()
     event_handler = MetadataEventHandler()
-    observer.schedule(event_handler, path=get_metadata_path(root_project=True))
+    metadata_file = get_metadata_path(root_project=True)
+    if not os.path.exists(metadata_file):
+        os.makedirs(os.path.dirname(metadata_file), exist_ok=True)
+        with open(metadata_file, 'w') as f:
+            f.write('')
+    observer.schedule(event_handler, path=metadata_file)
     observer.start()
 
     get_messages(
