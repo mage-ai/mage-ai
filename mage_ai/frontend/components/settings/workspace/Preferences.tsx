@@ -10,7 +10,7 @@ import FlexContainer, {
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType, { FeatureUUIDEnum, ProjectPipelinesType } from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum, ProjectRequestPayloadType } from '@interfaces/ProjectType';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -106,14 +106,7 @@ function Preferences({
     },
   );
 
-  const updateProject = useCallback((payload: {
-    features?: {
-      [key: string]: boolean;
-    };
-    help_improve_mage?: boolean;
-    openai_api_key?: string;
-    pipelines?: ProjectPipelinesType;
-  }) => updateProjectBase({
+  const updateProject = useCallback((payload: ProjectRequestPayloadType) => updateProjectBase({
     project: {
       ...payload,
       root_project: rootProjectUse,
@@ -362,12 +355,18 @@ function Preferences({
           id="save-project-settings"
           loading={isLoadingUpdateProject}
           onClick={() => {
-            updateProject({
+            const updateProjectPayload: ProjectRequestPayloadType = {
               features: projectAttributes?.features,
               help_improve_mage: projectAttributes?.help_improve_mage,
               openai_api_key: projectAttributes?.openai_api_key,
               pipelines: projectAttributes?.pipelines,
-            });
+            };
+            if (project?.help_improve_mage === true
+              && projectAttributes?.help_improve_mage === false
+            ) {
+              updateProjectPayload.deny_improve_mage = true;
+            }
+            updateProject(updateProjectPayload);
           }}
           primary
         >
