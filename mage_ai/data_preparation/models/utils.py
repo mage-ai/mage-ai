@@ -19,6 +19,12 @@ STRING_SERIALIZABLE_COLUMN_TYPES = set([
     'ObjectId',
 ])
 
+AMBIGUOUS_COLUMN_TYPES = set([
+    'mixed-integer',
+    'complex',
+    'unknown-array',
+])
+
 CAST_TYPE_COLUMN_TYPES = set([
     'Int64',
     'int64',

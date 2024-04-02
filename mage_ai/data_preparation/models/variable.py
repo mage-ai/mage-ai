@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 import polars as pl
-from pandas.api.types import is_object_dtype
+from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
@@ -18,6 +18,7 @@ from mage_ai.data_preparation.models.constants import (
     VARIABLE_DIR,
 )
 from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
+    AMBIGUOUS_COLUMN_TYPES,
     STRING_SERIALIZABLE_COLUMN_TYPES,
     apply_transform_pandas,
     cast_column_types,
@@ -582,9 +583,18 @@ class Variable:
             else:
                 series_non_null = df_col.dropna()
                 if len(series_non_null) > 0:
-                    coltype = type(series_non_null.iloc[0])
+                    sample_element = series_non_null.iloc[0]
+                    coltype = type(sample_element)
+                    coltype_inferred = infer_dtype(series_non_null)
                     if is_object_dtype(series_non_null.dtype):
                         if coltype.__name__ in STRING_SERIALIZABLE_COLUMN_TYPES:
+                            cast_coltype = str
+                        # If the column is a "primitive" type, i.e. int/bool/etc and there is
+                        # a mix of types in the column, cast to string
+                        elif (
+                            not hasattr(sample_element, '__dict__')
+                            and coltype_inferred in AMBIGUOUS_COLUMN_TYPES
+                        ):
                             cast_coltype = str
                         else:
                             cast_coltype = coltype
