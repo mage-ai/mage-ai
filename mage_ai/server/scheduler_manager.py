@@ -101,6 +101,8 @@ class SchedulerManager:
         logger.info('Stop scheduler.')
         if self.is_alive:
             self.scheduler_process.terminate()
+            if job_manager is not None:
+                job_manager.stop()
             self.scheduler_process = None
             self.status = self.SchedulerStatus.STOPPED
 
