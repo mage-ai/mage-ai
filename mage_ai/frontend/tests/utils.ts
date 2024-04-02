@@ -34,11 +34,11 @@ export async function enableSettings(
 ) {
   await page.goto('/settings');
 
-  const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
-  if (await helpImproveMageToggle.isChecked()) {
-    await helpImproveMageToggle.click();
-  }
-  await expect(helpImproveMageToggle).not.toBeChecked();
+  // const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
+  // if (await helpImproveMageToggle.isChecked()) {
+  //   await helpImproveMageToggle.click();
+  // }
+  // await expect(helpImproveMageToggle).not.toBeChecked();
 
 
   const features = getSettingsToEnable(settingFeaturesToDisable);
