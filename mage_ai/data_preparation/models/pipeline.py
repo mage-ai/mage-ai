@@ -7,7 +7,8 @@ import tempfile
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, overload
+from warnings import warn
 
 import aiofiles
 import pytz
@@ -222,10 +223,34 @@ class Pipeline:
             self.widget_configs
 
     @classmethod
+    @overload
     def create(
         self,
         name: str,
         repo_path: str,
+        description: str = None,
+        pipeline_type: PipelineType = PipelineType.PYTHON,
+        tags: List[str] = None,
+    ):
+        ...
+
+    @classmethod
+    @overload
+    def create(
+        self,
+        name: str,
+        repo_path: str,
+        description: str = None,
+        pipeline_type: PipelineType = PipelineType.PYTHON,
+        tags: List[str] = None,
+    ):
+        ...
+
+    @classmethod
+    def create(
+        self,
+        name: str,
+        repo_path: str = None,
         description: str = None,
         pipeline_type: PipelineType = PipelineType.PYTHON,
         tags: List[str] = None,
@@ -235,6 +260,15 @@ class Pipeline:
         2. Create a new yaml file to store pipeline config
         3. Create other files: requirements.txt, __init__.py
         """
+        # Warn if repo_path is not provided. Eventually, we should remove the method
+        # that does not require repo_path.
+        if repo_path is None:
+            warn(
+                'repo_path argument in Pipeline.create should be provided.',
+                SyntaxWarning,
+                stacklevel=2,
+            )
+
         uuid = clean_name(name)
         pipeline_path = os.path.join(repo_path, PIPELINES_FOLDER, uuid)
         if os.path.exists(pipeline_path):
@@ -376,19 +410,48 @@ class Pipeline:
         )
 
     @classmethod
+    @overload
     def get(
-        self,
+        cls,
         uuid,
         repo_path: str,
         check_if_exists: bool = False,
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-            IntegrationPipeline,
-        )
+        ...
 
-        config_path, repo_path = self._get_config_path(
+    @classmethod
+    @overload
+    def get(
+        cls,
+        uuid,
+        repo_path: str = None,
+        check_if_exists: bool = False,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
+        ...
+
+    @classmethod
+    def get(
+        cls,
+        uuid,
+        repo_path: str = None,
+        check_if_exists: bool = False,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
+        # Warn if repo_path is not provided. Eventually, we should remove the method
+        # that does not require repo_path.
+        if repo_path is None:
+            warn(
+                'repo_path argument in Pipeline.get should be provided.',
+                SyntaxWarning,
+                stacklevel=2,
+            )
+
+        config_path, repo_path = cls._get_config_path(
             uuid,
             repo_path=repo_path,
             all_projects=all_projects,
@@ -398,8 +461,11 @@ class Pipeline:
         if check_if_exists and not os.path.exists(config_path):
             return None
 
-        pipeline = self(uuid, repo_path, use_repo_path=use_repo_path)
+        pipeline = cls(uuid, repo_path, use_repo_path=use_repo_path)
         if PipelineType.INTEGRATION == pipeline.type:
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
             pipeline = IntegrationPipeline(uuid, repo_path)
 
         return pipeline
@@ -491,6 +557,7 @@ class Pipeline:
         return config
 
     @classmethod
+    @overload
     async def get_async(
         self,
         uuid,
@@ -498,9 +565,35 @@ class Pipeline:
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-            IntegrationPipeline,
-        )
+        ...
+
+    @classmethod
+    @overload
+    async def get_async(
+        self,
+        uuid,
+        repo_path: str = None,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
+        ...
+
+    @classmethod
+    async def get_async(
+        self,
+        uuid,
+        repo_path: str = None,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
+        # Warn if repo_path is not provided. Eventually, we should remove the method
+        # that does not require repo_path.
+        if repo_path is None:
+            warn(
+                'repo_path argument in Pipeline.get_async should be provided.',
+                SyntaxWarning,
+                stacklevel=2,
+            )
 
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
@@ -521,6 +614,9 @@ class Pipeline:
             config = yaml.safe_load(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
             catalog = None
             catalog_config_path = os.path.join(
                 repo_path,
@@ -1099,7 +1195,7 @@ class Pipeline:
             should_update_tag_cache = True
 
             cache = PipelineCache()
-            cache.move_model(dict(uuid=new_uuid), dict(uuid=old_uuid))
+            cache.move_model(dict(uuid=new_uuid), dict(uuid=old_uuid), self.repo_path)
 
         should_save = False
 
@@ -1370,7 +1466,7 @@ class Pipeline:
                         old_uuid,
                         self.repo_path,
                     )
-                cache.update_pipeline(block.to_dict(), self)
+                cache.update_pipeline(block.to_dict(), self, self.repo_path)
 
         if should_update_tag_cache:
             from mage_ai.cache.tag import TagCache

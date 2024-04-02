@@ -106,7 +106,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
 
         with patch(
             'mage_ai.data_preparation.models.block.File.from_path',
-            lambda _x: file,
+            lambda _x, repo_path=None: file,
         ):
             with patch.object(file, 'create_parent_directories') as mock_create_parent_directories:
                 with patch.object(file, 'update_content') as mock_update_content:

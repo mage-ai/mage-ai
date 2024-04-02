@@ -971,7 +971,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
             # For block_type SCRATCHPAD and MARKDOWN, also delete the file if possible
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
-                pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+                pipelines = Pipeline.get_pipelines_by_block(
+                    self,
+                    self.pipeline.repo_path,
+                    widget=widget,
+                )
                 pipelines = [
                     pipeline for pipeline in pipelines if self.pipeline.uuid != pipeline.uuid
                 ]
@@ -981,7 +985,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
-        pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+        pipelines = Pipeline.get_pipelines_by_block(self, self.repo_path, widget=widget)
         if not force:
             for p in pipelines:
                 if not p.block_deletable(self):

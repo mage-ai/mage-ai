@@ -94,7 +94,7 @@ class PipelineCacheTest(BaseApiTestCase):
         model['name'] = self.uuid
 
         with freeze_time(now):
-            self.cache.update_models([model], added_at=now.timestamp())
+            self.cache.update_models([model], self.repo_path, added_at=now.timestamp())
 
         self.assertEqual(
             self.__get_cache(refresh=True)[self.pipeline_json['uuid']]['pipeline'],
