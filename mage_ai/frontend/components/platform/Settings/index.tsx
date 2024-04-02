@@ -13,10 +13,10 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import useProject from '@utils/models/project/useProject';
-import { Add, Save} from '@oracle/icons';
+import { Add, Save } from '@oracle/icons';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
-import { ignoreKeys } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -61,7 +61,6 @@ function Settings() {
       <Button
         beforeIcon={<Add />}
         compact
-        small
         onClick={() => setAttributes(prev => ({
           ...prev,
           projects: {
@@ -70,6 +69,7 @@ function Settings() {
           },
         }))}
         secondary
+        small
       >
         Register project
       </Button>
@@ -89,6 +89,10 @@ function Settings() {
             setAttributes(prev => ({
               ...prev,
               ...objectServer,
+              features: {
+                ...prev?.features,
+                override: !!objectServer?.features_override && !isEmptyObject(objectServer?.features_override),
+              }
             }));
 
             toast.success(
@@ -107,7 +111,6 @@ function Settings() {
   return (
     <Spacing p={PADDING_UNITS}>
       <SetupSection
-        title="Projects"
         headerChildren={(
           <>
             <Spacing ml={PADDING_UNITS} />
@@ -115,6 +118,7 @@ function Settings() {
             {addButtonMemo}
           </>
         )}
+        title="Projects"
       >
         <Accordion
           noBorder
@@ -152,12 +156,10 @@ function Settings() {
                 titleYPadding={PADDING_UNITS * UNIT}
               >
                 <SetupSectionRow
-                  title="Name"
                   description="Unique name of project."
                   textInput={{
                     fullWidth: false,
                     monospace: true,
-                    placeholder: projectName,
                     onChange: e => setAttributes(prev => ({
                       ...prev,
                       projects: {
@@ -168,12 +170,13 @@ function Settings() {
                         },
                       },
                     })),
+                    placeholder: projectName,
                     value: uuid,
                   }}
+                  title="Name"
                 />
 
                 <SetupSectionRow
-                  title="Path"
                   description={(
                     <Text muted small>
                       Relative path to the project directory starting from the root project directory.
@@ -184,7 +187,6 @@ function Settings() {
                   textInput={{
                     fullWidth: false,
                     monospace: true,
-                    placeholder: projectName,
                     onChange: e => setAttributes(prev => ({
                       ...prev,
                       projects: {
@@ -195,13 +197,15 @@ function Settings() {
                         },
                       },
                     })),
+                    placeholder: projectName,
                     value: path || '',
                   }}
+                  title="Path"
                 />
 
                 <SetupSectionRow
-                  title="Currently selected project"
                   description="The currently selected project."
+                  title="Currently selected project"
                   toggleSwitch={{
                     checked: projectName === activeProjectName,
                     onCheck: () => setActiveProjectName(
@@ -220,7 +224,7 @@ function Settings() {
                       setAttributes(prev => ({
                         ...prev,
                         projects: ignoreKeys(attributes?.projects, [projectName]),
-                      }))
+                      }));
                     }}
                     small
                   >
@@ -239,7 +243,6 @@ function Settings() {
         title="Features"
       >
         <SetupSectionRow
-          title="Override all project features"
           description={(
             <Text muted small>
               If this setting is toggled, the feature flags that are set from the root project
@@ -247,6 +250,7 @@ function Settings() {
               will override the feature flags of all sub-projects.
             </Text>
           )}
+          title="Override all project features"
           toggleSwitch={{
             checked: attributes?.features?.override,
             onCheck: () => setAttributes(prev => ({
