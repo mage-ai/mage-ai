@@ -34,6 +34,7 @@ export async function enableSettings(
 ) {
   await page.goto('/settings');
   await page.waitForLoadState();
+  await expect(page.getByText('Add new block v2')).toBeVisible();
 
   const helpImproveMageToggle = page.locator('#help_improve_mage_toggle');
   const helpImproveMageToggleInput = page.locator('#help_improve_mage_toggle_input');

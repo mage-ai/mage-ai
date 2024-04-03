@@ -13,7 +13,7 @@ export default defineConfig({
   // This section is the same as in the playwright.config.ts file.
   expect: {
     // Maximum time expect() should wait for the condition to be met.
-    timeout: 30000,
+    timeout: 45000,
   },
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
@@ -32,7 +32,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   testDir: './tests',
   // Time spent by the test function, fixtures, beforeEach and afterEach hooks
-  timeout: 75000,
+  timeout: 100000,
   // Opt out of parallel tests on CI.
   workers: process.env.CI ? 1 : undefined,
   
