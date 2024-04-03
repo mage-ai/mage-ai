@@ -33,12 +33,15 @@ export async function enableSettings(
   settingFeaturesToDisable: TSettingFeaturesToDisable,
 ) {
   await page.goto('/settings');
+  await page.waitForLoadState();
+  await expect(page.getByText('Add new block v2')).toBeVisible();
 
-  // const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
-  // if (await helpImproveMageToggle.isChecked()) {
-  //   await helpImproveMageToggle.click();
-  // }
-  // await expect(helpImproveMageToggle).not.toBeChecked();
+  const helpImproveMageToggle = page.locator('#help_improve_mage_toggle');
+  const helpImproveMageToggleInput = page.locator('#help_improve_mage_toggle_input');
+  if (await helpImproveMageToggleInput.isChecked()) {
+    await helpImproveMageToggle.click();
+  }
+  await expect(helpImproveMageToggleInput).not.toBeChecked();
 
 
   const features = getSettingsToEnable(settingFeaturesToDisable);

@@ -44,9 +44,11 @@ import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getSetSettings } from '@storage/CommandCenter/utils';
+import { isEmptyObject } from '@utils/hash';
 import { launchCommandCenter } from '@components/CommandCenter/utils';
 import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
 
@@ -136,6 +138,7 @@ function Header({
     featureEnabled,
     featureUUIDs,
   ]);
+  const projectPlatformOverrideFeaturesEnabled = !isEmptyObject(project?.features_override);
   projectRef.current = project;
 
   const launchCommandCenterWrapper = useCallback(() => {
@@ -211,6 +214,8 @@ function Header({
                 response,
               });
             } else {
+              const displayLocalTimeUpdated: boolean = !!response?.data?.project?.features?.display_local_timezone;
+              storeLocalTimezoneSetting(displayLocalTimeUpdated);
               if (typeof window !== 'undefined') {
                 window.location.reload();
               }
@@ -594,6 +599,7 @@ function Header({
 
             <Spacing ml={1}>
               <ServerTimeDropdown
+                disableTimezoneToggle={projectPlatformOverrideFeaturesEnabled}
                 projectName={project?.name}
               />
             </Spacing>
