@@ -177,7 +177,7 @@ function Preferences({
             <ToggleSwitch
               checked={projectAttributes?.help_improve_mage}
               compact
-              data-testid="help_improve_mage_toggle"
+              id="help_improve_mage_toggle"
               onCheck={() => setProjectAttributes(prev => ({
                 ...prev,
                 help_improve_mage: !projectAttributes?.help_improve_mage,

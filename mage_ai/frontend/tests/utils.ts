@@ -35,10 +35,12 @@ export async function enableSettings(
   await page.goto('/settings');
   await page.waitForLoadState();
 
-  const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
-  await expect(helpImproveMageToggle).toBeChecked();
-  await helpImproveMageToggle.click();
-  await expect(helpImproveMageToggle).not.toBeChecked();
+  const helpImproveMageToggle = page.locator('#help_improve_mage_toggle');
+  const helpImproveMageToggleInput = page.locator('#help_improve_mage_toggle_input');
+  if (await helpImproveMageToggleInput.isChecked()) {
+    await helpImproveMageToggle.click();
+  }
+  await expect(helpImproveMageToggleInput).not.toBeChecked();
 
 
   const features = getSettingsToEnable(settingFeaturesToDisable);

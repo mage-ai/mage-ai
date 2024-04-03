@@ -14,6 +14,7 @@ type ToggleSwitchProps = {
   checked?: boolean;
   compact?: boolean;
   disabled?: boolean;
+  id?: string;
   monotone?: boolean;
   onCheck?: Dispatch<SetStateAction<boolean>>;
   pauseEvent?: boolean;
@@ -94,6 +95,7 @@ const ToggleSwitchStyle = styled.label<
 const ToggleSwitch = ({
   checked,
   disabled,
+  id,
   onCheck,
   pauseEvent = true,
   ...props
@@ -105,11 +107,13 @@ const ToggleSwitch = ({
       <ToggleSwitchStyle
         {...props}
         disabled={disabled}
+        id={id}
         noBackground
         noBorder
       >
         <input
           checked={checked}
+          id={id ? `${id}_input` : null}
           readOnly
           type="checkbox"
         />
