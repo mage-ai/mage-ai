@@ -35,7 +35,8 @@ export async function enableSettings(
   await page.goto('/settings');
 
   const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
-  if (await helpImproveMageToggle.isChecked()) {
+  const helpImproveMageInput = helpImproveMageToggle.locator('input[type="checkbox"]');
+  if (await helpImproveMageInput.isChecked()) {
     await helpImproveMageToggle.click();
   }
   await expect(helpImproveMageToggle).not.toBeChecked();
