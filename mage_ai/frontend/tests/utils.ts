@@ -33,6 +33,7 @@ export async function enableSettings(
   settingFeaturesToDisable: TSettingFeaturesToDisable,
 ) {
   await page.goto('/settings');
+  await page.waitForLoadState();
 
   const helpImproveMageToggle = page.getByTestId('help_improve_mage_toggle');
   await expect(helpImproveMageToggle).toBeChecked();
