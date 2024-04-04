@@ -142,6 +142,7 @@ import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
+import { getOutputCollapsedUUID } from '@components/CodeBlock/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
@@ -1617,6 +1618,23 @@ function PipelineDetailPage({
       blocksInSidekick: blocksInSidekickInner,
     };
   }, [blocks]);
+
+  const collapseAllBlockOutputs = useCallback((state: boolean = true) => {
+    if (blocksInNotebook.some(({ uuid: blockUUID }) =>
+      get(getOutputCollapsedUUID(pipelineUUID, blockUUID), false) !== state,
+    )) {
+      blocksInNotebook.forEach(({ type: blockType, uuid: blockUUID }) => {
+        set(getOutputCollapsedUUID(pipelineUUID, blockUUID), state);
+        setBlocksThatNeedToRefresh((prev: any) => ({
+          ...prev,
+          [blockType]: {
+            ...prev?.[blockType],
+            [blockUUID]: Number(new Date()),
+          },
+        }));
+      });
+    }
+  }, [blocksInNotebook, pipelineUUID]);
 
   const updatePipelineMetadata =
     useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
@@ -3212,6 +3230,7 @@ function PipelineDetailPage({
       return (
         <FileHeaderMenu
           cancelPipeline={cancelPipeline}
+          collapseAllBlockOutputs={collapseAllBlockOutputs}
           createPipeline={createPipeline}
           executePipeline={executePipeline}
           hideOutputOnExecution={hideBlockOutputOnExecution}
@@ -3233,6 +3252,7 @@ function PipelineDetailPage({
     }
   }, [
     cancelPipeline,
+    collapseAllBlockOutputs,
     createPipeline,
     executePipeline,
     hideBlockOutputOnExecution,

@@ -43,6 +43,7 @@ const INDEX_COMPUTE = 4;
 type FileHeaderMenuProps = {
   cancelPipeline: () => void;
   children?: any;
+  collapseAllBlockOutputs?: (state: boolean) => void;
   createPipeline: (data: any) => void;
   executePipeline: () => void;
   hideOutputOnExecution?: boolean;
@@ -69,6 +70,7 @@ type FileHeaderMenuProps = {
 function FileHeaderMenu({
   cancelPipeline,
   children,
+  collapseAllBlockOutputs,
   createPipeline,
   executePipeline,
   hideOutputOnExecution,
@@ -240,28 +242,24 @@ function FileHeaderMenu({
       onClick: toggleHideOutputOnExecution,
       uuid: 'Hide output on execution',
     },
-    // {
-    //   label: () => (
-    //     <FileHeaderMenuItem
-    //       label="Collapse all outputs"
-    //     />
-    //   ),
-    //   onClick: () => {
-    //     // collapseAllOutputs();
-    //   },
-    //   uuid: 'Collapse all outputs',
-    // },
-    // {
-    //   label: () => (
-    //     <FileHeaderMenuItem
-    //       label="Expand all outputs"
-    //     />
-    //   ),
-    //   onClick: () => {
-    //     // expandAllOutputs();
-    //   },
-    //   uuid: 'Expand all outputs',
-    // },
+    {
+      label: () => (
+        <FileHeaderMenuItem
+          label="Collapse all outputs"
+        />
+      ),
+      onClick: () => collapseAllBlockOutputs(true),
+      uuid: 'Collapse all outputs',
+    },
+    {
+      label: () => (
+        <FileHeaderMenuItem
+          label="Expand all outputs"
+        />
+      ),
+      onClick: () => collapseAllBlockOutputs(false),
+      uuid: 'Expand all outputs',
+    },
     {
       label: () => (
         <FileHeaderMenuItem

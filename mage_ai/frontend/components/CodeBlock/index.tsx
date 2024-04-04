@@ -165,8 +165,10 @@ import {
   buildBorderProps,
   buildConvertBlockMenuItems,
   calculateOffsetPercentage,
+  getCodeCollapsedUUID,
   getDownstreamBlockUuids,
   getMessagesWithType,
+  getOutputCollapsedUUID,
   getUpstreamBlockUuids,
   hasErrorOrOutput,
 } from './utils';
@@ -865,13 +867,14 @@ function CodeBlock({
     dataProviders,
   ]);
 
-  const codeCollapsedUUID = useMemo(() => (
-    `${pipelineUUID}/${blockUUID}/codeCollapsed`
-  ), [pipelineUUID, blockUUID]);
-
-  const outputCollapsedUUID = useMemo(() => (
-    `${pipelineUUID}/${blockUUID}/outputCollapsed`
-  ), [pipelineUUID, blockUUID]);
+  const codeCollapsedUUID = useMemo(
+    () => getCodeCollapsedUUID(pipelineUUID, blockUUID),
+    [pipelineUUID, blockUUID],
+  );
+  const outputCollapsedUUID = useMemo(
+    () => getOutputCollapsedUUID(pipelineUUID, blockUUID),
+    [pipelineUUID, blockUUID],
+  );
 
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));
