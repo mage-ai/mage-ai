@@ -242,24 +242,24 @@ function FileHeaderMenu({
       onClick: toggleHideOutputOnExecution,
       uuid: 'Hide output on execution',
     },
-    {
-      label: () => (
-        <FileHeaderMenuItem
-          label="Collapse all outputs"
-        />
-      ),
-      onClick: () => collapseAllBlockOutputs(true),
-      uuid: 'Collapse all outputs',
-    },
-    {
-      label: () => (
-        <FileHeaderMenuItem
-          label="Expand all outputs"
-        />
-      ),
-      onClick: () => collapseAllBlockOutputs(false),
-      uuid: 'Expand all outputs',
-    },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Collapse all outputs"
+    //     />
+    //   ),
+    //   onClick: () => collapseAllBlockOutputs(true),
+    //   uuid: 'Collapse all outputs',
+    // },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Expand all outputs"
+    //     />
+    //   ),
+    //   onClick: () => collapseAllBlockOutputs(false),
+    //   uuid: 'Expand all outputs',
+    // },
     {
       label: () => (
         <FileHeaderMenuItem

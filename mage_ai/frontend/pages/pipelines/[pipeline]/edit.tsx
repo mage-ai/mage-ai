@@ -1623,16 +1623,18 @@ function PipelineDetailPage({
     if (blocksInNotebook.some(({ uuid: blockUUID }) =>
       get(getOutputCollapsedUUID(pipelineUUID, blockUUID), false) !== state,
     )) {
+      const blocksThatNeedToRefreshUpdated = {};
       blocksInNotebook.forEach(({ type: blockType, uuid: blockUUID }) => {
         set(getOutputCollapsedUUID(pipelineUUID, blockUUID), state);
-        setBlocksThatNeedToRefresh((prev: any) => ({
-          ...prev,
-          [blockType]: {
-            ...prev?.[blockType],
-            [blockUUID]: Number(new Date()),
-          },
-        }));
+        if (!blocksThatNeedToRefreshUpdated[blockType]) {
+          blocksThatNeedToRefreshUpdated[blockType] = {};
+        }
+        blocksThatNeedToRefreshUpdated[blockType][blockUUID] = Number(new Date());
       });
+      setBlocksThatNeedToRefresh((prev: any) => ({
+        ...prev,
+        ...blocksThatNeedToRefreshUpdated,
+      }));
     }
   }, [blocksInNotebook, pipelineUUID]);
 
