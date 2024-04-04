@@ -6,7 +6,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FileHeaderMenuItem from './FileHeaderMenuItem';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import KernelType, { KernelNameEnum } from '@interfaces/KernelType';
 import PipelineType, {
   KERNEL_NAME_TO_PIPELINE_TYPE,
   PipelineTypeEnum,
@@ -18,6 +17,7 @@ import {
   LayoutSplit,
   LayoutStacked,
 } from '@oracle/icons';
+import { KernelNameEnum } from '@interfaces/KernelType';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
@@ -31,7 +31,6 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SHARED_FILE_HEADER_BUTTON_PROPS } from './constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
 import { randomNameGenerator } from '@utils/string';
