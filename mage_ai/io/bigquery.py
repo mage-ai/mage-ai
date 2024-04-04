@@ -288,14 +288,23 @@ WHERE table_id = '{table_name}'
                             **configuration_params,
                         )
 
+                        parts = temp_table_id.split('.')
+                        if len(parts) == 2:
+                            temp_table_name = parts[1]
+                        elif len(parts) == 3:
+                            temp_table_name = parts[2]
+                        column_types = self.get_column_types(schema, temp_table_name)
+                        columns = list(column_types.keys())
+                        if not columns:
+                            columns = df.columns.str.replace(' ', '_')
+
                         on_conditions = []
                         for col in unique_constraints:
                             on_conditions.append(
                                 f'((a.{col} IS NULL AND b.{col} IS NULL) OR a.{col} = b.{col})',
                             )
 
-                        columns_cleaned = df.columns.str.replace(' ', '_')
-                        insert_columns = ', '.join([f'`{col}`' for col in columns_cleaned])
+                        insert_columns = ', '.join([f'`{col}`' for col in columns])
 
                         merge_commands = [
                             f'MERGE INTO `{table_id}` AS a',
@@ -305,11 +314,11 @@ WHERE table_id = '{table_name}'
 
                         if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                             set_command = ', '.join(
-                                [f'a.`{col}` = b.`{col}`' for col in columns_cleaned],
+                                [f'a.`{col}` = b.`{col}`' for col in columns],
                             )
                             merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
 
-                        merge_values = f"({', '.join([f'b.`{col}`' for col in columns_cleaned])})"
+                        merge_values = f"({', '.join([f'b.`{col}`' for col in columns])})"
                         merge_commands.append(
                             f'WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}',  # noqa: E501
                         )
