@@ -8,6 +8,7 @@ from mysql.connector.cursor import MySQLCursor
 from pandas import DataFrame, Series
 
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.parsers import encode_complex
@@ -60,7 +61,7 @@ class MySQL(BaseSQL):
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
-        query = []
+        columns_and_types = []
         for cname in dtypes:
             if overwrite_types is not None and cname in overwrite_types.keys():
                 dtypes[cname] = overwrite_types[cname]
@@ -68,9 +69,22 @@ class MySQL(BaseSQL):
                 cleaned_col_name = clean_name(cname, case_sensitive=case_sensitive)
             else:
                 cleaned_col_name = cname
-            query.append(f'`{cleaned_col_name}` {dtypes[cname]} NULL')
+            columns_and_types.append(f'`{cleaned_col_name}` {dtypes[cname]} NULL')
 
-        return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
+        if unique_constraints:
+            unique_constraints = [
+                clean_name(col, case_sensitive=case_sensitive)
+                for col in unique_constraints
+            ]
+            index_name = '_'.join([
+                clean_name(table_name, case_sensitive=case_sensitive),
+            ] + unique_constraints)
+            index_name = f'unique{index_name}'[:64]
+            columns_and_types.append(
+                f"CONSTRAINT {index_name} Unique({', '.join(unique_constraints)})"
+            )
+
+        return f'CREATE TABLE {table_name} (' + ','.join(columns_and_types) + ');'
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to MySQL database'):
@@ -94,6 +108,9 @@ class MySQL(BaseSQL):
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
+        case_sensitive: bool = False,
+        unique_constraints: List[str] = None,
+        unique_conflict_method: str = None,
         **kwargs,
     ) -> None:
         def serialize_obj(val):
@@ -133,9 +150,24 @@ class MySQL(BaseSQL):
         for _, row in df_.iterrows():
             values.append(tuple([str(val) if type(val) is pd.Timestamp else val for val in row]))
 
-        insert_columns = ', '.join([f'`{col}`'for col in columns])
+        cleaned_columns = [clean_name(col, case_sensitive=case_sensitive) for col in columns]
+        insert_columns = ', '.join([f'`{col}`'for col in cleaned_columns])
 
-        sql = f'INSERT INTO {full_table_name} ({insert_columns}) VALUES ({values_placeholder})'
+        query = [
+            f'INSERT INTO {full_table_name} ({insert_columns})',
+            f'VALUES ({values_placeholder})',
+        ]
+
+        if unique_constraints and unique_conflict_method:
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                update_command = [f'{col} = new.{col}' for col in cleaned_columns]
+                query += [
+                    'AS new',
+                    f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",
+                ]
+
+        sql = '\n'.join(query)
+
         cursor.executemany(sql, values)
 
     def get_type(self, column: Series, dtype: str) -> str:
