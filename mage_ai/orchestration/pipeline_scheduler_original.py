@@ -830,6 +830,8 @@ class PipelineScheduler:
         Returns:
             List[BlockRun]: A list of crashed block runs.
         """
+        for b in self.pipeline_run.block_runs:
+            b.refresh()
         running_or_queued_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
             BlockRun.BlockRunStatus.RUNNING,
             BlockRun.BlockRunStatus.QUEUED,
