@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FileHeaderMenuItem from './FileHeaderMenuItem';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import KernelType, { KernelNameEnum } from '@interfaces/KernelType';
@@ -10,12 +11,10 @@ import PipelineType, {
   KERNEL_NAME_TO_PIPELINE_TYPE,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useKernel from '@utils/models/kernel/useKernel';
 import useProject from '@utils/models/project/useProject';
 import {
-  Check,
   LayoutSplit,
   LayoutStacked,
 } from '@oracle/icons';
@@ -39,7 +38,6 @@ import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
-const ICON_SIZE = 1.5 * UNIT;
 const INDEX_COMPUTE = 4;
 
 type FileHeaderMenuProps = {
@@ -47,6 +45,7 @@ type FileHeaderMenuProps = {
   children?: any;
   createPipeline: (data: any) => void;
   executePipeline: () => void;
+  hideOutputOnExecution?: boolean;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
   pipeline: PipelineType;
@@ -60,9 +59,10 @@ type FileHeaderMenuProps = {
   setMessages: (message: {
     [uuid: string]: KernelOutputType[];
   }) => void;
-  sideBySideEnabled?: boolean;
   setScrollTogether?: (prev: any) => void;
   setSideBySideEnabled?: (prev: any) => void;
+  sideBySideEnabled?: boolean;
+  toggleHideOutputOnExecution?: () => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -71,6 +71,7 @@ function FileHeaderMenu({
   children,
   createPipeline,
   executePipeline,
+  hideOutputOnExecution,
   interruptKernel,
   isPipelineExecuting,
   pipeline,
@@ -82,6 +83,7 @@ function FileHeaderMenu({
   setScrollTogether,
   setSideBySideEnabled,
   sideBySideEnabled,
+  toggleHideOutputOnExecution,
   updatePipelineMetadata,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
@@ -230,15 +232,42 @@ function FileHeaderMenu({
   const viewItems = useMemo(() => [
     {
       label: () => (
-        <FlexContainer alignItems="center">
-          <LayoutStacked success={!sideBySideEnabled} />
-
-          <Spacing mr={1} />
-
-          <Text noWrapping>
-            Show output below block
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          checked={hideOutputOnExecution}
+          label="Hide output on execution"
+        />
+      ),
+      onClick: toggleHideOutputOnExecution,
+      uuid: 'Hide output on execution',
+    },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Collapse all outputs"
+    //     />
+    //   ),
+    //   onClick: () => {
+    //     // collapseAllOutputs();
+    //   },
+    //   uuid: 'Collapse all outputs',
+    // },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Expand all outputs"
+    //     />
+    //   ),
+    //   onClick: () => {
+    //     // expandAllOutputs();
+    //   },
+    //   uuid: 'Expand all outputs',
+    // },
+    {
+      label: () => (
+        <FileHeaderMenuItem
+          beforeIcon={<LayoutStacked success={!sideBySideEnabled} />}
+          label="Show output below block"
+        />
       ),
       onClick: () => {
         setSideBySideEnabled(false);
@@ -247,15 +276,10 @@ function FileHeaderMenu({
     },
     {
       label: () => (
-        <FlexContainer alignItems="center">
-          <LayoutSplit success={sideBySideEnabled} />
-
-          <Spacing mr={1} />
-
-          <Text noWrapping>
-            Show output next to code (beta)
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          beforeIcon={<LayoutSplit success={sideBySideEnabled} />}
+          label="Show output next to code (beta)"
+        />
       ),
       onClick: () => {
         setSideBySideEnabled(true);
@@ -265,24 +289,22 @@ function FileHeaderMenu({
     {
       disabled: !sideBySideEnabled,
       label: () => (
-        <FlexContainer alignItems="center">
-          {scrollTogether ? <Check /> : <div style={{ width: ICON_SIZE}} />}
-
-          <Spacing mr={1} />
-
-          <Text disabled={!sideBySideEnabled} noWrapping>
-            Scroll output alongside code (beta)
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          checked={scrollTogether}
+          label="Scroll output alongside code (beta)"
+          muted={!sideBySideEnabled}
+        />
       ),
       onClick: () => setScrollTogether(!scrollTogether),
       uuid: 'Scroll output alongside code',
     },
   ], [
+    hideOutputOnExecution,
     scrollTogether,
     setScrollTogether,
     setSideBySideEnabled,
     sideBySideEnabled,
+    toggleHideOutputOnExecution,
   ]);
 
   const computeItems = useMemo(() => {

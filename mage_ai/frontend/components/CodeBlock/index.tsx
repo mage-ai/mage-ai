@@ -225,6 +225,7 @@ type CodeBlockProps = {
   hideExtraCommandButtons?: boolean;
   hideExtraConfiguration?: boolean;
   hideHeaderInteractiveInformation?: boolean;
+  hideOutputOnExecution?: boolean;
   hideRunButton?: boolean;
   interactionsMapping?: {
     [interactionUUID: string]: InteractionType;
@@ -359,6 +360,7 @@ function CodeBlock({
   hideExtraCommandButtons,
   hideExtraConfiguration,
   hideHeaderInteractiveInformation,
+  hideOutputOnExecution,
   hideRunButton,
   interactionsMapping,
   interruptKernel,
@@ -928,7 +930,7 @@ function CodeBlock({
       && !isStreamingPipeline
       && !isDataIntegration
       && BlockLanguageEnum.PYTHON === blockLanguage
-      && (PipelineTypeEnum.PYSPARK === pipeline?.type || !project?.emr_config)
+      && (PipelineTypeEnum.PYSPARK === pipeline?.type || !project?.emr_config),
     );
   }, [
     blockLanguage,
@@ -952,8 +954,8 @@ function CodeBlock({
   const runBlockAndTrack = useCallback((payload?: RunBlockAndTrackProps) => {
     if (sideBySideEnabled) {
       dispatchEventSyncColumnPositions({
-        columnIndex: scrollTogether ? 2 : 1,
         bypassOffScreen: scrollTogether,
+        columnIndex: scrollTogether ? 2 : 1,
         ...(payload?.syncColumnPositions || {
           rect: refColumn2?.current?.getBoundingClientRect(),
           y: refColumn1?.current?.getBoundingClientRect()?.y,
@@ -998,7 +1000,7 @@ function CodeBlock({
         Object.entries(interaction?.variables || {}).forEach(([
           variableUUID,
           {
-            types
+            types,
           },
         ]) => {
           if (variablesToUse && variableUUID in variablesToUse) {
@@ -1025,13 +1027,17 @@ function CodeBlock({
         || dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL]
         || [
           BlockTypeEnum.SCRATCHPAD,
-        ].includes(blockType)
+        ].includes(blockType),
     });
 
     if (!disableReset) {
       setRunCount(1 + Number(runCount));
       setRunEndTime(null);
-      setOutputCollapsed(false);
+      if (hideOutputOnExecution) {
+        setOutputCollapsed(true);
+      } else {
+        setOutputCollapsed(false);
+      }
     }
 
     if (sparkEnabled) {
@@ -1039,10 +1045,13 @@ function CodeBlock({
     }
   }, [
     blockInteractions,
+    blockType,
     content,
     dataProviderConfig,
+    dispatchEventSyncColumnPositions,
     fetchExecutionStates,
     hasDownstreamWidgets,
+    hideOutputOnExecution,
     interactionsMapping,
     isDBT,
     refColumn1,

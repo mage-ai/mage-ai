@@ -103,6 +103,7 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
+  LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION,
 } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -475,6 +476,18 @@ function PipelineDetailPage({
     setScrollTogether,
     setSideBySideEnabledState,
   ]);
+
+  const [hideBlockOutputOnExecution, setHideBlockOutputOnExecution] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION, false),
+  );
+  const toggleHideBlockOutputOnExecution = useCallback(() => {
+    const hideBlockOutputOnExecutionUpdated = !hideBlockOutputOnExecution;
+    setHideBlockOutputOnExecution(hideBlockOutputOnExecutionUpdated);
+    set(
+      LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION,
+      hideBlockOutputOnExecutionUpdated,
+    );
+  }, [hideBlockOutputOnExecution]);
 
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
@@ -3090,6 +3103,7 @@ function PipelineDetailPage({
       files={files}
       globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
+      hideOutputOnExecution={hideBlockOutputOnExecution}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
       interactionsMapping={interactionsMapping}
@@ -3155,6 +3169,7 @@ function PipelineDetailPage({
     files,
     globalDataProducts,
     globalVariables,
+    hideBlockOutputOnExecution,
     hiddenBlocks,
     interactionsMapping,
     interruptKernel,
@@ -3199,6 +3214,7 @@ function PipelineDetailPage({
           cancelPipeline={cancelPipeline}
           createPipeline={createPipeline}
           executePipeline={executePipeline}
+          hideOutputOnExecution={hideBlockOutputOnExecution}
           interruptKernel={interruptKernel}
           isPipelineExecuting={isPipelineExecuting}
           pipeline={pipeline}
@@ -3210,6 +3226,7 @@ function PipelineDetailPage({
           setScrollTogether={setScrollTogether}
           setSideBySideEnabled={setSideBySideEnabled}
           sideBySideEnabled={sideBySideEnabled}
+          toggleHideOutputOnExecution={toggleHideBlockOutputOnExecution}
           updatePipelineMetadata={updatePipelineMetadata}
         />
       );
@@ -3218,6 +3235,7 @@ function PipelineDetailPage({
     cancelPipeline,
     createPipeline,
     executePipeline,
+    hideBlockOutputOnExecution,
     interruptKernel,
     isPipelineExecuting,
     page,
@@ -3229,6 +3247,7 @@ function PipelineDetailPage({
     setScrollTogether,
     setSideBySideEnabled,
     sideBySideEnabled,
+    toggleHideBlockOutputOnExecution,
     updatePipelineMetadata,
   ]);
 
