@@ -1619,24 +1619,24 @@ function PipelineDetailPage({
     };
   }, [blocks]);
 
-  const collapseAllBlockOutputs = useCallback((state: boolean = true) => {
-    if (blocksInNotebook.some(({ uuid: blockUUID }) =>
-      get(getOutputCollapsedUUID(pipelineUUID, blockUUID), false) !== state,
-    )) {
-      const blocksThatNeedToRefreshUpdated = {};
-      blocksInNotebook.forEach(({ type: blockType, uuid: blockUUID }) => {
-        set(getOutputCollapsedUUID(pipelineUUID, blockUUID), state);
-        if (!blocksThatNeedToRefreshUpdated[blockType]) {
-          blocksThatNeedToRefreshUpdated[blockType] = {};
-        }
-        blocksThatNeedToRefreshUpdated[blockType][blockUUID] = Number(new Date());
-      });
-      setBlocksThatNeedToRefresh((prev: any) => ({
-        ...prev,
-        ...blocksThatNeedToRefreshUpdated,
-      }));
-    }
-  }, [blocksInNotebook, pipelineUUID]);
+  // const collapseAllBlockOutputs = useCallback((state: boolean = true) => {
+  //   if (blocksInNotebook.some(({ uuid: blockUUID }) =>
+  //     get(getOutputCollapsedUUID(pipelineUUID, blockUUID), false) !== state,
+  //   )) {
+  //     const blocksThatNeedToRefreshUpdated = {};
+  //     blocksInNotebook.forEach(({ type: blockType, uuid: blockUUID }) => {
+  //       set(getOutputCollapsedUUID(pipelineUUID, blockUUID), state);
+  //       if (!blocksThatNeedToRefreshUpdated[blockType]) {
+  //         blocksThatNeedToRefreshUpdated[blockType] = {};
+  //       }
+  //       blocksThatNeedToRefreshUpdated[blockType][blockUUID] = Number(new Date());
+  //     });
+  //     setBlocksThatNeedToRefresh((prev: any) => ({
+  //       ...prev,
+  //       ...blocksThatNeedToRefreshUpdated,
+  //     }));
+  //   }
+  // }, [blocksInNotebook, pipelineUUID]);
 
   const updatePipelineMetadata =
     useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
@@ -3232,7 +3232,6 @@ function PipelineDetailPage({
       return (
         <FileHeaderMenu
           cancelPipeline={cancelPipeline}
-          collapseAllBlockOutputs={collapseAllBlockOutputs}
           createPipeline={createPipeline}
           executePipeline={executePipeline}
           hideOutputOnExecution={hideBlockOutputOnExecution}
@@ -3254,7 +3253,6 @@ function PipelineDetailPage({
     }
   }, [
     cancelPipeline,
-    collapseAllBlockOutputs,
     createPipeline,
     executePipeline,
     hideBlockOutputOnExecution,
