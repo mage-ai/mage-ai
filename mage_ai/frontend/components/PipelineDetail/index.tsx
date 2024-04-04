@@ -132,6 +132,7 @@ type PipelineDetailProps = {
   files: FileType[];
   globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
+  hideOutputOnExecution?: boolean;
   hiddenBlocks: {
     [uuid: string]: BlockType;
   };
@@ -229,6 +230,7 @@ function PipelineDetail({
   files,
   globalDataProducts,
   globalVariables,
+  hideOutputOnExecution,
   hiddenBlocks,
   interactionsMapping,
   interruptKernel,
@@ -1027,6 +1029,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
           globalDataProducts={globalDataProducts}
+          hideOutputOnExecution={hideOutputOnExecution}
           hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
           interactionsMapping={interactionsMapping}
           interruptKernel={interruptKernel}
@@ -1123,6 +1126,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     fetchFileTree,
     fetchPipeline,
     globalDataProducts,
+    hideOutputOnExecution,
     hiddenBlocks,
     interactionsMapping,
     interruptKernel,

@@ -57,6 +57,16 @@ export const getDownstreamBlockUuids = (
   return downstreamBlocks;
 };
 
+export const getCodeCollapsedUUID = (
+  pipelineUUID: string,
+  blockUUID: string,
+) => `${pipelineUUID}/${blockUUID}/codeCollapsed`;
+
+export const getOutputCollapsedUUID = (
+  pipelineUUID: string,
+  blockUUID: string,
+) => `${pipelineUUID}/${blockUUID}/outputCollapsed`;
+
 export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
