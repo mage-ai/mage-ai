@@ -771,7 +771,7 @@
           "icon": "code-branch",
           "pages": [
             "production/data-sync/git-sync",
-            "production/data-sync/github"
+            "production/data-sync/version-control"
           ]
         },
         {
@@ -1195,6 +1195,10 @@
     {
       "source": "/development/git/generate-an-ssh-token",
       "destination": "/development/git/configure#generate-ssh-token"
+    },
+    {
+      "source": "/production/data-sync/github",
+      "destination": "/production/data-sync/version-control"
     }
   ]
 }

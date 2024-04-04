@@ -39,6 +39,9 @@ GitHub Enterprise (GHE) or other providers, you will need to follow the steps be
 authenticate with multiple git providers if you need to. Mage will attempt to use the oauth provider
 based on the URL of the remote.
 
+When creating the OAuth app for GHE, BitBucket, or GitLab, you will need to set the authorized
+callback URL to `http(s)://<your-mage-url>/oauth`.
+
 <AccordionGroup>
 
 <Accordion title='Authenticate with GHE'>
