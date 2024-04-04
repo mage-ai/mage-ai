@@ -48,6 +48,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -989,6 +990,9 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         block_runs_all = []
 
         data_integration_block_uuids_mapping = {}
+
+        pipeline_project = Project(pipeline.repo_config)
+
         for block_run in self.block_runs:
             block_runs_all.append(block_run)
 
@@ -1021,7 +1025,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                 "original": 1,
             }
             """
-            if metrics and block and block.is_data_integration():
+            if metrics and block and block.is_data_integration(pipeline_project=pipeline_project):
                 original_block_uuid = metrics.get('original_block_uuid')
 
                 if original_block_uuid and metrics.get('child'):
