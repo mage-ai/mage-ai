@@ -1,9 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-
-import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import Divider from '@oracle/elements/Divider';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import useApplicationBase, { ApplicationBaseType } from '../useApplicationBase';
 import useTerminal from '@components/Terminal/useTerminal';

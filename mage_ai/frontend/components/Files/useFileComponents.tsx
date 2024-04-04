@@ -33,6 +33,7 @@ import dark from '@oracle/styles/themes/dark';
 import useContextMenu from '@utils/useContextMenu';
 import useDelayFetch from '@api/utils/useDelayFetch';
 import useStatus from '@utils/models/status/useStatus';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import {
   Check,
   Circle,
@@ -455,6 +456,7 @@ function useFileComponents({
     exclude_dir_pattern: COMMON_EXCLUDE_DIR_PATTERNS,
   }, {
     delay: (typeof delayFetch === 'undefined' || delayFetch === null) ? 0 : delayFetch,
+    pauseFetch: uuidProp !== ApplicationExpansionUUIDEnum.ArcaneLibrary,
   });
   const filesFlatten = useMemo(() => filesFlattenData?.files  || [], [filesFlattenData]);
 

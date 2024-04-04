@@ -10,7 +10,7 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
   let opts;
 
   const lastArg = argsInit?.slice(-1)?.[0];
-  if ('condition' in lastArg || 'delay' in lastArg) {
+  if ('condition' in lastArg || 'delay' in lastArg || 'pauseFetch' in lastArg) {
     args = args.slice(0, args?.length - 1);
     opts = lastArg;
   }
@@ -18,6 +18,7 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
   const {
     condition,
     delay,
+    pauseFetch,
   } = opts || {
     condition: undefined,
     delay: 3000,
@@ -43,17 +44,17 @@ export default function useDelayFetch(endpoint: (opts?: any) => any, ...argsInit
       }, delay);
     };
 
-    if (!ready) {
+    if (!ready && !pauseFetch) {
       getReady();
     }
-  }, [condition]);
+  }, [condition, pauseFetch]);
 
   const {
     data,
     mutate,
   } = endpoint(...(ready
     ? args
-    : [null, null, { pauseFetch: delay }]
+    : [null, null, { pauseFetch: pauseFetch || delay }]
   ));
 
   return {
