@@ -320,8 +320,8 @@
     "age": {
       "type": [
         "null",
-        "integer",
-        "string"
+        "string",
+        "integer"
       ]
     },
     "gender": {
