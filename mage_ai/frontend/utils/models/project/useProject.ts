@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMutation } from 'react-query';
 
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
@@ -22,6 +22,7 @@ export type UseProjectType = {
     OPERATION_HISTORY: FeatureUUIDEnum;
   };
   fetchProjects: () => any;
+  isLoadingProject?: boolean;
   isLoadingUpdate: boolean;
   project: ProjectType;
   projectPlatformActivated?: boolean;
@@ -32,10 +33,12 @@ export type UseProjectType = {
 
 type UseProjectProps = {
   pauseFetch?: boolean;
+  showError?: (resp: { response: any }) => void;
 };
 
 function useProject({
   pauseFetch,
+  showError,
 }: UseProjectProps = {
   pauseFetch: false,
 }): UseProjectType {
@@ -44,6 +47,17 @@ function useProject({
   }, {
     pauseFetch,
   });
+  useEffect(() => {
+    if (dataProjects?.error) {
+      showError?.({
+        response: dataProjects,
+      });
+    }
+  }, [
+    dataProjects,
+    showError,
+  ]);
+
   const {
     project,
     rootProject,
@@ -92,6 +106,7 @@ function useProject({
     featureEnabled: (featureUUID: FeatureUUIDEnum): boolean => featureEnabled(project, featureUUID),
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
+    isLoadingProject: !dataProjects,
     isLoadingUpdate,
     project,
     projectPlatformActivated: project && rootProject && project?.name !== rootProject?.name,

@@ -123,11 +123,12 @@ function Header({
   const {
     featureEnabled,
     featureUUIDs,
+    isLoadingProject,
     isLoadingUpdate,
     project: projectInit,
     rootProject,
     updateProject,
-  } = useProject();
+  } = useProject({ showError });
   const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
   const commandCenterEnabled = useMemo(() =>
@@ -232,23 +233,18 @@ function Header({
     }
 
     breadcrumbProjects.push(crumb);
+  } else if (!isLoadingProject) {
+    breadcrumbProjects.push({
+      bold: true,
+      danger: true,
+      label: () => 'Error loading project configuration',
+    });
   }
 
-  const breadcrumbs = useMemo(() => {
-    // breadcrumbsProp || [{
-    //   bold: true,
-    //   label: () => project?.name,
-    //   linkProps: {
-    //     href: '/',
-    //     sameColorText: true,
-    //   },
-    // }]
-
-    return [
+  const breadcrumbs = useMemo(() => [
       ...breadcrumbProjects,
       ...(breadcrumbsProp || []),
-    ];
-  }, [
+    ], [
     breadcrumbProjects,
     breadcrumbsProp,
     project,
