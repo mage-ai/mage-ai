@@ -81,6 +81,7 @@ class Pipeline:
         uuid,
         repo_path=None,
         config=None,
+        config_path=None,
         repo_config=None,
         catalog=None,
         use_repo_path: bool = False,
@@ -127,6 +128,9 @@ class Pipeline:
         # Used for showing the operation history. For example: recently viewed pipelines.
         self.history = []
 
+        if config_path and not config_path.endswith(PIPELINE_CONFIG_FILE):
+            config_path = os.path.join(config_path, PIPELINE_CONFIG_FILE)
+        self._config_path = config_path
         if config is None:
             self.load_config_from_yaml()
         else:
@@ -150,7 +154,13 @@ class Pipeline:
 
     @property
     def config_path(self):
-        return self.build_config_path(self.uuid, self.repo_path, use_repo_path=self.use_repo_path)
+        if not self._config_path:
+            self._config_path = self.build_config_path(
+                self.uuid,
+                self.repo_path,
+                use_repo_path=self.use_repo_path,
+            )
+        return self._config_path
 
     @property
     def catalog_config_path(self):
@@ -395,9 +405,18 @@ class Pipeline:
         if check_if_exists and not os.path.exists(config_path):
             return None
 
-        pipeline = self(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
+        pipeline = self(
+            uuid,
+            repo_path=repo_path,
+            config_path=config_path,
+            use_repo_path=use_repo_path
+        )
         if PipelineType.INTEGRATION == pipeline.type:
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+            pipeline = IntegrationPipeline(
+                uuid,
+                repo_path=repo_path,
+                config_path=config_path,
+            )
 
         return pipeline
 
@@ -537,11 +556,18 @@ class Pipeline:
                 uuid,
                 catalog=catalog,
                 config=config,
+                config_path=config_path,
                 repo_path=repo_path,
                 use_repo_path=use_repo_path,
             )
         else:
-            pipeline = self(uuid, repo_path=repo_path, config=config, use_repo_path=use_repo_path)
+            pipeline = self(
+                uuid,
+                repo_path=repo_path,
+                config=config,
+                config_path=config_path,
+                use_repo_path=use_repo_path,
+            )
         return pipeline
 
     @classmethod
