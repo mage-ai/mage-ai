@@ -130,7 +130,7 @@ function BlockLayoutItem({
   }, [
     dataBlockLayoutItem,
     showError,
-]);
+  ]);
 
   useEffect(() => {
     if (!blockLayoutItem) {
