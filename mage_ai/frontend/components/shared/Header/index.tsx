@@ -63,6 +63,7 @@ export type MenuItemType = {
 
 export type HeaderProps = {
   breadcrumbs?: BreadcrumbType[];
+  hideActions?: boolean;
   menuItems?: MenuItemType[];
   project?: ProjectType;
   version?: string;
@@ -70,6 +71,7 @@ export type HeaderProps = {
 
 function Header({
   breadcrumbs: breadcrumbsProp,
+  hideActions,
   menuItems,
   project: projectProp,
   version: versionProp,
@@ -233,7 +235,7 @@ function Header({
     }
 
     breadcrumbProjects.push(crumb);
-  } else if (!isLoadingProject) {
+  } else if (!isLoadingProject && !hideActions) {
     breadcrumbProjects.push({
       bold: true,
       danger: true,
@@ -321,23 +323,25 @@ function Header({
     design,
   ]);
 
-  const userDropdown: FlyoutMenuItemType[] = [
-    {
-      label: () => 'Settings',
-      linkProps: {
-        href: '/settings/workspace/preferences',
+  const userDropdown: FlyoutMenuItemType[] = hideActions
+    ? []
+    : [
+      {
+        label: () => 'Settings',
+        linkProps: {
+          href: '/settings/workspace/preferences',
+        },
+        uuid: 'user_settings',
       },
-      uuid: 'user_settings',
-    },
-    {
-      label: () => 'Launch command center',
-      onClick: (e) => {
-        pauseEvent(e);
-        launchCommandCenterWrapper();
+      {
+        label: () => 'Launch command center',
+        onClick: (e) => {
+          pauseEvent(e);
+          launchCommandCenterWrapper();
+        },
+        uuid: 'Launch command center',
       },
-      uuid: 'Launch command center',
-    },
-  ];
+    ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
@@ -468,7 +472,7 @@ function Header({
             />
           </Flex>
 
-          {!!project && (
+          {(!!project && !hideActions) && (
             <Flex flex={1} alignItems="center" justifyContent="center">
               <Spacing ml={PADDING_UNITS} />
 
@@ -596,6 +600,7 @@ function Header({
             <Spacing ml={1}>
               <ServerTimeDropdown
                 disableTimezoneToggle={projectPlatformOverrideFeaturesEnabled}
+                disabled={hideActions}
                 projectName={project?.name}
               />
             </Spacing>

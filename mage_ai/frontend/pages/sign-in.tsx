@@ -3,7 +3,12 @@ import SignForm from '@components/Sessions/SignForm';
 
 function SignInPage() {
   return (
-    <BasePage title="Sign in">
+    <BasePage
+      headerProps={{
+        hideActions: true,
+      }}
+      title="Sign in"
+    >
       <SignForm
         title="👋 Sign in"
       />
