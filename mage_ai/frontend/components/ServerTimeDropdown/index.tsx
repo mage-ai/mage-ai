@@ -36,11 +36,13 @@ import { useError } from '@context/Error';
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
 type ServerTimeDropdownProps = {
+  disabled?: boolean;
   disableTimezoneToggle?: boolean;
   projectName: string;
 };
 
 function ServerTimeDropdown({
+  disabled,
   disableTimezoneToggle,
   projectName,
 }: ServerTimeDropdownProps) {
@@ -150,7 +152,7 @@ function ServerTimeDropdown({
       <div style={{ position: 'relative' }}>
         <ServerTimeButton
           active={showDropdown}
-          disabled={isSmallBreakpoint}
+          disabled={isSmallBreakpoint || disabled}
           mountedCallback={setDropdownPosition}
           onClick={handleButtonClick}
           time={times.get(defaultTimeZone)}
