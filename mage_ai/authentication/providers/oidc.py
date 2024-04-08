@@ -131,4 +131,5 @@ class OidcProvider(OauthProvider, SsoProvider):
         return dict(
             email=email,
             username=userinfo_resp.get('preferred_username', email),
+            user_roles = userinfo_resp.get('user_roles'),
         )
