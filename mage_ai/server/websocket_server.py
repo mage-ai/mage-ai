@@ -116,6 +116,7 @@ def run_pipeline(
         pipeline.execute_sync(
             global_vars=global_vars,
             build_block_output_stdout=build_block_output_stdout,
+            retry_config=dict(),
             run_sensors=False,
         )
         add_pipeline_message(

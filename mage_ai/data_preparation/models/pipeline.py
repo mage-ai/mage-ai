@@ -673,6 +673,7 @@ class Pipeline:
         analyze_outputs: bool = False,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
+        retry_config=None,
         run_sensors: bool = True,
         run_tests: bool = True,
         update_status: bool = True,
@@ -689,6 +690,7 @@ class Pipeline:
             StreamingPipelineExecutor(self).execute(
                 build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
+                retry_config=retry_config,
             )
         else:
             root_blocks = []

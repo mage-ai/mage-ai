@@ -28,6 +28,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         super().__init__(pipeline, **kwargs)
         # TODO: Support custom log destination for streaming pipelines
         self.parse_and_validate_blocks()
+        self.retry_metadata = dict(attempts=0)
 
     def parse_and_validate_blocks(self):
         """
@@ -74,6 +75,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None,
         pipeline_run_id: int = None,
+        retry_config: Dict = None,
         **kwargs,
     ) -> None:
         # TODOs:
@@ -90,19 +92,43 @@ class StreamingPipelineExecutor(PipelineExecutor):
             self.logger = DictLogger(self.logger_manager.logger, logging_tags=tags)
             stdout = StreamToLogger(self.logger, logging_tags=tags)
         try:
-            with redirect_stdout(stdout):
-                with redirect_stderr(stdout):
-                    self.__execute_in_python(
-                        build_block_output_stdout=build_block_output_stdout,
-                        global_vars=global_vars,
-                        pipeline_run_id=pipeline_run_id,
-                    )
+            if retry_config is None:
+                retry_config = self.pipeline.retry_config or dict()
+            infinite_retries = False if retry_config else False
+
+            if type(retry_config) is not RetryConfig:
+                retry_config = RetryConfig.load(config=retry_config)
+
+            @retry(
+                retries=retry_config.retries,
+                delay=retry_config.delay,
+                max_delay=retry_config.max_delay,
+                exponential_backoff=retry_config.exponential_backoff,
+                logger=self.logger,
+                logging_tags=self.logging_tags,
+                retry_metadata=self.retry_metadata,
+            )
+            def __execute_with_retry():
+                with redirect_stdout(stdout):
+                    with redirect_stderr(stdout):
+                        self.__execute_in_python(
+                            build_block_output_stdout=build_block_output_stdout,
+                            global_vars=global_vars,
+                            pipeline_run_id=pipeline_run_id,
+                        )
+            __execute_with_retry()
         except Exception as e:
             if not build_block_output_stdout:
                 self.logger.exception(
                         f'Failed to execute streaming pipeline {self.pipeline.uuid}',
                         **merge_dict(dict(error=e), tags),
                     )
+            if not infinite_retries:
+                # If pipeline retry config is present, fail the pipeline after the retries
+                self.__update_pipeline_run_status(
+                    pipeline_run_id,
+                    PipelineRun.PipelineRunStatus.FAILED,
+                )
             raise e
 
     def __execute_in_python(
@@ -221,24 +247,8 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 **merge_dict(global_vars, kwargs),
             )
 
-        retry_config = self.pipeline.retry_config
-        infinite_retries = False if retry_config else False
-
-        if retry_config is None:
-            retry_config = dict()
-        if type(retry_config) is not RetryConfig:
-            retry_config = RetryConfig.load(config=retry_config)
-
-        @retry(
-            retries=retry_config.retries if self.RETRYABLE else 0,
-            delay=retry_config.delay,
-            max_delay=retry_config.max_delay,
-            exponential_backoff=retry_config.exponential_backoff,
-            logger=self.logger,
-            logging_tags=self.logging_tags,
-            retry_metadata=self.retry_metadata,
-        )
-        def __execute_with_retry():
+        # Long running method
+        try:
             if source.consume_method == SourceConsumeMethod.BATCH_READ:
                 source.batch_read(handler=handle_batch_events)
             elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
@@ -249,17 +259,6 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     asyncio.run(source.read_async(handler=handle_event_async))
             elif source.consume_method == SourceConsumeMethod.READ:
                 source.read(handler=handle_event)
-
-        # Long running method
-        try:
-            __execute_with_retry()
-        except Exception:
-            if not infinite_retries:
-                # If pipeline retry config is present, fail the pipeline after the retries
-                self.__update_pipeline_run_status(
-                    pipeline_run_id,
-                    PipelineRun.PipelineRunStatus.FAILED,
-                )
         finally:
             source.destroy()
             for sink in sinks_by_uuid.values():
@@ -269,7 +268,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
     def __update_pipeline_run_status(
         self,
         pipeline_run_id: int,
-        status: PipelineRun.BlockRunStatus,
+        status: PipelineRun.PipelineRunStatus,
     ):
         if not pipeline_run_id or not status:
             return
