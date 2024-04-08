@@ -595,10 +595,6 @@ class Permission(BaseModel):
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
-    # 1 = owner
-    # 2 = admin
-    # 4 = edit
-    # 8 = view
     access = Column(Integer, default=None)
     role_id = Column(Integer, ForeignKey('role.id'))
     user_id = Column(Integer, ForeignKey('user.id'), default=None)
