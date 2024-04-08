@@ -575,7 +575,7 @@ async def main(
             from mage_ai.data_preparation.sync.git_sync import GitSync
             sync_config = GitConfig.load(config=preferences.sync_config)
             sync = GitSync(sync_config, setup_repo=True)
-            if sync_config.sync_on_start:
+            if sync_config.remote_repo_link and sync_config.sync_on_start is True:
                 try:
                     sync.sync_data()
                     logger.info(
