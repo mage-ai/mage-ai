@@ -3,8 +3,10 @@ import copy
 import logging
 import os
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import datetime
 from typing import Callable, Dict, List, Union
 
+import pytz
 import yaml
 from jinja2 import Template
 
@@ -12,9 +14,13 @@ from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecuto
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.retry import retry
 
 
 class StreamingPipelineExecutor(PipelineExecutor):
@@ -67,6 +73,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None,
+        pipeline_run_id: int = None,
         **kwargs,
     ) -> None:
         # TODOs:
@@ -74,6 +81,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # 2. Support flink pipeline
 
         tags = self.build_tags(**kwargs)
+        self.logging_tags = tags
         if build_block_output_stdout:
             stdout_logger = logging.getLogger('streaming_pipeline_executor')
             self.logger = DictLogger(stdout_logger)
@@ -87,6 +95,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     self.__execute_in_python(
                         build_block_output_stdout=build_block_output_stdout,
                         global_vars=global_vars,
+                        pipeline_run_id=pipeline_run_id,
                     )
         except Exception as e:
             if not build_block_output_stdout:
@@ -99,7 +108,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
     def __execute_in_python(
         self,
         build_block_output_stdout: Callable[..., object] = None,
-        global_vars: Dict = None
+        global_vars: Dict = None,
+        pipeline_run_id: int = None,
+
     ):
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         from mage_ai.streaming.sources.base import SourceConsumeMethod
@@ -210,8 +221,24 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 **merge_dict(global_vars, kwargs),
             )
 
-        # Long running method
-        try:
+        retry_config = self.pipeline.retry_config
+        infinite_retries = False if retry_config else False
+
+        if retry_config is None:
+            retry_config = dict()
+        if type(retry_config) is not RetryConfig:
+            retry_config = RetryConfig.load(config=retry_config)
+
+        @retry(
+            retries=retry_config.retries if self.RETRYABLE else 0,
+            delay=retry_config.delay,
+            max_delay=retry_config.max_delay,
+            exponential_backoff=retry_config.exponential_backoff,
+            logger=self.logger,
+            logging_tags=self.logging_tags,
+            retry_metadata=self.retry_metadata,
+        )
+        def __execute_with_retry():
             if source.consume_method == SourceConsumeMethod.BATCH_READ:
                 source.batch_read(handler=handle_batch_events)
             elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
@@ -222,10 +249,35 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     asyncio.run(source.read_async(handler=handle_event_async))
             elif source.consume_method == SourceConsumeMethod.READ:
                 source.read(handler=handle_event)
+
+        # Long running method
+        try:
+            __execute_with_retry()
+        except Exception:
+            if not infinite_retries:
+                # If pipeline retry config is present, fail the pipeline after the retries
+                self.__update_pipeline_run_status(
+                    pipeline_run_id,
+                    PipelineRun.PipelineRunStatus.FAILED,
+                )
         finally:
             source.destroy()
             for sink in sinks_by_uuid.values():
                 sink.destroy()
+
+    @safe_db_query
+    def __update_pipeline_run_status(
+        self,
+        pipeline_run_id: int,
+        status: PipelineRun.BlockRunStatus,
+    ):
+        if not pipeline_run_id or not status:
+            return
+        pipeline_run = PipelineRun.query.get(pipeline_run_id)
+        pipeline_run.update(
+            status=status,
+            completed_at=datetime.now(tz=pytz.UTC),
+        )
 
     def __execute_in_flink(self):
         """
