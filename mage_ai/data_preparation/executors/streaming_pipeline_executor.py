@@ -2,6 +2,7 @@ import asyncio
 import copy
 import logging
 import os
+import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from typing import Callable, Dict, List, Union
@@ -21,6 +22,7 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 class StreamingPipelineExecutor(PipelineExecutor):
@@ -128,7 +130,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 self.__update_pipeline_run_status(
                     pipeline_run_id,
                     PipelineRun.PipelineRunStatus.FAILED,
+                    error=e,
                 )
+
             raise e
 
     def __execute_in_python(
@@ -269,6 +273,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self,
         pipeline_run_id: int,
         status: PipelineRun.PipelineRunStatus,
+        error: Exception = None,
     ):
         if not pipeline_run_id or not status:
             return
@@ -277,6 +282,20 @@ class StreamingPipelineExecutor(PipelineExecutor):
             status=status,
             completed_at=datetime.now(tz=pytz.UTC),
         )
+        if status == PipelineRun.PipelineRunStatus.FAILED:
+            asyncio.run(UsageStatisticLogger().pipeline_run_ended(pipeline_run))
+            error_msg = None
+            stacktrace = None
+            if error is not None:
+                error_msg = str(error)
+                stacktrace = traceback.format_exc()
+            notification_sender = self.pipeline.get_notification_sender()
+            notification_sender.send_pipeline_run_failure_message(
+                pipeline=self.pipeline,
+                pipeline_run=pipeline_run,
+                error=error_msg,
+                stacktrace=stacktrace,
+            )
 
     def __execute_in_flink(self):
         """

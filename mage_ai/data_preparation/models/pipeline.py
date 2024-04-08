@@ -62,6 +62,8 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.constants import Entity
+from mage_ai.orchestration.notification.config import NotificationConfig
+from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.settings.platform import build_repo_path_for_all_projects
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
@@ -727,6 +729,16 @@ class Pipeline:
         with open(self.catalog_config_path) as f:
             config = json.load(f)
         return config
+
+    def get_notification_sender(self):
+        return NotificationSender(
+            NotificationConfig.load(
+                config=merge_dict(
+                    self.repo_config.notification_config,
+                    self.notification_config,
+                ),
+            ),
+        )
 
     def load_config_from_yaml(self):
         catalog = None
