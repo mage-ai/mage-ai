@@ -935,7 +935,10 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
     @property
     def pipeline_tags(self):
-        pipeline_config = Pipeline.get_config(self.pipeline_uuid)
+        try:
+            pipeline_config = Pipeline.get_config(self.pipeline_uuid)
+        except Exception:
+            pipeline_config = dict()
 
         return pipeline_config.get('tags') if pipeline_config is not None else []
 

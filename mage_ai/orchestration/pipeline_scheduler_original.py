@@ -1681,7 +1681,11 @@ def gen_pipeline_with_schedules_single_project(
     # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
     # each pipeline.
     for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
-        pipeline = Pipeline.get(pipeline_uuid)
+        try:
+            pipeline = Pipeline.get(pipeline_uuid)
+        except Exception as e:
+            print(f'Error fetching pipeline {pipeline_uuid}: {e}')
+            continue
         yield pipeline_uuid, pipeline, active_schedules
 
 
@@ -1742,11 +1746,15 @@ def gen_pipeline_with_schedules_project_platform(
     for pair in pipeline_schedules_by_pipeline_by_repo_path.items():
         repo_path, pipeline_schedules_by_pipeline = pair
         for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
-            pipeline = get_pipeline_from_platform(
-                pipeline_uuid,
-                repo_path=repo_path,
-                mapping=pipeline_schedule_repo_paths_to_repo_path_mapping,
-            )
+            try:
+                pipeline = get_pipeline_from_platform(
+                    pipeline_uuid,
+                    repo_path=repo_path,
+                    mapping=pipeline_schedule_repo_paths_to_repo_path_mapping,
+                )
+            except Exception as e:
+                print(f'Error fetching pipeline {pipeline_uuid}: {e}')
+                continue
             yield pipeline_uuid, pipeline, active_schedules
 
 
