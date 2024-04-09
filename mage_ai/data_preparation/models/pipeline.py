@@ -1308,7 +1308,9 @@ class Pipeline:
                         file_path = (configuration.get('file_source') or {}).get('path')
                         if file_path:
                             # Check for block name with period to avoid replacing a directory name
-                            new_file_path = file_path.replace(f'{block.name}.', f'{name}.')
+                            new_file_path = file_path.replace(
+                                f'{clean_name(block.name)}.', f'{clean_name(name)}.'
+                            )
                             configuration['file_source']['path'] = new_file_path
                             block_update_payload['configuration'] = configuration
                         blocks_to_remove_from_cache.append(block.to_dict())
