@@ -92,6 +92,11 @@ function ConfigureBlock({
     type: block?.type,
   });
 
+  const blockNameStartsWithNumber = useMemo(() =>
+    !!blockAttributes?.name && startsWithNumber(blockAttributes?.name || ''),
+    [blockAttributes?.name],
+  );
+
   const handleOnSave = useCallback(() => {
     onSave({
       ...blockAttributes,
@@ -107,7 +112,10 @@ function ConfigureBlock({
         onClose();
       } else if (event.key === KEY_ENTER) {
         const buttonText = event.target.innerText;
-        if (!buttonText.startsWith('Save and') && buttonText !== 'Cancel') {
+        if (!buttonText.startsWith('Save and')
+          && buttonText !== 'Cancel'
+          && !blockNameStartsWithNumber
+        ) {
           handleOnSave();
         }
       }
@@ -118,7 +126,7 @@ function ConfigureBlock({
     return () => {
       document?.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleOnSave, onClose]);
+  }, [blockNameStartsWithNumber, handleOnSave, onClose]);
 
   useEffect(() => {
     refTextInput?.current?.focus();
@@ -130,10 +138,6 @@ function ConfigureBlock({
 
   const isCustomBlock = useMemo(() => BlockTypeEnum.CUSTOM === block?.type, [block]);
   const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
-  const blockNameStartsWithNumber = useMemo(() =>
-    !!blockAttributes?.name && startsWithNumber(blockAttributes?.name || ''),
-    [blockAttributes?.name],
-  );
 
   // @ts-ignore
   const blockActionObject = useMemo(() => block?.block_action_object, [block]);
@@ -380,7 +384,7 @@ function ConfigureBlock({
 
         {blockNameStartsWithNumber && (
           <Text bold warning>
-            Note: Numbers are not allowed as the first character of block name.
+            Note: Numbers are not allowed as the first character of a block name.
           </Text>
         )}
       </RowStyle>
