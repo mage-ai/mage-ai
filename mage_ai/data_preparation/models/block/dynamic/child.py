@@ -229,3 +229,6 @@ class DynamicChildController:
             block_runs.append(block_run)
 
         return block_runs
+
+    def run_tests(self, **kwargs):
+        pass
