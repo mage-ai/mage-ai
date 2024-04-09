@@ -3,9 +3,28 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BackfillPresenter import BackfillPresenter
 from mage_ai.orchestration.constants import Entity
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
 
 
 class BackfillPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if self.resource:
+            backfill = self.resource.model
+            if backfill:
+                pipeline = get_pipeline_from_platform(
+                    backfill.pipeline_uuid,
+                    check_if_exists=True,
+                    repo_path=backfill.pipeline_schedule.repo_path,
+                    use_repo_path=True,
+                )
+                if pipeline:
+                    self.project_uuid = pipeline.project_uuid
+        elif parent_model:
+            self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         parent_model = self.options.get('parent_model')

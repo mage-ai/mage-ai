@@ -4,9 +4,28 @@ from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockPresenter import BlockPresenter
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.schedules import PipelineRun
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
+from mage_ai.settings.repo import get_repo_path
 
 
 class BlockPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            pipeline_uuid = None
+            if isinstance(parent_model, PipelineRun):
+                pipeline_uuid = parent_model.pipeline_uuid
+                pipeline = get_pipeline_from_platform(
+                    pipeline_uuid,
+                    check_if_exists=True,
+                    repo_path=get_repo_path(),
+                    use_repo_path=True,
+                )
+                if pipeline:
+                    self.project_uuid = pipeline.project_uuid
+            else:
+                self.project_uuid = parent_model.project_uuid
+
     @property
     def entity(self):
         parent_model = self.options.get('parent_model')

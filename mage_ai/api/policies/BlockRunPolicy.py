@@ -3,9 +3,47 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BlockRunPresenter import BlockRunPresenter
 from mage_ai.orchestration.constants import Entity
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
+from mage_ai.settings.repo import get_repo_path
 
 
 class BlockRunPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        query = self.options.get('query', {})
+        pipeline_uuid = query.get('pipeline_uuid', [None])
+        pipeline_uuid = query.get('pipeline_uuid', [None])
+        if pipeline_uuid:
+            pipeline_uuid = pipeline_uuid[0]
+        parent_model = self.options.get('parent_model')
+        if self.resource:
+            block_run = self.resource.model
+            pipeline = get_pipeline_from_platform(
+                block_run.pipeline_run.pipeline_uuid,
+                check_if_exists=True,
+                repo_path=block_run.pipeline_run.pipeline_schedule.repo_path,
+                use_repo_path=True,
+            )
+            if pipeline:
+                self.project_uuid = pipeline.project_uuid
+        elif pipeline_uuid:
+            pipeline = get_pipeline_from_platform(
+                pipeline_uuid,
+                check_if_exists=True,
+                repo_path=get_repo_path(),
+                use_repo_path=True,
+            )
+            if pipeline:
+                self.project_uuid = pipeline.project_uuid
+        elif parent_model:
+            pipeline = get_pipeline_from_platform(
+                parent_model.pipeline_uuid,
+                check_if_exists=True,
+                repo_path=parent_model.pipeline_schedule.repo_path,
+                use_repo_path=True,
+            )
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         query = self.options.get('query', {})

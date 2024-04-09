@@ -193,6 +193,10 @@ class Pipeline:
         return 1
 
     @property
+    def project_uuid(self):
+        return self.repo_config.project_uuid
+
+    @property
     def variables_dir(self):
         return self.repo_config.variables_dir
 

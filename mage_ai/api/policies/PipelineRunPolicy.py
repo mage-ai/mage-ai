@@ -2,11 +2,39 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineRunPresenter import PipelineRunPresenter
-from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
+from mage_ai.settings.repo import get_repo_path
 
 
 class PipelineRunPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        query = self.options.get('query', {})
+        pipeline_uuid = query.get('pipeline_uuid', [None])
+        if pipeline_uuid:
+            pipeline_uuid = pipeline_uuid[0]
+        if self.resource:
+            pipeline_run = self.resource.model
+            pipeline = get_pipeline_from_platform(
+                pipeline_run.pipeline_uuid,
+                check_if_exists=True,
+                repo_path=pipeline_run.pipeline_schedule.repo_path,
+                use_repo_path=True,
+            )
+            if pipeline:
+                self.project_uuid = pipeline.project_uuid
+        elif pipeline_uuid:
+            pipeline = get_pipeline_from_platform(
+                pipeline_uuid,
+                check_if_exists=True,
+                repo_path=get_repo_path(),
+                use_repo_path=True,
+            )
+            if pipeline:
+                self.project_uuid = pipeline.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         query = self.options.get('query', {})
@@ -19,7 +47,7 @@ class PipelineRunPolicy(BasePolicy):
         if self.resource and self.resource.model:
             return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 PipelineRunPolicy.allow_actions([

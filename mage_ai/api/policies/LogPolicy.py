@@ -3,12 +3,27 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.LogPresenter import LogPresenter
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.schedules import BlockRun
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
 
 
 class LogPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            if type(parent_model) is BlockRun:
+                pipeline = get_pipeline_from_platform(
+                    parent_model.pipeline_run.project_uuid,
+                    check_if_exists=True,
+                    repo_path=parent_model.pipeline_run.pipeline_schedule.repo_path,
+                    use_repo_path=True,
+                )
+                if pipeline:
+                    self.project_uuid = pipeline.project_uuid
+            elif issubclass(parent_model.__class__, Pipeline):
+                self.project_uuid = parent_model.project_uuid
+
     @property
     def entity(self):
         parent_model = self.options.get('parent_model')
@@ -18,7 +33,7 @@ class LogPolicy(BasePolicy):
             elif issubclass(parent_model.__class__, Pipeline):
                 return Entity.PIPELINE, parent_model.uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 LogPolicy.allow_actions([

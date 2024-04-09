@@ -40,6 +40,8 @@ def get_pipeline_from_platform(
 
     return Pipeline.get(
         pipeline_uuid,
+        check_if_exists=check_if_exists,
+        repo_path=repo_path,
         all_projects=False if repo_path else True,
         repo_path=repo_path,
         use_repo_path=use_repo_path,

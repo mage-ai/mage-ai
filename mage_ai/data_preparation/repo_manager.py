@@ -13,13 +13,13 @@ from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.settings.platform import build_repo_path_for_all_projects, project_platform_activated
 from mage_ai.settings import INITIAL_METADATA, settings
-from mage_ai.settings.repo import (
-    DEFAULT_MAGE_DATA_DIR,
-    MAGE_DATA_DIR_ENV_VAR,
-    PROJECT_METADATA_FILENAME,
+from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
 )
+from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
 from mage_ai.settings.repo import get_repo_name as get_repo_name_new
@@ -329,7 +329,7 @@ def set_project_uuid_from_metadata() -> None:
         )
         if 'projects' not in project_uuid_cache:
             project_uuid_cache['projects'] = {}
-        for project_name, paths in repo_paths_all:
+        for project_name, paths in repo_paths_all.items():
             metadata_path = os.path.join(paths.get('full_path'), PROJECT_METADATA_FILENAME)
             if os.path.exists(metadata_path):
                 with open(metadata_path, 'r', encoding='utf-8') as f:

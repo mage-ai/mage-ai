@@ -5,8 +5,8 @@ from mage_ai.api.presenters.PipelineSchedulePresenter import PipelineSchedulePre
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
+from mage_ai.settings.platform.utils import get_pipeline_from_platform
 
 READABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
     'description',
@@ -30,6 +30,29 @@ WRITABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
 
 
 class PipelineSchedulePolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        if self.resource:
+            if isinstance(self.resource.model, dict):
+                pipeline_uuid = self.resource.model.get('pipeline_uuid')
+                repo_path = self.resource.model.get('repo_path')
+                pipeline = get_pipeline_from_platform(
+                    pipeline_uuid,
+                    check_if_exists=True,
+                    repo_path=repo_path,
+                    use_repo_path=True,
+                )
+            else:
+                pipeline = get_pipeline_from_platform(
+                    self.resource.model.pipeline_uuid,
+                    check_if_exists=True,
+                    repo_path=self.resource.model.repo_path,
+                    use_repo_path=True,
+                )
+            if pipeline:
+                self.project_uuid = pipeline.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         if self.resource and self.resource.model:
@@ -38,7 +61,7 @@ class PipelineSchedulePolicy(BasePolicy):
             else:
                 return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:
