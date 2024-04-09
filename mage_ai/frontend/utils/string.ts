@@ -275,8 +275,12 @@ export function isNumeric(str) {
   return !isNaN(str);
 }
 
-export function isInteger(str) {
+export function isInteger(str: string) {
   return Number.isInteger(Number(str));
+}
+
+export function startsWithNumber(str: string) {
+  return isInteger(str.charAt(0));
 }
 
 export function extractNumber(text) {

@@ -38,6 +38,7 @@ export const HeaderStyle = styled.div<{
 `;
 
 export const RowStyle = styled.div<{
+  columnFlex?: boolean;
   display?: string;
   lightBackground?: boolean;
   paddingVerticalAddition?: number;
@@ -54,6 +55,11 @@ export const RowStyle = styled.div<{
     padding-bottom: ${1 * UNIT + (props?.paddingVerticalAddition || 0)}px;
     padding-left: ${PADDING_UNITS * UNIT}px;
     padding-top: ${1 * UNIT + (props?.paddingVerticalAddition || 0)}px;
+  `}
+
+  ${({ columnFlex }) => columnFlex && `
+    display: flex;
+    flex-direction: column;
   `}
 
   ${props => props.lightBackground && `

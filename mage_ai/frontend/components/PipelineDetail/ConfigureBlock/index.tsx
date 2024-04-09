@@ -15,7 +15,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import CodeBlock from '@components/CodeBlock';
 import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
+import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LLMType, { LLMUseCaseEnum } from '@interfaces/LLMType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -44,7 +44,7 @@ import {
   PADDING_UNITS,
   UNIT,
 } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
+import { capitalize, startsWithNumber } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -130,6 +130,10 @@ function ConfigureBlock({
 
   const isCustomBlock = useMemo(() => BlockTypeEnum.CUSTOM === block?.type, [block]);
   const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
+  const blockNameStartsWithNumber = useMemo(() =>
+    !!blockAttributes?.name && startsWithNumber(blockAttributes?.name || ''),
+    [blockAttributes?.name],
+  );
 
   // @ts-ignore
   const blockActionObject = useMemo(() => block?.block_action_object, [block]);
@@ -351,26 +355,34 @@ function ConfigureBlock({
         </RowStyle>
       )}
 
-      <RowStyle>
-        <Text default>
-          Name
-        </Text>
+      <RowStyle columnFlex>
+        <FlexContainer {...JUSTIFY_SPACE_BETWEEN_PROPS} fullWidth>
+          <Text default>
+            Name
+          </Text>
 
-        <TextInput
-          alignRight
-          fullWidth
-          noBackground
-          noBorder
-          // @ts-ignore
-          onChange={e => setBlockAttributes(prev => ({
-            ...prev,
-            name: e.target.value,
-          }))}
-          paddingVertical={UNIT}
-          placeholder="Block name..."
-          ref={refTextInput}
-          value={blockAttributes?.name || ''}
-        />
+          <TextInput
+            alignRight
+            fullWidth
+            noBackground
+            noBorder
+            // @ts-ignore
+            onChange={e => setBlockAttributes(prev => ({
+              ...prev,
+              name: e.target.value,
+            }))}
+            paddingVertical={UNIT}
+            placeholder="Block name..."
+            ref={refTextInput}
+            value={blockAttributes?.name || ''}
+          />
+        </FlexContainer>
+
+        {blockNameStartsWithNumber && (
+          <Text bold warning>
+            Note: Numbers are not allowed as the first character of block name.
+          </Text>
+        )}
       </RowStyle>
 
       <RowStyle>
@@ -560,7 +572,7 @@ function ConfigureBlock({
           <KeyboardShortcutButton
             bold
             centerText
-            disabled={isLoadingCreateLLM}
+            disabled={isLoadingCreateLLM || blockNameStartsWithNumber}
             onClick={handleOnSave}
             primary
             tabIndex={0}
