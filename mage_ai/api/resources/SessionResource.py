@@ -11,9 +11,10 @@ from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     OAUTH_DEFAULT_ACCESS,
+    get_bool_value,
     get_settings_value,
 )
-from mage_ai.settings.keys import LDAP_DEFAULT_ACCESS
+from mage_ai.settings.keys import LDAP_DEFAULT_ACCESS, UPDATE_ROLES_ON_LOGIN
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -28,6 +29,9 @@ class SessionResource(BaseResource):
         provider = payload.get('provider')
 
         oauth_client = kwargs.get('oauth_client')
+
+        update_roles_on_login = get_bool_value(
+            get_settings_value(UPDATE_ROLES_ON_LOGIN, default='False'))
 
         # Oauth sign in
         if token and provider:
@@ -57,6 +61,9 @@ class SessionResource(BaseResource):
                         email=email,
                         roles_new=roles,
                     )
+                elif update_roles_on_login and roles:
+                    user.update(roles_new=roles)
+
                 oauth_token = generate_access_token(user, oauth_client)
                 return self(oauth_token, user, **kwargs)
 
@@ -109,6 +116,11 @@ class SessionResource(BaseResource):
                     roles_new=roles,
                     username=email,
                 )
+            elif update_roles_on_login:
+                role_names = conn.get_user_roles(user_attributes)
+                if role_names:
+                    roles = Role.query.filter(Role.name.in_(role_names)).all()
+                    user.update(roles_new=roles)
 
             oauth_token = generate_access_token(user, kwargs['oauth_client'])
             return self(oauth_token, user, **kwargs)

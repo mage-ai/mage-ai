@@ -359,8 +359,10 @@ function SyncData() {
                     setSync(prevSync => ({
                       ...prevSync,
                       branch: null,
+                      sync_on_executor_start: false,
                       sync_on_pipeline_run: false,
                       sync_on_start: false,
+                      sync_submodules: false,
                     }));
                   }
                   return newVal;

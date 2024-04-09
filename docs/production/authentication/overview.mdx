@@ -133,6 +133,7 @@ In this case, you will also need to configure the following variables:
 | `LDAP_GROUP_FIELD` | Name of user attribute to use to determine a user's LDAP group. | `memberOf` |
 | `LDAP_ROLES_MAPPING` | Mapping of user LDAP group to Mage roles. Must be in JSON string format. | `'{"Admin": ["Admin"]}'` |
 | `LDAP_DEFAULT_ACCESS` | Default access for a new user authenticated through LDAP (default user will have no role) | `Viewer`, `Editor`, `Admin` |
+| `UPDATE_ROLES_ON_LOGIN` | Update roles on every login. Otherwise, the roles will only be set when the user logs in for the first time. | `1` |
 
 Make sure to adjust the values of the variables to match your LDAP configuration.
 
