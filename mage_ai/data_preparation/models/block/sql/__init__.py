@@ -337,7 +337,7 @@ def execute_sql_code(
             if should_query:
                 return [
                     loader.load(
-                        f'SELECT * FROM {table_name}',
+                        f'SELECT * FROM {schema}.{table_name}',
                         verbose=False,
                     ),
                 ]
