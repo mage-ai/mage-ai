@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 
-from mage_ai.data_preparation.models.constants import BlockLanguage
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.shared.memory import get_memory_usage, get_memory_usage_async
 from mage_ai.shared.strings import to_ordinal_integers
@@ -470,7 +470,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if should_reduce_output(upstream_block):
+            if should_reduce_output(upstream_block) and block.type != BlockType.EXTENSION:
                 child_data = []
                 metadata = {}
                 for lazy_variable_set in lazy_variable_controller:
