@@ -310,8 +310,9 @@ def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
 
 def set_project_uuid_from_metadata() -> None:
     global project_uuid
-    if os.path.exists(get_metadata_path()):
-        with open(get_metadata_path(), 'r', encoding='utf-8') as f:
+    metadata_path = get_metadata_path(root_project=True)
+    if os.path.exists(metadata_path):
+        with open(metadata_path, 'r', encoding='utf-8') as f:
             config = yml.load(f) or {}
             project_uuid = config.get('project_uuid')
 
