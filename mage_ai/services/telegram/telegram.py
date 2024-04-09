@@ -4,12 +4,7 @@ from mage_ai.services.telegram.config import TelegramConfig
 
 
 def send_telegram_message(config: TelegramConfig, message: str, title: str) -> None:
-    summary = """
-    <b>{title}</b>
-
-
-    {message}
-    """.format(title=title, message=message)
+    summary = f"<b>{title}</b>\n\n{message}"
 
     payload = {
         "text": summary,
