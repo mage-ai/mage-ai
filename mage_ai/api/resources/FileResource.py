@@ -149,7 +149,7 @@ class FileResource(GenericResource):
                 tags = pipeline_config.get('tags', [])
                 pipeline_uuid = pipeline_config.get('uuid')
                 repo_path = get_repo_path(user=user)
-                pipeline = Pipeline(pipeline_uuid, repo_path, config=pipeline_config)
+                pipeline = Pipeline(pipeline_uuid, config=pipeline_config, repo_path=repo_path)
                 if tags:
                     from mage_ai.cache.tag import TagCache
 

@@ -1263,7 +1263,7 @@ def retry_pipeline_run(
     repo_path: str,
 ) -> 'PipelineRun':
     pipeline_uuid = pipeline_run['pipeline_uuid']
-    pipeline = Pipeline.get(pipeline_uuid, repo_path, check_if_exists=True)
+    pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True, repo_path=repo_path)
     if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
         raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
 
@@ -1697,7 +1697,7 @@ def gen_pipeline_with_schedules_single_project(
     # each pipeline.
     for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
         try:
-            pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=get_repo_path())
         except Exception as e:
             print(f'Error fetching pipeline {pipeline_uuid}: {e}')
             continue

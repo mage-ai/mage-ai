@@ -130,7 +130,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid, self.repo_path) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline1.uuid,
                             self.pipeline2.uuid,
                             self.pipeline3.uuid,
@@ -173,7 +173,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid, self.repo_path) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline3.uuid,
                         ]],
                         any_order=True,
@@ -295,7 +295,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     type=PipelineType.STREAMING,
                 ), None)
 
-                mock_add_model.assert_called_once_with(resource.model, self.repo_path)
+                mock_add_model.assert_called_once_with(resource.model, repo_path=self.repo_path)
 
     async def test_update(self):
         __initialize_cache = self.__prepare_cache()[1]
@@ -306,7 +306,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     type=PipelineType.STREAMING,
                 ))
 
-                mock_update_model.assert_called_once_with(resource.model, self.repo_path)
+                mock_update_model.assert_called_once_with(resource.model, repo_path=self.repo_path)
 
     async def test_delete(self):
         __initialize_cache = self.__prepare_cache()[1]

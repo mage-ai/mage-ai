@@ -47,7 +47,7 @@ class OutputResource(GenericResource):
 
         repo_path = get_repo_path(user=user)
         if block_uuid and pipeline_uuid:
-            pipeline = Pipeline.get(pipeline_uuid, repo_path)
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             block = pipeline.get_block(block_uuid)
 
             if block.is_data_integration():

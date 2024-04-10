@@ -19,7 +19,7 @@ class ChartDataSourceBase(ABC):
     @property
     def pipeline(self):
         if self.pipeline_uuid and not self._pipeline:
-            self._pipeline = Pipeline.get(self.pipeline_uuid, get_repo_path())
+            self._pipeline = Pipeline.get(self.pipeline_uuid, repo_path=get_repo_path())
 
         return self._pipeline
 

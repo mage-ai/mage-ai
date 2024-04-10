@@ -152,7 +152,7 @@ def add_host_to_known_hosts(remote_repo_link: str):
     return False
 
 
-def get_access_token(git_config, repo_path) -> str:
+def get_access_token(git_config, repo_path: str) -> str:
     token = get_settings_value(GIT_ACCESS_TOKEN)
     overwrite_with_project_settings = get_bool_value(
         get_settings_value(GIT_OVERWRITE_WITH_PROJECT_SETTINGS)

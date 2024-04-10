@@ -20,7 +20,7 @@ class ExecutionStateResource(GenericResource):
         repo_path = get_repo_path(user=user)
 
         if pipeline_uuid and block_uuid:
-            pipeline = await Pipeline.get_async(pipeline_uuid, repo_path)
+            pipeline = await Pipeline.get_async(pipeline_uuid, repo_path=repo_path)
             if pipeline and pipeline.type in [PipelineType.PYTHON, PipelineType.PYSPARK]:
                 block = pipeline.get_block(block_uuid)
                 if block and block.compute_management_enabled() and block.is_using_spark():

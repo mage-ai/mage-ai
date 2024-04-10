@@ -518,7 +518,7 @@ def on_failure_callback(**kwargs):
         block = Block.create(faker.name(), 'data_loader', self.repo_path, pipeline=pipeline)
 
         def get_block():
-            return Pipeline.get(pipeline.uuid, self.repo_path).get_block(block.uuid)
+            return Pipeline.get(pipeline.uuid, repo_path=self.repo_path).get_block(block.uuid)
 
         with open(block.file_path, 'w') as file:
             file.write('')
@@ -614,7 +614,7 @@ SELECT 1 AS id;
 
         test_block.delete(force=True)
 
-        pipeline = Pipeline.get('test_pipeline_delete_force', self.repo_path)
+        pipeline = Pipeline.get('test_pipeline_delete_force', repo_path=self.repo_path)
         self.assertIsNone(pipeline.get_block('test_data_loader'))
 
         block2 = pipeline.get_block('test_transformer')

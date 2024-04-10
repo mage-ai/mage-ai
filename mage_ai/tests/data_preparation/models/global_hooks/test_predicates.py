@@ -64,9 +64,13 @@ def build_operation_resource_settings(
         ),
         Pipeline.__name__: dict(
             right_object_keys=['variables', first_object_key],
-            operation_resource=Pipeline(uuid.uuid4().hex, repo_path, config=dict(variables={
-                first_object_key: right_value,
-            })),
+            operation_resource=Pipeline(
+                uuid.uuid4().hex,
+                config=dict(variables={
+                    first_object_key: right_value,
+                }),
+                repo_path=repo_path,
+            ),
         ),
     }
 

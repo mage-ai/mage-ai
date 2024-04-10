@@ -23,7 +23,7 @@ class FileVersionResource(GenericResource):
 
         repo_path = get_repo_path(user=user)
         if pipeline_uuid and block_uuid:
-            pipeline = Pipeline.get(pipeline_uuid, repo_path)
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             if pipeline:
                 block = pipeline.get_block(block_uuid)
                 if block:

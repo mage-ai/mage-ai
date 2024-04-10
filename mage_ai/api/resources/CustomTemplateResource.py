@@ -93,7 +93,7 @@ class CustomTemplateResource(GenericResource):
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
 
             if not custom_template:
-                pipeline = Pipeline.get(payload.get('pipeline_uuid'), repo_path)
+                pipeline = Pipeline.get(payload.get('pipeline_uuid'), repo_path=repo_path)
                 custom_template = CustomPipelineTemplate.create_from_pipeline(
                     pipeline,
                     template_uuid,
@@ -133,7 +133,7 @@ class CustomTemplateResource(GenericResource):
             elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
                 return self(
                     CustomPipelineTemplate.load(
-                        repo_path=get_repo_path(user=user),
+                        repo_path,
                         template_uuid=template_uuid,
                     ),
                     user,

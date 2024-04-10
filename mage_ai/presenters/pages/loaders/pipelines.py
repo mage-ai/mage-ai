@@ -8,7 +8,7 @@ from mage_ai.settings.repo import get_repo_path
 
 async def get_pipeline(uuid: str, repo_path: str) -> Pipeline:
     try:
-        return await Pipeline.get_async(uuid, repo_path)
+        return await Pipeline.get_async(uuid, repo_path=repo_path)
     except Exception as err:
         err_message = f'Error loading pipeline {uuid}: {err}.'
         if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:

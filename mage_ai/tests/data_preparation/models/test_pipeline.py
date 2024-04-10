@@ -725,7 +725,7 @@ class PipelineTest(AsyncDBTestCase):
                     widgets=[],
                 ),
             )
-        pipeline_load = Pipeline.get('test_pipeline_9', self.repo_path)
+        pipeline_load = Pipeline.get('test_pipeline_9', repo_path=self.repo_path)
         self.assertEqual(pipeline_load.to_dict()['data_integration'], expected_catalog_config)
 
     def test_save_and_get_integration_pipeline_async(self):
@@ -941,7 +941,7 @@ def export_data(df, *args):
             self.faker.unique.name(),
             repo_path=self.repo_path,
         )
-        self.assertEqual(Pipeline.get(pipeline.uuid, self.repo_path).uuid, pipeline.uuid)
+        self.assertEqual(Pipeline.get(pipeline.uuid, repo_path=self.repo_path).uuid, pipeline.uuid)
 
     async def test_get_async(self):
         pipeline = Pipeline.create(
@@ -999,7 +999,7 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
         )
 
         self.assertEqual(
-            Pipeline.get(pipeline1.uuid, base_repo_path()).uuid,
+            Pipeline.get(pipeline1.uuid, repo_path=base_repo_path()).uuid,
             pipeline1.uuid,
         )
 
@@ -1013,7 +1013,7 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
 
         for pipeline in pipelines:
             self.assertIsNone(
-                Pipeline.get(pipeline.uuid, base_repo_path(), check_if_exists=True),
+                Pipeline.get(pipeline.uuid, repo_path=base_repo_path(), check_if_exists=True),
             )
 
         with patch(
@@ -1024,9 +1024,9 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(
                     Pipeline.get(
                         pipeline.uuid,
-                        base_repo_path(),
                         all_projects=True,
                         check_if_exists=True,
+                        repo_path=base_repo_path(),
                     ).uuid,
                     pipeline.uuid,
                 )

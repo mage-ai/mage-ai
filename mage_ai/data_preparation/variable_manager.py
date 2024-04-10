@@ -326,8 +326,8 @@ def get_global_variables(
 
     pipeline = pipeline or Pipeline.get(
         pipeline_uuid,
-        get_repo_path(),
         all_projects=project_platform_activated(),
+        repo_path=get_repo_path(),
     )
     if pipeline.variables is not None:
         global_variables = pipeline.variables
@@ -355,8 +355,8 @@ def get_global_variable(
 
     pipeline = Pipeline.get(
         pipeline_uuid,
-        get_repo_path(),
         all_projects=project_platform_activated(),
+        repo_path=get_repo_path(),
     )
     if pipeline.variables is not None:
         return pipeline.variables.get(key)
@@ -396,8 +396,7 @@ def set_global_variable(
     Set global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    repo_path = repo_path or get_repo_path()
-    pipeline = Pipeline.get(pipeline_uuid, repo_path)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     if pipeline.variables is None:
         pipeline.variables = get_global_variables(pipeline_uuid)
@@ -413,8 +412,7 @@ def delete_global_variable(
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    repo_path = repo_path or get_repo_path()
-    pipeline = Pipeline.get(pipeline_uuid, repo_path)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)
     else:

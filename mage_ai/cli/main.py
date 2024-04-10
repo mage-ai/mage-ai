@@ -239,7 +239,7 @@ def run(
         # Initialize db_connection session before getting the pipeline in case
         # "mage_secret_var" syntax is used in the project's metadata.yaml
         db_connection.start_session()
-        pipeline = Pipeline.get(pipeline_uuid, project_path)
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
         if pipeline_run_id is None:
             default_variables = get_global_variables(pipeline_uuid)

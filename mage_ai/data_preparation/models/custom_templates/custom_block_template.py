@@ -92,7 +92,6 @@ class CustomBlockTemplate(BaseConfig):
         self,
         block_name: str,
         pipeline: Pipeline,
-        repo_path: str,
         extension_uuid: str = None,
         priority: int = None,
         upstream_block_uuids: List[str] = None,
@@ -105,7 +104,7 @@ class CustomBlockTemplate(BaseConfig):
         return Block.create(
             block_name,
             self.block_type,
-            repo_path,
+            self.repo_path,
             color=self.color,
             configuration=configuration,
             extension_uuid=extension_uuid,

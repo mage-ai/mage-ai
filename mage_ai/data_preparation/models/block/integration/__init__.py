@@ -429,7 +429,9 @@ class DestinationBlock(IntegrationBlock):
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
             )
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid, self.repo_path)
+            integration_pipeline = IntegrationPipeline(
+                self.pipeline.uuid, repo_path=self.repo_path
+            )
             destination_state_file_path = integration_pipeline.destination_state_file_path(
                 destination_table=destination_table,
                 stream=state_stream,
@@ -482,7 +484,9 @@ class DestinationBlock(IntegrationBlock):
                 update_destination_state_bookmarks,
             )
 
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid, self.repo_path)
+            integration_pipeline = IntegrationPipeline(
+                self.pipeline.uuid, repo_path=self.repo_path
+            )
             tap_stream_id = data.get('tap_stream_id')
             destination_table = data.get('destination_table')
             bookmark_values = data.get('bookmark_values', {})

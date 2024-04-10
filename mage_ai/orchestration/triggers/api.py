@@ -46,8 +46,8 @@ def trigger_pipeline(
     repo_path_use = repo_path or get_repo_path()
     pipeline = Pipeline.get(
         pipeline_uuid,
-        repo_path_use,
         all_projects=project_platform_activated(),
+        repo_path=repo_path_use,
         use_repo_path=repo_path is not None,
     )
 

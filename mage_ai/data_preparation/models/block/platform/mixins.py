@@ -136,7 +136,7 @@ class ProjectPlatformAccessible:
         if val:
             return os.path.dirname(val)
 
-    def build_file(self, repo_path: str = None) -> File:
+    def build_file(self) -> File:
         if not self.project_platform_activated:
             return
 
@@ -256,6 +256,8 @@ class ProjectPlatformAccessible:
             paths = get_repo_paths_for_file_path(file_path)
             if paths:
                 return paths.get('full_path')
+
+        return None
 
     def __file_source(self) -> str:
         return self.configuration.get('file_source') if self.configuration else None

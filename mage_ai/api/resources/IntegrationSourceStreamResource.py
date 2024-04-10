@@ -11,4 +11,4 @@ class IntegrationSourceStreamResource(GenericResource):
     @safe_db_query
     def member(self, pk, user, **kwargs):
         repo_path = get_repo_path(user=user)
-        return self(IntegrationPipeline.get(pk, repo_path), user, **kwargs)
+        return self(IntegrationPipeline.get(pk, repo_path=repo_path), user, **kwargs)

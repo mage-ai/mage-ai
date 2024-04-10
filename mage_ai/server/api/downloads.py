@@ -40,7 +40,7 @@ class ApiDownloadHandler(BaseHandler):
 
         repo_path = get_repo_path(user=user)
 
-        pipeline = Pipeline.get(pipeline_uuid, repo_path)
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
         block = pipeline.get_block(block_uuid)
         pipeline_run_id = self.get_argument('pipeline_run_id', None)
         execution_partition = None

@@ -202,7 +202,7 @@ async def __load_pipelines(resource: GlobalHookResource):
 
     async def get_pipeline(uuid):
         try:
-            return await Pipeline.get_async(uuid, repo_path)
+            return await Pipeline.get_async(uuid, repo_path=repo_path)
         except Exception as err:
             err_message = f'Error loading pipeline {uuid}: {err}.'
             if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:

@@ -44,7 +44,7 @@ class ClusterResource(GenericResource):
 
             repo_path = get_repo_path(user=self.current_user)
 
-            emr_cluster_manager.set_active_cluster(cluster_id=cluster_id, repo_path=repo_path)
+            emr_cluster_manager.set_active_cluster(repo_path, cluster_id=cluster_id)
             success = True
 
             self.model.update(

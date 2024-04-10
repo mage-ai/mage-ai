@@ -16,14 +16,13 @@ class PipelineInteractionResource(GenericResource):
         uuid = urllib.parse.unquote(pk)
         user = kwargs.get('user')
         repo_path = get_repo_path(user=user)
-        pipeline = await Pipeline.get_async(uuid, repo_path)
+        pipeline = await Pipeline.get_async(uuid, repo_path=repo_path)
         return PipelineInteractions(pipeline)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        repo_path = get_repo_path(user=user)
-        model = await self.get_model(pk, repo_path=repo_path)
+        model = await self.get_model(pk, user=user)
 
         query = kwargs.get('query', {})
         filter_for_permissions = query.get('filter_for_permissions', [False])

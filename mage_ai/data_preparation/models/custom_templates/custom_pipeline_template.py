@@ -39,7 +39,7 @@ class CustomPipelineTemplate(BaseConfig):
     user: Dict = field(default_factory=dict)
 
     @classmethod
-    def load(self, repo_path: str = None, template_uuid: str = None, uuid: str = None):
+    def load(self, repo_path: str, template_uuid: str = None, uuid: str = None):
         uuid_use = uuid
         template_uuid_use = template_uuid
 
@@ -54,14 +54,14 @@ class CustomPipelineTemplate(BaseConfig):
             )
 
         try:
-            self.repo_path = repo_path or get_repo_path()
             config_path_metadata = os.path.join(
-                self.repo_path,
+                repo_path,
                 uuid_use,
                 METADATA_FILENAME_WITH_EXTENSION,
             )
             custom_template = super().load(config_path_metadata)
             custom_template.template_uuid = template_uuid_use
+            custom_template.repo_path = repo_path
 
             return custom_template
         except Exception as err:

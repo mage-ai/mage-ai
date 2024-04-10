@@ -148,7 +148,7 @@ class IntegrationSourceResource(GenericResource):
             block_uuid = payload.get('block_uuid')
 
             if block_uuid:
-                pipeline = Pipeline.get(pipeline_uuid, repo_path)
+                pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
                 block = pipeline.get_block(block_uuid)
                 try:
                     test_connection(block)
@@ -157,7 +157,7 @@ class IntegrationSourceResource(GenericResource):
                     traceback.print_exc()
                     error_message = str(e)
             else:
-                pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path)
+                pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path=repo_path)
                 config = payload['config']
 
                 try:
@@ -168,7 +168,7 @@ class IntegrationSourceResource(GenericResource):
                     error_message = str(e)
         elif 'sample_data' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
-            pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path)
+            pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path=repo_path)
 
             streams_updated = pipeline.preview_data(
                 BlockType.DATA_LOADER,
@@ -226,4 +226,4 @@ class IntegrationSourceResource(GenericResource):
 
         repo_path = get_repo_path(user=user)
 
-        return self(IntegrationPipeline.get(pk, repo_path), user, **kwargs)
+        return self(IntegrationPipeline.get(pk, repo_path=repo_path), user, **kwargs)

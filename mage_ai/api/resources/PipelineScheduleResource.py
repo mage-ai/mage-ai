@@ -78,10 +78,6 @@ class PipelineScheduleResource(DatabaseResource):
 
         if project_platform_activated():
             query = PipelineSchedule.query
-            if pipeline:
-                query = query.filter(PipelineSchedule.repo_path == pipeline.repo_path)
-            elif user:
-                query = query.filter(PipelineSchedule.repo_path == get_repo_path(user=user))
         else:
             query = PipelineSchedule.repo_query
 
@@ -417,7 +413,7 @@ class PipelineScheduleResource(DatabaseResource):
         resource = super().update(payload)
         updated_model = resource.model
 
-        pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path)
+        pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path=repo_path)
         if pipeline:
             trigger = Trigger(
                 last_enabled_at=updated_model.last_enabled_at,

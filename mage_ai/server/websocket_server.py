@@ -201,8 +201,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if pipeline_uuid:
             pipeline = Pipeline.get(
                 pipeline_uuid,
-                repo_path,
                 all_projects=project_platform_activated(),
+                repo_path=repo_path,
                 use_repo_path=True,
             )
 

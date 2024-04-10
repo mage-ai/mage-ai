@@ -5,8 +5,7 @@ from mage_ai.settings.repo import get_repo_path
 
 class ApiPipelineBlockAnalysisHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        # Deprecated?
-        pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')

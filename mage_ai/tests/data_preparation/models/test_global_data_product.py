@@ -32,7 +32,7 @@ class GlobalDataProductTest(DBTestCase):
             self.pipeline.add_block(
                 Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
-            self.pipeline = Pipeline.get('test_pipeline', self.repo_path)
+            self.pipeline = Pipeline.get('test_pipeline', repo_path=self.repo_path)
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',
@@ -80,7 +80,7 @@ class GlobalDataProductTest(DBTestCase):
         )
 
     def test_load_all(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
         gdp = arr[0]
@@ -95,7 +95,7 @@ class GlobalDataProductTest(DBTestCase):
             self.assertEqual(getattr(gdp, key), getattr(self.global_data_product, key))
 
     def test_get(self):
-        gdp = GlobalDataProduct.get('mage', file_path=self.file_path)
+        gdp = GlobalDataProduct.get('mage', self.repo_path)
 
         for key in [
             'object_type',
@@ -422,22 +422,22 @@ class GlobalDataProductTest(DBTestCase):
         )
 
     def test_delete(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
         self.global_data_product.delete()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 0)
 
     def test_save(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
         self.global_data_product.delete()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 0)
 
         self.global_data_product.save()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
     def test_update(self):
@@ -449,7 +449,7 @@ class GlobalDataProductTest(DBTestCase):
             settings=dict(mage=dict(partitions=3)),
         ))
 
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         gdp = arr[0]
 
         self.assertEqual(gdp.object_type, 'test1')

@@ -7,8 +7,7 @@ import tempfile
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, overload
-from warnings import warn
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 import pytz
@@ -48,7 +47,10 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.models.utils import is_yaml_serializable
+from mage_ai.data_preparation.models.utils import (
+    is_yaml_serializable,
+    warn_for_repo_path,
+)
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import (
     RepoConfig,
@@ -82,9 +84,9 @@ class Pipeline:
     def __init__(
         self,
         uuid,
-        repo_path,
         config=None,
         repo_config=None,
+        repo_path: str = None,
         catalog=None,
         use_repo_path: bool = False,
         description: str = None,
@@ -104,7 +106,10 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
-        self.repo_path = repo_path
+
+        warn_for_repo_path(repo_path)
+
+        self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
         self.run_pipeline_in_one_process = False
         self.schedules = []
@@ -223,30 +228,6 @@ class Pipeline:
             self.widget_configs
 
     @classmethod
-    @overload
-    def create(
-        self,
-        name: str,
-        repo_path: str,
-        description: str = None,
-        pipeline_type: PipelineType = PipelineType.PYTHON,
-        tags: List[str] = None,
-    ):
-        ...
-
-    @classmethod
-    @overload
-    def create(
-        self,
-        name: str,
-        repo_path: str,
-        description: str = None,
-        pipeline_type: PipelineType = PipelineType.PYTHON,
-        tags: List[str] = None,
-    ):
-        ...
-
-    @classmethod
     def create(
         self,
         name: str,
@@ -260,14 +241,7 @@ class Pipeline:
         2. Create a new yaml file to store pipeline config
         3. Create other files: requirements.txt, __init__.py
         """
-        # Warn if repo_path is not provided. Eventually, we should remove the method
-        # that does not require repo_path.
-        if repo_path is None:
-            warn(
-                'repo_path argument in Pipeline.create should be provided.',
-                SyntaxWarning,
-                stacklevel=2,
-            )
+        warn_for_repo_path(repo_path)
 
         uuid = clean_name(name)
         pipeline_path = os.path.join(repo_path, PIPELINES_FOLDER, uuid)
@@ -288,8 +262,8 @@ class Pipeline:
 
         pipeline = Pipeline(
             uuid,
-            repo_path,
             description=description,
+            repo_path=repo_path,
             tags=tags or [],
         )
 
@@ -410,19 +384,6 @@ class Pipeline:
         )
 
     @classmethod
-    @overload
-    def get(
-        cls,
-        uuid,
-        repo_path: str,
-        check_if_exists: bool = False,
-        all_projects: bool = False,
-        use_repo_path: bool = False,
-    ):
-        ...
-
-    @classmethod
-    @overload
     def get(
         cls,
         uuid,
@@ -431,25 +392,7 @@ class Pipeline:
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        ...
-
-    @classmethod
-    def get(
-        cls,
-        uuid,
-        repo_path: str = None,
-        check_if_exists: bool = False,
-        all_projects: bool = False,
-        use_repo_path: bool = False,
-    ):
-        # Warn if repo_path is not provided. Eventually, we should remove the method
-        # that does not require repo_path.
-        if repo_path is None:
-            warn(
-                'repo_path argument in Pipeline.get should be provided.',
-                SyntaxWarning,
-                stacklevel=2,
-            )
+        warn_for_repo_path(repo_path)
 
         config_path, repo_path = cls._get_config_path(
             uuid,
@@ -461,12 +404,12 @@ class Pipeline:
         if check_if_exists and not os.path.exists(config_path):
             return None
 
-        pipeline = cls(uuid, repo_path, use_repo_path=use_repo_path)
+        pipeline = cls(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
         if PipelineType.INTEGRATION == pipeline.type:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
             )
-            pipeline = IntegrationPipeline(uuid, repo_path)
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
 
         return pipeline
 
@@ -557,18 +500,6 @@ class Pipeline:
         return config
 
     @classmethod
-    @overload
-    async def get_async(
-        self,
-        uuid,
-        repo_path: str,
-        all_projects: bool = False,
-        use_repo_path: bool = False,
-    ):
-        ...
-
-    @classmethod
-    @overload
     async def get_async(
         self,
         uuid,
@@ -576,24 +507,7 @@ class Pipeline:
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        ...
-
-    @classmethod
-    async def get_async(
-        self,
-        uuid,
-        repo_path: str = None,
-        all_projects: bool = False,
-        use_repo_path: bool = False,
-    ):
-        # Warn if repo_path is not provided. Eventually, we should remove the method
-        # that does not require repo_path.
-        if repo_path is None:
-            warn(
-                'repo_path argument in Pipeline.get_async should be provided.',
-                SyntaxWarning,
-                stacklevel=2,
-            )
+        warn_for_repo_path(repo_path)
 
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
@@ -695,13 +609,17 @@ class Pipeline:
         return arr
 
     @classmethod
-    def get_pipelines_by_block(self, block, repo_path: str, widget=False) -> List['Pipeline']:
+    def get_pipelines_by_block(
+        self, block, repo_path: str = None, widget=False
+    ) -> List['Pipeline']:
+        warn_for_repo_path(repo_path)
+        repo_path = repo_path or get_repo_path()
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         pipelines = []
         for entry in os.scandir(pipelines_folder):
             if entry.is_dir():
                 try:
-                    p = Pipeline(entry.name, repo_path)
+                    p = Pipeline(entry.name, repo_path=repo_path)
                     mapping = p.widgets_by_uuid if widget else p.blocks_by_uuid
                     if block.uuid in mapping:
                         pipelines.append(p)

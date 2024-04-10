@@ -973,7 +973,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 pipelines = Pipeline.get_pipelines_by_block(
                     self,
-                    self.pipeline.repo_path,
+                    repo_path=self.pipeline.repo_path,
                     widget=widget,
                 )
                 pipelines = [
@@ -985,7 +985,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
-        pipelines = Pipeline.get_pipelines_by_block(self, self.repo_path, widget=widget)
+        pipelines = Pipeline.get_pipelines_by_block(
+            self, repo_path=self.repo_path, widget=widget
+        )
         if not force:
             for p in pipelines:
                 if not p.block_deletable(self):
@@ -2612,7 +2614,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
-                CallbackBlock.create(self.uuid, repo_path=self.repo_path)
+                CallbackBlock.create(self.uuid, self.repo_path)
             self.__update_pipeline_block()
 
         if 'retry_config' in data and data['retry_config'] != self.retry_config:
@@ -3713,11 +3715,11 @@ class ConditionalBlock(AddonBlock):
 
 class CallbackBlock(AddonBlock):
     @classmethod
-    def create(cls, orig_block_name, repo_path: str = None) -> 'CallbackBlock':
+    def create(cls, orig_block_name, repo_path: str) -> 'CallbackBlock':
         return Block.create(
             f'{clean_name_orig(orig_block_name)}_callback',
             BlockType.CALLBACK,
-            repo_path or get_repo_path(),
+            repo_path,
             language=BlockLanguage.PYTHON,
         )
 
