@@ -257,7 +257,7 @@ class KafkaSource(BaseSource):
 
     def test_connection(self):
         self.consumer._client.check_version(timeout=5)
-        self._print('Test connectino successfully.')
+        self._print('Test connection successfully.')
 
     def __deserialize_message(self, message):
         if self.config.serde_config is None:
