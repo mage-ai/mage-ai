@@ -84,9 +84,9 @@ class Pipeline:
     def __init__(
         self,
         uuid,
+        repo_path: str = None,
         config=None,
         repo_config=None,
-        repo_path: str = None,
         catalog=None,
         use_repo_path: bool = False,
         description: str = None,
@@ -2124,7 +2124,7 @@ class Pipeline:
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
         if block_uuid is not None:
-            current_pipeline = Pipeline(self.uuid, self.repo_path)
+            current_pipeline = Pipeline(self.uuid, repo_path=self.repo_path)
             block = self.get_block(
                 block_uuid,
                 block_type=block_type,

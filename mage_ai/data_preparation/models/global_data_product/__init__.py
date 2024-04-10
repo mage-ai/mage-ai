@@ -72,7 +72,7 @@ class GlobalDataProduct:
             if self._object:
                 return self._object
             else:
-                self._object = Pipeline.get(self.object_uuid, self.repo_path)
+                self._object = Pipeline.get(self.object_uuid, repo_path=self.repo_path)
 
         return self._object
 
@@ -306,8 +306,8 @@ class GlobalDataProduct:
     def delete(self) -> None:
         self.save(delete=True)
 
-    def save(self, delete: bool = False, file_path: str = None) -> None:
-        mapping = index_by(lambda x: x.uuid, self.load_all())
+    def save(self, delete: bool = False) -> None:
+        mapping = index_by(lambda x: x.uuid, self.load_all(self.repo_path))
 
         if delete:
             mapping.pop(self.uuid, None)
@@ -325,7 +325,7 @@ class GlobalDataProduct:
                     mapping_new[uuid][k] = v
 
         content = yaml.safe_dump(mapping_new)
-        safe_write(file_path or self.file_path(), content)
+        safe_write(self.file_path(self.repo_path), content)
 
     def update(self, payload: Dict) -> None:
         for key in [

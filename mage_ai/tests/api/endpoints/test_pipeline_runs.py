@@ -166,7 +166,7 @@ build_list_endpoint_tests(
 
 
 def __assert_after(test_case, results, mocks, mock_objects):
-    mocks[0].assert_called_once_with(get_repo_path())
+    mocks[0].assert_called_once_with(repo_path=get_repo_path())
 
 
 # Project platform

@@ -55,6 +55,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
                 week_of_month=8,
                 week_of_year=9,
             ),
+            repo_path=self.repo_path,
             settings=dict(
                 data_exporter={},
                 data_loader=dict(partitions=1),
@@ -67,7 +68,7 @@ class TriggerGlobalDataProductTest(DBTestCase):
             self.repo_path,
             'global_data_products.yaml',
         )
-        self.global_data_product.save(file_path=self.file_path)
+        self.global_data_product.save()
 
         PipelineRun.query.filter(
             PipelineRun.id.in_([pr.id for pr in self.global_data_product.pipeline_runs()]),

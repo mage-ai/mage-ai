@@ -70,8 +70,8 @@ async def get_pipeline_from_platform_async(
 
     return await Pipeline.get_async(
         pipeline_uuid,
-        repo_path,
         all_projects=False if repo_path else True,
+        repo_path=repo_path,
         use_repo_path=use_repo_path,
     )
 

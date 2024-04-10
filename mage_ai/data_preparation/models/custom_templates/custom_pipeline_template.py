@@ -138,10 +138,18 @@ class CustomPipelineTemplate(BaseConfig):
         )
 
     def build_pipeline(self) -> Pipeline:
-        return Pipeline(clean_name(self.template_uuid), self.repo_path, config=self.pipeline)
+        return Pipeline(
+            clean_name(self.template_uuid),
+            config=self.pipeline,
+            repo_path=self.repo_path,
+        )
 
     def create_pipeline(self, name: str) -> Pipeline:
-        pipeline = Pipeline(clean_name(name), self.repo_path, config=self.pipeline)
+        pipeline = Pipeline(
+            clean_name(name),
+            repo_path=self.repo_path,
+            config=self.pipeline,
+        )
         os.makedirs(os.path.dirname(pipeline.config_path), exist_ok=True)
         pipeline.save()
 

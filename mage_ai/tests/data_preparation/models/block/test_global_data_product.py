@@ -42,6 +42,7 @@ class GlobalDataProductBlockTest(DBTestCase):
             object_uuid=self.pipeline.uuid,
             outdated_after=dict(months=1),
             outdated_starting_at=dict(day_of_month=1),
+            repo_path=self.repo_path,
             settings=dict(data_loader=dict(partitions=1)),
             uuid='mage',
         )
@@ -50,7 +51,7 @@ class GlobalDataProductBlockTest(DBTestCase):
             self.repo_path,
             'global_data_products.yaml',
         )
-        self.global_data_product.save(file_path=self.file_path)
+        self.global_data_product.save()
 
     def tearDown(self):
         super().tearDown()

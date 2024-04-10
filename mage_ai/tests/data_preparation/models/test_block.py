@@ -783,7 +783,7 @@ class CallbackBlockTest(DBTestCase):
             self.repo_path,
             pipeline=self.pipeline,
         )
-        callback_block = CallbackBlock.create(parent_block.name)
+        callback_block = CallbackBlock.create(parent_block.name, self.repo_path)
         self.pipeline.add_block(callback_block)
         parent_block = parent_block.update(
             dict(callback_blocks=[callback_block.uuid])
