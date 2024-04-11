@@ -13,7 +13,7 @@ import TagType from '@interfaces/TagType';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import {
-  PIPELINE_RUN_STATUSES,
+  PIPELINE_RUN_STATUSES_NO_LAST_RUN_FAILED,
   PipelineRunFilterQueryEnum,
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
@@ -77,7 +77,7 @@ function RunListPage() {
       filterOptions={{
         pipeline_tag: tags.map(({ uuid }) => uuid),
         pipeline_uuid: pipelineUUIDs,
-        status: PIPELINE_RUN_STATUSES,
+        status: PIPELINE_RUN_STATUSES_NO_LAST_RUN_FAILED,
       }}
       filterValueLabelMapping={{
         pipeline_tag: tags.reduce((acc, { uuid }) => ({

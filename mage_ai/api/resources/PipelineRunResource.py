@@ -1,3 +1,4 @@
+from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
@@ -5,7 +6,10 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
 from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.models.block.utils import get_all_descendants
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import (
+    PIPELINE_RUN_STATUS_LAST_RUN_FAILED,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -94,9 +98,32 @@ class PipelineRunResource(DatabaseResource):
 
         repo_pipeline_schedule_ids = [s.id for s in PipelineSchedule.repo_query]
 
+        if status == PIPELINE_RUN_STATUS_LAST_RUN_FAILED:
+            latest_pipeline_runs = PipelineRun.select(
+                PipelineRun.id,
+                func.row_number()
+                    .over(
+                        partition_by=(
+                            PipelineRun.execution_date,
+                            PipelineRun.pipeline_schedule_id,
+                        ),
+                        order_by=desc(PipelineRun.created_at))
+                    .label('row_number')
+            ).cte(name='latest_pipeline_runs')
+            query = (PipelineRun.select(
+                    PipelineRun,
+                )
+                .join(latest_pipeline_runs, and_(
+                    PipelineRun.id == latest_pipeline_runs.c.id,
+                    # latest_pipeline_runs.c.row_number == 1,
+                ))
+                .filter(latest_pipeline_runs.c.row_number == 1)
+            )
+        else:
+            query = PipelineRun.query
+
         results = (
-            PipelineRun
-            .query
+            query
             .filter(PipelineRun.pipeline_schedule_id.in_(repo_pipeline_schedule_ids))
             .options(selectinload(PipelineRun.block_runs))
             .options(selectinload(PipelineRun.pipeline_schedule))
@@ -120,8 +147,12 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
         if pipeline_uuids_with_tags:
             results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids_with_tags))
-        if status is not None:
+
+        if status == PIPELINE_RUN_STATUS_LAST_RUN_FAILED:
+            results = results.filter(PipelineRun.status == PipelineRun.PipelineRunStatus.FAILED)
+        elif status is not None:
             results = results.filter(PipelineRun.status == status)
+
         if statuses:
             results = results.filter(PipelineRun.status.in_(statuses))
         if start_timestamp is not None:
