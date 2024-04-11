@@ -3,9 +3,13 @@ import { ScheduleTypeEnum } from './PipelineScheduleType';
 
 export const RunStatus = RunStatusEnum;
 
-// This is a pipeline run status filter used for fetching the latest (most
-// recently created) failed pipeline run for each grouping of pipeline
-// runs with the same execution date and pipeline schedule ID.
+/*
+ * LAST_RUN_FAILED_STATUS is a pipeline run status filter used for
+ * fetching the last pipeline run retry (or individual pipeline
+ * run if there are no retries) that has failed for each grouping
+ * of pipeline runs with the same execution date, pipeline uuid,
+ * and pipeline schedule ID.
+ */
 export const LAST_RUN_FAILED_STATUS = 'last_run_failed';
 
 export const PIPELINE_RUN_STATUSES = [

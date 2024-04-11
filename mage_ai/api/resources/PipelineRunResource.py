@@ -99,6 +99,12 @@ class PipelineRunResource(DatabaseResource):
         repo_pipeline_schedule_ids = [s.id for s in PipelineSchedule.repo_query]
 
         if status == PIPELINE_RUN_STATUS_LAST_RUN_FAILED:
+            """
+            The initial query below is used to get the last pipeline run retry
+            (or individual pipeline run if there are no retries) for each
+            grouping of pipeline runs with the same execution_date,
+            pipeline_uuid, and pipeline_schedule_id.
+            """
             latest_pipeline_runs = PipelineRun.select(
                 PipelineRun.id,
                 func.row_number()
