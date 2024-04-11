@@ -39,11 +39,11 @@ export const COMPLETED_STATUSES = [
 export const MAGE_VARIABLES_KEY = '__mage_variables';
 
 export const RUN_STATUS_TO_LABEL = {
+  [LAST_RUN_FAILED_STATUS]: 'Last run failed',
   [RunStatus.CANCELLED]: 'Cancelled',
   [RunStatus.COMPLETED]: 'Done',
   [RunStatus.FAILED]: 'Failed',
   [RunStatus.INITIAL]: 'Ready',
-  [LAST_RUN_FAILED_STATUS]: 'Last run failed',
   [RunStatus.RUNNING]: 'Running',
 };
 

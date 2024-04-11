@@ -106,8 +106,9 @@ class PipelineRunResource(DatabaseResource):
                         partition_by=(
                             PipelineRun.execution_date,
                             PipelineRun.pipeline_schedule_id,
+                            PipelineRun.pipeline_uuid,
                         ),
-                        order_by=desc(PipelineRun.created_at))
+                        order_by=desc(PipelineRun.id))
                     .label('row_number')
             ).cte(name='latest_pipeline_runs')
             query = (PipelineRun.select(
@@ -115,9 +116,8 @@ class PipelineRunResource(DatabaseResource):
                 )
                 .join(latest_pipeline_runs, and_(
                     PipelineRun.id == latest_pipeline_runs.c.id,
-                    # latest_pipeline_runs.c.row_number == 1,
+                    latest_pipeline_runs.c.row_number == 1,
                 ))
-                .filter(latest_pipeline_runs.c.row_number == 1)
             )
         else:
             query = PipelineRun.query
