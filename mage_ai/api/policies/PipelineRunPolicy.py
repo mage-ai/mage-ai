@@ -3,8 +3,6 @@ from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineRunPresenter import PipelineRunPresenter
 from mage_ai.orchestration.constants import Entity
-from mage_ai.settings.platform.utils import get_pipeline_from_platform
-from mage_ai.settings.repo import get_repo_path
 
 
 class PipelineRunPolicy(BasePolicy):
@@ -15,23 +13,9 @@ class PipelineRunPolicy(BasePolicy):
             pipeline_uuid = pipeline_uuid[0]
         if self.resource:
             pipeline_run = self.resource.model
-            pipeline = get_pipeline_from_platform(
-                pipeline_run.pipeline_uuid,
-                check_if_exists=True,
-                repo_path=pipeline_run.pipeline_schedule.repo_path,
-                use_repo_path=True,
-            )
-            if pipeline:
-                self.project_uuid = pipeline.project_uuid
-        elif pipeline_uuid:
-            pipeline = get_pipeline_from_platform(
-                pipeline_uuid,
-                check_if_exists=True,
-                repo_path=get_repo_path(),
-                use_repo_path=True,
-            )
-            if pipeline:
-                self.project_uuid = pipeline.project_uuid
+            repo_config = pipeline_run.pipeline_schedule.repo_path
+            if repo_config:
+                self.project_uuid = repo_config.project_uuid
         else:
             super().initialize_project_uuid()
 

@@ -5,8 +5,8 @@ from mage_ai.api.presenters.PipelineSchedulePresenter import PipelineSchedulePre
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.constants import Entity
-from mage_ai.settings.platform.utils import get_pipeline_from_platform
 
 READABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
     'description',
@@ -33,23 +33,12 @@ class PipelineSchedulePolicy(BasePolicy):
     def initialize_project_uuid(self):
         if self.resource:
             if isinstance(self.resource.model, dict):
-                pipeline_uuid = self.resource.model.get('pipeline_uuid')
                 repo_path = self.resource.model.get('repo_path')
-                pipeline = get_pipeline_from_platform(
-                    pipeline_uuid,
-                    check_if_exists=True,
-                    repo_path=repo_path,
-                    use_repo_path=True,
-                )
+                repo_config = get_repo_config(repo_path=repo_path)
             else:
-                pipeline = get_pipeline_from_platform(
-                    self.resource.model.pipeline_uuid,
-                    check_if_exists=True,
-                    repo_path=self.resource.model.repo_path,
-                    use_repo_path=True,
-                )
-            if pipeline:
-                self.project_uuid = pipeline.project_uuid
+                repo_config = get_repo_config(repo_path=self.resource.model.repo_path)
+            if repo_config:
+                self.project_uuid = repo_config.project_uuid
         else:
             super().initialize_project_uuid()
 
