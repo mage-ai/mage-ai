@@ -403,6 +403,8 @@ class PipelineScheduleResource(DatabaseResource):
         if updated_status == ScheduleStatus.ACTIVE and self.model.status == ScheduleStatus.INACTIVE:
             payload['last_enabled_at'] = datetime.now(tz=pytz.UTC)
 
+        old_name = self.model.name
+
         resource = super().update(payload)
         updated_model = resource.model
 
@@ -424,11 +426,13 @@ class PipelineScheduleResource(DatabaseResource):
             update_only_if_exists = (
                 not pipeline.should_save_trigger_in_code_automatically()
             )
+            old_trigger_name = old_name if old_name != updated_model.name else None
 
             add_or_update_trigger_for_pipeline_and_persist(
                 trigger,
                 pipeline.uuid,
                 update_only_if_exists=update_only_if_exists,
+                old_trigger_name=old_trigger_name,
             )
 
         return self
