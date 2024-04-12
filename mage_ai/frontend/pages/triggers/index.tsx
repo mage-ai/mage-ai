@@ -72,7 +72,7 @@ function TriggerListPage() {
     >
       <Spacing mx={2} my={1}>
         <FlexContainer alignItems="center">
-          <Text bold default large>Sort runs by:</Text>
+          <Text bold default large>Sort by:</Text>
           <Spacing mr={1} />
           <Select
             compact
