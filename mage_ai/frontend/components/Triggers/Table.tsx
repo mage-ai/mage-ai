@@ -192,7 +192,7 @@ function TriggersTable({
     ]);
   }
 
-  columnFlex.push(...[1, 2]);
+  columnFlex.push(...[2, 1]);
   columns.push(...[
     {
       uuid: 'Name',
@@ -482,7 +482,7 @@ function TriggersTable({
                   default
                   key={`trigger_description_${idx}`}
                   title={description}
-                  width={UNIT * 35}
+                  width={UNIT * 40}
                 >
                   {description}
                 </Text>,
