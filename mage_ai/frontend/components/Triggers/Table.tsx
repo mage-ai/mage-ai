@@ -522,7 +522,7 @@ function TriggersTable({
                   {...getRunStatusTextProps(lastPipelineRunStatus)}
                   key={`latest_run_status_${idx}`}
                 >
-                  {lastPipelineRunStatus || 'N/A'}
+                  {lastPipelineRunStatus || '—'}
                 </Text>,
                 <Text default key={`trigger_run_count_${idx}`} monospace>
                   {pipelineRunsCount || '0'}
