@@ -481,6 +481,8 @@ function TriggersTable({
                 <Text
                   default
                   key={`trigger_description_${idx}`}
+                  title={description}
+                  width={UNIT * 35}
                 >
                   {description}
                 </Text>,
