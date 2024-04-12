@@ -206,6 +206,7 @@ def add_or_update_trigger_for_pipeline_and_persist(
     trigger: Trigger,
     pipeline_uuid: str,
     update_only_if_exists: bool = False,
+    old_trigger_name: str = None,
 ) -> Dict:
     trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
 
@@ -214,13 +215,14 @@ def add_or_update_trigger_for_pipeline_and_persist(
     have, so we need to set "envs" on the updated trigger if it already exists.
     Otherwise, it will get overwritten when updating the trigger in code.
     """
-    existing_trigger = trigger_configs_by_name.get(trigger.name)
+    trigger_name = trigger.name if old_trigger_name is None else old_trigger_name
+    existing_trigger = trigger_configs_by_name.get(trigger_name)
     if existing_trigger is not None:
         trigger.envs = existing_trigger.get('envs', [])
     elif update_only_if_exists:
         return None
 
-    trigger_configs_by_name[trigger.name] = trigger.to_dict()
+    trigger_configs_by_name[trigger_name] = trigger.to_dict()
     yaml_config = dict(triggers=list(trigger_configs_by_name.values()))
     content = yaml.safe_dump(yaml_config)
     trigger_file_path = get_triggers_file_path(pipeline_uuid)
