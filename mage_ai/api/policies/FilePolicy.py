@@ -2,10 +2,18 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.FilePresenter import FilePresenter
+from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.settings.repo import get_repo_path
 
 
 class FilePolicy(BasePolicy):
-    pass
+    def initialize_project_uuid(self):
+        if self.resource and self.resource.model:
+            file = self.resource.model
+            repo_config = get_repo_config(file.repo_path)
+            self.project_uuid = repo_config.project_uuid
+        else:
+            self.project_uuid = get_repo_path(root_project=True)
 
 
 FilePolicy.allow_actions([
