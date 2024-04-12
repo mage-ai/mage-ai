@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockType,
 )
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -50,6 +51,9 @@ class BlockCache(BaseCache):
         block_language = ''
         configuration = None
         file_path = None
+
+        warn_for_repo_path(repo_path)
+
         repo_path = repo_path or get_repo_path()
 
         if isinstance(block, dict):

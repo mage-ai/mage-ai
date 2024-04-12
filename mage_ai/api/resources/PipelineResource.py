@@ -467,7 +467,7 @@ class PipelineResource(BaseResource):
 
         async def _on_create_callback(resource):
             cache = await PipelineCache.initialize_cache()
-            cache.add_model(resource.model, repo_path)
+            cache.add_model(resource.model)
 
             tags = resource.model.tags
             if tags:
@@ -558,10 +558,9 @@ class PipelineResource(BaseResource):
     @safe_db_query
     async def delete(self, **kwargs):
         async def _on_delete_callback(resource):
-            repo_path = get_repo_path(user=self.current_user)
             pipeline = resource.model
             pipeline_cache = await PipelineCache.initialize_cache()
-            pipeline_cache.remove_model(pipeline, repo_path)
+            pipeline_cache.remove_model(pipeline)
 
             tags = pipeline.tags
             if tags:
@@ -800,10 +799,8 @@ class PipelineResource(BaseResource):
                 elif status == 'retry_incomplete_block_runs':
                     retry_incomplete_block_runs(pipeline_uuid)
 
-            repo_path = get_repo_path(user=self.current_user)
-
             cache = await PipelineCache.initialize_cache()
-            cache.update_model(resource.model, repo_path)
+            cache.update_model(resource.model)
 
         self.on_update_callback = _update_callback
 

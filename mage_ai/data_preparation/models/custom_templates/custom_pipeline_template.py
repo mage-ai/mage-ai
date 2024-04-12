@@ -21,7 +21,6 @@ from mage_ai.data_preparation.models.triggers import (
     load_trigger_configs,
 )
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
@@ -124,7 +123,7 @@ class CustomPipelineTemplate(BaseConfig):
     @property
     def metadata_file_path(self) -> str:
         return os.path.join(
-            get_repo_path(),
+            self.repo_path,
             self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
         )
@@ -132,7 +131,7 @@ class CustomPipelineTemplate(BaseConfig):
     @property
     def triggers_file_path(self) -> str:
         return os.path.join(
-            get_repo_path(),
+            self.repo_path,
             self.uuid,
             TRIGGER_FILE_NAME,
         )
@@ -192,4 +191,4 @@ class CustomPipelineTemplate(BaseConfig):
         safe_write(file_path, content)
 
     def delete(self) -> None:
-        shutil.rmtree(os.path.join(get_repo_path(), self.uuid))
+        shutil.rmtree(os.path.join(self.repo_path, self.uuid))

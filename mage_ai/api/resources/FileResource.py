@@ -176,7 +176,9 @@ class FileResource(GenericResource):
                     overwrite=overwrite,
                 )
 
-                block_type = Block.block_type_from_path(dir_path)
+                block_type = Block.block_type_from_path(
+                    dir_path, repo_path=get_repo_path(user=user)
+                )
                 if block_type:
                     cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                     cache_block_action_object.update_block(block_file_absolute_path=file.file_path)
@@ -236,7 +238,10 @@ class FileResource(GenericResource):
 
     @safe_db_query
     async def update(self, payload, **kwargs):
-        block_type = Block.block_type_from_path(self.model.dir_path)
+        block_type = Block.block_type_from_path(
+            self.model.dir_path,
+            repo_path=get_repo_path(user=self.current_user),
+        )
         cache_block_action_object = None
         if block_type:
             cache_block_action_object = await BlockActionObjectCache.initialize_cache()

@@ -5,6 +5,7 @@ from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResou
 from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
@@ -34,6 +35,8 @@ def trigger_pipeline(
 ) -> PipelineRun:
     if variables is None:
         variables = {}
+
+    warn_for_repo_path(repo_path)
 
     if remote_blocks:
         arr = []

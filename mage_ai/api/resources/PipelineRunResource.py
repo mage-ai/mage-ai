@@ -298,8 +298,8 @@ class PipelineRunResource(DatabaseResource):
             'next': has_next,
         }
 
-        repo_path = get_repo_path(user=user)
         if include_pipeline_uuids:
+            repo_path = get_repo_path(user=user)
             pipeline_uuids = Pipeline.get_all_pipelines_all_projects(repo_path=repo_path)
             result_set.metadata['pipeline_uuids'] = pipeline_uuids
 

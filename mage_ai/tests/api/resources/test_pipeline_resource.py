@@ -70,7 +70,7 @@ class PipelineResourceTest(BaseApiTestCase):
         pipelines = [self.pipeline1, self.pipeline2, self.pipeline3]
 
         for pipeline in pipelines[:number_of_pipelines_to_caches]:
-            self.cache.add_model(pipeline, self.repo_path)
+            self.cache.add_model(pipeline)
 
         def __get_model(
             model,
@@ -295,7 +295,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     type=PipelineType.STREAMING,
                 ), None)
 
-                mock_add_model.assert_called_once_with(resource.model, self.repo_path)
+                mock_add_model.assert_called_once_with(resource.model)
 
     async def test_update(self):
         __initialize_cache = self.__prepare_cache()[1]
@@ -306,7 +306,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     type=PipelineType.STREAMING,
                 ))
 
-                mock_update_model.assert_called_once_with(resource.model, self.repo_path)
+                mock_update_model.assert_called_once_with(resource.model)
 
     async def test_delete(self):
         __initialize_cache = self.__prepare_cache()[1]

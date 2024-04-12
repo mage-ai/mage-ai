@@ -19,10 +19,10 @@ class FileContentResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         file = None
 
-        repo_path = get_repo_path(user=user)
         if 'payload' in kwargs and 'file_content' in kwargs['payload']:
             payload = kwargs['payload']['file_content']
             if 'block_uuid' in payload and 'pipeline_uuid' in payload:
+                repo_path = get_repo_path(user=user)
                 pipeline = await Pipeline.get_async(
                     payload.get('pipeline_uuid'), repo_path=repo_path
                 )
@@ -60,7 +60,10 @@ class FileContentResource(GenericResource):
 
         await self.model.update_content_async(content)
 
-        block_type = Block.block_type_from_path(self.model.dir_path)
+        block_type = Block.block_type_from_path(
+            self.model.dir_path,
+            repo_path=get_repo_path(user=self.current_user),
+        )
         if block_type:
             cache_block_action_object = await BlockActionObjectCache.initialize_cache()
             cache_block_action_object.update_block(block_file_absolute_path=self.model.file_path)

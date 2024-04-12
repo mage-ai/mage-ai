@@ -282,8 +282,6 @@ class PipelineScheduleResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
-        repo_path = get_repo_path(user=self.current_user)
-
         arr = payload.pop('event_matchers', None)
         event_matchers = []
         if arr is not None:
@@ -413,6 +411,7 @@ class PipelineScheduleResource(DatabaseResource):
         resource = super().update(payload)
         updated_model = resource.model
 
+        repo_path = get_repo_path(user=self.current_user)
         pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path=repo_path)
         if pipeline:
             trigger = Trigger(

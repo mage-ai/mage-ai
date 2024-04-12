@@ -32,7 +32,6 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.io.base import QUERY_ROW_LIMIT, DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.settings.repo import get_repo_path
 
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.CUSTOM,
@@ -99,7 +98,7 @@ def execute_sql_code(
     disable_query_preprocessing = configuration.get('disable_query_preprocessing', False) or False
 
     if not config_file_loader:
-        config_path = path.join(get_repo_path(), 'io_config.yaml')
+        config_path = path.join(block.repo_path, 'io_config.yaml')
         config_profile = configuration.get('data_provider_profile')
         config_file_loader = ConfigFileLoader(config_path, config_profile)
 

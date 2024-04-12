@@ -45,8 +45,8 @@ class OutputResource(GenericResource):
 
         model = dict(outputs=[])
 
-        repo_path = get_repo_path(user=user)
         if block_uuid and pipeline_uuid:
+            repo_path = get_repo_path(user=user)
             pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             block = pipeline.get_block(block_uuid)
 

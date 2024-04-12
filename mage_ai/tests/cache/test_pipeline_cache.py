@@ -94,7 +94,7 @@ class PipelineCacheTest(BaseApiTestCase):
         model['name'] = self.uuid
 
         with freeze_time(now):
-            self.cache.update_models([model], self.repo_path, added_at=now.timestamp())
+            self.cache.update_models([model], added_at=now.timestamp())
 
         self.assertEqual(
             self.__get_cache(refresh=True)[self.pipeline_json['uuid']]['pipeline'],
@@ -111,7 +111,7 @@ class PipelineCacheTest(BaseApiTestCase):
         model['name'] = self.uuid
 
         with freeze_time(now):
-            self.cache.update_model(model, self.repo_path, added_at=now.timestamp())
+            self.cache.update_model(model, added_at=now.timestamp())
 
         self.assertEqual(
             self.__get_cache(refresh=True)[self.pipeline_json['uuid']]['pipeline'],
@@ -128,7 +128,7 @@ class PipelineCacheTest(BaseApiTestCase):
         model['name'] = self.uuid
 
         with freeze_time(now):
-            self.cache.add_model(model, self.repo_path)
+            self.cache.add_model(model)
 
         self.assertEqual(
             self.__get_cache(refresh=True)[self.pipeline_json['uuid']]['pipeline'],
@@ -140,7 +140,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_remove_model(self):
-        self.cache.remove_model(self.pipeline_json, self.repo_path)
+        self.cache.remove_model(self.pipeline_json)
         self.assertFalse(
             self.pipeline_json['uuid'] in self.__get_cache(refresh=True),
         )

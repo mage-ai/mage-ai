@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import (
     VARIABLE_DIR,
     Variable,
@@ -22,6 +23,7 @@ from mage_ai.shared.utils import clean_name
 
 class VariableManager:
     def __init__(self, repo_path=None, variables_dir=None):
+        warn_for_repo_path(repo_path)
         self.repo_path = repo_path or get_repo_path()
         if variables_dir is None:
             self.variables_dir = self.repo_path
@@ -327,7 +329,6 @@ def get_global_variables(
     pipeline = pipeline or Pipeline.get(
         pipeline_uuid,
         all_projects=project_platform_activated(),
-        repo_path=get_repo_path(),
     )
     if pipeline.variables is not None:
         global_variables = pipeline.variables
@@ -356,7 +357,6 @@ def get_global_variable(
     pipeline = Pipeline.get(
         pipeline_uuid,
         all_projects=project_platform_activated(),
-        repo_path=get_repo_path(),
     )
     if pipeline.variables is not None:
         return pipeline.variables.get(key)

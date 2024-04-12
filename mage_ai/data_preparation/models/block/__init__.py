@@ -82,6 +82,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
@@ -865,8 +866,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
 
     @classmethod
-    def block_type_from_path(self, block_file_absolute_path: str) -> BlockType:
-        file_path = str(block_file_absolute_path).replace(get_repo_path(), '')
+    def block_type_from_path(
+        self, block_file_absolute_path: str, repo_path: str = None
+    ) -> BlockType:
+        warn_for_repo_path(repo_path)
+        if not repo_path:
+            repo_path = get_repo_path()
+        file_path = str(block_file_absolute_path).replace(repo_path, '')
         if file_path.startswith(os.sep):
             file_path = file_path[1:]
 

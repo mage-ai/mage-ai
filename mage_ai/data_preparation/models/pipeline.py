@@ -1113,7 +1113,9 @@ class Pipeline:
             should_update_tag_cache = True
 
             cache = PipelineCache()
-            cache.move_model(dict(uuid=new_uuid), dict(uuid=old_uuid), self.repo_path)
+            cache.move_model(
+                dict(uuid=new_uuid), dict(uuid=old_uuid), repo_path=self.repo_path
+            )
 
         should_save = False
 

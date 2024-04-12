@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Union
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_PIPELINE_DETAILS_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict, group_models_by_keys
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -63,6 +64,7 @@ class PipelineCache(BaseCache):
             return pipeline_uuid
 
         if not repo_path:
+            warn_for_repo_path(repo_path)
             repo_path = get_repo_path()
 
         return ':'.join([remove_base_repo_path_or_name(repo_path), pipeline_uuid])
@@ -92,8 +94,8 @@ class PipelineCache(BaseCache):
     def update_models(
         self,
         pipelines,
-        repo_path: str,
         added_at: str = None,
+        repo_path: str = None,
     ) -> None:
         mapping = self.get(self.cache_key)
         if mapping is None:
@@ -115,15 +117,17 @@ class PipelineCache(BaseCache):
     def update_model(
         self,
         pipeline,
-        repo_path: str,
         added_at: str = None,
+        repo_path: str = None,
     ) -> None:
-        self.update_models([pipeline], repo_path, added_at=added_at)
+        self.update_models([pipeline], added_at=added_at, repo_path=repo_path)
 
-    def add_model(self, model, repo_path: str) -> None:
-        self.update_model(model, repo_path, added_at=datetime.utcnow().timestamp())
+    def add_model(self, model, repo_path: str = None) -> None:
+        self.update_model(
+            model, added_at=datetime.utcnow().timestamp(), repo_path=repo_path
+        )
 
-    def move_model(self, new_model, old_model, repo_path: str) -> None:
+    def move_model(self, new_model, old_model, repo_path: str = None) -> None:
         new_key = self.build_key(new_model, repo_path=repo_path)
         if not new_key:
             return
@@ -142,7 +146,7 @@ class PipelineCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    def remove_model(self, model, repo_path: str) -> None:
+    def remove_model(self, model, repo_path: str = None) -> None:
         key = self.build_key(model, repo_path=repo_path)
         if not key:
             return

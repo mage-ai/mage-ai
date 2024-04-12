@@ -28,9 +28,9 @@ class IntegrationDestinationResource(GenericResource):
         success = False
 
         action_type = payload['action_type']
-        repo_path = get_repo_path(user=user)
         if 'test_connection' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
+            repo_path = get_repo_path(user=user)
             pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path=repo_path)
             config = payload['config']
 
