@@ -316,7 +316,16 @@ def trigger_and_check_status(
                     lock.release_lock(__lock_key_for_creating_pipeline_run(global_data_product))
 
                     if pipeline_run_created:
-                        break
+                        if check_status:
+                            tries += 1
+                            __log(
+                                f'Round {tries}: status check for global data product '
+                                f'{global_data_product.uuid}, '
+                                f'finished; will check again after {poll_interval} seconds.'
+                            )
+                            sleep(poll_interval)
+                        else:
+                            break
             else:
                 __log(
                     f'No pipeline run for global data product {global_data_product.uuid} '

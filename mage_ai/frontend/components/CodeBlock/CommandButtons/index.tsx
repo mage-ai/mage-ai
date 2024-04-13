@@ -530,10 +530,19 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {!hideExtraButtons && ([
-        BlockTypeEnum.DATA_LOADER,
-        BlockTypeEnum.TRANSFORMER,
-      ].includes(block.type) && !isStreaming && !isIntegration) && (
+      {!hideExtraButtons && !([
+        BlockTypeEnum.CALLBACK,
+        BlockTypeEnum.CHART,
+        BlockTypeEnum.CONDITIONAL,
+        BlockTypeEnum.EXTENSION,
+        BlockTypeEnum.MARKDOWN,
+        BlockTypeEnum.SCRATCHPAD,
+        BlockTypeEnum.SENSOR,
+      ].includes(block.type)
+      && (BlockTypeEnum.DBT !== block.type || BlockLanguageEnum.YAML !== block?.language)
+      && !isStreaming
+      && !isIntegration)
+      && (
         <>
           <Spacing
             ml={PADDING_UNITS}

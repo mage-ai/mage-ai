@@ -915,6 +915,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
   const codeEditorMappingRef = useRef({});
 
+  console.log('wtf', messages)
+
   const codeBlocks: {
     block: BlockType;
     element: Element;

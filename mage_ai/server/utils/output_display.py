@@ -208,7 +208,7 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif bool({has_reduce_output}):
+    elif bool({has_reduce_output}) and bool({is_dynamic_child}):
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
                 _internal_output_return,
@@ -460,7 +460,7 @@ def execute_custom_code():
 
     output = block_output['output'] or []
 
-    if {widget} or is_dynamic_block(block) or is_dynamic_child or has_reduce_output:
+    if {widget} or is_dynamic_block(block) or is_dynamic_child:
         return output
     else:
         return find(lambda val: val is not None, output)

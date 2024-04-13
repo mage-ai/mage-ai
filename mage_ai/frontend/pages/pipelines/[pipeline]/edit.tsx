@@ -297,6 +297,8 @@ function PipelineDetailPage({
   }>({});
   const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
+  console.log('wtf0', messages)
+
   // Pipeline
   // eslint-disable-next-line prefer-const
   let pipeline;
@@ -935,7 +937,10 @@ function PipelineDetailPage({
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
   const [deleteWidget] = useMutation(
-    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(
+      encodeURIComponent(pipelineUUID),
+      encodeURIComponent(uuid),
+    )(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -1755,7 +1760,7 @@ function PipelineDetailPage({
       }
 
       return api.blocks.pipelines.useDelete(
-        pipelineUUID,
+        encodeURIComponent(pipelineUUID),
         encodeURIComponent(uuid),
         query,
       )();
@@ -2408,12 +2413,15 @@ function PipelineDetailPage({
     token,
   ]);
 
+  console.log('wtffffffffffffffff', getWebSocket())
+
   // WebSocket
   const {
     sendMessage,
   } = useWebSocket(getWebSocket(), {
     onClose: () => DEBUG(() => console.log('socketUrlPublish closed')),
     onMessage: (lastMessage) => {
+      console.log('lastMessage', lastMessage)
       if (lastMessage) {
         const message: KernelOutputType = JSON.parse(lastMessage.data);
         const {
