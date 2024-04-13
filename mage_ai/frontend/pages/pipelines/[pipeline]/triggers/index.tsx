@@ -493,6 +493,7 @@ function PipelineSchedules({
               <>
                 <TriggersTable
                   fetchPipelineSchedules={fetchPipelineSchedules}
+                  includeCreatedAtColumn
                   pipeline={pipeline}
                   pipelineSchedules={pipelineSchedules}
                   pipelineTriggersByName={pipelineTriggersByName}
