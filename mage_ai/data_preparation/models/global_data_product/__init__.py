@@ -82,7 +82,7 @@ class GlobalDataProduct:
             return arr
 
         if GlobalDataProductObjectType.PIPELINE == self.object_type:
-            for block_uuid, block_settings in self.settings.items():
+            for block_uuid in self.settings.keys():
                 arr.append(self.pipeline.get_block(block_uuid))
 
         return arr
