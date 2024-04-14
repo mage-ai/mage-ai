@@ -68,16 +68,19 @@ class ApiRunHandler(BaseHandler):
         try:
             if record:
                 pipeline_run = PipelineRun.create(
+                    completed_at=datetime.utcnow(),
                     create_block_runs=False,
                     execution_date=datetime.utcnow(),
                     started_at=datetime.utcnow(),
                     pipeline_schedule_id=pipeline_schedule.id,
                     pipeline_uuid=pipeline.uuid,
-                    status=PipelineRun.PipelineRunStatus.RUNNING,
+                    status=PipelineRun.PipelineRunStatus.COMPLETED,
+                    variables=variables,
                 )
                 block_run = BlockRun.create(
                     pipeline_run_id=pipeline_run.id,
                     block_uuid=block.uuid,
+                    metrics=variables,
                     status=BlockRun.BlockRunStatus.RUNNING,
                     started_at=datetime.utcnow(),
                 )
@@ -125,10 +128,6 @@ class ApiRunHandler(BaseHandler):
             )
 
             if record:
-                pipeline_run.update(
-                    completed_at=datetime.utcnow(),
-                    status=PipelineRun.PipelineRunStatus.COMPLETED,
-                )
                 block_run.update(
                     completed_at=datetime.utcnow(),
                     status=BlockRun.BlockRunStatus.COMPLETED,
