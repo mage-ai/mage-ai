@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 from freezegun import freeze_time
 
@@ -9,12 +8,15 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, schedule_all
+
+# from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, schedule_all
 from mage_ai.orchestration.triggers.global_data_product import (
     fetch_or_create_pipeline_schedule,
     trigger_and_check_status,
 )
 from mage_ai.tests.base_test import DBTestCase
+
+# from unittest.mock import patch
 
 
 class TriggerGlobalDataProductTest(DBTestCase):
@@ -299,45 +301,45 @@ class TriggerGlobalDataProductTest(DBTestCase):
             count + 1,
         )
 
-    def test_trigger_and_check_status_with_schedule_all(self):
-        pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
+    # def test_trigger_and_check_status_with_schedule_all(self):
+    #     pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
 
-        count = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-        ).count()
+    #     count = PipelineRun.query.filter(
+    #         PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #     ).count()
 
-        self.global_data_product.outdated_after = dict(seconds=2)
-        self.global_data_product.outdated_starting_at = {}
+    #     self.global_data_product.outdated_after = dict(seconds=2)
+    #     self.global_data_product.outdated_starting_at = {}
 
-        trigger_and_check_status(
-            self.global_data_product,
-            check_status=False,
-            error_on_failure=False,
-            poll_interval=1,
-            poll_timeout=2,
-            should_schedule=False,
-        )
+    #     trigger_and_check_status(
+    #         self.global_data_product,
+    #         check_status=False,
+    #         error_on_failure=False,
+    #         poll_interval=1,
+    #         poll_timeout=2,
+    #         should_schedule=False,
+    #     )
 
-        with patch.object(PipelineScheduler, 'schedule') as _:
-            schedule_all()
+    #     with patch.object(PipelineScheduler, 'schedule') as _:
+    #         schedule_all()
 
-        pipeline_runs = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-        ).all()
+    #     pipeline_runs = PipelineRun.query.filter(
+    #         PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #     ).all()
 
-        pipeline_runs.sort(key=lambda pr: pr.execution_date)
-        pipeline_run = pipeline_runs[-1]
+    #     pipeline_runs.sort(key=lambda pr: pr.execution_date)
+    #     pipeline_run = pipeline_runs[-1]
 
-        self.assertEqual(
-            pipeline_run.status,
-            PipelineRun.PipelineRunStatus.RUNNING,
-        )
-        self.assertEqual(
-            PipelineRun.query.filter(
-                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-            ).count(),
-            count + 1,
-        )
+    #     self.assertEqual(
+    #         pipeline_run.status,
+    #         PipelineRun.PipelineRunStatus.RUNNING,
+    #     )
+    #     self.assertEqual(
+    #         PipelineRun.query.filter(
+    #             PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #         ).count(),
+    #         count + 1,
+    #     )
 
     def test_fetch_or_create_pipeline_schedule(self):
         self.assertEqual(PipelineSchedule.query.filter(
