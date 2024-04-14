@@ -188,6 +188,7 @@ function ChartBlock(
     if (messagesWithType?.length) {
       const messagesIndex = messagesWithType.length - 1;
       chartDataRaw = messagesWithType?.[messagesIndex]?.data[0]
+        // @ts-ignore
         || messagesWithType?.[messagesIndex]?.data?.data?.[0];
     }
 
