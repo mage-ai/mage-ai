@@ -40,13 +40,13 @@ class ApiRunHandler(BaseHandler):
         payload = self.get_payload().get('run', {})
         pipeline_uuid = payload.get('pipeline_uuid')
         block_uuid = payload.get('block_uuid')
-        variables = payload.get('variables', {})
         project = payload.get('project')
+        variables = payload.get('variables', {})
 
         record = payload.get('record', True)
         store_variables = payload.get('store_variables', True)
-        incomplete_only = payload.get('incomplete_only', False)
         run_upstream_blocks = payload.get('run_upstream_blocks', False)
+        incomplete_only = payload.get('incomplete_only', False)
 
         pipeline = Pipeline.get(
             pipeline_uuid,
