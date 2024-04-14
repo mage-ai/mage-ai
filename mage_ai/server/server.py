@@ -55,6 +55,7 @@ from mage_ai.server.api.events import (
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
 )
+from mage_ai.server.api.runs import ApiRunHandler
 from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
@@ -319,6 +320,16 @@ def make_app(
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/api_trigger',
             ApiTriggerPipelineHandler,
+        ),
+
+        # Run a single block and get a response immediately
+        (
+            r'/api/runs',
+            ApiRunHandler,
+        ),
+        (
+            r'/api/runs/(?P<token>\w+)',
+            ApiRunHandler,
         ),
 
         # Download block output

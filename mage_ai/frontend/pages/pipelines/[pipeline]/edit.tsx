@@ -935,7 +935,10 @@ function PipelineDetailPage({
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
   const [deleteWidget] = useMutation(
-    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(
+      encodeURIComponent(pipelineUUID),
+      encodeURIComponent(uuid),
+    )(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -1755,7 +1758,7 @@ function PipelineDetailPage({
       }
 
       return api.blocks.pipelines.useDelete(
-        pipelineUUID,
+        encodeURIComponent(pipelineUUID),
         encodeURIComponent(uuid),
         query,
       )();

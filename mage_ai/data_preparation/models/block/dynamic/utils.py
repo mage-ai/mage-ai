@@ -9,7 +9,10 @@ import pandas as pd
 from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_block,
 )
-from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+)
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -245,7 +248,9 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
         data = dict(
             columns=columns_to_display,
             rows=json.loads(
-                dataframe[columns_to_display].to_json(orient='split')
+                dataframe[columns_to_display][:DATAFRAME_SAMPLE_COUNT_PREVIEW].to_json(
+                    orient='split',
+                )
             )['data'],
             index=list(dataframe.index),
             shape=[row_count, column_count],
@@ -253,7 +258,7 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     else:
         data = dict(
             columns=['col0'],
-            rows=[[dataframe]],
+            rows=[[dataframe[:DATAFRAME_SAMPLE_COUNT_PREVIEW]]],
             index=[0],
             shape=[1, 1],
         )
@@ -413,7 +418,7 @@ def transform_output_for_display_dynamic_child(
             df = pd.concat([df, df_inner], axis=1)
 
     df = limit_output(df, sample_count)
-    if 1 == len(set(df.columns)):
+    if isinstance(df, pd.DataFrame) and 1 == len(set(df.columns)):
         df.columns = [f'{col}_{idx}' for idx, col in enumerate(df.columns)]
 
     return transform_dataframe_for_display(df)

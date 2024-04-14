@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     should_reduce_output as should_reduce_output_original,
 )
+from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     BlockType,
@@ -393,6 +394,7 @@ def fetch_input_variables(
     dynamic_block_flags: List[DynamicBlockFlag] = None,
     metadata: Dict = None,
     upstream_block_uuids_override: List[str] = None,
+    current_block=None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -510,6 +512,22 @@ def fetch_input_variables(
             if BlockType.GLOBAL_DATA_PRODUCT == upstream_block.type:
                 global_data_product = upstream_block.get_global_data_product()
                 input_vars[idx] = global_data_product.get_outputs()
+
+                mds = {}
+                variable_uuids = upstream_block.output_variables(
+                    execution_partition=execution_partition,
+                )
+                for variable_uuid in variable_uuids:
+                    md = pipeline.get_block_variable(
+                        upstream_block_uuid,
+                        variable_uuid,
+                        partition=execution_partition,
+                    )
+                    if isinstance(md, dict):
+                        mds.update(md)
+
+                kwargs_vars.append(mds)
+
                 continue
 
             # Block output variables for upstream_block_uuid
@@ -742,6 +760,26 @@ def fetch_input_variables(
         upstream_block_uuids_final=upstream_block_uuids_final,
         __uuid='output_variables'
     )
+
+    if kwargs_vars:
+        kwargs_vars2 = []
+
+        remote_blocks_output = []
+        for kwargs in kwargs_vars:
+            for remote_block_dict in kwargs.get('remote_blocks', []):
+                # Global data products only need the remote block information, not the output
+                if current_block and BlockType.GLOBAL_DATA_PRODUCT == current_block.type:
+                    output = remote_block_dict
+                else:
+                    output = RemoteBlock.load(**remote_block_dict).get_outputs()
+            remote_blocks_output.append(output)
+
+        for kwargs in kwargs_vars:
+            if kwargs.get('remote_blocks'):
+                kwargs['remote_blocks'] = remote_blocks_output
+            kwargs_vars2.append(kwargs)
+
+        kwargs_vars = kwargs_vars2
 
     return input_vars, kwargs_vars, upstream_block_uuids_final
 

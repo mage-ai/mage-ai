@@ -1122,6 +1122,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         data_integration_runtime_settings: Dict = None,
         execution_partition_previous: str = None,
         metadata: Dict = None,
+        override_outputs: bool = True,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1213,7 +1214,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         DX_PRINTER.critical(
                             block=self,
                             execution_partition=execution_partition,
-                            override_outputs=True,
+                            override_outputs=override_outputs,
                             dynamic_block_uuid=dynamic_block_uuid,
                             __uuid='store_variables',
                         )
@@ -1221,7 +1222,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         self.store_variables(
                             variable_mapping,
                             execution_partition=execution_partition,
-                            override_outputs=True,
+                            override_outputs=override_outputs,
                             spark=self.__get_spark_session_from_global_vars(
                                 global_vars=global_vars,
                             ),
@@ -1780,6 +1781,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             global_vars=global_vars,
             metadata=metadata,
             upstream_block_uuids_override=upstream_block_uuids_override,
+            current_block=self,
         )
 
         return variables
@@ -2994,6 +2996,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         global_vars: Dict = None,
         dynamic_block_index: int = None,
     ) -> Dict:
+        from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
+
         """
         Enriches the provided global variables dictionary with additional context, Spark session,
         environment, configuration, and an empty context dictionary.
@@ -3039,6 +3043,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         if dynamic_block_index is not None:
             global_vars['dynamic_block_index'] = dynamic_block_index
+
+        # Remote blocks
+        if global_vars.get('remote_blocks'):
+            global_vars['remote_blocks'] = [RemoteBlock.load(
+                **remote_block_dict,
+            ).get_outputs() for remote_block_dict in global_vars['remote_blocks']]
 
         self.global_vars = global_vars
 

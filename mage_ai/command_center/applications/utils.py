@@ -17,7 +17,7 @@ from mage_ai.version_control.models import File
 
 """
 Icons:
-Arcane Library (file browser): ChurnV3
+Text Editor (file browser): ChurnV3
 Portal Terminal (terminal):    RankingV3
 Version Control (file diffs):  ForecastV3
 
@@ -65,7 +65,7 @@ async def build_application_arcane_library() -> Dict:
     return build_generic(model_class=File, item_dict=dict(
         item_type=ItemType.DETAIL,
         object_type=ObjectType.FILE,
-        title='Arcane Library',
+        title='Text editor',
         description='browse and edit files across all projects',
         subtitle='Browser / Editor',
         applications=[

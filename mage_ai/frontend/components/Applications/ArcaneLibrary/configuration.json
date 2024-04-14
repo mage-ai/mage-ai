@@ -75,8 +75,8 @@
         "cache_expires_at": 0
       },
       "subtitle": "Browser / Editor",
-      "title": "Arcane Library",
-      "uuid": "detail_file_File_Arcane Library_Browser / Editor_browse and edit files across all projects"
+      "title": "Text Editor",
+      "uuid": "detail_file_File_Text Editor_Browser / Editor_browse and edit files across all projects"
     },
     "itemsRef": {
       "current": [
@@ -132,8 +132,8 @@
             "cache_expires_at": 0
           },
           "subtitle": "Browser / Editor",
-          "title": "Arcane Library",
-          "uuid": "detail_file_File_Arcane Library_Browser / Editor_browse and edit files across all projects"
+          "title": "Text Editor",
+          "uuid": "detail_file_File_Text Editor_Browser / Editor_browse and edit files across all projects"
         },
         {
           "actions": [
