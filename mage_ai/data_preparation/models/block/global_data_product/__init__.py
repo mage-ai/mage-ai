@@ -54,13 +54,19 @@ class GlobalDataProductBlock(Block):
         if pipeline_run and pipeline_run.pipeline:
             pipeline = pipeline_run.pipeline
 
+            arr = []
+
+            for block in global_data_product.get_blocks():
+                if block and block.uuid:
+                    arr.append(RemoteBlock.load(
+                        block_uuid=block.uuid,
+                        execution_partition=pipeline_run.execution_partition,
+                        pipeline_uuid=pipeline.uuid,
+                        repo_path=pipeline.repo_path,
+                    ))
+
             return [
-                dict(remote_blocks=[RemoteBlock.load(
-                    block_uuid=block.uuid,
-                    execution_partition=pipeline_run.execution_partition,
-                    pipeline_uuid=pipeline.uuid,
-                    repo_path=pipeline.repo_path,
-                ) for block in global_data_product.get_blocks()]),
+                dict(remote_blocks=arr),
             ]
 
         return []

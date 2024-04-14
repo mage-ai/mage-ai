@@ -72,6 +72,8 @@ class GlobalDataProductBlockTest(DBTestCase):
                 from_notebook=False,
                 logger=ANY,
                 logging_tags=ANY,
+                poll_interval=30,
+                remote_blocks=None,
                 variables=dict(mage=3),
             ),
         ])
