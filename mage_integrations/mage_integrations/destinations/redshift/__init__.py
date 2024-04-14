@@ -68,7 +68,7 @@ class Redshift(Destination):
             build_create_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{temp_table_name}',
+                full_table_name=temp_table_name,
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
                 use_lowercase=self.use_lowercase,
