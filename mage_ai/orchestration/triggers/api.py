@@ -27,6 +27,7 @@ def trigger_pipeline(
     schedule_name: str = None,
     verbose: bool = True,
     remote_blocks: List[Union[Dict, RemoteBlock]] = None,
+    return_remote_blocks: bool = False,
     _should_schedule: bool = False,  # For internal use only (e.g. running hooks from notebook).
 ) -> PipelineRun:
     if variables is None:
@@ -59,6 +60,23 @@ def trigger_pipeline(
             poll_timeout=poll_timeout,
             verbose=verbose,
         )
+
+    if return_remote_blocks and pipeline_run and pipeline_run.pipeline:
+        pipeline = pipeline_run.pipeline
+
+        return [
+            dict(
+                remote_blocks=[
+                    RemoteBlock.load(
+                        block_uuid=block.uuid,
+                        execution_partition=pipeline_run.execution_partition,
+                        pipeline_uuid=pipeline.uuid,
+                        repo_path=pipeline.repo_path,
+                    )
+                    for block in pipeline.blocks_by_uuid.values()
+                ],
+            ),
+        ]
 
     return pipeline_run
 
