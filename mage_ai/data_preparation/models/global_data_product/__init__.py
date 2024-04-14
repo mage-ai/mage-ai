@@ -75,6 +75,18 @@ class GlobalDataProduct:
 
         return self._object
 
+    def get_blocks(self) -> List:
+        arr = []
+
+        if not self.settings or len(self.settings) == 0:
+            return arr
+
+        if GlobalDataProductObjectType.PIPELINE == self.object_type:
+            for block_uuid, block_settings in self.settings.items():
+                arr.append(self.pipeline.get_block(block_uuid))
+
+        return arr
+
     def get_outputs(self, from_notebook: bool = False, global_vars: Dict = None, **kwargs) -> Dict:
         data = {}
 

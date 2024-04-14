@@ -3,9 +3,10 @@ import json
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 from time import sleep
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import safe_db_query
@@ -145,6 +146,7 @@ def trigger_and_check_status(
     round_number: int = 0,
     verbose: bool = True,
     should_schedule: bool = False,
+    remote_blocks: List[Union[Dict, RemoteBlock]] = None,
 ):
     tags = merge_dict(logging_tags, dict(
         block_uuid=block.uuid if block else None,
@@ -163,6 +165,7 @@ def trigger_and_check_status(
             print(log_message)
             print(json.dumps(tags, indent=2))
 
+    pipeline_run = None
     pipeline_run_created = None
     tries = 0
 
@@ -305,6 +308,7 @@ def trigger_and_check_status(
                         global_data_product.pipeline,
                         pipeline_schedule,
                         dict(variables=variables),
+                        remote_blocks=remote_blocks,
                         should_schedule=should_schedule,
                     )
                     if pipeline_run_created:
@@ -312,6 +316,7 @@ def trigger_and_check_status(
                             f'Created pipeline run {pipeline_run_created.id} for '
                             f'global data product {global_data_product.uuid}.'
                         )
+                        pipeline_run = pipeline_run_created
 
                     lock.release_lock(__lock_key_for_creating_pipeline_run(global_data_product))
 
@@ -348,6 +353,7 @@ def trigger_and_check_status(
                     poll_timeout=poll_timeout,
                     verbose=verbose,
                     should_schedule=should_schedule,
+                    remote_blocks=remote_blocks,
                 )
                 break
         else:
@@ -367,6 +373,8 @@ def trigger_and_check_status(
             sleep(poll_interval)
         else:
             break
+
+    return pipeline_run or pipeline_run_created
 
 
 def fetch_or_create_pipeline_schedule(global_data_product: GlobalDataProduct) -> PipelineSchedule:

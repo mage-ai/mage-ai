@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
+from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
@@ -25,10 +26,19 @@ def trigger_pipeline(
     poll_timeout: Optional[float] = None,
     schedule_name: str = None,
     verbose: bool = True,
+    remote_blocks: List[Union[Dict, RemoteBlock]] = None,
     _should_schedule: bool = False,  # For internal use only (e.g. running hooks from notebook).
 ) -> PipelineRun:
     if variables is None:
         variables = {}
+
+    if remote_blocks:
+        arr = []
+        for remote_block in remote_blocks:
+            if isinstance(remote_block, dict):
+                remote_block = RemoteBlock.load(**remote_block)
+            arr.append(remote_block.to_dict())
+        variables['remote_blocks'] = arr
 
     pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
 
