@@ -716,8 +716,6 @@ function CodeBlock({
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTabState] = useState<TabType>(null);
 
-  console.log(block.uuid, messages, blockMessages)
-
   const setSelectedTab = useCallback((tab) => {
     dispatchEventChangedOutput();
     setSelected?.(!!tab);

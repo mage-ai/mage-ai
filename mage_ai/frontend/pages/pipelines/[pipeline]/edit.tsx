@@ -297,8 +297,6 @@ function PipelineDetailPage({
   }>({});
   const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
-  console.log('wtf0', messages)
-
   // Pipeline
   // eslint-disable-next-line prefer-const
   let pipeline;
@@ -2413,15 +2411,12 @@ function PipelineDetailPage({
     token,
   ]);
 
-  console.log('wtffffffffffffffff', getWebSocket())
-
   // WebSocket
   const {
     sendMessage,
   } = useWebSocket(getWebSocket(), {
     onClose: () => DEBUG(() => console.log('socketUrlPublish closed')),
     onMessage: (lastMessage) => {
-      console.log('lastMessage', lastMessage)
       if (lastMessage) {
         const message: KernelOutputType = JSON.parse(lastMessage.data);
         const {

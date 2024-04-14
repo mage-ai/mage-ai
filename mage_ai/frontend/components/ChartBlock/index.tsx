@@ -5,6 +5,7 @@ import { useMutation } from "react-query";
 import AutocompleteItemType from "@interfaces/AutocompleteItemType";
 import BlockType, {
   BlockLanguageEnum,
+  BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS,
   BlockTypeEnum,
   OutputType,
   StatusTypeEnum,
@@ -152,7 +153,7 @@ function ChartBlock(
   const blocksOfType = useMemo(
     () =>
       blocks?.filter(({ type }: BlockType) =>
-        [BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(type),
+        !BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS.includes(type),
       ),
     [blocks],
   );

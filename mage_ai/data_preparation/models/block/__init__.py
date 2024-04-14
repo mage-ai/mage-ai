@@ -1122,6 +1122,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         data_integration_runtime_settings: Dict = None,
         execution_partition_previous: str = None,
         metadata: Dict = None,
+        override_outputs: bool = True,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1213,7 +1214,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         DX_PRINTER.critical(
                             block=self,
                             execution_partition=execution_partition,
-                            override_outputs=True,
+                            override_outputs=override_outputs,
                             dynamic_block_uuid=dynamic_block_uuid,
                             __uuid='store_variables',
                         )
@@ -1221,7 +1222,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         self.store_variables(
                             variable_mapping,
                             execution_partition=execution_partition,
-                            override_outputs=True,
+                            override_outputs=override_outputs,
                             spark=self.__get_spark_session_from_global_vars(
                                 global_vars=global_vars,
                             ),

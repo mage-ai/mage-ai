@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 
 import AddChartMenu from './AddChartMenu';
 import BlockType, {
+  BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS,
   BlockLanguageEnum,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
@@ -530,15 +531,7 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {!hideExtraButtons && !([
-        BlockTypeEnum.CALLBACK,
-        BlockTypeEnum.CHART,
-        BlockTypeEnum.CONDITIONAL,
-        BlockTypeEnum.EXTENSION,
-        BlockTypeEnum.MARKDOWN,
-        BlockTypeEnum.SCRATCHPAD,
-        BlockTypeEnum.SENSOR,
-      ].includes(block.type)
+      {!hideExtraButtons && !(BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS.includes(block.type)
       && (BlockTypeEnum.DBT !== block.type || BlockLanguageEnum.YAML !== block?.language)
       && !isStreaming
       && !isIntegration)

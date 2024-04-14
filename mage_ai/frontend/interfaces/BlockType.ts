@@ -146,6 +146,16 @@ export const BLOCK_TYPES_WITH_NO_PARENTS = [
   BlockTypeEnum.MARKDOWN,
 ];
 
+export const BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CHART,
+  BlockTypeEnum.CONDITIONAL,
+  BlockTypeEnum.EXTENSION,
+  BlockTypeEnum.MARKDOWN,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
+];
+
 export const BLOCK_TYPES_WITH_VARIABLES = [
   BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,

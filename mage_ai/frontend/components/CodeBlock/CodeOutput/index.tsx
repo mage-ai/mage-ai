@@ -410,7 +410,6 @@ function CodeOutput({
     const testMessages = [];
 
     combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
-      console.log('wtfffffffffffff', block.uuid, output)
       let dataInit;
       let dataType;
       const outputIsArray = Array.isArray(output);
