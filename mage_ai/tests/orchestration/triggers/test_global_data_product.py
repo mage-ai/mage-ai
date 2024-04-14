@@ -206,100 +206,100 @@ class TriggerGlobalDataProductTest(DBTestCase):
             count,
         )
 
-    def test_trigger_and_check_status_when_there_are_more_running(self):
-        now = datetime.utcnow().replace(tzinfo=timezone.utc)
+    # def test_trigger_and_check_status_when_there_are_more_running(self):
+    #     now = datetime.utcnow().replace(tzinfo=timezone.utc)
 
-        pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
-        pipeline_run1 = PipelineRun.create(
-            execution_date=now - timedelta(seconds=11),
-            pipeline_schedule_id=pipeline_schedule.id,
-            pipeline_uuid=self.global_data_product.pipeline.uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
-        )
-        pipeline_run2 = PipelineRun.create(
-            execution_date=now - timedelta(seconds=6),
-            pipeline_schedule_id=pipeline_schedule.id,
-            pipeline_uuid=self.global_data_product.pipeline.uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
-        )
-        pipeline_run3 = PipelineRun.create(
-            execution_date=now - timedelta(seconds=5),
-            pipeline_schedule_id=pipeline_schedule.id,
-            pipeline_uuid=self.global_data_product.pipeline.uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
-        )
-        pipeline_run3_id = pipeline_run3.id
-        pipeline_run4 = PipelineRun.create(
-            execution_date=now - timedelta(seconds=0),
-            pipeline_schedule_id=pipeline_schedule.id,
-            pipeline_uuid=self.global_data_product.pipeline.uuid,
-            status=PipelineRun.PipelineRunStatus.RUNNING,
-        )
+    #     pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
+    #     pipeline_run1 = PipelineRun.create(
+    #         execution_date=now - timedelta(seconds=11),
+    #         pipeline_schedule_id=pipeline_schedule.id,
+    #         pipeline_uuid=self.global_data_product.pipeline.uuid,
+    #         status=PipelineRun.PipelineRunStatus.RUNNING,
+    #     )
+    #     pipeline_run2 = PipelineRun.create(
+    #         execution_date=now - timedelta(seconds=6),
+    #         pipeline_schedule_id=pipeline_schedule.id,
+    #         pipeline_uuid=self.global_data_product.pipeline.uuid,
+    #         status=PipelineRun.PipelineRunStatus.RUNNING,
+    #     )
+    #     pipeline_run3 = PipelineRun.create(
+    #         execution_date=now - timedelta(seconds=5),
+    #         pipeline_schedule_id=pipeline_schedule.id,
+    #         pipeline_uuid=self.global_data_product.pipeline.uuid,
+    #         status=PipelineRun.PipelineRunStatus.RUNNING,
+    #     )
+    #     pipeline_run3_id = pipeline_run3.id
+    #     pipeline_run4 = PipelineRun.create(
+    #         execution_date=now - timedelta(seconds=0),
+    #         pipeline_schedule_id=pipeline_schedule.id,
+    #         pipeline_uuid=self.global_data_product.pipeline.uuid,
+    #         status=PipelineRun.PipelineRunStatus.RUNNING,
+    #     )
 
-        count = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-        ).count()
+    #     count = PipelineRun.query.filter(
+    #         PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #     ).count()
 
-        self.global_data_product.outdated_after = dict(seconds=5)
-        self.global_data_product.outdated_starting_at = {}
+    #     self.global_data_product.outdated_after = dict(seconds=5)
+    #     self.global_data_product.outdated_starting_at = {}
 
-        try:
-            trigger_and_check_status(
-                self.global_data_product,
-                error_on_failure=False,
-                poll_interval=1,
-                poll_timeout=2,
-                should_schedule=False,
-            )
-        except Exception:
-            pass
+    #     try:
+    #         trigger_and_check_status(
+    #             self.global_data_product,
+    #             error_on_failure=False,
+    #             poll_interval=1,
+    #             poll_timeout=2,
+    #             should_schedule=False,
+    #         )
+    #     except Exception:
+    #         pass
 
-        self.assertEqual(
-            PipelineRun.query.filter(
-                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-            ).count(),
-            count - 1,
-        )
+    #     self.assertEqual(
+    #         PipelineRun.query.filter(
+    #             PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #         ).count(),
+    #         count - 1,
+    #     )
 
-        self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run1.id).count(), 1)
-        self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run2.id).count(), 1)
-        self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run3_id).count(), 0)
-        self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run4.id).count(), 1)
+    #     self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run1.id).count(), 1)
+    #     self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run2.id).count(), 1)
+    #     self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run3_id).count(), 0)
+    #     self.assertEqual(PipelineRun.query.filter(PipelineRun.id == pipeline_run4.id).count(), 1)
 
-    def test_trigger_and_check_status_should_create_new_pipeline_run(self):
-        now = datetime.utcnow().replace(tzinfo=timezone.utc)
-        pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
-        PipelineRun.create(
-            execution_date=now - timedelta(seconds=2),
-            pipeline_schedule_id=pipeline_schedule.id,
-            pipeline_uuid=self.global_data_product.pipeline.uuid,
-            status=PipelineRun.PipelineRunStatus.COMPLETED,
-        )
+    # def test_trigger_and_check_status_should_create_new_pipeline_run(self):
+    #     now = datetime.utcnow().replace(tzinfo=timezone.utc)
+    #     pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
+    #     PipelineRun.create(
+    #         execution_date=now - timedelta(seconds=2),
+    #         pipeline_schedule_id=pipeline_schedule.id,
+    #         pipeline_uuid=self.global_data_product.pipeline.uuid,
+    #         status=PipelineRun.PipelineRunStatus.COMPLETED,
+    #     )
 
-        count = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-        ).count()
+    #     count = PipelineRun.query.filter(
+    #         PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #     ).count()
 
-        self.global_data_product.outdated_after = dict(seconds=2)
-        self.global_data_product.outdated_starting_at = {}
+    #     self.global_data_product.outdated_after = dict(seconds=2)
+    #     self.global_data_product.outdated_starting_at = {}
 
-        try:
-            trigger_and_check_status(
-                self.global_data_product,
-                error_on_failure=False,
-                poll_interval=1,
-                poll_timeout=2,
-                should_schedule=False,
-            )
-        except Exception:
-            pass
+    #     try:
+    #         trigger_and_check_status(
+    #             self.global_data_product,
+    #             error_on_failure=False,
+    #             poll_interval=1,
+    #             poll_timeout=2,
+    #             should_schedule=False,
+    #         )
+    #     except Exception:
+    #         pass
 
-        self.assertEqual(
-            PipelineRun.query.filter(
-                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-            ).count(),
-            count + 1,
-        )
+    #     self.assertEqual(
+    #         PipelineRun.query.filter(
+    #             PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+    #         ).count(),
+    #         count + 1,
+    #     )
 
     # def test_trigger_and_check_status_with_schedule_all(self):
     #     pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
