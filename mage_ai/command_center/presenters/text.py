@@ -5,5 +5,5 @@ def application_title(uuid: ApplicationExpansionUUID) -> str:
     if ApplicationExpansionUUID.VersionControlFileDiffs == uuid:
         return 'version control file diffs'
     if ApplicationExpansionUUID.ArcaneLibrary == uuid:
-        return 'the Arcane Library'
+        return 'the Text Editor'
     return f'the {uuid} application'
