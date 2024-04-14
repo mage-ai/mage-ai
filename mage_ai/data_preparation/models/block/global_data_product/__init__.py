@@ -46,7 +46,7 @@ class GlobalDataProductBlock(Block):
             from_notebook=from_notebook,
             logger=logger,
             logging_tags=logging_tags,
-            poll_interval=15,
+            poll_interval=30,
             remote_blocks=global_vars.get('remote_blocks'),
             variables=global_vars.get('variables') if global_vars else None,
         )
