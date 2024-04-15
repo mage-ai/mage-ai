@@ -49,6 +49,7 @@ class BackfillPresenter(BasePresenter):
         ):
             pipeline_run_dates = preview_run_dates(self.model)
             data['total_run_count'] = len(pipeline_run_dates)
+            data['run_status_counts'] = self.model.pipeline_run_status_counts
             if include_preview_runs:
                 start_idx = offset
                 end_idx = start_idx + limit
