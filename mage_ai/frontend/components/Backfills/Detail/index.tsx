@@ -31,6 +31,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 import {
@@ -44,6 +45,7 @@ import {
   Switch,
 } from '@oracle/icons';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { ICON_SIZE_DEFAULT } from '@oracle/styles/units/icons';
 import {
   PADDING_UNITS,
   UNIT,
@@ -51,7 +53,6 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { capitalize } from '@utils/string';
-import { datetimeInLocalTimezone } from '@utils/date';
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import {
   getFormattedVariable,
@@ -202,6 +203,7 @@ function BackfillDetail({
     selectedRun,
     setErrors,
     showPreviewRuns,
+    status,
     totalRuns,
   ]);
 
@@ -371,6 +373,13 @@ function BackfillDetail({
             <Text default>
               Total runs
             </Text>
+            <Spacing mr={1} />
+            <Tooltip
+              default
+              label="This count does not include retries."
+              size={ICON_SIZE_DEFAULT}
+              widthFitContent
+            />
           </FlexContainer>,
           <Text
             key="total_runs"
