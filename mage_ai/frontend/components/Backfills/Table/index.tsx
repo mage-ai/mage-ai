@@ -52,7 +52,7 @@ function BackfillsTable({
     pipelineUUID,
   });
 
-  const columnFlex = [null, 1, 1, null, 1, 1, null, null];
+  const columnFlex = [null, 1, 1, null, 1, 1, null, null, null, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -76,6 +76,12 @@ function BackfillsTable({
       uuid: 'Completed at',
     },
     {
+      uuid: 'Interval',
+    },
+    {
+      uuid: 'Interval units',
+    },
+    {
       uuid: 'Type',
     },
   ];
@@ -97,6 +103,8 @@ function BackfillsTable({
         completed_at: completedAt,
         end_datetime: endDatetime,
         id,
+        interval_type: intervalType,
+        interval_units: intervalUnits,
         name,
         start_datetime: startDatetime,
         started_at: startedAt,
@@ -154,6 +162,20 @@ function BackfillsTable({
               ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
               : <>&#8212;</>
             }
+          </Text>,
+          <Text
+            default
+            key={`interval_type_${idx}`}
+            monospace
+          >
+            {intervalType || <>&#8212;</>}
+          </Text>,
+          <Text
+            default
+            key={`interval_units_${idx}`}
+            monospace
+          >
+            {intervalUnits || <>&#8212;</>}
           </Text>,
           <Text default key={`type_${idx}`} monospace>
             {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
