@@ -52,7 +52,7 @@ function BackfillsTable({
     pipelineUUID,
   });
 
-  const columnFlex = [null, 1, null, null, null, 1, 1, null];
+  const columnFlex = [null, 1, 1, null, 1, 1, null, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -61,14 +61,11 @@ function BackfillsTable({
       uuid: 'Name',
     },
     {
-      uuid: 'Type',
+      ...timezoneTooltipProps,
+      uuid: 'Backfill',
     },
     {
       uuid: 'Runs',
-    },
-    {
-      ...timezoneTooltipProps,
-      uuid: 'Backfill',
     },
     {
       ...timezoneTooltipProps,
@@ -77,6 +74,9 @@ function BackfillsTable({
     {
       ...timezoneTooltipProps,
       uuid: 'Completed at',
+    },
+    {
+      uuid: 'Type',
     },
   ];
   if (!isViewerRole) {
@@ -106,25 +106,21 @@ function BackfillsTable({
         const arr = [
           <Text
             {...getRunStatusTextProps(status)}
-            key="status"
+            key={`status_${idx}`}
           >
             {status || 'inactive'}
           </Text>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/backfills/${id}`}
             href={'/pipelines/[pipeline]/backfills/[...slug]'}
-            key="name"
+            key={`name_${idx}`}
             passHref
           >
             <Link bold sameColorAsText>
               {name}
             </Link>
           </NextLink>,
-          <Text default key="type" monospace>
-            {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
-          </Text>,
-          <Text default key="runs" monospace>{totalRunCount || 0}</Text>,
-          <Text default key="backfill" monospace small>
+          <Text default key={`backfill_${idx}`} monospace small>
             {(startDatetime && endDatetime) && (
               <>
                 {displayLocalOrUtcTime(startDatetime, displayLocalTimezone)}
@@ -134,9 +130,10 @@ function BackfillsTable({
             )}
             {!(startDatetime && endDatetime) && <>&#8212;</>}
           </Text>,
+          <Text default key={`runs_${idx}`} monospace>{totalRunCount || 0}</Text>,
           <Text
             default
-            key="started_at"
+            key={`started_at_${idx}`}
             monospace
             small
             title={startedAt ? utcStringToElapsedTime(startedAt) : null}
@@ -148,7 +145,7 @@ function BackfillsTable({
           </Text>,
           <Text
             default
-            key="completed_at"
+            key={`completed_at_${idx}`}
             monospace
             small
             title={completedAt ? utcStringToElapsedTime(completedAt) : null}
@@ -157,6 +154,9 @@ function BackfillsTable({
               ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
               : <>&#8212;</>
             }
+          </Text>,
+          <Text default key={`type_${idx}`} monospace>
+            {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
           </Text>,
         ];
         if (!isViewerRole) {
