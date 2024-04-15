@@ -418,11 +418,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if is_disable_pipeline_edit_access():
             custom_code = block.content
 
-        reload_all_repo_modules(custom_code)
-
         code = custom_code
 
         client = self.init_kernel_client(kernel_name)
+
+        reload_all_repo_modules(custom_code, client)
 
         value = dict(
             block_type=block_type or block.type,

@@ -2,13 +2,18 @@ import importlib
 import re
 from typing import Tuple
 
+from jupyter_client import KernelClient
+
 from mage_ai.autocomplete.utils import extract_all_imports
 from mage_ai.settings.repo import get_repo_path
 
 
-def reload_all_repo_modules(content: str) -> None:
+def reload_all_repo_modules(content: str, client: KernelClient) -> None:
     parts = get_repo_path().split('/')
     project_name = parts[-1]
+    root_parts = get_repo_path(root_project=True).split('/')
+    if len(root_parts) < len(parts):
+        project_name = '.'.join(parts[len(root_parts) - 1 :])
 
     for line in extract_all_imports(content):
         if f'import {project_name}' not in line and f'from {project_name}' not in line:
@@ -21,6 +26,12 @@ def reload_all_repo_modules(content: str) -> None:
             m1, m2 = matches[0]
             try:
                 importlib.reload(importlib.import_module(m1 or m2))
+                client.execute(
+                    f"""
+import importlib
+importlib.reload(importlib.import_module("{m1}" or "{m2}"))
+                """
+                )
             except Exception:
                 pass
 
