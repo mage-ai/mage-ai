@@ -15,6 +15,9 @@ import { ContainerStyle } from './index.style';
 import { Folder } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
+import CodeEditor from '@components/CodeEditor';
+import { BlockLanguageEnum } from '@interfaces/BlockType';
 
 
 type WorkspaceDetailProps = {
@@ -22,6 +25,7 @@ type WorkspaceDetailProps = {
   fetchWorkspaces: any;
   onSuccess: () => void;
   setErrors: (errors: ErrorsType) => void;
+  showUpdateModal: () => void;
   workspace: any;
 };
 
@@ -30,6 +34,7 @@ function WorkspaceDetail({
   fetchWorkspaces,
   onSuccess: onSuccessProp,
   setErrors,
+  showUpdateModal,
   workspace,
 }: WorkspaceDetailProps) {
   const {
@@ -188,6 +193,16 @@ function WorkspaceDetail({
           uuid: 'stop_instance',
         });
       }
+      items.push({
+        label: 'Update',
+        // @ts-ignore
+        onClick: () => {
+          onSuccessProp();
+          showUpdateModal();
+        },
+        props: {},
+        uuid: 'update_instance',
+      });
     }
     
     if (workspace?.['ingress_name'] && !workspace?.['url']) {
@@ -210,7 +225,15 @@ function WorkspaceDetail({
     }
     
     return items;
-  }, [clusterType, instance, updateWorkspace, workspace, isLoadingUpdateWorkspace]);
+  }, [
+    clusterType,
+    instance,
+    isLoadingUpdateWorkspace,
+    onSuccessProp,
+    showUpdateModal,
+    updateWorkspace,
+    workspace,
+  ]);
 
   const deleteButton = useMemo(() => (
     <Button
@@ -307,6 +330,28 @@ function WorkspaceDetail({
                 {index !== Object.entries(KUBERNETES_FIELDS).length - 1 && <Divider muted/>}
               </>
             ))}
+            {workspace?.['container_config'] && (
+              <>
+                <Divider muted/>
+                <Spacing mx={2} my={2}>
+                  <Text muted>
+                    Container config
+                  </Text>
+                  <Spacing mt={1} />
+                  <CodeEditorStyle>
+                    <CodeEditor
+                      autoHeight
+                      fontSize={12}
+                      language={BlockLanguageEnum.YAML}
+                      readOnly
+                      tabSize={2}
+                      value={workspace?.['container_config']}
+                      width="100%"
+                    />
+                  </CodeEditorStyle>
+                </Spacing>
+              </>
+            )}
           </ContainerStyle>
         )}
         {flattenedLifecycleConfig && (
@@ -341,7 +386,7 @@ function WorkspaceDetail({
         )}
       </Spacing>
     </>
-  )
+  );
 }
 
 export default WorkspaceDetail;

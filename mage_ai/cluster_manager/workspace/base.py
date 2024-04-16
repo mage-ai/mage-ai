@@ -148,6 +148,12 @@ class Workspace(abc.ABC):
         """
         raise NotImplementedError('Initialize method not implemented')
 
+    def update(self, payload: Dict, **kwargs):
+        """
+        Update the workspace configuration.
+        """
+        raise NotImplementedError('Update method not implemented')
+
     @abc.abstractmethod
     @safe_db_query
     def delete(self, **kwargs):

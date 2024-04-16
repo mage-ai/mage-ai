@@ -120,14 +120,19 @@ class WorkspaceResource(GenericResource):
     def update(self, payload, **kwargs):
         workspace = self.model.get('workspace')
 
+        print('update payload:', payload)
+
         error = ApiError.RESOURCE_ERROR.copy()
         try:
             action = payload.pop('action')
             args = ignore_keys(payload, ['name', 'cluster_type'])
+            print('update payload 2:', payload)
             if action == 'stop':
                 workspace.stop(**args)
             elif action == 'resume':
                 workspace.resume(**args)
+            elif action == 'patch':
+                workspace.update(payload)
             elif action == 'add_to_ingress':
                 if isinstance(workspace, KubernetesWorkspace):
                     workspace.add_to_ingress(**args)

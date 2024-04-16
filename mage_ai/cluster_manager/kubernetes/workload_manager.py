@@ -477,6 +477,60 @@ class WorkloadManager:
 
         return k8s_service
 
+    def patch_workload(
+        self,
+        name: str,
+        old_workspace_config: KubernetesWorkspaceConfig,
+        workspace_config: KubernetesWorkspaceConfig,
+        update_workspace_settings: bool = False,
+    ) -> None:
+        container_config_yaml = workspace_config.container_config
+        container_config = dict()
+        if isinstance(container_config_yaml, str):
+            container_config = yaml.full_load(container_config_yaml)
+
+        if update_workspace_settings:
+            env_vars = self.__populate_env_vars(
+                name,
+                container_config=container_config,
+            )
+            container_config['env'] = env_vars
+
+        mage_container_config = {
+            'name': f'{name}-container',
+            **container_config,
+        }
+
+        stateful_set_template_spec = {
+            'containers': [mage_container_config],
+        }
+
+        service_account_name = workspace_config.service_account_name
+        if service_account_name:
+            stateful_set_template_spec['serviceAccountName'] = service_account_name
+
+        ingress_name = workspace_config.ingress_name
+        previous_ingress_name = old_workspace_config.ingress_name
+        if ingress_name != previous_ingress_name:
+            self.remove_service_from_ingress_paths(previous_ingress_name, name)
+            self.add_service_to_ingress_paths(ingress_name, f'{name}-service', name)
+
+        updated_stateful_set = {
+            'spec': {
+                'template': {
+                    'spec': stateful_set_template_spec,
+                },
+            },
+        }
+
+        print('updated_stateful_set:', updated_stateful_set)
+
+        self.apps_client.patch_namespaced_stateful_set(
+            name,
+            namespace=self.namespace,
+            body=updated_stateful_set,
+        )
+
     def add_service_to_ingress_paths(
         self,
         ingress_name: str,
@@ -712,7 +766,7 @@ class WorkloadManager:
     def __populate_env_vars(
         self,
         name,
-        project_type: str = 'standalone',
+        project_type: str = None,
         project_uuid: str = None,
         container_config: Dict = None,
         initial_metadata: Dict = None,

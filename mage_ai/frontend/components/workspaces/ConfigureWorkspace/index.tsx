@@ -43,6 +43,7 @@ type ConfigureWorkspaceProps = {
   onCancel: () => void;
   onCreate: () => void;
   project?: ProjectType;
+  workspace?: any;
 };
 
 function ConfigureWorkspace({
@@ -50,11 +51,20 @@ function ConfigureWorkspace({
   onCancel,
   onCreate,
   project,
+  workspace,
 }: ConfigureWorkspaceProps) {
+  const {
+    lifecycle_config = {},
+    container_config,
+  } = workspace || {};
+
   const [error, setError] = useState<string>();
-  const [configureContainer, setConfigureContainer] = useState<boolean>();
-  const [workspaceConfig, setWorkspaceConfig] = useState(null);
-  const [lifecycleConfig, setLifecycleConfig] = useState(null);
+  const [configureContainer, setConfigureContainer] = useState<boolean>(!!container_config);
+  const [updateWorkspaceSettings, setUpdateWorkspaceSettings] = useState<boolean>(false);
+  const [workspaceConfig, setWorkspaceConfig] = useState(workspace);
+  const [lifecycleConfig, setLifecycleConfig] = useState(lifecycle_config);
+
+  const isUpdate = !!workspace;
 
   const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(
     () => project?.workspace_config_defaults, [project]);
@@ -73,6 +83,34 @@ function ConfigureWorkspace({
       }
     }
   }, [defaultWorkspaceConfig, lifecycleConfig, workspaceConfig]);
+
+  const [updateWorkspace, { isLoading: isLoadingUpdateWorkspace }] = useMutation(
+    api.workspaces.useUpdate(workspace?.name, {
+      cluster_type: clusterType,
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (res) => {
+            if (res['error_message']) {
+              setError(res['error_message']);
+            } else {
+              onCreate();
+            }
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            setError(message);
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),
@@ -313,7 +351,6 @@ function ConfigureWorkspace({
           </Spacing>
         </FlexContainer>
       </Spacing>
-      <Divider muted />
       {configureContainer && (
         <Spacing ml={3} mr={2} my={1}>
           <CodeEditorStyle>
@@ -334,10 +371,99 @@ function ConfigureWorkspace({
           </CodeEditorStyle>
         </Spacing>
       )}
+      <Divider muted />
     </>
   ), [
     createWorkspaceTextField,
     configureContainer,
+    workspaceConfig,
+  ]);
+
+  // Eventually, we should allow users to update every workspace field.
+  const k8sUpdateSettingsFields = useMemo(() => (
+    <>
+      <FlexContainer>
+        <Spacing ml={2} my={2}>
+          <Text bold sky>
+            General
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      {GENERAL_K8S_FIELDS.filter(({ uuid }) => uuid !== 'namespace').map(
+        (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={2} flexDirection="column">
+            <Text>
+              Update workspace settings
+            </Text>
+            <Text muted>
+              Set this to true to update the workspace environment variable settings with values
+              from this Kubernetes deployment.
+            </Text>
+          </Flex>
+          <Flex flex={1} />
+          <Flex flex={1}>
+            <Select
+              fullWidth
+              onChange={(e) => {
+                e.preventDefault();
+                setUpdateWorkspaceSettings(e.target.value === 'true');
+              }}
+              value={updateWorkspaceSettings?.toString() || 'false'}
+            >
+              <option key="true" value="true">
+                True
+              </option>
+              <option key="false" value="false">
+                False
+              </option>
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <Spacing ml={2} my={2}>
+        <FlexContainer alignItems="center">
+          <ToggleSwitch
+            checked={configureContainer}
+            compact
+            onCheck={() => setConfigureContainer(prevVal => !prevVal)}
+          />
+          <Spacing ml={1}>
+            <Text bold sky>
+              Configure container
+            </Text>
+          </Spacing>
+        </FlexContainer>
+      </Spacing>
+      {configureContainer && (
+        <Spacing ml={3} mr={2} my={1}>
+          <CodeEditorStyle>
+            <CodeEditor
+              autoHeight
+              fontSize={12}
+              language={BlockLanguageEnum.YAML}
+              onChange={(val: string) => {
+                setWorkspaceConfig(prev => ({
+                  ...prev,
+                  container_config: val,
+                }));
+              }}
+              tabSize={2}
+              value={workspaceConfig?.['container_config']}
+              width="100%"
+            />
+          </CodeEditorStyle>
+        </Spacing>
+      )}
+      <Divider muted />
+    </>
+  ), [
+    createWorkspaceTextField,
+    configureContainer,
+    updateWorkspaceSettings,
     workspaceConfig,
   ]);
 
@@ -563,7 +689,7 @@ function ConfigureWorkspace({
       <div style={{ width: '750px' }}>
         <Spacing p={2}>
           <Headline level={4}>
-            Create workspace
+            {isUpdate ? 'Update' : 'Create'} workspace
           </Headline>
           <form>
             {WORKSPACE_FIELDS.map(({
@@ -597,12 +723,14 @@ function ConfigureWorkspace({
               <Accordion noPaddingContent>
                 {clusterType === ClusterTypeEnum.K8S && (
                   <AccordionPanel title="Kubernetes">
-                    {k8sSettingsFields}
+                    {isUpdate ? k8sUpdateSettingsFields : k8sSettingsFields}
                   </AccordionPanel>
                 )}
-                <AccordionPanel title="Lifecycle (optional)">
-                  {lifecycleConfigFields}
-                </AccordionPanel>
+                {!isUpdate && (
+                  <AccordionPanel title="Lifecycle (optional)">
+                    {lifecycleConfigFields}
+                  </AccordionPanel>
+                )}
               </Accordion>
             </Spacing>
           </form>
@@ -645,20 +773,37 @@ function ConfigureWorkspace({
                   } else {
                     const updatedConfig = { ...workspaceConfig };
                     updatedConfig['name'] = updateWorkspaceName(name);
-                    updatedConfig['container_config'] = configureContainer && container_config;
+                    console.log('configure container:', configureContainer);
+                    console.log('container config:', container_config);
+                    if (configureContainer) {
+                      updatedConfig['container_config'] = container_config;
+                    }
+                    updatedConfig['update_workspace_settings'] = updateWorkspaceSettings;
                     // @ts-ignore
-                    createWorkspace({
-                      workspace: {
-                        ...updatedConfig,
-                        cluster_type: clusterType,
-                        lifecycle_config: lifecycleConfig,
-                      },
-                    });
+                    if (isUpdate) {
+                      // @ts-ignore
+                      updateWorkspace({
+                        workspace: {
+                          ...updatedConfig,
+                          action: 'patch',
+                          cluster_type: clusterType,
+                        },
+                      });
+                    } else {
+                      // @ts-ignore
+                      createWorkspace({
+                        workspace: {
+                          ...updatedConfig,
+                          cluster_type: clusterType,
+                          lifecycle_config: lifecycleConfig,
+                        },
+                      });
+                    }
                   }
                 }}
                 uuid="workspaces/create"
               >
-                Create
+                {isUpdate ? 'Update' : 'Create'}
               </KeyboardShortcutButton>
               <Spacing ml={1} />
               <KeyboardShortcutButton
