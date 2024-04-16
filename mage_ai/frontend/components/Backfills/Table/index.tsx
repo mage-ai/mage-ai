@@ -52,7 +52,7 @@ function BackfillsTable({
     pipelineUUID,
   });
 
-  const columnFlex = [null, 1, 1, null, 1, 1, null, null, null, null];
+  const columnFlex = [null, 1, 1, null, null, null, null, null, null, 1, 1, null, null, null, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -65,7 +65,22 @@ function BackfillsTable({
       uuid: 'Backfill',
     },
     {
-      uuid: 'Runs',
+      uuid: 'Ready',
+    },
+    {
+      uuid: 'Running',
+    },
+    {
+      uuid: 'Cancelled',
+    },
+    {
+      uuid: 'Completed',
+    },
+    {
+      uuid: 'Failed',
+    },
+    {
+      uuid: 'Total runs',
     },
     {
       ...timezoneTooltipProps,
@@ -106,6 +121,7 @@ function BackfillsTable({
         interval_type: intervalType,
         interval_units: intervalUnits,
         name,
+        run_status_counts: runStatusCounts = {},
         start_datetime: startDatetime,
         started_at: startedAt,
         status,
@@ -138,7 +154,48 @@ function BackfillsTable({
             )}
             {!(startDatetime && endDatetime) && <>&#8212;</>}
           </Text>,
-          <Text default key={`runs_${idx}`} monospace>{totalRunCount || 0}</Text>,
+          <Text
+            default
+            key={`ready_${idx}`}
+            monospace
+          >
+            {runStatusCounts[RunStatus.INITIAL] || 0}
+          </Text>,
+          <Text
+            default
+            info={runStatusCounts[RunStatus.RUNNING] > 0}
+            key={`running_${idx}`}
+            monospace
+          >
+            {runStatusCounts[RunStatus.RUNNING] || 0}
+          </Text>,
+          <Text
+            default
+            key={`cancelled_${idx}`}
+            monospace
+            warning={runStatusCounts[RunStatus.CANCELLED] > 0}
+          >
+            {runStatusCounts[RunStatus.CANCELLED] || 0}
+          </Text>,
+          <Text
+            default
+            key={`completed_${idx}`}
+            monospace
+            success={runStatusCounts[RunStatus.COMPLETED] > 0}
+          >
+            {runStatusCounts[RunStatus.COMPLETED] || 0}
+          </Text>,
+          <Text
+            danger={runStatusCounts[RunStatus.FAILED] > 0}
+            default
+            key={`failed_${idx}`}
+            monospace
+          >
+            {runStatusCounts[RunStatus.FAILED] || 0}
+          </Text>,
+          <Text bold default key={`total_runs_${idx}`} monospace>
+            {totalRunCount || 0}
+          </Text>,
           <Text
             default
             key={`started_at_${idx}`}
@@ -165,7 +222,7 @@ function BackfillsTable({
           </Text>,
           <Text
             default
-            key={`interval_type_${idx}`}
+            key={`interval_${idx}`}
             monospace
           >
             {intervalType || <>&#8212;</>}
