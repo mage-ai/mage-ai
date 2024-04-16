@@ -23,6 +23,11 @@ import { isViewer } from '@utils/session';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { utcStringToElapsedTime } from '@utils/date';
 
+const SHARED_COLUMN_TEXT_PROPS = {
+  default: true,
+  monospace: true,
+};
+
 type BackfillsTableProps = {
   fetchBackfills: () => void;
   pipeline: {
@@ -144,7 +149,11 @@ function BackfillsTable({
               {name}
             </Link>
           </NextLink>,
-          <Text default key={`backfill_${idx}`} monospace small>
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`backfill_${idx}`}
+            small
+          >
             {(startDatetime && endDatetime) && (
               <>
                 {displayLocalOrUtcTime(startDatetime, displayLocalTimezone)}
@@ -155,51 +164,49 @@ function BackfillsTable({
             {!(startDatetime && endDatetime) && <>&#8212;</>}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`ready_${idx}`}
-            monospace
           >
             {runStatusCounts[RunStatus.INITIAL] || 0}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             info={runStatusCounts[RunStatus.RUNNING] > 0}
             key={`running_${idx}`}
-            monospace
           >
             {runStatusCounts[RunStatus.RUNNING] || 0}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`cancelled_${idx}`}
-            monospace
             warning={runStatusCounts[RunStatus.CANCELLED] > 0}
           >
             {runStatusCounts[RunStatus.CANCELLED] || 0}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`completed_${idx}`}
-            monospace
             success={runStatusCounts[RunStatus.COMPLETED] > 0}
           >
             {runStatusCounts[RunStatus.COMPLETED] || 0}
           </Text>,
           <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
             danger={runStatusCounts[RunStatus.FAILED] > 0}
-            default
             key={`failed_${idx}`}
-            monospace
           >
             {runStatusCounts[RunStatus.FAILED] || 0}
           </Text>,
-          <Text bold default key={`total_runs_${idx}`} monospace>
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            bold
+            key={`total_runs_${idx}`}
+          >
             {totalRunCount || 0}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`started_at_${idx}`}
-            monospace
             small
             title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
@@ -209,9 +216,8 @@ function BackfillsTable({
             }
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`completed_at_${idx}`}
-            monospace
             small
             title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
@@ -221,20 +227,21 @@ function BackfillsTable({
             }
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`interval_${idx}`}
-            monospace
           >
             {intervalType || <>&#8212;</>}
           </Text>,
           <Text
-            default
+            {...SHARED_COLUMN_TEXT_PROPS}
             key={`interval_units_${idx}`}
-            monospace
           >
             {intervalUnits || <>&#8212;</>}
           </Text>,
-          <Text default key={`type_${idx}`} monospace>
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`type_${idx}`}
+          >
             {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
           </Text>,
         ];
