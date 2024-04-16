@@ -19,6 +19,9 @@ def get_memory() -> Tuple[float, float, float]:
     used_memory = None
 
     try:
+        # Skip check the memory in Windows
+        if os.name == 'nt':
+            return free_memory, used_memory, total_memory
         output = subprocess.check_output('free -t -m', shell=True).decode('utf-8')
         values = output.splitlines()[-1].split()[1:]
         total_memory, used_memory, free_memory = map(float, values)
