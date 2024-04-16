@@ -164,6 +164,7 @@ function BackfillDetail({
             : 'No runs available'
           }
           fetchPipelineRuns={fetchPipelineRuns}
+          hidePipelineColumn
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
 

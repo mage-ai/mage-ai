@@ -179,6 +179,7 @@ function TriggerDetail({
       <>
         <PipelineRunsTable
           fetchPipelineRuns={fetchPipelineRuns}
+          hideTriggerColumn
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
 
