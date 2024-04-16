@@ -588,7 +588,7 @@ function BackfillDetail({
                 noHoverUnderline
                 outline
                 sameColorAsText
-                title="Backfills can no longer be edited once they've been started."
+                title="Backfills cannot be edited once they've been started."
               >
                 Edit backfill
               </Button>
