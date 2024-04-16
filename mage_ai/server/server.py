@@ -13,6 +13,7 @@ from typing import Optional, Union
 import pytz
 import tornado.ioloop
 import tornado.web
+from sqlalchemy import or_
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -42,7 +43,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection, set_db_schema
+from mage_ai.orchestration.db import db_connection, safe_db_query, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -444,6 +445,7 @@ def make_app(
     )
 
 
+@safe_db_query
 def initialize_user_authentication(project_type: ProjectType) -> Oauth2Application:
     logger.info('User authentication is enabled.')
     # We need to sleep for a few seconds after creating all the tables or else there
@@ -471,19 +473,29 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
     if not legacy_owner_user and len(owner_users) == 0:
         logger.info('User with owner permission doesn’t exist, creating owner user.')
         if AUTHENTICATION_MODE.lower() == 'ldap':
-            user = User.create(
-                roles_new=[default_owner_role],
-                username=get_settings_value(LDAP_ADMIN_USERNAME, 'admin'),
-            )
+            username = get_settings_value(LDAP_ADMIN_USERNAME, 'admin')
+            user = User.query.filter(User.username == username).first()
+            if not user:
+                user = User.create(
+                    roles_new=[default_owner_role],
+                    username=get_settings_value(LDAP_ADMIN_USERNAME, 'admin'),
+                )
         else:
             password_salt = generate_salt()
-            user = User.create(
-                email='admin@admin.com',
-                password_hash=create_bcrypt_hash('admin', password_salt),
-                password_salt=password_salt,
-                roles_new=[default_owner_role],
-                username='admin',
-            )
+            user = User.query.filter(
+                or_(
+                    User.email == 'admin@admin.com',
+                    User.username == 'admin',
+                ),
+            ).first()
+            if not user:
+                user = User.create(
+                    email='admin@admin.com',
+                    password_hash=create_bcrypt_hash('admin', password_salt),
+                    password_salt=password_salt,
+                    roles_new=[default_owner_role],
+                    username='admin',
+                )
         owner_user = user
     else:
         if legacy_owner_user and not legacy_owner_user.roles_new:

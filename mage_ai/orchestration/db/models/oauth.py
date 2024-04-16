@@ -324,7 +324,7 @@ class Role(BaseModel):
     @classmethod
     @safe_db_query
     def create_default_roles(
-        self,
+        cls,
         entity: Entity = None,
         entity_id: str = None,
         name_func: Callable[[str], str] = None,
@@ -342,18 +342,18 @@ class Role(BaseModel):
             entity = Entity.GLOBAL
         permissions = Permission.create_default_permissions(entity=entity, entity_id=entity_id)
         mapping = {
-            self.DefaultRole.OWNER: Permission.Access.OWNER,
-            self.DefaultRole.ADMIN: Permission.Access.ADMIN,
-            self.DefaultRole.EDITOR: Permission.Access.EDITOR,
-            self.DefaultRole.VIEWER: Permission.Access.VIEWER,
+            cls.DefaultRole.OWNER: Permission.Access.OWNER,
+            cls.DefaultRole.ADMIN: Permission.Access.ADMIN,
+            cls.DefaultRole.EDITOR: Permission.Access.EDITOR,
+            cls.DefaultRole.VIEWER: Permission.Access.VIEWER,
         }
         for name, access in mapping.items():
             role_name = name
             if name_func is not None:
                 role_name = name_func(name)
-            role = self.query.filter(self.name == role_name).first()
+            role = cls.query.filter(Role.name == role_name).first()
             if not role:
-                self.create(
+                cls.create(
                     name=role_name,
                     permissions=[
                         Permission.query.filter(
