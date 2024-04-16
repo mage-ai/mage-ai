@@ -98,6 +98,7 @@ function BackfillDetail({
     name: modelName,
     pipeline_run_dates: pipelineRunDates,
     start_datetime: startDatetime,
+    started_at: startedAt,
     status,
     total_run_count: totalRunCount,
     variables: modelVariablesInit = {},
@@ -578,65 +579,61 @@ function BackfillDetail({
               </>
             )}
 
-            {!isViewerRole &&
-              <>
-                {status === RunStatus.COMPLETED
-                  ?
-                    <Text bold default large>
-                      Filter runs by status:
-                    </Text>
-                  :
-                    <Button
-                      linkProps={{
-                        as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
-                        href: '/pipelines/[pipeline]/backfills/[...slug]',
-                      }}
-                      noHoverUnderline
-                      outline
-                      sameColorAsText
-                    >
-                      Edit backfill
-                    </Button>
-                }
-
-                <Spacing mr={PADDING_UNITS} />
-              </>
+            {(!isViewerRole && !startedAt) &&
+              <Button
+                linkProps={{
+                  as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
+                  href: '/pipelines/[pipeline]/backfills/[...slug]',
+                }}
+                noHoverUnderline
+                outline
+                sameColorAsText
+                title="Backfills can no longer be edited once they've been started."
+              >
+                Edit backfill
+              </Button>
             }
 
             {!showPreviewRuns &&
-              <Select
-                compact
-                defaultColor
-                onChange={e => {
-                  e.preventDefault();
-                  const updatedStatus = e.target.value;
-                  if (updatedStatus === 'all') {
-                    router.push(
-                      '/pipelines/[pipeline]/backfills/[...slug]',
-                      `/pipelines/${pipelineUUID}/backfills/${modelID}`,
-                    );
-                  } else {
-                    goToWithQuery(
-                      {
-                        page: 0,
-                        status: e.target.value,
-                      },
-                    );
-                  }
-                }}
-                paddingRight={UNIT * 4}
-                placeholder="Select run status"
-                value={q?.status || 'all'}
-              >
-                <option key="all_statuses" value="all">
-                  All statuses
-                </option>
-                {PIPELINE_RUN_STATUSES.map(status => (
-                  <option key={status} value={status}>
-                    {RUN_STATUS_TO_LABEL[status]}
+              <>
+                <Text bold default large>
+                  Filter runs by status:
+                </Text>
+                <Spacing mr={PADDING_UNITS} />
+                <Select
+                  compact
+                  defaultColor
+                  onChange={e => {
+                    e.preventDefault();
+                    const updatedStatus = e.target.value;
+                    if (updatedStatus === 'all') {
+                      router.push(
+                        '/pipelines/[pipeline]/backfills/[...slug]',
+                        `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+                      );
+                    } else {
+                      goToWithQuery(
+                        {
+                          page: 0,
+                          status: e.target.value,
+                        },
+                      );
+                    }
+                  }}
+                  paddingRight={UNIT * 4}
+                  placeholder="Select run status"
+                  value={q?.status || 'all'}
+                >
+                  <option key="all_statuses" value="all">
+                    All statuses
                   </option>
-                ))}
-              </Select>
+                  {PIPELINE_RUN_STATUSES.map(status => (
+                    <option key={status} value={status}>
+                      {RUN_STATUS_TO_LABEL[status]}
+                    </option>
+                  ))}
+                </Select>
+              </>
             }
           </FlexContainer>
         )}

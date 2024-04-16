@@ -250,7 +250,7 @@ function BackfillsTable({
             <FlexContainer key={`edit_delete_backfill_${idx}`}>
               <Button
                 default
-                disabled={status === RunStatus.COMPLETED}
+                disabled={!!startedAt}
                 iconOnly
                 key={`${idx}_edit_button`}
                 linkProps={{
