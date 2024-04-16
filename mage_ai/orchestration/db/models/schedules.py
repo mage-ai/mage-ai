@@ -1917,7 +1917,7 @@ class Backfill(BaseModel):
     @property
     def pipeline_run_status_counts(self) -> Dict:
         status_counts = dict()
-        execution_dates_added = dict()
+        execution_dates_counted = set()
 
         # Sort the pipeline runs by id in reverse order so the first pipeline run
         # checked is the latest pipeline run created for a given execution date.
@@ -1929,8 +1929,8 @@ class Backfill(BaseModel):
 
         for pr in pipeline_runs_sorted:
             # Only count a pipeline run once per execution date
-            if pr.execution_date not in execution_dates_added:
+            if pr.execution_date not in execution_dates_counted:
                 status_counts[pr.status] = (status_counts.get(pr.status) or 0) + 1
-                execution_dates_added[pr.execution_date] = True
+                execution_dates_counted.add(pr.execution_date)
 
         return status_counts
