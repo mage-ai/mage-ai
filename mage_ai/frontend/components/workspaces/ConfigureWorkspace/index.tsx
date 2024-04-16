@@ -382,16 +382,6 @@ function ConfigureWorkspace({
   // Eventually, we should allow users to update every workspace field.
   const k8sUpdateSettingsFields = useMemo(() => (
     <>
-      <FlexContainer>
-        <Spacing ml={2} my={2}>
-          <Text bold sky>
-            General
-          </Text>
-        </Spacing>
-      </FlexContainer>
-      {GENERAL_K8S_FIELDS.filter(({ uuid }) => uuid !== 'namespace').map(
-        (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
-      <Divider muted/>
       <Spacing ml={3} mr={2} my={1}>
         <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex flex={2} flexDirection="column">
@@ -461,7 +451,6 @@ function ConfigureWorkspace({
       <Divider muted />
     </>
   ), [
-    createWorkspaceTextField,
     configureContainer,
     updateWorkspaceSettings,
     workspaceConfig,
@@ -761,7 +750,7 @@ function ConfigureWorkspace({
                 background={PURPLE}
                 bold
                 inline
-                loading={isLoadingCreateWorkspace}
+                loading={isLoadingCreateWorkspace || isLoadingUpdateWorkspace}
                 onClick={() => {
                   const {
                     name,
@@ -773,8 +762,6 @@ function ConfigureWorkspace({
                   } else {
                     const updatedConfig = { ...workspaceConfig };
                     updatedConfig['name'] = updateWorkspaceName(name);
-                    console.log('configure container:', configureContainer);
-                    console.log('container config:', container_config);
                     if (configureContainer) {
                       updatedConfig['container_config'] = container_config;
                     }

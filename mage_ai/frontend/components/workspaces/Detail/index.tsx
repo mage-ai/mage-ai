@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -10,14 +11,13 @@ import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { BlockLanguageEnum } from '@interfaces/BlockType';
 import { ClusterTypeEnum, KUBERNETES_FIELDS, LIFECYCLE_FIELDS } from '../constants';
+import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import { ContainerStyle } from './index.style';
 import { Folder } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
-import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
-import CodeEditor from '@components/CodeEditor';
-import { BlockLanguageEnum } from '@interfaces/BlockType';
 
 
 type WorkspaceDetailProps = {

@@ -480,10 +480,19 @@ class WorkloadManager:
     def patch_workload(
         self,
         name: str,
-        old_workspace_config: KubernetesWorkspaceConfig,
         workspace_config: KubernetesWorkspaceConfig,
         update_workspace_settings: bool = False,
     ) -> None:
+        """
+        Update workload for k8s. Currently the only fields that can be updated are
+        container_config and workspace settings.
+
+        Args:
+            name (str): name of the workload/workspace
+            workspace_config (KubernetesWorkspaceConfig): new workspace config
+            update_workspace_settings (bool): whether to update workspace settings with
+                the current pod's environment variables.
+        """
         container_config_yaml = workspace_config.container_config
         container_config = dict()
         if isinstance(container_config_yaml, str):
@@ -505,16 +514,6 @@ class WorkloadManager:
             'containers': [mage_container_config],
         }
 
-        service_account_name = workspace_config.service_account_name
-        if service_account_name:
-            stateful_set_template_spec['serviceAccountName'] = service_account_name
-
-        ingress_name = workspace_config.ingress_name
-        previous_ingress_name = old_workspace_config.ingress_name
-        if ingress_name != previous_ingress_name:
-            self.remove_service_from_ingress_paths(previous_ingress_name, name)
-            self.add_service_to_ingress_paths(ingress_name, f'{name}-service', name)
-
         updated_stateful_set = {
             'spec': {
                 'template': {
@@ -522,8 +521,6 @@ class WorkloadManager:
                 },
             },
         }
-
-        print('updated_stateful_set:', updated_stateful_set)
 
         self.apps_client.patch_namespaced_stateful_set(
             name,

@@ -64,7 +64,7 @@ function WorkspacePage() {
     [dataWorkspaces],
   );
 
-  const [showModal, hideModal] = useModal((ws) => (
+  const [showModal, hideModal] = useModal(({ workspace }) => (
     <ConfigureWorkspace
       clusterType={clusterType}
       onCancel={hideModal}
@@ -73,7 +73,7 @@ function WorkspacePage() {
         hideModal();
       }}
       project={project}
-      workspace={ws}
+      workspace={workspace}
     />
   ), {
   }, [
@@ -97,7 +97,7 @@ function WorkspacePage() {
           fetchWorkspaces={fetchWorkspaces}
           onSuccess={hideDetailModal}
           setErrors={setErrors}
-          showUpdateModal={() => showModal(workspace)}
+          showUpdateModal={() => showModal({ workspace })}
           workspace={workspace}
         />
       </div>

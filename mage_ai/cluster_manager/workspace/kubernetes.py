@@ -85,23 +85,18 @@ class KubernetesWorkspace(Workspace):
 
     def update(self, payload: Dict, **kwargs):
         update_workspace_settings = payload.pop('update_workspace_settings', False)
-        payload = extract(payload, [
-            'service_account_name',
-            'ingress_name',
+        extracted_payload = extract(payload, [
             'container_config',
         ])
-        print('payload:', payload)
         updated_config = merge_dict(
             self.config.to_dict(),
-            payload,
+            extracted_payload,
         )
         workspace_config = KubernetesWorkspaceConfig.load(
             config=updated_config
         )
-        print('workspace config:', workspace_config.to_dict())
         self.workload_manager.patch_workload(
             self.name,
-            self.config,
             workspace_config,
             update_workspace_settings=update_workspace_settings,
         )
