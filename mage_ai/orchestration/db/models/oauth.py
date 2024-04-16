@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     and_,
     asc,
     func,
@@ -880,10 +881,10 @@ class Oauth2AccessToken(BaseModel):
     expires = Column(DateTime(timezone=True))
     oauth2_application = relationship(Oauth2Application, back_populates='oauth2_access_tokens')
     oauth2_application_id = Column(Integer, ForeignKey('oauth2_application.id'))
-    token = Column(String(255), index=True, unique=True)
+    token = Column(Text, index=True, unique=True)
     user = relationship(User, back_populates='oauth2_access_tokens')
     user_id = Column(Integer, ForeignKey('user.id'))
-    refresh_token = Column(String(255))
+    refresh_token = Column(Text)
 
     def is_valid(self) -> bool:
         return self.token and \
