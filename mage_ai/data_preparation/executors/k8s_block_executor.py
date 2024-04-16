@@ -10,6 +10,7 @@ from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.utils import clean_name
 
 
 class K8sBlockExecutor(BlockExecutor):
@@ -72,6 +73,7 @@ class K8sBlockExecutor(BlockExecutor):
         if '{trigger_name}' in job_name_prefix:
             block_run = BlockRun.query.get(block_run_id)
             trigger = block_run.pipeline_run.pipeline_schedule
-            job_name_prefix = job_name_prefix.format(trigger_name=trigger.name)
+            job_name_prefix = job_name_prefix.format(
+                trigger_name=clean_name(trigger.name).replace('_', '-'))
 
         return job_name_prefix
