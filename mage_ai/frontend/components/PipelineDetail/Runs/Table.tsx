@@ -270,6 +270,7 @@ type PipelineRunsTableProps = {
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
+  hidePipelineColumn?: boolean;
   hideTriggerColumn?: boolean;
   includePipelineTags?: boolean;
   onClickRow?: (rowIndex: number) => void;
@@ -289,6 +290,7 @@ function PipelineRunsTable({
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
+  hidePipelineColumn,
   hideTriggerColumn,
   includePipelineTags,
   onClickRow,
@@ -406,7 +408,7 @@ function PipelineRunsTable({
   }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [null, null, null, null, 1];
+  const columnFlex = [null, null, null, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -422,10 +424,14 @@ function PipelineRunsTable({
     {
       uuid: 'Block runs',
     },
-    {
-      uuid: 'Pipeline',
-    },
   ];
+
+  if (!hidePipelineColumn) {
+    columnFlex.push(1);
+    columns.push({
+      uuid: 'Pipeline',
+    });
+  }
 
   if (!hideTriggerColumn) {
     columnFlex.push(1);
@@ -621,10 +627,15 @@ function PipelineRunsTable({
                       {`${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                  <Text default key="row_pipeline_uuid" monospace muted>
-                    {pipelineUUID}
-                  </Text>,
                 ];
+
+                if (!hidePipelineColumn) {
+                  arr.push(
+                    <Text default key="row_pipeline_uuid" monospace muted>
+                      {pipelineUUID}
+                    </Text>,
+                  );
+                }
 
                 if (!hideTriggerColumn) {
                   arr.push(
@@ -732,10 +743,15 @@ function PipelineRunsTable({
                       {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                  <Text default key="row_pipeline_uuid" monospace>
-                    {pipelineUUID}
-                  </Text>,
                 ];
+
+                if (!hidePipelineColumn) {
+                  arr.push(
+                    <Text default key="row_pipeline_uuid" monospace>
+                      {pipelineUUID}
+                    </Text>,
+                  );
+                }
 
                 if (!hideTriggerColumn) {
                   arr.push(
