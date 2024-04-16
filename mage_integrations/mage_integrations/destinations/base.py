@@ -644,11 +644,12 @@ class Destination(ABC):
 
             if 'anyOf' in prop_k:
                 for any_of in prop_k['anyOf']:
-                    any_of_type = any_of['type']
-                    if type(any_of_type) is list:
-                        prop_types += any_of_type
-                    else:
-                        prop_types.append(any_of_type)
+                    any_of_type = any_of.get('type')
+                    if any_of_type is not None:
+                        if type(any_of_type) is list:
+                            prop_types += any_of_type
+                        else:
+                            prop_types.append(any_of_type)
 
             if COLUMN_TYPE_ARRAY not in prop_types:
                 continue
