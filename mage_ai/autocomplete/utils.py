@@ -60,6 +60,7 @@ def extract_all_imports(file_content, ignore_nesting=False):
         r'import [\w.]+',
         r'from [\w.]+ import [\w.]+ as [\w.]+',
         r'from [\w.]+ import [\w.]+',
+        r'from [\w.]+ import \(',
     ]
     regexes = []
 
