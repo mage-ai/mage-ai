@@ -1,7 +1,10 @@
 import json
 from typing import Dict
 
-from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
+)
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
@@ -31,6 +34,7 @@ class TrinoDeltalake(TrinoConnector):
             schema,
             convert_column_type,
             lambda item_type_converted: f'ARRAY<{item_type_converted}>',
+            array_default_item_type=COLUMN_TYPE_STRING,
         )
 
     def convert_array(self, value: str, column_type_dict: Dict) -> str:
