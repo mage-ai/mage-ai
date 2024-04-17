@@ -13,7 +13,7 @@ def reload_all_repo_modules(content: str, client: KernelClient) -> None:
     project_name = parts[-1]
     root_parts = get_repo_path(root_project=True).split('/')
     if len(root_parts) < len(parts):
-        project_name = '.'.join(parts[len(root_parts) - 1 :])
+        project_name = '.'.join(parts[len(root_parts) - 1:])
 
     for line in extract_all_imports(content):
         if f'import {project_name}' not in line and f'from {project_name}' not in line:
@@ -46,34 +46,40 @@ def extract_decorated_function(code: str, decorated_function_name: str) -> Tuple
     number_of_lines = len(lines)
 
     for idx, line in enumerate(lines):
-        if line and \
-                span_current_start is not None and \
-                span_current_def is not None:
+        if line and span_current_start is not None and span_current_def is not None:
 
             if line.startswith('@') or line.startswith('def '):
-                spans.append((
-                    span_current_start,
-                    idx - 1,
-                ))
+                spans.append(
+                    (
+                        span_current_start,
+                        idx - 1,
+                    )
+                )
                 span_current_start = None
                 span_current_def = None
 
-        if line and \
-                span_current_start is not None and \
-                span_current_def is None and \
-                line.startswith('def '):
+        if (
+            line
+            and span_current_start is not None
+            and span_current_def is None
+            and line.startswith('def ')
+        ):
 
             span_current_def = idx
 
-        if line and \
-                span_current_start is None and \
-                line.startswith(f'@{decorated_function_name}'):
+        if (
+            line
+            and span_current_start is None
+            and line.startswith(f'@{decorated_function_name}')
+        ):
 
             span_current_start = idx
 
-        if span_current_start is not None and \
-                span_current_def is not None and \
-                idx == number_of_lines - 1:
+        if (
+            span_current_start is not None
+            and span_current_def is not None
+            and idx == number_of_lines - 1
+        ):
 
             spans.append((span_current_start, idx))
 
