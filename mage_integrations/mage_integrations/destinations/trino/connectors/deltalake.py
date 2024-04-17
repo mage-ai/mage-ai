@@ -23,6 +23,9 @@ def convert_column_type(
 
 
 class TrinoDeltalake(TrinoConnector):
+
+    name = "delta-lake"
+
     def column_type_mapping(self, schema: Dict) -> Dict:
         return column_type_mapping_orig(
             schema,
@@ -42,4 +45,6 @@ class TrinoDeltalake(TrinoConnector):
                 value_serialized = json.dumps(value)
         else:
             value_serialized = json.dumps(value)
+
+        value_serialized = value_serialized.replace("'", "''")
         return f"CAST(JSON '{value_serialized}' AS ARRAY<{item_type_converted}>)"
