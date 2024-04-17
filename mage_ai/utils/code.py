@@ -9,11 +9,8 @@ from mage_ai.settings.repo import get_repo_path
 
 
 def reload_all_repo_modules(content: str, client: KernelClient) -> None:
-    parts = get_repo_path().split('/')
+    parts = get_repo_path(root_project=True).split('/')
     project_name = parts[-1]
-    root_parts = get_repo_path(root_project=True).split('/')
-    if len(root_parts) < len(parts):
-        project_name = '.'.join(parts[len(root_parts) - 1:])
 
     for line in extract_all_imports(content):
         if f'import {project_name}' not in line and f'from {project_name}' not in line:
