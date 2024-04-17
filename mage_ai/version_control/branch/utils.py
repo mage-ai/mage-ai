@@ -1,11 +1,12 @@
 from typing import List
 
-from mage_ai.data_preparation.git.api import push_raw
 from mage_ai.shared.strings import capitalize_remove_underscore_lower
 
 
 async def push(branch) -> List[str]:
     from git.exc import GitCommandError
+
+    from mage_ai.data_preparation.git.api import push_raw
 
     project = branch.project
     user = project.user

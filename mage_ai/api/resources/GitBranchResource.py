@@ -6,7 +6,10 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
-from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
+from mage_ai.data_preparation.git.utils import (
+    get_oauth_access_token_for_user,
+    get_provider_from_remote_url,
+)
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import capitalize_remove_underscore_lower
@@ -53,7 +56,7 @@ class GitBranchResource(GenericResource):
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
-            access_token = api.get_access_token_for_user(user, provider=provider)
+            access_token = get_oauth_access_token_for_user(user, provider=provider)
             if access_token:
                 branches = GitClient.get_client_for_provider(provider)(
                     access_token.token
@@ -147,7 +150,7 @@ class GitBranchResource(GenericResource):
         if url:
             provider = get_provider_from_remote_url(url)
 
-        access_token = api.get_access_token_for_user(
+        access_token = get_oauth_access_token_for_user(
             self.current_user, provider=provider
         )
         http_access_token = git_manager.get_access_token()

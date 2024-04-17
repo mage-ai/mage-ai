@@ -3,9 +3,6 @@ import shutil
 import uuid
 from typing import Dict
 
-from git.remote import RemoteProgress
-from git.repo.base import Repo
-
 from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
@@ -39,7 +36,14 @@ def fetch(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            fetch progress.
+    """
+    from git.remote import RemoteProgress
+
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
@@ -74,7 +78,14 @@ def pull(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            pull progress.
+    """
+    from git.remote import RemoteProgress
+
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
@@ -110,7 +121,13 @@ def push_raw(
     token: str,
     user: User = None,
     **kwargs,
-) -> RemoteProgress:
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            push progress.
+    """
+    from git.remote import RemoteProgress
     custom_progress = RemoteProgress()
     provider = get_provider_from_remote_url(remote_url)
     username = get_username(token, user=user, provider=provider)
@@ -142,7 +159,12 @@ def push(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            push progress.
+    """
     from mage_ai.data_preparation.git import Git
 
     git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
@@ -213,6 +235,8 @@ def clone(
     tmp_path = f'{git_manager.repo_path}_{uuid.uuid4().hex}'
     os.mkdir(tmp_path)
     try:
+        from git.repo.base import Repo
+
         # Clone to a tmp folder first, then copy the folder to the actual repo path. Git
         # won't allow you to clone to a folder that is not empty.
         Repo.clone_from(

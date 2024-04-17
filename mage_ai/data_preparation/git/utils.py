@@ -6,12 +6,15 @@ from typing import Callable
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
+from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.git.constants import (
     DEFAULT_KNOWN_HOSTS_FILE,
     DEFAULT_SSH_KEY_DIRECTORY,
 )
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
 from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import (
     BITBUCKET_HOST,
@@ -269,3 +272,15 @@ here: https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-c
             return await func(*args, **kwargs)
 
     return wrapper
+
+
+def get_oauth_client_id(provider: str) -> str:
+    return f'{provider}_{get_project_uuid()}'
+
+
+def get_oauth_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessToken:
+    if not provider:
+        provider = ProviderName.GHE if get_ghe_hostname() else ProviderName.GITHUB
+    access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
+    if access_tokens:
+        return access_tokens[0]
