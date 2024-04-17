@@ -132,6 +132,7 @@ def column_type_mapping(
     convert_array_column_type_func: Callable,
     number_type: str = 'DOUBLE PRECISION',
     string_type: str = 'VARCHAR',
+    array_default_item_type: str = None,
 ) -> Dict:
     mapping = {}
     for column, column_settings in schema['properties'].items():
@@ -186,6 +187,9 @@ def column_type_mapping(
             items_items = column_settings.get('items', {}).get('items', {}).get('type', [])
             if len(items_items) >= 1:
                 item_types += items_items
+
+            if array_default_item_type:
+                item_types.append(array_default_item_type)
 
             if len(item_types):
                 item_type = item_types[0]
