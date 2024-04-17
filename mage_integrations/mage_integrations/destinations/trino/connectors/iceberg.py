@@ -2,7 +2,7 @@
 Trino iceberg connector
 """
 
-from .deltalake import TrinoDeltalake, convert_column_type
+from .deltalake import TrinoDeltalake, convert_column_type  # noqa: F401
 
 
 class TrinoIceberg(TrinoDeltalake):
