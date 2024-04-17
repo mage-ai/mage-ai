@@ -2,7 +2,10 @@
 Trino iceberg connector
 """
 
-from .deltalake import TrinoDeltalake, convert_column_type  # noqa: F401
+from mage_integrations.destinations.trino.connectors.deltalake import (  # noqa: F401
+    TrinoDeltalake,
+    convert_column_type,
+)
 
 
 class TrinoIceberg(TrinoDeltalake):
@@ -13,5 +16,4 @@ class TrinoIceberg(TrinoDeltalake):
     Any changes that are not common between iceberg and delta-lake connectors
     should be implemented in this class.
     """
-
-    name = "iceberg"
+    name = 'iceberg'

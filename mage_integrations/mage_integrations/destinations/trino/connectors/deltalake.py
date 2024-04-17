@@ -26,8 +26,7 @@ def convert_column_type(
 
 
 class TrinoDeltalake(TrinoConnector):
-
-    name = "delta-lake"
+    name = 'delta-lake'
 
     def column_type_mapping(self, schema: Dict) -> Dict:
         return column_type_mapping_orig(
