@@ -6,7 +6,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from math import ceil
 from statistics import stdev
-import time
 from typing import DefaultDict, Dict, List
 
 import dateutil.parser
@@ -24,9 +23,6 @@ from sqlalchemy import (
     String,
     Table,
     Text,
-    and_,
-    desc,
-    func,
     or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
