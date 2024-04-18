@@ -349,7 +349,7 @@ export function buildNodesEdgesPorts({
         return downstreamKey === initalDownstreamKey;
       });
     }
-    if ((downstreamBlocks?.length >= 2 && upstreamBlocks?.length < 2) || sameDownstreamBlocksGroup) {
+    if (downstreamBlocks?.length >= 2 && (upstreamBlocks?.length < 2 || sameDownstreamBlocksGroup)) {
       // Only group these blocks if their downstream is identical
       // or at least 2 of them have downstreams that match exactly (subgroup).
       const counts = {};
