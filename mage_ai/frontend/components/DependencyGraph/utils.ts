@@ -78,8 +78,8 @@ export function getParentNodeIDShared(uuids: string[]): string {
   return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join('→');
 }
 
-export function getDownstreamBlocksKey(downstreamBlockUUIDs: string[]): string {
-  return sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(',');
+export function getBlocksKey(blockUUIDs: string[]): string {
+  return sortByKey(blockUUIDs || [], uuid => uuid).join(',');
 }
 
 export function buildEdgeID(blockUUID: string, upstreamUUID: string): string {
@@ -341,13 +341,21 @@ export function buildNodesEdgesPorts({
 
     let sameDownstreamBlocksGroup = false;
     if (upstreamBlocks?.length > 1) {
-      const initalDownstreamKey = getDownstreamBlocksKey(upstreamBlocks?.[0]?.downstream_blocks || []);
-      sameDownstreamBlocksGroup = upstreamBlocks?.every(({
+      const initalDownstreamKey = getBlocksKey(upstreamBlocks?.[0]?.downstream_blocks);
+      const upstreamsHaveSameDownstreams = upstreamBlocks?.every(({
         downstream_blocks: downstreamBlockUUIDs,
-      }) => {
-        const downstreamKey = getDownstreamBlocksKey(downstreamBlockUUIDs);
-        return downstreamKey === initalDownstreamKey;
-      });
+      }) => getBlocksKey(downstreamBlockUUIDs) === initalDownstreamKey);
+
+      let downstreamsHaveSameUpstreams = true;
+      if (downstreamBlocks?.length > 1) {
+        const downstreamBlockGroupUUIDs = downstreamBlocks?.map(({ uuid }) => uuid);
+        const downstreamBlocksKey = getBlocksKey(downstreamBlockGroupUUIDs);
+        downstreamsHaveSameUpstreams = upstreamBlocks?.every(({
+          downstream_blocks: downstreamBlockUUIDs,
+        }) => getBlocksKey(downstreamBlockUUIDs) === downstreamBlocksKey);
+      }
+
+      sameDownstreamBlocksGroup = upstreamsHaveSameDownstreams && downstreamsHaveSameUpstreams;
     }
     if (downstreamBlocks?.length >= 2 && (upstreamBlocks?.length < 2 || sameDownstreamBlocksGroup)) {
       // Only group these blocks if their downstream is identical
@@ -357,7 +365,7 @@ export function buildNodesEdgesPorts({
         downstream_blocks: downstreamBlockUUIDs,
       }) => {
         if (downstreamBlockUUIDs?.length >= 1) {
-          const key = getDownstreamBlocksKey(downstreamBlockUUIDs);
+          const key = getBlocksKey(downstreamBlockUUIDs);
           if (!(key in counts)) {
             counts[key] = 0;
           }
