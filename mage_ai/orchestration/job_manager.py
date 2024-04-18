@@ -96,8 +96,10 @@ class JobManager:
         return f'{job_type}_{uid}'
 
 
-try:
-    job_manager = JobManager()
-except Exception:
-    traceback.print_exc()
-    job_manager = None
+job_manager = None
+
+if __name__ == '__main__':
+    try:
+        job_manager = JobManager()
+    except Exception:
+        traceback.print_exc()
