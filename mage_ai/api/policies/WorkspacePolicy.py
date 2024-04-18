@@ -54,6 +54,7 @@ WorkspacePolicy.allow_write([
     'storage_access_mode',
     'storage_request_size',
     'task_definition',
+    'update_workspace_settings',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

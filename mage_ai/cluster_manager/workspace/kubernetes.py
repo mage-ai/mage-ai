@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 import yaml
 
@@ -7,7 +8,7 @@ from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
 from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 
 
 class KubernetesWorkspace(Workspace):
@@ -81,6 +82,26 @@ class KubernetesWorkspace(Workspace):
         )
 
         return cls(name)
+
+    def update(self, payload: Dict, **kwargs):
+        update_workspace_settings = payload.pop('update_workspace_settings', False)
+        extracted_payload = extract(payload, [
+            'container_config',
+        ])
+        updated_config = merge_dict(
+            self.config.to_dict(),
+            extracted_payload,
+        )
+        workspace_config = KubernetesWorkspaceConfig.load(
+            config=updated_config
+        )
+        self.workload_manager.patch_workload(
+            self.name,
+            workspace_config,
+            update_workspace_settings=update_workspace_settings,
+        )
+        with open(self.config_path, 'w', encoding='utf-8') as fp:
+            yaml.dump(workspace_config.to_dict(), fp)
 
     def delete(self, **kwargs):
         try:
