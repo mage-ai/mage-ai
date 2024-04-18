@@ -2153,7 +2153,7 @@ function DependencyGraph({
           nodes={nodes}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           onZoomChange={z => {
-            const zFinal = Math.max(z, 0.05)
+            const zFinal = Math.max(z, 0.05);
             setZoom?.(zFinal);
             setZoomLevel(zFinal);
           }}

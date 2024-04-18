@@ -78,8 +78,12 @@ export function getParentNodeIDShared(uuids: string[]): string {
   return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join('→');
 }
 
+export function getDownstreamBlocksKey(downstreamBlockUUIDs: string[]): string {
+  return sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(',');
+}
+
 export function buildEdgeID(blockUUID: string, upstreamUUID: string): string {
-  return `${upstreamUUID}→${blockUUID}`
+  return `${upstreamUUID}→${blockUUID}`;
 }
 
 export function buildEdge(blockUUID: string, upstreamUUID: string): EdgeType {
@@ -335,7 +339,17 @@ export function buildNodesEdgesPorts({
       upstreamBlocks,
     } = info;
 
-    if (downstreamBlocks?.length >= 2) {
+    let sameDownstreamBlocksGroup = false;
+    if (upstreamBlocks?.length > 1) {
+      const initalDownstreamKey = getDownstreamBlocksKey(upstreamBlocks?.[0]?.downstream_blocks || []);
+      sameDownstreamBlocksGroup = upstreamBlocks?.every(({
+        downstream_blocks: downstreamBlockUUIDs,
+      }) => {
+        const downstreamKey = getDownstreamBlocksKey(downstreamBlockUUIDs);
+        return downstreamKey === initalDownstreamKey;
+      });
+    }
+    if ((downstreamBlocks?.length >= 2 && upstreamBlocks?.length < 2) || sameDownstreamBlocksGroup) {
       // Only group these blocks if their downstream is identical
       // or at least 2 of them have downstreams that match exactly (subgroup).
       const counts = {};
@@ -343,7 +357,7 @@ export function buildNodesEdgesPorts({
         downstream_blocks: downstreamBlockUUIDs,
       }) => {
         if (downstreamBlockUUIDs?.length >= 1) {
-          const key = sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(',');
+          const key = getDownstreamBlocksKey(downstreamBlockUUIDs);
           if (!(key in counts)) {
             counts[key] = 0;
           }
@@ -358,7 +372,7 @@ export function buildNodesEdgesPorts({
         downstreamBlocks?.forEach((block2) => {
           const uuid2 = block2?.uuid;
           if (!(uuid2 in blocksInGroups)) {
-            blocksInGroups[uuid2] = []
+            blocksInGroups[uuid2] = [];
           }
           blocksInGroups[uuid2].push(info);
         });
@@ -366,7 +380,7 @@ export function buildNodesEdgesPorts({
         upstreamBlocks?.forEach((block2) => {
           const uuid2 = block2?.uuid;
           if (!(uuid2 in blocksWithDownstreamBlockSet)) {
-            blocksWithDownstreamBlockSet[uuid2] = []
+            blocksWithDownstreamBlockSet[uuid2] = [];
           }
           blocksWithDownstreamBlockSet[uuid2].push(info);
         });
@@ -630,7 +644,7 @@ export function buildNodesEdgesPorts({
         if (uuid2 in nodesInner) {
           nodesInner[uuid2].parent = parentID3;
         }
-        const edgeID = buildEdgeID(parentID2, uuid2)
+        const edgeID = buildEdgeID(parentID2, uuid2);
         if (edgeID in edgesInner) {
           delete edgesInner[edgeID];
         }

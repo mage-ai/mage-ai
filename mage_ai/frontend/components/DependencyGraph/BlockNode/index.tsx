@@ -8,9 +8,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
-import dark from '@oracle/styles/themes/dark';
 import {
   CircleWithArrowUp,
   CubeWithArrowDown,
