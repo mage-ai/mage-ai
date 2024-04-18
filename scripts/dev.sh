@@ -180,7 +180,8 @@ export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export DEBUG=$DEBUG
 export MAGE_DATA_DIR=$MAGE_DATA_DIR
 
-UP_SERVICES="server app"
+# UP_SERVICES="server app"
+UP_SERVICES="server app neo4j postgres"
 
 if [[ "$SPARK" == "1" ]]; then
     UP_SERVICES="server_spark app_spark"
@@ -193,12 +194,14 @@ then
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker-compose -f docker-compose.yml up $UP_SERVICES
+    docker-compose -f docker-compose.yml -f docker-compose.override.yml up $UP_SERVICES
+    # docker-compose -f docker-compose.yml up $UP_SERVICES
 else
     # docker-compose does not exist
     HOST=$HOST \
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker compose -f docker-compose.yml up $UP_SERVICES
+    docker compose -f docker-compose.yml -f docker-compose.override.yml up $UP_SERVICES
+    # docker compose -f docker-compose.yml up $UP_SERVICES
 fi

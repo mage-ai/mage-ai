@@ -143,3 +143,17 @@ tzlocal==4.2
 xlsx2csv==0.8.1
 xmltodict==0.13.0
 zenpy==2.0.25
+
+# RAG, LLM
+anthropic==0.25.1
+chromadb==0.4.24
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+faiss-cpu==1.8.0
+neo4j==5.19.0
+pgvector==0.2.5
+pytextrank==3.3.0
+sentence-transformers==2.6.1
+spacy>=3.0.0,<4.0.0
+torch==2.2.2
+transformers==4.39.3
+voyageai==0.2.2

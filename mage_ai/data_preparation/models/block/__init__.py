@@ -1467,7 +1467,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
-                if kwargs_var:
+                if not isinstance(kwargs_var, pd.DataFrame) and kwargs_var:
                     if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
                         global_vars_copy.update(kwargs_var)
 
@@ -3050,6 +3050,18 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 **remote_block_dict,
             ).get_outputs() for remote_block_dict in global_vars['remote_blocks']]
 
+        factory_items_mapping = {}
+        if self.conditional_blocks and len(self.conditional_blocks) > 0:
+            for conditional_block in self.conditional_blocks:
+                if conditional_block.factory_items:
+                    factory_items_mapping[conditional_block.uuid] = conditional_block.factory_items
+
+        if factory_items_mapping:
+            global_vars['factory_items_mapping'] = merge_dict(
+                global_vars.get('factory_items_mapping', {}),
+                factory_items_mapping,
+            )
+
         self.global_vars = global_vars
 
         return global_vars
@@ -3653,6 +3665,10 @@ class AddonBlock(Block):
 
 
 class ConditionalBlock(AddonBlock):
+    @property
+    def factory_items(self) -> List:
+        return (self.configuration or {}).get('factory_items', [])
+
     def execute_conditional(
         self,
         parent_block: Block,
@@ -3676,9 +3692,11 @@ class ConditionalBlock(AddonBlock):
             )
 
             condition_functions = []
+            factory_functions = []
 
             results = dict(
                 condition=self._block_decorator(condition_functions),
+                factory=self._block_decorator(factory_functions),
             )
             exec(self.content, results)
 
@@ -3695,11 +3713,22 @@ class ConditionalBlock(AddonBlock):
                 )
 
                 for kwargs_var in kwargs_vars:
-                    global_vars_copy.update(kwargs_var)
+                    if isinstance(kwargs_var, dict):
+                        global_vars_copy.update(kwargs_var)
 
             result = True
             for condition_function in condition_functions:
                 result = condition_function(*input_vars, **global_vars_copy) and result
+
+            if factory_functions:
+                factory_items = []
+                for func in factory_functions:
+                    factory_items.append(func(*input_vars, **global_vars_copy))
+
+                if factory_items:
+                    self.configuration = self.configuration or {}
+                    self.configuration['factory_items'] = self.factory_items or []
+                    self.configuration['factory_items'] += factory_items
 
             return result
 

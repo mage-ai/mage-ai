@@ -1,25 +1,26 @@
-import json
+# import json
 import os
 from logging import Logger
 from typing import Any, Callable, Dict
 
 import psutil
 
-from mage_ai.data_preparation.logging.logger import DictLogger
+# from mage_ai.data_preparation.logging.logger import DictLogger
 
 
 def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
-    if logger:
-        if isinstance(logger, DictLogger):
-            logger.info(log_message, tags=logging_tags)
-        else:
-            logger.info(log_message)
-            if logging_tags:
-                logger.info(json.dumps(logging_tags, indent=2))
-    else:
-        print(log_message)
-        if logging_tags:
-            print(json.dumps(logging_tags, indent=2))
+    # if logger:
+    #     if isinstance(logger, DictLogger):
+    #         logger.info(log_message, tags=logging_tags)
+    #     else:
+    #         logger.info(log_message)
+    #         if logging_tags:
+    #             logger.info(json.dumps(logging_tags, indent=2))
+    # else:
+    #     print(log_message)
+    #     if logging_tags:
+    #         print(json.dumps(logging_tags, indent=2))
+    pass
 
 
 def get_memory_usage(

@@ -118,3 +118,7 @@ def collect_decorated_objs(decorated_objs):
         return obj
 
     return custom_code
+
+
+def factory(function):
+    return function
