@@ -106,13 +106,16 @@ jobs:
 
   test_web_server_windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
     needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
-          python-version: 3.10
+          python-version: ${{ matrix.python-version }}
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
         uses: actions/setup-node@v3
