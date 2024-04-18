@@ -30,7 +30,7 @@ export default defineConfig({
   reporter: 'html',
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
-  testDir: './tests',
+  testDir: './tests/basic',
   // Time spent by the test function, fixtures, beforeEach and afterEach hooks
   timeout: 100000,
   // Opt out of parallel tests on CI.
@@ -49,6 +49,7 @@ export default defineConfig({
     command: 'cd venv3/Scripts && activate && cd ../../ && python mage_ai/cli/main.py start test_project',
     cwd: '../../',
     env: {
+      INSTANCE_TYPE: 'web_server',
       PYTHONPATH: '.',
       REQUIRE_USER_AUTHENTICATION: '1',
     },
