@@ -138,7 +138,7 @@ function BlockNode({
     color,
     runtime: runtimeFromBlock,
     type,
-  } = block;
+  } = block || {};
   const {
     accent,
     accentLight,
