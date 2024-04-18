@@ -146,3 +146,35 @@ jobs:
           name: playwright-report
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
+
+  test_windows_2:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+    # needs: check-code-quality
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.18.0"
+      - name: Create Mage test project
+        run: |
+          Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
+          python -m venv venv3
+          venv3/Scripts/Activate.ps1
+          $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
+          python -m pip install -r requirements.txt
+          python mage_ai/cli/main.py init test_project
+      - name: Run Mage test project
+        run: |
+          venv3/Scripts/Activate.ps1
+          $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
+          python mage_ai/cli/main.py start test_project
+        timeout-minutes: 1
