@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from math import ceil
 from statistics import stdev
+import time
 from typing import DefaultDict, Dict, List
 
 import dateutil.parser
@@ -23,6 +24,9 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    and_,
+    desc,
+    func,
     or_,
 )
 from sqlalchemy.orm import joinedload, relationship, validates
@@ -1916,6 +1920,33 @@ class Backfill(BaseModel):
 
     @property
     def pipeline_run_status_counts(self) -> Dict:
+        # Method 1 with query
+        # start1 = time.time()
+        # latest_pipeline_runs = PipelineRun.select(
+        #     PipelineRun,
+        #     func.row_number()
+        #         .over(
+        #             partition_by=PipelineRun.execution_date,
+        #             order_by=desc(PipelineRun.id))
+        #         .label('row_number')
+        # ).where(PipelineRun.backfill_id == self.id).cte(name='latest_pipeline_runs')
+        # query = (PipelineRun.select(
+        #         PipelineRun.status,
+        #         func.count(PipelineRun.status).over(partition_by=PipelineRun.status).label('count'),
+        #     )
+        #     .distinct()
+        #     .join(latest_pipeline_runs, and_(
+        #         PipelineRun.id == latest_pipeline_runs.c.id,
+        #         latest_pipeline_runs.c.row_number == 1,
+        #     ))
+        # )
+        # results = query.all()
+        # status_counts2 = dict(results)
+        # end1 = time.time()
+        # print('+========DB QUERY time elapsed:', end1 - start1)
+
+        # Method 2 using given self.pipeline_runs
+        start2 = time.time()
         status_counts = dict()
         execution_dates_counted = set()
 
@@ -1932,5 +1963,9 @@ class Backfill(BaseModel):
             if pr.execution_date not in execution_dates_counted:
                 status_counts[pr.status] = (status_counts.get(pr.status) or 0) + 1
                 execution_dates_counted.add(pr.execution_date)
+        end2 = time.time()
+        print('+========SORT AND ITERATE time elapsed:', end2 - start2)
+
+        print('----------------------------------------------')
 
         return status_counts
