@@ -673,7 +673,7 @@ function DependencyGraph({
       }
     }
 
-    const disabled = blockEditing?.uuid === block.uuid;
+    const disabled = blockEditing?.uuid === block?.uuid;
     if (!disabled) {
       if (blockEditing) {
         onClickWhenEditingUpstreamBlocks(block);
@@ -2129,7 +2129,7 @@ function DependencyGraph({
                         blocksWithSameDownstreamBlocks={blocksWithSameDownstreamBlocks}
                         callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
                         conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
-                        disabled={blockEditing?.uuid === block.uuid}
+                        disabled={blockEditing?.uuid === block?.uuid}
                         downstreamBlocks={downstreamBlocks}
                         extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
                         hasFailed={hasFailed}
@@ -2139,7 +2139,7 @@ function DependencyGraph({
                         isInProgress={isInProgressFinal}
                         isQueued={isQueued}
                         isSuccessful={isSuccessful}
-                        key={block.uuid}
+                        key={block?.uuid}
                         pipeline={pipeline}
                         selected={selected}
                         selectedBlock={selectedBlock}
@@ -2153,7 +2153,7 @@ function DependencyGraph({
           nodes={nodes}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           onZoomChange={z => {
-            const zFinal = Math.max(z, 0.05)
+            const zFinal = Math.max(z, 0.05);
             setZoom?.(zFinal);
             setZoomLevel(zFinal);
           }}
