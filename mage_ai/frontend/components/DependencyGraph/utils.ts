@@ -340,6 +340,11 @@ export function buildNodesEdgesPorts({
     } = info;
 
     let sameDownstreamBlocksGroup = false;
+    /*
+     * We need to make sure certain block groupings only happen when there aren't
+     * additional block connections that can break the rendering of the layout
+     * in the dependency graph.
+     */
     if (upstreamBlocks?.length > 1) {
       const initalDownstreamKey = getBlocksKey(upstreamBlocks?.[0]?.downstream_blocks);
       const upstreamsHaveSameDownstreams = upstreamBlocks?.every(({
