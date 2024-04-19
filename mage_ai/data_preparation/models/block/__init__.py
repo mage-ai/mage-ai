@@ -2391,13 +2391,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             block_executor_type = Template(self.executor_type).render(**get_template_vars())
         else:
             block_executor_type = None
-        if self.pipeline:
-            pipeline_executor_type = self.pipeline.get_executor_type()
-        else:
-            pipeline_executor_type = None
-
         if not block_executor_type or block_executor_type == ExecutorType.LOCAL_PYTHON:
-            block_executor_type = pipeline_executor_type
+            # If block executor_type is not set, fall back to pipeline level executor_type
+            if self.pipeline:
+                pipeline_executor_type = self.pipeline.get_executor_type()
+            else:
+                pipeline_executor_type = None
+            block_executor_type = pipeline_executor_type or block_executor_type
         return block_executor_type
 
     def get_pipelines_from_cache(self, block_cache: BlockCache = None) -> List[Dict]:
