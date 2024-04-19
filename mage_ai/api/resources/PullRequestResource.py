@@ -3,9 +3,11 @@ from typing import Dict
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth.constants import ProviderName
-from mage_ai.data_preparation.git import api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
-from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
+from mage_ai.data_preparation.git.utils import (
+    get_oauth_access_token_for_user,
+    get_provider_from_remote_url,
+)
 
 
 def pull_request_to_dict(pr) -> Dict:
@@ -40,7 +42,7 @@ class PullRequestResource(GenericResource):
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
-            access_token = api.get_access_token_for_user(user, provider=provider)
+            access_token = get_oauth_access_token_for_user(user, provider=provider)
 
             if access_token:
                 arr = GitClient.get_client_for_provider(provider)(
@@ -84,7 +86,7 @@ class PullRequestResource(GenericResource):
         remote_url = payload.get('remote_url')
         provider = get_provider_from_remote_url(remote_url)
 
-        access_token = api.get_access_token_for_user(user, provider=provider)
+        access_token = get_oauth_access_token_for_user(user, provider=provider)
         if not access_token:
             error.update(
                 dict(

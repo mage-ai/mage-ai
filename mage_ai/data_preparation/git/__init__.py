@@ -19,6 +19,7 @@ from mage_ai.data_preparation.git.utils import (
     check_connection_async,
     create_ssh_keys,
     get_access_token,
+    get_oauth_access_token_for_user,
     get_provider_from_remote_url,
     poll_process_with_timeout,
     run_command,
@@ -564,7 +565,7 @@ class Git:
                 if len(remote_refs) == 0 and user:
                     from mage_ai.data_preparation.git import api
 
-                    access_token = api.get_access_token_for_user(user)
+                    access_token = get_oauth_access_token_for_user(user)
                     if access_token:
 
                         if remote_exists:

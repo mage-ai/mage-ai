@@ -10,11 +10,12 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List
 
 from mage_ai.authentication.oauth.constants import ProviderName
-from mage_ai.data_preparation.git.api import get_access_token_for_user, get_user
+from mage_ai.data_preparation.git.api import get_user
 from mage_ai.data_preparation.git.utils import (
     execute_on_remote_branch,
     get_access_token,
     get_auth_type_from_url,
+    get_oauth_access_token_for_user,
     get_provider_from_remote_url,
 )
 from mage_ai.data_preparation.preferences import Preferences, get_preferences
@@ -544,7 +545,7 @@ class ProjectUser(BaseVersionControl):
     @property
     def access_token(self) -> str:
         if self.user and self.provider:
-            access_token = get_access_token_for_user(self.user, provider=self.provider.name)
+            access_token = get_oauth_access_token_for_user(self.user, provider=self.provider.name)
             if access_token:
                 return access_token.token
 
