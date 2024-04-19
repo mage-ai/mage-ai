@@ -51,6 +51,9 @@ export default interface BackfillType {
   pipeline_run_dates?: PipelineRunDateType[];
   pipeline_schedule_id?: number;
   pipeline_uuid: string;
+  run_status_counts?: {
+    [key in RunStatus]: number;
+  };
   settings?: BackfillSettingsType;
   start_datetime?: string;
   started_at?: string;
