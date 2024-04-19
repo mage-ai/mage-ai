@@ -1,4 +1,5 @@
 import os
+import traceback
 from typing import Dict
 
 from mage_ai.orchestration.notification.config import (
@@ -61,33 +62,54 @@ class NotificationSender:
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
-            send_slack_message(self.config.slack_config, details or summary, title)
+            try:
+                send_slack_message(self.config.slack_config, details or summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
-            send_teams_message(self.config.teams_config, summary)
+            try:
+                send_teams_message(self.config.teams_config, summary)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.discord_config is not None and self.config.discord_config.is_valid:
-            send_discord_message(self.config.discord_config, summary, title)
+            try:
+                send_discord_message(self.config.discord_config, summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.telegram_config is not None and self.config.telegram_config.is_valid:
-            send_telegram_message(self.config.telegram_config, summary, title)
+            try:
+                send_telegram_message(self.config.telegram_config, summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
-            send_google_chat_message(self.config.google_chat_config, summary)
+            try:
+                send_google_chat_message(self.config.google_chat_config, summary)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.email_config is not None and title is not None:
-            send_email(
-                self.config.email_config,
-                subject=title,
-                message=details or summary,
-            )
+            try:
+                send_email(
+                    self.config.email_config,
+                    subject=title,
+                    message=details or summary,
+                )
+            except Exception:
+                traceback.print_exc()
 
         if self.config.opsgenie_config is not None and self.config.opsgenie_config.is_valid:
-            send_opsgenie_alert(
-                self.config.opsgenie_config,
-                message=title,
-                description=details or summary,
-            )
+            try:
+                send_opsgenie_alert(
+                    self.config.opsgenie_config,
+                    message=title,
+                    description=details or summary,
+                )
+            except Exception:
+                traceback.print_exc()
 
     def send_pipeline_run_success_message(self, pipeline, pipeline_run) -> None:
         if AlertOn.PIPELINE_RUN_SUCCESS in self.config.alert_on:
