@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 import pytz
@@ -99,6 +99,7 @@ class Pipeline:
         self.description = description
         self.executor_config = dict()
         self.executor_type = None
+        self._rendered_executor_type = None  # Render template variables
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
@@ -1768,10 +1769,13 @@ class Pipeline:
     def get_executable_blocks(self):
         return [b for b in self.blocks_by_uuid.values() if b.executable]
 
-    def get_executor_type(self) -> str:
-        if self.executor_type:
-            return Template(self.executor_type).render(**get_template_vars())
-        return self.executor_type
+    def get_executor_type(self) -> Optional[str]:
+        if self._rendered_executor_type is None:
+            if self.executor_type:
+                return Template(self.executor_type).render(**get_template_vars())
+            else:
+                self._rendered_executor_type = self.executor_type
+        return self._rendered_executor_type
 
     def has_block(self, block_uuid: str, block_type: str = None, extension_uuid: str = None):
         if extension_uuid:
