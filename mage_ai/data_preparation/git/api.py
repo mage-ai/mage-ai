@@ -30,6 +30,37 @@ def get_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessT
         return access_tokens[0]
 
 
+def switch_branch(
+    remote_name: str,
+    remote_url: str,
+    branch_name: str,
+    token: str,
+    user: User = None,
+    config_overwrite: Dict = None,
+):
+    from mage_ai.data_preparation.git import Git
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    try:
+        git_manager.switch_remote_branch(branch_name, remote_name)
+    except Exception as err:
+        raise err
+    finally:
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
+
+
 def fetch(
     remote_name: str,
     remote_url: str,

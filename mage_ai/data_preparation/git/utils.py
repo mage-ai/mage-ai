@@ -208,17 +208,16 @@ async def check_connection_async(git, remote_name: str) -> None:
             'Error connecting to remote, make sure your access token or SSH key is '
             'set up properly.'
         ),
+        timeout=5,
     )
 
 
 async def validate_authentication_for_remote_url(git, remote_url: str) -> None:
     proc = git.ls_remote(remote_url, as_process=True)
 
-    asyncio.run(
-        poll_process_with_timeout(
-            proc,
-            error_message='Error connecting to remote, make sure your access is valid.',
-        )
+    await poll_process_with_timeout(
+        proc,
+        error_message='Error connecting to remote, make sure your access is valid.',
     )
 
 

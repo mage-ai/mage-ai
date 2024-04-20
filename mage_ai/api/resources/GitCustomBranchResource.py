@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from mage_ai.api.resources.GitBranchResource import GitBranchResource
-from mage_ai.data_preparation.git import REMOTE_NAME, Git
+from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.sync import AuthType
 
 
@@ -16,6 +16,34 @@ class GitCustomBranchResource(GitBranchResource):
             setup_repo=setup_repo,
             user=user,
         )
+
+    @classmethod
+    def create(cls, payload, user, **kwargs):
+        branch = payload.get('name')
+        remote = payload.get('remote')
+
+        token, _, url, config_overwrite = cls.get_oauth_config(
+            remote_name=remote,
+            user=user,
+        )
+
+        git_manager = cls.get_git_manager(
+            user=user, config_overwrite=config_overwrite
+        )
+
+        if remote:
+            api.switch_branch(
+                remote,
+                url,
+                branch,
+                token,
+                user,
+                config_overwrite,
+            )
+        else:
+            git_manager.switch_branch(branch, remote=remote)
+
+        return cls(dict(name=git_manager.current_branch), user, **kwargs)
 
     @classmethod
     async def member(self, pk, user, **kwargs):
