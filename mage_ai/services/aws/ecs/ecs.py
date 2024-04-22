@@ -17,7 +17,7 @@ def run_task(
 
     print(json.dumps(response, indent=4, default=str))
     wait_for_completion = False if ecs_config.wait_timeout == -1 else wait_for_completion
-    
+
     if wait_for_completion:
         arn = response['tasks'][0]['taskArn']
         waiter = client.get_waiter('tasks_stopped')
