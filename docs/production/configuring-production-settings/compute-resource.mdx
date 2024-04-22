@@ -205,11 +205,11 @@ name: example_pipeline
 
 #### Extra fields
 
-| Field name              | Description                                                                                                                   | Example values              |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| assign_public_ip        | Whether to assign public IP to the ECS task.                                                                                  | true/false (default: true)  |
-| enable_execute_command  | Whether to [enable execute command for debugging](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html)  | true/false (default: false) |
-| wait_timeout            | The maximum wait time for the ECS task (in seoncds). The default wait timeout for the ECS task is 10 minutes.                 | 1200 (default: 600)         |
+| Field name              | Description                                                                                                                                            | Example values              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| assign_public_ip        | Whether to assign public IP to the ECS task.                                                                                                           | true/false (default: true)  |
+| enable_execute_command  | Whether to [enable execute command for debugging](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html)                           | true/false (default: false) |
+| wait_timeout            | The maximum wait time for the ECS task (in seoncds). The default wait timeout for the ECS task is 10 minutes. Setting to -1 will disable waiting. | 1200 (default: 600)         |
 
 Example config
 ```yaml
