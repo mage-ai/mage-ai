@@ -37,11 +37,11 @@ class GitCustomBranchResource(GitBranchResource):
                 url,
                 branch,
                 token,
-                user,
-                config_overwrite,
+                config_overwrite=config_overwrite,
+                user=user,
             )
         else:
-            git_manager.switch_branch(branch, remote=remote)
+            git_manager.switch_branch(branch)
 
         return cls(dict(name=git_manager.current_branch), user, **kwargs)
 

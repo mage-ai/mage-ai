@@ -55,6 +55,7 @@ function GitActions({
 
   const {
     data: dataAllGitBranches,
+    isValidating,
     mutate: fetchAllBranches,
   } = api.git_branches.list({ include_remote_branches: 1 });
   const allBranches = useMemo(
@@ -181,7 +182,11 @@ function GitActions({
     ],
   );
 
-  useEffect(() => updateStatus(), [action, updateStatus]);
+  useEffect(() => {
+    if (!isValidating) {
+      updateStatus();
+    }
+  }, [action, isValidating, updateStatus]);
   
   const user = useMemo(() => getUser() || {}, []);
   const sharedWebsocketData = useMemo(() => {

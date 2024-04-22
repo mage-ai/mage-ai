@@ -35,8 +35,8 @@ def switch_branch(
     remote_url: str,
     branch_name: str,
     token: str,
-    user: User = None,
     config_overwrite: Dict = None,
+    user: User = None,
 ):
     from mage_ai.data_preparation.git import Git
     provider = get_provider_from_remote_url(remote_url)

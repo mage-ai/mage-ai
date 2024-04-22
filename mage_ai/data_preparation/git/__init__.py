@@ -441,7 +441,7 @@ class Git:
         self.__pip_install()
 
     @_remote_command
-    def fetch(self, remote_name: str = None) -> None:
+    def fetch(self) -> None:
         self.origin.fetch()
 
     @_remote_command
