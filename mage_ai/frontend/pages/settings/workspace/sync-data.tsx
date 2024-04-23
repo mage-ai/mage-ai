@@ -4,8 +4,10 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
+import Divider from '@oracle/elements/Divider';
 import ErrorPopup from '@components/ErrorPopup';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -35,7 +37,24 @@ import {
   SECTION_ITEM_UUID_GIT_SETTINGS,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
+import { queryFromUrl } from '@utils/url';
+
+const TAB_GIT_SYNC = {
+  label: () => 'One-way Git Sync',
+  uuid: 'git_sync',
+};
+
+const TAB_GIT_INTEGRATION = {
+  label: () => 'Git Actions',
+  uuid: 'git_integration',
+};
+
+const TABS = [
+  TAB_GIT_SYNC,
+  TAB_GIT_INTEGRATION,
+];
 
 export interface SyncFieldType {
   autoComplete?: string;
@@ -53,14 +72,11 @@ function SyncData() {
   const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
-  const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
-
   useEffect(() => {
     if (dataSyncs) {
       const initialSync = dataSyncs?.syncs?.[0];
       setUserGitSettings(initialSync?.user_git_settings);
       setSync(initialSync);
-      setShowSyncSettings(!!initialSync?.branch);
     }
   }, [dataSyncs]);
 
@@ -71,6 +87,22 @@ function SyncData() {
     }
     return false;
   }, [dataSyncs]);
+
+  const {
+    data: dataGitBranch,
+    mutate: fetchBranch,
+  } = api.git_branches.detail('test',
+    {
+      _format: 'with_basic_details',
+    },
+    {
+      revalidateOnFocus: false,
+    },
+  );
+
+  const {
+    is_git_integration_enabled: gitIntegrationEnabled,
+  } = useMemo(() => dataGitBranch?.['git_branch'] || {}, [dataGitBranch]);
 
   const [createSync, { isLoading: isLoadingCreateSync }] = useMutation(
     api.syncs.useCreate(),
@@ -136,13 +168,23 @@ function SyncData() {
   const requireUserAuthentication =
     useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
 
+  const tabsToUse = useMemo(() => TABS, []);
+
+  const [selectedTab, setSelectedTab] = useState<TabType>();
+
+  useEffect(() => {
+    if (!selectedTab) {
+      setSelectedTab(gitIntegrationEnabled ? TAB_GIT_INTEGRATION : TAB_GIT_SYNC);
+    }
+  }, [gitIntegrationEnabled, selectedTab]);
+
   const userGitFields = useMemo(() => {
     let updateSettings: React.Dispatch<
       React.SetStateAction<SyncType | UserGitSettingsType>
     > = setSync;
     let settings: SyncType | UserGitSettingsType = sync;
 
-    if (!showSyncSettings && requireUserAuthentication) {
+    if (selectedTab?.uuid === TAB_GIT_INTEGRATION.uuid && requireUserAuthentication) {
       updateSettings = setUserGitSettings;
       settings = userGitSettings;
     }
@@ -180,7 +222,7 @@ function SyncData() {
                   </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.
                 </Text>
               </Spacing>
-            )
+            );
           } else if (uuid === 'ssh_private_key') {
             description = (
               <Spacing mb={1}>
@@ -241,12 +283,156 @@ function SyncData() {
   }, [
     additionalGitFields,
     requireUserAuthentication,
+    selectedTab,
     setUserGitSettings,
     setSync,
-    showSyncSettings,
     sync,
     userGitSettings,
   ]);
+
+  const q: { tab?: string } = queryFromUrl();
+  useEffect(() => {
+    if (q?.tab) {
+      setSelectedTab(tabsToUse.find(({ uuid }) => uuid === q?.tab));
+    }
+  }, [q, tabsToUse]);
+
+  const gitSyncFields = useMemo(() => (
+    <>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Text inline>
+          To learn more about One-way git sync, click{' '}
+        </Text>
+        <Link
+          bold
+          href="https://docs.mage.ai/production/data-sync/git-sync"
+          openNewWindow>
+          here
+        </Link>
+      </Spacing>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Text bold>
+          Sync with a specified branch. These settings
+          will be saved at the project level.
+        </Text>
+      </Spacing>
+      <form>
+        {SYNC_FIELDS.map(({
+          autoComplete,
+          disabled,
+          label,
+          required,
+          type,
+          uuid,
+        }: SyncFieldType) => (
+          <Spacing key={uuid} mt={2}>
+            <TextInput
+              autoComplete={autoComplete}
+              disabled={disabled}
+              label={label}
+              // @ts-ignore
+              onChange={e => {
+                setSync(prev => ({
+                  ...prev,
+                  [uuid]: e.target.value,
+                }));
+              }}
+              primary
+              required={required}
+              setContentOnMount
+              type={type}
+              value={sync?.[uuid] || ''}
+            />
+          </Spacing>
+        ))}
+      </form>
+      <FlexContainer alignItems="center">
+        <Spacing mt={2}>
+          <Checkbox
+            checked={sync?.sync_submodules}
+            label="Include submodules"
+            onClick={() => {
+              setSync(prev => ({
+                ...prev,
+                sync_submodules: !sync?.sync_submodules,
+              }));
+            }}
+          />
+        </Spacing>
+      </FlexContainer>
+      <Spacing mt={2}>
+        <Headline level={5}>
+          Additional sync settings
+        </Headline>
+      </Spacing>
+      <FlexContainer alignItems="center">
+        <Spacing mt={2}>
+          <Checkbox
+            checked={sync?.sync_on_pipeline_run}
+            label="Sync before each trigger run"
+            onClick={() => {
+              setSync(prev => ({
+                ...prev,
+                sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
+              }));
+            }}
+          />
+        </Spacing>
+      </FlexContainer>
+      <FlexContainer alignItems="center">
+        <Spacing mt={2}>
+          <Checkbox
+            checked={sync?.sync_on_start}
+            label="Sync on server start up"
+            onClick={() => {
+              setSync(prev => ({
+                ...prev,
+                sync_on_start: !sync?.sync_on_start,
+              }));
+            }}
+          />
+        </Spacing>
+      </FlexContainer>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Text bold>
+          Configure the Git authentication credentials that will be used to sync with
+          the specified Git repository.
+        </Text>
+      </Spacing>
+      {userGitFields}
+    </>
+  ), [sync, userGitFields]);
+
+  const gitIntegrationFields = useMemo(() => (
+    <>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        {!gitIntegrationEnabled && (
+          <Spacing mb={1}>
+            <Text bold warning>
+              When One-way git sync is enabled, you will be unable to access the Git Actions modal.
+              If you want to bypass this safeguard, set the GIT_ENABLE_GIT_INTEGRATION environment
+              variable.
+            </Text>
+          </Spacing>
+        )}
+        <Text bold>
+          We recommend using the <NextLink
+            as="/version-control"
+            href="/version-control"
+          >
+            <Link bold inline>version control app</Link>
+          </NextLink> unless you have a specific need to use the Git Actions modal.
+        </Text>
+      </Spacing>
+      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+        <Text>
+          These fields are required to help Mage configure your Git settings. These settings
+          will be specific to your user.
+        </Text>
+      </Spacing>
+      {userGitFields}
+    </>
+  ), [gitIntegrationEnabled, userGitFields]);
 
   return (
     <SettingsDashboard
@@ -262,17 +448,6 @@ function SyncData() {
         <Headline>
           Git repository settings
         </Headline>
-        <Text>
-          If you are using Github and want to use a more feature rich integration, you can check out
-          the <NextLink
-            as="/version-control"
-            href="/version-control"
-          >
-            <Link inline>version control app</Link>
-          </NextLink>.
-        </Text>
-        <Link>
-        </Link>
         <Spacing mt={1}>
           <Text bold>
             Authentication type
@@ -346,146 +521,27 @@ function SyncData() {
             </Spacing>
           ))}
         </form>
-
+        
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <FlexContainer alignItems="center">
-            <Spacing mr={1}>
-              <Checkbox
-                checked={!!showSyncSettings}
-                onClick={() => setShowSyncSettings(prev => {
-                  // @ts-ignore
-                  const newVal = !prev;
-                  if (!newVal) {
-                    setSync(prevSync => ({
-                      ...prevSync,
-                      branch: null,
-                      sync_on_executor_start: false,
-                      sync_on_pipeline_run: false,
-                      sync_on_start: false,
-                      sync_submodules: false,
-                    }));
-                  }
-                  return newVal;
-                })}
-              />
-            </Spacing>
-            <Text bold>
-              Use <Link
-                bold
-                href="https://docs.mage.ai/production/data-sync/git-sync"
-                openNewWindow>
-                One-way git sync
-              </Link> (Click link for more info)
-            </Text>
-          </FlexContainer>
+          <Divider light />
+        </Spacing>
+        <ButtonTabs
+          onClickTab={({ uuid }) => {
+            goToWithQuery({ tab: uuid });
+          }}
+          selectedTabUUID={selectedTab?.uuid}
+          tabs={tabsToUse}
+          underlineStyle
+        />
+        <Divider light />
+
+        <Spacing ml={2}>
+          {TAB_GIT_SYNC.uuid === selectedTab?.uuid && gitSyncFields}
+
+          {TAB_GIT_INTEGRATION.uuid === selectedTab?.uuid && gitIntegrationFields}
         </Spacing>
 
-        {showSyncSettings ? (
-          <>
-            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Text bold>
-                Sync with a specified branch. These settings
-                will be saved at the project level.
-              </Text>
-            </Spacing>
-            <form>
-              {SYNC_FIELDS.map(({
-                autoComplete,
-                disabled,
-                label,
-                required,
-                type,
-                uuid,
-              }: SyncFieldType) => (
-                <Spacing key={uuid} mt={2}>
-                  <TextInput
-                    autoComplete={autoComplete}
-                    disabled={disabled}
-                    label={label}
-                    // @ts-ignore
-                    onChange={e => {
-                      setSync(prev => ({
-                        ...prev,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
-                    primary
-                    required={required}
-                    setContentOnMount
-                    type={type}
-                    value={sync?.[uuid] || ''}
-                  />
-                </Spacing>
-              ))}
-            </form>
-            <FlexContainer alignItems="center">
-              <Spacing mt={2}>
-                <Checkbox
-                  checked={sync?.sync_submodules}
-                  label="Include submodules"
-                  onClick={() => {
-                    setSync(prev => ({
-                      ...prev,
-                      sync_submodules: !sync?.sync_submodules,
-                    }));
-                  }}
-                />
-              </Spacing>
-            </FlexContainer>
-            <Spacing mt={2}>
-              <Headline level={5}>
-                Additional sync settings
-              </Headline>
-            </Spacing>
-            <FlexContainer alignItems="center">
-              <Spacing mt={2}>
-                <Checkbox
-                  checked={sync?.sync_on_pipeline_run}
-                  label="Sync before each trigger run"
-                  onClick={() => {
-                    setSync(prev => ({
-                      ...prev,
-                      sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
-                    }));
-                  }}
-                />
-              </Spacing>
-            </FlexContainer>
-            <FlexContainer alignItems="center">
-              <Spacing mt={2}>
-                <Checkbox
-                  checked={sync?.sync_on_start}
-                  label="Sync on server start up"
-                  onClick={() => {
-                    setSync(prev => ({
-                      ...prev,
-                      sync_on_start: !sync?.sync_on_start,
-                    }));
-                  }}
-                />
-              </Spacing>
-            </FlexContainer>
-            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Text bold>
-                Configure the Git authentication credentials that will be used to sync with
-                the specified Git repository.
-              </Text>
-            </Spacing>
-            {userGitFields}
-          </>
-        ) : (
-          <>
-            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-              <Text bold>
-                These fields are required to help Mage configure your Git settings. These settings
-                will be specific to your user.
-              </Text>
-            </Spacing>
-            {userGitFields}
-          </>
-        )}
-
-        <Spacing mt={2}>
+        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
           <Button
             loading={isLoadingCreateSync}
             // @ts-ignore
