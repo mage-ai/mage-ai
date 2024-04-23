@@ -3728,7 +3728,7 @@ class ConditionalBlock(AddonBlock):
                 if factory_items:
                     self.configuration = self.configuration or {}
                     self.configuration['factory_items'] = self.factory_items or []
-                    self.configuration['factory_items'] += factory_items
+                    self.configuration['factory_items'] = factory_items
 
             return result
 

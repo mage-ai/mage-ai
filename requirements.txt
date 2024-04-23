@@ -146,13 +146,19 @@ zenpy==2.0.25
 
 # RAG, LLM
 anthropic==0.25.1
-chromadb==0.4.24
+cohere==5.3.2
+en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
 faiss-cpu==1.8.0
+gensim==4.3.2
 neo4j==5.19.0
+# python -m nltk.downloader stopwords punkt wordnet
+nltk==3.8.1
 pgvector==0.2.5
 pytextrank==3.3.0
+replicate==0.25.2
 sentence-transformers==2.6.1
+sentencepiece==0.2.0
 spacy>=3.0.0,<4.0.0
 torch==2.2.2
 transformers==4.39.3

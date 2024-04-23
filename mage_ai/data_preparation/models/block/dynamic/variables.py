@@ -42,7 +42,11 @@ class LazyVariable:
 
         if isinstance(result, list) or isinstance(result, tuple):
             if len(result) == 1:
-                return result[0]
+                item = result[0]
+                if isinstance(item, list) or isinstance(item, tuple):
+                    return result
+                else:
+                    return result[0]
 
         return result
 
