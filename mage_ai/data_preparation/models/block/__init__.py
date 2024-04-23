@@ -1617,7 +1617,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
-            if logger and 'logger' not in global_vars:
+            if logger:
                 global_vars['logger'] = logger
 
             track_spark = from_notebook and self.should_track_spark()
