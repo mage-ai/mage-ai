@@ -161,31 +161,26 @@ function FileTab({
             <>
               <Spacing mr={2} />
 
-              <Tooltip
-                label="Close"
-                size={null}
-                widthFitContent
+              <Link
+                autoHeight
+                block
+                noHoverUnderline
+                noOutline
+                onClick={(e) => {
+                  pauseEvent(e);
+                  onClickTabClose?.(filePath);
+                }}
+                preventDefault
+                title="Close"
               >
-                <Link
-                  autoHeight
-                  block
-                  noHoverUnderline
-                  noOutline
-                  onClick={(e) => {
-                    pauseEvent(e);
-                    onClickTabClose?.(filePath);
-                  }}
-                  preventDefault
-                >
-                  {(focused || selected) && (
-                    <Close
-                      muted={!selected}
-                      size={ICON_SIZE}
-                    />
-                  )}
-                  {!focused && !selected && <div style={{ width: ICON_SIZE }} />}
-                </Link>
-              </Tooltip>
+                {(focused || selected) && (
+                  <Close
+                    muted={!selected}
+                    size={ICON_SIZE}
+                  />
+                )}
+                {!focused && !selected && <div style={{ width: ICON_SIZE }} />}
+              </Link>
             </>
           )}
         </FlexContainer>
