@@ -316,6 +316,10 @@ function useFileComponents({
       && (typeof window === 'undefined'
         || !window.confirm(`${filePath} has unsaved changes, are you sure you want to close this file?`)));
 
+    if (fps?.length > 0) {
+      return;
+    }
+
     const indexes = filePaths?.map((filePath) => openFilePaths?.findIndex((fp: string) => fp === filePath));
     indexes.sort();
     let idx = indexes?.find((index, i) => i >= 1 && index > indexes[i - 1] + 1);
@@ -355,9 +359,11 @@ function useFileComponents({
     }
   }, [
     filesTouched,
-    selectedFilePath,
+    openFilePaths,
     setContentByFilePath,
+    setFilesTouched,
     setOpenFilePaths,
+    setSelectedFilePath,
     status,
   ]);
 
