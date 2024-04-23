@@ -109,7 +109,7 @@ function Branches({
   );
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

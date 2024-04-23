@@ -94,12 +94,12 @@ function Remote({
 
   const branches = useMemo(() => remotes?.find(({
     name,
-  }) => name === actionRemoteName)?.refs?.map(({
-    name,
-  }) => {
-    const parts = name.split('/');
+  }) => name === actionRemoteName)?.refs?.map((ref) => {
+    const {
+      name,
+    } = ref;
     return {
-      name: parts[parts.length - 1],
+      name: name.substring(actionRemoteName.length + 1),
     };
   }), [
     actionRemoteName,
@@ -125,7 +125,7 @@ function Remote({
   );
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -156,7 +156,7 @@ function Remote({
   );
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -175,7 +175,7 @@ function Remote({
   );
 
   const [removeRemote, { isLoading: isLoadingRemoveRemote }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
