@@ -15,10 +15,11 @@ from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
-from mage_ai.settings import get_settings_value
+from mage_ai.settings import get_bool_value, get_settings_value
 from mage_ai.settings.keys import (
     BITBUCKET_HOST,
     GIT_ACCESS_TOKEN,
+    GIT_OVERWRITE_WITH_PROJECT_SETTINGS,
     GIT_SSH_PRIVATE_KEY,
     GIT_SSH_PUBLIC_KEY,
     GITLAB_HOST,
@@ -55,19 +56,23 @@ def get_provider_from_remote_url(remote_url: str) -> str:
         return ProviderName.GITHUB
 
 
-def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = False) -> str:
+def create_ssh_keys(
+    git_config: GitConfig, repo_path: str, overwrite: bool = False
+) -> str:
     if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
         os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
     pubk_secret_name = git_config.ssh_public_key_secret_name
+    overwrite_with_project_settings = get_bool_value(
+        get_settings_value(GIT_OVERWRITE_WITH_PROJECT_SETTINGS)
+    )
     if pubk_secret_name:
         public_key_file = os.path.join(
-            DEFAULT_SSH_KEY_DIRECTORY,
-            f'id_rsa_{pubk_secret_name}.pub'
+            DEFAULT_SSH_KEY_DIRECTORY, f'id_rsa_{pubk_secret_name}.pub'
         )
         if not os.path.exists(public_key_file) or overwrite:
             try:
                 public_key = get_settings_value(GIT_SSH_PUBLIC_KEY)
-                if not public_key:
+                if not public_key or overwrite_with_project_settings:
                     public_key = get_secret_value(
                         pubk_secret_name,
                         repo_name=repo_path,
@@ -83,13 +88,12 @@ def create_ssh_keys(git_config: GitConfig, repo_path: str, overwrite: bool = Fal
     private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
     if pk_secret_name:
         custom_private_key_file = os.path.join(
-            DEFAULT_SSH_KEY_DIRECTORY,
-            f'id_rsa_{pk_secret_name}'
+            DEFAULT_SSH_KEY_DIRECTORY, f'id_rsa_{pk_secret_name}'
         )
         if not os.path.exists(custom_private_key_file) or overwrite:
             try:
                 private_key = get_settings_value(GIT_SSH_PRIVATE_KEY)
-                if not private_key:
+                if not private_key or overwrite_with_project_settings:
                     private_key = get_secret_value(
                         pk_secret_name,
                         repo_name=repo_path,
@@ -145,11 +149,16 @@ def add_host_to_known_hosts(remote_repo_link: str):
 
 def get_access_token(git_config, repo_path: str = None) -> str:
     token = get_settings_value(GIT_ACCESS_TOKEN)
-    if not token and git_config and git_config.access_token_secret_name:
-        token = get_secret_value(
+    overwrite_with_project_settings = get_bool_value(
+        get_settings_value(GIT_OVERWRITE_WITH_PROJECT_SETTINGS)
+    )
+    if git_config and git_config.access_token_secret_name:
+        token_from_secrets = get_secret_value(
             git_config.access_token_secret_name,
             repo_name=repo_path or get_repo_path(),
         )
+        if not token or overwrite_with_project_settings:
+            token = token_from_secrets
 
     return token
 
@@ -182,10 +191,7 @@ async def poll_process_with_timeout(
     if return_code is not None:
         out, err = proc.communicate()
         if return_code != 0:
-            message = (
-                err.decode('UTF-8') if err
-                else error_message
-            )
+            message = err.decode('UTF-8') if err else error_message
             raise ChildProcessError(message)
         else:
             return out.decode('UTF-8') if out else None
@@ -261,11 +267,13 @@ def execute_on_remote_branch(func: Callable, branch) -> None:
                     if hostname:
                         await __add_host_to_known_hosts(remote_name)
                     else:
-                        raise TimeoutError("""
+                        raise TimeoutError(
+                            """
 Connecting to remote timed out, make sure your SSH key is set up properly
 and your repository host is added as a known host. More information
 here: https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts
-""")
+"""
+                        )
             return await func(*args, **kwargs)
         else:
             await check_connection_async(git, remote_name)
@@ -278,7 +286,9 @@ def get_oauth_client_id(provider: str) -> str:
     return f'{provider}_{get_project_uuid()}'
 
 
-def get_oauth_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessToken:
+def get_oauth_access_token_for_user(
+    user: User, provider: str = None
+) -> Oauth2AccessToken:
     if not provider:
         provider = ProviderName.GHE if get_ghe_hostname() else ProviderName.GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)

@@ -80,8 +80,7 @@ class Git:
             if setup_repo:
                 self.__setup_repo()
 
-        if self.repo and self.git_config:
-            self.__set_git_config()
+        self.__set_git_config()
 
         if self.remote_repo_link and self.repo:
             try:
@@ -730,13 +729,23 @@ class Git:
             shutil.rmtree(tmp_path)
 
     def __set_git_config(self):
-        if self.git_config.username:
-            self.repo.config_writer().set_value(
-                'user', 'name', self.git_config.username).release()
-        if self.git_config.email:
-            self.repo.config_writer().set_value(
-                'user', 'email', self.git_config.email).release()
-        self.repo.config_writer('global').set_value(
+        from git.config import GitConfigParser
+        if self.git_config:
+            if self.git_config.username:
+                self.repo.config_writer().set_value(
+                    'user', 'name', self.git_config.username).release()
+            if self.git_config.email:
+                self.repo.config_writer().set_value(
+                    'user', 'email', self.git_config.email).release()
+
+        # This GitConfigParser is created in the same way that GitPython creates a
+        # global config parser. We create it this way to avoid needing to create a
+        # git.Repo object.
+        global_config = GitConfigParser(
+            os.path.normpath(os.path.expanduser("~/.gitconfig")),
+            read_only=False,
+        )
+        global_config.set_value(
             'safe', 'directory', Path(self.repo_path).as_posix()).release()
 
     def __pip_install(self) -> None:
