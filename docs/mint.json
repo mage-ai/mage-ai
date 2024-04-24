@@ -380,7 +380,8 @@
               ]
             },
             "getting-started/kernels",
-            "platform/projects/features"
+            "development/project/features",
+            "development/project/local-timezone"
           ]
         },
         {
