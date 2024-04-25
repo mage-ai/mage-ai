@@ -7,6 +7,10 @@ from kubernetes.client import (
     V1Container,
     V1EnvFromSource,
     V1EnvVar,
+    V1NodeAffinity,
+    V1NodeSelector,
+    V1NodeSelectorRequirement,
+    V1NodeSelectorTerm,
     V1Pod,
     V1PodSpec,
     V1SecretEnvSource,
@@ -377,13 +381,12 @@ class JobManagerTests(TestCase):
 
         # Pod
         self.assertEqual(job.spec.template.spec.affinity, V1Affinity(
-            **dict(
-                node_affinity=dict(
-                    required_during_scheduling_ignored_during_execution=dict(
+                node_affinity=V1NodeAffinity(
+                    required_during_scheduling_ignored_during_execution=V1NodeSelector(
                         node_selector_terms=[
-                            dict(
+                            V1NodeSelectorTerm(
                                 match_expressions=[
-                                    dict(
+                                    V1NodeSelectorRequirement(
                                         key='kubernetes.io/os',
                                         operator='In',
                                         values=['linux']
@@ -394,7 +397,7 @@ class JobManagerTests(TestCase):
                     )
                 )
             )
-        ))
+        )
 
         self.assertEqual(job.spec.template.spec.service_account_name, 'secretaccount')
         self.assertEqual(job.spec.template.spec.image_pull_secrets,
