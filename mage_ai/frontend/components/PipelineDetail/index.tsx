@@ -125,6 +125,7 @@ type PipelineDetailProps = {
   };
   dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
+  disableAutosave?: boolean;
   disableShortcuts: boolean;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
@@ -223,6 +224,7 @@ function PipelineDetail({
   blocksThatNeedToRefresh,
   dataProviders,
   deleteBlock,
+  disableAutosave,
   disableShortcuts,
   fetchFileTree,
   fetchPipeline,
@@ -679,7 +681,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
   useEffect(() => {
     const autoSaveInterval = setInterval(() => {
-      if (pipelineContentTouched) {
+      if (pipelineContentTouched && !disableAutosave) {
         savePipelineContent();
       }
     }, 1000 * 10);
@@ -688,6 +690,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       clearInterval(autoSaveInterval);
     };
   }, [
+    disableAutosave,
     pipelineContentTouched,
     savePipelineContent,
   ]);

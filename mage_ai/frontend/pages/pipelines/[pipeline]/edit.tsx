@@ -98,6 +98,7 @@ import { DEBUG } from '@utils/environment';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
+  LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
@@ -489,6 +490,17 @@ function PipelineDetailPage({
       hideBlockOutputOnExecutionUpdated,
     );
   }, [hideBlockOutputOnExecution]);
+  const [disableAutosave, setDisableAutosave] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE, false),
+  );
+  const toggleDisableAutosave = useCallback(() => {
+    const disableAutosaveUpdated = !disableAutosave;
+    setDisableAutosave(disableAutosaveUpdated);
+    set(
+      LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE,
+      disableAutosaveUpdated,
+    );
+  }, [disableAutosave]);
 
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
@@ -3119,6 +3131,7 @@ function PipelineDetailPage({
       blocksThatNeedToRefresh={blocksThatNeedToRefresh}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
+      disableAutosave={disableAutosave}
       disableShortcuts={disableShortcuts}
       fetchFileTree={fetchFiles}
       fetchPipeline={fetchPipeline}
@@ -3126,9 +3139,9 @@ function PipelineDetailPage({
       files={files}
       globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
-      hideOutputOnExecution={hideBlockOutputOnExecution}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
+      hideOutputOnExecution={hideBlockOutputOnExecution}
       interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       mainContainerRef={mainContainerRef}
@@ -3185,6 +3198,7 @@ function PipelineDetailPage({
     blocksThatNeedToRefresh,
     dataProviders,
     deleteBlock,
+    disableAutosave,
     disableShortcuts,
     fetchFiles,
     fetchPipeline,
@@ -3236,6 +3250,7 @@ function PipelineDetailPage({
         <FileHeaderMenu
           cancelPipeline={cancelPipeline}
           createPipeline={createPipeline}
+          disableAutosave={disableAutosave}
           executePipeline={executePipeline}
           hideOutputOnExecution={hideBlockOutputOnExecution}
           interruptKernel={interruptKernel}
@@ -3244,11 +3259,11 @@ function PipelineDetailPage({
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
           scrollTogether={scrollTogether}
-          setActiveSidekickView={setActiveSidekickView}
           setMessages={setMessages}
           setScrollTogether={setScrollTogether}
           setSideBySideEnabled={setSideBySideEnabled}
           sideBySideEnabled={sideBySideEnabled}
+          toggleDisableAutosave={toggleDisableAutosave}
           toggleHideOutputOnExecution={toggleHideBlockOutputOnExecution}
           updatePipelineMetadata={updatePipelineMetadata}
         />
@@ -3257,6 +3272,7 @@ function PipelineDetailPage({
   }, [
     cancelPipeline,
     createPipeline,
+    disableAutosave,
     executePipeline,
     hideBlockOutputOnExecution,
     interruptKernel,
@@ -3270,6 +3286,7 @@ function PipelineDetailPage({
     setScrollTogether,
     setSideBySideEnabled,
     sideBySideEnabled,
+    toggleDisableAutosave,
     toggleHideBlockOutputOnExecution,
     updatePipelineMetadata,
   ]);

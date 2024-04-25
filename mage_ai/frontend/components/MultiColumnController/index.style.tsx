@@ -5,7 +5,7 @@ import { DRAGGABLE_WIDTH as DRAGGABLE_WIDTH_INIT } from '@components/TripleLayou
 import { transition } from '@oracle/styles/mixins';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
-export const DRAGGABLE_WIDTH = DRAGGABLE_WIDTH_INIT
+export const DRAGGABLE_WIDTH = DRAGGABLE_WIDTH_INIT;
 export const DIVIDER_WIDTH = 2;
 
 export const ColumnStyle = styled.div<{

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FileHeaderMenuItem from './FileHeaderMenuItem';
+import FileHeaderMenuItem, { blankIcon } from './FileHeaderMenuItem';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineType, {
@@ -14,6 +14,7 @@ import Text from '@oracle/elements/Text';
 import useKernel from '@utils/models/kernel/useKernel';
 import useProject from '@utils/models/project/useProject';
 import {
+  Check,
   LayoutSplit,
   LayoutStacked,
 } from '@oracle/icons';
@@ -31,7 +32,6 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SHARED_FILE_HEADER_BUTTON_PROPS } from './constants';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -44,6 +44,7 @@ type FileHeaderMenuProps = {
   children?: any;
   collapseAllBlockOutputs?: (state: boolean) => void;
   createPipeline: (data: any) => void;
+  disableAutosave?: boolean;
   executePipeline: () => void;
   hideOutputOnExecution?: boolean;
   interruptKernel: () => void;
@@ -52,16 +53,13 @@ type FileHeaderMenuProps = {
   restartKernel: () => void;
   savePipelineContent: () => void;
   scrollTogether?: boolean;
-  setActiveSidekickView: (
-    newView: ViewKeyEnum,
-    pushHistory?: boolean,
-  ) => void;
   setMessages: (message: {
     [uuid: string]: KernelOutputType[];
   }) => void;
   setScrollTogether?: (prev: any) => void;
   setSideBySideEnabled?: (prev: any) => void;
   sideBySideEnabled?: boolean;
+  toggleDisableAutosave?: () => void;
   toggleHideOutputOnExecution?: () => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
@@ -71,6 +69,7 @@ function FileHeaderMenu({
   children,
   collapseAllBlockOutputs,
   createPipeline,
+  disableAutosave,
   executePipeline,
   hideOutputOnExecution,
   interruptKernel,
@@ -79,11 +78,11 @@ function FileHeaderMenu({
   restartKernel,
   savePipelineContent,
   scrollTogether,
-  setActiveSidekickView,
   setMessages,
   setScrollTogether,
   setSideBySideEnabled,
   sideBySideEnabled,
+  toggleDisableAutosave,
   toggleHideOutputOnExecution,
   updatePipelineMetadata,
 }: FileHeaderMenuProps) {
@@ -102,6 +101,7 @@ function FileHeaderMenu({
 
   const fileItems = [
     {
+      beforeIcon: blankIcon,
       label: () => 'New standard pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
@@ -112,6 +112,7 @@ function FileHeaderMenu({
       uuid: 'new_standard_pipeline',
     },
     {
+      beforeIcon: blankIcon,
       label: () => 'New streaming pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
@@ -123,6 +124,7 @@ function FileHeaderMenu({
       uuid: 'new_streaming_pipeline',
     },
     {
+      beforeIcon: blankIcon,
       keyTextGroups: [[
         isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
         KEY_SYMBOL_S,
@@ -130,6 +132,12 @@ function FileHeaderMenu({
       label: () => 'Save pipeline',
       onClick: () => savePipelineContent(),
       uuid: 'save_pipeline',
+    },
+    {
+      beforeIcon: disableAutosave ? <Check /> : blankIcon,
+      label: () => 'Disable autosave',
+      onClick: toggleDisableAutosave,
+      uuid: 'Disable_autosave',
     },
   ];
   const runItems = useMemo(() => {
@@ -149,20 +157,20 @@ function FileHeaderMenu({
       //   uuid: 'Delete selected block',
       // },
       {
-        label: () => 'Interrupt kernel',
         keyTextGroups: [
           [KEY_SYMBOL_I],
           [KEY_SYMBOL_I],
         ],
+        label: () => 'Interrupt kernel',
         onClick: () => interruptKernel(),
         uuid: 'Interrupt kernel',
       },
       {
-        label: () => 'Restart kernel',
         keyTextGroups: [
           [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
           [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
         ],
+        label: () => 'Restart kernel',
         onClick: () => restartKernel(),
         uuid: 'Restart kernel',
       },
