@@ -11,6 +11,8 @@ type FileHeaderMenuItemProps = {
   muted?: boolean;
 };
 
+export const blankIcon =  <div style={{ width: ICON_SIZE_DEFAULT }} />;
+
 function FileHeaderMenuItem({
   beforeIcon,
   checked,
@@ -23,7 +25,7 @@ function FileHeaderMenuItem({
         ? beforeIcon
         : (checked
           ?  <Check />
-          :  <div style={{ width: ICON_SIZE_DEFAULT }} />
+          :  blankIcon
         )
       }
 
