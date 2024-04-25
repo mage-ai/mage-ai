@@ -294,7 +294,7 @@ class BlockActionObjectCache(BaseCache):
                     )
 
                     content = None
-                    with open(block_file_absolute_path, 'r') as f:
+                    with open(block_file_absolute_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
                     mapping[OBJECT_TYPE_BLOCK_FILE][key] = dict(
