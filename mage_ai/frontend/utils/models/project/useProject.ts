@@ -16,6 +16,7 @@ export type UseProjectType = {
     CUSTOM_DESIGN: FeatureUUIDEnum;
     DBT_V2: FeatureUUIDEnum;
     DATA_INTEGRATION_IN_BATCH_PIPELINE: FeatureUUIDEnum;
+    GLOBAL_HOOKS: FeatureUUIDEnum;
     INTERACTIONS: FeatureUUIDEnum;
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
     LOCAL_TIMEZONE: FeatureUUIDEnum;
