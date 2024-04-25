@@ -376,10 +376,12 @@
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
                 "integrations/databases/trino",
-                "integrations/databases/weaviate"
+                "integrations/databases/Weaviate"
               ]
             },
-            "getting-started/kernels"
+            "getting-started/kernels",
+            "development/project/features",
+            "development/project/local-timezone"
           ]
         },
         {

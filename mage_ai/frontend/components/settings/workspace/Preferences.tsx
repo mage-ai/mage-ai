@@ -244,7 +244,15 @@ function Preferences({
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
             <Headline level={5}>
-              Features
+              Features&nbsp;
+              <Link
+                bold
+                href="https://docs.mage.ai/development/project/features"
+                largeSm
+                openNewWindow
+              >
+                (docs)
+              </Link>
             </Headline>
           </Spacing>
 

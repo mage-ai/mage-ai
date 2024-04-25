@@ -1,0 +1,74 @@
+---
+title: "Project features"
+description: "Enable features in your Mage project settings."
+---
+
+You can enable or disable the features below in your project's Preferences page,
+found at `/settings/workspace/preferences`.
+
+## Features
+
+### Add new block v2
+
+An improved experience for adding new blocks to your pipeline in the
+Pipeline Editor (`/pipelines/[pipeline_uuid]/edit`), which allows you to
+search for existing block files and use data integration blocks inside of
+a standard (batch) pipeline.
+
+### Command center
+
+Refer to this [page](/developer-ux/command-center/spellcaster) for details on
+the Command Center.
+
+### Compute management (beta)
+
+Adds a `Compute management` tab to the navigation pane that allows you to
+configure Spark using a standalone cluster or AWS EMR.
+
+### Custom design
+
+Allows you to change the header logo. Refer to this [page](/platform/designs/setup)
+for more details and instructions.
+
+### Data integration in batch pipeline
+
+This requires the `Add new block v2` feature above to be enabled as well. It allows
+you to add data integration blocks (as a data loader or data exporter block) inside
+of a standard (batch) pipeline, which lets you load data from different sources
+or export data to different destinations. This allows more flexibility inside of a
+batch pipeline, instead of using a data integration pipeline.
+
+The data integration blocks can be found in the `All blocks -> Data loader -> Sources`
+and `All blocks -> Data exporter -> Destinations` flyout menus in the Pipeline Editor.
+
+### Dbt v2
+
+An improved experience for adding dbt models from your files and configuring/running
+your dbt blocks in the Pipeline Editor (`/pipelines/[pipeline_uuid]/edit`).
+
+### Global hooks (beta)
+
+An advanced feature that adds a `Global hooks` tab to the navigation pane, allowing you
+to create hooks attached to an operation (e.g. create, update, delete) on some resource
+(e.g. Pipeline, Pipeline Run, Block Run) that execute an associated pipeline when a
+certain condition is met.
+
+### Interactions
+
+Refer to this [page](/interactions/overview) for details on block interactions.
+
+### Display local timezone
+
+Refer to this [page](/development/project/local-timezone) for more details on displaying timestamps in your local timezone.
+
+### Notebook block output split view
+
+Allows you to show the block output to the right of a code block (instead of below it)
+in the Pipeline Editor. You can choose where to display the block output by clicking `View`
+in the subheader and selecting "Show output next to code" or "Show output below block".
+
+### Operation history
+
+Keeps track of recently viewed pipelines so you can easily navigate back to them
+in the Pipelines Dashboard (`/pipelines`). Adds a `RECENTLY VIEWED` tab to the Pipelines
+Dashboard that lists these pipelines.

@@ -15,6 +15,7 @@ import {
   HEADLINE_SIZE,
   LARGE,
   LARGE_LG,
+  LARGE_SM,
   REGULAR,
   SMALL,
   XLARGE,
@@ -109,6 +110,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.large && `
     ${LARGE}
+  `}
+
+  ${props => props.largeSm && `
+    ${LARGE_SM}
   `}
 
   ${props => props.largeLg && `
