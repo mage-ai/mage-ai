@@ -9,7 +9,6 @@ import sentry_sdk
 
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
-from mage_ai.orchestration.job_manager import job_manager
 from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
 from mage_ai.settings import (
@@ -26,6 +25,7 @@ logger = Logger().new_server_logger(__name__)
 
 
 def run_scheduler():
+    from mage_ai.orchestration.job_manager import job_manager
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
 
     sentry_dsn = SENTRY_DSN
@@ -98,6 +98,8 @@ class SchedulerManager:
                 time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL / 1000)
 
     def stop_scheduler(self):
+        from mage_ai.orchestration.job_manager import job_manager
+
         logger.info('Stop scheduler.')
         if self.is_alive:
             self.scheduler_process.terminate()
