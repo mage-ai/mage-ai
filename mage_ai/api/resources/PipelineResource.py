@@ -119,6 +119,12 @@ class PipelineResource(BaseResource):
         if include_schedules:
             include_schedules = include_schedules[0]
 
+        repo_path = query.get('repo_path', [None])
+        if repo_path:
+            repo_path = repo_path[0]
+        if not repo_path:
+            repo_path = get_repo_path(root_project=False)
+
         search_query = query.get('search', [None])
         if search_query:
             search_query = search_query[0]
@@ -174,11 +180,11 @@ class PipelineResource(BaseResource):
 
             if NO_TAGS_QUERY in tags:
                 pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
-                all_pipeline_uuids = set(Pipeline.get_all_pipelines(get_repo_path()))
+                all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path))
                 pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
                 pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
-            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+            pipeline_uuids = Pipeline.get_all_pipelines(repo_path)
 
         if search_query:
             pipeline_uuids = list(filter(
@@ -206,7 +212,7 @@ class PipelineResource(BaseResource):
 
         async def get_pipeline(uuid: str) -> Pipeline:
             try:
-                return await Pipeline.get_async(uuid)
+                return await Pipeline.get_async(uuid, repo_path=repo_path)
             except Exception as err:
                 err_message = f'Error loading pipeline {uuid}: {err}.'
                 if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
@@ -217,7 +223,7 @@ class PipelineResource(BaseResource):
 
         def get_pipeline_with_config(uuid, config: Dict) -> Pipeline:
             try:
-                return Pipeline(uuid, config=config)
+                return Pipeline(uuid, config=config, repo_path=repo_path)
             except Exception as err:
                 err_message = f'Error loading pipeline sync {uuid}: {err}.'
                 if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
@@ -239,7 +245,7 @@ class PipelineResource(BaseResource):
                     ))
         else:
             for uuid in pipeline_uuids:
-                pipeline_dict = cache.get_model(dict(uuid=uuid))
+                pipeline_dict = cache.get_model(dict(uuid=uuid, repo_path=repo_path))
                 if pipeline_dict and pipeline_dict.get('pipeline'):
                     pipeline = get_pipeline_with_config(uuid, pipeline_dict['pipeline'])
                     if pipeline:

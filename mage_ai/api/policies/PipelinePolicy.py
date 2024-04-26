@@ -150,6 +150,7 @@ PipelinePolicy.allow_query(
 PipelinePolicy.allow_query([
     'from_history_days',
     'include_schedules',
+    'repo_path',
     'search',
     'status[]',
     'tag[]',

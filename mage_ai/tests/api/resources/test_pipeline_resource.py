@@ -129,7 +129,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline1.uuid,
                             self.pipeline2.uuid,
                             self.pipeline3.uuid,
@@ -172,7 +172,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline3.uuid,
                         ]],
                         any_order=True,
