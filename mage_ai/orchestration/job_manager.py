@@ -13,16 +13,7 @@ class JobType(str, Enum):
 
 class JobManager:
     def __init__(self):
-        self._queue = None
-
-    @property
-    def queue(self):
-        # Delay initalizing the queue with multiprocessing to prevent the
-        # error of staring a new process before the current process has finished
-        # its bootstrapping phase.
-        if self._queue is None:
-            self._queue = QueueFactory.get_queue()
-        return self._queue
+        self.queue = QueueFactory.get_queue()
 
     def add_job(
         self,
