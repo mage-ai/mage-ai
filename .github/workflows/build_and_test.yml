@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: 'poetry'
       - name: Install Python dev dependencies
         run: |
@@ -49,6 +49,7 @@ jobs:
   test_backend:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     needs: check-code-quality
@@ -75,18 +76,18 @@ jobs:
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
 
-      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+      # Run Playwright web UI tests only run once per workflow (Python 3.11).
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: "18.18.0"
-        if: matrix.python-version == '3.10'
+        if: matrix.python-version == '3.11'
       - name: Create Mage test project
         run: |
           python mage_ai/cli/main.py init test_project
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:.
-        if: matrix.python-version == '3.10'
+        if: matrix.python-version == '3.11'
       - name: Build frontend, start server, and run Playwright tests
         run: |
           yarn install &&
@@ -96,7 +97,7 @@ jobs:
         working-directory: mage_ai/frontend/
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
-        if: matrix.python-version == '3.10'
+        if: matrix.python-version == '3.11'
       - uses: actions/upload-artifact@v3
         if: always()
         with:
