@@ -17,6 +17,8 @@ class OutputPolicy(BasePolicy):
                 )
                 if repo_config:
                     self.project_uuid = repo_config.project_uuid
+        else:
+            super().initialize_project_uuid()
 
     @property
     def entity(self):

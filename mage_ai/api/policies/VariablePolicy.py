@@ -10,6 +10,8 @@ class VariablePolicy(BasePolicy):
         parent_model = self.options.get('parent_model')
         if parent_model:
             self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
 
     @property
     def entity(self):

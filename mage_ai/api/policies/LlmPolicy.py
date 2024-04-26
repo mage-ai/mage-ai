@@ -11,6 +11,8 @@ class LlmPolicy(BasePolicy):
         if parent_model:
             if issubclass(parent_model.__class__, Pipeline):
                 self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
 
     @property
     def entity(self):

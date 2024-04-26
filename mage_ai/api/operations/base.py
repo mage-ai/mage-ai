@@ -226,6 +226,9 @@ class BaseOperation():
                     self.user.project_access == 0 and \
                     not self.user.roles:
 
+                import traceback
+                traceback.print_exc()
+
                 if not REQUIRE_USER_PERMISSIONS:
                     err.message = 'You don’t have access to this project. ' + \
                         'Please ask an admin or owner for permissions.'

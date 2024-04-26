@@ -20,6 +20,8 @@ class LogPolicy(BasePolicy):
                     self.project_uuid = repo_config.project_uuid
             elif issubclass(parent_model.__class__, Pipeline):
                 self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
 
     @property
     def entity(self):

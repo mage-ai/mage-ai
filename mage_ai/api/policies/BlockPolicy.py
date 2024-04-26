@@ -18,6 +18,8 @@ class BlockPolicy(BasePolicy):
                     self.project_uuid = repo_config.project_uuid
             else:
                 self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
 
     @property
     def entity(self):
