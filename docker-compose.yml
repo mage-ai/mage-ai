@@ -4,7 +4,7 @@ x-server_settings: &server_settings
   build:
     context: .
     dockerfile: ./dev.Dockerfile
-  command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+  command: ./scripts/server/dev.sh
   environment:
     - ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
     - AUTHENTICATION_MODE=$AUTHENTICATION_MODE

@@ -3049,9 +3049,22 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         # Remote blocks
         if global_vars.get('remote_blocks'):
-            global_vars['remote_blocks'] = [RemoteBlock.load(
-                **remote_block_dict,
-            ).get_outputs() for remote_block_dict in global_vars['remote_blocks']]
+            arr = []
+
+            for remote_block_dict in global_vars['remote_blocks']:
+                if isinstance(remote_block_dict, dict):
+                    rb = None
+
+                    try:
+                        rb = RemoteBlock.load(**remote_block_dict)
+                    except Exception as err:
+                        print(f'[WARNING] block.enrich_global_vars.remote_blocks: {err}')
+
+                    if rb:
+                        rb_outputs = rb.get_outputs()
+                        arr.append(rb_outputs)
+
+            global_vars['remote_blocks'] = arr
 
         factory_items_mapping = {}
         if self.conditional_blocks and len(self.conditional_blocks) > 0:
