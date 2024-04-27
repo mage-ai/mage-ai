@@ -1,7 +1,8 @@
 import re
-from typing import List
+from typing import Dict, List
 
 import inflection
+import pandas as pd
 
 
 def camel_to_snake_case(name):
@@ -68,3 +69,40 @@ def to_ordinal_integers(word: str) -> List[int]:
 
 def size_of_string(string: str) -> float:
     return len(str(string).encode('utf-8'))
+
+
+def shorten_string(s: str, length: int = 256) -> str:
+    """Shorten strings over a certain length and add an ellipsis."""
+    diff = len(s) - length
+    value = s[:length]
+
+    if diff >= 1:
+        value = f'{value}... [truncated {diff} characters]'
+
+    return value
+
+
+def process_value(value, length: int = 16):
+    """Process each value based on its type."""
+    if isinstance(value, str):
+        return shorten_string(value)
+    elif isinstance(value, list):
+        # Shorten the list to 16 elements and process each element
+        return [process_value(item) for item in value[:length]]
+    elif isinstance(value, dict):
+        # Recursively process dictionaries
+        return {k: process_value(v) for k, v in value.items()}
+    else:
+        return value
+
+
+def process_dict_list(dict_list: List[Dict]) -> List[Dict]:
+    """Process a list of dictionaries."""
+    return [process_value(d) for d in dict_list]
+
+
+def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply processing to each cell in a pandas DataFrame."""
+    for col in df.columns:
+        df[col] = df[col].apply(process_value)
+    return df

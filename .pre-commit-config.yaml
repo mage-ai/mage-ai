@@ -1,6 +1,6 @@
 # for when we add pre-push hooks, so users only need to run pre-commit install
 default_install_hook_types: [pre-commit, pre-push]
-exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions|^scripts/pre-start"
+exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions|^scripts/pre-start|^mage_integrations/mage_integrations"
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

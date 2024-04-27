@@ -160,6 +160,7 @@ def __custom_output():
     )
     from mage_ai.shared.environments import is_debug
     from mage_ai.shared.parsers import encode_complex, sample_output
+    from mage_ai.shared.strings import process_dataframe, process_dict_list
 
 
     if pd.__version__ < '1.5.0':
@@ -221,7 +222,7 @@ def __custom_output():
     elif isinstance(_internal_output_return, pd.DataFrame) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
-        _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+        _sample = process_dataframe(_internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}])
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
         for col in _columns:
             try:

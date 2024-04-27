@@ -106,7 +106,7 @@ from mage_ai.shared.path_fixer import (
     get_path_parts,
     remove_base_repo_path,
 )
-from mage_ai.shared.strings import format_enum
+from mage_ai.shared.strings import format_enum, process_dataframe, process_value
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
@@ -2223,6 +2223,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             return merge_dict(data, dict(multi_output=True)), is_data_product
         elif isinstance(data, pd.DataFrame):
+            data = process_dataframe(data)
+
             if csv_lines_only:
                 data = dict(
                     table=data.to_csv(header=True, index=False).strip('\n').split('\n')
@@ -2250,6 +2252,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     row_count, column_count = data.shape
 
                 columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
@@ -2308,7 +2311,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             return data, False
         elif type(data) is str:
             data = dict(
-                text_data=data,
+                text_data=process_value(data),
                 type=DataType.TEXT,
                 variable_uuid=variable_uuid,
             )
@@ -2316,7 +2319,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         elif type(data) is dict or type(data) is list:
             data = dict(
                 text_data=simplejson.dumps(
-                    data,
+                    process_value(data),
                     default=encode_complex,
                     ignore_nan=True,
                 ),
@@ -2326,6 +2329,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             return data, False
         elif is_spark_dataframe(data):
             df = data.toPandas()
+            df = process_dataframe(df)
             columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
             data = dict(
                 sample_data=dict(

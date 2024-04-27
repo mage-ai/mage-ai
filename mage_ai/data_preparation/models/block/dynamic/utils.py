@@ -18,6 +18,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.shared.strings import process_dataframe, process_dict_list
 
 
 class DynamicBlockFlag(str, Enum):
@@ -244,6 +245,7 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
         row_count, column_count = dataframe.shape
+        dataframe = process_dataframe(dataframe)
 
         data = dict(
             columns=columns_to_display,
@@ -258,7 +260,7 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     else:
         data = dict(
             columns=['col0'],
-            rows=[[dataframe[:DATAFRAME_SAMPLE_COUNT_PREVIEW]]],
+            rows=[process_dict_list([dataframe[:DATAFRAME_SAMPLE_COUNT_PREVIEW]])],
             index=[0],
             shape=[1, 1],
         )
@@ -276,17 +278,17 @@ def coerce_into_dataframe(child_data: Union[
     if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
         if isinstance(item, pd.DataFrame):
-            child_data = child_data
+            child_data = process_dataframe(child_data)
         elif isinstance(item, dict):
-            child_data = pd.DataFrame(child_data)
+            child_data = pd.DataFrame(process_dict_list([child_data]))
         else:
             child_data = pd.DataFrame(
-                [dict(col=value) for value in child_data],
+                process_dict_list([dict(col=value) for value in child_data]),
             )
     elif isinstance(child_data, pd.DataFrame):
         return child_data
     else:
-        child_data = pd.DataFrame([dict(col=child_data)])
+        child_data = pd.DataFrame(process_dict_list([dict(col=child_data)]))
 
     return child_data
 
