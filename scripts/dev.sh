@@ -1,4 +1,5 @@
 #!/bin/bash
+LLM=0
 PROJECT_NAME="$1"
 
 POSITIONAL=()
@@ -137,6 +138,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --llm)
+    LLM="$3"
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -181,11 +187,15 @@ export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export DEBUG=$DEBUG
 export MAGE_DATA_DIR=$MAGE_DATA_DIR
 
-# UP_SERVICES="server app"
-UP_SERVICES="server app neo4j postgres"
+UP_SERVICES="server app"
 
 if [[ "$SPARK" == "1" ]]; then
     UP_SERVICES="server_spark app_spark"
+fi
+
+# Conditionally add neo4j and postgres if LLM=1
+if [[ "$LLM" == "1" ]]; then
+    UP_SERVICES="$UP_SERVICES neo4j postgres"
 fi
 
 if command -v docker-compose &> /dev/null
@@ -196,7 +206,6 @@ then
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
     docker-compose -f docker-compose.yml -f docker-compose.override.yml up $UP_SERVICES
-    # docker-compose -f docker-compose.yml up $UP_SERVICES
 else
     # docker-compose does not exist
     HOST=$HOST \
@@ -204,5 +213,4 @@ else
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
     docker compose -f docker-compose.yml -f docker-compose.override.yml up $UP_SERVICES
-    # docker compose -f docker-compose.yml up $UP_SERVICES
 fi
