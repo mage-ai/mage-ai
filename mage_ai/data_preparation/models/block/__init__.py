@@ -1467,7 +1467,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
-                if not isinstance(kwargs_var, pd.DataFrame) and kwargs_var:
+                if not isinstance(kwargs_var, pd.DataFrame) and \
+                        not isinstance(kwargs_var, pd.Series) and \
+                        kwargs_var:
+
                     if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
                         global_vars_copy.update(kwargs_var)
 

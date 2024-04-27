@@ -510,8 +510,11 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             elif isinstance(child_data, dict):
                 input_vars.append(child_data.get(index))
 
-            if metadata and index < len(metadata):
-                kwargs_vars.append(metadata[index])
+            if metadata is not None and index < len(metadata):
+                if isinstance(metadata, pd.DataFrame) or isinstance(metadata, pd.Series):
+                    kwargs_vars.append(metadata.iloc[index])
+                else:
+                    kwargs_vars.append(metadata[index])
         else:
             from mage_ai.data_preparation.models.block.utils import (
                 fetch_input_variables,
