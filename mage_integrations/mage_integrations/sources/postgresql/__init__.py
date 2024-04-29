@@ -96,6 +96,7 @@ class PostgreSQL(Source):
         * attnum: stores the attribute number (column number) within the table or composite type.
             It serves as the ordinal position of the attribute within the table.
         * attnotnull: stores information about whether an attribute allows NULL values or not.
+        * attisdropped: whether the attribute has been dropped (removed) from the table.
 
         pg_attrdef: stores default values for table columns.
         * adbin:  stores the binary representation of the default value expression. It contains the
@@ -145,6 +146,7 @@ LEFT JOIN
         AND pg_attribute.attnum = pg_attrdef.adnum
 WHERE
   pg_attribute.attnum > -1
+    AND pg_attribute.attisdropped = 'f'
     AND pg_class.relkind IN ('r', 'v', 'm', 'f')
     AND nspname = '{schema}'
         """
