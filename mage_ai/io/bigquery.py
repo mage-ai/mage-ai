@@ -242,6 +242,7 @@ WHERE TABLE_NAME = '{table_name}'
             elif len(parts) == 3:
                 database, schema, table_name = parts
 
+            database = database or self.default_database()
             df_existing = self.client.query(f"""
 SELECT 1
 FROM `{database}.{schema}.__TABLES_SUMMARY__`
