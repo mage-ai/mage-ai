@@ -524,7 +524,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if BlockLanguage.YAML == self.language:
                 content = await self.content_async()
                 if content:
-                    text = self.interpolate_content(content)
+                    try:
+                        text = self.interpolate_content(content)
+                    except Exception:
+                        traceback.print_exc()
+                        text = content
                     settings = yaml.safe_load(text)
                     uuid = settings.get('source') or settings.get('destination')
                     mapping = grouped_templates.get(uuid) or {}

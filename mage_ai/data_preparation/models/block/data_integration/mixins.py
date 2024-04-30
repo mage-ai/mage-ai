@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
     BlockLanguage,
     BlockType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -229,7 +230,8 @@ class DataIntegrationMixin:
             return False
 
         if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
-                BlockLanguage.YAML == self.language:
+                BlockLanguage.YAML == self.language and \
+                self.pipeline.type != PipelineType.STREAMING:
 
             return True
 
