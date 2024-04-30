@@ -14,7 +14,7 @@ from inspect import Parameter, isfunction, signature
 from logging import Logger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import inflection
 import pandas as pd
@@ -680,31 +680,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return table_name
 
     @property
-    def full_table_name(self) -> str:
+    def full_table_name(self) -> Optional[str]:
         from mage_ai.data_preparation.models.block.sql.utils.shared import (
-            extract_create_statement_table_name,
-            extract_insert_statement_table_names,
-            extract_update_statement_table_names,
+            extract_full_table_name,
         )
 
-        if not self.content:
-            return None
-
-        table_name = extract_create_statement_table_name(self.content)
-        if table_name:
-            return table_name
-
-        matches = extract_insert_statement_table_names(self.content)
-        if len(matches) == 0:
-            matches = extract_update_statement_table_names(self.content)
-
-        if len(matches) == 0:
-            return None
-
-        return matches[len(matches) - 1]
+        return extract_full_table_name(self.content)
 
     @classmethod
-    def after_create(self, block: 'Block', **kwargs) -> None:
+    def after_create(cls, block: 'Block', **kwargs) -> None:
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
