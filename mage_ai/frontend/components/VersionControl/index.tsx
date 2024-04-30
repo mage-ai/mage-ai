@@ -82,9 +82,7 @@ function VersionControl() {
     }
   }, [q]);
 
-  const { data: dataBranches, mutate: fetchBranches } = api.git_custom_branches.list({
-    include_remote_branches: 1,
-  });
+  const { data: dataBranches, mutate: fetchBranches } = api.git_custom_branches.list();
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_custom_branches, [dataBranches]);
 
   useEffect(() => {

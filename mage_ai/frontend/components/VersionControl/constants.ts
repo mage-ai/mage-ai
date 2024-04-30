@@ -10,6 +10,10 @@ export const ACTION_REBASE = 'rebase';
 export const ACTION_RESET = 'reset';
 export const ACTION_RESET_HARD = 'reset --hard';
 
+export const ADDITIONAL_ARGUMENTS = {
+  [ACTION_FETCH]: ['prune'],
+};
+
 export const LOCAL_STORAGE_GIT_REMOTE_NAME = 'git_remote_name';
 export const LOCAL_STORAGE_GIT_REPOSITORY_NAME = 'git_repository_name';
 

@@ -37,6 +37,7 @@ def switch_branch(
     token: str,
     config_overwrite: Dict = None,
     user: User = None,
+    **kwargs,
 ):
     from mage_ai.data_preparation.git import Git
     provider = get_provider_from_remote_url(remote_url)
@@ -67,6 +68,7 @@ def fetch(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ):
     """
     Returns:
@@ -89,7 +91,7 @@ def fetch(
     remote.set_url(url)
 
     try:
-        remote.fetch(progress=custom_progress)
+        remote.fetch(progress=custom_progress, **kwargs)
     except Exception as err:
         raise err
     finally:
@@ -109,6 +111,7 @@ def pull(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ):
     """
     Returns:
@@ -190,6 +193,7 @@ def push(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ):
     """
     Returns:
@@ -218,6 +222,7 @@ def reset_hard(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
@@ -248,6 +253,7 @@ def clone(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 

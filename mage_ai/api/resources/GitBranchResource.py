@@ -187,6 +187,13 @@ class GitBranchResource(GenericResource):
         action_payload = payload.get('action_payload', dict())
         action_remote = action_payload.get('remote', None)
         action_branch = action_payload.get('branch', None)
+        action_arg = action_payload.get('arg', None)
+
+        # Eventually we would want to give the user the ability to pass in multiple
+        # arguments to the action, but for now we will just pass in a single argument.
+        action_kwargs = dict()
+        if action_arg:
+            action_kwargs[action_arg] = True
 
         files = payload.get('files', None)
         message = payload.get('message', None)
@@ -239,6 +246,7 @@ class GitBranchResource(GenericResource):
                             action_branch,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
                         if custom_progress.other_lines:
                             lines = custom_progress.other_lines
@@ -269,6 +277,7 @@ class GitBranchResource(GenericResource):
                                 action_branch,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
                         else:
                             custom_progress = api.fetch(
@@ -276,6 +285,7 @@ class GitBranchResource(GenericResource):
                                 url,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
 
                         if custom_progress and custom_progress.other_lines:
@@ -304,6 +314,7 @@ class GitBranchResource(GenericResource):
                             url,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
 
                         if custom_progress and custom_progress.other_lines:
@@ -337,6 +348,7 @@ class GitBranchResource(GenericResource):
                                 action_branch,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
                         else:
                             self.model[
@@ -357,6 +369,7 @@ class GitBranchResource(GenericResource):
                             url,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
                     else:
                         self.model[
