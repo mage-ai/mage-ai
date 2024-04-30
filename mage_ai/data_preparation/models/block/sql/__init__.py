@@ -21,6 +21,7 @@ from mage_ai.data_preparation.models.block.sql import (
     trino,
 )
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    extract_full_table_name,
     has_create_or_insert_statement,
     has_drop_statement,
     has_update_statement,
@@ -662,6 +663,29 @@ def execute_raw_sql(
     should_query: bool = False,
     disable_query_preprocessing: bool = False,
 ) -> List[Any]:
+    """
+    Execute raw SQL queries with optional preprocessing and post-processing.
+
+    Args:
+        loader (Loader): The loader object responsible for executing queries.
+        block (Block): The SQL block object.
+        query_string (str): The SQL query string to execute.
+        configuration (Dict, optional): Additional configuration parameters for the query execution.
+            Defaults to None.
+        should_query (bool, optional): Flag indicating whether to perform query execution.
+            Defaults to False.
+        disable_query_preprocessing (bool, optional): Flag indicating whether to disable query
+            preprocessing. Defaults to False.
+
+    Returns:
+        List[Any]: A list containing the query results or an empty list if no results are expected.
+
+    Note:
+        This method preprocesses the query string, executes the queries, and performs
+        post-processing as needed. If `should_query` is False, it only preprocesses the query
+        without executing it.
+
+    """
     if configuration is None:
         configuration = {}
 
@@ -686,9 +710,11 @@ def execute_raw_sql(
             queries.append(query)
             fetch_query_at_indexes.append(True)
 
-    if should_query and (has_create_or_insert or has_update) and block.full_table_name:
-        queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
-        fetch_query_at_indexes.append(block.full_table_name)
+    if should_query and (has_create_or_insert or has_update):
+        full_table_name = extract_full_table_name(query_string)
+        if full_table_name:
+            queries.append(f'SELECT * FROM {full_table_name} LIMIT 1000')
+            fetch_query_at_indexes.append(full_table_name)
 
     if should_query:
         results = loader.execute_queries(

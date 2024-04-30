@@ -55,7 +55,7 @@ class SQLBlockSharedUtilsTest(DBTestCase):
         self.assertEqual(extract_create_statement_table_name(text), expected_result)
 
     def test_extract_insert_statement_table_names(self):
-        # Test case 1: Basic test with one INSERT statement
+        # Test case 1: Basic test with one INSERT statement and remove comment
         text = """
         -- This is a comment
         INSERT INTO table_name
@@ -77,6 +77,31 @@ class SQLBlockSharedUtilsTest(DBTestCase):
         SELECT * FROM table_name;
         """
         expected_result = []
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 4: Multiple INSERT statements
+        text = """
+            INSERT INTO table1 VALUES (1, 'John');
+            INSERT INTO table2 VALUES (2, 'Jane');
+            """
+        expected_result = ["table1", "table2"]
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 5: IGNORE INSERT statement
+        text = "INSERT IGNORE INTO table3 VALUES (3, 'Alice');"
+        expected_result = ["table3"]
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 6: case insensitivity
+        text = "insert into TABLE5 values (5, 'Eve');"
+        expected_result = ["TABLE5"]
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 7: Multiple spaces
+        text = """
+        INSERT   INTO   table_name VALUES (1, 'John');
+        """
+        expected_result = ['table_name']
         self.assertEqual(extract_insert_statement_table_names(text), expected_result)
 
     def test_extract_drop_statement_table_names(self):

@@ -1,6 +1,6 @@
 import re
 from os import path
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from jinja2 import StrictUndefined, Template
 from pandas import DataFrame
@@ -482,7 +482,7 @@ def remove_comments(text: str) -> str:
     return '\n'.join(line for line in lines if not line.startswith('--'))
 
 
-def extract_create_statement_table_name(text: str) -> str:
+def extract_create_statement_table_name(text: str) -> Optional[str]:
     create_table_pattern = r'create table(?: if not exists)*'
 
     statement_partial, _ = extract_and_replace_text_between_strings(
@@ -507,7 +507,7 @@ def extract_create_statement_table_name(text: str) -> str:
 
 def extract_insert_statement_table_names(text: str) -> List[str]:
     matches = re.findall(
-        r'insert(?: overwrite)*(?: into)*[\s]+([\w.]+)',
+        r'insert(?:\s+ignore)?(?:\s+overwrite)?(?:\s+into)?[\s]+([\w.]+)',
         remove_comments(text),
         re.IGNORECASE,
     )
@@ -530,6 +530,24 @@ def extract_update_statement_table_names(text: str) -> List[str]:
         re.IGNORECASE,
     )
     return matches
+
+
+def extract_full_table_name(text: str) -> Optional[str]:
+    if not text:
+        return None
+
+    table_name = extract_create_statement_table_name(text)
+    if table_name:
+        return table_name
+
+    matches = extract_insert_statement_table_names(text)
+    if len(matches) == 0:
+        matches = extract_update_statement_table_names(text)
+
+    if len(matches) == 0:
+        return None
+
+    return matches[len(matches) - 1]
 
 
 def has_create_or_insert_statement(text: str) -> bool:
