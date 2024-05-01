@@ -130,7 +130,7 @@ function Header({
     project: projectInit,
     rootProject,
     updateProject,
-  } = useProject({ showError });
+  } = useProject({ showError: hideActions ? null : showError });
   const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
   const commandCenterEnabled = useMemo(() =>
