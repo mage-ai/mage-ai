@@ -239,12 +239,14 @@ class Redshift(BaseSQL):
                         col_with_types = ', '.join(col_with_types)
                         query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
                         cur.execute(query)
+                    if df.shape[0] > 0:
+                        columns = ', '.join([t[0] for t in columns_with_type])
+                        values = [f"""({', '.join([format_value(x) for x in v])})"""
+                                  for v in df.values]
+                        values = ', '.join(values)
+                        query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
 
-                    columns = ', '.join([t[0] for t in columns_with_type])
-                    values = [f"""({', '.join([format_value(x) for x in v])})""" for v in df.values]
-                    values = ', '.join(values)
-                    query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
-                    cur.execute(query)
+                        cur.execute(query)
 
                 self.conn.commit()
 
