@@ -27,6 +27,7 @@ import {
   ACTION_PULL,
   ACTION_RESET,
   ACTION_RESET_HARD,
+  ADDITIONAL_ARGUMENTS,
 } from '../constants';
 import {
   Add,
@@ -78,6 +79,7 @@ function Remote({
   const [actionError, setActionError] = useState<string>(null);
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
+  const [actionArgument, setActionArgument] = useState<string>(null);
   const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
@@ -620,7 +622,7 @@ function Remote({
                   ))}
                 </Select>
                 
-                {![ACTION_FETCH, ACTION_CLONE].includes(actionName) && (
+                {[ACTION_PULL, ACTION_RESET_HARD].includes(actionName) && (
                   <Spacing ml={1}>
                     <Select
                       beforeIcon={<Branch />}
@@ -633,6 +635,23 @@ function Remote({
                       {branches?.map(({ name }) => (
                         <option key={name} value={name}>
                           {name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+                )}
+
+                {ADDITIONAL_ARGUMENTS[actionName] && (
+                  <Spacing ml={1}>
+                    <Select
+                      label="Additional argument"
+                      monospace
+                      onChange={e => setActionArgument(e.target.value)}
+                      value={actionArgument || ''}
+                    >
+                      {ADDITIONAL_ARGUMENTS[actionName]?.map((name) => (
+                        <option key={name} value={name}>
+                          {capitalizeRemoveUnderscoreLower(name)}
                         </option>
                       ))}
                     </Select>
@@ -711,6 +730,7 @@ function Remote({
                       actionGitBranch({
                         git_custom_branch: {
                           action_payload: {
+                            arg: actionArgument,
                             branch: actionBranchName,
                             remote: actionRemoteName,
                           },
