@@ -2,7 +2,7 @@ attrs==17.4.0
 azure-storage-blob==12.14.1
 backoff
 clickhouse_sqlalchemy~=0.2.4
-couchbase==4.1.1
+couchbase==4.1.6
 deltalake==0.7.0
 elasticsearch==8.9.0
 facebook_business==17.0.2

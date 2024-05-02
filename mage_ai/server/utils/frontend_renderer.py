@@ -1,14 +1,12 @@
-from IPython import get_ipython
-from IPython.display import IFrame, Javascript, display
-from enum import Enum
-from mage_ai.server.app import (
-    server_config,
-)
-from mage_ai.server.constants import SERVER_PORT
-from mage_ai.server.logger import Logger
-
 import os
 
+from IPython import get_ipython
+from IPython.display import IFrame, Javascript, display
+
+from mage_ai.server.app import server_config
+from mage_ai.server.constants import SERVER_PORT
+from mage_ai.server.logger import Logger
+from mage_ai.shared.enum import StrEnum
 
 FRONTEND_DIST_PATH = os.path.abspath(
     os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend_dist'),
@@ -19,7 +17,7 @@ IFRAME_HEIGHT = 1000
 logger = Logger().new_server_logger(__name__)
 
 
-class NotebookType(str, Enum):
+class NotebookType(StrEnum):
     DATABRICKS = 'databricks'
     GOOGLE_COLAB = 'google_colab'
     SAGEMAKER = 'sagemaker'
@@ -36,7 +34,8 @@ def infer_notebook_type():
         return None
 
 
-def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None, config={}):
+def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None, config=None):
+    config = dict(config) if config is not None else {}
     path_to_server = f'http://{host}:{port}'
 
     def __print_url():
@@ -72,7 +71,8 @@ def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None
         display(IFrame(path_to_server, width='95%', height=1000))
 
 
-def update_frontend_urls(host=None, port=None, notebook_type=None, config={}):
+def update_frontend_urls(host=None, port=None, notebook_type=None, config=None):
+    config = dict(config) if config is not None else {}
     if notebook_type == NotebookType.DATABRICKS:
         required_args = [
             'cluster_id',

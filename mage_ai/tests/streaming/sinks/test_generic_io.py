@@ -4,7 +4,6 @@ from unittest.mock import ANY, MagicMock, call, patch
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from mage_ai.streaming.sinks.generic_io import GenericIOSink
 from mage_ai.tests.base_test import TestCase
 
 TEST_DATABASES = [
@@ -52,12 +51,12 @@ TEST_DATABASES = [
 
 
 class GenericIOTests(TestCase):
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_init_client(self, mock_import_module, mock_config_loader):
+    def test_init_client(self, mock_import_module):
         first_db = True
         for database in TEST_DATABASES:
-            mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+            mock_objects = self.__mock_objects(mock_import_module, database)
+            mock_config_loader = mock_objects['config_loader']
 
             # Assertions
             if first_db:
@@ -74,11 +73,10 @@ class GenericIOTests(TestCase):
             mock_objects['io_client'].close.assert_called_once()
             first_db = False
 
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_write(self, mock_import_module, mock_config_loader):
+    def test_write(self, mock_import_module):
         database = TEST_DATABASES[0]
-        mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+        mock_objects = self.__mock_objects(mock_import_module, database)
 
         mock_objects['sink'].batch_write = MagicMock()
 
@@ -90,11 +88,10 @@ class GenericIOTests(TestCase):
         # Assertions
         mock_objects['sink'].batch_write.assert_called_once_with([message])
 
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_batch_write(self, mock_import_module, mock_config_loader):
+    def test_batch_write(self, mock_import_module):
         database = TEST_DATABASES[0]
-        mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+        mock_objects = self.__mock_objects(mock_import_module, database)
         mock_objects['io_client'].export = MagicMock()
 
         # Test data
@@ -130,23 +127,34 @@ class GenericIOTests(TestCase):
             ]),
         )
 
-    def __mock_objects(self, mock_import_module, mock_config_loader, database):
+    def __mock_objects(self, mock_import_module, database):
+        from mage_ai.streaming.sinks.generic_io import GenericIOSink
+
         mock_io_module = MagicMock()
         mock_io_class = MagicMock()
         mock_io_client = MagicMock()
         mock_import_module.return_value = mock_io_module
         mock_io_class.with_config.return_value = mock_io_client
+
+        mock_config_loader = MagicMock()
         mock_config_loader_instance = mock_config_loader.return_value
+
         setattr(mock_io_module, database['class_name'], mock_io_class)
-        generic_io_sink = GenericIOSink(dict(
-            connector_type=database['connector_type'],
-            profile='test_profile',
+
+        generic_io_sink = GenericIOSink(
             config=dict(
-                table_name='test_table',
-            )
-        ))
+                connector_type=database['connector_type'],
+                profile='test_profile',
+                config=dict(
+                    table_name='test_table',
+                )
+            ),
+            config_loader_class=mock_config_loader,
+        )
+
         return dict(
             config_loader_instance=mock_config_loader_instance,
+            config_loader=mock_config_loader,
             io_module=mock_io_module,
             io_class=mock_io_class,
             io_client=mock_io_client,

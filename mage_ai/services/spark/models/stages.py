@@ -1,25 +1,25 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List
 
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.metrics import Metrics
+from mage_ai.shared.enum import StrEnum
 
 
-class Locality(str, Enum):
+class Locality(StrEnum):
     NODE_LOCAL = 'NODE_LOCAL'
     PROCESS_LOCAL = 'PROCESS_LOCAL'
     RACK_LOCAL = 'RACK_LOCAL'
 
 
-class StageStatus(str, Enum):
+class StageStatus(StrEnum):
     COMPLETE = 'COMPLETE'
     PENDING = 'PENDING'
     SKIPPED = 'SKIPPED'
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     SUCCESS = 'SUCCESS'
 
 

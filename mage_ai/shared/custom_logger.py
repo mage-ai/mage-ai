@@ -1,15 +1,15 @@
 import inspect
 import logging
-from enum import Enum
 
 import simplejson
 
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_deus_ex_machina
 from mage_ai.shared.parsers import encode_complex
 
 
-class Color(str, Enum):
+class Color(StrEnum):
     BLUE = "\x1b[1;34m"
     BOLD_RED = "\x1b[31;1m"
     GREEN = "\x1b[1;32m"

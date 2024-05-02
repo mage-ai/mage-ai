@@ -1,4 +1,3 @@
-import enum
 import io
 import os
 from typing import Dict
@@ -8,9 +7,10 @@ from mysql.connector import connect
 from sshtunnel import SSHTunnelForwarder
 
 from mage_integrations.connections.sql.base import Connection
+from mage_integrations.utils.enum import StrEnum
 
 
-class ConnectionMethod(str, enum.Enum):
+class ConnectionMethod(StrEnum):
     DIRECT = 'direct'
     SSH_TUNNEL = 'ssh_tunnel'
 

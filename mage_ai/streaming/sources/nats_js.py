@@ -1,5 +1,4 @@
 import asyncio
-import enum
 import json
 import ssl
 import threading
@@ -10,6 +9,7 @@ import nats
 from nats.errors import NoServersError, TimeoutError
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
 
@@ -22,7 +22,7 @@ class SSLConfig:
     check_hostname: bool = False
 
 
-class ConsumerType(str, enum.Enum):
+class ConsumerType(StrEnum):
     PULL = "PULL"
     PUSH = "PUSH"
 

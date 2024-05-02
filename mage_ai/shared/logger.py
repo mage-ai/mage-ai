@@ -2,10 +2,10 @@ import json
 import logging
 import time
 from contextlib import contextmanager, redirect_stdout
-from enum import Enum
 from typing import Callable, List
 
 from mage_ai.settings import SERVER_LOGGING_TEMPLATE
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import merge_dict
 
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ def set_logging_format(logging_format: str = None, level: str = None) -> None:
             root_logger.exception('Invalid logging level %s', level)
 
 
-class LoggingLevel(str, Enum):
+class LoggingLevel(StrEnum):
     DEBUG = 'DEBUG'
     INFO = 'INFO'
     WARNING = 'WARNING'

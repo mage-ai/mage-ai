@@ -1,10 +1,10 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID'
 CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY'
 
 
-class ClusterStatusState(str, Enum):
+class ClusterStatusState(StrEnum):
     BOOTSTRAPPING = 'BOOTSTRAPPING'
     RUNNING = 'RUNNING'
     STARTING = 'STARTING'

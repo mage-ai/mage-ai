@@ -1,12 +1,12 @@
 import json
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Callable, Dict
 
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_test
 
 
-class SourceConsumeMethod(str, Enum):
+class SourceConsumeMethod(StrEnum):
     BATCH_READ = 'BATCH_READ'
     READ = 'READ'
     READ_ASYNC = 'READ_ASYNC'

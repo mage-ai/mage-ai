@@ -1,9 +1,10 @@
-from mage_ai.data_cleaner.column_types.constants import ColumnType
-from enum import Enum
-import pandas as pd
-import numpy as np
 import re
 
+import numpy as np
+import pandas as pd
+
+from mage_ai.data_cleaner.column_types.constants import ColumnType
+from mage_ai.shared.enum import StrEnum
 
 CONSTANT_IMPUTATION_DEFAULTS = {
     ColumnType.CATEGORY: 'missing',
@@ -34,7 +35,7 @@ INVALID_VALUE_PLACEHOLDERS = {
 }
 
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     ADD = 'add'
     AVERAGE = 'average'
     CLEAN_COLUMN_NAME = 'clean_column_name'
@@ -73,18 +74,18 @@ class ActionType(str, Enum):
     STANDARDIZE = 'standardize'
 
 
-class Axis(str, Enum):
+class Axis(StrEnum):
     COLUMN = 'column'
     ROW = 'row'
 
 
-class VariableType(str, Enum):
+class VariableType(StrEnum):
     FEATURE = 'feature'
     FEATURE_SET = 'feature_set'
     FEATURE_SET_VERSION = 'feature_set_version'
 
 
-class Operator(str, Enum):
+class Operator(StrEnum):
     CONTAINS = 'contains'
     NOT_CONTAINS = 'not contains'
     EQUALS = '=='
@@ -95,7 +96,7 @@ class Operator(str, Enum):
     LESS_THAN_OR_EQUALS = '<='
 
 
-class ImputationStrategy(str, Enum):
+class ImputationStrategy(StrEnum):
     AVERAGE = 'average'
     COLUMN = 'column'
     CONSTANT = 'constant'

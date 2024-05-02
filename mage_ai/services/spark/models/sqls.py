@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List
 
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.stages import StageAttempt
+from mage_ai.shared.enum import StrEnum
 
 
-class SqlStatus(str, Enum):
+class SqlStatus(StrEnum):
     COMPLETED = 'COMPLETED'
 
 

@@ -45,9 +45,13 @@ class GenericIOConfig(BaseConfig):
 class GenericIOSink(BaseSink):
     config_class = GenericIOConfig
 
+    def __init__(self, config: Dict, config_loader_class=None, **kwargs):
+        self.config_loader_class = config_loader_class or ConfigFileLoader
+        super().__init__(config, **kwargs)
+
     def init_client(self):
         config_path = os.path.join(get_repo_path(), 'io_config.yaml')
-        config_file_loader = ConfigFileLoader(config_path, self.config.profile)
+        config_file_loader = self.config_loader_class(config_path, self.config.profile)
 
         self.io_client = self.__io_class().with_config(config_file_loader)
         if hasattr(self.io_client, 'open') and callable(self.io_client.open):
