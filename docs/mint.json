@@ -302,6 +302,7 @@
                 "streaming/destinations/mssql",
                 "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
+                "streaming/destinations/oracledb",
                 "streaming/destinations/postgres",
                 "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
