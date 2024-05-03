@@ -27,6 +27,7 @@ import SyncType, {
 } from '@interfaces/SyncType';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
 import api from '@api';
 import {
   PADDING_UNITS,
@@ -37,12 +38,10 @@ import {
   SECTION_ITEM_UUID_GIT_SETTINGS,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
+import { VariableType } from '@interfaces/PipelineVariableType';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
-import SecretType from '@interfaces/SecretType';
-import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
-import { VariableType } from '@interfaces/PipelineVariableType';
 
 const TAB_GIT_SYNC = {
   label: () => 'One-way Git Sync',
