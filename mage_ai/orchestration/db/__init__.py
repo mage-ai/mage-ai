@@ -30,6 +30,7 @@ if OTEL_EXPORTER_OTLP_ENDPOINT:
 
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
+    db_kwargs['connect_args']['check_same_thread'] = False
 elif not db_connection_url:
     pg_db_connection_url = get_postgres_connection_url()
 

@@ -27,6 +27,7 @@ import SyncType, {
 } from '@interfaces/SyncType';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
 import api from '@api';
 import {
   PADDING_UNITS,
@@ -37,6 +38,7 @@ import {
   SECTION_ITEM_UUID_GIT_SETTINGS,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
+import { VariableType } from '@interfaces/PipelineVariableType';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
@@ -67,7 +69,7 @@ export interface SyncFieldType {
 }
 
 function SyncData() {
-  const { data: dataSyncs } = api.syncs.list();
+  const { data: dataSyncs, mutate: fetchSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
   const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
@@ -156,6 +158,28 @@ function SyncData() {
     },
   );
 
+  const [deleteSecret] = useMutation(
+    (name: string) => api.secrets.useDelete(name)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchSyncs();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            // @ts-ignore
+            setErrorMessages((errorMessages) => errorMessages.concat(message));
+          },
+        },
+      ),
+    },
+  );
+
   const authType = useMemo(() => sync?.auth_type || AuthType.SSH, [sync?.auth_type]);
   const additionalGitFields = useMemo(() => {
     if (authType === AuthType.HTTPS) {
@@ -189,99 +213,127 @@ function SyncData() {
       settings = userGitSettings;
     }
 
-    return (
-      <form>
-        {additionalGitFields.map(({
-          autoComplete,
-          disabled,
-          label,
-          labelDescription,
-          required,
-          type,
-          uuid,
-        }: SyncFieldType) => {
-          let description;
-          if (uuid === 'ssh_public_key') {
-            description = (
-              <Spacing mb={1}>
-                <Text small>
-                  Run <Link
-                    onClick={() => {
-                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n && echo');
-                      toast.success(
-                        'Successfully copied to clipboard.',
-                        {
-                          position: toast.POSITION.BOTTOM_RIGHT,
-                          toastId: uuid,
-                        },
-                      );
-                    }}
-                    small
-                  >
-                    cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n && echo
-                  </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.
-                </Text>
-              </Spacing>
-            );
-          } else if (uuid === 'ssh_private_key') {
-            description = (
-              <Spacing mb={1}>
-                <Text small>
-                  Follow same steps as the public key, but run <Link
-                    onClick={() => {
-                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519 | base64 | tr -d \\\\n && echo');
-                      toast.success(
-                        'Successfully copied to clipboard.',
-                        {
-                          position: toast.POSITION.BOTTOM_RIGHT,
-                          toastId: uuid,
-                        },
-                      );
-                    }}
-                    small
-                  >
-                    cat ~/.ssh/id_ed25519 | base64 | tr -d \\n && echo
-                  </Link> instead. The key will be stored as a Mage secret.
-                </Text>
-              </Spacing>
-            );
-          } else {
-            description = labelDescription && (
-              <Spacing mb={1}>
-                <Text small>
-                  {labelDescription}
-                </Text>
-              </Spacing>
-            );
-          }
-          return (
-            <Spacing key={uuid} mt={2}>
-              {description}
+    const secretValues = 
+      Object.entries(settings || {})
+        .filter(([field, value]) => (field.endsWith('_secret_name') && !!value));
 
-              <TextInput  
-                autoComplete={autoComplete}
-                disabled={disabled}
-                label={label}
-                // @ts-ignore
-                onChange={e => {
-                  updateSettings(prev => ({
-                    ...prev,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                primary
-                required={required}
-                setContentOnMount
-                type={type}
-                value={settings?.[uuid] || ''}
-              />
-            </Spacing>
-          );
-        })}
-      </form>
+    return (
+      <>
+        <form>
+          {additionalGitFields.map(({
+            autoComplete,
+            disabled,
+            label,
+            labelDescription,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => {
+            let description;
+            if (uuid === 'ssh_public_key') {
+              description = (
+                <Spacing mb={1}>
+                  <Text small>
+                    Run <Link
+                      onClick={() => {
+                        navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n && echo');
+                        toast.success(
+                          'Successfully copied to clipboard.',
+                          {
+                            position: toast.POSITION.BOTTOM_RIGHT,
+                            toastId: uuid,
+                          },
+                        );
+                      }}
+                      small
+                    >
+                      cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n && echo
+                    </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret. You will see the secret below if you have already added it.
+                  </Text>
+                </Spacing>
+              );
+            } else if (uuid === 'ssh_private_key') {
+              description = (
+                <Spacing mb={1}>
+                  <Text small>
+                    Follow same steps as the public key, but run <Link
+                      onClick={() => {
+                        navigator.clipboard.writeText('cat ~/.ssh/id_ed25519 | base64 | tr -d \\\\n && echo');
+                        toast.success(
+                          'Successfully copied to clipboard.',
+                          {
+                            position: toast.POSITION.BOTTOM_RIGHT,
+                            toastId: uuid,
+                          },
+                        );
+                      }}
+                      small
+                    >
+                      cat ~/.ssh/id_ed25519 | base64 | tr -d \\n && echo
+                    </Link> instead. The key will be stored as a Mage secret. You will see the secret below if you have already added it.
+                  </Text>
+                </Spacing>
+              );
+            } else {
+              description = labelDescription && (
+                <Spacing mb={1}>
+                  <Text small>
+                    {labelDescription}
+                  </Text>
+                </Spacing>
+              );
+            }
+            return (
+              <Spacing key={uuid} mt={2}>
+                {description}
+
+                <TextInput  
+                  autoComplete={autoComplete}
+                  disabled={disabled}
+                  label={label}
+                  // @ts-ignore
+                  onChange={e => {
+                    updateSettings(prev => ({
+                      ...prev,
+                      [uuid]: e.target.value,
+                    }));
+                  }}
+                  primary
+                  required={required}
+                  setContentOnMount
+                  type={type}
+                  value={settings?.[uuid] || ''}
+                />
+              </Spacing>
+            );
+          })}
+        </form>
+        <Spacing mb={1} mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Headline level={5}>
+            Git secrets
+          </Headline>
+        </Spacing>
+        {secretValues && secretValues.length > 0 ? (
+          secretValues.map(([_, value]) => (
+            <VariableRow
+              deleteVariable={() => deleteSecret(value)}
+              hideEdit
+              key={value}
+              obfuscate
+              variable={{
+                uuid: value,
+                value: 'placeholder',
+              } as VariableType}
+            />
+          ))
+        ) : (
+          <Text>You have no Git secrets saved for {selectedTab?.label?.()}</Text>
+        )}
+      </>
     );
   }, [
     additionalGitFields,
+    deleteSecret,
     requireUserAuthentication,
     selectedTab,
     setUserGitSettings,

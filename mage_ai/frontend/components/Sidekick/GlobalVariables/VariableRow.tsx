@@ -162,7 +162,7 @@ function VariableRow({
             </KeyboardShortcutButton>
           </CellStyle>
         </Col>
-        <Col md={4}>
+        <Col md={obfuscate ? 7 : 4}>
           {(edit && !disableKeyEdit) ? (
             <CellStyle>
               <TextInput
@@ -190,7 +190,7 @@ function VariableRow({
             </CellStyle>
           )}
         </Col>
-        <Col md={7}>
+        <Col md={obfuscate ? 4 : 7}>
           {edit ? (
             <CellStyle>
               <TextInput

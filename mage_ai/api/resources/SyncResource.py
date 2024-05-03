@@ -40,6 +40,7 @@ class SyncResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
         sync_config = self.get_project_sync_config(user)
+
         return self.build_result_set(
             [sync_config],
             user,
@@ -146,16 +147,14 @@ class SyncResource(GenericResource):
 
         if ssh_public_key:
             secret_name = get_ssh_public_key_secret_name(user=user)
-            secret = Secret.query.filter(
-                Secret.name == secret_name).one_or_none()
+            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, ssh_public_key, repo_name=repo_name)
             user_payload['ssh_public_key_secret_name'] = secret_name
         if ssh_private_key:
             secret_name = get_ssh_private_key_secret_name(user=user)
-            secret = Secret.query.filter(
-                Secret.name == secret_name).one_or_none()
+            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, ssh_private_key, repo_name=repo_name)
@@ -164,8 +163,7 @@ class SyncResource(GenericResource):
         access_token = user_payload.pop('access_token', None)
         if access_token:
             secret_name = get_access_token_secret_name(user=user)
-            secret = Secret.query.filter(
-                Secret.name == secret_name).one_or_none()
+            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, access_token, repo_name=repo_name)
