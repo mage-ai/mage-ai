@@ -72,12 +72,15 @@ def create_ssh_keys(
         if not os.path.exists(public_key_file) or overwrite:
             try:
                 public_key = get_settings_value(GIT_SSH_PUBLIC_KEY)
-                if not public_key or overwrite_with_project_settings:
-                    public_key = get_secret_value(
-                        pubk_secret_name,
-                        repo_name=repo_path,
-                        suppress_warning=True,
-                    )
+                public_key_from_secrets = get_secret_value(
+                    pubk_secret_name,
+                    repo_name=repo_path,
+                    suppress_warning=True,
+                )
+                if public_key_from_secrets and (
+                    not public_key or overwrite_with_project_settings
+                ):
+                    public_key = public_key_from_secrets
                 if public_key:
                     with open(public_key_file, 'w') as f:
                         f.write(base64.b64decode(public_key).decode('utf-8'))
@@ -93,12 +96,15 @@ def create_ssh_keys(
         if not os.path.exists(custom_private_key_file) or overwrite:
             try:
                 private_key = get_settings_value(GIT_SSH_PRIVATE_KEY)
-                if not private_key or overwrite_with_project_settings:
-                    private_key = get_secret_value(
-                        pk_secret_name,
-                        repo_name=repo_path,
-                        suppress_warning=True,
-                    )
+                private_key_from_secrets = get_secret_value(
+                    pk_secret_name,
+                    repo_name=repo_path,
+                    suppress_warning=True,
+                )
+                if private_key_from_secrets and (
+                    not private_key or overwrite_with_project_settings
+                ):
+                    private_key = private_key_from_secrets
                 if private_key:
                     with open(custom_private_key_file, 'w') as f:
                         f.write(base64.b64decode(private_key).decode('utf-8'))
@@ -157,7 +163,7 @@ def get_access_token(git_config, repo_path: str = None) -> str:
             git_config.access_token_secret_name,
             repo_name=repo_path or get_repo_path(),
         )
-        if not token or overwrite_with_project_settings:
+        if token_from_secrets and (not token or overwrite_with_project_settings):
             token = token_from_secrets
 
     return token

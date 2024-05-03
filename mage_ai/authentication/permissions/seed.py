@@ -1,5 +1,7 @@
+import asyncio
 import importlib
 import inspect
+import logging
 import os
 
 from mage_ai.api import policies
@@ -11,7 +13,7 @@ from mage_ai.authentication.permissions.constants import (
     PermissionAccess,
     PermissionCondition,
 )
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.oauth import Permission, Role, RolePermission, User
 
 KEY_ADMIN = 'admin'
@@ -30,6 +32,9 @@ ROLE_NAME_TO_KEY = {
     KEY_OWNER: 'Owner default permissions',
     KEY_VIEWER: 'Viewer default permissions',
 }
+
+
+logger = logging.getLogger(__name__)
 
 
 async def evaluate_condition(condition):
@@ -224,6 +229,15 @@ async def attribute_rules(policy_class, rules):
     return mapping
 
 
+def bootstrap_permissions_sync(policy_names: str = None):
+    loop = asyncio.get_event_loop()
+    if loop is not None:
+        loop.create_task(bootstrap_permissions(policy_names))
+    else:
+        asyncio.run(bootstrap_permissions(policy_names))
+
+
+@safe_db_query
 async def bootstrap_permissions(policy_names: str = None):
     action_rules_mapping = {}
     query_rules_mapping = {}
@@ -248,7 +262,7 @@ async def bootstrap_permissions(policy_names: str = None):
         )
 
         model_name = policy_class.model_name()
-        print(f'Processing {model_name}...')
+        logger.info(f'Processing {model_name}...')
         action_rules_mapping[model_name] = await action_rules(policy_class)
         query_rules_mapping[model_name] = await attribute_rules(
             policy_class,

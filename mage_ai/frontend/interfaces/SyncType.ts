@@ -76,7 +76,7 @@ export const HTTPS_GIT_FIELDS = [
   {
     autoComplete: 'access_token',
     label: 'Access token',
-    labelDescription: 'Add your Git access token to authenticate with your provided username. The access token will be stored as a Mage secret.',
+    labelDescription: 'Add your Git access token to authenticate with your provided username. The access token will be stored as a Mage secret. You will see the secret below if you have already added it.',
     required: true,
     type: 'password',
     uuid: 'access_token',
