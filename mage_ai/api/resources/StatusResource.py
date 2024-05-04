@@ -57,6 +57,8 @@ class StatusResource(GenericResource):
             'repo_path_relative': get_repo_path(root_project=False, absolute_path=False),
             'repo_path_relative_root': get_repo_path(root_project=True, absolute_path=False),
             'repo_path_root': get_repo_path(root_project=True),
+            'server_process_id': os.getpid(),
+            'scheduler_process_id': scheduler_manager.get_scheduler_pid(),
             'scheduler_status': scheduler_manager.get_status(),
             'instance_type': instance_type,
             'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
