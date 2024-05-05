@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import scipy
+from sklearn.base import BaseEstimator
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.variable import (
@@ -76,6 +77,8 @@ class VariableManager:
             isinstance(data[0], pd.Series)
         ):
             variable_type = VariableType.SERIES_PANDAS
+        elif isinstance(data, BaseEstimator):
+            variable_type = VariableType.BASE_ESTIMATOR_SKLEARN
 
         variable = Variable(
             clean_name(variable_uuid),

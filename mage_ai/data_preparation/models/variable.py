@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
+import joblib
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -44,8 +45,11 @@ METADATA_FILE = 'type.json'
 JSON_FILE = 'data.json'
 JSON_SAMPLE_FILE = 'sample_data.json'
 
+JOBLIB_FILE = 'model.joblib'
+
 
 class VariableType(str, Enum):
+    BASE_ESTIMATOR_SKLEARN = 'base_estimator_sklearn'
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
     GEO_DATAFRAME = 'geo_dataframe'
@@ -202,6 +206,8 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
+        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
+            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
         else:
             data = self.__read_json(raise_exception=raise_exception, sample=sample)
 
@@ -244,6 +250,8 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
+        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
+            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
         else:
             data = await self.__read_json_async(sample=sample)
 
@@ -313,6 +321,13 @@ class Variable:
                     self.__write_parquet(data.to_frame())
             else:
                 self.__write_json(data)
+        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
+            data_class = data.__class__
+            self.__write_json(dict(
+                module=data_class.__module__,
+                name=data_class.__name__,
+            ))
+            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
         else:
             self.__write_json(data)
 
@@ -348,6 +363,27 @@ class Variable:
             self.__write_spark_parquet(data)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             self.__write_geo_dataframe(data)
+        elif self.variable_type == VariableType.MATRIX_SPARSE:
+            self.__write_matrix_sparse(data)
+        elif self.variable_type == VariableType.SERIES_PANDAS:
+            if isinstance(data, pd.Series) or (
+                isinstance(data, list) and
+                len(data) >= 1 and
+                isinstance(data[0], pd.Series)
+            ):
+                if isinstance(data, list):
+                    self.__write_parquet(data)
+                else:
+                    self.__write_parquet(data.to_frame())
+            else:
+                await self.__write_json_async(data)
+        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
+            data_class = data.__class__
+            await self.__write_json_async(dict(
+                module=data_class.__module__,
+                name=data_class.__name__,
+            ))
+            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
         else:
             await self.__write_json_async(data)
 
@@ -886,11 +922,13 @@ class Variable:
             arr1 = []
             arr2 = []
             for matrix in csr_matrix:
-                m1, m2 = self.__serialize_matrix_sparse(matrix)
-                arr1.append(m1)
-                arr2.append(m2)
+                m_1, m_2 = self.__serialize_matrix_sparse(matrix)
+                arr1.append(m_1)
+                arr2.append(m_2)
             data = arr1
             data_sample = arr2
+        else:
+            data, data_sample = self.__serialize_matrix_sparse(csr_matrix)
 
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
         self.storage.write_json_file(sample_file_path, data_sample)

@@ -23,6 +23,8 @@ import scipy
 import simplejson
 import yaml
 from jinja2 import Template
+from sklearn.base import BaseEstimator
+from sklearn.utils import estimator_html_repr
 
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
@@ -2224,6 +2226,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 execution_partition=execution_partition,
                 skip_dynamic_block=skip_dynamic_block,
             )
+        elif isinstance(data, BaseEstimator):
+            data = dict(
+                text_data=estimator_html_repr(data),
+                type=DataType.TEXT_HTML,
+                variable_uuid=variable_uuid,
+            )
+            return data, False
         elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
             from mage_ai.data_preparation.models.block.dynamic.utils import (
                 coerce_into_dataframe,
@@ -2352,6 +2361,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 variable_uuid=variable_uuid,
             )
             return data, True
+
         return data, False
 
     def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
