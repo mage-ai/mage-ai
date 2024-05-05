@@ -2520,7 +2520,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         if include_outputs:
             include_outputs_use = include_outputs
-            if self.is_using_spark() and self.compute_management_enabled():
+            if self.is_using_spark() and \
+                    self.compute_management_enabled() and \
+                    self.pipeline and \
+                    self.pipeline.type == PipelineType.PYSPARK:
+
                 include_outputs_use = include_outputs_use and include_outputs_spark
 
             if include_outputs_use:

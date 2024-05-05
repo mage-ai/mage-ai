@@ -451,6 +451,7 @@ rows = [[] for _ in stats]
 
 for col, col_type in columns_and_types:
     series = df_1[col]
+
     min_value = None
     max_value = None
     mean = None
@@ -458,7 +459,19 @@ for col, col_type in columns_and_types:
 
     not_null = series[series.notnull()]
 
+    if len(not_null) == 0:
+        continue
+
     if col_type.value in ['number', 'number_with_decimals']:
+        if str(series.dtype) == 'object':
+            if col_type.value == 'number_with_decimals':
+                series = series.astype('float64')
+                not_null = not_null.astype('float64')
+            else:
+                series = series.astype('int64')
+                not_null = not_null.astype('int64')
+        print(col, col_type, series.dtype)
+
         count = len(not_null.index)
         if count >= 1:
             mean = round(not_null.sum() / count, 2)
