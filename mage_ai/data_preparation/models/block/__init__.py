@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, U
 import inflection
 import pandas as pd
 import polars as pl
+import scipy
 import simplejson
 import yaml
 from jinja2 import Template
@@ -99,7 +100,7 @@ from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
-from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
 from mage_ai.shared.path_fixer import (
     add_absolute_path,
     add_root_repo_path_to_relative_path,
@@ -2195,7 +2196,25 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
 
-        if (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
+        if isinstance(data, scipy.sparse.csr_matrix) or (
+            isinstance(data, list) and
+            len(data) >= 1 and
+            isinstance(data[0], scipy.sparse.csr_matrix)
+        ):
+            if isinstance(data, list):
+                data = convert_matrix_to_dataframe(data[0])
+            else:
+                data = convert_matrix_to_dataframe(data)
+
+            return self.__format_output_data(
+                data,
+                variable_uuid=variable_uuid,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+                skip_dynamic_block=skip_dynamic_block,
+            )
+        elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
             from mage_ai.data_preparation.models.block.dynamic.utils import (
                 coerce_into_dataframe,
             )

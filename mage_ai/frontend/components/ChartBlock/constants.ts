@@ -378,11 +378,14 @@ number_of_unique_values = [df_1[col].nunique() for col in columns]
         [VARIABLE_NAME_Y]: 'rows',
         chart_type: ChartTypeEnum.TABLE,
       },
-      content: `columns = ['mode value', 'frequency', '% of values']
+      content: `from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
 
+
+df_1 = convert_matrix_to_dataframe(df_1)
+columns = ['mode value', 'frequency', '% of values']
 column_index = []
 rows = []
-for col in df_1.columns:
+for col in df_1.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]:
     value_counts = df_1[col].value_counts()
     if len(value_counts.index) == 0:
         continue
@@ -440,10 +443,14 @@ for col_type, count in sorted(col_counts.items()):
         [VARIABLE_NAME_Y]: 'rows',
         chart_type: ChartTypeEnum.TABLE,
       },
-      content: `from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
-import statistics
+      content: `import statistics
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
 
+df_1 = convert_matrix_to_dataframe(df_1)
+df_1 = df_1.iloc[:, :DATAFRAME_ANALYSIS_MAX_COLUMNS]
 columns_and_types = infer_column_types(df_1).items()
 columns = [t[0] for t in columns_and_types]
 stats = ['Type', 'Missing values', 'Unique values', 'Min', 'Max', 'Mean', 'Median', 'Mode']

@@ -1,8 +1,10 @@
 # flake8: noqa
 import re
+from typing import Union
 
 import numpy as np
 import pandas as pd
+import scipy
 
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
@@ -10,6 +12,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     INVALID_VALUE_PLACEHOLDERS,
 )
 from mage_ai.shared.multi import run_parallel_multiple_args
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
@@ -224,8 +227,12 @@ def infer_object_type(series, column_name, kwargs):
             return ColumnType.CATEGORY_HIGH_CARDINALITY
 
 
-def infer_column_types(df, **kwargs):
+def infer_column_types(df: Union[pd.DataFrame, scipy.sparse.csr_matrix], **kwargs):
     column_types = kwargs.get('column_types', {})
+
+    if isinstance(df, scipy.sparse.csr_matrix):
+        df = convert_matrix_to_dataframe(df)
+
     df_columns = df.columns.tolist()
     ctypes = {k: v for k, v in column_types.items() if k in df_columns}
     new_cols = [col for col in df_columns if col not in column_types]

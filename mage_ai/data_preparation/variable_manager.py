@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import pandas as pd
+import scipy
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.variable import (
@@ -57,12 +58,19 @@ class VariableManager:
         variable_type: VariableType = None,
         clean_block_uuid: bool = True,
     ) -> None:
-        if type(data) is pd.DataFrame:
+        if isinstance(data, pd.DataFrame):
             variable_type = VariableType.DATAFRAME
         elif is_spark_dataframe(data):
             variable_type = VariableType.SPARK_DATAFRAME
         elif is_geo_dataframe(data):
             variable_type = VariableType.GEO_DATAFRAME
+        elif isinstance(data, scipy.sparse.csr_matrix) or (
+            isinstance(data, list) and
+            len(data) >= 1 and
+            isinstance(data[0], scipy.sparse.csr_matrix)
+        ):
+            variable_type = VariableType.MATRIX_SPARSE
+
         variable = Variable(
             clean_name(variable_uuid),
             self.pipeline_path(pipeline_uuid),

@@ -2,11 +2,12 @@ import os
 import traceback
 from contextlib import contextmanager
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import polars as pl
+import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
@@ -30,7 +31,7 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from mage_ai.shared.parsers import sample_output
+from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
 from mage_ai.shared.utils import clean_name
 
 DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
@@ -48,6 +49,7 @@ class VariableType(str, Enum):
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
     GEO_DATAFRAME = 'geo_dataframe'
+    MATRIX_SPARSE = 'matrix_sparse'
     POLARS_DATAFRAME = 'polars_dataframe'
     SPARK_DATAFRAME = 'spark_dataframe'
 
@@ -197,7 +199,13 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        return self.__read_json(raise_exception=raise_exception, sample=sample)
+        else:
+            data = self.__read_json(raise_exception=raise_exception, sample=sample)
+
+            if self.variable_type == VariableType.MATRIX_SPARSE:
+                data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+
+            return data
 
     async def read_data_async(
         self,
@@ -231,7 +239,13 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
-        return await self.__read_json_async(sample=sample)
+        else:
+            data = await self.__read_json_async(sample=sample)
+
+            if self.variable_type == VariableType.MATRIX_SPARSE:
+                data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+
+            return data
 
     @contextmanager
     def open_to_write(self, filename: str) -> None:
@@ -280,6 +294,8 @@ class Variable:
             self.__write_spark_parquet(data)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             self.__write_geo_dataframe(data)
+        elif self.variable_type == VariableType.MATRIX_SPARSE:
+            self.__write_matrix_sparse(data)
         else:
             self.__write_json(data)
 
@@ -502,6 +518,29 @@ class Variable:
                 )
             df = cast_column_types(df, column_types)
         return df
+
+    def __read_matrix_sparse(
+        self,
+        json_dict: Union[Dict, List[Dict]],
+        sample: bool = False,
+        sample_count: int = None,
+    ) -> scipy.sparse._csr.csr_matrix:
+        if isinstance(json_dict, list):
+            return [self.__deserialize_matrix_sparse(d, sample, sample_count) for d in json_dict]
+
+        return self.__deserialize_matrix_sparse(json_dict, sample, sample_count)
+
+    def __deserialize_matrix_sparse(
+        self,
+        json_dict: Dict,
+        sample: bool = False,
+        sample_count: int = None,
+    ) -> scipy.sparse._csr.csr_matrix:
+        csr_matrix = deserialize_matrix(json_dict)
+        if sample:
+            return csr_matrix[:sample_count, :DATAFRAME_SAMPLE_MAX_COLUMNS]
+
+        return csr_matrix
 
     def __read_polars_parquet(
         self,
@@ -745,3 +784,33 @@ class Variable:
         self.storage.makedirs(self.variable_path, exist_ok=True)
         for k in DATAFRAME_ANALYSIS_KEYS:
             self.storage.write_json_file(os.path.join(self.variable_path, f'{k}.json'), data.get(k))
+
+    def __write_matrix_sparse(
+        self,
+        csr_matrix: Union[scipy.sparse._csr.csr_matrix, List[scipy.sparse._csr.csr_matrix]],
+    ) -> None:
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+
+        if isinstance(csr_matrix, list):
+            arr1 = []
+            arr2 = []
+            for matrix in csr_matrix:
+                m1, m2 = self.__serialize_matrix_sparse(matrix)
+                arr1.append(m1)
+                arr2.append(m2)
+            data = arr1
+            data_sample = arr2
+
+        sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+        self.storage.write_json_file(sample_file_path, data_sample)
+
+        file_path = os.path.join(self.variable_path, JSON_FILE)
+        self.storage.write_json_file(file_path, data)
+
+    def __serialize_matrix_sparse(self, csr_matrix: scipy.sparse._csr.csr_matrix) -> Tuple[Dict]:
+        sample = csr_matrix[:DATAFRAME_SAMPLE_COUNT, :DATAFRAME_SAMPLE_MAX_COLUMNS]
+        data_sample = serialize_matrix(sample)
+        data = serialize_matrix(csr_matrix)
+
+        return data, data_sample

@@ -151,6 +151,7 @@ def __custom_output():
     import pandas as pd
     import polars as pl
     import simplejson
+    import scipy
 
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
@@ -159,7 +160,7 @@ def __custom_output():
         transform_output_for_display_reduce_output,
     )
     from mage_ai.shared.environments import is_debug
-    from mage_ai.shared.parsers import encode_complex, sample_output
+    from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex, sample_output
 
 
     if pd.__version__ < '1.5.0':
@@ -170,6 +171,17 @@ def __custom_output():
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
     _internal_output_return = {last_line}
+
+    if isinstance(_internal_output_return, scipy.sparse.csr_matrix) or \
+            (
+                isinstance(_internal_output_return, list) and
+                len(_internal_output_return) >= 1 and
+                isinstance(_internal_output_return[0], scipy.sparse.csr_matrix)
+            ):
+        if isinstance(_internal_output_return, list):
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return[0])
+        else:
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return)
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):

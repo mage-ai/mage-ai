@@ -1,9 +1,13 @@
+import base64
+import io
 from datetime import datetime
 from enum import Enum
 from json import JSONDecoder
+from typing import Dict
 
 import numpy as np
 import pandas as pd
+import scipy
 
 from mage_ai.orchestration.db.models.base import BaseModel
 
@@ -64,6 +68,8 @@ def encode_complex(obj):
     # Convert pandas._libs.missing.NAType to None
     elif isinstance(obj, pd._libs.missing.NAType):
         return None
+    elif isinstance(obj, scipy.sparse.csr_matrix):
+        return serialize_matrix(obj)
 
     return obj
 
@@ -110,3 +116,33 @@ def sample_output(obj):
             output[k] = v
         return output, sampled
     return obj, False
+
+
+def serialize_matrix(csr_matrix: scipy.sparse._csr.csr_matrix) -> Dict:
+    with io.BytesIO() as buffer:
+        scipy.sparse.save_npz(buffer, csr_matrix)
+        buffer.seek(0)
+        data = base64.b64encode(buffer.read()).decode('ascii')
+
+    return {
+        '__type__': 'scipy.sparse.csr_matrix',
+        '__data__': data
+    }
+
+
+def deserialize_matrix(json_dict: Dict) -> scipy.sparse._csr.csr_matrix:
+    data = json_dict['__data__']
+    data = base64.b64decode(data.encode('ascii'))
+
+    with io.BytesIO(data) as buffer:
+        buffer.seek(0)
+        csr_matrix = scipy.sparse.load_npz(buffer)
+
+    return csr_matrix
+
+
+def convert_matrix_to_dataframe(csr_matrix: scipy.sparse.csr_matrix) -> pd.DataFrame:
+    if isinstance(csr_matrix, scipy.sparse.csr_matrix):
+        n_columns = csr_matrix.shape[1]
+        return pd.DataFrame(csr_matrix.toarray(), columns=[f'col_{i}' for i in range(n_columns)])
+    return csr_matrix
