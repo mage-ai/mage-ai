@@ -162,7 +162,6 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                                               f'FROM {full_table_name_temp})')
 
             insert_records_from_temp_table = f'INSERT INTO {full_table_name} SELECT * FROM {full_table_name_temp}'
-            truncate_records_from_temp_table = f'TRUNCATE TABLE {full_table_name_temp}'
 
             commands = [
                 '\n'.join([
@@ -170,12 +169,12 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     f'VALUES {insert_values}',
                 ]),
             ]
-            # This is temp as need to know the best way to create table programmatically i will change it properly
+
             commands = commands + [
                 drop_duplicate_records_from_temp,
                 delete_records_from_full_table,
                 insert_records_from_temp_table,
-                truncate_records_from_temp_table,
+                drop_temp_table_command,
             ]
 
         # Not query data from stl_insert table anymore since it's inefficient.
