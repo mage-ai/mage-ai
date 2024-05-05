@@ -70,6 +70,12 @@ class VariableManager:
             isinstance(data[0], scipy.sparse.csr_matrix)
         ):
             variable_type = VariableType.MATRIX_SPARSE
+        elif isinstance(data, pd.Series) or (
+            isinstance(data, list) and
+            len(data) >= 1 and
+            isinstance(data[0], pd.Series)
+        ):
+            variable_type = VariableType.SERIES_PANDAS
 
         variable = Variable(
             clean_name(variable_uuid),

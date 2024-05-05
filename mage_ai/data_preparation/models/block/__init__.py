@@ -2196,6 +2196,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
 
+        if isinstance(data, pd.Series) or (
+            isinstance(data, list) and
+            len(data) >= 1 and
+            isinstance(data[0], pd.Series)
+        ):
+            if isinstance(data, list):
+                data = pd.DataFrame(data).T
+            else:
+                data = data.to_frame()
+
         if isinstance(data, scipy.sparse.csr_matrix) or (
             isinstance(data, list) and
             len(data) >= 1 and

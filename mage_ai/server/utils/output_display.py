@@ -172,16 +172,24 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, scipy.sparse.csr_matrix) or \
-            (
-                isinstance(_internal_output_return, list) and
-                len(_internal_output_return) >= 1 and
-                isinstance(_internal_output_return[0], scipy.sparse.csr_matrix)
-            ):
+    if isinstance(_internal_output_return, scipy.sparse.csr_matrix) or (
+        isinstance(_internal_output_return, list) and
+        len(_internal_output_return) >= 1 and
+        isinstance(_internal_output_return[0], scipy.sparse.csr_matrix)
+    ):
         if isinstance(_internal_output_return, list):
             _internal_output_return = convert_matrix_to_dataframe(_internal_output_return[0])
         else:
             _internal_output_return = convert_matrix_to_dataframe(_internal_output_return)
+    elif isinstance(_internal_output_return, pd.Series) or (
+        isinstance(_internal_output_return, list) and
+        len(_internal_output_return) >= 1 and
+        isinstance(_internal_output_return[0], pd.Series)
+    ):
+        if isinstance(_internal_output_return, list):
+            _internal_output_return = pd.DataFrame(_internal_output_return).T
+        else:
+            _internal_output_return = _internal_output_return.to_frame()
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):

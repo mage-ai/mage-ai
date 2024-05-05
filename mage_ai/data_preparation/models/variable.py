@@ -51,6 +51,7 @@ class VariableType(str, Enum):
     GEO_DATAFRAME = 'geo_dataframe'
     MATRIX_SPARSE = 'matrix_sparse'
     POLARS_DATAFRAME = 'polars_dataframe'
+    SERIES_PANDAS = 'series_pandas'
     SPARK_DATAFRAME = 'spark_dataframe'
 
 
@@ -181,7 +182,9 @@ class Variable:
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
-        if self.variable_type == VariableType.DATAFRAME:
+        if self.variable_type == VariableType.DATAFRAME or \
+                self.variable_type == VariableType.SERIES_PANDAS:
+
             return self.__read_parquet(
                 raise_exception=raise_exception,
                 sample=sample,
@@ -226,7 +229,9 @@ class Variable:
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
-        if self.variable_type == VariableType.DATAFRAME:
+        if self.variable_type == VariableType.DATAFRAME or \
+                self.variable_type == VariableType.SERIES_PANDAS:
+
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             return self.__read_polars_parquet(
@@ -268,7 +273,7 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
-        if isinstance(data, pd.Series):
+        if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
             data = data.to_list()
 
         if self.variable_type is None and type(data) is pd.DataFrame:
@@ -296,6 +301,18 @@ class Variable:
             self.__write_geo_dataframe(data)
         elif self.variable_type == VariableType.MATRIX_SPARSE:
             self.__write_matrix_sparse(data)
+        elif self.variable_type == VariableType.SERIES_PANDAS:
+            if isinstance(data, pd.Series) or (
+                isinstance(data, list) and
+                len(data) >= 1 and
+                isinstance(data[0], pd.Series)
+            ):
+                if isinstance(data, list):
+                    self.__write_parquet(data)
+                else:
+                    self.__write_parquet(data.to_frame())
+            else:
+                self.__write_json(data)
         else:
             self.__write_json(data)
 
@@ -507,9 +524,19 @@ class Variable:
             if df.shape[0] > sample_count:
                 df = df.iloc[:sample_count]
 
+        column_types_raw = None
         column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
         if self.storage.path_exists(column_types_filename):
-            column_types = self.storage.read_json_file(column_types_filename)
+            column_types_raw = self.storage.read_json_file(column_types_filename)
+            column_types = {}
+
+            if self.variable_type == VariableType.SERIES_PANDAS:
+                if isinstance(column_types_raw, list):
+                    for col_data in column_types_raw:
+                        column_types.update(col_data['column_types'])
+            else:
+                column_types = column_types_raw
+
             # ddf = dask_from_pandas(df)
             if should_deserialize_pandas(column_types):
                 df = apply_transform_pandas(
@@ -517,6 +544,32 @@ class Variable:
                     lambda row: deserialize_columns(row, column_types),
                 )
             df = cast_column_types(df, column_types)
+
+        if self.variable_type == VariableType.SERIES_PANDAS:
+            if column_types_raw and isinstance(column_types_raw, list):
+                series_list = []
+
+                for col_data in column_types_raw:
+                    column_mapping = col_data.get('column_mapping')
+                    index = col_data.get('index')
+
+                    columns_idx = []
+                    columns = []
+                    for col_idx, col in column_mapping.items():
+                        columns_idx.append(col_idx)
+                        columns.append(col)
+
+                    df_series = df.iloc[:len(index)][columns_idx]
+                    df_series.columns = columns
+                    for col in df_series.columns:
+                        series = df_series[col]
+                        series.set_axis(index)
+                        series_list.append(series)
+
+                return series_list
+            else:
+                df = df.iloc[:, 0]
+
         return df
 
     def __read_matrix_sparse(
@@ -608,7 +661,7 @@ class Variable:
         df_sample_output = data.iloc[:DATAFRAME_SAMPLE_COUNT]
         df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
-    def __write_parquet(self, data: pd.DataFrame) -> None:
+    def __get_column_types(self, data: pd.DataFrame) -> Tuple[Dict, pd.DataFrame]:
         column_types = {}
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
@@ -651,6 +704,43 @@ class Variable:
                         column_types[c] = coltype.__name__
                     else:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
+        return column_types, df_output
+
+    def __write_parquet(
+        self,
+        data: Union[pd.DataFrame, List[pd.Series]],
+    ) -> None:
+        column_types_to_test = {}
+
+        is_series_list = \
+            isinstance(data, list) and len(data) >= 1 and isinstance(data[0], pd.Series)
+        if is_series_list:
+            df_output = pd.DataFrame()
+
+            column_types = []
+            for idx, series in enumerate(data):
+                df_series = series.to_frame()
+                column_mapping = {}
+
+                columns = []
+                for col in df_series.columns:
+                    col_idx = f'{col}_{idx}'
+                    column_mapping[col_idx] = col
+                    columns.append(col_idx)
+
+                df_series.columns = columns
+                col_types, df_series = self.__get_column_types(df_series)
+
+                df_output = pd.concat([df_output, df_series], axis=1)
+                column_types.append(dict(
+                    column_mapping=column_mapping,
+                    column_types=col_types,
+                    index=series.index.to_list(),
+                ))
+                column_types_to_test.update(col_types)
+        else:
+            column_types, df_output = self.__get_column_types(data)
+            column_types_to_test.update(column_types)
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
         self.storage.write_json_file(
@@ -658,7 +748,7 @@ class Variable:
             column_types,
         )
 
-        if should_serialize_pandas(column_types):
+        if should_serialize_pandas(column_types_to_test):
             # Try using Polars to write the dataframe to improve performance
             if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
                     and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
@@ -676,7 +766,7 @@ class Variable:
             # ddf = dask_from_pandas(df_output)
             df_output_serialized = apply_transform_pandas(
                 df_output,
-                lambda row: serialize_columns(row, column_types),
+                lambda row: serialize_columns(row, column_types_to_test),
             )
         else:
             df_output_serialized = df_output
