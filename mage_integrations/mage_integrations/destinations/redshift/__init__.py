@@ -161,7 +161,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                                               f'IN (SELECT {", ".join(unique_constraints_clean)} '
                                               f'FROM {full_table_name_temp})')
 
-            insert_records_from_temp_table = f'INSERT INTO {full_table_name} SELECT * FROM {full_table_name_temp}'
+            insert_records_from_temp_table = (f'INSERT INTO {full_table_name} '
+                                              f'SELECT * FROM {full_table_name_temp}')
 
             commands = [
                 '\n'.join([
