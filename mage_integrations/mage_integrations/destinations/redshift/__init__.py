@@ -149,10 +149,13 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             ]
 
             drop_duplicate_records_from_temp = (f'DELETE FROM {full_table_name_temp} '
-                                                f'WHERE ({", ".join(unique_constraints_clean)},_mage_created_at) '
-                                                f'IN ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at '
-                                                f'FROM ( SELECT {", ".join(unique_constraints_clean)}, _mage_created_at, '
-                                                f'ROW_NUMBER() OVER (PARTITION BY {", ".join(unique_constraints_clean)} '
+                                                f'WHERE ({", ".join(unique_constraints_clean)}'
+                                                f',_mage_created_at) '
+                                                f'IN ( SELECT {", ".join(unique_constraints_clean)}, '
+                                                f'_mage_created_at '
+                                                f'FROM ( SELECT {", ".join(unique_constraints_clean)}, '
+                                                f'_mage_created_at, ROW_NUMBER() OVER '
+                                                f'(PARTITION BY {", ".join(unique_constraints_clean)} '
                                                 f'ORDER BY _mage_created_at DESC) as row_num '
                                                 f'FROM {full_table_name_temp} ) AS subquery_alias WHERE row_num > 1);')
 
