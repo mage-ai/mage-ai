@@ -3,10 +3,9 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import pandas as pd
-import scipy
-from sklearn.base import BaseEstimator
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variable import (
     VARIABLE_DIR,
     Variable,
@@ -59,26 +58,11 @@ class VariableManager:
         variable_type: VariableType = None,
         clean_block_uuid: bool = True,
     ) -> None:
-        if isinstance(data, pd.DataFrame):
-            variable_type = VariableType.DATAFRAME
-        elif is_spark_dataframe(data):
-            variable_type = VariableType.SPARK_DATAFRAME
-        elif is_geo_dataframe(data):
-            variable_type = VariableType.GEO_DATAFRAME
-        elif isinstance(data, scipy.sparse.csr_matrix) or (
-            isinstance(data, list) and
-            len(data) >= 1 and
-            isinstance(data[0], scipy.sparse.csr_matrix)
-        ):
-            variable_type = VariableType.MATRIX_SPARSE
-        elif isinstance(data, pd.Series) or (
-            isinstance(data, list) and
-            len(data) >= 1 and
-            isinstance(data[0], pd.Series)
-        ):
-            variable_type = VariableType.SERIES_PANDAS
-        elif isinstance(data, BaseEstimator):
-            variable_type = VariableType.BASE_ESTIMATOR_SKLEARN
+        variable_type, _ = infer_variable_type(
+            data,
+            repo_path=self.repo_path,
+            variable_type=variable_type,
+        )
 
         variable = Variable(
             clean_name(variable_uuid),

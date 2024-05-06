@@ -19,11 +19,9 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, U
 import inflection
 import pandas as pd
 import polars as pl
-import scipy
 import simplejson
 import yaml
 from jinja2 import Template
-from sklearn.base import BaseEstimator
 from sklearn.utils import estimator_html_repr
 
 import mage_ai.data_preparation.decorators
@@ -85,7 +83,8 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.variable import Variable, VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
@@ -1632,7 +1631,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if outputs is None:
             outputs = []
-        if type(outputs) is not list:
+
+        if isinstance(outputs, tuple):
+            outputs = list(outputs)
+
+        if not isinstance(outputs, list):
             outputs = [outputs]
 
         return outputs
@@ -1868,7 +1871,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         variable_uuid: str = None,
         dynamic_block_index: int = None,
         partition: str = None,
-    ):
+    ) -> Variable:
         variable_manager = self.pipeline.variable_manager
 
         block_uuid, changed = uuid_for_output_variables(
@@ -1997,6 +2000,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                             data_products.append(data)
                         else:
                             outputs.append(data)
+
+            return outputs + data_products
         else:
             if self.pipeline is None:
                 return
@@ -2026,14 +2031,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     execution_partition=execution_partition,
                 )
 
-            for v in all_variables:
-                if selected_variables and v not in selected_variables:
+            for idx, variable_uuid in enumerate(all_variables):
+                if selected_variables and variable_uuid not in selected_variables:
                     continue
 
                 variable_object = self.get_variable_object(
                     block_uuid=block_uuid,
                     partition=execution_partition,
-                    variable_uuid=v,
+                    variable_uuid=variable_uuid,
                 )
 
                 if variable_type is not None and variable_object.variable_type != variable_type:
@@ -2046,17 +2051,24 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
                 data, is_data_product = self.__format_output_data(
                     data,
-                    v,
+                    variable_uuid,
                     block_uuid=block_uuid,
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
                 )
-                if is_data_product:
-                    data_products.append(data)
-                else:
-                    outputs.append(data)
 
-        return outputs + data_products
+                if is_data_product:
+                    data_products.append((idx, data, is_data_product))
+                else:
+                    outputs.append((idx, data, is_data_product))
+
+            arr = outputs + data_products
+            arr_sorted = sorted(arr, key=lambda x: x[0])
+
+            if len(data_products) >= len(outputs):
+                return [x[1] for x in arr_sorted]
+            else:
+                return [x[1] for x in arr]
 
     async def __get_outputs_async(
         self,
@@ -2127,6 +2139,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         data_products.append(data)
                     else:
                         outputs.append(data)
+
+            return outputs + data_products
         else:
             if self.pipeline is None:
                 return
@@ -2146,11 +2160,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if not include_print_outputs:
                 all_variables = self.output_variables(execution_partition=execution_partition)
 
-            for v in all_variables:
+            for idx, variable_uuid in enumerate(all_variables):
                 variable_object = variable_manager.get_variable_object(
                     self.pipeline.uuid,
                     block_uuid,
-                    v,
+                    variable_uuid,
                     partition=execution_partition,
                     spark=self.get_spark_session(),
                 )
@@ -2165,17 +2179,23 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
                 data, is_data_product = self.__format_output_data(
                     data,
-                    v,
+                    variable_uuid,
                     block_uuid=block_uuid,
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
                 )
                 if is_data_product:
-                    data_products.append(data)
+                    data_products.append((idx, data, is_data_product))
                 else:
-                    outputs.append(data)
+                    outputs.append((idx, data, is_data_product))
 
-        return outputs + data_products
+            arr = outputs + data_products
+            arr_sorted = sorted(arr, key=lambda x: x[0])
+
+            if len(data_products) >= len(outputs):
+                return [x[1] for x in arr_sorted]
+            else:
+                return [x[1] for x in arr]
 
     def __format_output_data(
         self,
@@ -2198,22 +2218,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
 
-        if isinstance(data, pd.Series) or (
-            isinstance(data, list) and
-            len(data) >= 1 and
-            isinstance(data[0], pd.Series)
-        ):
-            if isinstance(data, list):
+        variable_type, basic_iterable = infer_variable_type(data)
+
+        if VariableType.SERIES_PANDAS == variable_type:
+            if basic_iterable:
                 data = pd.DataFrame(data).T
             else:
                 data = data.to_frame()
 
-        if isinstance(data, scipy.sparse.csr_matrix) or (
-            isinstance(data, list) and
-            len(data) >= 1 and
-            isinstance(data[0], scipy.sparse.csr_matrix)
-        ):
-            if isinstance(data, list):
+        if VariableType.MATRIX_SPARSE == variable_type:
+            if basic_iterable:
                 data = convert_matrix_to_dataframe(data[0])
             else:
                 data = convert_matrix_to_dataframe(data)
@@ -2226,13 +2240,29 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 execution_partition=execution_partition,
                 skip_dynamic_block=skip_dynamic_block,
             )
-        elif isinstance(data, BaseEstimator):
+        elif VariableType.MODEL_SKLEARN == variable_type:
+            if not basic_iterable:
+                return dict(
+                    text_data=estimator_html_repr(data),
+                    type=DataType.TEXT_HTML,
+                    variable_uuid=variable_uuid,
+                ), True
+
             data = dict(
-                text_data=estimator_html_repr(data),
-                type=DataType.TEXT_HTML,
+                text_data=simplejson.dumps(
+                    [dict(
+                        text_data=estimator_html_repr(d),
+                        type=DataType.TEXT_HTML,
+                        variable_uuid=variable_uuid,
+                    ) for d in data],
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
+                type=DataType.TEXT,
                 variable_uuid=variable_uuid,
             )
-            return data, False
+
+            return data, True
         elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
             from mage_ai.data_preparation.models.block.dynamic.utils import (
                 coerce_into_dataframe,
@@ -2329,14 +2359,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 variable_uuid=variable_uuid,
             )
             return data, False
-        elif type(data) is str:
+        elif isinstance(data, str):
             data = dict(
                 text_data=data,
                 type=DataType.TEXT,
                 variable_uuid=variable_uuid,
             )
             return data, False
-        elif type(data) is dict or type(data) is list:
+        elif isinstance(data, dict) or basic_iterable:
             data = dict(
                 text_data=simplejson.dumps(
                     data,
@@ -2901,8 +2931,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     ) -> None:
         if self.pipeline is None:
             return
+
         for uuid, data in variable_mapping.items():
-            if type(data) is pd.DataFrame:
+            if isinstance(data, pd.DataFrame):
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS or shape_only:
                     self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
@@ -2945,12 +2976,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
-                except Exception:
-                    pass
+                except Exception as err:
+                    if is_debug():
+                        raise err
                     # TODO: we use to silently fail, but it looks bad when using BigQuery
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())
-            elif type(data) is pl.DataFrame:
+            elif isinstance(data, pl.DataFrame):
                 self.pipeline.variable_manager.add_variable(
                     self.pipeline.uuid,
                     self.uuid,

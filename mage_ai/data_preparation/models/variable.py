@@ -2,7 +2,7 @@ import os
 import traceback
 from contextlib import contextmanager
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
 import numpy as np
@@ -12,6 +12,8 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
+from mage_ai.ai.utils.xgboost import load_model as load_model_xgboost
+from mage_ai.ai.utils.xgboost import save_model as save_model_xgboost
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
@@ -26,7 +28,10 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     cast_column_types,
     cast_column_types_polars,
     deserialize_columns,
+    deserialize_complex,
+    infer_variable_type,
     serialize_columns,
+    serialize_complex,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
@@ -45,15 +50,19 @@ METADATA_FILE = 'type.json'
 JSON_FILE = 'data.json'
 JSON_SAMPLE_FILE = 'sample_data.json'
 
+# Models
 JOBLIB_FILE = 'model.joblib'
+UBJSON_MODEL_FILENAME = 'model.ubj'
 
 
 class VariableType(str, Enum):
-    BASE_ESTIMATOR_SKLEARN = 'base_estimator_sklearn'
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
+    DICTIONARY_COMPLEX = 'dictionary_complex'
     GEO_DATAFRAME = 'geo_dataframe'
     MATRIX_SPARSE = 'matrix_sparse'
+    MODEL_SKLEARN = 'model_sklearn'
+    MODEL_XGBOOST = 'model_xgboost'
     POLARS_DATAFRAME = 'polars_dataframe'
     SERIES_PANDAS = 'series_pandas'
     SPARK_DATAFRAME = 'spark_dataframe'
@@ -206,13 +215,17 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
-            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
         else:
+            data = self.__should_load_model()
+            if data:
+                return data
+
             data = self.__read_json(raise_exception=raise_exception, sample=sample)
 
             if self.variable_type == VariableType.MATRIX_SPARSE:
                 data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+            elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
+                data = self.__read_dictionary_complex(data)
 
             return data
 
@@ -250,15 +263,73 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
-        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
-            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
         else:
+            data = self.__should_load_model()
+            if data:
+                return data
+
             data = await self.__read_json_async(sample=sample)
 
             if self.variable_type == VariableType.MATRIX_SPARSE:
                 data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+            elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
+                data = self.__read_dictionary_complex(data)
 
             return data
+
+    def __read_dictionary_complex(self, data: Dict) -> Dict:
+        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        if self.storage.path_exists(column_types_filename):
+            column_types = self.storage.read_json_file(column_types_filename)
+            data = deserialize_complex(data, column_types)
+
+        return data
+
+    def __save_dictionary_complex(self, data: Dict) -> Dict:
+        data, column_types = serialize_complex(data)
+        self.storage.write_json_file(
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
+            column_types,
+        )
+        return data
+
+    async def __save_dictionary_complex_async(self, data: Dict) -> Dict:
+        data, column_types = serialize_complex(data)
+        await self.storage.write_json_file_async(
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
+            column_types,
+        )
+        return data
+
+    def __should_save_model(self, data: Any) -> Dict:
+        is_model = False
+
+        if VariableType.MODEL_SKLEARN == self.variable_type:
+            is_model = True
+            os.makedirs(self.variable_path, exist_ok=True)
+            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
+        elif VariableType.MODEL_XGBOOST == self.variable_type:
+            is_model = True
+            os.makedirs(self.variable_path, exist_ok=True)
+            save_model_xgboost(data, os.path.join(self.variable_path, UBJSON_MODEL_FILENAME))
+
+        if is_model:
+            data_class = data.__class__
+            data = dict(
+                module=data_class.__module__,
+                name=data_class.__name__,
+            )
+
+        return data
+
+    def __should_load_model(self) -> Optional[Any]:
+        if VariableType.MODEL_SKLEARN == self.variable_type:
+            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
+        elif VariableType.MODEL_XGBOOST == self.variable_type:
+            return load_model_xgboost(
+                os.path.join(self.variable_path, UBJSON_MODEL_FILENAME),
+                raise_exception=False,
+            )
 
     @contextmanager
     def open_to_write(self, filename: str) -> None:
@@ -281,12 +352,13 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
+
         if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
             data = data.to_list()
 
-        if self.variable_type is None and type(data) is pd.DataFrame:
+        if self.variable_type is None and isinstance(data, pd.DataFrame):
             self.variable_type = VariableType.DATAFRAME
-        elif self.variable_type is None and type(data) is pl.DataFrame:
+        elif self.variable_type is None and isinstance(data, pl.DataFrame):
             self.variable_type = VariableType.POLARS_DATAFRAME
         elif is_spark_dataframe(data):
             self.variable_type = VariableType.SPARK_DATAFRAME
@@ -310,25 +382,20 @@ class Variable:
         elif self.variable_type == VariableType.MATRIX_SPARSE:
             self.__write_matrix_sparse(data)
         elif self.variable_type == VariableType.SERIES_PANDAS:
-            if isinstance(data, pd.Series) or (
-                isinstance(data, list) and
-                len(data) >= 1 and
-                isinstance(data[0], pd.Series)
-            ):
-                if isinstance(data, list):
+            var_type, basic_iterable = infer_variable_type(data)
+            if VariableType.SERIES_PANDAS == var_type:
+                if basic_iterable:
                     self.__write_parquet(data)
                 else:
                     self.__write_parquet(data.to_frame())
             else:
                 self.__write_json(data)
-        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
-            data_class = data.__class__
-            self.__write_json(dict(
-                module=data_class.__module__,
-                name=data_class.__name__,
-            ))
-            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
         else:
+            if VariableType.DICTIONARY_COMPLEX == self.variable_type:
+                data = self.__save_dictionary_complex(data)
+            else:
+                data = self.__should_save_model(data)
+
             self.__write_json(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
@@ -342,9 +409,9 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
-        if self.variable_type is None and type(data) is pd.DataFrame:
+        if self.variable_type is None and isinstance(data, pd.DataFrame):
             self.variable_type = VariableType.DATAFRAME
-        elif self.variable_type is None and type(data) is pl.DataFrame:
+        elif self.variable_type is None and isinstance(data, pl.DataFrame):
             self.variable_type = VariableType.POLARS_DATAFRAME
         elif is_spark_dataframe(data):
             self.variable_type = VariableType.SPARK_DATAFRAME
@@ -366,25 +433,19 @@ class Variable:
         elif self.variable_type == VariableType.MATRIX_SPARSE:
             self.__write_matrix_sparse(data)
         elif self.variable_type == VariableType.SERIES_PANDAS:
-            if isinstance(data, pd.Series) or (
-                isinstance(data, list) and
-                len(data) >= 1 and
-                isinstance(data[0], pd.Series)
-            ):
-                if isinstance(data, list):
+            var_type, basic_iterable = infer_variable_type(data)
+            if VariableType.SERIES_PANDAS == var_type:
+                if basic_iterable:
                     self.__write_parquet(data)
                 else:
                     self.__write_parquet(data.to_frame())
             else:
                 await self.__write_json_async(data)
-        elif self.variable_type == VariableType.BASE_ESTIMATOR_SKLEARN:
-            data_class = data.__class__
-            await self.__write_json_async(dict(
-                module=data_class.__module__,
-                name=data_class.__name__,
-            ))
-            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
         else:
+            if VariableType.DICTIONARY_COMPLEX == self.variable_type:
+                data = await self.__save_dictionary_complex_asycn(data)
+            else:
+                data = self.__should_save_model(data)
             await self.__write_json_async(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
@@ -610,11 +671,11 @@ class Variable:
 
     def __read_matrix_sparse(
         self,
-        json_dict: Union[Dict, List[Dict]],
+        json_dict: Union[Dict, List[Dict], Tuple[Dict]],
         sample: bool = False,
         sample_count: int = None,
     ) -> scipy.sparse._csr.csr_matrix:
-        if isinstance(json_dict, list):
+        if isinstance(json_dict, list) or isinstance(json_dict, Tuple):
             return [self.__deserialize_matrix_sparse(d, sample, sample_count) for d in json_dict]
 
         return self.__deserialize_matrix_sparse(json_dict, sample, sample_count)
@@ -748,8 +809,10 @@ class Variable:
     ) -> None:
         column_types_to_test = {}
 
-        is_series_list = \
-            isinstance(data, list) and len(data) >= 1 and isinstance(data[0], pd.Series)
+        is_series_list = (isinstance(data, list) or isinstance(data, tuple)) and \
+            len(data) >= 1 and \
+            isinstance(data[0], pd.Series)
+
         if is_series_list:
             df_output = pd.DataFrame()
 
@@ -918,7 +981,7 @@ class Variable:
         if not self.storage.isdir(self.variable_path):
             self.storage.makedirs(self.variable_path, exist_ok=True)
 
-        if isinstance(csr_matrix, list):
+        if isinstance(csr_matrix, list) or isinstance(csr_matrix, tuple):
             arr1 = []
             arr2 = []
             for matrix in csr_matrix:

@@ -104,6 +104,7 @@ class LocalStorage(BaseStorage):
                     raise err
                 else:
                     print(f'[ERROR] LocalStorage.write_json_file: {err}')
+                    print(data)
 
     async def write_json_file_async(self, file_path: str, data) -> None:
         async with aiofiles.open(file_path, mode='w') as file:

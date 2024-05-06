@@ -151,7 +151,6 @@ def __custom_output():
     import pandas as pd
     import polars as pl
     import simplejson
-    import scipy
 
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
@@ -159,8 +158,15 @@ def __custom_output():
         transform_output_for_display_dynamic_child,
         transform_output_for_display_reduce_output,
     )
+    from mage_ai.data_preparation.models.utils import infer_variable_type
+    from mage_ai.data_preparation.models.variable import VariableType
     from mage_ai.shared.environments import is_debug
-    from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex, sample_output
+    from mage_ai.shared.parsers import (
+        convert_matrix_to_dataframe,
+        encode_complex,
+        polars_to_dict_split,
+        sample_output,
+    )
 
 
     if pd.__version__ < '1.5.0':
@@ -171,22 +177,15 @@ def __custom_output():
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
     _internal_output_return = {last_line}
+    variable_type, basic_iterable = infer_variable_type(_internal_output_return)
 
-    if isinstance(_internal_output_return, scipy.sparse.csr_matrix) or (
-        isinstance(_internal_output_return, list) and
-        len(_internal_output_return) >= 1 and
-        isinstance(_internal_output_return[0], scipy.sparse.csr_matrix)
-    ):
-        if isinstance(_internal_output_return, list):
+    if VariableType.MATRIX_SPARSE == variable_type:
+        if basic_iterable:
             _internal_output_return = convert_matrix_to_dataframe(_internal_output_return[0])
         else:
             _internal_output_return = convert_matrix_to_dataframe(_internal_output_return)
-    elif isinstance(_internal_output_return, pd.Series) or (
-        isinstance(_internal_output_return, list) and
-        len(_internal_output_return) >= 1 and
-        isinstance(_internal_output_return[0], pd.Series)
-    ):
-        if isinstance(_internal_output_return, list):
+    elif VariableType.SERIES_PANDAS == variable_type:
+        if basic_iterable:
             _internal_output_return = pd.DataFrame(_internal_output_return).T
         else:
             _internal_output_return = _internal_output_return.to_frame()
@@ -238,23 +237,36 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, pd.DataFrame) and (
+    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame)) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
-        _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
-        _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+        _is_polars = isinstance(_internal_output_return, pl.DataFrame)
+
+        if _is_polars:
+            _sample = _internal_output_return[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+            _columns = _sample.columns[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+        else:
+            _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+            _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+
         for col in _columns:
             try:
                 _sample[col] = _sample[col].fillna('')
             except Exception:
                 pass
-        _rows = simplejson.loads(_sample[_columns].to_json(
-            date_format='iso',
-            default_handler=str,
-            orient='split',
-        ))['data']
+
+        if _is_polars:
+            _rows = polars_to_dict_split(_sample[_columns])['data']
+            _index = [i for i in range(len(_sample))]
+        else:
+            _rows = simplejson.loads(_sample[_columns].to_json(
+                date_format='iso',
+                default_handler=str,
+                orient='split',
+            ))['data']
+            _index = _sample.index.tolist()
+
         _shape = _internal_output_return.shape
-        _index = _sample.index.tolist()
 
         _json_string = simplejson.dumps(
             dict(
@@ -270,8 +282,6 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, pl.DataFrame):
-        return print(_internal_output_return)
     elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
         _sample = _internal_output_return.limit({DATAFRAME_SAMPLE_COUNT_PREVIEW}).toPandas()
         _columns = _sample.columns.tolist()[:40]

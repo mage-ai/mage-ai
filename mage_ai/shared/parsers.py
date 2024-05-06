@@ -7,6 +7,7 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy
 
 from mage_ai.orchestration.db.models.base import BaseModel
@@ -18,6 +19,7 @@ INTS = (
     np.int8,
     np.int_,
     np.intc,
+    np.integer,
     np.intp,
     np.uint16,
     np.uint32,
@@ -39,35 +41,27 @@ def encode_complex(obj):
         return obj.to_dict()
     elif isinstance(obj, Enum):
         return obj.value
-    elif hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
-        return obj.isoformat()
-    elif isinstance(obj, np.integer):
-        return int(obj)
-    elif isinstance(obj, np.floating):
-        return float(obj)
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, datetime):
+    elif isinstance(obj, datetime) or \
+            hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
         return obj.isoformat()
     elif isinstance(obj, INTS):
         return int(obj)
-    elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+    elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64, np.floating)):
         return float(obj)
     elif isinstance(obj, (np.complex_, np.complex64, np.complex128)):
         return {'real': obj.real, 'imag': obj.imag}
     elif isinstance(obj, (np.ndarray,)):
+        # np.array is a function
         return obj.tolist()
     elif isinstance(obj, (np.bool_)):
         return bool(obj)
-    elif isinstance(obj, (np.void)):
+    elif isinstance(obj, (np.void, pd._libs.missing.NAType)):
+        # Convert pandas._libs.missing.NAType to None
         return None
     elif isinstance(obj, pd.DataFrame):
         return obj.to_dict(orient='records')
-    elif isinstance(obj, pd.Series):
+    elif isinstance(obj, (pd.Index, pd.Series)):
         return obj.to_list()
-    # Convert pandas._libs.missing.NAType to None
-    elif isinstance(obj, pd._libs.missing.NAType):
-        return None
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
 
@@ -146,3 +140,14 @@ def convert_matrix_to_dataframe(csr_matrix: scipy.sparse.csr_matrix) -> pd.DataF
         n_columns = csr_matrix.shape[1]
         return pd.DataFrame(csr_matrix.toarray(), columns=[f'col_{i}' for i in range(n_columns)])
     return csr_matrix
+
+
+def polars_to_dict_split(df: pl.DataFrame) -> Dict:
+    # Extract column names
+    columns = df.columns
+
+    # Extract rows as list of lists
+    data = df.to_numpy().tolist()
+
+    # Construct and return the dictionary
+    return dict(columns=columns, data=data)
