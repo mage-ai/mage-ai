@@ -453,6 +453,7 @@ class PipelineSchedulerTests(DBTestCase):
                 execution_date=None,
                 execution_partition=f'{pipeline_run.pipeline_schedule_id}',
                 event={},
+                pipeline_run_id=pipeline_run.id,
             ),
             dict(
                 pipeline_run_id=pipeline_run.id,
