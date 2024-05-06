@@ -257,6 +257,8 @@ def active_project_settings(
             are fetched for the specific repository.
         settings (Dict, optional): Pre-existing project platform settings. If not provided,
             settings are fetched using project_platform_settings.
+        user (User, optional): When provided, we will fetch the settings for the active project
+            for the user. The active project can be different depending on the user.
 
     Returns:
         Dict: A dictionary containing the settings of the active or default project.

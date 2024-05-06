@@ -1,10 +1,9 @@
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
+from mage_ai.settings.repo import get_repo_path
 
 
 class SyncPresenter(BasePresenter):
-
     default_attributes = [
         'access_token',
         'access_token_secret_name',
@@ -33,7 +32,9 @@ class SyncPresenter(BasePresenter):
                 if attribute.endswith('_secret_name'):
                     secret_name = data.get(attribute)
                     if secret_name and not get_secret_value(
-                        secret_name, repo_name=get_repo_path(), suppress_warning=False
+                        secret_name,
+                        repo_name=get_repo_path(user=self.current_user),
+                        suppress_warning=False,
                     ):
                         data[attribute] = None
 

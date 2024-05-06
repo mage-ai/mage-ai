@@ -1,7 +1,7 @@
 """Add UserProject table
 
 Revision ID: 0227396a216c
-Revises: b9a2d6d0a2c7
+Revises: 42a14d6143f1
 Create Date: 2024-04-01 11:31:34.680396
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0227396a216c'
-down_revision = 'b9a2d6d0a2c7'
+down_revision = '42a14d6143f1'
 branch_labels = None
 depends_on = None
 

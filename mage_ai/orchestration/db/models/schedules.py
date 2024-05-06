@@ -828,7 +828,8 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
     @property
     def pipeline_type(self) -> PipelineType:
-        return self.pipeline.type if self.pipeline is not None else None
+        pipeline = self.pipeline
+        return pipeline.type if pipeline is not None else None
 
     @property
     def logs(self) -> List[Dict]:
