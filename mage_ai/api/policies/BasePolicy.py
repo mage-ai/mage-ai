@@ -34,7 +34,6 @@ from mage_ai.settings.platform import (
     active_project_settings,
     project_platform_activated,
 )
-from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import extract, ignore_keys
 
 CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS = '__user_role_validations'
@@ -77,7 +76,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
 
     def initialize_project_uuid(self):
         if project_platform_activated():
-            active_project = active_project_settings(repo_path=base_repo_path()) or {}
+            active_project = active_project_settings(user=self.current_user) or {}
             project_name = active_project.get('uuid')
             if project_name:
                 self.project_uuid = get_project_uuid(

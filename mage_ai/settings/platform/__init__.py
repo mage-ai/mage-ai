@@ -320,7 +320,6 @@ def active_project_settings(
 def project_platform_settings(
     repo_path: str = None,
     mage_projects_only: bool = False,
-    user=None,
 ) -> Dict:
     mapping = (__combined_platform_settings(
         repo_path=repo_path,
