@@ -82,6 +82,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
@@ -92,7 +93,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
 from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -649,7 +650,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return add_absolute_path(file_path)
 
         return self.__build_file_path(
-            self.repo_path or os.getcwd(),
+            self.repo_path,
             self.uuid,
             self.type,
             self.language,
@@ -665,7 +666,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if file:
                 return file
 
-        return File.from_path(self.file_path)
+        repo_path = self.pipeline.repo_path if self.pipeline else None
+        return File.from_path(self.file_path, repo_path=repo_path)
 
     @property
     def table_name(self) -> str:
@@ -818,8 +820,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if not configuration.get('file_source'):
                 configuration['file_source'] = {}
             if not configuration['file_source'].get('path'):
+                relative_path = str(Path(repo_path).relative_to(base_repo_path_directory_name()))
                 configuration['file_source']['path'] = self.__build_file_path(
-                    get_repo_path(absolute_path=False, root_project=False),
+                    relative_path,
                     uuid,
                     block_type,
                     language,
@@ -863,8 +866,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
 
     @classmethod
-    def block_type_from_path(self, block_file_absolute_path: str) -> BlockType:
-        file_path = str(block_file_absolute_path).replace(get_repo_path(), '')
+    def block_type_from_path(
+        self, block_file_absolute_path: str, repo_path: str = None
+    ) -> BlockType:
+        warn_for_repo_path(repo_path)
+        if not repo_path:
+            repo_path = get_repo_path()
+        file_path = str(block_file_absolute_path).replace(repo_path, '')
         if file_path.startswith(os.sep):
             file_path = file_path[1:]
 
@@ -969,7 +977,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
             # For block_type SCRATCHPAD and MARKDOWN, also delete the file if possible
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
-                pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+                pipelines = Pipeline.get_pipelines_by_block(
+                    self,
+                    repo_path=self.pipeline.repo_path,
+                    widget=widget,
+                )
                 pipelines = [
                     pipeline for pipeline in pipelines if self.pipeline.uuid != pipeline.uuid
                 ]
@@ -979,7 +991,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
-        pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+        pipelines = Pipeline.get_pipelines_by_block(
+            self, repo_path=self.repo_path, widget=widget
+        )
         if not force:
             for p in pipelines:
                 if not p.block_deletable(self):
@@ -2391,7 +2405,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     def get_pipelines_from_cache(self, block_cache: BlockCache = None) -> List[Dict]:
         if block_cache is None:
             block_cache = BlockCache()
-        arr = block_cache.get_pipelines(self)
+        arr = block_cache.get_pipelines(self, self.repo_path)
 
         return unique_by(
             arr,
@@ -2606,7 +2620,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
-                CallbackBlock.create(self.uuid)
+                CallbackBlock.create(self.uuid, self.repo_path)
             self.__update_pipeline_block()
 
         if 'retry_config' in data and data['retry_config'] != self.retry_config:
@@ -3488,7 +3502,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 New block added to pipeline, so it must be added to the block cache.
                 Old block no longer in pipeline, so it must be removed from block cache.
                 """
-                cache.add_pipeline(self, self.pipeline)
+                cache.add_pipeline(self, self.pipeline, self.pipeline.repo_path)
                 old_block = BlockFactory.get_block(
                     old_uuid,
                     old_uuid,
@@ -3498,10 +3512,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 )
                 cache.remove_pipeline(old_block, self.pipeline.uuid, self.pipeline.repo_path)
             else:
-                cache.move_pipelines(self, dict(
-                    type=self.type,
-                    uuid=old_uuid,
-                ))
+                cache.move_pipelines(
+                    self,
+                    dict(
+                        type=self.type,
+                        uuid=old_uuid,
+                    ),
+                    self.pipeline.repo_path,
+                )
 
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
@@ -3703,11 +3721,11 @@ class ConditionalBlock(AddonBlock):
 
 class CallbackBlock(AddonBlock):
     @classmethod
-    def create(cls, orig_block_name) -> 'CallbackBlock':
+    def create(cls, orig_block_name, repo_path: str) -> 'CallbackBlock':
         return Block.create(
             f'{clean_name_orig(orig_block_name)}_callback',
             BlockType.CALLBACK,
-            get_repo_path(),
+            repo_path,
             language=BlockLanguage.PYTHON,
         )
 

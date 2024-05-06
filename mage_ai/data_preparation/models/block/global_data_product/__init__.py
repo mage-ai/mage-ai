@@ -13,7 +13,10 @@ class GlobalDataProductBlock(Block):
         )
 
         override_configuration = (self.configuration or {}).get('global_data_product', {})
-        global_data_product = GlobalDataProduct.get(override_configuration.get('uuid'))
+        global_data_product = GlobalDataProduct.get(
+            override_configuration.get('uuid'),
+            self.repo_path,
+        )
 
         for key in [
             'outdated_after',

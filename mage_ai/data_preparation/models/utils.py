@@ -1,5 +1,7 @@
+import inspect
 import traceback
 from typing import Any, Dict
+from warnings import warn
 
 import dask.dataframe as dd
 import numpy
@@ -8,6 +10,7 @@ import polars as pl
 import simplejson
 import yaml
 
+from mage_ai.settings.platform.constants import user_project_platform_activated
 from mage_ai.shared.parsers import encode_complex
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
@@ -137,3 +140,21 @@ def is_yaml_serializable(key: str, value: Any) -> bool:
         return True
     except Exception:
         return False
+
+
+def warn_for_repo_path(repo_path: str) -> None:
+    """
+    Warn if repo_path is not provided when using project platform and user
+    authentication is enabled.
+    """
+    if repo_path is None and user_project_platform_activated():
+        try:
+            func_name = inspect.stack()[1][3]
+            message = f'repo_path argument in {func_name} must be provided.'
+        except Exception:
+            message = 'repo_path argument must be provided.'
+        warn(
+            f'{message} Some functionalities may not work as expected',
+            SyntaxWarning,
+            stacklevel=2,
+        )

@@ -149,14 +149,11 @@ class PipelineScheduleProjectPlatformMixin:
 
         pipeline_use = pipeline or self.pipeline
         if not pipeline_use:
-            try:
-                Pipeline.get(self.pipeline_uuid)
-            except Exception:
-                print(
-                    f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
-                    + f'for pipeline schedule ID {self.id}.',
-                )
-                return False
+            print(
+                f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
+                + f'for pipeline schedule ID {self.id}.',
+            )
+            return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
             pipeline_run_count = self.pipeline_runs_count

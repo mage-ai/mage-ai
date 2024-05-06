@@ -299,7 +299,8 @@ class PipelineRunResource(DatabaseResource):
         }
 
         if include_pipeline_uuids:
-            pipeline_uuids = Pipeline.get_all_pipelines_all_projects(get_repo_path())
+            repo_path = get_repo_path(user=user)
+            pipeline_uuids = Pipeline.get_all_pipelines_all_projects(repo_path=repo_path)
             result_set.metadata['pipeline_uuids'] = pipeline_uuids
 
         return result_set
@@ -309,7 +310,8 @@ class PipelineRunResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline_schedule = kwargs.get('parent_model')
 
-        pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
+        repo_path = get_repo_path(user=user)
+        pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid, repo_path=repo_path)
         configured_payload, _ = configure_pipeline_run_payload(
             pipeline_schedule,
             pipeline.type,
@@ -332,9 +334,10 @@ class PipelineRunResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
+        repo_path = get_repo_path(user=self.current_user)
         if 'retry_blocks' == payload.get('pipeline_run_action'):
             self.model.refresh()
-            pipeline = Pipeline.get(self.model.pipeline_uuid)
+            pipeline = Pipeline.get(self.model.pipeline_uuid, repo_path=repo_path)
             block_runs_to_retry = []
             from_block_uuid = payload.get('from_block_uuid')
             if from_block_uuid is not None:
@@ -385,6 +388,7 @@ class PipelineRunResource(DatabaseResource):
             pipeline = Pipeline.get(
                 self.model.pipeline_uuid,
                 check_if_exists=True,
+                repo_path=repo_path,
             )
 
             stop_pipeline_run(self.model, pipeline)

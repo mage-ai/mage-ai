@@ -123,7 +123,7 @@ class PipelineResource(BaseResource):
         if repo_path:
             repo_path = repo_path[0]
         if not repo_path:
-            repo_path = get_repo_path(root_project=False)
+            repo_path = get_repo_path(root_project=False, user=user)
 
         search_query = query.get('search', [None])
         if search_query:
@@ -153,6 +153,8 @@ class PipelineResource(BaseResource):
             from_history_days = from_history_days[0]
 
         history_by_pipeline_uuid = {}
+        repo_path = get_repo_path(user=user)
+        print('repo path:', repo_path)
         if from_history_days is not None and is_number(from_history_days):
             timestamp_start = (datetime.utcnow() - timedelta(
                 hours=24 * int(from_history_days),
@@ -180,11 +182,11 @@ class PipelineResource(BaseResource):
 
             if NO_TAGS_QUERY in tags:
                 pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
-                all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path))
+                all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path=repo_path))
                 pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
                 pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
-            pipeline_uuids = Pipeline.get_all_pipelines(repo_path)
+            pipeline_uuids = Pipeline.get_all_pipelines(repo_path=repo_path)
 
         if search_query:
             pipeline_uuids = list(filter(
@@ -242,6 +244,7 @@ class PipelineResource(BaseResource):
                     pipelines.append(Pipeline(
                         pipeline_uuid_from_cache,
                         config=pipeline_dict['pipeline'],
+                        repo_path=repo_path,
                     ))
         else:
             for uuid in pipeline_uuids:
@@ -256,6 +259,7 @@ class PipelineResource(BaseResource):
                         pipelines.append(Pipeline(
                             uuid,
                             config=dict(type='invalid'),
+                            repo_path=repo_path,
                         ))
                 else:
                     pipeline_uuids_miss.append(uuid)
@@ -374,18 +378,22 @@ class PipelineResource(BaseResource):
         llm_payload = payload.get('llm')
         pipeline = None
 
+        repo_path = get_repo_path(user=user)
         if template_uuid:
-            custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
+            custom_template = CustomPipelineTemplate.load(
+                repo_path,
+                template_uuid=template_uuid,
+            )
             pipeline = custom_template.create_pipeline(name)
         elif clone_pipeline_uuid is not None:
-            source = Pipeline.get(clone_pipeline_uuid)
+            source = Pipeline.get(clone_pipeline_uuid, repo_path=repo_path)
             pipeline = await Pipeline.duplicate(source, name)
         else:
             pipeline = Pipeline.create(
                 name,
                 description=description,
                 pipeline_type=pipeline_type,
-                repo_path=get_repo_path(),
+                repo_path=repo_path,
                 tags=tags,
             )
 
@@ -476,15 +484,20 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
-    async def __fetch_model(self, pipeline_uuid: str, **kqwargs):
+    async def __fetch_model(self, pipeline_uuid: str, repo_path: str, **kwargs):
         all_projects = project_platform_activated()
 
         if all_projects:
             return await get_pipeline_from_platform_async(
                 pipeline_uuid,
+                repo_path=repo_path,
             )
 
-        return await Pipeline.get_async(pipeline_uuid, all_projects=all_projects)
+        return await Pipeline.get_async(
+            pipeline_uuid,
+            all_projects=all_projects,
+            repo_path=repo_path,
+        )
 
     @classmethod
     @safe_db_query
@@ -494,12 +507,15 @@ class PipelineResource(BaseResource):
         **kwargs,
     ):
         pipeline_uuid = urllib.parse.unquote(pk)
-        return await self.__fetch_model(pipeline_uuid, **kwargs)
+        user = kwargs.get('user')
+        repo_path = get_repo_path(user=user)
+        return await self.__fetch_model(pipeline_uuid, repo_path, **kwargs)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        pipeline = await self.__fetch_model(pk, **kwargs)
+        repo_path = get_repo_path(user=user)
+        pipeline = await self.__fetch_model(pk, repo_path, **kwargs)
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:
@@ -582,6 +598,8 @@ class PipelineResource(BaseResource):
                 self.model.validate('A cycle was formed while adding a block')
                 self.model.save()
             return self
+
+        repo_path = get_repo_path(user=self.current_user)
 
         query = kwargs.get('query', {})
         update_content = query.get('update_content', [False])
@@ -717,7 +735,7 @@ class PipelineResource(BaseResource):
 
         def retry_pipeline_runs(pipeline_runs):
             for run in pipeline_runs:
-                retry_pipeline_run(run)
+                retry_pipeline_run(run, repo_path)
 
         @safe_db_query
         def query_incomplete_block_runs(pipeline_uuid: str):

@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.block.utils import serialize_output
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun
+from mage_ai.settings.repo import get_repo_path
 
 
 class OutputResource(GenericResource):
@@ -45,7 +46,8 @@ class OutputResource(GenericResource):
         model = dict(outputs=[])
 
         if block_uuid and pipeline_uuid:
-            pipeline = Pipeline.get(pipeline_uuid)
+            repo_path = get_repo_path(user=user)
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             block = pipeline.get_block(block_uuid)
 
             if block.is_data_integration():

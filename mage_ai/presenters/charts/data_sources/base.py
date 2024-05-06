@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.settings.repo import get_repo_path
 
 
 class ChartDataSourceBase(ABC):
@@ -18,7 +19,7 @@ class ChartDataSourceBase(ABC):
     @property
     def pipeline(self):
         if self.pipeline_uuid and not self._pipeline:
-            self._pipeline = Pipeline.get(self.pipeline_uuid)
+            self._pipeline = Pipeline.get(self.pipeline_uuid, repo_path=get_repo_path())
 
         return self._pipeline
 

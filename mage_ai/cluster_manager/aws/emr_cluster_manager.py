@@ -8,7 +8,6 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.services.aws.emr.config import EmrConfig
 from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
 from mage_ai.services.aws.emr.launcher import create_cluster
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 
@@ -37,12 +36,12 @@ class EmrClusterManager(ClusterManager):
             is_active=c['Id'] == self.active_cluster_id,
         ) for c in valid_clusters]
 
-    def create_cluster(self, emr_config: Dict = None):
+    def create_cluster(self, repo_path: str, emr_config: Dict = None):
         emr_config = EmrConfig.load(
             config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
 
         return create_cluster(
-            get_repo_path(),
+            repo_path,
             done_status=None,
             emr_config=emr_config,
             tags=dict(name=CLUSTER_NAME),
@@ -51,6 +50,7 @@ class EmrClusterManager(ClusterManager):
 
     def set_active_cluster(
         self,
+        repo_path: str,
         auto_creation: bool = True,
         auto_selection: bool = False,
         cluster_id=None,
@@ -61,13 +61,17 @@ class EmrClusterManager(ClusterManager):
             if len(clusters) > 0:
                 cluster_id = clusters[0]['id']
             elif auto_creation:
-                self.create_cluster(emr_config=emr_config)
+                self.create_cluster(repo_path, emr_config=emr_config)
         if cluster_id is None:
             return
 
         self.active_cluster_id = cluster_id
         emr_config = EmrConfig.load(
-            config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
+            config=merge_dict(
+                get_repo_config(repo_path=repo_path).emr_config or dict(),
+                emr_config or dict(),
+            )
+        )
 
         # Fetch cluster master instance public DNS
         cluster_info = describe_cluster(cluster_id)

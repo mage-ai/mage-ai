@@ -67,9 +67,9 @@ class SyncResource(GenericResource):
             user_payload = self.update_user_settings(user_settings, user=user, repo_name=repo_name)
             UserGitConfig.load(config=user_payload)
 
-            repo_path = kwargs.get('repo_path') or get_repo_path()
+            repo_path = kwargs.get('repo_path') or get_repo_path(user=user)
             user_preferences = user.preferences or {}
-            user_git_settings = user.git_settings or {}
+            user_git_settings = user.get_git_settings(repo_path) or {}
             user_preferences[repo_path] = {
                 **user_preferences.get(repo_path, {}),
                 'git_settings': {

@@ -747,6 +747,7 @@ class BaseOperation():
                         query=self.query,
                         resource_class=self.__resource_class(),
                         resource_id=self.pk,
+                        user=self.user,
                     )
                     if inspect.isawaitable(model):
                         model = await model

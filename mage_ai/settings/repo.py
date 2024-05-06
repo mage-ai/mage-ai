@@ -35,6 +35,7 @@ def get_repo_path(
     file_path: str = None,
     root_project: bool = False,
     absolute_path: bool = True,
+    user=None,
 ) -> str:
     """
     Retrieve the repository path based on the given parameters.
@@ -44,6 +45,8 @@ def get_repo_path(
         root_project (bool, optional): If True, returns the root project's repository path.
         absolute_path (bool, optional): If True, returns the absolute repository path;
             if False, returns the path relative to the base repository directory.
+        user (str, optional): The user to use to get the active project. This only applies
+            if multi project is enabled and root_project = False.
 
     Returns:
         str: The repository path as per the specified parameters.
@@ -88,7 +91,7 @@ def get_repo_path(
                     repo_path_use = settings.get('full_path')
 
             if not repo_path_use:
-                repo_path_use = build_active_project_repo_path(repo_path)
+                repo_path_use = build_active_project_repo_path(repo_path, user=user)
 
     if repo_path_use:
         repo_path = repo_path_use

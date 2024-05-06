@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.custom_templates.utils import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.template import fetch_template_source
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import ignore_keys
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -64,8 +65,9 @@ class CustomTemplateResource(GenericResource):
             template_uuid = clean_name(template_uuid)
             payload['template_uuid'] = template_uuid
 
+        repo_path = get_repo_path(user=user)
         if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
-            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+            custom_template = CustomBlockTemplate.load(repo_path, template_uuid=template_uuid)
 
             if not custom_template:
                 custom_template = CustomBlockTemplate(**ignore_keys(payload, [
@@ -91,7 +93,7 @@ class CustomTemplateResource(GenericResource):
             custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
 
             if not custom_template:
-                pipeline = Pipeline.get(payload.get('pipeline_uuid'))
+                pipeline = Pipeline.get(payload.get('pipeline_uuid'), repo_path=repo_path)
                 custom_template = CustomPipelineTemplate.create_from_pipeline(
                     pipeline,
                     template_uuid,
@@ -120,12 +122,20 @@ class CustomTemplateResource(GenericResource):
 
         template_uuid = urllib.parse.unquote(pk)
 
+        repo_path = get_repo_path(user=user)
         try:
             if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
-                return self(CustomBlockTemplate.load(template_uuid=template_uuid), user, **kwargs)
+                return self(
+                    CustomBlockTemplate.load(repo_path, template_uuid=template_uuid),
+                    user,
+                    **kwargs,
+                )
             elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
                 return self(
-                    CustomPipelineTemplate.load(template_uuid=template_uuid),
+                    CustomPipelineTemplate.load(
+                        repo_path,
+                        template_uuid=template_uuid,
+                    ),
                     user,
                     **kwargs,
                 )

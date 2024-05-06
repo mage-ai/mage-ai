@@ -39,7 +39,7 @@ class WidgetResource(GenericResource):
         resource = Widget.create(
             payload.get('name') or payload.get('uuid'),
             payload.get('type'),
-            get_repo_path(),
+            get_repo_path(user=user),
             config=payload.get('config'),
             language=payload.get('language'),
             pipeline=pipeline,

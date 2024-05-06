@@ -1,5 +1,6 @@
 import shutil
 from functools import reduce
+from unittest.mock import ANY
 
 from mage_ai.api.resources.ProjectResource import ProjectResource, build_project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -105,7 +106,7 @@ async def _assert_after_update(self, result, model_before_update, **kwargs):
         model_after_update['openai_api_key'] == result['openai_api_key'],
     ])
 
-    mocks[0].assert_called_once_with('project_name')
+    mocks[0].assert_called_once_with('project_name', user=ANY)
 
     return before_update and after_update
 

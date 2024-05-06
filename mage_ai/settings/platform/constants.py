@@ -1,5 +1,6 @@
 import os
 
+from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 from mage_ai.settings.utils import base_repo_path
 
 PLATFORM_SETTINGS_FILENAME = 'settings.yaml'
@@ -22,3 +23,7 @@ set_project_platform_activated_flag()
 
 def project_platform_activated() -> bool:
     return project_platform_activated_flag
+
+
+def user_project_platform_activated() -> bool:
+    return project_platform_activated_flag and REQUIRE_USER_AUTHENTICATION

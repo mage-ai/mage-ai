@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import (
     VARIABLE_DIR,
     Variable,
@@ -22,6 +23,7 @@ from mage_ai.shared.utils import clean_name
 
 class VariableManager:
     def __init__(self, repo_path=None, variables_dir=None):
+        warn_for_repo_path(repo_path)
         self.repo_path = repo_path or get_repo_path()
         if variables_dir is None:
             self.variables_dir = self.repo_path
@@ -324,7 +326,10 @@ def get_global_variables(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    pipeline = pipeline or Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    pipeline = pipeline or Pipeline.get(
+        pipeline_uuid,
+        all_projects=project_platform_activated(),
+    )
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:
@@ -349,7 +354,10 @@ def get_global_variable(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        all_projects=project_platform_activated(),
+    )
     if pipeline.variables is not None:
         return pipeline.variables.get(key)
     else:
@@ -382,12 +390,13 @@ def set_global_variable(
     pipeline_uuid: str,
     key: str,
     value: Any,
+    repo_path: str = None,
 ) -> None:
     """
     Set global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     if pipeline.variables is None:
         pipeline.variables = get_global_variables(pipeline_uuid)
@@ -397,12 +406,13 @@ def set_global_variable(
 def delete_global_variable(
     pipeline_uuid: str,
     key: str,
+    repo_path: str = None,
 ) -> None:
     """
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)
     else:

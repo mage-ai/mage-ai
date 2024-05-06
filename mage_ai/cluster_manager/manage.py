@@ -67,7 +67,7 @@ def get_workspaces(cluster_type: ClusterType, **kwargs) -> List[Workspace]:
     """
     is_main_project = get_project_type() == ProjectType.MAIN
 
-    repo_path = get_repo_path()
+    repo_path = get_repo_path(root_project=True)
     projects_folder = os.path.join(repo_path, 'projects')
     if is_main_project:
         # sort by file last modified time

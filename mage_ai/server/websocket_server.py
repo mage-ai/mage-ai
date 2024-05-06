@@ -186,45 +186,53 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         token = message.get('token')
 
         pipeline_uuid = message.get('pipeline_uuid')
+        oauth_client, oauth_token, user = None, None, None
+
+        if api_key and token:
+            oauth_client = Oauth2Application.query.filter(
+                Oauth2Application.client_id == api_key,
+            ).first()
+            if oauth_client:
+                oauth_token, _ = authenticate_client_and_token(oauth_client.id, token)
+                user = oauth_token.user
+
+        repo_path = get_repo_path(user=user)
         pipeline = None
         if pipeline_uuid:
             pipeline = Pipeline.get(
                 pipeline_uuid,
-                repo_path=get_repo_path(),
                 all_projects=project_platform_activated(),
+                repo_path=repo_path,
+                use_repo_path=True,
             )
 
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = not REQUIRE_USER_AUTHENTICATION
 
-            if api_key and token:
-                oauth_client = Oauth2Application.query.filter(
-                    Oauth2Application.client_id == api_key,
-                ).first()
-                if oauth_client:
-                    oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    if valid and oauth_token and oauth_token.user:
-                        try:
-                            if pipeline_uuid:
-                                await PipelineResource.policy_class()(
-                                    PipelineResource(
-                                        pipeline,
-                                        oauth_token.user,
-                                    ),
-                                    oauth_token.user,
-                                ).authorize_action(action=OperationType.UPDATE)
-                            else:
-                                await ProjectResource.policy_class()(
-                                    ProjectResource(
-                                        {},
-                                        oauth_token.user,
-                                    ),
-                                    oauth_token.user,
-                                ).authorize_action(action=OperationType.UPDATE)
-                            valid = True
-                        except ApiError as err:
-                            print(f'[WARNING] WebSocketServer.on_message: {err}.')
-                            valid = False
+            if oauth_client:
+                valid = oauth_token.is_valid()
+                if valid and oauth_token and user:
+                    try:
+                        if pipeline_uuid:
+                            await PipelineResource.policy_class()(
+                                PipelineResource(
+                                    pipeline,
+                                    user,
+                                ),
+                                user,
+                            ).authorize_action(action=OperationType.UPDATE)
+                        else:
+                            await ProjectResource.policy_class()(
+                                ProjectResource(
+                                    {},
+                                    user,
+                                ),
+                                user,
+                            ).authorize_action(action=OperationType.UPDATE)
+                        valid = True
+                    except ApiError as err:
+                        print(f'[WARNING] WebSocketServer.on_message: {err}.')
+                        valid = False
 
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
@@ -454,6 +462,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
+                    pipeline.repo_path,
                     block_type=block_type,
                     execution_uuid=execution_uuid,
                     extension_uuid=extension_uuid,
@@ -493,6 +502,7 @@ db_connection.start_session()
             block_output_process_code = get_block_output_process_code(
                 pipeline_uuid,
                 block_uuid,
+                pipeline.repo_path,
                 block_type=block_type,
                 kernel_name=kernel_name,
             )
@@ -525,6 +535,7 @@ db_connection.start_session()
         if kernel_name == KernelName.PYSPARK:
             code = get_pipeline_execution_code(
                 pipeline_uuid,
+                pipeline.repo_path,
                 global_vars=global_vars,
                 kernel_name=kernel_name,
                 pipeline_config=pipeline.to_dict(include_content=True),

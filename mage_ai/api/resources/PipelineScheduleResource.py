@@ -253,7 +253,10 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         if 'repo_path' not in payload:
-            payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
+            payload['repo_path'] = (
+                (pipeline.repo_path if pipeline else None)
+                or get_repo_path(user=user)
+            )
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
         if payload.get('status') == ScheduleStatus.ACTIVE and \
@@ -408,7 +411,8 @@ class PipelineScheduleResource(DatabaseResource):
         resource = super().update(payload)
         updated_model = resource.model
 
-        pipeline = Pipeline.get(updated_model.pipeline_uuid)
+        repo_path = get_repo_path(user=self.current_user)
+        pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path=repo_path)
         if pipeline:
             trigger = Trigger(
                 last_enabled_at=updated_model.last_enabled_at,

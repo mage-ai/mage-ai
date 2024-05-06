@@ -47,7 +47,10 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.models.utils import is_yaml_serializable
+from mage_ai.data_preparation.models.utils import (
+    is_yaml_serializable,
+    warn_for_repo_path,
+)
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import (
     RepoConfig,
@@ -81,7 +84,7 @@ class Pipeline:
     def __init__(
         self,
         uuid,
-        repo_path=None,
+        repo_path: str = None,
         config=None,
         repo_config=None,
         catalog=None,
@@ -103,6 +106,9 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
+
+        warn_for_repo_path(repo_path)
+
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
         self.run_pipeline_in_one_process = False
@@ -225,9 +231,9 @@ class Pipeline:
     def create(
         self,
         name: str,
+        repo_path: str = None,
         description: str = None,
         pipeline_type: PipelineType = PipelineType.PYTHON,
-        repo_path: str = None,
         tags: List[str] = None,
     ):
         """
@@ -235,6 +241,8 @@ class Pipeline:
         2. Create a new yaml file to store pipeline config
         3. Create other files: requirements.txt, __init__.py
         """
+        warn_for_repo_path(repo_path)
+
         uuid = clean_name(name)
         pipeline_path = os.path.join(repo_path, PIPELINES_FOLDER, uuid)
         if os.path.exists(pipeline_path):
@@ -358,7 +366,7 @@ class Pipeline:
 
             block_cache = await BlockCache.initialize_cache()
             for block in blocks:
-                block_cache.add_pipeline(block, duplicate_pipeline)
+                block_cache.add_pipeline(block, duplicate_pipeline, duplicate_pipeline.repo_path)
 
         return cls.get(
             duplicate_pipeline_uuid,
@@ -377,18 +385,16 @@ class Pipeline:
 
     @classmethod
     def get(
-        self,
+        cls,
         uuid,
         repo_path: str = None,
         check_if_exists: bool = False,
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-            IntegrationPipeline,
-        )
+        warn_for_repo_path(repo_path)
 
-        config_path, repo_path = self._get_config_path(
+        config_path, repo_path = cls._get_config_path(
             uuid,
             repo_path=repo_path,
             all_projects=all_projects,
@@ -398,8 +404,11 @@ class Pipeline:
         if check_if_exists and not os.path.exists(config_path):
             return None
 
-        pipeline = self(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
+        pipeline = cls(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
         if PipelineType.INTEGRATION == pipeline.type:
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
 
         return pipeline
@@ -498,9 +507,7 @@ class Pipeline:
         all_projects: bool = False,
         use_repo_path: bool = False,
     ):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
-            IntegrationPipeline,
-        )
+        warn_for_repo_path(repo_path)
 
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
@@ -521,6 +528,9 @@ class Pipeline:
             config = yaml.safe_load(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
             catalog = None
             catalog_config_path = os.path.join(
                 repo_path,
@@ -599,7 +609,10 @@ class Pipeline:
         return arr
 
     @classmethod
-    def get_pipelines_by_block(self, block, repo_path=None, widget=False) -> List['Pipeline']:
+    def get_pipelines_by_block(
+        self, block, repo_path: str = None, widget=False
+    ) -> List['Pipeline']:
+        warn_for_repo_path(repo_path)
         repo_path = repo_path or get_repo_path()
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         pipelines = []
@@ -1100,7 +1113,9 @@ class Pipeline:
             should_update_tag_cache = True
 
             cache = PipelineCache()
-            cache.move_model(dict(uuid=new_uuid), dict(uuid=old_uuid))
+            cache.move_model(
+                dict(uuid=new_uuid), dict(uuid=old_uuid), repo_path=self.repo_path
+            )
 
         should_save = False
 
@@ -1371,7 +1386,7 @@ class Pipeline:
                         old_uuid,
                         self.repo_path,
                     )
-                cache.update_pipeline(block.to_dict(), self)
+                cache.update_pipeline(block.to_dict(), self, self.repo_path)
 
         if should_update_tag_cache:
             from mage_ai.cache.tag import TagCache
@@ -2111,7 +2126,7 @@ class Pipeline:
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
         if block_uuid is not None:
-            current_pipeline = Pipeline(self.uuid, self.repo_path)
+            current_pipeline = Pipeline(self.uuid, repo_path=self.repo_path)
             block = self.get_block(
                 block_uuid,
                 block_type=block_type,

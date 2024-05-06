@@ -110,6 +110,7 @@ class BlockResource(GenericResource):
         name = payload.get('name')
         block_name = name or payload.get('uuid')
         require_unique_name = payload.get('require_unique_name')
+        repo_path = get_repo_path(user=user)
 
         payload_config = payload.get('config') or {}
         replicated_block = None
@@ -208,7 +209,7 @@ class BlockResource(GenericResource):
 
             if payload_config and payload_config.get('custom_template_uuid'):
                 template_uuid = payload_config.get('custom_template_uuid')
-                custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+                custom_template = CustomBlockTemplate.load(repo_path, template_uuid=template_uuid)
                 block = custom_template.create_block(
                     block_name,
                     pipeline,
@@ -221,7 +222,7 @@ class BlockResource(GenericResource):
                 block = Block.create(
                     block_name,
                     block_type,
-                    get_repo_path(),
+                    repo_path,
                     require_unique_name=require_unique_name,
                     **block_attributes,
                 )
@@ -234,7 +235,7 @@ class BlockResource(GenericResource):
 
         if pipeline:
             cache = await BlockCache.initialize_cache()
-            cache.add_pipeline(block.to_dict(), pipeline)
+            cache.add_pipeline(block.to_dict(), pipeline, repo_path)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(block)
