@@ -71,7 +71,7 @@ def group_and_hydrate_files(
     custom_templates = []
 
     for template_uuid, _ in groups.items():
-        custom_template = custom_template_class.load(template_uuid=template_uuid)
+        custom_template = custom_template_class.load(get_repo_path(), template_uuid=template_uuid)
         if custom_template:
             custom_templates.append(custom_template)
 
