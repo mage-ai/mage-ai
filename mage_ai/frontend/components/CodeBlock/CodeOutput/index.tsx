@@ -354,9 +354,11 @@ function CodeOutput(
       if (rows?.length >= 1) {
         if (multiOutputInitFromData && rows?.some((row) => row && containsHTML(row))) {
           return (
-            <HTMLOutputStyle monospace>
-              {rows?.map((row, idx) => <InnerHTML html={row} key={`html-row-${idx}`} />)}
-            </HTMLOutputStyle>
+            <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
+              <HTMLOutputStyle monospace>
+                {rows?.map((row, idx) => <InnerHTML html={row} key={`html-row-${idx}`} />)}
+              </HTMLOutputStyle>
+            </Spacing>
           );
         }
 
