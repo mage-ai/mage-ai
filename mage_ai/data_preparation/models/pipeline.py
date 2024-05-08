@@ -992,7 +992,8 @@ class Pipeline:
         include_extensions: bool = False,
         include_outputs: bool = False,
         include_outputs_spark: bool = False,
-        sample_count: int = None,
+        sample_count: Optional[int] = None,
+        disable_block_output_previews: bool = False,
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
@@ -1011,6 +1012,7 @@ class Pipeline:
                 include_block_catalog=include_block_catalog,
                 include_block_pipelines=include_block_pipelines,
                 include_outputs_spark=include_outputs_spark,
+                disable_output_preview=disable_block_output_previews,
             ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(

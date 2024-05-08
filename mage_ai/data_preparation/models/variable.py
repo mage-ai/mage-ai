@@ -52,10 +52,12 @@ JSON_SAMPLE_FILE = 'sample_data.json'
 
 # Models
 JOBLIB_FILE = 'model.joblib'
+JOBLIB_OBJECT_FILE = 'object.joblib'
 UBJSON_MODEL_FILENAME = 'model.ubj'
 
 
 class VariableType(str, Enum):
+    CUSTOM_OBJECT = 'custom_object'
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
     DICTIONARY_COMPLEX = 'dictionary_complex'
@@ -216,7 +218,7 @@ class Variable:
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
         else:
-            data = self.__should_load_model()
+            data = self.__should_load_object()
             if data:
                 return data
 
@@ -264,7 +266,7 @@ class Variable:
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
         else:
-            data = self.__should_load_model()
+            data = self.__should_load_object()
             if data:
                 return data
 
@@ -301,19 +303,23 @@ class Variable:
         )
         return data
 
-    def __should_save_model(self, data: Any) -> Dict:
-        is_model = False
+    def __should_save_object(self, data: Any) -> Dict:
+        is_object = False
 
         if VariableType.MODEL_SKLEARN == self.variable_type:
-            is_model = True
+            is_object = True
             os.makedirs(self.variable_path, exist_ok=True)
             joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
         elif VariableType.MODEL_XGBOOST == self.variable_type:
-            is_model = True
+            is_object = True
             os.makedirs(self.variable_path, exist_ok=True)
             save_model_xgboost(data, os.path.join(self.variable_path, UBJSON_MODEL_FILENAME))
+        elif VariableType.CUSTOM_OBJECT == self.variable_type:
+            is_object = True
+            os.makedirs(self.variable_path, exist_ok=True)
+            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_OBJECT_FILE))
 
-        if is_model:
+        if is_object:
             data_class = data.__class__
             data = dict(
                 module=data_class.__module__,
@@ -322,7 +328,7 @@ class Variable:
 
         return data
 
-    def __should_load_model(self) -> Optional[Any]:
+    def __should_load_object(self) -> Optional[Any]:
         if VariableType.MODEL_SKLEARN == self.variable_type:
             return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
         elif VariableType.MODEL_XGBOOST == self.variable_type:
@@ -330,6 +336,8 @@ class Variable:
                 os.path.join(self.variable_path, UBJSON_MODEL_FILENAME),
                 raise_exception=False,
             )
+        elif VariableType.CUSTOM_OBJECT == self.variable_type:
+            return joblib.load(os.path.join(self.variable_path, JOBLIB_OBJECT_FILE))
 
     @contextmanager
     def open_to_write(self, filename: str) -> None:
@@ -394,7 +402,7 @@ class Variable:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = self.__save_dictionary_complex(data)
             else:
-                data = self.__should_save_model(data)
+                data = self.__should_save_object(data)
 
             self.__write_json(data)
 
@@ -445,7 +453,7 @@ class Variable:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = await self.__save_dictionary_complex_asycn(data)
             else:
-                data = self.__should_save_model(data)
+                data = self.__should_save_object(data)
             await self.__write_json_async(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:

@@ -2,7 +2,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -18,6 +18,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.shared.outputs import prepare_data_for_output
 
 
 class DynamicBlockFlag(str, Enum):
@@ -241,6 +242,7 @@ def uuid_for_output_variables(
 
 def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
     data = None
+
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
         row_count, column_count = dataframe.shape
@@ -271,8 +273,16 @@ def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
 
 def coerce_into_dataframe(child_data: Union[
     List[Union[Dict, int, str, pd.DataFrame]],
-    pd.DataFrame
-]) -> Dict:
+    Dict,
+    int,
+    str,
+    pd.DataFrame,
+], single_item_only: bool = False) -> pd.DataFrame:
+    child_data, _ = prepare_data_for_output(
+        child_data,
+        single_item_only=single_item_only,
+    )
+
     if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
         if isinstance(item, pd.DataFrame):
@@ -403,15 +413,19 @@ def transform_output_for_display_dynamic_child(
             Dict,
             int,
             str,
-            pd.DataFrame
-        ]
+            pd.DataFrame,
+        ],
     ],
     is_dynamic: bool = False,
-    sample_count: int = None,
+    sample_count: Optional[int] = None,
+    single_item_only: bool = False,
 ) -> List[Dict]:
     df = None
     for output_from_variable_object in output:
-        df_inner = coerce_into_dataframe(output_from_variable_object)
+        df_inner = coerce_into_dataframe(
+            output_from_variable_object,
+            single_item_only=single_item_only,
+        )
         if df is None:
             df = df_inner
         else:

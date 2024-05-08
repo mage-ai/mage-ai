@@ -13,7 +13,7 @@ import yaml
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.parsers import encode_complex, is_custom_object
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = {
@@ -213,9 +213,14 @@ def infer_variable_type(
         all(is_model_xgboost(d) for d in data)
     ):
         variable_type_use = VariableType.MODEL_XGBOOST
-    elif variable_type_use is None:
-        if isinstance(data, dict) and any(is_user_defined_complex(v) for v in data.values()):
-            variable_type_use = VariableType.DICTIONARY_COMPLEX
+    elif is_custom_object(data):
+        variable_type_use = VariableType.CUSTOM_OBJECT
+
+    if variable_type_use is None and \
+            isinstance(data, dict) and \
+            any(is_user_defined_complex(v) for v in data.values()):
+
+        variable_type_use = VariableType.DICTIONARY_COMPLEX
 
     return variable_type_use, basic_iterable
 

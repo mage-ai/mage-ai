@@ -477,7 +477,6 @@ for col, col_type in columns_and_types:
             else:
                 series = series.astype('int64')
                 not_null = not_null.astype('int64')
-        print(col, col_type, series.dtype)
 
         count = len(not_null.index)
         if count >= 1:

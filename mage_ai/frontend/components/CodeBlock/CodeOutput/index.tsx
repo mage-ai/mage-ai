@@ -1,37 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Ansi from 'ansi-to-react';
-import InnerHTML from 'dangerously-set-html-content';
-import { useMutation } from 'react-query';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Ansi from "ansi-to-react";
+import InnerHTML from "dangerously-set-html-content";
+import { useMutation } from "react-query";
 
-import AuthToken from '@api/utils/AuthToken';
+import AuthToken from "@api/utils/AuthToken";
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
   StatusTypeEnum,
-} from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
-import Circle from '@oracle/elements/Circle';
-import CodeEditor from '@components/CodeEditor';
-import DataTable from '@components/DataTable';
-import DependencyGraph from '@components/DependencyGraph';
-import Divider from '@oracle/elements/Divider';
-import ErrorsType from '@interfaces/ErrorsType';
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, {
-  DataTypeEnum,
-  DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
-import MultiOutput from './MultiOutput';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ProgressBar from '@oracle/components/ProgressBar';
-import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
-import api from '@api';
-import usePrevious from '@utils/usePrevious';
-import { BorderColorShareProps } from '../index.style';
-import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
+} from "@interfaces/BlockType";
+import Button from "@oracle/elements/Button";
+import Circle from "@oracle/elements/Circle";
+import CodeEditor from "@components/CodeEditor";
+import DataTable from "@components/DataTable";
+import DependencyGraph from "@components/DependencyGraph";
+import Divider from "@oracle/elements/Divider";
+import ErrorsType from "@interfaces/ErrorsType";
+import Flex from "@oracle/components/Flex";
+import FlexContainer from "@oracle/components/FlexContainer";
+import KernelOutputType, { DataTypeEnum, DATA_TYPE_TEXTLIKE } from "@interfaces/KernelOutputType";
+import MultiOutput from "./MultiOutput";
+import PipelineType, { PipelineTypeEnum } from "@interfaces/PipelineType";
+import ProgressBar from "@oracle/components/ProgressBar";
+import Spacing from "@oracle/elements/Spacing";
+import Text from "@oracle/elements/Text";
+import Tooltip from "@oracle/components/Tooltip";
+import api from "@api";
+import usePrevious from "@utils/usePrevious";
+import { BorderColorShareProps } from "../index.style";
+import { Check, ChevronDown, ChevronUp, Expand, Save } from "@oracle/icons";
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -39,33 +36,33 @@ import {
   ExtraInfoStyle,
   HTMLOutputStyle,
   OutputRowStyle,
-} from './index.style';
-import { CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED } from '@components/PipelineDetail/constants';
-import { FileExtensionEnum } from '@interfaces/FileType';
+} from "./index.style";
+import { CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED } from "@components/PipelineDetail/constants";
+import { FileExtensionEnum } from "@interfaces/FileType";
 import {
   INTERNAL_OUTPUT_REGEX,
   INTERNAL_OUTPUT_STRING,
   INTERNAL_TEST_REGEX,
   INTERNAL_TEST_STRING,
-} from '@utils/models/output';
-import { OutputDisplayTypeEnum } from './constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { ResponseTypeEnum } from '@api/constants';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { SIDE_BY_SIDE_VERTICAL_PADDING } from '../index.style';
+} from "@utils/models/output";
+import { OutputDisplayTypeEnum } from "./constants";
+import { PADDING_UNITS, UNIT } from "@oracle/styles/units/spacing";
+import { ResponseTypeEnum } from "@api/constants";
+import { SCROLLBAR_WIDTH } from "@oracle/styles/scrollbars";
+import { SIDE_BY_SIDE_VERTICAL_PADDING } from "../index.style";
 import {
   TAB_DBT_LINEAGE_UUID,
   TAB_DBT_LOGS_UUID,
   TAB_DBT_PREVIEW_UUID,
   TAB_DBT_SQL_UUID,
-} from '../constants';
-import { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
-import { isJsonString } from '@utils/string';
-import { onSuccess } from '@api/utils/response';
-import { isObject } from '@utils/hash';
-import { range } from '@utils/array';
+} from "../constants";
+import { TabType } from "@oracle/components/Tabs/ButtonTabs";
+import { ViewKeyEnum } from "@components/Sidekick/constants";
+import { addDataOutputBlockUUID, openSaveFileDialog } from "@components/PipelineDetail/utils";
+import { containsHTML, isJsonString } from "@utils/string";
+import { onSuccess } from "@api/utils/response";
+import { isObject } from "@utils/hash";
+import { range } from "@utils/array";
 
 type CodeOutputProps = {
   alwaysShowExtraInfo?: boolean;
@@ -124,46 +121,49 @@ const SHARED_BUTTON_PROPS = {
   transparent: true,
 };
 
-function CodeOutput({
-  alwaysShowExtraInfo,
-  block,
-  blockIndex,
-  blockMetadata,
-  buttonTabs,
-  children,
-  childrenBelowTabs,
-  collapsed,
-  contained = true,
-  dynamicBlock,
-  dynamicChildBlock,
-  hasError,
-  hasOutput,
-  hideExtraInfo,
-  hideOutput,
-  isInProgress,
-  mainContainerWidth,
-  messages,
-  messagesAll,
-  onClickSelectBlock,
-  openSidekickView,
-  outputDisplayType,
-  outputRowNormalPadding,
-  pipeline,
-  runCount,
-  runEndTime,
-  runStartTime,
-  scrollTogether,
-  selected,
-  selectedTab,
-  setCollapsed,
-  setErrors,
-  setOutputBlocks,
-  setSelectedOutputBlock,
-  setSelectedTab,
-  showBorderTop,
-  sideBySideEnabled,
-  sparkEnabled,
-}: CodeOutputProps, ref) {
+function CodeOutput(
+  {
+    alwaysShowExtraInfo,
+    block,
+    blockIndex,
+    blockMetadata,
+    buttonTabs,
+    children,
+    childrenBelowTabs,
+    collapsed,
+    contained = true,
+    dynamicBlock,
+    dynamicChildBlock,
+    hasError,
+    hasOutput,
+    hideExtraInfo,
+    hideOutput,
+    isInProgress,
+    mainContainerWidth,
+    messages,
+    messagesAll,
+    onClickSelectBlock,
+    openSidekickView,
+    outputDisplayType,
+    outputRowNormalPadding,
+    pipeline,
+    runCount,
+    runEndTime,
+    runStartTime,
+    scrollTogether,
+    selected,
+    selectedTab,
+    setCollapsed,
+    setErrors,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+    setSelectedTab,
+    showBorderTop,
+    sideBySideEnabled,
+    sparkEnabled,
+  }: CodeOutputProps,
+  ref,
+) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -178,79 +178,64 @@ function CodeOutput({
     });
 
     window.dispatchEvent(evt);
-  }, [
-    blockIndex,
-  ]);
+  }, [blockIndex]);
 
   useEffect(() => {
     if (mounted && sideBySideEnabled) {
       dispatchEventChanged();
     }
-  }, [
-    messagesAll,
-    mounted,
-    scrollTogether,
-    sideBySideEnabled,
-  ]);
+  }, [messagesAll, mounted, scrollTogether, sideBySideEnabled]);
 
-  const {
-    color: blockColor,
-    status,
-    type: blockType,
-    uuid: blockUUID,
-  } = block || {};
-  const borderColorShareProps = useMemo(() => ({
-    blockColor,
-    blockType,
-    dynamicBlock,
-    dynamicChildBlock,
-    hasError,
-    selected,
-  }), [
-    blockColor,
-    blockType,
-    dynamicBlock,
-    dynamicChildBlock,
-    hasError,
-    selected,
-  ]);
+  const { color: blockColor, status, type: blockType, uuid: blockUUID } = block || {};
+  const borderColorShareProps = useMemo(
+    () => ({
+      blockColor,
+      blockType,
+      dynamicBlock,
+      dynamicChildBlock,
+      hasError,
+      selected,
+    }),
+    [blockColor, blockType, dynamicBlock, dynamicChildBlock, hasError, selected],
+  );
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
-  const executedAndIdle = StatusTypeEnum.EXECUTED === status
-    || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
-    || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
+  const executedAndIdle =
+    StatusTypeEnum.EXECUTED === status ||
+    (!isInProgress && runCount === 0 && numberOfMessages >= 1) ||
+    (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
   const [progress, setProgress] = useState<number>();
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
 
   const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
-  const [
-    downloadBlockOutputAsCsvFile,
-    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
-  ]: any = useMutation(
-    () => api.block_outputs.pipelines.downloads.detailAsync(
-      pipeline?.uuid,
-      blockUUID,
-      { token },
+  const [downloadBlockOutputAsCsvFile, { isLoading: isLoadingDownloadBlockOutputAsCsvFile }]: any =
+    useMutation(
+      () =>
+        api.block_outputs.pipelines.downloads.detailAsync(
+          pipeline?.uuid,
+          blockUUID,
+          { token },
+          {
+            onDownloadProgress: (p) =>
+              setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+            responseType: ResponseTypeEnum.BLOB,
+          },
+        ),
       {
-        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
-        responseType: ResponseTypeEnum.BLOB,
-      },
-    ),
-    {
-      onSuccess: (response: any) => onSuccess(
-          response, {
+        onSuccess: (response: any) =>
+          onSuccess(response, {
             callback: (blobResponse) => {
               openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
             },
-            onErrorCallback: (response, errors) => setErrors?.({
-              errors,
-              response,
-            }),
-          },
-        ),
-    },
-  );
+            onErrorCallback: (response, errors) =>
+              setErrors?.({
+                errors,
+                response,
+              }),
+          }),
+      },
+    );
 
   useEffect(() => {
     if (!isInProgress) {
@@ -258,55 +243,51 @@ function CodeOutput({
     }
   }, [isInProgress]);
 
-  const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
+  const combineTextData = (data) => (Array.isArray(data) ? data.join("\n") : data);
 
-  const combinedMessages = useMemo(() => messages?.length >= 1
-    ? messages.reduce((arr, curr) => {
-      const last = arr.at(-1);
+  const combinedMessages = useMemo(
+    () =>
+      messages?.length >= 1
+        ? messages.reduce((arr, curr) => {
+            const last = arr.at(-1);
 
-      if (DATA_TYPE_TEXTLIKE.includes(last?.type)
-        && last?.type === curr.type
-        && !isObject(combineTextData(curr?.data))
-        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-      ) {
-        if (Array.isArray(last.data)) {
-          last.data.concat(curr.data);
-        } else if (typeof last.data === 'string') {
-          const currentText = combineTextData(curr.data) || '';
-          last.data = [last.data, currentText].join('\n');
-        }
-      } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-        && !isObject(combineTextData(curr?.data))
-        && !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-      ) {
-        arr.push({
-          ...curr,
-          data: combineTextData(curr.data),
-        });
-      } else {
-        arr.push({ ...curr });
-      }
+            if (
+              DATA_TYPE_TEXTLIKE.includes(last?.type) &&
+              last?.type === curr.type &&
+              !isObject(combineTextData(curr?.data)) &&
+              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
+            ) {
+              if (Array.isArray(last.data)) {
+                last.data.concat(curr.data);
+              } else if (typeof last.data === "string") {
+                const currentText = combineTextData(curr.data) || "";
+                last.data = [last.data, currentText].join("\n");
+              }
+            } else if (
+              DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+              !isObject(combineTextData(curr?.data)) &&
+              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
+            ) {
+              arr.push({
+                ...curr,
+                data: combineTextData(curr.data),
+              });
+            } else {
+              arr.push({ ...curr });
+            }
 
-      return arr;
-    }, [])
-    : messagesAll || []
-  , [
-    messages,
-    messagesAll,
-  ]);
+            return arr;
+          }, [])
+        : messagesAll || [],
+    [messages, messagesAll],
+  );
 
-  const renderMessagesRaw = useMemo(() => !messages?.length && messagesAll?.length >= 1, [
-    messages,
-    messagesAll,
-  ]);
+  const renderMessagesRaw = useMemo(
+    () => !messages?.length && messagesAll?.length >= 1,
+    [messages, messagesAll],
+  );
 
-  const progressBar = useMemo(() => (
-    <ProgressBar
-      progress={progress}
-    />
-  ), [
-    progress,
-  ]);
+  const progressBar = useMemo(() => <ProgressBar progress={progress} />, [progress]);
 
   const isDBT = BlockTypeEnum.DBT === block?.type;
 
@@ -315,32 +296,20 @@ function CodeOutput({
     if (isDBT && !hasErrorPrev && hasError && setSelectedTab) {
       setSelectedTab?.(TAB_DBT_LOGS_UUID);
     }
-  }, [
-    hasError,
-    hasErrorPrev,
-    isDBT,
-    setSelectedTab,
-  ]);
+  }, [hasError, hasErrorPrev, isDBT, setSelectedTab]);
 
-  const {
-    content,
-    tableContent,
-    testContent,
-  } = useMemo(() => {
-    const createDataTableElement = (output, {
-      borderTop,
-      selected: selectedProp,
-    }, dataInit: {
-      multi_output?: boolean;
-    } = {}) => {
-      const {
-        columns,
-        index,
-        rows,
-        shape,
-      } = output;
+  const { content, tableContent, testContent } = useMemo(() => {
+    const createDataTableElement = (
+      output,
+      { borderTop, multiOutputInit: multiOutputInitFromData, selected: selectedProp },
+      dataInit: {
+        multi_output?: boolean;
+      } = {},
+    ) => {
+      const { columns, index, rows, shape } = output;
+      const multiOutputInit: boolean = !!dataInit?.multi_output;
 
-      if (dataInit && isObject(dataInit) && !!dataInit?.multi_output) {
+      if (dataInit && isObject(dataInit) && multiOutputInit) {
         return (
           <MultiOutput
             outputs={rows?.map((row, idx: number) => ({
@@ -349,13 +318,11 @@ function CodeOutput({
                   return <div />;
                 }
 
-                const {
-                  data,
-                  type,
-                } = row;
+                const { data, type } = row;
                 if (DataTypeEnum.TABLE === type) {
                   return createDataTableElement(data, {
                     borderTop,
+                    multiOutputInit,
                     selected: selectedProp,
                   });
                 }
@@ -368,39 +335,48 @@ function CodeOutput({
         );
       }
 
-
       if (shape) {
         setDataFrameShape(shape);
       }
 
-      const columnHeadersContainEmptyString = columns?.some(header => header === '');
+      const columnHeadersContainEmptyString = columns?.some((header) => header === "");
       if (columnHeadersContainEmptyString) {
         return (
           <Spacing mx={5} my={3}>
             <Text monospace warning>
-              Block output table could not be rendered due to empty string headers.
-              Please check your data’s column headers for empty strings.
+              Block output table could not be rendered due to empty string headers. Please check
+              your data’s column headers for empty strings.
             </Text>
           </Spacing>
         );
       }
 
-      return rows?.length >= 1 && (
-        <DataTable
-          columns={columns}
-          disableScrolling={!selectedProp}
-          index={index}
-          key={`data-table-${index}`}
-          maxHeight={UNIT * 60}
-          noBorderBottom
-          noBorderLeft
-          noBorderRight
-          noBorderTop={!borderTop}
-          rows={rows}
-          // Remove border 2px and padding from each side
-          width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
-        />
-      );
+      if (rows?.length >= 1) {
+        if (multiOutputInitFromData && rows?.some((row) => row && containsHTML(row))) {
+          return (
+            <HTMLOutputStyle monospace>
+              {rows?.map((row, idx) => <InnerHTML html={row} key={`html-row-${idx}`} />)}
+            </HTMLOutputStyle>
+          );
+        }
+
+        return (
+          <DataTable
+            columns={columns}
+            disableScrolling={!selectedProp}
+            index={index}
+            key={`data-table-${index}`}
+            maxHeight={UNIT * 60}
+            noBorderBottom
+            noBorderLeft
+            noBorderRight
+            noBorderTop={!borderTop}
+            rows={rows}
+            // Remove border 2px and padding from each side
+            width={mainContainerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)}
+          />
+        );
+      }
     };
 
     let isTable = false;
@@ -416,13 +392,13 @@ function CodeOutput({
 
       if (renderMessagesRaw && outputIsArray) {
         dataInit = {
-          columns: ['-'],
+          columns: ["-"],
           index: 0,
-          rows: output?.map(i => [isJsonString(i) ? JSON.parse(i) : i]),
+          rows: output?.map((i) => [isJsonString(i) ? JSON.parse(i) : i]),
           shape: [output?.length, 1],
         };
         dataType = DataTypeEnum.TABLE;
-      } else if (typeof output === 'string') {
+      } else if (typeof output === "string") {
         dataInit = output;
         dataType = DataTypeEnum.TEXT_PLAIN;
       } else {
@@ -440,23 +416,29 @@ function CodeOutput({
       } else {
         dataArray1 = [dataInit];
       }
-      dataArray1 = dataArray1.filter(d => d);
+      dataArray1 = dataArray1.filter((d) => d);
 
       const dataArray = [];
-      dataArray1.forEach((data: string | {
-        columns: string[];
-        rows: any[][];
-        shape: number[];
-      }) => {
-        if (dataType === DataTypeEnum.TEXT_HTML) {
-          dataArray.push(data);
-        } else if (data && typeof data === 'string') {
-          const lines = data.split('\n');
-          dataArray.push(...lines);
-        } else if (typeof dataArray === 'object') {
-          dataArray.push(data);
-        }
-      });
+      dataArray1.forEach(
+        (
+          data:
+            | string
+            | {
+                columns: string[];
+                rows: any[][];
+                shape: number[];
+              },
+        ) => {
+          if (dataType === DataTypeEnum.TEXT_HTML) {
+            dataArray.push(data);
+          } else if (data && typeof data === "string") {
+            const lines = data.split("\n");
+            dataArray.push(...lines);
+          } else if (typeof dataArray === "object") {
+            dataArray.push(data);
+          }
+        },
+      );
 
       const dataArrayLength = dataArray.length;
 
@@ -468,13 +450,14 @@ function CodeOutput({
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
-          normalPadding: outputRowNormalPadding, sideBySideEnabled,
+          normalPadding: outputRowNormalPadding,
+          sideBySideEnabled,
         };
 
         const borderTop = idx >= 1;
 
-        if (typeof data === 'string' && data?.match(INTERNAL_TEST_REGEX)) {
-          const parts = data.split('\n');
+        if (typeof data === "string" && data?.match(INTERNAL_TEST_REGEX)) {
+          const parts = data.split("\n");
           const partsNonTest = [];
           parts.forEach((part: string) => {
             if (part?.match(INTERNAL_TEST_REGEX)) {
@@ -488,7 +471,7 @@ function CodeOutput({
             }
 
             if (partsNonTest.length >= 1) {
-              data = partsNonTest.join('\n');
+              data = partsNonTest.join("\n");
             } else {
               data = null;
             }
@@ -497,7 +480,7 @@ function CodeOutput({
 
         if (data === null) {
           return;
-        } else if (typeof data === 'string' && data?.match(INTERNAL_OUTPUT_REGEX)) {
+        } else if (typeof data === "string" && data?.match(INTERNAL_OUTPUT_REGEX)) {
           const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
@@ -505,64 +488,63 @@ function CodeOutput({
           // without a newline character \n
           // e.g.
           // \"type\": \"table\"}FloatProgress(value=0.0
-          const parts2 = rawString.split('FloatProgress');
+          const parts2 = rawString.split("FloatProgress");
           if (parts.length >= 2) {
             rawString = parts2[0];
           }
-
           if (isJsonString(rawString)) {
             const data = JSON.parse(rawString);
 
             if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
               if (Array.isArray(data?.[0]?.text_data)) {
                 isTable = true;
-                const rows = data?.map(d => d?.text_data);
-                const columns = range(Math.max(...rows?.map(row => row?.length)))?.map((_, idx) => `col${idx}`);
+                const rows = data?.map((d) => d?.text_data);
+                const columns = range(Math.max(...rows?.map((row) => row?.length)))?.map(
+                  (_, idx) => `col${idx}`,
+                );
                 const shape = [rows?.length, columns?.length];
                 const index = rows?.map((_, idx) => idx);
-                const tableEl = createDataTableElement({
-                  rows,
-                  columns,
-                  shape,
-                  index,
-                }, {
-                  borderTop,
-                  selected,
-                }, data);
+                const tableEl = createDataTableElement(
+                  {
+                    rows,
+                    columns,
+                    shape,
+                    index,
+                  },
+                  {
+                    borderTop,
+                    selected,
+                  },
+                  data,
+                );
                 tableContent.push(tableEl);
                 displayElement = tableEl;
               } else {
-                const textArr = data?.map(d => d?.text_data);
+                const textArr = data?.map((d) => d?.text_data);
                 displayElement = (
                   <OutputRowStyle {...outputRowSharedProps}>
                     {textArr.map((t) => (
                       <Text key={t} monospace preWrap>
-                        {t?.length >= 1 && typeof t === 'string' && (
-                          <Ansi>
-                            {t}
-                          </Ansi>
-                        )}
-                        {!t?.length && (
-                          <>&nbsp;</>
-                        )}
+                        {t?.length >= 1 && typeof t === "string" && <Ansi>{t}</Ansi>}
+                        {!t?.length && <>&nbsp;</>}
                       </Text>
                     ))}
                   </OutputRowStyle>
                 );
               }
             } else {
-              const {
-                data: dataDisplay,
-                type: typeDisplay,
-              } = data;
-
+              const { data: dataDisplay, type: typeDisplay } = data;
               if (DataTypeEnum.TABLE === typeDisplay) {
                 if (dataDisplay) {
                   isTable = true;
-                  const tableEl = createDataTableElement(dataDisplay, {
-                    borderTop,
-                    selected,
-                  }, data);
+                  const tableEl = createDataTableElement(
+                    dataDisplay,
+                    {
+                      borderTop,
+                      selected,
+                    },
+                    data,
+                  );
                   tableContent.push(tableEl);
 
                   if (!isDBT) {
@@ -576,10 +558,14 @@ function CodeOutput({
           const dataDisplay = isJsonString(data) ? JSON.parse(data) : data;
           if (dataDisplay) {
             isTable = true;
-            const tableEl = createDataTableElement(dataDisplay, {
-              borderTop,
-              selected,
-            }, output);
+            const tableEl = createDataTableElement(
+              dataDisplay,
+              {
+                borderTop,
+                selected,
+              },
+              output,
+            );
             tableContent.push(tableEl);
 
             if (!isDBT) {
@@ -598,30 +584,16 @@ function CodeOutput({
 
               displayElement = (
                 <MultiOutput
-                  outputs={rows?.map(({
-                    data: value,
-                    type: typeInner,
-                  }, idx: number) => ({
+                  outputs={rows?.map(({ data: value, type: typeInner }, idx: number) => ({
                     render: () => {
                       if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
-                        const textArr = value?.split('\\n');
+                        const textArr = value?.split("\\n");
                         return (
-                          <OutputRowStyle
-                            contained
-                            first
-                            last
-                            normalPadding
-                          >
+                          <OutputRowStyle contained first last normalPadding>
                             {textArr.map((t) => (
                               <Text key={t} monospace preWrap>
-                                {t?.length >= 1 && typeof t === 'string' && (
-                                  <Ansi>
-                                    {t}
-                                  </Ansi>
-                                )}
-                                {!t?.length && (
-                                  <>&nbsp;</>
-                                )}
+                                {t?.length >= 1 && typeof t === "string" && <Ansi>{t}</Ansi>}
+                                {!t?.length && <>&nbsp;</>}
                               </Text>
                             ))}
                           </OutputRowStyle>
@@ -640,40 +612,28 @@ function CodeOutput({
               // @ts-ignore
             } else if (data?.data) {
               // @ts-ignore
-              const textArr = data?.data?.split('\\n');
+              const textArr = data?.data?.split("\\n");
 
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
                   {textArr.map((t) => (
                     <Text key={t} monospace preWrap>
-                      {t?.length >= 1 && typeof t === 'string' && (
-                        <Ansi>
-                          {t}
-                        </Ansi>
-                      )}
-                      {!t?.length && (
-                        <>&nbsp;</>
-                      )}
+                      {t?.length >= 1 && typeof t === "string" && <Ansi>{t}</Ansi>}
+                      {!t?.length && <>&nbsp;</>}
                     </Text>
                   ))}
                 </OutputRowStyle>
               );
             }
           } else {
-            const textArr = data?.split('\\n');
+            const textArr = data?.split("\\n");
 
             displayElement = (
               <OutputRowStyle {...outputRowSharedProps}>
                 {textArr.map((t) => (
                   <Text key={t} monospace preWrap>
-                    {t?.length >= 1 && typeof t === 'string' && (
-                      <Ansi>
-                        {t}
-                      </Ansi>
-                    )}
-                    {!t?.length && (
-                      <>&nbsp;</>
-                    )}
+                    {t?.length >= 1 && typeof t === "string" && <Ansi>{t}</Ansi>}
+                    {!t?.length && <>&nbsp;</>}
                   </Text>
                 ))}
               </OutputRowStyle>
@@ -691,11 +651,8 @@ function CodeOutput({
           }
         } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
-            <div style={{ backgroundColor: 'white' }}>
-              <img
-                alt={`Image ${idx} from code output`}
-                src={`data:image/png;base64, ${data}`}
-              />
+            <div style={{ backgroundColor: "white" }}>
+              <img alt={`Image ${idx} from code output`} src={`data:image/png;base64, ${data}`} />
             </div>
           );
         } else if (dataType === DataTypeEnum.PROGRESS) {
@@ -704,11 +661,7 @@ function CodeOutput({
         }
 
         if (displayElement) {
-          arr.push(
-            <div key={`code-output-${idx}-${idxInner}`}>
-              {displayElement}
-            </div>,
-          );
+          arr.push(<div key={`code-output-${idx}-${idxInner}`}>{displayElement}</div>);
         }
       });
 
@@ -719,13 +672,8 @@ function CodeOutput({
 
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK && !sparkEnabled) {
       arrContent.unshift([
-        <OutputRowStyle
-          contained
-          key="progress_bar"
-        >
-          <Spacing mt={1}>
-            {progressBar}
-          </Spacing>
+        <OutputRowStyle contained key="progress_bar">
+          <Spacing mt={1}>{progressBar}</Spacing>
         </OutputRowStyle>,
       ]);
     }
@@ -750,9 +698,8 @@ function CodeOutput({
   ]);
 
   const columnCount = dataFrameShape?.[1] || 0;
-  const columnsPreviewMessage = columnCount > 30
-    ? ` (30 out of ${columnCount} columns displayed)`
-    : '';
+  const columnsPreviewMessage =
+    columnCount > 30 ? ` (30 out of ${columnCount} columns displayed)` : "";
 
   const currentContentToDisplay = useMemo(() => {
     let el;
@@ -760,7 +707,10 @@ function CodeOutput({
     if ((isDBT && selectedTab) || outputDisplayType) {
       const tabUUID = selectedTab?.uuid;
 
-      if (TAB_DBT_PREVIEW_UUID.uuid === tabUUID || OutputDisplayTypeEnum.DATA === outputDisplayType) {
+      if (
+        TAB_DBT_PREVIEW_UUID.uuid === tabUUID ||
+        OutputDisplayTypeEnum.DATA === outputDisplayType
+      ) {
         if (tableContent?.length >= 1) {
           el = tableContent;
         } else if (!isInProgress) {
@@ -768,24 +718,23 @@ function CodeOutput({
             <Spacing px={2} py={1}>
               <Text muted>
                 {hasError
-                  ? 'Error, check logs.'
-                  : 'No preview to display yet, try running the block.'
-                }
+                  ? "Error, check logs."
+                  : "No preview to display yet, try running the block."}
               </Text>
             </Spacing>
           );
         }
-      } else if (TAB_DBT_LOGS_UUID.uuid === tabUUID || OutputDisplayTypeEnum.LOGS === outputDisplayType) {
+      } else if (
+        TAB_DBT_LOGS_UUID.uuid === tabUUID ||
+        OutputDisplayTypeEnum.LOGS === outputDisplayType
+      ) {
         if (content?.length >= 1) {
           el = content;
         } else if (!isInProgress) {
           el = (
             <Spacing px={2} py={1}>
               <Text muted>
-                {hasError
-                  ? 'Error, check logs.'
-                  : 'No logs to display yet, try running the block.'
-                }
+                {hasError ? "Error, check logs." : "No logs to display yet, try running the block."}
               </Text>
             </Spacing>
           );
@@ -857,25 +806,21 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs
-    && !hasError
-    && !hasOutput
-    && !renderMessagesRaw
-    && !children
-    && !alwaysShowExtraInfo
+  if (
+    !buttonTabs &&
+    !hasError &&
+    !hasOutput &&
+    !renderMessagesRaw &&
+    !children &&
+    !alwaysShowExtraInfo
   ) {
     return null;
   }
 
   return (
-    <div
-      ref={ref}
-    >
+    <div ref={ref}>
       <div
-        onClick={onClickSelectBlock
-          ? () => onClickSelectBlock?.()
-          : null
-        }
+        onClick={onClickSelectBlock ? () => onClickSelectBlock?.() : null}
         style={{
           paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
         }}
@@ -898,23 +843,15 @@ function CodeOutput({
               <>
                 <Spacing py={2}>
                   <OutputRowStyle contained normalPadding={sideBySideEnabled}>
-                    {testContent.map(({
-                      error,
-                      message,
-                      stacktrace,
-                    }, idx) => (
+                    {testContent.map(({ error, message, stacktrace }, idx) => (
                       <Spacing key={message} mt={idx >= 1 ? 3 : 0}>
                         <Text monospace preWrap>
-                          <Ansi>
-                            {`${message}${error ? ' ' + error : ''}`}
-                          </Ansi>
+                          <Ansi>{`${message}${error ? " " + error : ""}`}</Ansi>
                         </Text>
 
                         {stacktrace?.map((line: string) => (
                           <Text default key={line} monospace preWrap small>
-                            <Ansi>
-                              {line}
-                            </Ansi>
+                            <Ansi>{line}</Ansi>
                           </Text>
                         ))}
                       </Spacing>
@@ -922,7 +859,7 @@ function CodeOutput({
                   </OutputRowStyle>
                 </Spacing>
 
-                <Spacing mb={(sideBySideEnabled || hasError) ? 2 : 0}>
+                <Spacing mb={sideBySideEnabled || hasError ? 2 : 0}>
                   <Divider medium />
                 </Spacing>
               </>
@@ -952,16 +889,12 @@ function CodeOutput({
             <FlexContainer justifyContent="space-between">
               <Flex alignItems="center" px={1}>
                 {setCollapsed && (
-                  <Button
-                    {...SHARED_BUTTON_PROPS}
-                    onClick={() => setCollapsed(!collapsed)}
-                  >
+                  <Button {...SHARED_BUTTON_PROPS} onClick={() => setCollapsed(!collapsed)}>
                     {collapsed ? (
                       <FlexContainer alignItems="center">
-                        <ChevronDown muted size={UNIT * 2} />&nbsp;
-                        <Text default>
-                          Expand output
-                        </Text>
+                        <ChevronDown muted size={UNIT * 2} />
+                        &nbsp;
+                        <Text default>Expand output</Text>
                       </FlexContainer>
                     ) : (
                       <FlexContainer alignItems="center">
@@ -992,28 +925,21 @@ function CodeOutput({
               </Flex>
 
               <ExtraInfoContentStyle>
-                <FlexContainer
-                  alignItems="center"
-                  fullWidth
-                  justifyContent="flex-end"
-                >
+                <FlexContainer alignItems="center" fullWidth justifyContent="flex-end">
                   <Tooltip
                     {...SHARED_TOOLTIP_PROPS}
-                    label={runCount >= 1 && runStartTime
-                      ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
-                      : (
-                        hasError
-                          ? 'Block executed with errors'
-                          : 'Block executed successfully'
-                      )
+                    label={
+                      runCount >= 1 && runStartTime
+                        ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
+                        : hasError
+                          ? "Block executed with errors"
+                          : "Block executed successfully"
                     }
                   >
                     <FlexContainer alignItems="center">
                       {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
                         <>
-                          <Text small>
-                            {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-                          </Text>
+                          <Text small>{(Number(runEndTime) - Number(runStartTime)) / 1000}s</Text>
 
                           <Spacing mr={1} />
                         </>
@@ -1021,10 +947,7 @@ function CodeOutput({
 
                       {!hasError && <Check size={UNIT * 2} success />}
                       {hasError && (
-                        <Circle
-                          danger
-                          size={UNIT * 2}
-                        >
+                        <Circle danger size={UNIT * 2}>
                           <Text bold monospace small>
                             !
                           </Text>
@@ -1032,13 +955,10 @@ function CodeOutput({
                       )}
                     </FlexContainer>
                   </Tooltip>
-                  {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
+                  {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) && (
                     <Spacing pl={2}>
                       <FlexContainer alignItems="center">
-                        <Tooltip
-                          {...SHARED_TOOLTIP_PROPS}
-                          label="Expand table"
-                        >
+                        <Tooltip {...SHARED_TOOLTIP_PROPS} label="Expand table">
                           <Button
                             {...SHARED_BUTTON_PROPS}
                             onClick={() => {
@@ -1063,9 +983,10 @@ function CodeOutput({
                         <Tooltip
                           {...SHARED_TOOLTIP_PROPS}
                           forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
-                          label={isLoadingDownloadBlockOutputAsCsvFile
-                            ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                            : 'Save output as CSV file'
+                          label={
+                            isLoadingDownloadBlockOutputAsCsvFile
+                              ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                              : "Save output as CSV file"
                           }
                         >
                           <Button
@@ -1082,7 +1003,7 @@ function CodeOutput({
                         </Tooltip>
                       </FlexContainer>
                     </Spacing>
-                  }
+                  )}
                 </FlexContainer>
               </ExtraInfoContentStyle>
             </FlexContainer>

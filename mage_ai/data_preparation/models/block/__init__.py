@@ -1908,6 +1908,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         outputs = []
 
         for variable_uuid in all_variables:
+            if not is_output_variable(variable_uuid):
+                continue
+
             variable = self.pipeline.get_block_variable(
                 block_uuid,
                 variable_uuid,
@@ -2366,7 +2369,35 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 variable_uuid=variable_uuid,
             )
             return data, False
-        elif isinstance(data, dict) or basic_iterable:
+        elif basic_iterable:
+            data = dict(
+                text_data=simplejson.dumps(
+                    data,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            )
+            return data, False
+        elif isinstance(data, dict):
+            try:
+                pair = self.__format_output_data(
+                    pd.DataFrame([data]),
+                    variable_uuid=variable_uuid,
+                    block_uuid=block_uuid,
+                    csv_lines_only=csv_lines_only,
+                    execution_partition=execution_partition,
+                    skip_dynamic_block=skip_dynamic_block,
+                )
+                if len(pair) >= 1:
+                    return pair[0], True
+            except Exception as err:
+                print(
+                    f'[ERROR] Block.__format_output_data for block '
+                    f'{self.uuid} variable {variable_uuid}: {err}',
+                )
+
             data = dict(
                 text_data=simplejson.dumps(
                     data,
@@ -2434,9 +2465,26 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         self,
         outputs,
         override: bool = False,
+        override_conditionally: bool = False,
         override_outputs: bool = False,
     ) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
+
+        if override_conditionally:
+            for variable_uuid, data in variable_mapping.items():
+                variable = self.get_variable_object(
+                    self.uuid,
+                    variable_uuid,
+                )
+                if not variable or not variable.variable_type:
+                    continue
+
+                # if VariableType
+                # variable = self.get_variable_object(variable_uuid=variable_uuid)
+                # if variable.exists():
+                #     variable_mapping.pop(variable_uuid)
+                pass
+
         await self.store_variables_async(
             variable_mapping,
             override=override,
@@ -2569,9 +2617,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         include_content: bool = False,
         include_outputs: bool = False,
         include_outputs_spark: bool = False,
-        sample_count: int = None,
-        block_cache: BlockCache = None,
+        sample_count: Optional[int] = None,
+        block_cache: Optional[BlockCache] = None,
         check_if_file_exists: bool = False,
+        disable_output_preview: bool = False,
         **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
@@ -2597,21 +2646,30 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 include_outputs_use = include_outputs_use and include_outputs_spark
 
             if include_outputs_use:
-                data['outputs'] = await self.__outputs_async()
+                if disable_output_preview and \
+                        self.configuration and \
+                        self.configuration.get('disable_output_preview', False):
 
-                if check_if_file_exists and not \
-                        self.replicated_block and \
-                        BlockType.GLOBAL_DATA_PRODUCT != self.type:
+                    data['outputs'] = [
+                        'Output preview is disabled for this block. '
+                        'To enable it, go to block settings.',
+                    ]
+                else:
+                    data['outputs'] = await self.__outputs_async()
 
-                    file_path = self.file.file_path
-                    if not os.path.isfile(file_path):
-                        data['error'] = dict(
-                            error='No such file or directory',
-                            message='You may have moved it or changed its filename. '
-                            'Delete the current block to remove it from the pipeline '
-                            'or write code and save the pipeline to create a new file at '
-                            f'{file_path}.',
-                        )
+                    if check_if_file_exists and not \
+                            self.replicated_block and \
+                            BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+                        file_path = self.file.file_path
+                        if not os.path.isfile(file_path):
+                            data['error'] = dict(
+                                error='No such file or directory',
+                                message='You may have moved it or changed its filename. '
+                                'Delete the current block to remove it from the pipeline '
+                                'or write code and save the pipeline to create a new file at '
+                                f'{file_path}.',
+                            )
 
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()

@@ -200,6 +200,7 @@ def __custom_output():
                     output,
                     is_dynamic=bool({is_dynamic}),
                     sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                    single_item_only=True,
                 )
                 output_transformed.append(output_tf)
 
@@ -237,9 +238,12 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame)) and (
+    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame, dict)) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
+        if isinstance(_internal_output_return, dict):
+            _internal_output_return = pd.DataFrame([_internal_output_return])
+
         _is_polars = isinstance(_internal_output_return, pl.DataFrame)
 
         if _is_polars:
@@ -487,6 +491,9 @@ def execute_custom_code():
                 global_vars=global_vars,
                 update_tests=False,
             )
+
+    if block.configuration and block.configuration.get('disable_output_preview', False):
+        return 'Output preview is disabled for this block. To enable it, go to block settings.'
 
     output = block_output['output'] or []
 

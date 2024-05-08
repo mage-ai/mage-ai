@@ -85,6 +85,7 @@ class PipelinePresenter(BasePresenter):
                 include_outputs=include_outputs,
                 include_outputs_spark=include_outputs_spark,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                disable_block_output_previews=True,
             )
         elif constants.UPDATE == display_format:
             data = self.model.to_dict(include_extensions=include_extensions)

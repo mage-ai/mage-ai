@@ -772,7 +772,7 @@ def fetch_input_variables(
                     output = remote_block_dict
                 else:
                     output = RemoteBlock.load(**remote_block_dict).get_outputs()
-            remote_blocks_output.append(output)
+                remote_blocks_output.append(output)
 
         for kwargs in kwargs_vars:
             if kwargs.get('remote_blocks'):

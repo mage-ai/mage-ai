@@ -1,9 +1,10 @@
 import base64
+import inspect
 import io
 from datetime import datetime
 from enum import Enum
 from json import JSONDecoder
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -64,6 +65,15 @@ def encode_complex(obj):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
+    else:
+        try:
+            import xgboost as xgb
+
+            if isinstance(obj, xgb.Booster):
+                return str(obj)
+        except Exception as err:
+            print(f'[ERROR] encode_complex: {err}')
+            return None
 
     return obj
 
@@ -151,3 +161,10 @@ def polars_to_dict_split(df: pl.DataFrame) -> Dict:
 
     # Construct and return the dictionary
     return dict(columns=columns, data=data)
+
+
+def is_custom_object(obj: Any) -> bool:
+    for base_class in inspect.getmro(obj.__class__):
+        if base_class.__module__ not in ('__builtin__', 'builtins'):
+            return True
+    return False
