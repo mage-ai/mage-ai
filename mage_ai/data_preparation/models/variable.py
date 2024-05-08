@@ -1,10 +1,8 @@
 import os
 import traceback
 from contextlib import contextmanager
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import joblib
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -12,62 +10,28 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
-from mage_ai.ai.utils.xgboost import load_model as load_model_xgboost
-from mage_ai.ai.utils.xgboost import save_model as save_model_xgboost
-from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_cleaner.shared.utils import (is_geo_dataframe,
+                                               is_spark_dataframe)
 from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_ANALYSIS_KEYS,
-    DATAFRAME_SAMPLE_COUNT,
-    DATAFRAME_SAMPLE_MAX_COLUMNS,
-    VARIABLE_DIR,
-)
+    DATAFRAME_ANALYSIS_KEYS, DATAFRAME_SAMPLE_COUNT,
+    DATAFRAME_SAMPLE_MAX_COLUMNS, VARIABLE_DIR)
 from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
-    AMBIGUOUS_COLUMN_TYPES,
-    STRING_SERIALIZABLE_COLUMN_TYPES,
-    apply_transform_pandas,
-    cast_column_types,
-    cast_column_types_polars,
-    deserialize_columns,
-    deserialize_complex,
-    infer_variable_type,
-    serialize_columns,
-    serialize_complex,
-    should_deserialize_pandas,
-    should_serialize_pandas,
-)
+    AMBIGUOUS_COLUMN_TYPES, STRING_SERIALIZABLE_COLUMN_TYPES,
+    apply_transform_pandas, cast_column_types, cast_column_types_polars,
+    deserialize_columns, deserialize_complex, infer_variable_type,
+    serialize_columns, serialize_complex, should_deserialize_pandas,
+    should_serialize_pandas)
+from mage_ai.data_preparation.models.variables.constants import (
+    DATAFRAME_COLUMN_TYPES_FILE, DATAFRAME_CSV_FILE, DATAFRAME_PARQUET_FILE,
+    DATAFRAME_PARQUET_SAMPLE_FILE, JSON_FILE, JSON_SAMPLE_FILE, METADATA_FILE,
+    VariableType)
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
+from mage_ai.shared.hash import flatten_dict
+from mage_ai.shared.outputs import load_custom_object, save_custom_object
+from mage_ai.shared.parsers import (deserialize_matrix, sample_output,
+                                    serialize_matrix)
 from mage_ai.shared.utils import clean_name
-
-DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
-DATAFRAME_PARQUET_FILE = 'data.parquet'
-DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
-DATAFRAME_CSV_FILE = 'data.csv'
-
-METADATA_FILE = 'type.json'
-
-JSON_FILE = 'data.json'
-JSON_SAMPLE_FILE = 'sample_data.json'
-
-# Models
-JOBLIB_FILE = 'model.joblib'
-JOBLIB_OBJECT_FILE = 'object.joblib'
-UBJSON_MODEL_FILENAME = 'model.ubj'
-
-
-class VariableType(str, Enum):
-    CUSTOM_OBJECT = 'custom_object'
-    DATAFRAME = 'dataframe'
-    DATAFRAME_ANALYSIS = 'dataframe_analysis'
-    DICTIONARY_COMPLEX = 'dictionary_complex'
-    GEO_DATAFRAME = 'geo_dataframe'
-    MATRIX_SPARSE = 'matrix_sparse'
-    MODEL_SKLEARN = 'model_sklearn'
-    MODEL_XGBOOST = 'model_xgboost'
-    POLARS_DATAFRAME = 'polars_dataframe'
-    SERIES_PANDAS = 'series_pandas'
-    SPARK_DATAFRAME = 'spark_dataframe'
 
 
 class Variable:
@@ -91,7 +55,9 @@ class Variable:
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
-        self.block_dir_name = clean_name(self.block_uuid) if clean_block_uuid else self.block_uuid
+        self.block_dir_name = (
+            clean_name(self.block_uuid) if clean_block_uuid else self.block_uuid
+        )
         self.partition = partition
         self.variable_dir_path = os.path.join(
             pipeline_path,
@@ -125,7 +91,9 @@ class Variable:
         if self.variable_type is None:
             try:
                 if self.storage.path_exists(self.metadata_path):
-                    metadata = self.storage.read_json_file(self.metadata_path, raise_exception=True)
+                    metadata = self.storage.read_json_file(
+                        self.metadata_path, raise_exception=True
+                    )
                     self.variable_type = metadata.get('type')
             except Exception:
                 traceback.print_exc()
@@ -197,9 +165,10 @@ class Variable:
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
-        if self.variable_type == VariableType.DATAFRAME or \
-                self.variable_type == VariableType.SERIES_PANDAS:
-
+        if (
+            self.variable_type == VariableType.DATAFRAME
+            or self.variable_type == VariableType.SERIES_PANDAS
+        ):
             return self.__read_parquet(
                 raise_exception=raise_exception,
                 sample=sample,
@@ -212,11 +181,15 @@ class Variable:
                 sample_count=sample_count,
             )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
+            return self.__read_spark_parquet(
+                sample=sample, sample_count=sample_count, spark=spark
+            )
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
+            return self.__read_dataframe_analysis(
+                dataframe_analysis_keys=dataframe_analysis_keys
+            )
         else:
             data = self.__should_load_object()
             if data:
@@ -225,7 +198,9 @@ class Variable:
             data = self.__read_json(raise_exception=raise_exception, sample=sample)
 
             if self.variable_type == VariableType.MATRIX_SPARSE:
-                data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+                data = self.__read_matrix_sparse(
+                    data, sample=sample, sample_count=sample_count
+                )
             elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = self.__read_dictionary_complex(data)
 
@@ -250,9 +225,10 @@ class Variable:
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
-        if self.variable_type == VariableType.DATAFRAME or \
-                self.variable_type == VariableType.SERIES_PANDAS:
-
+        if (
+            self.variable_type == VariableType.DATAFRAME
+            or self.variable_type == VariableType.SERIES_PANDAS
+        ):
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             return self.__read_polars_parquet(
@@ -260,7 +236,9 @@ class Variable:
                 sample_count=sample_count,
             )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
+            return self.__read_spark_parquet(
+                sample=sample, sample_count=sample_count, spark=spark
+            )
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
@@ -273,22 +251,33 @@ class Variable:
             data = await self.__read_json_async(sample=sample)
 
             if self.variable_type == VariableType.MATRIX_SPARSE:
-                data = self.__read_matrix_sparse(data, sample=sample, sample_count=sample_count)
+                data = self.__read_matrix_sparse(
+                    data, sample=sample, sample_count=sample_count
+                )
             elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = self.__read_dictionary_complex(data)
 
             return data
 
     def __read_dictionary_complex(self, data: Dict) -> Dict:
-        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        column_types_filename = os.path.join(
+            self.variable_path, DATAFRAME_COLUMN_TYPES_FILE
+        )
         if self.storage.path_exists(column_types_filename):
             column_types = self.storage.read_json_file(column_types_filename)
-            data = deserialize_complex(data, column_types)
+            data = deserialize_complex(
+                data,
+                column_types,
+                unflatten=True,
+            )
 
         return data
 
     def __save_dictionary_complex(self, data: Dict) -> Dict:
-        data, column_types = serialize_complex(data)
+        data, column_types = serialize_complex(
+            flatten_dict(data),
+            save_path=self.variable_path,
+        )
         self.storage.write_json_file(
             os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
             column_types,
@@ -296,56 +285,31 @@ class Variable:
         return data
 
     async def __save_dictionary_complex_async(self, data: Dict) -> Dict:
-        data, column_types = serialize_complex(data)
+        data, column_types = serialize_complex(
+            flatten_dict(data),
+            save_path=self.variable_path,
+        )
         await self.storage.write_json_file_async(
             os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
             column_types,
         )
         return data
 
-    def __should_save_object(self, data: Any) -> Dict:
-        is_object = False
-
-        if VariableType.MODEL_SKLEARN == self.variable_type:
-            is_object = True
-            os.makedirs(self.variable_path, exist_ok=True)
-            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_FILE))
-        elif VariableType.MODEL_XGBOOST == self.variable_type:
-            is_object = True
-            os.makedirs(self.variable_path, exist_ok=True)
-            save_model_xgboost(data, os.path.join(self.variable_path, UBJSON_MODEL_FILENAME))
-        elif VariableType.CUSTOM_OBJECT == self.variable_type:
-            is_object = True
-            os.makedirs(self.variable_path, exist_ok=True)
-            joblib.dump(data, os.path.join(self.variable_path, JOBLIB_OBJECT_FILE))
-
-        if is_object:
-            data_class = data.__class__
-            data = dict(
-                module=data_class.__module__,
-                name=data_class.__name__,
-            )
-
-        return data
+    def __should_save_object(self, data: Any) -> Tuple[Dict, Optional[str]]:
+        return save_custom_object(
+            data, self.variable_path, variable_type=self.variable_type
+        )
 
     def __should_load_object(self) -> Optional[Any]:
-        if VariableType.MODEL_SKLEARN == self.variable_type:
-            return joblib.load(os.path.join(self.variable_path, JOBLIB_FILE))
-        elif VariableType.MODEL_XGBOOST == self.variable_type:
-            return load_model_xgboost(
-                os.path.join(self.variable_path, UBJSON_MODEL_FILENAME),
-                raise_exception=False,
-            )
-        elif VariableType.CUSTOM_OBJECT == self.variable_type:
-            return joblib.load(os.path.join(self.variable_path, JOBLIB_OBJECT_FILE))
+        return load_custom_object(self.variable_path, self.variable_type)
 
     @contextmanager
     def open_to_write(self, filename: str) -> None:
         if not self.storage.isdir(self.variable_path):
             self.storage.makedirs(self.variable_path, exist_ok=True)
 
-        with self.storage.open_to_write(self.full_path(filename)) as f:
-            yield f
+        with self.storage.open_to_write(self.full_path(filename)) as fi:
+            yield fi
 
     def full_path(self, filename: str = None) -> str:
         if filename:
@@ -361,7 +325,10 @@ class Variable:
             data (Any): Variable data to be written to storage.
         """
 
-        if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
+        if (
+            isinstance(data, pd.Series)
+            and self.variable_type != VariableType.SERIES_PANDAS
+        ):
             data = data.to_list()
 
         if self.variable_type is None and isinstance(data, pd.DataFrame):
@@ -402,7 +369,7 @@ class Variable:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = self.__save_dictionary_complex(data)
             else:
-                data = self.__should_save_object(data)
+                data, _ = self.__should_save_object(data)
 
             self.__write_json(data)
 
@@ -453,7 +420,7 @@ class Variable:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type:
                 data = await self.__save_dictionary_complex_asycn(data)
             else:
-                data = self.__should_save_object(data)
+                data, _ = self.__should_save_object(data)
             await self.__write_json_async(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
@@ -465,9 +432,11 @@ class Variable:
         Write metadata to the persistent storage.
         """
         metadata = dict(
-            type=self.variable_type.value
-            if isinstance(self.variable_type, VariableType)
-            else self.variable_type,
+            type=(
+                self.variable_type.value
+                if isinstance(self.variable_type, VariableType)
+                else self.variable_type
+            ),
         )
         self.storage.write_json_file(self.metadata_path, metadata)
 
@@ -518,22 +487,34 @@ class Variable:
             if self.storage.path_exists(file_path):
                 try:
                     data = self.storage.read_json_file(
-                        file_path, default_value=default_value, raise_exception=raise_exception)
+                        file_path,
+                        default_value=default_value,
+                        raise_exception=raise_exception,
+                    )
                 except Exception as ex:
                     if raise_exception:
-                        raise Exception(f'Failed to read json file: {file_path}') from ex
+                        raise Exception(
+                            f'Failed to read json file: {file_path}'
+                        ) from ex
             else:
                 try:
                     data = self.storage.read_json_file(
-                        old_file_path, default_value=default_value, raise_exception=raise_exception)
+                        old_file_path,
+                        default_value=default_value,
+                        raise_exception=raise_exception,
+                    )
                 except Exception as ex:
                     if raise_exception:
-                        raise Exception(f'Failed to read json file: {old_file_path}') from ex
+                        raise Exception(
+                            f'Failed to read json file: {old_file_path}'
+                        ) from ex
         if sample:
             data = sample_output(data)[0]
         return data
 
-    async def __read_json_async(self, default_value: Dict = None, sample: bool = False) -> Dict:
+    async def __read_json_async(
+        self, default_value: Dict = None, sample: bool = False
+    ) -> Dict:
         if default_value is None:
             default_value = {}
         # For backward compatibility
@@ -544,7 +525,9 @@ class Variable:
         read_sample_success = False
         if sample and self.storage.path_exists(sample_file_path):
             try:
-                data = await self.storage.read_json_file_async(sample_file_path, default_value)
+                data = await self.storage.read_json_file_async(
+                    sample_file_path, default_value
+                )
                 read_sample_success = True
             except Exception:
                 pass
@@ -552,7 +535,9 @@ class Variable:
             if self.storage.path_exists(file_path):
                 data = await self.storage.read_json_file_async(file_path, default_value)
             else:
-                data = await self.storage.read_json_file_async(old_file_path, default_value)
+                data = await self.storage.read_json_file_async(
+                    old_file_path, default_value
+                )
         if sample:
             data = sample_output(data)[0]
         return data
@@ -572,7 +557,9 @@ class Variable:
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
         try:
             await self.storage.write_json_file_async(file_path, data)
-            await self.storage.write_json_file_async(sample_file_path, sample_output(data)[0])
+            await self.storage.write_json_file_async(
+                sample_file_path, sample_output(data)[0]
+            )
         except Exception:
             traceback.print_exc()
 
@@ -603,7 +590,9 @@ class Variable:
         raise_exception: bool = False,
     ) -> pd.DataFrame:
         file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
-        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
+        sample_file_path = os.path.join(
+            self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE
+        )
 
         read_sample_success = False
         if sample:
@@ -612,7 +601,9 @@ class Variable:
                 read_sample_success = True
             except Exception as ex:
                 if raise_exception:
-                    raise Exception(f'Failed to read parquet file: {sample_file_path}') from ex
+                    raise Exception(
+                        f'Failed to read parquet file: {sample_file_path}'
+                    ) from ex
                 else:
                     traceback.print_exc()
         if not read_sample_success:
@@ -630,7 +621,9 @@ class Variable:
                 df = df.iloc[:sample_count]
 
         column_types_raw = None
-        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        column_types_filename = os.path.join(
+            self.variable_path, DATAFRAME_COLUMN_TYPES_FILE
+        )
         if self.storage.path_exists(column_types_filename):
             column_types_raw = self.storage.read_json_file(column_types_filename)
             column_types = {}
@@ -664,7 +657,7 @@ class Variable:
                         columns_idx.append(col_idx)
                         columns.append(col)
 
-                    df_series = df.iloc[:len(index)][columns_idx]
+                    df_series = df.iloc[: len(index)][columns_idx]
                     df_series.columns = columns
                     for col in df_series.columns:
                         series = df_series[col]
@@ -684,7 +677,10 @@ class Variable:
         sample_count: int = None,
     ) -> scipy.sparse._csr.csr_matrix:
         if isinstance(json_dict, list) or isinstance(json_dict, Tuple):
-            return [self.__deserialize_matrix_sparse(d, sample, sample_count) for d in json_dict]
+            return [
+                self.__deserialize_matrix_sparse(d, sample, sample_count)
+                for d in json_dict
+            ]
 
         return self.__deserialize_matrix_sparse(json_dict, sample, sample_count)
 
@@ -714,7 +710,9 @@ class Variable:
         read_sample_success = False
         if sample:
             try:
-                df = self.storage.read_polars_parquet(sample_file_path, use_pyarrow=True)
+                df = self.storage.read_polars_parquet(
+                    sample_file_path, use_pyarrow=True
+                )
                 read_sample_success = True
             except Exception as ex:
                 if raise_exception:
@@ -737,7 +735,9 @@ class Variable:
             if df.shape[0] > sample_count:
                 df = df.head(sample_count)
 
-        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        column_types_filename = os.path.join(
+            self.variable_path, DATAFRAME_COLUMN_TYPES_FILE
+        )
         if self.storage.path_exists(column_types_filename):
             column_types = self.storage.read_json_file(column_types_filename)
             # No Mage specific code to serialize columns for polars when writing a variable,
@@ -745,12 +745,13 @@ class Variable:
             df = cast_column_types_polars(df, column_types)
         return df
 
-    def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
+    def __read_spark_parquet(
+        self, sample: bool = False, sample_count: int = None, spark=None
+    ):
         if spark is None:
             return None
         df = (
-            spark.read
-            .format('parquet')
+            spark.read.format('parquet')
             .option('header', 'true')
             .option('inferSchema', 'true')
             .option('delimiter', ',')
@@ -817,9 +818,11 @@ class Variable:
     ) -> None:
         column_types_to_test = {}
 
-        is_series_list = (isinstance(data, list) or isinstance(data, tuple)) and \
-            len(data) >= 1 and \
-            isinstance(data[0], pd.Series)
+        is_series_list = (
+            (isinstance(data, list) or isinstance(data, tuple))
+            and len(data) >= 1
+            and isinstance(data[0], pd.Series)
+        )
 
         if is_series_list:
             df_output = pd.DataFrame()
@@ -839,11 +842,13 @@ class Variable:
                 col_types, df_series = self.__get_column_types(df_series)
 
                 df_output = pd.concat([df_output, df_series], axis=1)
-                column_types.append(dict(
-                    column_mapping=column_mapping,
-                    column_types=col_types,
-                    index=series.index.to_list(),
-                ))
+                column_types.append(
+                    dict(
+                        column_mapping=column_mapping,
+                        column_types=col_types,
+                        index=series.index.to_list(),
+                    )
+                )
                 column_types_to_test.update(col_types)
         else:
             column_types, df_output = self.__get_column_types(data)
@@ -857,8 +862,12 @@ class Variable:
 
         if should_serialize_pandas(column_types_to_test):
             # Try using Polars to write the dataframe to improve performance
-            if type(df_output.index) is RangeIndex and df_output.index.start == 0 \
-                    and df_output.index.stop == df_output.shape[0] and df_output.index.step == 1:
+            if (
+                type(df_output.index) is RangeIndex
+                and df_output.index.start == 0
+                and df_output.index.stop == df_output.shape[0]
+                and df_output.index.step == 1
+            ):
                 # Polars ignores any index
                 try:
                     pl_df = pl.from_pandas(df_output)
@@ -922,8 +931,7 @@ class Variable:
 
     def __write_spark_parquet(self, data) -> None:
         (
-            data.write
-            .option('header', 'True')
+            data.write.option('header', 'True')
             .mode('overwrite')
             .parquet(self.variable_path)
         )
@@ -945,7 +953,9 @@ class Variable:
         for k in DATAFRAME_ANALYSIS_KEYS:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
-            result[k] = self.storage.read_json_file(os.path.join(self.variable_path, f'{k}.json'))
+            result[k] = self.storage.read_json_file(
+                os.path.join(self.variable_path, f'{k}.json')
+            )
         return result
 
     async def __read_dataframe_analysis_async(
@@ -980,11 +990,15 @@ class Variable:
         """
         self.storage.makedirs(self.variable_path, exist_ok=True)
         for k in DATAFRAME_ANALYSIS_KEYS:
-            self.storage.write_json_file(os.path.join(self.variable_path, f'{k}.json'), data.get(k))
+            self.storage.write_json_file(
+                os.path.join(self.variable_path, f'{k}.json'), data.get(k)
+            )
 
     def __write_matrix_sparse(
         self,
-        csr_matrix: Union[scipy.sparse._csr.csr_matrix, List[scipy.sparse._csr.csr_matrix]],
+        csr_matrix: Union[
+            scipy.sparse._csr.csr_matrix, List[scipy.sparse._csr.csr_matrix]
+        ],
     ) -> None:
         if not self.storage.isdir(self.variable_path):
             self.storage.makedirs(self.variable_path, exist_ok=True)
@@ -1007,7 +1021,9 @@ class Variable:
         file_path = os.path.join(self.variable_path, JSON_FILE)
         self.storage.write_json_file(file_path, data)
 
-    def __serialize_matrix_sparse(self, csr_matrix: scipy.sparse._csr.csr_matrix) -> Tuple[Dict]:
+    def __serialize_matrix_sparse(
+        self, csr_matrix: scipy.sparse._csr.csr_matrix
+    ) -> Tuple[Dict]:
         sample = csr_matrix[:DATAFRAME_SAMPLE_COUNT, :DATAFRAME_SAMPLE_MAX_COLUMNS]
         data_sample = serialize_matrix(sample)
         data = serialize_matrix(csr_matrix)

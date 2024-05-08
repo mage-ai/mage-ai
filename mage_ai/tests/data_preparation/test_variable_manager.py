@@ -5,14 +5,12 @@ from pandas.testing import assert_frame_equal
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.data_preparation.variable_manager import (
-    VariableManager,
-    get_global_variable,
-    get_global_variables,
-    set_global_variable,
-)
+from mage_ai.data_preparation.variable_manager import (VariableManager,
+                                                       get_global_variable,
+                                                       get_global_variables,
+                                                       set_global_variable)
 from mage_ai.settings.repo import set_repo_path
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
@@ -25,10 +23,13 @@ class VariableManagerTest(DBTestCase):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data1 = {'k1': 'v1', 'k2': 'v2'}
-        data2 = pd.DataFrame([
-            ['test1', 1],
-            ['test2', 2],
-        ], columns=['col1', 'col2'])
+        data2 = pd.DataFrame(
+            [
+                ['test1', 1],
+                ['test2', 2],
+            ],
+            columns=['col1', 'col2'],
+        )
         data3 = dict(
             metadata=dict(
                 column_types=dict(
@@ -45,7 +46,7 @@ class VariableManagerTest(DBTestCase):
                 dict(
                     title='Remove outliers',
                 )
-            ]
+            ],
         )
         variable_manager.add_variable('test_pipeline_1', 'block1', 'var1', data1)
         variable_manager.add_variable('test_pipeline_1', 'block2', 'var2', data2)
@@ -99,7 +100,9 @@ class VariableManagerTest(DBTestCase):
         self.assertEqual(get_global_variable('test_pipeline_3', 'var1'), 1)
         self.assertEqual(get_global_variable('test_pipeline_3', 'var2'), 'test')
         self.assertEqual(get_global_variable('test_pipeline_3', 'var3'), [1, 2, 3])
-        self.assertEqual(get_global_variable('test_pipeline_3', 'var4'), dict(k1='v1', k2='v2'))
+        self.assertEqual(
+            get_global_variable('test_pipeline_3', 'var4'), dict(k1='v1', k2='v2')
+        )
 
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(
@@ -119,7 +122,9 @@ class VariableManagerTest(DBTestCase):
         )
         pipeline.variables = self.faker.unique.name()
         pipeline.save()
-        self.assertEqual(get_global_variables(None, pipeline=pipeline), pipeline.variables)
+        self.assertEqual(
+            get_global_variables(None, pipeline=pipeline), pipeline.variables
+        )
         self.assertEqual(get_global_variables(pipeline.uuid), pipeline.variables)
 
 
@@ -165,4 +170,6 @@ class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
                         get_global_variables(None, pipeline=pipeline),
                         pipeline.variables,
                     )
-                    self.assertEqual(get_global_variables(pipeline.uuid), pipeline.variables)
+                    self.assertEqual(
+                        get_global_variables(pipeline.uuid), pipeline.variables
+                    )

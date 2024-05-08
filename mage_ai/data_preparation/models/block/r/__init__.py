@@ -9,7 +9,8 @@ import simplejson
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.variable import DATAFRAME_CSV_FILE, VariableType
+from mage_ai.data_preparation.models.variables.constants import (
+    DATAFRAME_CSV_FILE, VariableType)
 from mage_ai.shared.parsers import encode_complex
 
 BLOCK_TYPE_TO_EXECUTION_TEMPLATE = {
@@ -19,10 +20,12 @@ BLOCK_TYPE_TO_EXECUTION_TEMPLATE = {
 }
 
 template_env = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(
-        os.path.dirname(__file__),
-        'templates',
-    )),
+    loader=jinja2.FileSystemLoader(
+        os.path.join(
+            os.path.dirname(__file__),
+            'templates',
+        )
+    ),
     lstrip_blocks=True,
     trim_blocks=True,
 )
@@ -34,9 +37,12 @@ def execute_r_code(
     execution_partition: str = None,
     global_vars: Dict = None,
 ):
-    input_variable_objects = block.input_variable_objects(
-        execution_partition=execution_partition,
-    ) or []
+    input_variable_objects = (
+        block.input_variable_objects(
+            execution_partition=execution_partition,
+        )
+        or []
+    )
 
     # Render R script with user code
     execution_code = __render_r_script(
@@ -60,14 +66,21 @@ def execute_r_code(
     output_variable_objects = block.output_variable_objects(
         execution_partition=execution_partition,
     )
-    output_variable_objects = [v for v in output_variable_objects
-                               if os.path.exists(os.path.join(
-                                    output_variable_objects[0].variable_path,
-                                    DATAFRAME_CSV_FILE,
-                                ))]
+    output_variable_objects = [
+        v
+        for v in output_variable_objects
+        if os.path.exists(
+            os.path.join(
+                output_variable_objects[0].variable_path,
+                DATAFRAME_CSV_FILE,
+            )
+        )
+    ]
 
     if len(output_variable_objects) > 0:
-        df = pd.read_csv(os.path.join(output_variable_objects[0].variable_path, DATAFRAME_CSV_FILE))
+        df = pd.read_csv(
+            os.path.join(output_variable_objects[0].variable_path, DATAFRAME_CSV_FILE)
+        )
     else:
         df = None
     return df
@@ -125,23 +138,26 @@ def __render_r_script(
 
     global_vars_str = __render_global_vars(global_vars=global_vars)
 
-    return template.render(
-        code=code,
-        global_vars=global_vars_str,
-        input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE)
-                     for v in input_variable_objects],
-        input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
-        output_path=output_path,
-    ) + '\n'
+    return (
+        template.render(
+            code=code,
+            global_vars=global_vars_str,
+            input_paths=[
+                os.path.join(v.variable_path, DATAFRAME_CSV_FILE)
+                for v in input_variable_objects
+            ],
+            input_vars_str=', '.join(
+                [f'df_{i + 1}' for i in range(len(input_variable_objects))]
+            ),
+            output_path=output_path,
+        )
+        + '\n'
+    )
 
 
 def __execute_r_code(file_path: str):
     subprocess.run(
-        [
-            'Rscript',
-            '--vanilla',
-            file_path
-        ],
+        ['Rscript', '--vanilla', file_path],
         check=True,
     )
 

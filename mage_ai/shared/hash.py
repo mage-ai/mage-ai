@@ -105,6 +105,30 @@ def flatten(input_data):
     return final_data
 
 
+def flatten_dict(d, parent_key='', sep='.'):
+    items = []
+    for k, v in d.items():
+        new_key = f'{parent_key}{sep}{k}' if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+
+def unflatten_dict(d, sep='.'):
+    result_dict = {}
+    for k, v in d.items():
+        parts = k.split(sep)
+        current_level = result_dict
+        for part in parts[:-1]:
+            if part not in current_level:
+                current_level[part] = {}
+            current_level = current_level[part]
+        current_level[parts[-1]] = v
+    return result_dict
+
+
 def get_json_value(str_value, arr_or_string):
     if not str_value:
         return str_value

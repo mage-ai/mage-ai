@@ -8,7 +8,8 @@ from polars.testing import assert_frame_equal as assert_polars_frame_equal
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import Variable, VariableType
+from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.tests.base_test import DBTestCase
 
 
@@ -42,35 +43,51 @@ class VariableTest(DBTestCase):
                 [1, 'test'],
                 [2, 'test2'],
             ],
-            columns=['col1', 'col2']
+            columns=['col1', 'col2'],
         )
         df2 = pd.DataFrame(
             [
                 [1, 'test', 3.123, np.NaN],
                 [2, 'test2', 4.321, np.NaN],
             ],
-            columns=['col1', 'col2', 'col3', 'col4']
+            columns=['col1', 'col2', 'col3', 'col4'],
         )
         df2['col4'] = df2['col4'].astype('Int64')
         variable1.write_data(df1)
         variable2.write_data(df2)
         variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block1', 'var1', 'data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block1', 'var1', 'sample_data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block2', 'var2', 'data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block2', 'var2', 'sample_data.parquet'),
-        ))
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(variable_dir_path, 'block1', 'var1', 'data.parquet'),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    variable_dir_path, 'block1', 'var1', 'sample_data.parquet'
+                ),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(variable_dir_path, 'block2', 'var2', 'data.parquet'),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    variable_dir_path, 'block2', 'var2', 'sample_data.parquet'
+                ),
+            )
+        )
         assert_frame_equal(variable1.read_data(), df1)
-        assert_frame_equal(variable1.read_data(sample=True, sample_count=1), df1.iloc[:1])
+        assert_frame_equal(
+            variable1.read_data(sample=True, sample_count=1), df1.iloc[:1]
+        )
         assert_frame_equal(variable2.read_data(), df2)
-        assert_frame_equal(variable2.read_data(sample=True, sample_count=1), df2.iloc[:1])
+        assert_frame_equal(
+            variable2.read_data(sample=True, sample_count=1), df2.iloc[:1]
+        )
 
     def test_write_and_read_dataframe_analysis(self):
         pipeline = self.__create_pipeline('test pipeline 3')
@@ -96,7 +113,7 @@ class VariableTest(DBTestCase):
                 dict(
                     title='Remove outliers',
                 )
-            ]
+            ],
         )
         variable.write_data(data)
         self.assertEqual(variable.read_data(), data)
@@ -112,18 +129,29 @@ class VariableTest(DBTestCase):
             results=[100] * 100,
         )
         variable.write_data(data)
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path,
-            'pipelines/test_pipeline_4/.variables/block1/var1/data.json'
-        )))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path,
-            'pipelines/test_pipeline_4/.variables/block1/var1/sample_data.json'
-        )))
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    self.repo_path,
+                    'pipelines/test_pipeline_4/.variables/block1/var1/data.json',
+                )
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    self.repo_path,
+                    'pipelines/test_pipeline_4/.variables/block1/var1/sample_data.json',
+                )
+            )
+        )
         self.assertEqual(variable.read_data(), data)
-        self.assertEqual(variable.read_data(sample=True), dict(
-            results=[100] * 20,
-        ))
+        self.assertEqual(
+            variable.read_data(sample=True),
+            dict(
+                results=[100] * 20,
+            ),
+        )
 
     def test_write_and_read_polars_dataframe(self):
         pipeline = self.__create_pipeline('test pipeline polars')
@@ -138,35 +166,51 @@ class VariableTest(DBTestCase):
                 [1, 'test'],
                 [2, 'test2'],
             ],
-            schema=['col1', 'col2']
+            schema=['col1', 'col2'],
         )
         df2 = pl.DataFrame(
             [
                 [1, 'test', 3.123, 41414123123124],
                 [2, 'test2', 4.321, 12111111],
             ],
-            schema=['col1', 'col2', 'col3', 'col4']
+            schema=['col1', 'col2', 'col3', 'col4'],
         )
         df2 = df2.cast({'col4': pl.Int64})
         variable1.write_data(df1)
         variable2.write_data(df2)
         variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block1', 'polars1', 'data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block1', 'polars1', 'sample_data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block2', 'polars2', 'data.parquet'),
-        ))
-        self.assertTrue(os.path.exists(
-            os.path.join(variable_dir_path, 'block2', 'polars2', 'sample_data.parquet'),
-        ))
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(variable_dir_path, 'block1', 'polars1', 'data.parquet'),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    variable_dir_path, 'block1', 'polars1', 'sample_data.parquet'
+                ),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(variable_dir_path, 'block2', 'polars2', 'data.parquet'),
+            )
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.join(
+                    variable_dir_path, 'block2', 'polars2', 'sample_data.parquet'
+                ),
+            )
+        )
         assert_polars_frame_equal(variable1.read_data(), df1)
-        assert_polars_frame_equal(variable1.read_data(sample=True, sample_count=1), df1.head(1))
+        assert_polars_frame_equal(
+            variable1.read_data(sample=True, sample_count=1), df1.head(1)
+        )
         assert_polars_frame_equal(variable2.read_data(), df2)
-        assert_polars_frame_equal(variable2.read_data(sample=True, sample_count=1), df2.head(1))
+        assert_polars_frame_equal(
+            variable2.read_data(sample=True, sample_count=1), df2.head(1)
+        )
 
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(

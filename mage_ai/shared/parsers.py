@@ -4,13 +4,14 @@ import io
 from datetime import datetime
 from enum import Enum
 from json import JSONDecoder
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import polars as pl
 import scipy
 
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.orchestration.db.models.base import BaseModel
 
 INTS = (
@@ -42,8 +43,11 @@ def encode_complex(obj):
         return obj.to_dict()
     elif isinstance(obj, Enum):
         return obj.value
-    elif isinstance(obj, datetime) or \
-            hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
+    elif (
+        isinstance(obj, datetime)
+        or hasattr(obj, 'isoformat')
+        and 'method' in type(obj.isoformat).__name__
+    ):
         return obj.isoformat()
     elif isinstance(obj, INTS):
         return int(obj)
@@ -65,15 +69,14 @@ def encode_complex(obj):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
-    else:
-        try:
-            import xgboost as xgb
 
-            if isinstance(obj, xgb.Booster):
-                return str(obj)
-        except Exception as err:
-            print(f'[ERROR] encode_complex: {err}')
-            return None
+    try:
+        import xgboost as xgb
+
+        if isinstance(obj, xgb.Booster):
+            return object_to_uuid(obj)
+    except Exception as err:
+        print(f'[ERROR] encode_complex: {err}')
 
     return obj
 
@@ -128,10 +131,7 @@ def serialize_matrix(csr_matrix: scipy.sparse._csr.csr_matrix) -> Dict:
         buffer.seek(0)
         data = base64.b64encode(buffer.read()).decode('ascii')
 
-    return {
-        '__type__': 'scipy.sparse.csr_matrix',
-        '__data__': data
-    }
+    return {'__type__': 'scipy.sparse.csr_matrix', '__data__': data}
 
 
 def deserialize_matrix(json_dict: Dict) -> scipy.sparse._csr.csr_matrix:
@@ -148,7 +148,9 @@ def deserialize_matrix(json_dict: Dict) -> scipy.sparse._csr.csr_matrix:
 def convert_matrix_to_dataframe(csr_matrix: scipy.sparse.csr_matrix) -> pd.DataFrame:
     if isinstance(csr_matrix, scipy.sparse.csr_matrix):
         n_columns = csr_matrix.shape[1]
-        return pd.DataFrame(csr_matrix.toarray(), columns=[f'col_{i}' for i in range(n_columns)])
+        return pd.DataFrame(
+            csr_matrix.toarray(), columns=[f'col_{i}' for i in range(n_columns)]
+        )
     return csr_matrix
 
 
@@ -163,8 +165,59 @@ def polars_to_dict_split(df: pl.DataFrame) -> Dict:
     return dict(columns=columns, data=data)
 
 
-def is_custom_object(obj: Any) -> bool:
-    for base_class in inspect.getmro(obj.__class__):
-        if base_class.__module__ not in ('__builtin__', 'builtins'):
-            return True
-    return False
+def object_to_hash(obj: Any) -> str:
+    return hex(id(obj))
+
+
+def object_uuid_parts(obj: Any) -> Dict[str, Union[bool, str, List[str]]]:
+    if inspect.isclass(obj):
+        obj_cls = obj
+    else:
+        obj_cls = obj.__class__
+
+    return dict(
+        module=obj_cls.__module__,
+        name=obj_cls.__name__,
+    )
+
+
+def object_to_uuid(obj: Any, include_hash: bool = True) -> str:
+    hash_uuid = None
+    if include_hash:
+        hash_uuid = object_to_hash(obj)
+
+    parts = object_uuid_parts(obj)
+    uuid = '.'.join(
+        [
+            t
+            for t in [
+                str(parts['module']),
+                str(parts['name']),
+            ]
+            if t
+        ]
+    )
+
+    if hash_uuid:
+        return f'{uuid} {hash_uuid}'
+
+    return uuid
+
+
+def object_to_dict(
+    obj: Any,
+    variable_type: Optional[VariableType] = None,
+) -> Dict[str, Union[bool, str, List[str]]]:
+    is_class = inspect.isclass(obj)
+
+    data_dict = object_uuid_parts(obj)
+    data_dict['type'] = 'class' if is_class else 'instance'
+    data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
+
+    if not is_class:
+        data_dict['hash'] = object_to_hash(obj)
+
+    if variable_type:
+        data_dict['variable_type'] = variable_type.value
+
+    return data_dict

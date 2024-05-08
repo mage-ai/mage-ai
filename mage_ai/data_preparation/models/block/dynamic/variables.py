@@ -28,7 +28,9 @@ class LazyVariable:
 
     @property
     def is_dynamic(self):
-        from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+        from mage_ai.data_preparation.models.block.dynamic.utils import \
+            is_dynamic_block
+
         return is_dynamic_block(self.block)
 
     def read_data(self):
@@ -72,11 +74,14 @@ class LazyVariableSet(Sequence):
         **kwargs,
     ):
         self.block = block
-        self.lazy_variables = [LazyVariable(
-            block,
-            variable_object,
-            **kwargs,
-        ) for variable_object in variable_objects]
+        self.lazy_variables = [
+            LazyVariable(
+                block,
+                variable_object,
+                **kwargs,
+            )
+            for variable_object in variable_objects
+        ]
         self.logger = logger
         self.logging_tags = logging_tags
 
@@ -94,7 +99,9 @@ class LazyVariableSet(Sequence):
 
     @property
     def is_dynamic(self):
-        from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+        from mage_ai.data_preparation.models.block.dynamic.utils import \
+            is_dynamic_block
+
         return is_dynamic_block(self.block)
 
     @property
@@ -106,12 +113,19 @@ class LazyVariableSet(Sequence):
         return self[1]
 
     def read_child_data(self) -> Any:
-        if not isinstance(self.lazy_child_data, pd.DataFrame) and not self.lazy_child_data:
+        if (
+            not isinstance(self.lazy_child_data, pd.DataFrame)
+            and not self.lazy_child_data
+        ):
             return None
 
-        return self.read_lazy_variable(
-            self.lazy_child_data,
-        ) if self.lazy_child_data is not None else None
+        return (
+            self.read_lazy_variable(
+                self.lazy_child_data,
+            )
+            if self.lazy_child_data is not None
+            else None
+        )
 
     def read_metadata(self) -> Any:
         return self.read_lazy_variable(self.lazy_metadata) if self.lazy_metadata else {}
@@ -172,7 +186,9 @@ class LazyVariableController(Sequence):
 
     @property
     def is_dynamic(self):
-        from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+        from mage_ai.data_preparation.models.block.dynamic.utils import \
+            is_dynamic_block
+
         return is_dynamic_block(self.block)
 
     def render(
@@ -190,7 +206,7 @@ class LazyVariableController(Sequence):
             if self.is_dynamic:
                 if isinstance(child_data, pd.DataFrame):
                     index = child_dynamic_block_index % len(child_data.index)
-                    child_data = child_data.iloc[index:index + 1]
+                    child_data = child_data.iloc[index: index + 1]
                 else:
                     index = child_dynamic_block_index % len(child_data)
                     child_data = child_data[index]
@@ -199,13 +215,13 @@ class LazyVariableController(Sequence):
             return child_data, metadata
 
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index:dynamic_block_index + 1]
+            arr = arr[dynamic_block_index: dynamic_block_index + 1]
         return [lazy_variable_set.read_data() for lazy_variable_set in arr]
 
     async def render_async(self, dynamic_block_index: int = None):
         arr = self.lazy_variable_sets
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index:dynamic_block_index + 1]
+            arr = arr[dynamic_block_index: dynamic_block_index + 1]
         return await asyncio.gather(
             *[lazy_variable_set.read_data_async() for lazy_variable_set in arr],
         )
@@ -215,9 +231,8 @@ def get_dynamic_child_block_indexes(
     block,
     execution_partition: str = None,
 ) -> List[int]:
-    from mage_ai.data_preparation.models.block.dynamic.utils import (
-        build_combinations_for_dynamic_child,
-    )
+    from mage_ai.data_preparation.models.block.dynamic.utils import \
+        build_combinations_for_dynamic_child
 
     """
     Get all the folder names in the dynamic child block’s variables directory:
@@ -225,10 +240,12 @@ def get_dynamic_child_block_indexes(
         1/
         2/
     """
-    count = len(build_combinations_for_dynamic_child(
-        block,
-        execution_partition=execution_partition,
-    ))
+    count = len(
+        build_combinations_for_dynamic_child(
+            block,
+            execution_partition=execution_partition,
+        )
+    )
 
     return [i for i in range(count)]
 
@@ -273,16 +290,23 @@ def get_variable_objects(
     def __sort(variable_object: str):
         if not variable_object:
             return -96, -96
-        return to_ordinal_integers(variable_object.block_dir_name)[0], variable_object.uuid
+        return (
+            to_ordinal_integers(variable_object.block_dir_name)[0],
+            variable_object.uuid,
+        )
 
     return sorted(
-        [variable_manager.get_variable_object(
-            block_uuid=block_uuid,
-            clean_block_uuid=dynamic_block_index is None,
-            partition=execution_partition,
-            pipeline_uuid=pipeline_uuid,
-            variable_uuid=variable_uuid,
-        ) for variable_uuid in variable_uuids if variable_uuid != ''],
+        [
+            variable_manager.get_variable_object(
+                block_uuid=block_uuid,
+                clean_block_uuid=dynamic_block_index is None,
+                partition=execution_partition,
+                pipeline_uuid=pipeline_uuid,
+                variable_uuid=variable_uuid,
+            )
+            for variable_uuid in variable_uuids
+            if variable_uuid != ''
+        ],
         key=__sort,
     )
 
@@ -312,7 +336,9 @@ def __get_all_variable_objects_for_dynamic_child(
     """
     variable_objects_arr = []
 
-    indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
+    indexes = get_dynamic_child_block_indexes(
+        block, execution_partition=execution_partition
+    )
     for dynamic_block_index in indexes:
         # 0/output_0,
         # 0/output_1,
@@ -328,7 +354,10 @@ def __get_all_variable_objects_for_dynamic_child(
         def __sort(variable_object: str):
             if not variable_object:
                 return -96, -96
-            return to_ordinal_integers(variable_object.block_dir_name)[0], variable_object.uuid
+            return (
+                to_ordinal_integers(variable_object.block_dir_name)[0],
+                variable_object.uuid,
+            )
 
         variable_objects_arr.append(sorted(arr, key=__sort))
 
@@ -348,10 +377,15 @@ async def get_outputs_async(
         dynamic_block_index=dynamic_block_index,
     )
 
-    return await asyncio.gather(*[variable_object.read_data_async(
-        sample=sample,
-        sample_count=sample_count,
-    ) for variable_object in variable_objects])
+    return await asyncio.gather(
+        *[
+            variable_object.read_data_async(
+                sample=sample,
+                sample_count=sample_count,
+            )
+            for variable_object in variable_objects
+        ]
+    )
 
 
 def get_outputs(
@@ -367,15 +401,17 @@ def get_outputs(
         dynamic_block_index=dynamic_block_index,
     )
 
-    return [variable_object.read_data(
-        sample=sample,
-        sample_count=sample_count,
-    ) for variable_object in variable_objects]
+    return [
+        variable_object.read_data(
+            sample=sample,
+            sample_count=sample_count,
+        )
+        for variable_object in variable_objects
+    ]
 
 
 def get_outputs_for_dynamic_block(
-    block,
-    **kwargs
+    block, **kwargs
 ) -> Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]:
     values = get_outputs(block, **kwargs)
 
@@ -391,8 +427,7 @@ def get_outputs_for_dynamic_block(
 
 
 async def get_outputs_for_dynamic_block_async(
-    block,
-    **kwargs
+    block, **kwargs
 ) -> Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]:
     values = await get_outputs_async(block, **kwargs)
 
@@ -422,14 +457,17 @@ def get_outputs_for_dynamic_child(
     )
 
     # List[List[LazyVariableSet]]
-    lazy_variables_sets = [LazyVariableSet(
-        block,
-        variable_objects,
-        logger=logger,
-        logging_tags=logging_tags,
-        sample=sample,
-        sample_count=sample_count,
-    ) for variable_objects in list_of_lists_of_variables]
+    lazy_variables_sets = [
+        LazyVariableSet(
+            block,
+            variable_objects,
+            logger=logger,
+            logging_tags=logging_tags,
+            sample=sample,
+            sample_count=sample_count,
+        )
+        for variable_objects in list_of_lists_of_variables
+    ]
 
     return LazyVariableController(block, lazy_variables_sets)
 
@@ -444,10 +482,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     **kwargs,
 ) -> Tuple[List, List, List]:
     from mage_ai.data_preparation.models.block.dynamic.utils import (
-        is_dynamic_block,
-        is_dynamic_block_child,
-        should_reduce_output,
-    )
+        is_dynamic_block, is_dynamic_block_child, should_reduce_output)
 
     input_vars = []
     kwargs_vars = []
@@ -470,7 +505,10 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if should_reduce_output(upstream_block) and block.type != BlockType.EXTENSION:
+            if (
+                should_reduce_output(upstream_block)
+                and block.type != BlockType.EXTENSION
+            ):
                 child_data = []
                 metadata = {}
                 for lazy_variable_set in lazy_variable_controller:
@@ -507,11 +545,13 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 input_vars.append(child_data.get(index))
 
             if metadata and index < len(metadata):
-                kwargs_vars.append(metadata[index])
+                if isinstance(metadata, list):
+                    kwargs_vars.append(metadata[index])
+                elif isinstance(metadata, dict):
+                    kwargs_vars.append(metadata)
         else:
-            from mage_ai.data_preparation.models.block.utils import (
-                fetch_input_variables,
-            )
+            from mage_ai.data_preparation.models.block.utils import \
+                fetch_input_variables
 
             ir, kr, up = fetch_input_variables(
                 block.pipeline,

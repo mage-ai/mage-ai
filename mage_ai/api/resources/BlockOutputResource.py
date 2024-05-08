@@ -1,7 +1,7 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.orchestration.db import safe_db_query
 
 
@@ -10,6 +10,7 @@ class BlockOutputResource(GenericResource):
     Resource to fetch block output for the notebook. Created to support legacy
     endpoint /api/pipelines/<pipeline_uuid>/blocks/<block_uuid>/outputs
     """
+
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
@@ -26,7 +27,8 @@ class BlockOutputResource(GenericResource):
             error = ApiError.RESOURCE_ERROR.copy()
             if block is None:
                 error.update(
-                    message=f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+                    message=f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}'
+                )
                 raise ApiError(error)
             # Only fetch dataframe variables by default
             outputs = block.get_outputs(
