@@ -4,27 +4,37 @@ from typing import Dict
 
 
 def shorten_directory(full_path: str) -> Dict:
-    parts = Path(os.path.dirname(full_path)).parts
+    # Use Path object for simplicity and cross-platform compatibility
+    path_obj = Path(full_path)
+    parts = path_obj.parts
     parts_count = len(parts)
+
+    # Initialize dir_name as an empty string
     dir_name = ''
-    if parts_count >= 1:
-        os.path.join(*parts[max([0, parts_count - 3]):])
+    # Handle directory part; ignore the filename in parts
+    if parts_count > 1:
+        # Join all parts except the last one (filename)
+        dir_name = os.path.join(*parts[:parts_count - 1])
 
+    # Simplifying the directory to show only relevant parts (3 levels up max)
     if parts_count >= 4:
-        if parts_count >= 5:
-            dir_name = os.path.join('.', dir_name)
+        if parts_count > 4:
+            # For deeply nested paths, show as relative path starting with ..
+            relevant_parts = parts[-3:]
+            dir_name = os.path.join('..', *relevant_parts)
         else:
-            dir_name = os.path.join('..', dir_name)
+            # If exactly 4 levels deep, show entire path
+            dir_name = os.path.join(*parts[:-1])
 
-        for _i in range(min(1, parts_count - 4)):
-            dir_name = os.path.join('..', dir_name)
+    # Extracting extension (without the dot)
+    extension = path_obj.suffix[1:] if path_obj.suffix.startswith('.') else path_obj.suffix
 
-    extension = Path(full_path or '').suffix
-    if extension:
-        extension = extension.replace('.', '')
+    # Include the filename in the output
+    filename = path_obj.name
 
     return dict(
         directory=dir_name,
         extension=extension,
-        parts=parts,
+        parts=parts[:-1],  # Exclude the filename from 'parts'
+        filename=filename,
     )

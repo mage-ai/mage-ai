@@ -192,7 +192,7 @@ class Variable:
             )
         else:
             data = self.__should_load_object()
-            if data:
+            if data is not None:
                 return data
 
             data = self.__read_json(raise_exception=raise_exception, sample=sample)
@@ -245,7 +245,7 @@ class Variable:
             )
         else:
             data = self.__should_load_object()
-            if data:
+            if data is not None:
                 return data
 
             data = await self.__read_json_async(sample=sample)

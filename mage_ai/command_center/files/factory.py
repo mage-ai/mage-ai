@@ -6,7 +6,8 @@ from typing import Dict, List
 from mage_ai.cache.file import FileCache
 from mage_ai.command_center.constants import ItemType, ObjectType
 from mage_ai.command_center.factory import BaseFactory
-from mage_ai.command_center.files.constants import ITEMS, add_application_actions
+from mage_ai.command_center.files.constants import (ITEMS,
+                                                    add_application_actions)
 from mage_ai.command_center.utils import shorten_directory
 from mage_ai.shared.hash import merge_dict
 
@@ -55,7 +56,6 @@ class FileFactory(BaseFactory):
                     ),
                 ),
             )
-
             scored = factory.filter_score(item_dict)
             if scored:
                 files.append(scored)

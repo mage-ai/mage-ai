@@ -98,6 +98,7 @@ class FileCache(BaseCache):
         for absolute_path in absolute_paths:
             arr_init.extend(get_absolute_paths_from_all_files(
                 absolute_path,
+                comparator=lambda absolute_path: not absolute_path.endswith('.pyc'),
                 parse_values=__parse_values,
             ))
 
