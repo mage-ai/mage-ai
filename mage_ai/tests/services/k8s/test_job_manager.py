@@ -365,7 +365,7 @@ class JobManagerTests(TestCase):
             },
             'job': {
                 'active_deadline_seconds': 0,
-                'backoff_limit': 0,
+                'backoff_limit': 3,
                 'ttl_seconds_after_finished': 100
             }
         }
@@ -440,6 +440,11 @@ class JobManagerTests(TestCase):
                 name='data-pvc',
             )
         )
+
+        # Job
+        self.assertEqual(job.spec.active_deadline_seconds, 0)
+        self.assertEqual(job.spec.backoff_limit, 3)
+        self.assertEqual(job.spec.ttl_seconds_after_finished, 100)
 
     @patch('mage_ai.services.k8s.job_manager.client')
     @patch('mage_ai.services.k8s.job_manager.config')
