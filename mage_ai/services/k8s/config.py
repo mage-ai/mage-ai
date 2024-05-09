@@ -4,15 +4,15 @@ from typing import Dict
 from kubernetes.client import (
     V1Container,
     V1EnvVar,
+    V1JobSpec,
     V1LocalObjectReference,
     V1ObjectMeta,
     V1PodSpec,
+    V1PodTemplateSpec,
     V1ResourceRequirements,
     V1Toleration,
     V1Volume,
-    V1VolumeMount,
-    V1JobSpec,
-    V1PodTemplateSpec
+    V1VolumeMount
 )
 
 from mage_ai.services.k8s.constants import CONFIG_FILE, DEFAULT_NAMESPACE

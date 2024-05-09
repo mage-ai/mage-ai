@@ -7,6 +7,7 @@ from kubernetes.client import (
     V1Container,
     V1EnvFromSource,
     V1EnvVar,
+    V1JobSpec,
     V1NodeAffinity,
     V1NodeSelector,
     V1NodeSelectorRequirement,
@@ -14,8 +15,7 @@ from kubernetes.client import (
     V1Pod,
     V1PodSpec,
     V1SecretEnvSource,
-    V1Toleration,
-    V1JobSpec
+    V1Toleration
 )
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
