@@ -9,7 +9,7 @@ JOBLIB_FILE = 'model.joblib'
 JOBLIB_OBJECT_FILE = 'object.joblib'
 JSON_FILE = 'data.json'
 JSON_SAMPLE_FILE = 'sample_data.json'
-MEDIA_IMAGE_VISUALIZATION_FILE = 'visualization.png'
+MEDIA_IMAGE_VISUALIZATION_FILE = 'visualization.webp'
 METADATA_FILE = 'type.json'
 UBJSON_MODEL_FILENAME = 'model.ubj'
 

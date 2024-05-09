@@ -193,6 +193,11 @@ def __custom_output():
             _internal_output_return = _internal_output_return.to_frame()
     elif VariableType.MODEL_XGBOOST == variable_type:
         text_data, success = create_tree_visualization(_internal_output_return)
+
+        if not success:
+            print(text_data)
+            return
+
         data = dict(
             text_data=text_data,
             type=DataType.IMAGE_PNG if success else DataType.TEXT,
