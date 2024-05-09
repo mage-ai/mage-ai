@@ -15,7 +15,7 @@ from kubernetes.client import (
     V1Pod,
     V1PodSpec,
     V1SecretEnvSource,
-    V1Toleration
+    V1Toleration,
 )
 
 from mage_ai.services.k8s.config import K8sExecutorConfig

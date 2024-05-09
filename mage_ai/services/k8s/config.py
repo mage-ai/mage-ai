@@ -12,7 +12,7 @@ from kubernetes.client import (
     V1ResourceRequirements,
     V1Toleration,
     V1Volume,
-    V1VolumeMount
+    V1VolumeMount,
 )
 
 from mage_ai.services.k8s.constants import CONFIG_FILE, DEFAULT_NAMESPACE
