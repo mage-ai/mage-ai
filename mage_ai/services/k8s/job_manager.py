@@ -138,9 +138,10 @@ class JobManager():
 
         # Create the specification of deployment
         spec = client.V1JobSpec(template=template,
-                                active_deadline_seconds=k8s_config.job_config.active_deadline_seconds,
-                                backoff_limit=k8s_config.job_config.backoff_limit,
-                                ttl_seconds_after_finished=k8s_config.job_config.ttl_seconds_after_finished)
+            active_deadline_seconds=k8s_config.job_config.active_deadline_seconds,
+            backoff_limit=k8s_config.job_config.backoff_limit,
+            ttl_seconds_after_finished=k8s_config.job_config.ttl_seconds_after_finished)
+
         # Instantiate the job object
         job = client.V1Job(
             api_version=self.api_version,
