@@ -22,7 +22,7 @@ class MSSQL(Destination):
 
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(
-            authentication=self.config('authentication'),
+            authentication=self.config.get('authentication'),
             database=self.config['database'],
             driver=self.config.get('driver'),
             host=self.config['host'],
