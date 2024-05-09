@@ -1680,7 +1680,11 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
             return block_runs[0]
         return None
 
-    def get_outputs(self, sample_count: int = None) -> List[Dict]:
+    def get_outputs(
+        self,
+        exclude_blank_variable_uuids: bool = False,
+        sample_count: int = None,
+    ) -> List[Dict]:
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         block = pipeline.get_block(self.block_uuid)
         block_uuid = self.block_uuid
@@ -1755,6 +1759,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
                 ]
 
         return block.get_outputs(
+            exclude_blank_variable_uuids=exclude_blank_variable_uuids,
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
             block_uuid=block_uuid,

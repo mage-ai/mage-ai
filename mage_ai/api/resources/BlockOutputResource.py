@@ -32,6 +32,7 @@ class BlockOutputResource(GenericResource):
                 raise ApiError(error)
             # Only fetch dataframe variables by default
             outputs = block.get_outputs(
+                exclude_blank_variable_uuids=True,
                 include_print_outputs=False,
                 sample_count=None,
                 variable_type=VariableType.DATAFRAME,

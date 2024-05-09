@@ -14,8 +14,7 @@ from inspect import Parameter, isfunction, signature
 from logging import Logger
 from pathlib import Path
 from queue import Queue
-from typing import (Any, Callable, Dict, Generator, List, Optional, Set, Tuple,
-                    Union)
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import inflection
 import pandas as pd
@@ -26,45 +25,64 @@ from jinja2 import Template
 from sklearn.utils import estimator_html_repr
 
 import mage_ai.data_preparation.decorators
+from mage_ai.ai.utils.xgboost import render_tree_visualization
 from mage_ai.cache.block import BlockCache
-from mage_ai.data_cleaner.shared.utils import (is_geo_dataframe,
-                                               is_spark_dataframe)
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.data_preparation.logging.logger_manager_factory import \
-    LoggerManagerFactory
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.content import hydrate_block_outputs
-from mage_ai.data_preparation.models.block.data_integration.mixins import \
-    DataIntegrationMixin
-from mage_ai.data_preparation.models.block.data_integration.utils import \
-    execute_data_integration
+from mage_ai.data_preparation.models.block.data_integration.mixins import (
+    DataIntegrationMixin,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    execute_data_integration,
+)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
-    is_dynamic_block, is_dynamic_block_child, should_reduce_output,
-    uuid_for_output_variables)
+    is_dynamic_block,
+    is_dynamic_block_child,
+    should_reduce_output,
+    uuid_for_output_variables,
+)
 from mage_ai.data_preparation.models.block.dynamic.variables import (
     delete_variable_objects_for_dynamic_child,
     fetch_input_variables_for_dynamic_upstream_blocks,
-    get_outputs_for_dynamic_block, get_outputs_for_dynamic_block_async,
-    get_outputs_for_dynamic_child)
-from mage_ai.data_preparation.models.block.errors import \
-    HasDownstreamDependencies
-from mage_ai.data_preparation.models.block.extension.utils import \
-    handle_run_tests
-from mage_ai.data_preparation.models.block.platform.mixins import \
-    ProjectPlatformAccessible
-from mage_ai.data_preparation.models.block.platform.utils import \
-    from_another_project
+    get_outputs_for_dynamic_block,
+    get_outputs_for_dynamic_block_async,
+    get_outputs_for_dynamic_child,
+)
+from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
+from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.platform.mixins import (
+    ProjectPlatformAccessible,
+)
+from mage_ai.data_preparation.models.block.platform.utils import from_another_project
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
-    clean_name, fetch_input_variables, input_variables, is_output_variable,
-    is_valid_print_variable, output_variables)
+    clean_name,
+    fetch_input_variables,
+    input_variables,
+    is_output_variable,
+    is_valid_print_variable,
+    output_variables,
+)
 from mage_ai.data_preparation.models.constants import (
-    BLOCK_LANGUAGE_TO_FILE_EXTENSION, CALLBACK_STATUSES,
-    CUSTOM_EXECUTION_BLOCK_TYPES, DATAFRAME_ANALYSIS_MAX_COLUMNS,
-    DATAFRAME_ANALYSIS_MAX_ROWS, DATAFRAME_SAMPLE_COUNT_PREVIEW,
-    FILE_EXTENSION_TO_BLOCK_LANGUAGE, NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
-    BlockColor, BlockLanguage, BlockStatus, BlockType, CallbackStatus,
-    ExecutorType, PipelineType)
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    CALLBACK_STATUSES,
+    CUSTOM_EXECUTION_BLOCK_TYPES,
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    DATAFRAME_ANALYSIS_MAX_ROWS,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
+    NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    BlockColor,
+    BlockLanguage,
+    BlockStatus,
+    BlockType,
+    CallbackStatus,
+    ExecutorType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variable import Variable
@@ -72,8 +90,7 @@ from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
-from mage_ai.data_preparation.templates.data_integrations.utils import \
-    get_templates
+from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
@@ -87,9 +104,12 @@ from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
-from mage_ai.shared.path_fixer import (add_absolute_path,
-                                       add_root_repo_path_to_relative_path,
-                                       get_path_parts, remove_base_repo_path)
+from mage_ai.shared.path_fixer import (
+    add_absolute_path,
+    add_root_repo_path_to_relative_path,
+    get_path_parts,
+    remove_base_repo_path,
+)
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
@@ -694,8 +714,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def full_table_name(self) -> Optional[str]:
-        from mage_ai.data_preparation.models.block.sql.utils.shared import \
-            extract_full_table_name
+        from mage_ai.data_preparation.models.block.sql.utils.shared import (
+            extract_full_table_name,
+        )
 
         return extract_full_table_name(self.content)
 
@@ -738,8 +759,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         widget: bool = False,
         downstream_block_uuids: List[str] = None,
     ) -> 'Block':
-        from mage_ai.data_preparation.models.block.block_factory import \
-            BlockFactory
+        from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 
         """
         1. Create a new folder for block_type if not exist
@@ -915,8 +935,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         parts = get_path_parts(file_path)
 
         if parts and len(parts) >= 3:
-            from mage_ai.data_preparation.models.block.block_factory import \
-                BlockFactory
+            from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 
             # If file_path == transformers/test4.py
             # parts ==
@@ -1169,8 +1188,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
 
             if output_messages_to_logs and not logger:
-                from mage_ai.data_preparation.models.block.constants import \
-                    LOG_PARTITION_EDIT_PIPELINE
+                from mage_ai.data_preparation.models.block.constants import (
+                    LOG_PARTITION_EDIT_PIPELINE,
+                )
 
                 logger_manager = LoggerManagerFactory.get_logger_manager(
                     block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
@@ -1856,7 +1876,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
         partition: str = None,
-    ):
+    ) -> List[str]:
         variable_manager = self.pipeline.variable_manager
 
         block_uuid_use, changed = uuid_for_output_variables(
@@ -1988,6 +2008,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         selected_variables: List[str] = None,
         metadata: Dict = None,
         dynamic_block_index: int = None,
+        exclude_blank_variable_uuids: bool = False,
     ) -> List[Dict]:
         data_products = []
         outputs = []
@@ -2029,7 +2050,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     (child_data, 'child_data'),
                     (metadata, 'metadata'),
                 ]:
-                    if output is None:
+                    if output is None or \
+                            (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                         continue
 
                     data, is_data_product = self.__format_output_data(
@@ -2088,7 +2110,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
 
             for idx, variable_uuid in enumerate(all_variables):
-                if selected_variables and variable_uuid not in selected_variables:
+                if (selected_variables and variable_uuid not in selected_variables) or \
+                        (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                     continue
 
                 variable_object = self.get_variable_object(
@@ -2304,12 +2327,29 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 execution_partition=execution_partition,
                 skip_dynamic_block=skip_dynamic_block,
             )
-        elif VariableType.MODEL_SKLEARN == variable_type:
+        elif VariableType.MODEL_SKLEARN == variable_type or \
+                VariableType.MODEL_XGBOOST == variable_type:
+
+            if VariableType.MODEL_SKLEARN == variable_type:
+                data_type = DataType.TEXT_HTML
+                text_data = estimator_html_repr(data)
+            elif variable_manager:
+                data_type = DataType.IMAGE_PNG
+
+                image_dir = variable_manager.build_variable(
+                    pipeline_uuid=self.pipeline.uuid if self.pipeline.uuid else None,
+                    block_uuid=self.uuid,
+                    variable_uuid=variable_uuid,
+                    partition=execution_partition,
+                    variable_type=variable_type,
+                ).variable_path
+                text_data = render_tree_visualization(image_dir)
+
             if not basic_iterable:
                 return (
                     dict(
-                        text_data=estimator_html_repr(data),
-                        type=DataType.TEXT_HTML,
+                        text_data=text_data,
+                        type=data_type,
                         variable_uuid=variable_uuid,
                     ),
                     True,
@@ -2319,8 +2359,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 text_data=simplejson.dumps(
                     [
                         dict(
-                            text_data=estimator_html_repr(d),
-                            type=DataType.TEXT_HTML,
+                            text_data=text_data,
+                            type=data_type,
                             variable_uuid=variable_uuid,
                         )
                         for d in data
@@ -2334,8 +2374,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             return data, True
         elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
-            from mage_ai.data_preparation.models.block.dynamic.utils import \
-                coerce_into_dataframe
+            from mage_ai.data_preparation.models.block.dynamic.utils import (
+                coerce_into_dataframe,
+            )
 
             data, is_data_product = self.__format_output_data(
                 coerce_into_dataframe(data),
@@ -3129,8 +3170,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 else:
                     data_for_analysis = data.reset_index(drop=True)
                 try:
-                    from mage_ai.data_cleaner.data_cleaner import \
-                        clean as clean_data
+                    from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 
                     analysis = clean_data(
                         data_for_analysis,
@@ -3259,8 +3299,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         global_vars: Dict = None,
         dynamic_block_index: int = None,
     ) -> Dict:
-        from mage_ai.data_preparation.models.block.remote.models import \
-            RemoteBlock
+        from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 
         """
         Enriches the provided global variables dictionary with additional context, Spark session,
@@ -3612,7 +3651,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
-            TAG_DYNAMIC, TAG_DYNAMIC_CHILD, TAG_REDUCE_OUTPUT, TAG_REPLICA)
+            TAG_DYNAMIC,
+            TAG_DYNAMIC_CHILD,
+            TAG_REDUCE_OUTPUT,
+            TAG_REPLICA,
+        )
 
         arr = []
 
@@ -3773,8 +3816,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
             cache = BlockCache()
             if detach:
-                from mage_ai.data_preparation.models.block.block_factory import \
-                    BlockFactory
+                from mage_ai.data_preparation.models.block.block_factory import (
+                    BlockFactory,
+                )
 
                 """"
                 New block added to pipeline, so it must be added to the block cache.

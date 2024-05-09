@@ -6,7 +6,13 @@ import joblib
 from mage_ai.ai.utils.xgboost import load_model as load_model_xgboost
 from mage_ai.ai.utils.xgboost import save_model as save_model_xgboost
 from mage_ai.data_preparation.models.variables.constants import (
-    JOBLIB_FILE, JOBLIB_OBJECT_FILE, UBJSON_MODEL_FILENAME, VariableType)
+    CONFIG_JSON_FILE,
+    JOBLIB_FILE,
+    JOBLIB_OBJECT_FILE,
+    MEDIA_IMAGE_VISUALIZATION_FILE,
+    UBJSON_MODEL_FILENAME,
+    VariableType,
+)
 from mage_ai.shared.parsers import object_to_dict
 
 
@@ -25,9 +31,14 @@ def save_custom_object(
         joblib.dump(data, full_path)
     elif VariableType.MODEL_XGBOOST == variable_type:
         is_object = True
-        os.makedirs(variable_path, exist_ok=True)
-        full_path = os.path.join(variable_path, UBJSON_MODEL_FILENAME)
-        save_model_xgboost(data, full_path)
+
+        save_model_xgboost(
+            data,
+            model_dir=variable_path,
+            model_filename=UBJSON_MODEL_FILENAME,
+            config_filename=CONFIG_JSON_FILE,
+            image_filename=MEDIA_IMAGE_VISUALIZATION_FILE,
+        )
     elif VariableType.CUSTOM_OBJECT == variable_type:
         is_object = True
         os.makedirs(variable_path, exist_ok=True)
@@ -51,7 +62,9 @@ def load_custom_object(
         return joblib.load(os.path.join(variable_path, JOBLIB_FILE))
     elif VariableType.MODEL_XGBOOST == variable_type:
         return load_model_xgboost(
-            os.path.join(variable_path, UBJSON_MODEL_FILENAME),
+            model_dir=variable_path,
+            model_filename=UBJSON_MODEL_FILENAME,
+            config_filename=CONFIG_JSON_FILE,
             raise_exception=False,
         )
     elif VariableType.CUSTOM_OBJECT == variable_type:

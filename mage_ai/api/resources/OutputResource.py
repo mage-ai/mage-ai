@@ -22,7 +22,7 @@ class OutputResource(GenericResource):
 
         outputs = []
         if type(parent_model) is BlockRun:
-            outputs = parent_model.get_outputs()
+            outputs = parent_model.get_outputs(exclude_blank_variable_uuids=True)
 
         return self.build_result_set(
             outputs,

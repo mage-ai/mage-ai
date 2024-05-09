@@ -44,7 +44,3 @@ select = ["E", "F", "W"]
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
-
-[pycodestyle]
-ignore = E501
-max_line_length = 100
