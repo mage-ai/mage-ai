@@ -10,6 +10,7 @@ class SQLDestinationMixin(BaseDestinationTests):
     expected_conn_class_kwargs = dict()
     expected_template_config = {
         'config': {
+            'authentication': None,
             'database': '',
             'host': '',
             'password': '',
