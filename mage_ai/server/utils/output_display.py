@@ -152,6 +152,7 @@ def __custom_output():
     import polars as pl
     import simplejson
 
+    from mage_ai.ai.utils.xgboost import create_tree_visualization
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         combine_transformed_output_for_multi_output,
@@ -160,6 +161,7 @@ def __custom_output():
     )
     from mage_ai.data_preparation.models.utils import infer_variable_type
     from mage_ai.data_preparation.models.variable import VariableType
+    from mage_ai.server.kernel_output_parser import DataType
     from mage_ai.shared.environments import is_debug
     from mage_ai.shared.parsers import (
         convert_matrix_to_dataframe,
@@ -189,6 +191,18 @@ def __custom_output():
             _internal_output_return = pd.DataFrame(_internal_output_return).T
         else:
             _internal_output_return = _internal_output_return.to_frame()
+    elif VariableType.MODEL_XGBOOST == variable_type:
+        data = dict(
+            text_data=create_tree_visualization(_internal_output_return),
+            type=DataType.IMAGE_PNG,
+            variable_uuid=variable_type,
+        )
+        _json_string = simplejson.dumps(
+            data,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if bool({is_dynamic_child}):

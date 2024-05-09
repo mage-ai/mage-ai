@@ -106,33 +106,30 @@ def create_tree_visualization(
 ) -> str:
     try:
         import xgboost as xgb
-
-        if image_path:
-            # Remove the '.png' extension when specifying the filename
-            base_image_path = image_path.rsplit('.', 1)[0] if '.' in image_path else image_path
-
-            trees_to_render = 0
-            n_trees = model.num_boosted_rounds()
-            if n_trees > max_trees:
-                trees_to_render = max_trees
-            elif n_trees == max_trees:
-                trees_to_render = 0
-            elif num_trees < max_trees:
-                trees_to_render = num_trees
-
-            graph = xgb.to_graphviz(model, num_trees=trees_to_render, rankdir='TB', format='png')
-            # Pass the adjusted filename without the extension
-            graph.render(filename=base_image_path, cleanup=True, format='png')
-            # Since the 'format' is 'png', Graphviz will output 'visualization.png'
-            return image_path
-
         from PIL import Image
 
         # Increase the maximum allowed image size to, say, 500 million pixels
         Image.MAX_IMAGE_PIXELS = 1024 * 1024 * 500
 
-        # Generate a graph of the N trees
-        graph = xgb.to_graphviz(model, num_trees=num_trees, rankdir='TB', format='png')
+        trees_to_render = 0
+        n_trees = model.num_boosted_rounds()
+        if n_trees > max_trees:
+            trees_to_render = max_trees
+        elif n_trees == max_trees:
+            trees_to_render = 0
+        elif num_trees < max_trees:
+            trees_to_render = num_trees
+
+        graph = xgb.to_graphviz(model, num_trees=trees_to_render, rankdir='TB', format='png')
+
+        if image_path:
+            # Remove the '.png' extension when specifying the filename
+            base_image_path = image_path.rsplit('.', 1)[0] if '.' in image_path else image_path
+
+            # Pass the adjusted filename without the extension
+            graph.render(filename=base_image_path, cleanup=True, format='png')
+            # Since the 'format' is 'png', Graphviz will output 'visualization.png'
+            return image_path
 
         # Save the graph to a temporary PNG file (or use BytesIO directly with some adjustments)
         png_bytes = graph.pipe(format='png')
@@ -145,7 +142,7 @@ def create_tree_visualization(
 
         # Convert the PIL Image to a base64 string
         buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
+        image.save(buffered, format='PNG')
         img_str = base64.b64encode(buffered.getvalue()).decode()
 
         return img_str

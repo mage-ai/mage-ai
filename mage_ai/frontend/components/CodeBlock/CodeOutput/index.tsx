@@ -535,7 +535,7 @@ function CodeOutput(
                 );
               }
             } else {
-              const { data: dataDisplay, type: typeDisplay } = data;
+              const { data: dataDisplay, text_data: textData, type: typeDisplay } = data;
               if (DataTypeEnum.TABLE === typeDisplay) {
                 if (dataDisplay) {
                   isTable = true;
@@ -553,6 +553,17 @@ function CodeOutput(
                     displayElement = tableEl;
                   }
                 }
+              } else if (DataTypeEnum.IMAGE_PNG === typeDisplay && textData) {
+                displayElement = (
+                  <div
+                    style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}
+                  >
+                    <img
+                      alt="Image from code output"
+                      src={`data:image/png;base64, ${textData}`}
+                      />
+                  </div>
+                );
               }
             }
           }
@@ -574,9 +585,11 @@ function CodeOutput(
               displayElement = tableEl;
             }
           }
-        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)
+            || (DataTypeEnum.TEXT_HTML === dataType && isObject(data) && output?.multi_output)) {
           if (isObject(data)) {
-            if (output?.multi_output && DataTypeEnum.TEXT === output?.type) {
+            if (output?.multi_output &&
+                [DataTypeEnum.TEXT, DataTypeEnum.TEXT_HTML].includes(output?.type)) {
               const {
                 // @ts-ignore
                 columns,
@@ -600,11 +613,19 @@ function CodeOutput(
                             ))}
                           </OutputRowStyle>
                         );
-                      } else if (DataTypeEnum.TABLE === typeInner && isObject(value)) {
+                      } else if (isObject(value) && DataTypeEnum.TABLE === typeInner) {
                         return createDataTableElement(value, {
                           borderTop,
                           selected,
                         });
+                      } else if (DataTypeEnum.TEXT_HTML === typeInner) {
+                        return (
+                          <OutputRowStyle contained normalPadding>
+                            <HTMLOutputStyle monospace>
+                              <InnerHTML html={value} />
+                            </HTMLOutputStyle>
+                          </OutputRowStyle>
+                        );
                       }
                     },
                     uuid: columns?.[idx],
