@@ -21,6 +21,7 @@ class MSSQL(Source):
 
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(
+            authentication=self.config.get('authentication'),
             database=self.config['database'],
             driver=self.config.get('driver'),
             host=self.config['host'],

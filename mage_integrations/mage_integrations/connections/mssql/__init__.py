@@ -9,15 +9,17 @@ from mage_integrations.connections.sql.base import Connection
 class MSSQL(Connection):
     def __init__(
         self,
-        database: str,
-        host: str,
-        password: str,
-        username: str,
+        authentication: str = None,
+        database: str = None,
         driver: str = None,
+        host: str = None,
+        password: str = None,
         port: int = 1433,
+        username: str = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.authentication = authentication
         self.database = database
         self.host = host
         self.password = password
@@ -26,15 +28,22 @@ class MSSQL(Connection):
         self.driver = driver or 'ODBC Driver 18 for SQL Server'
 
     def build_connection(self):
-        connection_string = (
-            f'DRIVER={{{self.driver}}};'
-            f'SERVER={self.host};'
-            f'DATABASE={self.database};'
-            f'UID={self.username};'
-            f'PWD={self.password};'
+        connection_string_params = [
+            f'DRIVER={{{self.driver}}};',
+            f'SERVER={self.host};',
+            f'DATABASE={self.database};',
+            f'UID={self.username};',
+            f'PWD={self.password};',
+        ]
+        if self.authentication:
+            connection_string_params += f'Authentication={self.authentication};'
+
+        connection_string_params += [
             'ENCRYPT=yes;'
             'TrustServerCertificate=yes;'
-        )
+        ]
+
+        connection_string = ''.join(connection_string_params)
 
         # https://github.com/mkleehammer/pyodbc/wiki/Using-an-Output-Converter-function
         cnxn = pyodbc.connect(connection_string)
