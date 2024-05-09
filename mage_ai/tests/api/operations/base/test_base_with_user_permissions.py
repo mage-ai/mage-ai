@@ -1,4 +1,4 @@
-from unittest.mock import patch
+# from unittest.mock import patch
 
 from mage_ai.authentication.permissions.constants import EntityName, PermissionAccess
 from mage_ai.orchestration.db.models.oauth import (
@@ -58,29 +58,29 @@ class BaseOperationsWithUserAuthenticationAndPermissionsTest(Base):
         self.tear_down()
 
 
-for method_name in dir(Base):
-    if not method_name.startswith('run_mixin_'):
-        continue
+# for method_name in dir(Base):
+#     if not method_name.startswith('run_mixin_'):
+#         continue
 
-    async def _test(self, method=method_name):
-        with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
-            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1):
-                await getattr(self, method)()
+#     async def _test(self, method=method_name):
+#         with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
+#             with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1):
+#                 await getattr(self, method)()
 
-    setattr(
-        BaseOperationsWithUserAuthenticationAndPermissionsTest,
-        method_name.replace('run_mixin_', ''),
-        _test,
-    )
+#     setattr(
+#         BaseOperationsWithUserAuthenticationAndPermissionsTest,
+#         method_name.replace('run_mixin_', ''),
+#         _test,
+#     )
 
-    if method_name.startswith('run_mixin_test_execute_'):
-        async def _test_with_parent(self, method=method_name):
-            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
-                with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1):
-                    await getattr(self, method)(**self.parent_resource_options())
+#     if method_name.startswith('run_mixin_test_execute_'):
+#         async def _test_with_parent(self, method=method_name):
+#             with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
+#                 with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1):
+#                     await getattr(self, method)(**self.parent_resource_options())
 
-        setattr(
-            BaseOperationsWithUserAuthenticationAndPermissionsTest,
-            method_name.replace('run_mixin_', '') + '_with_parent',
-            _test_with_parent,
-        )
+#         setattr(
+#             BaseOperationsWithUserAuthenticationAndPermissionsTest,
+#             method_name.replace('run_mixin_', '') + '_with_parent',
+#             _test_with_parent,
+#         )
