@@ -5,8 +5,6 @@ from json import JSONDecoder
 import numpy as np
 import pandas as pd
 
-from mage_ai.orchestration.db.models.base import BaseModel
-
 INTS = (
     np.int16,
     np.int32,
@@ -25,6 +23,7 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
 def encode_complex(obj):
+    from mage_ai.orchestration.db.models.base import BaseModel
     from mage_ai.shared.models import BaseDataClass
 
     if isinstance(obj, set):

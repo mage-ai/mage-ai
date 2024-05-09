@@ -149,7 +149,7 @@ function UploadPipeline({
           directoryPath={null} // no directory needs to be specified in case of pipeline imports
           onDragActiveChange={setIsDragActive}
           overwrite={overwritePipeline}
-          pipelineZip={true}
+          pipelineZip
           setFileUploadProgress={setFileUploadProgress}
           setUploadedFiles={(uploadedFiles) => {
             // @ts-ignore

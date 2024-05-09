@@ -161,6 +161,7 @@ def get_access_token(git_config, repo_path: str) -> str:
         token_from_secrets = get_secret_value(
             git_config.access_token_secret_name,
             repo_name=repo_path,
+            suppress_warning=True,
         )
         if token_from_secrets and (not token or overwrite_with_project_settings):
             token = token_from_secrets

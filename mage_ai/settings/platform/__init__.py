@@ -279,7 +279,7 @@ def active_project_settings(
     from mage_ai.data_preparation.models.project import Project
     from mage_ai.data_preparation.models.project.constants import FeatureUUID
     from mage_ai.data_preparation.repo_manager import get_project_uuid
-    from mage_ai.orchestration.db.models.utils import get_active_project_for_user
+
     if not settings:
         settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
@@ -291,6 +291,8 @@ def active_project_settings(
     if user and Project.is_feature_enabled_in_root_or_active_project(
         FeatureUUID.PROJECT_PLATFORM_USER_PROJECTS
     ):
+        from mage_ai.orchestration.db.models.utils import get_active_project_for_user
+
         user_active_project = get_active_project_for_user(user, get_project_uuid())
     if user_active_project:
         key = user_active_project.project_name

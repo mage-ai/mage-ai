@@ -167,9 +167,9 @@ class GitBranchResource(GenericResource):
             token = access_token.token
             user_from_api = api.get_user(token, provider=provider)
             # Default to mage user email if no email is returned from API
-            email = user_from_api.get(
-                'email', user.email if user else None
-            )
+            email = user_from_api.get('email')
+            if email is None and user:
+                email = user.email
             config_overwrite = dict(
                 username=user_from_api.get('username'),
                 email=email,
