@@ -613,10 +613,12 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def __outputs_async(self) -> List:
+    async def __outputs_async(self, exclude_blank_variable_uuids: bool = False) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.__get_outputs_async()
+                self._outputs = await self.__get_outputs_async(
+                    exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+                )
         return self._outputs
 
     @property
@@ -2162,6 +2164,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         variable_type: VariableType = None,
         block_uuid: str = None,
         dynamic_block_index: int = None,
+        exclude_blank_variable_uuids: bool = False,
     ) -> List[Dict]:
         data_products = []
         outputs = []
@@ -2206,7 +2209,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     (child_data, 'child_data'),
                     (metadata, 'metadata'),
                 ]:
-                    if output is None:
+                    if output is None or \
+                            (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                         continue
 
                     data, is_data_product = self.__format_output_data(
@@ -2245,6 +2249,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
 
             for idx, variable_uuid in enumerate(all_variables):
+                if exclude_blank_variable_uuids and variable_uuid.strip() == '':
+                    continue
+
                 variable_object = variable_manager.get_variable_object(
                     self.pipeline.uuid,
                     block_uuid,
@@ -2748,6 +2755,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         block_cache: Optional[BlockCache] = None,
         check_if_file_exists: bool = False,
         disable_output_preview: bool = False,
+        exclude_blank_variable_uuids: bool = False,
         **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
@@ -2784,7 +2792,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                         'To enable it, go to block settings.',
                     ]
                 else:
-                    data['outputs'] = await self.__outputs_async()
+                    data['outputs'] = await self.__outputs_async(
+                        exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+                    )
 
                     if (
                         check_if_file_exists

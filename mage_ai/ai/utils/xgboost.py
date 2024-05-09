@@ -101,6 +101,7 @@ def save_model(
 def create_tree_visualization(
     model: Any,
     image_path: Optional[str] = None,
+    max_trees: int = 12,
     num_trees: int = 0,
 ) -> str:
     try:
@@ -110,7 +111,16 @@ def create_tree_visualization(
             # Remove the '.png' extension when specifying the filename
             base_image_path = image_path.rsplit('.', 1)[0] if '.' in image_path else image_path
 
-            graph = xgb.to_graphviz(model, num_trees=num_trees, rankdir='TB', format='png')
+            trees_to_render = 0
+            n_trees = model.num_boosted_rounds()
+            if n_trees > max_trees:
+                trees_to_render = max_trees
+            elif n_trees == max_trees:
+                trees_to_render = 0
+            elif num_trees < max_trees:
+                trees_to_render = num_trees
+
+            graph = xgb.to_graphviz(model, num_trees=trees_to_render, rankdir='TB', format='png')
             # Pass the adjusted filename without the extension
             graph.render(filename=base_image_path, cleanup=True, format='png')
             # Since the 'format' is 'png', Graphviz will output 'visualization.png'
