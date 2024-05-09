@@ -192,9 +192,10 @@ def __custom_output():
         else:
             _internal_output_return = _internal_output_return.to_frame()
     elif VariableType.MODEL_XGBOOST == variable_type:
+        text_data, success = create_tree_visualization(_internal_output_return)
         data = dict(
-            text_data=create_tree_visualization(_internal_output_return),
-            type=DataType.IMAGE_PNG,
+            text_data=text_data,
+            type=DataType.IMAGE_PNG if success else DataType.TEXT,
             variable_uuid=variable_type,
         )
         _json_string = simplejson.dumps(

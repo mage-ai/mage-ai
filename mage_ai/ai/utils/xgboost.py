@@ -2,13 +2,14 @@ import base64
 import io
 import json
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 from mage_ai.data_preparation.models.variables.constants import (
     CONFIG_JSON_FILE,
     MEDIA_IMAGE_VISUALIZATION_FILE,
     UBJSON_MODEL_FILENAME,
 )
+from mage_ai.settings.server import MAX_OUTPUT_IMAGE_PREVIEW_SIZE
 from mage_ai.shared.environments import is_debug
 
 
@@ -101,9 +102,10 @@ def save_model(
 def create_tree_visualization(
     model: Any,
     image_path: Optional[str] = None,
+    max_render_size: int = MAX_OUTPUT_IMAGE_PREVIEW_SIZE,
     max_trees: int = 12,
     num_trees: int = 0,
-) -> str:
+) -> Tuple[Optional[str], bool]:
     try:
         import xgboost as xgb
         from PIL import Image
@@ -129,7 +131,7 @@ def create_tree_visualization(
             # Pass the adjusted filename without the extension
             graph.render(filename=base_image_path, cleanup=True, format='png')
             # Since the 'format' is 'png', Graphviz will output 'visualization.png'
-            return image_path
+            return image_path, True
 
         # Save the graph to a temporary PNG file (or use BytesIO directly with some adjustments)
         png_bytes = graph.pipe(format='png')
@@ -145,10 +147,52 @@ def create_tree_visualization(
         image.save(buffered, format='PNG')
         img_str = base64.b64encode(buffered.getvalue()).decode()
 
-        return img_str
+        buffered.seek(0)  # Reset pointer to the beginning of the buffer
+        file_size_bytes = buffered.getbuffer().nbytes
+        if file_size_bytes > max_render_size:
+            message = (
+                'XGBoost tree visualization created an image that exceeds '
+                f'{max_render_size} bytes (actual size is {file_size_bytes} bytes). '
+                'No preview will be shown in the browser. '
+                'To increase the preview limit, set the environment variable '
+                'MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value.'
+            )
+            return message, False
+
+        return img_str, True
     except Exception as err:
         print(f'[ERROR] XGBoost.create_tree_visualization: {err}')
-        return str(err)
+        return str(err), False
+
+
+def render_tree_visualization(
+    image_dir: str,
+    image_filename: str = MEDIA_IMAGE_VISUALIZATION_FILE,
+    max_render_size: int = MAX_OUTPUT_IMAGE_PREVIEW_SIZE,
+) -> Tuple[Optional[str], bool]:
+    # Load the model’s tree from a PNG file into base64 format
+    try:
+        image_path = os.path.join(image_dir, image_filename)
+
+        # Check for file size before opening
+        file_size_bytes = os.path.getsize(image_path)
+
+        if file_size_bytes > max_render_size:
+            message = (
+                'XGBoost tree visualization created an image that exceeds '
+                f'{max_render_size} bytes (actual size is {file_size_bytes} bytes). '
+                'No preview will be shown in the browser. '
+                'To increase the preview limit, set the environment variable '
+                'MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value.'
+            )
+            return message, False
+
+        with open(image_path, 'rb') as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        return encoded_string, True
+    except Exception as err:
+        print(f'[ERROR] XGBoost.render_tree_visualization: {err}')
+        return str(err), False
 
 
 def create_tree_plot(model: Any, image_path: str, num_trees: int = 0) -> str:
@@ -169,19 +213,4 @@ def create_tree_plot(model: Any, image_path: str, num_trees: int = 0) -> str:
         return image_path
     except Exception as err:
         print(f'[ERROR] XGBoost.create_tree_plot: {err}')
-        return str(err)
-
-
-def render_tree_visualization(
-    image_dir: str,
-    image_filename: str = MEDIA_IMAGE_VISUALIZATION_FILE,
-) -> str:
-    # Load the model’s tree from a PNG file into base64 format
-    try:
-        image_path = os.path.join(image_dir, image_filename)
-        with open(image_path, 'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-        return encoded_string
-    except Exception as err:
-        print(f'[ERROR] XGBoost.render_tree_visualization: {err}')
         return str(err)

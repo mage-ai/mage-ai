@@ -72,6 +72,11 @@ def is_disable_pipeline_edit_access(
     return value >= 1
 
 
+# Limit the image preview size to 5MBs by default. If a block returns an XBoost model
+# (e.g.) xgboost.Booster() instance, the preview in the UI is a tree plot of the model.
+# The image can be very large in byte size, so we limit the size to prevent the UI from freezing.
+MAX_OUTPUT_IMAGE_PREVIEW_SIZE = os.getenv('MAX_OUTPUT_IMAGE_PREVIEW_SIZE', 1024 * 1024 * 5)
+
 # -------------------
 # User Authentication Settings
 # -------------------
@@ -230,4 +235,5 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'GITLAB_CLIENT_ID',
     'GITLAB_CLIENT_SECRET',
     'SERVER_LOGGING_TEMPLATE',
+    'MAX_OUTPUT_IMAGE_PREVIEW_SIZE',
 ]

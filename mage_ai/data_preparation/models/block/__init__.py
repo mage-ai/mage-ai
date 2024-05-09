@@ -2337,41 +2337,48 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         elif VariableType.MODEL_SKLEARN == variable_type or \
                 VariableType.MODEL_XGBOOST == variable_type:
 
-            if VariableType.MODEL_SKLEARN == variable_type:
-                data_type = DataType.TEXT_HTML
-                text_data = estimator_html_repr(data)
-            elif variable_manager:
-                data_type = DataType.IMAGE_PNG
+            def __render(
+                model: Any,
+                partition=execution_partition,
+                pipeline=self.pipeline,
+                uuid=self.uuid,
+                variable_manager=variable_manager,
+                variable_type=variable_type,
+                variable_uuid=variable_uuid,
+            ) -> Dict[str, Optional[str]]:
+                data_type = None
+                text_data = None
 
-                image_dir = variable_manager.build_variable(
-                    pipeline_uuid=self.pipeline.uuid if self.pipeline.uuid else None,
-                    block_uuid=self.uuid,
+                if VariableType.MODEL_SKLEARN == variable_type:
+                    data_type = DataType.TEXT_HTML
+                    text_data = estimator_html_repr(model)
+                elif variable_manager:
+                    image_dir = variable_manager.build_variable(
+                        pipeline_uuid=pipeline.uuid if pipeline.uuid else None,
+                        block_uuid=uuid,
+                        variable_uuid=variable_uuid,
+                        partition=partition,
+                        variable_type=variable_type,
+                    ).variable_path
+                    text_data, success = render_tree_visualization(image_dir)
+
+                    if success:
+                        data_type = DataType.IMAGE_PNG
+                    else:
+                        data_type = DataType.TEXT
+
+                return dict(
+                    text_data=text_data,
+                    type=data_type,
                     variable_uuid=variable_uuid,
-                    partition=execution_partition,
-                    variable_type=variable_type,
-                ).variable_path
-                text_data = render_tree_visualization(image_dir)
+                )
 
             if not basic_iterable:
-                return (
-                    dict(
-                        text_data=text_data,
-                        type=data_type,
-                        variable_uuid=variable_uuid,
-                    ),
-                    True,
-                )
+                return __render(data), True
 
             data = dict(
                 text_data=simplejson.dumps(
-                    [
-                        dict(
-                            text_data=text_data,
-                            type=data_type,
-                            variable_uuid=variable_uuid,
-                        )
-                        for d in data
-                    ],
+                    [__render(d) for d in data],
                     default=encode_complex,
                     ignore_nan=True,
                 ),
