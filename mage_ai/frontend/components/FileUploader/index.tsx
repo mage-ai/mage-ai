@@ -107,7 +107,7 @@ function FileUploader({
 
   return (
     <MultiFileInput
-      // @ts-ignore
+      fileSelectOnly={pipelineZip}
       onDragActiveChange={onDragActiveChange}
       setFiles={setFiles}
     >

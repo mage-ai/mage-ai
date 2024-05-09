@@ -10,6 +10,7 @@ const DropzoneStyle = styled.div`
 
 type MultiFileInputProps = {
   children: any;
+  fileSelectOnly?: boolean;
   inputOnChange?: (e: any) => void;
   inputProps?: {
     [key: string]: number | string;
@@ -22,6 +23,7 @@ type MultiFileInputProps = {
 
 function MultiFileInput({
   children,
+  fileSelectOnly,
   inputOnChange,
   inputProps,
   onDragActiveChange,
@@ -81,8 +83,8 @@ function MultiFileInput({
       <input
         {...finalInputProps}
         // @ts-ignore
-        directory=""
-        webkitdirectory=""
+        directory={fileSelectOnly ? null : ''}
+        webkitdirectory={fileSelectOnly ? null : ''}
       />
       {children}
     </DropzoneStyle>
