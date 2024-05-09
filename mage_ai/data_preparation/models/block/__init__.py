@@ -2314,6 +2314,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         variable_type, basic_iterable = infer_variable_type(data)
 
+        if VariableType.LIST_COMPLEX == variable_type:
+            return self.__format_output_data(
+                pd.DataFrame([encode_complex(d) for d in data], columns=['column']),
+                variable_uuid=variable_uuid,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+                skip_dynamic_block=skip_dynamic_block,
+            )
+
         if VariableType.SERIES_PANDAS == variable_type:
             if basic_iterable:
                 data = pd.DataFrame(data).T

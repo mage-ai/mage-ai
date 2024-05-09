@@ -4,8 +4,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from mage_ai.data_cleaner.shared.utils import (is_geo_dataframe,
-                                               is_spark_dataframe)
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
@@ -31,7 +30,7 @@ class VariableManager:
 
     @classmethod
     def get_manager(
-        self,
+        cls,
         repo_path: str = None,
         variables_dir: str = None,
     ) -> 'VariableManager':

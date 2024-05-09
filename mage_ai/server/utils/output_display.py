@@ -180,6 +180,22 @@ def __custom_output():
 
     _internal_output_return = {last_line}
     variable_type, basic_iterable = infer_variable_type(_internal_output_return)
+    is_dynamic = bool({is_dynamic})
+    is_dynamic_child = bool({is_dynamic_child})
+
+    if variable_type is None and \
+            is_dynamic and \
+            not is_dynamic_child and \
+            isinstance(_internal_output_return, list) and \
+            len(_internal_output_return) >= 1:
+
+        variable_type, basic_iterable = infer_variable_type(_internal_output_return[0])
+
+        list_of_lists = []
+        if VariableType.LIST_COMPLEX == variable_type:
+            for list_of_items in _internal_output_return:
+                list_of_lists.append([encode_complex(item) for item in list_of_items])
+            _internal_output_return = list_of_lists
 
     if VariableType.MATRIX_SPARSE == variable_type:
         if basic_iterable:
@@ -209,16 +225,18 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
+    elif VariableType.LIST_COMPLEX == variable_type:
+        _internal_output_return = [encode_complex(item) for item in _internal_output_return]
 
     # Dynamic block child logic always takes precedence over dynamic block logic
-    if bool({is_dynamic_child}):
+    if is_dynamic_child:
         output_transformed = []
 
         if _internal_output_return and isinstance(_internal_output_return, list):
             for output in _internal_output_return:
                 output_tf = transform_output_for_display_dynamic_child(
                     output,
-                    is_dynamic=bool({is_dynamic}),
+                    is_dynamic=is_dynamic,
                     sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
                     single_item_only=True,
                 )
@@ -238,7 +256,7 @@ def __custom_output():
             print(type(_internal_output_return))
             print(type(output_transformed))
             raise err
-    elif bool({is_dynamic}):
+    elif is_dynamic:
         _json_string = simplejson.dumps(
             transform_output_for_display(
                 _internal_output_return,
@@ -248,7 +266,7 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif bool({has_reduce_output}) and bool({is_dynamic_child}):
+    elif bool({has_reduce_output}) and is_dynamic_child:
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
                 _internal_output_return,
@@ -258,11 +276,13 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame, dict)) and (
+    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame, dict, list)) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
         if isinstance(_internal_output_return, dict):
             _internal_output_return = pd.DataFrame([_internal_output_return])
+        elif isinstance(_internal_output_return, list):
+            _internal_output_return = pd.DataFrame(_internal_output_return, columns=['column'])
 
         _is_polars = isinstance(_internal_output_return, pl.DataFrame)
 

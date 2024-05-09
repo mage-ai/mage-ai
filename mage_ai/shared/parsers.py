@@ -13,6 +13,7 @@ import scipy
 
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.orchestration.db.models.base import BaseModel
+from mage_ai.shared.complex import is_model_sklearn, is_model_xgboost
 
 INTS = (
     np.int16,
@@ -69,14 +70,8 @@ def encode_complex(obj):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
-
-    try:
-        import xgboost as xgb
-
-        if isinstance(obj, xgb.Booster):
-            return object_to_uuid(obj)
-    except Exception as err:
-        print(f'[ERROR] encode_complex: {err}')
+    elif is_model_sklearn(obj) or is_model_xgboost(obj) or inspect.isclass(obj):
+        return object_to_uuid(obj)
 
     return obj
 

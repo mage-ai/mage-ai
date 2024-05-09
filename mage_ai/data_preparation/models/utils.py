@@ -14,16 +14,19 @@ import yaml
 from pandas import DataFrame
 from sklearn.utils import estimator_html_repr
 
-from mage_ai.data_cleaner.shared.utils import (is_geo_dataframe,
-                                               is_spark_dataframe)
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.shared.complex import is_model_sklearn, is_model_xgboost
 from mage_ai.shared.hash import unflatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
-from mage_ai.shared.parsers import (convert_matrix_to_dataframe,
-                                    encode_complex, object_to_dict,
-                                    object_to_uuid)
+from mage_ai.shared.parsers import (
+    convert_matrix_to_dataframe,
+    encode_complex,
+    object_to_dict,
+    object_to_uuid,
+)
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = {
@@ -166,27 +169,6 @@ def is_basic_iterable(data: Any) -> bool:
     return isinstance(data, (list, set, tuple))
 
 
-def is_model_sklearn(data: Any) -> bool:
-    pairs = [
-        (str(pc.__module__), str(pc.__name__)) for pc in inspect.getmro(data.__class__)
-    ]
-    return any(
-        module_name.startswith('sklearn.base')
-        and class_name.startswith('BaseEstimator')
-        for module_name, class_name in pairs
-    )
-
-
-def is_model_xgboost(data: Any) -> bool:
-    pairs = [
-        (str(pc.__module__), str(pc.__name__)) for pc in inspect.getmro(data.__class__)
-    ]
-    return any(
-        module_name.startswith('xgboost.core') and class_name.startswith('Booster')
-        for module_name, class_name in pairs
-    )
-
-
 def infer_variable_type(
     data: Any,
     repo_path: Optional[str] = None,
@@ -230,16 +212,22 @@ def infer_variable_type(
         basic_iterable and len(data) >= 1 and all(is_model_xgboost(d) for d in data)
     ):
         variable_type_use = VariableType.MODEL_XGBOOST
-    elif is_custom_object(data) or (
-        basic_iterable and len(data) >= 1 and all(is_custom_object(d) for d in data)
+    elif is_list_complex(data) or (
+        basic_iterable
+        and len(data) >= 1
+        and all(is_list_complex(d) for d in data)
     ):
-        variable_type_use = VariableType.CUSTOM_OBJECT
+        variable_type_use = VariableType.LIST_COMPLEX
     elif is_dictionary_complex(data) or (
         basic_iterable
         and len(data) >= 1
         and all(is_dictionary_complex(d) for d in data)
     ):
         variable_type_use = VariableType.DICTIONARY_COMPLEX
+    elif is_custom_object(data) or (
+        basic_iterable and len(data) >= 1 and all(is_custom_object(d) for d in data)
+    ):
+        variable_type_use = VariableType.CUSTOM_OBJECT
 
     return variable_type_use, basic_iterable
 
@@ -247,6 +235,12 @@ def infer_variable_type(
 def is_dictionary_complex(data: Any) -> bool:
     return isinstance(data, dict) and any(
         is_user_defined_complex(v) for v in data.values()
+    )
+
+
+def is_list_complex(data: Any) -> bool:
+    return isinstance(data, list) and any(
+        is_user_defined_complex(v) for v in data
     )
 
 
@@ -486,7 +480,7 @@ def deserialize_complex(
     """
     Deserialize serialized data (from JSON) back to its original structure and types.
     """
-    if unflatten:
+    if unflatten and isinstance(data, dict):
         return unflatten_and_deserialize(data, column_types)
 
     if isinstance(data, dict):

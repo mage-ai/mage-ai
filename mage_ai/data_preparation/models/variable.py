@@ -10,27 +10,42 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
-from mage_ai.data_cleaner.shared.utils import (is_geo_dataframe,
-                                               is_spark_dataframe)
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_ANALYSIS_KEYS, DATAFRAME_SAMPLE_COUNT,
-    DATAFRAME_SAMPLE_MAX_COLUMNS, VARIABLE_DIR)
+    DATAFRAME_ANALYSIS_KEYS,
+    DATAFRAME_SAMPLE_COUNT,
+    DATAFRAME_SAMPLE_MAX_COLUMNS,
+    VARIABLE_DIR,
+)
 from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
-    AMBIGUOUS_COLUMN_TYPES, STRING_SERIALIZABLE_COLUMN_TYPES,
-    apply_transform_pandas, cast_column_types, cast_column_types_polars,
-    deserialize_columns, deserialize_complex, infer_variable_type,
-    serialize_columns, serialize_complex, should_deserialize_pandas,
-    should_serialize_pandas)
+    AMBIGUOUS_COLUMN_TYPES,
+    STRING_SERIALIZABLE_COLUMN_TYPES,
+    apply_transform_pandas,
+    cast_column_types,
+    cast_column_types_polars,
+    deserialize_columns,
+    deserialize_complex,
+    infer_variable_type,
+    serialize_columns,
+    serialize_complex,
+    should_deserialize_pandas,
+    should_serialize_pandas,
+)
 from mage_ai.data_preparation.models.variables.constants import (
-    DATAFRAME_COLUMN_TYPES_FILE, DATAFRAME_CSV_FILE, DATAFRAME_PARQUET_FILE,
-    DATAFRAME_PARQUET_SAMPLE_FILE, JSON_FILE, JSON_SAMPLE_FILE, METADATA_FILE,
-    VariableType)
+    DATAFRAME_COLUMN_TYPES_FILE,
+    DATAFRAME_CSV_FILE,
+    DATAFRAME_PARQUET_FILE,
+    DATAFRAME_PARQUET_SAMPLE_FILE,
+    JSON_FILE,
+    JSON_SAMPLE_FILE,
+    METADATA_FILE,
+    VariableType,
+)
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
-from mage_ai.shared.parsers import (deserialize_matrix, sample_output,
-                                    serialize_matrix)
+from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
 from mage_ai.shared.utils import clean_name
 
 
@@ -201,8 +216,9 @@ class Variable:
                 data = self.__read_matrix_sparse(
                     data, sample=sample, sample_count=sample_count
                 )
-            elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
-                data = self.__read_dictionary_complex(data)
+            elif VariableType.DICTIONARY_COMPLEX == self.variable_type or \
+                    VariableType.LIST_COMPLEX == self.variable_type:
+                data = self.__read_complex_object(data)
 
             return data
 
@@ -254,12 +270,13 @@ class Variable:
                 data = self.__read_matrix_sparse(
                     data, sample=sample, sample_count=sample_count
                 )
-            elif VariableType.DICTIONARY_COMPLEX == self.variable_type:
-                data = self.__read_dictionary_complex(data)
+            elif VariableType.DICTIONARY_COMPLEX == self.variable_type or \
+                    VariableType.LIST_COMPLEX == self.variable_type:
+                data = self.__read_complex_object(data)
 
             return data
 
-    def __read_dictionary_complex(self, data: Dict) -> Dict:
+    def __read_complex_object(self, data: Union[Dict, List]) -> Union[Dict, List]:
         column_types_filename = os.path.join(
             self.variable_path, DATAFRAME_COLUMN_TYPES_FILE
         )
@@ -268,14 +285,14 @@ class Variable:
             data = deserialize_complex(
                 data,
                 column_types,
-                unflatten=True,
+                unflatten=isinstance(data, dict),
             )
 
         return data
 
-    def __save_dictionary_complex(self, data: Dict) -> Dict:
+    def __save_complex_object(self, data: Union[Dict, List]) -> Union[Dict, List]:
         data, column_types = serialize_complex(
-            flatten_dict(data),
+            flatten_dict(data) if isinstance(data, dict) else data,
             save_path=self.variable_path,
         )
         self.storage.write_json_file(
@@ -284,9 +301,9 @@ class Variable:
         )
         return data
 
-    async def __save_dictionary_complex_async(self, data: Dict) -> Dict:
+    async def __save_complex_object_async(self, data: Union[Dict, List]) -> Union[Dict, List]:
         data, column_types = serialize_complex(
-            flatten_dict(data),
+            flatten_dict(data) if isinstance(data, dict) else data,
             save_path=self.variable_path,
         )
         await self.storage.write_json_file_async(
@@ -366,8 +383,9 @@ class Variable:
             else:
                 self.__write_json(data)
         else:
-            if VariableType.DICTIONARY_COMPLEX == self.variable_type:
-                data = self.__save_dictionary_complex(data)
+            if VariableType.DICTIONARY_COMPLEX == self.variable_type or \
+                        VariableType.LIST_COMPLEX == self.variable_type:
+                data = self.__save_complex_object(data)
             else:
                 data, _ = self.__should_save_object(data)
 
@@ -417,8 +435,9 @@ class Variable:
             else:
                 await self.__write_json_async(data)
         else:
-            if VariableType.DICTIONARY_COMPLEX == self.variable_type:
-                data = await self.__save_dictionary_complex_asycn(data)
+            if VariableType.DICTIONARY_COMPLEX == self.variable_type or \
+                        VariableType.LIST_COMPLEX == self.variable_type:
+                data = await self.__save_complex_object_asycn(data)
             else:
                 data, _ = self.__should_save_object(data)
             await self.__write_json_async(data)

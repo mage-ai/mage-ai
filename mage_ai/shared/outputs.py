@@ -13,6 +13,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     UBJSON_MODEL_FILENAME,
     VariableType,
 )
+from mage_ai.shared.array import is_iterable
 from mage_ai.shared.parsers import object_to_dict
 
 
@@ -42,8 +43,13 @@ def save_custom_object(
     elif VariableType.CUSTOM_OBJECT == variable_type:
         is_object = True
         os.makedirs(variable_path, exist_ok=True)
-        full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
-        joblib.dump(data, full_path)
+
+        if is_iterable(data):
+            for item in data:
+                pass
+        else:
+            full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
+            joblib.dump(data, full_path)
     elif VariableType.DICTIONARY_COMPLEX == variable_type:
         is_object = True
         pass

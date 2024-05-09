@@ -20,6 +20,7 @@ class VariableType(str, Enum):
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
     DICTIONARY_COMPLEX = 'dictionary_complex'
     GEO_DATAFRAME = 'geo_dataframe'
+    LIST_COMPLEX = 'list_complex'
     MATRIX_SPARSE = 'matrix_sparse'
     MODEL_SKLEARN = 'model_sklearn'
     MODEL_XGBOOST = 'model_xgboost'
