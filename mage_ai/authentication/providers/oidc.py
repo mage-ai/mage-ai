@@ -145,7 +145,7 @@ class OidcProvider(OauthProvider, SsoProvider):
                 if group in self.roles_mapping:
                     mage_roles.append(self.roles_mapping[group])
         else:
-            mage_roles.extend(userinfo_resp.get('user_roles'),[])
+            mage_roles.extend(userinfo_resp.get('user_roles',[]))
 
         return dict(
             email=email,
