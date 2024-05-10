@@ -299,8 +299,7 @@ class Widget(Block):
         metrics = chart_configuration_settings['metrics']
 
         if custom_code is not None and custom_code.strip():
-            if not group_by_columns or not metrics:
-                exec(custom_code, results)
+            exec(custom_code, results)
         elif self.content is not None:
             exec(self.content, results)
         elif os.path.exists(self.file_path):

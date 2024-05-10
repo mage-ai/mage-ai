@@ -87,7 +87,7 @@ class BlockLayoutItemResource(GenericResource):
                 ]),
             )
 
-            content = block.content
+            content = content_override or block.content
 
             if data_source_config or (
                     configuration_to_use and
@@ -100,7 +100,11 @@ class BlockLayoutItemResource(GenericResource):
                         block_uuid=block.uuid,
                         pipeline_uuid=pipeline_uuid,
                     )
-                    data = data_source.load_data(block=block)
+                    data = data_source.load_data(
+                        block=block,
+                        configuration=configuration_to_use,
+                        custom_code=content_override,
+                    )
                 else:
                     data_source_block_uuid = data_source_config.get('block_uuid')
 

@@ -87,10 +87,8 @@ function BlockLayoutItem({
 
   const [columnLayoutSettingsInit] = useState<ColumnType>(columnLayoutSettings);
   const [blockLayoutItemState, setBlockLayoutItem] = useState<BlockLayoutItemType>(block);
-  const blockLayoutItem = useMemo(() => ({
-    ...(blockLayoutItemProp || {}),
-    ...(blockLayoutItemState || {}),
-  }), [
+  const blockLayoutItem = useMemo(() => blockLayoutItemProp || blockLayoutItemState,
+  [
     blockLayoutItemProp,
     blockLayoutItemState,
   ]);
@@ -143,8 +141,8 @@ function BlockLayoutItem({
                 });
               } else {
                 const item = resp?.block_layout_item;
-                setDataBlockLayoutItem(resp);
-                setBlockLayoutItem(item);
+                // setDataBlockLayoutItem(resp);
+                // setBlockLayoutItem(item);
                 if (onFetchBlockLayoutItem) {
                   onFetchBlockLayoutItem?.(item);
                 }
@@ -172,7 +170,10 @@ function BlockLayoutItem({
   ]);
 
   const data =
-    useMemo(() => blockLayoutItem?.data || dataBlockLayoutItem?.block_layout_item?.data, [
+    useMemo(() => dataBlockLayoutItem?.block_layout_item
+      ? dataBlockLayoutItem?.block_layout_item?.data
+      : blockLayoutItem?.data,
+    [
       blockLayoutItem,
       dataBlockLayoutItem,
     ]);
@@ -466,11 +467,18 @@ function BlockLayoutItem({
               </>
             )}
 
-            {(!dataBlockLayoutItem || !data) && (
+            {!dataBlockLayoutItem && (
               <Spacing p={PADDING_UNITS}>
                 <Spinner />
               </Spacing>
             )}
+
+            {dataBlockLayoutItem && !data && (
+              <Text muted>
+                Chart hasn’t been configured or no data was retrieved.
+              </Text>
+            )}
+
             {data && buildChart({
               height: height || blockLayoutItem?.configuration?.[VARIABLE_NAME_HEIGHT],
               width: width - (WIDTH_OFFSET + 1) - (columnsInRow ? DIVIDER_WIDTH / columnsInRow : 0),

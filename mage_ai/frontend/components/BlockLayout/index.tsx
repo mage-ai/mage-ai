@@ -102,6 +102,8 @@ function BlockLayout({
     selectedBlockItem,
   ]);
 
+  const itemCached = useMemo(() => items?.[selectedBlockItem?.uuid], [items, selectedBlockItem]);
+
   const [dataBlockLayoutItem, setDataBlockLayoutItem] = useState<any>(null);
   const [
     fetchBlockLayoutItem,
@@ -116,7 +118,7 @@ function BlockLayout({
       selectedBlockItem && encodeURIComponent(selectedBlockItem?.uuid),
       {
         configuration_override: encodeURIComponent(JSON.stringify(objectAttributes?.configuration || '')),
-        content_override: encodeURIComponent(objectAttributes?.content || ''),
+        content_override: encodeURIComponent(objectAttributes?.content || itemCached?.content || ''),
         data_source_override: encodeURIComponent(JSON.stringify(objectAttributes?.data_source || '')),
         skip_render: opts?.skip_render ? true : false,
       },
@@ -129,12 +131,20 @@ function BlockLayout({
       onSuccess: (response: any) => onSuccess(
           response, {
             callback: resp => setDataBlockLayoutItem((prev) => {
-              if (prev?.block_layout_item?.uuid !== resp?.block_layout_item?.uuid) {
+              const item = resp?.block_layout_item;
+
+              if (prev?.block_layout_item?.uuid !== item?.uuid) {
                 setObjectAttributesState(prev2 => ({
                   ...prev2,
-                  ...resp?.block_layout_item,
+                  ...item,
                 }));
               }
+
+              setItems(prev => ({
+                ...prev,
+                [item?.uuid]: item,
+              }));
+
               return resp;
             }),
           },
@@ -468,10 +478,12 @@ function BlockLayout({
       },
     });
     setSelectedBlockItem(blockItem);
+    setObjectAttributes(() => ({}));
   }, [
     layout,
     pageBlockLayout,
     setSelectedBlockItem,
+    setObjectAttributes,
     updateBlockLayoutItem,
   ]);
 
@@ -510,6 +522,7 @@ function BlockLayout({
           >
             <BlockLayoutItem
               block={block}
+              blockLayoutItem={items?.[blockUUID]}
               blockUUID={blockUUID}
               columnIndex={idx2}
               columnLayoutSettings={column}
@@ -581,6 +594,7 @@ function BlockLayout({
     createNewBlockItem,
     deletingBlockUUID,
     isLoadingUpdateBlockLayoutItem,
+    items,
     layout,
     moveBlockLayoutItem,
     removeBlockLayoutItem,
@@ -1056,8 +1070,6 @@ function BlockLayout({
     topOffset,
   ]);
 
-  const itemCached = useMemo(() => items?.[selectedBlockItem?.uuid], [items, selectedBlockItem]);
-
   const after = useMemo(() => selectedBlockItem && (
     <Spacing py={PADDING_UNITS}>
       <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
@@ -1251,7 +1263,7 @@ function BlockLayout({
                 ...blockLayoutItemServer?.configuration,
                 ...objectAttributes?.configuration,
               },
-              data: blockLayoutItemServer?.data || itemCached?.data,
+              data: blockLayoutItemServer ? blockLayoutItemServer?.data : itemCached?.data,
               data_source: {
                 ...itemCached?.data_source,
                 ...blockLayoutItemServer?.data_source,
