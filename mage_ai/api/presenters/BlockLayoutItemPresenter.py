@@ -7,7 +7,9 @@ class BlockLayoutItemPresenter(BasePresenter):
         'content',
         'data',
         'data_source',
+        'error',
         'name',
+        'skip_render',
         'type',
         'uuid',
     ]

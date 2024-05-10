@@ -46,3 +46,15 @@ class ApiError(Exception):
             self.errors = opts.get('errors')
             self.message = opts.get('message')
             self.type = opts.get('type')
+
+    def to_dict(self, **kwargs) -> Dict:
+        errors = self.errors
+        if not isinstance(errors, list):
+            errors = str(errors).split('\n')
+
+        return dict(
+            code=self.code,
+            errors=errors,
+            message=self.message,
+            type=self.type,
+        )

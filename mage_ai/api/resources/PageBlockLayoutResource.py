@@ -71,6 +71,8 @@ class PageBlockLayoutResource(GenericResource):
             if block_uuid in blocks_with_content:
                 block = blocks_with_content[block_uuid]
                 block.update(dict(name=block_name_new))
+                blocks_with_content.pop(block_uuid, None)
+                blocks_with_content[block_uuid_new] = block
 
         for block_uuid, block in blocks_with_content.items():
             await block.update_content_async(

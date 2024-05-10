@@ -3594,7 +3594,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 """
                 with open(new_file_path, 'w') as f:
                     f.write(block_content)
-            else:
+            elif os.path.exists(old_file_path):
                 os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:

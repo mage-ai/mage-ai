@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { useMutation } from 'react-query';
 
 import BlockLayoutItemDetail from '../BlockLayoutItemDetail';
 import BlockLayoutItemType, { RenderTypeEnum } from '@interfaces/BlockLayoutItemType';
@@ -14,6 +15,7 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import { onSuccess } from '@api/utils/response';
 import { ColumnType } from '@interfaces/PageBlockLayoutType';
 import { DIVIDER_WIDTH } from '../LayoutDivider/index.style';
 import { Ellipsis } from '@oracle/icons';
@@ -21,6 +23,7 @@ import { ItemStyle, WIDTH_OFFSET } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VARIABLE_NAME_HEIGHT } from '@interfaces/ChartBlockType';
 import { useError } from '@context/Error';
+import useAbortController from '@utils/hooks/useAbortController';
 
 type BlockLayoutItemProps = {
   block?: BlockLayoutItemType;
@@ -43,6 +46,7 @@ type BlockLayoutItemProps = {
     columnIndex: number;
     rowIndex: number;
   }) => void;
+  onFetchBlockLayoutItem?: (data: BlockLayoutItemType) => void;
   onSave?: () => void;
   pageBlockLayoutUUID: string;
   removeBlockLayoutItem?: () => void;
@@ -64,8 +68,9 @@ function BlockLayoutItem({
   disableDrag,
   first,
   height,
-  isLoading,
+  isLoading: isLoadingProp,
   onDrop,
+  onFetchBlockLayoutItem,
   onSave,
   pageBlockLayoutUUID,
   removeBlockLayoutItem,
@@ -81,15 +86,13 @@ function BlockLayoutItem({
   const [isHovering, setIsHovering] = useState<boolean>(false);
 
   const [columnLayoutSettingsInit] = useState<ColumnType>(columnLayoutSettings);
-  const [blockLayoutItemState, setBlockLayoutItem] = useState<BlockLayoutItemType>(null);
-  const blockLayoutItem = useMemo(() => blockLayoutItemProp || blockLayoutItemState, [
+  const [blockLayoutItemState, setBlockLayoutItem] = useState<BlockLayoutItemType>(block);
+  const blockLayoutItem = useMemo(() => ({
+    ...(blockLayoutItemProp || {}),
+    ...(blockLayoutItemState || {}),
+  }), [
     blockLayoutItemProp,
     blockLayoutItemState,
-  ]);
-  const [dataState, setData] = useState(null);
-  const data = useMemo(() => blockLayoutItem?.data || dataState, [
-    blockLayoutItem,
-    dataState,
   ]);
 
   const [showError] = useError(null, {}, [], {
@@ -100,8 +103,8 @@ function BlockLayoutItem({
   const refreshInterval = useMemo(() => {
     const ri = blockLayoutItem?.data_source?.refresh_interval;
 
-    if (ri) {
-      return Math.max(ri, 1000);
+    if (!ri) {
+      return 60000;
     }
 
     return ri;
@@ -109,50 +112,70 @@ function BlockLayoutItem({
     blockLayoutItem,
   ]);
 
-  const {
-    data: dataBlockLayoutItem,
-  } = api.block_layout_items.page_block_layouts.detail(
-    !blockLayoutItemProp && encodeURIComponent(pageBlockLayoutUUID),
-    !blockLayoutItemProp && encodeURIComponent(blockUUID),
-    {},
+  const [dataBlockLayoutItem, setDataBlockLayoutItem] =
+    useState<BlockLayoutItemType>(blockLayoutItem);
+  const [
+    fetchBlockLayoutItem,
     {
-      refreshInterval,
-      revalidateOnFocus: !refreshInterval,
+      isLoading: isLoadingFetchBlockLayoutItem,
+    },
+  ]: any = useMutation(
+    (opts: {
+      skip_render?: boolean;
+    } = {}) => api.block_layout_items.page_block_layouts.detailAsync(
+      !blockLayoutItemProp && encodeURIComponent(pageBlockLayoutUUID),
+      !blockLayoutItemProp && encodeURIComponent(blockUUID),
+      {
+        skip_render: opts?.skip_render ? true : false,
+      },
+      {
+        refreshInterval,
+        revalidateOnFocus: false,
+      },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+          response, {
+            callback: (resp) => {
+              if (resp?.error) {
+                showError({
+                  response: resp,
+                });
+              } else {
+                const item = resp?.block_layout_item;
+                setDataBlockLayoutItem(resp);
+                setBlockLayoutItem(item);
+                if (onFetchBlockLayoutItem) {
+                  onFetchBlockLayoutItem?.(item);
+                }
+              }
+            },
+          },
+        ),
     },
   );
 
-  useEffect(() => {
-    if (dataBlockLayoutItem?.error) {
-      showError({
-        response: dataBlockLayoutItem,
-      });
-    }
-  }, [
-    dataBlockLayoutItem,
-    showError,
-  ]);
+  const {
+    doFetch,
+    data: data2,
+    isLoading: isLoadingFetchBlockLayoutItem2,
+    error,
+  } = useAbortController(() => !detail && fetchBlockLayoutItem());
 
   useEffect(() => {
-    if (!blockLayoutItem) {
-      if (block) {
-        setBlockLayoutItem(block);
-      } else if (dataBlockLayoutItem?.block_layout_item) {
-        setBlockLayoutItem(dataBlockLayoutItem?.block_layout_item);
-      }
-    }
-  }, [
-    block,
-    blockLayoutItem,
-    dataBlockLayoutItem,
+    doFetch();
+  }, []);
+
+  const isLoading: boolean = useMemo(() => isLoadingProp && isLoadingFetchBlockLayoutItem, [
+    isLoadingProp,
+    isLoadingFetchBlockLayoutItem,
   ]);
 
-  useEffect(() => {
-    if (dataBlockLayoutItem?.block_layout_item?.data) {
-      setData(dataBlockLayoutItem?.block_layout_item?.data);
-    }
-  }, [
-    dataBlockLayoutItem?.block_layout_item?.data,
-  ]);
+  const data =
+    useMemo(() => blockLayoutItem?.data || dataBlockLayoutItem?.block_layout_item?.data, [
+      blockLayoutItem,
+      dataBlockLayoutItem,
+    ]);
 
   const buildChart = useCallback(({
     height: heightArg,
@@ -186,7 +209,7 @@ function BlockLayoutItem({
         return (
           <iframe
             // @ts-ignore
-            srcdoc={renderData}
+            srcDoc={renderData}
             style={{
               height: heightArg,
               width: widthArg,
@@ -443,14 +466,17 @@ function BlockLayoutItem({
               </>
             )}
 
-            {!dataBlockLayoutItem && !data && <Spinner inverted />}
+            {(!dataBlockLayoutItem || !data) && (
+              <Spacing p={PADDING_UNITS}>
+                <Spinner />
+              </Spacing>
+            )}
             {data && buildChart({
               height: height || blockLayoutItem?.configuration?.[VARIABLE_NAME_HEIGHT],
               width: width - (WIDTH_OFFSET + 1) - (columnsInRow ? DIVIDER_WIDTH / columnsInRow : 0),
             })}
           </ItemStyle>
         </div>
-
       </Flex>
 
       <LayoutDivider

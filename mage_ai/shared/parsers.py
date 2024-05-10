@@ -1,6 +1,7 @@
 import base64
 import inspect
 import io
+import traceback
 from datetime import datetime
 from enum import Enum
 from json import JSONDecoder
@@ -72,6 +73,15 @@ def encode_complex(obj):
         return serialize_matrix(obj)
     elif is_model_sklearn(obj) or is_model_xgboost(obj) or inspect.isclass(obj):
         return object_to_uuid(obj)
+    elif hasattr(obj, 'to_dict'):
+        return obj.to_dict()
+    elif isinstance(obj, Exception):
+        # Serialize the exception
+        return {
+            'type': type(obj).__name__,
+            'message': str(obj),
+            'traceback': traceback.format_tb(obj.__traceback__),
+        }
 
     return obj
 

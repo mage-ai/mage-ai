@@ -59,7 +59,7 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                         block.uuid,
                         v.uuid,
                     ))
-        else:
+        elif block:
             block_output = block.execute_with_callback(
                 global_vars=merge_dict(
                     get_global_variables(self.pipeline_uuid),
