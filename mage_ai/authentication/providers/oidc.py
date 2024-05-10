@@ -141,11 +141,11 @@ class OidcProvider(OauthProvider, SsoProvider):
 
         email = userinfo_resp.get('email')
         if hasattr(self, 'roles_mapping'):
-            for group in userinfo_resp.get('user_roles'):
+            for group in userinfo_resp.get('user_roles',[]):
                 if group in self.roles_mapping:
                     mage_roles.append(self.roles_mapping[group])
         else:
-            mage_roles.extend(userinfo_resp.get('user_roles'))
+            mage_roles.extend(userinfo_resp.get('user_roles'),[])
 
         return dict(
             email=email,
