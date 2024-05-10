@@ -1,3 +1,4 @@
+import json
 import urllib.parse
 import uuid
 from typing import Awaitable, Dict
@@ -11,7 +12,12 @@ from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.server.logger import Logger
 from mage_ai.settings import get_settings_value
-from mage_ai.settings.keys import OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_DISCOVERY_URL
+from mage_ai.settings.keys import (
+    OIDC_CLIENT_ID,
+    OIDC_CLIENT_SECRET,
+    OIDC_DISCOVERY_URL,
+    OIDC_ROLES_MAPPING,
+)
 
 logger = Logger().new_server_logger(__name__)
 
@@ -25,6 +31,12 @@ class OidcProvider(OauthProvider, SsoProvider):
         self.client_secret = get_settings_value(OIDC_CLIENT_SECRET)
         self.__validate()
 
+        roles_mapping = get_settings_value(OIDC_ROLES_MAPPING)
+        if roles_mapping:
+            try:
+                self.roles_mapping = json.loads(roles_mapping)
+            except Exception:
+                logger.exception('Failed to parse OIDC roles mapping.')
         self.discover()
 
     def __validate(self):
@@ -115,6 +127,7 @@ class OidcProvider(OauthProvider, SsoProvider):
     async def get_user_info(self, access_token: str = None, **kwargs) -> Awaitable[Dict]:
         if access_token is None:
             raise Exception('Access token is required to fetch user info.')
+        mage_roles = []
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self.userinfo_endpoint,
@@ -127,9 +140,15 @@ class OidcProvider(OauthProvider, SsoProvider):
                 userinfo_resp = await response.json()
 
         email = userinfo_resp.get('email')
+        if hasattr(self, 'roles_mapping'):
+            for group in userinfo_resp.get('user_roles'):
+                if group in self.roles_mapping:
+                    mage_roles.append(self.roles_mapping[group])
+        else:
+            mage_roles.extend(userinfo_resp.get('user_roles'))
 
         return dict(
             email=email,
             username=userinfo_resp.get('preferred_username', email),
-            user_roles=userinfo_resp.get('user_roles', []),
+            user_roles=mage_roles,
         )
