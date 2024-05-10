@@ -1,39 +1,39 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ThemeContext } from "styled-components";
-import { useMutation } from "react-query";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
-import AutocompleteItemType from "@interfaces/AutocompleteItemType";
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
   BlockLanguageEnum,
   BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS,
   BlockTypeEnum,
   OutputType,
   StatusTypeEnum,
-} from "@interfaces/BlockType";
-import ChartController from "./ChartController";
-import Chip from "@oracle/components/Chip";
-import CodeEditor, { CodeEditorSharedProps } from "@components/CodeEditor";
-import CodeOutput from "@components/CodeBlock/CodeOutput";
-import Col from "@components/shared/Grid/Col";
-import ErrorsType from "@interfaces/ErrorsType";
-import Flex from "@oracle/components/Flex";
-import FlexContainer from "@oracle/components/FlexContainer";
-import KernelOutputType, { DataTypeEnum, ExecutionStateEnum } from "@interfaces/KernelOutputType";
-import KeyboardShortcutButton from "@oracle/elements/Button/KeyboardShortcutButton";
-import LabelWithValueClicker from "@oracle/components/LabelWithValueClicker";
-import Link from "@oracle/elements/Link";
-import MultiSelect from "@oracle/elements/Inputs/MultiSelect";
-import PipelineType from "@interfaces/PipelineType";
-import Select from "@oracle/elements/Inputs/Select";
-import Spacing from "@oracle/elements/Spacing";
-import Spinner from "@oracle/components/Spinner";
-import Text from "@oracle/elements/Text";
-import TextInput from "@oracle/elements/Inputs/TextInput";
-import Tooltip from "@oracle/components/Tooltip";
-import api from "@api";
-import buildAutocompleteProvider from "@components/CodeEditor/autocomplete";
-import dark from "@oracle/styles/themes/dark";
-import usePrevious from "@utils/usePrevious";
+} from '@interfaces/BlockType';
+import ChartController from './ChartController';
+import Chip from '@oracle/components/Chip';
+import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
+import CodeOutput from '@components/CodeBlock/CodeOutput';
+import Col from '@components/shared/Grid/Col';
+import ErrorsType from '@interfaces/ErrorsType';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType, { DataTypeEnum, ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
+import Link from '@oracle/elements/Link';
+import MultiSelect from '@oracle/elements/Inputs/MultiSelect';
+import PipelineType from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
+import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
+import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
+import dark from '@oracle/styles/themes/dark';
+import usePrevious from '@utils/usePrevious';
 import {
   AGGREGATE_FUNCTIONS,
   CHART_TYPES,
@@ -41,29 +41,29 @@ import {
   ConfigurationType,
   VARIABLE_NAMES,
   VARIABLE_NAME_WIDTH_PERCENTAGE,
-} from "@interfaces/ChartBlockType";
+} from '@interfaces/ChartBlockType';
 import {
   CONFIGURATIONS_BY_CHART_TYPE,
   ConfigurationItemType,
   ConfigurationOptionType,
   DEFAULT_SETTINGS_BY_CHART_TYPE,
   VARIABLE_INFO_BY_CHART_TYPE,
-} from "./constants";
+} from './constants';
 import {
   ChartBlockStyle,
   CodeHelperStyle,
   CodeStyle,
   ConfigurationOptionsStyle,
-} from "./index.style";
-import { Edit, PlayButtonFilled, Trash } from "@oracle/icons";
-import { KEY_CODE_ENTER, KEY_CODE_META } from "@utils/hooks/keyboardShortcuts/constants";
-import { UNIT } from "@oracle/styles/units/spacing";
-import { capitalize, isJsonString } from "@utils/string";
-import { getColorsForBlockType } from "@components/CodeBlock/index.style";
-import { indexBy, remove, sortByKey } from "@utils/array";
-import { isEmptyObject } from "@utils/hash";
-import { onSuccess } from "@api/utils/response";
-import { useKeyboardContext } from "@context/Keyboard";
+} from './index.style';
+import { Edit, PlayButtonFilled, Trash } from '@oracle/icons';
+import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { capitalize, isJsonString } from '@utils/string';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { indexBy, remove, sortByKey } from '@utils/array';
+import { isEmptyObject } from '@utils/hash';
+import { onSuccess } from '@api/utils/response';
+import { useKeyboardContext } from '@context/Keyboard';
 
 export type ChartPropsShared = {
   autocompleteItems: AutocompleteItemType[];
@@ -194,7 +194,7 @@ function ChartBlock(
 
     if (chartDataRaw) {
       chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
-      chartDataRaw = chartDataRaw.replaceAll('\\"', '"').replaceAll("\\'", "'");
+      chartDataRaw = chartDataRaw.replaceAll('\\"', '"').replaceAll('\\\'', '\'');
       if (isJsonString(chartDataRaw)) {
         chartData2 = JSON.parse(chartDataRaw);
       }
@@ -391,10 +391,10 @@ function ChartBlock(
         <Spacing key={blockUUID} ml={2}>
           <Text bold inline monospace small>
             df_{idx + 1}
-          </Text>{" "}
+          </Text>{' '}
           <Text inline monospace muted small>
-            {"->"}
-          </Text>{" "}
+            {'->'}
+          </Text>{' '}
           <Link
             color={blockColor}
             inline
@@ -434,12 +434,12 @@ function ChartBlock(
           <Spacing key={varNameValue} ml={2}>
             <Text bold inline monospace small>
               {varNameValue}
-            </Text>{" "}
+            </Text>{' '}
             {info && (
               <>
                 <Text inline monospace muted small>
-                  {"->"}
-                </Text>{" "}
+                  {'->'}
+                </Text>{' '}
                 <Text default inline small>
                   {info}
                 </Text>
@@ -517,7 +517,7 @@ function ChartBlock(
                   },
                 ),
               onFocus: () => setSelectedBlock(block),
-              value: configuration?.[uuid] || "",
+              value: configuration?.[uuid] || '',
             };
 
             const blocks = dataBlock?.block ? [dataBlock.block] : [];
@@ -530,7 +530,7 @@ function ChartBlock(
               return acc.concat(
                 outputs.reduce((acc2, { sample_data: sampleData }) => {
                   if (sampleData?.columns) {
-                    return acc2.concat(sampleData.columns);
+                    return acc2.concat(sampleData?.columns?.filter((v) => !acc2.includes(v)));
                   }
 
                   return acc2;
@@ -581,7 +581,7 @@ function ChartBlock(
                     <div
                       key={col}
                       style={{
-                        display: "inline-block",
+                        display: 'inline-block',
                         marginRight: 2,
                         marginTop: 2,
                       }}
@@ -660,7 +660,7 @@ function ChartBlock(
                     <div
                       key={`${aggregation}(${column})`}
                       style={{
-                        display: "inline-block",
+                        display: 'inline-block',
                         marginRight: 2,
                         marginTop: 2,
                       }}
@@ -780,7 +780,7 @@ function ChartBlock(
       <ChartBlockStyle ref={ref}>
         <Spacing mt={1} pt={1} px={1}>
           <FlexContainer alignItems="center" fullWidth justifyContent="space-between">
-            <Flex flex={1} style={{ position: "relative" }}>
+            <Flex flex={1} style={{ position: 'relative' }}>
               <LabelWithValueClicker
                 bold={false}
                 fullWidth
@@ -846,7 +846,7 @@ function ChartBlock(
                 }}
                 placeholder="Source block"
                 small
-                value={upstreamBlocks?.[0] || ""}
+                value={upstreamBlocks?.[0] || ''}
               >
                 {blocksOfType?.map(({ uuid }: BlockType) => (
                   <option key={uuid} value={uuid}>
@@ -971,8 +971,8 @@ function ChartBlock(
                     value={configuration?.[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1}
                   >
                     {[
-                      ["1/2 width", 0.5],
-                      ["full width", 1],
+                      ['1/2 width', 0.5],
+                      ['full width', 1],
                     ].map(([label, value]) => (
                       <option key={label} value={value}>
                         {label}

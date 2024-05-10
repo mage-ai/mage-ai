@@ -242,46 +242,51 @@ export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
       [VARIABLE_NAME_Y]: 'y',
       [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.VERTICAL,
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `columns = df_1.columns
 x = df_1.columns[:7]
 y = [[v] for v in [len(df_1[col].unique()) for col in x]]
-`;
-    },
+`,
   },
   [ChartTypeEnum.HISTOGRAM]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 10,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `import pandas as pd
+
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
+
+
+if isinstance(df_1, list) and len(df_1) >= 1:
+    item = df_1[0]
+    if isinstance(item, pd.Series):
+        item = item.to_frame()
+    elif not isinstance(item, pd.DataFrame):
+        item = convert_matrix_to_dataframe(item)
+    df_1 = item
+
+columns = df_1.columns
 col = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))[0]
 x = df_1[col]
-`;
-    },
+`,
   },
   [ChartTypeEnum.LINE_CHART]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_X]: 'x',
       [VARIABLE_NAME_Y]: 'y',
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `columns = df_1.columns
 cols = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))
 x = df_1[cols[0]]
 y = [df_1[cols[1]]]
-`;
-    },
+`,
   },
   [ChartTypeEnum.PIE_CHART]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 7,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: (block: BlockType) => {
-      return `x = df_1[df_1.columns[0]]`;
-    },
+    content: (block: BlockType) => 'x = df_1[df_1.columns[0]]',
   },
   [ChartTypeEnum.TABLE]: {
     configuration: (block: BlockType) => ({
@@ -289,10 +294,8 @@ y = [df_1[cols[1]]]
       [VARIABLE_NAME_X]: 'x',
       [VARIABLE_NAME_Y]: 'y',
     }),
-    content: (block: BlockType) => {
-      return `x = df_1.columns
-y = df_1.to_numpy()`;
-    },
+    content: (block: BlockType) => `x = df_1.columns
+y = df_1.to_numpy()`,
   },
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: {
     configuration: (block: BlockType) => ({
@@ -379,6 +382,7 @@ number_of_unique_values = [df_1[col].nunique() for col in columns]
         chart_type: ChartTypeEnum.TABLE,
       },
       content: `from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
 
 df_1 = convert_matrix_to_dataframe(df_1)

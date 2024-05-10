@@ -1,7 +1,12 @@
+import math
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.analysis.constants import (
     CHART_TYPE_BAR_HORIZONTAL,
-    CHART_TYPE_LINE_CHART,
     CHART_TYPE_HISTOGRAM,
+    CHART_TYPE_LINE_CHART,
     DATA_KEY_SCATTER_PLOT,
     DATA_KEY_SCATTER_PLOT_LABELS,
     DATA_KEY_TIME_SERIES,
@@ -9,9 +14,7 @@ from mage_ai.data_cleaner.analysis.constants import (
 )
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
-import math
-import numpy as np
-import pandas as pd
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
 DD_KEY = 'lambda.analysis_charts'
 BUCKETS = 40
@@ -65,6 +68,9 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
 
 def build_histogram_data(col1, series, column_type):
     increment(f'{DD_KEY}.build_histogram_data.start', dict(feature_uuid=col1))
+
+    if not isinstance(series, pd.Series):
+        series = convert_matrix_to_dataframe(series)
 
     max_value = series.max() if len(series) >= 1 else None
     min_value = series.min() if len(series) >= 1 else None

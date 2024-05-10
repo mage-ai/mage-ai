@@ -8,6 +8,7 @@ import pandas as pd
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 from mage_ai.shared.strings import is_number
 
 from .charts import (
@@ -98,6 +99,14 @@ class Widget(Block):
                     dfs += input_var
                 else:
                     dfs.append(input_var)
+
+        arr = []
+        for d in dfs:
+            if isinstance(d, list):
+                arr += d
+            else:
+                arr.append(d)
+        dfs = [convert_matrix_to_dataframe(d) for d in arr]
 
         should_use_no_code = x_values is None and y_values is None and \
             (group_by_columns or metrics)
