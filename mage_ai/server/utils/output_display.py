@@ -219,8 +219,7 @@ def __custom_output():
 
             return print(f'[__internal_output__]{{_json_string}}')
         except Exception as err:
-            print(type(_internal_output_return))
-            print(type(output_transformed))
+            print(f'[ERROR] Failed to serialize output: {{err}}')
             raise err
 
     if variable_type is None and \

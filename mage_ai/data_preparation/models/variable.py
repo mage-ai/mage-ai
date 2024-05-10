@@ -43,6 +43,7 @@ from mage_ai.data_preparation.models.variables.constants import (
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.shared.array import is_iterable
 from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
@@ -341,7 +342,6 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
-
         if (
             isinstance(data, pd.Series)
             and self.variable_type != VariableType.SERIES_PANDAS
@@ -374,17 +374,11 @@ class Variable:
         elif self.variable_type == VariableType.MATRIX_SPARSE:
             self.__write_matrix_sparse(data)
         elif self.variable_type == VariableType.SERIES_PANDAS:
-            var_type, basic_iterable = infer_variable_type(data)
-            if VariableType.SERIES_PANDAS == var_type:
-                if basic_iterable:
-                    self.__write_parquet(data)
-                else:
-                    self.__write_parquet(data.to_frame())
-            else:
+            if not self.__write_series_pandas(data):
                 self.__write_json(data)
         else:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type or \
-                        VariableType.LIST_COMPLEX == self.variable_type:
+                    VariableType.LIST_COMPLEX == self.variable_type:
                 data = self.__save_complex_object(data)
             else:
                 data, _ = self.__should_save_object(data)
@@ -426,13 +420,7 @@ class Variable:
         elif self.variable_type == VariableType.MATRIX_SPARSE:
             self.__write_matrix_sparse(data)
         elif self.variable_type == VariableType.SERIES_PANDAS:
-            var_type, basic_iterable = infer_variable_type(data)
-            if VariableType.SERIES_PANDAS == var_type:
-                if basic_iterable:
-                    self.__write_parquet(data)
-                else:
-                    self.__write_parquet(data.to_frame())
-            else:
+            if not self.__write_series_pandas(data):
                 await self.__write_json_async(data)
         else:
             if VariableType.DICTIONARY_COMPLEX == self.variable_type or \
@@ -1013,6 +1001,33 @@ class Variable:
                 os.path.join(self.variable_path, f'{k}.json'), data.get(k)
             )
 
+    def __write_series_pandas(self, data: Union[List[pd.Series], pd.Series]) -> bool:
+        var_type, basic_iterable = infer_variable_type(data)
+        if VariableType.SERIES_PANDAS == var_type:
+            if basic_iterable:
+                self.__write_parquet(data)
+            else:
+                self.__write_parquet(data.to_frame())
+
+            row_count = None
+
+            if isinstance(data, pd.Series):
+                row_count = data.shape[0]
+            elif is_iterable(data) and len(data) >= 1 and isinstance(data[0], pd.Series):
+                row_count = sum([s.shape[0] for s in data])
+
+            if row_count is not None:
+                self.__write_dataframe_analysis(dict(
+                    statistics=dict(
+                        original_row_count=row_count,
+                        original_column_count=1,
+                    ),
+                ))
+
+            return True
+
+        return False
+
     def __write_matrix_sparse(
         self,
         csr_matrix: Union[
@@ -1040,9 +1055,17 @@ class Variable:
         file_path = os.path.join(self.variable_path, JSON_FILE)
         self.storage.write_json_file(file_path, data)
 
+        if isinstance(csr_matrix, scipy.sparse._csr.csr_matrix):
+            self.__write_dataframe_analysis(dict(
+                statistics=dict(
+                    original_row_count=csr_matrix.shape[0],
+                    original_column_count=csr_matrix.shape[1],
+                ),
+            ))
+
     def __serialize_matrix_sparse(
         self, csr_matrix: scipy.sparse._csr.csr_matrix
-    ) -> Tuple[Dict]:
+    ) -> Tuple[Dict, Dict]:
         sample = csr_matrix[:DATAFRAME_SAMPLE_COUNT, :DATAFRAME_SAMPLE_MAX_COLUMNS]
         data_sample = serialize_matrix(sample)
         data = serialize_matrix(csr_matrix)
