@@ -21,6 +21,16 @@ def get_bool_value(value: str) -> bool:
     return value.lower() in ('true', '1', 't')
 
 
+def get_int_value(value: str) -> int:
+    if not value:
+        return None
+    try:
+        int_value = int(value)
+    except Exception:
+        int_value = None
+    return int_value
+
+
 # ----------------------------------
 # Debugging and Environment Settings
 # ----------------------------------
@@ -98,7 +108,9 @@ OAUTH_DEFAULT_ACCESS = os.getenv('OAUTH_DEFAULT_ACCESS')
 # ---------------------
 # General Server Settings
 # ---------------------
-
+CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT = get_int_value(os.getenv('CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT'))
+CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT = get_int_value(
+                                            os.getenv('CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT'))
 DISABLE_AUTO_BROWSER_OPEN = get_bool_value(os.getenv('DISABLE_AUTO_BROWSER_OPEN', 'False'))
 # The hostname in Kubernetes or AWS ECS
 HOSTNAME = os.getenv('HOSTNAME')
@@ -178,6 +190,8 @@ except ValueError:
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
 MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
+    'CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT',
+    'CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT',
     'DISABLE_NOTEBOOK_EDIT_ACCESS',
     'DISABLE_AUTO_BROWSER_OPEN',
     'REQUIRE_USER_AUTHENTICATION',
