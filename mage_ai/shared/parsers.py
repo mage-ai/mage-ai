@@ -144,7 +144,7 @@ def convert_matrix_to_dataframe(csr_matrix: scipy.sparse.csr_matrix) -> pd.DataF
     if isinstance(csr_matrix, scipy.sparse.csr_matrix):
         n_columns = csr_matrix.shape[1]
         return pd.DataFrame(
-            csr_matrix.toarray(), columns=[f'col_{i}' for i in range(n_columns)]
+            csr_matrix.toarray(), columns=[str(i) for i in range(n_columns)]
         )
     return csr_matrix
 

@@ -11,12 +11,17 @@ type OutputType = {
 
 type MultiOutputProps = {
   outputs: OutputType[];
+  onTabChange?: (tab: TabType) => void;
 };
 
-function MultiOutput({ outputs }: MultiOutputProps) {
+function MultiOutput({
+  outputs,
+  onTabChange,
+}: MultiOutputProps) {
   const outputsRef = useRef({});
 
   const tabs = useMemo(() => outputs.map(({ uuid }, idx) => ({
+    index: idx,
     label: () => uuid,
     uuid: `${uuid}_${idx}`,
   })), [outputs]);
@@ -37,7 +42,7 @@ function MultiOutput({ outputs }: MultiOutputProps) {
       arr.push(
         <div className={idx >= 1 ? 'inactive' : null} key={uuid} ref={ref}>
           {render()}
-        </div>
+        </div>,
       );
     });
 
@@ -48,7 +53,6 @@ function MultiOutput({ outputs }: MultiOutputProps) {
     <MultiOutputStyle>
       <ButtonTabs
         allowScroll
-        selectedTabUUID={selectedTab?.uuid}
         onClickTab={(tab) => {
           setSelectedTab(tab);
 
@@ -76,7 +80,12 @@ function MultiOutput({ outputs }: MultiOutputProps) {
               }
             }
           });
+
+          if (onTabChange) {
+            onTabChange?.(tab);
+          }
         }}
+        selectedTabUUID={selectedTab?.uuid}
         tabs={tabs}
         underlineStyle
       />

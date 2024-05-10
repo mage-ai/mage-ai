@@ -22,12 +22,9 @@ import polars as pl
 import simplejson
 import yaml
 from jinja2 import Template
-from sklearn.utils import estimator_html_repr
 
 import mage_ai.data_preparation.decorators
-from mage_ai.ai.utils.xgboost import render_tree_visualization
 from mage_ai.cache.block import BlockCache
-from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -53,6 +50,7 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.outputs import format_output_data
 from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
@@ -84,7 +82,6 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
@@ -92,7 +89,6 @@ from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
@@ -103,7 +99,7 @@ from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
-from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.path_fixer import (
     add_absolute_path,
     add_root_repo_path_to_relative_path,
@@ -2084,7 +2080,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return outputs + data_products
         else:
             if self.pipeline is None:
-                return
+                return []
 
             if not block_uuid:
                 block_uuid = self.uuid
@@ -2111,6 +2107,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     execution_partition=execution_partition,
                 )
 
+            variable_type_mapping = {}
+
             for idx, variable_uuid in enumerate(all_variables):
                 if (selected_variables and variable_uuid not in selected_variables) or \
                         (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2127,6 +2125,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     and variable_object.variable_type != variable_type
                 ):
                     continue
+
+                if variable_object.variable_type is not None:
+                    variable_type_mapping[variable_object.variable_type] = \
+                        variable_type_mapping.get(variable_object.variable_type, [])
+                    variable_type_mapping[variable_object.variable_type].append(variable_uuid)
 
                 data = variable_object.read_data(
                     sample=sample,
@@ -2150,9 +2153,20 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             arr_sorted = sorted(arr, key=lambda x: x[0])
 
             if len(data_products) >= len(outputs):
-                return [x[1] for x in arr_sorted]
+                items = [x[1] for x in arr_sorted]
             else:
-                return [x[1] for x in arr]
+                items = [x[1] for x in arr]
+
+            if len(items) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
+                arr = []
+                for item in items[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
+                    if isinstance(item, dict):
+                        arr.append(merge_dict(item, dict(multi_output=True)))
+                    else:
+                        arr.append(item)
+                return arr
+
+            return items
 
     async def __get_outputs_async(
         self,
@@ -2229,7 +2243,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return outputs + data_products
         else:
             if self.pipeline is None:
-                return
+                return []
 
             if not block_uuid:
                 block_uuid = self.uuid
@@ -2248,6 +2262,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     execution_partition=execution_partition
                 )
 
+            variable_type_mapping = {}
+
             for idx, variable_uuid in enumerate(all_variables):
                 if exclude_blank_variable_uuids and variable_uuid.strip() == '':
                     continue
@@ -2265,6 +2281,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     and variable_object.variable_type != variable_type
                 ):
                     continue
+
+                if variable_object.variable_type is not None:
+                    variable_type_mapping[variable_object.variable_type] = \
+                        variable_type_mapping.get(variable_object.variable_type, [])
+                    variable_type_mapping[variable_object.variable_type].append(variable_uuid)
 
                 data = await variable_object.read_data_async(
                     sample=True,
@@ -2287,283 +2308,23 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             arr_sorted = sorted(arr, key=lambda x: x[0])
 
             if len(data_products) >= len(outputs):
-                return [x[1] for x in arr_sorted]
+                items = [x[1] for x in arr_sorted]
             else:
-                return [x[1] for x in arr]
+                items = [x[1] for x in arr]
 
-    def __format_output_data(
-        self,
-        data: Any,
-        variable_uuid: str,
-        block_uuid: str = None,
-        csv_lines_only: bool = False,
-        execution_partition: str = None,
-        skip_dynamic_block: bool = False,
-    ) -> Tuple[Dict, bool]:
-        """
-        Takes variable data and formats it to return to the frontend.
-
-        Returns:
-            Tuple[Dict, bool]: Tuple of the formatted data and is_data_product boolean. Data product
-                outputs and non data product outputs are handled slightly differently.
-        """
-        variable_manager = self.pipeline.variable_manager
-
-        is_dynamic_child = is_dynamic_block_child(self)
-        is_dynamic = is_dynamic_block(self)
-
-        variable_type, basic_iterable = infer_variable_type(data)
-
-        if VariableType.LIST_COMPLEX == variable_type:
-            return self.__format_output_data(
-                pd.DataFrame([encode_complex(d) for d in data], columns=['column']),
-                variable_uuid=variable_uuid,
-                block_uuid=block_uuid,
-                csv_lines_only=csv_lines_only,
-                execution_partition=execution_partition,
-                skip_dynamic_block=skip_dynamic_block,
-            )
-
-        if VariableType.SERIES_PANDAS == variable_type:
-            if basic_iterable:
-                data = pd.DataFrame(data).T
-            else:
-                data = data.to_frame()
-
-        if VariableType.MATRIX_SPARSE == variable_type:
-            if basic_iterable:
-                data = convert_matrix_to_dataframe(data[0])
-            else:
-                data = convert_matrix_to_dataframe(data)
-
-            return self.__format_output_data(
-                data,
-                variable_uuid=variable_uuid,
-                block_uuid=block_uuid,
-                csv_lines_only=csv_lines_only,
-                execution_partition=execution_partition,
-                skip_dynamic_block=skip_dynamic_block,
-            )
-        elif VariableType.MODEL_SKLEARN == variable_type or \
-                VariableType.MODEL_XGBOOST == variable_type:
-
-            def __render(
-                model: Any,
-                partition=execution_partition,
-                pipeline=self.pipeline,
-                uuid=self.uuid,
-                variable_manager=variable_manager,
-                variable_type=variable_type,
-                variable_uuid=variable_uuid,
-            ) -> Dict[str, Optional[str]]:
-                data_type = None
-                text_data = None
-
-                if VariableType.MODEL_SKLEARN == variable_type:
-                    data_type = DataType.TEXT_HTML
-                    text_data = estimator_html_repr(model)
-                elif variable_manager:
-                    image_dir = variable_manager.build_variable(
-                        pipeline_uuid=pipeline.uuid if pipeline.uuid else None,
-                        block_uuid=uuid,
-                        variable_uuid=variable_uuid,
-                        partition=partition,
-                        variable_type=variable_type,
-                    ).variable_path
-                    text_data, success = render_tree_visualization(image_dir)
-
-                    if success:
-                        data_type = DataType.IMAGE_PNG
+            if len(items) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
+                arr = []
+                for item in items[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
+                    if isinstance(item, dict):
+                        arr.append(merge_dict(item, dict(multi_output=True)))
                     else:
-                        data_type = DataType.TEXT
+                        arr.append(item)
+                return arr
 
-                return dict(
-                    text_data=text_data,
-                    type=data_type,
-                    variable_uuid=variable_uuid,
-                )
+            return items
 
-            if not basic_iterable:
-                return __render(data), True
-
-            data = dict(
-                text_data=simplejson.dumps(
-                    [__render(d) for d in data],
-                    default=encode_complex,
-                    ignore_nan=True,
-                ),
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
-
-            return data, True
-        elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
-            from mage_ai.data_preparation.models.block.dynamic.utils import (
-                coerce_into_dataframe,
-            )
-
-            data, is_data_product = self.__format_output_data(
-                coerce_into_dataframe(data),
-                variable_uuid=variable_uuid,
-                skip_dynamic_block=True,
-            )
-
-            return merge_dict(data, dict(multi_output=True)), is_data_product
-        elif isinstance(data, pd.DataFrame):
-            if csv_lines_only:
-                data = dict(
-                    table=data.to_csv(header=True, index=False).strip('\n').split('\n')
-                )
-            else:
-                try:
-                    analysis = variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        block_uuid,
-                        variable_uuid,
-                        dataframe_analysis_keys=['metadata', 'statistics'],
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME_ANALYSIS,
-                    )
-                except Exception:
-                    analysis = None
-                if analysis is not None and (
-                    analysis.get('statistics') or analysis.get('metadata')
-                ):
-                    stats = analysis.get('statistics', {})
-                    column_types = (analysis.get('metadata') or {}).get(
-                        'column_types', {}
-                    )
-                    row_count = stats.get('original_row_count', stats.get('count'))
-                    column_count = stats.get('original_column_count', len(column_types))
-                else:
-                    row_count, column_count = data.shape
-
-                columns_to_display = data.columns.tolist()[
-                    :DATAFRAME_ANALYSIS_MAX_COLUMNS
-                ]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=json.loads(
-                            data[columns_to_display].to_json(
-                                orient='split', date_format='iso'
-                            ),
-                        )['data'],
-                    ),
-                    shape=[row_count, column_count],
-                    type=DataType.TABLE,
-                    variable_uuid=variable_uuid,
-                )
-            return data, True
-        elif isinstance(data, pl.DataFrame):
-            try:
-                analysis = variable_manager.get_variable(
-                    self.pipeline.uuid,
-                    block_uuid,
-                    variable_uuid,
-                    dataframe_analysis_keys=['statistics'],
-                    partition=execution_partition,
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
-                )
-            except Exception:
-                analysis = None
-            if analysis is not None:
-                stats = analysis.get('statistics', {})
-                row_count = stats.get('original_row_count')
-                column_count = stats.get('original_column_count')
-            else:
-                row_count, column_count = data.shape
-            columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-            data = dict(
-                sample_data=dict(
-                    columns=columns_to_display,
-                    rows=[
-                        list(row.values())
-                        for row in json.loads(
-                            data[columns_to_display].write_json(row_oriented=True)
-                        )
-                    ],
-                ),
-                shape=[row_count, column_count],
-                type=DataType.TABLE,
-                variable_uuid=variable_uuid,
-            )
-            return data, True
-        elif is_geo_dataframe(data):
-            data = dict(
-                text_data=f"""Use the code in a scratchpad to get the output of the block:
-
-from mage_ai.data_preparation.variable_manager import get_variable
-df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
-""",
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
-            return data, False
-        elif isinstance(data, str):
-            data = dict(
-                text_data=data,
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
-            return data, False
-        elif basic_iterable:
-            data = dict(
-                text_data=simplejson.dumps(
-                    data,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ),
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
-            return data, False
-        elif isinstance(data, dict):
-            try:
-                pair = self.__format_output_data(
-                    pd.DataFrame([data]),
-                    variable_uuid=variable_uuid,
-                    block_uuid=block_uuid,
-                    csv_lines_only=csv_lines_only,
-                    execution_partition=execution_partition,
-                    skip_dynamic_block=skip_dynamic_block,
-                )
-                if len(pair) >= 1:
-                    return pair[0], True
-            except Exception as err:
-                print(
-                    f'[ERROR] Block.__format_output_data for block '
-                    f'{self.uuid} variable {variable_uuid}: {err}',
-                )
-
-            data = dict(
-                text_data=simplejson.dumps(
-                    data,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ),
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
-            return data, False
-        elif is_spark_dataframe(data):
-            df = data.toPandas()
-            columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-            data = dict(
-                sample_data=dict(
-                    columns=columns_to_display,
-                    rows=json.loads(
-                        df[columns_to_display].to_json(
-                            orient='split', date_format='iso'
-                        ),
-                    )['data'],
-                ),
-                type=DataType.TABLE,
-                variable_uuid=variable_uuid,
-            )
-            return data, True
-
-        return data, False
+    def __format_output_data(self, *args, **kwargs) -> Tuple[Dict, bool]:
+        return format_output_data(self, *args, **kwargs)
 
     def __save_outputs_prepare(
         self, outputs, override_output_variable: bool = False

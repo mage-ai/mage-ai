@@ -139,6 +139,10 @@ def add_internal_output_info(block, code: str) -> str:
         is_dynamic = is_dynamic_block(block) if block else False
         is_dynamic_child = is_dynamic_block_child(block) if block else False
 
+        pipeline_uuid = block.pipeline.uuid if block.pipeline else None
+        repo_path = block.pipeline.repo_path if block.pipeline else None
+        block_uuid = block.uuid
+
         internal_output = f"""
 # Post processing code below (source: output_display.py)
 
@@ -159,6 +163,8 @@ def __custom_output():
         transform_output_for_display_dynamic_child,
         transform_output_for_display_reduce_output,
     )
+    from mage_ai.data_preparation.models.block.outputs import format_output_data
+    from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.models.utils import infer_variable_type
     from mage_ai.data_preparation.models.variable import VariableType
     from mage_ai.server.kernel_output_parser import DataType
@@ -178,10 +184,44 @@ def __custom_output():
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
+    pipeline = Pipeline.get('{pipeline_uuid}', repo_path='{repo_path}')
+    block = pipeline.get_block('{block_uuid}')
+
     _internal_output_return = {last_line}
     variable_type, basic_iterable = infer_variable_type(_internal_output_return)
     is_dynamic = bool({is_dynamic})
     is_dynamic_child = bool({is_dynamic_child})
+
+
+    if not is_dynamic and \
+            isinstance(_internal_output_return, list) and \
+            len(_internal_output_return) >= 2 and \
+            any([infer_variable_type(i)[0] for i in _internal_output_return]):
+
+        output_transformed = []
+        for idx, item in enumerate(_internal_output_return[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]):
+            data_output, _ = format_output_data(
+                block,
+                item,
+                'output_' + str(idx),
+                automatic_sampling=True,
+            )
+            if isinstance(data_output, dict):
+                data_output['multi_output'] = True
+            output_transformed.append(data_output)
+
+        try:
+            _json_string = simplejson.dumps(
+                output_transformed,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+
+            return print(f'[__internal_output__]{{_json_string}}')
+        except Exception as err:
+            print(type(_internal_output_return))
+            print(type(output_transformed))
+            raise err
 
     if variable_type is None and \
             is_dynamic and \
@@ -191,8 +231,9 @@ def __custom_output():
 
         variable_type, basic_iterable = infer_variable_type(_internal_output_return[0])
 
-        list_of_lists = []
         if VariableType.LIST_COMPLEX == variable_type:
+            list_of_lists = []
+
             for list_of_items in _internal_output_return:
                 list_of_lists.append([encode_complex(item) for item in list_of_items])
             _internal_output_return = list_of_lists
@@ -207,6 +248,10 @@ def __custom_output():
             _internal_output_return = pd.DataFrame(_internal_output_return).T
         else:
             _internal_output_return = _internal_output_return.to_frame()
+    elif VariableType.CUSTOM_OBJECT == variable_type:
+        return _internal_output_return
+    elif VariableType.MODEL_SKLEARN == variable_type:
+        return _internal_output_return
     elif VariableType.MODEL_XGBOOST == variable_type:
         text_data, success = create_tree_visualization(_internal_output_return)
 
@@ -418,6 +463,12 @@ spark = SparkSession.builder.getOrCreate()
 '''
 
     return f"""{magic_header}
+import datetime
+import json
+import logging
+
+import pandas as pd
+
 from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
 from mage_ai.data_preparation.models.block.dynamic.utils import has_reduce_output_from_upstreams
 from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
@@ -425,12 +476,10 @@ from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
-from mage_ai.shared.array import find
+from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
-import datetime
-import json
-import logging
-import pandas as pd
+from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.variable import VariableType
 
 
 db_connection.start_session()
@@ -539,8 +588,15 @@ def execute_custom_code():
 
     if {widget} or is_dynamic_block(block) or is_dynamic_child:
         return output
-    else:
-        return find(lambda val: val is not None, output)
+
+    if is_iterable(output) and \
+            len(output) >= 2 and \
+            any([infer_variable_type(i)[0] is not None for i in output]):
+
+        return output[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+
+    item = find(lambda val: val is not None, output)
+    return item
 
 df = execute_custom_code()
     """

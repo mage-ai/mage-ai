@@ -58,10 +58,10 @@ import {
 } from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
+import { addDataOutputBlockUUID, openSaveFileDialog, prepareOutput } from '@components/PipelineDetail/utils';
 import { containsHTML, isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import { isObject } from '@utils/hash';
+import { ignoreKeys, isObject } from '@utils/hash';
 import { range } from '@utils/array';
 
 type CodeOutputProps = {
@@ -205,6 +205,32 @@ function CodeOutput(
     (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
+  const [dataFrameShapes, setDataFrameShapes] = useState<{
+    [key: string]: number[];
+  }>({});
+  const multipleDataFrames =
+      useMemo(() => Object.keys(dataFrameShapes).length >= 2, [dataFrameShapes]);
+  const [selectedOutputTab, setSelectedOutputTab] = useState<TabType>(null);
+
+  const dataFrameShapeDisplay = useMemo(() => {
+    if (!multipleDataFrames) {
+      return dataFrameShape;
+    }
+
+    if (Object.values(dataFrameShapes)?.length >= 1) {
+      if (selectedOutputTab) {
+        return dataFrameShapes?.[String(selectedOutputTab?.index)];
+      } else {
+        return dataFrameShapes?.[0];
+      }
+    }
+  }, [
+    multipleDataFrames,
+    selectedOutputTab,
+    dataFrameShape,
+    dataFrameShapes,
+  ]);
+
   const [progress, setProgress] = useState<number>();
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
 
@@ -301,9 +327,14 @@ function CodeOutput(
   const { content, tableContent, testContent } = useMemo(() => {
     const createDataTableElement = (
       output,
-      { borderTop, multiOutputInit: multiOutputInitFromData, selected: selectedProp },
+      {
+        borderTop,
+        multiOutputInit: multiOutputInitFromData,
+        selected: selectedProp,
+      },
       dataInit: {
         multi_output?: boolean;
+        uuid?: string;
       } = {},
     ) => {
       const { columns, index, rows, shape } = output;
@@ -312,6 +343,7 @@ function CodeOutput(
       if (dataInit && isObject(dataInit) && multiOutputInit) {
         return (
           <MultiOutput
+            onTabChange={setSelectedOutputTab}
             outputs={rows?.map((row, idx: number) => ({
               render: () => {
                 if (!row) {
@@ -324,6 +356,8 @@ function CodeOutput(
                     borderTop,
                     multiOutputInit,
                     selected: selectedProp,
+                  }, {
+                    uuid: String(idx),
                   });
                 }
 
@@ -337,6 +371,12 @@ function CodeOutput(
 
       if (shape) {
         setDataFrameShape(shape);
+        if (dataInit?.uuid) {
+          setDataFrameShapes((prev) => ({
+            ...prev,
+            [dataInit.uuid]: shape,
+          }));
+        }
       }
 
       const columnHeadersContainEmptyString = columns?.some((header) => header === '');
@@ -381,6 +421,7 @@ function CodeOutput(
       }
     };
 
+    let isMultiOutput = false;
     let isTable = false;
 
     const arrContent = [];
@@ -446,9 +487,9 @@ function CodeOutput(
 
       const arr = [];
 
-      dataArray.forEach((data: string, idxInner: number) => {
+      function buildDisplayElement(data, dataTypeInner, idxInner, outputRowProps = null) {
         let displayElement;
-        const outputRowSharedProps = {
+        const outputRowSharedProps = outputRowProps || {
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
@@ -494,10 +535,41 @@ function CodeOutput(
           if (parts.length >= 2) {
             rawString = parts2[0];
           }
+
           if (isJsonString(rawString)) {
             const data = JSON.parse(rawString);
 
-            if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
+            // Order matters; this must go 1st in order to handle multi-output from the notebook.
+            if (data?.length >= 1
+              && Array.isArray(data)
+              && data?.every(d => d?.multi_output)
+            ) {
+              isMultiOutput = true;
+
+              displayElement = (
+                <MultiOutput
+                  onTabChange={setSelectedOutputTab}
+                  outputs={data?.map((item, idx: number) => ({
+                    render: () => {
+                      const itemPrepared = prepareOutput(ignoreKeys(item, ['multi_output']));
+
+                      return buildDisplayElement(
+                        itemPrepared?.data,
+                        itemPrepared?.type,
+                        idx,
+                        {
+                          contained: true,
+                          first: true,
+                          last: true,
+                          normalPadding: true,
+                        },
+                      );
+                    },
+                    uuid: `Output ${idx}`,
+                  }))}
+                />
+              );
+            } else if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
               if (Array.isArray(data?.[0]?.text_data)) {
                 isTable = true;
                 const rows = data?.map((d) => d?.text_data);
@@ -517,7 +589,10 @@ function CodeOutput(
                     borderTop,
                     selected,
                   },
-                  data,
+                  {
+                    ...data,
+                    uuid: String(idxInner),
+                  },
                 );
                 tableContent.push(tableEl);
                 displayElement = tableEl;
@@ -545,7 +620,10 @@ function CodeOutput(
                       borderTop,
                       selected,
                     },
-                    data,
+                    {
+                      ...data,
+                      uuid: String(idxInner),
+                    },
                   );
                   tableContent.push(tableEl);
 
@@ -567,7 +645,7 @@ function CodeOutput(
               }
             }
           }
-        } else if (dataType === DataTypeEnum.TABLE) {
+        } else if (dataTypeInner === DataTypeEnum.TABLE) {
           const dataDisplay = isJsonString(data) ? JSON.parse(data) : data;
           if (dataDisplay) {
             isTable = true;
@@ -577,7 +655,10 @@ function CodeOutput(
                 borderTop,
                 selected,
               },
-              output,
+              {
+                ...output,
+                uuid: String(idxInner),
+              },
             );
             tableContent.push(tableEl);
 
@@ -585,11 +666,17 @@ function CodeOutput(
               displayElement = tableEl;
             }
           }
-        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)
-            || (DataTypeEnum.TEXT_HTML === dataType && isObject(data) && output?.multi_output)) {
+        } else if (DATA_TYPE_TEXTLIKE.includes(dataTypeInner)
+            || (
+              DataTypeEnum.TEXT_HTML === dataTypeInner && isObject(data) && output?.multi_output
+            )
+        ) {
           if (isObject(data)) {
             if (output?.multi_output &&
-                [DataTypeEnum.TEXT, DataTypeEnum.TEXT_HTML].includes(output?.type)) {
+                [DataTypeEnum.TEXT, DataTypeEnum.TEXT_HTML].includes(output?.type)
+            ) {
+              isMultiOutput = true;
+
               const {
                 // @ts-ignore
                 columns,
@@ -599,6 +686,7 @@ function CodeOutput(
 
               displayElement = (
                 <MultiOutput
+                  onTabChange={setSelectedOutputTab}
                   outputs={rows?.map(({ data: value, type: typeInner }, idx: number) => ({
                     render: () => {
                       if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
@@ -617,6 +705,8 @@ function CodeOutput(
                         return createDataTableElement(value, {
                           borderTop,
                           selected,
+                        }, {
+                          uuid: String(idx),
                         });
                       } else if (DataTypeEnum.TEXT_HTML === typeInner) {
                         return (
@@ -633,9 +723,9 @@ function CodeOutput(
                 />
               );
               // @ts-ignore
-            } else if (data?.data) {
+            } else if (data?.data || data?.text_data) {
               // @ts-ignore
-              const textArr = data?.data?.split('\\n');
+              const textArr = data?.data ? data?.data?.split('\\n') : [data?.text_data];
 
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
@@ -662,7 +752,7 @@ function CodeOutput(
               </OutputRowStyle>
             );
           }
-        } else if (dataType === DataTypeEnum.TEXT_HTML) {
+        } else if (dataTypeInner === DataTypeEnum.TEXT_HTML) {
           if (data) {
             displayElement = (
               <OutputRowStyle {...outputRowSharedProps}>
@@ -672,7 +762,7 @@ function CodeOutput(
               </OutputRowStyle>
             );
           }
-        } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
+        } else if (dataTypeInner === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
             <div
               style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}
@@ -680,10 +770,16 @@ function CodeOutput(
               <img alt={`Image ${idx} from code output`} src={`data:image/png;base64, ${data}`} />
             </div>
           );
-        } else if (dataType === DataTypeEnum.PROGRESS) {
+        } else if (dataTypeInner === DataTypeEnum.PROGRESS) {
           const percent = parseInt(data);
           setProgress(percent > 90 ? 90 : percent);
         }
+
+        return displayElement;
+      }
+
+      dataArray.forEach((data: string, idxInner: number) => {
+        const displayElement = buildDisplayElement(data, dataType, idxInner);
 
         if (displayElement) {
           arr.push(<div key={`code-output-${idx}-${idxInner}`}>{displayElement}</div>);
@@ -924,10 +1020,10 @@ function CodeOutput(
                     ) : (
                       <FlexContainer alignItems="center">
                         <ChevronUp muted size={UNIT * 2} />
-                        {dataFrameShape && (
+                        {dataFrameShapeDisplay && (
                           <Spacing ml={2}>
                             <Text>
-                              {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                              {`${dataFrameShapeDisplay[0]} rows x ${dataFrameShapeDisplay[1]} columns${columnsPreviewMessage}`}
                             </Text>
                           </Spacing>
                         )}
@@ -938,10 +1034,10 @@ function CodeOutput(
 
                 {!setCollapsed && (
                   <FlexContainer alignItems="center">
-                    {dataFrameShape && (
+                    {dataFrameShapeDisplay && (
                       <Spacing pl={1}>
                         <Text>
-                          {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                          {`${dataFrameShapeDisplay[0]} rows x ${dataFrameShapeDisplay[1]} columns${columnsPreviewMessage}`}
                         </Text>
                       </Spacing>
                     )}

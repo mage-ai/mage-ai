@@ -14,6 +14,7 @@ export type TabType = {
   Icon?: any;
   IconSelected?: any;
   icon?: any;
+  index?: number;
   label?: () => string | any;
   uuid: string;
 };

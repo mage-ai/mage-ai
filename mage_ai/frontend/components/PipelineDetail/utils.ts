@@ -30,7 +30,7 @@ import { indexBy, range } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { isEmptyObject } from '@utils/hash';
 
-function prepareOutput(output) {
+export function prepareOutput(output) {
   let data;
   let type;
 

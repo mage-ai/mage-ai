@@ -6,10 +6,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-from mage_ai.data_preparation.models.block.dynamic.variables import \
-    get_outputs_for_dynamic_block
+from mage_ai.data_preparation.models.block.dynamic.variables import (
+    get_outputs_for_dynamic_block,
+)
 from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_ANALYSIS_MAX_COLUMNS, DATAFRAME_SAMPLE_COUNT_PREVIEW)
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+)
 from mage_ai.data_preparation.models.utils import prepare_data_for_output
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
@@ -400,19 +403,23 @@ def transform_output_for_display_reduce_output(
     return arr
 
 
-def combine_transformed_output_for_multi_output(transform_outputs: List[Dict]):
-    columns = []
+def combine_transformed_output_for_multi_output(
+    transform_outputs: List[Dict],
+    columns: Optional[List[str]] = None,
+):
     index = []
+    columns_use = columns or []
     for i in range(len(transform_outputs)):
-        columns.append(f'child_{i}')
+        if not columns:
+            columns_use.append(f'child_{i}')
         index.append(i)
 
     return dict(
         data=dict(
-            columns=columns,
+            columns=columns_use,
             index=index,
             rows=transform_outputs,
-            shape=[len(transform_outputs), len(columns)],
+            shape=[len(transform_outputs), len(columns_use)],
         ),
         type=DataType.TABLE,
         multi_output=True,
