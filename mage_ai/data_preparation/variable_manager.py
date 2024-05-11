@@ -5,16 +5,12 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
-from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.utils import (
+    infer_variable_type,
+    warn_for_repo_path,
+)
 from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
-
-from mage_ai.data_preparation.models.utils import warn_for_repo_path
-from mage_ai.data_preparation.models.variable import (
-    VARIABLE_DIR,
-    Variable,
-    VariableType,
-)
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.platform import project_platform_activated
@@ -333,7 +329,6 @@ def get_global_variables(
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
     pipeline = pipeline or Pipeline.get(
-        pipeline_uuid, all_projects=project_platform_activated()
         pipeline_uuid,
         all_projects=project_platform_activated(),
     )
@@ -416,7 +411,6 @@ def delete_global_variable(
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-
 
     pipeline = Pipeline.get(pipeline_uuid)
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
