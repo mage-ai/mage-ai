@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-type FetchArgs = [string, RequestInit?]; // Example of more specific fetch arguments type
+type FetchArgs = [string?, RequestInit?]; // Example of more specific fetch arguments type
 
 interface UseAbortableFetchReturnType<T> {
   doFetch: (...args: FetchArgs) => Promise<void>;
@@ -9,7 +9,7 @@ interface UseAbortableFetchReturnType<T> {
   error: Error | null;
 }
 
-function useAbortableFetch<T>(requestFunction: (...args?: FetchArgs) => Promise<T>): UseAbortableFetchReturnType<T> {
+function useAbortableFetch<T>(requestFunction: (...args: FetchArgs) => Promise<T>): UseAbortableFetchReturnType<T> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -25,9 +25,16 @@ function useAbortableFetch<T>(requestFunction: (...args?: FetchArgs) => Promise<
     const signal = abortControllerRef.current.signal;
 
     try {
-      const response = await requestFunction(...args, signal);
+      // Assuming the last argument in args should be RequestInit where you can add signal
+      if (args.length > 0 && typeof args[args.length - 1] === 'object') {
+        const lastArg = args[args.length - 1] as RequestInit;
+        args[args.length - 1] = { ...lastArg, signal }; // Integrating signal into the last argument (RequestInit)
+      } else {
+        args.push({ signal }); // If no RequestInit object present, add one with signal
+      }
+      const response = await requestFunction(...args);
       setData(response);
-    } catch (err) {
+    }  catch (err) {
       const error = err as Error; // Casting for TypeScript 4.4+ with --strict catch clause
       if (error.name !== 'AbortError') {
         setError(error);

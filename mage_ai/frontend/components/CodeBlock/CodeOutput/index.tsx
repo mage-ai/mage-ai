@@ -376,13 +376,18 @@ function CodeOutput(
     );
   }
 
+  // @ts-ignore
   const { content, tableContent, testContent } = useMemo(() => {
     const createDataTableElement = (
-      output,
+      output: any,
       {
         borderTop,
         multiOutputInit: multiOutputInitFromData,
         selected: selectedProp,
+      }: {
+        borderTop?: boolean;
+        multiOutputInit?: boolean;
+        selected?: boolean;
       },
       dataInit: {
         multi_output?: boolean;
@@ -597,7 +602,6 @@ function CodeOutput(
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
           normalPadding: outputRowNormalPadding,
-          sideBySideEnabled,
         };
 
         const borderTop = idx >= 1;
@@ -939,7 +943,6 @@ function CodeOutput(
     progressBar,
     renderMessagesRaw,
     selected,
-    sideBySideEnabled,
     sparkEnabled,
   ]);
 

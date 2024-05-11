@@ -111,7 +111,11 @@ function BlockLayoutItem({
   ]);
 
   const [dataBlockLayoutItem, setDataBlockLayoutItem] =
-    useState<BlockLayoutItemType>(blockLayoutItem);
+    useState<{
+      block_layout_item?: BlockLayoutItemType,
+    }>({
+      block_layout_item: blockLayoutItem,
+    });
   const [
     fetchBlockLayoutItem,
     {

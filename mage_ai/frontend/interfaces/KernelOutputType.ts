@@ -44,4 +44,5 @@ export default interface KernelOutputType {
   pipeline_uuid?: string;
   type: DataTypeEnum;
   uuid?: string;
+  variable_uuid?: string;
 }
