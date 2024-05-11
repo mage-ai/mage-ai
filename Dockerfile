@@ -11,13 +11,14 @@ RUN \
   curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
   apt-get -y update && \
   ACCEPT_EULA=Y apt-get -y install --no-install-recommends \
-    # NFS dependencies
-    nfs-common \
-    # odbc dependencies
-    msodbcsql18\
-    unixodbc-dev \
-    # R
-    r-base && \
+  # NFS dependencies
+  nfs-common \
+  # odbc dependencies
+  msodbcsql18\
+  unixodbc-dev \
+  graphviz \
+  # R
+  r-base && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
@@ -25,6 +26,7 @@ RUN \
 RUN \
   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
+
 
 ## Python Packages
 RUN \
@@ -42,20 +44,20 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
   if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ]; then \
-    pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"; \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"; \
   else \
-    pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-integrations&subdirectory=mage_integrations"; \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-integrations&subdirectory=mage_integrations"; \
   fi
 
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
 RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
-      tag=$(tail -n 1 /tmp/constants.py) && \
-      VERSION=$(echo "$tag" | tr -d "'") && \
-      pip3 install --no-cache-dir "mage-ai[all]==$VERSION"; \
-    else \
-      pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
-    fi
+  tag=$(tail -n 1 /tmp/constants.py) && \
+  VERSION=$(echo "$tag" | tr -d "'") && \
+  pip3 install --no-cache-dir "mage-ai[all]==$VERSION"; \
+  else \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
+  fi
 
 
 ## Startup Script

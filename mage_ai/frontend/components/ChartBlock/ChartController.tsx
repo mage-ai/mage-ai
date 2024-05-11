@@ -173,7 +173,6 @@ function ChartController({
             minValue,
           ])}
           height={chartHeight}
-          width={width}
           large
           margin={{
             left: UNIT * 5,
@@ -192,6 +191,7 @@ function ChartController({
           showYAxisLabels
           showZeroes
           sortData={d => sortByKey(d, '[0]')}
+          width={width}
           xAxisLabel={xAxisLabelProp || xAxisLabel || configuration[VARIABLE_NAME_X]}
           yAxisLabel={xAxisLabel ? `count(${xAxisLabel})` : configuration[VARIABLE_NAME_Y]}
         />

@@ -37,10 +37,7 @@ export const CONFIG_KEY_DISABLE_QUERY_PREPROCESSING = 'disable_query_preprocessi
 export const CONFIG_KEY_DBT = 'dbt';
 export const CONFIG_KEY_DBT_COMMAND = 'command';
 
-export const VARIABLE_NAMES = [
-  VARIABLE_NAME_X,
-  VARIABLE_NAME_Y,
-];
+export const VARIABLE_NAMES = [VARIABLE_NAME_X, VARIABLE_NAME_Y];
 
 export enum ChartTypeEnum {
   BAR_CHART = 'bar chart',
@@ -147,6 +144,7 @@ export interface ConfigurationType {
     command?: string;
     disable_tests?: boolean;
   };
+  disable_output_preview?: boolean;
   dynamic?: boolean;
   file_path?: string;
   file_source?: FileSourceType;

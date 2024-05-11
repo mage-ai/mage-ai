@@ -500,6 +500,7 @@ function KeyboardShortcutButton({
         eventParameters,
         eventName,
         onClick,
+        ref: refToUse,
       }) => {
         const El = (
           // @ts-ignore
@@ -528,7 +529,7 @@ function KeyboardShortcutButton({
               ? 11    // 11px padding to match size of button with text
               : padding
             }
-            ref={ref}
+            ref={refToUse}
             type={(asHref || linkHref) ? null : type}
             useModelTheme={useModelTheme}
             withIcon={!!Icon}

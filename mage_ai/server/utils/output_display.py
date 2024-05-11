@@ -15,13 +15,13 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.code import is_pyspark_code
 
-REGEX_PATTERN = r'^[ ]{2,}[\w]+'
+REGEX_PATTERN = r"^[ ]{2,}[\w]+"
 
 
 def remove_comments(code_lines: List[str]) -> List[str]:
     return list(
         filter(
-            lambda x: not re.search(r'^\#', str(x).strip()),
+            lambda x: not re.search(r"^\#", str(x).strip()),
             code_lines,
         )
     )
@@ -39,27 +39,26 @@ def remove_empty_last_lines(code_lines: List[str]) -> List[str]:
 def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
     starting_index = len(code_lines) - 1
 
-    brackets_close = code_lines[starting_index].count('}')
-    brackets_open = code_lines[starting_index].count('{')
-    paranthesis_close = code_lines[starting_index].count(')')
-    paranthesis_open = code_lines[starting_index].count('(')
-    square_brackets_close = code_lines[starting_index].count(']')
-    square_brackets_open = code_lines[starting_index].count('[')
+    brackets_close = code_lines[starting_index].count("}")
+    brackets_open = code_lines[starting_index].count("{")
+    paranthesis_close = code_lines[starting_index].count(")")
+    paranthesis_open = code_lines[starting_index].count("(")
+    square_brackets_close = code_lines[starting_index].count("]")
+    square_brackets_open = code_lines[starting_index].count("[")
 
     while starting_index >= 0 and (
         brackets_close > brackets_open
         or paranthesis_close > paranthesis_open
         or square_brackets_close > square_brackets_open
     ):
-
         starting_index -= 1
 
-        brackets_close += code_lines[starting_index].count('}')
-        brackets_open += code_lines[starting_index].count('{')
-        paranthesis_close += code_lines[starting_index].count(')')
-        paranthesis_open += code_lines[starting_index].count('(')
-        square_brackets_close += code_lines[starting_index].count(']')
-        square_brackets_open += code_lines[starting_index].count('[')
+        brackets_close += code_lines[starting_index].count("}")
+        brackets_open += code_lines[starting_index].count("{")
+        paranthesis_close += code_lines[starting_index].count(")")
+        paranthesis_open += code_lines[starting_index].count("(")
+        square_brackets_close += code_lines[starting_index].count("]")
+        square_brackets_open += code_lines[starting_index].count("[")
 
     return starting_index
 
@@ -82,62 +81,72 @@ def get_content_inside_triple_quotes(parts):
 
         variable = None
         if re.search(r'[\w]+[ ]*=[ ]*[f]*"""', first_line):
-            variable = first_line.split('=')[0].strip()
+            variable = first_line.split("=")[0].strip()
 
-        return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
+        return "\n".join(parts[start_index + 1: -1]).replace('"', '\\"'), variable
 
     return None, None
 
 
 def add_internal_output_info(block, code: str) -> str:
-    if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
+    if code.startswith("%%sql") or code.startswith("%%bash") or len(code) == 0:
         return code
-    code_lines = remove_comments(code.split('\n'))
+    code_lines = remove_comments(code.split("\n"))
     code_lines = remove_empty_last_lines(code_lines)
 
     starting_index = find_index_of_last_expression_lines(code_lines)
     if starting_index < len(code_lines) - 1:
-        last_line = ' '.join(code_lines[starting_index:])
+        last_line = " ".join(code_lines[starting_index:])
         code_lines = code_lines[:starting_index] + [last_line]
     else:
         last_line = code_lines[len(code_lines) - 1]
 
-    matches = re.search(r'^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*', last_line)
+    matches = re.search(r"^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*", last_line)
     if matches:
         # Get the variable name in the last line if the last line is a variable assignment
         last_line = matches.group(1)
     last_line = last_line.strip()
 
     is_print_statement = False
-    if re.findall(r'print\(', last_line):
+    if re.findall(r"print\(", last_line):
         is_print_statement = True
 
     last_line_in_block = False
     if len(code_lines) >= 2:
-        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(REGEX_PATTERN, code_lines[-1]):
+        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(
+            REGEX_PATTERN, code_lines[-1]
+        ):
             last_line_in_block = True
-    elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
+    elif re.search(r"^import[ ]{1,}|^from[ ]{1,}", code_lines[-1].strip()):
         last_line_in_block = True
 
     if re.search('"""$', last_line):
         triple_quotes_content, variable = get_content_inside_triple_quotes(code_lines)
         if variable:
-            return f'{code}\nprint({variable})'
+            return f"{code}\nprint({variable})"
         elif triple_quotes_content:
             return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
-    if not last_line or last_line_in_block or re.match(r'^from|^import|^\%\%', last_line.strip()):
+    if (
+        not last_line
+        or last_line_in_block
+        or re.match(r"^from|^import|^\%\%", last_line.strip())
+    ):
         return code
     else:
         if matches:
             end_index = len(code_lines)
         else:
             end_index = -1
-        code_without_last_line = '\n'.join(code_lines[:end_index])
+        code_without_last_line = "\n".join(code_lines[:end_index])
 
         has_reduce_output = has_reduce_output_from_upstreams(block) if block else False
         is_dynamic = is_dynamic_block(block) if block else False
         is_dynamic_child = is_dynamic_block_child(block) if block else False
+
+        pipeline_uuid = block.pipeline.uuid if block.pipeline else None
+        repo_path = block.pipeline.repo_path if block.pipeline else None
+        block_uuid = block.uuid
 
         internal_output = f"""
 # Post processing code below (source: output_display.py)
@@ -152,14 +161,25 @@ def __custom_output():
     import polars as pl
     import simplejson
 
+    from mage_ai.ai.utils.xgboost import create_tree_visualization
     from mage_ai.data_preparation.models.block.dynamic.utils import transform_output_for_display
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         combine_transformed_output_for_multi_output,
         transform_output_for_display_dynamic_child,
         transform_output_for_display_reduce_output,
     )
+    from mage_ai.data_preparation.models.block.outputs import format_output_data
+    from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.data_preparation.models.utils import infer_variable_type
+    from mage_ai.data_preparation.models.variable import VariableType
+    from mage_ai.server.kernel_output_parser import DataType
     from mage_ai.shared.environments import is_debug
-    from mage_ai.shared.parsers import encode_complex, sample_output
+    from mage_ai.shared.parsers import (
+        convert_matrix_to_dataframe,
+        encode_complex,
+        polars_to_dict_split,
+        sample_output,
+    )
 
 
     if pd.__version__ < '1.5.0':
@@ -169,18 +189,106 @@ def __custom_output():
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
+    pipeline = Pipeline.get('{pipeline_uuid}', repo_path='{repo_path}')
+    block = pipeline.get_block('{block_uuid}')
+
     _internal_output_return = {last_line}
+    variable_type, basic_iterable = infer_variable_type(_internal_output_return)
+    is_dynamic = bool({is_dynamic})
+    is_dynamic_child = bool({is_dynamic_child})
+
+    if not is_dynamic and \
+            not is_dynamic_child and \
+            isinstance(_internal_output_return, list) and \
+            len(_internal_output_return) >= 2 and \
+            any([infer_variable_type(i)[0] for i in _internal_output_return]):
+
+        output_transformed = []
+        for idx, item in enumerate(_internal_output_return[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]):
+            data_output, _ = format_output_data(
+                block,
+                item,
+                'output_' + str(idx),
+                automatic_sampling=True,
+                sample_count={DATAFRAME_SAMPLE_COUNT_PREVIEW},
+            )
+            if isinstance(data_output, dict):
+                data_output['multi_output'] = True
+            output_transformed.append(data_output)
+
+        try:
+            _json_string = simplejson.dumps(
+                output_transformed,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+
+            return print(f'[__internal_output__]{{_json_string}}')
+        except Exception as err:
+            print(f'[ERROR] Failed to serialize output: {{err}}')
+            raise err
+
+    if variable_type is None and \
+            is_dynamic and \
+            not is_dynamic_child and \
+            isinstance(_internal_output_return, list) and \
+            len(_internal_output_return) >= 1:
+
+        variable_type, basic_iterable = infer_variable_type(_internal_output_return[0])
+
+        if VariableType.LIST_COMPLEX == variable_type:
+            list_of_lists = []
+
+            for list_of_items in _internal_output_return:
+                list_of_lists.append([encode_complex(item) for item in list_of_items])
+            _internal_output_return = list_of_lists
+
+    if VariableType.MATRIX_SPARSE == variable_type:
+        if basic_iterable:
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return[0])
+        else:
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return)
+    elif VariableType.SERIES_PANDAS == variable_type:
+        if basic_iterable:
+            _internal_output_return = pd.DataFrame(_internal_output_return).T
+        else:
+            _internal_output_return = _internal_output_return.to_frame()
+    elif VariableType.CUSTOM_OBJECT == variable_type:
+        return _internal_output_return
+    elif VariableType.MODEL_SKLEARN == variable_type:
+        return _internal_output_return
+    elif VariableType.MODEL_XGBOOST == variable_type:
+        text_data, success = create_tree_visualization(_internal_output_return)
+
+        if not success:
+            print(text_data)
+            return
+
+        data = dict(
+            text_data=text_data,
+            type=DataType.IMAGE_PNG if success else DataType.TEXT,
+            variable_uuid=variable_type,
+        )
+        _json_string = simplejson.dumps(
+            data,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
+    elif VariableType.LIST_COMPLEX == variable_type:
+        _internal_output_return = [encode_complex(item) for item in _internal_output_return]
 
     # Dynamic block child logic always takes precedence over dynamic block logic
-    if bool({is_dynamic_child}):
+    if is_dynamic_child:
         output_transformed = []
 
         if _internal_output_return and isinstance(_internal_output_return, list):
             for output in _internal_output_return:
                 output_tf = transform_output_for_display_dynamic_child(
                     output,
-                    is_dynamic=bool({is_dynamic}),
-                    sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                    is_dynamic=is_dynamic,
+                    is_dynamic_child=is_dynamic_child,
+                    single_item_only=True,
                 )
                 output_transformed.append(output_tf)
 
@@ -198,43 +306,67 @@ def __custom_output():
             print(type(_internal_output_return))
             print(type(output_transformed))
             raise err
-    elif bool({is_dynamic}):
+    elif is_dynamic:
         _json_string = simplejson.dumps(
             transform_output_for_display(
                 _internal_output_return,
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
                 sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),
             default=encode_complex,
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif bool({has_reduce_output}) and bool({is_dynamic_child}):
+    elif bool({has_reduce_output}) and is_dynamic_child:
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
                 _internal_output_return,
-                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
+                sample_count={DATAFRAME_SAMPLE_COUNT_PREVIEW},
+                sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),
             default=encode_complex,
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, pd.DataFrame) and (
+    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame, dict, list)) and (
         type(_internal_output_return).__module__ != 'geopandas.geodataframe'
     ):
-        _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
-        _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+        if isinstance(_internal_output_return, dict):
+            _internal_output_return = pd.DataFrame([_internal_output_return])
+        elif isinstance(_internal_output_return, list):
+            _internal_output_return = pd.DataFrame(_internal_output_return, columns=['column'])
+
+        _is_polars = isinstance(_internal_output_return, pl.DataFrame)
+
+        if _is_polars:
+            _sample = _internal_output_return[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+            _columns = _sample.columns[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+        else:
+            _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+            _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
+
         for col in _columns:
             try:
                 _sample[col] = _sample[col].fillna('')
             except Exception:
                 pass
-        _rows = simplejson.loads(_sample[_columns].to_json(
-            date_format='iso',
-            default_handler=str,
-            orient='split',
-        ))['data']
+
+        if _is_polars:
+            _rows = polars_to_dict_split(_sample[_columns])['data']
+            _index = [i for i in range(len(_sample))]
+        else:
+            _rows = simplejson.loads(_sample[_columns].to_json(
+                date_format='iso',
+                default_handler=str,
+                orient='split',
+            ))['data']
+            _index = _sample.index.tolist()
+
         _shape = _internal_output_return.shape
-        _index = _sample.index.tolist()
 
         _json_string = simplejson.dumps(
             dict(
@@ -250,8 +382,6 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, pl.DataFrame):
-        return print(_internal_output_return)
     elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
         _sample = _internal_output_return.limit({DATAFRAME_SAMPLE_COUNT_PREVIEW}).toPandas()
         _columns = _sample.columns.tolist()[:40]
@@ -313,7 +443,7 @@ def add_execution_code(
     variables: Dict = None,
     widget: bool = False,
 ) -> str:
-    escaped_code = code.replace("'''", "\"\"\"")
+    escaped_code = code.replace("'''", '"""')
 
     if execution_uuid:
         execution_uuid = f"'{execution_uuid}'"
@@ -321,30 +451,36 @@ def add_execution_code(
     if extension_uuid:
         extension_uuid = f"'{extension_uuid}'"
     if upstream_blocks:
-        upstream_blocks = ', '.join([f"'{u}'" for u in upstream_blocks])
-        upstream_blocks = f'[{upstream_blocks}]'
+        upstream_blocks = ", ".join([f"'{u}'" for u in upstream_blocks])
+        upstream_blocks = f"[{upstream_blocks}]"
 
     run_settings_json = json.dumps(run_settings or {})
 
-    magic_header = ''
-    spark_session_init = ''
+    magic_header = ""
+    spark_session_init = ""
     if kernel_name == KernelName.PYSPARK:
         if block_type == BlockType.CHART or (
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
         ):
-            magic_header = '%%local'
+            magic_header = "%%local"
             run_incomplete_upstream = False
             run_upstream = False
         else:
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
-                magic_header = '%%spark -o df --maxrows 10000'
-    elif pipeline_config['type'] == 'databricks':
-        spark_session_init = '''
+                magic_header = "%%spark -o df --maxrows 10000"
+    elif pipeline_config["type"] == "databricks":
+        spark_session_init = """
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
-'''
+"""
 
     return f"""{magic_header}
+import datetime
+import json
+import logging
+
+import pandas as pd
+
 from mage_ai.data_preparation.models.block.dynamic.utils import build_combinations_for_dynamic_child
 from mage_ai.data_preparation.models.block.dynamic.utils import has_reduce_output_from_upstreams
 from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
@@ -352,12 +488,10 @@ from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.orchestration.db import db_connection
-from mage_ai.shared.array import find
+from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
-import datetime
-import json
-import logging
-import pandas as pd
+from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.variable import VariableType
 
 
 db_connection.start_session()
@@ -460,12 +594,22 @@ def execute_custom_code():
                 update_tests=False,
             )
 
+    if block.configuration and block.configuration.get('disable_output_preview', False):
+        return 'Output preview is disabled for this block. To enable it, go to block settings.'
+
     output = block_output['output'] or []
 
     if {widget} or is_dynamic_block(block) or is_dynamic_child:
         return output
-    else:
-        return find(lambda val: val is not None, output)
+
+    if is_iterable(output) and \
+            len(output) >= 2 and \
+            any([infer_variable_type(i)[0] is not None for i in output]):
+
+        return output[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+
+    item = find(lambda val: val is not None, output)
+    return item
 
 df = execute_custom_code()
     """
@@ -477,10 +621,11 @@ def get_block_output_process_code(
     repo_path: str,
     block_type: BlockType = None,
     kernel_name: str = None,
-
 ):
-    if kernel_name != KernelName.PYSPARK or \
-            block_type not in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+    if kernel_name != KernelName.PYSPARK or block_type not in [
+        BlockType.DATA_LOADER,
+        BlockType.TRANSFORMER,
+    ]:
         return None
     return f"""%%local
 from mage_ai.data_preparation.models.constants import BlockStatus
@@ -510,13 +655,13 @@ def get_pipeline_execution_code(
     repo_config: Dict = None,
     update_status: bool = True,
 ) -> str:
-    spark_session_init = ''
-    if pipeline_config['type'] == 'databricks':
-        spark_session_init = '''
+    spark_session_init = ""
+    if pipeline_config["type"] == "databricks":
+        spark_session_init = """
 from pyspark.sql import SparkSession
 import os
 spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
-'''
+"""
 
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline

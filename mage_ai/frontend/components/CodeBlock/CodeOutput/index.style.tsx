@@ -46,12 +46,14 @@ export const ContainerStyle = styled.div<{
   `}
 `;
 
-export const OutputRowStyle = styled.div<{
+export type OutputRowProps = {
   contained?: boolean;
   first?: boolean;
   last?: boolean;
   normalPadding?: boolean;
-}>`
+};
+
+export const OutputRowStyle = styled.div<OutputRowProps>`
   ${props => props.first && `
     padding-top: ${UNIT * PADDING_UNITS}px;
   `}

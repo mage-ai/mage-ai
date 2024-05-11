@@ -7,6 +7,7 @@ export enum ExecutionStateEnum {
 }
 
 export enum DataTypeEnum {
+  GROUP = 'group',
   IMAGE_PNG = 'image/png',
   PROGRESS = 'progress',
   TABLE = 'table',
@@ -32,13 +33,16 @@ export default interface KernelOutputType {
   block_type?: BlockTypeEnum;
   error?: string;
   execution_state?: ExecutionStateEnum;
+  group_id?: string | number;
   metadata?: {
     [key: string]: string;
   };
   multi_output?: boolean;
   msg_id?: string;
   msg_type?: MsgType;
+  outputs?: KernelOutputType[];
   pipeline_uuid?: string;
   type: DataTypeEnum;
   uuid?: string;
+  variable_uuid?: string;
 }

@@ -242,46 +242,51 @@ export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
       [VARIABLE_NAME_Y]: 'y',
       [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.VERTICAL,
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `columns = df_1.columns
 x = df_1.columns[:7]
 y = [[v] for v in [len(df_1[col].unique()) for col in x]]
-`;
-    },
+`,
   },
   [ChartTypeEnum.HISTOGRAM]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 10,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `import pandas as pd
+
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
+
+
+if isinstance(df_1, list) and len(df_1) >= 1:
+    item = df_1[0]
+    if isinstance(item, pd.Series):
+        item = item.to_frame()
+    elif not isinstance(item, pd.DataFrame):
+        item = convert_matrix_to_dataframe(item)
+    df_1 = item
+
+columns = df_1.columns
 col = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))[0]
 x = df_1[col]
-`;
-    },
+`,
   },
   [ChartTypeEnum.LINE_CHART]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_X]: 'x',
       [VARIABLE_NAME_Y]: 'y',
     }),
-    content: (block: BlockType) => {
-      return `columns = df_1.columns
+    content: (block: BlockType) => `columns = df_1.columns
 cols = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))
 x = df_1[cols[0]]
 y = [df_1[cols[1]]]
-`;
-    },
+`,
   },
   [ChartTypeEnum.PIE_CHART]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 7,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: (block: BlockType) => {
-      return `x = df_1[df_1.columns[0]]`;
-    },
+    content: (block: BlockType) => 'x = df_1[df_1.columns[0]]',
   },
   [ChartTypeEnum.TABLE]: {
     configuration: (block: BlockType) => ({
@@ -289,10 +294,8 @@ y = [df_1[cols[1]]]
       [VARIABLE_NAME_X]: 'x',
       [VARIABLE_NAME_Y]: 'y',
     }),
-    content: (block: BlockType) => {
-      return `x = df_1.columns
-y = df_1.to_numpy()`;
-    },
+    content: (block: BlockType) => `x = df_1.columns
+y = df_1.to_numpy()`,
   },
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: {
     configuration: (block: BlockType) => ({
@@ -378,11 +381,15 @@ number_of_unique_values = [df_1[col].nunique() for col in columns]
         [VARIABLE_NAME_Y]: 'rows',
         chart_type: ChartTypeEnum.TABLE,
       },
-      content: `columns = ['mode value', 'frequency', '% of values']
+      content: `from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
+
+df_1 = convert_matrix_to_dataframe(df_1)
+columns = ['mode value', 'frequency', '% of values']
 column_index = []
 rows = []
-for col in df_1.columns:
+for col in df_1.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]:
     value_counts = df_1[col].value_counts()
     if len(value_counts.index) == 0:
         continue
@@ -440,10 +447,14 @@ for col_type, count in sorted(col_counts.items()):
         [VARIABLE_NAME_Y]: 'rows',
         chart_type: ChartTypeEnum.TABLE,
       },
-      content: `from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
-import statistics
+      content: `import statistics
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+from mage_ai.data_preparation.models.constants import DATAFRAME_ANALYSIS_MAX_COLUMNS
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
 
+df_1 = convert_matrix_to_dataframe(df_1)
+df_1 = df_1.iloc[:, :DATAFRAME_ANALYSIS_MAX_COLUMNS]
 columns_and_types = infer_column_types(df_1).items()
 columns = [t[0] for t in columns_and_types]
 stats = ['Type', 'Missing values', 'Unique values', 'Min', 'Max', 'Mean', 'Median', 'Mode']
@@ -451,6 +462,7 @@ rows = [[] for _ in stats]
 
 for col, col_type in columns_and_types:
     series = df_1[col]
+
     min_value = None
     max_value = None
     mean = None
@@ -458,7 +470,18 @@ for col, col_type in columns_and_types:
 
     not_null = series[series.notnull()]
 
+    if len(not_null) == 0:
+        continue
+
     if col_type.value in ['number', 'number_with_decimals']:
+        if str(series.dtype) == 'object':
+            if col_type.value == 'number_with_decimals':
+                series = series.astype('float64')
+                not_null = not_null.astype('float64')
+            else:
+                series = series.astype('int64')
+                not_null = not_null.astype('int64')
+
         count = len(not_null.index)
         if count >= 1:
             mean = round(not_null.sum() / count, 2)

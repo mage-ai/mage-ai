@@ -10,6 +10,7 @@ import NextLink from 'next/link';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
 import {
+  TableHeaderProps,
   useBlockLayout,
   useTable,
 } from 'react-table';
@@ -27,6 +28,7 @@ import {
 import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
+  SMALL,
 } from '@oracle/styles/fonts/sizes';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { TAB_REPORTS } from '@components/datasets/overview/constants';
@@ -55,6 +57,15 @@ type SharedProps = {
     removedRows?: number[];
   };
   renderColumnHeader?: (column: any, idx: number, opts: {
+    width: number;
+  }) => any;
+  renderColumnHeaderCell?: (column: any, idx: number, opts: {
+    index: boolean;
+    key: string;
+    props: TableHeaderProps;
+    style: {
+      [key: string]: number | string;
+    };
     width: number;
   }) => any;
   width?: number;
@@ -129,7 +140,8 @@ const Styles = styled.div<{
     .tr {
       .td.td-index-column {
         ${props => `
-          color: ${(props.theme.content || light.content).default};
+          ${SMALL}
+          color: ${(props.theme.content || dark.content).disabled};
         `}
       }
     }
@@ -151,9 +163,9 @@ const Styles = styled.div<{
       margin: 0;
 
       ${props => `
-        background-color: ${(props.theme.background || light.background).table};
-        border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
-        border-right: 1px solid ${(props.theme.borders || light.borders).medium};
+        background-color: ${(props.theme.background || dark.background).table};
+        border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+        border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
       `}
     }
 
@@ -171,10 +183,27 @@ const Styles = styled.div<{
   }
 `;
 
-function estimateCellHeight({ original }) {
+function estimateCellHeight({
+  original,
+  values,
+  width,
+}: {
+  original: string[];
+  values: {
+    [key: string]: string | number;
+  };
+  width: number;
+}) {
+  const columns = original.length;
   const maxLength = Math.max(...original.map(val => val?.length || 0));
   const totalWidth = maxLength * WIDTH_OF_CHARACTER;
-  const numberOfLines = Math.ceil(totalWidth / (DEFAULT_COLUMN_WIDTH - (UNIT * 2)));
+
+  const columnWidth = columns * totalWidth;
+  const coverage = columnWidth / width;
+
+  const numberOfLines = coverage > 1
+    ? Math.ceil(totalWidth / (DEFAULT_COLUMN_WIDTH - (UNIT * 2)))
+    : 1;
 
   return (Math.max(numberOfLines, 1) * REGULAR_LINE_HEIGHT) + (UNIT * 2);
 }
@@ -191,6 +220,7 @@ function Table({
   numberOfIndexes,
   previewIndexes,
   renderColumnHeader,
+  renderColumnHeaderCell,
   width,
 }: TableProps) {
   const themeContext = useContext(ThemeContext);
@@ -412,7 +442,10 @@ function Table({
   const listHeight = useMemo(() => {
     let val;
     if (maxHeight) {
-      val = sum(rows.map(estimateCellHeight));
+      val = sum(rows.map(row => estimateCellHeight({
+        ...row,
+        width,
+      })));
       if (columnHeaderHeight) {
         val += columnHeaderHeight;
       } else {
@@ -435,6 +468,7 @@ function Table({
     height,
     maxHeight,
     rows,
+    width,
   ]);
 
   const variableListMemo = useMemo(() => (
@@ -442,7 +476,10 @@ function Table({
       estimatedItemSize={BASE_ROW_HEIGHT}
       height={listHeight}
       itemCount={rows?.length}
-      itemSize={(idx: number) => estimateCellHeight(rows[idx])}
+      itemSize={(idx: number) => estimateCellHeight({
+        ...rows[idx],
+        width,
+      })}
       outerRef={refListOuter}
       style={{
         maxHeight: maxHeight,
@@ -457,6 +494,7 @@ function Table({
     maxHeight,
     renderRow,
     rows,
+    width,
   ]);
 
   return (
@@ -496,15 +534,26 @@ function Table({
                   columnStyle.textAlign = 'center';
                   columnStyle.width = maxWidthOfIndexColumns[idx];
                   columnStyle.minWidth = maxWidthOfIndexColumns[idx];
+                } else {
+                  columnStyle.color = (themeContext || dark).content.default;
+                  columnStyle.padding = UNIT * 1;
+                  columnStyle.minWidth = defaultColumn.width;
+                }
+
+                if (renderColumnHeaderCell) {
+                  return renderColumnHeaderCell(column, idx - numberOfIndexes, {
+                    key: column.id,
+                    index: indexColumn,
+                    props: columnProps,
+                    style: columnStyle,
+                    width: defaultColumn.width,
+                  });
                 } else if (renderColumnHeader) {
                   el = renderColumnHeader(column, idx - numberOfIndexes, {
                     width: defaultColumn.width,
                   });
                 } else {
                   el = column.render('Header');
-                  columnStyle.color = (themeContext || dark).content.default;
-                  columnStyle.padding = UNIT * 1;
-                  columnStyle.minWidth = defaultColumn.width;
                 }
 
                 return (
@@ -544,6 +593,7 @@ function DataTable({
   noBorderTop,
   previewIndexes,
   renderColumnHeader,
+  renderColumnHeaderCell,
   rows: rowsProp,
   width,
 }: DataTableProps) {
@@ -586,6 +636,7 @@ function DataTable({
       numberOfIndexes={numberOfIndexes}
       previewIndexes={previewIndexes}
       renderColumnHeader={renderColumnHeader}
+      renderColumnHeaderCell={renderColumnHeaderCell}
       width={width}
     />
   ), [
@@ -600,6 +651,7 @@ function DataTable({
     numberOfIndexes,
     previewIndexes,
     renderColumnHeader,
+    renderColumnHeaderCell,
     width,
   ]);
 

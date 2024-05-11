@@ -39,9 +39,13 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                     )
 
                 if partitions >= 0:
-                    pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.desc())
+                    pipeline_runs = pipeline_runs.order_by(
+                        PipelineRun.execution_date.desc()
+                    )
                 else:
-                    pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.asc())
+                    pipeline_runs = pipeline_runs.order_by(
+                        PipelineRun.execution_date.asc()
+                    )
 
                 pipeline_runs = pipeline_runs.limit(abs(partitions))
 
@@ -54,18 +58,20 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                 )
 
                 for v in output_variable_objects:
-                    arr.append(self.pipeline.variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        block.uuid,
-                        v.uuid,
-                    ))
-        else:
+                    arr.append(
+                        self.pipeline.variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            block.uuid,
+                            v.uuid,
+                        )
+                    )
+        elif block:
             block_output = block.execute_with_callback(
                 global_vars=merge_dict(
                     get_global_variables(self.pipeline_uuid),
                     variables or {},
                 ),
             )
-            arr += block_output['output'] or []
+            arr += block_output["output"] or []
 
         return arr
