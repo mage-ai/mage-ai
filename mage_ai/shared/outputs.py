@@ -50,11 +50,7 @@ def save_custom_object(
         is_object = True
         os.makedirs(variable_path, exist_ok=True)
 
-        if is_iterable(data):
-            for idx, item in enumerate(data):
-                full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
-                joblib.dump(data, os.path.join(variable_path, f'{JOBLIB_OBJECT_FILE}.{idx}'))
-        else:
+        if not is_iterable(data):
             full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
             joblib.dump(data, full_path)
     elif VariableType.DICTIONARY_COMPLEX == variable_type:
