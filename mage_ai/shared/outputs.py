@@ -5,6 +5,8 @@ import joblib
 
 from mage_ai.ai.utils.xgboost import load_model as load_model_xgboost
 from mage_ai.ai.utils.xgboost import save_model as save_model_xgboost
+
+# MATRIX_NPZ_FILE, MATRIX_SAMPLE_NPZ_FILE
 from mage_ai.data_preparation.models.variables.constants import (
     CONFIG_JSON_FILE,
     JOBLIB_FILE,
@@ -15,6 +17,8 @@ from mage_ai.data_preparation.models.variables.constants import (
 )
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.parsers import object_to_dict
+
+# from scipy.sparse import load_npz, save_npz
 
 
 def save_custom_object(
@@ -40,6 +44,8 @@ def save_custom_object(
             config_filename=CONFIG_JSON_FILE,
             image_filename=MEDIA_IMAGE_VISUALIZATION_FILE,
         )
+    # elif VariableType.MATRIX_SPARSE == variable_type:
+    #     save_npz(os.path.join(variable_path, MATRIX_NPZ_FILE), data)
     elif VariableType.CUSTOM_OBJECT == variable_type:
         is_object = True
         os.makedirs(variable_path, exist_ok=True)
@@ -73,6 +79,8 @@ def load_custom_object(
             config_filename=CONFIG_JSON_FILE,
             raise_exception=False,
         )
+    # elif VariableType.MATRIX_SPARSE == variable_type:
+    #     return load_npz(os.path.join(variable_path, MATRIX_NPZ_FILE))
     elif VariableType.CUSTOM_OBJECT == variable_type:
         return joblib.load(os.path.join(variable_path, JOBLIB_OBJECT_FILE))
     elif VariableType.DICTIONARY_COMPLEX == variable_type:
