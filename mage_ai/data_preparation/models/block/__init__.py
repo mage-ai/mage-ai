@@ -42,6 +42,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     uuid_for_output_variables,
 )
 from mage_ai.data_preparation.models.block.dynamic.variables import (
+    LazyVariableSet,
     delete_variable_objects_for_dynamic_child,
     fetch_input_variables_for_dynamic_upstream_blocks,
     get_outputs_for_dynamic_block,
@@ -90,6 +91,7 @@ from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
@@ -2235,7 +2237,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if is_dynamic_child or is_dynamic:
             sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-            pairs = []
+            output_sets = []
+            variable_sets = []
 
             if is_dynamic_child:
                 lazy_variable_controller = get_outputs_for_dynamic_child(
@@ -2244,28 +2247,61 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     sample=sample,
                     sample_count=sample_count_use,
                 )
-                pairs = await lazy_variable_controller.render_async(
+                variable_sets: List[
+                    Union[
+                        Tuple[Optional[Any], Dict],
+                        List[LazyVariableSet],
+                    ],
+                ] = await lazy_variable_controller.render_async(
                     dynamic_block_index=dynamic_block_index,
+                    lazy_load=True,
                 )
+
             elif is_dynamic:
-                tup = await get_outputs_for_dynamic_block_async(
+                output_pair: List[
+                    Optional[Union[Dict, int, str, pd.DataFrame, Any]],
+                ] = await get_outputs_for_dynamic_block_async(
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
                     sample_count=sample_count_use,
                 )
-                pairs.append(tup)
+                output_sets.append(output_pair)
 
-            if len(pairs) > 10:
-                # Limit the number of dynamic block children we display output for in the UI
-                pairs = pairs[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-            for pair in pairs:
+            # Limit the number of dynamic block children we display output for in the UI
+            output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+            variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+
+            for idx, lazy_variable_set in enumerate(variable_sets):
+                child_data, metadata = await lazy_variable_set.read_data_async()
+                formatted_outputs = []
+
+                if child_data and isinstance(child_data, list) and len(child_data) >= 1:
+                    for output_idx, output in enumerate(child_data):
+                        output_formatted, _ = self.__format_output_data(
+                            output,
+                            f'output {output_idx}',
+                            block_uuid=self.uuid,
+                            csv_lines_only=csv_lines_only,
+                            execution_partition=execution_partition,
+                        )
+                        formatted_outputs.append(output_formatted)
+
+                    data_products.append(dict(
+                        outputs=formatted_outputs,
+                        type=DataType.GROUP,
+                        variable_uuid=f'Dynamic child {idx}',
+                    ))
+                else:
+                    output_sets.append((child_data, metadata))
+
+            for output_pair in output_sets:
                 child_data = None
                 metadata = None
-                if len(pair) >= 1:
-                    child_data = pair[0]
-                    if len(pair) >= 2:
-                        metadata = pair[1]
+                if len(output_pair) >= 1:
+                    child_data = output_pair[0]
+                    if len(output_pair) >= 2:
+                        metadata = output_pair[1]
 
                 for output, variable_uuid in [
                     (child_data, 'Dynamic data'),

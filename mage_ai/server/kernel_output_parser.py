@@ -7,6 +7,7 @@ class DataType(str, Enum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
     PROGRESS = 'progress'
+    GROUP = 'group'
     TABLE = 'table'
     TEXT = 'text'
     TEXT_HTML = 'text/html'

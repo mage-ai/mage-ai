@@ -82,7 +82,12 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     type,
     uuid,
   }: BlockType) => {
-    if (outputs?.length >= 1) {
+    const groupedOutputs: boolean =
+      outputs?.length >= 1 && outputs?.some(o => DataTypeEnum.GROUP === o?.type);
+
+    if (groupedOutputs) {
+      messagesInit[uuid] = outputs;
+    } else if (outputs?.length >= 1) {
       let outputsFinal = [];
       let multiOutput = false;
       let outputType;
@@ -113,8 +118,8 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
               shape: [outputs?.length || 0, 1],
               rows: outputsFinal,
             },
-            type: outputType,
             multi_output: true,
+            type: outputType,
           },
         ];
         // This is to display reduce output data

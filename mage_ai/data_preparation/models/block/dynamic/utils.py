@@ -437,7 +437,7 @@ def transform_output_for_display(
 
     return dict(
         data=dict(
-            columns=['Dynamic data', 'Metadata'],
+            columns=['dynamic children data', 'metadata'],
             rows=[child_data, metadata],
             shape=[2, 2],
         ),
@@ -476,7 +476,8 @@ def transform_output_for_display_reduce_output(
 def combine_transformed_output_for_multi_output(
     transform_outputs: List[Dict],
     columns: Optional[List[str]] = None,
-):
+    is_grouping: bool = False,
+) -> Dict[str, Union[DataType, Dict, bool, str]]:
     columns_use = columns or []
     for i in range(len(transform_outputs)):
         if not columns:
@@ -486,9 +487,12 @@ def combine_transformed_output_for_multi_output(
         data=dict(
             columns=columns_use,
             rows=transform_outputs,
-            shape=[len(transform_outputs), len(columns_use)],
+            shape=[
+                len(transform_outputs),
+                len(columns_use),
+            ],
         ),
-        type=DataType.TABLE,
+        type=DataType.GROUP if is_grouping else DataType.TABLE,
         multi_output=True,
     )
 
@@ -518,7 +522,9 @@ def transform_output_for_display_dynamic_child(
         if df is None:
             df = df_inner
         else:
-            df = pd.concat([df, df_inner], axis=1)
+            df.reset_index(drop=True, inplace=True)
+            df_inner.reset_index(drop=True, inplace=True)
+            df = pd.concat([df, df_inner], axis=1, ignore_index=True)
 
     shape = None
     if hasattr(df, 'shape'):

@@ -1,7 +1,8 @@
 import { createRef, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import { MultiOutputStyle } from './index.style';
 import { addClassNames, removeClassNames } from '@utils/elements';
 
@@ -11,11 +12,15 @@ type OutputType = {
 };
 
 type MultiOutputProps = {
+  color?: string;
+  header?: JSX.Element;
   outputs: OutputType[];
   onTabChange?: (tab: TabType) => void;
 };
 
 function MultiOutput({
+  color,
+  header,
   outputs,
   onTabChange,
 }: MultiOutputProps) {
@@ -52,46 +57,51 @@ function MultiOutput({
 
   return (
     <MultiOutputStyle>
-      <ButtonTabs
-        allowScroll
-        onClickTab={(tab) => {
-          setSelectedTab(tab);
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        <Flex flex={1}>
+          <ButtonTabs
+            allowScroll
+            onClickTab={(tab) => {
+              setSelectedTab(tab);
 
-          Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
-            // @ts-ignore
-            if (ref?.current) {
-              if (tab?.uuid === uuid) {
+              Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
                 // @ts-ignore
-                ref.current.className = removeClassNames(
-                  // @ts-ignore
-                  ref.current.className || '',
-                  [
-                    'inactive',
-                  ],
-                );
-              } else {
-                // @ts-ignore
-                ref.current.className = addClassNames(
-                  // @ts-ignore
-                  ref.current.className || '',
-                  [
-                    'inactive',
-                  ],
-                );
+                if (ref?.current) {
+                  if (tab?.uuid === uuid) {
+                    // @ts-ignore
+                    ref.current.className = removeClassNames(
+                      // @ts-ignore
+                      ref.current.className || '',
+                      [
+                        'inactive',
+                      ],
+                    );
+                  } else {
+                    // @ts-ignore
+                    ref.current.className = addClassNames(
+                      // @ts-ignore
+                      ref.current.className || '',
+                      [
+                        'inactive',
+                      ],
+                    );
+                  }
+                }
+              });
+
+              if (onTabChange) {
+                onTabChange?.(tab);
               }
-            }
-          });
+            }}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={tabs}
+            underlineColor={color}
+            underlineStyle
+          />
+        </Flex>
 
-          if (onTabChange) {
-            onTabChange?.(tab);
-          }
-        }}
-        selectedTabUUID={selectedTab?.uuid}
-        tabs={tabs}
-        underlineStyle
-      />
-
-      <Divider medium />
+        {header}
+      </FlexContainer>
 
       {outputsMemo}
     </MultiOutputStyle>

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
 import InnerHTML from 'dangerously-set-html-content';
+import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -50,7 +51,7 @@ import { OutputDisplayTypeEnum } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ResponseTypeEnum } from '@api/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { SIDE_BY_SIDE_VERTICAL_PADDING } from '../index.style';
+import { SIDE_BY_SIDE_VERTICAL_PADDING, getColorsForBlockType } from '../index.style';
 import {
   TAB_DBT_LINEAGE_UUID,
   TAB_DBT_LOGS_UUID,
@@ -165,6 +166,7 @@ function CodeOutput(
   }: CodeOutputProps,
   ref,
 ) {
+  const themeContext = useContext(ThemeContext);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -199,6 +201,18 @@ function CodeOutput(
     }),
     [blockColor, blockType, dynamicBlock, dynamicChildBlock, hasError, selected],
   );
+  const blockTypeColor = useMemo(() =>
+    getColorsForBlockType(
+      blockType,
+      {
+        blockColor,
+        theme: themeContext,
+      }),
+    [
+      blockColor,
+      blockType,
+      themeContext,
+    ]);
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const executedAndIdle =
     StatusTypeEnum.EXECUTED === status ||
@@ -377,38 +391,45 @@ function CodeOutput(
     ) => {
       const { columns, index, rows, shape } = output;
       const multiOutputInit: boolean = !!dataInit?.multi_output;
-
       if (dataInit && isObject(dataInit) && multiOutputInit) {
         return (
           <MultiOutput
+            color={blockTypeColor?.accent}
             onTabChange={setSelectedOutputTab}
-            outputs={rows?.map((row, idx: number) => ({
+            outputs={rows?.map((row, idxWithinGroup: number) => ({
               render: () => {
-                if (!row) {
-                  return <div />;
-                }
+                const { data, text_data: textData, type: typeInner } = row || {};
 
-                const { data, text_data: textData, type } = row;
-                if (DataTypeEnum.TABLE === type) {
-                  return createDataTableElement(data, {
+                let el;
+                if (!row) {
+                  el = <div />;
+                } else if (DataTypeEnum.TABLE === typeInner) {
+                  el = createDataTableElement(data, {
                     borderTop,
                     multiOutputInit,
                     selected: selectedProp,
                   }, {
-                    uuid: String(idx),
+                    uuid: String(idxWithinGroup),
                   });
-                } else if (DataTypeEnum.TEXT === type) {
-                  return buildDisplayForTextOutput(textData || data, {
+                } else if (DataTypeEnum.TEXT === typeInner) {
+                  el = buildDisplayForTextOutput(textData || data, {
                     contained: true,
                     normalPadding: true,
                     first: true,
                     last: true,
                   });
+                } else {
+                  el = data;
                 }
 
-                return data;
+                return (
+                  <>
+                    {((DataTypeEnum.TABLE !== typeInner) || !borderTop) && <Divider medium />}
+                    {el}
+                  </>
+                );
               },
-              uuid: columns?.[idx],
+              uuid: columns?.[idxWithinGroup],
             }))}
           />
         );
@@ -504,6 +525,8 @@ function CodeOutput(
     const testMessages = [];
 
     combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
+      const isGroupedOutput = DataTypeEnum?.GROUP === output?.type;
+
       let dataInit;
       let dataType;
       const outputIsArray = Array.isArray(output);
@@ -524,7 +547,7 @@ function CodeOutput(
         dataType = output?.type;
       }
 
-      if (!outputIsArray && (!dataInit || dataInit?.length === 0)) {
+      if (!outputIsArray && (!dataInit || dataInit?.length === 0) && !isGroupedOutput) {
         return;
       }
 
@@ -562,7 +585,12 @@ function CodeOutput(
 
       const arr = [];
 
-      function buildDisplayElement(data, dataTypeInner, idxInner, outputRowProps?: OutputRowProps) {
+      function buildDisplayElement(
+        data,
+        dataTypeInner,
+        idxInner: number,
+        outputRowProps?: OutputRowProps,
+      ) {
         let displayElement;
         const outputRowSharedProps: OutputRowProps = outputRowProps || {
           contained,
@@ -623,21 +651,29 @@ function CodeOutput(
 
               displayElement = (
                 <MultiOutput
+                  color={blockTypeColor?.accent}
                   onTabChange={setSelectedOutputTab}
-                  outputs={data?.map((item, idx: number) => ({
+                  outputs={data?.map((item, idxWithinGroup: number) => ({
                     render: () => {
+                      const { type: typeInner } = item;
                       const itemPrepared = prepareOutput(ignoreKeys(item, ['multi_output']));
 
-                      return buildDisplayElement(
-                        itemPrepared?.data,
-                        itemPrepared?.type,
-                        idx,
-                        {
-                          contained: true,
-                          first: true,
-                          last: true,
-                          normalPadding: true,
-                        },
+                      return (
+                        <>
+                          {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
+
+                          {buildDisplayElement(
+                            itemPrepared?.data,
+                            itemPrepared?.type,
+                            idxWithinGroup,
+                            {
+                              contained: true,
+                              first: true,
+                              last: true,
+                              normalPadding: true,
+                            },
+                          )}
+                        </>
                       );
                     },
                     uuid: `Output ${idx}`,
@@ -751,31 +787,43 @@ function CodeOutput(
 
               displayElement = (
                 <MultiOutput
+                  color={blockTypeColor?.accent}
                   onTabChange={setSelectedOutputTab}
-                  outputs={rows?.map(({ data: value, type: typeInner }, idx: number) => ({
+                  outputs={rows?.map(({ data: value, type: typeInner }, idxWithinGroup: number) => ({
                     render: () => {
+                      let el;
                       if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
-                        return buildDisplayForTextOutput(value, {
+                        el = buildDisplayForTextOutput(value, {
                           contained: true,
                           first: true,
                           last: true,
                           normalPadding: true,
                         });
                       } else if (isObject(value) && DataTypeEnum.TABLE === typeInner) {
-                        return createDataTableElement(value, {
+                        el = createDataTableElement(value, {
                           borderTop,
                           selected,
                         }, {
-                          uuid: String(idx),
+                          uuid: String(idxWithinGroup),
                         });
                       } else if (DataTypeEnum.TEXT_HTML === typeInner) {
-                        return buildDisplayForHTMLOutput(value, {
+                        el = buildDisplayForHTMLOutput(value, {
                           contained: true,
+                          first: true,
+                          last: true,
                           normalPadding: true,
                         });
                       }
+
+                      return (
+                        <>
+                          {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
+
+                          {el}
+                        </>
+                      );
                     },
-                    uuid: columns?.[idx],
+                    uuid: columns?.[idxWithinGroup],
                   }))}
                 />
               );
@@ -808,6 +856,51 @@ function CodeOutput(
         return displayElement;
       }
 
+      if (isGroupedOutput) {
+        const displayElement = (
+          <Spacing mt={idx >= 1 ? PADDING_UNITS : 0}>
+            <MultiOutput
+              color={blockTypeColor?.accent}
+              header={
+                <Spacing px={PADDING_UNITS}>
+                  <Text color={blockTypeColor?.accent}>
+                    {output?.variable_uuid}
+                  </Text>
+                </Spacing>
+              }
+              onTabChange={setSelectedOutputTab}
+              outputs={output?.outputs?.map((item, idxWithinGroup: number) => ({
+                render: () => {
+                  const { type: typeInner } = item;
+                  const itemPrepared = prepareOutput(ignoreKeys(item, ['multi_output']));
+
+                  return (
+                    <>
+                      {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
+
+                      {buildDisplayElement(
+                        itemPrepared?.data,
+                        itemPrepared?.type,
+                        idxWithinGroup,
+                        {
+                          contained: true,
+                          first: true,
+                          last: true,
+                          normalPadding: true,
+                        },
+                      )}
+                    </>
+                  );
+                },
+                uuid: item?.variable_uuid,
+              }))}
+            />
+          </Spacing>
+        );
+
+        arr.push(<div key={`code-output-${idx}`}>{displayElement}</div>);
+      }
+
       dataArray.forEach((data: string, idxInner: number) => {
         const displayElement = buildDisplayElement(data, dataType, idxInner);
 
@@ -835,6 +928,7 @@ function CodeOutput(
       testContent: testMessages,
     };
   }, [
+    blockTypeColor,
     combinedMessages,
     contained,
     isDBT,

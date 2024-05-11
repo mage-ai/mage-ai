@@ -1316,8 +1316,11 @@ class Pipeline:
                         )
 
                         block_update_payload = extract(block_data, ['name'])
-                        configuration = copy.deepcopy(block_data).get('configuration', {})
+                        configuration = copy.deepcopy(block_data).get('configuration', {}) or {}
                         configuration['file_path'] = new_file_path_relative
+
+                        if not configuration.get('file_source'):
+                            configuration['file_source'] = {}
                         configuration['file_source']['path'] = new_file_path_relative
                         block_update_payload['configuration'] = configuration
 
