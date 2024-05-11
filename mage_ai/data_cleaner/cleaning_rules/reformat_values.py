@@ -1,11 +1,10 @@
+import re
+
+import pandas as pd
+
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_cleaner.transformer_actions.constants import (
-    ActionType,
-    Axis,
-)
-import pandas as pd
-import re
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 
 
 class ReformatValuesSubRule:
@@ -257,8 +256,16 @@ class ReformatDateSubRule(ReformatValuesSubRule):
 
     def strip_column_for_date_parsing(self, column):
         clean_col = self.clean_column(column)
-        clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
-        clean_col = clean_col.str.replace(r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0])
+        clean_col = clean_col.str.replace(
+            r'[\,\s\t]+',
+            ' ',
+            regex=True,
+        )
+        clean_col = clean_col.str.replace(
+            r'\s*([\/\\\-\.]+)\s*',
+            lambda group: group.group(1)[0],
+            regex=True,
+        )
         return clean_col.str.lower()
 
 
@@ -269,7 +276,9 @@ class ReformatValues(BaseRule):
         ReformatDateSubRule,
     ]
 
-    def __init__(self, df, column_types, statistics, custom_config={}):
+    def __init__(self, df, column_types, statistics, custom_config=None):
+        if custom_config is None:
+            custom_config = {}
         super().__init__(df, column_types, statistics, custom_config=custom_config)
         # TODO Clean dataframe prior to giving to rule
         self.clean_column_cache = {}
