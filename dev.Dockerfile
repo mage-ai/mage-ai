@@ -12,8 +12,8 @@ RUN \
   curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
   NODE_MAJOR=20 && \
   echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
-  apt-get -y update && \
-  ACCEPT_EULA=Y apt-get -y install --no-install-recommends \
+  apt-get update -y && \
+  ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
   # Node
   nodejs \
   # NFS dependencies
@@ -21,18 +21,16 @@ RUN \
   # odbc dependencies
   msodbcsql18 \
   unixodbc-dev && \
-  # R
-  # r-base=4.2.2.20221110-2 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-## R Packages
-# RUN \
-#   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
-#   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
-
 ## Chart packages
-RUN apt-get update && apt-get install graphviz
+# Before fixing, ensure you have merged the chart packages installation step with another apt-get install step to adhere to best practices.
+# If keeping as a separate RUN statement, ensure you follow the same pattern regarding list cleanup and `-y` switch as done for system packages.
+RUN apt-get update -y && \
+  apt-get install -y --no-install-recommends graphviz && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 ## Node Packages
 RUN npm install --global yarn && yarn global add next
