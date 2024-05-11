@@ -194,6 +194,7 @@ def __custom_output():
 
 
     if not is_dynamic and \
+            not is_dynamic_child and \
             isinstance(_internal_output_return, list) and \
             len(_internal_output_return) >= 2 and \
             any([infer_variable_type(i)[0] for i in _internal_output_return]):
@@ -205,6 +206,7 @@ def __custom_output():
                 item,
                 'output_' + str(idx),
                 automatic_sampling=True,
+                sample_count={DATAFRAME_SAMPLE_COUNT_PREVIEW},
             )
             if isinstance(data_output, dict):
                 data_output['multi_output'] = True
@@ -281,7 +283,6 @@ def __custom_output():
                 output_tf = transform_output_for_display_dynamic_child(
                     output,
                     is_dynamic=is_dynamic,
-                    sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
                     single_item_only=True,
                 )
                 output_transformed.append(output_tf)
@@ -305,6 +306,7 @@ def __custom_output():
             transform_output_for_display(
                 _internal_output_return,
                 sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),
             default=encode_complex,
             ignore_nan=True,
@@ -314,7 +316,8 @@ def __custom_output():
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
                 _internal_output_return,
-                sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
+                sample_count={DATAFRAME_SAMPLE_COUNT_PREVIEW},
+                sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),
             default=encode_complex,
             ignore_nan=True,

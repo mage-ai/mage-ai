@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
+from scipy.sparse import csr_matrix
 
 from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_block,
@@ -256,29 +257,30 @@ def uuid_for_output_variables(
     return (block_uuid, changed)
 
 
-def transform_dataframe_for_display(dataframe: pd.DataFrame) -> Dict:
+def transform_dataframe_for_display(
+    dataframe: pd.DataFrame,
+    sample_columns: int = DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    shape: Optional[Tuple[int, int]] = None,
+) -> Dict:
     data = None
 
     if isinstance(dataframe, pd.DataFrame):
-        columns_to_display = dataframe.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-        row_count, column_count = dataframe.shape
+        columns_to_display = dataframe.columns.tolist()[:sample_columns]
+        row_count, column_count = shape or dataframe.shape
+
+        df = dataframe.iloc[:sample_count][columns_to_display]
 
         data = dict(
             columns=columns_to_display,
-            rows=json.loads(
-                dataframe[columns_to_display][:DATAFRAME_SAMPLE_COUNT_PREVIEW].to_json(
-                    orient='split',
-                )
-            )['data'],
-            index=list(dataframe.index),
+            rows=json.loads(df.to_json(orient='split'))['data'],
             shape=[row_count, column_count],
         )
     else:
         data = dict(
-            columns=['col0'],
-            rows=[[dataframe[:DATAFRAME_SAMPLE_COUNT_PREVIEW]]],
-            index=[0],
-            shape=[1, 1],
+            columns=['-'],
+            rows=[[dataframe[:sample_count]]],
+            shape=list(shape) if shape else [1, 1],
         )
 
     return dict(
@@ -310,25 +312,39 @@ def coerce_into_dataframe(
             child_data = pd.DataFrame(child_data)
         else:
             child_data = pd.DataFrame(
-                [dict(col=value) for value in child_data],
+                [{
+                    '-': value,
+                } for value in child_data],
             )
     elif isinstance(child_data, pd.DataFrame):
         return child_data
     else:
-        child_data = pd.DataFrame([dict(col=child_data)])
+        child_data = pd.DataFrame([{
+            '-': child_data,
+        }])
 
     return child_data
 
 
 def limit_output(
-    output: Union[List, pd.DataFrame], sample_count: int
-) -> Union[List, pd.DataFrame]:
-    if sample_count is not None:
-        if output is not None:
-            if isinstance(output, list):
-                output = output[:sample_count]
-            elif isinstance(output, pd.DataFrame):
+    output: Union[List, pd.DataFrame, pd.Series, csr_matrix],
+    sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    sample_columns: Optional[int] = None,
+) -> Union[List, pd.DataFrame, pd.Series, csr_matrix]:
+    if sample_count is not None and output is not None:
+        if isinstance(output, list):
+            output = output[:sample_count]
+        elif isinstance(output, pd.Series):
+            output = output.iloc[:sample_count]
+        elif isinstance(output, pd.DataFrame):
+            if sample_columns is not None:
+                output = output.iloc[:sample_count, :sample_columns]
+            else:
                 output = output.iloc[:sample_count]
+        elif isinstance(output, csr_matrix):
+            output = output[:sample_count]  # For csr_matrix, this slices rows
+            if sample_columns is not None:
+                output = output[:, :sample_columns]
     return output
 
 
@@ -367,16 +383,16 @@ def transform_output_for_display(
     output: Tuple[
         Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]
     ],
-    sample_count: int = None,
+    sample_count: Optional[int] = None,
+    sample_columns: Optional[int] = None,
 ) -> List[Dict]:
     child_data, metadata = transform_output(output)
-    child_data = limit_output(child_data, sample_count)
-    metadata = limit_output(metadata, sample_count)
+    child_data = limit_output(child_data, sample_count, sample_columns=sample_columns)
+    metadata = limit_output(metadata, sample_count, sample_columns=sample_columns)
 
     return dict(
         data=dict(
             columns=['child_data', 'metadata'],
-            index=[0, 1],
             rows=[child_data, metadata],
             shape=[2, 2],
         ),
@@ -387,9 +403,14 @@ def transform_output_for_display(
 
 def transform_output_for_display_reduce_output(
     output: List[Any],
-    sample_count: int = None,
+    sample_count: Optional[int] = None,
+    sample_columns: Optional[int] = None,
 ) -> List[Dict]:
-    output = limit_output(output, sample_count)
+    output = limit_output([limit_output(
+        o,
+        sample_count,
+        sample_columns=sample_columns,
+    ) for o in output], sample_count, sample_columns=sample_columns)
 
     arr = [
         dict(
@@ -407,17 +428,14 @@ def combine_transformed_output_for_multi_output(
     transform_outputs: List[Dict],
     columns: Optional[List[str]] = None,
 ):
-    index = []
     columns_use = columns or []
     for i in range(len(transform_outputs)):
         if not columns:
             columns_use.append(f'child_{i}')
-        index.append(i)
 
     return dict(
         data=dict(
             columns=columns_use,
-            index=index,
             rows=transform_outputs,
             shape=[len(transform_outputs), len(columns_use)],
         ),
@@ -437,7 +455,6 @@ def transform_output_for_display_dynamic_child(
         ],
     ],
     is_dynamic: bool = False,
-    sample_count: Optional[int] = None,
     single_item_only: bool = False,
 ) -> List[Dict]:
     df = None
@@ -451,11 +468,14 @@ def transform_output_for_display_dynamic_child(
         else:
             df = pd.concat([df, df_inner], axis=1)
 
-    df = limit_output(df, sample_count)
-    if isinstance(df, pd.DataFrame) and 1 == len(set(df.columns)):
-        df.columns = [f'{col}_{idx}' for idx, col in enumerate(df.columns)]
+    shape = None
+    if hasattr(df, 'shape'):
+        shape = df.shape
 
-    return transform_dataframe_for_display(df)
+    if isinstance(df, pd.DataFrame) and len(set(df.columns)) == 1:
+        df.columns = [str(idx) for idx, col in enumerate(df.columns)]
+
+    return transform_dataframe_for_display(df, shape=shape)
 
 
 def create_combinations(combinations: List[Any]) -> List[Any]:

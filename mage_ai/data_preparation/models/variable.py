@@ -56,10 +56,10 @@ class Variable:
         uuid: str,
         pipeline_path: str,
         block_uuid: str,
-        partition: str = None,
+        partition: Optional[str] = None,
         spark=None,
-        storage: BaseStorage = None,
-        variable_type: VariableType = None,
+        storage: Optional[BaseStorage] = None,
+        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
     ) -> None:
         self.uuid = uuid
@@ -389,6 +389,13 @@ class Variable:
             # Not write json file in spark data directory to avoid read error
             self.write_metadata()
 
+        if VariableType.ITERABLE == self.variable_type:
+            self.__write_dataframe_analysis(dict(
+                statistics=dict(
+                    original_row_count=len(data),
+                ),
+            ))
+
     async def write_data_async(self, data: Any) -> None:
         """
         Write variable data to the persistent storage.
@@ -433,6 +440,13 @@ class Variable:
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error
             self.write_metadata()
+
+        if VariableType.ITERABLE == self.variable_type:
+            self.__write_dataframe_analysis(dict(
+                statistics=dict(
+                    original_row_count=len(data),
+                ),
+            ))
 
     def write_metadata(self) -> None:
         """
@@ -911,6 +925,18 @@ class Variable:
             )
         except Exception as err:
             print(f'Sample output error: {err}.')
+            traceback.print_exc()
+
+        try:
+            n_rows, n_cols = df_output_serialized.shape
+            self.__write_dataframe_analysis(dict(
+                statistics=dict(
+                    original_row_count=n_rows,
+                    original_column_count=n_cols,
+                ),
+            ))
+        except Exception as err:
+            print(f'Writing DataFrame analysis failed during writing parquet: {err}.')
             traceback.print_exc()
 
     def __write_polars_dataframe(self, data: pl.DataFrame) -> None:

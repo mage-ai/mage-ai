@@ -19,7 +19,6 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
 
 
@@ -41,6 +40,8 @@ def format_output_data(
         Tuple[Dict, bool]: Tuple of the formatted data and is_data_product boolean. Data product
             outputs and non data product outputs are handled slightly differently.
     """
+    if not block_uuid:
+        block_uuid = block.uuid
     variable_manager = block.pipeline.variable_manager
 
     is_dynamic_child = is_dynamic_block_child(block)
@@ -74,6 +75,7 @@ def format_output_data(
             csv_lines_only=csv_lines_only,
             execution_partition=execution_partition,
             skip_dynamic_block=skip_dynamic_block,
+            automatic_sampling=automatic_sampling,
             sample_count=sample_count,
         )
     elif VariableType.CUSTOM_OBJECT == variable_type:
@@ -140,14 +142,14 @@ def format_output_data(
             coerce_into_dataframe,
         )
 
-        data, is_data_product = format_output_data(
+        return format_output_data(
             block,
             coerce_into_dataframe(data),
             variable_uuid=variable_uuid,
             skip_dynamic_block=True,
+            automatic_sampling=automatic_sampling,
+            sample_count=sample_count,
         )
-
-        return merge_dict(data, dict(multi_output=True)), is_data_product
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
             data = dict(
@@ -163,8 +165,10 @@ def format_output_data(
                     partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
-            except Exception:
+            except Exception as err:
+                print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
                 analysis = None
+
             if analysis is not None and (
                 analysis.get('statistics') or analysis.get('metadata')
             ):
@@ -180,8 +184,12 @@ def format_output_data(
             columns_to_display = data.columns.tolist()[
                 :DATAFRAME_ANALYSIS_MAX_COLUMNS
             ]
-            if sample_count:
+
+            if automatic_sampling and not sample_count:
+                data = data.iloc[:DATAFRAME_SAMPLE_COUNT]
+            elif sample_count:
                 data = data.iloc[:sample_count]
+
             data = dict(
                 sample_data=dict(
                     columns=columns_to_display,
@@ -271,6 +279,8 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
                 csv_lines_only=csv_lines_only,
                 execution_partition=execution_partition,
                 skip_dynamic_block=skip_dynamic_block,
+                automatic_sampling=automatic_sampling,
+                sample_count=sample_count,
             )
             if len(pair) >= 1:
                 return pair[0], True

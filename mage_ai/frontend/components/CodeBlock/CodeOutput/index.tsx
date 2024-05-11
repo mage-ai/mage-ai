@@ -36,6 +36,7 @@ import {
   ExtraInfoStyle,
   HTMLOutputStyle,
   OutputRowStyle,
+  OutputRowProps,
 } from './index.style';
 import { CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED } from '@components/PipelineDetail/constants';
 import { FileExtensionEnum } from '@interfaces/FileType';
@@ -324,6 +325,43 @@ function CodeOutput(
     }
   }, [hasError, hasErrorPrev, isDBT, setSelectedTab]);
 
+  function buildDisplayForHTMLOutput(value: string, outputRowSharedProps?: OutputRowProps): JSX.Element {
+    return (
+      <OutputRowStyle {...(outputRowSharedProps || {})}>
+        <HTMLOutputStyle monospace>
+          <InnerHTML html={value} />
+        </HTMLOutputStyle>
+      </OutputRowStyle>
+    );
+  }
+
+  function buildDisplayForTextOutput(
+    value: string | { text_data: string } | { text_data: string }[],
+    outputRowSharedProps?: OutputRowProps,
+  ): JSX.Element {
+    let textArr = [];
+    if (value) {
+      if (typeof value === 'string') {
+        textArr = value.split('\\n');
+      } else if (Array.isArray(value)) {
+        textArr = value.map((v) => v?.text_data);
+      } else if (isObject(value)) {
+        textArr = [value?.text_data];
+      }
+    }
+
+    return (
+      <OutputRowStyle {...(outputRowSharedProps || {})}>
+        {textArr.map((t) => (
+          <Text key={t} monospace preWrap>
+            {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
+            {!t?.length && <>&nbsp;</>}
+          </Text>
+        ))}
+      </OutputRowStyle>
+    );
+  }
+
   const { content, tableContent, testContent } = useMemo(() => {
     const createDataTableElement = (
       output,
@@ -350,7 +388,7 @@ function CodeOutput(
                   return <div />;
                 }
 
-                const { data, type } = row;
+                const { data, text_data: textData, type } = row;
                 if (DataTypeEnum.TABLE === type) {
                   return createDataTableElement(data, {
                     borderTop,
@@ -358,6 +396,13 @@ function CodeOutput(
                     selected: selectedProp,
                   }, {
                     uuid: String(idx),
+                  });
+                } else if (DataTypeEnum.TEXT === type) {
+                  return buildDisplayForTextOutput(textData || data, {
+                    contained: true,
+                    normalPadding: true,
+                    first: true,
+                    last: true,
                   });
                 }
 
@@ -487,9 +532,9 @@ function CodeOutput(
 
       const arr = [];
 
-      function buildDisplayElement(data, dataTypeInner, idxInner, outputRowProps = null) {
+      function buildDisplayElement(data, dataTypeInner, idxInner, outputRowProps?: OutputRowProps) {
         let displayElement;
-        const outputRowSharedProps = outputRowProps || {
+        const outputRowSharedProps: OutputRowProps = outputRowProps || {
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
@@ -597,17 +642,7 @@ function CodeOutput(
                 tableContent.push(tableEl);
                 displayElement = tableEl;
               } else {
-                const textArr = data?.map((d) => d?.text_data);
-                displayElement = (
-                  <OutputRowStyle {...outputRowSharedProps}>
-                    {textArr.map((t) => (
-                      <Text key={t} monospace preWrap>
-                        {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
-                        {!t?.length && <>&nbsp;</>}
-                      </Text>
-                    ))}
-                  </OutputRowStyle>
-                );
+                displayElement = buildDisplayForTextOutput(data, outputRowSharedProps);
               }
             } else {
               const { data: dataDisplay, text_data: textData, type: typeDisplay } = data;
@@ -690,17 +725,12 @@ function CodeOutput(
                   outputs={rows?.map(({ data: value, type: typeInner }, idx: number) => ({
                     render: () => {
                       if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
-                        const textArr = value?.split('\\n');
-                        return (
-                          <OutputRowStyle contained first last normalPadding>
-                            {textArr.map((t) => (
-                              <Text key={t} monospace preWrap>
-                                {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
-                                {!t?.length && <>&nbsp;</>}
-                              </Text>
-                            ))}
-                          </OutputRowStyle>
-                        );
+                        return buildDisplayForTextOutput(value, {
+                          contained: true,
+                          first: true,
+                          last: true,
+                          normalPadding: true,
+                        });
                       } else if (isObject(value) && DataTypeEnum.TABLE === typeInner) {
                         return createDataTableElement(value, {
                           borderTop,
@@ -709,13 +739,10 @@ function CodeOutput(
                           uuid: String(idx),
                         });
                       } else if (DataTypeEnum.TEXT_HTML === typeInner) {
-                        return (
-                          <OutputRowStyle contained normalPadding>
-                            <HTMLOutputStyle monospace>
-                              <InnerHTML html={value} />
-                            </HTMLOutputStyle>
-                          </OutputRowStyle>
-                        );
+                        return buildDisplayForHTMLOutput(value, {
+                          contained: true,
+                          normalPadding: true,
+                        });
                       }
                     },
                     uuid: columns?.[idx],
@@ -725,42 +752,15 @@ function CodeOutput(
               // @ts-ignore
             } else if (data?.data || data?.text_data) {
               // @ts-ignore
-              const textArr = data?.data ? data?.data?.split('\\n') : [data?.text_data];
-
-              displayElement = (
-                <OutputRowStyle {...outputRowSharedProps}>
-                  {textArr.map((t) => (
-                    <Text key={t} monospace preWrap>
-                      {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
-                      {!t?.length && <>&nbsp;</>}
-                    </Text>
-                  ))}
-                </OutputRowStyle>
-              );
+              displayElement =
+                buildDisplayForTextOutput(data?.data || data?.text_data, outputRowSharedProps);
             }
           } else {
-            const textArr = data?.split('\\n');
-
-            displayElement = (
-              <OutputRowStyle {...outputRowSharedProps}>
-                {textArr.map((t) => (
-                  <Text key={t} monospace preWrap>
-                    {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
-                    {!t?.length && <>&nbsp;</>}
-                  </Text>
-                ))}
-              </OutputRowStyle>
-            );
+            displayElement = buildDisplayForTextOutput(data, outputRowSharedProps);
           }
         } else if (dataTypeInner === DataTypeEnum.TEXT_HTML) {
           if (data) {
-            displayElement = (
-              <OutputRowStyle {...outputRowSharedProps}>
-                <HTMLOutputStyle monospace>
-                  <InnerHTML html={data} />
-                </HTMLOutputStyle>
-              </OutputRowStyle>
-            );
+            displayElement = buildDisplayForHTMLOutput(data, outputRowSharedProps);
           }
         } else if (dataTypeInner === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (

@@ -228,6 +228,8 @@ def infer_variable_type(
         basic_iterable and len(data) >= 1 and all(is_custom_object(d) for d in data)
     ):
         variable_type_use = VariableType.CUSTOM_OBJECT
+    elif basic_iterable:
+        variable_type_use = VariableType.ITERABLE
 
     return variable_type_use, basic_iterable
 

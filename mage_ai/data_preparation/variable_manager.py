@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -31,8 +31,8 @@ class VariableManager:
     @classmethod
     def get_manager(
         cls,
-        repo_path: str = None,
-        variables_dir: str = None,
+        repo_path: Optional[str] = None,
+        variables_dir: Optional[str] = None,
     ) -> 'VariableManager':
         manager_args = dict(
             repo_path=repo_path,
@@ -51,8 +51,8 @@ class VariableManager:
         block_uuid: str,
         variable_uuid: str,
         data: Any,
-        partition: str = None,
-        variable_type: VariableType = None,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
     ) -> None:
         variable_type, _ = infer_variable_type(

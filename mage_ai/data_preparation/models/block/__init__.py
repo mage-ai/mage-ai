@@ -71,6 +71,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     BlockColor,
@@ -1996,16 +1997,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     def get_outputs(
         self,
-        execution_partition: str = None,
+        execution_partition: Optional[str] = None,
         include_print_outputs: bool = True,
         csv_lines_only: bool = False,
         sample: bool = True,
-        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        variable_type: VariableType = None,
-        block_uuid: str = None,
-        selected_variables: List[str] = None,
-        metadata: Dict = None,
-        dynamic_block_index: int = None,
+        sample_count: Optional[int] = None,
+        variable_type: Optional[VariableType] = None,
+        block_uuid: Optional[str] = None,
+        selected_variables: Optional[List[str]] = None,
+        metadata: Optional[Dict] = None,
+        dynamic_block_index: Optional[int] = None,
         exclude_blank_variable_uuids: bool = False,
     ) -> List[Dict]:
         data_products = []
@@ -2014,7 +2015,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
 
+        sample_count_use = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+
         if is_dynamic_child or is_dynamic:
+            sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
             pairs = []
 
             if is_dynamic_child:
@@ -2022,7 +2026,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                 )
                 pairs = lazy_variable_controller.render(
                     dynamic_block_index=dynamic_block_index,
@@ -2032,7 +2036,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                 )
                 pairs.append(tup)
 
@@ -2045,8 +2049,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         metadata = pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'child_data'),
-                    (metadata, 'metadata'),
+                    (child_data, 'output_0'),
+                    (metadata, 'output_1'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2060,18 +2064,19 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         execution_partition=execution_partition,
                     )
 
-                    outputs_below_limit = not sample or not sample_count
+                    outputs_below_limit = not sample or not sample_count_use
                     if is_data_product:
                         outputs_below_limit = outputs_below_limit or (
-                            sample_count is not None
-                            and len(data_products) < sample_count
+                            sample_count_use is not None
+                            and len(data_products) < sample_count_use
                         )
                     else:
                         outputs_below_limit = outputs_below_limit or (
-                            sample_count is not None and len(outputs) < sample_count
+                            sample_count_use is not None and len(outputs) < sample_count_use
                         )
 
                     if outputs_below_limit:
+                        data['multi_output'] = True
                         if is_data_product:
                             data_products.append(data)
                         else:
@@ -2133,7 +2138,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
                 data = variable_object.read_data(
                     sample=sample,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                     spark=self.get_spark_session(),
                 )
                 data, is_data_product = self.__format_output_data(
@@ -2171,13 +2176,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     async def __get_outputs_async(
         self,
         csv_lines_only: bool = False,
-        execution_partition: str = None,
+        execution_partition: Optional[str] = None,
         include_print_outputs: bool = True,
         sample: bool = True,
-        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        variable_type: VariableType = None,
-        block_uuid: str = None,
-        dynamic_block_index: int = None,
+        sample_count: Optional[int] = None,
+        variable_type: Optional[VariableType] = None,
+        block_uuid: Optional[str] = None,
+        dynamic_block_index: Optional[int] = None,
         exclude_blank_variable_uuids: bool = False,
     ) -> List[Dict]:
         data_products = []
@@ -2186,7 +2191,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
 
+        sample_count_use = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+
         if is_dynamic_child or is_dynamic:
+            sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
             pairs = []
 
             if is_dynamic_child:
@@ -2194,7 +2202,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                 )
                 pairs = await lazy_variable_controller.render_async(
                     dynamic_block_index=dynamic_block_index,
@@ -2204,7 +2212,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                 )
                 pairs.append(tup)
 
@@ -2220,8 +2228,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         metadata = pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'child_data'),
-                    (metadata, 'metadata'),
+                    (child_data, 'output_0'),
+                    (metadata, 'output_1'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2235,6 +2243,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         execution_partition=execution_partition,
                     )
 
+                    data['multi_output'] = True
                     if is_data_product:
                         data_products.append(data)
                     else:
@@ -2289,7 +2298,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
                 data = await variable_object.read_data_async(
                     sample=True,
-                    sample_count=sample_count,
+                    sample_count=sample_count_use,
                     spark=self.get_spark_session(),
                 )
                 data, is_data_product = self.__format_output_data(
