@@ -24,7 +24,7 @@ def is_booster_trained(booster: Any, raise_exception: bool = True) -> bool:
         # If feature_names exists, it means the model has been trained.
         return booster.num_boosted_rounds() >= 1
     except xgb.core.XGBoostError as err:
-        message = f'XGBoost model is not trained. {err}'
+        message = f"XGBoost model is not trained. {err}"
 
         if raise_exception:
             raise Exception(message)
@@ -49,7 +49,7 @@ def load_model(
         model.load_model(model_path)
 
         config_path = os.path.join(model_dir, config_filename)
-        with open(config_path, 'r') as file:
+        with open(config_path, "r") as file:
             model_config = json.load(file)
 
         model_config_str = json.dumps(model_config)
@@ -60,7 +60,7 @@ def load_model(
     except Exception as err:
         if raise_exception or is_debug():
             raise err
-        print(f'[ERROR] XGBoost.load_model: {err}')
+        print(f"[ERROR] XGBoost.load_model: {err}")
 
     return None
 
@@ -86,7 +86,7 @@ def save_model(
     # Save the structure of the trees (for tree-based models like gradient boosting)
     # along with some basic configurations necessary to understand the model structure itself
     config_path = os.path.join(model_dir, config_filename)
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         f.write(booster.save_config())
 
     if image_filename:
@@ -94,7 +94,7 @@ def save_model(
         try:
             create_tree_visualization(booster, image_path=image_path)
         except Exception as err:
-            print(f'[ERROR] XGBoost.load_model: {err}')
+            print(f"[ERROR] XGBoost.load_model: {err}")
 
     return True
 
@@ -122,19 +122,23 @@ def create_tree_visualization(
         elif n_trees == max_trees:
             trees_to_render = 0
 
-        graph = xgb.to_graphviz(model, num_trees=trees_to_render, rankdir='TB', format='png')
+        graph = xgb.to_graphviz(
+            model, num_trees=trees_to_render, rankdir="TB", format="png"
+        )
 
         if image_path:
             # Remove the '.png' extension when specifying the filename
-            base_image_path = image_path.rsplit('.', 1)[0] if '.' in image_path else image_path
+            base_image_path = (
+                image_path.rsplit(".", 1)[0] if "." in image_path else image_path
+            )
 
             # Pass the adjusted filename without the extension
-            graph.render(filename=base_image_path, cleanup=True, format='png')
+            graph.render(filename=base_image_path, cleanup=True, format="png")
             # Since the 'format' is 'png', Graphviz will output 'visualization.png'
             return image_path, True
 
         # Save the graph to a temporary PNG file (or use BytesIO directly with some adjustments)
-        png_bytes = graph.pipe(format='png')
+        png_bytes = graph.pipe(format="png")
 
         # Convert PNG bytes to an PIL Image object
         image = Image.open(io.BytesIO(png_bytes))
@@ -144,24 +148,24 @@ def create_tree_visualization(
 
         # Convert the PIL Image to a base64 string
         buffered = io.BytesIO()
-        image.save(buffered, format='PNG')
+        image.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
 
         buffered.seek(0)  # Reset pointer to the beginning of the buffer
         file_size_bytes = buffered.getbuffer().nbytes
         if file_size_bytes > max_render_size:
             message = (
-                'XGBoost tree visualization created an image that exceeds '
-                f'{max_render_size} bytes (actual size is {file_size_bytes} bytes). '
-                'No preview will be shown in the browser. '
-                'To increase the preview limit, set the environment variable '
-                'MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value.'
+                "XGBoost tree visualization created an image that exceeds "
+                f"{max_render_size} bytes (actual size is {file_size_bytes} bytes). "
+                "No preview will be shown in the browser. "
+                "To increase the preview limit, set the environment variable "
+                "MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value."
             )
             return message, False
 
         return img_str, True
     except Exception as err:
-        print(f'[ERROR] XGBoost.create_tree_visualization: {err}')
+        print(f"[ERROR] XGBoost.create_tree_visualization: {err}")
         return str(err), False
 
 
@@ -179,19 +183,19 @@ def render_tree_visualization(
 
         if file_size_bytes > max_render_size:
             message = (
-                'XGBoost tree visualization created an image that exceeds '
-                f'{max_render_size} bytes (actual size is {file_size_bytes} bytes). '
-                'No preview will be shown in the browser. '
-                'To increase the preview limit, set the environment variable '
-                'MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value.'
+                "XGBoost tree visualization created an image that exceeds "
+                f"{max_render_size} bytes (actual size is {file_size_bytes} bytes). "
+                "No preview will be shown in the browser. "
+                "To increase the preview limit, set the environment variable "
+                "MAX_OUTPUT_IMAGE_PREVIEW_SIZE to a larger byte size value."
             )
             return message, False
 
-        with open(image_path, 'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
         return encoded_string, True
     except Exception as err:
-        print(f'[ERROR] XGBoost.render_tree_visualization: {err}')
+        print(f"[ERROR] XGBoost.render_tree_visualization: {err}")
         return str(err), False
 
 
@@ -200,17 +204,17 @@ def create_tree_plot(model: Any, image_path: str, num_trees: int = 0) -> str:
         import matplotlib.pyplot as plt
         import xgboost as xgb
 
-        plt.close('all')
+        plt.close("all")
 
         plt.figure(dpi=300)
         xgb.plot_tree(model, num_trees=5)
         plt.tight_layout()
 
-        plt.savefig(image_path, dpi=300, bbox_inches='tight')
+        plt.savefig(image_path, dpi=300, bbox_inches="tight")
 
         plt.close()
 
         return image_path
     except Exception as err:
-        print(f'[ERROR] XGBoost.create_tree_plot: {err}')
+        print(f"[ERROR] XGBoost.create_tree_plot: {err}")
         return str(err)

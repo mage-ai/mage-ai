@@ -16,7 +16,7 @@ from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
 from mage_ai.shared.parsers import convert_matrix_to_dataframe
 
-DD_KEY = 'lambda.analysis_charts'
+DD_KEY = "lambda.analysis_charts"
 BUCKETS = 40
 SCATTER_PLOT_SAMPLE_COUNT = 200
 SCATTER_PLOT_CATEGORY_LIMIT = 10
@@ -37,13 +37,17 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
         diff = 0
 
     is_integer = False
-    parts = str(diff).split('.')
+    parts = str(diff).split(".")
     if len(parts) == 1:
         is_integer = True
     else:
         is_integer = int(parts[1]) == 0
 
-    if ColumnType.NUMBER == column_type and total_interval <= max_buckets and is_integer:
+    if (
+        ColumnType.NUMBER == column_type
+        and total_interval <= max_buckets
+        and is_integer
+    ):
         number_of_buckets = int(total_interval)
         bucket_interval = 1
     elif bucket_interval > 1:
@@ -67,7 +71,7 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
 
 
 def build_histogram_data(col1, series, column_type):
-    increment(f'{DD_KEY}.build_histogram_data.start', dict(feature_uuid=col1))
+    increment(f"{DD_KEY}.build_histogram_data.start", dict(feature_uuid=col1))
 
     if not isinstance(series, pd.Series):
         series = convert_matrix_to_dataframe(series)
@@ -80,7 +84,7 @@ def build_histogram_data(col1, series, column_type):
     if bucket_interval == 0:
         return
 
-    bins = [b['min_value'] for b in buckets] + [buckets[-1]['max_value']]
+    bins = [b["min_value"] for b in buckets] + [buckets[-1]["max_value"]]
     count, _ = np.histogram(series, bins=bins)
 
     x = []
@@ -89,13 +93,13 @@ def build_histogram_data(col1, series, column_type):
     for idx, bucket in enumerate(buckets):
         x.append(
             dict(
-                max=bucket['max_value'],
-                min=bucket['min_value'],
+                max=bucket["max_value"],
+                min=bucket["min_value"],
             )
         )
         y.append(dict(value=count[idx]))
 
-    increment(f'{DD_KEY}.build_histogram_data.succeeded', dict(feature_uuid=col1))
+    increment(f"{DD_KEY}.build_histogram_data.succeeded", dict(feature_uuid=col1))
 
     return dict(
         type=CHART_TYPE_HISTOGRAM,
@@ -120,11 +124,13 @@ def build_correlation_data(df):
                 if value is not None:
                     x.append(dict(label=col2))
                     y.append(dict(value=value))
-        charts[col1] = [dict(
-            type=CHART_TYPE_BAR_HORIZONTAL,
-            x=x,
-            y=y,
-        )]
+        charts[col1] = [
+            dict(
+                type=CHART_TYPE_BAR_HORIZONTAL,
+                x=x,
+                y=y,
+            )
+        ]
     return charts
 
 
@@ -154,11 +160,12 @@ def build_time_series_data(df, features, datetime_column):
     df_copy[datetime_column] = datetimes.view(int) / 10**9
 
     for bucket in buckets:
-        max_value = bucket['max_value']
-        min_value = bucket['min_value']
+        max_value = bucket["max_value"]
+        min_value = bucket["min_value"]
 
         df_filtered = df_copy[
-            (df_copy[datetime_column] >= min_value) & (df_copy[datetime_column] < max_value)
+            (df_copy[datetime_column] >= min_value)
+            & (df_copy[datetime_column] < max_value)
         ]
 
         x.append(
@@ -170,8 +177,8 @@ def build_time_series_data(df, features, datetime_column):
 
         series_count = df_filtered.shape[0]
         for f in features:
-            col = f['uuid']
-            column_type = f['column_type']
+            col = f["uuid"]
+            column_type = f["column_type"]
             if col not in y_dict:
                 y_dict[col] = []
 
@@ -239,22 +246,22 @@ def build_overview_data(
     datetime_features,
     numeric_features,
 ):
-    increment(f'{DD_KEY}.build_overview_data.start')
+    increment(f"{DD_KEY}.build_overview_data.start")
 
     time_series = []
     df_copy = df.copy()
 
     for feature in datetime_features:
-        column_type = feature['column_type']
-        datetime_column = feature['uuid']
+        column_type = feature["column_type"]
+        datetime_column = feature["uuid"]
         tags = dict(datetime_column=datetime_column)
-        increment(f'{DD_KEY}.build_overview_time_series.start', tags)
+        increment(f"{DD_KEY}.build_overview_time_series.start", tags)
 
         if df_copy[datetime_column].count() <= 1:
             continue
 
         df_copy[datetime_column] = pd.to_datetime(
-            df[datetime_column], infer_datetime_format=True, errors='coerce'
+            df[datetime_column], infer_datetime_format=True, errors="coerce"
         )
         df_copy[datetime_column] = df_copy[datetime_column].view(int) / 10**9
 
@@ -268,11 +275,12 @@ def build_overview_data(
         y = []
 
         for bucket in buckets:
-            max_value = bucket['max_value']
-            min_value = bucket['min_value']
+            max_value = bucket["max_value"]
+            min_value = bucket["min_value"]
 
             df_filtered = df_copy[
-                (df_copy[datetime_column] >= min_value) & (df_copy[datetime_column] < max_value)
+                (df_copy[datetime_column] >= min_value)
+                & (df_copy[datetime_column] < max_value)
             ]
 
             x.append(
@@ -300,7 +308,7 @@ def build_overview_data(
             )
         )
 
-        increment(f'{DD_KEY}.build_overview_time_series.succeeded', tags)
+        increment(f"{DD_KEY}.build_overview_time_series.succeeded", tags)
 
     """
     Build sample data for scatter plot. Sample data consits of two parts:
@@ -312,7 +320,7 @@ def build_overview_data(
     else:
         df_sample = df.copy()
 
-    df_sample_numeric = df_sample[numeric_features].dropna(axis=1, how='all')
+    df_sample_numeric = df_sample[numeric_features].dropna(axis=1, how="all")
     """
     Calculate low cardinality categorical features:
     1. unique count <= SCATTER_PLOT_CATEGORY_LIMIT and unique count > 1
@@ -321,27 +329,34 @@ def build_overview_data(
     non_numeric_features = list(set(df.columns) - set(numeric_features))
     non_numeric_nuniques = df_sample[non_numeric_features].nunique()
     non_numeric_nuniques_filtered = non_numeric_nuniques[
-        (non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT) & (non_numeric_nuniques > 1)
+        (non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT)
+        & (non_numeric_nuniques > 1)
     ]
     non_numeric_counts = df_sample[non_numeric_features].count()
     sample_count = df_sample.shape[0]
-    non_numeric_counts_filtered = non_numeric_counts[non_numeric_counts > sample_count / 2]
+    non_numeric_counts_filtered = non_numeric_counts[
+        non_numeric_counts > sample_count / 2
+    ]
     eligible_category_features = set(non_numeric_nuniques_filtered.index) & set(
         non_numeric_counts_filtered.index
     )
     if len(eligible_category_features) > 0:
         encoder = MultipleColumnLabelEncoder(input_type=str)
-        df_sample_category = encoder.fit_transform(df_sample[eligible_category_features])
-        class_mappings = {k: list(e.label_classes()) for k, e in encoder.encoders.items()}
+        df_sample_category = encoder.fit_transform(
+            df_sample[eligible_category_features]
+        )
+        class_mappings = {
+            k: list(e.label_classes()) for k, e in encoder.encoders.items()
+        }
         df_sample_filtered = pd.concat([df_sample_numeric, df_sample_category], axis=1)
     else:
         class_mappings = dict()
         df_sample_filtered = df_sample_numeric
 
-    increment(f'{DD_KEY}.build_overview_data.succeeded')
+    increment(f"{DD_KEY}.build_overview_data.succeeded")
 
     return {
         DATA_KEY_TIME_SERIES: time_series,
-        DATA_KEY_SCATTER_PLOT: df_sample_filtered.to_dict('list'),
+        DATA_KEY_SCATTER_PLOT: df_sample_filtered.to_dict("list"),
         DATA_KEY_SCATTER_PLOT_LABELS: class_mappings,
     }

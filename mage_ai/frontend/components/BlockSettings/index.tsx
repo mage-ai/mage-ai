@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation } from "react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockType, {
   BLOCK_TYPES_WITH_VARIABLES,
@@ -8,62 +8,62 @@ import BlockType, {
   BlockRequestPayloadType,
   BlockRetryConfigType,
   BlockTypeEnum,
-} from "@interfaces/BlockType";
-import Button from "@oracle/elements/Button";
-import Checkbox from "@oracle/elements/Checkbox";
-import Circle from "@oracle/elements/Circle";
-import Flex from "@oracle/components/Flex";
-import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from "@oracle/components/FlexContainer";
+} from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
+import Circle from '@oracle/elements/Circle';
+import Flex from '@oracle/components/Flex';
+import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
 import GlobalDataProductType, {
   GlobalDataProductObjectTypeEnum,
-} from "@interfaces/GlobalDataProductType";
-import Headline from "@oracle/elements/Headline";
-import KeyboardShortcutButton from "@oracle/elements/Button/KeyboardShortcutButton";
-import Link from "@oracle/elements/Link";
-import OutdatedAfterField from "@components/GlobalDataProductDetail/OutdatedAfterField";
-import OutdatedStartingAtField from "@components/GlobalDataProductDetail/OutdatedStartingAtField";
-import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from "@interfaces/PipelineType";
-import ProjectType from "@interfaces/ProjectType";
-import RowDataTable, { RowStyle } from "@oracle/components/RowDataTable";
-import Select from "@oracle/elements/Inputs/Select";
-import SettingsField from "@components/GlobalDataProductDetail/SettingsField";
-import Spacing from "@oracle/elements/Spacing";
-import Spinner from "@oracle/components/Spinner";
-import Table from "@components/shared/Table";
-import Text from "@oracle/elements/Text";
-import TextInput from "@oracle/elements/Inputs/TextInput";
-import Tooltip from "@oracle/components/Tooltip";
-import VariableRow from "@components/Sidekick/GlobalVariables/VariableRow";
-import api from "@api";
-import usePrevious from "@utils/usePrevious";
-import { Add, DiamondDetached, DiamondShared, Edit } from "@oracle/icons";
-import { BannerStyle } from "./index.style";
-import { EXECUTOR_TYPES } from "@interfaces/ExecutorType";
-import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from "@oracle/styles/units/icons";
-import { OpenDataIntegrationModalType } from "@components/DataIntegrationModal/constants";
+} from '@interfaces/GlobalDataProductType';
+import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
+import OutdatedAfterField from '@components/GlobalDataProductDetail/OutdatedAfterField';
+import OutdatedStartingAtField from '@components/GlobalDataProductDetail/OutdatedStartingAtField';
+import PipelineType, { PipelineRetryConfigType, PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
+import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
+import Select from '@oracle/elements/Inputs/Select';
+import SettingsField from '@components/GlobalDataProductDetail/SettingsField';
+import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+import Table from '@components/shared/Table';
+import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
+import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
+import api from '@api';
+import usePrevious from '@utils/usePrevious';
+import { Add, DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
+import { BannerStyle } from './index.style';
+import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
+import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
+import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
-} from "@oracle/styles/units/spacing";
-import { TableContainerStyle } from "@components/IntegrationPipeline/index.style";
-import { YELLOW } from "@oracle/styles/colors/main";
-import { indexBy } from "@utils/array";
-import { capitalize } from "@utils/string";
-import { getBlockColorHexCodeMapping } from "@components/CodeBlock/utils";
-import { getSelectedStreams } from "@utils/models/block";
-import { ignoreKeys, isEmptyObject } from "@utils/hash";
-import { isDataIntegrationBlock } from "@utils/models/block";
-import { onSuccess } from "@api/utils/response";
-import { useError } from "@context/Error";
+} from '@oracle/styles/units/spacing';
+import { TableContainerStyle } from '@components/IntegrationPipeline/index.style';
+import { YELLOW } from '@oracle/styles/colors/main';
+import { indexBy } from '@utils/array';
+import { capitalize } from '@utils/string';
+import { getBlockColorHexCodeMapping } from '@components/CodeBlock/utils';
+import { getSelectedStreams } from '@utils/models/block';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
+import { isDataIntegrationBlock } from '@utils/models/block';
+import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 
 const SHARED_BUTTON_PROPS = {
   borderLess: true,
   iconOnly: true,
   noBackground: true,
   outline: true,
-  padding: "4px",
+  padding: '4px',
 };
 const SHARED_EMPHASIZED_TEXT_PROPS = {
   bold: true,
@@ -138,7 +138,7 @@ function BlockSettings({
   );
 
   const [showError] = useError(null, {}, [], {
-    uuid: "BlockSettings/index",
+    uuid: 'BlockSettings/index',
   });
 
   const globalDataProductsByUUID = useMemo(
@@ -187,10 +187,10 @@ function BlockSettings({
   const blockVariables: { [key: string]: string } = useMemo(
     () =>
       ignoreKeys(blockAttributes?.configuration || configuration, [
-        "data_integration",
-        "file_path",
-        "file_source",
-        "global_data_product",
+        'data_integration',
+        'file_path',
+        'file_source',
+        'global_data_product',
       ]),
     [blockAttributes?.configuration, configuration],
   );
@@ -222,7 +222,7 @@ function BlockSettings({
     data: dataBlock,
     // mutate: fetchBlock,
   } = api.blocks.pipelines.detail(pipelineUUID, encodeURIComponent(blockUUID), {
-    _format: "with_settings",
+    _format: 'with_settings',
     block_type: blockType,
   });
   const blockDetails: {
@@ -276,10 +276,10 @@ function BlockSettings({
             columnFlex={[null, 1]}
             columns={[
               {
-                uuid: "Name",
+                uuid: 'Name',
               },
               {
-                uuid: "Project path",
+                uuid: 'Project path',
               },
             ]}
             rows={blockPipelines.map(
@@ -294,7 +294,7 @@ function BlockSettings({
                   nameEl = (
                     <Text key="name" monospace muted>
                       {pipelineName || pipelineUUID}
-                      {isCurrentProject && " (current)"}
+                      {isCurrentProject && ' (current)'}
                     </Text>
                   );
                 } else {
@@ -314,7 +314,7 @@ function BlockSettings({
                 return [
                   nameEl,
                   <Text default key="project_path" monospace>
-                    {repoPath || "-"}
+                    {repoPath || '-'}
                   </Text>,
                 ];
               },
@@ -329,16 +329,16 @@ function BlockSettings({
   const isUsingPipelineRetryConfig: boolean = useMemo(
     () =>
       pipelineRetryConfig &&
-      typeof pipelineRetryConfig !== "undefined" &&
+      typeof pipelineRetryConfig !== 'undefined' &&
       !isEmptyObject(pipelineRetryConfig) &&
-      ((typeof pipelineRetryConfig?.delay !== "undefined" &&
-        typeof blockRetryConfig?.delay === "undefined") ||
-        (typeof pipelineRetryConfig?.exponential_backoff !== "undefined" &&
-          typeof blockRetryConfig?.exponential_backoff === "undefined") ||
-        (typeof pipelineRetryConfig?.max_delay !== "undefined" &&
-          typeof blockRetryConfig?.max_delay === "undefined") ||
-        (typeof pipelineRetryConfig?.retries !== "undefined" &&
-          typeof blockRetryConfig?.retries === "undefined")),
+      ((typeof pipelineRetryConfig?.delay !== 'undefined' &&
+        typeof blockRetryConfig?.delay === 'undefined') ||
+        (typeof pipelineRetryConfig?.exponential_backoff !== 'undefined' &&
+          typeof blockRetryConfig?.exponential_backoff === 'undefined') ||
+        (typeof pipelineRetryConfig?.max_delay !== 'undefined' &&
+          typeof blockRetryConfig?.max_delay === 'undefined') ||
+        (typeof pipelineRetryConfig?.retries !== 'undefined' &&
+          typeof blockRetryConfig?.retries === 'undefined')),
     [blockRetryConfig, pipelineRetryConfig],
   );
 
@@ -399,18 +399,18 @@ function BlockSettings({
                         showUpdateBlockModal(
                           {
                             ...ignoreKeys(blockWithUpdatedContent, [
-                              "all_upstream_blocks_executed",
-                              "callback_blocks",
-                              "conditional_blocks",
-                              "downstream_blocks",
-                              "executor_config",
-                              "executor_type",
-                              "name",
-                              "outputs",
-                              "retry_config",
-                              "status",
-                              "tags",
-                              "timeout",
+                              'all_upstream_blocks_executed',
+                              'callback_blocks',
+                              'conditional_blocks',
+                              'downstream_blocks',
+                              'executor_config',
+                              'executor_type',
+                              'name',
+                              'outputs',
+                              'retry_config',
+                              'status',
+                              'tags',
+                              'timeout',
                             ]),
                             detach: true,
                           },
@@ -447,7 +447,7 @@ function BlockSettings({
                   disabled={isDbtBlock}
                   onClick={() => showUpdateBlockModal(block, blockName)}
                 >
-                  <Text bold>{blockName || ""}</Text>
+                  <Text bold>{blockName || ''}</Text>
                 </Button>
               </FlexContainer>
             </RowStyle>
@@ -474,7 +474,7 @@ function BlockSettings({
                     onClick={() => showUpdateBlockModal(block, blockName)}
                     outline={false}
                   >
-                    <Text bold>{capitalize(blockColor || "")}</Text>
+                    <Text bold>{capitalize(blockColor || '')}</Text>
                   </Button>
                 </FlexContainer>
               </RowStyle>
@@ -566,7 +566,7 @@ function BlockSettings({
           <Headline level={5}>Executor type</Headline>
 
           <Text muted>
-            For more information on this setting, please read the{" "}
+            For more information on this setting, please read the{' '}
             <Link
               href="https://docs.mage.ai/production/configuring-production-settings/compute-resource#2-set-executor-type-and-customize-the-compute-resource-of-the-mage-executor"
               openNewWindow
@@ -589,7 +589,7 @@ function BlockSettings({
                 }
                 primary
                 ref={refExecutorTypeSelect}
-                value={blockAttributes?.executor_type || ""}
+                value={blockAttributes?.executor_type || ''}
               >
                 {EXECUTOR_TYPES.map((executorTypeOption) => (
                   <option key={executorTypeOption} value={executorTypeOption}>
@@ -612,7 +612,7 @@ function BlockSettings({
                 primary
                 ref={refExecutorTypeTextInput}
                 setContentOnMount
-                value={blockAttributes?.executor_type || ""}
+                value={blockAttributes?.executor_type || ''}
               />
             )}
 
@@ -636,8 +636,8 @@ function BlockSettings({
                 small
               >
                 {editCustomExecutorType
-                  ? "Select a preset executor type"
-                  : "Enter a custom executor type"}
+                  ? 'Select a preset executor type'
+                  : 'Enter a custom executor type'}
               </Link>
             </Spacing>
           </Spacing>
@@ -654,7 +654,7 @@ function BlockSettings({
                 <br />
               </>
             )}
-            For more information on this setting, please read the{" "}
+            For more information on this setting, please read the{' '}
             <Link
               href="https://docs.mage.ai/orchestration/pipeline-runs/retrying-block-runs"
               openNewWindow
@@ -675,7 +675,7 @@ function BlockSettings({
                     retry_config: {
                       ...prev?.retry_config,
                       retries:
-                        typeof e.target.value !== "undefined" &&
+                        typeof e.target.value !== 'undefined' &&
                         e.target.value !== null &&
                         e.target.value?.length >= 1
                           ? Number(e.target.value)
@@ -684,13 +684,13 @@ function BlockSettings({
                   }))
                 }
                 primary
-                required={typeof pipelineRetryConfig?.retries === "undefined"}
+                required={typeof pipelineRetryConfig?.retries === 'undefined'}
                 setContentOnMount
                 type="number"
                 value={
-                  typeof blockRetryConfig?.retries !== "undefined"
+                  typeof blockRetryConfig?.retries !== 'undefined'
                     ? blockRetryConfig?.retries
-                    : pipelineRetryConfig?.retries || ""
+                    : pipelineRetryConfig?.retries || ''
                 }
               />
 
@@ -705,7 +705,7 @@ function BlockSettings({
                     retry_config: {
                       ...prev?.retry_config,
                       delay:
-                        typeof e.target.value !== "undefined" &&
+                        typeof e.target.value !== 'undefined' &&
                         e.target.value !== null &&
                         e.target.value?.length >= 1
                           ? Number(e.target.value)
@@ -714,13 +714,13 @@ function BlockSettings({
                   }))
                 }
                 primary
-                required={typeof pipelineRetryConfig?.delay === "undefined"}
+                required={typeof pipelineRetryConfig?.delay === 'undefined'}
                 setContentOnMount
                 type="number"
                 value={
-                  typeof blockRetryConfig?.delay !== "undefined"
+                  typeof blockRetryConfig?.delay !== 'undefined'
                     ? blockRetryConfig?.delay
-                    : pipelineRetryConfig?.delay || ""
+                    : pipelineRetryConfig?.delay || ''
                 }
               />
 
@@ -735,7 +735,7 @@ function BlockSettings({
                     retry_config: {
                       ...prev?.retry_config,
                       max_delay:
-                        typeof e.target.value !== "undefined" &&
+                        typeof e.target.value !== 'undefined' &&
                         e.target.value !== null &&
                         e.target.value?.length >= 1
                           ? Number(e.target.value)
@@ -744,13 +744,13 @@ function BlockSettings({
                   }))
                 }
                 primary
-                required={typeof pipelineRetryConfig?.max_delay === "undefined"}
+                required={typeof pipelineRetryConfig?.max_delay === 'undefined'}
                 setContentOnMount
                 type="number"
                 value={
-                  typeof blockRetryConfig?.max_delay !== "undefined"
+                  typeof blockRetryConfig?.max_delay !== 'undefined'
                     ? blockRetryConfig?.max_delay
-                    : pipelineRetryConfig?.max_delay || ""
+                    : pipelineRetryConfig?.max_delay || ''
                 }
               />
             </FlexContainer>
@@ -758,8 +758,8 @@ function BlockSettings({
             <Spacing mt={PADDING_UNITS}>
               <Checkbox
                 checked={
-                  typeof blockRetryConfig?.exponential_backoff === "undefined" &&
-                  typeof pipelineRetryConfig?.exponential_backoff !== "undefined"
+                  typeof blockRetryConfig?.exponential_backoff === 'undefined' &&
+                  typeof pipelineRetryConfig?.exponential_backoff !== 'undefined'
                     ? !!pipelineRetryConfig?.exponential_backoff
                     : !!blockRetryConfig?.exponential_backoff
                 }
@@ -770,8 +770,8 @@ function BlockSettings({
                     retry_config: {
                       ...prev?.retry_config,
                       exponential_backoff:
-                        typeof blockRetryConfig?.exponential_backoff === "undefined" &&
-                        typeof pipelineRetryConfig?.exponential_backoff !== "undefined"
+                        typeof blockRetryConfig?.exponential_backoff === 'undefined' &&
+                        typeof pipelineRetryConfig?.exponential_backoff !== 'undefined'
                           ? !pipelineRetryConfig?.exponential_backoff
                           : !prev?.retry_config?.exponential_backoff,
                     },
@@ -798,7 +798,7 @@ function BlockSettings({
               primary
               setContentOnMount
               type="number"
-              value={blockAttributes?.timeout || ""}
+              value={blockAttributes?.timeout || ''}
             />
             <Spacing mb={1} />
             <Text muted small>
@@ -863,21 +863,21 @@ function BlockSettings({
                     &#40;{blockUUID}&#41;.
                   </Text>
                   <Text inline muted>
-                    {" "}
+                    {' '}
                     Refer to the
                     <Link
                       href="https://docs.mage.ai/development/variables/block-variables"
                       openNewWindow
                     >
-                      {" "}
+                      {' '}
                       documentation
-                    </Link>{" "}
+                    </Link>{' '}
                     for more details.
                   </Text>
                 </Text>
                 <Text muted>
                   <Text bold inline warning>
-                    Note:{" "}
+                    Note:{' '}
                   </Text>
                   Click the
                   <Text {...SHARED_EMPHASIZED_TEXT_PROPS}> Update block settings</Text> button below

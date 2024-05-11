@@ -33,4 +33,4 @@ class ChartDataSourceChartCode(ChartDataSourceBase):
             ),
         )
 
-        return block_output['output'] or []
+        return block_output["output"] or []

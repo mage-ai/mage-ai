@@ -4,12 +4,7 @@ import os
 import traceback
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-import inspect
-import traceback
-from typing import Any, Dict
 from warnings import warn
-
 
 import dask.dataframe as dd
 import numpy as np
@@ -17,7 +12,6 @@ import pandas as pd
 import polars as pl
 import simplejson
 import yaml
-
 from pandas import DataFrame
 from sklearn.utils import estimator_html_repr
 
@@ -25,6 +19,7 @@ from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_datafra
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.settings.platform.constants import user_project_platform_activated
 from mage_ai.shared.complex import is_model_sklearn, is_model_xgboost
 from mage_ai.shared.hash import unflatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
@@ -34,8 +29,6 @@ from mage_ai.shared.parsers import (
     object_to_dict,
     object_to_uuid,
 )
-from mage_ai.settings.platform.constants import user_project_platform_activated
-from mage_ai.shared.parsers import encode_complex
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = {
@@ -43,24 +36,24 @@ JSON_SERIALIZABLE_COLUMN_TYPES = {
     list.__name__,
 }
 STRING_SERIALIZABLE_COLUMN_TYPES = {
-    'ObjectId',
+    "ObjectId",
 }
 
 AMBIGUOUS_COLUMN_TYPES = {
-    'mixed-integer',
-    'complex',
-    'unknown-array',
+    "mixed-integer",
+    "complex",
+    "unknown-array",
 }
 
 CAST_TYPE_COLUMN_TYPES = {
-    'Int64',
-    'int64',
-    'float64',
+    "Int64",
+    "int64",
+    "float64",
 }
 
 POLARS_CAST_TYPE_COLUMN_TYPES = {
-    'Float64': pl.Float64,
-    'Int64': pl.Int64,
+    "Float64": pl.Float64,
+    "Int64": pl.Int64,
 }
 
 
@@ -224,7 +217,8 @@ def infer_variable_type(
     elif is_list_complex(data) or (
         basic_iterable
         and len(data) >= 1
-        and len(data) <= 100  # If there are over 100 complex items in this list, we won’t handle.
+        and len(data)
+        <= 100  # If there are over 100 complex items in this list, we won’t handle.
         and all(is_list_complex(d) for d in data)
     ):
         variable_type_use = VariableType.LIST_COMPLEX
@@ -306,12 +300,12 @@ def serialize_complex(
         ]:
             type_info = object_to_dict(value, variable_type=variable_type)
             if full_save_path:
-                type_info['path'] = full_save_path
+                type_info["path"] = full_save_path
         else:
             type_info = object_to_dict(value, variable_type=variable_type)
 
         if combine_values_and_column_types:
-            type_info['value'] = serialized_value
+            type_info["value"] = serialized_value
 
         column_types[key_path] = type_info
 
@@ -325,7 +319,7 @@ def serialize_complex(
         serialized_value = None
 
         full_save_path = os.path.join(save_path, *current_path) if save_path else None
-        key_path = '.'.join(current_path)
+        key_path = ".".join(current_path)
         variable_type, _ = infer_variable_type(value)
 
         if isinstance(value, dict):
@@ -387,41 +381,41 @@ def construct_value(type_info: Dict[str, Union[str, Optional[str]]], value: Any)
     """
     Constructs a Python object from value based on type information.
     """
-    type_name = type_info['name']
+    type_name = type_info["name"]
 
-    if 'path' in type_info and 'variable_type' in type_info:
+    if "path" in type_info and "variable_type" in type_info:
         return deserialize_custom_complex_objects(
             value,
-            str(type_info['path']),
-            VariableType(type_info['variable_type']),
+            str(type_info["path"]),
+            VariableType(type_info["variable_type"]),
         )
 
-    if 'Timestamp' == type_name:
+    if "Timestamp" == type_name:
         return pd.Timestamp(value)
-    elif 'datetime' == type_name:
+    elif "datetime" == type_name:
         return datetime.fromisoformat(value)
-    elif 'ndarray' == type_name:
+    elif "ndarray" == type_name:
         return np.array(value)
-    elif 'DataFrame' == type_name:
+    elif "DataFrame" == type_name:
         return pd.DataFrame(value)
-    elif 'Series' == type_name:
+    elif "Series" == type_name:
         return pd.Series(value)
-    elif 'tuple' == type_name:
+    elif "tuple" == type_name:
         return tuple(value)
-    elif 'set' == type_name:
+    elif "set" == type_name:
         return set(value)
-    elif 'int' == type_name:
+    elif "int" == type_name:
         return int(value)
-    elif 'float' == type_name:
+    elif "float" == type_name:
         return float(value)
-    elif 'str' == type_name:
+    elif "str" == type_name:
         return str(value)
-    elif 'bool' == type_name:
+    elif "bool" == type_name:
         return bool(value)
     else:
         # For simplicity, assuming direct values don't need complex deserialization
-        module_name = type_info['module']
-        class_name = type_info['name']
+        module_name = type_info["module"]
+        class_name = type_info["name"]
         module = importlib.import_module(str(module_name))
         class_ = getattr(module, str(class_name))
         return class_(value)
@@ -437,20 +431,20 @@ def deserialize_element(value: Any, path: str, column_types: Dict[str, Dict]):
         type_info = column_types[path]
 
         # Handle complex nested structures
-        if type_info['name'] in ['list', 'tuple', 'set']:
+        if type_info["name"] in ["list", "tuple", "set"]:
             # Recursively construct elements of the list, tuple, or set
             constructed_elements = [
                 deserialize_element(
                     v,
-                    f'{path}.{i}',
+                    f"{path}.{i}",
                     column_types,
                 )
                 for i, v in enumerate(value)
             ]
 
-            if type_info['name'] == 'tuple':
+            if type_info["name"] == "tuple":
                 return tuple(constructed_elements)
-            elif type_info['name'] == 'set':
+            elif type_info["name"] == "set":
                 return set(constructed_elements)
 
             # list
@@ -500,7 +494,7 @@ def deserialize_complex(
         ]
     else:
         # Top-level simple types
-        return deserialize_element(data, '', column_types)
+        return deserialize_element(data, "", column_types)
 
 
 def is_custom_object(obj: Any) -> bool:
@@ -508,7 +502,7 @@ def is_custom_object(obj: Any) -> bool:
         return False
 
     for base_class in inspect.getmro(obj.__class__):
-        if base_class.__module__ not in ('__builtin__', 'builtins'):
+        if base_class.__module__ not in ("__builtin__", "builtins"):
             return True
     return False
 
@@ -565,6 +559,7 @@ def prepare_data_for_output(
 
     return data, variable_type
 
+
 def warn_for_repo_path(repo_path: str) -> None:
     """
     Warn if repo_path is not provided when using project platform and user
@@ -573,11 +568,11 @@ def warn_for_repo_path(repo_path: str) -> None:
     if repo_path is None and user_project_platform_activated():
         try:
             func_name = inspect.stack()[1][3]
-            message = f'repo_path argument in {func_name} must be provided.'
+            message = f"repo_path argument in {func_name} must be provided."
         except Exception:
-            message = 'repo_path argument must be provided.'
+            message = "repo_path argument must be provided."
         warn(
-            f'{message} Some functionalities may not work as expected',
+            f"{message} Some functionalities may not work as expected",
             SyntaxWarning,
             stacklevel=2,
         )

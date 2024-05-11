@@ -139,7 +139,7 @@ class LazyVariableSet(Sequence):
         return get_memory_usage(
             logger=self.logger,
             logging_tags=self.logging_tags,
-            message_prefix=f'[Block {lazy_variable.block.uuid}.read_data',
+            message_prefix=f"[Block {lazy_variable.block.uuid}.read_data",
             wrapped_function=lazy_variable.read_data,
         )
 
@@ -202,12 +202,7 @@ class LazyVariableController(Sequence):
         child_dynamic_block_index: Optional[int] = None,
         dynamic_block_index: Optional[int] = None,
         lazy_load: bool = False,
-    ) -> List[
-        Union[
-            Tuple[Optional[Any], Dict],
-            List[LazyVariableSet],
-        ],
-    ]:
+    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet],],]:
         arr = self.lazy_variable_sets
 
         if child_dynamic_block_index is not None:
@@ -238,13 +233,9 @@ class LazyVariableController(Sequence):
         self,
         dynamic_block_index: Optional[int] = None,
         lazy_load: bool = False,
-    ) -> List[
-        Union[
-            Tuple[Optional[Any], Dict],
-            List[LazyVariableSet],
-        ],
-    ]:
+    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet],],]:
         arr = self.lazy_variable_sets
+
         if dynamic_block_index is not None:
             arr = arr[dynamic_block_index: dynamic_block_index + 1]
 
@@ -335,7 +326,7 @@ def get_variable_objects(
                 variable_uuid=variable_uuid,
             )
             for variable_uuid in variable_uuids
-            if variable_uuid != ''
+            if variable_uuid != ""
         ],
         key=__sort,
     )
@@ -407,10 +398,15 @@ async def get_outputs_async(
         dynamic_block_index=dynamic_block_index,
     )
 
-    return await asyncio.gather(*[variable_object.read_data_async(
-        sample=sample,
-        sample_count=sample_count,
-    ) for variable_object in variable_objects])
+    return await asyncio.gather(
+        *[
+            variable_object.read_data_async(
+                sample=sample,
+                sample_count=sample_count,
+            )
+            for variable_object in variable_objects
+        ]
+    )
 
 
 def get_outputs(
@@ -482,14 +478,17 @@ def get_outputs_for_dynamic_child(
     )
 
     # List[List[LazyVariableSet]]
-    lazy_variables_sets = [LazyVariableSet(
-        block,
-        variable_objects,
-        logger=logger,
-        logging_tags=logging_tags,
-        sample=sample,
-        sample_count=sample_count,
-    ) for variable_objects in list_of_lists_of_variables]
+    lazy_variables_sets = [
+        LazyVariableSet(
+            block,
+            variable_objects,
+            logger=logger,
+            logging_tags=logging_tags,
+            sample=sample,
+            sample_count=sample_count,
+        )
+        for variable_objects in list_of_lists_of_variables
+    ]
 
     return LazyVariableController(block, lazy_variables_sets)
 

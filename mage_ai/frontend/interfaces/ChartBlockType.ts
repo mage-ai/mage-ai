@@ -1,53 +1,53 @@
 import {
   GlobalDataProductOutdatedAfterType,
   GlobalDataProductOutdatedStartingAtType,
-} from "./GlobalDataProductType";
-import { IngestModeEnum } from "./DataIntegrationBlockType";
+} from './GlobalDataProductType';
+import { IngestModeEnum } from './DataIntegrationBlockType';
 
-export const VARIABLE_NAME_BUCKETS = "buckets";
-export const VARIABLE_NAME_CHART_STYLE = "chart_style";
-export const VARIABLE_NAME_GROUP_BY = "group_by";
-export const VARIABLE_NAME_HEIGHT = "height";
-export const VARIABLE_NAME_INDEX = "index";
-export const VARIABLE_NAME_LEGEND_LABELS = "legend_labels";
-export const VARIABLE_NAME_LIMIT = "limit";
-export const VARIABLE_NAME_METRICS = "metrics";
-export const VARIABLE_NAME_TIME_INTERVAL = "time_interval";
-export const VARIABLE_NAME_WIDTH_PERCENTAGE = "width_percentage";
-export const VARIABLE_NAME_X = "x";
-export const VARIABLE_NAME_Y = "y";
-export const VARIABLE_NAME_Y_SORT_ORDER = "y_sort_order";
+export const VARIABLE_NAME_BUCKETS = 'buckets';
+export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
+export const VARIABLE_NAME_GROUP_BY = 'group_by';
+export const VARIABLE_NAME_HEIGHT = 'height';
+export const VARIABLE_NAME_INDEX = 'index';
+export const VARIABLE_NAME_LEGEND_LABELS = 'legend_labels';
+export const VARIABLE_NAME_LIMIT = 'limit';
+export const VARIABLE_NAME_METRICS = 'metrics';
+export const VARIABLE_NAME_TIME_INTERVAL = 'time_interval';
+export const VARIABLE_NAME_WIDTH_PERCENTAGE = 'width_percentage';
+export const VARIABLE_NAME_X = 'x';
+export const VARIABLE_NAME_Y = 'y';
+export const VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order';
 
-export const CONFIG_KEY_DATA_PROVIDER = "data_provider";
-export const CONFIG_KEY_DATA_PROVIDER_DATABASE = "data_provider_database";
-export const CONFIG_KEY_DATA_PROVIDER_PROFILE = "data_provider_profile";
-export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = "data_provider_schema";
-export const CONFIG_KEY_DATA_PROVIDER_TABLE = "data_provider_table";
-export const CONFIG_KEY_DBT_PROFILE_TARGET = "dbt_profile_target";
-export const CONFIG_KEY_DBT_PROJECT_NAME = "dbt_project_name";
-export const CONFIG_KEY_DBT_PROFILES_FILE_PATH = "dbt_profiles_file_path";
-export const CONFIG_KEY_EXPORT_WRITE_POLICY = "export_write_policy";
-export const CONFIG_KEY_LIMIT = "limit";
-export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = "unique_upstream_table_name";
-export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = "upstream_block_configuration";
-export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = "table_name";
-export const CONFIG_KEY_USE_RAW_SQL = "use_raw_sql";
-export const CONFIG_KEY_DISABLE_QUERY_PREPROCESSING = "disable_query_preprocessing";
+export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
+export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database';
+export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
+export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
+export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
+export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
+export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
+export const CONFIG_KEY_DBT_PROFILES_FILE_PATH = 'dbt_profiles_file_path';
+export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
+export const CONFIG_KEY_LIMIT = 'limit';
+export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = 'unique_upstream_table_name';
+export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = 'upstream_block_configuration';
+export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = 'table_name';
+export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
+export const CONFIG_KEY_DISABLE_QUERY_PREPROCESSING = 'disable_query_preprocessing';
 
-export const CONFIG_KEY_DBT = "dbt";
-export const CONFIG_KEY_DBT_COMMAND = "command";
+export const CONFIG_KEY_DBT = 'dbt';
+export const CONFIG_KEY_DBT_COMMAND = 'command';
 
 export const VARIABLE_NAMES = [VARIABLE_NAME_X, VARIABLE_NAME_Y];
 
 export enum ChartTypeEnum {
-  BAR_CHART = "bar chart",
-  CUSTOM = "custom",
-  HISTOGRAM = "histogram",
-  LINE_CHART = "line chart",
-  PIE_CHART = "pie chart",
-  TABLE = "table",
-  TIME_SERIES_BAR_CHART = "time series bar chart",
-  TIME_SERIES_LINE_CHART = "time series line chart",
+  BAR_CHART = 'bar chart',
+  CUSTOM = 'custom',
+  HISTOGRAM = 'histogram',
+  LINE_CHART = 'line chart',
+  PIE_CHART = 'pie chart',
+  TABLE = 'table',
+  TIME_SERIES_BAR_CHART = 'time series bar chart',
+  TIME_SERIES_LINE_CHART = 'time series line chart',
 }
 
 export const CHART_TYPES = [
@@ -61,19 +61,19 @@ export const CHART_TYPES = [
 ];
 
 export enum ChartStyleEnum {
-  HORIZONTAL = "horizontal",
-  VERTICAL = "vertical",
+  HORIZONTAL = 'horizontal',
+  VERTICAL = 'vertical',
 }
 
 export enum AggregationFunctionEnum {
-  AVERAGE = "average",
-  COUNT = "count",
-  COUNT_DISTINCT = "count_distinct",
-  MAX = "max",
-  MEDIAN = "median",
-  MIN = "min",
-  MODE = "mode",
-  SUM = "sum",
+  AVERAGE = 'average',
+  COUNT = 'count',
+  COUNT_DISTINCT = 'count_distinct',
+  MAX = 'max',
+  MEDIAN = 'median',
+  MIN = 'min',
+  MODE = 'mode',
+  SUM = 'sum',
 }
 
 export const AGGREGATE_FUNCTIONS = [
@@ -93,8 +93,8 @@ interface MetricType {
 }
 
 export enum SortOrderEnum {
-  ASCENDING = "ascending",
-  DESCENDING = "descending",
+  ASCENDING = 'ascending',
+  DESCENDING = 'descending',
 }
 
 export interface ConfigurationDataIntegrationInputType {
@@ -167,12 +167,12 @@ export function buildMetricName(metric: MetricType) {
 }
 
 export enum TimeIntervalEnum {
-  DAY = "day",
-  HOUR = "hour",
-  MINUTE = "minute",
-  MONTH = "month",
-  ORIGINAL = "original",
-  SECOND = "second",
-  WEEK = "week",
-  YEAR = "year",
+  DAY = 'day',
+  HOUR = 'hour',
+  MINUTE = 'minute',
+  MONTH = 'month',
+  ORIGINAL = 'original',
+  SECOND = 'second',
+  WEEK = 'week',
+  YEAR = 'year',
 }

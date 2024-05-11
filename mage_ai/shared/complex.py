@@ -9,9 +9,11 @@ def is_model_sklearn(data: Any) -> bool:
     try:
         from sklearn.base import BaseEstimator, is_classifier, is_regressor
 
-        return is_classifier(data) or is_regressor(data) or isinstance(data, BaseEstimator)
+        return (
+            is_classifier(data) or is_regressor(data) or isinstance(data, BaseEstimator)
+        )
     except ImportError as err:
-        print(f'Error importing sklearn: {err}')
+        print(f"Error importing sklearn: {err}")
         return False
 
 
@@ -26,18 +28,18 @@ def is_model_xgboost(data: Any) -> bool:
     # Check for direct instance of Booster
     if inspect.isclass(data):
         # Checking if it's a class reference rather than an instance
-        if 'xgboost.core.Booster' == f"{data.__module__}.{data.__qualname__}":
+        if "xgboost.core.Booster" == f"{data.__module__}.{data.__qualname__}":
             return True
     else:
         # Check based on instance attributes and methods
-        if hasattr(data, '__class__'):
+        if hasattr(data, "__class__"):
             class_name = f"{data.__class__.__module__}.{data.__class__.__qualname__}"
-            if class_name.startswith('xgboost.core.Booster'):
+            if class_name.startswith("xgboost.core.Booster"):
                 return True
 
     # Check for sklearn API models (like XGBClassifier, XGBRegressor)
     # These models have a get_booster() method
-    if hasattr(data, 'get_booster'):
+    if hasattr(data, "get_booster"):
         return True
 
     return False

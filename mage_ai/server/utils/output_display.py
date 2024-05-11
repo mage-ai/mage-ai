@@ -15,13 +15,13 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.code import is_pyspark_code
 
-REGEX_PATTERN = r'^[ ]{2,}[\w]+'
+REGEX_PATTERN = r"^[ ]{2,}[\w]+"
 
 
 def remove_comments(code_lines: List[str]) -> List[str]:
     return list(
         filter(
-            lambda x: not re.search(r'^\#', str(x).strip()),
+            lambda x: not re.search(r"^\#", str(x).strip()),
             code_lines,
         )
     )
@@ -39,27 +39,26 @@ def remove_empty_last_lines(code_lines: List[str]) -> List[str]:
 def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
     starting_index = len(code_lines) - 1
 
-    brackets_close = code_lines[starting_index].count('}')
-    brackets_open = code_lines[starting_index].count('{')
-    paranthesis_close = code_lines[starting_index].count(')')
-    paranthesis_open = code_lines[starting_index].count('(')
-    square_brackets_close = code_lines[starting_index].count(']')
-    square_brackets_open = code_lines[starting_index].count('[')
+    brackets_close = code_lines[starting_index].count("}")
+    brackets_open = code_lines[starting_index].count("{")
+    paranthesis_close = code_lines[starting_index].count(")")
+    paranthesis_open = code_lines[starting_index].count("(")
+    square_brackets_close = code_lines[starting_index].count("]")
+    square_brackets_open = code_lines[starting_index].count("[")
 
     while starting_index >= 0 and (
         brackets_close > brackets_open
         or paranthesis_close > paranthesis_open
         or square_brackets_close > square_brackets_open
     ):
-
         starting_index -= 1
 
-        brackets_close += code_lines[starting_index].count('}')
-        brackets_open += code_lines[starting_index].count('{')
-        paranthesis_close += code_lines[starting_index].count(')')
-        paranthesis_open += code_lines[starting_index].count('(')
-        square_brackets_close += code_lines[starting_index].count(']')
-        square_brackets_open += code_lines[starting_index].count('[')
+        brackets_close += code_lines[starting_index].count("}")
+        brackets_open += code_lines[starting_index].count("{")
+        paranthesis_close += code_lines[starting_index].count(")")
+        paranthesis_open += code_lines[starting_index].count("(")
+        square_brackets_close += code_lines[starting_index].count("]")
+        square_brackets_open += code_lines[starting_index].count("[")
 
     return starting_index
 
@@ -82,58 +81,64 @@ def get_content_inside_triple_quotes(parts):
 
         variable = None
         if re.search(r'[\w]+[ ]*=[ ]*[f]*"""', first_line):
-            variable = first_line.split('=')[0].strip()
+            variable = first_line.split("=")[0].strip()
 
-        return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
+        return "\n".join(parts[start_index + 1: -1]).replace('"', '\\"'), variable
 
     return None, None
 
 
 def add_internal_output_info(block, code: str) -> str:
-    if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
+    if code.startswith("%%sql") or code.startswith("%%bash") or len(code) == 0:
         return code
-    code_lines = remove_comments(code.split('\n'))
+    code_lines = remove_comments(code.split("\n"))
     code_lines = remove_empty_last_lines(code_lines)
 
     starting_index = find_index_of_last_expression_lines(code_lines)
     if starting_index < len(code_lines) - 1:
-        last_line = ' '.join(code_lines[starting_index:])
+        last_line = " ".join(code_lines[starting_index:])
         code_lines = code_lines[:starting_index] + [last_line]
     else:
         last_line = code_lines[len(code_lines) - 1]
 
-    matches = re.search(r'^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*', last_line)
+    matches = re.search(r"^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*", last_line)
     if matches:
         # Get the variable name in the last line if the last line is a variable assignment
         last_line = matches.group(1)
     last_line = last_line.strip()
 
     is_print_statement = False
-    if re.findall(r'print\(', last_line):
+    if re.findall(r"print\(", last_line):
         is_print_statement = True
 
     last_line_in_block = False
     if len(code_lines) >= 2:
-        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(REGEX_PATTERN, code_lines[-1]):
+        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(
+            REGEX_PATTERN, code_lines[-1]
+        ):
             last_line_in_block = True
-    elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
+    elif re.search(r"^import[ ]{1,}|^from[ ]{1,}", code_lines[-1].strip()):
         last_line_in_block = True
 
     if re.search('"""$', last_line):
         triple_quotes_content, variable = get_content_inside_triple_quotes(code_lines)
         if variable:
-            return f'{code}\nprint({variable})'
+            return f"{code}\nprint({variable})"
         elif triple_quotes_content:
             return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
-    if not last_line or last_line_in_block or re.match(r'^from|^import|^\%\%', last_line.strip()):
+    if (
+        not last_line
+        or last_line_in_block
+        or re.match(r"^from|^import|^\%\%", last_line.strip())
+    ):
         return code
     else:
         if matches:
             end_index = len(code_lines)
         else:
             end_index = -1
-        code_without_last_line = '\n'.join(code_lines[:end_index])
+        code_without_last_line = "\n".join(code_lines[:end_index])
 
         has_reduce_output = has_reduce_output_from_upstreams(block) if block else False
         is_dynamic = is_dynamic_block(block) if block else False
@@ -438,7 +443,7 @@ def add_execution_code(
     variables: Dict = None,
     widget: bool = False,
 ) -> str:
-    escaped_code = code.replace("'''", "\"\"\"")
+    escaped_code = code.replace("'''", '"""')
 
     if execution_uuid:
         execution_uuid = f"'{execution_uuid}'"
@@ -446,28 +451,28 @@ def add_execution_code(
     if extension_uuid:
         extension_uuid = f"'{extension_uuid}'"
     if upstream_blocks:
-        upstream_blocks = ', '.join([f"'{u}'" for u in upstream_blocks])
-        upstream_blocks = f'[{upstream_blocks}]'
+        upstream_blocks = ", ".join([f"'{u}'" for u in upstream_blocks])
+        upstream_blocks = f"[{upstream_blocks}]"
 
     run_settings_json = json.dumps(run_settings or {})
 
-    magic_header = ''
-    spark_session_init = ''
+    magic_header = ""
+    spark_session_init = ""
     if kernel_name == KernelName.PYSPARK:
         if block_type == BlockType.CHART or (
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
         ):
-            magic_header = '%%local'
+            magic_header = "%%local"
             run_incomplete_upstream = False
             run_upstream = False
         else:
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
-                magic_header = '%%spark -o df --maxrows 10000'
-    elif pipeline_config['type'] == 'databricks':
-        spark_session_init = '''
+                magic_header = "%%spark -o df --maxrows 10000"
+    elif pipeline_config["type"] == "databricks":
+        spark_session_init = """
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
-'''
+"""
 
     return f"""{magic_header}
 import datetime
@@ -616,10 +621,11 @@ def get_block_output_process_code(
     repo_path: str,
     block_type: BlockType = None,
     kernel_name: str = None,
-
 ):
-    if kernel_name != KernelName.PYSPARK or \
-            block_type not in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+    if kernel_name != KernelName.PYSPARK or block_type not in [
+        BlockType.DATA_LOADER,
+        BlockType.TRANSFORMER,
+    ]:
         return None
     return f"""%%local
 from mage_ai.data_preparation.models.constants import BlockStatus
@@ -649,13 +655,13 @@ def get_pipeline_execution_code(
     repo_config: Dict = None,
     update_status: bool = True,
 ) -> str:
-    spark_session_init = ''
-    if pipeline_config['type'] == 'databricks':
-        spark_session_init = '''
+    spark_session_init = ""
+    if pipeline_config["type"] == "databricks":
+        spark_session_init = """
 from pyspark.sql import SparkSession
 import os
 spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
-'''
+"""
 
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline

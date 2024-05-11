@@ -10,24 +10,26 @@ def shorten_directory(full_path: str) -> Dict:
     parts_count = len(parts)
 
     # Initialize dir_name as an empty string
-    dir_name = ''
+    dir_name = ""
     # Handle directory part; ignore the filename in parts
     if parts_count > 1:
         # Join all parts except the last one (filename)
-        dir_name = os.path.join(*parts[:parts_count - 1])
+        dir_name = os.path.join(*parts[: parts_count - 1])
 
     # Simplifying the directory to show only relevant parts (3 levels up max)
     if parts_count >= 4:
         if parts_count > 4:
             # For deeply nested paths, show as relative path starting with ..
             relevant_parts = parts[-3:]
-            dir_name = os.path.join('..', *relevant_parts)
+            dir_name = os.path.join("..", *relevant_parts)
         else:
             # If exactly 4 levels deep, show entire path
             dir_name = os.path.join(*parts[:-1])
 
     # Extracting extension (without the dot)
-    extension = path_obj.suffix[1:] if path_obj.suffix.startswith('.') else path_obj.suffix
+    extension = (
+        path_obj.suffix[1:] if path_obj.suffix.startswith(".") else path_obj.suffix
+    )
 
     # Include the filename in the output
     filename = path_obj.name

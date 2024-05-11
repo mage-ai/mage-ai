@@ -17,8 +17,8 @@ class BlockOutputResource(GenericResource):
     def member(self, pk, user, **kwargs):
         block_uuid = pk
 
-        query = kwargs.get('query', {})
-        pipeline_uuid = query.get('pipeline_uuid', [None])
+        query = kwargs.get("query", {})
+        pipeline_uuid = query.get("pipeline_uuid", [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         outputs = []
@@ -29,7 +29,7 @@ class BlockOutputResource(GenericResource):
             error = ApiError.RESOURCE_ERROR.copy()
             if block is None:
                 error.update(
-                    message=f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}'
+                    message=f"Block {block_uuid} does not exist in pipeline {pipeline_uuid}"
                 )
                 raise ApiError(error)
             # Only fetch dataframe variables by default

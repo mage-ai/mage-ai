@@ -61,7 +61,9 @@ def format_output_data(
     if VariableType.MATRIX_SPARSE == variable_type:
         if automatic_sampling and not sample_count:
             n_rows, n_cols = data.shape
-            max_dims = min(DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols)
+            max_dims = min(
+                DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols
+            )
             sample_count = round(max_dims / n_cols)
         if basic_iterable:
             data = convert_matrix_to_dataframe(data[0])
@@ -80,13 +82,18 @@ def format_output_data(
             sample_count=sample_count,
         )
     elif VariableType.CUSTOM_OBJECT == variable_type:
-        return dict(
-            text_data=encode_complex(data),
-            type=DataType.TEXT,
-            variable_uuid=variable_uuid,
-        ), True
-    elif VariableType.MODEL_SKLEARN == variable_type or \
-            VariableType.MODEL_XGBOOST == variable_type:
+        return (
+            dict(
+                text_data=encode_complex(data),
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            ),
+            True,
+        )
+    elif (
+        VariableType.MODEL_SKLEARN == variable_type
+        or VariableType.MODEL_XGBOOST == variable_type
+    ):
 
         def __render(
             model: Any,
@@ -143,7 +150,11 @@ def format_output_data(
             coerce_into_dataframe,
         )
 
-        if VariableType.LIST_COMPLEX == variable_type and basic_iterable and len(data) >= 1:
+        if (
+            VariableType.LIST_COMPLEX == variable_type
+            and basic_iterable
+            and len(data) >= 1
+        ):
             data = [encode_complex(item) for item in data]
 
         return format_output_data(
@@ -161,7 +172,7 @@ def format_output_data(
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
             data = dict(
-                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+                table=data.to_csv(header=True, index=False).strip("\n").split("\n")
             )
         else:
             try:
@@ -169,29 +180,25 @@ def format_output_data(
                     block.pipeline.uuid,
                     block_uuid,
                     variable_uuid,
-                    dataframe_analysis_keys=['metadata', 'statistics'],
+                    dataframe_analysis_keys=["metadata", "statistics"],
                     partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
             except Exception as err:
-                print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
+                print(f"Error getting dataframe analysis for block {block_uuid}: {err}")
                 analysis = None
 
             if analysis is not None and (
-                analysis.get('statistics') or analysis.get('metadata')
+                analysis.get("statistics") or analysis.get("metadata")
             ):
-                stats = analysis.get('statistics', {})
-                column_types = (analysis.get('metadata') or {}).get(
-                    'column_types', {}
-                )
-                row_count = stats.get('original_row_count', stats.get('count'))
-                column_count = stats.get('original_column_count', len(column_types))
+                stats = analysis.get("statistics", {})
+                column_types = (analysis.get("metadata") or {}).get("column_types", {})
+                row_count = stats.get("original_row_count", stats.get("count"))
+                column_count = stats.get("original_column_count", len(column_types))
             else:
                 row_count, column_count = data.shape
 
-            columns_to_display = data.columns.tolist()[
-                :DATAFRAME_ANALYSIS_MAX_COLUMNS
-            ]
+            columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
 
             if automatic_sampling and not sample_count:
                 data = data.iloc[:DATAFRAME_SAMPLE_COUNT]
@@ -203,9 +210,9 @@ def format_output_data(
                     columns=columns_to_display,
                     rows=json.loads(
                         data[columns_to_display].to_json(
-                            orient='split', date_format='iso'
+                            orient="split", date_format="iso"
                         ),
-                    )['data'],
+                    )["data"],
                 ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
@@ -218,16 +225,16 @@ def format_output_data(
                 block.pipeline.uuid,
                 block_uuid,
                 variable_uuid,
-                dataframe_analysis_keys=['statistics'],
+                dataframe_analysis_keys=["statistics"],
                 partition=execution_partition,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
             )
         except Exception:
             analysis = None
         if analysis is not None:
-            stats = analysis.get('statistics', {})
-            row_count = stats.get('original_row_count')
-            column_count = stats.get('original_column_count')
+            stats = analysis.get("statistics", {})
+            row_count = stats.get("original_row_count")
+            column_count = stats.get("original_column_count")
         else:
             row_count, column_count = data.shape
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
@@ -294,8 +301,8 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
                 return pair[0], True
         except Exception as err:
             print(
-                f'[ERROR] Block.format_output_data for block '
-                f'{block.uuid} variable {variable_uuid}: {err}',
+                f"[ERROR] Block.format_output_data for block "
+                f"{block.uuid} variable {variable_uuid}: {err}",
             )
 
         data = dict(
@@ -315,10 +322,8 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
             sample_data=dict(
                 columns=columns_to_display,
                 rows=json.loads(
-                    df[columns_to_display].to_json(
-                        orient='split', date_format='iso'
-                    ),
-                )['data'],
+                    df[columns_to_display].to_json(orient="split", date_format="iso"),
+                )["data"],
             ),
             type=DataType.TABLE,
             variable_uuid=variable_uuid,

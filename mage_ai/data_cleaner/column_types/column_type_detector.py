@@ -21,25 +21,25 @@ MULTITHREAD_MAX_NUM_ENTRIES = 50000
 NUMBER_TYPE_MATCHES_THRESHOLD = 0.8
 STRING_TYPE_MATCHES_THRESHOLD = 0.3
 
-REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,2}$|^\d{1,2}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|^\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
+REGEX_DATETIME_PATTERN = r"^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,2}$|^\d{1,2}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|^\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})"
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
-REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+#-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9_.+#-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
-REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?\s*(?:[元€$]|CAD){0,1})$'
+REGEX_INTEGER_PATTERN = r"^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?\s*(?:[元€$]|CAD){0,1})$"
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
-REGEX_LIST_PATTERN = r'^[\[(](?:[^\n\r],?)*[\])]$'
+REGEX_LIST_PATTERN = r"^[\[(](?:[^\n\r],?)*[\])]$"
 REGEX_LIST = re.compile(REGEX_LIST_PATTERN)
-REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$'
+REGEX_NUMBER_PATTERN = r"^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$"
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
 REGEX_PHONE_NUMBER_PATTERN = (
-    r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
+    r"^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$"
 )
 REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
-REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
+REGEX_ZIP_CODE_PATTERN = r"^\d{3,5}(?:[-\s]\d{4})?$"
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
 
-RESERVED_PHONE_NUMBER_WORDS = frozenset(['phone', 'landline'])
-RESERVED_ZIP_CODE_WORDS = frozenset(['zip', 'postal', 'zipcode', 'postcode'])
+RESERVED_PHONE_NUMBER_WORDS = frozenset(["phone", "landline"])
+RESERVED_ZIP_CODE_WORDS = frozenset(["zip", "postal", "zipcode", "postcode"])
 
 
 def str_in_set(string, string_set):
@@ -89,9 +89,13 @@ def find_syntax_errors(series, column_type):
     if check_syntax_errors:
         mask |= ~str_series.str.match(pattern, na=True)
         if filter_invalid:
-            mask &= ~str_series.str.match(INVALID_VALUE_PLACEHOLDERS[column_type], na=True)
+            mask &= ~str_series.str.match(
+                INVALID_VALUE_PLACEHOLDERS[column_type], na=True
+            )
         if filter_null:
-            mask &= ~str_series.str.match(CONSTANT_IMPUTATION_DEFAULTS[column_type], na=True)
+            mask &= ~str_series.str.match(
+                CONSTANT_IMPUTATION_DEFAULTS[column_type], na=True
+            )
     return mask & series.notna()
 
 
@@ -102,10 +106,12 @@ def infer_number_type(series, column_name, dtype):
         mdtype = ColumnType.NUMBER_WITH_DECIMALS
     else:
         is_integer = np.floor(clean_series) == clean_series
-        correct_phone_nums = ((clean_series >= 1e9) & (clean_series < 1e12) & is_integer).sum()
+        correct_phone_nums = (
+            (clean_series >= 1e9) & (clean_series < 1e12) & is_integer
+        ).sum()
         if (
             correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
-            and 'phone' in column_name.lower()
+            and "phone" in column_name.lower()
         ):
             mdtype = ColumnType.PHONE_NUMBER
         else:
@@ -128,11 +134,11 @@ def infer_number_type(series, column_name, dtype):
 
 def infer_column_type(series, column_name, dtype, kwargs):
     mdtype = None
-    if 'datetime64' in str(dtype):
+    if "datetime64" in str(dtype):
         mdtype = ColumnType.DATETIME
-    elif dtype == 'object':
+    elif dtype == "object":
         mdtype = infer_object_type(series, column_name, kwargs)
-    elif dtype == 'bool':
+    elif dtype == "bool":
         mdtype = ColumnType.TRUE_OR_FALSE
     elif np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer):
         mdtype = infer_number_type(series, column_name, dtype)
@@ -143,8 +149,10 @@ def infer_column_type(series, column_name, dtype, kwargs):
 
 
 def infer_object_type(series, column_name, kwargs):
-    clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
-    clean_series = clean_series.map(lambda x: x if (not isinstance(x, str) or x != '') else np.nan)
+    clean_series = series.apply(lambda x: x.strip(" '\"") if type(x) is str else x)
+    clean_series = clean_series.map(
+        lambda x: x if (not isinstance(x, str) or x != "") else np.nan
+    )
     clean_series = clean_series.dropna()
 
     exact_dtype = type(clean_series.iloc[0]) if clean_series.count() else None
@@ -170,21 +178,25 @@ def infer_object_type(series, column_name, kwargs):
             lowercase_column_name = column_name.lower()
             correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
             correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-            if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
+            if (
+                correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
+                and str_in_set(lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS)
             ):
                 return ColumnType.PHONE_NUMBER
-            elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                lowercase_column_name, RESERVED_ZIP_CODE_WORDS
+            elif (
+                correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD
+                and str_in_set(lowercase_column_name, RESERVED_ZIP_CODE_WORDS)
             ):
                 return ColumnType.ZIP_CODE
             else:
-                clean_series = clean_series.str.replace(r'\.0*', '', regex=True)
+                clean_series = clean_series.str.replace(r"\.0*", "", regex=True)
                 try:
                     clean_series.astype(np.int64)
                     return ColumnType.NUMBER
                 except OverflowError:
-                    if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):
+                    if clean_series_nunique <= kwargs.get(
+                        "category_cardinality_threshold", 255
+                    ):
                         return ColumnType.CATEGORY
                     else:
                         return ColumnType.CATEGORY_HIGH_CARDINALITY
@@ -201,8 +213,9 @@ def infer_object_type(series, column_name, kwargs):
         lowercase_column_name = column_name.lower()
         if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
             return ColumnType.EMAIL
-        elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
-            lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
+        elif (
+            correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD
+            and str_in_set(lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS)
         ):
             return ColumnType.PHONE_NUMBER
         elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
@@ -217,18 +230,18 @@ def infer_object_type(series, column_name, kwargs):
         if clean_series_nunique / length >= 0.8:
             return ColumnType.TEXT
 
-        word_count = clean_series.map(lambda x: len(str(x).split(' '))).max()
+        word_count = clean_series.map(lambda x: len(str(x).split(" "))).max()
         if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
             return ColumnType.TEXT
 
-        if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):
+        if clean_series_nunique <= kwargs.get("category_cardinality_threshold", 255):
             return ColumnType.CATEGORY
         else:
             return ColumnType.CATEGORY_HIGH_CARDINALITY
 
 
 def infer_column_types(df: Union[pd.DataFrame, scipy.sparse.csr_matrix], **kwargs):
-    column_types = kwargs.get('column_types', {})
+    column_types = kwargs.get("column_types", {})
 
     if isinstance(df, scipy.sparse.csr_matrix):
         df = convert_matrix_to_dataframe(df)
@@ -250,7 +263,9 @@ def infer_column_types(df: Union[pd.DataFrame, scipy.sparse.csr_matrix], **kwarg
             infer_column_type, columns, new_cols, df_sample.dtypes[new_cols], kwarg_list
         )
     else:
-        types = map(infer_column_type, columns, new_cols, df_sample.dtypes[new_cols], kwarg_list)
+        types = map(
+            infer_column_type, columns, new_cols, df_sample.dtypes[new_cols], kwarg_list
+        )
     for col, dtype in zip(new_cols, types):
         ctypes[col] = dtype
     return ctypes

@@ -23,11 +23,11 @@ def camel_case_keys_to_snake_case(d):
 
 def dig(obj_arg, arr_or_string):
     if type(arr_or_string) is str:
-        arr_or_string = arr_or_string.split('.')
+        arr_or_string = arr_or_string.split(".")
     arr = list(map(str.strip, arr_or_string))
 
     def _build(obj, key):
-        tup = re.split(r'\[(\d+)\]$', key)
+        tup = re.split(r"\[(\d+)\]$", key)
         if len(tup) >= 2:
             key, index = filter(lambda x: x, tup)
             if key and index:
@@ -56,7 +56,7 @@ def safe_dig(obj_arg, arr_or_string):
             key/index is missing or the object is None.
     """
     if isinstance(arr_or_string, str):
-        arr_or_string = arr_or_string.split('.')
+        arr_or_string = arr_or_string.split(".")
     arr = list(map(str.strip, arr_or_string))
 
     def _build(obj, key):
@@ -64,7 +64,7 @@ def safe_dig(obj_arg, arr_or_string):
         if obj is None or not isinstance(obj, dict) and not isinstance(obj, list):
             return None
 
-        tup = re.split(r'\[(\d+)\]$', key)
+        tup = re.split(r"\[(\d+)\]$", key)
         if len(tup) >= 2:
             key, index = filter(lambda x: x, tup)
             index = int(index) if index else None
@@ -96,19 +96,19 @@ def flatten(input_data):
             for k2, v2 in v1.items():
                 if type(v2) is dict:
                     for k3, v3 in v2.items():
-                        final_data[f'{k1}_{k2}_{k3}'] = v3
+                        final_data[f"{k1}_{k2}_{k3}"] = v3
                 else:
-                    final_data[f'{k1}_{k2}'] = v2
+                    final_data[f"{k1}_{k2}"] = v2
         else:
             final_data[k1] = v1
 
     return final_data
 
 
-def flatten_dict(d, parent_key='', sep='.'):
+def flatten_dict(d, parent_key="", sep="."):
     items = []
     for k, v in d.items():
-        new_key = f'{parent_key}{sep}{k}' if parent_key else k
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
         if isinstance(v, dict):
             items.extend(flatten_dict(v, new_key, sep=sep).items())
         else:
@@ -116,7 +116,7 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
-def unflatten_dict(d, sep='.'):
+def unflatten_dict(d, sep="."):
     result_dict = {}
     for k, v in d.items():
         parts = k.split(sep)
@@ -231,11 +231,11 @@ def set_value(obj: Dict, keys: List[str], value) -> Dict:
 
     results = dict(__obj_to_set_value=obj, __value=value)
 
-    key = ''.join(f"['{key}']" for key in keys)
-    expression = f'__obj_to_set_value{key} = __value'
+    key = "".join(f"['{key}']" for key in keys)
+    expression = f"__obj_to_set_value{key} = __value"
     exec(expression, results)
 
-    return results['__obj_to_set_value']
+    return results["__obj_to_set_value"]
 
 
 def combine_into(child: Dict, parent: Dict) -> None:

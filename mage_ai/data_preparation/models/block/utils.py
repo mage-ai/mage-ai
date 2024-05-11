@@ -56,7 +56,7 @@ def clean_name(name: str, **kwargs) -> str:
     Returns:
         str: The cleaned name.
     """
-    return clean_name_orig(name, allow_characters=['/'], **kwargs)
+    return clean_name_orig(name, allow_characters=["/"], **kwargs)
 
 
 def dynamic_block_values_and_metadata(
@@ -101,7 +101,7 @@ def dynamic_block_values_and_metadata(
             )
 
     DX_PRINTER.error(
-        'dynamic_block_values_and_metadata/output_variables',
+        "dynamic_block_values_and_metadata/output_variables",
         block=block,
         block_metadata=len(block_metadata),
         block_uuid=block_uuid,
@@ -109,7 +109,7 @@ def dynamic_block_values_and_metadata(
         execution_partition=execution_partition,
         output_vars=output_vars,
         values=values,
-        __uuid='dynamic_block_values_and_metadata',
+        __uuid="dynamic_block_values_and_metadata",
     )
 
     return values, block_metadata
@@ -125,11 +125,13 @@ def get_all_ancestors(block) -> List:
     Returns:
         List: A list of all ancestors of the block.
     """
-    arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
-    return list(filter(
-        lambda x: x.uuid != block.uuid,
-        arr,
-    ))
+    arr = get_leaf_nodes(block, "upstream_blocks", include_all_nodes=True)
+    return list(
+        filter(
+            lambda x: x.uuid != block.uuid,
+            arr,
+        )
+    )
 
 
 def get_all_descendants(block) -> List:
@@ -142,11 +144,13 @@ def get_all_descendants(block) -> List:
     Returns:
         List: A list of all descendants of the block.
     """
-    arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
-    return list(filter(
-        lambda x: x.uuid != block.uuid,
-        arr,
-    ))
+    arr = get_leaf_nodes(block, "downstream_blocks", include_all_nodes=True)
+    return list(
+        filter(
+            lambda x: x.uuid != block.uuid,
+            arr,
+        )
+    )
 
 
 def get_leaf_nodes(
@@ -222,8 +226,9 @@ def output_variables(
 
     di_settings = None
     if data_integration_settings_mapping:
-        di_settings = data_integration_settings_mapping.get(block_uuid) or \
-            data_integration_settings_mapping.get(block.uuid)
+        di_settings = data_integration_settings_mapping.get(
+            block_uuid
+        ) or data_integration_settings_mapping.get(block.uuid)
 
     if block and not di_settings:
         di_settings = block.get_data_integration_settings(
@@ -248,25 +253,26 @@ def output_variables(
             partition=execution_partition,
         )
 
-    output_variables = [v for v in all_variables
-                        if is_output_variable(v, include_df=include_df)]
+    output_variables = [
+        v for v in all_variables if is_output_variable(v, include_df=include_df)
+    ]
 
     DX_PRINTER.error(
         block=block,
         block_uuid=block_uuid,
         dynamic_block_index=dynamic_block_index,
-        output_variables_count=len(output_variables) if output_variables else 'null',
-        output_variables=', '.join(output_variables or []),
-        all_variables_count=len(all_variables) if all_variables else 'null',
-        all_variables=', '.join(all_variables or []),
+        output_variables_count=len(output_variables) if output_variables else "null",
+        output_variables=", ".join(output_variables or []),
+        all_variables_count=len(all_variables) if all_variables else "null",
+        all_variables=", ".join(all_variables or []),
         partition=execution_partition,
         should_reduce_output=should_reduce_output(block),
-        __uuid='output_variables',
+        __uuid="output_variables",
     )
 
     if block and di_settings:
-        streams = get_selected_streams(di_settings.get('catalog'))
-        tap_stream_ids = [s.get('tap_stream_id') for s in streams]
+        streams = get_selected_streams(di_settings.get("catalog"))
+        tap_stream_ids = [s.get("tap_stream_id") for s in streams]
         # For integration pipelines, we want to include variables with the "output" prefix
         # to view sample data for the selected streams.
         if pipeline.type == PipelineType.INTEGRATION:
@@ -294,7 +300,7 @@ def is_output_variable(variable_uuid: str, include_df: bool = True) -> bool:
         bool: True if the variable is an output variable, False otherwise.
 
     """
-    return (include_df and variable_uuid == 'df') or variable_uuid.startswith('output')
+    return (include_df and variable_uuid == "df") or variable_uuid.startswith("output")
 
 
 def is_valid_print_variable(k, v, block_uuid):
@@ -309,17 +315,17 @@ def is_valid_print_variable(k, v, block_uuid):
     Returns:
         bool: True if the key-value pair is a valid print variable, False otherwise.
     """
-    if f'{block_uuid}_' not in k:
+    if f"{block_uuid}_" not in k:
         return False
     if type(v) is not str:
         return False
     # Not store empty json
-    if v == '{}' or v == '':
+    if v == "{}" or v == "":
         return False
     try:
         json_data = json.loads(v)
         # Not store empty data in json object
-        if 'data' in json_data and not json_data['data']:
+        if "data" in json_data and not json_data["data"]:
             return False
     except Exception:
         pass
@@ -413,7 +419,7 @@ def fetch_input_variables(
         Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
             upstream block UUIDs.
     """
-    spark = (global_vars or dict()).get('spark')
+    spark = (global_vars or dict()).get("spark")
     upstream_block_uuids_final = upstream_block_uuids_override or []
 
     if upstream_block_uuids_override:
@@ -434,16 +440,21 @@ def fetch_input_variables(
         disable_dynamic_index_for_output_variables = False
         # Fetch the data normally, then use the dynamic block index to select.
         block_is_dynamic_block = DynamicBlockFlag.DYNAMIC in (dynamic_block_flags or [])
-        block_is_dynamic_block_child = DynamicBlockFlag.DYNAMIC_CHILD in (dynamic_block_flags or [])
+        block_is_dynamic_block_child = DynamicBlockFlag.DYNAMIC_CHILD in (
+            dynamic_block_flags or []
+        )
         if block_is_dynamic_block and block_is_dynamic_block_child:
             disable_dynamic_index_for_output_variables = True
 
         if dynamic_block_indexes and (
-            not block_is_dynamic_block or
-            not block_is_dynamic_block_child or
-            len(dynamic_block_indexes) >= 2
+            not block_is_dynamic_block
+            or not block_is_dynamic_block_child
+            or len(dynamic_block_indexes) >= 2
         ):
-            for upstream_block_uuid, dynamic_block_index_folder in dynamic_block_indexes.items():
+            for (
+                upstream_block_uuid,
+                dynamic_block_index_folder,
+            ) in dynamic_block_indexes.items():
                 block = pipeline.get_block(upstream_block_uuid)
                 if block:
                     upstream_is_dynamic_block = is_dynamic_block(block)
@@ -455,23 +466,33 @@ def fetch_input_variables(
                     - Upstream is a dynamic child block
                     - Current block is a virtual clone of the original one
                     """
-                    if upstream_is_dynamic_block and \
-                            upstream_is_dynamic_block_child and \
-                            metadata and \
-                            metadata.get('clone_original'):
-
-                        dynamic_block_index_mapping[block.uuid] = extract_dynamic_block_index(
+                    if (
+                        upstream_is_dynamic_block
+                        and upstream_is_dynamic_block_child
+                        and metadata
+                        and metadata.get("clone_original")
+                    ):
+                        dynamic_block_index_mapping[
+                            block.uuid
+                        ] = extract_dynamic_block_index(
                             upstream_block_uuid,
                         )
-                    elif upstream_is_dynamic_block and not upstream_is_dynamic_block_child:
+                    elif (
+                        upstream_is_dynamic_block
+                        and not upstream_is_dynamic_block_child
+                    ):
                         # If the upstream block is dynamic and not a dynamic child block,
                         # it won‘t have output variable directories with the
                         # dynamic block index named after it.
                         dynamic_block_index_mapping[block.uuid] = None
                     else:
-                        dynamic_block_index_mapping[block.uuid] = dynamic_block_index_folder
+                        dynamic_block_index_mapping[
+                            block.uuid
+                        ] = dynamic_block_index_folder
                 else:
-                    dynamic_block_index_mapping[upstream_block_uuid] = dynamic_block_index_folder
+                    dynamic_block_index_mapping[
+                        upstream_block_uuid
+                    ] = dynamic_block_index_folder
 
         dynamic_block_index_values_for_output_variables = dict(
             dynamic_block_index=dynamic_block_index,
@@ -493,8 +514,9 @@ def fetch_input_variables(
             input_args=input_args,
             data_integration_settings_mapping=data_integration_settings_mapping,
             **(
-                {} if disable_dynamic_index_for_output_variables else
-                dynamic_block_index_values_for_output_variables
+                {}
+                if disable_dynamic_index_for_output_variables
+                else dynamic_block_index_values_for_output_variables
             ),
         )
         # Block UUIDs
@@ -533,32 +555,42 @@ def fetch_input_variables(
             # Block output variables for upstream_block_uuid
             variables = input_variables_by_uuid[upstream_block_uuid]
 
-            dynamic_block_index_for_output_variable = \
-                dynamic_block_index_values_for_output_variables.get('dynamic_block_index')
+            dynamic_block_index_for_output_variable = (
+                dynamic_block_index_values_for_output_variables.get(
+                    "dynamic_block_index"
+                )
+            )
 
-            if not disable_dynamic_index_for_output_variables and \
-                    dynamic_block_index_mapping and \
-                    upstream_block_uuid in dynamic_block_index_mapping:
-
-                dynamic_block_index_for_output_variable = \
-                    dynamic_block_index_mapping[upstream_block_uuid]
+            if (
+                not disable_dynamic_index_for_output_variables
+                and dynamic_block_index_mapping
+                and upstream_block_uuid in dynamic_block_index_mapping
+            ):
+                dynamic_block_index_for_output_variable = dynamic_block_index_mapping[
+                    upstream_block_uuid
+                ]
 
             # Fetch variable values
             if should_reduce:
-                variable_values = [reduce_output_from_block(
-                    upstream_block,
-                    variable_uuid,
-                    from_notebook=from_notebook,
-                    global_vars=global_vars,
-                    input_args=input_args,
-                    partition=execution_partition,
-                    raise_exception=True,
-                    spark=spark,
-                ) for variable_uuid in variables]
+                variable_values = [
+                    reduce_output_from_block(
+                        upstream_block,
+                        variable_uuid,
+                        from_notebook=from_notebook,
+                        global_vars=global_vars,
+                        input_args=input_args,
+                        partition=execution_partition,
+                        raise_exception=True,
+                        spark=spark,
+                    )
+                    for variable_uuid in variables
+                ]
             else:
                 # Getting input variables from cache the cache is not empty
                 if block_run_outputs_cache:
-                    variable_values = block_run_outputs_cache.get(upstream_block_uuid, [])
+                    variable_values = block_run_outputs_cache.get(
+                        upstream_block_uuid, []
+                    )
                 else:
                     variable_values = [
                         pipeline.get_block_variable(
@@ -584,10 +616,11 @@ def fetch_input_variables(
                         upstream_in_dynamic_upstream = True
 
             # This is for blocks with multiple upstream dynamic blocks or dynamic child blocks.
-            if dynamic_block_indexes and \
-                    len(dynamic_block_indexes) >= 2 and \
-                    upstream_block_uuid in dynamic_block_indexes:
-
+            if (
+                dynamic_block_indexes
+                and len(dynamic_block_indexes) >= 2
+                and upstream_block_uuid in dynamic_block_indexes
+            ):
                 input_value = None
 
                 input_data = variable_values[0]
@@ -630,7 +663,11 @@ def fetch_input_variables(
                         # SQL blocks will return a Pandas DataFrame
                         if type(arr) is pd.DataFrame:
                             val = arr.iloc[dynamic_block_index].to_dict()
-                        elif type(arr) is list and len(arr) >= 1 and dynamic_block_index < len(arr):
+                        elif (
+                            type(arr) is list
+                            and len(arr) >= 1
+                            and dynamic_block_index < len(arr)
+                        ):
                             val = arr[dynamic_block_index]
 
                 input_vars[idx] = val
@@ -641,7 +678,11 @@ def fetch_input_variables(
 
                     if dynamic_block_index is None or upstream_is_dynamic_block_child:
                         kwargs_vars.append(arr)
-                    elif type(arr) is list and len(arr) >= 1 and dynamic_block_index < len(arr):
+                    elif (
+                        type(arr) is list
+                        and len(arr) >= 1
+                        and dynamic_block_index < len(arr)
+                    ):
                         kwargs_vars.append(arr[dynamic_block_index])
             elif not dynamic_upstream_block_uuids or not upstream_in_dynamic_upstream:
                 if type(variable_values) is list and len(variable_values) == 1:
@@ -672,7 +713,9 @@ def fetch_input_variables(
                 upstream_is_dynamic = is_dynamic_block(upstream_block)
 
                 uuids = list(
-                    filter(lambda x: upstream_block_uuid in x, dynamic_upstream_block_uuids),
+                    filter(
+                        lambda x: upstream_block_uuid in x, dynamic_upstream_block_uuids
+                    ),
                 )
                 input_variables_by_uuid = input_variables(
                     pipeline,
@@ -712,10 +755,11 @@ def fetch_input_variables(
                             final_value.append(val)
 
                     # output_0 is the metadata for dynamic blocks
-                    if dynamic_block_index is not None and \
-                            upstream_is_dynamic and \
-                            len(variables) >= 2:
-
+                    if (
+                        dynamic_block_index is not None
+                        and upstream_is_dynamic
+                        and len(variables) >= 2
+                    ):
                         var = variables[1]
                         variable_values = pipeline.get_block_variable(
                             upstream_block_uuid,
@@ -730,10 +774,14 @@ def fetch_input_variables(
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)
 
-                if ((upstream_is_dynamic and dynamic_block_index is not None)
-                    or should_reduce) and \
-                        len(final_value) >= 1 and \
-                        all([type(v) is pd.DataFrame for v in final_value]):
+                if (
+                    (
+                        (upstream_is_dynamic and dynamic_block_index is not None)
+                        or should_reduce
+                    )
+                    and len(final_value) >= 1
+                    and all([type(v) is pd.DataFrame for v in final_value])
+                ):
                     final_value = pd.concat(final_value)
 
                 if not should_reduce:
@@ -742,23 +790,27 @@ def fetch_input_variables(
                     if upstream_is_dynamic and dynamic_block_index is not None:
                         # SQL blocks will return a Pandas DataFrame
                         if type(final_value) is pd.DataFrame:
-                            final_value = final_value.iloc[dynamic_block_index].to_dict()
+                            final_value = final_value.iloc[
+                                dynamic_block_index
+                            ].to_dict()
                         else:
                             final_value = final_value[dynamic_block_index]
 
-                    if type(final_value) is not pd.DataFrame and \
-                        type(final_value) is list and \
-                            len(final_value) == 1:
+                    if (
+                        type(final_value) is not pd.DataFrame
+                        and type(final_value) is list
+                        and len(final_value) == 1
+                    ):
                         final_value = final_value[0]
 
                 input_vars[idx] = final_value
 
     DX_PRINTER.debug(
-        'fetch_input_variables final',
+        "fetch_input_variables final",
         input_vars=input_vars,
         kwargs_vars=kwargs_vars,
         upstream_block_uuids_final=upstream_block_uuids_final,
-        __uuid='output_variables'
+        __uuid="output_variables",
     )
 
     if kwargs_vars:
@@ -766,17 +818,20 @@ def fetch_input_variables(
 
         remote_blocks_output = []
         for kwargs in kwargs_vars:
-            for remote_block_dict in kwargs.get('remote_blocks', []):
+            for remote_block_dict in kwargs.get("remote_blocks", []):
                 # Global data products only need the remote block information, not the output
-                if current_block and BlockType.GLOBAL_DATA_PRODUCT == current_block.type:
+                if (
+                    current_block
+                    and BlockType.GLOBAL_DATA_PRODUCT == current_block.type
+                ):
                     output = remote_block_dict
                 else:
                     output = RemoteBlock.load(**remote_block_dict).get_outputs()
                 remote_blocks_output.append(output)
 
         for kwargs in kwargs_vars:
-            if kwargs.get('remote_blocks'):
-                kwargs['remote_blocks'] = remote_blocks_output
+            if kwargs.get("remote_blocks"):
+                kwargs["remote_blocks"] = remote_blocks_output
             kwargs_vars2.append(kwargs)
 
         kwargs_vars = kwargs_vars2
@@ -793,7 +848,7 @@ def serialize_output(
     if type(data) is pd.DataFrame:
         if csv_lines_only:
             data = dict(
-                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+                table=data.to_csv(header=True, index=False).strip("\n").split("\n")
             )
         else:
             row_count, column_count = data.shape
@@ -802,9 +857,9 @@ def serialize_output(
             data = dict(
                 sample_data=dict(
                     columns=columns_to_display,
-                    rows=json.loads(
-                        data[columns_to_display].to_json(orient='split')
-                    )['data']
+                    rows=json.loads(data[columns_to_display].to_json(orient="split"))[
+                        "data"
+                    ],
                 ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
@@ -812,11 +867,11 @@ def serialize_output(
             )
     elif is_geo_dataframe(data):
         data = dict(
-            text_data=f'''Use the code in a scratchpad to get the output of the block:
+            text_data=f"""Use the code in a scratchpad to get the output of the block:
 
 from mage_ai.data_preparation.variable_manager import get_variable
 df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
-''',
+""",
             type=DataType.TEXT,
             variable_uuid=variable_uuid,
         )
@@ -842,7 +897,7 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
-                rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                rows=json.loads(df[columns_to_display].to_json(orient="split"))["data"],
             ),
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
