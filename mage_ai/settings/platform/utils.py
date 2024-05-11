@@ -22,9 +22,13 @@ def get_pipeline_from_platform(
     use_repo_path: bool = False,
 ):
     from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.settings.repo import get_repo_path
 
     if not project_platform_activated():
-        return Pipeline.get(pipeline_uuid, check_if_exists=check_if_exists)
+        repo_path = repo_path or get_repo_path()
+        return Pipeline.get(
+            pipeline_uuid, check_if_exists=check_if_exists, repo_path=repo_path
+        )
 
     if not mapping:
         mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
@@ -36,8 +40,8 @@ def get_pipeline_from_platform(
 
     return Pipeline.get(
         pipeline_uuid,
-        repo_path=repo_path,
         all_projects=False if repo_path else True,
+        repo_path=repo_path,
         use_repo_path=use_repo_path,
     )
 
@@ -51,10 +55,13 @@ async def get_pipeline_from_platform_async(
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
     if not project_platform_activated():
-        return await Pipeline.get_async(pipeline_uuid)
+        return await Pipeline.get_async(pipeline_uuid, repo_path=repo_path)
 
     if not mapping:
-        mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
+        mapping = repo_path_from_database_query_to_project_repo_path(
+            'pipeline_schedules',
+            repo_path=repo_path,
+        )
 
     if repo_path and not use_repo_path:
         repo_path = mapping.get(repo_path)
@@ -63,8 +70,8 @@ async def get_pipeline_from_platform_async(
 
     return await Pipeline.get_async(
         pipeline_uuid,
-        repo_path=repo_path,
         all_projects=False if repo_path else True,
+        repo_path=repo_path,
         use_repo_path=use_repo_path,
     )
 

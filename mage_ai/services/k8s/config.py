@@ -4,9 +4,11 @@ from typing import Dict
 from kubernetes.client import (
     V1Container,
     V1EnvVar,
+    V1JobSpec,
     V1LocalObjectReference,
     V1ObjectMeta,
     V1PodSpec,
+    V1PodTemplateSpec,
     V1ResourceRequirements,
     V1Toleration,
     V1Volume,
@@ -43,8 +45,10 @@ class K8sExecutorConfig(BaseConfig):
     metadata: Dict = None
     container: Dict = None
     pod: Dict = None
+    job: Dict = None
     # parsed k8s objects
     pod_config: V1PodSpec = None
+    job_config: V1JobSpec = None
     meta: V1ObjectMeta = None
 
     @classmethod
@@ -119,6 +123,25 @@ class K8sExecutorConfig(BaseConfig):
             tolerations=tolerations,
             volumes=volumes,
         )
+
+        active_deadline_seconds = None
+        backoff_limit = 0
+        ttl_seconds_after_finished = None
+
+        if executor_config.job:
+            active_deadline_seconds = executor_config.job.get('active_deadline_seconds')
+            backoff_limit = executor_config.job.get('backoff_limit')
+            ttl_seconds_after_finished = executor_config.job.get('ttl_seconds_after_finished')
+
+        executor_config.job_config = V1JobSpec(
+            active_deadline_seconds=active_deadline_seconds,
+            backoff_limit=backoff_limit,
+            ttl_seconds_after_finished=ttl_seconds_after_finished,
+            template=V1PodTemplateSpec(
+                spec=executor_config.pod_config
+            )
+        )
+
         return executor_config
 
     @classmethod

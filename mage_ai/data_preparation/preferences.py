@@ -101,12 +101,12 @@ class Preferences:
         config_dict: Dict = None,
         user: User = None,
     ):
-        self.repo_path = repo_path or get_repo_path()
+        self.repo_path = repo_path or get_repo_path(user=user)
         self.preferences_file_path = os.path.join(self.repo_path, PREFERENCES_FILE)
         self.user = user
         project_preferences = dict()
         try:
-            if user and user.preferences and user.git_settings is None:
+            if user and user.preferences and user.get_git_settings(self.repo_path) is None:
                 project_preferences = user.preferences
             elif config_dict:
                 project_preferences = config_dict
@@ -120,7 +120,7 @@ class Preferences:
         # Git settings
         project_sync_config = project_preferences.get('sync_config', dict())
         if user:
-            user_git_settings = user.git_settings or {}
+            user_git_settings = user.get_git_settings(self.repo_path) or {}
             project_sync_config = merge_dict(project_sync_config, user_git_settings)
 
         self.sync_config = build_sync_config(project_sync_config)

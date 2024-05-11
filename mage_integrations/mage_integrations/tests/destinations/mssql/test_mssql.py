@@ -29,6 +29,7 @@ class MSSQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
     conn_class_path = 'mage_integrations.destinations.mssql.MSSQLConnection'
     destination_class = MSSQL
     expected_conn_class_kwargs = dict(
+        authentication=None,
         database='database',
         driver='driver',
         host='host',
@@ -38,6 +39,7 @@ class MSSQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
     )
     expected_template_config = {
         'config': {
+            'authentication': None,
             'database': 'msdb',
             'host': 'localhost',
             'port': '1433',

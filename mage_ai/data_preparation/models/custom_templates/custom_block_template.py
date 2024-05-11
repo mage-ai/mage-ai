@@ -1,8 +1,11 @@
 import os
 import shutil
-import yaml
 from dataclasses import dataclass, field
+from typing import Dict, List
+
+import yaml
 from jinja2 import Template
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
@@ -10,18 +13,18 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
 )
-from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
     METADATA_FILENAME_WITH_EXTENSION,
 )
-from mage_ai.data_preparation.models.custom_templates.utils import custom_templates_directory
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.data_preparation.models.custom_templates.utils import (
+    custom_templates_directory,
+)
+from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
-from typing import Dict, List
 
 
 @dataclass
@@ -34,12 +37,13 @@ class CustomBlockTemplate(BaseConfig):
     language: BlockLanguage = None
     name: str = None
     pipeline: Dict = field(default_factory=dict)
+    repo_path: str = None
     tags: List = field(default_factory=list)
     template_uuid: str = None
     user: Dict = field(default_factory=dict)
 
     @classmethod
-    def load(self, template_uuid: str = None, uuid: str = None):
+    def load(self, repo_path, template_uuid: str = None, uuid: str = None):
         uuid_use = uuid
         template_uuid_use = template_uuid
 
@@ -55,12 +59,13 @@ class CustomBlockTemplate(BaseConfig):
 
         try:
             config_path_metadata = os.path.join(
-                get_repo_path(),
+                repo_path,
                 uuid_use,
                 METADATA_FILENAME_WITH_EXTENSION,
             )
             custom_template = super().load(config_path_metadata)
             custom_template.template_uuid = template_uuid_use
+            custom_template.repo_path = repo_path
 
             return custom_template
         except Exception as err:
@@ -77,7 +82,7 @@ class CustomBlockTemplate(BaseConfig):
     @property
     def metadata_file_path(self) -> str:
         return os.path.join(
-            get_repo_path(),
+            self.repo_path,
             self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
         )
@@ -98,7 +103,7 @@ class CustomBlockTemplate(BaseConfig):
         return Block.create(
             block_name,
             self.block_type,
-            get_repo_path(),
+            self.repo_path,
             color=self.color,
             configuration=configuration,
             extension_uuid=extension_uuid,
@@ -118,7 +123,7 @@ class CustomBlockTemplate(BaseConfig):
         return File(
             dir_path=self.uuid,
             filename=filename,
-            repo_path=get_repo_path(),
+            repo_path=self.repo_path,
         ).content()
 
     def render_template(
@@ -170,8 +175,8 @@ class CustomBlockTemplate(BaseConfig):
                 filename,
                 self.uuid,
                 self.content,
-                get_repo_path(),
+                self.repo_path,
             )
 
     def delete(self) -> None:
-        shutil.rmtree(os.path.join(get_repo_path(), self.uuid))
+        shutil.rmtree(os.path.join(self.repo_path, self.uuid))

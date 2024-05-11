@@ -44,20 +44,23 @@ class Git:
         auth_type: AuthType = None,
         git_config: GitConfig = None,
         setup_repo: bool = False,
+        user: User = None,
     ) -> None:
         import git
         import git.exc
 
         self.auth_type = auth_type if auth_type else AuthType.SSH
         self.git_config = git_config
+        self.user = user
         self.origin = None
         self.remote_repo_link = None
         self.repo = None
 
-        self.repo_path = os.getcwd()
+        self.project_repo_path = get_repo_path(user=user)
 
+        self.repo_path = os.getcwd()
         if project_platform_activated():
-            git_dict = git_settings()
+            git_dict = git_settings(user=user)
             if git_dict and git_dict.get('path'):
                 self.repo_path = git_dict.get('path')
 
@@ -170,6 +173,7 @@ class Git:
             auth_type=auth_type,
             git_config=git_config,
             setup_repo=setup_repo,
+            user=user,
         )
 
     @property
@@ -784,10 +788,10 @@ class Git:
                 pass
 
     def __create_ssh_keys(self, overwrite: bool = False) -> str:
-        return create_ssh_keys(self.git_config, get_repo_path(), overwrite=overwrite)
+        return create_ssh_keys(self.git_config, self.project_repo_path, overwrite=overwrite)
 
     def __add_host_to_known_hosts(self):
         return add_host_to_known_hosts_util(self.git_config.remote_repo_link)
 
     def get_access_token(self) -> str:
-        return get_access_token(self.git_config)
+        return get_access_token(self.git_config, self.project_repo_path)

@@ -4,6 +4,7 @@
   "port": "1433",
   "username": "root",
   "password": "password",
+  "authentication": null,
   "schema": "",
   "table": ""
 }

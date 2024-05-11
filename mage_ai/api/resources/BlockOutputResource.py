@@ -3,6 +3,7 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 
 
 class BlockOutputResource(GenericResource):
@@ -22,7 +23,8 @@ class BlockOutputResource(GenericResource):
             pipeline_uuid = pipeline_uuid[0]
         outputs = []
         if pipeline_uuid is not None:
-            pipeline = Pipeline.get(pipeline_uuid)
+            repo_path = get_repo_path(user=user)
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             block = pipeline.get_block(block_uuid)
             error = ApiError.RESOURCE_ERROR.copy()
             if block is None:

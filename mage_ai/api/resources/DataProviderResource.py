@@ -43,7 +43,7 @@ class DataProviderResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        file_path = f'{get_repo_path()}/io_config.yaml'
+        file_path = f'{get_repo_path(user=user)}/io_config.yaml'
         profiles = []
         if os.path.exists(file_path):
             async with aiofiles.open(file_path, mode='r') as file:

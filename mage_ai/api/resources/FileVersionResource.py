@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 
 
 class FileVersionResource(GenericResource):
@@ -21,7 +22,8 @@ class FileVersionResource(GenericResource):
             block_uuid = block_uuid[0]
 
         if pipeline_uuid and block_uuid:
-            pipeline = Pipeline.get(pipeline_uuid)
+            repo_path = get_repo_path(user=user)
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             if pipeline:
                 block = pipeline.get_block(block_uuid)
                 if block:

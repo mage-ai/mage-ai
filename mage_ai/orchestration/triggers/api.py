@@ -5,6 +5,7 @@ from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResou
 from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
@@ -15,10 +16,12 @@ from mage_ai.orchestration.triggers.utils import (
     create_and_start_pipeline_run,
 )
 from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.repo import get_repo_path
 
 
 def trigger_pipeline(
     pipeline_uuid: str,
+    repo_path: str = None,
     variables: Dict = None,
     check_status: bool = False,
     error_on_failure: bool = False,
@@ -33,6 +36,8 @@ def trigger_pipeline(
     if variables is None:
         variables = {}
 
+    warn_for_repo_path(repo_path)
+
     if remote_blocks:
         arr = []
         for remote_block in remote_blocks:
@@ -41,7 +46,13 @@ def trigger_pipeline(
             arr.append(remote_block.to_dict())
         variables['remote_blocks'] = arr
 
-    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
+    repo_path_use = repo_path or get_repo_path()
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        all_projects=project_platform_activated(),
+        repo_path=repo_path_use,
+        use_repo_path=repo_path is not None,
+    )
 
     pipeline_schedule = __fetch_or_create_pipeline_schedule(pipeline, schedule_name=schedule_name)
 

@@ -630,8 +630,8 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         self.permissions = None
 
     def tearDown(self):
-        for pipeline_uuid in Pipeline.get_all_pipelines(self.repo_path):
-            pipeline = Pipeline.get(pipeline_uuid)
+        for pipeline_uuid in Pipeline.get_all_pipelines(repo_path=self.repo_path):
+            pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
             if pipeline:
                 pipeline.delete()
 

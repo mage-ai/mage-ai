@@ -13,7 +13,7 @@ class AutocompleteItemResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        repo_path = get_repo_path()
+        repo_path = get_repo_path(user=user)
 
         collection = []
         for file_group, mapping in [

@@ -35,6 +35,7 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
 def encode_complex(obj):
+    from mage_ai.orchestration.db.models.base import BaseModel
     from mage_ai.shared.models import BaseDataClass
 
     if isinstance(obj, set):

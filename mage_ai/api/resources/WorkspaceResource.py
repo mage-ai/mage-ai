@@ -163,7 +163,7 @@ class WorkspaceResource(GenericResource):
             raise ApiError(error)
 
         if project_type == ProjectType.MAIN and subproject:
-            repo_path = get_repo_path()
+            repo_path = get_repo_path(user=self.current_user)
             projects_folder = os.path.join(repo_path, 'projects')
             projects = [
                 f.name.split('.')[0]

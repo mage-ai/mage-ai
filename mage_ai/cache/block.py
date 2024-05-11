@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockType,
 )
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -50,7 +51,10 @@ class BlockCache(BaseCache):
         block_language = ''
         configuration = None
         file_path = None
-        repo_path = repo_path or get_repo_path(root_project=False)
+
+        warn_for_repo_path(repo_path)
+
+        repo_path = repo_path or get_repo_path()
 
         if isinstance(block, dict):
             block_type = block.get('type')
@@ -83,12 +87,12 @@ class BlockCache(BaseCache):
 
         return remove_base_repo_path_or_name(file_path)
 
-    def get_pipelines(self, block) -> List[Dict]:
+    def get_pipelines(self, block, repo_path: str) -> List[Dict]:
         pipelines = []
 
         mapping = self.get(self.cache_key)
         if mapping is not None:
-            key = self.build_key(block)
+            key = self.build_key(block, repo_path=repo_path)
             if key:
                 return (mapping.get(key) or {}).get('pipelines', [])
 
@@ -105,15 +109,15 @@ class BlockCache(BaseCache):
 
         return pipeline_count_mapping
 
-    def add_pipeline(self, block, pipeline) -> None:
-        self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
+    def add_pipeline(self, block, pipeline, repo_path: str) -> None:
+        self.update_pipeline(block, pipeline, repo_path, added_at=datetime.utcnow().timestamp())
 
-    def move_pipelines(self, new_block, old_block) -> None:
-        new_key = self.build_key(new_block)
+    def move_pipelines(self, new_block, old_block, repo_path: str) -> None:
+        new_key = self.build_key(new_block, repo_path=repo_path)
         if not new_key:
             return
 
-        old_key = self.build_key(old_block)
+        old_key = self.build_key(old_block, repo_path=repo_path)
         if not old_key:
             return
 
@@ -131,17 +135,19 @@ class BlockCache(BaseCache):
         self,
         block,
         pipeline,
+        repo_path: str,
         added_at: str = None,
     ) -> None:
-        self.update_pipelines(block, [pipeline], added_at)
+        self.update_pipelines(block, [pipeline], repo_path, added_at)
 
     def update_pipelines(
         self,
         block,
         pipelines,
+        repo_path: str,
         added_at: str = None,
     ) -> None:
-        key = self.build_key(block)
+        key = self.build_key(block, repo_path=repo_path)
         if not key:
             return
 
@@ -191,8 +197,8 @@ class BlockCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    def remove_block(self, block) -> None:
-        key = self.build_key(block)
+    def remove_block(self, block, repo_path: str) -> None:
+        key = self.build_key(block, repo_path=repo_path)
         if not key:
             return
 

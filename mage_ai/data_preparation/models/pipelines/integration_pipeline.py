@@ -262,8 +262,7 @@ class IntegrationPipeline(Pipeline):
                 output = proc.stdout.decode()
                 print_logs_from_output(output, config=config)
 
-                pipeline = Pipeline(self.uuid)
-                block = pipeline.get_block(self.data_loader.uuid)
+                block = self.get_block(self.data_loader.uuid)
 
                 for line in output.split('\n'):
                     try:

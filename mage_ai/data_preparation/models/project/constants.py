@@ -15,3 +15,4 @@ class FeatureUUID(str, Enum):
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view'
     OPERATION_HISTORY = 'operation_history'
     POLARS = 'polars'
+    PROJECT_PLATFORM_USER_PROJECTS = 'project_platform_user_projects'

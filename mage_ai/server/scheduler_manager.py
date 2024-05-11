@@ -75,6 +75,15 @@ class SchedulerManager:
     def is_alive(self):
         return self.scheduler_process is not None and self.scheduler_process.is_alive()
 
+    def get_scheduler_pid(self):
+        if not self.scheduler_process:
+            return None
+        try:
+            return self.scheduler_process.pid
+        except Exception:
+            traceback.print_exc()
+            return None
+
     def get_status(self, auto_restart: bool = False):
         if auto_restart and self.status == self.SchedulerStatus.RUNNING and not self.is_alive:
             logger.info('Restarting pipeline scheduler.')
