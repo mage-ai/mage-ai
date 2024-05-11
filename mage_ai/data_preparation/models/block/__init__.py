@@ -2061,7 +2061,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if is_dynamic_child or is_dynamic:
             sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-            pairs = []
+            output_sets = []
+            variable_sets = []
 
             if is_dynamic_child:
                 lazy_variable_controller = get_outputs_for_dynamic_child(
@@ -2070,29 +2071,70 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     sample=sample,
                     sample_count=sample_count_use,
                 )
-                pairs = lazy_variable_controller.render(
+                variable_sets: List[
+                    Union[
+                        Tuple[Optional[Any], Dict],
+                        List[LazyVariableSet],
+                    ],
+                ] = lazy_variable_controller.render(
                     dynamic_block_index=dynamic_block_index,
+                    lazy_load=True,
                 )
             elif is_dynamic:
-                tup = get_outputs_for_dynamic_block(
+                output_pair: List[
+                    Optional[Union[
+                        Any,
+                        Dict,
+                        int,
+                        pd.DataFrame,
+                        str,
+                    ]]
+                ] = get_outputs_for_dynamic_block(
                     self,
                     execution_partition=execution_partition,
                     sample=sample,
                     sample_count=sample_count_use,
                 )
-                pairs.append(tup)
+                output_sets.append(output_pair)
 
-            for pair in pairs:
+            # Limit the number of dynamic block children we display output for in the UI
+            output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+            variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+
+            for idx, lazy_variable_set in enumerate(variable_sets):
+                child_data, metadata = lazy_variable_set.read_data()
+                formatted_outputs = []
+
+                if child_data and isinstance(child_data, list) and len(child_data) >= 1:
+                    for output_idx, output in enumerate(child_data):
+                        output_formatted, _ = self.__format_output_data(
+                            output,
+                            f'output {output_idx}',
+                            block_uuid=self.uuid,
+                            csv_lines_only=csv_lines_only,
+                            execution_partition=execution_partition,
+                        )
+                        formatted_outputs.append(output_formatted)
+
+                    data_products.append(dict(
+                        outputs=formatted_outputs,
+                        type=DataType.GROUP,
+                        variable_uuid=f'Dynamic child {idx}',
+                    ))
+                else:
+                    output_sets.append((child_data, metadata))
+
+            for output_pair in output_sets:
                 child_data = None
                 metadata = None
-                if len(pair) >= 1:
-                    child_data = pair[0]
-                    if len(pair) >= 2:
-                        metadata = pair[1]
+                if len(output_pair) >= 1:
+                    child_data = output_pair[0]
+                    if len(output_pair) >= 2:
+                        metadata = output_pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'Dynamic data'),
-                    (metadata, 'Metadata'),
+                    (child_data, 'dynamic output data'),
+                    (metadata, 'metadata'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2304,8 +2346,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         metadata = output_pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'Dynamic data'),
-                    (metadata, 'Metadata'),
+                    (child_data, 'dynamic output data'),
+                    (metadata, 'metadata'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2319,11 +2361,23 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         execution_partition=execution_partition,
                     )
 
-                    data['multi_output'] = True
+                    outputs_below_limit = not sample or not sample_count_use
                     if is_data_product:
-                        data_products.append(data)
+                        outputs_below_limit = outputs_below_limit or (
+                            sample_count_use is not None
+                            and len(data_products) < sample_count_use
+                        )
                     else:
-                        outputs.append(data)
+                        outputs_below_limit = outputs_below_limit or (
+                            sample_count_use is not None and len(outputs) < sample_count_use
+                        )
+
+                    if outputs_below_limit:
+                        data['multi_output'] = True
+                        if is_data_product:
+                            data_products.append(data)
+                        else:
+                            outputs.append(data)
 
             return outputs + data_products
         else:

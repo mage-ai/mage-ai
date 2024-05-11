@@ -199,9 +199,15 @@ class LazyVariableController(Sequence):
 
     def render(
         self,
-        child_dynamic_block_index: int = None,
-        dynamic_block_index: int = None,
-    ) -> Union[List[Tuple], Tuple]:
+        child_dynamic_block_index: Optional[int] = None,
+        dynamic_block_index: Optional[int] = None,
+        lazy_load: bool = False,
+    ) -> List[
+        Union[
+            Tuple[Optional[Any], Dict],
+            List[LazyVariableSet],
+        ],
+    ]:
         arr = self.lazy_variable_sets
 
         if child_dynamic_block_index is not None:
@@ -218,10 +224,14 @@ class LazyVariableController(Sequence):
                     child_data = child_data[index]
                 metadata = metadata[index] if len(metadata) > index else {}
 
-            return child_data, metadata
+            return [child_data, metadata]
 
         if dynamic_block_index is not None:
             arr = arr[dynamic_block_index: dynamic_block_index + 1]
+
+        if lazy_load:
+            return arr
+
         return [lazy_variable_set.read_data() for lazy_variable_set in arr]
 
     async def render_async(
@@ -431,14 +441,14 @@ def get_outputs_for_dynamic_block(
     values = get_outputs(block, **kwargs)
 
     if BlockLanguage.SQL == block.language:
-        return values[0] if len(values) == 1 else values, None
+        return [values[0] if len(values) == 1 else values, None]
 
     if len(values) >= 2:
         return values[0], values[1]
     elif len(values) >= 1:
-        return values[0], None
+        return [values[0], None]
 
-    return None, None
+    return [None, None]
 
 
 async def get_outputs_for_dynamic_block_async(
