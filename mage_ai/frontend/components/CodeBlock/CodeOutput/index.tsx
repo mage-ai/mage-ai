@@ -60,7 +60,7 @@ import {
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID, openSaveFileDialog, prepareOutput } from '@components/PipelineDetail/utils';
-import { containsHTML, isJsonString } from '@utils/string';
+import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
 import { range } from '@utils/array';
@@ -458,6 +458,36 @@ function CodeOutput(
             noBorderLeft
             noBorderRight
             noBorderTop={!borderTop}
+            renderColumnHeaderCell={({
+              Header: columnName,
+            }, _, {
+              index: columnIndex,
+              key: columnKey,
+              props: columnProps,
+              style: columnStyle,
+              width: columnWidth,
+            }) => {
+              const empty = columnName?.length === 0 || containsOnlySpecialCharacters(columnName);
+              return (
+                <div
+                  {...columnProps}
+                  className="th"
+                  key={columnKey}
+                  style={{
+                    ...columnStyle,
+                    paddingBottom: 0,
+                    paddingTop: 0,
+                  }}
+                  title={columnIndex ? 'Row number' : undefined}
+                >
+                  <FlexContainer alignItems="center" fullHeight fullWidth>
+                    <Text disabled monospace small>
+                      {empty ? '' : columnName}
+                    </Text>
+                  </FlexContainer>
+                </div>
+              );
+            }}
             rows={rows}
             // Remove border 2px and padding from each side
             width={mainContainerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)}
@@ -815,6 +845,7 @@ function CodeOutput(
     progressBar,
     renderMessagesRaw,
     selected,
+    sideBySideEnabled,
     sparkEnabled,
   ]);
 
@@ -923,7 +954,6 @@ function CodeOutput(
     pipeline,
     selected,
     selectedTab,
-    sideBySideEnabled,
     tableContent,
   ]);
 

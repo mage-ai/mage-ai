@@ -1309,16 +1309,18 @@ class Pipeline:
                                 await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)
 
+                        new_block_uuid = clean_name(name)
+                        old_file_path, old_file_path_relative = block.build_file_path_directory()
+                        new_file_path, new_file_path_relative = block.build_file_path_directory(
+                            block_uuid=new_block_uuid,
+                        )
+
                         block_update_payload = extract(block_data, ['name'])
                         configuration = copy.deepcopy(block_data).get('configuration', {})
-                        file_path = (configuration.get('file_source') or {}).get('path')
-                        if file_path:
-                            # Check for block name with period to avoid replacing a directory name
-                            new_file_path = file_path.replace(
-                                f'{clean_name(block.name)}.', f'{clean_name(name)}.'
-                            )
-                            configuration['file_source']['path'] = new_file_path
-                            block_update_payload['configuration'] = configuration
+                        configuration['file_path'] = new_file_path_relative
+                        configuration['file_source']['path'] = new_file_path_relative
+                        block_update_payload['configuration'] = configuration
+
                         blocks_to_remove_from_cache.append(block.to_dict())
                         block.update(
                             block_update_payload,

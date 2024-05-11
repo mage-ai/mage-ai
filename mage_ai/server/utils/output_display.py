@@ -192,7 +192,6 @@ def __custom_output():
     is_dynamic = bool({is_dynamic})
     is_dynamic_child = bool({is_dynamic_child})
 
-
     if not is_dynamic and \
             not is_dynamic_child and \
             isinstance(_internal_output_return, list) and \
@@ -283,6 +282,7 @@ def __custom_output():
                 output_tf = transform_output_for_display_dynamic_child(
                     output,
                     is_dynamic=is_dynamic,
+                    is_dynamic_child=is_dynamic_child,
                     single_item_only=True,
                 )
                 output_transformed.append(output_tf)
@@ -305,6 +305,8 @@ def __custom_output():
         _json_string = simplejson.dumps(
             transform_output_for_display(
                 _internal_output_return,
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
                 sample_count={DATAFRAME_ANALYSIS_MAX_COLUMNS},
                 sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),
@@ -316,6 +318,8 @@ def __custom_output():
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
                 _internal_output_return,
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
                 sample_count={DATAFRAME_SAMPLE_COUNT_PREVIEW},
                 sample_columns={DATAFRAME_ANALYSIS_MAX_COLUMNS},
             ),

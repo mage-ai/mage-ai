@@ -259,11 +259,19 @@ def uuid_for_output_variables(
 
 def transform_dataframe_for_display(
     dataframe: pd.DataFrame,
+    is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
     sample_columns: int = DATAFRAME_ANALYSIS_MAX_COLUMNS,
     sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
     shape: Optional[Tuple[int, int]] = None,
 ) -> Dict:
     data = None
+
+    column_name = '-'
+    if is_dynamic:
+        column_name = 'dynamic child blocks'
+    elif is_dynamic_child:
+        column_name = 'output'
 
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:sample_columns]
@@ -278,7 +286,7 @@ def transform_dataframe_for_display(
         )
     else:
         data = dict(
-            columns=['-'],
+            columns=[column_name],
             rows=[[dataframe[:sample_count]]],
             shape=list(shape) if shape else [1, 1],
         )
@@ -297,12 +305,17 @@ def coerce_into_dataframe(
         str,
         pd.DataFrame,
     ],
+    is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
     single_item_only: bool = False,
 ) -> pd.DataFrame:
-    child_data, _ = prepare_data_for_output(
-        child_data,
-        single_item_only=single_item_only,
-    )
+    child_data, _ = prepare_data_for_output(child_data, single_item_only=single_item_only)
+
+    column_name = '-'
+    if is_dynamic:
+        column_name = 'dynamic child blocks'
+    elif is_dynamic_child:
+        column_name = 'output'
 
     if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
@@ -313,14 +326,14 @@ def coerce_into_dataframe(
         else:
             child_data = pd.DataFrame(
                 [{
-                    '-': value,
+                    column_name: value,
                 } for value in child_data],
             )
     elif isinstance(child_data, pd.DataFrame):
         return child_data
     else:
         child_data = pd.DataFrame([{
-            '-': child_data,
+            column_name: child_data,
         }])
 
     return child_data
@@ -329,7 +342,7 @@ def coerce_into_dataframe(
 def limit_output(
     output: Union[List, pd.DataFrame, pd.Series, csr_matrix],
     sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
-    sample_columns: Optional[int] = None,
+    sample_columns: Optional[int] = DATAFRAME_ANALYSIS_MAX_COLUMNS,
 ) -> Union[List, pd.DataFrame, pd.Series, csr_matrix]:
     if sample_count is not None and output is not None:
         if isinstance(output, list):
@@ -352,6 +365,8 @@ def transform_output(
     output: Tuple[
         Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]
     ],
+    is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
 ):
     child_data = None
     metadata = None
@@ -364,17 +379,41 @@ def transform_output(
     if child_data is None:
         return []
 
-    child_data = coerce_into_dataframe(child_data)
+    child_data = coerce_into_dataframe(
+        child_data,
+        is_dynamic=is_dynamic,
+        is_dynamic_child=is_dynamic_child,
+    )
 
     if isinstance(child_data, tuple):
-        return transform_output(child_data)
+        return transform_output(
+            child_data,
+            is_dynamic=is_dynamic,
+            is_dynamic_child=is_dynamic_child,
+        )
     elif isinstance(child_data, list):
-        child_data = [transform_dataframe_for_display(data) for data in child_data]
+        child_data = [transform_dataframe_for_display(
+            data,
+            is_dynamic=is_dynamic,
+            is_dynamic_child=is_dynamic_child,
+        ) for data in child_data]
     else:
-        child_data = transform_dataframe_for_display(child_data)
+        child_data = transform_dataframe_for_display(
+            child_data,
+            is_dynamic=is_dynamic,
+            is_dynamic_child=is_dynamic_child,
+        )
 
     if metadata is not None:
-        metadata = transform_dataframe_for_display(coerce_into_dataframe(metadata))
+        metadata = transform_dataframe_for_display(
+            coerce_into_dataframe(
+                metadata,
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
+            ),
+            is_dynamic=is_dynamic,
+            is_dynamic_child=is_dynamic_child,
+        )
 
     return child_data, metadata
 
@@ -383,16 +422,22 @@ def transform_output_for_display(
     output: Tuple[
         Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]
     ],
+    is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
     sample_count: Optional[int] = None,
     sample_columns: Optional[int] = None,
 ) -> List[Dict]:
-    child_data, metadata = transform_output(output)
+    child_data, metadata = transform_output(
+        output,
+        is_dynamic=is_dynamic,
+        is_dynamic_child=is_dynamic_child,
+    )
     child_data = limit_output(child_data, sample_count, sample_columns=sample_columns)
     metadata = limit_output(metadata, sample_count, sample_columns=sample_columns)
 
     return dict(
         data=dict(
-            columns=['child_data', 'metadata'],
+            columns=['Dynamic data', 'Metadata'],
             rows=[child_data, metadata],
             shape=[2, 2],
         ),
@@ -403,20 +448,24 @@ def transform_output_for_display(
 
 def transform_output_for_display_reduce_output(
     output: List[Any],
+    is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
     sample_count: Optional[int] = None,
     sample_columns: Optional[int] = None,
 ) -> List[Dict]:
-    output = limit_output([limit_output(
-        o,
-        sample_count,
+    output = [limit_output(
+        values,
+        sample_count=sample_count,
         sample_columns=sample_columns,
-    ) for o in output], sample_count, sample_columns=sample_columns)
+    ) for values in output]
+
+    output = limit_output(output, sample_count=sample_count, sample_columns=sample_columns)
 
     arr = [
         dict(
             text_data=data,
             type=DataType.TEXT,
-            variable_uuid=f'output_{idx}',
+            variable_uuid=f'reduced output {idx}',
         )
         for idx, data in enumerate(output)
     ]
@@ -431,7 +480,7 @@ def combine_transformed_output_for_multi_output(
     columns_use = columns or []
     for i in range(len(transform_outputs)):
         if not columns:
-            columns_use.append(f'child_{i}')
+            columns_use.append(f'output {i}')
 
     return dict(
         data=dict(
@@ -455,12 +504,15 @@ def transform_output_for_display_dynamic_child(
         ],
     ],
     is_dynamic: bool = False,
+    is_dynamic_child: bool = False,
     single_item_only: bool = False,
 ) -> List[Dict]:
     df = None
     for output_from_variable_object in output:
         df_inner = coerce_into_dataframe(
             output_from_variable_object,
+            is_dynamic=is_dynamic,
+            is_dynamic_child=is_dynamic_child,
             single_item_only=single_item_only,
         )
         if df is None:
@@ -475,7 +527,12 @@ def transform_output_for_display_dynamic_child(
     if isinstance(df, pd.DataFrame) and len(set(df.columns)) == 1:
         df.columns = [str(idx) for idx, col in enumerate(df.columns)]
 
-    return transform_dataframe_for_display(df, shape=shape)
+    return transform_dataframe_for_display(
+        df,
+        is_dynamic=is_dynamic,
+        is_dynamic_child=is_dynamic_child,
+        shape=shape,
+    )
 
 
 def create_combinations(combinations: List[Any]) -> List[Any]:

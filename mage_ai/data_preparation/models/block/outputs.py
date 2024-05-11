@@ -42,12 +42,13 @@ def format_output_data(
     """
     if not block_uuid:
         block_uuid = block.uuid
+
+    variable_type, basic_iterable = infer_variable_type(data)
+
     variable_manager = block.pipeline.variable_manager
 
     is_dynamic_child = is_dynamic_block_child(block)
     is_dynamic = is_dynamic_block(block)
-
-    variable_type, basic_iterable = infer_variable_type(data)
 
     if VariableType.SERIES_PANDAS == variable_type:
         if automatic_sampling and not sample_count:
@@ -142,9 +143,16 @@ def format_output_data(
             coerce_into_dataframe,
         )
 
+        if VariableType.LIST_COMPLEX == variable_type and basic_iterable and len(data) >= 1:
+            data = [encode_complex(item) for item in data]
+
         return format_output_data(
             block,
-            coerce_into_dataframe(data),
+            coerce_into_dataframe(
+                data,
+                is_dynamic=is_dynamic,
+                is_dynamic_child=is_dynamic_child,
+            ),
             variable_uuid=variable_uuid,
             skip_dynamic_block=True,
             automatic_sampling=automatic_sampling,

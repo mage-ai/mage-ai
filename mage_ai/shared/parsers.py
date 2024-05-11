@@ -186,7 +186,7 @@ def object_uuid_parts(obj: Any) -> Dict[str, Union[bool, str, List[str]]]:
     )
 
 
-def object_to_uuid(obj: Any, include_hash: bool = True) -> str:
+def object_to_uuid(obj: Any, include_hash: bool = False) -> str:
     hash_uuid = None
     if include_hash:
         hash_uuid = object_to_hash(obj)

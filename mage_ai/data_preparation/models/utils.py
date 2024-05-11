@@ -215,6 +215,7 @@ def infer_variable_type(
     elif is_list_complex(data) or (
         basic_iterable
         and len(data) >= 1
+        and len(data) <= 100  # If there are over 100 complex items in this list, we won’t handle.
         and all(is_list_complex(d) for d in data)
     ):
         variable_type_use = VariableType.LIST_COMPLEX
@@ -241,7 +242,7 @@ def is_dictionary_complex(data: Any) -> bool:
 
 
 def is_list_complex(data: Any) -> bool:
-    return isinstance(data, list) and any(
+    return isinstance(data, (list, set, tuple)) and any(
         is_user_defined_complex(v) for v in data
     )
 
@@ -298,18 +299,7 @@ def serialize_complex(
             if full_save_path:
                 type_info['path'] = full_save_path
         else:
-            class_info = object_to_dict(value, variable_type=variable_type)
-
-            # For lists, we assume uniform type
-            if is_basic_iterable(value) and len(value) > 0:
-                subtypes = {}
-                value_iter = list(value) if isinstance(value, set) else value
-                # Check the first item for simplicity
-                for i, val in enumerate(value_iter[:1]):
-                    subtypes[str(i)] = object_to_dict(val, variable_type=variable_type)
-                class_info['subtypes'] = subtypes
-
-            type_info = class_info
+            type_info = object_to_dict(value, variable_type=variable_type)
 
         if combine_values_and_column_types:
             type_info['value'] = serialized_value
@@ -389,6 +379,14 @@ def construct_value(type_info: Dict[str, Union[str, Optional[str]]], value: Any)
     Constructs a Python object from value based on type information.
     """
     type_name = type_info['name']
+
+    if 'path' in type_info and 'variable_type' in type_info:
+        return deserialize_custom_complex_objects(
+            value,
+            str(type_info['path']),
+            VariableType(type_info['variable_type']),
+        )
+
     if 'Timestamp' == type_name:
         return pd.Timestamp(value)
     elif 'datetime' == type_name:
@@ -411,12 +409,6 @@ def construct_value(type_info: Dict[str, Union[str, Optional[str]]], value: Any)
         return str(value)
     elif 'bool' == type_name:
         return bool(value)
-    elif 'path' in type_info and 'variable_type' in type_info:
-        return deserialize_custom_complex_objects(
-            value,
-            str(type_info['path']),
-            VariableType(type_info['variable_type']),
-        )
     else:
         # For simplicity, assuming direct values don't need complex deserialization
         module_name = type_info['module']
@@ -434,9 +426,6 @@ def deserialize_element(value: Any, path: str, column_types: Dict[str, Dict]):
     """
     if path in column_types:
         type_info = column_types[path]
-
-        if 'subtypes' not in type_info:
-            return construct_value(type_info, value)
 
         # Handle complex nested structures
         if type_info['name'] in ['list', 'tuple', 'set']:
@@ -554,9 +543,14 @@ def prepare_data_for_output(
             data = object_to_uuid(data)
     elif VariableType.DICTIONARY_COMPLEX == variable_type:
         if basic_iterable:
-            data = [serialize_complex(d) for d in data]
+            data = [serialize_complex(d)[0] for d in data]
         else:
-            data = serialize_complex(data)
+            data = serialize_complex(data)[0]
+    elif VariableType.LIST_COMPLEX == variable_type:
+        if basic_iterable:
+            data = [serialize_complex(d)[0] for d in data]
+        else:
+            data = serialize_complex(data)[0]
     else:
         variable_type = None
 

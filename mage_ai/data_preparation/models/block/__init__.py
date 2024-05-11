@@ -650,17 +650,22 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_uuid: str,
         block_type: BlockType,
         language: BlockLanguage,
+        relative_path: bool = False,
     ) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
         block_directory = (
             f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
         )
 
-        return os.path.join(
-            repo_path or os.getcwd(),
+        parts = []
+        if not relative_path:
+            parts.append(repo_path or os.getcwd())
+        parts += [
             block_directory,
             f'{block_uuid}.{file_extension}',
-        )
+        ]
+
+        return os.path.join(*parts)
 
     @property
     def file_path(self) -> str:
@@ -680,6 +685,41 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             self.type,
             self.language,
         )
+
+    def build_file_path_directory(
+        self,
+        block_uuid: Optional[str] = None,
+    ) -> Tuple[Optional[str], Optional[str]]:
+        file_path = None
+        file_path_absolute = None
+
+        if self.replicated_block and self.replicated_block_object:
+            file_path_absolute, file_path = self.replicated_block_object.build_file_path_directory(
+                block_uuid=block_uuid,
+            )
+
+        if not file_path:
+            file_path = self.get_file_path_from_source() or self.configuration.get('file_path')
+
+        if not file_path:
+            file_path = self.__build_file_path(
+                self.repo_path or os.getcwd(),
+                self.uuid,
+                self.type,
+                self.language,
+                relative_path=True,
+            )
+
+        if block_uuid:
+            old_file_path = Path(file_path)
+            old_file_extension = old_file_path.suffix
+            new_file_name = f'{block_uuid}{old_file_extension}'
+            file_path = str(old_file_path.with_name(new_file_name))
+
+        if file_path:
+            file_path_absolute = add_absolute_path(file_path)
+
+        return file_path_absolute, file_path
 
     @property
     def file(self) -> File:
@@ -2049,8 +2089,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         metadata = pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'output_0'),
-                    (metadata, 'output_1'),
+                    (child_data, 'Dynamic data'),
+                    (metadata, 'Metadata'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -2228,8 +2268,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         metadata = pair[1]
 
                 for output, variable_uuid in [
-                    (child_data, 'output_0'),
-                    (metadata, 'output_1'),
+                    (child_data, 'Dynamic data'),
+                    (metadata, 'Metadata'),
                 ]:
                     if output is None or \
                             (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
@@ -3520,7 +3560,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             and self.file_source_path()
             and add_absolute_path(self.file_source_path()) == self.file_path
         ):
-            #  /home/src/data-vault/perftools/mage/data_loaders/team/illusory_glitter
+            # /home/src/data-vault/perftools/mage/data_loaders/team/illusory_glitter
             old_file_path_without_extension = str(Path(old_file_path).with_suffix(''))
             #  /home/src/data-vault/perftools/mage/data_loaders/team
             old_file_path_without_uuid = str(
@@ -3532,11 +3572,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
             )
 
-            #  perftools/mage/data_loaders/team
+            # perftools/mage/data_loaders/team
             old_file_path_without_repo_path = remove_base_repo_path(
                 old_file_path_without_uuid
             )
-            #  perftools/mage
+            # perftools/mage
             path_without_block_directory = str(old_file_path_without_repo_path).split(
                 directory_name,
             )[0]
@@ -3560,7 +3600,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             self.configuration = configuration
 
         # This has to be here
-        new_file_path = self.file_path
+        new_file_path, new_file_path_relative = self.build_file_path_directory(
+            block_uuid=new_uuid,
+        )
+
+        configuration = self.configuration or {}
+        if not configuration.get('file_source'):
+            configuration['file_source'] = {}
+        configuration['file_path'] = new_file_path_relative
+        configuration['file_source']['path'] = new_file_path_relative
+        self.configuration = configuration
 
         if self.pipeline is not None:
             DX_PRINTER.critical(
@@ -3590,7 +3639,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         if not self.replicated_block and BlockType.GLOBAL_DATA_PRODUCT != self.type:
             if os.path.exists(new_file_path):
                 raise Exception(
-                    f'Block {new_uuid} already exists. Please use a different name.'
+                    f'Block {new_uuid} already exists at {new_file_path}. '
+                    'Please use a different name.'
                 )
 
             parent_dir = os.path.dirname(new_file_path)
@@ -3607,9 +3657,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:
-            self.pipeline.update_block_uuid(
-                self, old_uuid, widget=BlockType.CHART == self.type
-            )
+            self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
             cache = BlockCache()
             if detach:

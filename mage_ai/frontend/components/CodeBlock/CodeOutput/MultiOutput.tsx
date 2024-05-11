@@ -1,6 +1,7 @@
 import { createRef, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import Divider from '@oracle/elements/Divider';
 import { MultiOutputStyle } from './index.style';
 import { addClassNames, removeClassNames } from '@utils/elements';
 
@@ -89,6 +90,8 @@ function MultiOutput({
         tabs={tabs}
         underlineStyle
       />
+
+      <Divider medium />
 
       {outputsMemo}
     </MultiOutputStyle>
