@@ -16,6 +16,7 @@ RUN \
   # odbc dependencies
   msodbcsql18\
   unixodbc-dev \
+  graphviz \
   # R
   r-base && \
   apt-get clean && \
@@ -26,8 +27,6 @@ RUN \
   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
-## Chart packages
-RUN apt-get update && apt-get install graphviz
 
 ## Python Packages
 RUN \
