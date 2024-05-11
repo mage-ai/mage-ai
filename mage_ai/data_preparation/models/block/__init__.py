@@ -2559,7 +2559,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         variable_mapping = self.__save_outputs_prepare(outputs)
 
         if override_conditionally:
-            for variable_uuid, data in variable_mapping.items():
+            for variable_uuid, _ in variable_mapping.items():
                 variable = self.get_variable_object(
                     self.uuid,
                     variable_uuid,

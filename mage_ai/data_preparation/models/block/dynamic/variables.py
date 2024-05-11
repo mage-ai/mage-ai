@@ -202,7 +202,7 @@ class LazyVariableController(Sequence):
         child_dynamic_block_index: Optional[int] = None,
         dynamic_block_index: Optional[int] = None,
         lazy_load: bool = False,
-    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet],],]:
+    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet]]]:
         arr = self.lazy_variable_sets
 
         if child_dynamic_block_index is not None:
@@ -233,7 +233,7 @@ class LazyVariableController(Sequence):
         self,
         dynamic_block_index: Optional[int] = None,
         lazy_load: bool = False,
-    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet],],]:
+    ) -> List[Union[Tuple[Optional[Any], Dict], List[LazyVariableSet]]]:
         arr = self.lazy_variable_sets
 
         if dynamic_block_index is not None:

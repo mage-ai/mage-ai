@@ -311,12 +311,13 @@ def serialize_complex(
 
     def serialize(
         value: Any,
-        current_path: List[str] = [],
+        current_path: Optional[List[str]] = None,
         combine_values_and_column_types=combine_values_and_column_types,
         save_path=save_path,
     ) -> Any:
         """Recursively serializes data while updating column types accordingly."""
         serialized_value = None
+        current_path = current_path or []
 
         full_save_path = os.path.join(save_path, *current_path) if save_path else None
         key_path = ".".join(current_path)

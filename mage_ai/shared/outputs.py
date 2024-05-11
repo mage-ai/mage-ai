@@ -51,8 +51,9 @@ def save_custom_object(
         os.makedirs(variable_path, exist_ok=True)
 
         if is_iterable(data):
-            for item in data:
-                pass
+            for idx, item in enumerate(data):
+                full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
+                joblib.dump(data, os.path.join(variable_path, f'{JOBLIB_OBJECT_FILE}.{idx}'))
         else:
             full_path = os.path.join(variable_path, JOBLIB_OBJECT_FILE)
             joblib.dump(data, full_path)

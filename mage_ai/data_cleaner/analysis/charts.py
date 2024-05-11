@@ -1,4 +1,5 @@
 import math
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,7 @@ SCATTER_PLOT_CATEGORY_LIMIT = 10
 TIME_SERIES_BUCKETS = 40
 
 
-def increment(metric, tags={}):
+def increment(metric, tags: Dict = None):
     pass
 
 
