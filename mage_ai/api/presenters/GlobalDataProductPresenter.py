@@ -12,4 +12,7 @@ class GlobalDataProductPresenter(BasePresenter):
     ]
 
     def present(self, **kwargs):
-        return self.model.to_dict(include_uuid=True)
+        if self.model:
+            return self.model.to_dict(include_uuid=True)
+
+        return {}
