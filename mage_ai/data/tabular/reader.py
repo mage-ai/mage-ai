@@ -1,8 +1,8 @@
 import os
 from functools import reduce
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
-import polars as pl
+import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
@@ -205,7 +205,8 @@ def scan_batch_datasets(
     columns: Optional[List[str]] = None,
     filter: Optional[ds.Expression] = None,
     filters: Optional[List[List[str]]] = None,
-):
+    scan: Optional[bool] = False,
+) -> Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]]:
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
 
     filters_list = []
@@ -234,11 +235,15 @@ def scan_batch_datasets(
     if filter:
         filters_list.append(filter)
 
-    # Create a scanner to query the dataset
-    for record_batch in dataset.to_batches(
+    # Use scan_batches which yields record batches directly from the scan operation
+    scanner_settings = dict(
         batch_size=batch_size,
         columns=columns,
         filter=reduce(lambda a, b: a & b, filters_list),
         use_threads=True,
-    ):
-        yield pl.from_arrow(record_batch)
+    )
+
+    if scan:
+        return dataset.scanner(**scanner_settings).scan_batches()
+
+    return dataset.to_batches(**scanner_settings)

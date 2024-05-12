@@ -1,8 +1,9 @@
 import glob
 import os
 import shutil
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
+import pandas as pd
 import polars as pl
 import pyarrow as pa
 from pyarrow import parquet as pq
@@ -80,10 +81,10 @@ def add_custom_metadata_to_table(table: pa.Table, metadata: Dict) -> pa.Table:
     return table.replace_schema_metadata(new_schema.metadata)
 
 
-def write_polars_df_with_partitioning(
+def to_parquet(
     output_dir: str,
-    df: Optional[pl.DataFrame] = None,
-    dfs: Optional[List[pl.DataFrame]] = None,
+    df: Optional[Union[pl.DataFrame, pd.Series]] = None,
+    dfs: Optional[Union[List[pl.DataFrame], pd.Series]] = None,
     chunk_size: Optional[int] = None,
     metadata: Optional[Dict] = None,
     num_buckets: Optional[int] = None,
