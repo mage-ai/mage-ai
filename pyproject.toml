@@ -44,3 +44,7 @@ select = ["E", "F", "W"]
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
+
+[tool.pyright]
+venv = ".venv"
+venvPath = "."
