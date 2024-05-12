@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 from typing import Dict, List, Optional, Union
@@ -9,6 +10,7 @@ import pyarrow as pa
 from pyarrow import parquet as pq
 
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
+from mage_ai.shared.parsers import object_to_dict
 
 
 def append_chunk_column(
@@ -81,10 +83,16 @@ def add_custom_metadata_to_table(table: pa.Table, metadata: Dict) -> pa.Table:
     return table.replace_schema_metadata(new_schema.metadata)
 
 
+def series_to_dataframe(series: Union[pd.Series, pl.Series]) -> pl.DataFrame:
+    if isinstance(series, pd.Series):
+        series = pl.Series(series.name, series.to_numpy())
+    return pl.DataFrame(series)
+
+
 def to_parquet(
     output_dir: str,
-    df: Optional[Union[pl.DataFrame, pd.Series]] = None,
-    dfs: Optional[Union[List[pl.DataFrame], pd.Series]] = None,
+    df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
+    dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
     chunk_size: Optional[int] = None,
     metadata: Optional[Dict] = None,
     num_buckets: Optional[int] = None,
@@ -101,6 +109,20 @@ def to_parquet(
     :param chunk_size: Number of rows per chunk.
     :param metadata: Dictionary with custom metadata to add to the Parquet files.
     """
+
+    series_sample = None
+    if dfs is not None and any(
+        [isinstance(item, (pd.Series, pl.Series)) for item in dfs]
+    ):
+        series_sample = dfs[0]
+        dfs = [
+            series_to_dataframe(series)
+            for series in dfs
+            if isinstance(series, (pd.Series, pl.Series))
+        ]
+    elif isinstance(df, (pd.Series, pl.Series)):
+        series_sample = df
+        df = series_to_dataframe(df)
 
     chunk_sizes = [] + ([chunk_size] if chunk_size else [])
     if dfs is not None:
@@ -124,7 +146,9 @@ def to_parquet(
 
             chunk_sizes.append(chunk_size_for_index)
             print(f'Chunk size for index {index}: {chunk_size_for_index}')
-    elif df is not None and (chunk_size or num_buckets):
+    elif (
+        df is not None and (chunk_size or num_buckets) and not isinstance(df, pd.Series)
+    ):
         df = add_chunk_column(df, chunk_size=chunk_size, num_buckets=num_buckets)
 
     if df is None:
@@ -135,9 +159,10 @@ def to_parquet(
         metadata['chunk_sizes'] = chunk_sizes
     if num_buckets:
         metadata['num_buckets'] = num_buckets
-
-    if chunk_size or num_buckets:
-        partition_cols = (partition_cols or []) + [COLUMN_CHUNK]
+    if series_sample is not None:
+        metadata['object'] = json.dumps(
+            object_to_dict(series_sample, include_hash=False, include_uuid=False)
+        )
 
     # Convert the Polars DataFrame to a PyArrow Table first
     table = add_custom_metadata_to_table(df.to_arrow(), metadata)
@@ -151,6 +176,8 @@ def to_parquet(
         shutil.rmtree(output_dir)
         print(f"Existing data in '{output_dir}' has been deleted for replace mode.")
 
+    if chunk_size or num_buckets:
+        partition_cols = (partition_cols or []) + [COLUMN_CHUNK]
     # Utilize PyArrow's write_to_dataset function to handle partitioning
     pq.write_to_dataset(
         table,

@@ -1,7 +1,10 @@
+import json
 import os
 from functools import reduce
 from typing import Any, Dict, Iterator, List, Optional, Union
 
+import pandas as pd
+import polars as pl
 import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
@@ -11,6 +14,7 @@ from mage_ai.data.tabular.constants import (
     DEFAULT_BATCH_SIZE,
     FilterComparison,
 )
+from mage_ai.shared.array import find, flatten
 
 
 def create_filter(*args) -> ds.Expression:
@@ -79,9 +83,20 @@ def read_metadata(
 ) -> Dict[
     str,
     Union[
-        List[Dict[str, Any]],
-        Dict[str, Any],
-        float,
+        int,
+        Dict[
+            str,
+            Dict[
+                str,
+                List[str],
+            ],
+        ],
+        List[
+            Dict[
+                str,
+                Union[str, int, Dict[str, str]],
+            ]
+        ],
     ],
 ]:
     """
@@ -92,7 +107,7 @@ def read_metadata(
     :param include_schema: A boolean flag to include schema information in the output.
     :return: A dictionary containing metadata and optionally schema information.
     """
-    partition_details = []
+    file_details_list = []
 
     # List all Parquet files in the directory
     parquet_files = []
@@ -188,14 +203,106 @@ def read_metadata(
 
             file_details['schema'] = schema_info
 
-        partition_details.append(file_details)
+        file_details_list.append(file_details)
 
-    return dict(
-        num_partitions=len(partition_details),
-        num_rows=num_rows_total,
-        partitions=partition_details,
-        schema=schema_combined,
+    return {
+        'files': file_details_list,
+        'num_partitions': len(file_details_list),
+        'num_rows': num_rows_total,
+        'schema': schema_combined,
+    }
+
+
+def get_file_metadata(file_details: Any) -> Dict[str, str]:
+    return file_details['metadata']
+
+
+def get_object_metadata(file_metadata: Dict[str, str]) -> Dict[str, str]:
+    if file_metadata is not None:
+        object_metadata_json: Optional[str] = file_metadata.get('object', None)
+        if object_metadata_json is not None:
+            return json.loads(object_metadata_json)
+    return {}
+
+
+def get_file_details(
+    dataset_metadata_dict: Any,
+) -> List[
+    Dict[
+        str,
+        Union[str, int, Dict[str, str]],
+    ]
+]:
+    file_details_list = dataset_metadata_dict['files']
+
+    if isinstance(file_details_list, list) and len(file_details_list) >= 1:
+        return file_details_list
+
+    return []
+
+
+def compare_object(object: Any, object_metadata: Dict[str, str]) -> bool:
+    return (
+        object_metadata.get('module') == object.__module__
+        and object_metadata.get('name') == object.__name__
     )
+
+
+def deserialize_batch(
+    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch],
+    object_metadata: Optional[Dict[str, str]] = None,
+) -> Union[
+    pd.Series,
+    pl.DataFrame,
+    pl.Series,
+]:
+    record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
+    table = pa.Table.from_batches([record_batch])
+
+    if object_metadata is not None and table.num_columns >= 1:
+        if compare_object(pd.Series, object_metadata):
+            column_name = table.column_names[0]
+            return pd.Series(table.column(column_name).to_pandas())
+        elif compare_object(pl.Series, object_metadata):
+            # Convert the PyArrow Array/ChunkedArray directly to a Polars Series
+            column = table.column(0)
+            if column.num_chunks > 0:
+                # Handle the case where the column is chunked
+                chunk_array = column.chunk(0)  # Assuming you want the first chunk
+                # Create a Polars Series from the PyArrow Array
+                return pl.Series(chunk_array.to_pylist())
+            else:
+                # Handle non-chunked column
+                return pl.Series(column.to_pylist())
+
+    return pl.from_arrow(table)
+
+
+def get_all_objects_metadata(source: Union[List[str], str]) -> List[Dict[str, str]]:
+    return flatten(
+        [
+            [
+                get_object_metadata(get_file_metadata(file_details))
+                for file_details in get_file_details(read_metadata(directory))
+            ]
+            for directory in (source if isinstance(source, list) else [source])
+        ]
+    )
+
+
+def get_series_object_metadata(
+    source: Union[List[str], str],
+) -> Optional[Dict[str, str]]:
+    def __check(object_metadata: Dict[str, str]) -> bool:
+        return compare_object(
+            pd.Series,
+            object_metadata,
+        ) or compare_object(
+            pl.Series,
+            object_metadata,
+        )
+
+    return find(__check, get_all_objects_metadata(source))
 
 
 def scan_batch_datasets(
@@ -203,11 +310,14 @@ def scan_batch_datasets(
     batch_size: Optional[int] = DEFAULT_BATCH_SIZE,
     chunks: Optional[List[int]] = None,
     columns: Optional[List[str]] = None,
+    deserialize: Optional[bool] = False,
     filter: Optional[ds.Expression] = None,
     filters: Optional[List[List[str]]] = None,
+    return_generator: Optional[bool] = False,
     scan: Optional[bool] = False,
 ) -> Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]]:
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
+    object_metadata = get_series_object_metadata(source)
 
     filters_list = []
     if chunks:
@@ -235,15 +345,35 @@ def scan_batch_datasets(
     if filter:
         filters_list.append(filter)
 
+    expression = None
+    if len(filters_list) >= 1:
+        expression = reduce(lambda a, b: a & b, filters_list)
+
     # Use scan_batches which yields record batches directly from the scan operation
     scanner_settings = dict(
         batch_size=batch_size,
         columns=columns,
-        filter=reduce(lambda a, b: a & b, filters_list),
+        filter=expression,
         use_threads=True,
     )
 
-    if scan:
-        return dataset.scanner(**scanner_settings).scan_batches()
+    if return_generator:
+        if scan:
+            return dataset.scanner(**scanner_settings).scan_batches()
+        else:
+            return dataset.to_batches(**scanner_settings)
 
-    return dataset.to_batches(**scanner_settings)
+    if scan:
+        for tagged_record_batch in dataset.scanner(**scanner_settings).scan_batches():
+            yield (
+                deserialize_batch(tagged_record_batch, object_metadata=object_metadata)
+                if deserialize
+                else tagged_record_batch
+            )
+    else:
+        for record_batch in dataset.to_batches(**scanner_settings):
+            yield (
+                deserialize_batch(record_batch, object_metadata=object_metadata)
+                if deserialize
+                else record_batch
+            )
