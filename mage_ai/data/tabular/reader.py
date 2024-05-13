@@ -14,6 +14,7 @@ from mage_ai.data.tabular.constants import (
     DEFAULT_BATCH_SIZE,
     FilterComparison,
 )
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.array import find, flatten
 
 
@@ -315,6 +316,7 @@ def scan_batch_datasets(
     filters: Optional[List[List[str]]] = None,
     return_generator: Optional[bool] = False,
     scan: Optional[bool] = False,
+    settings: Optional[BatchSettings] = None,
 ) -> Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]]:
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
     object_metadata = get_series_object_metadata(source)
