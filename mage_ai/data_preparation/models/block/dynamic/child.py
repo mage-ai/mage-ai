@@ -128,8 +128,10 @@ class DynamicChildController:
                 counts_by_upstream_block_uuid[upstream_block.uuid] = count
 
                 if is_dynamic:
-                    metadata_by_upstream_block_uuid[upstream_block.uuid] = \
-                        [lazy_var_set.read_metadata() for lazy_var_set in lazy_variable_controller]
+                    metadata_by_upstream_block_uuid[upstream_block.uuid] = [
+                        lazy_var_set.read_metadata()
+                        for lazy_var_set in lazy_variable_controller
+                    ]
             elif is_dynamic:
                 tries = 0
                 count = 0
@@ -180,30 +182,39 @@ class DynamicChildController:
                 if is_dynamic_child or is_dynamic:
                     count = counts_by_upstream_block_uuid.get(upstream_block.uuid)
 
-                    parent_index = dynamic_block_index % count
+                    if count is not None and count >= 1:
+                        parent_index = dynamic_block_index % count
 
-                    if is_dynamic_child:
-                        block_runs = block_runs_by_block_uuid[upstream_block.uuid]
-                        block_runs = sorted(
-                            [br for br in block_runs if br.block_uuid != upstream_block.uuid],
-                            key=lambda br: br.id,
-                        )
-                        # This errors list index out of range
-                        if parent_index < len(block_runs):
-                            dynamic_upstream_block_uuids.append(block_runs[parent_index].block_uuid)
-
-                    if metadata_by_upstream_block_uuid.get(upstream_block.uuid):
-                        metadata = metadata_by_upstream_block_uuid[upstream_block.uuid]
-                        if parent_index < len(metadata):
-                            metadata = metadata[parent_index]
-
-                            if metadata.get('block_uuid'):
-                                block_run_block_uuid = metadata.get('block_uuid')
-
-                            if metadata.get('upstream_blocks'):
-                                upstream_blocks_from_metadata.extend(
-                                    metadata.get('upstream_blocks'),
+                        if is_dynamic_child:
+                            block_runs = block_runs_by_block_uuid[upstream_block.uuid]
+                            block_runs = sorted(
+                                [
+                                    br
+                                    for br in block_runs
+                                    if br.block_uuid != upstream_block.uuid
+                                ],
+                                key=lambda br: br.id,
+                            )
+                            # This errors list index out of range
+                            if parent_index < len(block_runs):
+                                dynamic_upstream_block_uuids.append(
+                                    block_runs[parent_index].block_uuid
                                 )
+
+                        if metadata_by_upstream_block_uuid.get(upstream_block.uuid):
+                            metadata = metadata_by_upstream_block_uuid[
+                                upstream_block.uuid
+                            ]
+                            if parent_index < len(metadata):
+                                metadata = metadata[parent_index]
+
+                                if metadata.get('block_uuid'):
+                                    block_run_block_uuid = metadata.get('block_uuid')
+
+                                if metadata.get('upstream_blocks'):
+                                    upstream_blocks_from_metadata.extend(
+                                        metadata.get('upstream_blocks'),
+                                    )
 
             block_run_dict = dict(
                 dynamic_block_index=dynamic_block_index,
@@ -213,10 +224,12 @@ class DynamicChildController:
             if upstream_blocks_from_metadata:
                 block_run_dict['upstream_blocks'] = upstream_blocks_from_metadata
 
-            block_run_dicts.append((
-                f'{self.block.uuid}:{block_run_block_uuid}',
-                block_run_dict,
-            ))
+            block_run_dicts.append(
+                (
+                    f'{self.block.uuid}:{block_run_block_uuid}',
+                    block_run_dict,
+                )
+            )
 
         block_runs = []
         pipeline_run = self.pipeline_run()
