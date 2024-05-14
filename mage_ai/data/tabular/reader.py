@@ -379,3 +379,55 @@ def scan_batch_datasets(
                 if deserialize
                 else record_batch
             )
+
+
+# dataset = ds.dataset('test_data', format='parquet', partitioning='hive')
+# dataset.count_rows()  # 161_061_270
+
+
+# def batch_dataset_by_size(
+#     dataset,
+#     max_batch_size_bytes,
+#     num_rows_to_estimate=1000,
+# ):
+#     pass
+
+
+# import pyarrow as pa
+# import pyarrow.dataset as ds
+
+
+# def batch_dataset_by_size(dataset, max_batch_size_bytes, num_rows_to_estimate=1000):
+#     # Estimate the byte size per row
+#     num_rows_to_estimate = min(num_rows_to_estimate, dataset.count_rows())
+#     sample_rows = dataset.take(indices=num_rows_to_estimate)
+#     estimated_bytes_per_row = sample_rows.get_total_buffer_size() / num_rows_to_estimate
+
+#     # Calculate the number of rows per batch based on the maximum batch size
+#     rows_per_batch = max(1, int(max_batch_size_bytes / estimated_bytes_per_row))
+
+#     # Batch the dataset
+#     batches = dataset.to_batches(batch_size=rows_per_batch)
+
+#     return batches
+
+
+# # Usage example
+# dataset = ds.dataset("path/to/dataset")
+# max_batch_size_bytes = 100 * 1024 * 1024  # 100 MB
+# num_rows_to_estimate = 1000
+
+# batches = batch_dataset_by_size(dataset, max_batch_size_bytes, num_rows_to_estimate)
+
+# # Iterate over the batches
+# for batch in batches:
+#     # Process each batch
+#     print(f"Batch size: {batch.num_rows} rows, {batch.get_total_buffer_size()} bytes")
+
+
+# for i in parquet_file.iter_batches(batch_size=1000):
+#     print(i)
+
+# batches = dataset.to_batches(batch_size=max_rows_per_batch)
+
+# batch_size
