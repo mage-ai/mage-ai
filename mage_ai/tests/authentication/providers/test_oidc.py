@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 from mage_ai.authentication.providers.oidc import OidcProvider
 
 
-class TestGetUserInfo(unittest.IsolatedAsyncioTestCase):
+class OidcProviderTest(unittest.IsolatedAsyncioTestCase):
     async def test_get_user_info(self):
         # Define test cases
         test_cases = [
