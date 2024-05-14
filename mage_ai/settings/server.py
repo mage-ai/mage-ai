@@ -129,6 +129,7 @@ HOSTNAME = os.getenv("HOSTNAME")
 INITIAL_METADATA = os.getenv("INITIAL_METADATA")
 LOGS_DIR_PATH = os.getenv("LOGS_DIR_PATH")
 MAX_FILE_CACHE_SIZE = os.getenv("MAX_FILE_CACHE_SIZE") or (1024 * 1024)  # 1 MB
+ENABLE_USER_PROJECTS = get_bool_value(os.getenv("ENABLE_USER_PROJECTS"))
 REDIS_URL = os.getenv("REDIS_URL")
 SERVER_VERBOSITY = os.getenv("SERVER_VERBOSITY", "info") or "info"
 SERVER_LOGGING_FORMAT = os.getenv("SERVER_LOGGING_FORMAT", "plaintext")

@@ -151,12 +151,16 @@ class Project():
         return self.repo_config.pipelines
 
     @classmethod
-    def is_feature_enabled_in_root_or_active_project(self, feature_name: FeatureUUID) -> bool:
-        if self(root_project=True).is_feature_enabled(feature_name):
+    def is_feature_enabled_in_root_or_active_project(
+        self,
+        feature_name: FeatureUUID,
+        user=None,
+    ) -> bool:
+        if self(root_project=True, user=user).is_feature_enabled(feature_name):
             return True
 
         if project_platform_activated():
-            return self(root_project=False).is_feature_enabled(feature_name)
+            return self(root_project=False, user=user).is_feature_enabled(feature_name)
 
         return False
 

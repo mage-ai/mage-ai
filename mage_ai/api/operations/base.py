@@ -295,7 +295,10 @@ class BaseOperation():
         resource_parent: Any = None,
         resources: List[Dict] = None,
     ) -> List[Hook]:
-        if not Project.is_feature_enabled_in_root_or_active_project(FeatureUUID.GLOBAL_HOOKS):
+        if not Project.is_feature_enabled_in_root_or_active_project(
+            FeatureUUID.GLOBAL_HOOKS,
+            user=self.user,
+        ):
             return None
 
         operation_types = [operation_type]

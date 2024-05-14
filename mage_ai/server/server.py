@@ -633,10 +633,10 @@ async def main(
         logger.info('Initializing tag cache.')
         await TagCache.initialize_cache(replace=True)
 
-        logger.info('Initializing block action object cache.')
-        await BlockActionObjectCache.initialize_cache(replace=True)
-
         project_model = Project(root_project=True)
+        logger.info('Initializing block action object cache.')
+        await BlockActionObjectCache.initialize_cache(project=project_model, replace=True)
+
         if project_model:
             if project_model.spark_config and \
                     project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
@@ -672,7 +672,7 @@ async def main(
         try:
             from mage_ai.services.ssh.aws.emr.models import create_tunnel
 
-            tunnel = create_tunnel(clean_up_on_failure=True)
+            tunnel = create_tunnel(clean_up_on_failure=True, project=project_model)
             if tunnel:
                 print(f'SSH tunnel active: {tunnel.is_active()}')
         except Exception as err:
