@@ -110,7 +110,9 @@ function RetryButton({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            onSuccessProp();
+            if (onSuccessProp) {
+              onSuccessProp?.();
+            }
           },
           onErrorCallback: (response, errors) => setErrors?.({
             errors,
@@ -618,8 +620,8 @@ function PipelineRunsTable({
                     passHref
                   >
                     <Link
-                      bold
                       block
+                      bold
                       centerAlign
                       muted
                       title={blockRunCountTooltipMessage}
@@ -733,8 +735,8 @@ function PipelineRunsTable({
                     passHref
                   >
                     <Link
-                      bold
                       block
+                      bold
                       centerAlign
                       disabled={disabled}
                       sky

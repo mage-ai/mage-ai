@@ -134,6 +134,7 @@ mage_ai/server/data/files/**
 default_repo
 instance_metadata.json
 ~/.mage_data
+mage_data/
 
 # test notebook
 test.ipynb
@@ -166,6 +167,7 @@ node_modules
 .npmrc
 mage_ai/server/frontend_dist_base_path
 .env
+.env.*
 
 # Scratch files
 scratch*
