@@ -160,7 +160,6 @@ class Interaction:
         self.file.delete()
 
     def exists(self) -> bool:
-        print('OMGGGGGGGGGGGGGGGGGGGGGG', self.file, self.file_path)
         return self.file.exists()
 
     async def inputs(self) -> Dict:
@@ -288,7 +287,6 @@ class Interaction:
 
     @property
     def __repo_path(self) -> str:
-        print('WTFFFFFFFFFFFFFFFFFFF', self.pipeline.repo_path)
         return (
             self.pipeline.repo_path
             if self.pipeline is not None

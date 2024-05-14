@@ -559,8 +559,6 @@ class Pipeline:
                 PIPELINE_CONFIG_FILE,
             )
 
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFF', config_path, repo_path)
-
         if not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
