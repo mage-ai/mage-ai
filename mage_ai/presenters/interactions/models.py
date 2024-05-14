@@ -144,14 +144,14 @@ class Interaction:
         return self._content
 
     async def content_parsed(self, interpolate_variables: bool = False) -> Dict:
-        if self._content_parsed is not None or \
-                BlockLanguage.YAML != self.language:
-
+        if self._content_parsed is not None or BlockLanguage.YAML != self.language:
             return self._content_parsed
 
         text = await self.content_async()
         self._content_parsed = yaml.safe_load(
-            interpolate_content(text, self.__pipeline_variables) if interpolate_variables else text,
+            interpolate_content(text, self.__pipeline_variables)
+            if interpolate_variables
+            else text,
         )
 
         return self._content_parsed
@@ -160,6 +160,7 @@ class Interaction:
         self.file.delete()
 
     def exists(self) -> bool:
+        print('OMGGGGGGGGGGGGGGGGGGGGGG', self.file, self.file_path)
         return self.file.exists()
 
     async def inputs(self) -> Dict:
@@ -173,7 +174,7 @@ class Interaction:
     async def layout(self) -> Dict:
         settings = await self.content_parsed() or {}
         rows = []
-        for row in (settings.get('layout') or []):
+        for row in settings.get('layout') or []:
             items = []
             for item in row:
                 items.append(InteractionLayoutItem(**item))
@@ -199,7 +200,7 @@ class Interaction:
         for _uuid, item in (settings.get('inputs') or {}).items():
             InteractionInput(**item)
 
-        for row in (settings.get('layout') or []):
+        for row in settings.get('layout') or []:
             for item in row:
                 InteractionLayoutItem(**item)
 
@@ -287,4 +288,9 @@ class Interaction:
 
     @property
     def __repo_path(self) -> str:
-        return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+        print('WTFFFFFFFFFFFFFFFFFFF', self.pipeline.repo_path)
+        return (
+            self.pipeline.repo_path
+            if self.pipeline is not None
+            else get_repo_path(root_project=True)
+        )
