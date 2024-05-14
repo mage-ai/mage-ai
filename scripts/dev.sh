@@ -137,6 +137,16 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --services)
+    SERVICES="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --override-compose)
+    OVERRIDE_COMPOSE="$3"
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -149,6 +159,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 : "${PORT:="''"}"
 : "${PROJECT_NAME:="''"}"
 : "${MANAGE_INSTANCE:="''"}"
+: "${SERVICES:="server app"}"
 
 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -183,25 +194,35 @@ export MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
 export SMTP_EMAIL=$SMTP_EMAIL
 export SMTP_PASSWORD=$SMTP_PASSWORD
 
-UP_SERVICES="server app"
-
-if [[ "$SPARK" == "1" ]]; then
-    UP_SERVICES="server_spark app_spark"
-fi
-
 if command -v docker-compose &> /dev/null
 then
     # docker-compose exists
-    HOST=$HOST \
-    PORT=$PORT \
-    PROJECT=$PROJECT_NAME \
-    MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker-compose -f docker-compose.yml up $UP_SERVICES
+    if [ -n "${OVERRIDE_COMPOSE}" ]; then
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker-compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
+    else
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker-compose -f docker-compose.yml up $SERVICES
+    fi
 else
-    # docker-compose does not exist
-    HOST=$HOST \
-    PORT=$PORT \
-    PROJECT=$PROJECT_NAME \
-    MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker compose -f docker-compose.yml up $UP_SERVICES
+    # docker-compose does not exist (Docker Compose V2 syntax)
+    if [ -n "${OVERRIDE_COMPOSE}" ]; then
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
+    else
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker compose -f docker-compose.yml up $SERVICES
+    fi
 fi

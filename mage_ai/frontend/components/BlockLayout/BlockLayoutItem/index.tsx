@@ -174,12 +174,15 @@ function BlockLayoutItem({
   ]);
 
   const data =
-    useMemo(() => dataBlockLayoutItem?.block_layout_item
-      ? dataBlockLayoutItem?.block_layout_item?.data
-      : blockLayoutItem?.data,
+    useMemo(() => detail
+      ? dataBlockLayoutItem?.block_layout_item
+        ? dataBlockLayoutItem?.block_layout_item?.data
+        : blockLayoutItem?.data
+      : blockLayoutItem?.data || dataBlockLayoutItem?.block_layout_item?.data,
     [
       blockLayoutItem,
       dataBlockLayoutItem,
+      detail,
     ]);
 
   const buildChart = useCallback(({

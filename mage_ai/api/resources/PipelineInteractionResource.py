@@ -15,8 +15,10 @@ class PipelineInteractionResource(GenericResource):
     async def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
         user = kwargs.get('user')
-        repo_path = get_repo_path(user=user)
-        pipeline = await Pipeline.get_async(uuid, repo_path=repo_path)
+        repo_path = get_repo_path(user=user, root_project=True)
+        pipeline = await Pipeline.get_async(
+            uuid, all_projects=True, repo_path=repo_path
+        )
         return PipelineInteractions(pipeline)
 
     @classmethod
@@ -39,11 +41,14 @@ class PipelineInteractionResource(GenericResource):
         if 'content' in payload:
             payload_update['content'] = payload.get('content')
         else:
-            payload_update['content_parsed'] = extract(payload, [
-                'blocks',
-                'layout',
-                'permissions',
-            ])
+            payload_update['content_parsed'] = extract(
+                payload,
+                [
+                    'blocks',
+                    'layout',
+                    'permissions',
+                ],
+            )
 
         await self.model.update(**payload_update)
 
@@ -53,13 +58,21 @@ class PipelineInteractionResource(GenericResource):
                 resource = InteractionResource.member(
                     interaction_uuid,
                     self.current_user,
-                    **merge_dict(kwargs, dict(
-                        parent_model=self.model.pipeline,
-                    )),
+                    **merge_dict(
+                        kwargs,
+                        dict(
+                            parent_model=self.model.pipeline,
+                        ),
+                    ),
                 )
 
-                await resource.update(extract(interaction, [
-                    'inputs',
-                    'layout',
-                    'variables',
-                ]))
+                await resource.update(
+                    extract(
+                        interaction,
+                        [
+                            'inputs',
+                            'layout',
+                            'variables',
+                        ],
+                    )
+                )
