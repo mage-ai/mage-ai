@@ -84,10 +84,14 @@ class BlockActionObjectCache(BaseCache):
     cache_key = CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING
 
     @classmethod
-    async def initialize_cache(self, replace: bool = False) -> 'BlockActionObjectCache':
+    async def initialize_cache(
+        self,
+        project: Project = None,
+        replace: bool = False,
+    ) -> 'BlockActionObjectCache':
         cache = self()
         if replace or not cache.exists():
-            await cache.initialize_cache_for_all_objects()
+            await cache.initialize_cache_for_all_objects(project=project)
 
         return cache
 
@@ -233,21 +237,43 @@ class BlockActionObjectCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    async def initialize_cache_for_all_objects(self) -> None:
+    async def initialize_cache_for_all_objects(self, project=None) -> None:
+        """
+        Initializes a cache for various types of objects across all projects.
+
+        This method populates a mapping dictionary with cached data for different types of objects,
+        including mage templates, custom block templates, and block files, from all projects.
+
+        - `OBJECT_TYPE_BLOCK_FILE`: Cache for block files.
+        - `OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE`: Cache for custom block templates.
+        - `OBJECT_TYPE_MAGE_TEMPLATE`: Cache for mage templates.
+
+        The caching process includes fetching templates relevant to all projects,
+        processing custom block templates from a directory,
+        and gathering data for block files from all projects' directories.
+
+        The cache is constructed and stored using the `set` method.
+
+        Returns:
+            None: This method does not return any value, it updates the cache for all objects.
+        """
         mapping = {
             OBJECT_TYPE_BLOCK_FILE: {},
             OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE: {},
             OBJECT_TYPE_MAGE_TEMPLATE: {},
         }
 
+        # Cache Mage templates
         mage_templates = TEMPLATES + TEMPLATES_ONLY_FOR_V2
-        if Project().is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+        project = project or Project()
+        if project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
             mage_templates += get_templates_for_data_integrations()
 
         for block_action_object in mage_templates:
             key = self.build_key_for_mage_template(block_action_object)
             mapping[OBJECT_TYPE_MAGE_TEMPLATE][key] = block_action_object
 
+        # Cache custom block templates
         file_dicts = get_templates(DIRECTORY_FOR_BLOCK_TEMPLATES)
         file_dicts_flat = flatten_files(file_dicts)
         custom_block_templates = group_and_hydrate_files(file_dicts_flat, CustomBlockTemplate)
@@ -258,9 +284,11 @@ class BlockActionObjectCache(BaseCache):
                 include_content=True,
             )
 
+        # Cache block files
         paths_to_traverse = [dict(full_path=base_repo_path())]
         if project_platform_activated():
             paths_to_traverse = build_repo_path_for_all_projects(mage_projects_only=True).values()
+
         for path_dict in paths_to_traverse:
             repo_path = path_dict['full_path']
 

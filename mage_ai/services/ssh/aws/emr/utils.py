@@ -32,6 +32,14 @@ def should_tunnel(
     if not project:
         project = Project()
 
+    if not project.emr_config:
+        error_message = 'Project has incomplete configuration for AWS EMR.'
+
+        if raise_error:
+            raise Exception(error_message)
+        else:
+            return False
+
     if not project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
         error_message = 'Compute management feature isn’t enabled. '\
             'Turn the feature on in the project’s settings.'
@@ -47,14 +55,6 @@ def should_tunnel(
         kernel_name=kernel_name,
     ):
         error_message = 'SSH tunnel is only supported for the AWS EMR compute service.'
-
-        if raise_error:
-            raise Exception(error_message)
-        else:
-            return False
-
-    if not project.emr_config:
-        error_message = 'Project has incomplete configuration for AWS EMR.'
 
         if raise_error:
             raise Exception(error_message)
