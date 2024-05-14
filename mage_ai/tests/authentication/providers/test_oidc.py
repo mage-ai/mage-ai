@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, patch
+
 from mage_ai.authentication.providers.oidc import OidcProvider
 
 
