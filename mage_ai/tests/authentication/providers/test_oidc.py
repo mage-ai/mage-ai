@@ -19,7 +19,6 @@ class TestGetUserInfo(unittest.IsolatedAsyncioTestCase):
             }
         ]
 
-
         # Patching the __init__ method to completely replace it
         with patch.object(OidcProvider, '__init__', return_value=None):
             for case in test_cases:
@@ -53,6 +52,7 @@ class TestGetUserInfo(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(user_info['email'], 'test@example.com')
                     self.assertEqual(user_info['username'], 'test_user')
                     self.assertListEqual(user_info['user_roles'], case['expected_roles'])
+
 
 if __name__ == '__main__':
     unittest.main()
