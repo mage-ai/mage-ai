@@ -167,7 +167,6 @@ node_modules
 .npmrc
 mage_ai/server/frontend_dist_base_path
 .env
-.env.*
 
 # Scratch files
 scratch*
@@ -186,3 +185,5 @@ playwright-report/
 package-lock.json
 package.json
 yarn.lock
+
+mlruns/

@@ -3,7 +3,7 @@ import os
 import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import yaml
 from croniter import croniter
@@ -30,9 +30,9 @@ class ScheduleType(str, enum.Enum):
 
 
 SCHEDULE_TYPE_TO_LABEL = {
-  ScheduleType.API: 'API',
-  ScheduleType.EVENT: 'Event',
-  ScheduleType.TIME: 'Schedule',
+    ScheduleType.API: 'API',
+    ScheduleType.EVENT: 'Event',
+    ScheduleType.TIME: 'Schedule',
 }
 
 
@@ -66,10 +66,12 @@ class Trigger(BaseConfig):
     status: ScheduleStatus = ScheduleStatus.INACTIVE
     last_enabled_at: datetime = None
     variables: Dict = field(default_factory=dict)
-    sla: int = None     # in seconds
+    sla: int = None  # in seconds
     settings: Dict = field(default_factory=dict)
     envs: List = field(default_factory=list)
     repo_path: str = None
+    description: Optional[str] = None
+    token: Optional[str] = None
 
     def __post_init__(self):
         if self.schedule_type and type(self.schedule_type) is str:
@@ -77,15 +79,19 @@ class Trigger(BaseConfig):
         if self.status and type(self.status) is str:
             self.status = ScheduleStatus(self.status)
         if any(env not in VALID_ENVS for env in self.envs):
-            raise Exception(f'Please provide valid env values inside {list(VALID_ENVS)}.')
+            raise Exception(
+                f'Please provide valid env values inside {list(VALID_ENVS)}.'
+            )
 
     @property
     def has_valid_schedule_interval(self) -> bool:
         # Check if trigger has valid cron expression
-        if self.schedule_interval is not None and \
-            self.schedule_type == ScheduleType.TIME and \
-            self.schedule_interval not in [e.value for e in ScheduleInterval] and \
-                not croniter.is_valid(self.schedule_interval):
+        if (
+            self.schedule_interval is not None
+            and self.schedule_type == ScheduleType.TIME
+            and self.schedule_interval not in [e.value for e in ScheduleInterval]
+            and not croniter.is_valid(self.schedule_interval)
+        ):
             return False
 
         return True
@@ -97,9 +103,13 @@ class Trigger(BaseConfig):
             name=self.name,
             pipeline_uuid=self.pipeline_uuid,
             schedule_interval=self.schedule_interval,
-            schedule_type=self.schedule_type.value if self.schedule_type else self.schedule_type,
+            schedule_type=self.schedule_type.value
+            if self.schedule_type
+            else self.schedule_type,
             settings=self.settings,
             sla=self.sla,
+            description=self.description,
+            token=self.token,
             start_time=self.start_time,
             status=self.status.value if self.status else self.status,
             variables=self.variables,
@@ -183,7 +193,8 @@ def build_triggers(
         except Exception as e:
             if raise_exception:
                 raise Exception(
-                    f'Failed to parse trigger config {trigger_config}. {str(e)}') from e
+                    f'Failed to parse trigger config {trigger_config}. {str(e)}'
+                ) from e
             else:
                 print(f'Failed to parse trigger config for pipeline {pipeline_uuid}')
                 traceback.print_exc()
@@ -199,7 +210,8 @@ def load_trigger_configs(
     trigger_configs = yaml_config.get('triggers') or {}
 
     return build_triggers(
-        trigger_configs, pipeline_uuid, raise_exception, repo_path=get_repo_path())
+        trigger_configs, pipeline_uuid, raise_exception, repo_path=get_repo_path()
+    )
 
 
 def add_or_update_trigger_for_pipeline_and_persist(
