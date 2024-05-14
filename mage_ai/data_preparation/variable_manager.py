@@ -1,16 +1,16 @@
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
-from mage_ai.data_preparation.models.utils import warn_for_repo_path
-from mage_ai.data_preparation.models.variable import (
-    VARIABLE_DIR,
-    Variable,
-    VariableType,
+from mage_ai.data_preparation.models.utils import (
+    infer_variable_type,
+    warn_for_repo_path,
 )
+from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.platform import project_platform_activated
@@ -34,10 +34,10 @@ class VariableManager:
 
     @classmethod
     def get_manager(
-        self,
-        repo_path: str = None,
-        variables_dir: str = None,
-    ) -> 'VariableManager':
+        cls,
+        repo_path: Optional[str] = None,
+        variables_dir: Optional[str] = None,
+    ) -> "VariableManager":
         manager_args = dict(
             repo_path=repo_path,
             variables_dir=variables_dir,
@@ -55,16 +55,16 @@ class VariableManager:
         block_uuid: str,
         variable_uuid: str,
         data: Any,
-        partition: str = None,
-        variable_type: VariableType = None,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
     ) -> None:
-        if type(data) is pd.DataFrame:
-            variable_type = VariableType.DATAFRAME
-        elif is_spark_dataframe(data):
-            variable_type = VariableType.SPARK_DATAFRAME
-        elif is_geo_dataframe(data):
-            variable_type = VariableType.GEO_DATAFRAME
+        variable_type, _ = infer_variable_type(
+            data,
+            repo_path=self.repo_path,
+            variable_type=variable_type,
+        )
+
         variable = Variable(
             clean_name(variable_uuid),
             self.pipeline_path(pipeline_uuid),
@@ -82,8 +82,8 @@ class VariableManager:
         if is_debug():
             print(
                 f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
-                f'in pipeline {pipeline_uuid} '
-                f'stored in {variable.variable_path}'
+                f"in pipeline {pipeline_uuid} "
+                f"stored in {variable.variable_path}"
             )
 
     def build_variable(
@@ -134,26 +134,23 @@ class VariableManager:
         variable.variable_type = variable_type
         await variable.write_data_async(data)
 
-    def clean_variables(
-        self,
-        pipeline_uuid: str = None
-    ):
+    def clean_variables(self, pipeline_uuid: str = None):
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         repo_config = get_repo_config()
         if not repo_config.variables_retention_period:
-            print('Variable retention period is not provided.')
+            print("Variable retention period is not provided.")
             return
-        min_partition = (datetime.utcnow() -
-                         str_to_timedelta(repo_config.variables_retention_period)).strftime(
-                            format='%Y%m%dT%H%M%S')
-        print(f'Clean variables before partition {min_partition}')
+        min_partition = (
+            datetime.utcnow() - str_to_timedelta(repo_config.variables_retention_period)
+        ).strftime(format="%Y%m%dT%H%M%S")
+        print(f"Clean variables before partition {min_partition}")
         if pipeline_uuid is None:
             pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
         else:
             pipeline_uuids = [pipeline_uuid]
         for pipeline_uuid in pipeline_uuids:
-            print(f'Removing cached variables from pipeline {pipeline_uuid}')
+            print(f"Removing cached variables from pipeline {pipeline_uuid}")
             pipeline_variable_path = os.path.join(
                 self.pipeline_path(pipeline_uuid),
                 VARIABLE_DIR,
@@ -161,7 +158,9 @@ class VariableManager:
             dirs = self.storage.listdir(pipeline_variable_path)
             for dirname in dirs:
                 if dirname.isdigit():
-                    pipeline_schedule_vpath = os.path.join(pipeline_variable_path, dirname)
+                    pipeline_schedule_vpath = os.path.join(
+                        pipeline_variable_path, dirname
+                    )
                     execution_partitions = self.storage.listdir(
                         pipeline_schedule_vpath,
                     )
@@ -171,7 +170,7 @@ class VariableManager:
                                 pipeline_schedule_vpath,
                                 partition,
                             )
-                            print(f'Removing folder {pipeline_partition_vpath}')
+                            print(f"Removing folder {pipeline_partition_vpath}")
                             self.storage.remove_dir(pipeline_partition_vpath)
 
     def delete_variable(
@@ -249,22 +248,25 @@ class VariableManager:
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         from mage_ai.data_preparation.models.pipeline import Pipeline
+
         pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
-        variable_dir_path = os.path.join(self.pipeline_path(pipeline_uuid), VARIABLE_DIR)
+        variable_dir_path = os.path.join(
+            self.pipeline_path(pipeline_uuid), VARIABLE_DIR
+        )
         if not self.storage.path_exists(variable_dir_path):
             return dict()
         block_dirs = self.storage.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
-            if not pipeline.has_block(d) and d != 'global':
+            if not pipeline.has_block(d) and d != "global":
                 continue
             block_variables_path = os.path.join(variable_dir_path, d)
             if not self.storage.isdir(block_variables_path):
                 variables_by_block[d] = []
             else:
                 variables = self.storage.listdir(os.path.join(variable_dir_path, d))
-                variable_names = sorted([v.split('.')[0] for v in variables])
-                variables_by_block[d] = [v for v in variable_names if v != '']
+                variable_names = sorted([v.split(".")[0] for v in variables])
+                variables_by_block[d] = [v for v in variable_names if v != ""]
         return variables_by_block
 
     def get_variables_by_block(
@@ -278,16 +280,16 @@ class VariableManager:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
-            partition or '',
+            partition or "",
             clean_name(block_uuid) if clean_block_uuid else block_uuid,
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
         variables = self.storage.listdir(variable_dir_path, max_results=max_results)
-        return sorted([v.split('.')[0] for v in variables])
+        return sorted([v.split(".")[0] for v in variables])
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
-        path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
+        path = os.path.join(self.variables_dir, "pipelines", pipeline_uuid)
         if type(self.storage) is LocalStorage:
             if not self.storage.path_exists(path):
                 self.storage.makedirs(path, exist_ok=True)
@@ -310,11 +312,11 @@ class GCSVariableManager(VariableManager):
         self.storage = GCSStorage(dirpath=variables_dir)
 
 
-def clean_variables(
-    pipeline_uuid: str = None
-):
+def clean_variables(pipeline_uuid: str = None):
     variables_dir = get_variables_dir()
-    VariableManager(variables_dir=variables_dir).clean_variables(pipeline_uuid=pipeline_uuid)
+    VariableManager(variables_dir=variables_dir).clean_variables(
+        pipeline_uuid=pipeline_uuid
+    )
 
 
 def get_global_variables(
@@ -336,7 +338,7 @@ def get_global_variables(
         variables_dir = get_variables_dir()
         variables = VariableManager(variables_dir=variables_dir).get_variables_by_block(
             pipeline_uuid,
-            'global',
+            "global",
         )
         global_variables = dict()
         for variable in variables:
@@ -363,17 +365,12 @@ def get_global_variable(
     else:
         return VariableManager(variables_dir=get_variables_dir()).get_variable(
             pipeline_uuid,
-            'global',
+            "global",
             key,
         )
 
 
-def get_variable(
-    pipeline_uuid: str,
-    block_uuid: str,
-    key: str,
-    **kwargs
-) -> Any:
+def get_variable(pipeline_uuid: str, block_uuid: str, key: str, **kwargs) -> Any:
     """
     Set block intermediate variable by key.
     Block intermediate variables are stored in variables dir.
@@ -396,6 +393,8 @@ def set_global_variable(
     Set global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
+    pipeline = Pipeline.get(pipeline_uuid)
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     if pipeline.variables is None:
@@ -412,10 +411,12 @@ def delete_global_variable(
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
+    pipeline = Pipeline.get(pipeline_uuid)
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)
     else:
         VariableManager(
             variables_dir=get_variables_dir(),
-        ).delete_variable(pipeline_uuid, 'global', key)
+        ).delete_variable(pipeline_uuid, "global", key)

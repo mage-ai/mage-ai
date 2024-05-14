@@ -1,10 +1,12 @@
 import random
+from collections.abc import Iterable
+from typing import Any
 
 
 def batch(iterable, n=1):
     length = len(iterable)
     for ndx in range(0, length, n):
-        yield iterable[ndx:min(ndx + n, length)]
+        yield iterable[ndx: min(ndx + n, length)]
 
 
 def difference(li1, li2):
@@ -50,3 +52,24 @@ def unique_by(arr1, key):
         arr2.append(item)
         mapping[k] = True
     return arr2
+
+
+def is_iterable(
+    obj: Any, exclude_dicts: bool = True, exclude_strings: bool = True
+) -> bool:
+    """
+    Check if an object is iterable, optionally excluding strings.
+
+    Args:
+        obj: The object to check for iterability.
+        exclude_strings (bool): Whether to consider strings as non-iterable (to exclude them).
+
+    Returns:
+        bool: True if the object is iterable; False otherwise.
+    """
+    if (exclude_strings and isinstance(obj, str)) or (
+        exclude_dicts and isinstance(obj, dict)
+    ):
+        return False
+
+    return isinstance(obj, Iterable)

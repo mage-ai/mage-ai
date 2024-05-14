@@ -46,6 +46,7 @@ export interface DataSourceType {
 
 export default interface BlockLayoutItemType {
   configuration?: ConfigurationType;
+  content?: string;
   data?: {
     columns?: string[];
     render?: string;

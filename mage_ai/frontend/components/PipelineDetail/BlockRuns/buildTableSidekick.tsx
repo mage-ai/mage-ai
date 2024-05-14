@@ -4,10 +4,15 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import InnerHTML from 'dangerously-set-html-content';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import {
+  HTMLOutputStyle,
+  OutputRowStyle,
+} from 'components/CodeBlock/CodeOutput/index.style';
 import Text from '@oracle/elements/Text';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
@@ -15,7 +20,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
-import { alphabet, isJsonString } from '@utils/string';
+import { alphabet, hashCode, isJsonString } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export const TAB_TREE = { uuid: 'Dependency tree' };
@@ -133,6 +138,28 @@ export default function({
           } else {
             el = emptyOutputMessageEl;
           }
+        } else if (DataTypeEnum.IMAGE_PNG === dataType && textData) {
+          el = (
+            <div
+              style={{
+                backgroundColor: 'white',
+                maxHeight: height - heightOffset - 90,
+                overflow: 'auto',
+              }}
+            >
+              <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
+            </div>
+          );
+        } else if (DataTypeEnum.TEXT_HTML === dataType && textData) {
+          const key = String(hashCode(textData));
+          el = (
+            // We need to force the key change or else it doesn’t update.
+            <OutputRowStyle contained key={key} normalPadding>
+              <HTMLOutputStyle monospace>
+                <InnerHTML html={textData} />
+              </HTMLOutputStyle>
+            </OutputRowStyle>
+          );
         } else {
           const parsedText = isJsonString(textData)
             ? JSON.stringify(JSON.parse(textData), null, 2)
@@ -174,7 +201,7 @@ export default function({
       });
 
       if (DataTypeEnum.TEXT === dataTypeInit) {
-        arr.push(arrGroup)
+        arr.push(arrGroup);
       }
     });
   }

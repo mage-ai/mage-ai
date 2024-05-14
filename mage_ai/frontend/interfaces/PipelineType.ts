@@ -19,6 +19,11 @@ export enum PipelineTypeEnum {
   STREAMING = 'streaming',
 }
 
+export enum ConcurrencyConfigRunLimitReachedActionEnum {
+  SKIP = 'skip',
+  WAIT = 'wait',
+}
+
 // Invalid pipeline type used for pipelines with invalid configuration
 export const PIPELINE_TYPE_INVALID = 'invalid';
 
@@ -118,10 +123,18 @@ export interface PipelineSettingsType {
   triggers?: PipelineSettingsTriggersType;
 }
 
+interface ConcurrencyConfigType {
+  block_run_limit?: number;
+  on_pipeline_run_limit_reached?: ConcurrencyConfigRunLimitReachedActionEnum;
+  pipeline_run_limit?: number;
+  pipeline_run_limit_all_triggers?: number;
+}
+
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
   callbacks?: BlockType[];
+  concurrency_config?: ConcurrencyConfigType;
   conditionals?: BlockType[];
   created_at?: string;
   data_integration?: {

@@ -18,6 +18,7 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Loading from '@oracle/components/Loading';
 import LayoutDivider from './LayoutDivider';
 import Link from '@oracle/elements/Link';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
@@ -29,6 +30,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import useDebounce from '@utils/hooks/useDebounce';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
 import { ChartTypeEnum, CHART_TYPES } from '@interfaces/ChartBlockType';
@@ -64,6 +66,7 @@ function BlockLayout({
     uuid: `BlockLayout/${uuid}`,
   });
 
+  const [debouncer] = useDebounce();
   const [touchedAttributes, setTouchedAttributes] = useState<{
     [attribute: string]: boolean;
   }>({});
@@ -71,6 +74,9 @@ function BlockLayout({
     content?: string;
     name_new?: string;
   } & BlockLayoutItemType>(null);
+  const [items, setItems] = useState<{
+    [key: string]: BlockLayoutItemType;
+  }>({});
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const refMenu = useRef(null);
 
@@ -95,19 +101,54 @@ function BlockLayout({
   const refreshInterval = useMemo(() => selectedBlockItem?.data_source?.refresh_interval, [
     selectedBlockItem,
   ]);
-  const {
-    data: dataBlockLayoutItem,
-    mutate: fetchBlockLayoutItem,
-  } = api.block_layout_items.page_block_layouts.detail(
-    selectedBlockItem && encodeURIComponent(uuid),
-    selectedBlockItem && encodeURIComponent(selectedBlockItem?.uuid),
+
+  const itemCached = useMemo(() => items?.[selectedBlockItem?.uuid], [items, selectedBlockItem]);
+
+  const [dataBlockLayoutItem, setDataBlockLayoutItem] = useState<any>(null);
+  const [
+    fetchBlockLayoutItem,
     {
-      configuration_override: encodeURIComponent(JSON.stringify(objectAttributes?.configuration || '')),
-      data_source_override: encodeURIComponent(JSON.stringify(objectAttributes?.data_source || '')),
+      isLoading: isLoadingFetchBlockLayoutItem,
     },
+  ]: any = useMutation(
+    (opts: {
+      skip_render?: boolean;
+    } = {}) => api.block_layout_items.page_block_layouts.detailAsync(
+      selectedBlockItem && encodeURIComponent(uuid),
+      selectedBlockItem && encodeURIComponent(selectedBlockItem?.uuid),
+      {
+        configuration_override: encodeURIComponent(JSON.stringify(objectAttributes?.configuration || '')),
+        content_override: encodeURIComponent(objectAttributes?.content || itemCached?.content || ''),
+        data_source_override: encodeURIComponent(JSON.stringify(objectAttributes?.data_source || '')),
+        skip_render: opts?.skip_render ? true : false,
+      },
+      {
+        refreshInterval,
+        revalidateOnFocus: !refreshInterval,
+      },
+    ),
     {
-      refreshInterval,
-      revalidateOnFocus: !refreshInterval,
+      onSuccess: (response: any) => onSuccess(
+          response, {
+            callback: resp => setDataBlockLayoutItem((prev) => {
+              const item = resp?.block_layout_item;
+
+              if (prev?.block_layout_item?.uuid !== item?.uuid) {
+                setObjectAttributesState(prev2 => ({
+                  ...prev2,
+                  ...item,
+                }));
+              }
+
+              setItems(prev => ({
+                ...prev,
+                [item?.uuid]: item,
+              }));
+
+              return resp;
+            }),
+          },
+        ),
     },
   );
 
@@ -126,65 +167,76 @@ function BlockLayout({
     showError,
 ]);
 
-  const setObjectAttributes = useCallback((prev) => {
-    fetchBlockLayoutItem();
-    setObjectAttributesState(prev);
+  const setObjectAttributes = useCallback((prev, opts: { skip_render?: boolean } = {}) => {
+    debouncer(() => fetchBlockLayoutItem({
+      skip_render: false,
+    }), opts?.skip_render ? 3000 : 300);
+
+    setObjectAttributesState(typeof prev === 'function' ? prev : prev2 => ({
+      ...prev2,
+      ...prev,
+    }));
   }, [
     fetchBlockLayoutItem,
+    debouncer,
     setObjectAttributesState,
   ]);
 
-  const setSelectedBlockItem = useCallback((prev1) => {
-    setObjectAttributes((prev2) => {
-      const data = {
-        ...prev1,
-      };
-
-      if (typeof data?.name_new === 'undefined') {
-        data.name_new = data?.name;
-      }
-
-      return data;
+  const setSelectedBlockItem = useCallback((prev) => {
+    setObjectAttributes({
+      ...prev,
+      name_new: prev?.name_new || prev?.name || randomNameGenerator(),
     });
-    setSelectedBlockItemState(prev1);
+    setSelectedBlockItemState(prev);
   }, [
     setObjectAttributes,
     setSelectedBlockItemState,
   ]);
 
-  const {
-    data: dataPageBlockLayout,
-  } = api.page_block_layouts.detail(encodeURIComponent(uuid));
-
-  const [pageBlockLayout, setPageBlockLayout] = useState<PageBlockLayoutType>(null);
-
-  const layout: ColumnType[][] = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
-  const setLayout = useCallback((layoutNew) => {
-    setPageBlockLayout(prev => ({
-      ...prev,
-      layout: layoutNew,
-    }));
-  }, [setPageBlockLayout]);
+  const [dataPageBlockLayout, setDataPageBlockLayout] = useState<any>(null);
+  const pageBlockLayout =
+      useMemo(() => dataPageBlockLayout?.page_block_layout, [dataPageBlockLayout]);
+  const [fetchPageBlockLayout, { isLoading: isLoadingFetchPageBlockLayout }] = useMutation(
+    () => api.page_block_layouts.detailAsync(encodeURIComponent(uuid)),
+    {
+      onSuccess: (response: any) => onSuccess(
+          response,
+          {
+            callback: (resp) => {
+              setDataPageBlockLayout(resp);
+            },
+          },
+        ),
+    },
+  );
 
   useEffect(() => {
-    if (dataPageBlockLayout?.page_block_layout) {
-      setPageBlockLayout(dataPageBlockLayout?.page_block_layout);
-    }
-  }, [dataPageBlockLayout]);
+    fetchPageBlockLayout();
+  }, []);
+
+  const layout: ColumnType[][] = useMemo(() => pageBlockLayout?.layout, [pageBlockLayout]);
+  function setLayout(layoutNew) {
+    setDataPageBlockLayout((prev) => ({
+      ...prev,
+      page_block_layout: {
+        ...prev?.page_block_layout,
+        layout: layoutNew,
+      },
+    }));
+  }
 
   const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
     api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            page_block_layout: pbl,
-          }) => {
+          callback: (resp) => {
+            const pbl = resp?.page_block_layout;
             const {
               blocks: blocksNew,
             } = pbl;
 
-            setPageBlockLayout(pbl);
+            setDataPageBlockLayout(resp);
 
             const blockItemNew =
               Object.values(blocksNew).find(({ name }) => name === objectAttributes?.name_new);
@@ -194,7 +246,6 @@ function BlockLayout({
             }
 
             setDeletingBlockUUID(null);
-            fetchBlockLayoutItem();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -238,18 +289,7 @@ function BlockLayout({
     setLayout(newLayout);
   }, [
     layout,
-    setLayout,
   ]);
-
-  // useEffect(() => {
-  //   if (!layout && pageBlockLayout?.layout) {
-  //     setLayout(pageBlockLayout?.layout);
-  //   }
-  // }, [
-  //   layout,
-  //   pageBlockLayout,
-  //   setLayout,
-  // ]);
 
   const [containerRect, setContainerRect] = useState(null);
   const [headerRect, setHeaderRect] = useState(null);
@@ -438,10 +478,12 @@ function BlockLayout({
       },
     });
     setSelectedBlockItem(blockItem);
+    setObjectAttributes(() => ({}));
   }, [
     layout,
     pageBlockLayout,
     setSelectedBlockItem,
+    setObjectAttributes,
     updateBlockLayoutItem,
   ]);
 
@@ -480,6 +522,7 @@ function BlockLayout({
           >
             <BlockLayoutItem
               block={block}
+              blockLayoutItem={items?.[blockUUID]}
               blockUUID={blockUUID}
               columnIndex={idx2}
               columnLayoutSettings={column}
@@ -499,6 +542,10 @@ function BlockLayout({
                   idx2,
                 );
               }}
+              onFetchBlockLayoutItem={blockItem => setItems(prev => ({
+                ...prev,
+                [blockItem?.uuid]: blockItem,
+              }))}
               onSave={saveLayout}
               pageBlockLayoutUUID={uuid}
               removeBlockLayoutItem={() => removeBlockLayoutItem(blockUUID, idx1, idx2)}
@@ -547,6 +594,7 @@ function BlockLayout({
     createNewBlockItem,
     deletingBlockUUID,
     isLoadingUpdateBlockLayoutItem,
+    items,
     layout,
     moveBlockLayoutItem,
     removeBlockLayoutItem,
@@ -682,7 +730,9 @@ function BlockLayout({
             onChange={e => setObjectAttributes(prev => ({
               ...prev,
               name_new: e.target.value,
-            }))}
+            }), {
+              skip_render: true,
+            })}
             placeholder="Type name for chart..."
             primary
             setContentOnMount
@@ -706,7 +756,9 @@ function BlockLayout({
               configuration: {
                 chart_type: e.target.value,
               },
-            }))}
+            }), {
+              skip_render: true,
+            })}
             placeholder="Select chart type"
             primary
             value={objectAttributes?.configuration?.chart_type || ''}
@@ -746,7 +798,9 @@ function BlockLayout({
                 ...prev?.data_source,
                 type: e.target.value,
               },
-            }))}
+            }), {
+              skip_render: true,
+            })}
             placeholder="Select data source type"
             primary
             value={objectAttributes?.data_source?.type || ''}
@@ -787,7 +841,9 @@ function BlockLayout({
                     pipeline_schedule_id: null,
                     pipeline_uuid: e.target.value,
                   },
-                }))}
+                }), {
+                  skip_render: true,
+                })}
                 primary
                 value={objectAttributes?.data_source?.pipeline_uuid || ''}
               >
@@ -826,7 +882,9 @@ function BlockLayout({
                     ...prev?.data_source,
                     pipeline_schedule_id: e.target.value,
                   },
-                }))}
+                }), {
+                  skip_render: true,
+                })}
                 primary
                 value={objectAttributes?.data_source?.pipeline_schedule_id || ''}
               >
@@ -863,7 +921,9 @@ function BlockLayout({
                     ...prev?.data_source,
                     block_uuid: e.target.value,
                   },
-                }))}
+                }), {
+                  skip_render: true,
+                })}
                 primary
                 value={objectAttributes?.data_source?.block_uuid || ''}
               >
@@ -907,7 +967,9 @@ function BlockLayout({
                       ? Number(e.target.value)
                       : e.target.value,
                   },
-                }))}
+                }), {
+                  skip_render: true,
+                })}
                 placeholder="Enter number of partitions"
                 primary
                 setContentOnMount
@@ -938,7 +1000,9 @@ function BlockLayout({
                 ...prev?.data_source,
                 refresh_interval: e.target.value,
               },
-            }))}
+            }), {
+              skip_render: true,
+            })}
             placeholder="Enter number for refresh interval"
             primary
             setContentOnMount
@@ -1028,22 +1092,57 @@ function BlockLayout({
 
       <CodeEditor
         autoHeight
-        block={selectedBlockItem}
+        block={{
+          ...itemCached,
+          ...selectedBlockItem,
+        }}
         onChange={(val: string) => {
           setObjectAttributes(prev => ({
             ...prev,
             content: val,
-          }));
+          }), {
+            skip_render: true,
+          });
         }}
-        value={objectAttributes?.content || blockLayoutItemServer?.content || ''}
+        value={objectAttributes?.content || itemCached?.content || ''}
         width="100%"
       />
     </Spacing>
   ), [
-    blockLayoutItemServer,
+    itemCached,
     objectAttributes,
     selectedBlockItem,
     setObjectAttributes,
+  ]);
+
+  const beforeFooter = useMemo(() => (
+    <Spacing p={PADDING_UNITS}>
+      <FlexContainer>
+        <Button
+          fullWidth
+          loading={isLoadingUpdateBlockLayoutItem}
+          onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
+          primary
+        >
+          Save changes
+        </Button>
+
+        <Spacing mr={1} />
+
+        <Button
+          fullWidth
+          onClick={() => setSelectedBlockItem(null)}
+          secondary
+        >
+          Back to dashboard
+        </Button>
+      </FlexContainer>
+    </Spacing>
+  ), [
+    isLoadingUpdateBlockLayoutItem,
+    objectAttributes,
+    setSelectedBlockItem,
+    updateBlockLayoutItemCustom,
   ]);
 
   return (
@@ -1055,30 +1154,7 @@ function BlockLayout({
       afterWidth={afterWidth}
       before={before}
       beforeDraggableTopOffset={topOffset ? (topOffset - ASIDE_HEADER_HEIGHT) : 0}
-      beforeFooter={!beforeHidden && (
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer>
-            <Button
-              fullWidth
-              loading={isLoadingUpdateBlockLayoutItem}
-              onClick={() => updateBlockLayoutItemCustom(objectAttributes)}
-              primary
-            >
-              Save changes
-            </Button>
-
-            <Spacing mr={1} />
-
-            <Button
-              fullWidth
-              onClick={() => setSelectedBlockItem(null)}
-              secondary
-            >
-              Back to dashboard
-            </Button>
-          </FlexContainer>
-        </Spacing>
-      )}
+      beforeFooter={!beforeHidden && beforeFooter}
       beforeHeader={(
         <>
           <Breadcrumbs
@@ -1112,10 +1188,15 @@ function BlockLayout({
       setBeforeMousedownActive={setBeforeMousedownActive}
       setBeforeWidth={setBeforeWidth}
     >
-      <div ref={refHeader}>
+      <div ref={refHeader} style={{ position: 'relative' }}>
+        {selectedBlockItem && isLoadingFetchBlockLayoutItem && (
+          <div style={{ position: 'absolute', width: '100%' }}>
+            <Loading />
+          </div>
+        )}
+
         <FlexContainer
           justifyContent="space-between"
-
         >
           <Flex flex={1}>
           </Flex>
@@ -1170,14 +1251,21 @@ function BlockLayout({
       <DndProvider backend={HTML5Backend}>
         {selectedBlockItem && (
           <BlockLayoutItem
-            block={selectedBlockItem}
+            block={{
+              ...itemCached,
+              ...selectedBlockItem,
+            }}
             blockLayoutItem={{
+              ...itemCached,
               ...blockLayoutItemServer,
               configuration: {
+                ...itemCached?.configuration,
                 ...blockLayoutItemServer?.configuration,
                 ...objectAttributes?.configuration,
               },
+              data: blockLayoutItemServer ? blockLayoutItemServer?.data : itemCached?.data,
               data_source: {
+                ...itemCached?.data_source,
                 ...blockLayoutItemServer?.data_source,
                 ...objectAttributes?.data_source,
               },
@@ -1192,7 +1280,11 @@ function BlockLayout({
           />
         )}
 
-        {!selectedBlockItem && !isEmpty && rowsEl}
+        <div style={{
+          display: (selectedBlockItem || isEmpty) ? 'none' : null,
+        }}>
+          {rowsEl}
+        </div>
         {!selectedBlockItem && isEmpty && emtpyState}
       </DndProvider>
 

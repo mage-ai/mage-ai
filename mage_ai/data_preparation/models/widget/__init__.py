@@ -8,6 +8,7 @@ import pandas as pd
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 from mage_ai.shared.strings import is_number
 
 from .charts import (
@@ -50,10 +51,11 @@ class Widget(Block):
 
     @property
     def output_variable_names(self):
-        chart_type = (self.configuration or {}).get('chart_type')
+        chart_type = (self.configuration or {}).get("chart_type")
         var_names = VARIABLE_NAMES_BY_CHART_TYPE.get(chart_type, [])
         return [
-            (var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names
+            (var_name_orig, self.configuration.get(var_name_orig))
+            for var_name_orig in var_names
         ]
 
     def delete(self, commit=True):
@@ -92,15 +94,27 @@ class Widget(Block):
             for key in upstream_block_uuids:
                 if results and key in results.keys():
                     dfs.append(results[key])
-        elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
+        elif (
+            input_vars_from_data_source is not None
+            and len(input_vars_from_data_source) >= 1
+        ):
             for input_var in input_vars_from_data_source:
                 if isinstance(input_var, list):
                     dfs += input_var
                 else:
                     dfs.append(input_var)
 
-        should_use_no_code = x_values is None and y_values is None and \
-            (group_by_columns or metrics)
+        arr = []
+        for d in dfs:
+            if isinstance(d, list):
+                arr += d
+            else:
+                arr.append(d)
+        dfs = [convert_matrix_to_dataframe(d) for d in arr]
+
+        should_use_no_code = (
+            x_values is None and y_values is None and (group_by_columns or metrics)
+        )
 
         if should_use_no_code and len(dfs) == 0:
             return data
@@ -126,7 +140,9 @@ class Widget(Block):
                 data[VARIABLE_NAME_X] = encode_values_in_list(
                     convert_to_list(variables[VARIABLE_NAME_X])
                 )
-                y_values = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_Y]))
+                y_values = encode_values_in_list(
+                    convert_to_list(variables[VARIABLE_NAME_Y])
+                )
                 data[VARIABLE_NAME_Y] = [y_values]
         elif ChartType.HISTOGRAM == chart_type:
             arr = []
@@ -195,8 +211,10 @@ class Widget(Block):
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
-            limit_config = self.configuration.get(VARIABLE_NAME_LIMIT) or \
-                DATAFRAME_SAMPLE_COUNT_PREVIEW
+            limit_config = (
+                self.configuration.get(VARIABLE_NAME_LIMIT)
+                or DATAFRAME_SAMPLE_COUNT_PREVIEW
+            )
             if is_number(limit_config):
                 limit_config = int(limit_config)
 
@@ -221,14 +239,19 @@ class Widget(Block):
                                 ),
                             }
                         )
-        elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
+        elif chart_type in [
+            ChartType.TIME_SERIES_BAR_CHART,
+            ChartType.TIME_SERIES_LINE_CHART,
+        ]:
             if should_use_no_code:
                 df = dfs[0]
                 if group_by_columns and metrics:
                     tup = build_time_series_buckets(
                         df,
                         group_by_columns[0],
-                        self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
+                        self.configuration.get(
+                            VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL
+                        ),
                         metrics,
                     )
 
@@ -240,8 +263,10 @@ class Widget(Block):
         return data
 
     def get_chart_configuration_settings(self, configuration: Dict = None) -> Dict:
-        chart_type = (configuration or self.configuration or {}).get('chart_type')
-        group_by_columns = (configuration or self.configuration or {}).get(VARIABLE_NAME_GROUP_BY)
+        chart_type = (configuration or self.configuration or {}).get("chart_type")
+        group_by_columns = (configuration or self.configuration or {}).get(
+            VARIABLE_NAME_GROUP_BY
+        )
         metrics = (configuration or self.configuration or {}).get(VARIABLE_NAME_METRICS)
 
         return dict(
@@ -269,16 +294,19 @@ class Widget(Block):
         decorated_functions_y = []
         test_functions = []
 
-        results = merge_dict(dict(
-            columns=self._block_decorator(decorated_functions_columns),
-            configuration=self._block_decorator(decorated_functions_configuration),
-            data_source=self._block_decorator(decorated_functions_data_source),
-            render=self._block_decorator_render(decorated_functions_render),
-            test=self._block_decorator(test_functions),
-            x=self._block_decorator(decorated_functions_x),
-            xy=self._block_decorator(decorated_functions_xy),
-            y=self._block_decorator(decorated_functions_y),
-        ), outputs_from_input_vars)
+        results = merge_dict(
+            dict(
+                columns=self._block_decorator(decorated_functions_columns),
+                configuration=self._block_decorator(decorated_functions_configuration),
+                data_source=self._block_decorator(decorated_functions_data_source),
+                render=self._block_decorator_render(decorated_functions_render),
+                test=self._block_decorator(test_functions),
+                x=self._block_decorator(decorated_functions_x),
+                xy=self._block_decorator(decorated_functions_xy),
+                y=self._block_decorator(decorated_functions_y),
+            ),
+            outputs_from_input_vars,
+        )
 
         inputs_vars_use = list()
         if input_vars is not None:
@@ -286,12 +314,11 @@ class Widget(Block):
 
         chart_configuration_settings = self.get_chart_configuration_settings()
 
-        group_by_columns = chart_configuration_settings['group_by_columns']
-        metrics = chart_configuration_settings['metrics']
+        group_by_columns = chart_configuration_settings["group_by_columns"]
+        metrics = chart_configuration_settings["metrics"]
 
         if custom_code is not None and custom_code.strip():
-            if not group_by_columns or not metrics:
-                exec(custom_code, results)
+            exec(custom_code, results)
         elif self.content is not None:
             exec(self.content, results)
         elif os.path.exists(self.file_path):
@@ -354,31 +381,29 @@ class Widget(Block):
         else:
             item = None
 
-            if input_vars_from_data_source is not None and \
-                    isinstance(input_vars_from_data_source, list) and \
-                    len(input_vars_from_data_source) >= 1:
-
+            if (
+                input_vars_from_data_source is not None
+                and isinstance(input_vars_from_data_source, list)
+                and len(input_vars_from_data_source) >= 1
+            ):
                 item = input_vars_from_data_source[0]
             else:
                 item = input_vars_from_data_source
 
-            if item is not None and \
-                    isinstance(item, list) and \
-                    len(item) >= 1:
-
+            if item is not None and isinstance(item, list) and len(item) >= 1:
                 item = item[0]
 
             if item is not None:
                 if isinstance(item, dict):
                     columns = list(item.keys())
-                elif hasattr(item, 'columns'):
+                elif hasattr(item, "columns"):
                     columns = list(item.columns)
 
         if x is not None:
-            options['x_values'] = x
+            options["x_values"] = x
 
         if y is not None:
-            options['y_values'] = y
+            options["y_values"] = y
 
         if len(decorated_functions_configuration) >= 1:
             configuration = self.execute_block_function(
@@ -387,11 +412,13 @@ class Widget(Block):
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
-            chart_configuration_settings = self.get_chart_configuration_settings(configuration)
+            chart_configuration_settings = self.get_chart_configuration_settings(
+                configuration
+            )
 
-        chart_type = chart_configuration_settings['chart_type']
-        group_by_columns = chart_configuration_settings['group_by_columns']
-        metrics = chart_configuration_settings['metrics']
+        chart_type = chart_configuration_settings["chart_type"]
+        group_by_columns = chart_configuration_settings["group_by_columns"]
+        metrics = chart_configuration_settings["metrics"]
 
         variables = self.get_variables_from_code_execution(results)
 
@@ -431,6 +458,7 @@ class Widget(Block):
                     render = function(*args_inner, **kwargs_inner)
 
                     return merge_dict(dict(render=render), kwargs or {})
+
                 decorated_functions.append(func)
 
             return inner

@@ -19,11 +19,11 @@ class OutputResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
-        parent_model = kwargs['parent_model']
+        parent_model = kwargs["parent_model"]
 
         outputs = []
         if type(parent_model) is BlockRun:
-            outputs = parent_model.get_outputs()
+            outputs = parent_model.get_outputs(exclude_blank_variable_uuids=True)
 
         return self.build_result_set(
             outputs,
@@ -33,13 +33,13 @@ class OutputResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def create(self, payload: Dict, user, **kwargs) -> 'OutputResource':
-        block_uuid = payload.get('block_uuid')
-        pipeline_uuid = payload.get('pipeline_uuid')
-        partition = payload.get('partition')
-        persist = payload.get('persist') or False
-        refresh = payload.get('refresh') or False
-        sample_count = payload.get('sample_count') or None
+    def create(self, payload: Dict, user, **kwargs) -> "OutputResource":
+        block_uuid = payload.get("block_uuid")
+        pipeline_uuid = payload.get("pipeline_uuid")
+        partition = payload.get("partition")
+        persist = payload.get("persist") or False
+        refresh = payload.get("refresh") or False
+        sample_count = payload.get("sample_count") or None
         if sample_count:
             sample_count = int(sample_count)
 
@@ -51,15 +51,15 @@ class OutputResource(GenericResource):
             block = pipeline.get_block(block_uuid)
 
             if block.is_data_integration():
-                streams = payload.get('streams')
+                streams = payload.get("streams")
                 outputs_by_stream = {}
                 outputs_by_stream_serialized = {}
 
                 # 1. Try to get the sample data that is stored as block outputs
                 if not refresh:
                     for stream in streams:
-                        parent_stream = stream.get('parent_stream')
-                        stream_id = stream.get('stream')
+                        parent_stream = stream.get("parent_stream")
+                        stream_id = stream.get("stream")
                         # This data is already serialized
                         outputs = read_data_from_cache(
                             block,
@@ -96,14 +96,18 @@ class OutputResource(GenericResource):
                                         output = output[0]
 
                             if should_map_serialize_output:
-                                output_serialized = [serialize_output(block, o) for o in output]
+                                output_serialized = [
+                                    serialize_output(block, o) for o in output
+                                ]
                             else:
                                 output_serialized = serialize_output(block, output)
 
-                        model['outputs'].append(dict(
-                            data=output_serialized,
-                            uuid=stream_id,
-                        ))
+                        model["outputs"].append(
+                            dict(
+                                data=output_serialized,
+                                uuid=stream_id,
+                            )
+                        )
 
                         if refresh and persist:
                             persist_data_for_stream(
@@ -117,35 +121,35 @@ class OutputResource(GenericResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
-        query = kwargs.get('query', {})
+        query = kwargs.get("query", {})
 
         payload = {}
         for key in [
-            'block_uuid',
-            'parent_stream',
-            'partition',
-            'sample_count',
-            'stream',
+            "block_uuid",
+            "parent_stream",
+            "partition",
+            "sample_count",
+            "stream",
         ]:
             value = query.get(key, [None])
             if value:
                 value = value[0]
                 payload[key] = value
 
-        partition = payload.get('partition')
-        sample_count = payload.get('sample_count') or None
+        partition = payload.get("partition")
+        sample_count = payload.get("sample_count") or None
         if sample_count:
             sample_count = int(sample_count)
 
         model = dict(outputs=[])
 
-        pipeline = kwargs.get('parent_model')
+        pipeline = kwargs.get("parent_model")
         block = pipeline.get_block(pk)
         if block and block.is_data_integration():
             outputs_by_stream = {}
             outputs_by_stream_serialized = {}
 
-            stream_id = payload.get('stream')
+            stream_id = payload.get("stream")
             if stream_id:
                 # This data is already serialized
                 outputs = read_data_from_cache(
@@ -165,9 +169,11 @@ class OutputResource(GenericResource):
                         if not output_serialized:
                             output_serialized = serialize_output(block, output)
 
-                        model['outputs'].append(dict(
-                            data=output_serialized,
-                            uuid=stream_id,
-                        ))
+                        model["outputs"].append(
+                            dict(
+                                data=output_serialized,
+                                uuid=stream_id,
+                            )
+                        )
 
         return self(model, user, **kwargs)
