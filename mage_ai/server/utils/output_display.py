@@ -244,7 +244,9 @@ spark = SparkSession.builder.getOrCreate()
     replacements = [
         ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
         ('block_uuid', f"'{block_uuid}'"),
-        ('escaped_code', escaped_code),
+        ('escaped_code', f"""r\'\'\'
+{escaped_code}
+\'\'\'"""),
         ('global_vars', global_vars),
         ('output_messages_to_logs', output_messages_to_logs),
         ('pipeline_config', pipeline_config),
@@ -282,10 +284,12 @@ spark = SparkSession.builder.getOrCreate()
 
     return f"""{magic_header}
 
+import datetime
+
 {code_content}
 
 df = execute_custom_code()
-    """
+"""
 
 
 def get_block_output_process_code(

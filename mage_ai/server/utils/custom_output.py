@@ -1,3 +1,10 @@
+INTERNAL_PREFIX = '__internal_output__'
+
+
+def __render_output_tags(output: str) -> str:
+    return f'<RenderOutput>{output}</RenderOutput>'
+
+
 def __custom_output():
     import warnings
 
@@ -34,6 +41,16 @@ def __custom_output():
     pipeline = Pipeline.get('{pipeline_uuid}', repo_path='{repo_path}')
     block = pipeline.get_block('{block_uuid}')
 
+    outputs = block.get_outputs()
+    if outputs is not None and len(outputs) >= 1:
+        _json_string = simplejson.dumps(
+            outputs,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+
+        return print(__render_output_tags(_json_string))
+
     _internal_output_return = '{last_line}'
     variable_type, basic_iterable = infer_variable_type(_internal_output_return)
     is_dynamic = bool('{is_dynamic}')
@@ -68,7 +85,7 @@ def __custom_output():
                 ignore_nan=True,
             )
 
-            return print(f'[__internal_output__]{_json_string}')
+            return print(f'[{INTERNAL_PREFIX}]{_json_string}')
         except Exception as err:
             print(f'[ERROR] Failed to serialize output: {err}')
             raise err
@@ -124,7 +141,7 @@ def __custom_output():
             default=encode_complex,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{_json_string}')
+        return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif VariableType.LIST_COMPLEX == variable_type:
         _internal_output_return = [
             encode_complex(item) for item in _internal_output_return
@@ -155,7 +172,7 @@ def __custom_output():
                 ignore_nan=True,
             )
 
-            return print(f'[__internal_output__]{_json_string}')
+            return print(f'[{INTERNAL_PREFIX}]{_json_string}')
         except Exception as err:
             print(type(_internal_output_return))
             print(type(output_transformed))
@@ -172,7 +189,7 @@ def __custom_output():
             default=encode_complex,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{_json_string}')
+        return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif bool('{has_reduce_output}') and is_dynamic_child:
         _json_string = simplejson.dumps(
             transform_output_for_display_reduce_output(
@@ -185,7 +202,7 @@ def __custom_output():
             default=encode_complex,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{_json_string}')
+        return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif isinstance(
         _internal_output_return, (pd.DataFrame, pl.DataFrame, dict, list)
     ) and (type(_internal_output_return).__module__ != 'geopandas.geodataframe'):
@@ -243,7 +260,7 @@ def __custom_output():
             default=encode_complex,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{_json_string}')
+        return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
         _sample = _internal_output_return.limit(
             int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')
@@ -266,7 +283,7 @@ def __custom_output():
             default=encode_complex,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{_json_string}')
+        return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif not bool('{is_print_statement}'):
         output, sampled = sample_output(encode_complex(_internal_output_return))
         if sampled:

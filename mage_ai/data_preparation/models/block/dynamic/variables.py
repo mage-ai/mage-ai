@@ -10,7 +10,6 @@ import pandas as pd
 
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.shared.memory import get_memory_usage
 from mage_ai.shared.strings import to_ordinal_integers
 
 
@@ -19,8 +18,8 @@ class LazyVariable:
         self,
         block,
         variable: Variable,
-        sample: int = None,
-        sample_count: int = None,
+        sample: Optional[int] = None,
+        sample_count: Optional[int] = None,
         skip: bool = False,
     ):
         self.block = block
@@ -136,12 +135,7 @@ class LazyVariableSet(Sequence):
         return self.read_lazy_variable(self.lazy_metadata) if self.lazy_metadata else {}
 
     def read_lazy_variable(self, lazy_variable: LazyVariable) -> Any:
-        return get_memory_usage(
-            logger=self.logger,
-            logging_tags=self.logging_tags,
-            message_prefix=f"[Block {lazy_variable.block.uuid}.read_data",
-            wrapped_function=lazy_variable.read_data,
-        )
+        return lazy_variable.read_data()
 
     async def read_lazy_variable_async(
         self,

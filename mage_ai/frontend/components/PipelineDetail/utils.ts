@@ -72,6 +72,65 @@ export function prepareOutput(output) {
   };
 }
 
+export function prepareOutputsForDisplay(outputs: OutputType[]) {
+  let outputsFinal = [];
+  let multiOutput = false;
+  let outputType;
+
+  outputs.forEach((output: OutputType) => {
+    const {
+      data,
+      type,
+    } = prepareOutput(output);
+
+    multiOutput = multiOutput || output?.multi_output;
+    outputType = (!data && !outputType && outputs?.length >= 2) ? null : (outputType || type);
+
+    if (!!data || outputs?.length === 1) {
+      outputsFinal.push({
+        data,
+        type,
+      });
+    }
+  });
+
+  if (multiOutput) {
+    outputsFinal = [
+      {
+        data: {
+          columns: outputs?.map((output, idx) => output?.variable_uuid || `output_${idx}`),
+          index: outputs?.map((o, i) => i),
+          shape: [outputs?.length || 0, 1],
+          rows: outputsFinal,
+        },
+        multi_output: true,
+        type: outputType,
+      },
+    ];
+    // This is to display reduce output data
+  } else if (DataTypeEnum.TABLE === outputType && outputsFinal?.length >= 2 && !!outputsFinal?.[0]?.data?.text_data) {
+    const rows = outputsFinal?.map(({ data }) => data);
+    if (rows?.length >= 1) {
+      const columns = range(Math.max(...rows?.map(row => row?.length)))?.map((_, idx) => `col${idx}`);
+      const shape = [rows?.length, columns?.length];
+      const index = rows?.map((_, idx) => idx);
+      outputsFinal = [
+        {
+          data: {
+            rows,
+            columns,
+            shape,
+            index,
+          },
+          type: outputType,
+        },
+      ];
+    }
+  }
+
+  return outputsFinal;
+}
+
 export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
   const contentByBlockUUID = {};
@@ -88,62 +147,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     if (groupedOutputs) {
       messagesInit[uuid] = outputs;
     } else if (outputs?.length >= 1) {
-      let outputsFinal = [];
-      let multiOutput = false;
-      let outputType;
-
-      outputs.forEach((output: OutputType) => {
-        const {
-          data,
-          type,
-        } = prepareOutput(output);
-
-        multiOutput = multiOutput || output?.multi_output;
-        outputType = (!data && !outputType && outputs?.length >= 2) ? null : (outputType || type);
-
-        if (!!data || outputs?.length === 1) {
-          outputsFinal.push({
-            data,
-            type,
-          });
-        }
-      });
-
-      if (multiOutput) {
-        outputsFinal = [
-          {
-            data: {
-              columns: outputs?.map((output, idx) => output?.variable_uuid || `output_${idx}`),
-              index: outputs?.map((o, i) => i),
-              shape: [outputs?.length || 0, 1],
-              rows: outputsFinal,
-            },
-            multi_output: true,
-            type: outputType,
-          },
-        ];
-        // This is to display reduce output data
-      } else if (DataTypeEnum.TABLE === outputType && outputsFinal?.length >= 2 && !!outputsFinal?.[0]?.data?.text_data) {
-        const rows = outputsFinal?.map(({ data }) => data);
-        if (rows?.length >= 1) {
-          const columns = range(Math.max(...rows?.map(row => row?.length)))?.map((_, idx) => `col${idx}`);
-          const shape = [rows?.length, columns?.length];
-          const index = rows?.map((_, idx) => idx);
-          outputsFinal = [
-            {
-              data: {
-                rows,
-                columns,
-                shape,
-                index,
-              },
-              type: outputType,
-            },
-          ];
-        }
-      }
-
-      messagesInit[uuid] = outputsFinal;
+      messagesInit[uuid] = prepareOutputsForDisplay(outputs);
     }
 
     if (!contentByBlockUUID[type]) {

@@ -39,9 +39,8 @@ def execute_custom_code():
         blocks = pipeline.get_blocks('{upstream_blocks}')
         block.upstream_blocks = blocks
 
-    code = """
-'{escaped_code}'
-    """
+    code = \
+'{escaped_code}' # noqa E128
 
     global_vars = merge_dict('{global_vars}' or dict(), pipeline.variables or dict())
 

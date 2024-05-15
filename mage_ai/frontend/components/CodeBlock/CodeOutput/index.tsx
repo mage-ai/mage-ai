@@ -60,7 +60,7 @@ import {
 } from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID, openSaveFileDialog, prepareOutput } from '@components/PipelineDetail/utils';
+import { addDataOutputBlockUUID, openSaveFileDialog, prepareOutput, prepareOutputsForDisplay } from '@components/PipelineDetail/utils';
 import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
@@ -286,42 +286,78 @@ function CodeOutput(
 
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
-  const combinedMessages = useMemo(
-    () =>
-      messages?.length >= 1
-        ? messages.reduce((arr, curr) => {
-            const last = arr.at(-1);
+  const combinedMessages = useMemo(() => {
+    const arr = [];
+    const arrRender = [];
 
-            if (
-              DATA_TYPE_TEXTLIKE.includes(last?.type) &&
-              last?.type === curr.type &&
-              !isObject(combineTextData(curr?.data)) &&
-              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-            ) {
-              if (Array.isArray(last.data)) {
-                last.data.concat(curr.data);
-              } else if (typeof last.data === 'string') {
-                const currentText = combineTextData(curr.data) || '';
-                last.data = [last.data, currentText].join('\n');
+    if (messages?.length >= 1) {
+      messages.map((curr) => {
+        let currentData = curr?.data;
+        const renderOutputMatches = [];
+        const leftOverMessages = [];
+
+        if (currentData && Array.isArray(currentData)) {
+          currentData?.forEach((textData: string) => {
+            const match = textData &&
+              typeof textData === 'string' &&
+              textData?.match(/<RenderOutput>(.*?)<\/RenderOutput>/);
+
+            if (match && match[1] && isJsonString(match[1])) {
+              const output = JSON.parse(match[1]);
+
+              if (Array.isArray(output)) {
+                // Multi-output will show tabs.
+                if (output?.every(({ multi_output: multiOutput }) => !!multiOutput)) {
+                  // Combine the multiple outputs into 1 object that will render as multiple tabs.
+                  renderOutputMatches.push(...prepareOutputsForDisplay(output));
+                } else {
+                  renderOutputMatches.push(...output);
+                }
+              } else {
+                renderOutputMatches.push(output);
               }
-            } else if (
-              DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
-              !isObject(combineTextData(curr?.data)) &&
-              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-            ) {
-              arr.push({
-                ...curr,
-                data: combineTextData(curr.data),
-              });
             } else {
-              arr.push({ ...curr });
+              leftOverMessages.push(textData);
             }
+          });
 
-            return arr;
-          }, [])
-        : messagesAll || [],
-    [messages, messagesAll],
-  );
+          currentData = leftOverMessages;
+          arrRender.push(...renderOutputMatches);
+        }
+
+        const last = arr.at(-1);
+
+        if (
+          DATA_TYPE_TEXTLIKE.includes(last?.type) &&
+          last?.type === curr.type &&
+          !isObject(combineTextData(currentData)) &&
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          if (Array.isArray(last.data)) {
+            last.data.concat(currentData);
+          } else if (typeof last.data === 'string') {
+            const currentText = combineTextData(currentData) || '';
+            last.data = [last.data, currentText].join('\n');
+          }
+        } else if (
+          DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+          !isObject(combineTextData(currentData)) &&
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          arr.push({
+            ...curr,
+            data: combineTextData(currentData),
+          });
+        } else {
+          arr.push({ ...curr });
+        }
+      });
+    } else {
+      arr.push(...(messagesAll || []));
+    }
+
+    return arr.concat(arrRender);
+  }, [messages, messagesAll]);
 
   const renderMessagesRaw = useMemo(
     () => !messages?.length && messagesAll?.length >= 1,
