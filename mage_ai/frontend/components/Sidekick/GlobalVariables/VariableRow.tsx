@@ -188,7 +188,6 @@ function VariableRow({
                 color={LIME_DARK}
                 monospace
                 small
-                textOverflow={!obfuscate}
                 title={uuid}
               >
                 {uuid}
