@@ -146,11 +146,12 @@ class ProjectPlatformAccessible:
 
         root_project_path, path, file_path_base = parts
 
-        return File(
-            filename=file_path_base,
-            dir_path=path,
-            repo_path=root_project_path,
-        )
+        if file_path_base and path and root_project_path:
+            return File(
+                filename=file_path_base,
+                dir_path=path,
+                repo_path=root_project_path,
+            )
 
     def hydrate_dbt_nodes(self, nodes_default: Dict, nodes_init: List[Dict]) -> Dict:
         """
@@ -172,7 +173,6 @@ class ProjectPlatformAccessible:
         #   /home/src/default_platform/default_repo/dbt/demo
         # node['original_file_path']
         #   models/example/model.sql
-        print('self.project_path', self.project_path)
         return {
             node['unique_id']: {
                 # file_path needs to be:

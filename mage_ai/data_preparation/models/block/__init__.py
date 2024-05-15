@@ -733,6 +733,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         if file_path:
             file_path_absolute = add_absolute_path(file_path)
 
+            if not file_path_absolute and block_uuid:
+                file_path_absolute = self.__build_file_path(
+                    self.repo_path or os.getcwd(),
+                    block_uuid,
+                    self.type,
+                    self.language,
+                    relative_path=False,
+                )
+
         return file_path_absolute, file_path
 
     @property
@@ -746,7 +755,17 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 return file
 
         repo_path = self.pipeline.repo_path if self.pipeline else None
-        return File.from_path(self.file_path, repo_path=repo_path)
+        new_file = File.from_path(self.file_path, repo_path=repo_path)
+
+        if not new_file.filename or not new_file.dir_path:
+            new_file = File.from_path(self.__build_file_path(
+                new_file.repo_path,
+                self.uuid,
+                self.type,
+                self.language,
+            ))
+
+        return new_file
 
     @property
     def table_name(self) -> str:
@@ -3511,7 +3530,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 )
 
         if not self.replicated_block and BlockType.GLOBAL_DATA_PRODUCT != self.type:
-            if os.path.exists(new_file_path):
+            if new_file_path and os.path.exists(new_file_path):
                 raise Exception(
                     f'Block {new_uuid} already exists at {new_file_path}. '
                     'Please use a different name.'
