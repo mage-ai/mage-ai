@@ -200,7 +200,7 @@ function Secrets({
                   </KeyboardShortcutButton>
                 </CellStyle>
               </Col>
-              <Col md={4}>
+              <Col md={5}>
                 <CellStyle>
                   <TextInput
                     borderless
@@ -219,7 +219,7 @@ function Secrets({
                   />
                 </CellStyle>
               </Col>
-              <Col md={7}>
+              <Col md={6}>
                 <CellStyle>
                   <TextInput
                     borderless
