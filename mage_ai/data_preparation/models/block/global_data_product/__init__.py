@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 class GlobalDataProductBlock(Block):
@@ -13,9 +14,14 @@ class GlobalDataProductBlock(Block):
         )
 
         override_configuration = (self.configuration or {}).get('global_data_product', {})
+
+        project_path = self.repo_path
+        if override_configuration.get('project'):
+            project_path = add_absolute_path(override_configuration.get('project'))
+
         global_data_product = GlobalDataProduct.get(
             override_configuration.get('uuid'),
-            self.repo_path,
+            project_path,
         )
 
         for key in [

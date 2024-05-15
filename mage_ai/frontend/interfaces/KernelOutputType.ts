@@ -1,4 +1,4 @@
-import { BlockTypeEnum } from './BlockType';
+import { BlockTypeEnum, SampleDataType } from './BlockType';
 
 export enum ExecutionStateEnum {
   BUSY = 'busy', // Code is being executed
@@ -29,7 +29,7 @@ export enum MsgType {
 }
 
 export default interface KernelOutputType {
-  data?: string | string[];
+  data?: SampleDataType | string | string[];
   block_type?: BlockTypeEnum;
   error?: string;
   execution_state?: ExecutionStateEnum;
@@ -44,5 +44,7 @@ export default interface KernelOutputType {
   pipeline_uuid?: string;
   type: DataTypeEnum;
   uuid?: string;
+  sample_data?: SampleDataType;
+  text_data?: string;
   variable_uuid?: string;
 }

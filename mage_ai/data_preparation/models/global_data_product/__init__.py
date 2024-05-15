@@ -369,6 +369,7 @@ class GlobalDataProduct:
             'object_uuid',
             'outdated_after',
             'outdated_starting_at',
+            'repo_path',
             'settings',
         ]:
             value = payload.get(key)

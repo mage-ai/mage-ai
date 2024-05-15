@@ -141,10 +141,10 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     type,
     uuid,
   }: BlockType) => {
-    const groupedOutputs: boolean =
-      outputs?.length >= 1 && outputs?.some(o => DataTypeEnum.GROUP === o?.type);
+    const groupedOrMultiOutputs: boolean = outputs?.length >= 1
+      && outputs?.some(o => DataTypeEnum.GROUP === o?.type || !!o?.multi_output);
 
-    if (groupedOutputs) {
+    if (groupedOrMultiOutputs) {
       messagesInit[uuid] = outputs;
     } else if (outputs?.length >= 1) {
       messagesInit[uuid] = prepareOutputsForDisplay(outputs);

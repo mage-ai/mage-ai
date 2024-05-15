@@ -8,6 +8,7 @@ import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
+  OutputType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -21,6 +22,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum, DATA_TYPE_TEXTLIKE } from '@interfaces/KernelOutputType';
 import MultiOutput from './MultiOutput';
+import OutputRenderer from './OutputRenderer';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
@@ -306,13 +308,14 @@ function CodeOutput(
               const output = JSON.parse(match[1]);
 
               if (Array.isArray(output)) {
-                // Multi-output will show tabs.
-                if (output?.every(({ multi_output: multiOutput }) => !!multiOutput)) {
-                  // Combine the multiple outputs into 1 object that will render as multiple tabs.
-                  renderOutputMatches.push(...prepareOutputsForDisplay(output));
-                } else {
-                  renderOutputMatches.push(...output);
-                }
+                // // Multi-output will show tabs.
+                // if (output?.every(({ multi_output: multiOutput }) => !!multiOutput)) {
+                //   // Combine the multiple outputs into 1 object that will render as multiple tabs.
+                //   renderOutputMatches.push(...prepareOutputsForDisplay(output));
+                // } else {
+                //   renderOutputMatches.push(...output);
+                // }
+                renderOutputMatches.push(...output);
               } else {
                 renderOutputMatches.push(output);
               }
@@ -356,7 +359,30 @@ function CodeOutput(
       arr.push(...(messagesAll || []));
     }
 
-    return arr.concat(arrRender);
+    const combined = arr.concat(arrRender);
+    const separateRows = [];
+    const multiOutputs = [];
+
+    // 1. combinedMessages flattens the outputs
+    // 2. Grouped outputs are already grouped into a single object
+    // 3. Multi-output enabled outputs need to be grouped
+
+    combined?.forEach((output) => {
+      if (isObject(output) && output?.multi_output) {
+        multiOutputs.push(output);
+      } else {
+        separateRows.push(output);
+      }
+    });
+
+    if (multiOutputs?.length >= 1) {
+      separateRows.unshift({
+        multi_output: true,
+        outputs: multiOutputs,
+      });
+    }
+
+    return separateRows;
   }, [messages, messagesAll]);
 
   const renderMessagesRaw = useMemo(
@@ -565,11 +591,30 @@ function CodeOutput(
     const tableContent = [];
     const testMessages = [];
 
-    combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
-      const isGroupedOutput = DataTypeEnum?.GROUP === output?.type;
+    combinedMessages?.forEach((output: KernelOutputType | OutputType, idx: number) => {
+      const outputIsGroupedOutputs = DataTypeEnum?.GROUP === output?.type;
+      const outputIsMultiOutputs = output?.multi_output && output?.outputs?.length >= 1;
 
-      let dataInit;
-      let dataType;
+      if (outputIsGroupedOutputs || outputIsMultiOutputs) {
+        arrContent.push(
+          <OutputRenderer
+            block={block}
+            contained
+            containerWidth={mainContainerWidth}
+            first={idx === 0}
+            index={idx}
+            key={`output-${idx}`}
+            last={idx === combinedMessages?.length - 1}
+            normalPadding
+            output={output}
+          />,
+        );
+
+        return;
+      }
+
+      let dataInit = null;
+      let dataType = null;
       const outputIsArray = Array.isArray(output);
 
       if (renderMessagesRaw && outputIsArray) {
@@ -588,11 +633,13 @@ function CodeOutput(
         dataType = output?.type;
       }
 
-      if (!outputIsArray && (!dataInit || dataInit?.length === 0) && !isGroupedOutput) {
+      if (!outputIsArray && (!dataInit || dataInit?.length === 0) && !outputIsGroupedOutputs) {
         return;
       }
 
       let dataArray1: string[] = [];
+      const dataArray = [];
+
       if (Array.isArray(dataInit)) {
         dataArray1 = dataInit;
       } else {
@@ -600,7 +647,6 @@ function CodeOutput(
       }
       dataArray1 = dataArray1.filter((d) => d);
 
-      const dataArray = [];
       dataArray1.forEach(
         (
           data:
@@ -896,51 +942,6 @@ function CodeOutput(
         return displayElement;
       }
 
-      if (isGroupedOutput) {
-        const displayElement = (
-          <Spacing mt={idx >= 1 ? PADDING_UNITS : 0}>
-            <MultiOutput
-              color={blockTypeColor?.accent}
-              header={
-                <Spacing px={PADDING_UNITS}>
-                  <Text color={blockTypeColor?.accent}>
-                    {output?.variable_uuid}
-                  </Text>
-                </Spacing>
-              }
-              onTabChange={setSelectedOutputTab}
-              outputs={output?.outputs?.map((item, idxWithinGroup: number) => ({
-                render: () => {
-                  const { type: typeInner } = item;
-                  const itemPrepared = prepareOutput(ignoreKeys(item, ['multi_output']));
-
-                  return (
-                    <>
-                      {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
-
-                      {buildDisplayElement(
-                        itemPrepared?.data,
-                        itemPrepared?.type,
-                        idxWithinGroup,
-                        {
-                          contained: true,
-                          first: true,
-                          last: true,
-                          normalPadding: true,
-                        },
-                      )}
-                    </>
-                  );
-                },
-                uuid: item?.variable_uuid,
-              }))}
-            />
-          </Spacing>
-        );
-
-        arr.push(<div key={`code-output-${idx}`}>{displayElement}</div>);
-      }
-
       dataArray.forEach((data: string, idxInner: number) => {
         const displayElement = buildDisplayElement(data, dataType, idxInner);
 
@@ -968,6 +969,7 @@ function CodeOutput(
       testContent: testMessages,
     };
   }, [
+    block,
     blockTypeColor,
     combinedMessages,
     contained,

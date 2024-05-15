@@ -177,9 +177,11 @@ export interface SampleDataType {
 }
 
 export interface OutputType {
+  data?: SampleDataType | string | string[];
   multi_output?: boolean;
+  outputs?: OutputType[];
   sample_data: SampleDataType;
-  shape: number[];
+  shape?: number[];
   text_data: string;
   type: DataTypeEnum;
   variable_uuid: string;
