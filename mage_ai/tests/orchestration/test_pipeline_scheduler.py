@@ -557,24 +557,43 @@ class PipelineSchedulerTests(DBTestCase):
             status=ScheduleStatus.ACTIVE,
         )
         now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        execution_date1 = now_time - timedelta(seconds=601)
         pipeline_run = create_pipeline_run_with_schedule(
-            execution_date=now_time - timedelta(seconds=601),
+            execution_date=execution_date1,
             pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
-        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        pipeline_run2 = create_pipeline_run_with_schedule(
-            execution_date=now_time - timedelta(seconds=599),
+        pipeline_run.update(
+            started_at=execution_date1,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        execution_date2 = now_time - timedelta(seconds=601)
+        create_pipeline_run_with_schedule(
+            created_at=execution_date2,
+            execution_date=execution_date2,
             pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
-        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        execution_date3 = now_time - timedelta(seconds=599)
         pipeline_run3 = create_pipeline_run_with_schedule(
-            execution_date=now_time - timedelta(seconds=1),
+            execution_date=execution_date3,
             pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
-        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3.update(
+            started_at=execution_date3,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        execution_date4 = now_time - timedelta(seconds=1)
+        pipeline_run4 = create_pipeline_run_with_schedule(
+            execution_date=execution_date4,
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run4.update(
+            started_at=execution_date4,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
         with patch.object(
             NotificationSender, 'send_pipeline_run_sla_passed_message'
         ) as mock_send_message:

@@ -1435,6 +1435,18 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             (coalesce(PipelineRun.passed_sla, False) == False),  # noqa: E712
         ).all()
 
+    @classmethod
+    @safe_db_query
+    def running_runs(
+        self,
+        pipeline_schedules: List[int],
+    ):
+        return self.query.filter(
+            PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
+            PipelineRun.status == self.PipelineRunStatus.RUNNING,
+            (coalesce(PipelineRun.passed_sla, False) == False),  # noqa: E712
+        ).all()
+
     @safe_db_query
     def complete(self):
         self.update(
