@@ -162,7 +162,7 @@ function VariableRow({
             </KeyboardShortcutButton>
           </CellStyle>
         </Col>
-        <Col md={obfuscate ? 7 : 4}>
+        <Col md={obfuscate ? 9 : 4}>
           {(edit && !disableKeyEdit) ? (
             <CellStyle>
               <TextInput
@@ -184,13 +184,19 @@ function VariableRow({
             </CellStyle>
           ) : (
             <CellStyle>
-              <Text color={LIME_DARK} monospace small textOverflow>
+              <Text
+                color={LIME_DARK}
+                monospace
+                small
+                textOverflow={!obfuscate}
+                title={uuid}
+              >
                 {uuid}
               </Text>
             </CellStyle>
           )}
         </Col>
-        <Col md={obfuscate ? 4 : 7}>
+        <Col md={obfuscate ? 2 : 7}>
           {edit ? (
             <CellStyle>
               <TextInput
@@ -214,10 +220,14 @@ function VariableRow({
             <CellStyle>
               {obfuscate ? (
                 <Text monospace small>
-                  ********
+                  {showActions ? '*' : '*******'}
                 </Text>
               ) : (
-                <Text monospace small>
+                <Text
+                  monospace
+                  small
+                  title={value.toString()}
+                >
                   {value.toString()}
                 </Text>
               )}
