@@ -115,7 +115,9 @@ function GlobalDataProductDetail({
   const pipeline: PipelineType = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
   const blocks: BlockType[] = useMemo(() => pipeline?.blocks || [], [pipeline]);
 
-  const { data: dataPipelines } = api.pipelines.list();
+  const { data: dataPipelines } = api.pipelines.list({
+    repo_path: globalDataProduct?.repo_path,
+  });
   const pipelines: PipelineType[] =
     useMemo(() => sortByKey(dataPipelines?.pipelines || [], 'uuid'), [dataPipelines]);
 

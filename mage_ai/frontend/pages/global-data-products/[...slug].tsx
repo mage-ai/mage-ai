@@ -9,13 +9,18 @@ import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 type TemplateDetailsProps = {
+  project?: string;
   slug: string;
 };
 
 function GlobalDataProductDetailPage({
+  project,
   slug,
 }: TemplateDetailsProps) {
-  const { data: dataGlobalDataProduct } = api.global_data_products.detail(slug);
+  const { data: dataGlobalDataProduct } = api.global_data_products.detail(slug, project
+    ? { project }
+    : {},
+  );
   const globalDataProduct =  useMemo(() => dataGlobalDataProduct?.global_data_product, [
     dataGlobalDataProduct,
   ]);
@@ -62,13 +67,15 @@ function GlobalDataProductDetailPage({
 
 GlobalDataProductDetailPage.getInitialProps = async (ctx) => {
   const {
-    slug,
+    slug: slugProp,
   }: {
     slug: string[],
   } = ctx.query;
-
+  const slug = slugProp?.[slugProp?.length - 1];
+  const project = slugProp?.length >= 2 ? slugProp?.[0] : null;
   return {
-    slug: slug?.[0],
+    project,
+    slug,
   };
 };
 

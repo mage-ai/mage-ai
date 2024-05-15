@@ -58,7 +58,7 @@ function GlobalDataProducts({
 
   return (
     <Table
-      columnFlex={[1, null, null]}
+      columnFlex={[null, null, null, null]}
       columns={[
         {
           uuid: 'UUID',
@@ -69,6 +69,9 @@ function GlobalDataProducts({
         {
           uuid: 'Object UUID',
         },
+        {
+          uuid: 'Project',
+        },
       ]}
       onClickRow={(rowIndex: number) => {
         const gdp = globalDataProducts?.[rowIndex];
@@ -78,7 +81,7 @@ function GlobalDataProducts({
           } else {
             router.push(
               '/global-data-products/[...slug]',
-              `/global-data-products/${gdp?.uuid}`,
+              `/global-data-products${gdp?.project ? '/' + gdp?.project : ''}/${gdp?.uuid}`,
             );
           }
         }
@@ -87,6 +90,7 @@ function GlobalDataProducts({
         const {
           object_type: objectType,
           object_uuid: objectUUID,
+          project,
           uuid,
         } = globalDataProduct;
         const linkProps: {
@@ -130,6 +134,9 @@ function GlobalDataProducts({
               {objectUUID}
             </Link>
           </NextLink>,
+          <Text default key="project" monospace>
+            {project}
+          </Text>,
         ];
       })}
       uuid="global-data-products"

@@ -65,26 +65,28 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 def query_pipeline_schedules(pipeline_uuids: List[str]):
     a = aliased(PipelineSchedule, name='a')
     result = (
-        PipelineSchedule.
-        select(*[
-            a.created_at,
-            a.id,
-            a.name,
-            a.pipeline_uuid,
-            a.schedule_interval,
-            a.schedule_type,
-            a.start_time,
-            a.status,
-            a.updated_at,
-        ]).
-        filter(
+        PipelineSchedule.select(
+            *[
+                a.created_at,
+                a.id,
+                a.name,
+                a.pipeline_uuid,
+                a.schedule_interval,
+                a.schedule_type,
+                a.start_time,
+                a.status,
+                a.updated_at,
+            ]
+        ).filter(
             a.pipeline_uuid.in_(pipeline_uuids),
             or_(
-                a.repo_path.in_(Project().repo_path_for_database_query(
-                    'pipeline_schedules',
-                )),
+                a.repo_path.in_(
+                    Project().repo_path_for_database_query(
+                        'pipeline_schedules',
+                    )
+                ),
                 a.repo_path.is_(None),
-            )
+            ),
         )
     ).all()
     return group_by(lambda x: x.pipeline_uuid, result)
@@ -153,12 +155,14 @@ class PipelineResource(BaseResource):
             from_history_days = from_history_days[0]
 
         history_by_pipeline_uuid = {}
-        repo_path = get_repo_path(user=user)
-        print('repo path:', repo_path)
+
         if from_history_days is not None and is_number(from_history_days):
-            timestamp_start = (datetime.utcnow() - timedelta(
-                hours=24 * int(from_history_days),
-            )).timestamp()
+            timestamp_start = (
+                datetime.utcnow()
+                - timedelta(
+                    hours=24 * int(from_history_days),
+                )
+            ).timestamp()
             history = load_pipelines_detail(timestamp_start=timestamp_start)
             history = sorted(
                 history,
@@ -182,18 +186,24 @@ class PipelineResource(BaseResource):
 
             if NO_TAGS_QUERY in tags:
                 pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
-                all_pipeline_uuids = set(Pipeline.get_all_pipelines(repo_path=repo_path))
-                pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
+                all_pipeline_uuids = set(
+                    Pipeline.get_all_pipelines(repo_path=repo_path)
+                )
+                pipeline_uuids_without_tags = list(
+                    all_pipeline_uuids - pipeline_uuids_with_tags
+                )
                 pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(repo_path=repo_path)
 
         if search_query:
-            pipeline_uuids = list(filter(
-                lambda x: search_query.lower() in x.lower() or
-                search_query.lower() in x.lower().split(' '),
-                pipeline_uuids,
-            ))
+            pipeline_uuids = list(
+                filter(
+                    lambda x: search_query.lower() in x.lower()
+                    or search_query.lower() in x.lower().split(' '),
+                    pipeline_uuids,
+                )
+            )
 
         total_count = len(pipeline_uuids)
         await UsageStatisticLogger().pipelines_impression(lambda: total_count)
@@ -207,7 +217,7 @@ class PipelineResource(BaseResource):
             if offset:
                 pipeline_uuids = pipeline_uuids[offset:]
             if limit:
-                pipeline_uuids = pipeline_uuids[:(limit + 1)]
+                pipeline_uuids = pipeline_uuids[: (limit + 1)]
             offset_limit_applied = True
 
         cache = await PipelineCache.initialize_cache()
@@ -217,7 +227,10 @@ class PipelineResource(BaseResource):
                 return await Pipeline.get_async(uuid, repo_path=repo_path)
             except Exception as err:
                 err_message = f'Error loading pipeline {uuid}: {err}.'
-                if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
+                if (
+                    err.__class__.__name__ == 'OSError'
+                    and 'Too many open files' in err.strerror
+                ):
                     raise Exception(err_message)
                 else:
                     print(err_message)
@@ -228,7 +241,10 @@ class PipelineResource(BaseResource):
                 return Pipeline(uuid, config=config, repo_path=repo_path)
             except Exception as err:
                 err_message = f'Error loading pipeline sync {uuid}: {err}.'
-                if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
+                if (
+                    err.__class__.__name__ == 'OSError'
+                    and 'Too many open files' in err.strerror
+                ):
                     raise Exception(err_message)
                 else:
                     print(err_message)
@@ -241,11 +257,13 @@ class PipelineResource(BaseResource):
             for pipeline_dict in cache.get_models(types=pipeline_types):
                 pipeline_uuid_from_cache = pipeline_dict['pipeline']['uuid']
                 if pipeline_uuid_from_cache in pipeline_uuids:
-                    pipelines.append(Pipeline(
-                        pipeline_uuid_from_cache,
-                        config=pipeline_dict['pipeline'],
-                        repo_path=repo_path,
-                    ))
+                    pipelines.append(
+                        Pipeline(
+                            pipeline_uuid_from_cache,
+                            config=pipeline_dict['pipeline'],
+                            repo_path=repo_path,
+                        )
+                    )
         else:
             for uuid in pipeline_uuids:
                 pipeline_dict = cache.get_model(dict(uuid=uuid, repo_path=repo_path))
@@ -256,11 +274,13 @@ class PipelineResource(BaseResource):
                     else:
                         # Add pipeline with type "invalid" so pipeline with invalid config
                         # can still be displayed in UI and visible to user
-                        pipelines.append(Pipeline(
-                            uuid,
-                            config=dict(type='invalid'),
-                            repo_path=repo_path,
-                        ))
+                        pipelines.append(
+                            Pipeline(
+                                uuid,
+                                config=dict(type='invalid'),
+                                repo_path=repo_path,
+                            )
+                        )
                 else:
                     pipeline_uuids_miss.append(uuid)
 
@@ -283,15 +303,23 @@ class PipelineResource(BaseResource):
             pipeline.schedules = schedules
 
             if pipeline_statuses and (
-                (PipelineStatus.ACTIVE in pipeline_statuses and
-                    any(s.status == ScheduleStatus.ACTIVE
-                        for s in pipeline.schedules)) or
-                (PipelineStatus.INACTIVE in pipeline_statuses and
-                    len(pipeline.schedules) > 0 and
-                    all(s.status == ScheduleStatus.INACTIVE
-                        for s in pipeline.schedules)) or
-                (PipelineStatus.NO_SCHEDULES in pipeline_statuses and
-                    len(pipeline.schedules) == 0)
+                (
+                    PipelineStatus.ACTIVE in pipeline_statuses
+                    and any(
+                        s.status == ScheduleStatus.ACTIVE for s in pipeline.schedules
+                    )
+                )
+                or (
+                    PipelineStatus.INACTIVE in pipeline_statuses
+                    and len(pipeline.schedules) > 0
+                    and all(
+                        s.status == ScheduleStatus.INACTIVE for s in pipeline.schedules
+                    )
+                )
+                or (
+                    PipelineStatus.NO_SCHEDULES in pipeline_statuses
+                    and len(pipeline.schedules) == 0
+                )
             ):
                 filtered_pipelines.append(pipeline)
 
@@ -304,6 +332,7 @@ class PipelineResource(BaseResource):
                     pipeline.history = history_by_pipeline_uuid.get(pipeline.uuid)
 
         if sorts:
+
             def _sort_key(p, sorts=sorts, reverse_sort=reverse_sort):
                 bools = []
                 vals = []
@@ -311,24 +340,35 @@ class PipelineResource(BaseResource):
                     if 'blocks' == k.lower():
                         val = len(p.blocks_by_uuid)
                         vals.append(val)
-                        bools.append(val is None if not reverse_sort else val is not None)
+                        bools.append(
+                            val is None if not reverse_sort else val is not None
+                        )
                     elif 'triggers' == k.lower():
                         val = len(p.schedules)
                         vals.append(val)
-                        bools.append(val is None if not reverse_sort else val is not None)
+                        bools.append(
+                            val is None if not reverse_sort else val is not None
+                        )
                     elif 'status' == k.lower():
                         if len(p.schedules) == 0:
                             val = 'no_schedules'
-                        elif find(lambda s: s.status == 'active', p.schedules) is not None:
+                        elif (
+                            find(lambda s: s.status == 'active', p.schedules)
+                            is not None
+                        ):
                             val = 'active'
                         else:
                             val = 'inactive'
                         vals.append(val)
-                        bools.append(val is None if not reverse_sort else val is not None)
+                        bools.append(
+                            val is None if not reverse_sort else val is not None
+                        )
                     elif hasattr(p, k):
                         val = getattr(p, k)
                         vals.append(val)
-                        bools.append(val is None if not reverse_sort else val is not None)
+                        bools.append(
+                            val is None if not reverse_sort else val is not None
+                        )
                     else:
                         bools.append(False)
 
@@ -417,25 +457,37 @@ class PipelineResource(BaseResource):
                             block_payload['configuration'] = configuration
 
                         block_uuid = f'{pipeline.uuid}_block_{block_number}'
-                        block_resource = await BlockResource.create(merge_dict(
-                            dict(
-                                name=block_uuid,
-                                type=block_payload.get('block_type'),
+                        block_resource = await BlockResource.create(
+                            merge_dict(
+                                dict(
+                                    name=block_uuid,
+                                    type=block_payload.get('block_type'),
+                                ),
+                                ignore_keys(
+                                    block_payload,
+                                    [
+                                        'block_type',
+                                        'upstream_blocks',
+                                    ],
+                                ),
                             ),
-                            ignore_keys(block_payload, [
-                                'block_type',
-                                'upstream_blocks',
-                            ]),
-                        ), user, **merge_dict(kwargs, dict(
-                            parent_model=pipeline,
-                        )))
+                            user,
+                            **merge_dict(
+                                kwargs,
+                                dict(
+                                    parent_model=pipeline,
+                                ),
+                            ),
+                        )
 
                         upstream_block_uuids = block_payload.get('upstream_blocks')
 
                         pipeline.add_block(
                             block_resource.model,
                             None,
-                            priority=len(upstream_block_uuids) if upstream_block_uuids else 0,
+                            priority=len(upstream_block_uuids)
+                            if upstream_block_uuids
+                            else 0,
                             widget=False,
                         )
 
@@ -449,7 +501,10 @@ class PipelineResource(BaseResource):
 
                         if upstream_block_uuids and len(upstream_block_uuids) >= 1:
                             block = config['block']
-                            arr = [f'{pipeline.uuid}_block_{bn}' for bn in upstream_block_uuids]
+                            arr = [
+                                f'{pipeline.uuid}_block_{bn}'
+                                for bn in upstream_block_uuids
+                            ]
                             block.update(dict(upstream_blocks=arr))
 
         if pipeline:
@@ -522,7 +577,9 @@ class PipelineResource(BaseResource):
             kernel_name = PIPELINE_TO_KERNEL_NAME[pipeline.type]
             switch_active_kernel(
                 kernel_name,
-                emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
+                emr_config=pipeline.executor_config
+                if kernel_name == KernelName.PYSPARK
+                else None,
             )
 
         if api_operation_action == DETAIL:
@@ -579,7 +636,9 @@ class PipelineResource(BaseResource):
 
                 block_cache = await BlockCache.initialize_cache()
                 for block in pipeline.blocks_by_uuid.values():
-                    block_cache.remove_pipeline(block, pipeline.uuid, pipeline.repo_path)
+                    block_cache.remove_pipeline(
+                        block, pipeline.uuid, pipeline.repo_path
+                    )
 
         self.on_delete_callback = _on_delete_callback
         return self.model.delete()
@@ -591,8 +650,7 @@ class PipelineResource(BaseResource):
             block = self.model.get_block(block_uuid, widget=False)
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks_by_uuid = {
-                    block.uuid: block
-                    for block in block.upstream_dbt_blocks()
+                    block.uuid: block for block in block.upstream_dbt_blocks()
                 }
                 self.model.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                 self.model.validate('A cycle was formed while adding a block')
@@ -614,23 +672,34 @@ class PipelineResource(BaseResource):
             if 'pipeline_uuid' not in llm_payload:
                 llm_payload['pipeline_uuid'] = self.model.uuid
 
-            llm_resource = await LlmResource.create(llm_payload, self.current_user, **kwargs)
+            llm_resource = await LlmResource.create(
+                llm_payload, self.current_user, **kwargs
+            )
             llm_response = llm_resource.model.get('response')
 
             pipeline_doc = None
             block_docs = []
             blocks = self.model.blocks_by_uuid.values()
 
-            async def _add_markdown_block(block_doc: str, block_uuid: str, priority: int):
-                return await BlockResource.create(dict(
-                    content=block_doc.strip() if block_doc else block_doc,
-                    language=BlockLanguage.MARKDOWN,
-                    name=f'Documentation for {block_uuid}',
-                    priority=priority,
-                    type=BlockType.MARKDOWN,
-                ), self.current_user, **merge_dict(kwargs, dict(
-                    parent_model=self.model,
-                )))
+            async def _add_markdown_block(
+                block_doc: str, block_uuid: str, priority: int
+            ):
+                return await BlockResource.create(
+                    dict(
+                        content=block_doc.strip() if block_doc else block_doc,
+                        language=BlockLanguage.MARKDOWN,
+                        name=f'Documentation for {block_uuid}',
+                        priority=priority,
+                        type=BlockType.MARKDOWN,
+                    ),
+                    self.current_user,
+                    **merge_dict(
+                        kwargs,
+                        dict(
+                            parent_model=self.model,
+                        ),
+                    ),
+                )
 
             if LLMUseCase.GENERATE_DOC_FOR_BLOCK == llm_use_case:
                 block_doc = llm_response.get('block_doc')
@@ -674,11 +743,15 @@ class PipelineResource(BaseResource):
             switch_active_kernel(
                 kernel_name,
                 emr_config=self.model.executor_config
-                if kernel_name == KernelName.PYSPARK else None,
+                if kernel_name == KernelName.PYSPARK
+                else None,
             )
         except Exception as e:
             pipeline_type_updated = payload.get('type')
-            if pipeline_type_updated is not None and pipeline_type_updated != pipeline_type:
+            if (
+                pipeline_type_updated is not None
+                and pipeline_type_updated != pipeline_type
+            ):
                 await self.model.update(dict(type=pipeline_type))
 
             raise e
@@ -688,9 +761,9 @@ class PipelineResource(BaseResource):
             trigger_configs_by_name = get_trigger_configs_by_name(pipeline_uuid)
             triggers_in_code_to_update = []
             schedules = (
-                PipelineSchedule.
-                query.
-                filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+                PipelineSchedule.query.filter(
+                    PipelineSchedule.pipeline_uuid == pipeline_uuid
+                )
             ).all()
             for schedule in schedules:
                 trigger_config = trigger_configs_by_name.get(schedule.name)
@@ -713,22 +786,23 @@ class PipelineResource(BaseResource):
         ):
             if pipeline_runs is not None:
                 pipeline_run_ids = [run.get('id') for run in pipeline_runs]
-                pipeline_runs_to_cancel = (
-                    PipelineRun.
-                    query.
-                    filter(PipelineRun.id.in_(pipeline_run_ids))
+                pipeline_runs_to_cancel = PipelineRun.query.filter(
+                    PipelineRun.id.in_(pipeline_run_ids)
                 )
             elif pipeline_schedule_id is not None:
-                pipeline_runs_to_cancel = PipelineRun.in_progress_runs([pipeline_schedule_id])
+                pipeline_runs_to_cancel = PipelineRun.in_progress_runs(
+                    [pipeline_schedule_id]
+                )
             else:
-                pipeline_runs_to_cancel = (
-                    PipelineRun.
-                    query.
-                    filter(PipelineRun.pipeline_uuid == pipeline_uuid).
-                    filter(PipelineRun.status.in_([
-                        PipelineRun.PipelineRunStatus.INITIAL,
-                        PipelineRun.PipelineRunStatus.RUNNING,
-                    ]))
+                pipeline_runs_to_cancel = PipelineRun.query.filter(
+                    PipelineRun.pipeline_uuid == pipeline_uuid
+                ).filter(
+                    PipelineRun.status.in_(
+                        [
+                            PipelineRun.PipelineRunStatus.INITIAL,
+                            PipelineRun.PipelineRunStatus.RUNNING,
+                        ]
+                    )
                 )
             for pipeline_run in pipeline_runs_to_cancel:
                 PipelineScheduler(pipeline_run).stop()
@@ -749,15 +823,18 @@ class PipelineResource(BaseResource):
                 a.pipeline_uuid,
             ]
             result = (
-                PipelineRun.
-                select(*columns).
-                join(b, a.id == b.pipeline_run_id).
-                filter(a.pipeline_uuid == pipeline_uuid).
-                filter(a.status == PipelineRun.PipelineRunStatus.FAILED).
-                filter(b.status.not_in([
-                    BlockRun.BlockRunStatus.COMPLETED,
-                    BlockRun.BlockRunStatus.CONDITION_FAILED,
-                ]))
+                PipelineRun.select(*columns)
+                .join(b, a.id == b.pipeline_run_id)
+                .filter(a.pipeline_uuid == pipeline_uuid)
+                .filter(a.status == PipelineRun.PipelineRunStatus.FAILED)
+                .filter(
+                    b.status.not_in(
+                        [
+                            BlockRun.BlockRunStatus.COMPLETED,
+                            BlockRun.BlockRunStatus.CONDITION_FAILED,
+                        ]
+                    )
+                )
             ).all()
 
             return result
