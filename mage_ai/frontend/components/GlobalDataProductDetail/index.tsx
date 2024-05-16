@@ -49,10 +49,8 @@ function GlobalDataProductDetail({ globalDataProduct, isNew }: GlobalDataProduct
 
   const [beforeHidden, setBeforeHidden] = useState<boolean>(false);
   const [beforeWidth, setBeforeWidth] = useState<number>(600);
-  const [touched, setTouched] = useState<boolean>(false);
   const [objectAttributes, setObjectAttributesState] = useState<GlobalDataProductType>(null);
   const setObjectAttributes = useCallback(handlePrevious => {
-    setTouched(true);
     setObjectAttributesState(handlePrevious);
   }, []);
 
@@ -66,7 +64,9 @@ function GlobalDataProductDetail({ globalDataProduct, isNew }: GlobalDataProduct
   const buttonDisabled = useMemo(() => !objectAttributes?.uuid, [objectAttributes]);
 
   const [updateObject, { isLoading: isLoadingUpdateObject }] = useMutation(
-    api.global_data_products.useUpdate(isNew ? objectAttributes?.uuid : globalDataProduct?.uuid),
+    (gdp: {
+      global_data_product: GlobalDataProductType;
+    }) => api.global_data_products.useUpdate(isNew ? objectAttributes?.uuid : globalDataProduct?.uuid)(gdp),
     {
       onSuccess: (response: any) =>
         onSuccess(response, {
@@ -78,7 +78,6 @@ function GlobalDataProductDetail({ globalDataProduct, isNew }: GlobalDataProduct
               );
             } else {
               setObjectAttributesState(gdp);
-              setTouched(false);
 
               toast.success('Global data product successfully saved.', {
                 position: toast.POSITION.BOTTOM_RIGHT,

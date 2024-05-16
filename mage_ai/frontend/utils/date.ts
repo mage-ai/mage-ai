@@ -343,3 +343,7 @@ export function padTime(time: string) {
 export function convertToMillisecondsTimestamp(value: number): number {
   return value * (parseInt(String(value)).toString().length === 10 ? 1000 : 1);
 }
+
+export function isDate(value: any): value is Date {
+  return value instanceof Date;
+}

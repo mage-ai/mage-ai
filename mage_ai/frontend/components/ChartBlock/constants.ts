@@ -82,7 +82,7 @@ const SHARED_CONFIGS = ({
   includeYTooltipFormat = true,
 }: {
   includeXTooltipFormat?: boolean;
-  includeYTooltipFormat?: bool;
+  includeYTooltipFormat?: boolean;
 } = {}) => [
   {
     ...SHARED_CODE_PROPS,

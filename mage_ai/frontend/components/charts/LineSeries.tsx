@@ -27,6 +27,7 @@ import { binarySearch } from '@utils/array';
 import { formatNumberLabel, getTooltipContentLength } from './utils/label';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import { getChartColors } from './constants';
+import { TooltipData } from './BarChart/constants';
 
 const tooltipStyles = {
   ...defaultStyles,
@@ -55,10 +56,19 @@ type SharedProps = {
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   noCurve?: boolean;
   numYTicks?: number;
-  renderXTooltipContent?: (opts: any, index: number) => JSX.Element;
-  renderYTooltipContent?: (opts: any, index: number) => JSX.Element;
+  renderXTooltipContent?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData,
+  ) => JSX.Element;
+  renderYTooltipContent?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData,
+  ) => JSX.Element;
   thickStroke?: boolean;
   thickness?: number;
+  timeSeries?: boolean;
   xLabelFormat?: any;
   xLabelRotate?: boolean;
   yLabelFormat?: any;
@@ -66,7 +76,6 @@ type SharedProps = {
 
 type LineSeriesProps = {
   width: number;
-  timeSeries?: boolean;
 } & SharedProps;
 
 export type LineSeriesContainerProps = {

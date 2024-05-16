@@ -66,7 +66,7 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
 
   const metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn)) || [];
 
-  function buildFormatFunctionLabel(functionCode: string) {
+  function buildFormatFunctionLabel(functionCode?: any): (...args: any[]) => any {
     function formatter(
       value: string | undefined,
       index: number,
@@ -86,7 +86,7 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
     return formatter;
   }
 
-  function buildFormatFunctionTooltip(functionCode: string) {
+  function buildFormatFunctionTooltip(functionCode?: any): (...args: any[]) => any {
     function formatter(value: string | undefined, index: number, values: TooltipData) {
       try {
         const dynamicFunction = new Function('value', 'index', 'values', functionCode);
@@ -101,24 +101,24 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
 
   const xTooltipFormatValue = configuration?.[VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT];
   const xTooltipFormat = useCallback(
-    (...args) => buildFormatFunctionTooltip(xTooltipFormatValue)(...args),
+    (...args: any[]) => buildFormatFunctionTooltip(xTooltipFormatValue)(...args),
     [xTooltipFormatValue],
   );
   const yTooltipFormatValue = configuration?.[VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT];
   const yTooltipFormat = useCallback(
-    (...args) => buildFormatFunctionTooltip(yTooltipFormatValue)(...args),
+    (...args: any[]) => buildFormatFunctionTooltip(yTooltipFormatValue)(...args),
     [yTooltipFormatValue],
   );
 
   const xAxisLabelFormatValue = configuration?.[VARIABLE_NAME_X_AXIS_LABEL_FORMAT];
   const xAxisLabelFormat = useCallback(
-    (...args) => buildFormatFunctionLabel(xAxisLabelFormatValue)(...args),
+    (...args: any[]) => buildFormatFunctionLabel(xAxisLabelFormatValue)(...args),
     [xAxisLabelFormatValue],
   );
 
   const yAxisLabelFormatValue = configuration?.[VARIABLE_NAME_Y_AXIS_LABEL_FORMAT];
   const yAxisLabelFormat = useCallback(
-    (...args) => buildFormatFunctionLabel(yAxisLabelFormatValue)(...args),
+    (...args: any[]) => buildFormatFunctionLabel(yAxisLabelFormatValue)(...args),
     [yAxisLabelFormatValue],
   );
 
@@ -213,17 +213,17 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
         <BarChartVertical
           {...sharedProps}
           xAxisLabel={xAxisLabelProp || xAxisLabel}
-          xLabelFormat={(ts: number, index, values) => {
+          xLabelFormat={(ts: string, index, values) => {
             let val = ts;
 
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                val = moment(ts * 1000).format(xAxisLabelFormatValue);
+                val = moment(Number(ts) * 1000).format(xAxisLabelFormatValue);
               } else {
                 val = xAxisLabelFormat(ts, index, values);
               }
             } else if (isTimeSeries) {
-              val = moment(ts * 1000).format(variableDateFormat);
+              val = moment(Number(ts) * 1000).format(variableDateFormat);
             }
 
             return val;
@@ -359,7 +359,7 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
             left: 5 * UNIT,
           }}
           noCurve={!yValuesSmooth}
-          renderXTooltipContent={(x, _, toolipData) => {
+          renderXTooltipContent={(x, yNotUsed, toolipData) => {
             const { index, y } = toolipData;
 
             let xLabel = configuration[VARIABLE_NAME_X];
@@ -377,7 +377,7 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
             }
 
             if (isTimeSeries) {
-              xValueText = moment(x * 1000).format(variableDateFormat);
+              xValueText = moment(Number(x) * 1000).format(variableDateFormat);
             }
 
             return (
@@ -418,24 +418,22 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
           width={width ? width - (3 * UNIT + 3) : width}
           xAxisLabel={xAxisLabelProp || xAxisLabel || String(configuration[VARIABLE_NAME_X] || '')}
           xLabelFormat={(ts: number, index, values) => {
-            let val = ts;
+            let val = String(ts);
 
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                val = moment(ts * 1000).format(xAxisLabelFormatValue);
+                val = moment(Number(ts) * 1000).format(xAxisLabelFormatValue);
               } else {
                 val = xAxisLabelFormat(ts, index, values);
               }
             } else if (isTimeSeries) {
-              val = moment(ts * 1000).format(variableDateFormat);
+              val = moment(Number(ts) * 1000).format(variableDateFormat);
             }
 
             return val;
           }}
-          xTooltipFormat={xTooltipFormatValue ? xTooltipFormat : null}
           yAxisLabel={yAxisLabel || String(configuration[VARIABLE_NAME_Y])}
           yLabelFormat={yAxisLabelFormatValue ? yAxisLabelFormat : undefined}
-          yTooltipFormat={yTooltipFormatValue ? yTooltipFormat : null}
         />
       );
     }

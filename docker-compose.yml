@@ -65,8 +65,6 @@ x-app_settings: &app_settings
   build:
     context: .
     dockerfile: ./dev.Dockerfile
-  depends_on:
-    - server
   command: ./scripts/install_and_run.sh
   ports:
     - 3000:3000
@@ -98,6 +96,8 @@ services:
     <<: *server_settings
   app:
     <<: *app_settings
+    depends_on:
+      - server
   server_spark:
     <<: *server_settings
     image: mage/data_spark
@@ -112,3 +112,5 @@ services:
       dockerfile: ./dev.spark.Dockerfile
     depends_on:
       - server_spark
+  test-frontend:
+    <<: *app_settings

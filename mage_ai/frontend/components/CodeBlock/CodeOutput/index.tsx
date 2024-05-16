@@ -66,7 +66,6 @@ import {
   addDataOutputBlockUUID,
   openSaveFileDialog,
   prepareOutput,
-  prepareOutputsForDisplay,
 } from '@components/PipelineDetail/utils';
 import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
@@ -599,7 +598,7 @@ function CodeOutput(
     const tableContent = [];
     const testMessages = [];
 
-    combinedMessages?.forEach((output: KernelOutputType | OutputType, idx: number) => {
+    combinedMessages?.forEach((output: OutputType, idx: number) => {
       const outputIsGroupedOutputs = DataTypeEnum?.GROUP === output?.type;
       const outputIsMultiOutputs = output?.multi_output && output?.outputs?.length >= 1;
 

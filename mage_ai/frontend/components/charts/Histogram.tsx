@@ -34,6 +34,7 @@ import {
 } from './utils/date';
 import { formatNumberLabel } from './utils/label';
 import { getChartColors } from './constants';
+import { isDate } from '@utils/date';
 
 type TooltipData = {
   bar: any;
@@ -62,8 +63,10 @@ export type HistogramProps = {
   renderTooltipContent?: (
     y: string | number,
     x: string | number | null,
-    tooltip: TooltipData,
-  ) => string;
+    tooltip: TooltipData | {
+      values: number[] | string[];
+    },
+  ) => string | React.ReactNode;
   selected?: boolean;
   showAxisLabels?: boolean;
   showYAxisLabels?: boolean;
@@ -173,7 +176,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
           // @ts-ignore
           .sort(
             (a: any, b: any) =>
-              new Date(formatDateTickLabel(a[0])) - new Date(formatDateTickLabel(b[0])),
+            new Date(formatDateTickLabel(a[0])).getTime() - new Date(formatDateTickLabel(b[0])).getTime(),
           )
       : dataSample;
     const maxDateFreq = xScaleDate ? Math.max(...Object.values(dateFrequencyByRange)) : 0;
@@ -368,10 +371,9 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
                 tickFormat={(label, ...args) =>
                   xLabelFormat
                     ? xLabelFormat(label, ...args)
-                    : // @ts-ignore
-                      isDateType
+                    : isDate(label) // Here we ensure label is treated as Date if it's supposed to be a Date
                       ? formatDateAxisLabel(label)
-                      : label
+                      : label.toString() // Fallback to converting label to string if it's not a Date
                 }
                 tickLabelProps={(val: any) => ({
                   fill: showYAxisLabels ? colors.active : 'transparent',

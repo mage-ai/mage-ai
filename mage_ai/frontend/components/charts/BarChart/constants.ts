@@ -15,12 +15,16 @@ export type TooltipFormatProps = {
   xTooltipFormat?: (
     y: string | number,
     x: string | number | null,
-    tooltip: TooltipData,
+    tooltip: TooltipData | {
+      values: number[];
+    },
   ) => string | number;
   yTooltipFormat?: (
     y: string | number,
     x: string | number | null,
-    tooltip: TooltipData,
+    tooltip: TooltipData | {
+      values: number[];
+    },
   ) => string | number;
 };
 

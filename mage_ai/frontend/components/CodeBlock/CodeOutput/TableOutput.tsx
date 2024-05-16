@@ -6,7 +6,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { HTMLOutputStyle } from './index.style';
-import { OutputType } from '@interfaces/BlockType';
+import { OutputType, SampleDataType } from '@interfaces/BlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { containsOnlySpecialCharacters, containsHTML } from '@utils/string';
@@ -46,11 +46,22 @@ function TableOutput({
     rows: string[][] | number[][];
   } = useMemo(
     () =>
-      (isObject(data) ? data : null) ||
-      sampleData || {
-        columns: [],
-        rows: [],
-      },
+      (isObject(data)
+        && typeof sampleData !== 'string'
+        && !Array.isArray(sampleData)
+        ? data as SampleDataType
+        : null
+      )
+      || (isObject(sampleData)
+        && sampleData?.rows
+        && sampleData?.columns
+          ? sampleData
+          : null
+      )
+      || {
+          columns: [],
+          rows: [],
+        },
     [data, sampleData],
   );
 
@@ -58,6 +69,7 @@ function TableOutput({
     if (shape && setShapeCallback) {
       setShapeCallback?.(shape);
       if (uuid) {
+        // @ts-ignore
         setShapeCallback((prev: number[]) => ({
           ...prev,
           [uuid]: shape,
@@ -77,11 +89,22 @@ function TableOutput({
     );
   }
 
-  if (rows?.length >= 1 && rows?.every(row => typeof row === 'string' && containsHTML(row))) {
+  if (
+    Array.isArray(rows)
+    && rows.length >= 1
+    // @ts-ignore
+    && rows.every(row => Array.isArray(row) && row.every(cell => typeof cell === 'string' && containsHTML(cell)))
+  ) {
     return (
       <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
         <HTMLOutputStyle monospace>
-          {rows?.map((row, idx) => <InnerHTML html={String(row)} key={`html-row-${idx}`} />)}
+          {rows.map((row, idx) =>
+            <div key={`html-row-${idx}`}>
+              {row.map((cell, cellIdx) => (
+                <InnerHTML html={String(cell)} key={`html-cell-${cellIdx}`} />
+              ))}
+            </div>,
+          )}
         </HTMLOutputStyle>
       </Spacing>
     );

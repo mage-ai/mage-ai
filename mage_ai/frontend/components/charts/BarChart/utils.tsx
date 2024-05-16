@@ -38,7 +38,7 @@ function max<D>(arr: D[], fn: (d: D) => number) {
 }
 
 export function getColorSet(
-  opts?: {
+  opts: {
     flat?: boolean;
   } = {},
 ) {
@@ -81,12 +81,12 @@ export function getColorSet(
     return colorsSets.reduce((acc, val) => acc.concat(val), []);
   }
 
-  return colorsSets.reduce((acc, val, idx) => {
-    val.forEach((color, index) => {
+  return colorsSets.reduce((acc: string[][], val, idx) => {
+    val.forEach((color: string, index: number) => {
       if (!acc[index]) {
         acc[index] = [];
       }
-      acc[index].push(color);
+      acc[index]?.push(color);
     });
     return acc;
   }, []);

@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react';
-import InnerHTML from 'dangerously-set-html-content';
+import { useMemo } from 'react';
 
 import Chip from '@oracle/components/Chip';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -29,14 +28,14 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import Panel from '@oracle/components/Panel';
 import { PADDING_UNITS } from 'oracle/styles/units/spacing';
 import { dig, setNested } from '@utils/hash';
-import BlockType from '@interfaces/BlockType';
+import BlockLayoutItemType from '@interfaces/BlockLayoutItemType';
 
 function ChartConfigurations({
   block,
   updateConfiguration,
 }: {
-  block: BlockType;
-  updateConfiguration: (configuration: ConfigurationType, options?: { autoRun?: boolean }) => void;
+  block: BlockLayoutItemType;
+  updateConfiguration: (configuration: ConfigurationType, options?: { autoRun?: boolean, skip_render?: boolean }) => void;
 }) {
   const { data, configuration } = block || {};
   const { chart_type: chartType } = configuration || {};

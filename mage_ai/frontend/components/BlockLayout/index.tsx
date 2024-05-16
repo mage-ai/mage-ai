@@ -1,59 +1,56 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockLayoutItem from './BlockLayoutItem';
+import api from '@api';
+import { onSuccess } from '@api/utils/response';
+import ChartConfigurations from '@components/BlockLayout/ChartConfigurations';
+import Breadcrumbs from '@components/Breadcrumbs';
+import CodeEditor from '@components/CodeEditor';
+import TripleLayout from '@components/TripleLayout';
+import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { useError } from '@context/Error';
 import BlockLayoutItemType, {
-  DATA_SOURCES,
-  DATA_SOURCES_HUMAN_READABLE_MAPPING,
-  DataSourceEnum,
+    DATA_SOURCES,
+    DATA_SOURCES_HUMAN_READABLE_MAPPING,
+    DataSourceEnum,
 } from '@interfaces/BlockLayoutItemType';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import Breadcrumbs from '@components/Breadcrumbs';
-import Button from '@oracle/elements/Button';
-import ChartConfigurations from '@components/BlockLayout/ChartConfigurations';
-import CodeEditor from '@components/CodeEditor';
-import Divider from '@oracle/elements/Divider';
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
-import Loading from '@oracle/components/Loading';
-import LayoutDivider from './LayoutDivider';
-import Link from '@oracle/elements/Link';
+import {
+    CHART_TYPES,
+    ChartTypeEnum,
+} from '@interfaces/ChartBlockType';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
-import Select from '@oracle/elements/Inputs/Select';
-import Spacing from '@oracle/elements/Spacing';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Loading from '@oracle/components/Loading';
 import Spinner from '@oracle/components/Spinner';
-import Text from '@oracle/elements/Text';
+import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
+import Headline from '@oracle/elements/Headline';
+import Select from '@oracle/elements/Inputs/Select';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import TripleLayout from '@components/TripleLayout';
-import api from '@api';
-import useDebounce from '@utils/hooks/useDebounce';
-import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import Link from '@oracle/elements/Link';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import { Add } from '@oracle/icons';
-import {
-  ChartTypeEnum,
-  CHART_TYPES,
-  VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
-  VARIABLE_NAME_X_AXIS_LABEL_FORMAT,
-  VARIABLE_NAME_TOOLTIP_FORMAT,
-} from '@interfaces/ChartBlockType';
-import {
-  PADDING_UNITS,
-  UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-  UNITS_BETWEEN_SECTIONS,
-} from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
+import {
+    PADDING_UNITS,
+    UNIT,
+    UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+    UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
-import { ignoreKeys } from '@utils/hash';
-import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex, sortByKey, sum } from '@utils/array';
-import { useError } from '@context/Error';
+import { ignoreKeys } from '@utils/hash';
+import useDebounce from '@utils/hooks/useDebounce';
 import { useWindowSize } from '@utils/sizes';
+import { capitalize, cleanName, randomNameGenerator } from '@utils/string';
+import BlockLayoutItem from './BlockLayoutItem';
+import LayoutDivider from './LayoutDivider';
 
 type BlockLayoutProps = {
   leftOffset?: number;
@@ -81,7 +78,6 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
     [key: string]: BlockLayoutItemType;
   }>({});
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
-  const refMenu = useRef(null);
 
   const localStorageKeyAfter = `block_layout_after_width_${uuid}`;
   const localStorageKeyBefore = `block_layout_before_width_${uuid}`;
@@ -208,7 +204,7 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
     () => dataPageBlockLayout?.page_block_layout,
     [dataPageBlockLayout],
   );
-  const [fetchPageBlockLayout, { isLoading: isLoadingFetchPageBlockLayout }] = useMutation(
+  const [fetchPageBlockLayout] = useMutation(
     () => api.page_block_layouts.detailAsync(encodeURIComponent(uuid)),
     {
       onSuccess: (response: any) =>
@@ -236,7 +232,12 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
   }
 
   const [updateBlockLayoutItem, { isLoading: isLoadingUpdateBlockLayoutItem }] = useMutation(
-    api.page_block_layouts.useUpdate(encodeURIComponent(uuid)),
+    (updatePayload: {
+      page_block_layout: {
+        blocks?: any;
+        layout?: any;
+      };
+    }) => api.page_block_layouts.useUpdate(encodeURIComponent(uuid))(updatePayload),
     {
       onSuccess: (response: any) =>
         onSuccess(response, {

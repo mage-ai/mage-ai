@@ -1,10 +1,12 @@
 import datetime
+from typing import List, Optional, Tuple
+
 import pytz
 
 from mage_ai.shared.array import find_index
 
 
-def compare(date1: datetime, date2: datetime) -> int:
+def compare(date1, date2) -> Optional[int]:
     if date1 is None or date2 is None:
         return None
 
@@ -27,8 +29,7 @@ def n_days_ago(n: int) -> str:
 def str_to_timedelta(period_str: str):
     unit = period_str[-1]
     if unit not in ['d', 'h', 'w']:
-        raise Exception(
-            'Please provide a valid period unit ("d", "h", or "w")')
+        raise Exception('Please provide a valid period unit ("d", "h", or "w")')
     if unit == 'd':
         return datetime.timedelta(days=int(period_str[:-1]))
     elif unit == 'h':
@@ -45,8 +46,8 @@ def week_of_month(day: datetime.datetime) -> int:
 
     # e.g. 7 - 5 = 2
     first_week_last_day = 7 - ((first_day_weekday + 1) % 7)
-    day_ranges_per_week = [
-        # If the 1st day is Friday, then Saturday is the 2nd, and that is the end of the 1st week
+    # If the 1st day is Friday, then Saturday is the 2nd, and that is the end of the 1st week
+    day_ranges_per_week: List[Tuple[int, int]] = [
         (1, first_week_last_day),
     ]
 
@@ -57,7 +58,10 @@ def week_of_month(day: datetime.datetime) -> int:
         # 3: (24, 30)
         # 4: (31, 37)
         day_ranges_per_week.append(
-            (first_week_last_day + 1 + (7 * i), first_week_last_day + (7 * (i + 1))),
+            (
+                first_week_last_day + 1 + (7 * i),
+                first_week_last_day + (7 * (i + 1)),
+            ),
         )
 
     # If the first day of the month is a Friday, here are the day ranges for each week:
