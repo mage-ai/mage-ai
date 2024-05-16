@@ -64,7 +64,8 @@ export type HistogramProps = {
     y: string | number,
     x: string | number | null,
     tooltip: TooltipData | {
-      values: number[] | string[];
+      hideRange?: boolean;
+      values?: number[] | string[];
     },
   ) => string | React.ReactNode;
   selected?: boolean;

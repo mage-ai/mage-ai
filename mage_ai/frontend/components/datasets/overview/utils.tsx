@@ -113,15 +113,20 @@ export function buildRenderColumnHeader({
             right: 0,
             top: 0,
           }}
-          renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
-            <p>
-              Rows: {count}
-              <br />
-              Start: {xLabelMin}
-              <br />
-              End: {xLabelMax}
-            </p>
-          )}
+          renderTooltipContent={(value, _, {
+            values,
+          }) => {
+            const [xLabelMin, xLabelMax] = values;
+            return (
+              <p>
+                Rows: {value}
+                <br />
+                Start: {xLabelMin}
+                <br />
+                End: {xLabelMax}
+              </p>
+            );
+          }}
           sortData={d => sortByKey(d, '[4]')}
         />
       );
@@ -186,24 +191,29 @@ export function buildRenderColumnHeader({
             right: 0,
             top: 0,
           }}
-          renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
-            <p>
-              {hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Value: {xLabelMin}
-                </>
-              )}
-              {!hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Range: {xLabelMin} - {xLabelMax}
-                </>
-              )}
-            </p>
-          )}
+          renderTooltipContent={(value, _, opts) => {
+            const xLabelMin = opts?.values?.[0];
+            const xLabelMax = opts?.values?.[1];
+            const hideRange = (typeof xLabelMin === 'undefined' || typeof xLabelMax === 'undefined');
+            return (
+              <p>
+                {hideRange && (
+                  <>
+                    Rows: {value}
+                    <br />
+                    Value: {typeof xLabelMin !== 'undefined' ? xLabelMin : xLabelMax}
+                  </>
+                )}
+                {!hideRange && (
+                  <>
+                    Rows: {value}
+                    <br />
+                    Range: {xLabelMin} - {xLabelMax}
+                  </>
+                )}
+              </p>
+            );
+          }}
           sortData={d => sortByKey(d, '[2]')}
           width={columnWidth - (UNIT * 2)}
         />
@@ -252,7 +262,7 @@ export function buildRenderColumnHeader({
             marginBottom: UNIT,
           }}
         >
-          {ColumnTypeIcon && 
+          {ColumnTypeIcon &&
             <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
               <ColumnTypeIcon size={UNIT * 2} />
             </Flex>
