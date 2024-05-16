@@ -33,7 +33,7 @@ import api from '@api';
 import useDebounce from '@utils/hooks/useDebounce';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Add } from '@oracle/icons';
-import { ChartTypeEnum, CHART_TYPES } from '@interfaces/ChartBlockType';
+import { ChartTypeEnum, CHART_TYPES, VARIABLE_NAME_Y_AXIS_LABEL_FORMAT, VARIABLE_NAME_X_AXIS_LABEL_FORMAT, VARIABLE_NAME_TOOLTIP_FORMAT } from '@interfaces/ChartBlockType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -170,7 +170,7 @@ function BlockLayout({
   const setObjectAttributes = useCallback((prev, opts: { skip_render?: boolean } = {}) => {
     debouncer(() => fetchBlockLayoutItem({
       skip_render: false,
-    }), opts?.skip_render ? 3000 : 300);
+    }), opts?.skip_render ? 3000 : 1000);
 
     setObjectAttributesState(typeof prev === 'function' ? prev : prev2 => ({
       ...prev2,
@@ -1046,14 +1046,14 @@ function BlockLayout({
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
           <ChartConfigurations
             block={blockForChartConfigurations}
-            updateConfiguration={(configuration) => {
+            updateConfiguration={(configuration, opts) => {
               setObjectAttributes(prev => ({
                 ...prev,
                 configuration: {
                   ...prev?.configuration,
                   ...configuration,
                 },
-              }));
+              }), opts);
             }}
           />
         </Spacing>

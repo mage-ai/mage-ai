@@ -6,6 +6,7 @@ import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
 import { defaultStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
+import { TooltipData as TooltipDataBase, TooltipFormatProps, AxisLabelFormatProps } from './BarChart/constants';
 import { localPoint } from '@visx/event';
 import {
   scaleBand,
@@ -47,7 +48,7 @@ type TooltipData = {
   width: number;
   x: number;
   y: number;
-};
+} & TooltipDataBase;
 
 export type HistogramProps = {
   columnType?: string;
@@ -69,9 +70,7 @@ export type HistogramProps = {
   showZeroes?: boolean;
   sortData?: (data: any[]) => any[];
   width?: number;
-  xLabelFormat?: (value: any) => string;
-  yLabelFormat?: (value: any) => string;
-};
+} & TooltipFormatProps & AxisLabelFormatProps;
 
 export type HistogramContainerProps = {
   loading?: boolean;
@@ -109,6 +108,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
   showZeroes,
   sortData,
   tooltipData,
+  yTooltipFormat,
   tooltipLeft,
   tooltipOpen,
   tooltipTop,
@@ -122,6 +122,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
     if (getXValue) {
       return getXValue(tuple);
     }
+
 
     return tuple[0];
   }, [getXValue]);
@@ -258,17 +259,26 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
         tuple = dataSample[0];
       }
       let colVal = getColVal(tuple);
-      colVal = (colVal.length > 15) ? `${colVal.slice(0, 21)}` : colVal;
+      colVal = (colVal?.length > 15) ? `${colVal.slice(0, 21)}` : colVal;
+      const [xMinValue, yValue, xMaxValue] = tuple;
 
       const tooltipText: any = renderTooltipContent
-        ? renderTooltipContent(tuple)
-        : `${colVal} (${getColValFreq(tuple)})`;
+        ? renderTooltipContent(yValue, index, {
+          xMin: xMinValue,
+          xMax: xMaxValue,
+        })
+        : yTooltipFormat
+          ? yTooltipFormat(yValue, index, {
+            xMin: xMinValue,
+            xMax: xMaxValue,
+          })
+          : `${colVal} (${getColValFreq(tuple)})`;
       // const tooltipLeftPosition = (x < width / 2) ? x : (x - margin.left * 3);
 
       showTooltip({
         tooltipData: tooltipText,
-        tooltipLeft: x - margin.left,
-        tooltipTop: y + margin.top,
+        tooltipLeft: x,
+        tooltipTop: y,
       });
     },
     [
@@ -277,11 +287,11 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
       getColVal,
       getColValFreq,
       margin.left,
-      margin.top,
       renderTooltipContent,
       showAxisLabels,
       showTooltip,
-      width,
+      yTooltipFormat,
+      xMax,
     ],
   );
 
@@ -327,7 +337,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
               left={margin.left}
               scale={yScale}
               stroke={colors.muted}
-              tickFormat={label => yLabelFormat ? yLabelFormat(label) : formatNumberLabel(label)}
+              tickFormat={(label, ...args) => yLabelFormat ? yLabelFormat(label, ...args) : formatNumberLabel(label)}
               tickLabelProps={() => ({
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
@@ -348,8 +358,8 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
               orientation="top"
               scale={xScaleDate || xScale}
               stroke={colors.muted}
-              tickFormat={label => xLabelFormat
-                ? xLabelFormat(String(label))
+              tickFormat={(label, ...args) => xLabelFormat
+                ? xLabelFormat(String(label), ...args)
                 // @ts-ignore
                 : isDateType ? formatDateAxisLabel(label) : String(label)
               }

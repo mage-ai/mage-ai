@@ -6,6 +6,7 @@ import { ThemeContext } from 'styled-components';
 import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
+import { TooltipFormatProps, AxisLabelFormatProps } from './BarChart/constants';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
@@ -13,6 +14,7 @@ import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getChartColors } from './constants';
+import { getColorSet } from './BarChart/utils';
 
 const defaultMargin = {
   bottom: 0,
@@ -29,14 +31,16 @@ type PieProps = {
   getX: (data: any) => string;
   getY: (data: any) => number;
   textColor?: string;
+  thickness?: number;
   width?: number;
-};
+} & TooltipFormatProps & AxisLabelFormatProps;
 
 export type PieChartProps = PieProps & {
   height?: number | string;
+  thickness?: number;
   width?: number | string;
   xAxisLabel?: string;
-};
+} & TooltipFormatProps & AxisLabelFormatProps;
 
 // react-spring transition definitions
 type AnimatedStyles = { startAngle: number; endAngle: number; opacity: number };
@@ -59,7 +63,8 @@ type AnimatedPieProps<Datum> = ProvidedProps<Datum> & {
   getKey: (d: PieArcDatum<Datum>) => string;
   onClickDatum: (d: PieArcDatum<Datum>) => void;
   textColor?: string;
-};
+  thickness?: number;
+} & TooltipFormatProps & AxisLabelFormatProps;
 
 function AnimatedPie<Datum>({
   animate,
@@ -69,6 +74,8 @@ function AnimatedPie<Datum>({
   getColor,
   onClickDatum,
   textColor,
+  xLabelFormat,
+  yLabelFormat,
 }: AnimatedPieProps<Datum>) {
   const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(arcs, {
     enter: enterUpdateTransition,
@@ -81,6 +88,12 @@ function AnimatedPie<Datum>({
   return transitions((props, arc, { key }) => {
     const [centroidX, centroidY] = path.centroid(arc);
     const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.1;
+
+    const content = (xLabelFormat || yLabelFormat)
+      ? xLabelFormat
+        ? xLabelFormat(arc?.data?.[0], arc?.data?.[1], arc?.index)
+        : yLabelFormat(arc?.data?.[1], arc?.data?.[0], arc?.index)
+      : getKey(arc);
 
     return (
       <g key={key}>
@@ -109,7 +122,7 @@ function AnimatedPie<Datum>({
               x={centroidX}
               y={centroidY}
             >
-              {getKey(arc)}
+              {content}
             </text>
           </animated.g>
         )}
@@ -126,6 +139,9 @@ function PieChart({
   height,
   margin = defaultMargin,
   textColor,
+  thickness,
+  xLabelFormat,
+  yLabelFormat,
   width,
 }: PieProps) {
   const [selectedData, setSelectedData] = useState(null);
@@ -138,7 +154,9 @@ function PieChart({
 
   const getColor = scaleOrdinal({
     domain: data.map(d => getX(d)),
-    range: getChartColors(themeContext),
+    range: getColorSet({
+      flat: true,
+    }),
   });
 
   const innerWidth = width - margin.left - margin.right;
@@ -146,7 +164,9 @@ function PieChart({
   const radius = Math.min(innerWidth, innerHeight) / 2;
   const centerY = innerHeight / 2;
   const centerX = innerWidth / 2;
-  const donutThickness = Math.min(innerWidth / 4, UNIT * 12);
+  const donutThickness = thickness
+    ? (Math.min(innerWidth, innerHeight) / 2) * thickness
+    : Math.min(innerWidth / 4, UNIT * 12);
 
   return (
     <svg
@@ -181,6 +201,8 @@ function PieChart({
                 )
               }
               textColor={finalTextColor}
+              xLabelFormat={xLabelFormat}
+              yLabelFormat={yLabelFormat}
             />
           )}
         </Pie>

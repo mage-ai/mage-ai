@@ -1,3 +1,4 @@
+import InnerHTML from 'dangerously-set-html-content';
 import { useCallback, useMemo } from 'react';
 
 import Chip from '@oracle/components/Chip';
@@ -22,6 +23,9 @@ import {
 } from '@components/ChartBlock/constants';
 import { capitalize } from '@utils/string';
 import { remove, sortByKey } from '@utils/array';
+import TextArea from '@oracle/elements/Inputs/TextArea';
+import Panel from '@oracle/components/Panel';
+import Ansi from 'ansi-to-react';
 
 function ChartConfigurations({
   block,
@@ -49,6 +53,7 @@ function ChartConfigurations({
       ...acc,
       [key]: arr.map(({
         autoRun,
+        description,
         label,
         monospace,
         options,
@@ -56,6 +61,24 @@ function ChartConfigurations({
         type,
         uuid,
       }) => {
+        const renderWithLabelDescription = (elInit) => (
+          <Panel>
+            <Spacing mb={2}>
+              <Spacing mb={1}>
+                <Text bold>
+                  {sharedProps?.label}
+                </Text>
+              </Spacing>
+              {description && (Array.isArray(description) ? description : [description]).map((desc, i) => (
+                <Text key={`${desc}-${i}`} monospace={monospace} muted xsmall>
+                  <span dangerouslySetInnerHTML={{ __html: desc }} />
+                </Text>
+              ))}
+            </Spacing>
+            {elInit}
+          </Panel>
+        );
+
         let el;
         const sharedProps = {
           fullWidth: true,
@@ -104,7 +127,9 @@ function ChartConfigurations({
                   ))}
                 </Select>
               )}
-
+              {columnsFromConfig.length > 0 && (
+                <div style={{ marginTop: 4 }} />
+              )}
               {columnsFromConfig.map((col: string) => (
                 <div
                   key={col}
@@ -198,7 +223,7 @@ function ChartConfigurations({
                   style={{
                     display: 'inline-block',
                     marginRight: 2,
-                    marginTop: 2,
+                    marginTop: 4,
                   }}
                 >
                   <Chip
@@ -222,6 +247,51 @@ function ChartConfigurations({
               ))}
             </>
           );
+        } else if (ConfigurationItemType.CODE === type) {
+          el = renderWithLabelDescription(
+            <>
+              <Text monospace small>
+                <Text color="#00CC99" inline monospace small>
+                  function
+                </Text> <Text color="#0080FF" inline monospace small>
+                  format
+                </Text><Text color="#FF9933" inline monospace small>
+                  (
+                </Text><Text color="#00FFFF" inline monospace small>
+                  value
+                </Text>, <Text color="#00FFFF" inline monospace small>
+                  index
+                </Text>, <Text color="#00FFFF" inline monospace small>
+                  values
+                </Text><Text color="#FF9933" inline monospace small>
+                  )
+                </Text> <Text color="#FF9933" inline monospace small>
+                  {'{'}
+                </Text>
+              </Text>
+              <TextArea
+                {...sharedProps}
+                autoGrow
+                borderless
+                label={null}
+                monospace
+                onChange={(e) => {
+                  updateConfiguration({
+                    [uuid]: e.target.value,
+                  }, {
+                    skip_render: true,
+                  });
+                }}
+                paddingVertical={0}
+                primary
+                rows={1}
+                small
+              />
+              <Text color="#FF9933" inline monospace small>
+                {'}'}
+              </Text>
+            </>,
+          );
         } else if (options) {
           el = (
             <Select
@@ -238,9 +308,15 @@ function ChartConfigurations({
           el = (
             <TextInput
               {...sharedProps}
+              label={!description ? sharedProps?.label : undefined}
+              placeholder={description ? sharedProps?.label : undefined}
               type={type}
             />
           );
+
+          if (description) {
+            el = renderWithLabelDescription(el);
+          }
         }
 
         return (

@@ -13,12 +13,17 @@ import {
   VARIABLE_NAME_LIMIT,
   VARIABLE_NAME_METRICS,
   VARIABLE_NAME_TIME_INTERVAL,
+  VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
+  VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
   VARIABLE_NAME_X,
+  VARIABLE_NAME_X_AXIS_LABEL_FORMAT,
   VARIABLE_NAME_Y,
+  VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   VARIABLE_NAME_Y_SORT_ORDER,
 } from '@interfaces/ChartBlockType';
 
 export enum ConfigurationItemType {
+  CODE = 'code',
   COLUMNS = 'columns',
   METRICS = 'metrics',
   NUMBER = 'number',
@@ -26,6 +31,7 @@ export enum ConfigurationItemType {
 
 export interface ConfigurationOptionType {
   autoRun?: boolean;
+  description?: string[] | string;
   label: () => string;
   monospace?: boolean;
   options?: string[];
@@ -35,6 +41,51 @@ export interface ConfigurationOptionType {
   type?: ConfigurationItemType;
   uuid: string;
 }
+
+const SHARED_CODE_PROPS = {
+  description: [
+    'value&nbsp;: string | number | undefined',
+    'index&nbsp;: string | number | undefined',
+    'values: { value, index }[] | { x, y, index }',
+    '&nbsp;',
+    'return string | number',
+  ],
+  monospace: true,
+  type: ConfigurationItemType.CODE,
+};
+
+const SHARED_CONFIGS = ({
+  includeXTooltipFormat = false,
+  includeYTooltipFormat = true,
+}: {
+  includeXTooltipFormat?: boolean;
+  includeYTooltipFormat?: bool;
+} = {}) => [
+  {
+    ...SHARED_CODE_PROPS,
+    label: () => 'X axis label format',
+    uuid: VARIABLE_NAME_X_AXIS_LABEL_FORMAT,
+  },
+  {
+    ...SHARED_CODE_PROPS,
+    label: () => 'Y axis label format',
+    uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
+  },
+  ...(includeXTooltipFormat ? [
+    {
+      ...SHARED_CODE_PROPS,
+      label: () => 'X tooltip format',
+      uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
+    },
+  ] : []),
+  ...(includeYTooltipFormat ? [
+    {
+      ...SHARED_CODE_PROPS,
+      label: () => 'Y tooltip format',
+      uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
+    },
+  ] : []),
+];
 
 const timeSeriesConfiguration: {
   noCode: ConfigurationOptionType[];
@@ -61,6 +112,23 @@ const timeSeriesConfiguration: {
         TimeIntervalEnum.YEAR,
       ],
       uuid: VARIABLE_NAME_TIME_INTERVAL,
+    },
+    {
+      description: [
+        'MMMM Do YYYY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// May 15th 2024',
+        'h:mm:ss a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 3:31:13 pm',
+        'dddd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Wednesday',
+        'MMM Do YY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// May 15th 24',
+        'YYYY [text] YYYY // 2024 text 2024',
+      ],
+      label: () => 'X axis label format',
+      monospace: true,
+      uuid: VARIABLE_NAME_X_AXIS_LABEL_FORMAT,
+    },
+    {
+      ...SHARED_CODE_PROPS,
+      label: () => 'Y axis label format',
+      uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
     },
     {
       label: () => 'metrics',
@@ -107,6 +175,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         ],
         uuid: VARIABLE_NAME_Y_SORT_ORDER,
       },
+      ...SHARED_CONFIGS(),
     ],
     code: [
       {
@@ -137,6 +206,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_BUCKETS,
       },
+      ...SHARED_CONFIGS(),
     ],
     code: [
       {
@@ -149,7 +219,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.LINE_CHART]: {
     noCode: [
       {
-        label: () => 'group by columns',
+        label: () => 'number column to group by',
         settings: {
           maxValues: 1,
         },
@@ -161,6 +231,9 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         type: ConfigurationItemType.METRICS,
         uuid: VARIABLE_NAME_METRICS,
       },
+      ...SHARED_CONFIGS({
+        includeXTooltipFormat: true,
+      }),
     ],
     code: [
       {
@@ -195,6 +268,9 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_BUCKETS,
       },
+      ...SHARED_CONFIGS({
+        includeYTooltipFormat: false,
+      }),
     ],
     code: [
       {

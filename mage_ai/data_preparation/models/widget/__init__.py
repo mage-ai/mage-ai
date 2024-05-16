@@ -204,7 +204,7 @@ class Widget(Block):
                         value_counts[key] = 0
                     value_counts[key] += 1
 
-            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS) or MAX_BUCKETS)
             arr = sorted(
                 list(zip(value_counts.values(), value_counts.keys())),
                 reverse=True,

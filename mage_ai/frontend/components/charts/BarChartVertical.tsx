@@ -34,6 +34,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
     renderNoDataText,
     renderTooltipContent,
     tooltipData,
+    yTooltipFormat,
     tooltipLeft,
     tooltipOpen,
     tooltipTop,
@@ -72,11 +73,11 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
       <svg height={height} width={width}>
         {renderNoDataText && !data?.length && (
           <text
-            fill={colors.active}
             dominantBaseline="middle"
-            textAnchor="middle"
+            fill={colors.active}
             fontFamily={FONT_FAMILY_REGULAR}
             fontSize={fontSize}
+            textAnchor="middle"
             x="50%"
             y="50%"
           >
@@ -120,10 +121,9 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
                       left={barGroup.x0 + margin.left}
                       top={margin.top}
                     >
-                      {barGroup.bars.map((bar) => {
-                        return (
-                          <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
-                            <rect
+                      {barGroup.bars.map((bar) => (
+                        <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
+                          <rect
                               fill={bar.color}
                               height={bar.height}
                               pointerEvents="none"
@@ -132,9 +132,8 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
                               x={bar.x}
                               y={bar.y}
                             />
-                          </g>
-                        );
-                      })}
+                        </g>
+                        ))}
                     </Group>
                   ))
                 }
@@ -145,7 +144,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
                 numTicks={yNumTicks}
                 scale={tempScale}
                 stroke={colors.muted}
-                tickFormat={label => yLabelFormat(label)}
+                tickFormat={yLabelFormat}
                 tickLabelProps={() => ({
                   fill: colors.active,
                   fontFamily: FONT_FAMILY_REGULAR,
@@ -212,24 +211,30 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
             if (keyForYData !== k) {
               let valueToDisplay = v;
 
-              if (isNumeric(valueToDisplay)) {
-                if (String(valueToDisplay).split('.').length >= 2) {
-                  valueToDisplay = valueToDisplay.toFixed(4);
+              if (yTooltipFormat) {
+                valueToDisplay = yTooltipFormat(valueToDisplay, k, tooltipData);
+              } else {
+                if (isNumeric(valueToDisplay)) {
+                  if (String(valueToDisplay).split('.').length >= 2) {
+                    valueToDisplay = valueToDisplay.toFixed(4);
+                  }
                 }
+
+                valueToDisplay = `${k}: ${valueToDisplay}`;
               }
 
               return (
-                <Text key={k} inverted small>
-                  {k}: {valueToDisplay}
+                <Text inverted key={k} monospace small>
+                  {valueToDisplay}
                 </Text>
               );
             }
           })}
 
-          <br />
+          <div style={{ marginBottom: 2 }} />
 
-          <Text inverted small>
-            {xLabelFormat && xLabelFormat(ySerialize(tooltipData))}
+          <Text bold inverted small>
+            {xLabelFormat && xLabelFormat(ySerialize(tooltipData), tooltipData?.x, null)}
             {!xLabelFormat && ySerialize(tooltipData)}
           </Text>
         </TooltipWithBounds>
@@ -300,6 +305,6 @@ function BarChartVerticalContainer({
       )}
     </>
   );
-};
+}
 
 export default BarChartVerticalContainer;

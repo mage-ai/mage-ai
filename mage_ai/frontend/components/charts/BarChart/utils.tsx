@@ -31,6 +31,60 @@ function max<D>(arr: D[], fn: (d: D) => number) {
   return Math.max(...arr.map(fn));
 }
 
+export function getColorSet({
+  flat = false,
+}: {
+  flat?: boolean;
+}) {
+  const colorsSets = [
+    [
+      // Very specific order
+      PURPLE,
+      BLUE,
+      RED,
+      GREEN,
+      YELLOW,
+      PEACH,
+      NAVY,
+      PINK,
+    ],
+    [
+      '#8E73E5', // (Lighter shade of #6B50D7)
+      '#4F7EFF', // (Lighter shade of #2A60FE)
+      '#FF5A7A', // (Lighter shade of #FF144D)
+      '#56E06B', // (Lighter shade of #2FCB52)
+      '#FFD64A', // (Lighter shade of #FFCC19)
+      '#CBA9B2', // (Lighter shade of #B98D95)
+      '#4F86FF', // (Lighter shade of #0F4CFF)
+      '#FF6FFB', // (Lighter shade of #FF4FF8)
+    ],
+    [
+      '#5338AA', // (Darker shade of #6B50D7)
+      '#1E4BCC', // (Darker shade of #2A60FE)
+      '#CB1035', // (Darker shade of #FF144D)
+      '#209A3C', // (Darker shade of #2FCB52)
+      '#E6AB00', // (Darker shade of #FFCC19)
+      '#836970', // (Darker shade of #B98D95)
+      '#0C3BCC', // (Darker shade of #0F4CFF)
+      '#CB00C6', // (Darker shade of #FF4FF8)
+    ],
+  ];
+
+  if (flat) {
+    return colorsSets.reduce((acc, val) => acc.concat(val), []);
+  }
+
+  return colorsSets.reduce((acc, val, idx) => {
+    val.forEach((color, index) => {
+      if (!acc[index]) {
+        acc[index] = [];
+      }
+      acc[index].push(color);
+    });
+    return acc;
+  }, []);
+}
+
 export function buildSharedProps({
   data: completeData,
   height,
@@ -69,19 +123,13 @@ export function buildSharedProps({
     keyForYData,
   ]);
 
+  const colorsSets = getColorSet();
   const colorScale = scaleOrdinal({
     domain: xKeys,
-    // Very specific order
     range: [
-      PURPLE,
-      BLUE,
-      RED,
-      GREEN,
-      YELLOW,
-      PEACH,
-      NAVY,
-      PINK,
-      LIME,
+      ...colorsSets.map(pair => pair[0]),
+      ...colorsSets.map(pair => pair[1]),
+      ...colorsSets.map(pair => pair[2]),
     ],
   });
   const dataYSerialized = useMemo(() => data.map(ySerialize), [data, ySerialize]);
@@ -108,8 +156,7 @@ export function buildSharedProps({
 
   let tickValues: string[] = dataYSerialized;
   if (orientationVertical) {
-    tickValues = data.reduce((acc, d) => {
-      return acc.concat(xKeys.map(k => {
+    tickValues = data.reduce((acc, d) => acc.concat(xKeys.map(k => {
         const v = d[k];
 
         if (isNumeric(v)) {
@@ -117,14 +164,13 @@ export function buildSharedProps({
         }
 
         return v;
-      }));
-    }, []);
+      })), []);
   }
 
   const maxTickValueCharacterLength: number =
     Math.min(
       Math.max(...tickValues.map(s => String(s).length)),
-      MAX_LABEL_LENGTH
+      MAX_LABEL_LENGTH,
     );
 
   // if (maxTickValueCharacterLength * 6 > margin.right * 2) {

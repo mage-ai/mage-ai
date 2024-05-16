@@ -49,7 +49,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   tooltipOpen,
   tooltipTop,
   width,
+  yTooltipFormat,
   xAxisLabel,
+  xLabelFormat,
   xNumTicks,
   yLabelFormat: yLabelFormatProp,
 }: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
@@ -92,11 +94,11 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
       <svg height={height} width={width}>
         {renderNoDataText && !data?.length && (
           <text
-            fill={colors.active}
             dominantBaseline="middle"
-            textAnchor="middle"
+            fill={colors.active}
             fontFamily={FONT_FAMILY_REGULAR}
             fontSize={fontSize}
+            textAnchor="middle"
             x="50%"
             y="50%"
           >
@@ -162,7 +164,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
               hideTicks
               scale={yScale}
               stroke={colors.muted}
-              tickFormat={label => yLabelFormat(label)}
+              tickFormat={yLabelFormat}
               tickLabelProps={() => ({
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
@@ -188,6 +190,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
               numTicks={xNumTicks}
               scale={tempScale}
               stroke={colors.muted}
+              tickFormat={xLabelFormat}
               tickLabelProps={() => ({
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
@@ -230,7 +233,13 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
             if (keyForYData !== k) {
               let valueToDisplay = v;
 
-              if (isNumeric(valueToDisplay)) {
+              if (yTooltipFormat) {
+                return (
+                  <Text inverted key={k} small>
+                    {yTooltipFormat(valueToDisplay, k, tooltipData)}
+                  </Text>
+                );
+              } else if (isNumeric(valueToDisplay)) {
                 if (String(valueToDisplay).split('.').length >= 2) {
                   if (typeof valueToDisplay !== 'undefined' && valueToDisplay !== null && isNumeric(valueToDisplay)) {
                     valueToDisplay = valueToDisplay?.toFixed(4);
@@ -239,7 +248,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
               }
 
               return (
-                <Text key={k} inverted small>
+                <Text inverted key={k} small>
                   {k}: {valueToDisplay}
                 </Text>
               );

@@ -57,9 +57,10 @@ type SharedProps = {
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   noCurve?: boolean;
   numYTicks?: number;
-  renderXTooltipContent?: (opts: any, index: number) => any | number | string;
-  renderYTooltipContent?: (opts: any, index: number) => any | number | string;
+  renderXTooltipContent?: (opts: any, index: number) => JSX.Element;
+  renderYTooltipContent?: (opts: any, index: number) => JSX.Element;
   thickStroke?: boolean;
+  thickness?: number;
   xLabelFormat?: any;
   xLabelRotate?: boolean;
   yLabelFormat?: any;
@@ -95,6 +96,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   renderYTooltipContent,
   showTooltip,
   thickStroke,
+  thickness,
   tooltipData,
   tooltipLeft = 0,
   tooltipTop = [],
@@ -207,6 +209,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
       getY,
       getYScaleValues,
       margin,
+      maxNumberOfYValues,
       showTooltip,
       xScale,
       xValues,
@@ -304,7 +307,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             numTicks={numXTicks}
             scale={xScale}
             stroke={axisStrokeColor}
-            tickFormat={label => xLabelFormat ? xLabelFormat(label) : label}
+            tickFormat={xLabelFormat}
             tickLabelProps={(val) => ({
               fill: text,
               fontFamily,
@@ -321,7 +324,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             numTicks={numYTicks}
             scale={yScale}
             stroke={axisStrokeColor}
-            tickFormat={label => yLabelFormat ? yLabelFormat(label) : formatNumberLabel(label)}
+            tickFormat={(label, ...args) => yLabelFormat ? yLabelFormat(label, ...args) : formatNumberLabel(label)}
             tickLabelProps={label => ({
               dx: (String(label).length > 4) ? 3 : 0,
               fill: text,
@@ -366,7 +369,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               data={data.filter(d => d.y != undefined)}
               key={i}
               pointerEvents="none"
-              strokeWidth={thickStroke ? 2 : 1}
+              strokeWidth={thickness || (thickStroke ? 2 : 1)}
               x={d => xScale(getX(d))}
               // @ts-ignore
               y={d => yScale(d.y && (i >= d.y.length ? yScaleMin : getY(d, i)))}
@@ -429,13 +432,13 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               <Tooltip
                 key={idx}
                 left={tooltipLeft > xHalfwayPoint
-                  ? (tooltipLeft - (getTooltipContentLength(renderYTooltipContent, tooltipData, idx) * unit))
+                  ? (tooltipLeft - (getTooltipContentLength(renderYTooltipContent ? () => renderYTooltipContent(getY(tooltipData), idx, tooltipData) : undefined) * unit))
                   : (tooltipLeft + unit)
                 }
                 style={tooltipStyles}
                 top={top - 2 * unit}
               >
-                {renderYTooltipContent && renderYTooltipContent(tooltipData, idx)}
+                {renderYTooltipContent && renderYTooltipContent(getY(tooltipData), idx, tooltipData)}
                 {!renderYTooltipContent && (
                   <Text center small>
                     {yValue.toFixed ? yValue.toFixed(3) : yValue} {lineLegendNames?.[idx]}
@@ -447,7 +450,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
           <Tooltip
             left={tooltipLeft > xHalfwayPoint
-              ? (tooltipLeft - (getTooltipContentLength(renderXTooltipContent, tooltipData) * 4))
+              ? (tooltipLeft - (getTooltipContentLength(renderXTooltipContent ? () => renderXTooltipContent(getX(tooltipData), tooltipData?.index, tooltipData) : undefined) * 4))
               : tooltipLeft}
             style={{
               ...tooltipStyles,
@@ -455,7 +458,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             }}
             top={yMax + margin.top}
           >
-            {renderXTooltipContent && renderXTooltipContent(tooltipData)}
+            {renderXTooltipContent && renderXTooltipContent(getX(tooltipData), tooltipData?.index, tooltipData)}
             {!renderXTooltipContent && (
               <Text center small>
                 {getX(tooltipData).toFixed(3)}

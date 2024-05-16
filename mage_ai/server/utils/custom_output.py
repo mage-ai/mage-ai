@@ -41,15 +41,17 @@ def __custom_output():
     pipeline = Pipeline.get('{pipeline_uuid}', repo_path='{repo_path}')
     block = pipeline.get_block('{block_uuid}')
 
-    outputs = block.get_outputs()
-    if outputs is not None and len(outputs) >= 1:
-        _json_string = simplejson.dumps(
-            outputs,
-            default=encode_complex,
-            ignore_nan=True,
-        )
+    if block.executable:
+        outputs = block.get_outputs()
 
-        return print(__render_output_tags(_json_string))
+        if outputs is not None and len(outputs) >= 1:
+            _json_string = simplejson.dumps(
+                outputs,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+
+            return print(__render_output_tags(_json_string))
 
     _internal_output_return = '{last_line}'
     variable_type, basic_iterable = infer_variable_type(_internal_output_return)
