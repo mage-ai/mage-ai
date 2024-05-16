@@ -475,10 +475,11 @@ def handle_variables(
             def __callback(
                 data_from_yield,
                 block=block,
-                block_uuid=b_uuid,
+                b_uuid=b_uuid,
                 csv_lines_only=csv_lines_only,
                 execution_partition=execution_partition,
                 variable_uuid=variable_uuid,
+                idx=idx,
             ):
                 data, is_data_product = format_output_data(
                     block,
