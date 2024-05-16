@@ -13,7 +13,6 @@ import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getChartColors } from './constants';
 import { getColorSet } from './BarChart/utils';
 
 const defaultMargin = {
@@ -95,8 +94,12 @@ function AnimatedPie<Datum>({
     const content =
       xLabelFormat || yLabelFormat
         ? xLabelFormat
-          ? xLabelFormat(arc?.data?.[0], arc?.data?.[1], arc?.index)
-          : yLabelFormat(arc?.data?.[1], arc?.data?.[0], arc?.index)
+          ? xLabelFormat(arc?.data?.[0], arc?.data?.[1], [
+            { index: arc?.index },
+          ])
+          : yLabelFormat(arc?.data?.[1], arc?.data?.[0], [
+            { index: arc?.index },
+          ])
         : getKey(arc);
 
     return (
@@ -160,7 +163,7 @@ function PieChart({
     domain: data.map(d => getX(d)),
     range: getColorSet({
       flat: true,
-    }),
+    }) as string[],
   });
 
   const innerWidth = width - margin.left - margin.right;

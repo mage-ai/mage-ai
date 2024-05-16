@@ -41,7 +41,7 @@ export function getColorSet(
   opts: {
     flat?: boolean;
   } = {},
-) {
+): string[][] | string[] {
   const { flat } = opts || {};
   const colorsSets = [
     [

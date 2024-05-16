@@ -23,7 +23,7 @@ export type TooltipFormatProps = {
     y: string | number,
     x: string | number | null,
     tooltip: TooltipData | {
-      values: number[];
+      values?: number[];
     },
   ) => string | number;
 };
@@ -32,17 +32,17 @@ export type AxisLabelFormatProps = {
   yLabelFormat?: (
     value: any,
     index: number,
-    values: {
-      value: any;
-      index: number;
+    values?: {
+      value?: any;
+      index?: number;
     }[],
   ) => string | undefined;
   xLabelFormat?: (
     value: any,
     index: number,
-    values: {
-      value: any;
-      index: number;
+    values?: {
+      value?: any;
+      index?: number;
     }[],
   ) => string | undefined;
 };
