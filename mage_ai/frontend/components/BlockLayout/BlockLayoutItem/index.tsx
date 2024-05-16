@@ -178,6 +178,7 @@ function BlockLayoutItem({
     [
       blockLayoutItem,
       dataBlockLayoutItem,
+      detail,
     ]);
 
   const buildChart = useCallback(({

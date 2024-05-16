@@ -72,6 +72,7 @@ class BaseOperation():
         self.__combined_options_attr = None
         self.__presentation_format_attr = None
         self.__updated_options_attr = None
+        self.__flags = dict()
 
     async def execute(self):
         db_connection.start_cache()
@@ -295,7 +296,14 @@ class BaseOperation():
         resource_parent: Any = None,
         resources: List[Dict] = None,
     ) -> List[Hook]:
-        if not Project.is_feature_enabled_in_root_or_active_project(FeatureUUID.GLOBAL_HOOKS):
+        if FeatureUUID.GLOBAL_HOOKS not in self.__flags:
+            self.__flags[FeatureUUID.GLOBAL_HOOKS] = \
+                Project.is_feature_enabled_in_root_or_active_project(
+                    FeatureUUID.GLOBAL_HOOKS,
+                    user=self.user,
+            )
+
+        if not self.__flags[FeatureUUID.GLOBAL_HOOKS]:
             return None
 
         operation_types = [operation_type]

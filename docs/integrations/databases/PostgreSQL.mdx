@@ -170,4 +170,17 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
 
 ```
 
+Method arguments
+| Field name              | Description                                                                                                                                            | Example values              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| allow_reserved_words    | Whether to allow using reserved words as column names.                                                                                                 | True/False (default: False) |
+| auto_clean_name         | Whether to automatically clean the column name (replace the empty space with underscore, avoid using number as the prefix of the column name)          | True/False (default: True)  |
+| case_sensitive          | Whether to support case sensitive columns                                                                                                              | True/False (default: False) |
+| cascade_on_drop         | Whether to cascade the table drop.                                                                                                                     | True/False (default: False) |
+| drop_table_on_replace   | Whether to drop the table when "if_exists" param is set to "replace".                                                                                  | True/False (default: False) |
+| if_exists               | Specify resolution policy if table name already exists                                                                                                 | "fail"/"replace"/"append" (default: "replace") |
+| overwrite_types         | Overwrite the column types                                                                                                                             | {'column1': 'INTEGER', 'column2': 'VARCHAR'}   |
+| unique_conflict_method  | How to handle the conflict on unique constrants.                                                                                                       | 'UPDATE' (default: None)         |
+| unique_constraints      | The unique constraints of the table.                                                                                                                   | ['col1', 'col2'] (default: None) |
+
 <br />
