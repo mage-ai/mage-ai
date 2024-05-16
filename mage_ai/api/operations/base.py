@@ -768,6 +768,7 @@ class BaseOperation():
         if not self.__combined_options_attr:
             self.__combined_options_attr = {
                 'context': self.context,
+                'context_data': self.context.data,
                 'meta': self.meta,
                 'options': self.options,
                 'payload': self.payload,

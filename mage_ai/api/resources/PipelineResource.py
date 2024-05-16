@@ -103,7 +103,7 @@ class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        context_data = kwargs.get('context').data
+        context_data = kwargs.get('context_data')
         limit = (meta or {}).get(META_KEY_LIMIT, None)
         if limit is not None:
             limit = int(limit)
