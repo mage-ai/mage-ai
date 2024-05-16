@@ -41,7 +41,7 @@ class GlobalDataProduct:
         self._object = None
 
     @classmethod
-    def file_path(self, repo_path: str) -> str:
+    def file_path(cls, repo_path: str) -> str:
         return os.path.join(repo_path, 'global_data_products.yaml')
 
     @classmethod

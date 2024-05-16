@@ -461,6 +461,7 @@ class GlobalDataProductTest(DBTestCase):
                 object_uuid='test2',
                 outdated_after=dict(seconds=777),
                 outdated_starting_at=dict(day_of_month=40),
+                repo_path=self.repo_path,
                 settings=dict(mage=dict(partitions=3)),
             )
         )
