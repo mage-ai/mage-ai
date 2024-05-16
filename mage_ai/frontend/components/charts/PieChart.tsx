@@ -33,14 +33,16 @@ type PieProps = {
   textColor?: string;
   thickness?: number;
   width?: number;
-} & TooltipFormatProps & AxisLabelFormatProps;
+} & TooltipFormatProps &
+  AxisLabelFormatProps;
 
 export type PieChartProps = PieProps & {
   height?: number | string;
   thickness?: number;
   width?: number | string;
   xAxisLabel?: string;
-} & TooltipFormatProps & AxisLabelFormatProps;
+} & TooltipFormatProps &
+  AxisLabelFormatProps;
 
 // react-spring transition definitions
 type AnimatedStyles = { startAngle: number; endAngle: number; opacity: number };
@@ -64,7 +66,8 @@ type AnimatedPieProps<Datum> = ProvidedProps<Datum> & {
   onClickDatum: (d: PieArcDatum<Datum>) => void;
   textColor?: string;
   thickness?: number;
-} & TooltipFormatProps & AxisLabelFormatProps;
+} & TooltipFormatProps &
+  AxisLabelFormatProps;
 
 function AnimatedPie<Datum>({
   animate,
@@ -89,11 +92,12 @@ function AnimatedPie<Datum>({
     const [centroidX, centroidY] = path.centroid(arc);
     const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.1;
 
-    const content = (xLabelFormat || yLabelFormat)
-      ? xLabelFormat
-        ? xLabelFormat(arc?.data?.[0], arc?.data?.[1], arc?.index)
-        : yLabelFormat(arc?.data?.[1], arc?.data?.[0], arc?.index)
-      : getKey(arc);
+    const content =
+      xLabelFormat || yLabelFormat
+        ? xLabelFormat
+          ? xLabelFormat(arc?.data?.[0], arc?.data?.[1], arc?.index)
+          : yLabelFormat(arc?.data?.[1], arc?.data?.[0], arc?.index)
+        : getKey(arc);
 
     return (
       <g key={key}>
@@ -146,7 +150,7 @@ function PieChart({
 }: PieProps) {
   const [selectedData, setSelectedData] = useState(null);
   const themeContext: ThemeType = useContext(ThemeContext);
-  const finalTextColor = textColor || (themeContext?.content.active || dark.content.active);
+  const finalTextColor = textColor || themeContext?.content.active || dark.content.active;
 
   if (width < 10) {
     return null;
@@ -169,35 +173,33 @@ function PieChart({
     : Math.min(innerWidth / 4, UNIT * 12);
 
   return (
-    <svg
-      height={height}
-      width={width}
-    >
-      <Group
-        left={centerX + margin.left}
-        top={centerY + margin.top}
-      >
+    <svg height={height} width={width}>
+      <Group left={centerX + margin.left} top={centerY + margin.top}>
         {/* Donut */}
         <Pie
           cornerRadius={UNIT / 2}
-          data={selectedData
-            ? data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
-            : data
+          data={
+            selectedData
+              ? data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
+              : data
           }
           innerRadius={Math.max(radius - donutThickness, 12.25)}
           outerRadius={radius}
           padAngle={0.005}
           pieValue={getY}
         >
-          {(pie) => (
+          {pie => (
             <AnimatedPie
               {...pie}
               animate={animate}
               getColor={({ data }) => getColor(getX(data))}
               getKey={({ data }) => getX(data)}
-              onClickDatum={({ data }) => animate &&
+              onClickDatum={({ data }) =>
+                animate &&
                 setSelectedData(
-                  selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data,
+                  selectedData && JSON.stringify(selectedData) === JSON.stringify(data)
+                    ? null
+                    : data,
                 )
               }
               textColor={finalTextColor}
@@ -232,13 +234,7 @@ export default function PieChartContainer({
     <>
       <div style={style}>
         <ParentSize>
-          {({ width, height }) => (
-            <PieChart
-              {...props}
-              height={height}
-              width={width}
-            />
-          )}
+          {({ width, height }) => <PieChart {...props} height={height} width={width} />}
         </ParentSize>
       </div>
 

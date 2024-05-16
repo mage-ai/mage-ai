@@ -42,7 +42,7 @@ export const HUMAN_READABLE = 'MMMM D, YYYY HH:mmZ';
 export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const TIME_ZONE_NAMES: {
-  [key in TimeZoneEnum]: string
+  [key in TimeZoneEnum]: string;
 } = {
   [TimeZoneEnum.LOCAL]: LOCAL_TIMEZONE,
   [TimeZoneEnum.UTC]: 'Etc/Universal',
@@ -65,11 +65,7 @@ export function dateFormatLong(
     utcFormat?: boolean;
   },
 ) {
-  const {
-    dayAgo,
-    includeSeconds,
-    utcFormat,
-  } = opts || {};
+  const { dayAgo, includeSeconds, utcFormat } = opts || {};
   let momentObj = moment(text);
   let dateFormat = opts?.dateFormat || DATE_FORMAT_LONG_NO_SEC;
 
@@ -91,10 +87,7 @@ export function datetimeInLocalTimezone(
   enableLocalTimezoneConversion?: boolean,
 ): string {
   if (enableLocalTimezoneConversion) {
-    return moment
-      .utc(datetime)
-      .local()
-      .format();
+    return moment.utc(datetime).local().format();
   }
 
   return datetime;
@@ -105,9 +98,7 @@ export function momentInLocalTimezone(
   enableLocalTimezoneConversion?: boolean,
 ): moment.Moment {
   if (enableLocalTimezoneConversion) {
-    return momentObj
-      .utc()
-      .local();
+    return momentObj.utc().local();
   }
 
   return momentObj;
@@ -171,7 +162,8 @@ export function utcStringToElapsedTime(datetime: string) {
   } else if (duration.days() >= 1) {
     timeDisplay = `${pluralize('day', duration.days(), true)} ago`;
   } else if (duration.hours() >= 1) {
-    timeDisplay = `${pluralize('hr', duration.hours(), true)} ` +
+    timeDisplay =
+      `${pluralize('hr', duration.hours(), true)} ` +
       `${pluralize('min', duration.minutes(), true)} ago`;
   } else {
     timeDisplay = `${pluralize('min', duration.minutes(), true)} ago`;
@@ -180,23 +172,15 @@ export function utcStringToElapsedTime(datetime: string) {
   return timeDisplay;
 }
 
-export function utcStringToLocalDate(
-  datetime: string,
-): Date {
-  return moment
-    .utc(datetime)
-    .local()
-    .toDate();
+export function utcStringToLocalDate(datetime: string): Date {
+  return moment.utc(datetime).local().toDate();
 }
 
 export function utcNowDate(opts?: { dateObj?: boolean }): any {
-  const utcDate: string = dateFormatLong(
-    new Date().toISOString(),
-    {
-      includeSeconds: true,
-      utcFormat: true,
-    },
-  );
+  const utcDate: string = dateFormatLong(new Date().toISOString(), {
+    includeSeconds: true,
+    utcFormat: true,
+  });
 
   if (opts?.dateObj) {
     return new Date(utcDate);
@@ -215,7 +199,7 @@ export function currentTimes({
 }) {
   const currentMoment = tzMoment.utc();
   const zoneTimes = new Map(
-    timeZones.map((timeZone) => {
+    timeZones.map(timeZone => {
       let moment = currentMoment;
       switch (timeZone) {
         case TimeZoneEnum.LOCAL:
@@ -224,10 +208,7 @@ export function currentTimes({
           break;
       }
 
-      return [
-        timeZone,
-        moment.format(includeSeconds ? TIME_FORMAT : TIME_FORMAT_NO_SEC),
-      ];
+      return [timeZone, moment.format(includeSeconds ? TIME_FORMAT : TIME_FORMAT_NO_SEC)];
     }),
   );
 
@@ -238,9 +219,12 @@ export function abbreviatedTimezone(timezone: TimeZoneEnum) {
   return tzMoment.tz(TIME_ZONE_NAMES[timezone]).zoneAbbr();
 }
 
-export function dateFromFromUnixTimestamp(timestamp: number, opts?: {
-  withMilliseconds?: boolean;
-}) {
+export function dateFromFromUnixTimestamp(
+  timestamp: number,
+  opts?: {
+    withMilliseconds?: boolean;
+  },
+) {
   if (opts?.withMilliseconds) {
     return moment.unix(timestamp / 1000);
   }
@@ -249,10 +233,7 @@ export function dateFromFromUnixTimestamp(timestamp: number, opts?: {
 }
 
 export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {
-  return moment.unix(text).format(opts?.withSeconds
-    ? DATE_FORMAT_LONG
-    : DATE_FORMAT_LONG_NO_SEC,
-  );
+  return moment.unix(text).format(opts?.withSeconds ? DATE_FORMAT_LONG : DATE_FORMAT_LONG_NO_SEC);
 }
 
 export function isoDateFormatFromDateParts(
@@ -278,12 +259,10 @@ export function utcDateFromDateAndTime(
   return second ? `${utcDateNoSeconds}:${second}` : utcDateNoSeconds;
 }
 
-export function getDatePartsFromUnixTimestamp(
-  timestamp: string | number,
-): {
-  date: Date,
-  hour: string,
-  minute: string,
+export function getDatePartsFromUnixTimestamp(timestamp: string | number): {
+  date: Date;
+  hour: string;
+  minute: string;
 } {
   const dateMoment = moment.unix(+timestamp).utc();
 
@@ -313,9 +292,7 @@ export function getFullDateRangeString(
   const dateStartString = dateMomentStart.format(DATE_FORMAT_FULL);
   const dateEndString = dateMomentEnd.format(DATE_FORMAT_FULL);
 
-  return options?.endDateOnly
-    ? dateEndString
-    : `${dateStartString} - ${dateEndString}`;
+  return options?.endDateOnly ? dateEndString : `${dateStartString} - ${dateEndString}`;
 }
 
 export function getStartDateStringFromPeriod(
@@ -339,9 +316,7 @@ export function getStartDateStringFromPeriod(
     : dateMoment.startOf('day').format(DATE_FORMAT_LONG);
 }
 
-export function getDateRange(
-  daysInterval: number = 90,
-): string[] {
+export function getDateRange(daysInterval: number = 90): string[] {
   const date = new Date();
   const dateRange = [];
   for (let i = 0; i < daysInterval; i++) {

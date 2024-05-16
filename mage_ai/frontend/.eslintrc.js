@@ -20,7 +20,12 @@ module.exports = {
         tsconfigRootDir: __dirname,
         sourceType: "module",
     },
-    plugins: ["@typescript-eslint", "react"],
+    plugins: [
+      "@typescript-eslint",
+      "react",
+       "react-hooks",
+      "unused-imports",
+    ],
     rules: {
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/comma-dangle": ["warn", "always-multiline"],

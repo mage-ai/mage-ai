@@ -25,17 +25,16 @@ function GlobalDataProducts({
 }: GlobalDataProductsProps) {
   const router = useRouter();
 
-  const { data: dataGlobalProducts } = api.global_data_products.list({}, {}, {
-    pauseFetch: !!globalDataProductsProps,
-  });
-  const globalDataProducts: GlobalDataProductType[] =
-    useMemo(() => globalDataProductsProps
-      || dataGlobalProducts?.global_data_products
-      || [],
-    [
-      dataGlobalProducts,
-      globalDataProductsProps,
-    ],
+  const { data: dataGlobalProducts } = api.global_data_products.list(
+    {},
+    {},
+    {
+      pauseFetch: !!globalDataProductsProps,
+    },
+  );
+  const globalDataProducts: GlobalDataProductType[] = useMemo(
+    () => globalDataProductsProps || dataGlobalProducts?.global_data_products || [],
+    [dataGlobalProducts, globalDataProductsProps],
   );
 
   if (!dataGlobalProducts && !globalDataProductsProps) {
@@ -49,9 +48,7 @@ function GlobalDataProducts({
   if (dataGlobalProducts && globalDataProducts?.length === 0) {
     return (
       <Spacing p={PADDING_UNITS}>
-        <Text>
-          There are currently no global data products registered.
-        </Text>
+        <Text>There are currently no global data products registered.</Text>
       </Spacing>
     );
   }
@@ -113,21 +110,13 @@ function GlobalDataProducts({
           <Text default key="objectType" monospace>
             {objectType}
           </Text>,
-          <NextLink
-            as={linkProps?.as}
-            href={linkProps?.href || ''}
-            key="objectUUID"
-            passHref
-          >
+          <NextLink as={linkProps?.as} href={linkProps?.href || ''} key="objectUUID" passHref>
             <Link
               default
               monospace
-              onClick={(e) => {
+              onClick={e => {
                 pauseEvent(e);
-                router.push(
-                  linkProps.href,
-                  linkProps.as,
-                );
+                router.push(linkProps.href, linkProps.as);
               }}
               preventDefault
             >

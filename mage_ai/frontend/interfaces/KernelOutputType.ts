@@ -16,10 +16,7 @@ export enum DataTypeEnum {
   TEXT_PLAIN = 'text/plain',
 }
 
-export const DATA_TYPE_TEXTLIKE = [
-  DataTypeEnum.TEXT,
-  DataTypeEnum.TEXT_PLAIN,
-];
+export const DATA_TYPE_TEXTLIKE = [DataTypeEnum.TEXT, DataTypeEnum.TEXT_PLAIN];
 
 export enum MsgType {
   DISPLAY_DATA = 'display_data',

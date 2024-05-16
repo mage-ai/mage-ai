@@ -10,7 +10,7 @@ git diff --name-only master...HEAD | \
   grep -v '^mage_ai/server/frontend_dist/' | \
   grep -v '^mage_ai/server/frontend_dist_base_path_template/' | \
   grep -E '\.(js|jsx|ts|tsx)$' | \
-  xargs eslint_d --fix --config mage_ai/frontend/.eslintrc.js
+  xargs eslint_d --quiet  --config mage_ai/frontend/.eslintrc.js --fix
 
 git diff --name-only master...HEAD | \
   grep -v '^mage_ai/server/frontend_dist/' | \

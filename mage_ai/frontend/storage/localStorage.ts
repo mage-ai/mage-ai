@@ -67,7 +67,7 @@ export function getCustomCodeState({
   defaultValue = {},
 }: {
   actionType: ActionTypeEnum;
-  featureSetId: string
+  featureSetId: string;
   defaultValue?: any;
 }) {
   const key = getCustomCodeKey(featureSetId);
@@ -80,7 +80,7 @@ export function setCustomCodeState({
   newValue,
 }: {
   actionType: ActionTypeEnum;
-  featureSetId: string
+  featureSetId: string;
   newValue: string;
 }) {
   const key = getCustomCodeKey(featureSetId);
@@ -90,7 +90,10 @@ export function setCustomCodeState({
   });
 }
 
-export function setLocalStorageValue(storageKey: string, value: boolean | string | number): boolean | string | number {
+export function setLocalStorageValue(
+  storageKey: string,
+  value: boolean | string | number,
+): boolean | string | number {
   if (typeof value !== 'undefined') {
     set(storageKey, value);
   }

@@ -33,14 +33,8 @@ import {
   VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   buildMetricName,
 } from '@interfaces/ChartBlockType';
-import {
-  DATE_FORMAT_LONG,
-  DATE_FORMAT_SHORT,
-} from '@utils/date';
-import {
-  numberWithCommas,
-  roundNumber,
-} from '@utils/string';
+import { DATE_FORMAT_LONG, DATE_FORMAT_SHORT } from '@utils/date';
+import { numberWithCommas, roundNumber } from '@utils/string';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { range, sortByKey } from '@utils/array';
 import { TooltipData } from '@components/charts/BarChart/constants';
@@ -55,15 +49,8 @@ type ChartControllerProps = {
   xAxisLabel?: string;
 };
 
-function ChartController({
-  block,
-  data,
-  width,
-  xAxisLabel: xAxisLabelProp,
-}: ChartControllerProps) {
-  const {
-    configuration = {},
-  } = block;
+function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: ChartControllerProps) {
+  const { configuration = {} } = block;
   const {
     chart_style: chartStyle,
     chart_type: chartType,
@@ -77,19 +64,21 @@ function ChartController({
 
   const chartHeight = configuration[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT;
 
-  const metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
-    || [];
+  const metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn)) || [];
 
   function buildFormatFunctionLabel(functionCode: string) {
-    function formatter(value: string | undefined, index: number, values: {
-      value: string | undefined;
-      index: number;
-    }[]) {
+    function formatter(
+      value: string | undefined,
+      index: number,
+      values: {
+        value: string | undefined;
+        index: number;
+      }[],
+    ) {
       try {
         const dynamicFunction = new Function('value', 'index', 'values', functionCode);
         return dynamicFunction(value, index, values);
-      } catch (e) {
-      }
+      } catch (e) {}
 
       return value;
     }
@@ -102,8 +91,7 @@ function ChartController({
       try {
         const dynamicFunction = new Function('value', 'index', 'values', functionCode);
         return dynamicFunction(value, index, values);
-      } catch (e) {
-      }
+      } catch (e) {}
 
       return value;
     }
@@ -112,57 +100,45 @@ function ChartController({
   }
 
   const xTooltipFormatValue = configuration?.[VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT];
-  const xTooltipFormat =
-    useCallback((...args) => buildFormatFunctionTooltip(
-      xTooltipFormatValue,
-    )(...args), [
-      xTooltipFormatValue,
-    ]);
+  const xTooltipFormat = useCallback(
+    (...args) => buildFormatFunctionTooltip(xTooltipFormatValue)(...args),
+    [xTooltipFormatValue],
+  );
   const yTooltipFormatValue = configuration?.[VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT];
-    const yTooltipFormat =
-      useCallback((...args) => buildFormatFunctionTooltip(
-        yTooltipFormatValue,
-      )(...args), [
-        yTooltipFormatValue,
-      ]);
+  const yTooltipFormat = useCallback(
+    (...args) => buildFormatFunctionTooltip(yTooltipFormatValue)(...args),
+    [yTooltipFormatValue],
+  );
 
   const xAxisLabelFormatValue = configuration?.[VARIABLE_NAME_X_AXIS_LABEL_FORMAT];
-  const xAxisLabelFormat =
-    useCallback((...args) => buildFormatFunctionLabel(
-      xAxisLabelFormatValue,
-    )(...args), [
-      xAxisLabelFormatValue,
-    ]);
+  const xAxisLabelFormat = useCallback(
+    (...args) => buildFormatFunctionLabel(xAxisLabelFormatValue)(...args),
+    [xAxisLabelFormatValue],
+  );
 
   const yAxisLabelFormatValue = configuration?.[VARIABLE_NAME_Y_AXIS_LABEL_FORMAT];
-  const yAxisLabelFormat =
-    useCallback((...args) => buildFormatFunctionLabel(
-      yAxisLabelFormatValue,
-    )(...args), [
-      yAxisLabelFormatValue,
-    ]);
+  const yAxisLabelFormat = useCallback(
+    (...args) => buildFormatFunctionLabel(yAxisLabelFormatValue)(...args),
+    [yAxisLabelFormatValue],
+  );
 
   const variableDateFormat = useMemo(() => {
     const timeInterval = configuration?.[VARIABLE_NAME_TIME_INTERVAL];
     if (xAxisLabelFormatValue) {
       return xAxisLabelFormatValue;
-    } else if ([
-      TimeIntervalEnum.HOUR,
-      TimeIntervalEnum.MINUTE,
-      TimeIntervalEnum.SECOND,
-    ].includes(timeInterval)) {
+    } else if (
+      [TimeIntervalEnum.HOUR, TimeIntervalEnum.MINUTE, TimeIntervalEnum.SECOND].includes(
+        timeInterval,
+      )
+    ) {
       return DATE_FORMAT_LONG;
     }
 
     return DATE_FORMAT_SHORT;
   }, [configuration, xAxisLabelFormatValue]);
 
-  if (ChartTypeEnum.BAR_CHART === chartType
-    || ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType) {
-    const {
-      x,
-      y,
-    } = data;
+  if (ChartTypeEnum.BAR_CHART === chartType || ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType) {
+    const { x, y } = data;
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y)) {
@@ -262,19 +238,13 @@ function ChartController({
       );
     }
   } else if (ChartTypeEnum.HISTOGRAM === chartType) {
-    const {
-      x,
-      y,
-    } = data;
+    const { x, y } = data;
     const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
 
     if (x && y && Array.isArray(x)) {
       return (
         <Histogram
-          data={x.map(({
-            max: maxValue,
-            min: minValue,
-          } , idx: number) => [
+          data={x.map(({ max: maxValue, min: minValue }, idx: number) => [
             maxValue,
             y?.[idx]?.value,
             minValue,
@@ -287,9 +257,7 @@ function ChartController({
             top: UNIT * 3,
           }}
           noPadding
-          renderTooltipContent={(value, index, {
-            values,
-          }) => {
+          renderTooltipContent={(value, index, { values }) => {
             const [xMin, xMax] = values;
 
             if (yTooltipFormatValue || xTooltipFormatValue) {
@@ -309,13 +277,15 @@ function ChartController({
 
               return (
                 <>
-                  {[yTip, xTip]?.filter?.(t => t)?.map((text: string, idx: number) => (
-                    <div key={text} style={{ marginTop: idx >= 1 ? 1 : 0 }}>
-                      <Text inverted monospace small>
-                        {text}
-                      </Text>
-                    </div>
-                  ))}
+                  {[yTip, xTip]
+                    ?.filter?.(t => t)
+                    ?.map((text: string, idx: number) => (
+                      <div key={text} style={{ marginTop: idx >= 1 ? 1 : 0 }}>
+                        <Text inverted monospace small>
+                          {text}
+                        </Text>
+                      </div>
+                    ))}
                 </>
               );
             }
@@ -326,9 +296,11 @@ function ChartController({
                   {value}
                 </Text>
                 <Text bold inverted monospace small>
-                  {xMin} <Text inline inverted muted small>
+                  {xMin}{' '}
+                  <Text inline inverted muted small>
                     &#8594;
-                  </Text> {xMax}
+                  </Text>{' '}
+                  {xMax}
                 </Text>
               </>
             );
@@ -346,13 +318,11 @@ function ChartController({
         />
       );
     }
-  } else if (ChartTypeEnum.LINE_CHART === chartType
-    || ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType
+  } else if (
+    ChartTypeEnum.LINE_CHART === chartType ||
+    ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType
   ) {
-    const {
-      x,
-      y,
-    } = data;
+    const { x, y } = data;
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
@@ -390,10 +360,7 @@ function ChartController({
           }}
           noCurve={!yValuesSmooth}
           renderXTooltipContent={(x, _, toolipData) => {
-            const {
-              index,
-              y,
-            } = toolipData;
+            const { index, y } = toolipData;
 
             let xLabel = configuration[VARIABLE_NAME_X];
             let xValueText = x;
@@ -415,7 +382,13 @@ function ChartController({
 
             return (
               <Text inverted small>
-                <Text bold inline inverted small>{xLabel}</Text>: <Text inline inverted monospace small>{xValueText}</Text>
+                <Text bold inline inverted small>
+                  {xLabel}
+                </Text>
+                :{' '}
+                <Text inline inverted monospace small>
+                  {xValueText}
+                </Text>
               </Text>
             );
           }}
@@ -430,17 +403,20 @@ function ChartController({
 
             return (
               <Text inverted small>
-                <Text bold inline inverted small>{metricNames[idx]}</Text>: <Text inline inverted monospace small>{y}</Text>
+                <Text bold inline inverted small>
+                  {metricNames[idx]}
+                </Text>
+                :{' '}
+                <Text inline inverted monospace small>
+                  {y}
+                </Text>
               </Text>
             );
           }}
           thickness={4}
           timeSeries={isTimeSeries}
-          width={width ? width - ((3 * UNIT) + 3) : width}
-          xAxisLabel={xAxisLabelProp
-            || xAxisLabel
-            || String(configuration[VARIABLE_NAME_X] || '')
-          }
+          width={width ? width - (3 * UNIT + 3) : width}
+          xAxisLabel={xAxisLabelProp || xAxisLabel || String(configuration[VARIABLE_NAME_X] || '')}
           xLabelFormat={(ts: number, index, values) => {
             let val = ts;
 
@@ -477,10 +453,7 @@ function ChartController({
           height={chartHeight}
           thickness={0.5}
           width={width}
-          xAxisLabel={xAxisLabelProp
-            || xAxisLabel
-            || String(configuration[VARIABLE_NAME_X] || '')
-          }
+          xAxisLabel={xAxisLabelProp || xAxisLabel || String(configuration[VARIABLE_NAME_X] || '')}
           xLabelFormat={xAxisLabelFormatValue ? xAxisLabelFormat : undefined}
           xTooltipFormat={xTooltipFormatValue ? xTooltipFormat : null}
           yLabelFormat={yAxisLabelFormatValue ? yAxisLabelFormat : undefined}
@@ -489,25 +462,25 @@ function ChartController({
       );
     }
   } else if (ChartTypeEnum.TABLE === chartType) {
-    const {
-      index,
-      x,
-      y,
-    } = data;
+    const { index, x, y } = data;
 
-    return Array.isArray(x) && Array.isArray(y) && Array.isArray(y[0]) && (
-      <DataTable
-        columns={x}
-        height={configuration[VARIABLE_NAME_HEIGHT] ? null : chartHeight}
-        index={index}
-        maxHeight={configuration[VARIABLE_NAME_HEIGHT] ? chartHeight : null}
-        noBorderBottom
-        noBorderLeft
-        noBorderRight
-        noBorderTop
-        rows={y}
-        width={width}
-      />
+    return (
+      Array.isArray(x) &&
+      Array.isArray(y) &&
+      Array.isArray(y[0]) && (
+        <DataTable
+          columns={x}
+          height={configuration[VARIABLE_NAME_HEIGHT] ? null : chartHeight}
+          index={index}
+          maxHeight={configuration[VARIABLE_NAME_HEIGHT] ? chartHeight : null}
+          noBorderBottom
+          noBorderLeft
+          noBorderRight
+          noBorderTop
+          rows={y}
+          width={width}
+        />
+      )
     );
   }
 

@@ -94,20 +94,24 @@ const SHARED_CONFIGS = ({
     label: () => 'Y axis label format',
     uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   },
-  ...(includeXTooltipFormat ? [
-    {
-      ...SHARED_CODE_PROPS,
-      label: () => 'X tooltip format',
-      uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
-    },
-  ] : []),
-  ...(includeYTooltipFormat ? [
-    {
-      ...SHARED_CODE_PROPS,
-      label: () => 'Y tooltip format',
-      uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
-    },
-  ] : []),
+  ...(includeXTooltipFormat
+    ? [
+        {
+          ...SHARED_CODE_PROPS,
+          label: () => 'X tooltip format',
+          uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
+        },
+      ]
+    : []),
+  ...(includeYTooltipFormat
+    ? [
+        {
+          ...SHARED_CODE_PROPS,
+          label: () => 'Y tooltip format',
+          uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
+        },
+      ]
+    : []),
 ];
 
 const timeSeriesConfiguration: {
@@ -182,20 +186,13 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
       {
         autoRun: true,
         label: () => 'chart style',
-        options: [
-          ChartStyleEnum.HORIZONTAL,
-          ChartStyleEnum.VERTICAL,
-        ],
+        options: [ChartStyleEnum.HORIZONTAL, ChartStyleEnum.VERTICAL],
         uuid: VARIABLE_NAME_CHART_STYLE,
       },
       {
         autoRun: true,
         label: () => 'sort direction',
-        options: [
-          null,
-          SortOrderEnum.ASCENDING,
-          SortOrderEnum.DESCENDING,
-        ],
+        options: [null, SortOrderEnum.ASCENDING, SortOrderEnum.DESCENDING],
         uuid: VARIABLE_NAME_Y_SORT_ORDER,
       },
       ...SHARED_CONFIGS(),
@@ -330,7 +327,6 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         monospace: true,
         uuid: VARIABLE_NAME_Y,
       },
-
     ],
   },
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: timeSeriesConfiguration,
@@ -416,7 +412,8 @@ y = df_1.to_numpy()`,
 
 export const VARIABLE_INFO_BY_CHART_TYPE = {
   [ChartTypeEnum.BAR_CHART]: {
-    [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
+    [VARIABLE_NAME_X]: (): string =>
+      'must be a list of booleans, dates, integers, floats, or strings.',
     [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats.',
   },
   [ChartTypeEnum.HISTOGRAM]: {
@@ -424,15 +421,18 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
   },
   [ChartTypeEnum.LINE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
-    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats. ' +
+    [VARIABLE_NAME_Y]: (): string =>
+      'must be a list of lists containing integers or floats. ' +
       'Each list is a single line in the chart.',
   },
   [ChartTypeEnum.PIE_CHART]: {
-    [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
+    [VARIABLE_NAME_X]: (): string =>
+      'must be a list of booleans, dates, integers, floats, or strings.',
   },
   [ChartTypeEnum.TABLE]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of strings.',
-    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing booleans, dates, integers, floats, or strings.',
+    [VARIABLE_NAME_Y]: (): string =>
+      'must be a list of lists containing booleans, dates, integers, floats, or strings.',
   },
 };
 

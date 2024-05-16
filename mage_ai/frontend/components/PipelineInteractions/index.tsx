@@ -98,7 +98,8 @@ function PipelineInteractions({
 
   const [newInteractionUUID, setNewInteractionUUID] = useState<string>(null);
   const [isAddingNewInteraction, setIsAddingNewInteraction] = useState<boolean>(false);
-  const [mostRecentlyAddedInteractionUUID, setMostRecentlyAddedInteractionUUID] = useState<string>(null);
+  const [mostRecentlyAddedInteractionUUID, setMostRecentlyAddedInteractionUUID] =
+    useState<string>(null);
   const isLoadingInteractions = !blockInteractionsMappingProp;
 
   const [interactionsMappingState, setInteractionsMappingState] = useState<{
@@ -114,10 +115,7 @@ function PipelineInteractions({
     }
 
     return blockInteractionsMappingState;
-  }, [
-    blockInteractionsMappingProp,
-    blockInteractionsMappingState,
-  ]);
+  }, [blockInteractionsMappingProp, blockInteractionsMappingState]);
 
   const interactionsMapping = useMemo(() => {
     if (typeof interactionsMappingProp !== 'undefined') {
@@ -125,86 +123,91 @@ function PipelineInteractions({
     }
 
     return interactionsMappingState;
-  }, [
-    interactionsMappingProp,
-    interactionsMappingState,
-  ]);
+  }, [interactionsMappingProp, interactionsMappingState]);
 
-  const setBlockInteractionsMapping = useCallback((prev, opts?: {
-    initialBootstrap?: boolean;
-  }) => {
-    if (!opts?.initialBootstrap) {
-      setTouched(true);
-    }
+  const setBlockInteractionsMapping = useCallback(
+    (
+      prev,
+      opts?: {
+        initialBootstrap?: boolean;
+      },
+    ) => {
+      if (!opts?.initialBootstrap) {
+        setTouched(true);
+      }
 
-    if (typeof setBlockInteractionsMappingProp !== 'undefined') {
-      return setBlockInteractionsMappingProp(prev);
-    }
+      if (typeof setBlockInteractionsMappingProp !== 'undefined') {
+        return setBlockInteractionsMappingProp(prev);
+      }
 
-    return setBlockInteractionsMappingState(prev);
-  }, [
-    setBlockInteractionsMappingProp,
-    setBlockInteractionsMappingState,
-    setTouched,
-  ]);
-
-  const setInteractionsMapping = useCallback((prev, opts?: {
-    initialBootstrap?: boolean;
-  }) => {
-    if (!opts?.initialBootstrap) {
-      setTouched(true);
-    }
-
-    if (typeof setInteractionsMappingProp !== 'undefined') {
-      return setInteractionsMappingProp(prev);
-    }
-
-    return setInteractionsMappingState(prev);
-  }, [
-    setInteractionsMappingProp,
-    setInteractionsMappingState,
-    setTouched,
-  ]);
-
-  const [permissionsState, setPermissionsState] =
-    useState<InteractionPermission[] | InteractionPermissionWithUUID[]>(null);
-
-  const updateBlockInteractionAtIndex = useCallback((
-    blockUUID: string,
-    index: number,
-    blockInteraction: BlockInteractionType,
-    opts?: {
-      remove?: boolean;
+      return setBlockInteractionsMappingState(prev);
     },
+    [setBlockInteractionsMappingProp, setBlockInteractionsMappingState, setTouched],
+  );
+
+  const setInteractionsMapping = useCallback(
+    (
+      prev,
+      opts?: {
+        initialBootstrap?: boolean;
+      },
+    ) => {
+      if (!opts?.initialBootstrap) {
+        setTouched(true);
+      }
+
+      if (typeof setInteractionsMappingProp !== 'undefined') {
+        return setInteractionsMappingProp(prev);
+      }
+
+      return setInteractionsMappingState(prev);
+    },
+    [setInteractionsMappingProp, setInteractionsMappingState, setTouched],
+  );
+
+  const [permissionsState, setPermissionsState] = useState<
+    InteractionPermission[] | InteractionPermissionWithUUID[]
+  >(null);
+
+  const updateBlockInteractionAtIndex = useCallback(
+    (
+      blockUUID: string,
+      index: number,
+      blockInteraction: BlockInteractionType,
+      opts?: {
+        remove?: boolean;
+      },
+      // @ts-ignore
+    ) =>
+      setBlockInteractionsMapping((prev: { [blockUUID: string]: BlockInteractionType }) => {
+        // @ts-ignore
+        let blockInteractions = [...(prev?.[blockUUID] || [])];
+
+        if (opts?.remove) {
+          blockInteractions = removeAtIndex(blockInteractions, index);
+        } else {
+          blockInteractions[index] = {
+            ...blockInteractions[index],
+            ...blockInteraction,
+          };
+        }
+
+        return {
+          ...prev,
+          [blockUUID]: blockInteractions,
+        };
+      }),
+    [setBlockInteractionsMapping],
+  );
+
   // @ts-ignore
-  ) => setBlockInteractionsMapping((prev: {
-    [blockUUID: string]: BlockInteractionType;
-  }) => {
-    // @ts-ignore
-    let blockInteractions = [...(prev?.[blockUUID] || [])];
-
-    if (opts?.remove) {
-      blockInteractions = removeAtIndex(blockInteractions, index);
-    } else {
-      blockInteractions[index] = {
-        ...blockInteractions[index],
-        ...blockInteraction,
-      };
-    }
-
-    return {
-      ...prev,
-      [blockUUID]: blockInteractions,
-    };
-  }), [
-    setBlockInteractionsMapping,
-  ]);
-
-  // @ts-ignore
-  const setPermissions: (prev) => InteractionPermissionWithUUID[] =
-    useCallback((prev, opts?: {
-      initialBootstrap?: boolean;
-    }) => {
+  const setPermissions: (prev) => InteractionPermissionWithUUID[] = useCallback(
+    (
+      prev,
+      opts?: {
+        initialBootstrap?: boolean;
+      },
+    ) => {
       setLastUpdated(Number(new Date()));
 
       if (!opts?.initialBootstrap) {
@@ -216,48 +219,35 @@ function PipelineInteractions({
       } else {
         setPermissionsState(prev);
       }
-    }, [
-      setLastUpdated,
-      setPermissionsProp,
-      setPermissionsState,
-      setTouched,
-    ]);
+    },
+    [setLastUpdated, setPermissionsProp, setPermissionsState, setTouched],
+  );
 
   // @ts-ignore
-  const permissions: InteractionPermissionWithUUID[] =
-    useMemo(() => (typeof permissionsProp !== 'undefined'
-      ? permissionsProp
-      : permissionsState
-    // @ts-ignore
-    )?.map(({
-      roles,
-      triggers,
-    }: InteractionPermission, idx1: number) => ({
-      roles: roles?.map((
-        roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType,
-        idx2: number,
-      ) => ({
-        role: typeof roleItem === 'string' ? roleItem : roleItem?.role,
-        uuid: `${idx1}-${lastUpdated}-${idx2}`,
-      })),
-      triggers: triggers?.map((trigger: BlockInteractionTriggerType, idx2: number) => ({
-        ...trigger,
-        uuid: `${idx1}-${lastUpdated}-${idx2}`,
-      })),
-      uuid: `${idx1}-${lastUpdated}`,
-    })), [
-      lastUpdated,
-      permissionsProp,
-      permissionsState,
-    ]);
+  const permissions: InteractionPermissionWithUUID[] = useMemo(
+    () =>
+      (typeof permissionsProp !== 'undefined' ? permissionsProp : permissionsState)
+        // @ts-ignore
+        ?.map(({ roles, triggers }: InteractionPermission, idx1: number) => ({
+          roles: roles?.map(
+            (roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType, idx2: number) => ({
+              role: typeof roleItem === 'string' ? roleItem : roleItem?.role,
+              uuid: `${idx1}-${lastUpdated}-${idx2}`,
+            }),
+          ),
+          triggers: triggers?.map((trigger: BlockInteractionTriggerType, idx2: number) => ({
+            ...trigger,
+            uuid: `${idx1}-${lastUpdated}-${idx2}`,
+          })),
+          uuid: `${idx1}-${lastUpdated}`,
+        })),
+    [lastUpdated, permissionsProp, permissionsState],
+  );
 
   const saveCallback = useCallback(() => {
     setLastSaved(Number(new Date()));
     setTouched(false);
-  }, [
-    setLastSaved,
-    setTouched,
-  ]);
+  }, [setLastSaved, setTouched]);
 
   const savePipelineInteraction = useCallback(() => {
     if (savePipelineInteractionProp) {
@@ -269,29 +259,25 @@ function PipelineInteractions({
         blocks: blockInteractionsMapping,
         interactions: interactionsMapping,
         permissions: permissions?.map(
-          ({
-            roles,
-            triggers,
-          }: InteractionPermission | InteractionPermissionWithUUID) => ({
-            roles: roles?.map(
-              (roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType) => typeof roleItem === 'string'
-                ? roleItem
-                : roleItem?.role,
+          ({ roles, triggers }: InteractionPermission | InteractionPermissionWithUUID) => ({
+            roles: roles?.map((roleItem: RoleFromServerEnum | BlockInteractionRoleWithUUIDType) =>
+              typeof roleItem === 'string' ? roleItem : roleItem?.role,
             ),
-            triggers: triggers?.map(({
-              schedule_interval: scheduleInterval,
-              schedule_type: scheduleType,
-            }: BlockInteractionTriggerType | BlockInteractionTriggerWithUUIDType) => ({
-              schedule_interval: scheduleInterval,
-              schedule_type: scheduleType,
-            })),
+            triggers: triggers?.map(
+              ({
+                schedule_interval: scheduleInterval,
+                schedule_type: scheduleType,
+              }: BlockInteractionTriggerType | BlockInteractionTriggerWithUUIDType) => ({
+                schedule_interval: scheduleInterval,
+                schedule_type: scheduleType,
+              }),
+            ),
           }),
         ),
-      // @ts-ignore
+        // @ts-ignore
       }).then(() => saveCallback());
     }
-  },
-  [
+  }, [
     blockInteractionsMapping,
     interactionsMapping,
     permissions,
@@ -305,34 +291,36 @@ function PipelineInteractions({
   // @ts-ignore
   const visibleMapping: {
     [key: string]: boolean;
-  } = useMemo(() => blocks?.reduce((acc, _, idx: number) => ({
-    ...acc,
-    [String(idx)]: true,
-  }), {}), [
-    blocks,
-  ]);
+  } = useMemo(
+    () =>
+      blocks?.reduce(
+        (acc, _, idx: number) => ({
+          ...acc,
+          [String(idx)]: true,
+        }),
+        {},
+      ),
+    [blocks],
+  );
 
   useEffect(() => {
-    if (typeof interactionsMappingProp === 'undefined'
-      && !interactionsMapping
-      && interactions?.length >= 1
+    if (
+      typeof interactionsMappingProp === 'undefined' &&
+      !interactionsMapping &&
+      interactions?.length >= 1
     ) {
       setInteractionsMapping(
         indexBy(interactions || [], ({ uuid }) => uuid),
         { initialBootstrap: true },
       );
     }
-  }, [
-    interactions,
-    interactionsMapping,
-    interactionsMappingProp,
-    setInteractionsMapping,
-  ]);
+  }, [interactions, interactionsMapping, interactionsMappingProp, setInteractionsMapping]);
 
   useEffect(() => {
-    if (typeof blockInteractionsMappingProp === 'undefined'
-      && !blockInteractionsMapping
-      && pipelineInteraction?.blocks
+    if (
+      typeof blockInteractionsMappingProp === 'undefined' &&
+      !blockInteractionsMapping &&
+      pipelineInteraction?.blocks
     ) {
       setBlockInteractionsMapping(pipelineInteraction?.blocks, { initialBootstrap: true });
     }
@@ -348,11 +336,7 @@ function PipelineInteractions({
       // @ts-ignore
       setPermissions(pipelineInteraction?.permissions, { initialBootstrap: true });
     }
-  }, [
-    permissions,
-    pipelineInteraction,
-    setPermissions,
-  ]);
+  }, [permissions, pipelineInteraction, setPermissions]);
 
   const interactionsMemo = useMemo(() => {
     const arr = [];
@@ -360,9 +344,7 @@ function PipelineInteractions({
     const blocksCount = blocks?.length || 0;
 
     blocks?.map((block: BlockType, idx: number) => {
-      const {
-        uuid: blockUUID,
-      } = block || {
+      const { uuid: blockUUID } = block || {
         uuid: null,
       };
 
@@ -374,7 +356,7 @@ function PipelineInteractions({
           beforeIcon={hasBlockInteractions ? <Edit /> : <Add />}
           compact
           disabled={isLoadingInteractions}
-          onClick={(e) => {
+          onClick={e => {
             pauseEvent(e);
             setSelectedBlock(block);
           }}
@@ -393,11 +375,8 @@ function PipelineInteractions({
           key={blockUUID}
           noBorderRadius={idx >= 1}
           noPaddingContent
-          title={(
-            <FlexContainer
-              alignItems="center"
-              justifyContent="space-between"
-            >
+          title={
+            <FlexContainer alignItems="center" justifyContent="space-between">
               <Spacing mr={PADDING_UNITS} py={1}>
                 <Text large monospace>
                   {blockUUID}
@@ -405,12 +384,10 @@ function PipelineInteractions({
               </Spacing>
 
               {hasBlockInteractions && (
-                <FlexContainer alignItems="center">
-                  {buttonEl}
-                </FlexContainer>
+                <FlexContainer alignItems="center">{buttonEl}</FlexContainer>
               )}
             </FlexContainer>
-          )}
+          }
           titleXPadding={PADDING_UNITS * UNIT}
           titleYPadding={1.5 * UNIT}
         >
@@ -454,34 +431,26 @@ function PipelineInteractions({
     setSelectedBlock,
   ]);
 
-  const accordionMemo = useMemo(() => blocks?.length >= 1 && (
-    <Accordion
-      noBackground
-      noBorder
-      noBoxShadow
-      visibleMapping={visibleMapping}
-    >
-      {interactionsMemo}
-    </Accordion>
-  ), [
-    blocks,
-    interactionsMemo,
-    visibleMapping,
-  ]);
+  const accordionMemo = useMemo(
+    () =>
+      blocks?.length >= 1 && (
+        <Accordion noBackground noBorder noBoxShadow visibleMapping={visibleMapping}>
+          {interactionsMemo}
+        </Accordion>
+      ),
+    [blocks, interactionsMemo, visibleMapping],
+  );
 
-  const editingBlockInteractions =
-    useMemo(() => blockInteractionsMapping?.[editingBlock?.uuid] || [], [
-      blockInteractionsMapping,
-      editingBlock,
-    ]);
+  const editingBlockInteractions = useMemo(
+    () => blockInteractionsMapping?.[editingBlock?.uuid] || [],
+    [blockInteractionsMapping, editingBlock],
+  );
 
   const editingBlockVariableUUIDs = useMemo(() => {
     const variableUUIDS = [];
     const variablesSeen = {};
 
-    editingBlockInteractions?.forEach(({
-      uuid: interactionUUID,
-    }) => {
+    editingBlockInteractions?.forEach(({ uuid: interactionUUID }) => {
       const interaction = interactionsMapping?.[interactionUUID];
       const variables = interaction?.variables;
 
@@ -494,10 +463,7 @@ function PipelineInteractions({
     });
 
     return variableUUIDS;
-  }, [
-    interactionsMapping,
-    editingBlockInteractions,
-  ]);
+  }, [interactionsMapping, editingBlockInteractions]);
 
   const addBlockInteractionButtonMemo = useMemo(() => {
     const hasItems = editingBlockInteractions?.length >= 1;
@@ -509,7 +475,7 @@ function PipelineInteractions({
             <Button
               beforeIcon={<Add />}
               compact={hasItems}
-              onClick={(e) => {
+              onClick={e => {
                 pauseEvent(e);
                 setIsAddingNewInteraction(true);
                 setTimeout(() => refNewInteractionUUID?.current?.focus(), 1);
@@ -542,7 +508,7 @@ function PipelineInteractions({
             <TextInput
               compact
               monospace
-              onChange={(e) => {
+              onChange={e => {
                 pauseEvent(e);
                 setNewInteractionUUID(e.target.value);
               }}
@@ -557,7 +523,7 @@ function PipelineInteractions({
             <Button
               compact={hasItems}
               loading={isLoadingCreateInteraction}
-              onClick={(e) => {
+              onClick={e => {
                 pauseEvent(e);
 
                 createInteraction({
@@ -566,10 +532,8 @@ function PipelineInteractions({
                   layout: [],
                   uuid: `${newInteractionUUID}.${BlockLanguageEnum.YAML}`,
                   variables: {},
-                // @ts-ignore
-                }).then(({
-                  data,
-                }) => {
+                  // @ts-ignore
+                }).then(({ data }) => {
                   if (data?.error) {
                     return;
                   }
@@ -588,12 +552,9 @@ function PipelineInteractions({
                     [interactionUUID]: interaction,
                   }));
 
-                  setTimeout(
-                    () => {
-                      refMostRecentlyAddedInteraction?.current?.scrollIntoView();
-                    },
-                    ANIMATION_DURATION_CONTENT + 100,
-                  );
+                  setTimeout(() => {
+                    refMostRecentlyAddedInteraction?.current?.scrollIntoView();
+                  }, ANIMATION_DURATION_CONTENT + 100);
                 });
 
                 setIsAddingNewInteraction(false);
@@ -610,7 +571,7 @@ function PipelineInteractions({
 
             <Button
               compact={hasItems}
-              onClick={(e) => {
+              onClick={e => {
                 pauseEvent(e);
 
                 setIsAddingNewInteraction(false);
@@ -650,18 +611,14 @@ function PipelineInteractions({
         {!editingBlock && (
           <>
             <Spacing mb={PADDING_UNITS}>
-              <Headline>
-                Blocks with interactions
-              </Headline>
+              <Headline>Blocks with interactions</Headline>
             </Spacing>
 
             {accordionMemo}
 
             <Spacing mb={PADDING_UNITS} mt={UNITS_BETWEEN_SECTIONS}>
               <FlexContainer alignItems="center">
-                <Headline>
-                  Permissions
-                </Headline>
+                <Headline>Permissions</Headline>
 
                 <Spacing mr={PADDING_UNITS} />
 
@@ -670,10 +627,16 @@ function PipelineInteractions({
                     beforeIcon={<Add />}
                     compact
                     disabled={isLoadingInteractions}
-                    onClick={() => setPermissions(prev => prev?.concat([{
-                      roles: [],
-                      triggers: [],
-                    }]))}
+                    onClick={() =>
+                      setPermissions(prev =>
+                        prev?.concat([
+                          {
+                            roles: [],
+                            triggers: [],
+                          },
+                        ]),
+                      )
+                    }
                     secondary
                     small
                   >
@@ -713,9 +676,7 @@ function PipelineInteractions({
             <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
               <FlexContainer alignItems="center">
                 <Spacing mr={PADDING_UNITS} py={1}>
-                  <Headline>
-                    Block interactions
-                  </Headline>
+                  <Headline>Block interactions</Headline>
                 </Spacing>
 
                 {editingBlockInteractions?.length >= 1 && addBlockInteractionButtonMemo}
@@ -740,9 +701,13 @@ function PipelineInteractions({
                   {editingBlockVariableUUIDs?.map((variableUUID: string, idx: number) => (
                     <Spacing key={variableUUID} mr={1}>
                       <Text default monospace>
-                        {variableUUID}{editingBlockVariableUUIDs?.length >= 2 && idx < editingBlockVariableUUIDs?.length - 1 && (
-                          <Text inline monospace muted>,</Text>
-                        )}
+                        {variableUUID}
+                        {editingBlockVariableUUIDs?.length >= 2 &&
+                          idx < editingBlockVariableUUIDs?.length - 1 && (
+                            <Text inline monospace muted>
+                              ,
+                            </Text>
+                          )}
                       </Text>
                     </Spacing>
                   ))}
@@ -752,16 +717,12 @@ function PipelineInteractions({
           </Spacing>
         )}
 
-        {editingBlockInteractions?.map((
-          blockInteraction: BlockInteractionType, idx: number,
-        ) => {
-          const {
-            description: blockInteractionDescription,
-            name: blockInteractionName,
-          } = blockInteraction || {
-            description: null,
-            name: null,
-          };
+        {editingBlockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => {
+          const { description: blockInteractionDescription, name: blockInteractionName } =
+            blockInteraction || {
+              description: null,
+              name: null,
+            };
           const blockUUID = editingBlock?.uuid;
           const interactionUUID = blockInteraction?.uuid;
           const interaction = interactionsMapping?.[interactionUUID];
@@ -780,14 +741,11 @@ function PipelineInteractions({
                 containerWidth={containerWidth}
                 interaction={interaction}
                 isEditing
-                removeBlockInteraction={() => updateBlockInteractionAtIndex(
-                  blockUUID,
-                  idx,
-                  blockInteraction,
-                  {
+                removeBlockInteraction={() =>
+                  updateBlockInteractionAtIndex(blockUUID, idx, blockInteraction, {
                     remove: true,
-                  },
-                )}
+                  })
+                }
                 setInteractionsMapping={setInteractionsMapping}
               >
                 <Spacing p={PADDING_UNITS}>
@@ -808,9 +766,11 @@ function PipelineInteractions({
                     <Flex flex={1}>
                       <TextInput
                         fullWidth
-                        onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
-                          name: e.target.value,
-                        })}
+                        onChange={e =>
+                          updateBlockInteractionAtIndex(blockUUID, idx, {
+                            name: e.target.value,
+                          })
+                        }
                         value={blockInteractionName || ''}
                       />
                     </Flex>
@@ -835,9 +795,11 @@ function PipelineInteractions({
                     <Flex flex={1}>
                       <TextArea
                         fullWidth
-                        onChange={e => updateBlockInteractionAtIndex(blockUUID, idx, {
-                          description: e.target.value,
-                        })}
+                        onChange={e =>
+                          updateBlockInteractionAtIndex(blockUUID, idx, {
+                            description: e.target.value,
+                          })
+                        }
                         rows={Math.max(
                           3,
                           Math.min(12, blockInteractionDescription?.split('\n')?.length),
@@ -850,9 +812,10 @@ function PipelineInteractions({
               </BlockInteractionController>
 
               <div
-                ref={idx === editingBlockInteractions?.length - 1
-                  ? refMostRecentlyAddedInteraction
-                  : null
+                ref={
+                  idx === editingBlockInteractions?.length - 1
+                    ? refMostRecentlyAddedInteraction
+                    : null
                 }
               />
             </div>
@@ -885,15 +848,14 @@ function PipelineInteractions({
 
                 <Spacing mr={1} />
 
-                <Text warning>
-                  You have unsaved interaction changes
-                </Text>
+                <Text warning>You have unsaved interaction changes</Text>
               </>
             )}
 
             {!touched && lastSaved && (
               <Text muted>
-                Interactions last saved at {dateFormatLongFromUnixTimestamp(Number(lastSaved) / 1000)}
+                Interactions last saved at{' '}
+                {dateFormatLongFromUnixTimestamp(Number(lastSaved) / 1000)}
               </Text>
             )}
           </FlexContainer>

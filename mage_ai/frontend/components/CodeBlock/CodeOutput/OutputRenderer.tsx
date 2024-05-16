@@ -50,10 +50,10 @@ function OutputRenderer({
       }),
     [block, themeContext],
   );
-  const textValue = useMemo(() => textData || (typeof data === 'string' ? data : ''), [
-    data,
-    textData,
-  ]);
+  const textValue = useMemo(
+    () => textData || (typeof data === 'string' ? data : ''),
+    [data, textData],
+  );
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
   if ((DataTypeEnum.GROUP === dataType || multiOutput) && outputsLength >= 1) {
@@ -93,23 +93,14 @@ function OutputRenderer({
     );
 
     if (DataTypeEnum.GROUP === dataType) {
-      return (
-        <Spacing mt={index >= 1 ? PADDING_UNITS : 0}>
-          {el}
-        </Spacing>
-      );
+      return <Spacing mt={index >= 1 ? PADDING_UNITS : 0}>{el}</Spacing>;
     }
 
     return el;
   } else if (DataTypeEnum.TEXT === dataType) {
     return <TextOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
-    return (
-      <HTMLOutput
-        {...outputRowSharedProps}
-        value={textValue}
-      />
-    );
+    return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TEXT_PLAIN === dataType) {
     return <TextOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {

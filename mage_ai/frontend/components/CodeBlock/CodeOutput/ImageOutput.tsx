@@ -8,18 +8,16 @@ interface ImageOutputProps {
   uuid?: string;
 }
 
-function ImageOutput({
-  data,
-  height = UNIT * 60,
-  uuid,
-}: ImageOutputProps): JSX.Element {
+function ImageOutput({ data, height = UNIT * 60, uuid }: ImageOutputProps): JSX.Element {
   return (
-    <div style={{
-      backgroundColor: '#000000',
-      height,
-      overflow: 'auto',
-      position: 'relative',
-    }}>
+    <div
+      style={{
+        backgroundColor: '#000000',
+        height,
+        overflow: 'auto',
+        position: 'relative',
+      }}
+    >
       <Image
         alt={`Image ${uuid ? `${uuid} ` : ''}from code output`}
         layout="fill"

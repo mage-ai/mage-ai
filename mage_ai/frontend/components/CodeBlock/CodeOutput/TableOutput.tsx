@@ -44,13 +44,15 @@ function TableOutput({
   }: {
     columns: string[];
     rows: string[][] | number[][];
-  } = useMemo(() => (isObject(data) ? data : null) || sampleData || {
-    columns: [],
-    rows: [],
-  }, [
-    data,
-    sampleData,
-  ]);
+  } = useMemo(
+    () =>
+      (isObject(data) ? data : null) ||
+      sampleData || {
+        columns: [],
+        rows: [],
+      },
+    [data, sampleData],
+  );
 
   useEffect(() => {
     if (shape && setShapeCallback) {
@@ -64,12 +66,12 @@ function TableOutput({
     }
   }, [setShapeCallback, shape, uuid]);
 
-  if (columns?.some((header) => header === '')) {
+  if (columns?.some(header => header === '')) {
     return (
       <Spacing mx={5} my={3}>
         <Text monospace warning>
-          Block output table could not be rendered due to empty string headers. Please check
-          your data’s column headers for empty strings.
+          Block output table could not be rendered due to empty string headers. Please check your
+          data’s column headers for empty strings.
         </Text>
       </Spacing>
     );
@@ -95,15 +97,17 @@ function TableOutput({
       noBorderLeft
       noBorderRight
       noBorderTop={!borderTop}
-      renderColumnHeaderCell={({
-        Header: columnName,
-      }, _, {
-        index: columnIndex,
-        key: columnKey,
-        props: columnProps,
-        style: columnStyle,
-        // width: columnWidth,
-      }) => {
+      renderColumnHeaderCell={(
+        { Header: columnName },
+        _,
+        {
+          index: columnIndex,
+          key: columnKey,
+          props: columnProps,
+          style: columnStyle,
+          // width: columnWidth,
+        },
+      ) => {
         const empty = columnName?.length === 0 || containsOnlySpecialCharacters(columnName);
         return (
           <div
@@ -127,9 +131,11 @@ function TableOutput({
       }}
       rows={rows}
       // Remove border 2px and padding from each side
-      width={containerWidth
-        ? containerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)
-        : null}
+      width={
+        containerWidth
+          ? containerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)
+          : null
+      }
     />
   );
 }

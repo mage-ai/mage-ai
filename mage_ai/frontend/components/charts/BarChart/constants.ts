@@ -12,19 +12,35 @@ export type BuildSharedProps = {
 } & AxisLabelFormatProps;
 
 export type TooltipFormatProps = {
-  xTooltipFormat?: (y: string | number, x: string | number | null, tooltip: TooltipData) => string | number;
-  yTooltipFormat?: (y: string | number, x: string | number | null, tooltip: TooltipData) => string | number;
+  xTooltipFormat?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData,
+  ) => string | number;
+  yTooltipFormat?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData,
+  ) => string | number;
 };
 
 export type AxisLabelFormatProps = {
-  yLabelFormat?: (value: any, index: number, values: {
+  yLabelFormat?: (
+    value: any,
+    index: number,
+    values: {
       value: any;
       index: number;
-  }[]) => string | undefined;
-  xLabelFormat?: (value: any, index: number, values: {
+    }[],
+  ) => string | undefined;
+  xLabelFormat?: (
+    value: any,
+    index: number,
+    values: {
       value: any;
       index: number;
-  }[]) => string | undefined;
+    }[],
+  ) => string | undefined;
 };
 
 export type SharedProps = {
@@ -35,7 +51,9 @@ export type SharedProps = {
   xNumTicks?: number;
   yAxisLabel?: string;
   yNumTicks?: number;
-} & BuildSharedProps & TooltipFormatProps & AxisLabelFormatProps;
+} & BuildSharedProps &
+  TooltipFormatProps &
+  AxisLabelFormatProps;
 
 export type TooltipData = {
   bar: any;

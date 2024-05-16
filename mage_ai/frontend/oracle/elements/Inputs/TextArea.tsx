@@ -13,12 +13,7 @@ const TextAreaStyle = styled.textarea<TextAreaProps>`
 `;
 
 function TextArea(props: TextAreaProps, ref: React.Ref<HTMLTextAreaElement>) {
-  const {
-    autoGrow,
-    onChange,
-    rows = 3,
-    value,
-  } = props;
+  const { autoGrow, onChange, rows = 3, value } = props;
 
   const [valueInternal, setValueInternal] = useState(value);
 
@@ -33,19 +28,22 @@ function TextArea(props: TextAreaProps, ref: React.Ref<HTMLTextAreaElement>) {
     }
   }, [valueInternal, rows]);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // If rows is null, meaning auto-grow is enabled
-    if (autoGrow) {
-      e.target.style.height = 'auto'; // Reset height to compute new scrollHeight
-      e.target.style.height = `${e.target.scrollHeight}px`;
-    }
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      // If rows is null, meaning auto-grow is enabled
+      if (autoGrow) {
+        e.target.style.height = 'auto'; // Reset height to compute new scrollHeight
+        e.target.style.height = `${e.target.scrollHeight}px`;
+      }
 
-    setValueInternal(e.target.value);
+      setValueInternal(e.target.value);
 
-    if (onChange) {
-      onChange(e);
-    }
-  }, [autoGrow, onChange]);
+      if (onChange) {
+        onChange(e);
+      }
+    },
+    [autoGrow, onChange],
+  );
 
   return (
     <InputWrapper
@@ -53,14 +51,7 @@ function TextArea(props: TextAreaProps, ref: React.Ref<HTMLTextAreaElement>) {
       ref={ref}
       onChange={handleChange}
       // @ts-ignore
-      input={
-        <TextAreaStyle
-          {...props}
-          onChange={handleChange}
-          ref={textAreaRef}
-          rows={rows}
-        />
-      }
+      input={<TextAreaStyle {...props} onChange={handleChange} ref={textAreaRef} rows={rows} />}
     />
   );
 }

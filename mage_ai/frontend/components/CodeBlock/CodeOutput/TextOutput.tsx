@@ -16,7 +16,7 @@ function TextOutput({ value, ...outputRowSharedProps }: TextOutputProps) {
     if (typeof value === 'string') {
       textArr = value.split('\\n');
     } else if (Array.isArray(value)) {
-      textArr = value.map((v) => v?.text_data);
+      textArr = value.map(v => v?.text_data);
     } else if (isObject(value)) {
       textArr = [value?.text_data];
     }

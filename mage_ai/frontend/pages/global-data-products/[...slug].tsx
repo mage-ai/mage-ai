@@ -13,17 +13,15 @@ type TemplateDetailsProps = {
   slug: string;
 };
 
-function GlobalDataProductDetailPage({
-  project,
-  slug,
-}: TemplateDetailsProps) {
-  const { data: dataGlobalDataProduct } = api.global_data_products.detail(slug, project
-    ? { project }
-    : {},
+function GlobalDataProductDetailPage({ project, slug }: TemplateDetailsProps) {
+  const { data: dataGlobalDataProduct } = api.global_data_products.detail(
+    slug,
+    project ? { project } : {},
   );
-  const globalDataProduct =  useMemo(() => dataGlobalDataProduct?.global_data_product, [
-    dataGlobalDataProduct,
-  ]);
+  const globalDataProduct = useMemo(
+    () => dataGlobalDataProduct?.global_data_product,
+    [dataGlobalDataProduct],
+  );
 
   const label = useMemo(() => {
     if (slug?.length >= 21) {
@@ -56,20 +54,16 @@ function GlobalDataProductDetailPage({
           <Spinner inverted />
         </Spacing>
       )}
-      {globalDataProduct && (
-        <GlobalDataProductDetail
-          globalDataProduct={globalDataProduct}
-        />
-      )}
+      {globalDataProduct && <GlobalDataProductDetail globalDataProduct={globalDataProduct} />}
     </Dashboard>
   );
 }
 
-GlobalDataProductDetailPage.getInitialProps = async (ctx) => {
+GlobalDataProductDetailPage.getInitialProps = async ctx => {
   const {
     slug: slugProp,
   }: {
-    slug: string[],
+    slug: string[];
   } = ctx.query;
   const slug = slugProp?.[slugProp?.length - 1];
   const project = slugProp?.length >= 2 ? slugProp?.[0] : null;
