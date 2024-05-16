@@ -364,3 +364,7 @@ export function getDayRangeForCurrentMonth() {
 export function padTime(time: string) {
   return time.padStart(2, '0');
 }
+
+export function convertToMillisecondsTimestamp(value: number): number {
+  return value * (parseInt(String(value)).toString().length === 10 ? 1000 : 1);
+}

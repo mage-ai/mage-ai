@@ -23,8 +23,12 @@ import {
   VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
   VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
   VARIABLE_NAME_X,
+  VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH,
   VARIABLE_NAME_X_AXIS_LABEL_FORMAT,
   VARIABLE_NAME_Y,
+  VARIABLE_GROUP_NAME_DESIGN,
+  VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN,
+  VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN,
   VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   buildMetricName,
 } from '@interfaces/ChartBlockType';
@@ -39,6 +43,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { range, sortByKey } from '@utils/array';
 import { TooltipData } from '@components/charts/BarChart/constants';
+import { dig, setNested } from '@utils/hash';
 
 type ChartControllerProps = {
   block: BlockType;
@@ -63,6 +68,11 @@ function ChartController({
     chart_type: chartType,
     y_sort_order: ySortOrder,
   } = configuration || {};
+
+  const design = useMemo(() => configuration?.[VARIABLE_GROUP_NAME_DESIGN] || {}, [configuration]);
+  const xGridLinesHidden = design?.[VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN];
+  const yGridLinesHidden = design?.[VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN];
+  const yValuesSmooth = design?.[VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH];
 
   const chartHeight = configuration[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT;
 
@@ -343,14 +353,17 @@ function ChartController({
 
       return (
         <LineSeries
+          // areaBetweenLines
           data={dataParsed}
           height={chartHeight}
+          hideGridX={!!xGridLinesHidden}
+          hideGridY={!!yGridLinesHidden}
           lineLegendNames={legendNames}
           margin={{
             bottom: 8 * UNIT,
             left: 5 * UNIT,
           }}
-          noCurve
+          noCurve={!yValuesSmooth}
           renderXTooltipContent={(x, _, toolipData) => {
             const {
               index,
@@ -397,19 +410,26 @@ function ChartController({
             );
           }}
           thickness={4}
+          timeSeries={isTimeSeries}
           width={width ? width - ((3 * UNIT) + 3) : width}
           xAxisLabel={xAxisLabelProp
             || xAxisLabel
             || String(configuration[VARIABLE_NAME_X] || '')
           }
           xLabelFormat={(ts: number, index, values) => {
+            let val = ts;
+
             if (xAxisLabelFormatValue) {
-              return xAxisLabelFormat(ts, index, values);
+              if (isTimeSeries) {
+                val = moment(ts * 1000).format(xAxisLabelFormatValue);
+              } else {
+                val = xAxisLabelFormat(ts, index, values);
+              }
             } else if (isTimeSeries) {
-              return moment(ts * 1000).format(variableDateFormat);
+              val = moment(ts * 1000).format(variableDateFormat);
             }
 
-            return ts;
+            return val;
           }}
           xTooltipFormat={xTooltipFormatValue ? xTooltipFormat : null}
           yAxisLabel={yAxisLabel || String(configuration[VARIABLE_NAME_Y])}

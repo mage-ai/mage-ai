@@ -20,6 +20,10 @@ import {
   VARIABLE_NAME_Y,
   VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   VARIABLE_NAME_Y_SORT_ORDER,
+  VARIABLE_GROUP_NAME_DESIGN,
+  VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH,
+  VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN,
+  VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN,
 } from '@interfaces/ChartBlockType';
 
 export enum ConfigurationItemType {
@@ -27,6 +31,7 @@ export enum ConfigurationItemType {
   COLUMNS = 'columns',
   METRICS = 'metrics',
   NUMBER = 'number',
+  TOGGLE = 'toggle',
 }
 
 export interface ConfigurationOptionType {
@@ -114,6 +119,11 @@ const timeSeriesConfiguration: {
       uuid: VARIABLE_NAME_TIME_INTERVAL,
     },
     {
+      label: () => 'metrics',
+      type: ConfigurationItemType.METRICS,
+      uuid: VARIABLE_NAME_METRICS,
+    },
+    {
       description: [
         'MMMM Do YYYY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// May 15th 2024',
         'h:mm:ss a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 3:31:13 pm',
@@ -131,9 +141,19 @@ const timeSeriesConfiguration: {
       uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
     },
     {
-      label: () => 'metrics',
-      type: ConfigurationItemType.METRICS,
-      uuid: VARIABLE_NAME_METRICS,
+      label: () => 'hide X grid lines',
+      type: ConfigurationItemType.TOGGLE,
+      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN].join('.'),
+    },
+    {
+      label: () => 'hide Y grid lines',
+      type: ConfigurationItemType.TOGGLE,
+      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN].join('.'),
+    },
+    {
+      label: () => 'smooth Y line curves',
+      type: ConfigurationItemType.TOGGLE,
+      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH].join('.'),
     },
   ],
 };

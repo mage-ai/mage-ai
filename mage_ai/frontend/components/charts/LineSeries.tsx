@@ -16,7 +16,7 @@ import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withToolti
 import { curveBasis } from '@visx/curve';
 import { localPoint } from '@visx/event';
 import { range } from 'lodash';
-import { scaleLinear, scaleOrdinal } from '@visx/scale';
+import { scaleLinear, scaleOrdinal, scaleTime } from '@visx/scale';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
@@ -29,6 +29,7 @@ import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
 import { formatNumberLabel, getTooltipContentLength } from './utils/label';
+import { convertToMillisecondsTimestamp } from '@utils/date';
 import { getChartColors } from './constants';
 
 const tooltipStyles = {
@@ -52,6 +53,7 @@ type SharedProps = {
   gridProps?: any;
   height: number;
   hideGridX?: boolean;
+  hideGridY?: boolean;
   increasedXTicks?: boolean;
   lineLegendNames?: string[];
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
@@ -68,6 +70,7 @@ type SharedProps = {
 
 type LineSeriesProps = {
   width: number;
+  timeSeries?: boolean;
 } & SharedProps;
 
 export type LineSeriesContainerProps = {
@@ -86,6 +89,8 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   gridProps = {},
   height,
   hideGridX,
+  timeSeries,
+  hideGridY,
   hideTooltip,
   increasedXTicks,
   lineLegendNames,
@@ -108,34 +113,56 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 }: LineSeriesProps & WithTooltipProvidedProps) => {
   const themeContext = useContext(ThemeContext);
 
-  const getX = getXProp || (d => d?.x);
-  const getY = getYProp || ((d, idx = 0) => d?.y?.[idx]);
+  const getX = getXProp ? getXProp : (d) => convertToMillisecondsTimestamp(d?.x);
+  const getY = getYProp ? getYProp : (d, idx = 0) => d?.y?.[idx];
 
   const border = dark.monotone.gray;
   const purplePastel = dark.brand.wind200;
   const text = dark.content.muted;
   const { gray } = dark.monotone;
 
-  const xValues = data.map(d => Number(getX(d)));
+  const xValues = data.map((d) => {
+    const value = Number(getX(d));
+
+    if (timeSeries) {
+      return convertToMillisecondsTimestamp(value);
+    }
+
+    return value;
+  });
 
   if (width < 10) {
     return null;
   }
 
-  const xMax = width - margin.left - margin.right;
+  const strokeWidth = thickness || (thickStroke ? 2 : 1);
+  const xMax = width - (margin.left + margin.right);
   const yMax = height - margin.top - margin.bottom;
   const xHalfwayPoint = xMax / 2;
+
+  const startXPadding = strokeWidth / 2; // Padding at the start of the line
+  const endXPadding = strokeWidth / 2; // Padding at the end of the line
 
   const maxNumberOfYValues = data.length === 0
     ? 0
     : Math.max(...data.map(({ y }) => y?.length || 0));
-  const xScale = useMemo(() => scaleLinear<number>({
-    domain: [Math.min(...xValues), Math.max(...xValues)],
-    range: [0, xMax],
-  }), [
-    xMax,
-    xValues,
-  ]);
+
+  let xScale = null;
+  if (timeSeries) {
+    xScale = scaleTime<number>({
+      domain: [
+        Math.min(...xValues),
+        Math.max(...xValues),
+      ],
+      range: [0, xMax],
+    });
+  } else {
+    xScale = scaleLinear<number>({
+      domain: [Math.min(...xValues), Math.max(...xValues)],
+      range: [0, xMax],
+    });
+  }
+
   const yScaleMin = Math.min(...data.map(({ y }) => (Math.min(
     ...(getYScaleValues
       ? getYScaleValues(y)
@@ -288,17 +315,18 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             />
           )}
 
-          <GridRows
-            height={yMax}
-            pointerEvents="none"
-            scale={yScale}
-            stroke={border}
-            strokeDasharray="3,3"
-            strokeOpacity={0.4}
-            width={xMax}
-            {...gridProps}
-          />
-
+          {!hideGridY && (
+            <GridRows
+              height={yMax}
+              pointerEvents="none"
+              scale={yScale}
+              stroke={border}
+              strokeDasharray="3,3"
+              strokeOpacity={0.4}
+              width={xMax}
+              {...gridProps}
+            />
+          )}
 
           {/* This is a vertical line at the end of the x-axis */}
           <line stroke={border} x1={xMax} x2={xMax} y1={0} y2={yMax} />
@@ -369,8 +397,17 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               data={data.filter(d => d.y != undefined)}
               key={i}
               pointerEvents="none"
-              strokeWidth={thickness || (thickStroke ? 2 : 1)}
-              x={d => xScale(getX(d))}
+              strokeWidth={strokeWidth}
+              // Adjust the x value to account for padding
+              x={d => {
+                const originalX = xScale(getX(d)); // Original X position
+                const paddedXMax = xMax - endXPadding; // Maximum X value after applying end padding
+                const scaleX = scaleLinear({
+                  range: [startXPadding, paddedXMax], // Adjust range to account for padding
+                  domain: xScale.domain(),
+                });
+                return scaleX(getX(d)); // Returns scaled X values with padding
+              }}
               // @ts-ignore
               y={d => yScale(d.y && (i >= d.y.length ? yScaleMin : getY(d, i)))}
               {...linePathProps[i]}

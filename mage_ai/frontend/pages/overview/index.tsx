@@ -87,6 +87,11 @@ import { queryFromUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
+import {
+  LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED,
+  set,
+  get,
+} from 'storage/localStorage';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -109,15 +114,16 @@ function OverviewPage({
   const q = queryFromUrl();
   const router = useRouter();
   const newPipelineButtonMenuRef = useRef(null);
+
+  const allTabs = useMemo(() => TIME_PERIOD_TABS.concat(TAB_DASHBOARD), []);
   const [selectedTab, setSelectedTabState] =
-    useState<TabType>(TIME_PERIOD_TABS.find(({ uuid }) => uuid === tab) || TAB_TODAY);
+    useState<TabType>(allTabs.find(({ uuid }) => uuid === (tab ? tab : get(LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED)?.uuid)) || TAB_TODAY);
 
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const timePeriod = selectedTab?.uuid;
 
-  const allTabs = useMemo(() => TIME_PERIOD_TABS.concat(TAB_DASHBOARD), []);
 
   const startDateString = useMemo(() =>
     getStartDateStringFromPeriod(timePeriod, { isoString: true }),
@@ -138,8 +144,7 @@ function OverviewPage({
       },
     ),
     {
-      onSuccess: (response: any) => {
-        return onSuccess(
+      onSuccess: (response: any) => onSuccess(
           response,
           {
             callback: ({
@@ -150,8 +155,7 @@ function OverviewPage({
               setMonitorStats(stats);
             },
           },
-        );
-      },
+        ),
     },
   );
 
@@ -170,6 +174,8 @@ function OverviewPage({
         fetchMonitorStats();
       }
 
+      set(LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, tab);
+
       return tab;
     });
   }, []);
@@ -178,6 +184,14 @@ function OverviewPage({
     if (!mountedRef?.current) {
       mountedRef.current = true;
       fetchMonitorStats();
+    }
+
+    if (!tab) {
+      goToWithQuery({
+        [TAB_URL_PARAM]: selectedTab ? selectedTab?.uuid : allTabs?.[0]?.uuid,
+      }, {
+        pushHistory: false,
+      });
     }
   }, []);
 
@@ -212,9 +226,7 @@ function OverviewPage({
     getDateRange(TIME_PERIOD_INTERVAL_MAPPING[timePeriod] + 1),
     [timePeriod],
     );
-  const allPipelineRunData = useMemo(() => {
-    return getAllPipelineRunDataGrouped(monitorStats, dateRange);
-  }, [
+  const allPipelineRunData = useMemo(() => getAllPipelineRunDataGrouped(monitorStats, dateRange), [
     monitorStats,
     dateRange,
   ]);
@@ -786,10 +798,8 @@ def d(df):
   );
 }
 
-OverviewPage.getInitialProps = async (ctx) => {
-  return {
-    tab: (ctx?.query?.tab || TimePeriodEnum.TODAY) as TimePeriodEnum,
-  };
-};
+OverviewPage.getInitialProps = async (ctx) => ({
+  tab: (ctx?.query?.tab ? ctx?.query?.tab as TimePeriodEnum : null),
+});
 
 export default PrivateRoute(OverviewPage);

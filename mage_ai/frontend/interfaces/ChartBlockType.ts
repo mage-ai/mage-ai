@@ -21,6 +21,10 @@ export const VARIABLE_NAME_Y = 'y';
 export const VARIABLE_NAME_Y_AXIS_LABEL_FORMAT = 'y_axis_label_format';
 export const VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT = 'y_tooltip_label_format';
 export const VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order';
+export const VARIABLE_GROUP_NAME_DESIGN = 'design';
+export const VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN = 'x_grid_lines_hidden';
+export const VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN = 'y_grid_lines_hidden';
+export const VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH = 'y_values_smooth';
 
 export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
 export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database';

@@ -1,9 +1,11 @@
-import InnerHTML from 'dangerously-set-html-content';
 import { useCallback, useMemo } from 'react';
+import InnerHTML from 'dangerously-set-html-content';
 
 import Chip from '@oracle/components/Chip';
+import FlexContainer from '@oracle/components/FlexContainer';
 import MultiSelect from '@oracle/elements/Inputs/MultiSelect';
 import Select from '@oracle/elements/Inputs/Select';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -25,7 +27,8 @@ import { capitalize } from '@utils/string';
 import { remove, sortByKey } from '@utils/array';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import Panel from '@oracle/components/Panel';
-import Ansi from 'ansi-to-react';
+import { PADDING_UNITS } from 'oracle/styles/units/spacing';
+import { dig, setNested } from '@utils/hash';
 
 function ChartConfigurations({
   block,
@@ -61,23 +64,46 @@ function ChartConfigurations({
         type,
         uuid,
       }) => {
-        const renderWithLabelDescription = (elInit) => (
-          <Panel>
-            <Spacing mb={2}>
-              <Spacing mb={1}>
-                <Text bold>
-                  {sharedProps?.label}
-                </Text>
-              </Spacing>
-              {description && (Array.isArray(description) ? description : [description]).map((desc, i) => (
-                <Text key={`${desc}-${i}`} monospace={monospace} muted xsmall>
-                  <span dangerouslySetInnerHTML={{ __html: desc }} />
-                </Text>
-              ))}
-            </Spacing>
-            {elInit}
-          </Panel>
-        );
+        const renderWithLabelDescription = (elInit?: JSX.Element, opts?: {
+          inline?: boolean;
+        }) => {
+          const {
+            inline,
+          } = opts || {
+            inline: false,
+          };
+          const elMore = (
+            <>
+              <Text bold>
+                {sharedProps?.label}
+              </Text>
+              {description && (
+                <Spacing mb={1}>
+                  {(Array.isArray(description) ? description : [description]).map((desc, i) => (
+                    <Text key={`${desc}-${i}`} monospace={monospace} muted xsmall>
+                      <span dangerouslySetInnerHTML={{ __html: desc }} />
+                    </Text>
+                  ))}
+                </Spacing>
+              )}
+              {elInit && (
+                <Spacing mt={2}>
+                  {elInit}
+                </Spacing>
+              )}
+            </>
+          );
+
+          if (inline) {
+            return elMore;
+          }
+
+          return (
+            <Panel>
+              {elMore}
+            </Panel>
+          );
+        };
 
         let el;
         const sharedProps = {
@@ -87,12 +113,12 @@ function ChartConfigurations({
           monospace: monospace,
           // onBlur: () => setSelectedBlock(block),
           onChange: e => updateConfiguration({
-            [uuid]: e.target.value,
+            ...setNested(configuration, uuid, e.target.value),
           }, {
             autoRun,
           }),
           // onFocus: () => setSelectedBlock(block),
-          value: configuration?.[uuid] || '',
+          value: configuration ? dig(configuration || {}, uuid) : '',
         };
 
         if (ConfigurationItemType.COLUMNS === type) {
@@ -304,7 +330,27 @@ function ChartConfigurations({
               ))}
             </Select>
           );
-        } else {
+        } else if (ConfigurationItemType.TOGGLE === type) {
+          el = (
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <ToggleSwitch
+                  checked={!!sharedProps?.value}
+                  compact
+                  onCheck={(valFunc: (val: boolean) => boolean) => sharedProps?.onChange({
+                    target: {
+                      value: valFunc(sharedProps?.value),
+                    },
+                  })}
+                />
+
+                <Spacing mr={PADDING_UNITS} />
+
+                {renderWithLabelDescription(null, { inline: true })}
+              </FlexContainer>
+            </Spacing>
+          );
+        }else {
           el = (
             <TextInput
               {...sharedProps}
