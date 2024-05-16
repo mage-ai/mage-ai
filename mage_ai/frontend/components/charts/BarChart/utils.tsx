@@ -31,11 +31,10 @@ function max<D>(arr: D[], fn: (d: D) => number) {
   return Math.max(...arr.map(fn));
 }
 
-export function getColorSet({
-  flat = false,
-}: {
+export function getColorSet(opts?: {
   flat?: boolean;
-}) {
+} = {}) {
+  const { flat } = opts || {};
   const colorsSets = [
     [
       // Very specific order

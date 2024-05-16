@@ -63,7 +63,7 @@ export type HistogramProps = {
   muted?: boolean;
   numberOfXTicks?: number;
   noPadding?: boolean;
-  renderTooltipContent?: (tuple: any[]) => any;
+  renderTooltipContent?: (y: string | number, x: string | number | null, tooltip: TooltipData) => string;
   selected?: boolean;
   showAxisLabels?: boolean;
   showYAxisLabels?: boolean;
@@ -264,13 +264,11 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
 
       const tooltipText: any = renderTooltipContent
         ? renderTooltipContent(yValue, index, {
-          xMin: xMinValue,
-          xMax: xMaxValue,
+          values: [xMinValue, xMaxValue],
         })
         : yTooltipFormat
           ? yTooltipFormat(yValue, index, {
-            xMin: xMinValue,
-            xMax: xMaxValue,
+            values: [xMinValue, xMaxValue],
           })
           : `${colVal} (${getColValFreq(tuple)})`;
       // const tooltipLeftPosition = (x < width / 2) ? x : (x - margin.left * 3);
@@ -359,9 +357,9 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
               scale={xScaleDate || xScale}
               stroke={colors.muted}
               tickFormat={(label, ...args) => xLabelFormat
-                ? xLabelFormat(String(label), ...args)
+                ? xLabelFormat(label, ...args)
                 // @ts-ignore
-                : isDateType ? formatDateAxisLabel(label) : String(label)
+                : isDateType ? formatDateAxisLabel(label) : label
               }
               tickLabelProps={(val: any) => ({
                 fill: showYAxisLabels ? colors.active : 'transparent',

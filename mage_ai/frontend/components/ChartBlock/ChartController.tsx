@@ -9,6 +9,7 @@ import Histogram from '@components/charts/Histogram';
 import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
+import Spacing from '@oracle/elements/Spacing';
 import { CHART_HEIGHT_DEFAULT } from './index.style';
 import {
   ChartStyleEnum,
@@ -237,13 +238,19 @@ function ChartController({
           {...sharedProps}
           xAxisLabel={xAxisLabelProp || xAxisLabel}
           xLabelFormat={(ts: number, index, values) => {
+            let val = ts;
+
             if (xAxisLabelFormatValue) {
-              return xAxisLabelFormat(ts, index, values);
+              if (isTimeSeries) {
+                val = moment(ts * 1000).format(xAxisLabelFormatValue);
+              } else {
+                val = xAxisLabelFormat(ts, index, values);
+              }
             } else if (isTimeSeries) {
-              return moment(ts * 1000).format(variableDateFormat);
+              val = moment(ts * 1000).format(variableDateFormat);
             }
 
-            return ts;
+            return val;
           }}
           xNumTicks={xy.length}
           xTooltipFormat={xTooltipFormatValue ? xTooltipFormat : null}
@@ -281,17 +288,35 @@ function ChartController({
           }}
           noPadding
           renderTooltipContent={(value, index, {
-            xMin,
-            xMax,
+            values,
           }) => {
-            if (yTooltipFormatValue) {
+            const [xMin, xMax] = values;
+
+            if (yTooltipFormatValue || xTooltipFormatValue) {
+              let xTip, yTip;
+
+              if (yTooltipFormat) {
+                yTip = yTooltipFormat(value, index, {
+                  values,
+                });
+              }
+
+              if (xTooltipFormat) {
+                xTip = xTooltipFormat(value, index, {
+                  values,
+                });
+              }
+
               return (
-                <Text inverted monospace small>
-                  {yTooltipFormat(value, index, {
-                    xMin,
-                    xMax,
-                  })}
-                </Text>
+                <>
+                  {[yTip, xTip]?.filter?.(t => t)?.map((text: string, idx: number) => (
+                    <div key={text} style={{ marginTop: idx >= 1 ? 1 : 0 }}>
+                      <Text inverted monospace small>
+                        {text}
+                      </Text>
+                    </div>
+                  ))}
+                </>
               );
             }
 

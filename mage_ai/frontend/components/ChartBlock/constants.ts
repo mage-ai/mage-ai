@@ -47,11 +47,29 @@ export interface ConfigurationOptionType {
   uuid: string;
 }
 
+const SHARED_DESIGN_PROPS = [
+  {
+    label: () => 'hide X grid lines',
+    type: ConfigurationItemType.TOGGLE,
+    uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN].join('.'),
+  },
+  {
+    label: () => 'hide Y grid lines',
+    type: ConfigurationItemType.TOGGLE,
+    uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN].join('.'),
+  },
+  {
+    label: () => 'smooth Y line curves',
+    type: ConfigurationItemType.TOGGLE,
+    uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH].join('.'),
+  },
+];
+
 const SHARED_CODE_PROPS = {
   description: [
     'value&nbsp;: string | number | undefined',
     'index&nbsp;: string | number | undefined',
-    'values: { value, index }[] | { x, y, index }',
+    'values: { value, index }[] | { x, y, index, values }',
     '&nbsp;',
     'return string | number',
   ],
@@ -140,21 +158,6 @@ const timeSeriesConfiguration: {
       label: () => 'Y axis label format',
       uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
     },
-    {
-      label: () => 'hide X grid lines',
-      type: ConfigurationItemType.TOGGLE,
-      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN].join('.'),
-    },
-    {
-      label: () => 'hide Y grid lines',
-      type: ConfigurationItemType.TOGGLE,
-      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN].join('.'),
-    },
-    {
-      label: () => 'smooth Y line curves',
-      type: ConfigurationItemType.TOGGLE,
-      uuid: [VARIABLE_GROUP_NAME_DESIGN, VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH].join('.'),
-    },
   ],
 };
 
@@ -226,7 +229,9 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_BUCKETS,
       },
-      ...SHARED_CONFIGS(),
+      ...SHARED_CONFIGS({
+        includeXTooltipFormat: true,
+      }),
     ],
     code: [
       {
@@ -254,6 +259,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
       ...SHARED_CONFIGS({
         includeXTooltipFormat: true,
       }),
+      ...SHARED_DESIGN_PROPS,
     ],
     code: [
       {
@@ -328,7 +334,10 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     ],
   },
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: timeSeriesConfiguration,
-  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: timeSeriesConfiguration,
+  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
+    ...timeSeriesConfiguration,
+    noCode: timeSeriesConfiguration.noCode.concat(SHARED_DESIGN_PROPS),
+  },
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {

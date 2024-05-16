@@ -43,11 +43,8 @@ export type TooltipData = {
   height: number;
   index: number;
   key: string;
+  values?: number[] | string[];
   width: number;
   x: number;
   y: number | string;
-  xMin?: number;
-  yMin?: number;
-  xMax?: number;
-  yMax?: number;
 };
