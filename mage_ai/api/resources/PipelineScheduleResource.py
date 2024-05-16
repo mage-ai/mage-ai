@@ -424,6 +424,7 @@ class PipelineScheduleResource(DatabaseResource):
                 sla=updated_model.sla,
                 start_time=updated_model.start_time,
                 status=updated_model.status,
+                token=updated_model.token,
                 variables=updated_model.variables,
             )
 

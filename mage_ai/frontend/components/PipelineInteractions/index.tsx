@@ -590,7 +590,7 @@ function PipelineInteractions({
 
                   setTimeout(
                     () => {
-                      refMostRecentlyAddedInteraction?.current?.scrollIntoView()
+                      refMostRecentlyAddedInteraction?.current?.scrollIntoView();
                     },
                     ANIMATION_DURATION_CONTENT + 100,
                   );
@@ -869,7 +869,7 @@ function PipelineInteractions({
             <Button
               beforeIcon={<Save />}
               disabled={isLoadingInteractions}
-              loading={isLoadingUpdatePipelineInteraction || isLoadingInteractions}
+              loading={isLoadingUpdatePipelineInteraction}
               onClick={() => savePipelineInteraction()}
               primary={touched}
               secondary={!touched}
