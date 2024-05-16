@@ -62,7 +62,11 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 @safe_db_query
-def query_pipeline_schedules(pipeline_uuids: List[str]):
+def query_pipeline_schedules(
+    pipeline_uuids: List[str],
+    context_data: Dict = None,
+    repo_path: str = None,
+):
     a = aliased(PipelineSchedule, name='a')
     result = (
         PipelineSchedule.select(
@@ -81,7 +85,10 @@ def query_pipeline_schedules(pipeline_uuids: List[str]):
             a.pipeline_uuid.in_(pipeline_uuids),
             or_(
                 a.repo_path.in_(
-                    Project().repo_path_for_database_query(
+                    Project(
+                        context_data=context_data,
+                        repo_path=repo_path,
+                    ).repo_path_for_database_query(
                         'pipeline_schedules',
                     )
                 ),
@@ -96,6 +103,7 @@ class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
+        context_data = kwargs.get('context').data
         limit = (meta or {}).get(META_KEY_LIMIT, None)
         if limit is not None:
             limit = int(limit)
@@ -125,7 +133,11 @@ class PipelineResource(BaseResource):
         if repo_path:
             repo_path = repo_path[0]
         if not repo_path:
-            repo_path = get_repo_path(root_project=False, user=user)
+            repo_path = get_repo_path(
+                context_data=context_data,
+                root_project=False,
+                user=user,
+            )
 
         search_query = query.get('search', [None])
         if search_query:
@@ -155,7 +167,6 @@ class PipelineResource(BaseResource):
             from_history_days = from_history_days[0]
 
         history_by_pipeline_uuid = {}
-
         if from_history_days is not None and is_number(from_history_days):
             timestamp_start = (
                 datetime.utcnow()
@@ -206,7 +217,9 @@ class PipelineResource(BaseResource):
             )
 
         total_count = len(pipeline_uuids)
-        await UsageStatisticLogger().pipelines_impression(lambda: total_count)
+        await UsageStatisticLogger(
+            context_data=context_data, repo_path=repo_path,
+        ).pipelines_impression(lambda: total_count)
 
         if not sorts:
             pipeline_uuids = sorted(pipeline_uuids, reverse=reverse_sort)
@@ -293,7 +306,11 @@ class PipelineResource(BaseResource):
 
         mapping = {}
         if include_schedules:
-            mapping = query_pipeline_schedules(pipeline_uuids)
+            mapping = query_pipeline_schedules(
+                pipeline_uuids,
+                context_data=context_data,
+                repo_path=repo_path,
+            )
 
         filtered_pipelines = []
         for pipeline in pipelines:
@@ -403,7 +420,8 @@ class PipelineResource(BaseResource):
             'results': len(arr),
             'next': has_next,
         }
-
+        for p in arr:
+            p.context_data = context_data
         return result_set
 
     @classmethod

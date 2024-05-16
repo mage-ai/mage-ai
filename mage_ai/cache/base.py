@@ -69,7 +69,7 @@ class BaseCache():
 
     def build_path(self, key: str) -> str:
         dir_path = os.getenv(MAGE_CACHE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME) or os.path.join(
-            get_variables_dir(repo_path=self.repo_path),
+            get_variables_dir(repo_path=self.repo_path, root_project=self.root_project),
             MAGE_CACHE_DIRECTORY_DEFAULT,
         )
 

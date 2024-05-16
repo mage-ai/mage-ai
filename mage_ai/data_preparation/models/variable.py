@@ -481,7 +481,7 @@ class Variable:
             if self.storage.path_exists(file_path):
                 try:
                     self.storage.remove(file_path)
-                except FileNotFoundError as err:
+                except Exception as err:
                     print(f"Error deleting file {file_path}: {err}")
 
     def __delete_json(self) -> None:

@@ -138,19 +138,31 @@ class Pipeline:
         # Used for showing the operation history. For example: recently viewed pipelines.
         self.history = []
 
+        # Path of the pipeline metadata.yaml file
+        self._config_path = None
         if config is None:
             self.load_config_from_yaml()
         else:
             self.load_config(config, catalog=catalog)
 
+        self.context_data = dict()
+
     @classmethod
     def build_config_path(
-        self, uuid: str, repo_path: str, use_repo_path: bool = False
+        self,
+        uuid: str,
+        repo_path: str,
+        context_data: Dict = None,
+        use_repo_path: bool = False,
     ) -> str:
         if project_platform_activated() and not use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
-            config_path, _repo_path = get_pipeline_config_path(uuid)
+            config_path, _repo_path = get_pipeline_config_path(
+                uuid,
+                context_data=context_data,
+                repo_path=repo_path,
+            )
             if config_path:
                 return config_path
 
@@ -163,16 +175,24 @@ class Pipeline:
 
     @property
     def config_path(self):
-        return self.build_config_path(
-            self.uuid, self.repo_path, use_repo_path=self.use_repo_path
-        )
+        if not self._config_path:
+            self._config_path = self.build_config_path(
+                self.uuid,
+                self.repo_path,
+                context_data=self.context_data,
+                use_repo_path=self.use_repo_path,
+            )
+        return self._config_path
 
     @property
     def catalog_config_path(self):
         if project_platform_activated() and not self.use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
-            config_path, _repo_path = get_pipeline_config_path(self.uuid)
+            config_path, _repo_path = get_pipeline_config_path(
+                self.uuid,
+                context_data=self.context_data,
+            )
             if config_path:
                 return os.path.join(
                     os.path.dirname(config_path), DATA_INTEGRATION_CATALOG_FILE

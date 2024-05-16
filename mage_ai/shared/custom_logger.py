@@ -150,6 +150,17 @@ class ColorPrinter:
             __uuid='get_callers'
         )
 
+    def print_call_stack(self):
+        stack = inspect.stack()
+        stack_list = []
+        for frame_info in stack:
+            frame = frame_info.frame
+            filename = frame.f_code.co_filename
+            lineno = frame.f_lineno
+            function_name = frame.f_code.co_name
+            stack_list.append(f"File '{filename}', line {lineno}, in {function_name}")
+        self.info('Call stack:', stack=stack_list)
+
 
 class CustomFormatter(logging.Formatter):
     # https://stackoverflow.com/a/56944256/1084284

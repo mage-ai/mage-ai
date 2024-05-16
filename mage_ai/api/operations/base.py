@@ -300,6 +300,7 @@ class BaseOperation():
             self.__flags[FeatureUUID.GLOBAL_HOOKS] = \
                 Project.is_feature_enabled_in_root_or_active_project(
                     FeatureUUID.GLOBAL_HOOKS,
+                    context_data=self.context.data,
                     user=self.user,
             )
 
