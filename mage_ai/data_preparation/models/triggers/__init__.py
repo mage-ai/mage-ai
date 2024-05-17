@@ -116,16 +116,22 @@ class Trigger(BaseConfig):
         )
 
 
-def get_triggers_file_path(pipeline_uuid: str) -> str:
-    pipeline_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, pipeline_uuid)
+def get_triggers_file_path(
+    pipeline_uuid: str,
+    repo_path: str = None
+) -> str:
+    pipeline_path = os.path.join(repo_path or get_repo_path(), PIPELINES_FOLDER, pipeline_uuid)
     trigger_file_path = os.path.join(pipeline_path, TRIGGER_FILE_NAME)
     return trigger_file_path
 
 
-def load_triggers_file_content(pipeline_uuid: str) -> str:
+def load_triggers_file_content(
+    pipeline_uuid: str,
+    repo_path: str = None,
+) -> str:
     content = None
 
-    trigger_file_path = get_triggers_file_path(pipeline_uuid)
+    trigger_file_path = get_triggers_file_path(pipeline_uuid, repo_path=repo_path)
     if os.path.exists(trigger_file_path):
         with open(trigger_file_path) as fp:
             content = fp.read()
@@ -143,15 +149,28 @@ def load_triggers_file_data(pipeline_uuid: str) -> Dict:
     return data
 
 
-def get_triggers_by_pipeline(pipeline_uuid: str) -> List[Trigger]:
-    trigger_file_path = get_triggers_file_path(pipeline_uuid)
+def get_triggers_by_pipeline(
+    pipeline_uuid: str,
+    repo_path: str = None,
+) -> List[Trigger]:
+    trigger_file_path = get_triggers_file_path(
+        pipeline_uuid,
+        repo_path=repo_path,
+    )
 
     if not os.path.exists(trigger_file_path):
         return []
 
     try:
-        content = load_triggers_file_content(pipeline_uuid)
-        triggers = load_trigger_configs(content, pipeline_uuid=pipeline_uuid)
+        content = load_triggers_file_content(
+            pipeline_uuid,
+            repo_path=repo_path,
+        )
+        triggers = load_trigger_configs(
+            content,
+            pipeline_uuid=pipeline_uuid,
+            repo_path=repo_path,
+        )
     except Exception:
         traceback.print_exc()
         triggers = []
@@ -204,13 +223,18 @@ def build_triggers(
 def load_trigger_configs(
     content: str,
     pipeline_uuid: str = None,
+    repo_path: str = None,
     raise_exception: bool = False,
+    user=None,
 ) -> List[Trigger]:
     yaml_config = yaml.safe_load(content) or {}
     trigger_configs = yaml_config.get('triggers') or {}
 
     return build_triggers(
-        trigger_configs, pipeline_uuid, raise_exception, repo_path=get_repo_path()
+        trigger_configs,
+        pipeline_uuid,
+        raise_exception,
+        repo_path=repo_path or get_repo_path(),
     )
 
 
