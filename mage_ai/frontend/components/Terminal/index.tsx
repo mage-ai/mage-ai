@@ -190,6 +190,7 @@ function Terminal({
     }
   }, [
     lastMessage,
+    setStdout,
   ]);
 
   const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
@@ -237,12 +238,12 @@ function Terminal({
     unregisterOnKeyDown(terminalUUID);
   }, [unregisterOnKeyDown, terminalUUID]);
 
-  const decreaseCursorIndex = useCallback(() => {
-    setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
-  }, []);
+  function decreaseCursorIndex() {
+    return setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
+  }
   const increaseCursorIndex = useCallback(() => {
     setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
-  }, [command]);
+  }, [command, setCursorIndex]);
 
   const sendCommand = useCallback((cmd) => {
     sendMessage(JSON.stringify({
@@ -263,6 +264,7 @@ function Terminal({
     commandHistory,
     sendMessage,
     setCommand,
+    oauthWebsocketData,
     setCommandHistory,
     setCommandIndex,
     setCursorIndex,
@@ -510,7 +512,9 @@ in the context menu that appears.
             >
               <Text monospace>
                 <Text inline monospace>
-                  {lastCommand && (
+                  {lastCommand
+                    && ((Array.isArray(lastCommand) && lastCommand?.length >= 1 && typeof lastCommand?.[0] === 'string') || typeof lastCommand === 'string')
+                    && (
                     <Ansi>
                       {Array.isArray(lastCommand) ? lastCommand.join('\n') : lastCommand}
                     </Ansi>

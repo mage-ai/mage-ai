@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
@@ -15,10 +15,12 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
 
 
@@ -172,7 +174,7 @@ def format_output_data(
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
             data = dict(
-                table=data.to_csv(header=True, index=False).strip("\n").split("\n")
+                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
             )
         else:
             try:
@@ -180,21 +182,21 @@ def format_output_data(
                     block.pipeline.uuid,
                     block_uuid,
                     variable_uuid,
-                    dataframe_analysis_keys=["metadata", "statistics"],
+                    dataframe_analysis_keys=['metadata', 'statistics'],
                     partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
             except Exception as err:
-                print(f"Error getting dataframe analysis for block {block_uuid}: {err}")
+                print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
                 analysis = None
 
             if analysis is not None and (
-                analysis.get("statistics") or analysis.get("metadata")
+                analysis.get('statistics') or analysis.get('metadata')
             ):
-                stats = analysis.get("statistics", {})
-                column_types = (analysis.get("metadata") or {}).get("column_types", {})
-                row_count = stats.get("original_row_count", stats.get("count"))
-                column_count = stats.get("original_column_count", len(column_types))
+                stats = analysis.get('statistics', {})
+                column_types = (analysis.get('metadata') or {}).get('column_types', {})
+                row_count = stats.get('original_row_count', stats.get('count'))
+                column_count = stats.get('original_column_count', len(column_types))
             else:
                 row_count, column_count = data.shape
 
@@ -210,9 +212,9 @@ def format_output_data(
                     columns=columns_to_display,
                     rows=json.loads(
                         data[columns_to_display].to_json(
-                            orient="split", date_format="iso"
+                            orient='split', date_format='iso'
                         ),
-                    )["data"],
+                    )['data'],
                 ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
@@ -225,16 +227,16 @@ def format_output_data(
                 block.pipeline.uuid,
                 block_uuid,
                 variable_uuid,
-                dataframe_analysis_keys=["statistics"],
+                dataframe_analysis_keys=['statistics'],
                 partition=execution_partition,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
             )
         except Exception:
             analysis = None
         if analysis is not None:
-            stats = analysis.get("statistics", {})
-            row_count = stats.get("original_row_count")
-            column_count = stats.get("original_column_count")
+            stats = analysis.get('statistics', {})
+            row_count = stats.get('original_row_count')
+            column_count = stats.get('original_column_count')
         else:
             row_count, column_count = data.shape
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
@@ -301,8 +303,8 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
                 return pair[0], True
         except Exception as err:
             print(
-                f"[ERROR] Block.format_output_data for block "
-                f"{block.uuid} variable {variable_uuid}: {err}",
+                f'[ERROR] Block.format_output_data for block '
+                f'{block.uuid} variable {variable_uuid}: {err}',
             )
 
         data = dict(
@@ -322,8 +324,8 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
             sample_data=dict(
                 columns=columns_to_display,
                 rows=json.loads(
-                    df[columns_to_display].to_json(orient="split", date_format="iso"),
-                )["data"],
+                    df[columns_to_display].to_json(orient='split', date_format='iso'),
+                )['data'],
             ),
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
@@ -331,3 +333,241 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
         return data, True
 
     return data, False
+
+
+def get_outputs_for_display_dynamic_block(
+    block,
+    output_sets: List[Tuple],
+    child_data_sets: List[Tuple[Any, Any]],
+    block_uuid: Optional[str] = None,
+    csv_lines_only: bool = False,
+    exclude_blank_variable_uuids: bool = False,
+    execution_partition: Optional[str] = None,
+    metadata: Optional[Dict] = None,
+    sample: bool = True,
+    sample_count: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    data_products = []
+    outputs = []
+
+    block_uuid = block_uuid if block_uuid else block.uuid
+
+    for idx, pairs in enumerate(child_data_sets):
+        child_data, metadata = pairs
+        formatted_outputs = []
+
+        if child_data and isinstance(child_data, list) and len(child_data) >= 1:
+            for output_idx, output in enumerate(child_data):
+                output_formatted, _ = format_output_data(
+                    block,
+                    output,
+                    f'output {output_idx}',
+                    block_uuid=block_uuid,
+                    csv_lines_only=csv_lines_only,
+                    execution_partition=execution_partition,
+                )
+                formatted_outputs.append(output_formatted)
+
+            data_products.append(
+                dict(
+                    outputs=formatted_outputs,
+                    type=DataType.GROUP,
+                    variable_uuid=f'Dynamic child {idx}',
+                )
+            )
+        else:
+            output_sets.append((child_data, metadata))
+
+    for output_pair in output_sets:
+        child_data = None
+        metadata = None
+        if len(output_pair) >= 1:
+            child_data = output_pair[0]
+            if len(output_pair) >= 2:
+                metadata = output_pair[1]
+
+        for output, variable_uuid in [
+            (child_data, 'dynamic output data'),
+            (metadata, 'metadata'),
+        ]:
+            if output is None or (
+                exclude_blank_variable_uuids and variable_uuid.strip() == ''
+            ):
+                continue
+
+            data, is_data_product = format_output_data(
+                block,
+                output,
+                variable_uuid,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+            )
+
+            outputs_below_limit = not sample or not sample_count
+            if is_data_product:
+                outputs_below_limit = outputs_below_limit or (
+                    sample_count is not None and len(data_products) < sample_count
+                )
+            else:
+                outputs_below_limit = outputs_below_limit or (
+                    sample_count is not None and len(outputs) < sample_count
+                )
+
+            if outputs_below_limit:
+                data['multi_output'] = True
+                if is_data_product:
+                    data_products.append(data)
+                else:
+                    outputs.append(data)
+
+    return outputs + data_products
+
+
+def handle_variables(
+    block,
+    items: List[Dict[str, Any]],
+    block_groups: Optional[
+        List[Dict[str, Union[List[str], Optional[List[Any]], Optional[str]]]]
+    ] = None,
+    block_uuid: Optional[str] = None,
+    csv_lines_only: bool = False,
+    exclude_blank_variable_uuids: bool = False,
+    execution_partition: Optional[str] = None,
+    include_print_outputs: bool = True,
+    sample: bool = True,
+    sample_count: Optional[int] = None,
+    selected_variables: Optional[List[str]] = None,
+    variable_type: Optional[VariableType] = None,
+):
+    data_products = []
+    outputs = []
+
+    all_variables = []
+    variable_type_mapping = {}
+
+    if not block_groups:
+        if block.pipeline is None:
+            return []
+
+        if not block_uuid:
+            block_uuid = block.uuid
+
+        all_variables = block.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+
+        if not include_print_outputs:
+            all_variables = block.output_variables(
+                execution_partition=execution_partition,
+            )
+
+        block_groups = [dict(block_uuid=block_uuid, variable_uuids=all_variables)]
+
+    for idx, block_group in enumerate(block_groups):
+        b_uuid = block_group['block_uuid']
+        variable_uuids = block_group['variable_uuids'] or []
+        block_outputs = block_group.get('outputs')
+
+        for idx_inner, variable_uuid in enumerate(variable_uuids):
+
+            def __callback(
+                data_from_yield,
+                block=block,
+                b_uuid=b_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+                variable_uuid=variable_uuid,
+                idx=idx,
+            ):
+                data, is_data_product = format_output_data(
+                    block,
+                    data_from_yield,
+                    variable_uuid,
+                    block_uuid=b_uuid,
+                    csv_lines_only=csv_lines_only,
+                    execution_partition=execution_partition,
+                )
+
+                if is_data_product:
+                    data_products.append((idx, data, is_data_product))
+                else:
+                    outputs.append((idx, data, is_data_product))
+
+            if (selected_variables and variable_uuid not in selected_variables) or (
+                exclude_blank_variable_uuids and variable_uuid.strip() == ''
+            ):
+                continue
+
+            if block_outputs and idx_inner < len(block_outputs):
+                yield (block_outputs[idx_inner], sample, sample_count, __callback)
+            else:
+                variable_object = block.get_variable_object(
+                    block_uuid=b_uuid,
+                    partition=execution_partition,
+                    variable_uuid=variable_uuid,
+                )
+
+                if (
+                    variable_type is not None
+                    and variable_object.variable_type != variable_type
+                ):
+                    continue
+
+                if variable_object.variable_type is not None:
+                    variable_type_mapping[variable_object.variable_type] = (
+                        variable_type_mapping.get(variable_object.variable_type, [])
+                    )
+                    variable_type_mapping[variable_object.variable_type].append(
+                        variable_uuid
+                    )
+
+                yield (variable_object, sample, sample_count, __callback)
+
+    arr = outputs + data_products
+    arr_sorted = sorted(arr, key=lambda x: x[0])
+
+    if len(data_products) >= len(outputs):
+        arr_sorted = [x[1] for x in arr_sorted]
+    else:
+        arr_sorted = [x[1] for x in arr]
+
+    if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
+        for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
+            if isinstance(item, dict):
+                items.append(merge_dict(item, dict(multi_output=True)))
+            else:
+                items.append(item)
+    else:
+        items.extend(arr_sorted)
+
+
+def get_outputs_for_display_sync(block, **kwargs) -> List[Dict[str, Any]]:
+    items = []
+
+    for outputs in handle_variables(block, items, **kwargs):
+        variable_object, sample, sample_count, __callback = outputs
+        data = variable_object.read_data(
+            sample=sample,
+            sample_count=sample_count,
+            spark=block.get_spark_session(),
+        )
+        __callback(data)
+
+    return items
+
+
+async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]:
+    items = []
+
+    for outputs in handle_variables(block, items, **kwargs):
+        variable_object, sample, sample_count, __callback = outputs
+        data = await variable_object.read_data_async(
+            sample=sample,
+            sample_count=sample_count,
+            spark=block.get_spark_session(),
+        )
+        __callback(data)
+
+    return items

@@ -46,6 +46,7 @@ class PipelineTriggerResource(GenericResource):
                 sla=pipeline_schedule.sla,
                 start_time=pipeline_schedule.start_time,
                 status=pipeline_schedule.status,
+                token=pipeline_schedule.token,
                 variables=pipeline_schedule.variables,
             )
         else:

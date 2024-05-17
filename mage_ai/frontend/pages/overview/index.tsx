@@ -64,11 +64,7 @@ import {
   getStartDateStringFromPeriod,
   unixTimestampFromDate,
 } from '@utils/date';
-import {
-  TIME_PERIOD_TABS,
-  TAB_DASHBOARD,
-  TAB_TODAY,
-} from '@components/Dashboard/constants';
+import { TIME_PERIOD_TABS, TAB_DASHBOARD, TAB_TODAY } from '@components/Dashboard/constants';
 import { UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import {
@@ -87,6 +83,7 @@ import { queryFromUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
+import { LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, set, get } from 'storage/localStorage';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -97,11 +94,7 @@ const SHARED_FETCH_OPTIONS = {
   revalidateOnFocus: false,
 };
 
-function OverviewPage({
-  tab,
-}: {
-  tab?: TimePeriodEnum;
-}) {
+function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
   const abortRef = useRef(null);
   const mountedRef = useRef(false);
   const refSubheader = useRef(null);
@@ -109,81 +102,90 @@ function OverviewPage({
   const q = queryFromUrl();
   const router = useRouter();
   const newPipelineButtonMenuRef = useRef(null);
-  const [selectedTab, setSelectedTabState] =
-    useState<TabType>(TIME_PERIOD_TABS.find(({ uuid }) => uuid === tab) || TAB_TODAY);
+
+  const allTabs = useMemo(() => TIME_PERIOD_TABS.concat(TAB_DASHBOARD), []);
+  const [selectedTab, setSelectedTabState] = useState<TabType>(
+    allTabs.find(
+      ({ uuid }) => uuid === (tab ? tab : get(LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED)?.uuid),
+    ) || TAB_TODAY,
+  );
 
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const timePeriod = selectedTab?.uuid;
 
-  const allTabs = useMemo(() => TIME_PERIOD_TABS.concat(TAB_DASHBOARD), []);
-
-  const startDateString = useMemo(() =>
-    getStartDateStringFromPeriod(timePeriod, { isoString: true }),
+  const startDateString = useMemo(
+    () => getStartDateStringFromPeriod(timePeriod, { isoString: true }),
     [timePeriod],
   );
-  const monitorStatsQueryParams = useMemo(() => ({
-    group_by_pipeline_type: 1,
-    start_time: startDateString,
-  }), [startDateString]);
+  const monitorStatsQueryParams = useMemo(
+    () => ({
+      group_by_pipeline_type: 1,
+      start_time: startDateString,
+    }),
+    [startDateString],
+  );
 
   const [monitorStats, setMonitorStats] = useState();
   const [fetchMonitorStats, { isLoading: isValidatingMonitorStats }] = useMutation(
-    () => api.monitor_stats?.detailAsync(
-      MonitorStatsEnum.PIPELINE_RUN_COUNT,
-      monitorStatsQueryParams,
-      {
+    () =>
+      api.monitor_stats?.detailAsync(MonitorStatsEnum.PIPELINE_RUN_COUNT, monitorStatsQueryParams, {
         signal: abortRef?.current?.signal,
-      },
-    ),
+      }),
     {
-      onSuccess: (response: any) => {
-        return onSuccess(
-          response,
-          {
-            callback: ({
-              monitor_stat: {
-                stats,
-              },
-            }) => {
-              setMonitorStats(stats);
-            },
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ monitor_stat: { stats } }) => {
+            setMonitorStats(stats);
           },
-        );
-      },
+        }),
     },
   );
 
-  const setSelectedTab = useCallback((prev: TabType | ((tab: TabType) => TabType)) => {
-    if (abortRef?.current !== null) {
-      abortRef?.current?.abort();
-    }
-    abortRef.current = new AbortController();
-
-    setSelectedTabState((current: TabType) => {
-      const tab = typeof prev === 'function' ? prev(current) : prev;
-
-      if (current?.uuid !== tab?.uuid) {
-        goToWithQuery({ [TAB_URL_PARAM]: tab?.uuid }, { replaceParams: true });
-
-        fetchMonitorStats();
+  const setSelectedTab = useCallback(
+    (prev: TabType | ((tab: TabType) => TabType)) => {
+      if (abortRef?.current !== null) {
+        abortRef?.current?.abort();
       }
+      abortRef.current = new AbortController();
 
-      return tab;
-    });
-  }, []);
+      setSelectedTabState((current: TabType) => {
+        const tab = typeof prev === 'function' ? prev(current) : prev;
+
+        if (current?.uuid !== tab?.uuid) {
+          goToWithQuery({ [TAB_URL_PARAM]: tab?.uuid }, { replaceParams: true });
+
+          fetchMonitorStats();
+        }
+
+        set(LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, tab);
+
+        return tab;
+      });
+    },
+    [fetchMonitorStats],
+  );
 
   useEffect(() => {
     if (!mountedRef?.current) {
       mountedRef.current = true;
       fetchMonitorStats();
     }
-  }, []);
 
-  const {
-    data: dataPipelineRuns,
-  } = api.pipeline_runs.list(
+    if (!tab) {
+      goToWithQuery(
+        {
+          [TAB_URL_PARAM]: selectedTab ? selectedTab?.uuid : allTabs?.[0]?.uuid,
+        },
+        {
+          pushHistory: false,
+        },
+      );
+    }
+  }, [allTabs, fetchMonitorStats, selectedTab, tab]);
+
+  const { data: dataPipelineRuns } = api.pipeline_runs.list(
     {
       _limit: 50,
       include_pipeline_type: 1,
@@ -193,71 +195,60 @@ function OverviewPage({
     },
     { ...SHARED_FETCH_OPTIONS },
   );
-  const pipelineRunsWithoutDeletedPipelines = useMemo(() =>
-    (dataPipelineRuns?.pipeline_runs || [])
-      .filter(run => run.pipeline_type !== null)
-  , [dataPipelineRuns?.pipeline_runs]);
+  const pipelineRunsWithoutDeletedPipelines = useMemo(
+    () => (dataPipelineRuns?.pipeline_runs || []).filter(run => run.pipeline_type !== null),
+    [dataPipelineRuns?.pipeline_runs],
+  );
   const groupedPipelineRuns: {
-    [key: string]:  PipelineRunType[],
-  } = useMemo(() => groupBy(pipelineRunsWithoutDeletedPipelines, run => run.pipeline_type), [
-    pipelineRunsWithoutDeletedPipelines,
-  ]);
+    [key: string]: PipelineRunType[];
+  } = useMemo(
+    () => groupBy(pipelineRunsWithoutDeletedPipelines, run => run.pipeline_type),
+    [pipelineRunsWithoutDeletedPipelines],
+  );
   const {
     integration: integrationPipelineRuns = [],
     python: standardPipelineRuns = [],
     streaming: streamingPipelineRuns = [],
   } = groupedPipelineRuns;
 
-  const dateRange = useMemo(() =>
-    getDateRange(TIME_PERIOD_INTERVAL_MAPPING[timePeriod] + 1),
+  const dateRange = useMemo(
+    () => getDateRange(TIME_PERIOD_INTERVAL_MAPPING[timePeriod] + 1),
     [timePeriod],
-    );
-  const allPipelineRunData = useMemo(() => {
-    return getAllPipelineRunDataGrouped(monitorStats, dateRange);
-  }, [
-    monitorStats,
-    dateRange,
-  ]);
-  const {
-    pipelineRunCountByPipelineType,
-    totalPipelineRunCount,
-    ungroupedPipelineRunData,
-  } = allPipelineRunData;
-  const selectedDateRange = useMemo(() =>
-    getFullDateRangeString(
-      TIME_PERIOD_INTERVAL_MAPPING[timePeriod],
-      { endDateOnly: timePeriod === TimePeriodEnum.TODAY },
-    ),
+  );
+  const allPipelineRunData = useMemo(
+    () => getAllPipelineRunDataGrouped(monitorStats, dateRange),
+    [monitorStats, dateRange],
+  );
+  const { pipelineRunCountByPipelineType, totalPipelineRunCount, ungroupedPipelineRunData } =
+    allPipelineRunData;
+  const selectedDateRange = useMemo(
+    () =>
+      getFullDateRangeString(TIME_PERIOD_INTERVAL_MAPPING[timePeriod], {
+        endDateOnly: timePeriod === TimePeriodEnum.TODAY,
+      }),
     [timePeriod],
   );
 
-  const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
+  const useCreatePipelineMutation = onSuccessCallback =>
+    useMutation(api.pipelines.useCreate(), {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ pipeline: { uuid } }) => {
             onSuccessCallback?.(uuid);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
+    });
   const [createPipeline, { isLoading: isLoadingCreatePipeline }]: [
     MutateFunction<any>,
     { isLoading: boolean },
-  ] = useCreatePipelineMutation((pipelineUUID: string) => router.push(
-    '/pipelines/[pipeline]/edit',
-    `/pipelines/${pipelineUUID}/edit`,
-  ));
+  ] = useCreatePipelineMutation((pipelineUUID: string) =>
+    router.push('/pipelines/[pipeline]/edit', `/pipelines/${pipelineUUID}/edit`),
+  );
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
@@ -266,200 +257,205 @@ function OverviewPage({
     [project?.features],
   );
 
-  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(({
-    pipelineType,
-  }: {
-    pipelineType: PipelineTypeEnum,
-  }) => (
-    <ConfigurePipeline
-      onClose={hideCreatePipelineModal}
-      onSave={({
-        name,
-        description,
-        tags,
-      }) => {
-        createPipeline({
-          pipeline: {
-            description,
-            name,
-            tags,
-            type: pipelineType,
-          },
-        });
-      }}
-      pipelineType={pipelineType}
-    />
-  ), {
-  }, [
-    createPipeline,
-  ], {
-    background: true,
-    disableEscape: true,
-    uuid: 'overview/create_pipeline',
-  });
-
-  const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
-    <ErrorProvider>
-      <BrowseTemplates
-        contained
-        onClickCustomTemplate={(customTemplate) => {
+  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(
+    ({ pipelineType }: { pipelineType: PipelineTypeEnum }) => (
+      <ConfigurePipeline
+        onClose={hideCreatePipelineModal}
+        onSave={({ name, description, tags }) => {
           createPipeline({
             pipeline: {
-              custom_template_uuid: customTemplate?.template_uuid,
-              name: randomNameGenerator(),
+              description,
+              name,
+              tags,
+              type: pipelineType,
             },
-          }).then(() => {
-            hideBrowseTemplates();
           });
         }}
-        showBreadcrumbs
-        tabs={[NAV_TAB_PIPELINES]}
+        pipelineType={pipelineType}
       />
-    </ErrorProvider>
-  ), {
-  }, [
-  ], {
-    background: true,
-    uuid: 'browse_templates',
-  });
-
-  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
-    <UploadPipeline
-      onCancel={hideImportPipelineModal}
-    />
-  ), {
-  }, [
-    ,
-  ], {
-    background: true,
-    uuid: 'import_pipeline',
-  });
-
-  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
-    cancelButtonText,
-    header,
-    onCancel,
-    onSaveSuccess,
-  }: {
-    cancelButtonText?: string;
-    header?: any;
-    onCancel?: () => void;
-    onSaveSuccess?: (project: ProjectType) => void;
-  }) => (
-    <ErrorProvider>
-      <Preferences
-        cancelButtonText={cancelButtonText}
-        contained
-        header={(
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <Panel>
-              <Text warning>
-                You need to add an OpenAI API key to your project before you can
-                generate pipelines using AI.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text warning>
-                  Read <Link
-                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                    openNewWindow
-                  >
-                    OpenAI’s documentation
-                  </Link> to get your API key.
-                </Text>
-              </Spacing>
-            </Panel>
-          </Spacing>
-        )}
-        onCancel={() => {
-          onCancel?.();
-          hideConfigureProjectModal();
-        }}
-        onSaveSuccess={(project: ProjectType) => {
-          fetchProjects();
-          hideConfigureProjectModal();
-          onSaveSuccess?.(project);
-        }}
-      />
-    </ErrorProvider>
-  ), {
-  }, [
-    fetchProjects,
-  ], {
-    background: true,
-    uuid: 'configure_project',
-  });
-
-  const [showAIModal, hideAIModal] = useModal(() => (
-    <ErrorProvider>
-      <AIControlPanel
-        createPipeline={createPipeline}
-        isLoading={isLoadingCreatePipeline}
-        onClose={hideAIModal}
-      />
-    </ErrorProvider>
-  ), {
-  }, [
-    createPipeline,
-    isLoadingCreatePipeline,
-  ], {
-    background: true,
-    disableClickOutside: true,
-    disableCloseButton: true,
-    uuid: 'AI_modal',
-  });
-
-  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
-    createPipeline,
+    ),
+    {},
+    [createPipeline],
     {
-      showAIModal: () => {
-        if (!project?.openai_api_key) {
-          showConfigureProjectModal({
-            onSaveSuccess: () => {
-              showAIModal();
-            },
-          });
-        } else {
-          showAIModal();
-        }
-      },
+      background: true,
+      disableEscape: true,
+      uuid: 'overview/create_pipeline',
+    },
+  );
+
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(
+    () => (
+      <ErrorProvider>
+        <BrowseTemplates
+          contained
+          onClickCustomTemplate={customTemplate => {
+            createPipeline({
+              pipeline: {
+                custom_template_uuid: customTemplate?.template_uuid,
+                name: randomNameGenerator(),
+              },
+            }).then(() => {
+              hideBrowseTemplates();
+            });
+          }}
+          showBreadcrumbs
+          tabs={[NAV_TAB_PIPELINES]}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [],
+    {
+      background: true,
+      uuid: 'browse_templates',
+    },
+  );
+
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(
+    () => <UploadPipeline onCancel={hideImportPipelineModal} />,
+    {},
+    [,],
+    {
+      background: true,
+      uuid: 'import_pipeline',
+    },
+  );
+
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(
+    ({
+      cancelButtonText,
+      header,
+      onCancel,
+      onSaveSuccess,
+    }: {
+      cancelButtonText?: string;
+      header?: any;
+      onCancel?: () => void;
+      onSaveSuccess?: (project: ProjectType) => void;
+    }) => (
+      <ErrorProvider>
+        <Preferences
+          cancelButtonText={cancelButtonText}
+          contained
+          header={
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <Panel>
+                <Text warning>
+                  You need to add an OpenAI API key to your project before you can generate
+                  pipelines using AI.
+                </Text>
+
+                <Spacing mt={1}>
+                  <Text warning>
+                    Read{' '}
+                    <Link
+                      href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                      openNewWindow
+                    >
+                      OpenAI’s documentation
+                    </Link>{' '}
+                    to get your API key.
+                  </Text>
+                </Spacing>
+              </Panel>
+            </Spacing>
+          }
+          onCancel={() => {
+            onCancel?.();
+            hideConfigureProjectModal();
+          }}
+          onSaveSuccess={(project: ProjectType) => {
+            fetchProjects();
+            hideConfigureProjectModal();
+            onSaveSuccess?.(project);
+          }}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [fetchProjects],
+    {
+      background: true,
+      uuid: 'configure_project',
+    },
+  );
+
+  const [showAIModal, hideAIModal] = useModal(
+    () => (
+      <ErrorProvider>
+        <AIControlPanel
+          createPipeline={createPipeline}
+          isLoading={isLoadingCreatePipeline}
+          onClose={hideAIModal}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [createPipeline, isLoadingCreatePipeline],
+    {
+      background: true,
+      disableClickOutside: true,
+      disableCloseButton: true,
+      uuid: 'AI_modal',
+    },
+  );
+
+  const newPipelineButtonMenuItems = useMemo(
+    () =>
+      getNewPipelineButtonMenuItems(createPipeline, {
+        showAIModal: () => {
+          if (!project?.openai_api_key) {
+            showConfigureProjectModal({
+              onSaveSuccess: () => {
+                showAIModal();
+              },
+            });
+          } else {
+            showAIModal();
+          }
+        },
+        showBrowseTemplates,
+        showCreatePipelineModal,
+        showImportPipelineModal,
+      }),
+    [
+      createPipeline,
+      project,
+      showAIModal,
       showBrowseTemplates,
+      showConfigureProjectModal,
       showCreatePipelineModal,
       showImportPipelineModal,
-    },
-  ), [
-    createPipeline,
-    project,
-    showAIModal,
-    showBrowseTemplates,
-    showConfigureProjectModal,
-    showCreatePipelineModal,
-    showImportPipelineModal,
-  ]);
+    ],
+  );
 
-  const addButtonEl = useMemo(() => (
-    <AddButton
-      addButtonMenuOpen={addButtonMenuOpen}
-      addButtonMenuRef={newPipelineButtonMenuRef}
-      isLoading={isLoadingCreatePipeline}
-      label="New pipeline"
-      menuItems={newPipelineButtonMenuItems}
-      onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
-      onClickCallback={() => setAddButtonMenuOpen(false)}
-    />
-  ), [addButtonMenuOpen, isLoadingCreatePipeline, newPipelineButtonMenuItems]);
+  const addButtonEl = useMemo(
+    () => (
+      <AddButton
+        addButtonMenuOpen={addButtonMenuOpen}
+        addButtonMenuRef={newPipelineButtonMenuRef}
+        isLoading={isLoadingCreatePipeline}
+        label="New pipeline"
+        menuItems={newPipelineButtonMenuItems}
+        onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
+        onClickCallback={() => setAddButtonMenuOpen(false)}
+      />
+    ),
+    [addButtonMenuOpen, isLoadingCreatePipeline, newPipelineButtonMenuItems],
+  );
 
-  const utcTooltipEl = useMemo(() => (
-    displayLocalTimezone
-      ? (
+  const utcTooltipEl = useMemo(
+    () =>
+      displayLocalTimezone ? (
         <Spacing ml="4px">
           <Tooltip
             {...SHARED_UTC_TOOLTIP_PROPS}
             label="Please note that these counts are based on UTC time."
           />
         </Spacing>
-      ) : null
-  ), [displayLocalTimezone]);
+      ) : null,
+    [displayLocalTimezone],
+  );
 
   const pageBlockLayoutTemplate = useMemo(() => {
     const name0 = 'Pipelines';
@@ -658,21 +654,11 @@ def d(df):
   }, []);
 
   return (
-    <Dashboard
-      errors={errors}
-      setErrors={setErrors}
-      title="Overview"
-      uuid="overview/index"
-    >
-      <PageSectionHeader
-        backgroundColor={dark.background.panel}
-        ref={refSubheader}
-      >
+    <Dashboard errors={errors} setErrors={setErrors} title="Overview" uuid="overview/index">
+      <PageSectionHeader backgroundColor={dark.background.panel} ref={refSubheader}>
         <Spacing py={2}>
           <FlexContainer alignItems="center">
-            <Spacing ml={3}>
-              {addButtonEl}
-            </Spacing>
+            <Spacing ml={3}>{addButtonEl}</Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setSelectedTab(() => allTabs.find(t => uuid === t.uuid));
@@ -705,27 +691,21 @@ def d(df):
             </Headline>
 
             <Spacing mt={2}>
-              {isValidatingMonitorStats
-                ? (
-                  <Spacing mx={2} my={11}>
-                    <Spinner inverted />
-                  </Spacing>
-                ) : (
-                  <MetricsSummary
-                    pipelineRunCountByPipelineType={pipelineRunCountByPipelineType}
-                  />
-                )
-              }
+              {isValidatingMonitorStats ? (
+                <Spacing mx={2} my={11}>
+                  <Spinner inverted />
+                </Spacing>
+              ) : (
+                <MetricsSummary pipelineRunCountByPipelineType={pipelineRunCountByPipelineType} />
+              )}
             </Spacing>
 
             <Spacing mt={2}>
               <Spacing ml={2}>
                 <FlexContainer alignItems="center">
                   <Text bold large>
-                    {isValidatingMonitorStats
-                      ? '--'
-                      : formatNumber(totalPipelineRunCount)
-                    } total pipeline runs
+                    {isValidatingMonitorStats ? '--' : formatNumber(totalPipelineRunCount)} total
+                    pipeline runs
                   </Text>
                   {utcTooltipEl}
                 </FlexContainer>
@@ -735,7 +715,7 @@ def d(df):
                   backgroundColor={dark.background.panel}
                   colors={BAR_STACK_COLORS}
                   data={ungroupedPipelineRunData}
-                  getXValue={(data) => data['date']}
+                  getXValue={data => data['date']}
                   height={200}
                   keys={BAR_STACK_STATUSES}
                   margin={{
@@ -758,10 +738,7 @@ def d(df):
                 pipelineType={ALL_PIPELINE_RUNS_TYPE}
               />
               <Spacing ml={2} />
-              <Widget
-                pipelineRuns={standardPipelineRuns}
-                pipelineType={PipelineTypeEnum.PYTHON}
-              />
+              <Widget pipelineRuns={standardPipelineRuns} pipelineType={PipelineTypeEnum.PYTHON} />
             </FlexContainer>
           </Spacing>
 
@@ -786,10 +763,8 @@ def d(df):
   );
 }
 
-OverviewPage.getInitialProps = async (ctx) => {
-  return {
-    tab: (ctx?.query?.tab || TimePeriodEnum.TODAY) as TimePeriodEnum,
-  };
-};
+OverviewPage.getInitialProps = async ctx => ({
+  tab: ctx?.query?.tab ? (ctx?.query?.tab as TimePeriodEnum) : null,
+});
 
 export default PrivateRoute(OverviewPage);

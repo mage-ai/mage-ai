@@ -33,7 +33,9 @@ def add_absolute_path(file_path: str, add_base_repo_path: bool = True) -> str:
                     # DBT v1 paths
                     full_path = os.path.join(repo_path, 'dbt', file_path)
                 else:
-                    full_path = find_directory(repo_path, lambda x: x.endswith(file_path))
+                    full_path = find_directory(
+                        repo_path, lambda x: x.endswith(file_path)
+                    )
 
     if full_path:
         # Remove the repo path
@@ -93,7 +95,7 @@ def remove_base_repo_name(file_path: str) -> str:
 
 def remove_base_repo_path_or_name(file_path: str) -> str:
     if not file_path:
-        return
+        return file_path
 
     if os.path.isabs(file_path):
         value = str(remove_base_repo_path(file_path))
@@ -121,11 +123,13 @@ def remove_base_repo_directory_name(file_path: str) -> str:
 
 def remove_repo_names(file_path: str) -> str:
     try:
-        path = Path(file_path).relative_to(get_repo_path(
-            absolute_path=False,
-            file_path=file_path,
-            root_project=False,
-        ))
+        path = Path(file_path).relative_to(
+            get_repo_path(
+                absolute_path=False,
+                file_path=file_path,
+                root_project=False,
+            )
+        )
         return str(path)
     except ValueError:
         return file_path

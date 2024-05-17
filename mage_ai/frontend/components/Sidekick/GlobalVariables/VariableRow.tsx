@@ -49,10 +49,7 @@ function VariableRow({
   updateVariable: updateVariableProp,
   variable,
 }: VariableRowProps) {
-  const {
-    uuid,
-    value,
-  } = variable || {};
+  const { uuid, value } = variable || {};
 
   const refVariableKeyInput = useRef(null);
   const refTextInput = useRef(null);
@@ -61,58 +58,57 @@ function VariableRow({
   const [variableValue, setVariableValue] = useState<string>(value);
   const [edit, setEdit] = useState<boolean>(editStateInit);
 
-  const [updateVariable]: any = useMutation(
-    api.variables.pipelines.useUpdate(pipelineUUID, uuid),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            setEdit(false);
-            fetchVariables();
-          },
-        },
-      ),
-    },
-  );
-
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter') {
-      let updatedValue = variableValue;
-      try {
-        updatedValue = JSON.parse(variableValue);
-      } catch {
-        // do nothing
-      }
-      if (updateVariableProp) {
-        if (variableName && variableValue) {
-          updateVariableProp?.({
-            [variableName]: variableValue,
-          });
+  const [updateVariable]: any = useMutation(api.variables.pipelines.useUpdate(pipelineUUID, uuid), {
+    onSuccess: (response: any) =>
+      onSuccess(response, {
+        callback: () => {
           setEdit(false);
+          fetchVariables();
+        },
+      }),
+  });
+
+  const handleKeyDown = useCallback(
+    e => {
+      if (e.key === 'Enter') {
+        let updatedValue = variableValue;
+        try {
+          updatedValue = JSON.parse(variableValue);
+        } catch {
+          // do nothing
         }
-      } else {
-        updateVariable({
-          variable: {
-            name: variableName,
-            value: updatedValue,
-          },
-        });
+        if (updateVariableProp) {
+          if (variableName && variableValue) {
+            updateVariableProp?.({
+              [variableName]: variableValue,
+            });
+            setEdit(false);
+          }
+        } else {
+          updateVariable({
+            variable: {
+              name: variableName,
+              value: updatedValue,
+            },
+          });
+        }
+        removeKeyboardFocus();
+        onEnterCallback?.();
+      } else if (e.key === 'Escape') {
+        removeKeyboardFocus();
+        setEdit(false);
+        onEscapeCallback?.();
       }
-      removeKeyboardFocus();
-      onEnterCallback?.();
-    } else if (e.key === 'Escape') {
-      removeKeyboardFocus();
-      setEdit(false);
-      onEscapeCallback?.();
-    }
-  }, [
-    onEnterCallback,
-    onEscapeCallback,
-    updateVariableProp,
-    updateVariable,
-    variableName,
-    variableValue,
-  ]);
+    },
+    [
+      onEnterCallback,
+      onEscapeCallback,
+      updateVariableProp,
+      updateVariable,
+      variableName,
+      variableValue,
+    ],
+  );
 
   const handleDelete = useCallback(() => {
     removeKeyboardFocus();
@@ -132,10 +128,7 @@ function VariableRow({
   const copyText = copyTextProp || `kwargs['${uuid}']`;
 
   return (
-    <div
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
+    <div onMouseEnter={() => setShowActions(true)} onMouseLeave={() => setShowActions(false)}>
       <Row>
         <Col hiddenSmDown md={1}>
           <CellStyle noPadding>
@@ -146,13 +139,10 @@ function VariableRow({
               muted
               onClick={() => {
                 navigator.clipboard.writeText(copyText);
-                toast.success(
-                  'Successfully copied to clipboard.',
-                  {
-                    position: toast.POSITION.BOTTOM_RIGHT,
-                    toastId: uuid,
-                  },
-                );
+                toast.success('Successfully copied to clipboard.', {
+                  position: toast.POSITION.BOTTOM_RIGHT,
+                  toastId: uuid,
+                });
               }}
               small
               uuid={`Sidekick/GlobalVariables/${uuid}`}
@@ -163,14 +153,14 @@ function VariableRow({
           </CellStyle>
         </Col>
         <Col md={obfuscate ? 9 : 4}>
-          {(edit && !disableKeyEdit) ? (
+          {edit && !disableKeyEdit ? (
             <CellStyle>
               <TextInput
                 borderless
                 compact
                 fullWidth
                 monospace
-                onChange={(e) => {
+                onChange={e => {
                   setVariableName(e.target.value);
                   e.preventDefault();
                 }}
@@ -184,12 +174,7 @@ function VariableRow({
             </CellStyle>
           ) : (
             <CellStyle>
-              <Text
-                color={LIME_DARK}
-                monospace
-                small
-                title={uuid}
-              >
+              <Text color={LIME_DARK} monospace small title={uuid}>
                 {uuid}
               </Text>
             </CellStyle>
@@ -203,7 +188,7 @@ function VariableRow({
                 compact
                 fullWidth
                 monospace
-                onChange={(e) => {
+                onChange={e => {
                   setVariableValue(e.target.value);
                   e.preventDefault();
                 }}
@@ -222,11 +207,7 @@ function VariableRow({
                   {showActions ? '*' : '*******'}
                 </Text>
               ) : (
-                <Text
-                  monospace
-                  small
-                  title={value.toString()}
-                >
+                <Text monospace small title={value.toString()}>
                   {value.toString()}
                 </Text>
               )}

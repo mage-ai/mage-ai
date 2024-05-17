@@ -8,6 +8,7 @@ import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
+  OutputType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -21,6 +22,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum, DATA_TYPE_TEXTLIKE } from '@interfaces/KernelOutputType';
 import MultiOutput from './MultiOutput';
+import OutputRenderer from './OutputRenderer';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
@@ -60,7 +62,11 @@ import {
 } from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID, openSaveFileDialog, prepareOutput } from '@components/PipelineDetail/utils';
+import {
+  addDataOutputBlockUUID,
+  openSaveFileDialog,
+  prepareOutput,
+} from '@components/PipelineDetail/utils';
 import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
@@ -187,7 +193,7 @@ function CodeOutput(
     if (mounted && sideBySideEnabled) {
       dispatchEventChanged();
     }
-  }, [messagesAll, mounted, scrollTogether, sideBySideEnabled]);
+  }, [messagesAll, mounted, scrollTogether, sideBySideEnabled, dispatchEventChanged]);
 
   const { color: blockColor, status, type: blockType, uuid: blockUUID } = block || {};
   const borderColorShareProps = useMemo(
@@ -201,18 +207,14 @@ function CodeOutput(
     }),
     [blockColor, blockType, dynamicBlock, dynamicChildBlock, hasError, selected],
   );
-  const blockTypeColor = useMemo(() =>
-    getColorsForBlockType(
-      blockType,
-      {
+  const blockTypeColor = useMemo(
+    () =>
+      getColorsForBlockType(blockType, {
         blockColor,
         theme: themeContext,
       }),
-    [
-      blockColor,
-      blockType,
-      themeContext,
-    ]);
+    [blockColor, blockType, themeContext],
+  );
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const executedAndIdle =
     StatusTypeEnum.EXECUTED === status ||
@@ -223,8 +225,10 @@ function CodeOutput(
   const [dataFrameShapes, setDataFrameShapes] = useState<{
     [key: string]: number[];
   }>({});
-  const multipleDataFrames =
-      useMemo(() => Object.keys(dataFrameShapes).length >= 2, [dataFrameShapes]);
+  const multipleDataFrames = useMemo(
+    () => Object.keys(dataFrameShapes).length >= 2,
+    [dataFrameShapes],
+  );
   const [selectedOutputTab, setSelectedOutputTab] = useState<TabType>(null);
 
   const dataFrameShapeDisplay = useMemo(() => {
@@ -239,12 +243,7 @@ function CodeOutput(
         return dataFrameShapes?.[0];
       }
     }
-  }, [
-    multipleDataFrames,
-    selectedOutputTab,
-    dataFrameShape,
-    dataFrameShapes,
-  ]);
+  }, [multipleDataFrames, selectedOutputTab, dataFrameShape, dataFrameShapes]);
 
   const [progress, setProgress] = useState<number>();
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
@@ -258,7 +257,7 @@ function CodeOutput(
           blockUUID,
           { token },
           {
-            onDownloadProgress: (p) =>
+            onDownloadProgress: p =>
               setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
             responseType: ResponseTypeEnum.BLOB,
           },
@@ -266,7 +265,7 @@ function CodeOutput(
       {
         onSuccess: (response: any) =>
           onSuccess(response, {
-            callback: (blobResponse) => {
+            callback: blobResponse => {
               openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
             },
             onErrorCallback: (response, errors) =>
@@ -284,44 +283,105 @@ function CodeOutput(
     }
   }, [isInProgress]);
 
-  const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
+  const combineTextData = data => (Array.isArray(data) ? data.join('\n') : data);
 
-  const combinedMessages = useMemo(
-    () =>
-      messages?.length >= 1
-        ? messages.reduce((arr, curr) => {
-            const last = arr.at(-1);
+  const combinedMessages = useMemo(() => {
+    const arr = [];
+    const arrRender = [];
 
-            if (
-              DATA_TYPE_TEXTLIKE.includes(last?.type) &&
-              last?.type === curr.type &&
-              !isObject(combineTextData(curr?.data)) &&
-              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-            ) {
-              if (Array.isArray(last.data)) {
-                last.data.concat(curr.data);
-              } else if (typeof last.data === 'string') {
-                const currentText = combineTextData(curr.data) || '';
-                last.data = [last.data, currentText].join('\n');
+    if (messages?.length >= 1) {
+      messages.map(curr => {
+        let currentData = curr?.data;
+        const renderOutputMatches = [];
+        const leftOverMessages = [];
+
+        if (currentData && Array.isArray(currentData)) {
+          currentData?.forEach((textData: string) => {
+            const match =
+              textData &&
+              typeof textData === 'string' &&
+              textData?.match(/<RenderOutput>(.*?)<\/RenderOutput>/);
+
+            if (match && match[1] && isJsonString(match[1])) {
+              const output = JSON.parse(match[1]);
+
+              if (Array.isArray(output)) {
+                // // Multi-output will show tabs.
+                // if (output?.every(({ multi_output: multiOutput }) => !!multiOutput)) {
+                //   // Combine the multiple outputs into 1 object that will render as multiple tabs.
+                //   renderOutputMatches.push(...prepareOutputsForDisplay(output));
+                // } else {
+                //   renderOutputMatches.push(...output);
+                // }
+                renderOutputMatches.push(...output);
+              } else {
+                renderOutputMatches.push(output);
               }
-            } else if (
-              DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
-              !isObject(combineTextData(curr?.data)) &&
-              !combineTextData(curr?.data)?.match(INTERNAL_OUTPUT_REGEX)
-            ) {
-              arr.push({
-                ...curr,
-                data: combineTextData(curr.data),
-              });
             } else {
-              arr.push({ ...curr });
+              leftOverMessages.push(textData);
             }
+          });
 
-            return arr;
-          }, [])
-        : messagesAll || [],
-    [messages, messagesAll],
-  );
+          currentData = leftOverMessages;
+          arrRender.push(...renderOutputMatches);
+        }
+
+        const last = arr.at(-1);
+
+        if (
+          DATA_TYPE_TEXTLIKE.includes(last?.type) &&
+          last?.type === curr.type &&
+          !isObject(combineTextData(currentData)) &&
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          if (Array.isArray(last.data)) {
+            last.data.concat(currentData);
+          } else if (typeof last.data === 'string') {
+            const currentText = combineTextData(currentData) || '';
+            last.data = [last.data, currentText].join('\n');
+          }
+        } else if (
+          DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+          !isObject(combineTextData(currentData)) &&
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          arr.push({
+            ...curr,
+            data: combineTextData(currentData),
+          });
+        } else {
+          arr.push({ ...curr });
+        }
+      });
+    } else {
+      arr.push(...(messagesAll || []));
+    }
+
+    const combined = arr.concat(arrRender);
+    const separateRows = [];
+    const multiOutputs = [];
+
+    // 1. combinedMessages flattens the outputs
+    // 2. Grouped outputs are already grouped into a single object
+    // 3. Multi-output enabled outputs need to be grouped
+
+    combined?.forEach(output => {
+      if (isObject(output) && output?.multi_output) {
+        multiOutputs.push(output);
+      } else {
+        separateRows.push(output);
+      }
+    });
+
+    if (multiOutputs?.length >= 1) {
+      separateRows.unshift({
+        multi_output: true,
+        outputs: multiOutputs,
+      });
+    }
+
+    return separateRows;
+  }, [messages, messagesAll]);
 
   const renderMessagesRaw = useMemo(
     () => !messages?.length && messagesAll?.length >= 1,
@@ -339,7 +399,10 @@ function CodeOutput(
     }
   }, [hasError, hasErrorPrev, isDBT, setSelectedTab]);
 
-  function buildDisplayForHTMLOutput(value: string, outputRowSharedProps?: OutputRowProps): JSX.Element {
+  function buildDisplayForHTMLOutput(
+    value: string,
+    outputRowSharedProps?: OutputRowProps,
+  ): JSX.Element {
     return (
       <OutputRowStyle {...(outputRowSharedProps || {})}>
         <HTMLOutputStyle monospace>
@@ -358,7 +421,7 @@ function CodeOutput(
       if (typeof value === 'string') {
         textArr = value.split('\\n');
       } else if (Array.isArray(value)) {
-        textArr = value.map((v) => v?.text_data);
+        textArr = value.map(v => v?.text_data);
       } else if (isObject(value)) {
         textArr = [value?.text_data];
       }
@@ -366,7 +429,7 @@ function CodeOutput(
 
     return (
       <OutputRowStyle {...(outputRowSharedProps || {})}>
-        {textArr.map((t) => (
+        {textArr.map(t => (
           <Text key={t} monospace preWrap>
             {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
             {!t?.length && <>&nbsp;</>}
@@ -409,13 +472,17 @@ function CodeOutput(
                 if (!row) {
                   el = <div />;
                 } else if (DataTypeEnum.TABLE === typeInner) {
-                  el = createDataTableElement(data, {
-                    borderTop,
-                    multiOutputInit,
-                    selected: selectedProp,
-                  }, {
-                    uuid: String(idxWithinGroup),
-                  });
+                  el = createDataTableElement(
+                    data,
+                    {
+                      borderTop,
+                      multiOutputInit,
+                      selected: selectedProp,
+                    },
+                    {
+                      uuid: String(idxWithinGroup),
+                    },
+                  );
                 } else if (DataTypeEnum.TEXT === typeInner) {
                   el = buildDisplayForTextOutput(textData || data, {
                     contained: true,
@@ -429,7 +496,7 @@ function CodeOutput(
 
                 return (
                   <>
-                    {((DataTypeEnum.TABLE !== typeInner) || !borderTop) && <Divider medium />}
+                    {(DataTypeEnum.TABLE !== typeInner || !borderTop) && <Divider medium />}
                     {el}
                   </>
                 );
@@ -443,14 +510,14 @@ function CodeOutput(
       if (shape) {
         setDataFrameShape(shape);
         if (dataInit?.uuid) {
-          setDataFrameShapes((prev) => ({
+          setDataFrameShapes(prev => ({
             ...prev,
             [dataInit.uuid]: shape,
           }));
         }
       }
 
-      const columnHeadersContainEmptyString = columns?.some((header) => header === '');
+      const columnHeadersContainEmptyString = columns?.some(header => header === '');
       if (columnHeadersContainEmptyString) {
         return (
           <Spacing mx={5} my={3}>
@@ -463,7 +530,7 @@ function CodeOutput(
       }
 
       if (rows?.length >= 1) {
-        if (multiOutputInitFromData && rows?.some((row) => row && containsHTML(row))) {
+        if (multiOutputInitFromData && rows?.some(row => row && containsHTML(row))) {
           return (
             <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
               <HTMLOutputStyle monospace>
@@ -484,15 +551,17 @@ function CodeOutput(
             noBorderLeft
             noBorderRight
             noBorderTop={!borderTop}
-            renderColumnHeaderCell={({
-              Header: columnName,
-            }, _, {
-              index: columnIndex,
-              key: columnKey,
-              props: columnProps,
-              style: columnStyle,
-              width: columnWidth,
-            }) => {
+            renderColumnHeaderCell={(
+              { Header: columnName },
+              _,
+              {
+                index: columnIndex,
+                key: columnKey,
+                props: columnProps,
+                style: columnStyle,
+                width: columnWidth,
+              },
+            ) => {
               const empty = columnName?.length === 0 || containsOnlySpecialCharacters(columnName);
               return (
                 <div
@@ -529,18 +598,37 @@ function CodeOutput(
     const tableContent = [];
     const testMessages = [];
 
-    combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
-      const isGroupedOutput = DataTypeEnum?.GROUP === output?.type;
+    combinedMessages?.forEach((output: OutputType, idx: number) => {
+      const outputIsGroupedOutputs = DataTypeEnum?.GROUP === output?.type;
+      const outputIsMultiOutputs = output?.multi_output && output?.outputs?.length >= 1;
 
-      let dataInit;
-      let dataType;
+      if (outputIsGroupedOutputs || outputIsMultiOutputs) {
+        arrContent.push(
+          <OutputRenderer
+            block={block}
+            contained
+            containerWidth={mainContainerWidth}
+            first={idx === 0}
+            index={idx}
+            key={`output-${idx}`}
+            last={idx === combinedMessages?.length - 1}
+            normalPadding
+            output={output}
+          />,
+        );
+
+        return;
+      }
+
+      let dataInit = null;
+      let dataType = null;
       const outputIsArray = Array.isArray(output);
 
       if (renderMessagesRaw && outputIsArray) {
         dataInit = {
           columns: ['-'],
           index: 0,
-          rows: output?.map((i) => [isJsonString(i) ? JSON.parse(i) : i]),
+          rows: output?.map(i => [isJsonString(i) ? JSON.parse(i) : i]),
           shape: [output?.length, 1],
         };
         dataType = DataTypeEnum.TABLE;
@@ -552,19 +640,20 @@ function CodeOutput(
         dataType = output?.type;
       }
 
-      if (!outputIsArray && (!dataInit || dataInit?.length === 0) && !isGroupedOutput) {
+      if (!outputIsArray && (!dataInit || dataInit?.length === 0) && !outputIsGroupedOutputs) {
         return;
       }
 
       let dataArray1: string[] = [];
+      const dataArray = [];
+
       if (Array.isArray(dataInit)) {
         dataArray1 = dataInit;
       } else {
         dataArray1 = [dataInit];
       }
-      dataArray1 = dataArray1.filter((d) => d);
+      dataArray1 = dataArray1.filter(d => d);
 
-      const dataArray = [];
       dataArray1.forEach(
         (
           data:
@@ -647,10 +736,7 @@ function CodeOutput(
             const data = JSON.parse(rawString);
 
             // Order matters; this must go 1st in order to handle multi-output from the notebook.
-            if (data?.length >= 1
-              && Array.isArray(data)
-              && data?.every(d => d?.multi_output)
-            ) {
+            if (data?.length >= 1 && Array.isArray(data) && data?.every(d => d?.multi_output)) {
               isMultiOutput = true;
 
               displayElement = (
@@ -664,7 +750,7 @@ function CodeOutput(
 
                       return (
                         <>
-                          {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
+                          {(DataTypeEnum.TABLE !== typeInner || idx === 0) && <Divider medium />}
 
                           {buildDisplayElement(
                             itemPrepared?.data,
@@ -687,8 +773,8 @@ function CodeOutput(
             } else if (data?.[0] && isObject(data?.[0]) && DataTypeEnum.TEXT === data?.[0]?.type) {
               if (Array.isArray(data?.[0]?.text_data)) {
                 isTable = true;
-                const rows = data?.map((d) => d?.text_data);
-                const columns = range(Math.max(...rows?.map((row) => row?.length)))?.map(
+                const rows = data?.map(d => d?.text_data);
+                const columns = range(Math.max(...rows?.map(row => row?.length)))?.map(
                   (_, idx) => `col${idx}`,
                 );
                 const shape = [rows?.length, columns?.length];
@@ -738,13 +824,8 @@ function CodeOutput(
                 }
               } else if (DataTypeEnum.IMAGE_PNG === typeDisplay && textData) {
                 displayElement = (
-                  <div
-                    style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}
-                  >
-                    <img
-                      alt="Image from code output"
-                      src={`data:image/png;base64, ${textData}`}
-                      />
+                  <div style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}>
+                    <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
                   </div>
                 );
               }
@@ -771,14 +852,14 @@ function CodeOutput(
               displayElement = tableEl;
             }
           }
-        } else if (DATA_TYPE_TEXTLIKE.includes(dataTypeInner)
-            || (
-              DataTypeEnum.TEXT_HTML === dataTypeInner && isObject(data) && output?.multi_output
-            )
+        } else if (
+          DATA_TYPE_TEXTLIKE.includes(dataTypeInner) ||
+          (DataTypeEnum.TEXT_HTML === dataTypeInner && isObject(data) && output?.multi_output)
         ) {
           if (isObject(data)) {
-            if (output?.multi_output &&
-                [DataTypeEnum.TEXT, DataTypeEnum.TEXT_HTML].includes(output?.type)
+            if (
+              output?.multi_output &&
+              [DataTypeEnum.TEXT, DataTypeEnum.TEXT_HTML].includes(output?.type)
             ) {
               isMultiOutput = true;
 
@@ -793,49 +874,57 @@ function CodeOutput(
                 <MultiOutput
                   color={blockTypeColor?.accent}
                   onTabChange={setSelectedOutputTab}
-                  outputs={rows?.map(({ data: value, type: typeInner }, idxWithinGroup: number) => ({
-                    render: () => {
-                      let el;
-                      if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
-                        el = buildDisplayForTextOutput(value, {
-                          contained: true,
-                          first: true,
-                          last: true,
-                          normalPadding: true,
-                        });
-                      } else if (isObject(value) && DataTypeEnum.TABLE === typeInner) {
-                        el = createDataTableElement(value, {
-                          borderTop,
-                          selected,
-                        }, {
-                          uuid: String(idxWithinGroup),
-                        });
-                      } else if (DataTypeEnum.TEXT_HTML === typeInner) {
-                        el = buildDisplayForHTMLOutput(value, {
-                          contained: true,
-                          first: true,
-                          last: true,
-                          normalPadding: true,
-                        });
-                      }
+                  outputs={rows?.map(
+                    ({ data: value, type: typeInner }, idxWithinGroup: number) => ({
+                      render: () => {
+                        let el;
+                        if (DATA_TYPE_TEXTLIKE.includes(typeInner)) {
+                          el = buildDisplayForTextOutput(value, {
+                            contained: true,
+                            first: true,
+                            last: true,
+                            normalPadding: true,
+                          });
+                        } else if (isObject(value) && DataTypeEnum.TABLE === typeInner) {
+                          el = createDataTableElement(
+                            value,
+                            {
+                              borderTop,
+                              selected,
+                            },
+                            {
+                              uuid: String(idxWithinGroup),
+                            },
+                          );
+                        } else if (DataTypeEnum.TEXT_HTML === typeInner) {
+                          el = buildDisplayForHTMLOutput(value, {
+                            contained: true,
+                            first: true,
+                            last: true,
+                            normalPadding: true,
+                          });
+                        }
 
-                      return (
-                        <>
-                          {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
+                        return (
+                          <>
+                            {(DataTypeEnum.TABLE !== typeInner || idx === 0) && <Divider medium />}
 
-                          {el}
-                        </>
-                      );
-                    },
-                    uuid: columns?.[idxWithinGroup],
-                  }))}
+                            {el}
+                          </>
+                        );
+                      },
+                      uuid: columns?.[idxWithinGroup],
+                    }),
+                  )}
                 />
               );
               // @ts-ignore
             } else if (data?.data || data?.text_data) {
               // @ts-ignore
-              displayElement =
-                buildDisplayForTextOutput(data?.data || data?.text_data, outputRowSharedProps);
+              displayElement = buildDisplayForTextOutput(
+                data?.data || data?.text_data,
+                outputRowSharedProps,
+              );
             }
           } else {
             displayElement = buildDisplayForTextOutput(data, outputRowSharedProps);
@@ -846,9 +935,7 @@ function CodeOutput(
           }
         } else if (dataTypeInner === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
-            <div
-              style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}
-            >
+            <div style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}>
               <img alt={`Image ${idx} from code output`} src={`data:image/png;base64, ${data}`} />
             </div>
           );
@@ -858,51 +945,6 @@ function CodeOutput(
         }
 
         return displayElement;
-      }
-
-      if (isGroupedOutput) {
-        const displayElement = (
-          <Spacing mt={idx >= 1 ? PADDING_UNITS : 0}>
-            <MultiOutput
-              color={blockTypeColor?.accent}
-              header={
-                <Spacing px={PADDING_UNITS}>
-                  <Text color={blockTypeColor?.accent}>
-                    {output?.variable_uuid}
-                  </Text>
-                </Spacing>
-              }
-              onTabChange={setSelectedOutputTab}
-              outputs={output?.outputs?.map((item, idxWithinGroup: number) => ({
-                render: () => {
-                  const { type: typeInner } = item;
-                  const itemPrepared = prepareOutput(ignoreKeys(item, ['multi_output']));
-
-                  return (
-                    <>
-                      {((DataTypeEnum.TABLE !== typeInner) || idx === 0) && <Divider medium />}
-
-                      {buildDisplayElement(
-                        itemPrepared?.data,
-                        itemPrepared?.type,
-                        idxWithinGroup,
-                        {
-                          contained: true,
-                          first: true,
-                          last: true,
-                          normalPadding: true,
-                        },
-                      )}
-                    </>
-                  );
-                },
-                uuid: item?.variable_uuid,
-              }))}
-            />
-          </Spacing>
-        );
-
-        arr.push(<div key={`code-output-${idx}`}>{displayElement}</div>);
       }
 
       dataArray.forEach((data: string, idxInner: number) => {
@@ -932,6 +974,7 @@ function CodeOutput(
       testContent: testMessages,
     };
   }, [
+    block,
     blockTypeColor,
     combinedMessages,
     contained,

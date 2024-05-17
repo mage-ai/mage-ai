@@ -8,7 +8,17 @@ from mage_ai.shared.hash import ignore_keys
 class GlobalDataProductResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        repo_path = get_repo_path(user=user)
+        repo_path = query.get('repo_path', [None])
+        if repo_path:
+            repo_path = repo_path[0]
+
+        current_project = query.get('current_project', [False])
+        if current_project:
+            current_project = current_project[0]
+
+        if current_project:
+            repo_path = get_repo_path(user=user)
+
         return self.build_result_set(
             sorted(GlobalDataProduct.load_all(repo_path), key=lambda x: x.uuid),
             user,
@@ -21,7 +31,9 @@ class GlobalDataProductResource(GenericResource):
         uuid = payload.get('uuid')
         if GlobalDataProduct.get(uuid, repo_path):
             error = ApiError.RESOURCE_INVALID.copy()
-            error.update(dict(message=f'A global data product with UUID {uuid} already exists.'))
+            error.update(
+                dict(message=f'A global data product with UUID {uuid} already exists.')
+            )
             raise ApiError(error)
 
         model = GlobalDataProduct(
@@ -35,8 +47,18 @@ class GlobalDataProductResource(GenericResource):
 
     @classmethod
     def member(self, pk, user, **kwargs):
+        query = kwargs.get('query', {})
+        project = query.get('project', [None])
+        if project:
+            project = project[0]
         repo_path = get_repo_path(user=user)
-        return self(GlobalDataProduct.get(pk, repo_path), user, **kwargs)
+        return self(
+            GlobalDataProduct.get(
+                pk, repo_path=repo_path if not project else None, project=project
+            ),
+            user,
+            **kwargs,
+        )
 
     def delete(self, **kwargs):
         self.model.delete()
@@ -44,9 +66,15 @@ class GlobalDataProductResource(GenericResource):
     def update(self, payload, **kwargs):
         repo_path = get_repo_path(user=self.current_user)
         uuid = payload.get('uuid')
-        if self.model and self.model.uuid != uuid and GlobalDataProduct.get(uuid, repo_path):
+        if (
+            self.model
+            and self.model.uuid != uuid
+            and GlobalDataProduct.get(uuid, repo_path)
+        ):
             error = ApiError.RESOURCE_INVALID.copy()
-            error.update(dict(message=f'A global data product with UUID {uuid} already exists.'))
+            error.update(
+                dict(message=f'A global data product with UUID {uuid} already exists.')
+            )
             raise ApiError(error)
 
         if self.model:

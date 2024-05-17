@@ -11,7 +11,7 @@ JSON_FILE = "data.json"
 JSON_SAMPLE_FILE = "sample_data.json"
 MATRIX_NPZ_FILE = "matrix.npz"
 MATRIX_SAMPLE_NPZ_FILE = "matrix.npz"
-MEDIA_IMAGE_VISUALIZATION_FILE = "visualization.webp"
+MEDIA_IMAGE_VISUALIZATION_FILE = "visualization.png"
 METADATA_FILE = "type.json"
 UBJSON_MODEL_FILENAME = "model.ubj"
 

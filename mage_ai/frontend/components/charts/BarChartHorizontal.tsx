@@ -1,11 +1,6 @@
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { AxisBottom, AxisLeft } from '@visx/axis';
-import {
-  Bar,
-  BarGroupHorizontal,
-  BarStackHorizontal,
-  Line,
-} from '@visx/shape';
+import { Bar, BarGroupHorizontal, BarStackHorizontal, Line } from '@visx/shape';
 import { Group } from '@visx/group';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
 import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
@@ -34,222 +29,233 @@ const defaultMargin = {
   top: 0,
 };
 
-const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
-  data: completeData,
-  height,
-  hideTooltip,
-  keyForYData = yKey,
-  large,
-  margin: marginOverride = {},
-  renderNoDataText,
-  renderTooltipContent,
-  showTooltip,
-  tooltipData,
-  tooltipLeft,
-  tooltipOpen,
-  tooltipTop,
-  width,
-  xAxisLabel,
-  xNumTicks,
-  yLabelFormat: yLabelFormatProp,
-}: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
-  const {
-    colorScale,
-    colors,
-    data,
-    fontSize,
-    handleTooltip,
-    margin,
-    tempScale,
-    tickValues,
-    xKeys,
-    xMax,
-    y1Scale,
-    yLabelFormat,
-    yMax,
-    yScale,
-    ySerialize,
-  } = buildSharedProps({
+const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
+  ({
     data: completeData,
     height,
-    keyForYData,
+    hideTooltip,
+    keyForYData = yKey,
     large,
-    margin: marginOverride,
+    margin: marginOverride = {},
+    renderNoDataText,
+    renderTooltipContent,
     showTooltip,
+    tooltipData,
+    tooltipLeft,
+    tooltipOpen,
+    tooltipTop,
     width,
+    yTooltipFormat,
+    xAxisLabel,
+    xLabelFormat,
+    xNumTicks,
     yLabelFormat: yLabelFormatProp,
-  });
+  }: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
+    const {
+      colorScale,
+      colors,
+      data,
+      fontSize,
+      handleTooltip,
+      margin,
+      tempScale,
+      tickValues,
+      xKeys,
+      xMax,
+      y1Scale,
+      yLabelFormat,
+      yMax,
+      yScale,
+      ySerialize,
+    } = buildSharedProps({
+      data: completeData,
+      height,
+      keyForYData,
+      large,
+      margin: marginOverride,
+      showTooltip,
+      width,
+      yLabelFormat: yLabelFormatProp,
+    });
 
+    const tickValuesToDisplay = [];
+    const ticksToShow = Math.min(tickValues?.length || 0, Math.floor(height / Y_TICK_HEIGHT));
+    tickValues?.forEach(val => {
+      tickValuesToDisplay.push(val);
+    });
 
-  const tickValuesToDisplay = [];
-  const ticksToShow = Math.min((tickValues?.length || 0), Math.floor(height / Y_TICK_HEIGHT));
-  tickValues?.forEach((val) => {
-    tickValuesToDisplay.push(val);
-  });
-
-  return width < 10 ? null : (
-    <div>
-      <svg height={height} width={width}>
-        {renderNoDataText && !data?.length && (
-          <text
-            fill={colors.active}
-            dominantBaseline="middle"
-            textAnchor="middle"
-            fontFamily={FONT_FAMILY_REGULAR}
-            fontSize={fontSize}
-            x="50%"
-            y="50%"
-          >
-            {renderNoDataText()}
-          </text>
-        )}
-
-        <Bar
-          fill="transparent"
-          height={height - (margin.top + margin.bottom)}
-          onMouseLeave={() => hideTooltip()}
-          onMouseMove={handleTooltip}
-          onTouchMove={handleTooltip}
-          onTouchStart={handleTooltip}
-          rx={14}
-          width={width - (margin.left + margin.right)}
-          x={margin.left}
-          y={margin.top}
-        />
-
-        {data?.length && (
-          <Group
-            left={margin.left}
-            top={margin.top}
-          >
-            <BarGroupHorizontal
-              color={colorScale}
-              data={data}
-              keys={xKeys}
-              width={xMax}
-              xScale={tempScale}
-              y0={ySerialize}
-              y0Scale={yScale}
-              y1Scale={y1Scale}
+    return width < 10 ? null : (
+      <div>
+        <svg height={height} width={width}>
+          {renderNoDataText && !data?.length && (
+            <text
+              dominantBaseline="middle"
+              fill={colors.active}
+              fontFamily={FONT_FAMILY_REGULAR}
+              fontSize={fontSize}
+              textAnchor="middle"
+              x="50%"
+              y="50%"
             >
-              {(barGroups) =>
-                barGroups.map((barGroup) => (
-                  <Group
-                    key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
-                    top={barGroup.y0}
-                  >
-                    {barGroup.bars.map((bar) => (
-                      <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
-                        <>
-                          <rect
-                            fill={bar.color}
-                            height={bar.height}
-                            pointerEvents="none"
-                            rx={4}
-                            width={bar.width}
-                            x={bar.x}
-                            y={bar.y}
-                          />
-                        </>
-                      </g>
-                    ))}
-                  </Group>
-                ))
-              }
-            </BarGroupHorizontal>
+              {renderNoDataText()}
+            </text>
+          )}
 
-            <AxisLeft
-              hideTicks
-              scale={yScale}
-              stroke={colors.muted}
-              tickFormat={label => yLabelFormat(label)}
-              tickLabelProps={() => ({
-                fill: colors.active,
-                fontFamily: FONT_FAMILY_REGULAR,
-                fontSize,
-                style: {
-                  width: '10px',
-                },
-                textAnchor: 'end',
-              })}
-              tickStroke={colors.muted}
-              tickValues={tickValuesToDisplay}
-              top={2}
-            />
+          <Bar
+            fill="transparent"
+            height={height - (margin.top + margin.bottom)}
+            onMouseLeave={() => hideTooltip()}
+            onMouseMove={handleTooltip}
+            onTouchMove={handleTooltip}
+            onTouchStart={handleTooltip}
+            rx={14}
+            width={width - (margin.left + margin.right)}
+            x={margin.left}
+            y={margin.top}
+          />
 
-            <AxisBottom
-              label={xAxisLabel}
-              labelProps={{
-                fill: colors.muted,
-                fontFamily: FONT_FAMILY_REGULAR,
-                fontSize,
-                textAnchor: 'middle',
-              }}
-              numTicks={xNumTicks}
-              scale={tempScale}
-              stroke={colors.muted}
-              tickLabelProps={() => ({
-                fill: colors.active,
-                fontFamily: FONT_FAMILY_REGULAR,
-                fontSize,
-                textAnchor: 'middle',
-              })}
-              tickStroke={colors.muted}
-              top={yMax}
-            />
-          </Group>
-        )}
-
-
-        {tooltipData && (
-          <g>
-            <Line
-              from={{ x: margin.left, y: tooltipTop }}
-              pointerEvents="none"
-              stroke={colors.active}
-              strokeDasharray="5,2"
-              strokeWidth={1}
-              to={{ x: xMax + margin.left, y: tooltipTop }}
-            />
-          </g>
-        )}
-      </svg>
-
-      {tooltipOpen && tooltipData && (
-        <TooltipWithBounds
-          left={tooltipLeft}
-          style={{
-            ...tooltipStyles,
-            backgroundColor: colors.tooltipBackground,
-          }}
-          top={tooltipTop}
-        >
-          {renderTooltipContent && renderTooltipContent(tooltipData)}
-
-          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => {
-            if (keyForYData !== k) {
-              let valueToDisplay = v;
-
-              if (isNumeric(valueToDisplay)) {
-                if (String(valueToDisplay).split('.').length >= 2) {
-                  if (typeof valueToDisplay !== 'undefined' && valueToDisplay !== null && isNumeric(valueToDisplay)) {
-                    valueToDisplay = valueToDisplay?.toFixed(4);
-                  }
+          {data?.length && (
+            <Group left={margin.left} top={margin.top}>
+              <BarGroupHorizontal
+                color={colorScale}
+                data={data}
+                keys={xKeys}
+                width={xMax}
+                xScale={tempScale}
+                y0={ySerialize}
+                y0Scale={yScale}
+                y1Scale={y1Scale}
+              >
+                {barGroups =>
+                  barGroups.map(barGroup => (
+                    <Group
+                      key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
+                      top={barGroup.y0}
+                    >
+                      {barGroup.bars.map(bar => (
+                        <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
+                          <>
+                            <rect
+                              fill={bar.color}
+                              height={bar.height}
+                              pointerEvents="none"
+                              rx={4}
+                              width={bar.width}
+                              x={bar.x}
+                              y={bar.y}
+                            />
+                          </>
+                        </g>
+                      ))}
+                    </Group>
+                  ))
                 }
-              }
+              </BarGroupHorizontal>
 
-              return (
-                <Text key={k} inverted small>
-                  {k}: {valueToDisplay}
-                </Text>
-              );
-            }
-          })}
-        </TooltipWithBounds>
-      )}
-    </div>
-  );
-});
+              <AxisLeft
+                hideTicks
+                scale={yScale}
+                stroke={colors.muted}
+                tickFormat={yLabelFormat}
+                tickLabelProps={() => ({
+                  fill: colors.active,
+                  fontFamily: FONT_FAMILY_REGULAR,
+                  fontSize,
+                  style: {
+                    width: '10px',
+                  },
+                  textAnchor: 'end',
+                })}
+                tickStroke={colors.muted}
+                tickValues={tickValuesToDisplay}
+                top={2}
+              />
+
+              <AxisBottom
+                label={xAxisLabel}
+                labelProps={{
+                  fill: colors.muted,
+                  fontFamily: FONT_FAMILY_REGULAR,
+                  fontSize,
+                  textAnchor: 'middle',
+                }}
+                numTicks={xNumTicks}
+                scale={tempScale}
+                stroke={colors.muted}
+                tickFormat={xLabelFormat}
+                tickLabelProps={() => ({
+                  fill: colors.active,
+                  fontFamily: FONT_FAMILY_REGULAR,
+                  fontSize,
+                  textAnchor: 'middle',
+                })}
+                tickStroke={colors.muted}
+                top={yMax}
+              />
+            </Group>
+          )}
+
+          {tooltipData && (
+            <g>
+              <Line
+                from={{ x: margin.left, y: tooltipTop }}
+                pointerEvents="none"
+                stroke={colors.active}
+                strokeDasharray="5,2"
+                strokeWidth={1}
+                to={{ x: xMax + margin.left, y: tooltipTop }}
+              />
+            </g>
+          )}
+        </svg>
+
+        {tooltipOpen && tooltipData && (
+          <TooltipWithBounds
+            left={tooltipLeft}
+            style={{
+              ...tooltipStyles,
+              backgroundColor: colors.tooltipBackground,
+            }}
+            top={tooltipTop}
+          >
+            {renderTooltipContent && renderTooltipContent(tooltipData)}
+
+            {!renderTooltipContent &&
+              Object.entries(tooltipData).map(([k, v]) => {
+                if (keyForYData !== k) {
+                  let valueToDisplay = v;
+
+                  if (yTooltipFormat) {
+                    return (
+                      <Text inverted key={k} small>
+                        {yTooltipFormat(valueToDisplay, k, tooltipData)}
+                      </Text>
+                    );
+                  } else if (isNumeric(valueToDisplay)) {
+                    if (String(valueToDisplay).split('.').length >= 2) {
+                      if (
+                        typeof valueToDisplay !== 'undefined' &&
+                        valueToDisplay !== null &&
+                        isNumeric(valueToDisplay)
+                      ) {
+                        valueToDisplay = valueToDisplay?.toFixed(4);
+                      }
+                    }
+                  }
+
+                  return (
+                    <Text inverted key={k} small>
+                      {k}: {valueToDisplay}
+                    </Text>
+                  );
+                }
+              })}
+          </TooltipWithBounds>
+        )}
+      </div>
+    );
+  },
+);
 
 function BarStackHorizontalContainer({
   height: parentHeight,
@@ -264,7 +270,9 @@ function BarStackHorizontalContainer({
     parentWidthFinal = '100%';
   } else {
     parentWidthFinal = yAxisLabel
-      ? parentWidth === 0 ? parentWidth : parentWidth - 28
+      ? parentWidth === 0
+        ? parentWidth
+        : parentWidth - 28
       : parentWidth;
   }
 
@@ -288,18 +296,14 @@ function BarStackHorizontalContainer({
           </FlexContainer>
         )}
 
-        <div style={{
-          height: parentHeight,
-          width: parentWidthFinal,
-        }}>
+        <div
+          style={{
+            height: parentHeight,
+            width: parentWidthFinal,
+          }}
+        >
           <ParentSize>
-            {({ width, height }) => (
-              <BarChartHorizontal
-                {...props}
-                height={height}
-                width={width}
-              />
-            )}
+            {({ width, height }) => <BarChartHorizontal {...props} height={height} width={width} />}
           </ParentSize>
         </div>
       </div>

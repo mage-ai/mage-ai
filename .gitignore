@@ -185,5 +185,5 @@ playwright-report/
 package-lock.json
 package.json
 yarn.lock
-
+mlfow.db
 mlruns/

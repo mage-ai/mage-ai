@@ -153,7 +153,7 @@ function PipelineRunsMonitor({
               top: 10,
             }}
             tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
-            xLabelFormat={label => moment(label).format('MMM DD')}
+            xLabelFormat={(label: number) => moment(label).format('MMM DD')}
           />
         </Spacing>
         {pipelineRunsData && Object.entries(pipelineRunsData).map(([id, stats]) => {

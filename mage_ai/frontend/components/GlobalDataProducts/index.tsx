@@ -25,17 +25,16 @@ function GlobalDataProducts({
 }: GlobalDataProductsProps) {
   const router = useRouter();
 
-  const { data: dataGlobalProducts } = api.global_data_products.list({}, {}, {
-    pauseFetch: !!globalDataProductsProps,
-  });
-  const globalDataProducts: GlobalDataProductType[] =
-    useMemo(() => globalDataProductsProps
-      || dataGlobalProducts?.global_data_products
-      || [],
-    [
-      dataGlobalProducts,
-      globalDataProductsProps,
-    ],
+  const { data: dataGlobalProducts } = api.global_data_products.list(
+    {},
+    {},
+    {
+      pauseFetch: !!globalDataProductsProps,
+    },
+  );
+  const globalDataProducts: GlobalDataProductType[] = useMemo(
+    () => globalDataProductsProps || dataGlobalProducts?.global_data_products || [],
+    [dataGlobalProducts, globalDataProductsProps],
   );
 
   if (!dataGlobalProducts && !globalDataProductsProps) {
@@ -49,16 +48,14 @@ function GlobalDataProducts({
   if (dataGlobalProducts && globalDataProducts?.length === 0) {
     return (
       <Spacing p={PADDING_UNITS}>
-        <Text>
-          There are currently no global data products registered.
-        </Text>
+        <Text>There are currently no global data products registered.</Text>
       </Spacing>
     );
   }
 
   return (
     <Table
-      columnFlex={[1, null, null]}
+      columnFlex={[null, null, null, null]}
       columns={[
         {
           uuid: 'UUID',
@@ -69,6 +66,9 @@ function GlobalDataProducts({
         {
           uuid: 'Object UUID',
         },
+        {
+          uuid: 'Project',
+        },
       ]}
       onClickRow={(rowIndex: number) => {
         const gdp = globalDataProducts?.[rowIndex];
@@ -78,7 +78,7 @@ function GlobalDataProducts({
           } else {
             router.push(
               '/global-data-products/[...slug]',
-              `/global-data-products/${gdp?.uuid}`,
+              `/global-data-products${gdp?.project ? '/' + gdp?.project : ''}/${gdp?.uuid}`,
             );
           }
         }
@@ -87,6 +87,7 @@ function GlobalDataProducts({
         const {
           object_type: objectType,
           object_uuid: objectUUID,
+          project,
           uuid,
         } = globalDataProduct;
         const linkProps: {
@@ -109,27 +110,22 @@ function GlobalDataProducts({
           <Text default key="objectType" monospace>
             {objectType}
           </Text>,
-          <NextLink
-            as={linkProps?.as}
-            href={linkProps?.href || ''}
-            key="objectUUID"
-            passHref
-          >
+          <NextLink as={linkProps?.as} href={linkProps?.href || ''} key="objectUUID" passHref>
             <Link
               default
               monospace
-              onClick={(e) => {
+              onClick={e => {
                 pauseEvent(e);
-                router.push(
-                  linkProps.href,
-                  linkProps.as,
-                );
+                router.push(linkProps.href, linkProps.as);
               }}
               preventDefault
             >
               {objectUUID}
             </Link>
           </NextLink>,
+          <Text default key="project" monospace>
+            {project}
+          </Text>,
         ];
       })}
       uuid="global-data-products"

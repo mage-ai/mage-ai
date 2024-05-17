@@ -63,10 +63,13 @@ export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
   [BlockTypeEnum.DBT]: BlockTypeEnum.DBT,
 };
 
-export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce((acc, [k, v]) => ({
-  ...acc,
-  [v]: k,
-}), {});
+export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce(
+  (acc, [k, v]) => ({
+    ...acc,
+    [v]: k,
+  }),
+  {},
+);
 
 export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.CALLBACK,
@@ -74,10 +77,7 @@ export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.EXTENSION,
 ];
 
-export const ADD_ON_BLOCK_TYPES = [
-  BlockTypeEnum.CALLBACK,
-  BlockTypeEnum.CONDITIONAL,
-];
+export const ADD_ON_BLOCK_TYPES = [BlockTypeEnum.CALLBACK, BlockTypeEnum.CONDITIONAL];
 
 export enum BlockColorEnum {
   BLUE = 'blue',
@@ -113,10 +113,7 @@ export const DRAGGABLE_BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
-export const YAML_BLOCK_TYPES = [
-  BlockTypeEnum.DATA_EXPORTER,
-  BlockTypeEnum.DATA_LOADER,
-];
+export const YAML_BLOCK_TYPES = [BlockTypeEnum.DATA_EXPORTER, BlockTypeEnum.DATA_LOADER];
 
 export const R_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
@@ -177,9 +174,11 @@ export interface SampleDataType {
 }
 
 export interface OutputType {
+  data?: SampleDataType | string | string[];
   multi_output?: boolean;
+  outputs?: OutputType[];
   sample_data: SampleDataType;
-  shape: number[];
+  shape?: number[];
   text_data: string;
   type: DataTypeEnum;
   variable_uuid: string;
