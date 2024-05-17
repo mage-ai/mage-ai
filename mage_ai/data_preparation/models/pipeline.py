@@ -88,6 +88,7 @@ class Pipeline:
         config=None,
         repo_config=None,
         catalog=None,
+        context_data: Dict = None,
         use_repo_path: bool = False,
         description: str = None,
         tags: List[str] = None,
@@ -107,7 +108,12 @@ class Pipeline:
         self.name = None
         self.notification_config = dict()
 
+        # For multi project
         warn_for_repo_path(repo_path)
+        self.context_data = context_data
+        if self.context_data is None:
+            self.context_data = dict()
+        self._project = None
 
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
@@ -144,9 +150,6 @@ class Pipeline:
             self.load_config_from_yaml()
         else:
             self.load_config(config, catalog=catalog)
-
-        self.context_data = dict()
-        self._project = None
 
     @classmethod
     def build_config_path(
@@ -193,6 +196,7 @@ class Pipeline:
             config_path, _repo_path = get_pipeline_config_path(
                 self.uuid,
                 context_data=self.context_data,
+                repo_path=self.repo_path,
             )
             if config_path:
                 return os.path.join(
@@ -457,6 +461,7 @@ class Pipeline:
         repo_path: str = None,
         check_if_exists: bool = False,
         all_projects: bool = False,
+        context_data: Dict = None,
         use_repo_path: bool = False,
     ):
         warn_for_repo_path(repo_path)
@@ -465,19 +470,25 @@ class Pipeline:
             uuid,
             repo_path=repo_path,
             all_projects=all_projects,
+            context_data=context_data,
             use_repo_path=use_repo_path,
         )
 
         if check_if_exists and (not config_path or not os.path.exists(config_path)):
             return None
 
-        pipeline = cls(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
+        pipeline = cls(
+            uuid,
+            repo_path=repo_path,
+            context_data=context_data,
+            use_repo_path=use_repo_path,
+        )
         if PipelineType.INTEGRATION == pipeline.type:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
             )
 
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, context_data=context_data)
 
         return pipeline
 
@@ -511,12 +522,17 @@ class Pipeline:
         uuid,
         repo_path: str = None,
         all_projects: bool = False,
+        context_data: Dict = None,
         use_repo_path: bool = False,
     ) -> Tuple[str, str]:
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
-            config_path, repo_path = get_pipeline_config_path(uuid)
+            config_path, repo_path = get_pipeline_config_path(
+                uuid,
+                context_data=context_data,
+                repo_path=repo_path,
+            )
         else:
             repo_path = repo_path or get_repo_path()
             config_path = os.path.join(
@@ -573,6 +589,7 @@ class Pipeline:
         uuid,
         repo_path: str = None,
         all_projects: bool = False,
+        context_data: Dict = None,
         use_repo_path: bool = False,
     ):
         warn_for_repo_path(repo_path)
@@ -580,7 +597,11 @@ class Pipeline:
         if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
-            config_path, repo_path = get_pipeline_config_path(uuid)
+            config_path, repo_path = get_pipeline_config_path(
+                uuid,
+                context_data=context_data,
+                repo_path=repo_path,
+            )
         else:
             repo_path = repo_path or get_repo_path()
             config_path = os.path.join(

@@ -81,7 +81,7 @@ async def get_pipeline_from_platform_async(
 def get_pipeline_config_path(
     pipeline_uuid: str,
     context_data: Dict = None,
-    repo_path: str = None
+    repo_path: str = None,
 ) -> Tuple[str, str]:
     print(f'get pipeline config path {id(context_data)} {context_data} repo_path {repo_path}')
     from mage_ai.settings.repo import get_repo_path
@@ -90,7 +90,10 @@ def get_pipeline_config_path(
         context_data = dict()
 
     if not repo_path:
-        repo_path_active = get_repo_path(root_project=False)
+        repo_path_active = get_repo_path(
+            context_data=context_data,
+            root_project=False,
+        )
     else:
         repo_path_active = repo_path
 
