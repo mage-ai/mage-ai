@@ -69,7 +69,7 @@ class PipelinePresenter(BasePresenter):
                 include_block_metadata = include_block_metadata[0]
 
             include_block_catalog = PipelineType.PYTHON == self.model.type and Project(
-                self.model.repo_config
+                repo_config=self.model.repo_config
             ).is_feature_enabled(
                 FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
             )

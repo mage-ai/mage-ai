@@ -601,7 +601,7 @@ class PipelineResource(BaseResource):
             )
 
         if api_operation_action == DETAIL:
-            if Project(pipeline.repo_config).is_feature_enabled(
+            if Project(repo_config=pipeline.repo_config).is_feature_enabled(
                 FeatureUUID.OPERATION_HISTORY,
             ):
                 record_detail_pipeline(

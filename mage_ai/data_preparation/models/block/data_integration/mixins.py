@@ -221,7 +221,7 @@ class DataIntegrationMixin:
 
         actual_project: Project = pipeline_project
         if not actual_project:
-            actual_project = Project(self.pipeline.repo_config)
+            actual_project = Project(repo_config=self.pipeline.repo_config)
 
         if not actual_project.is_feature_enabled(
                         FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,

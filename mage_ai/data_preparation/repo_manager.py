@@ -46,9 +46,9 @@ class ProjectType(str, Enum):
 class RepoConfig:
     def __init__(
         self,
+        repo_path: str = None,
         config_dict: Dict = None,
         context_data: Dict = None,
-        repo_path: str = None,
         root_project: bool = False,
         user=None,
     ):
@@ -306,8 +306,8 @@ def get_repo_config(
     user=None,
 ) -> RepoConfig:
     return RepoConfig(
-        context_data=context_data,
         repo_path=repo_path,
+        context_data=context_data,
         root_project=root_project,
         user=user,
     )

@@ -2412,7 +2412,7 @@ class Pipeline:
         ):
             return self.settings.triggers.save_in_code_automatically
 
-        project = Project(self.repo_config)
+        project = Project(repo_config=self.repo_config)
 
         return (
             project.pipelines

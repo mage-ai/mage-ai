@@ -80,7 +80,7 @@ class BlockExecutor:
             repo_path=self.pipeline.repo_path,
         )
         self.logger = DictLogger(self.logger_manager.logger)
-        self.project = Project(self.pipeline.repo_config)
+        self.project = Project(repo_config=self.pipeline.repo_config)
         self.retry_metadata = dict(attempts=0)
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
