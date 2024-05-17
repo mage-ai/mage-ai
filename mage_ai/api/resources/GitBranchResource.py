@@ -12,6 +12,7 @@ from mage_ai.data_preparation.git.utils import (
 )
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.server.logger import Logger
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import capitalize_remove_underscore_lower
 
@@ -35,9 +36,21 @@ def build_file_object(obj):
 class GitBranchResource(GenericResource):
     @classmethod
     def get_git_manager(
-        self, user, setup_repo: bool = False, config_overwrite: Dict = None
+        self,
+        user=None,
+        context_data: Dict = None,
+        preferences=None,
+        repo_path: str = None,
+        setup_repo: bool = False,
+        config_overwrite: Dict = None,
     ) -> Git:
-        return Git.get_manager(setup_repo=setup_repo, user=user)
+        return Git.get_manager(
+            context_data=context_data,
+            preferences=preferences,
+            repo_path=repo_path,
+            setup_repo=setup_repo,
+            user=user,
+        )
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
@@ -97,11 +110,22 @@ class GitBranchResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        preferences = get_preferences(user=user)
+        context_data = kwargs.get('context_data')
+        repo_path = get_repo_path(context_data=context_data, user=user)
+        preferences = get_preferences(
+            repo_path=repo_path,
+            user=user,
+        )
         setup_repo = False
         if preferences.is_git_integration_enabled():
             setup_repo = True
-        git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
+        git_manager = self.get_git_manager(
+            user=user,
+            context_data=context_data,
+            preferences=preferences,
+            repo_path=repo_path,
+            setup_repo=setup_repo,
+        )
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
@@ -112,7 +136,7 @@ class GitBranchResource(GenericResource):
                     modified_files=[],
                     name=git_manager.current_branch,
                     staged_files=[],
-                    sync_config=get_preferences().sync_config,
+                    sync_config=preferences.sync_config,
                     untracked_files=[],
                 ),
                 user,
@@ -130,7 +154,7 @@ class GitBranchResource(GenericResource):
                 modified_files=modified_files,
                 name=git_manager.current_branch,
                 staged_files=staged_files,
-                sync_config=get_preferences().sync_config,
+                sync_config=preferences.sync_config,
                 untracked_files=untracked_files,
             ),
             user,

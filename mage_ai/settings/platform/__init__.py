@@ -423,10 +423,19 @@ def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool
     return parent
 
 
-def git_settings(repo_path: str = None, user=None) -> Dict:
+def git_settings(
+    repo_path: str = None,
+    context_data: Dict = None,
+    user=None,
+) -> Dict:
     git_dict = {}
 
-    settings = active_project_settings(get_default=True, repo_path=repo_path, user=user)
+    settings = active_project_settings(
+        context_data=context_data,
+        get_default=True,
+        repo_path=repo_path,
+        user=user,
+    )
     if settings and settings.get('git'):
         git_dict = settings.get('git') or {}
 
@@ -436,7 +445,11 @@ def git_settings(repo_path: str = None, user=None) -> Dict:
             git_dict['path'],
         )
     else:
-        git_dict['path'] = build_active_project_repo_path(repo_path=repo_path, user=user)
+        git_dict['path'] = build_active_project_repo_path(
+            context_data=context_data,
+            repo_path=repo_path,
+            user=user,
+        )
 
     return git_dict
 
