@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
-import styled, { ThemeContext } from 'styled-components';
+import { ThemeContext } from 'styled-components';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { Bar, Line, LinePath } from '@visx/shape';
 import { GridRows, GridColumns } from '@visx/grid';
@@ -57,12 +57,18 @@ type SharedProps = {
   noCurve?: boolean;
   numYTicks?: number;
   renderXTooltipContent?: (
-    y: string | number,
+    y: string | number | {
+      x: string | number;
+      y: string | number | (string | number)[];
+    },
     x: string | number | null,
     tooltip: TooltipData,
   ) => JSX.Element;
   renderYTooltipContent?: (
-    y: string | number,
+    y: string | number | {
+      x: string | number;
+      y: string | number | (string | number)[];
+    },
     x: string | number | null,
     tooltip: TooltipData,
   ) => JSX.Element;

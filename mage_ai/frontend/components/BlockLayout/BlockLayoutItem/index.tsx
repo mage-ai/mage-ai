@@ -262,7 +262,7 @@ function BlockLayoutItem({
         />
       )}
 
-      <Flex flex={1} flexDirection='column'>
+      <Flex flex={1} flexDirection="column">
         <div
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
@@ -270,7 +270,7 @@ function BlockLayoutItem({
         >
           <ItemStyle {...collected} ref={disableDrag ? null : drag}>
             <Spacing mb={1}>
-              <FlexContainer alignContent='center' justifyContent='space-between'>
+              <FlexContainer alignContent="center" justifyContent="space-between">
                 <Spacing py={1}>
                   <Text bold default>
                     {blockLayoutItem?.name || blockUUID}
@@ -323,8 +323,8 @@ function BlockLayoutItem({
 
             {editing && (
               <>
-                <FlexContainer alignItems='center' fullWidth>
-                  <Flex flex={1} flexDirection='column'>
+                <FlexContainer alignItems="center" fullWidth>
+                  <Flex flex={1} flexDirection="column">
                     <Text bold muted small>
                       Width (flex box)
                     </Text>
@@ -344,21 +344,21 @@ function BlockLayoutItem({
                       primary
                       setContentOnMount
                       small
-                      type='number'
+                      type="number"
                       value={columnLayoutSettings?.width || ''}
                     />
                   </Flex>
 
                   <Spacing mr={1} />
 
-                  <Flex flex={1} flexDirection='column'>
+                  <Flex flex={1} flexDirection="column">
                     <Text bold muted small>
                       Max width (%)
                     </Text>
                     <TextInput
                       compact
                       fullWidth
-                      label='Max width percentage'
+                      label="Max width percentage"
                       // @ts-ignore
                       onChange={e =>
                         updateLayout?.({
@@ -372,14 +372,14 @@ function BlockLayoutItem({
                       primary
                       setContentOnMount
                       small
-                      type='number'
+                      type="number"
                       value={columnLayoutSettings?.max_width_percentage || ''}
                     />
                   </Flex>
 
                   <Spacing mr={1} />
 
-                  <Flex flex={1} flexDirection='column'>
+                  <Flex flex={1} flexDirection="column">
                     <Text bold muted small>
                       Height (pixels)
                     </Text>
@@ -399,14 +399,14 @@ function BlockLayoutItem({
                       primary
                       setContentOnMount
                       small
-                      type='number'
+                      type="number"
                       value={columnLayoutSettings?.height || ''}
                     />
                   </Flex>
                 </FlexContainer>
 
                 <Spacing mt={PADDING_UNITS}>
-                  <FlexContainer alignItems='center' justifyContent='flex-end'>
+                  <FlexContainer alignItems="center" justifyContent="flex-end">
                     <Button
                       compact
                       onClick={() => {
