@@ -1553,12 +1553,12 @@ class PipelineRunTests(DBTestCase):
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
         expected_file_path1 = os.path.join(
-            get_repo_config(self.repo_path).variables_dir,
+            get_repo_config(repo_path=self.repo_path).variables_dir,
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
         expected_file_path2 = os.path.join(
-            get_repo_config(self.repo_path).variables_dir,
+            get_repo_config(epo_path=self.repo_path).variables_dir,
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/scheduler.log',
         )
@@ -1728,7 +1728,7 @@ class BlockRunTests(DBTestCase):
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
         for b in pipeline_run.block_runs:
             expected_file_path = os.path.join(
-                get_repo_config(self.repo_path).variables_dir,
+                get_repo_config(epo_path=self.repo_path).variables_dir,
                 'pipelines/test_pipeline/.logs',
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )

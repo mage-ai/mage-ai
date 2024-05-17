@@ -333,6 +333,7 @@ class PipelineResourceTest(BaseApiTestCase):
                 mock.assert_called_once_with(
                     self.pipeline1.uuid,
                     repo_path=self.repo_path,
+                    context_data=None,
                 )
 
     async def test_member(self):

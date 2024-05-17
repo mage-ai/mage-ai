@@ -27,7 +27,7 @@ class Project:
         root_project: bool = False,
         user=None,
     ):
-        print(f'Project context_data {id(context_data)} {context_data}')
+        # print(f'Project context_data {id(context_data)} {context_data}')
         self.context_data = context_data
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(

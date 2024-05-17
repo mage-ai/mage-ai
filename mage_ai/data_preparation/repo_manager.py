@@ -300,8 +300,8 @@ def init_repo(
 
 
 def get_repo_config(
-    context_data: Dict = None,
     repo_path: str = None,
+    context_data: Dict = None,
     root_project: bool = False,
     user=None,
 ) -> RepoConfig:
