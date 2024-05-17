@@ -338,7 +338,6 @@ def get_global_variables(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    print(f'get_global_variable {id(context_data)}')
     pipeline = pipeline or Pipeline.get(
         pipeline_uuid,
         all_projects=project_platform_activated(),

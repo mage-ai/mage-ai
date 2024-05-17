@@ -83,7 +83,6 @@ def get_pipeline_config_path(
     context_data: Dict = None,
     repo_path: str = None,
 ) -> Tuple[str, str]:
-    print(f'get pipeline config path {id(context_data)} {context_data} repo_path {repo_path}')
     from mage_ai.settings.repo import get_repo_path
 
     if context_data is None:

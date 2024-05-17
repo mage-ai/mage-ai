@@ -317,7 +317,10 @@ def active_project_settings(
     if context_data.get('active_project_settings'):
         return context_data['active_project_settings']
 
-    # print(f'active project settings {id(context_data)} context {context_data} user {user}')
+    # from mage_ai.shared.custom_logger import DX_PRINTER
+    # DX_PRINTER.info(f'active project settings {id(context_data)} context '
+    #                 f'{context_data} user {user}')
+    # DX_PRINTER.print_call_stack()
 
     if not settings:
         settings = project_platform_settings(
