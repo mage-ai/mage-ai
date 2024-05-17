@@ -49,6 +49,7 @@ def get_pipeline_from_platform(
 async def get_pipeline_from_platform_async(
     pipeline_uuid: str,
     repo_path: str = None,
+    context_data: Dict = None,
     mapping: Dict = None,
     use_repo_path: bool = False,
 ):
@@ -61,6 +62,7 @@ async def get_pipeline_from_platform_async(
         mapping = repo_path_from_database_query_to_project_repo_path(
             'pipeline_schedules',
             repo_path=repo_path,
+            context_data=context_data,
         )
 
     if repo_path and not use_repo_path:

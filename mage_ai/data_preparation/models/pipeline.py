@@ -146,6 +146,7 @@ class Pipeline:
             self.load_config(config, catalog=catalog)
 
         self.context_data = dict()
+        self._project = None
 
     @classmethod
     def build_config_path(
@@ -233,6 +234,16 @@ class Pipeline:
             PIPELINES_FOLDER,
             self.uuid,
         )
+
+    @property
+    def project(self):
+        if self._project is not None:
+            return self._project
+
+        from mage_ai.data_preparation.models.project import Project
+
+        self._project = Project(context_data=self.context_data, repo_config=self.repo_config)
+        return self._project
 
     @property
     def remote_variables_dir(self):
@@ -457,7 +468,7 @@ class Pipeline:
             use_repo_path=use_repo_path,
         )
 
-        if check_if_exists and not os.path.exists(config_path):
+        if check_if_exists and (not config_path or not os.path.exists(config_path)):
             return None
 
         pipeline = cls(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
@@ -579,7 +590,7 @@ class Pipeline:
                 PIPELINE_CONFIG_FILE,
             )
 
-        if not os.path.exists(config_path):
+        if not config_path or not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
             config = yaml.safe_load(await f.read()) or {}

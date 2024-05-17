@@ -67,8 +67,8 @@ def activate_project(project_name: str, user=None) -> None:
 
 # default repo_path will be the root project repo path if not provided downstream
 def build_repo_path_for_all_projects(
-    context_data: Dict = None,
     repo_path: str = None,
+    context_data: Dict = None,
     mage_projects_only: bool = False
 ) -> Dict:
     # from mage_ai.shared.custom_logger import DX_PRINTER
@@ -76,8 +76,8 @@ def build_repo_path_for_all_projects(
     # DX_PRINTER.print_call_stack()
     mapping = {}
     settings = project_platform_settings(
-        context_data=context_data,
         repo_path=repo_path,
+        context_data=context_data,
         mage_projects_only=mage_projects_only,
     )
     root_project_path = base_repo_path()
@@ -100,15 +100,24 @@ def build_repo_path_for_all_projects(
 def repo_path_from_database_query_to_project_repo_path(
     key: str,
     repo_path: str = None,
+    context_data: Dict = None,
 ) -> Dict:
     mapping = {}
 
-    repo_paths = build_repo_path_for_all_projects(repo_path=repo_path, mage_projects_only=True)
+    repo_paths = build_repo_path_for_all_projects(
+        repo_path=repo_path,
+        context_data=context_data,
+        mage_projects_only=True,
+    )
     for paths in repo_paths.values():
         full_path = paths['full_path']
         mapping[full_path] = full_path
 
-    settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
+    settings = project_platform_settings(
+        repo_path=repo_path,
+        context_data=context_data,
+        mage_projects_only=True,
+    )
     for project_name, setting in settings.items():
         query_arr_paths = []
         query_arr = dig(setting, ['database', 'query', key])
@@ -356,8 +365,8 @@ def active_project_settings(
 
 
 def project_platform_settings(
-    context_data: Dict = None,
     repo_path: str = None,
+    context_data: Dict = None,
     mage_projects_only: bool = False,
     user=None,
 ) -> Dict:

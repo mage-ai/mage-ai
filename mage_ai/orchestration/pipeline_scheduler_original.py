@@ -1700,6 +1700,7 @@ def gen_pipeline_with_schedules_single_project(
             pipeline = Pipeline.get(pipeline_uuid, repo_path=get_repo_path())
         except Exception as e:
             print(f'Error fetching pipeline {pipeline_uuid}: {e}')
+            traceback.print_exc()
             continue
         yield pipeline_uuid, pipeline, active_schedules
 
@@ -1769,6 +1770,7 @@ def gen_pipeline_with_schedules_project_platform(
                 )
             except Exception as e:
                 print(f'Error fetching pipeline {pipeline_uuid}: {e}')
+                traceback.print_exc()
                 continue
             yield pipeline_uuid, pipeline, active_schedules
 

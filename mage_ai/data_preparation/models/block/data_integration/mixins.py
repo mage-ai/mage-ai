@@ -216,12 +216,11 @@ class DataIntegrationMixin:
             bool: True if it's a data integration block, False otherwise.
         """
         if not self.pipeline:
-
             return False
 
         actual_project: Project = pipeline_project
         if not actual_project:
-            actual_project = Project(repo_config=self.pipeline.repo_config)
+            actual_project = self.pipeline.project
 
         if not actual_project.is_feature_enabled(
                         FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
