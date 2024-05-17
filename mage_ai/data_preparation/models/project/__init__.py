@@ -21,9 +21,9 @@ from mage_ai.shared.hash import dig
 class Project:
     def __init__(
         self,
-        context_data: Dict = None,
         repo_config=None,
         repo_path: Optional[str] = None,
+        context_data: Dict = None,
         root_project: bool = False,
         user=None,
     ):

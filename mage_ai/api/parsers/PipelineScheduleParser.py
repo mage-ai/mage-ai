@@ -40,7 +40,7 @@ async def parse_write(
     if not pipeline:
         pipeline = parser.policy.resource.pipeline
 
-    if Project(pipeline.repo_config if pipeline else None).is_feature_enabled(
+    if Project(repo_config=pipeline.repo_config if pipeline else None).is_feature_enabled(
         FeatureUUID.INTERACTIONS,
     ):
         pipeline_interaction = (parser.policy.result_set().context.data or {}).get(

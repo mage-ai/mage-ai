@@ -588,7 +588,7 @@ class PipelineResource(BaseResource):
     ):
         pipeline_uuid = urllib.parse.unquote(pk)
         user = kwargs.get('user')
-        repo_path = get_repo_path(user=user)
+        repo_path = get_repo_path(context_data=kwargs.get('context_data'), user=user)
         return await self.__fetch_model(pipeline_uuid, repo_path, **kwargs)
 
     @classmethod

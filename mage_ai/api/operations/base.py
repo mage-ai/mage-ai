@@ -753,6 +753,7 @@ class BaseOperation():
                 try:
                     model = parent_resource_class.get_model(
                         self.resource_parent_id,
+                        context_data=self.context.data,
                         query=self.query,
                         resource_class=self.__resource_class(),
                         resource_id=self.pk,
