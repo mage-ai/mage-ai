@@ -28,6 +28,7 @@ class Project:
         user=None,
     ):
         print(f'Project context_data {id(context_data)} {context_data}')
+        self.context_data = context_data
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(
             root_project=self.root_project,
@@ -71,7 +72,7 @@ class Project:
     @property
     def workspace_config_defaults(self) -> Dict:
         config = self.repo_config.workspace_config_defaults or {}
-        cluster_type = get_cluster_type()
+        cluster_type = get_cluster_type(repo_path=self.repo_path)
         try:
             if cluster_type == ClusterType.K8S:
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
@@ -212,7 +213,10 @@ class Project:
         return [self.repo_path]
 
     def projects(self) -> Dict:
-        return project_platform_settings(mage_projects_only=True)
+        return project_platform_settings(
+            context_data=self.context_data,
+            mage_projects_only=True
+        )
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.features.get(feature_name.value, False)
