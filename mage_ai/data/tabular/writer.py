@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import shutil
+import time
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
@@ -171,7 +172,7 @@ def to_parquet(
 
     # Overwrite logic: delete existing data before writing
     if replace and os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
+        safe_delete_dir(output_dir)
         print(f"Existing data in '{output_dir}' has been deleted for replace mode.")
 
     if chunk_size or num_buckets:
@@ -194,3 +195,21 @@ def to_parquet(
         f'{total_rows} rows with {total_columns} columns '
         f"written to '{output_dir}' across {num_partitions} partitions."
     )
+
+
+def safe_delete_dir(output_dir):
+    max_attempts = 5
+    for attempt in range(max_attempts):
+        try:
+            shutil.rmtree(output_dir)
+            print(f'Successfully deleted {output_dir}')
+            break  # Successfully deleted; exit the loop
+        except OSError as err:
+            if attempt < max_attempts - 1:
+                time.sleep(2)  # Wait a bit for retry
+                continue
+            else:
+                print(
+                    f'Failed to delete {output_dir} after {max_attempts} attempts: {err}'
+                )
+                raise err

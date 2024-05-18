@@ -1,6 +1,7 @@
 import json
 import os
 from functools import reduce
+from math import ceil
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pandas as pd
@@ -11,7 +12,10 @@ import pyarrow.parquet as pq
 
 from mage_ai.data.tabular.constants import (
     COLUMN_CHUNK,
-    DEFAULT_BATCH_SIZE,
+    DEFAULT_BATCH_BYTE_VALUE,
+    DEFAULT_BATCH_COUNT_VALUE,
+    DEFAULT_BATCH_ITEMS_VALUE,
+    BatchStrategy,
     FilterComparison,
 )
 from mage_ai.data.tabular.models import BatchSettings
@@ -105,6 +109,9 @@ def read_metadata(
     """
     file_details_list = []
 
+    num_rows_total = 0
+    total_byte_size = 0  # Initialize total byte size
+
     # List all Parquet files in the directory
     parquet_files = []
     for root, dirs, files in os.walk(directory):
@@ -112,11 +119,16 @@ def read_metadata(
             if file.endswith('.parquet'):
                 parquet_files.append(os.path.join(root, file))
 
-    num_rows_total = 0
     schema_combined = {}
 
     for file_path in parquet_files:
         file_details = {'file_path': file_path}
+        file_stats = os.stat(file_path)  # Get file statistics
+
+        # Use file size from file system
+        file_byte_size = file_stats.st_size
+        total_byte_size += file_byte_size  # Aggregate byte size
+        file_details['byte_size'] = file_byte_size
 
         # Read only the metadata of the Parquet file
         parquet_file = None
@@ -206,6 +218,7 @@ def read_metadata(
         'num_partitions': len(file_details_list),
         'num_rows': num_rows_total,
         'schema': schema_combined,
+        'total_byte_size': total_byte_size,  # Return total byte size
     }
 
 
@@ -274,20 +287,33 @@ def deserialize_batch(
     return pl.from_arrow(table)
 
 
-def get_all_objects_metadata(source: Union[List[str], str]) -> List[Dict[str, str]]:
+def get_all_objects_metadata(
+    metadatas: Optional[List[Any]] = None,
+    source: Optional[Union[List[str], str]] = None,
+) -> List[Dict[str, str]]:
+    if metadatas is None and source is not None:
+        metadatas = [
+            read_metadata(directory)
+            for directory in (source if isinstance(source, list) else [source])
+        ]
+
+    if metadatas is None:
+        return []
+
     return flatten(
         [
             [
                 get_object_metadata(get_file_metadata(file_details))
-                for file_details in get_file_details(read_metadata(directory))
+                for file_details in get_file_details(metadata)
             ]
-            for directory in (source if isinstance(source, list) else [source])
+            for metadata in metadatas
         ]
     )
 
 
 def get_series_object_metadata(
-    source: Union[List[str], str],
+    metadatas: Optional[List[Any]] = None,
+    source: Optional[Union[List[str], str]] = None,
 ) -> Optional[Dict[str, str]]:
     def __check(object_metadata: Dict[str, str]) -> bool:
         return compare_object(
@@ -298,12 +324,13 @@ def get_series_object_metadata(
             object_metadata,
         )
 
-    return find(__check, get_all_objects_metadata(source))
+    return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
 def scan_batch_datasets(
     source: Union[List[str], str],
-    batch_size: Optional[int] = DEFAULT_BATCH_SIZE,
+    batch_strategy: Optional[BatchStrategy] = None,
+    batch_value: Optional[int] = None,
     chunks: Optional[List[int]] = None,
     columns: Optional[List[str]] = None,
     deserialize: Optional[bool] = False,
@@ -313,8 +340,58 @@ def scan_batch_datasets(
     scan: Optional[bool] = False,
     settings: Optional[BatchSettings] = None,
 ) -> Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]]:
+    """
+    Scans and optionally deserializes batches of records from a dataset.
+
+    Parameters:
+    - source: Union[List[str], str] - The path(s) to the dataset(s) in Parquet format.
+    - batch_value: Optional[int] = DEFAULT_BATCH_SIZE - The number of records to include
+        in each batch.
+    - chunks: Optional[List[int]] = None - Specific chunks of the dataset to scan.
+    - columns: Optional[List[str]] = None - Specific columns to include in the output.
+    - deserialize: Optional[bool] = False - Whether to deserialize the scanned batches into a
+        more user-friendly format.
+    - filter: Optional[ds.Expression] = None - A single filter expression to apply to the dataset.
+    - filters: Optional[List[List[str]]] = None - A list of filter expressions to apply to
+        the dataset.
+    - return_generator: Optional[bool] = False - Whether to return a generator or directly
+        yield the batches.
+    - scan: Optional[bool] = False - Whether to use the scanner interface, which can be more
+        efficient for certain operations.
+        Use scan_batches which yields record batches directly from the scan operation
+    - settings: Optional[BatchSettings] = None - Additional settings for batch scanning,
+        not used in this function but provided for extension.
+
+    Returns:
+    Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
+        An iterator over the scanned (and optionally deserialized) batches of records.
+    """
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
-    object_metadata = get_series_object_metadata(source)
+    metadatas = []
+    for directory in source if isinstance(source, list) else [source]:
+        metadatas.append(read_metadata(directory))
+    object_metadata = get_series_object_metadata(metadatas=metadatas)
+
+    num_rows_total, total_byte_size = reduce(
+        lambda acc, metadata: (
+            acc[0] + metadata['num_rows'],
+            acc[1] + metadata['total_byte_size'],
+        ),
+        metadatas,
+        (0, 0),
+    )
+
+    batch_strategy = batch_strategy or BatchStrategy.ITEMS
+    if BatchStrategy.ITEMS == batch_strategy:
+        batch_size = batch_value or DEFAULT_BATCH_ITEMS_VALUE
+    elif BatchStrategy.BYTES == batch_strategy:
+        batch_value = batch_value or DEFAULT_BATCH_BYTE_VALUE
+        batch_size = calculate_batch_value(batch_value, num_rows_total, total_byte_size)
+    elif BatchStrategy.COUNT == batch_strategy:
+        batch_value = batch_value or DEFAULT_BATCH_COUNT_VALUE
+        batch_size = ceil(num_rows_total / batch_value)
+    else:
+        batch_size = DEFAULT_BATCH_ITEMS_VALUE
 
     filters_list = []
     if chunks:
@@ -346,7 +423,12 @@ def scan_batch_datasets(
     if len(filters_list) >= 1:
         expression = reduce(lambda a, b: a & b, filters_list)
 
-    # Use scan_batches which yields record batches directly from the scan operation
+    """
+    - `batch_size` controls how many rows are included in each batch.
+    - `columns`, if specified, controls which columns are loaded.
+    - `filter` allows filtering rows based on specific criteria before they are loaded.
+    - `use_threads=True` enables multithreading to potentially speed up the data loading process.
+    """
     scanner_settings = dict(
         batch_size=batch_size,
         columns=columns,
@@ -376,53 +458,13 @@ def scan_batch_datasets(
             )
 
 
-# dataset = ds.dataset('test_data', format='parquet', partitioning='hive')
-# dataset.count_rows()  # 161_061_270
+def calculate_batch_value(
+    max_batch_value_bytes: int,
+    total_row_count: int,
+    total_byte_size: int,
+):
+    # Estimate the byte size per row
+    estimated_bytes_per_row = total_byte_size / total_row_count
 
-
-# def batch_dataset_by_size(
-#     dataset,
-#     max_batch_size_bytes,
-#     num_rows_to_estimate=1000,
-# ):
-#     pass
-
-
-# import pyarrow as pa
-# import pyarrow.dataset as ds
-
-
-# def batch_dataset_by_size(dataset, max_batch_size_bytes, num_rows_to_estimate=1000):
-#     # Estimate the byte size per row
-#     num_rows_to_estimate = min(num_rows_to_estimate, dataset.count_rows())
-#     sample_rows = dataset.take(indices=num_rows_to_estimate)
-#     estimated_bytes_per_row = sample_rows.get_total_buffer_size() / num_rows_to_estimate
-
-#     # Calculate the number of rows per batch based on the maximum batch size
-#     rows_per_batch = max(1, int(max_batch_size_bytes / estimated_bytes_per_row))
-
-#     # Batch the dataset
-#     batches = dataset.to_batches(batch_size=rows_per_batch)
-
-#     return batches
-
-
-# # Usage example
-# dataset = ds.dataset("path/to/dataset")
-# max_batch_size_bytes = 100 * 1024 * 1024  # 100 MB
-# num_rows_to_estimate = 1000
-
-# batches = batch_dataset_by_size(dataset, max_batch_size_bytes, num_rows_to_estimate)
-
-# # Iterate over the batches
-# for batch in batches:
-#     # Process each batch
-#     print(f"Batch size: {batch.num_rows} rows, {batch.get_total_buffer_size()} bytes")
-
-
-# for i in parquet_file.iter_batches(batch_size=1000):
-#     print(i)
-
-# batches = dataset.to_batches(batch_size=max_rows_per_batch)
-
-# batch_size
+    # Calculate the number of rows per batch based on the maximum batch size
+    return max(1, int(max_batch_value_bytes / estimated_bytes_per_row))

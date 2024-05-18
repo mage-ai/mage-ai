@@ -114,3 +114,6 @@ services:
       - server_spark
   test-frontend:
     <<: *app_settings
+  py:
+    <<: *server_settings
+    ports: []

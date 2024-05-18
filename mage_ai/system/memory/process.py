@@ -4,6 +4,7 @@ import os
 import sys
 import tracemalloc
 from multiprocessing import Process, Queue
+from typing import Any, Dict, List, Tuple
 
 import psutil
 
@@ -56,10 +57,14 @@ def track_usage(queue):
 
 def wrapped_func(queue, code_string, func_name, *args, **kwargs):
     # Prepare a namespace dict where the executed code will live
-    namespace = {}
+    namespace = (
+        globals().copy()
+    )  # This copies the current global symbols to the namespace
 
     # Execute the code_string within the namespace
-    exec(code_string, globals(), namespace)
+    exec(
+        code_string, namespace, namespace
+    )  # Now both global and local scopes are the same
 
     # Now, retrieve the function from this namespace
     actual_function = namespace.get(func_name)
@@ -75,7 +80,9 @@ def wrapped_func(queue, code_string, func_name, *args, **kwargs):
         queue.put(None)
 
 
-def begin_working():
+def begin_working(jobs: List[Tuple[str, str, List[Any], Dict[str, Any]]]):
+    gc.collect()  # Force a collection to start from a clean slate
+
     queue = Queue()
 
     tracemalloc.start()
@@ -84,20 +91,8 @@ def begin_working():
     snapshot_before = tracemalloc.take_snapshot()
 
     num_processes = 0
-    for file_path, func_name, args, kwargs in [
-        (
-            '/Users/dangerous/Code/materia/mage-ai/mage_ai/system/memory/samples.py',
-            'worker',
-            (1,),
-            dict(another_arg=2),
-        ),
-        (
-            '/Users/dangerous/Code/materia/mage-ai/mage_ai/system/memory/samples.py',
-            'create_objects_example',
-            (1000,),
-            dict(),
-        ),
-    ]:
+    for file_path, func_name, args, kwargs in jobs:
+        print(f'Processing {func_name} in {file_path}')
         with open(file_path, 'r') as file:
             code_string = file.read()
 
@@ -113,7 +108,7 @@ def begin_working():
         )
         p.start()
         num_processes += 1
-        p.join(timeout=10)  # Adjust the timeout as needed
+        p.join(timeout=10 * 60)  # Adjust the timeout as needed
         if p.is_alive():
             print(f'Process {p.name} did not terminate as expected.')
             p.terminate()  # Forcefully terminate
@@ -132,10 +127,13 @@ def begin_working():
             continue  # Skip the rest of the loop
         # Existing code to process non-sentinel items...
 
-        memory_uses.append(memory_usage_info['memory_used'])
-        func_names.append(memory_usage_info['function_name'])
-        process_ids.append(memory_usage_info['process_id'])
-        uncollected_objects.extend(memory_usage_info['uncollected_objects'])
+        if 'error' in memory_usage_info:
+            raise Exception(memory_usage_info['error'])
+
+        memory_uses.append(memory_usage_info.get('memory_used'))
+        func_names.append(memory_usage_info.get('function_name'))
+        process_ids.append(memory_usage_info.get('process_id'))
+        uncollected_objects.extend(memory_usage_info.get('uncollected_objects') or [])
 
     print(f'Total memory used: {sum(memory_uses)} bytes across:')
     for func_name, process_id in zip(func_names, process_ids):
@@ -196,8 +194,23 @@ def begin_working():
             print('\t', stat.size_diff)
             print('\n')
 
+    gc.collect()  # Force a collection to start from a clean slate
+
 
 if __name__ == '__main__':
-    gc.collect()  # Force a collection to start from a clean slate
-    begin_working()
-    gc.collect()  # Force a collection to start from a clean slate
+    begin_working(
+        [
+            (
+                '/Users/dangerous/Code/materia/mage-ai/mage_ai/system/memory/samples.py',
+                'worker',
+                [1],
+                dict(another_arg=2),
+            ),
+            (
+                '/Users/dangerous/Code/materia/mage-ai/mage_ai/system/memory/samples.py',
+                'create_objects_example',
+                [1000],
+                dict(),
+            ),
+        ]
+    )
