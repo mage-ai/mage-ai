@@ -23,6 +23,8 @@ type OutputRendererProps = {
   index?: number;
   output: OutputType;
   onTabChangeCallback?: (tab: TabType) => void;
+  selected: boolean;
+  singleOutput?: boolean;
 } & OutputRowProps;
 
 function OutputRenderer({
@@ -31,6 +33,8 @@ function OutputRenderer({
   index,
   onTabChangeCallback,
   output,
+  selected,
+  singleOutput,
   ...outputRowSharedProps
 }: OutputRendererProps) {
   const themeContext = useContext(ThemeContext);
@@ -56,7 +60,7 @@ function OutputRenderer({
   );
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
-  if ((DataTypeEnum.GROUP === dataType || multiOutput) && outputsLength >= 1) {
+  if ((DataTypeEnum.GROUP === dataType || multiOutput || singleOutput) && outputsLength >= 1) {
     const el = (
       <MultiOutput
         color={blockColor?.accent}
@@ -83,6 +87,7 @@ function OutputRenderer({
                   index={index}
                   onTabChangeCallback={onTabChangeCallback}
                   output={ignoreKeys(item, ['multi_output', 'outputs'])}
+                  selected={selected}
                 />
               </>
             );
@@ -97,18 +102,18 @@ function OutputRenderer({
     }
 
     return el;
-  } else if (DataTypeEnum.TEXT === dataType) {
-    return <TextOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
     return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
-  } else if (DataTypeEnum.TEXT_PLAIN === dataType) {
-    return <TextOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {
-    return <TableOutput containerWidth={containerWidth} output={output} />;
+    return <TableOutput containerWidth={containerWidth} output={output} selected={selected} />;
   } else if (DataTypeEnum.IMAGE_PNG === dataType) {
     return <ImageOutput data={textValue} />;
   } else {
-    return <TextOutput {...outputRowSharedProps} value={textValue} />;
+    return <TextOutput {...{
+      ...outputRowSharedProps,
+      first: true,
+      last: true,
+    }} value={textValue} />;
   }
 }
 

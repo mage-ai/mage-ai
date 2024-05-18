@@ -44,6 +44,9 @@ def __custom_output():
     if block.executable:
         outputs = block.get_outputs()
 
+        if outputs is not None and isinstance(outputs, list):
+            outputs = outputs[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
+
         if outputs is not None and len(outputs) >= 1:
             _json_string = simplejson.dumps(
                 outputs,

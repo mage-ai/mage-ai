@@ -23,7 +23,7 @@ type TableOutputProps = {
   setShapeCallback?: (shape: number[]) => void;
   borderTop?: boolean;
   multiOutputInit?: boolean;
-  selected?: boolean;
+  selected: boolean;
   uuid?: string;
 };
 

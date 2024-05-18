@@ -17,7 +17,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.utils import infer_variable_type, is_primitive
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.hash import merge_dict
@@ -59,6 +59,8 @@ def format_output_data(
             data = pd.DataFrame(data).T
         else:
             data = data.to_frame()
+    elif VariableType.ITERABLE == variable_type and isinstance(data, list):
+        data = pd.Series(data).to_frame()
 
     if VariableType.MATRIX_SPARSE == variable_type:
         if automatic_sampling and not sample_count:
@@ -268,9 +270,9 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
             variable_uuid=variable_uuid,
         )
         return data, False
-    elif isinstance(data, str):
+    elif is_primitive(data):
         data = dict(
-            text_data=data,
+            text_data=str(data),
             type=DataType.TEXT,
             variable_uuid=variable_uuid,
         )
@@ -480,6 +482,7 @@ def handle_variables(
                 execution_partition=execution_partition,
                 variable_uuid=variable_uuid,
                 idx=idx,
+                idx_inner=idx_inner,
             ):
                 data, is_data_product = format_output_data(
                     block,
@@ -491,9 +494,9 @@ def handle_variables(
                 )
 
                 if is_data_product:
-                    data_products.append((idx, data, is_data_product))
+                    data_products.append(((idx, idx_inner), data, is_data_product))
                 else:
-                    outputs.append((idx, data, is_data_product))
+                    outputs.append(((idx, idx_inner), data, is_data_product))
 
             if (selected_variables and variable_uuid not in selected_variables) or (
                 exclude_blank_variable_uuids and variable_uuid.strip() == ''
@@ -531,7 +534,7 @@ def handle_variables(
     if len(data_products) >= len(outputs):
         arr_sorted = [x[1] for x in arr_sorted]
     else:
-        arr_sorted = [x[1] for x in arr]
+        arr_sorted = [x[1] for x in arr_sorted]
 
     if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
         for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:

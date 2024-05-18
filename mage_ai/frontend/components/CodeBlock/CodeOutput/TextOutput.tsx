@@ -19,6 +19,8 @@ function TextOutput({ value, ...outputRowSharedProps }: TextOutputProps) {
       textArr = value.map(v => v?.text_data);
     } else if (isObject(value)) {
       textArr = [value?.text_data];
+    } else {
+      textArr = [String(value)];
     }
   }
 
