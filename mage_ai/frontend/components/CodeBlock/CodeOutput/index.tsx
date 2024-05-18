@@ -317,13 +317,10 @@ function CodeOutput(
               }
 
               outputs?.forEach((item, idxInner) => {
-                if (isObject(item)
-                  && item?.type
-                  && (item?.variable_uuid
-                    || item?.data
-                    || item?.sample_data
-                    || item?.text_data
-                  )
+                if (
+                  isObject(item) &&
+                  item?.type &&
+                  (item?.variable_uuid || item?.data || item?.sample_data || item?.text_data)
                 ) {
                   if (item?.multi_output || DataTypeEnum.GROUP === item?.type) {
                     renderOutputMatches.push(item);
@@ -351,7 +348,6 @@ function CodeOutput(
                   });
                 }
               });
-
             } else {
               leftOverMessages.push(textData);
             }
@@ -367,8 +363,8 @@ function CodeOutput(
           DATA_TYPE_TEXTLIKE.includes(last?.type) &&
           last?.type === curr.type &&
           !isObject(combineTextData(currentData)) &&
-          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
-          && combineTextData(currentData)
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX) &&
+          combineTextData(currentData)
         ) {
           if (Array.isArray(last.data)) {
             last.data.concat(currentData);
@@ -377,9 +373,9 @@ function CodeOutput(
             last.data = [last.data, currentText].join('\n');
           }
         } else if (
-          DATA_TYPE_TEXTLIKE.includes(curr?.type)
-          && !isObject(combineTextData(currentData))
-          && !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+          DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+          !isObject(combineTextData(currentData)) &&
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
         ) {
           arr.push({
             ...curr,
@@ -439,24 +435,14 @@ function CodeOutput(
     value: string,
     outputRowSharedProps?: OutputRowProps,
   ): JSX.Element {
-    return (
-      <HTMLOutput
-        {...outputRowSharedProps}
-        value={value}
-      />
-    );
+    return <HTMLOutput {...outputRowSharedProps} value={value} />;
   }
 
   function buildDisplayForTextOutput(
     value: string | { text_data: string } | { text_data: string }[],
     outputRowSharedProps?: OutputRowProps,
   ): JSX.Element {
-    return (
-      <TextOutput
-        {...outputRowSharedProps}
-        value={value}
-      />
-    );
+    return <TextOutput {...outputRowSharedProps} value={value} />;
   }
 
   // @ts-ignore
@@ -622,8 +608,9 @@ function CodeOutput(
       const outputIsGroupedOutputs = DataTypeEnum?.GROUP === output?.type;
       const outputIsMultiOutputs = output?.multi_output && output?.outputs?.length >= 1;
 
-      if ((outputIsGroupedOutputs || outputIsMultiOutputs || singleOutput)
-        && (typeof output?.data !== 'string' || !output?.data?.match(INTERNAL_TEST_REGEX))
+      if (
+        (outputIsGroupedOutputs || outputIsMultiOutputs || singleOutput) &&
+        (typeof output?.data !== 'string' || !output?.data?.match(INTERNAL_TEST_REGEX))
       ) {
         arrContent.push(
           <OutputRenderer
@@ -848,11 +835,7 @@ function CodeOutput(
                 }
               } else if (DataTypeEnum.IMAGE_PNG === typeDisplay && textData) {
                 displayElement = (
-                  <ImageOutput
-                    data={textData}
-                    height={UNIT * 60}
-                    uuid={String(idxInner)}
-                  />
+                  <ImageOutput data={textData} height={UNIT * 60} uuid={String(idxInner)} />
                 );
               }
             }

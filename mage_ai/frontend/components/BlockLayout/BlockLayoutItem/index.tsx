@@ -156,7 +156,8 @@ function BlockLayoutItem({
 
   useEffect(() => {
     doFetch();
-  }, [doFetch]);
+    // @ts-ignore
+  }, []);
 
   const isLoading: boolean = useMemo(
     () => isLoadingProp && isLoadingFetchBlockLayoutItem,

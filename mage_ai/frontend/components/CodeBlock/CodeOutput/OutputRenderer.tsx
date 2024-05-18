@@ -115,11 +115,16 @@ function OutputRenderer({
       textValue = JSON.stringify(objectData, null, 2);
     }
 
-    return <TextOutput {...{
-      ...outputRowSharedProps,
-      first: true,
-      last: true,
-    }} value={textValue} />;
+    return (
+      <TextOutput
+        {...{
+          ...outputRowSharedProps,
+          first: true,
+          last: true,
+        }}
+        value={textValue}
+      />
+    );
   }
 }
 
