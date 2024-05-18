@@ -27,6 +27,7 @@ from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.yaml import trim_strings
 
 yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
@@ -82,14 +83,14 @@ class RepoConfig:
         self.workspace_shared_config = None
 
         from mage_ai.data_preparation.shared.utils import get_template_vars
+
         try:
             if not config_dict:
                 if os.path.exists(self.metadata_path):
                     with open(self.metadata_path) as f:
-                        config_file = Template(f.read()).render(
-                            **get_template_vars()
-                        )
+                        config_file = Template(f.read()).render(**get_template_vars())
                         repo_config = yaml.full_load(config_file) or {}
+                        repo_config = trim_strings(repo_config)
                 else:
                     repo_config = dict()
             else:
@@ -122,8 +123,9 @@ class RepoConfig:
 
             # Executor configs
             self.ai_config = repo_config.get('ai_config', dict())
-            self.azure_container_instance_config = \
-                repo_config.get('azure_container_instance_config')
+            self.azure_container_instance_config = repo_config.get(
+                'azure_container_instance_config'
+            )
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config') or dict()
             self.features = repo_config.get('features', {})
@@ -137,15 +139,21 @@ class RepoConfig:
             self.openai_api_key = repo_config.get('openai_api_key')
             self.pipelines = repo_config.get('pipelines')
             self.retry_config = repo_config.get('retry_config')
-            self.workspace_config_defaults = repo_config.get('workspace_config_defaults')
-            self.workspace_initial_metadata = repo_config.get('workspace_initial_metadata')
+            self.workspace_config_defaults = repo_config.get(
+                'workspace_config_defaults'
+            )
+            self.workspace_initial_metadata = repo_config.get(
+                'workspace_initial_metadata'
+            )
 
             self.ldap_config = repo_config.get('ldap_config')
 
             self.s3_bucket = None
             self.s3_path_prefix = None
-            if self.remote_variables_dir is not None and \
-                    self.remote_variables_dir.startswith('s3://'):
+            if (
+                self.remote_variables_dir is not None
+                and self.remote_variables_dir.startswith('s3://')
+            ):
                 path_parts = self.remote_variables_dir.replace('s3://', '').split('/')
                 self.s3_bucket = path_parts.pop(0)
                 self.s3_path_prefix = '/'.join(path_parts)
@@ -154,7 +162,9 @@ class RepoConfig:
 
             self.logging_config = repo_config.get('logging_config', dict())
 
-            self.variables_retention_period = repo_config.get('variables_retention_period')
+            self.variables_retention_period = repo_config.get(
+                'variables_retention_period'
+            )
         except Exception as err:
             traceback.print_exc()
             if is_debug():
@@ -213,7 +223,7 @@ class RepoConfig:
             spark_config=self.spark_config,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
             variables_retention_period=self.variables_retention_period,
-            workspace_config_defaults=self.workspace_config_defaults
+            workspace_config_defaults=self.workspace_config_defaults,
         )
 
     def save(self, **kwargs) -> None:
@@ -289,6 +299,7 @@ def get_repo_config(repo_path: str = None, root_project: bool = False) -> RepoCo
 
 def get_project_type(repo_path=None) -> ProjectType:
     from mage_ai.settings.repo import MAGE_PROJECT_TYPE_ENV_VAR
+
     try:
         project_type_from_env = os.getenv(MAGE_PROJECT_TYPE_ENV_VAR)
         if project_type_from_env:
@@ -302,6 +313,7 @@ def get_project_type(repo_path=None) -> ProjectType:
 
 def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
     from mage_ai.settings.repo import MAGE_CLUSTER_TYPE_ENV_VAR
+
     try:
         cluster_type_from_env = os.getenv(MAGE_CLUSTER_TYPE_ENV_VAR)
         if cluster_type_from_env:
@@ -371,7 +383,7 @@ def get_repo_path() -> str:
     warn(
         'repo_manager.get_repo_path is deprecated. Please use mage_ai.settings.repo.get_repo_path',
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     return get_repo_path_new()
 

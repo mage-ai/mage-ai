@@ -9,6 +9,7 @@ export enum ExecutionStateEnum {
 export enum DataTypeEnum {
   GROUP = 'group',
   IMAGE_PNG = 'image/png',
+  OBJECT = 'object',
   PROGRESS = 'progress',
   TABLE = 'table',
   TEXT = 'text',

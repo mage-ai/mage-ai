@@ -21,7 +21,11 @@ from mage_ai.data_preparation.models.utils import infer_variable_type, is_primit
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.parsers import convert_matrix_to_dataframe, encode_complex
+from mage_ai.shared.parsers import (
+    convert_matrix_to_dataframe,
+    encode_complex,
+    has_to_dict,
+)
 
 
 def format_output_data(
@@ -86,14 +90,16 @@ def format_output_data(
             sample_count=sample_count,
         )
     elif VariableType.CUSTOM_OBJECT == variable_type:
-        return (
-            dict(
-                text_data=encode_complex(data),
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            ),
-            True,
+        return_output = dict(
+            text_data=encode_complex(data),
+            variable_uuid=variable_uuid,
         )
+        if has_to_dict(data):
+            return_output['type'] = DataType.OBJECT
+        else:
+            return_output['type'] = DataType.TEXT
+
+        return return_output, True
     elif (
         VariableType.MODEL_SKLEARN == variable_type
         or VariableType.MODEL_XGBOOST == variable_type

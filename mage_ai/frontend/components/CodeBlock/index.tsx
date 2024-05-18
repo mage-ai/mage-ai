@@ -1639,8 +1639,8 @@ function CodeBlock({
       return (
         <DataIntegrationBlock
           block={block}
-          blocksMapping={blocksMapping}
           blockContent={content}
+          blocksMapping={blocksMapping}
           callbackEl={callbackEl}
           codeEditor={editorEl}
           hasElementsBelow={messages?.length >= 1 || !!blockExtras}
@@ -1868,7 +1868,7 @@ function CodeBlock({
           : null
         }
         openSidekickView={openSidekickView}
-        outputRowNormalPadding={sideBySideEnabled || isDataIntegration || sparkEnabled}
+        outputRowNormalPadding
         pipeline={pipeline}
         ref={blockOutputRef}
         runCount={runCount}
@@ -2281,7 +2281,7 @@ function CodeBlock({
   }, [
     blockInteractionsMemo,
     selectedSubheaderTabUUID,
-    variables
+    variables,
   ]);
 
   const headerTabs = useMemo(() => {
@@ -2485,13 +2485,13 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
           ...collected,
         }}
         className="code-block-header-sticky"
+        noSticky={sideBySideEnabled}
         onClick={() => onClickSelectBlock()}
         ref={disableDrag ? null : drag}
         zIndex={!sideBySideEnabled
           ? blocksLength + 1 - (blockIdx || 0)
           : null
         }
-        noSticky={sideBySideEnabled}
       >
         {childrenInner}
       </BlockHeaderStyle>
@@ -2759,7 +2759,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   <div style={{ height: 1, width: UNIT }} />
                 </Flex>
               </FlexContainer>
-            </Spacing>
+            </Spacing>,
           )}
 
           <ContainerStyle onClick={() => onClickSelectBlock()}>
@@ -3486,7 +3486,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                                 >
                                   {blockUUID}
                                 </Text>
-                              </Link>
+                              </Link>,
                             );
 
                             const count = blockUpstreamBlocks?.length || 0;
@@ -3499,7 +3499,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                                   small
                                 >
                                   ,&nbsp;&nbsp;
-                                </Text>
+                                </Text>,
                               );
                             }
 

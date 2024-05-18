@@ -110,6 +110,17 @@ function TableOutput({
     );
   }
 
+  if (!columns?.length) {
+    return (
+      <Spacing mx={5} my={3}>
+        <Text monospace warning>
+          Block output table could not be rendered due to missing column headers. Please check your
+          data’s column headers.
+        </Text>
+      </Spacing>
+    );
+  }
+
   return (
     <DataTable
       columns={columns}

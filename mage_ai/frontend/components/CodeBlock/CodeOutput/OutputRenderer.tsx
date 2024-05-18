@@ -15,7 +15,7 @@ import { OutputRowProps } from './index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { getColorsForBlockType } from '../index.style';
-import { ignoreKeys } from '@utils/hash';
+import { ignoreKeys, isObject } from '@utils/hash';
 
 type OutputRendererProps = {
   block: BlockType;
@@ -54,7 +54,7 @@ function OutputRenderer({
       }),
     [block, themeContext],
   );
-  const textValue = useMemo(
+  let textValue = useMemo(
     () => textData || (typeof data === 'string' ? data : ''),
     [data, textData],
   );
@@ -109,6 +109,12 @@ function OutputRenderer({
   } else if (DataTypeEnum.IMAGE_PNG === dataType) {
     return <ImageOutput data={textValue} />;
   } else {
+    const objectData = [data || textData]?.find(obj => obj && isObject(obj));
+
+    if (DataTypeEnum.OBJECT === dataType && objectData) {
+      textValue = JSON.stringify(objectData, null, 2);
+    }
+
     return <TextOutput {...{
       ...outputRowSharedProps,
       first: true,
