@@ -75,11 +75,14 @@ class VersionControlProjectResource(VersionControlErrors, AsyncBaseResource):
                 self.current_user,
                 repo_path=self.model.repo_path,
             )
-            self.model.sync_config = await SyncResource.presenter_class()(
+            result = SyncResource.presenter_class()(
                 sync_resource,
                 self.current_user,
                 **kwargs,
             ).present()
+            if result and inspect.isawaitable(result):
+                result = await result
+            self.model.sync_config = result
 
         self.model.update_attributes()
         self.validate_output()
