@@ -249,7 +249,7 @@ function estimateCellHeight({
   }
 
   const columns = original.length;
-  const maxLength = Math.max(...original.map(val => val?.length || 0));
+  const maxLength = Math.max(...original.map(val => String(val)?.length || 0));
   const totalWidth = maxLength * WIDTH_OF_CHARACTER;
 
   const columnWidth = columns * totalWidth;
@@ -350,8 +350,10 @@ function Table({ ...props }: TableProps) {
       refListOuter.current.addEventListener('scroll', onScrollCallback);
     }
 
+    const listOuter = refListOuter.current;
+
     return () => {
-      refListOuter?.current?.removeEventListener('scroll', onScrollCallback);
+      listOuter?.removeEventListener('scroll', onScrollCallback);
     };
   }, [
     refHeader,
