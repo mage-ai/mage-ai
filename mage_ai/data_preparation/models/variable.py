@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import traceback
 from contextlib import contextmanager
@@ -61,6 +63,7 @@ class Variable:
         storage: Optional[BaseStorage] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        data_manager: Optional[Any] = None,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -78,7 +81,7 @@ class Variable:
         self.variable_dir_path = os.path.join(
             pipeline_path,
             VARIABLE_DIR,
-            partition or "",
+            partition or '',
             self.block_dir_name,
         )
         if not self.storage.path_exists(self.variable_dir_path):
@@ -87,9 +90,11 @@ class Variable:
         self.variable_type = variable_type
         self.check_variable_type(spark=spark)
 
+        self.data_manager = data_manager
+
     @property
     def variable_path(self):
-        return os.path.join(self.variable_dir_path, self.uuid or "")
+        return os.path.join(self.variable_dir_path, self.uuid or '')
 
     @property
     def metadata_path(self):
@@ -110,7 +115,7 @@ class Variable:
                     metadata = self.storage.read_json_file(
                         self.metadata_path, raise_exception=True
                     )
-                    self.variable_type = metadata.get("type")
+                    self.variable_type = metadata.get('type')
             except Exception:
                 traceback.print_exc()
 
@@ -122,12 +127,12 @@ class Variable:
         elif (
             self.variable_type == VariableType.DATAFRAME or self.variable_type is None
         ) and os.path.exists(
-            os.path.join(self.variable_path, f"{self.uuid}", "data.sh")
+            os.path.join(self.variable_path, f'{self.uuid}', 'data.sh')
         ):
             self.variable_type = VariableType.GEO_DATAFRAME
         elif (
             self.variable_type is None
-            and len(self.storage.listdir(self.variable_path, suffix=".parquet")) > 0
+            and len(self.storage.listdir(self.variable_path, suffix='.parquet')) > 0
             and spark is not None
         ):
             self.variable_type = VariableType.SPARK_DATAFRAME
@@ -149,7 +154,7 @@ class Variable:
         Delete the variable data.
         """
         if self.variable_type is None and self.storage.path_exists(
-            os.path.join(self.variable_dir_path, f"{self.uuid}", DATAFRAME_PARQUET_FILE)
+            os.path.join(self.variable_dir_path, f'{self.uuid}', DATAFRAME_PARQUET_FILE)
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
@@ -161,11 +166,11 @@ class Variable:
 
     def read_data(
         self,
-        dataframe_analysis_keys: List[str] = None,
+        dataframe_analysis_keys: Optional[List[str]] = None,
         raise_exception: bool = False,
         sample: bool = False,
-        sample_count: int = None,
-        spark=None,
+        sample_count: Optional[int] = None,
+        spark: Optional[Any] = None,
     ) -> Any:
         """
         Read variable data.
@@ -348,6 +353,10 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
+
+        if self.data_manager and self.data_manager.writeable(self, data):
+            return self.data_manager.write_sync(self, data)
+
         if (
             isinstance(data, pd.Series)
             and self.variable_type != VariableType.SERIES_PANDAS
@@ -413,6 +422,9 @@ class Variable:
         Args:
             data (Any): Variable data to be written to storage.
         """
+        if self.data_manager and self.data_manager.writeable(self, data):
+            return await self.data_manager.self(self, data)
+
         if self.variable_type is None and isinstance(data, pd.DataFrame):
             self.variable_type = VariableType.DATAFRAME
         elif self.variable_type is None and isinstance(data, pl.DataFrame):
@@ -477,15 +489,15 @@ class Variable:
 
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
-            file_path = os.path.join(self.variable_path, f"{k}.json")
+            file_path = os.path.join(self.variable_path, f'{k}.json')
             if self.storage.path_exists(file_path):
                 try:
                     self.storage.remove(file_path)
                 except FileNotFoundError as err:
-                    print(f"Error deleting file {file_path}: {err}")
+                    print(f'Error deleting file {file_path}: {err}')
 
     def __delete_json(self) -> None:
-        old_file_path = os.path.join(self.variable_dir_path, f"{self.uuid}.json")
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         if self.storage.path_exists(old_file_path):
             self.storage.remove(old_file_path)
         if self.storage.isdir(self.variable_path):
@@ -507,7 +519,7 @@ class Variable:
         if default_value is None:
             default_value = {}
         # For backward compatibility
-        old_file_path = os.path.join(self.variable_dir_path, f"{self.uuid}.json")
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         file_path = os.path.join(self.variable_path, JSON_FILE)
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
 
@@ -529,7 +541,7 @@ class Variable:
                 except Exception as ex:
                     if raise_exception:
                         raise Exception(
-                            f"Failed to read json file: {file_path}"
+                            f'Failed to read json file: {file_path}'
                         ) from ex
             else:
                 try:
@@ -541,7 +553,7 @@ class Variable:
                 except Exception as ex:
                     if raise_exception:
                         raise Exception(
-                            f"Failed to read json file: {old_file_path}"
+                            f'Failed to read json file: {old_file_path}'
                         ) from ex
         if sample:
             data = sample_output(data)[0]
@@ -553,7 +565,7 @@ class Variable:
         if default_value is None:
             default_value = {}
         # For backward compatibility
-        old_file_path = os.path.join(self.variable_dir_path, f"{self.uuid}.json")
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         file_path = os.path.join(self.variable_path, JSON_FILE)
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
 
@@ -601,8 +613,8 @@ class Variable:
     def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
         import geopandas as gpd
 
-        file_path = os.path.join(self.variable_path, "data.sh")
-        sample_file_path = os.path.join(self.variable_path, "sample_data.sh")
+        file_path = os.path.join(self.variable_path, 'data.sh')
+        sample_file_path = os.path.join(self.variable_path, 'sample_data.sh')
         if not os.path.exists(file_path):
             return gpd.GeoDataFrame()
         if sample and os.path.exists(sample_file_path):
@@ -632,21 +644,21 @@ class Variable:
         read_sample_success = False
         if sample:
             try:
-                df = self.storage.read_parquet(sample_file_path, engine="pyarrow")
+                df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
                 read_sample_success = True
             except Exception as ex:
                 if raise_exception:
                     raise Exception(
-                        f"Failed to read parquet file: {sample_file_path}"
+                        f'Failed to read parquet file: {sample_file_path}'
                     ) from ex
                 else:
                     traceback.print_exc()
         if not read_sample_success:
             try:
-                df = self.storage.read_parquet(file_path, engine="pyarrow")
+                df = self.storage.read_parquet(file_path, engine='pyarrow')
             except Exception as ex:
                 if raise_exception:
-                    raise Exception(f"Failed to read parquet file: {file_path}") from ex
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
                 else:
                     traceback.print_exc()
                 df = pd.DataFrame()
@@ -666,7 +678,7 @@ class Variable:
             if self.variable_type == VariableType.SERIES_PANDAS:
                 if isinstance(column_types_raw, list):
                     for col_data in column_types_raw:
-                        column_types.update(col_data["column_types"])
+                        column_types.update(col_data['column_types'])
             else:
                 column_types = column_types_raw
 
@@ -683,8 +695,8 @@ class Variable:
                 series_list = []
 
                 for col_data in column_types_raw:
-                    column_mapping = col_data.get("column_mapping")
-                    index = col_data.get("index")
+                    column_mapping = col_data.get('column_mapping')
+                    index = col_data.get('index')
 
                     columns_idx = []
                     columns = []
@@ -752,7 +764,7 @@ class Variable:
             except Exception as ex:
                 if raise_exception:
                     raise Exception(
-                        f"Failed to read parquet file: {sample_file_path}"
+                        f'Failed to read parquet file: {sample_file_path}'
                     ) from ex
                 else:
                     traceback.print_exc()
@@ -761,7 +773,7 @@ class Variable:
                 df = self.storage.read_polars_parquet(file_path, use_pyarrow=True)
             except Exception as ex:
                 if raise_exception:
-                    raise Exception(f"Failed to read parquet file: {file_path}") from ex
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
                 else:
                     traceback.print_exc()
                 df = pl.DataFrame()
@@ -786,10 +798,10 @@ class Variable:
         if spark is None:
             return None
         df = (
-            spark.read.format("parquet")
-            .option("header", "true")
-            .option("inferSchema", "true")
-            .option("delimiter", ",")
+            spark.read.format('parquet')
+            .option('header', 'true')
+            .option('inferSchema', 'true')
+            .option('delimiter', ',')
             .load(self.variable_path)
         )
         if sample and sample_count:
@@ -798,9 +810,9 @@ class Variable:
 
     def __write_geo_dataframe(self, data) -> None:
         os.makedirs(self.variable_path, exist_ok=True)
-        data.to_file(os.path.join(self.variable_path, "data.sh"))
+        data.to_file(os.path.join(self.variable_path, 'data.sh'))
         df_sample_output = data.iloc[:DATAFRAME_SAMPLE_COUNT]
-        df_sample_output.to_file(os.path.join(self.variable_path, "sample_data.sh"))
+        df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
     def __get_column_types(self, data: pd.DataFrame) -> Tuple[Dict, pd.DataFrame]:
         column_types = {}
@@ -825,7 +837,7 @@ class Variable:
                         # If the column is a "primitive" type, i.e. int/bool/etc and there is
                         # a mix of types in the column, cast to string
                         elif (
-                            not hasattr(sample_element, "__dict__")
+                            not hasattr(sample_element, '__dict__')
                             and coltype_inferred in AMBIGUOUS_COLUMN_TYPES
                         ):
                             cast_coltype = str
@@ -869,7 +881,7 @@ class Variable:
 
                 columns = []
                 for col in df_series.columns:
-                    col_idx = f"{col}_{idx}"
+                    col_idx = f'{col}_{idx}'
                     column_mapping[col_idx] = col
                     columns.append(col_idx)
 
@@ -938,7 +950,7 @@ class Variable:
                 os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
             )
         except Exception as err:
-            print(f"Sample output error: {err}.")
+            print(f'Sample output error: {err}.')
             traceback.print_exc()
 
         try:
@@ -952,7 +964,7 @@ class Variable:
                 )
             )
         except Exception as err:
-            print(f"Writing DataFrame analysis failed during writing parquet: {err}.")
+            print(f'Writing DataFrame analysis failed during writing parquet: {err}.')
             traceback.print_exc()
 
     def __write_polars_dataframe(self, data: pl.DataFrame) -> None:
@@ -975,13 +987,13 @@ class Variable:
                 os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
             )
         except Exception as err:
-            print(f"Sample output error: {err}.")
+            print(f'Sample output error: {err}.')
             traceback.print_exc()
 
     def __write_spark_parquet(self, data) -> None:
         (
-            data.write.option("header", "True")
-            .mode("overwrite")
+            data.write.option('header', 'True')
+            .mode('overwrite')
             .parquet(self.variable_path)
         )
 
@@ -1003,7 +1015,7 @@ class Variable:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
             result[k] = self.storage.read_json_file(
-                os.path.join(self.variable_path, f"{k}.json")
+                os.path.join(self.variable_path, f'{k}.json')
             )
         return result
 
@@ -1025,7 +1037,7 @@ class Variable:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
             result[k] = await self.storage.read_json_file_async(
-                os.path.join(self.variable_path, f"{k}.json")
+                os.path.join(self.variable_path, f'{k}.json')
             )
         return result
 
@@ -1040,7 +1052,7 @@ class Variable:
         self.storage.makedirs(self.variable_path, exist_ok=True)
         for k in DATAFRAME_ANALYSIS_KEYS:
             self.storage.write_json_file(
-                os.path.join(self.variable_path, f"{k}.json"), data.get(k)
+                os.path.join(self.variable_path, f'{k}.json'), data.get(k)
             )
 
     def __write_series_pandas(self, data: Union[List[pd.Series], pd.Series]) -> bool:

@@ -2,9 +2,9 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-import pandas as pd
-
-from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data.models.manager import Manager
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -30,6 +30,8 @@ class VariableManager:
         else:
             self.variables_dir = variables_dir
         self.storage = LocalStorage()
+
+        self._data_manager = None
         # TODO: implement caching logic
 
     @classmethod
@@ -49,7 +51,74 @@ class VariableManager:
         else:
             return VariableManager(**manager_args)
 
+    @property
+    def data_manager(self) -> Optional[Manager]:
+        if Project(repo_path=self.repo_path).is_feature_enabled(FeatureUUID.MEMORY_V2):
+            self._data_manager = Manager(
+                repo_path=self.repo_path,
+                storage=self.storage,
+                variables_dir=self.variables_dir,
+            )
+        return self._data_manager
+
     def add_variable(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        data: Any,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
+        clean_block_uuid: bool = True,
+    ) -> None:
+        variable_type, _ = infer_variable_type(
+            data,
+            repo_path=self.repo_path,
+            variable_type=variable_type,
+        )
+
+        variable = Variable(
+            clean_name(variable_uuid),
+            self.pipeline_path(pipeline_uuid),
+            block_uuid,
+            partition=partition,
+            storage=self.storage,
+            variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
+            data_manager=self.data_manager,
+        )
+
+        # Delete data if it exists
+        variable.delete()
+        variable.variable_type = variable_type
+        variable.write_data(data)
+
+        if is_debug():
+            print(
+                f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
+                f"in pipeline {pipeline_uuid} "
+                f"stored in {variable.variable_path}"
+            )
+
+    def build_variable(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
+        clean_variable_uuid: bool = True,
+    ) -> Variable:
+        return Variable(
+            clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
+            self.pipeline_path(pipeline_uuid),
+            block_uuid,
+            partition=partition,
+            storage=self.storage,
+            variable_type=variable_type,
+        )
+
+    async def add_variable_async(
         self,
         pipeline_uuid: str,
         block_uuid: str,
@@ -78,77 +147,33 @@ class VariableManager:
         # Delete data if it exists
         variable.delete()
         variable.variable_type = variable_type
-        variable.write_data(data)
-        if is_debug():
-            print(
-                f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
-                f"in pipeline {pipeline_uuid} "
-                f"stored in {variable.variable_path}"
-            )
-
-    def build_variable(
-        self,
-        pipeline_uuid: str,
-        block_uuid: str,
-        variable_uuid: str,
-        partition: str = None,
-        variable_type: VariableType = None,
-        clean_variable_uuid: bool = True,
-    ) -> Variable:
-        return Variable(
-            clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
-            self.pipeline_path(pipeline_uuid),
-            block_uuid,
-            partition=partition,
-            storage=self.storage,
-            variable_type=variable_type,
-        )
-
-    async def add_variable_async(
-        self,
-        pipeline_uuid: str,
-        block_uuid: str,
-        variable_uuid: str,
-        data: Any,
-        partition: str = None,
-        variable_type: VariableType = None,
-        clean_block_uuid: bool = True,
-    ) -> None:
-        if type(data) is pd.DataFrame:
-            variable_type = VariableType.DATAFRAME
-        elif is_spark_dataframe(data):
-            variable_type = VariableType.SPARK_DATAFRAME
-        elif is_geo_dataframe(data):
-            variable_type = VariableType.GEO_DATAFRAME
-        variable = Variable(
-            clean_name(variable_uuid),
-            self.pipeline_path(pipeline_uuid),
-            block_uuid,
-            partition=partition,
-            storage=self.storage,
-            variable_type=variable_type,
-            clean_block_uuid=clean_block_uuid,
-        )
-        # Delete data if it exists
-        variable.delete()
-        variable.variable_type = variable_type
         await variable.write_data_async(data)
 
-    def clean_variables(self, pipeline_uuid: str = None):
+    def clean_variables(self, pipeline_uuid: Optional[str] = None):
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         repo_config = get_repo_config()
-        if not repo_config.variables_retention_period:
+        if repo_config.variables_retention_period is None:
             print('Variable retention period is not provided.')
             return
-        min_partition = (
-            datetime.utcnow() - str_to_timedelta(repo_config.variables_retention_period)
-        ).strftime(format='%Y%m%dT%H%M%S')
+
+        retention_ds = str_to_timedelta(repo_config.variables_retention_period)
+        if retention_ds is None:
+            return
+
+        min_partition = (datetime.utcnow() - retention_ds).strftime(
+            format='%Y%m%dT%H%M%S'
+        )
+
         print(f'Clean variables before partition {min_partition}')
         if pipeline_uuid is None:
-            pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
+            pipeline_uuids = [
+                d[0] if isinstance(d, tuple) else d
+                for d in Pipeline.get_all_pipelines(self.repo_path)
+            ]
         else:
             pipeline_uuids = [pipeline_uuid]
+
         for pipeline_uuid in pipeline_uuids:
             print(f'Removing cached variables from pipeline {pipeline_uuid}')
             pipeline_variable_path = os.path.join(
@@ -178,8 +203,8 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
-        partition: str = None,
-        variable_type: VariableType = None,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
     ) -> None:
         Variable(
@@ -197,13 +222,13 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
-        dataframe_analysis_keys: List[str] = None,
-        partition: str = None,
-        variable_type: VariableType = None,
+        dataframe_analysis_keys: Optional[List[str]] = None,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
         raise_exception: bool = False,
         sample: bool = False,
-        sample_count: int = None,
-        spark=None,
+        sample_count: Optional[int] = None,
+        spark: Optional[Any] = None,
         clean_block_uuid: bool = True,
     ) -> Any:
         variable = self.get_variable_object(
@@ -228,8 +253,8 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
-        partition: str = None,
-        variable_type: VariableType = None,
+        partition: Optional[str] = None,
+        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         spark=None,
     ) -> Variable:
@@ -273,9 +298,9 @@ class VariableManager:
         self,
         pipeline_uuid: str,
         block_uuid: str,
-        partition: str = None,
+        partition: Optional[str] = None,
         clean_block_uuid: bool = True,
-        max_results: int = None,
+        max_results: Optional[int] = None,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),

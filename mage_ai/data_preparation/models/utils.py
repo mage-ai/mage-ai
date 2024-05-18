@@ -561,7 +561,7 @@ def prepare_data_for_output(
     return data, variable_type
 
 
-def warn_for_repo_path(repo_path: str) -> None:
+def warn_for_repo_path(repo_path: Optional[str]) -> None:
     """
     Warn if repo_path is not provided when using project platform and user
     authentication is enabled.

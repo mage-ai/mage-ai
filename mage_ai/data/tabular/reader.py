@@ -1,7 +1,6 @@
 import json
 import os
 from functools import reduce
-from math import ceil
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pandas as pd
@@ -10,14 +9,7 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
-from mage_ai.data.tabular.constants import (
-    COLUMN_CHUNK,
-    DEFAULT_BATCH_BYTE_VALUE,
-    DEFAULT_BATCH_COUNT_VALUE,
-    DEFAULT_BATCH_ITEMS_VALUE,
-    BatchStrategy,
-    FilterComparison,
-)
+from mage_ai.data.tabular.constants import COLUMN_CHUNK, FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.array import find, flatten
 
@@ -329,8 +321,6 @@ def get_series_object_metadata(
 
 def scan_batch_datasets(
     source: Union[List[str], str],
-    batch_strategy: Optional[BatchStrategy] = None,
-    batch_value: Optional[int] = None,
     chunks: Optional[List[int]] = None,
     columns: Optional[List[str]] = None,
     deserialize: Optional[bool] = False,
@@ -372,26 +362,9 @@ def scan_batch_datasets(
         metadatas.append(read_metadata(directory))
     object_metadata = get_series_object_metadata(metadatas=metadatas)
 
-    num_rows_total, total_byte_size = reduce(
-        lambda acc, metadata: (
-            acc[0] + metadata['num_rows'],
-            acc[1] + metadata['total_byte_size'],
-        ),
-        metadatas,
-        (0, 0),
-    )
-
-    batch_strategy = batch_strategy or BatchStrategy.ITEMS
-    if BatchStrategy.ITEMS == batch_strategy:
-        batch_size = batch_value or DEFAULT_BATCH_ITEMS_VALUE
-    elif BatchStrategy.BYTES == batch_strategy:
-        batch_value = batch_value or DEFAULT_BATCH_BYTE_VALUE
-        batch_size = calculate_batch_value(batch_value, num_rows_total, total_byte_size)
-    elif BatchStrategy.COUNT == batch_strategy:
-        batch_value = batch_value or DEFAULT_BATCH_COUNT_VALUE
-        batch_size = ceil(num_rows_total / batch_value)
-    else:
-        batch_size = DEFAULT_BATCH_ITEMS_VALUE
+    if settings is None:
+        settings = BatchSettings()
+    batch_size = settings.batch_size(metadatas)
 
     filters_list = []
     if chunks:
@@ -456,15 +429,3 @@ def scan_batch_datasets(
                 if deserialize
                 else record_batch
             )
-
-
-def calculate_batch_value(
-    max_batch_value_bytes: int,
-    total_row_count: int,
-    total_byte_size: int,
-):
-    # Estimate the byte size per row
-    estimated_bytes_per_row = total_byte_size / total_row_count
-
-    # Calculate the number of rows per batch based on the maximum batch size
-    return max(1, int(max_batch_value_bytes / estimated_bytes_per_row))
