@@ -215,6 +215,8 @@ def object_to_uuid(obj: Any, include_hash: bool = False) -> str:
 
 def object_to_dict(
     obj: Any,
+    include_hash: bool = True,
+    include_uuid: bool = True,
     variable_type: Optional[VariableType] = None,
 ) -> Dict[str, Union[bool, str, List[str]]]:
     is_class = inspect.isclass(obj)
@@ -223,7 +225,10 @@ def object_to_dict(
     data_dict['type'] = 'class' if is_class else 'instance'
     data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
 
-    if not is_class:
+    if include_uuid:
+        data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
+
+    if include_hash and not is_class:
         data_dict['hash'] = object_to_hash(obj)
 
     if variable_type:

@@ -320,7 +320,7 @@ def get_variable_objects(
                 variable_uuid=variable_uuid,
             )
             for variable_uuid in variable_uuids
-            if variable_uuid != ""
+            if variable_uuid != ''
         ],
         key=__sort,
     )
