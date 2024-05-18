@@ -156,6 +156,7 @@ function BlockLayoutItem({
 
   useEffect(() => {
     doFetch();
+    // If we add doFetch in this array, it will cause an infinite loop.
     // @ts-ignore
   }, []);
 
