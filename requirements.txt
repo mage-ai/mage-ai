@@ -124,7 +124,7 @@ dbt-trino==1.7.1
 attrs==17.4.0
 backoff
 clickhouse_sqlalchemy
-deltalake==0.17.2
+deltalake==0.17.4
 facebook_business==17.0.2
 gnupg==2.3.1
 google-analytics-data==0.14.2
