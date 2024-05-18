@@ -156,7 +156,9 @@ function BlockLayoutItem({
 
   useEffect(() => {
     doFetch();
-  }, [doFetch]);
+    // If we add doFetch in this array, it will cause an infinite loop.
+    // @ts-ignore
+  }, []);
 
   const isLoading: boolean = useMemo(
     () => isLoadingProp && isLoadingFetchBlockLayoutItem,

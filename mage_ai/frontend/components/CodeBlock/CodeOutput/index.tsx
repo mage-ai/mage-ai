@@ -71,6 +71,9 @@ import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@util
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
 import { range } from '@utils/array';
+import TextOutput from './TextOutput';
+import ImageOutput from './ImageOutput';
+import HTMLOutput from './HTMLOutput';
 
 type CodeOutputProps = {
   alwaysShowExtraInfo?: boolean;
@@ -285,12 +288,13 @@ function CodeOutput(
 
   const combineTextData = data => (Array.isArray(data) ? data.join('\n') : data);
 
+  const singleOutput = useMemo(() => block?.outputs?.length === 1, [block]);
   const combinedMessages = useMemo(() => {
     const arr = [];
     const arrRender = [];
 
     if (messages?.length >= 1) {
-      messages.map(curr => {
+      messages.map((curr, idx: number) => {
         let currentData = curr?.data;
         const renderOutputMatches = [];
         const leftOverMessages = [];
@@ -303,20 +307,47 @@ function CodeOutput(
               textData?.match(/<RenderOutput>(.*?)<\/RenderOutput>/);
 
             if (match && match[1] && isJsonString(match[1])) {
-              const output = JSON.parse(match[1]);
+              const outputs = [];
 
+              const output = JSON.parse(match[1]);
               if (Array.isArray(output)) {
-                // // Multi-output will show tabs.
-                // if (output?.every(({ multi_output: multiOutput }) => !!multiOutput)) {
-                //   // Combine the multiple outputs into 1 object that will render as multiple tabs.
-                //   renderOutputMatches.push(...prepareOutputsForDisplay(output));
-                // } else {
-                //   renderOutputMatches.push(...output);
-                // }
-                renderOutputMatches.push(...output);
+                outputs.push(...output);
               } else {
-                renderOutputMatches.push(output);
+                outputs.push(output);
               }
+
+              outputs?.forEach((item, idxInner) => {
+                if (
+                  isObject(item) &&
+                  item?.type &&
+                  (item?.variable_uuid || item?.data || item?.sample_data || item?.text_data)
+                ) {
+                  if (item?.multi_output || DataTypeEnum.GROUP === item?.type) {
+                    renderOutputMatches.push(item);
+                  } else {
+                    renderOutputMatches.push({
+                      ...item,
+                      multi_output: true,
+                    });
+                  }
+                } else if (isObject(item)) {
+                  renderOutputMatches.push({
+                    ...item,
+                    multi_output: true,
+                  });
+                } else {
+                  renderOutputMatches.push({
+                    multi_output: true,
+                    sample_data: {
+                      columns: ['value'],
+                      rows: [[item]],
+                    },
+                    shape: [1, 1],
+                    type: DataTypeEnum.TABLE,
+                    variable_uuid: `output_${idxInner}`,
+                  });
+                }
+              });
             } else {
               leftOverMessages.push(textData);
             }
@@ -332,7 +363,8 @@ function CodeOutput(
           DATA_TYPE_TEXTLIKE.includes(last?.type) &&
           last?.type === curr.type &&
           !isObject(combineTextData(currentData)) &&
-          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX)
+          !combineTextData(currentData)?.match(INTERNAL_OUTPUT_REGEX) &&
+          combineTextData(currentData)
         ) {
           if (Array.isArray(last.data)) {
             last.data.concat(currentData);
@@ -403,40 +435,14 @@ function CodeOutput(
     value: string,
     outputRowSharedProps?: OutputRowProps,
   ): JSX.Element {
-    return (
-      <OutputRowStyle {...(outputRowSharedProps || {})}>
-        <HTMLOutputStyle monospace>
-          <InnerHTML html={value} />
-        </HTMLOutputStyle>
-      </OutputRowStyle>
-    );
+    return <HTMLOutput {...outputRowSharedProps} value={value} />;
   }
 
   function buildDisplayForTextOutput(
     value: string | { text_data: string } | { text_data: string }[],
     outputRowSharedProps?: OutputRowProps,
   ): JSX.Element {
-    let textArr = [];
-    if (value) {
-      if (typeof value === 'string') {
-        textArr = value.split('\\n');
-      } else if (Array.isArray(value)) {
-        textArr = value.map(v => v?.text_data);
-      } else if (isObject(value)) {
-        textArr = [value?.text_data];
-      }
-    }
-
-    return (
-      <OutputRowStyle {...(outputRowSharedProps || {})}>
-        {textArr.map(t => (
-          <Text key={t} monospace preWrap>
-            {t?.length >= 1 && typeof t === 'string' && <Ansi>{t}</Ansi>}
-            {!t?.length && <>&nbsp;</>}
-          </Text>
-        ))}
-      </OutputRowStyle>
-    );
+    return <TextOutput {...outputRowSharedProps} value={value} />;
   }
 
   // @ts-ignore
@@ -602,7 +608,10 @@ function CodeOutput(
       const outputIsGroupedOutputs = DataTypeEnum?.GROUP === output?.type;
       const outputIsMultiOutputs = output?.multi_output && output?.outputs?.length >= 1;
 
-      if (outputIsGroupedOutputs || outputIsMultiOutputs) {
+      if (
+        (outputIsGroupedOutputs || outputIsMultiOutputs || singleOutput) &&
+        (typeof output?.data !== 'string' || !output?.data?.match(INTERNAL_TEST_REGEX))
+      ) {
         arrContent.push(
           <OutputRenderer
             block={block}
@@ -614,6 +623,8 @@ function CodeOutput(
             last={idx === combinedMessages?.length - 1}
             normalPadding
             output={output}
+            selected={selected}
+            singleOutput={singleOutput}
           />,
         );
 
@@ -690,7 +701,7 @@ function CodeOutput(
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
-          normalPadding: outputRowNormalPadding,
+          normalPadding: true,
         };
 
         const borderTop = idx >= 1;
@@ -824,9 +835,7 @@ function CodeOutput(
                 }
               } else if (DataTypeEnum.IMAGE_PNG === typeDisplay && textData) {
                 displayElement = (
-                  <div style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}>
-                    <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
-                  </div>
+                  <ImageOutput data={textData} height={UNIT * 60} uuid={String(idxInner)} />
                 );
               }
             }
@@ -981,11 +990,11 @@ function CodeOutput(
     isDBT,
     isInProgress,
     mainContainerWidth,
-    outputRowNormalPadding,
     pipeline,
     progressBar,
     renderMessagesRaw,
     selected,
+    singleOutput,
     sparkEnabled,
   ]);
 
@@ -1133,7 +1142,7 @@ function CodeOutput(
             {!collapsed && testContent?.length >= 1 && (
               <>
                 <Spacing py={2}>
-                  <OutputRowStyle contained normalPadding={sideBySideEnabled}>
+                  <OutputRowStyle contained normalPadding>
                     {testContent.map(({ error, message, stacktrace }, idx) => (
                       <Spacing key={message} mt={idx >= 1 ? 3 : 0}>
                         <Text monospace preWrap>

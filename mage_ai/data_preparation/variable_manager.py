@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ class VariableManager:
         cls,
         repo_path: Optional[str] = None,
         variables_dir: Optional[str] = None,
-    ) -> "VariableManager":
+    ) -> 'VariableManager':
         manager_args = dict(
             repo_path=repo_path,
             variables_dir=variables_dir,
@@ -139,18 +139,18 @@ class VariableManager:
 
         repo_config = get_repo_config()
         if not repo_config.variables_retention_period:
-            print("Variable retention period is not provided.")
+            print('Variable retention period is not provided.')
             return
         min_partition = (
             datetime.utcnow() - str_to_timedelta(repo_config.variables_retention_period)
-        ).strftime(format="%Y%m%dT%H%M%S")
-        print(f"Clean variables before partition {min_partition}")
+        ).strftime(format='%Y%m%dT%H%M%S')
+        print(f'Clean variables before partition {min_partition}')
         if pipeline_uuid is None:
             pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
         else:
             pipeline_uuids = [pipeline_uuid]
         for pipeline_uuid in pipeline_uuids:
-            print(f"Removing cached variables from pipeline {pipeline_uuid}")
+            print(f'Removing cached variables from pipeline {pipeline_uuid}')
             pipeline_variable_path = os.path.join(
                 self.pipeline_path(pipeline_uuid),
                 VARIABLE_DIR,
@@ -170,7 +170,7 @@ class VariableManager:
                                 pipeline_schedule_vpath,
                                 partition,
                             )
-                            print(f"Removing folder {pipeline_partition_vpath}")
+                            print(f'Removing folder {pipeline_partition_vpath}')
                             self.storage.remove_dir(pipeline_partition_vpath)
 
     def delete_variable(
@@ -258,15 +258,15 @@ class VariableManager:
         block_dirs = self.storage.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
-            if not pipeline.has_block(d) and d != "global":
+            if not pipeline.has_block(d) and d != 'global':
                 continue
             block_variables_path = os.path.join(variable_dir_path, d)
             if not self.storage.isdir(block_variables_path):
                 variables_by_block[d] = []
             else:
                 variables = self.storage.listdir(os.path.join(variable_dir_path, d))
-                variable_names = sorted([v.split(".")[0] for v in variables])
-                variables_by_block[d] = [v for v in variable_names if v != ""]
+                variable_names = sorted([v.split('.')[0] for v in variables])
+                variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
 
     def get_variables_by_block(
@@ -280,16 +280,23 @@ class VariableManager:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
-            partition or "",
+            partition or '',
             clean_name(block_uuid) if clean_block_uuid else block_uuid,
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
         variables = self.storage.listdir(variable_dir_path, max_results=max_results)
-        return sorted([v.split(".")[0] for v in variables])
+        variables = [v for v in variables if v.split('.')[0]]
+
+        def __sort(variable_uuid: str) -> List[Union[int, str]]:
+            key = variable_uuid.split('.')[0]
+            parts = key.split('_')
+            return [int(k) if k.isdigit() else k for k in parts]
+
+        return sorted(variables, key=__sort)
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
-        path = os.path.join(self.variables_dir, "pipelines", pipeline_uuid)
+        path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
         if type(self.storage) is LocalStorage:
             if not self.storage.path_exists(path):
                 self.storage.makedirs(path, exist_ok=True)
@@ -338,7 +345,7 @@ def get_global_variables(
         variables_dir = get_variables_dir()
         variables = VariableManager(variables_dir=variables_dir).get_variables_by_block(
             pipeline_uuid,
-            "global",
+            'global',
         )
         global_variables = dict()
         for variable in variables:
@@ -365,7 +372,7 @@ def get_global_variable(
     else:
         return VariableManager(variables_dir=get_variables_dir()).get_variable(
             pipeline_uuid,
-            "global",
+            'global',
             key,
         )
 
@@ -419,4 +426,4 @@ def delete_global_variable(
     else:
         VariableManager(
             variables_dir=get_variables_dir(),
-        ).delete_variable(pipeline_uuid, "global", key)
+        ).delete_variable(pipeline_uuid, 'global', key)

@@ -244,9 +244,12 @@ spark = SparkSession.builder.getOrCreate()
     replacements = [
         ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
         ('block_uuid', f"'{block_uuid}'"),
-        ('escaped_code', f"""r\'\'\'
+        (
+            'escaped_code',
+            f"""r\'\'\'
 {escaped_code}
-\'\'\'"""),
+\'\'\'""",
+        ),
         ('global_vars', global_vars),
         ('output_messages_to_logs', output_messages_to_logs),
         ('pipeline_config', pipeline_config),

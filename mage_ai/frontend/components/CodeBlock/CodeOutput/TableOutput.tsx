@@ -23,7 +23,7 @@ type TableOutputProps = {
   setShapeCallback?: (shape: number[]) => void;
   borderTop?: boolean;
   multiOutputInit?: boolean;
-  selected?: boolean;
+  selected: boolean;
   uuid?: string;
 };
 
@@ -46,22 +46,13 @@ function TableOutput({
     rows: string[][] | number[][];
   } = useMemo(
     () =>
-      (isObject(data)
-        && typeof sampleData !== 'string'
-        && !Array.isArray(sampleData)
-        ? data as SampleDataType
-        : null
-      )
-      || (isObject(sampleData)
-        && sampleData?.rows
-        && sampleData?.columns
-          ? sampleData
-          : null
-      )
-      || {
-          columns: [],
-          rows: [],
-        },
+      (isObject(data) && typeof sampleData !== 'string' && !Array.isArray(sampleData)
+        ? (data as SampleDataType)
+        : null) ||
+      (isObject(sampleData) && sampleData?.rows && sampleData?.columns ? sampleData : null) || {
+        columns: [],
+        rows: [],
+      },
     [data, sampleData],
   );
 
@@ -90,22 +81,36 @@ function TableOutput({
   }
 
   if (
-    Array.isArray(rows)
-    && rows.length >= 1
+    Array.isArray(rows) &&
+    rows.length >= 1 &&
     // @ts-ignore
-    && rows.every(row => Array.isArray(row) && row.every(cell => typeof cell === 'string' && containsHTML(cell)))
+    rows.every(
+      row =>
+        Array.isArray(row) && row.every(cell => typeof cell === 'string' && containsHTML(cell)),
+    )
   ) {
     return (
       <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
         <HTMLOutputStyle monospace>
-          {rows.map((row, idx) =>
+          {rows.map((row, idx) => (
             <div key={`html-row-${idx}`}>
               {row.map((cell, cellIdx) => (
                 <InnerHTML html={String(cell)} key={`html-cell-${cellIdx}`} />
               ))}
-            </div>,
-          )}
+            </div>
+          ))}
         </HTMLOutputStyle>
+      </Spacing>
+    );
+  }
+
+  if (!columns?.length) {
+    return (
+      <Spacing mx={5} my={3}>
+        <Text monospace warning>
+          Block output table could not be rendered due to missing column headers. Please check your
+          data’s column headers.
+        </Text>
       </Spacing>
     );
   }

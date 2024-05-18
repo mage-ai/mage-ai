@@ -34,6 +34,10 @@ INTS = (
 MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
+def has_to_dict(obj) -> bool:
+    return hasattr(obj, 'to_dict')
+
+
 def encode_complex(obj):
     from mage_ai.shared.models import BaseDataClass
 
@@ -41,14 +45,14 @@ def encode_complex(obj):
         return list(obj)
     elif isinstance(obj, BaseModel):
         return obj.__class__.__name__
-    elif obj.__class__.__name__ == "BaseDataClass" or isinstance(obj, BaseDataClass):
+    elif obj.__class__.__name__ == 'BaseDataClass' or isinstance(obj, BaseDataClass):
         return obj.to_dict()
     elif isinstance(obj, Enum):
         return obj.value
     elif (
         isinstance(obj, datetime)
-        or hasattr(obj, "isoformat")
-        and "method" in type(obj.isoformat).__name__
+        or hasattr(obj, 'isoformat')
+        and 'method' in type(obj.isoformat).__name__
     ):
         return obj.isoformat()
     elif isinstance(obj, INTS):
@@ -56,7 +60,7 @@ def encode_complex(obj):
     elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64, np.floating)):
         return float(obj)
     elif isinstance(obj, (np.complex_, np.complex64, np.complex128)):
-        return {"real": obj.real, "imag": obj.imag}
+        return {'real': obj.real, 'imag': obj.imag}
     elif isinstance(obj, (np.ndarray,)):
         # np.array is a function
         return obj.tolist()
@@ -66,21 +70,21 @@ def encode_complex(obj):
         # Convert pandas._libs.missing.NAType to None
         return None
     elif isinstance(obj, pd.DataFrame):
-        return obj.to_dict(orient="records")
+        return obj.to_dict(orient='records')
     elif isinstance(obj, (pd.Index, pd.Series)):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
     elif is_model_sklearn(obj) or is_model_xgboost(obj) or inspect.isclass(obj):
         return object_to_uuid(obj)
-    elif hasattr(obj, "to_dict"):
+    elif has_to_dict(obj):
         return obj.to_dict()
     elif isinstance(obj, Exception):
         # Serialize the exception
         return {
-            "type": type(obj).__name__,
-            "message": str(obj),
-            "traceback": traceback.format_tb(obj.__traceback__),
+            'type': type(obj).__name__,
+            'message': str(obj),
+            'traceback': traceback.format_tb(obj.__traceback__),
         }
 
     return obj
@@ -97,7 +101,7 @@ def extract_json_objects(text, decoder=None):
         decoder = JSONDecoder()
     pos = 0
     while True:
-        match = text.find("{", pos)
+        match = text.find('{', pos)
         if match == -1:
             break
         try:
@@ -134,14 +138,14 @@ def serialize_matrix(csr_matrix: scipy.sparse._csr.csr_matrix) -> Dict:
     with io.BytesIO() as buffer:
         scipy.sparse.save_npz(buffer, csr_matrix)
         buffer.seek(0)
-        data = base64.b64encode(buffer.read()).decode("ascii")
+        data = base64.b64encode(buffer.read()).decode('ascii')
 
-    return {"__type__": "scipy.sparse.csr_matrix", "__data__": data}
+    return {'__type__': 'scipy.sparse.csr_matrix', '__data__': data}
 
 
 def deserialize_matrix(json_dict: Dict) -> scipy.sparse._csr.csr_matrix:
-    data = json_dict["__data__"]
-    data = base64.b64decode(data.encode("ascii"))
+    data = json_dict['__data__']
+    data = base64.b64decode(data.encode('ascii'))
 
     with io.BytesIO(data) as buffer:
         buffer.seek(0)
@@ -192,19 +196,19 @@ def object_to_uuid(obj: Any, include_hash: bool = False) -> str:
         hash_uuid = object_to_hash(obj)
 
     parts = object_uuid_parts(obj)
-    uuid = ".".join(
+    uuid = '.'.join(
         [
             t
             for t in [
-                str(parts["module"]),
-                str(parts["name"]),
+                str(parts['module']),
+                str(parts['name']),
             ]
             if t
         ]
     )
 
     if hash_uuid:
-        return f"{uuid} {hash_uuid}"
+        return f'{uuid} {hash_uuid}'
 
     return uuid
 
@@ -216,13 +220,13 @@ def object_to_dict(
     is_class = inspect.isclass(obj)
 
     data_dict = object_uuid_parts(obj)
-    data_dict["type"] = "class" if is_class else "instance"
-    data_dict["uuid"] = object_to_uuid(obj, include_hash=False)
+    data_dict['type'] = 'class' if is_class else 'instance'
+    data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
 
     if not is_class:
-        data_dict["hash"] = object_to_hash(obj)
+        data_dict['hash'] = object_to_hash(obj)
 
     if variable_type:
-        data_dict["variable_type"] = variable_type.value
+        data_dict['variable_type'] = variable_type.value
 
     return data_dict

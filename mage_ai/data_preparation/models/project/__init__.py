@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import aiohttp
 
@@ -18,16 +18,18 @@ from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import dig
 
 
-class Project():
+class Project:
     def __init__(
         self,
         repo_config=None,
-        repo_path: str = None,
+        repo_path: Optional[str] = None,
         root_project: bool = False,
         user=None,
     ):
         self.root_project = root_project
-        self.repo_path = repo_path or get_repo_path(root_project=self.root_project, user=user)
+        self.repo_path = repo_path or get_repo_path(
+            root_project=self.root_project, user=user
+        )
         self.user = user
 
         self.name = os.path.basename(self.repo_path)
@@ -68,6 +70,7 @@ class Project():
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
                     WorkloadManager,
                 )
+
                 workload_manager = WorkloadManager(os.getenv(KUBE_NAMESPACE))
                 k8s_default_values = workload_manager.get_default_values()
 
@@ -115,7 +118,9 @@ class Project():
 
         if project_platform_activated() and self.__repo_config_root_project:
             settings = platform_settings()
-            if settings.get('features') and (settings.get('features') or {}).get('override'):
+            if settings.get('features') and (settings.get('features') or {}).get(
+                'override'
+            ):
                 features.update(self.features_override)
 
         for uuid in FeatureUUID:
@@ -129,7 +134,9 @@ class Project():
     def features_override(self) -> Dict:
         if project_platform_activated() and self.__repo_config_root_project:
             settings = self.platform_settings()
-            if settings.get('features') and (settings.get('features') or {}).get('override'):
+            if settings.get('features') and (settings.get('features') or {}).get(
+                'override'
+            ):
                 return self.__repo_config_root_project.features or {}
 
         return {}
@@ -172,12 +179,19 @@ class Project():
         if self.settings:
             query_arr = dig(self.settings, ['database', 'query', key])
             if query_arr:
-                return [os.path.join(*[part for part in [
-                    os.path.dirname(get_repo_path(root_project=True)),
-                    query_alias,
-                ] if len(part) >= 1]) for query_alias in query_arr] + [
-                    get_repo_path(root_project=False)
-                ]
+                return [
+                    os.path.join(
+                        *[
+                            part
+                            for part in [
+                                os.path.dirname(get_repo_path(root_project=True)),
+                                query_alias,
+                            ]
+                            if len(part) >= 1
+                        ]
+                    )
+                    for query_alias in query_arr
+                ] + [get_repo_path(root_project=False)]
 
         return [self.repo_path]
 
