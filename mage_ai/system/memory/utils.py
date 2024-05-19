@@ -20,7 +20,7 @@ import pyarrow.parquet as pq
 from memory_profiler import memory_usage
 
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.system.constants import LogTag
+from mage_ai.system.constants import LogType
 
 
 def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
@@ -488,17 +488,27 @@ def current_memory_usage() -> float:
     return memory_usage(-1)[0]
 
 
-def format_metadata_message(metadata: Dict, tag: Optional[LogTag] = None) -> str:
-    return format_memory_message(
-        ' '.join([f'{k}={v}' for k, v in metadata.items() if v is not None]),
-        tag=tag,
-    )
+def format_metadata_message(metadata: Dict) -> str:
+    return ' '.join([f'{k}={v}' for k, v in metadata.items() if v is not None])
 
 
-def format_memory_message(message: Any, tag: Optional[LogTag] = None) -> str:
-    tag = tag or LogTag.MEMORY
-    timestamp = round(datetime.utcnow().timestamp() / 1000)
-    return f'[{timestamp}][{tag}] {message}\n'
+def format_log_message(
+    log_type: Optional[LogType] = None,
+    message: Optional[Any] = None,
+    metadata: Optional[Dict] = None,
+) -> str:
+    log_type = log_type or LogType.MEMORY
+    timestamp = round(datetime.utcnow().timestamp())
+    metadata = metadata or {}
+
+    msg = f'[{timestamp}] type={log_type.value}'
+    if message:
+        msg += f' message={message}'
+
+    if metadata:
+        msg += f' {format_metadata_message(metadata)}'
+
+    return f'{msg}\n'
 
 
 def monitor_memory_usage(

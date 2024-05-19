@@ -1,10 +1,10 @@
 from enum import Enum
 
 
-class LogTag(str, Enum):
+class LogType(str, Enum):
     GENERIC = 'GENERIC'
+    INITIAL = 'INITIAL'
     MEMORY = 'MEMORY'
-    METADATA = 'METADATA'
     METRICS = 'METRICS'
     PROCESS = 'PROCESS'
 

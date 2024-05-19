@@ -8,13 +8,13 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.shared.files import makedirs_async, makedirs_sync
-from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogTag
+from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
 from mage_ai.system.memory.constants import MEMORY_LOGS_FILENAME
-from mage_ai.system.memory.monitor import MemoryMonitor
 from mage_ai.system.memory.utils import (
     current_memory_usage,
-    format_memory_message,
-    format_metadata_message,
+    format_log_message,
+    monitor_memory_usage,
+    monitor_memory_usage_async,
 )
 
 
@@ -41,11 +41,13 @@ class MemoryManager:
         print(emu.report())
         """
         self.monitor = None
-        self.poll_interval = poll_interval or 0.1
+        self.poll_interval = poll_interval or 1.0
         self.uuid = uuid
         self.variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
         self._log_path = None
         self._metadata = metadata or {}
+        self.monitor_thread = None
+        self.stop_event = None
 
     @property
     def log_path(self) -> str:
@@ -55,7 +57,7 @@ class MemoryManager:
                 self.variables_dir,
                 SYSTEM_DIRECTORY,
                 LOGS_DIRECTORY,
-                self.uuid,
+                self.uuid or '',
                 now.strftime('%Y-%m-%d'),
                 now.strftime('%H'),
                 MEMORY_LOGS_FILENAME,
@@ -75,11 +77,16 @@ class MemoryManager:
 
     def __enter__(self):
         makedirs_sync(os.path.dirname(self.log_path))
-        self.monitor = self.__build_monitor()
-        self.monitor.start_sync(callback=self.__write_sync)
+
+        self.stop()
+        self.stop_event, self.monitor_thread = monitor_memory_usage(
+            callback=self.__write_sync,
+            interval_seconds=self.poll_interval,
+        )
+
         if self.metadata:
             with open(self.log_path, 'a') as f:
-                f.write(format_metadata_message(self.metadata, tag=LogTag.METADATA))
+                f.write(format_log_message(log_type=LogType.INITIAL, metadata=self.metadata))
         self.__write_sync(current_memory_usage())
         return self
 
@@ -87,15 +94,20 @@ class MemoryManager:
         try:
             self.__write_sync(current_memory_usage())
         finally:
-            self.__clear()
+            self.stop()
 
     async def __aenter__(self):
         await makedirs_async(os.path.dirname(self.log_path))
-        self.monitor = self.__build_monitor()
-        await self.monitor.start_async(callback=self.__write_async)
+
+        self.stop()
+        self.stop_event, self.monitor_thread = await monitor_memory_usage_async(
+            callback=self.__write_async,
+            interval_seconds=self.poll_interval,
+        )
+
         if self.metadata:
-            async with aiofiles.open(self._log_path, mode='a', encoding='utf-8') as fp:
-                await fp.write(format_metadata_message(self.metadata, tag=LogTag.METADATA))
+            async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
+                await fp.write(format_log_message(log_type=LogType.INITIAL, metadata=self.metadata))
         await self.__write_async(current_memory_usage())
         return self
 
@@ -103,19 +115,20 @@ class MemoryManager:
         try:
             await self.__write_async(current_memory_usage())
         finally:
-            self.__clear()
+            self.stop()
 
     def __write_sync(self, memory: float) -> None:
         with open(self.log_path, 'a') as f:
-            f.write(format_memory_message(memory))
+            f.write(format_log_message(metadata=dict(memory=memory, unit='mb')))
 
     async def __write_async(self, memory: float) -> None:
-        async with aiofiles.open(self._log_path, mode='a', encoding='utf-8') as fp:
-            await fp.write(format_memory_message(memory))
+        async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
+            await fp.write(format_log_message(metadata=dict(memory=memory, unit='mb')))
 
-    def __build_monitor(self) -> MemoryMonitor:
-        return MemoryMonitor(poll_interval=self.poll_interval)
-
-    def __clear(self) -> None:
-        self.monitor.stop()
-        self.monitor = None
+    def stop(self) -> None:
+        if self.stop_event:
+            self.stop_event.set()
+            self.stop_event = None
+        if self.monitor_thread:
+            self.monitor_thread.join()
+            self.monitor_thread = None
