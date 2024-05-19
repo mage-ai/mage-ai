@@ -31,6 +31,7 @@ class Reader(BaseData):
                 if sample and sample_count:
                     return sample_batch_datasets(
                         data_partitions_path,
+                        deserialize=True,
                         sample_count=sample_count,
                         **params,
                     )
@@ -67,6 +68,7 @@ class Reader(BaseData):
                 if sample and sample_count:
                     return await sample_batch_datasets_async(
                         data_partitions_path,
+                        deserialize=True,
                         sample_count=sample_count,
                         **params,
                     )

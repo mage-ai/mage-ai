@@ -13,7 +13,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -28,19 +27,22 @@ from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.models import BaseDataClass
 
-RecordBatchIterator = Iterator[
-    Union[
-        pa.RecordBatch,
-        ds.TaggedRecordBatch,
-        Optional[Dict[str, str]],
-    ],
+RecordBatch = Union[
+    Optional[Dict[str, str]],
+    ds.TaggedRecordBatch,
+    pa.RecordBatch,
+    pl.DataFrame,
 ]
+RecordBatchIterator = Iterator[RecordBatch]
+
+AsyncRecordBatchIterator = AsyncIterator[RecordBatch]
 
 
 @dataclass
 class ScanDatasetParameters(BaseDataClass):
     chunks: Optional[List[int]] = None
     columns: Optional[List[str]] = None
+    deserialize: Optional[bool] = False
     filter: Optional[ds.Expression] = None
     filters: Optional[List[List[str]]] = None
     scan: Optional[bool] = False
@@ -361,19 +363,7 @@ def get_series_object_metadata(
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
-def scan_batch_datasets_generator(
-    source: Union[List[str], str],
-    **kwargs,
-) -> Tuple[
-    Iterator[
-        Union[
-            pa.RecordBatch,
-            ds.TaggedRecordBatch,
-            Optional[Dict[str, str]],
-        ],
-    ],
-    Optional[Dict[str, str]],
-]:
+def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> RecordBatchIterator:
     """
     Scans and optionally deserializes batches of records from a dataset.
 
@@ -404,6 +394,7 @@ def scan_batch_datasets_generator(
 
     chunks = params.chunks
     columns = params.columns
+    deserialize = params.deserialize
     filter = params.filter
     filters = params.filters
     scan = params.scan
@@ -462,36 +453,30 @@ def scan_batch_datasets_generator(
     else:
         generator = dataset.to_batches(**scanner_settings)
 
-    return generator, object_metadata
+    def custom_generator_wrapper(generator=generator, object_metadata=object_metadata):
+        for tagged_or_record_batch in generator:
+            yield (
+                deserialize_batch(tagged_or_record_batch, object_metadata=object_metadata)
+                if deserialize
+                else tagged_or_record_batch
+            )
+
+    return custom_generator_wrapper()
 
 
 async def scan_batch_datasets_generator_async(
-    source: Union[List[str], str],
-    **kwargs,
-) -> Tuple[
-    AsyncIterator[
-        Union[
-            pa.RecordBatch,
-            ds.TaggedRecordBatch,
-            Optional[Dict[str, str]],
-        ],
-    ],
-    Optional[Dict[str, str]],
-]:
-    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs)
+    source: Union[List[str], str], **kwargs
+) -> AsyncRecordBatchIterator:
+    generator = scan_batch_datasets_generator(source, **kwargs)
 
     async def async_generator_wrapper():
         for item in generator:
             yield await run_in_executor(lambda: item)
 
-    return async_generator_wrapper(), object_metadata
+    return async_generator_wrapper()
 
 
-def scan_batch_datasets(
-    source: Union[List[str], str],
-    deserialize: Optional[bool] = False,
-    **kwargs,
-) -> Generator:
+def scan_batch_datasets(source: Union[List[str], str], **kwargs) -> Generator:
     """
     Cannot have a yield statement or else the return will never be reached.
     In Python, if a function contains a `yield` statement,
@@ -500,31 +485,15 @@ def scan_batch_datasets(
     but none of its code will run immediately.
     The function only executes on iteration.
     """
-    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs)
-
-    for tagged_or_record_batch in generator:
-        yield (
-            deserialize_batch(tagged_or_record_batch, object_metadata=object_metadata)
-            if deserialize
-            else tagged_or_record_batch,
-            object_metadata,
-        )
+    for tagged_or_record_batch_or_deserialized in scan_batch_datasets_generator(source, **kwargs):
+        yield tagged_or_record_batch_or_deserialized
 
 
-async def scan_batch_datasets_async(
-    source: Union[List[str], str],
-    deserialize: Optional[bool] = False,
-    **kwargs,
-) -> AsyncGenerator:
-    generator, object_metadata = await scan_batch_datasets_generator_async(source, **kwargs)
+async def scan_batch_datasets_async(source: Union[List[str], str], **kwargs) -> AsyncGenerator:
+    generator = await scan_batch_datasets_generator_async(source, **kwargs)
 
-    async for tagged_or_record_batch in generator:
-        yield (
-            await run_in_executor(deserialize_batch, tagged_or_record_batch, object_metadata)
-            if deserialize
-            else tagged_or_record_batch,
-            object_metadata,
-        )
+    async for tagged_or_record_batch_or_deserialized in generator:
+        yield tagged_or_record_batch_or_deserialized
 
 
 def sample_batch_datasets(
@@ -532,7 +501,7 @@ def sample_batch_datasets(
     sample_count: Optional[int] = None,
     settings: Optional[BatchSettings] = None,
     **kwargs,
-) -> Union[pd.DataFrame, pl.DataFrame, pd.Series, pl.Series]:
+) -> Optional[RecordBatch]:
     settings = BatchSettings.load(
         **{
             **(settings.to_dict() if settings is not None else {}),
@@ -540,18 +509,14 @@ def sample_batch_datasets(
         }
     )
 
-    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs, settings=settings)
+    generator = scan_batch_datasets_generator(source, **kwargs, settings=settings)
 
     try:
         batch = next(generator)
         if batch is not None:
-            if isinstance(batch, (pd.DataFrame, pl.DataFrame, pd.Series, pl.Series)):
-                return batch
-            return deserialize_batch(batch, object_metadata=object_metadata)
+            return batch
     except StopIteration:
         pass
-
-    return pl.DataFrame()
 
 
 async def sample_batch_datasets_async(
@@ -559,7 +524,7 @@ async def sample_batch_datasets_async(
     sample_count: Optional[int] = None,
     settings: Optional[BatchSettings] = None,
     **kwargs,
-) -> Union[pd.DataFrame, pl.DataFrame, pd.Series, pl.Series]:
+) -> Optional[RecordBatch]:
     settings = BatchSettings.load(
         **{
             **(settings.to_dict() if settings is not None else {}),
@@ -567,17 +532,9 @@ async def sample_batch_datasets_async(
         }
     )
 
-    generator, object_metadata = await scan_batch_datasets_generator_async(
-        source, **kwargs, settings=settings
-    )
+    generator = await scan_batch_datasets_generator_async(source, **kwargs, settings=settings)
 
     async for batch in generator:
         if batch is not None:
-            if isinstance(batch, (pd.DataFrame, pl.DataFrame, pd.Series, pl.Series)):
-                return batch
-
-            deserialized_batch = await run_in_executor(deserialize_batch, batch, object_metadata)
-            return deserialized_batch
+            return batch
         break
-
-    return pl.DataFrame()
