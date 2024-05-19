@@ -20,6 +20,48 @@ class Settings(BaseDataClass):
 
 @dataclass
 class BatchSettings(BaseDataClass):
+    """
+    Batches with less items uses less memory
+        Batch by 10K rows:
+            Time elapsed: 64.632 ms
+            Memory start: 0.192 gb
+            Memory final: 0.795 gb
+            Memory churn: 16.318 gb
+            Memory peak : 13.953 gb
+        Batch by 100K rows:
+            Time elapsed: 64.961 ms
+            Memory start: 0.194 gb
+            Memory final: 1.362 gb
+            Memory churn: 17.684 gb
+            Memory peak : 14.831 gb
+        Batch by 1M rows:
+            Time elapsed: 72.813 ms
+            Memory start: 0.198 gb
+            Memory final: 0.935 gb
+            Memory churn: 18.075 gb
+            Memory peak : 14.756 gb
+
+    Batches with less bytes uses less memory
+        Batch by 100MB:
+            Time elapsed: 73.180 ms
+            Memory start: 0.874 gb
+            Memory final: 1.028 gb
+            Memory churn: 16.988 gb
+            Memory peak : 14.823 gb
+        Batch by 1GB:
+            Time elapsed: 63.710 ms
+            Memory start: 0.890 gb
+            Memory final: 0.948 gb
+            Memory churn: 17.181 gb
+            Memory peak : 14.559 gb
+        Batch by 2GB:
+            Time elapsed: 67.282 ms
+            Memory start: 0.755 gb
+            Memory final: 1.059 gb
+            Memory churn: 17.256 gb
+            Memory peak : 15.057 gb
+    """
+
     count: Optional[Settings] = field(default=None)
     items: Optional[Settings] = field(default=None)
     size: Optional[Settings] = field(default=None)

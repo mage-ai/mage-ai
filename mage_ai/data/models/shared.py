@@ -82,4 +82,4 @@ class BaseData:
         ] and not project.is_feature_enabled(FeatureUUID.MEMORY_V2_PANDAS):
             return False
 
-        return is_user_defined_complex(data)
+        return data is None or is_user_defined_complex(data)

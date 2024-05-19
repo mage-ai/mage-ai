@@ -92,7 +92,7 @@ def to_parquet_sync(
     num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
 ):
-    for table in __prepare_data(
+    for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
         dfs=dfs,
@@ -104,7 +104,7 @@ def to_parquet_sync(
         pq.write_to_dataset(
             table,
             root_path=output_dir,
-            partition_cols=partition_cols,
+            partition_cols=partition_columns,
             use_dictionary=True,
             compression='snappy',
         )
@@ -119,7 +119,7 @@ async def to_parquet_async(
     num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
 ):
-    for table in __prepare_data(
+    for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
         dfs=dfs,
@@ -128,7 +128,7 @@ async def to_parquet_async(
         num_buckets=num_buckets,
         partition_cols=partition_cols,
     ):
-        await __write_to_dataset_async(table, output_dir, partition_cols)
+        await __write_to_dataset_async(table, output_dir, partition_columns)
 
 
 async def __write_to_dataset_async(
@@ -229,7 +229,7 @@ def __prepare_data(
         partition_cols = (partition_cols or []) + [COLUMN_CHUNK]
 
     # Utilize PyArrow's write_to_dataset function to handle partitioning
-    yield table
+    yield table, partition_cols
 
     partition_directories = glob.glob(f'{output_dir}/*')
     num_partitions = len(partition_directories)

@@ -144,6 +144,7 @@ class Variable:
         if self.variable_type is None:
             try:
                 if self.storage.path_exists(self.metadata_path):
+                    # Consider removing raise_exception=True
                     metadata = self.storage.read_json_file(self.metadata_path, raise_exception=True)
                     self.variable_type = metadata.get('type')
             except Exception:
@@ -206,6 +207,46 @@ class Variable:
         spark: Optional[Any] = None,
     ) -> Any:
         """
+        Used by
+            block.get_outputs
+                WebSocker server sending block output to the IDE
+        """
+
+        def __read(
+            dataframe_analysis_keys=dataframe_analysis_keys,
+            raise_exception=raise_exception,
+            sample=sample,
+            sample_count=sample_count,
+            spark=spark,
+        ):
+            return self.__read_data(
+                dataframe_analysis_keys=dataframe_analysis_keys,
+                raise_exception=raise_exception,
+                sample=sample,
+                sample_count=sample_count,
+                spark=spark,
+            )
+
+        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+            with MemoryManager(
+                self.internal_uuid,
+                poll_interval=POLL_INTERVAL,
+                metadata=dict(
+                    method='read_data',
+                ),
+            ):
+                return __read()
+        return __read()
+
+    def __read_data(
+        self,
+        dataframe_analysis_keys: Optional[List[str]] = None,
+        raise_exception: bool = False,
+        sample: bool = False,
+        sample_count: Optional[int] = None,
+        spark: Optional[Any] = None,
+    ) -> Any:
+        """
         Read variable data.
 
         Args:
@@ -220,7 +261,10 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.data_manager and self.data_manager.readable():
-            return self.data_manager.read_sync()
+            return self.data_manager.read_sync(
+                sample=sample,
+                sample_count=sample_count,
+            )
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -265,8 +309,46 @@ class Variable:
         dataframe_analysis_keys: Optional[List[str]] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
-        spark=None,
-    ):
+        spark: Optional[Any] = None,
+    ) -> Any:
+        """
+        Used by
+            block.to_dict_async
+                GET /pipelines/[:uuid]
+        """
+
+        async def __read(
+            dataframe_analysis_keys=dataframe_analysis_keys,
+            sample=sample,
+            sample_count=sample_count,
+            spark=spark,
+        ):
+            return await self.__read_data_async(
+                dataframe_analysis_keys=dataframe_analysis_keys,
+                sample=sample,
+                sample_count=sample_count,
+                spark=spark,
+            )
+
+        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+            with MemoryManager(
+                self.internal_uuid,
+                poll_interval=POLL_INTERVAL,
+                metadata=dict(
+                    method='read_data_async',
+                ),
+            ):
+                return await __read()
+
+        return await __read()
+
+    async def __read_data_async(
+        self,
+        dataframe_analysis_keys: Optional[List[str]] = None,
+        sample: bool = False,
+        sample_count: Optional[int] = None,
+        spark: Optional[Any] = None,
+    ) -> Any:
         """
         Read variable data asynchronously.
 
@@ -278,9 +360,18 @@ class Variable:
             sample_count (int, optional): The number of rows to sample, used for
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
+
+        Used by
+            block.to_dict_async
+                GET /pipelines/[:uuid]
         """
         if self.data_manager and self.data_manager.readable():
-            return self.data_manager.read_async()
+            data = await self.data_manager.read_async(
+                sample=sample,
+                sample_count=sample_count,
+            )
+
+            return data
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -371,7 +462,13 @@ class Variable:
 
     def write_data(self, data: Any) -> None:
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
-            with MemoryManager(self.internal_uuid, poll_interval=POLL_INTERVAL):
+            with MemoryManager(
+                self.internal_uuid,
+                poll_interval=POLL_INTERVAL,
+                metadata=dict(
+                    method='write_data',
+                ),
+            ):
                 self.__write_data(data)
         else:
             self.__write_data(data)
@@ -388,49 +485,50 @@ class Variable:
         """
 
         if self.data_manager and self.data_manager.writeable(data):
-            return self.data_manager.write_sync(data)
-
-        if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
-            data = data.to_list()
-
-        if self.variable_type is None and isinstance(data, pd.DataFrame):
-            self.variable_type = VariableType.DATAFRAME
-        elif self.variable_type is None and isinstance(data, pl.DataFrame):
-            self.variable_type = VariableType.POLARS_DATAFRAME
-        elif is_spark_dataframe(data):
-            self.variable_type = VariableType.SPARK_DATAFRAME
-        elif is_geo_dataframe(data):
-            self.variable_type = VariableType.GEO_DATAFRAME
-
-        # Dataframe analysis variables share the same uuid as the original dataframe variable
-        # so we won't write the metadata file for them
-        if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            self.__write_dataframe_analysis(data)
-            return
-
-        if self.variable_type == VariableType.DATAFRAME:
-            self.__write_parquet(data)
-        elif self.variable_type == VariableType.POLARS_DATAFRAME:
-            self.__write_polars_dataframe(data)
-        elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            self.__write_spark_parquet(data)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            self.__write_geo_dataframe(data)
-        elif self.variable_type == VariableType.MATRIX_SPARSE:
-            self.__write_matrix_sparse(data)
-        elif self.variable_type == VariableType.SERIES_PANDAS:
-            if not self.__write_series_pandas(data):
-                self.__write_json(data)
+            # self.__write_dataframe_analysis
+            self.data_manager.write_sync(data)
         else:
-            if (
-                VariableType.DICTIONARY_COMPLEX == self.variable_type
-                or VariableType.LIST_COMPLEX == self.variable_type
-            ):
-                data = self.__save_complex_object(data)
-            else:
-                data, _ = self.__should_save_object(data)
+            if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
+                data = data.to_list()
 
-            self.__write_json(data)
+            if self.variable_type is None and isinstance(data, pd.DataFrame):
+                self.variable_type = VariableType.DATAFRAME
+            elif self.variable_type is None and isinstance(data, pl.DataFrame):
+                self.variable_type = VariableType.POLARS_DATAFRAME
+            elif is_spark_dataframe(data):
+                self.variable_type = VariableType.SPARK_DATAFRAME
+            elif is_geo_dataframe(data):
+                self.variable_type = VariableType.GEO_DATAFRAME
+
+            # Dataframe analysis variables share the same uuid as the original dataframe variable
+            # so we won't write the metadata file for them
+            if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+                self.__write_dataframe_analysis(data)
+                return
+
+            if self.variable_type == VariableType.DATAFRAME:
+                self.__write_parquet(data)
+            elif self.variable_type == VariableType.POLARS_DATAFRAME:
+                self.__write_polars_dataframe(data)
+            elif self.variable_type == VariableType.SPARK_DATAFRAME:
+                self.__write_spark_parquet(data)
+            elif self.variable_type == VariableType.GEO_DATAFRAME:
+                self.__write_geo_dataframe(data)
+            elif self.variable_type == VariableType.MATRIX_SPARSE:
+                self.__write_matrix_sparse(data)
+            elif self.variable_type == VariableType.SERIES_PANDAS:
+                if not self.__write_series_pandas(data):
+                    self.__write_json(data)
+            else:
+                if (
+                    VariableType.DICTIONARY_COMPLEX == self.variable_type
+                    or VariableType.LIST_COMPLEX == self.variable_type
+                ):
+                    data = self.__save_complex_object(data)
+                else:
+                    data, _ = self.__should_save_object(data)
+
+                self.__write_json(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error
@@ -447,7 +545,13 @@ class Variable:
 
     async def write_data_async(self, data: Any) -> None:
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
-            with MemoryManager(self.internal_uuid, poll_interval=POLL_INTERVAL):
+            with MemoryManager(
+                self.internal_uuid,
+                poll_interval=POLL_INTERVAL,
+                metadata=dict(
+                    method='write_data_async',
+                ),
+            ):
                 await self.__write_data_async(data)
         else:
             await self.__write_data_async(data)
@@ -463,43 +567,44 @@ class Variable:
             VariableManager
         """
         if self.data_manager and self.data_manager.writeable(data):
-            return await self.data_manager.write_async(data)
-
-        if self.variable_type is None and isinstance(data, pd.DataFrame):
-            self.variable_type = VariableType.DATAFRAME
-        elif self.variable_type is None and isinstance(data, pl.DataFrame):
-            self.variable_type = VariableType.POLARS_DATAFRAME
-        elif is_spark_dataframe(data):
-            self.variable_type = VariableType.SPARK_DATAFRAME
-        elif is_geo_dataframe(data):
-            self.variable_type = VariableType.GEO_DATAFRAME
-
-        if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            self.__write_dataframe_analysis(data)
-            return
-
-        if self.variable_type == VariableType.DATAFRAME:
-            self.__write_parquet(data)
-        elif self.variable_type == VariableType.POLARS_DATAFRAME:
-            self.__write_polars_dataframe(data)
-        elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            self.__write_spark_parquet(data)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            self.__write_geo_dataframe(data)
-        elif self.variable_type == VariableType.MATRIX_SPARSE:
-            self.__write_matrix_sparse(data)
-        elif self.variable_type == VariableType.SERIES_PANDAS:
-            if not self.__write_series_pandas(data):
-                await self.__write_json_async(data)
+            await self.data_manager.write_async(data)
+            # self.__write_dataframe_analysis
         else:
-            if (
-                VariableType.DICTIONARY_COMPLEX == self.variable_type
-                or VariableType.LIST_COMPLEX == self.variable_type
-            ):
-                data = await self.__save_complex_object_asycn(data)
+            if self.variable_type is None and isinstance(data, pd.DataFrame):
+                self.variable_type = VariableType.DATAFRAME
+            elif self.variable_type is None and isinstance(data, pl.DataFrame):
+                self.variable_type = VariableType.POLARS_DATAFRAME
+            elif is_spark_dataframe(data):
+                self.variable_type = VariableType.SPARK_DATAFRAME
+            elif is_geo_dataframe(data):
+                self.variable_type = VariableType.GEO_DATAFRAME
+
+            if self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+                self.__write_dataframe_analysis(data)
+                return
+
+            if self.variable_type == VariableType.DATAFRAME:
+                self.__write_parquet(data)
+            elif self.variable_type == VariableType.POLARS_DATAFRAME:
+                self.__write_polars_dataframe(data)
+            elif self.variable_type == VariableType.SPARK_DATAFRAME:
+                self.__write_spark_parquet(data)
+            elif self.variable_type == VariableType.GEO_DATAFRAME:
+                self.__write_geo_dataframe(data)
+            elif self.variable_type == VariableType.MATRIX_SPARSE:
+                self.__write_matrix_sparse(data)
+            elif self.variable_type == VariableType.SERIES_PANDAS:
+                if not self.__write_series_pandas(data):
+                    await self.__write_json_async(data)
             else:
-                data, _ = self.__should_save_object(data)
-            await self.__write_json_async(data)
+                if (
+                    VariableType.DICTIONARY_COMPLEX == self.variable_type
+                    or VariableType.LIST_COMPLEX == self.variable_type
+                ):
+                    data = await self.__save_complex_object_asycn(data)
+                else:
+                    data, _ = self.__should_save_object(data)
+                await self.__write_json_async(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error

@@ -3,6 +3,7 @@ from typing import Any, Optional, Union
 from mage_ai.data.models.reader import Reader
 from mage_ai.data.models.shared import BaseData
 from mage_ai.data.models.writer import Writer
+from mage_ai.data.tabular.constants import DEFAULT_BATCH_ITEMS_VALUE
 from mage_ai.data_preparation.models.utils import infer_variable_type
 
 
@@ -34,19 +35,33 @@ class DataManager(BaseData):
             )
         return self._writer
 
-    async def read_async(self) -> Optional[Union[Any, str]]:
-        pass
+    def read_sync(
+        self,
+        sample: bool = False,
+        sample_count: Optional[int] = None,
+    ) -> Optional[Union[Any, str]]:
+        return self.reader.read_sync(
+            sample=sample,
+            sample_count=sample_count,
+        )
 
-    def read_sync(self) -> Optional[Union[Any, str]]:
-        pass
+    async def read_async(
+        self,
+        sample: bool = False,
+        sample_count: Optional[int] = None,
+    ) -> Optional[Union[Any, str]]:
+        return await self.reader.read_async(
+            sample=sample,
+            sample_count=sample_count,
+        )
 
-    async def write_async(self, data: Any) -> None:
+    async def write_async(self, data: Any, chunk_size: Optional[int] = None) -> None:
         self.__prepare(data, self.writer)
-        await self.writer.write_async(data)
+        await self.writer.write_async(data, chunk_size=chunk_size or DEFAULT_BATCH_ITEMS_VALUE)
 
-    def write_sync(self, data: Any) -> None:
+    def write_sync(self, data: Any, chunk_size: Optional[int] = None) -> None:
         self.__prepare(data, self.writer)
-        self.writer.write_sync(data)
+        self.writer.write_sync(data, chunk_size=chunk_size or DEFAULT_BATCH_ITEMS_VALUE)
 
     def readable(self) -> bool:
         return self.reader.supported()

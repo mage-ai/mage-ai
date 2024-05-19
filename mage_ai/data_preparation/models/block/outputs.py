@@ -69,9 +69,7 @@ def format_output_data(
     if VariableType.MATRIX_SPARSE == variable_type:
         if automatic_sampling and not sample_count:
             n_rows, n_cols = data.shape
-            max_dims = min(
-                DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols
-            )
+            max_dims = min(DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols)
             sample_count = round(max_dims / n_cols)
         if basic_iterable:
             data = convert_matrix_to_dataframe(data[0])
@@ -100,10 +98,7 @@ def format_output_data(
             return_output['type'] = DataType.TEXT
 
         return return_output, True
-    elif (
-        VariableType.MODEL_SKLEARN == variable_type
-        or VariableType.MODEL_XGBOOST == variable_type
-    ):
+    elif VariableType.MODEL_SKLEARN == variable_type or VariableType.MODEL_XGBOOST == variable_type:
 
         def __render(
             model: Any,
@@ -160,11 +155,7 @@ def format_output_data(
             coerce_into_dataframe,
         )
 
-        if (
-            VariableType.LIST_COMPLEX == variable_type
-            and basic_iterable
-            and len(data) >= 1
-        ):
+        if VariableType.LIST_COMPLEX == variable_type and basic_iterable and len(data) >= 1:
             data = [encode_complex(item) for item in data]
 
         return format_output_data(
@@ -181,9 +172,7 @@ def format_output_data(
         )
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
-            data = dict(
-                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
-            )
+            data = dict(table=data.to_csv(header=True, index=False).strip('\n').split('\n'))
         else:
             try:
                 analysis = variable_manager.get_variable(
@@ -198,9 +187,7 @@ def format_output_data(
                 print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
                 analysis = None
 
-            if analysis is not None and (
-                analysis.get('statistics') or analysis.get('metadata')
-            ):
+            if analysis is not None and (analysis.get('statistics') or analysis.get('metadata')):
                 stats = analysis.get('statistics', {})
                 column_types = (analysis.get('metadata') or {}).get('column_types', {})
                 row_count = stats.get('original_row_count', stats.get('count'))
@@ -219,9 +206,7 @@ def format_output_data(
                 sample_data=dict(
                     columns=columns_to_display,
                     rows=json.loads(
-                        data[columns_to_display].to_json(
-                            orient='split', date_format='iso'
-                        ),
+                        data[columns_to_display].to_json(orient='split', date_format='iso'),
                     )['data'],
                 ),
                 shape=[row_count, column_count],
@@ -255,9 +240,7 @@ def format_output_data(
                 columns=columns_to_display,
                 rows=[
                     list(row.values())
-                    for row in json.loads(
-                        data[columns_to_display].write_json(row_oriented=True)
-                    )
+                    for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
             shape=[row_count, column_count],
@@ -398,9 +381,7 @@ def get_outputs_for_display_dynamic_block(
             (child_data, 'dynamic output data'),
             (metadata, 'metadata'),
         ]:
-            if output is None or (
-                exclude_blank_variable_uuids and variable_uuid.strip() == ''
-            ):
+            if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue
 
             data, is_data_product = format_output_data(
@@ -518,19 +499,14 @@ def handle_variables(
                     variable_uuid=variable_uuid,
                 )
 
-                if (
-                    variable_type is not None
-                    and variable_object.variable_type != variable_type
-                ):
+                if variable_type is not None and variable_object.variable_type != variable_type:
                     continue
 
                 if variable_object.variable_type is not None:
                     variable_type_mapping[variable_object.variable_type] = (
                         variable_type_mapping.get(variable_object.variable_type, [])
                     )
-                    variable_type_mapping[variable_object.variable_type].append(
-                        variable_uuid
-                    )
+                    variable_type_mapping[variable_object.variable_type].append(variable_uuid)
 
                 yield (variable_object, sample, sample_count, __callback)
 

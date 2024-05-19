@@ -17,11 +17,15 @@ class Writer(BaseData):
             safe_delete_dir_sync(self.variable_path)
 
         if self.is_dataframe():
+
+            def __write(variable_path=self.variable_path, data=data, chunk_size=chunk_size):
+                to_parquet_sync(variable_path, df=data, chunk_size=chunk_size)
+
             if self.monitor_memory:
                 with self.build_memory_manager():
-                    to_parquet_sync(self.variable_path, df=data, chunk_size=chunk_size)
+                    __write()
             else:
-                to_parquet_sync(self.variable_path, df=data, chunk_size=chunk_size)
+                __write()
 
     async def write_async(
         self, data: Any, chunk_size: Optional[int] = None, replace: bool = True

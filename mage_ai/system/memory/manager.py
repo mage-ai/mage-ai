@@ -66,13 +66,14 @@ class MemoryManager:
 
     @property
     def metadata(self) -> Dict:
-        if not self._metadata:
-            project = Project()
-            self._metadata = dict(
+        project = Project()
+        self._metadata.update(
+            dict(
                 memory_v2=project.is_feature_enabled(FeatureUUID.MEMORY_V2),
                 memory_v2_pandas=project.is_feature_enabled(FeatureUUID.MEMORY_V2_PANDAS),
                 memory_v2_polars=project.is_feature_enabled(FeatureUUID.MEMORY_V2_POLARS),
             )
+        )
         return self._metadata
 
     def __enter__(self):

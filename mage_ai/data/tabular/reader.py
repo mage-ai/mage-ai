@@ -1,5 +1,7 @@
+import asyncio
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 from typing import Any, Dict, Iterator, List, Optional, Union
 
@@ -155,9 +157,7 @@ def read_metadata(
                     # otherwise fallback to checking the compressed size or file_offset
                     if hasattr(column, 'total_compressed_size'):
                         column_details['byte_size'] = column.total_compressed_size
-                    elif hasattr(
-                        column, 'compressed_size'
-                    ):  # if compressed_size attribute exists
+                    elif hasattr(column, 'compressed_size'):  # if compressed_size attribute exists
                         column_details['byte_size'] = column.compressed_size
                     elif hasattr(
                         column, 'file_offset'
@@ -329,7 +329,13 @@ def scan_batch_datasets(
     return_generator: Optional[bool] = False,
     scan: Optional[bool] = False,
     settings: Optional[BatchSettings] = None,
-) -> Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]]:
+) -> Iterator[
+    Union[
+        pa.RecordBatch,
+        ds.TaggedRecordBatch,
+        Optional[Dict[str, str]],
+    ],
+]:
     """
     Scans and optionally deserializes batches of records from a dataset.
 
@@ -371,22 +377,17 @@ def scan_batch_datasets(
         filters_list.append(
             reduce(
                 lambda a, b: a | b,
-                [
-                    create_filter(COLUMN_CHUNK, FilterComparison.EQUAL, chunk)
-                    for chunk in chunks
-                ],
+                [create_filter(COLUMN_CHUNK, FilterComparison.EQUAL, chunk) for chunk in chunks],
             )
         )
 
     if filters:
 
         def __create_filters(filters_strings: List[str]) -> ds.Expression:
-            return reduce(
-                lambda a, b: create_filter(a) & create_filter(b), filters_strings
-            )
+            return reduce(lambda a, b: create_filter(a) & create_filter(b), filters_strings)
 
         filters_list.append(
-            reduce(lambda a, b: __create_filters(a) | __create_filters(b), filters)
+            reduce(lambda a, b: __create_filters(a) | __create_filters(b), filters),
         )
 
     if filter:
@@ -411,21 +412,184 @@ def scan_batch_datasets(
 
     if return_generator:
         if scan:
-            return dataset.scanner(**scanner_settings).scan_batches()
+            scanner = dataset.scanner(**scanner_settings).scan_batches()
+            return ((batch, object_metadata) for batch in scanner)
         else:
-            return dataset.to_batches(**scanner_settings)
+            batches = dataset.to_batches(**scanner_settings)
+            return ((batch, object_metadata) for batch in batches)
 
     if scan:
         for tagged_record_batch in dataset.scanner(**scanner_settings).scan_batches():
             yield (
                 deserialize_batch(tagged_record_batch, object_metadata=object_metadata)
                 if deserialize
-                else tagged_record_batch
+                else tagged_record_batch,
+                object_metadata,
             )
     else:
         for record_batch in dataset.to_batches(**scanner_settings):
             yield (
                 deserialize_batch(record_batch, object_metadata=object_metadata)
                 if deserialize
-                else record_batch
+                else record_batch,
+                object_metadata,
             )
+
+
+async def scan_batch_datasets_async(
+    source: Union[List[str], str],
+    chunks: Optional[List[int]] = None,
+    columns: Optional[List[str]] = None,
+    deserialize: Optional[bool] = False,
+    filter: Optional[ds.Expression] = None,
+    filters: Optional[List[List[str]]] = None,
+    return_generator: Optional[bool] = False,
+    scan: Optional[bool] = False,
+    settings: Optional[BatchSettings] = None,
+) -> Iterator[
+    Union[
+        pa.RecordBatch,
+        ds.TaggedRecordBatch,
+        Optional[Dict[str, str]],
+    ],
+]:
+    """
+    Asynchronously scans and optionally deserializes batches of records from parquet datasets.
+
+    Example usage
+        source_path = 'path/to/your/parquet/dataset'
+        batches = await scan_batch_datasets_async(source=source_path)
+
+        => Process the batches as needed
+
+    Example usage with return generator
+        async for batch in scan_batch_datasets_async(source=source_path, return_generator=True):
+            process(batch)
+    """
+    loop = asyncio.get_event_loop()
+
+    # Function to wrap synchronous generator
+    async def async_generator_wrapper(sync_gen):
+        for item in sync_gen:
+            await asyncio.sleep(0)  # Yield control to the event loop
+            yield item
+
+    if return_generator:
+        # Prepare the synchronous generator in the executor and wrap with an asynchronous generator
+        sync_gen = await loop.run_in_executor(
+            ThreadPoolExecutor(),
+            # Use lambda to call the generator function
+            lambda: scan_batch_datasets(
+                source,
+                chunks,
+                columns,
+                deserialize,
+                filter,
+                filters,
+                # Force `return_generator` to False inside the synchronous function to get generator
+                False,
+                scan,
+                settings,
+            ),
+        )
+        return async_generator_wrapper(sync_gen)
+    else:
+        # If not returning a generator, the execution remains largely unchanged
+        batches = await loop.run_in_executor(
+            ThreadPoolExecutor(),
+            # Original synchronous function
+            scan_batch_datasets,
+            source,
+            chunks,
+            columns,
+            deserialize,
+            filter,
+            filters,
+            return_generator,
+            scan,
+            settings,
+        )
+        return batches
+
+
+def sample_batch_datasets(
+    sample_count: int,
+    source: Union[List[str], str],
+    chunks: Optional[List[int]] = None,
+    columns: Optional[List[str]] = None,
+    deserialize: Optional[bool] = False,
+    filter: Optional[ds.Expression] = None,
+    filters: Optional[List[List[str]]] = None,
+    return_generator: Optional[bool] = False,
+    scan: Optional[bool] = False,
+    settings: Optional[BatchSettings] = None,
+) -> Union[
+    pd.Series,
+    pl.DataFrame,
+    pl.Series,
+]:
+    settings = BatchSettings.load(items=dict(maximum=sample_count))
+    batch_generator = scan_batch_datasets(
+        source,
+        chunks=chunks,
+        columns=columns,
+        deserialize=deserialize,
+        filter=filter,
+        filters=filters,
+        return_generator=True,
+        scan=scan,
+        settings=settings,
+    )
+
+    if batch_generator is not None:
+        try:
+            # Check if the batch generator is not None and has at least one item
+            batch, object_metadata = next(batch_generator)
+            if batch is not None:  # Check if a batch is actually found
+                if isinstance(batch, (pd.DataFram, pl.DataFrame, pd.Series, pl.Series)):
+                    return batch
+                return deserialize_batch(batch, object_metadata=object_metadata)
+        except StopIteration:
+            pass  # Handle no rows in the dataset by falling through to return an empty DataFrame
+
+    return pl.DataFrame()  # Return an empty DataFrame if no batches are found
+
+
+async def sample_batch_datasets_async(
+    sample_count: int,
+    source: Union[List[str], str],
+    chunks: Optional[List[int]] = None,
+    columns: Optional[List[str]] = None,
+    deserialize: Optional[bool] = False,
+    filter: Optional[ds.Expression] = None,
+    filters: Optional[List[List[str]]] = None,
+    return_generator: Optional[bool] = False,
+    scan: Optional[bool] = False,
+    settings: Optional[BatchSettings] = None,
+) -> Union[
+    pd.Series,
+    pl.DataFrame,
+    pl.Series,
+]:
+    settings = BatchSettings.load(items=dict(maximum=sample_count))
+    batch_generator = await scan_batch_datasets_async(
+        source,
+        chunks=chunks,
+        columns=columns,
+        deserialize=deserialize,
+        filter=filter,
+        filters=filters,
+        return_generator=True,
+        scan=scan,
+        settings=settings,
+    )
+
+    if batch_generator is not None:
+        async for batch, object_metadata in batch_generator:
+            if isinstance(batch, (pd.DataFrame, pl.DataFrame, pd.Series, pl.Series)):
+                return batch
+
+            return deserialize_batch(batch, object_metadata=object_metadata)
+    # In case there are no rows in the dataset,
+    # return an empty DataFrame if the async for loop completes without returning
+    return pl.DataFrame()
