@@ -1,8 +1,21 @@
+import asyncio
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import reduce
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import pandas as pd
 import polars as pl
@@ -35,6 +48,12 @@ class ScanDatasetParameters(BaseDataClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('settings', BatchSettings)
+
+
+async def run_in_executor(func, *args):
+    executor = ThreadPoolExecutor()
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, func, *args)
 
 
 def create_filter(*args) -> ds.Expression:
@@ -446,11 +465,33 @@ def scan_batch_datasets_generator(
     return generator, object_metadata
 
 
+async def scan_batch_datasets_generator_async(
+    source: Union[List[str], str],
+    **kwargs,
+) -> Tuple[
+    AsyncIterator[
+        Union[
+            pa.RecordBatch,
+            ds.TaggedRecordBatch,
+            Optional[Dict[str, str]],
+        ],
+    ],
+    Optional[Dict[str, str]],
+]:
+    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs)
+
+    async def async_generator_wrapper():
+        for item in generator:
+            yield await run_in_executor(lambda: item)
+
+    return async_generator_wrapper(), object_metadata
+
+
 def scan_batch_datasets(
     source: Union[List[str], str],
     deserialize: Optional[bool] = False,
     **kwargs,
-) -> RecordBatchIterator:
+) -> Generator:
     """
     Cannot have a yield statement or else the return will never be reached.
     In Python, if a function contains a `yield` statement,
@@ -459,13 +500,27 @@ def scan_batch_datasets(
     but none of its code will run immediately.
     The function only executes on iteration.
     """
-    generator, object_metadata = scan_batch_datasets_generator(
-        source, **kwargs, deserialize=deserialize
-    )
+    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs)
 
     for tagged_or_record_batch in generator:
         yield (
             deserialize_batch(tagged_or_record_batch, object_metadata=object_metadata)
+            if deserialize
+            else tagged_or_record_batch,
+            object_metadata,
+        )
+
+
+async def scan_batch_datasets_async(
+    source: Union[List[str], str],
+    deserialize: Optional[bool] = False,
+    **kwargs,
+) -> AsyncGenerator:
+    generator, object_metadata = await scan_batch_datasets_generator_async(source, **kwargs)
+
+    async for tagged_or_record_batch in generator:
+        yield (
+            await run_in_executor(deserialize_batch, tagged_or_record_batch, object_metadata)
             if deserialize
             else tagged_or_record_batch,
             object_metadata,
@@ -495,5 +550,34 @@ def sample_batch_datasets(
             return deserialize_batch(batch, object_metadata=object_metadata)
     except StopIteration:
         pass
+
+    return pl.DataFrame()
+
+
+async def sample_batch_datasets_async(
+    source: Union[List[str], str],
+    sample_count: Optional[int] = None,
+    settings: Optional[BatchSettings] = None,
+    **kwargs,
+) -> Union[pd.DataFrame, pl.DataFrame, pd.Series, pl.Series]:
+    settings = BatchSettings.load(
+        **{
+            **(settings.to_dict() if settings is not None else {}),
+            **dict(items=dict(maximum=sample_count)),
+        }
+    )
+
+    generator, object_metadata = await scan_batch_datasets_generator_async(
+        source, **kwargs, settings=settings
+    )
+
+    async for batch in generator:
+        if batch is not None:
+            if isinstance(batch, (pd.DataFrame, pl.DataFrame, pd.Series, pl.Series)):
+                return batch
+
+            deserialized_batch = await run_in_executor(deserialize_batch, batch, object_metadata)
+            return deserialized_batch
+        break
 
     return pl.DataFrame()

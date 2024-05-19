@@ -1,7 +1,12 @@
 from typing import Any, List, Optional, Union
 
 from mage_ai.data.models.shared import BaseData
-from mage_ai.data.tabular.reader import sample_batch_datasets, scan_batch_datasets
+from mage_ai.data.tabular.reader import (
+    sample_batch_datasets,
+    sample_batch_datasets_async,
+    scan_batch_datasets_generator,
+    scan_batch_datasets_generator_async,
+)
 
 
 class Reader(BaseData):
@@ -10,36 +15,28 @@ class Reader(BaseData):
         chunks: Optional[List[int]] = None,
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
-        return_generator: Optional[bool] = False,
         sample: bool = False,
         sample_count: Optional[int] = None,
     ) -> Optional[Union[Any, str]]:
         if self.is_dataframe():
+            params = dict(chunks=chunks, columns=columns)
 
             def __read(
-                chunks=chunks,
-                columns=columns,
-                deserialize=deserialize,
-                return_generator=return_generator,
                 sample=sample,
                 sample_count=sample_count,
                 data_partitions_path=self.data_partitions_path,
+                deserialize=deserialize,
+                params=params,
             ):
                 if sample and sample_count:
                     return sample_batch_datasets(
                         data_partitions_path,
-                        chunks=chunks,
-                        columns=columns,
-                        deserialize=deserialize,
                         sample_count=sample_count,
+                        **params,
                     )
-                else:
-                    return scan_batch_datasets(
-                        data_partitions_path,
-                        chunks=chunks,
-                        columns=columns,
-                        deserialize=deserialize,
-                    )
+                return scan_batch_datasets_generator(
+                    data_partitions_path, deserialize=deserialize, **params
+                )
 
             if self.monitor_memory:
                 with self.build_memory_manager():
@@ -54,16 +51,33 @@ class Reader(BaseData):
         chunks: Optional[List[int]] = None,
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
-        return_generator: Optional[bool] = False,
         sample: bool = False,
         sample_count: Optional[int] = None,
     ) -> Optional[Union[Any, str]]:
-        data = self.read_sync(
-            chunks=chunks,
-            columns=columns,
-            deserialize=deserialize,
-            return_generator=return_generator,
-            sample=sample,
-            sample_count=sample_count,
-        )
-        return data
+        if self.is_dataframe():
+            params = dict(chunks=chunks, columns=columns)
+
+            async def __read(
+                sample=sample,
+                sample_count=sample_count,
+                data_partitions_path=self.data_partitions_path,
+                deserialize=deserialize,
+                params=params,
+            ):
+                if sample and sample_count:
+                    return await sample_batch_datasets_async(
+                        data_partitions_path,
+                        sample_count=sample_count,
+                        **params,
+                    )
+                return await scan_batch_datasets_generator_async(
+                    data_partitions_path, deserialize=deserialize, **params
+                )
+
+            if self.monitor_memory:
+                with self.build_memory_manager():
+                    batches = await __read()
+            else:
+                batches = await __read()
+
+            return batches
