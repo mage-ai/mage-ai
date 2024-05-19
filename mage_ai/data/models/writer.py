@@ -1,23 +1,38 @@
 from typing import Any, Optional
 
-from mage_ai.data.constants import WRITEABLE_VARIABLE_TYPES
 from mage_ai.data.models.shared import BaseData
-from mage_ai.data_preparation.models.utils import infer_variable_type
-from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.data.tabular.writer import to_parquet_async, to_parquet_sync
+from mage_ai.shared.files import (
+    makedirs_async,
+    makedirs_sync,
+    safe_delete_dir_async,
+    safe_delete_dir_sync,
+)
 
 
 class Writer(BaseData):
-    def supported(
-        self,
-        data: Optional[Any] = None,
-        variable: Optional[Variable] = None,
-        variable_type: Optional[VariableType] = None,
-    ) -> bool:
-        if variable_type is None:
-            if variable is not None:
-                variable_type = variable.variable_type
-            elif data is not None:
-                variable_type, _ = infer_variable_type(data, repo_path=self.repo_path)
+    def write_sync(self, data: Any, chunk_size: Optional[int] = None, replace: bool = True) -> None:
+        makedirs_sync(self.variable_path)
+        if replace:
+            safe_delete_dir_sync(self.variable_path)
 
-        return variable_type is not None and variable_type in WRITEABLE_VARIABLE_TYPES
+        if self.is_dataframe():
+            if self.monitor_memory:
+                with self.build_memory_manager():
+                    to_parquet_sync(self.variable_path, df=data, chunk_size=chunk_size)
+            else:
+                to_parquet_sync(self.variable_path, df=data, chunk_size=chunk_size)
+
+    async def write_async(
+        self, data: Any, chunk_size: Optional[int] = None, replace: bool = True
+    ) -> None:
+        await makedirs_async(self.variable_path)
+        if replace:
+            await safe_delete_dir_async(self.variable_path)
+
+        if self.is_dataframe():
+            if self.monitor_memory:
+                with self.build_memory_manager():
+                    await to_parquet_async(self.variable_path, df=data, chunk_size=chunk_size)
+            else:
+                await to_parquet_async(self.variable_path, df=data, chunk_size=chunk_size)

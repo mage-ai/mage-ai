@@ -2,9 +2,6 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from mage_ai.data.models.manager import Manager
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -30,8 +27,6 @@ class VariableManager:
         else:
             self.variables_dir = variables_dir
         self.storage = LocalStorage()
-
-        self._data_manager = None
         # TODO: implement caching logic
 
     @classmethod
@@ -51,16 +46,6 @@ class VariableManager:
         else:
             return VariableManager(**manager_args)
 
-    @property
-    def data_manager(self) -> Optional[Manager]:
-        if Project(repo_path=self.repo_path).is_feature_enabled(FeatureUUID.MEMORY_V2):
-            self._data_manager = Manager(
-                repo_path=self.repo_path,
-                storage=self.storage,
-                variables_dir=self.variables_dir,
-            )
-        return self._data_manager
-
     def add_variable(
         self,
         pipeline_uuid: str,
@@ -70,12 +55,19 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        disable_variable_type_inference: bool = False,
     ) -> None:
-        variable_type, _ = infer_variable_type(
-            data,
-            repo_path=self.repo_path,
-            variable_type=variable_type,
-        )
+        """
+        Used by:
+            block
+            block/data_integration/utils
+        """
+        if not disable_variable_type_inference:
+            variable_type, _ = infer_variable_type(
+                data,
+                repo_path=self.repo_path,
+                variable_type=variable_type,
+            )
 
         variable = Variable(
             clean_name(variable_uuid),
@@ -85,7 +77,6 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
-            data_manager=self.data_manager,
         )
 
         # Delete data if it exists
@@ -128,6 +119,10 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
     ) -> None:
+        """
+        Used by:
+            block
+        """
         variable_type, _ = infer_variable_type(
             data,
             repo_path=self.repo_path,
@@ -161,9 +156,7 @@ class VariableManager:
         if retention_ds is None:
             return
 
-        min_partition = (datetime.utcnow() - retention_ds).strftime(
-            format='%Y%m%dT%H%M%S'
-        )
+        min_partition = (datetime.utcnow() - retention_ds).strftime(format='%Y%m%dT%H%M%S')
 
         print(f'Clean variables before partition {min_partition}')
         if pipeline_uuid is None:
@@ -183,9 +176,7 @@ class VariableManager:
             dirs = self.storage.listdir(pipeline_variable_path)
             for dirname in dirs:
                 if dirname.isdigit():
-                    pipeline_schedule_vpath = os.path.join(
-                        pipeline_variable_path, dirname
-                    )
+                    pipeline_schedule_vpath = os.path.join(pipeline_variable_path, dirname)
                     execution_partitions = self.storage.listdir(
                         pipeline_schedule_vpath,
                     )
@@ -275,9 +266,7 @@ class VariableManager:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
-        variable_dir_path = os.path.join(
-            self.pipeline_path(pipeline_uuid), VARIABLE_DIR
-        )
+        variable_dir_path = os.path.join(self.pipeline_path(pipeline_uuid), VARIABLE_DIR)
         if not self.storage.path_exists(variable_dir_path):
             return dict()
         block_dirs = self.storage.listdir(variable_dir_path)
@@ -346,9 +335,7 @@ class GCSVariableManager(VariableManager):
 
 def clean_variables(pipeline_uuid: str = None):
     variables_dir = get_variables_dir()
-    VariableManager(variables_dir=variables_dir).clean_variables(
-        pipeline_uuid=pipeline_uuid
-    )
+    VariableManager(variables_dir=variables_dir).clean_variables(pipeline_uuid=pipeline_uuid)
 
 
 def get_global_variables(

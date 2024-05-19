@@ -1,14 +1,17 @@
+import asyncio
 import functools
 import io
 import json
 import os
 import sys
+import threading
 import time
 from collections import deque
 from collections.abc import Container, Iterable, Mapping
+from datetime import datetime
 from logging import Logger
 from sys import getsizeof
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import joblib
 import pandas as pd
@@ -17,6 +20,7 @@ import pyarrow.parquet as pq
 from memory_profiler import memory_usage
 
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.system.constants import LogTag
 
 
 def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
@@ -177,9 +181,7 @@ def estimate_file_memory_usage(file_path: str) -> Dict[str, float]:
         # Joblib files are used for serializing Python objects. The memory usage
         # Could be quite different from the file size depending on the object.
         # Using a heuristic here, but for accurate measurements, deserialization might be necessary.
-        estimated_memory_usage *= (
-            4  # Assuming significant expansion due to decompression
-        )
+        estimated_memory_usage *= 4  # Assuming significant expansion due to decompression
 
     # If you want to add specific estimates for different file types
     # (e.g., images, serialized objects),
@@ -203,9 +205,7 @@ def deep_getsizeof(o, ids) -> float:
         return size
 
     if isinstance(o, Mapping):
-        size += sum(
-            (deep_getsizeof(k, ids) + deep_getsizeof(v, ids) for k, v in o.items())
-        )
+        size += sum((deep_getsizeof(k, ids) + deep_getsizeof(v, ids) for k, v in o.items()))
 
     elif isinstance(o, Container):
         size += sum((deep_getsizeof(i, ids) for i in o))
@@ -229,9 +229,9 @@ def estimate_memory_usage(obj) -> float:
     - The estimated memory size in bytes.
     """
     if isinstance(obj, dict):
-        return sum(
-            (getsizeof(key) + getsizeof(value) for key, value in obj.items())
-        ) + getsizeof(obj)
+        return sum((getsizeof(key) + getsizeof(value) for key, value in obj.items())) + getsizeof(
+            obj
+        )
     elif isinstance(obj, Iterable) and not isinstance(obj, str):
         return sum((getsizeof(item) for item in obj)) + getsizeof(obj)
     try:
@@ -363,14 +363,10 @@ def print_nice_lines(data, column_padding=2):
     column_widths = {header: len(header) for header in headers}
     for row in data:
         for header in headers:
-            column_widths[header] = max(
-                column_widths[header], len(str(row.get(header, '')))
-            )
+            column_widths[header] = max(column_widths[header], len(str(row.get(header, ''))))
 
     # Create a format string for padding the columns
-    row_format = ''.join(
-        [f'{{:<{column_widths[header] + column_padding}}}' for header in headers]
-    )
+    row_format = ''.join([f'{{:<{column_widths[header] + column_padding}}}' for header in headers])
 
     # Print headers
     print(row_format.format(*headers))
@@ -410,9 +406,7 @@ def combined_memory_util(runs=1, return_output=False):
 
                 # Measure initial memory using memory_profiler (in bytes)
                 mem_usage_before = (
-                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True)
-                    * 1024
-                    * 1024
+                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True) * 1024 * 1024
                 )
                 mem_starts_mp.append(mem_usage_before)
 
@@ -434,9 +428,7 @@ def combined_memory_util(runs=1, return_output=False):
 
                 # Measure memory after execution using memory_profiler (in bytes)
                 mem_usage_after = (
-                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True)
-                    * 1024
-                    * 1024
+                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True) * 1024 * 1024
                 )
                 mem_ends_mp.append(mem_usage_after)
 
@@ -487,3 +479,80 @@ def combined_memory_util(runs=1, return_output=False):
         return wrapper
 
     return decorator
+
+
+def current_memory_usage() -> float:
+    """
+    Returns the current memory usage of the process in MB.
+    """
+    return memory_usage(-1)[0]
+
+
+def format_metadata_message(metadata: Dict, tag: Optional[LogTag] = None) -> str:
+    return format_memory_message(
+        ' '.join([f'{k}={v}' for k, v in metadata.items() if v is not None]),
+        tag=tag,
+    )
+
+
+def format_memory_message(message: Any, tag: Optional[LogTag] = None) -> str:
+    tag = tag or LogTag.MEMORY
+    timestamp = round(datetime.utcnow().timestamp() / 1000)
+    return f'[{timestamp}][{tag}] {message}\n'
+
+
+def monitor_memory_usage(
+    callback: Optional[Callable[[float], Any]],
+    interval_seconds: float = 1.0,
+):
+    """
+    Monitor and logs memory usage periodically to the same log file.
+    """
+
+    def monitor():
+        while not stop_event.is_set():
+            # Memory usage of the current process
+            if callback:
+                callback(current_memory_usage())
+            time.sleep(interval_seconds)
+
+    stop_event = threading.Event()
+    monitor_thread = threading.Thread(target=monitor)
+    monitor_thread.start()
+
+    return stop_event, monitor_thread
+
+
+def thread_target(monitor, loop):
+    """
+    This function is intended to be run in a separate thread.
+    It sets up an event loop and runs an asynchronous function within that loop.
+    """
+    # Set the event loop for the current thread
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(monitor())
+    loop.close()
+
+
+async def monitor_memory_usage_async(
+    callback: Optional[Callable[[float], Any]],
+    interval_seconds: float = 1.0,
+):
+    """
+    Monitor and logs memory usage periodically to the same log file.
+    """
+    new_loop = asyncio.new_event_loop()
+
+    async def monitor():
+        while not stop_event.is_set():
+            # Memory usage of the current process
+            if callback:
+                memory = current_memory_usage()
+                await callback(memory)
+            await asyncio.sleep(interval_seconds)
+
+    stop_event = threading.Event()
+    monitor_thread = threading.Thread(target=thread_target, args=(monitor, new_loop))
+    monitor_thread.start()
+
+    return stop_event, monitor_thread

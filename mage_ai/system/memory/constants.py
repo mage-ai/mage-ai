@@ -1,0 +1,2 @@
+MEMORY_LOGS_FILENAME = 'memory.log'
+MEMORY_LOGS_DIRECTORY = 'logs'

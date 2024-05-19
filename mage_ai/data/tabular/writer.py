@@ -1,8 +1,6 @@
+import asyncio
 import glob
 import json
-import os
-import shutil
-import time
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
@@ -29,9 +27,9 @@ def append_chunk_column(
     elif chunk_size is not None:
         chunks = [i // chunk_size for i in range(total_rows)]
     else:
-        chunks = (
-            [0] * total_rows
-        )  # Default to all rows in the same chunk if no parameters are provided
+        chunks = [
+            0
+        ] * total_rows  # Default to all rows in the same chunk if no parameters are provided
 
     return df.with_columns([pl.Series(COLUMN_CHUNK, chunks).cast(pl.Int32)])
 
@@ -60,9 +58,7 @@ def add_chunk_column(
         chunk_size = max(total_rows // num_buckets, 1)
         num_buckets = (total_rows + chunk_size - 1) // chunk_size
 
-    print(
-        f'Chunk size: {chunk_size}, Total rows: {total_rows}, Num buckets: {num_buckets}'
-    )
+    print(f'Chunk size: {chunk_size}, Total rows: {total_rows}, Num buckets: {num_buckets}')
 
     return append_chunk_column(df, chunk_size, total_rows, use_index_as_chunk, index)
 
@@ -70,9 +66,7 @@ def add_chunk_column(
 def add_custom_metadata_to_table(table: pa.Table, metadata: Dict) -> pa.Table:
     # This is a placeholder function. Adapt it based on your actual metadata handling.
     # Access existing metadata (if any) and merge with custom metadata
-    existing_metadata = (
-        table.schema.metadata if table.schema.metadata is not None else {}
-    )
+    existing_metadata = table.schema.metadata if table.schema.metadata is not None else {}
     updated_metadata = {
         **existing_metadata,
         **{key.encode(): str(value).encode() for key, value in metadata.items()},
@@ -89,7 +83,7 @@ def series_to_dataframe(series: Union[pd.Series, pl.Series]) -> pl.DataFrame:
     return pl.DataFrame(series)
 
 
-def to_parquet(
+def to_parquet_sync(
     output_dir: str,
     df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
@@ -97,7 +91,71 @@ def to_parquet(
     metadata: Optional[Dict] = None,
     num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
-    replace: bool = False,
+):
+    for table in __prepare_data(
+        output_dir=output_dir,
+        df=df,
+        dfs=dfs,
+        chunk_size=chunk_size,
+        metadata=metadata,
+        num_buckets=num_buckets,
+        partition_cols=partition_cols,
+    ):
+        pq.write_to_dataset(
+            table,
+            root_path=output_dir,
+            partition_cols=partition_cols,
+            use_dictionary=True,
+            compression='snappy',
+        )
+
+
+async def to_parquet_async(
+    output_dir: str,
+    df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
+    dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
+    chunk_size: Optional[int] = None,
+    metadata: Optional[Dict] = None,
+    num_buckets: Optional[int] = None,
+    partition_cols: Optional[List[str]] = None,
+):
+    for table in __prepare_data(
+        output_dir=output_dir,
+        df=df,
+        dfs=dfs,
+        chunk_size=chunk_size,
+        metadata=metadata,
+        num_buckets=num_buckets,
+        partition_cols=partition_cols,
+    ):
+        await __write_to_dataset_async(table, output_dir, partition_cols)
+
+
+async def __write_to_dataset_async(
+    table: pa.Table,
+    output_dir: str,
+    partition_cols: Optional[List[str]] = None,
+):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None,
+        pq.write_to_dataset,
+        table,
+        output_dir,
+        compression='snappy',
+        partition_cols=partition_cols,
+        use_dictionary=True,
+    )
+
+
+def __prepare_data(
+    output_dir: str,
+    df: Optional[Union[pd.DataFrame, pl.DataFrame, pl.Series, pd.Series]] = None,
+    dfs: Optional[Union[List[pd.DataFrame], List[pl.DataFrame], pl.Series, pd.Series]] = None,
+    chunk_size: Optional[int] = None,
+    metadata: Optional[Dict] = None,
+    num_buckets: Optional[int] = None,
+    partition_cols: Optional[List[str]] = None,
 ):
     """
     Writes a Polars DataFrame to partitioned Parquet files directly using PyArrow,
@@ -110,18 +168,21 @@ def to_parquet(
     """
 
     series_sample = None
-    if dfs is not None and any(
-        [isinstance(item, (pd.Series, pl.Series)) for item in dfs]
-    ):
-        series_sample = dfs[0]
-        dfs = [
-            series_to_dataframe(series)
-            for series in dfs
-            if isinstance(series, (pd.Series, pl.Series))
-        ]
+    if dfs is not None:
+        if all([isinstance(item, (pd.Series, pl.Series)) for item in dfs]):
+            series_sample = dfs[0]
+            dfs = [
+                series_to_dataframe(item)
+                for item in dfs
+                if isinstance(item, (pd.Series, pl.Series))
+            ]
+        elif all([isinstance(item, pd.DataFrame) for item in dfs]):
+            dfs = [pl.from_pandas(item) for item in dfs if isinstance(item, pd.DataFrame)]
     elif isinstance(df, (pd.Series, pl.Series)):
         series_sample = df
         df = series_to_dataframe(df)
+    elif isinstance(df, pd.DataFrame):
+        df = pl.from_pandas(df)
 
     chunk_sizes = [] + ([chunk_size] if chunk_size else [])
     if dfs is not None:
@@ -145,9 +206,7 @@ def to_parquet(
 
             chunk_sizes.append(chunk_size_for_index)
             print(f'Chunk size for index {index}: {chunk_size_for_index}')
-    elif (
-        df is not None and (chunk_size or num_buckets) and not isinstance(df, pd.Series)
-    ):
+    elif df is not None and (chunk_size or num_buckets) and isinstance(df, pl.DataFrame):
         df = add_chunk_column(df, chunk_size=chunk_size, num_buckets=num_buckets)
 
     if df is None:
@@ -166,25 +225,11 @@ def to_parquet(
     # Convert the Polars DataFrame to a PyArrow Table first
     table = add_custom_metadata_to_table(df.to_arrow(), metadata)
 
-    # Ensure the output directory exists
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Overwrite logic: delete existing data before writing
-    if replace and os.path.exists(output_dir):
-        safe_delete_dir(output_dir)
-        print(f"Existing data in '{output_dir}' has been deleted for replace mode.")
-
     if chunk_size or num_buckets:
         partition_cols = (partition_cols or []) + [COLUMN_CHUNK]
+
     # Utilize PyArrow's write_to_dataset function to handle partitioning
-    pq.write_to_dataset(
-        table,
-        root_path=output_dir,
-        partition_cols=partition_cols,  # This argument enforces Hive-style partitioning.
-        use_dictionary=True,
-        compression='snappy',
-    )
+    yield table
 
     partition_directories = glob.glob(f'{output_dir}/*')
     num_partitions = len(partition_directories)
@@ -195,21 +240,3 @@ def to_parquet(
         f'{total_rows} rows with {total_columns} columns '
         f"written to '{output_dir}' across {num_partitions} partitions."
     )
-
-
-def safe_delete_dir(output_dir):
-    max_attempts = 5
-    for attempt in range(max_attempts):
-        try:
-            shutil.rmtree(output_dir)
-            print(f'Successfully deleted {output_dir}')
-            break  # Successfully deleted; exit the loop
-        except OSError as err:
-            if attempt < max_attempts - 1:
-                time.sleep(2)  # Wait a bit for retry
-                continue
-            else:
-                print(
-                    f'Failed to delete {output_dir} after {max_attempts} attempts: {err}'
-                )
-                raise err

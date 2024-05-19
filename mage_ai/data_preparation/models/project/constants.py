@@ -13,6 +13,8 @@ class FeatureUUID(str, Enum):
     INTERACTIONS = 'interactions'
     LOCAL_TIMEZONE = 'display_local_timezone'
     MEMORY_V2 = 'memory_v2'
+    MEMORY_V2_PANDAS = 'memory_v2_pandas'
+    MEMORY_V2_POLARS = 'memory_v2_polars'
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view'
     OPERATION_HISTORY = 'operation_history'
     POLARS = 'polars'

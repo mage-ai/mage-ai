@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 from jinja2 import Template
@@ -150,8 +150,8 @@ def get_metadata_path(root_project: bool = False):
 
 
 def get_variables_dir(
-    repo_path: str = None,
-    repo_config: Dict = None,
+    repo_path: Optional[str] = None,
+    repo_config: Optional[Dict] = None,
     root_project: bool = False,
 ) -> str:
     """
@@ -191,9 +191,7 @@ def get_variables_dir(
                     repo_config = yaml.full_load(config_file_raw) or {}
                     if repo_config.get('variables_dir'):
                         variables_dir = repo_config.get('variables_dir')
-                        variables_dir = Template(variables_dir).render(
-                            **get_template_vars_no_db()
-                        )
+                        variables_dir = Template(variables_dir).render(**get_template_vars_no_db())
         if variables_dir is None:
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)

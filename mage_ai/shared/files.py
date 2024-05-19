@@ -1,5 +1,8 @@
+import asyncio
 import glob
 import os
+import shutil
+import time
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
@@ -55,10 +58,15 @@ def read_last_line(filename: str) -> str:
 
 
 def get_full_file_paths_containing_item(root_full_path: str, comparator: Callable) -> List[str]:
-    configfiles = [os.path.join(
-        dirpath,
-        f,
-    ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
+    configfiles = [
+        os.path.join(
+            dirpath,
+            f,
+        )
+        for dirpath, dirnames, files in os.walk(root_full_path)
+        for f in files
+        if comparator(f)
+    ]
 
     return configfiles
 
@@ -101,10 +109,11 @@ def get_absolute_paths_from_all_files(
     for filename in glob.iglob(dir_path, recursive=True):
         absolute_path = os.path.abspath(filename)
 
-        if os.path.isfile(absolute_path) and \
-                (not include_hidden_files or not absolute_path.startswith('.')) and \
-                (not comparator or comparator(absolute_path)):
-
+        if (
+            os.path.isfile(absolute_path)
+            and (not include_hidden_files or not absolute_path.startswith('.'))
+            and (not comparator or comparator(absolute_path))
+        ):
             value = (absolute_path, os.path.getsize(filename), round(os.path.getmtime(filename)))
             arr.append(parse_values(value) if parse_values else value)
 
@@ -149,3 +158,47 @@ async def read_async(file_path: str) -> str:
         except Exception as err:
             if is_debug():
                 print(f'[ERROR] files.read_async: {err}.')
+
+
+def safe_delete_dir_sync(output_dir):
+    max_attempts = 5
+    for attempt in range(max_attempts):
+        try:
+            shutil.rmtree(output_dir)
+            print(f'Successfully deleted {output_dir}')
+            break  # Successfully deleted; exit the loop
+        except OSError as err:
+            if attempt < max_attempts - 1:
+                time.sleep(2)  # Wait a bit for retry
+                continue
+            else:
+                print(f'Failed to delete {output_dir} after {max_attempts} attempts: {err}')
+                raise err
+
+
+async def safe_delete_dir_async(output_dir: str):
+    loop = asyncio.get_event_loop()
+    max_attempts = 5
+
+    for attempt in range(max_attempts):
+        try:
+            await loop.run_in_executor(None, shutil.rmtree, output_dir)
+            print(f'Successfully deleted {output_dir}')
+            break  # Successfully deleted; exit the loop
+        except OSError as err:
+            # Handles the potential need for retry due to file locking/availability/etc.
+            if attempt < max_attempts - 1:
+                await asyncio.sleep(2)  # Non-blocking wait before retry
+                continue
+            else:
+                print(f'Failed to delete {output_dir} after {max_attempts} attempts: {err}')
+                raise
+
+
+def makedirs_sync(path: str):
+    os.makedirs(path, exist_ok=True)
+
+
+async def makedirs_async(path: str):
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, os.makedirs, path, exist_ok=True)
