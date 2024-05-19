@@ -1,9 +1,8 @@
-import asyncio
 import json
 import os
-from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from functools import reduce
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
@@ -14,6 +13,28 @@ import pyarrow.parquet as pq
 from mage_ai.data.tabular.constants import COLUMN_CHUNK, FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.array import find, flatten
+from mage_ai.shared.models import BaseDataClass
+
+RecordBatchIterator = Iterator[
+    Union[
+        pa.RecordBatch,
+        ds.TaggedRecordBatch,
+        Optional[Dict[str, str]],
+    ],
+]
+
+
+@dataclass
+class ScanDatasetParameters(BaseDataClass):
+    chunks: Optional[List[int]] = None
+    columns: Optional[List[str]] = None
+    filter: Optional[ds.Expression] = None
+    filters: Optional[List[List[str]]] = None
+    scan: Optional[bool] = False
+    settings: Optional[BatchSettings] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('settings', BatchSettings)
 
 
 def create_filter(*args) -> ds.Expression:
@@ -36,19 +57,19 @@ def create_filter(*args) -> ds.Expression:
 
     value = FilterComparison(value) if isinstance(value, str) else value
 
-    field = ds.field(column_name)
+    schema_field = ds.field(column_name)
     if FilterComparison.EQUAL == comparison:
-        return field == value
+        return schema_field == value
     elif FilterComparison.NOT_EQUAL == comparison:
-        return field != value
+        return schema_field != value
     elif FilterComparison.LESS_THAN == comparison:
-        return field < value
+        return schema_field < value
     elif FilterComparison.LESS_THAN_OR_EQUAL == comparison:
-        return field <= value
+        return schema_field <= value
     elif FilterComparison.GREATER_THAN == comparison:
-        return field > value
+        return schema_field > value
     elif FilterComparison.GREATER_THAN_OR_EQUAL == comparison:
-        return field >= value
+        return schema_field >= value
     else:
         raise ValueError(f'Unsupported comparison type: {comparison}')
 
@@ -189,9 +210,9 @@ def read_metadata(
             schema = (
                 parquet_file.schema.to_arrow_schema()
             )  # Convert PyArrow Parquet schema to Arrow schema
-            for field in schema:
-                column_name = field.name
-                column_type = str(field.type)  # This should now work as expected
+            for schema_field in schema:
+                column_name = schema_field.name
+                column_type = str(schema_field.type)  # This should now work as expected
                 schema_info[column_name] = column_type
 
                 if column_name not in schema_combined:
@@ -259,6 +280,8 @@ def deserialize_batch(
 ]:
     record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
     table = pa.Table.from_batches([record_batch])
+    if COLUMN_CHUNK in table.column_names:
+        table = table.drop(columns=[COLUMN_CHUNK])
 
     if object_metadata is not None and table.num_columns >= 1:
         if compare_object(pd.Series, object_metadata):
@@ -319,22 +342,18 @@ def get_series_object_metadata(
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
-def scan_batch_datasets(
+def scan_batch_datasets_generator(
     source: Union[List[str], str],
-    chunks: Optional[List[int]] = None,
-    columns: Optional[List[str]] = None,
-    deserialize: Optional[bool] = False,
-    filter: Optional[ds.Expression] = None,
-    filters: Optional[List[List[str]]] = None,
-    return_generator: Optional[bool] = False,
-    scan: Optional[bool] = False,
-    settings: Optional[BatchSettings] = None,
-) -> Iterator[
-    Union[
-        pa.RecordBatch,
-        ds.TaggedRecordBatch,
-        Optional[Dict[str, str]],
+    **kwargs,
+) -> Tuple[
+    Iterator[
+        Union[
+            pa.RecordBatch,
+            ds.TaggedRecordBatch,
+            Optional[Dict[str, str]],
+        ],
     ],
+    Optional[Dict[str, str]],
 ]:
     """
     Scans and optionally deserializes batches of records from a dataset.
@@ -362,10 +381,19 @@ def scan_batch_datasets(
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
+    params = ScanDatasetParameters.load(**kwargs)
+
+    chunks = params.chunks
+    columns = params.columns
+    filter = params.filter
+    filters = params.filters
+    scan = params.scan
+    settings = params.settings
+
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:
-        metadatas.append(read_metadata(directory))
+        metadatas.append(read_metadata(directory, include_schema=True))
     object_metadata = get_series_object_metadata(metadatas=metadatas)
 
     if settings is None:
@@ -410,186 +438,62 @@ def scan_batch_datasets(
         use_threads=True,
     )
 
-    if return_generator:
-        if scan:
-            scanner = dataset.scanner(**scanner_settings).scan_batches()
-            return ((batch, object_metadata) for batch in scanner)
-        else:
-            batches = dataset.to_batches(**scanner_settings)
-            return ((batch, object_metadata) for batch in batches)
-
     if scan:
-        for tagged_record_batch in dataset.scanner(**scanner_settings).scan_batches():
-            yield (
-                deserialize_batch(tagged_record_batch, object_metadata=object_metadata)
-                if deserialize
-                else tagged_record_batch,
-                object_metadata,
-            )
+        generator = dataset.scanner(**scanner_settings).scan_batches()
     else:
-        for record_batch in dataset.to_batches(**scanner_settings):
-            yield (
-                deserialize_batch(record_batch, object_metadata=object_metadata)
-                if deserialize
-                else record_batch,
-                object_metadata,
-            )
+        generator = dataset.to_batches(**scanner_settings)
+
+    return generator, object_metadata
 
 
-async def scan_batch_datasets_async(
+def scan_batch_datasets(
     source: Union[List[str], str],
-    chunks: Optional[List[int]] = None,
-    columns: Optional[List[str]] = None,
     deserialize: Optional[bool] = False,
-    filter: Optional[ds.Expression] = None,
-    filters: Optional[List[List[str]]] = None,
-    return_generator: Optional[bool] = False,
-    scan: Optional[bool] = False,
-    settings: Optional[BatchSettings] = None,
-) -> Iterator[
-    Union[
-        pa.RecordBatch,
-        ds.TaggedRecordBatch,
-        Optional[Dict[str, str]],
-    ],
-]:
+    **kwargs,
+) -> RecordBatchIterator:
     """
-    Asynchronously scans and optionally deserializes batches of records from parquet datasets.
-
-    Example usage
-        source_path = 'path/to/your/parquet/dataset'
-        batches = await scan_batch_datasets_async(source=source_path)
-
-        => Process the batches as needed
-
-    Example usage with return generator
-        async for batch in scan_batch_datasets_async(source=source_path, return_generator=True):
-            process(batch)
+    Cannot have a yield statement or else the return will never be reached.
+    In Python, if a function contains a `yield` statement,
+    it turns the function into a generator function.
+    This means that the function will return a generator object,
+    but none of its code will run immediately.
+    The function only executes on iteration.
     """
-    loop = asyncio.get_event_loop()
+    generator, object_metadata = scan_batch_datasets_generator(
+        source, **kwargs, deserialize=deserialize
+    )
 
-    # Function to wrap synchronous generator
-    async def async_generator_wrapper(sync_gen):
-        for item in sync_gen:
-            await asyncio.sleep(0)  # Yield control to the event loop
-            yield item
-
-    if return_generator:
-        # Prepare the synchronous generator in the executor and wrap with an asynchronous generator
-        sync_gen = await loop.run_in_executor(
-            ThreadPoolExecutor(),
-            # Use lambda to call the generator function
-            lambda: scan_batch_datasets(
-                source,
-                chunks,
-                columns,
-                deserialize,
-                filter,
-                filters,
-                # Force `return_generator` to False inside the synchronous function to get generator
-                False,
-                scan,
-                settings,
-            ),
+    for tagged_or_record_batch in generator:
+        yield (
+            deserialize_batch(tagged_or_record_batch, object_metadata=object_metadata)
+            if deserialize
+            else tagged_or_record_batch,
+            object_metadata,
         )
-        return async_generator_wrapper(sync_gen)
-    else:
-        # If not returning a generator, the execution remains largely unchanged
-        batches = await loop.run_in_executor(
-            ThreadPoolExecutor(),
-            # Original synchronous function
-            scan_batch_datasets,
-            source,
-            chunks,
-            columns,
-            deserialize,
-            filter,
-            filters,
-            return_generator,
-            scan,
-            settings,
-        )
-        return batches
 
 
 def sample_batch_datasets(
-    sample_count: int,
     source: Union[List[str], str],
-    chunks: Optional[List[int]] = None,
-    columns: Optional[List[str]] = None,
-    deserialize: Optional[bool] = False,
-    filter: Optional[ds.Expression] = None,
-    filters: Optional[List[List[str]]] = None,
-    return_generator: Optional[bool] = False,
-    scan: Optional[bool] = False,
+    sample_count: Optional[int] = None,
     settings: Optional[BatchSettings] = None,
-) -> Union[
-    pd.Series,
-    pl.DataFrame,
-    pl.Series,
-]:
-    settings = BatchSettings.load(items=dict(maximum=sample_count))
-    batch_generator = scan_batch_datasets(
-        source,
-        chunks=chunks,
-        columns=columns,
-        deserialize=deserialize,
-        filter=filter,
-        filters=filters,
-        return_generator=True,
-        scan=scan,
-        settings=settings,
+    **kwargs,
+) -> Union[pd.DataFrame, pl.DataFrame, pd.Series, pl.Series]:
+    settings = BatchSettings.load(
+        **{
+            **(settings.to_dict() if settings is not None else {}),
+            **dict(items=dict(maximum=sample_count)),
+        }
     )
 
-    if batch_generator is not None:
-        try:
-            # Check if the batch generator is not None and has at least one item
-            batch, object_metadata = next(batch_generator)
-            if batch is not None:  # Check if a batch is actually found
-                if isinstance(batch, (pd.DataFram, pl.DataFrame, pd.Series, pl.Series)):
-                    return batch
-                return deserialize_batch(batch, object_metadata=object_metadata)
-        except StopIteration:
-            pass  # Handle no rows in the dataset by falling through to return an empty DataFrame
+    generator, object_metadata = scan_batch_datasets_generator(source, **kwargs, settings=settings)
 
-    return pl.DataFrame()  # Return an empty DataFrame if no batches are found
-
-
-async def sample_batch_datasets_async(
-    sample_count: int,
-    source: Union[List[str], str],
-    chunks: Optional[List[int]] = None,
-    columns: Optional[List[str]] = None,
-    deserialize: Optional[bool] = False,
-    filter: Optional[ds.Expression] = None,
-    filters: Optional[List[List[str]]] = None,
-    return_generator: Optional[bool] = False,
-    scan: Optional[bool] = False,
-    settings: Optional[BatchSettings] = None,
-) -> Union[
-    pd.Series,
-    pl.DataFrame,
-    pl.Series,
-]:
-    settings = BatchSettings.load(items=dict(maximum=sample_count))
-    batch_generator = await scan_batch_datasets_async(
-        source,
-        chunks=chunks,
-        columns=columns,
-        deserialize=deserialize,
-        filter=filter,
-        filters=filters,
-        return_generator=True,
-        scan=scan,
-        settings=settings,
-    )
-
-    if batch_generator is not None:
-        async for batch, object_metadata in batch_generator:
+    try:
+        batch = next(generator)
+        if batch is not None:
             if isinstance(batch, (pd.DataFrame, pl.DataFrame, pd.Series, pl.Series)):
                 return batch
-
             return deserialize_batch(batch, object_metadata=object_metadata)
-    # In case there are no rows in the dataset,
-    # return an empty DataFrame if the async for loop completes without returning
+    except StopIteration:
+        pass
+
     return pl.DataFrame()

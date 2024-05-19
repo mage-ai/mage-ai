@@ -1,7 +1,9 @@
+import os
 from pathlib import Path
 from typing import Any, Optional
 
 from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
+from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import infer_variable_type
@@ -47,6 +49,10 @@ class BaseData:
         self.uuid = uuid or str(
             Path(self.variable_dir_path).relative_to(Path(get_variables_dir(root_project=False)))
         )
+
+    @property
+    def data_partitions_path(self) -> str:
+        return os.path.join(self.variable_path, CHUNKS_DIRECTORY_NAME)
 
     def is_dataframe(self) -> bool:
         return self.variable_type in [

@@ -145,7 +145,9 @@ class Variable:
             try:
                 if self.storage.path_exists(self.metadata_path):
                     # Consider removing raise_exception=True
-                    metadata = self.storage.read_json_file(self.metadata_path, raise_exception=True)
+                    metadata = self.storage.read_json_file(
+                        self.metadata_path, raise_exception=True
+                    )
                     self.variable_type = metadata.get('type')
             except Exception:
                 traceback.print_exc()
@@ -338,9 +340,11 @@ class Variable:
                     method='read_data_async',
                 ),
             ):
-                return await __read()
+                data = await __read()
+        else:
+            data = await __read()
 
-        return await __read()
+        return data
 
     async def __read_data_async(
         self,
@@ -1161,7 +1165,9 @@ class Variable:
         """
         self.storage.makedirs(self.variable_path, exist_ok=True)
         for k in DATAFRAME_ANALYSIS_KEYS:
-            self.storage.write_json_file(os.path.join(self.variable_path, f'{k}.json'), data.get(k))
+            self.storage.write_json_file(
+                os.path.join(self.variable_path, f'{k}.json'), data.get(k)
+            )
 
     def __write_series_pandas(self, data: Union[List[pd.Series], pd.Series]) -> bool:
         var_type, basic_iterable = infer_variable_type(data)

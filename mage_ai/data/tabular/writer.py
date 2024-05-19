@@ -9,6 +9,7 @@ import pyarrow as pa
 from pyarrow import parquet as pq
 
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import object_to_dict
 
 
@@ -58,7 +59,8 @@ def add_chunk_column(
         chunk_size = max(total_rows // num_buckets, 1)
         num_buckets = (total_rows + chunk_size - 1) // chunk_size
 
-    print(f'Chunk size: {chunk_size}, Total rows: {total_rows}, Num buckets: {num_buckets}')
+    if is_debug():
+        print(f'Chunk size: {chunk_size}, Total rows: {total_rows}, Num buckets: {num_buckets}')
 
     return append_chunk_column(df, chunk_size, total_rows, use_index_as_chunk, index)
 
@@ -205,7 +207,8 @@ def __prepare_data(
             df = df.vstack(dataframe_with_chunk)
 
             chunk_sizes.append(chunk_size_for_index)
-            print(f'Chunk size for index {index}: {chunk_size_for_index}')
+            if is_debug():
+                print(f'Chunk size for index {index}: {chunk_size_for_index}')
     elif df is not None and (chunk_size or num_buckets) and isinstance(df, pl.DataFrame):
         df = add_chunk_column(df, chunk_size=chunk_size, num_buckets=num_buckets)
 
@@ -236,7 +239,8 @@ def __prepare_data(
     total_rows = table.num_rows
     total_columns = len(table.schema.names)
 
-    print(
-        f'{total_rows} rows with {total_columns} columns '
-        f"written to '{output_dir}' across {num_partitions} partitions."
-    )
+    if is_debug():
+        print(
+            f'{total_rows} rows with {total_columns} columns '
+            f"written to '{output_dir}' across {num_partitions} partitions."
+        )

@@ -160,12 +160,13 @@ async def read_async(file_path: str) -> str:
                 print(f'[ERROR] files.read_async: {err}.')
 
 
-def safe_delete_dir_sync(output_dir):
+def safe_delete_dir_sync(output_dir, verbose: bool = False):
     max_attempts = 5
     for attempt in range(max_attempts):
         try:
             shutil.rmtree(output_dir)
-            print(f'Successfully deleted {output_dir}')
+            if verbose:
+                print(f'Successfully deleted {output_dir}')
             break  # Successfully deleted; exit the loop
         except OSError as err:
             if attempt < max_attempts - 1:
@@ -176,14 +177,15 @@ def safe_delete_dir_sync(output_dir):
                 raise err
 
 
-async def safe_delete_dir_async(output_dir: str):
+async def safe_delete_dir_async(output_dir: str, verbose: bool = False):
     loop = asyncio.get_event_loop()
     max_attempts = 5
 
     for attempt in range(max_attempts):
         try:
             await loop.run_in_executor(None, shutil.rmtree, output_dir)
-            print(f'Successfully deleted {output_dir}')
+            if verbose:
+                print(f'Successfully deleted {output_dir}')
             break  # Successfully deleted; exit the loop
         except OSError as err:
             # Handles the potential need for retry due to file locking/availability/etc.
