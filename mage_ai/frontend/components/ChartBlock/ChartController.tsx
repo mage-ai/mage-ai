@@ -222,19 +222,17 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
           {...sharedProps}
           xAxisLabel={xAxisLabelProp || xAxisLabel}
           xLabelFormat={(ts: string, index, values) => {
-            let val = ts;
-
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                val = moment(convertToMillisecondsTimestamp(ts)).format(xAxisLabelFormatValue);
+                return moment(convertToMillisecondsTimestamp(Number(ts))).format(xAxisLabelFormatValue);
               } else {
-                val = xAxisLabelFormat(ts, index, values);
+                return xAxisLabelFormat(ts, index, values);
               }
             } else if (isTimeSeries) {
-              val = moment(convertToMillisecondsTimestamp(ts)).format(variableDateFormat);
+              return moment(convertToMillisecondsTimestamp(Number(ts))).format(variableDateFormat);
             }
 
-            return val;
+            return ts;
           }}
           xNumTicks={xy.length}
           xTooltipFormat={xTooltipFormatValue ? xTooltipFormat : null}

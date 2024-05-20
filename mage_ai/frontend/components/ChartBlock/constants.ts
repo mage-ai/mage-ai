@@ -162,6 +162,11 @@ const timeSeriesConfiguration: {
       label: () => 'Y axis label format',
       uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
     },
+    {
+      ...SHARED_CODE_PROPS,
+      label: () => 'Y tooltip format',
+      uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
+    },
   ],
 };
 
@@ -337,11 +342,6 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         ...SHARED_CODE_PROPS,
         label: () => 'X tooltip format',
         uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
-      },
-      {
-        ...SHARED_CODE_PROPS,
-        label: () => 'Y tooltip format',
-        uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
       },
       ...SHARED_DESIGN_PROPS,
     ]),

@@ -497,17 +497,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             upstream_block_uuids = self.upstream_block_uuids
 
         if outputs_from_input_vars is None:
-            if BlockLanguage.SQL == self.language and any(
-                [
-                    is_dynamic_block(
-                        upstream_block,
-                    )
-                    or is_dynamic_block_child(
-                        upstream_block,
-                    )
-                    for upstream_block in self.upstream_blocks
-                ]
-            ):
+            if BlockLanguage.SQL == self.language and any([
+                is_dynamic_block(
+                    upstream_block,
+                )
+                or is_dynamic_block_child(
+                    upstream_block,
+                )
+                for upstream_block in self.upstream_blocks
+            ]):
                 (
                     outputs_from_input_vars,
                     _kwargs_vars,
@@ -1272,9 +1270,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                             self.upstream_blocks,
                         )
                     )
-                    all_upstream_is_dbt = all(
-                        [BlockType.DBT == b.type for b in not_executed_upstream_blocks]
-                    )
+                    all_upstream_is_dbt = all([
+                        BlockType.DBT == b.type for b in not_executed_upstream_blocks
+                    ])
                     if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
                         upstream_block_uuids = list(
                             map(lambda b: b.uuid, not_executed_upstream_blocks)
@@ -1927,17 +1925,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 upstream block UUIDs.
         """
 
-        if any(
-            [
-                is_dynamic_block(
-                    upstream_block,
-                )
-                or is_dynamic_block_child(
-                    upstream_block,
-                )
-                for upstream_block in self.upstream_blocks
-            ]
-        ):
+        if any([
+            is_dynamic_block(
+                upstream_block,
+            )
+            or is_dynamic_block_child(
+                upstream_block,
+            )
+            for upstream_block in self.upstream_blocks
+        ]):
             return fetch_input_variables_for_dynamic_upstream_blocks(
                 self,
                 input_args,
@@ -2274,9 +2270,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         # Limit the number of dynamic block children we display output for in the UI
         output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
         variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        child_data_sets = await asyncio.gather(
-            *[lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets]
-        )
+        child_data_sets = await asyncio.gather(*[
+            lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets
+        ])
 
         return get_outputs_for_display_dynamic_block(
             self,
@@ -2814,9 +2810,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         test_function = getattr(self.module, func.__name__)
                     try:
                         sig = signature(test_function)
-                        has_kwargs = any(
-                            [p.kind == p.VAR_KEYWORD for p in sig.parameters.values()]
-                        )
+                        has_kwargs = any([
+                            p.kind == p.VAR_KEYWORD for p in sig.parameters.values()
+                        ])
                         if has_kwargs and global_vars is not None and len(global_vars) != 0:
                             test_function(*outputs, **global_vars)
                         else:
@@ -3878,12 +3874,10 @@ class CallbackBlock(AddonBlock):
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output. If the callback function has any positional arguments, we will
                     # pass in the input variables as positional arguments.
-                    if not input_vars or any(
-                        [
-                            p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
-                            for p in sig.parameters.values()
-                        ]
-                    ):
+                    if not input_vars or any([
+                        p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
+                        for p in sig.parameters.values()
+                    ]):
                         inner_function(
                             *input_vars,
                             **callback_kwargs,

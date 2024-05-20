@@ -144,11 +144,14 @@ def pipeline_block_columns_parser(directory_path: str, file_path: str) -> Dict:
 
         data = {}
 
+        # If the pipeline is in the directory path, there won’t be a pipeline UUID in the parts
         if len(parts) >= 1:
             data['scope_uuid'] = os.path.join(*parts)
-            data['pipeline_uuid'] = parts[0]
             if len(parts) >= 2:
+                data['pipeline_uuid'] = os.path.join(*parts[:1])
                 data['block_uuid'] = os.path.join(*parts[1:])
+            else:
+                data['block_uuid'] = os.path.join(*parts)
 
         return data
     except ValueError:

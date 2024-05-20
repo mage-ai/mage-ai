@@ -864,7 +864,10 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
             </>
           )}
 
-          {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
+          {[
+            DataSourceEnum.BLOCK,
+            DataSourceEnum.SYSTEM_METRICS,
+          ].includes(objectAttributes?.data_source?.type) && (
             <>
               <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
                 <Spacing mb={1}>
