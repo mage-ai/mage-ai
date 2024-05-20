@@ -22,6 +22,7 @@ import {
   VARIABLE_NAME_Y_SORT_ORDER,
   VARIABLE_GROUP_NAME_DESIGN,
   VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH,
+  VARIABLE_NAME_ORDER_BY,
   VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN,
   VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN,
 } from '@interfaces/ChartBlockType';
@@ -319,6 +320,20 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         label: () => 'max number of rows',
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_LIMIT,
+      },
+      {
+        label: () => 'order by column',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_ORDER_BY,
+      },
+      {
+        autoRun: true,
+        label: () => 'sort direction',
+        options: [null, SortOrderEnum.ASCENDING, SortOrderEnum.DESCENDING],
+        uuid: VARIABLE_NAME_Y_SORT_ORDER,
       },
     ],
     code: [

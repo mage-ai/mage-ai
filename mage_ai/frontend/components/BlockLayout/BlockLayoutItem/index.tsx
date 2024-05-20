@@ -93,22 +93,12 @@ function BlockLayoutItem({
     uuid: `BlockLayoutItem/${pageBlockLayoutUUID}/${blockUUID}`,
   });
 
-  // Minimum 1000ms refresh interval
-  const refreshInterval = useMemo(() => {
-    const ri = blockLayoutItem?.data_source?.refresh_interval;
-
-    if (!ri) {
-      return 60000;
-    }
-
-    return ri;
-  }, [blockLayoutItem]);
-
   const [dataBlockLayoutItem, setDataBlockLayoutItem] = useState<{
     block_layout_item?: BlockLayoutItemType;
   }>({
     block_layout_item: blockLayoutItem,
   });
+
   const [fetchBlockLayoutItem, { isLoading: isLoadingFetchBlockLayoutItem }]: any = useMutation(
     (
       opts: {
@@ -116,14 +106,10 @@ function BlockLayoutItem({
       } = {},
     ) =>
       api.block_layout_items.page_block_layouts.detailAsync(
-        !blockLayoutItemProp && encodeURIComponent(pageBlockLayoutUUID),
-        !blockLayoutItemProp && encodeURIComponent(blockUUID),
+        encodeURIComponent(pageBlockLayoutUUID),
+        encodeURIComponent(blockUUID),
         {
           skip_render: opts?.skip_render ? true : false,
-        },
-        {
-          refreshInterval,
-          revalidateOnFocus: false,
         },
       ),
     {
@@ -159,6 +145,31 @@ function BlockLayoutItem({
     // If we add doFetch in this array, it will cause an infinite loop.
     // @ts-ignore
   }, []);
+
+  // Minimum 1000ms refresh interval
+  const refreshInterval = useMemo(() => {
+    const ri = blockLayoutItem?.data_source?.refresh_interval;
+
+    if (!ri) {
+      return 60000;
+    }
+
+    return ri;
+  }, [blockLayoutItem?.data_source?.refresh_interval]);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (blockLayoutItemProp) {
+      intervalRef.current = setInterval(doFetch, refreshInterval);
+    }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+    // If we add doFetch in this array, it will cause an infinite loop.
+    // @ts-ignore
+  }, [blockLayoutItemProp, refreshInterval]);
 
   const isLoading: boolean = useMemo(
     () => isLoadingProp && isLoadingFetchBlockLayoutItem,

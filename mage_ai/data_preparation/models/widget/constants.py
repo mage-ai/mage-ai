@@ -4,9 +4,11 @@ from dateutil.relativedelta import relativedelta
 
 VARIABLE_NAME_BUCKETS = 'buckets'
 VARIABLE_NAME_GROUP_BY = 'group_by'
+VARIABLE_NAME_ORDER_BY = 'order_by'
 VARIABLE_NAME_INDEX = 'index'
 VARIABLE_NAME_LIMIT = 'limit'
 VARIABLE_NAME_METRICS = 'metrics'
+VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order'
 VARIABLE_NAME_TIME_INTERVAL = 'time_interval'
 VARIABLE_NAME_X = 'x'
 VARIABLE_NAME_Y = 'y'

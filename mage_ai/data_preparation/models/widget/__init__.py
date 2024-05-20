@@ -23,9 +23,11 @@ from .constants import (
     VARIABLE_NAME_INDEX,
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_METRICS,
+    VARIABLE_NAME_ORDER_BY,
     VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
+    VARIABLE_NAME_Y_SORT_ORDER,
     VARIABLE_NAMES_BY_CHART_TYPE,
     ChartType,
 )
@@ -210,7 +212,16 @@ class Widget(Block):
                 limit_config = int(limit_config)
 
             if should_use_no_code:
-                df = dfs[0].iloc[:limit_config]
+                df = dfs[0]
+                order_by = self.configuration.get(VARIABLE_NAME_ORDER_BY)
+                if order_by:
+                    df.sort_values(
+                        by=order_by,
+                        ascending=self.configuration.get(VARIABLE_NAME_Y_SORT_ORDER)
+                        != 'descending',
+                        inplace=True,
+                    )
+                df = df.iloc[:limit_config]
                 if group_by_columns:
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
