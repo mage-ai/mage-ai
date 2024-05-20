@@ -481,11 +481,13 @@ def combined_memory_util(runs=1, return_output=False):
     return decorator
 
 
-def current_memory_usage() -> float:
+def current_memory_usage() -> int:
     """
     Returns the current memory usage of the process in bytes.
+
+    Original value is MB, but we convert it to bytes.
     """
-    return memory_usage(-1)[0] / 1024**2
+    return int(memory_usage(-1)[0] * 1024**2)
 
 
 def format_metadata_message(metadata: Dict) -> str:
@@ -501,9 +503,9 @@ def format_log_message(
     timestamp = round(datetime.utcnow().timestamp())
     metadata = metadata or {}
 
-    msg = f'[{timestamp}] type={log_type.value}'
+    msg = f'[{timestamp}][{log_type.value}]'
     if message:
-        msg += f' message={message}'
+        msg += f' {message}'
 
     if metadata:
         msg += f' {format_metadata_message(metadata)}'

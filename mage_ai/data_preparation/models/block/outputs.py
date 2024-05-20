@@ -69,7 +69,9 @@ def format_output_data(
     if VariableType.MATRIX_SPARSE == variable_type:
         if automatic_sampling and not sample_count:
             n_rows, n_cols = data.shape
-            max_dims = min(DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols)
+            max_dims = min(
+                DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols
+            )
             sample_count = round(max_dims / n_cols)
         if basic_iterable:
             data = convert_matrix_to_dataframe(data[0])
@@ -98,7 +100,9 @@ def format_output_data(
             return_output['type'] = DataType.TEXT
 
         return return_output, True
-    elif VariableType.MODEL_SKLEARN == variable_type or VariableType.MODEL_XGBOOST == variable_type:
+    elif (
+        VariableType.MODEL_SKLEARN == variable_type or VariableType.MODEL_XGBOOST == variable_type
+    ):
 
         def __render(
             model: Any,
@@ -424,6 +428,7 @@ def handle_variables(
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     include_print_outputs: bool = True,
+    max_results: Optional[int] = None,
     sample: bool = True,
     sample_count: Optional[int] = None,
     selected_variables: Optional[List[str]] = None,
@@ -444,12 +449,14 @@ def handle_variables(
 
         all_variables = block.get_variables_by_block(
             block_uuid=block_uuid,
+            max_results=max_results,
             partition=execution_partition,
         )
 
         if not include_print_outputs:
             all_variables = block.output_variables(
                 execution_partition=execution_partition,
+                max_results=max_results,
             )
 
         block_groups = [dict(block_uuid=block_uuid, variable_uuids=all_variables)]

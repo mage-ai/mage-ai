@@ -299,7 +299,10 @@ class VariableManager:
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
-        variables = self.storage.listdir(variable_dir_path, max_results=max_results)
+        opts = {}
+        if max_results is not None:
+            opts['max_results'] = max_results
+        variables = self.storage.listdir(variable_dir_path, **opts)
         variables = [v for v in variables if v.split('.')[0]]
 
         def __sort(variable_uuid: str) -> List[Union[int, str]]:

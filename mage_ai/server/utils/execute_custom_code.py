@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
@@ -8,13 +7,10 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
-from mage_ai.system.memory.manager import MemoryManager
 
 db_connection.start_session()
 '{spark_session_init}'
@@ -24,21 +20,6 @@ if 'context' not in globals():
 
 
 def execute_custom_code():
-    if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
-        with MemoryManager(
-            os.path.join(
-                'pipelines', '{pipeline_uuid}', 'ide', '{block_uuid}', 'execute_custom_code'
-            ),
-            poll_interval=0.1,
-            metadata=dict(
-                method='execute_custom_code',
-            ),
-        ):
-            return __execute_custom_code()
-    return __execute_custom_code()
-
-
-def __execute_custom_code():
     block_uuid = '{block_uuid}'
     run_incomplete_upstream = bool('{run_incomplete_upstream}')
     run_upstream = bool('{run_upstream}')

@@ -2,11 +2,12 @@ from enum import Enum
 
 
 class LogType(str, Enum):
+    END = 'END'
     GENERIC = 'GENERIC'
-    INITIAL = 'INITIAL'
     MEMORY = 'MEMORY'
     METRICS = 'METRICS'
     PROCESS = 'PROCESS'
+    START = 'START'
 
 
 LOGS_DIRECTORY = 'logs'

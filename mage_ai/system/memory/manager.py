@@ -4,12 +4,14 @@ from typing import Dict, Optional
 
 import aiofiles
 
+from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.repo import get_variables_dir
+from mage_ai.settings.server import SYSTEM_LOGS_PARTITIONS
 from mage_ai.shared.files import makedirs_async, makedirs_sync
 from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
-from mage_ai.system.memory.constants import MEMORY_LOGS_FILENAME
+from mage_ai.system.memory.constants import MEMORY_LOGS_DIRECTORY
 from mage_ai.system.memory.utils import (
     current_memory_usage,
     format_log_message,
@@ -17,11 +19,14 @@ from mage_ai.system.memory.utils import (
     monitor_memory_usage_async,
 )
 
+DEFAULT_POLL_INTERVAL = 0.1
+
 
 class MemoryManager:
     def __init__(
         self,
-        uuid: str,
+        scope_uuid: str,
+        process_uuid: str,
         poll_interval: Optional[float] = None,
         repo_path: Optional[str] = None,
         metadata: Optional[Dict] = None,
@@ -41,38 +46,58 @@ class MemoryManager:
         print(emu.report())
         """
         self.monitor = None
-        self.poll_interval = poll_interval or 1.0
-        self.uuid = uuid
+        self.monitor_thread = None
+        self.poll_interval = poll_interval or DEFAULT_POLL_INTERVAL
+        self.process_uuid = process_uuid
+        self.scope_uuid = scope_uuid
+        self.stop_event = None
         self.variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
         self._log_path = None
         self._metadata = metadata or {}
-        self.monitor_thread = None
-        self.stop_event = None
 
     @property
     def log_path(self) -> str:
+        """
+        /root/.mage_data/[project]
+            /system/logs
+                /[pipeline_uuid]/[block_uuid]/[date]/[hour]
+                /[metric]/[process_uuid].log
+        """
         if not self._log_path:
             now = datetime.utcnow()
+
+            datetime_partitions = []
+            for partition_name in SYSTEM_LOGS_PARTITIONS:
+                if 'ds' == partition_name:
+                    datetime_partitions.append(now.strftime('%Y-%m-%d'))
+                elif 'hr' == partition_name:
+                    datetime_partitions.append(now.strftime('%H'))
+
             self._log_path = os.path.join(
                 self.variables_dir,
                 SYSTEM_DIRECTORY,
                 LOGS_DIRECTORY,
-                self.uuid or '',
-                now.strftime('%Y-%m-%d'),
-                now.strftime('%H'),
-                MEMORY_LOGS_FILENAME,
+                self.scope_uuid,  # [pipeline_uuid]/[block_uuid]
+                *datetime_partitions,
+                MEMORY_LOGS_DIRECTORY,
+                f'{self.process_uuid}.log',
             )
         return self._log_path
 
     @property
     def metadata(self) -> Dict:
         project = Project()
+        features_enabled = []
+        for feature in [FeatureUUID.MEMORY_V2_PANDAS, FeatureUUID.MEMORY_V2_POLARS]:
+            if project.is_feature_enabled(feature):
+                features_enabled.append(feature.value)
+        supported_variable_types = [v.value for v in SUPPORTED_VARIABLE_TYPES]
+
         self._metadata.update(
             dict(
-                memory_v2=project.is_feature_enabled(FeatureUUID.MEMORY_V2),
-                memory_v2_pandas=project.is_feature_enabled(FeatureUUID.MEMORY_V2_PANDAS),
-                memory_v2_polars=project.is_feature_enabled(FeatureUUID.MEMORY_V2_POLARS),
-            )
+                features_enabled=','.join(features_enabled),
+                supported_variable_types=','.join(supported_variable_types),
+            ),
         )
         return self._metadata
 
@@ -85,15 +110,16 @@ class MemoryManager:
             interval_seconds=self.poll_interval,
         )
 
-        if self.metadata:
-            with open(self.log_path, 'a') as f:
-                f.write(format_log_message(log_type=LogType.INITIAL, metadata=self.metadata))
+        with open(self.log_path, 'a') as f:
+            f.write(format_log_message(log_type=LogType.START, metadata=self.metadata))
         self.__write_sync(current_memory_usage())
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.__write_sync(current_memory_usage())
+            with open(self.log_path, 'a') as f:
+                f.write(format_log_message(log_type=LogType.END, metadata=self.metadata))
         finally:
             self.stop()
 
@@ -106,23 +132,22 @@ class MemoryManager:
             interval_seconds=self.poll_interval,
         )
 
-        if self.metadata:
-            async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
-                await fp.write(
-                    format_log_message(log_type=LogType.INITIAL, metadata=self.metadata)
-                )
+        async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
+            await fp.write(format_log_message(log_type=LogType.START, metadata=self.metadata))
         await self.__write_async(current_memory_usage())
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         try:
             await self.__write_async(current_memory_usage())
+            async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
+                await fp.write(format_log_message(log_type=LogType.END, metadata=self.metadata))
         finally:
             self.stop()
 
     def __write_sync(self, memory: float) -> None:
         with open(self.log_path, 'a') as f:
-            f.write(format_log_message(metadata=dict(memory=memory, unit='bytes')))
+            f.write(format_log_message(message=memory))
 
     async def __write_async(self, memory: float) -> None:
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:

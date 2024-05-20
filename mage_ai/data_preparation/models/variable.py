@@ -57,8 +57,6 @@ from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.memory.manager import MemoryManager
 
-POLL_INTERVAL = 0.1
-
 
 class Variable:
     def __init__(
@@ -117,16 +115,15 @@ class Variable:
         if self._data_manager is None:
             self._data_manager = DataManager(
                 storage=self.storage,
-                uuid=self.internal_uuid,
+                uuid=self.__scope_uuid(),
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
                 variable_type=self.variable_type,
             )
         return self._data_manager
 
-    @property
-    def internal_uuid(self) -> str:
-        path_parts = [self.partition or '', self.block_dir_name or self.uuid or '']
+    def __scope_uuid(self) -> str:
+        path_parts = [self.block_dir_name or '']
         try:
             path_parts.insert(
                 0, str(Path(self.pipeline_path).relative_to(Path(get_variables_dir())))
@@ -232,13 +229,7 @@ class Variable:
             )
 
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
-            with MemoryManager(
-                self.internal_uuid,
-                poll_interval=POLL_INTERVAL,
-                metadata=dict(
-                    method='read_data',
-                ),
-            ):
+            with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
                 return __read()
         return __read()
 
@@ -336,11 +327,7 @@ class Variable:
 
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
             with MemoryManager(
-                self.internal_uuid,
-                poll_interval=POLL_INTERVAL,
-                metadata=dict(
-                    method='read_data_async',
-                ),
+                scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
             ):
                 data = await __read()
         else:
@@ -468,13 +455,7 @@ class Variable:
 
     def write_data(self, data: Any) -> None:
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
-            with MemoryManager(
-                self.internal_uuid,
-                poll_interval=POLL_INTERVAL,
-                metadata=dict(
-                    method='write_data',
-                ),
-            ):
+            with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
                 self.__write_data(data)
         else:
             self.__write_data(data)
@@ -552,11 +533,7 @@ class Variable:
     async def write_data_async(self, data: Any) -> None:
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
             with MemoryManager(
-                self.internal_uuid,
-                poll_interval=POLL_INTERVAL,
-                metadata=dict(
-                    method='write_data_async',
-                ),
+                scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
             ):
                 await self.__write_data_async(data)
         else:
