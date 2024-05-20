@@ -42,7 +42,9 @@ class Git:
     def __init__(
         self,
         auth_type: AuthType = None,
+        context_data: Dict = None,
         git_config: GitConfig = None,
+        repo_path: str = None,
         setup_repo: bool = False,
         user: User = None,
     ) -> None:
@@ -50,17 +52,22 @@ class Git:
         import git.exc
 
         self.auth_type = auth_type if auth_type else AuthType.SSH
+        self.context_data = context_data if context_data is not None else dict()
         self.git_config = git_config
         self.user = user
         self.origin = None
         self.remote_repo_link = None
         self.repo = None
 
-        self.project_repo_path = get_repo_path(user=user)
+        self.project_repo_path = repo_path or get_repo_path(user=user)
 
         self.repo_path = os.getcwd()
         if project_platform_activated():
-            git_dict = git_settings(user=user)
+            git_dict = git_settings(
+                context_data=self.context_data,
+                repo_path=self.project_repo_path,
+                user=user,
+            )
             if git_dict and git_dict.get('path'):
                 self.repo_path = git_dict.get('path')
 
@@ -152,12 +159,19 @@ class Git:
     @classmethod
     def get_manager(
         self,
-        user: User = None,
-        setup_repo: bool = False,
         auth_type: str = None,
         config_overwrite: Dict = None,
+        context_data: Dict = None,
+        preferences=None,
+        repo_path: str = None,
+        setup_repo: bool = False,
+        user: User = None,
     ) -> 'Git':
-        preferences = get_preferences(user=user)
+        if preferences is None:
+            preferences = get_preferences(
+                repo_path=repo_path,
+                user=user,
+            )
         git_config = None
         config = preferences.sync_config if preferences and preferences.sync_config else {}
 
@@ -171,7 +185,9 @@ class Git:
 
         return Git(
             auth_type=auth_type,
+            context_data=context_data,
             git_config=git_config,
+            repo_path=repo_path,
             setup_repo=setup_repo,
             user=user,
         )

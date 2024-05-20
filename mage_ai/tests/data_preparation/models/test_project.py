@@ -176,7 +176,10 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
             'mage_ai.data_preparation.models.project.project_platform_settings',
         ) as mock_project_platform_settings:
             Project().projects()
-            mock_project_platform_settings.assert_called_with(mage_projects_only=True)
+            mock_project_platform_settings.assert_called_with(
+                context_data=dict(),
+                mage_projects_only=True,
+            )
 
     def test_is_feature_enabled(self):
         project = Project()

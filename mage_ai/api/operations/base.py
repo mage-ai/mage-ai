@@ -300,6 +300,7 @@ class BaseOperation():
             self.__flags[FeatureUUID.GLOBAL_HOOKS] = \
                 Project.is_feature_enabled_in_root_or_active_project(
                     FeatureUUID.GLOBAL_HOOKS,
+                    context_data=self.context.data,
                     user=self.user,
             )
 
@@ -752,6 +753,7 @@ class BaseOperation():
                 try:
                     model = parent_resource_class.get_model(
                         self.resource_parent_id,
+                        context_data=self.context.data,
                         query=self.query,
                         resource_class=self.__resource_class(),
                         resource_id=self.pk,
@@ -767,6 +769,7 @@ class BaseOperation():
         if not self.__combined_options_attr:
             self.__combined_options_attr = {
                 'context': self.context,
+                'context_data': self.context.data,
                 'meta': self.meta,
                 'options': self.options,
                 'payload': self.payload,

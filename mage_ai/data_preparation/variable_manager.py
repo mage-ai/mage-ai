@@ -329,6 +329,9 @@ def clean_variables(pipeline_uuid: str = None):
 def get_global_variables(
     pipeline_uuid: str,
     pipeline=None,
+    context_data: Dict = None,
+    repo_path: str = None,
+    variables_dir: str = None,
 ) -> Dict[str, Any]:
     """
     Get all global variables. Global variables are stored together with project's code.
@@ -338,12 +341,17 @@ def get_global_variables(
     pipeline = pipeline or Pipeline.get(
         pipeline_uuid,
         all_projects=project_platform_activated(),
+        context_data=context_data,
+        repo_path=repo_path,
     )
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:
-        variables_dir = get_variables_dir()
-        variables = VariableManager(variables_dir=variables_dir).get_variables_by_block(
+        variables_dir = variables_dir or get_variables_dir()
+        variables = VariableManager(
+            repo_path=repo_path,
+            variables_dir=variables_dir
+        ).get_variables_by_block(
             pipeline_uuid,
             'global',
         )

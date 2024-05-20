@@ -48,10 +48,16 @@ class RepoConfig:
         self,
         repo_path: str = None,
         config_dict: Dict = None,
+        context_data: Dict = None,
         root_project: bool = False,
+        user=None,
     ):
         self.root_project = root_project
-        self.repo_path = repo_path or get_repo_path_new(root_project=self.root_project)
+        self.repo_path = repo_path or get_repo_path_new(
+            context_data=context_data,
+            root_project=self.root_project,
+            user=user,
+        )
         self.repo_name = os.path.basename(self.repo_path)
         self.project_uuid = None
         self.project_type = None
@@ -293,11 +299,21 @@ def init_repo(
     get_repo_config(repo_path, root_project=root_project).save(**new_config)
 
 
-def get_repo_config(repo_path: str = None, root_project: bool = False) -> RepoConfig:
-    return RepoConfig(repo_path=repo_path, root_project=root_project)
+def get_repo_config(
+    repo_path: str = None,
+    context_data: Dict = None,
+    root_project: bool = False,
+    user=None,
+) -> RepoConfig:
+    return RepoConfig(
+        repo_path=repo_path,
+        context_data=context_data,
+        root_project=root_project,
+        user=user,
+    )
 
 
-def get_project_type(repo_path=None) -> ProjectType:
+def get_project_type(repo_config: RepoConfig = None, repo_path: str = None) -> ProjectType:
     from mage_ai.settings.repo import MAGE_PROJECT_TYPE_ENV_VAR
 
     try:
@@ -305,7 +321,9 @@ def get_project_type(repo_path=None) -> ProjectType:
         if project_type_from_env:
             return ProjectType(project_type_from_env)
         else:
-            return get_repo_config(repo_path=repo_path).project_type
+            if repo_config is None:
+                repo_config = get_repo_config(repo_path=repo_path)
+            return repo_config.project_type
     except Exception:
         # default to standalone project type
         return ProjectType.STANDALONE

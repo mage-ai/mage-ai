@@ -23,12 +23,19 @@ class Project:
         self,
         repo_config=None,
         repo_path: Optional[str] = None,
+        context_data: Dict = None,
         root_project: bool = False,
         user=None,
     ):
+        # print(f'Project context_data {id(context_data)} {context_data}')
+        if context_data is None:
+            context_data = dict()
+        self.context_data = context_data
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(
-            root_project=self.root_project, user=user
+            context_data=context_data,
+            root_project=self.root_project,
+            user=user,
         )
         self.user = user
 
@@ -36,7 +43,11 @@ class Project:
         self.settings = None
 
         if not root_project and project_platform_activated():
-            self.settings = active_project_settings(get_default=True, user=user)
+            self.settings = active_project_settings(
+                context_data=context_data,
+                get_default=True,
+                user=user,
+            )
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')
 
@@ -64,7 +75,7 @@ class Project:
     @property
     def workspace_config_defaults(self) -> Dict:
         config = self.repo_config.workspace_config_defaults or {}
-        cluster_type = get_cluster_type()
+        cluster_type = get_cluster_type(repo_path=self.repo_path)
         try:
             if cluster_type == ClusterType.K8S:
                 from mage_ai.cluster_manager.kubernetes.workload_manager import (
@@ -159,15 +170,24 @@ class Project:
 
     @classmethod
     def is_feature_enabled_in_root_or_active_project(
-        self,
+        cls,
         feature_name: FeatureUUID,
+        context_data: Dict = None,
         user=None,
     ) -> bool:
-        if self(root_project=True, user=user).is_feature_enabled(feature_name):
+        if cls(
+            context_data=context_data,
+            root_project=True,
+            user=user,
+        ).is_feature_enabled(feature_name):
             return True
 
         if project_platform_activated():
-            return self(root_project=False, user=user).is_feature_enabled(feature_name)
+            return cls(
+                context_data=context_data,
+                root_project=False,
+                user=user,
+            ).is_feature_enabled(feature_name)
 
         return False
 
@@ -196,7 +216,10 @@ class Project:
         return [self.repo_path]
 
     def projects(self) -> Dict:
-        return project_platform_settings(mage_projects_only=True)
+        return project_platform_settings(
+            context_data=self.context_data,
+            mage_projects_only=True
+        )
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.features.get(feature_name.value, False)
