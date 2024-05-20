@@ -22,8 +22,10 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
+from mage_ai.data.models.pyarrow.record_batch import RecordBatch, TaggedRecordBatch
 from mage_ai.data.tabular.constants import COLUMN_CHUNK, FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.utils import compare_object
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.models import BaseDataClass
 
@@ -56,28 +58,6 @@ class ScanDatasetParameters(BaseDataClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('settings', BatchSettings)
-
-
-class Delegator:
-    def __init__(self, target):
-        self._target = target
-
-    def __getattr__(self, item):
-        return getattr(self._target, item)
-
-
-class PyArrowRecordBatch:
-    def __init__(
-        self,
-        target: Union[pa.RecordBatch, ds.TaggedRecordBatch],
-        object_metadata: Optional[Dict[str, str]] = None,
-    ):
-        self.target = target
-        self.delegate = Delegator(self.target)
-        self.object_metadata = object_metadata
-
-    def deserialize(self):
-        return deserialize_batch(self.target, object_metadata=self.object_metadata)
 
 
 def create_filter(*args) -> ds.Expression:
@@ -306,45 +286,6 @@ def get_file_details(
     return []
 
 
-def compare_object(object: Any, object_metadata: Dict[str, str]) -> bool:
-    return (
-        object_metadata.get('module') == object.__module__
-        and object_metadata.get('name') == object.__name__
-    )
-
-
-def deserialize_batch(
-    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch],
-    object_metadata: Optional[Dict[str, str]] = None,
-) -> Union[
-    pd.Series,
-    pl.DataFrame,
-    pl.Series,
-]:
-    record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
-    table = pa.Table.from_batches([record_batch])
-    if COLUMN_CHUNK in table.column_names:
-        table = table.drop(columns=[COLUMN_CHUNK])
-
-    if object_metadata is not None and table.num_columns >= 1:
-        if compare_object(pd.Series, object_metadata):
-            column_name = table.column_names[0]
-            return pd.Series(table.column(column_name).to_pandas())
-        elif compare_object(pl.Series, object_metadata):
-            # Convert the PyArrow Array/ChunkedArray directly to a Polars Series
-            column = table.column(0)
-            if column.num_chunks > 0:
-                # Handle the case where the column is chunked
-                chunk_array = column.chunk(0)  # Assuming you want the first chunk
-                # Create a Polars Series from the PyArrow Array
-                return pl.Series(chunk_array.to_pylist())
-            else:
-                # Handle non-chunked column
-                return pl.Series(column.to_pylist())
-
-    return pl.from_arrow(table)
-
-
 def get_all_objects_metadata(
     metadatas: Optional[List[Any]] = None,
     source: Optional[Union[List[str], str]] = None,
@@ -475,9 +416,10 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
     else:
         generator = dataset.to_batches(**scanner_settings)
 
-    def custom_generator_wrapper(generator=generator, object_metadata=object_metadata):
+    def custom_generator_wrapper(generator=generator, object_metadata=object_metadata, scan=scan):
         for tagged_or_record_batch in generator:
-            batch = PyArrowRecordBatch(tagged_or_record_batch, object_metadata=object_metadata)
+            record_batch_class = TaggedRecordBatch if scan else RecordBatch
+            batch = record_batch_class(tagged_or_record_batch, object_metadata=object_metadata)
             yield batch.deserialize() if deserialize else batch
 
     return custom_generator_wrapper()

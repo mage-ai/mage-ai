@@ -19,33 +19,17 @@ class Reader(BaseData):
         sample_count: Optional[int] = None,
     ) -> Optional[Union[Any, str]]:
         if self.is_dataframe():
-            params = dict(chunks=chunks, columns=columns)
-
-            def __read(
-                sample=sample,
-                sample_count=sample_count,
-                data_partitions_path=self.data_partitions_path,
-                deserialize=deserialize,
-                params=params,
-            ):
-                if sample and sample_count:
-                    return sample_batch_datasets(
-                        data_partitions_path,
-                        deserialize=True,
-                        sample_count=sample_count,
-                        **params,
-                    )
-                return scan_batch_datasets_generator(
-                    data_partitions_path, deserialize=deserialize, **params
+            if sample and sample_count:
+                return sample_batch_datasets(
+                    self.data_partitions_path,
+                    chunks=chunks,
+                    columns=columns,
+                    deserialize=True,
+                    sample_count=sample_count,
                 )
-
-            if self.monitor_memory:
-                with self.build_memory_manager():
-                    batches = __read()
-            else:
-                batches = __read()
-
-            return batches
+            return scan_batch_datasets_generator(
+                self.data_partitions_path, chunks=chunks, columns=columns, deserialize=deserialize
+            )
 
     async def read_async(
         self,
@@ -56,30 +40,17 @@ class Reader(BaseData):
         sample_count: Optional[int] = None,
     ) -> Optional[Union[Any, str]]:
         if self.is_dataframe():
-            params = dict(chunks=chunks, columns=columns)
-
-            async def __read(
-                sample=sample,
-                sample_count=sample_count,
-                data_partitions_path=self.data_partitions_path,
-                deserialize=deserialize,
-                params=params,
-            ):
-                if sample and sample_count:
-                    return await sample_batch_datasets_async(
-                        data_partitions_path,
-                        deserialize=True,
-                        sample_count=sample_count,
-                        **params,
-                    )
-                return await scan_batch_datasets_generator_async(
-                    data_partitions_path, deserialize=deserialize, **params
+            if sample and sample_count:
+                return await sample_batch_datasets_async(
+                    self.data_partitions_path,
+                    chunks=chunks,
+                    columns=columns,
+                    deserialize=True,
+                    sample_count=sample_count,
                 )
-
-            if self.monitor_memory:
-                with self.build_memory_manager():
-                    batches = await __read()
-            else:
-                batches = await __read()
-
-            return batches
+            return await scan_batch_datasets_generator_async(
+                self.data_partitions_path,
+                chunks=chunks,
+                columns=columns,
+                deserialize=deserialize,
+            )

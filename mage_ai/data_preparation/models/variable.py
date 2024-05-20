@@ -530,6 +530,7 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
+        print('WTFFFFFFFFFFFFFFFFFFFFFF!!!!!!!!!!!!!!!!!!!!', data)
         if MEMORY_MANAGER_V2:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
@@ -913,6 +914,7 @@ class Variable:
         df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
     def __get_column_types(self, data: pd.DataFrame) -> Tuple[Dict, pd.DataFrame]:
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.variable_dir_path)
         column_types = {}
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types

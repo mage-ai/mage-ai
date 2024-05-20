@@ -39,7 +39,9 @@ def __custom_output():
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
     pipeline = Pipeline.get('{pipeline_uuid}', repo_path='{repo_path}')
-    block = pipeline.get_block('{block_uuid}')
+    block = pipeline.get_block(
+        '{block_uuid}', extension_uuid='{extension_uuid}', widget=bool('{widget}')
+    )
 
     if block.executable:
         outputs = block.get_outputs()
@@ -113,13 +115,9 @@ def __custom_output():
 
     if VariableType.MATRIX_SPARSE == variable_type:
         if basic_iterable:
-            _internal_output_return = convert_matrix_to_dataframe(
-                _internal_output_return[0]
-            )
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return[0])
         else:
-            _internal_output_return = convert_matrix_to_dataframe(
-                _internal_output_return
-            )
+            _internal_output_return = convert_matrix_to_dataframe(_internal_output_return)
     elif VariableType.SERIES_PANDAS == variable_type:
         if basic_iterable:
             _internal_output_return = pd.DataFrame(_internal_output_return).T
@@ -148,9 +146,7 @@ def __custom_output():
         )
         return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif VariableType.LIST_COMPLEX == variable_type:
-        _internal_output_return = [
-            encode_complex(item) for item in _internal_output_return
-        ]
+        _internal_output_return = [encode_complex(item) for item in _internal_output_return]
 
     # Dynamic block child logic always takes precedence over dynamic block logic
     if is_dynamic_child:
@@ -166,9 +162,7 @@ def __custom_output():
                 )
                 output_transformed.append(output_tf)
 
-        output_transformed = output_transformed[
-            : int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')
-        ]
+        output_transformed = output_transformed[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
 
         try:
             _json_string = simplejson.dumps(
@@ -208,15 +202,13 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[{INTERNAL_PREFIX}]{_json_string}')
-    elif isinstance(
-        _internal_output_return, (pd.DataFrame, pl.DataFrame, dict, list)
-    ) and (type(_internal_output_return).__module__ != 'geopandas.geodataframe'):
+    elif isinstance(_internal_output_return, (pd.DataFrame, pl.DataFrame, dict, list)) and (
+        type(_internal_output_return).__module__ != 'geopandas.geodataframe'
+    ):
         if isinstance(_internal_output_return, dict):
             _internal_output_return = pd.DataFrame([_internal_output_return])
         elif isinstance(_internal_output_return, list):
-            _internal_output_return = pd.DataFrame(
-                _internal_output_return, columns=['column']
-            )
+            _internal_output_return = pd.DataFrame(_internal_output_return, columns=['column'])
 
         _is_polars = isinstance(_internal_output_return, pl.DataFrame)
 
@@ -224,12 +216,8 @@ def __custom_output():
             _sample = _internal_output_return[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
             _columns = _sample.columns[: int('{DATAFRAME_ANALYSIS_MAX_COLUMNS}')]
         else:
-            _sample = _internal_output_return.iloc[
-                : int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')
-            ]
-            _columns = _sample.columns.tolist()[
-                : int('{DATAFRAME_ANALYSIS_MAX_COLUMNS}')
-            ]
+            _sample = _internal_output_return.iloc[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
+            _columns = _sample.columns.tolist()[: int('{DATAFRAME_ANALYSIS_MAX_COLUMNS}')]
 
         for col in _columns:
             try:
@@ -267,9 +255,7 @@ def __custom_output():
         )
         return print(f'[{INTERNAL_PREFIX}]{_json_string}')
     elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
-        _sample = _internal_output_return.limit(
-            int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')
-        ).toPandas()
+        _sample = _internal_output_return.limit(int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')).toPandas()
         _columns = _sample.columns.tolist()[:40]
         _rows = _sample.to_numpy().tolist()
         _shape = [_internal_output_return.count(), len(_sample.columns.tolist())]

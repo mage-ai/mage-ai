@@ -145,11 +145,6 @@ const LineSeries = withTooltip<LineSeriesProps>(
 
       return value;
     });
-
-    if (width < 10) {
-      return null;
-    }
-
     const strokeWidth = thickness || (thickStroke ? 2 : 1);
     const xMax = width - (margin.left + margin.right);
     const yMax = height - margin.top - margin.bottom;
@@ -250,6 +245,11 @@ const LineSeries = withTooltip<LineSeriesProps>(
     if (!noCurve) {
       curveProps.curve = curveBasis;
     }
+
+    if (width < 10) {
+      return <div />;
+    }
+
 
     return (
       <>

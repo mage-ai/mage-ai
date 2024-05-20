@@ -5,7 +5,6 @@ from typing import Dict, Optional
 import aiofiles
 
 from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
-from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.server import (
     MEMORY_MANAGER_PANDAS_VERSION,
     MEMORY_MANAGER_POLARS_VERSION,
@@ -14,11 +13,12 @@ from mage_ai.settings.server import (
     SYSTEM_LOGS_POLL_INTERVAL,
 )
 from mage_ai.shared.files import makedirs_async, makedirs_sync
-from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
+from mage_ai.system.constants import LogType
 from mage_ai.system.memory.constants import MEMORY_LOGS_DIRECTORY
 from mage_ai.system.memory.utils import (
     current_memory_usage,
     format_log_message,
+    get_log_directory,
     monitor_memory_usage,
     monitor_memory_usage_async,
 )
@@ -50,10 +50,10 @@ class MemoryManager:
         self.monitor = None
         self.monitor_thread = None
         self.poll_interval = poll_interval or SYSTEM_LOGS_POLL_INTERVAL
-        self.process_uuid = process_uuid
-        self.scope_uuid = scope_uuid
+        self.process_uuid = process_uuid  # [process_uuid]
+        self.repo_path = repo_path
+        self.scope_uuid = scope_uuid  # [pipeline_uuid]/[block_uuid]
         self.stop_event = None
-        self.variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
         self._log_path = None
         self._metadata = metadata or {}
 
@@ -62,8 +62,10 @@ class MemoryManager:
         """
         /root/.mage_data/[project]
             /system/logs
-                /[pipeline_uuid]/[block_uuid]/[date]/[hour]
-                /[metric]/[process_uuid].log
+                /pipelines/[pipeline_uuid]/[block_uuid]
+                    /[date]/[hour]
+                        /[metric]
+                            /[process_uuid].log
         """
         if not self._log_path:
             now = datetime.utcnow()
@@ -76,10 +78,7 @@ class MemoryManager:
                     datetime_partitions.append(now.strftime('%H'))
 
             self._log_path = os.path.join(
-                self.variables_dir,
-                SYSTEM_DIRECTORY,
-                LOGS_DIRECTORY,
-                self.scope_uuid,  # [pipeline_uuid]/[block_uuid]
+                get_log_directory(self.scope_uuid, repo_path=self.repo_path),
                 *datetime_partitions,
                 MEMORY_LOGS_DIRECTORY,
                 f'{self.process_uuid}.log',

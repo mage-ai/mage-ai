@@ -19,17 +19,7 @@ class Writer(BaseData):
             safe_delete_dir_sync(self.data_partitions_path)
 
         if self.is_dataframe():
-
-            def __write(
-                data_partitions_path=self.data_partitions_path, data=data, chunk_size=chunk_size
-            ):
-                to_parquet_sync(data_partitions_path, df=data, chunk_size=chunk_size)
-
-            if self.monitor_memory:
-                with self.build_memory_manager():
-                    __write()
-            else:
-                __write()
+            to_parquet_sync(self.data_partitions_path, df=data, chunk_size=chunk_size)
 
     async def write_async(
         self, data: Any, chunk_size: Optional[int] = None, replace: bool = True
@@ -39,14 +29,4 @@ class Writer(BaseData):
             await safe_delete_dir_async(self.data_partitions_path)
 
         if self.is_dataframe():
-
-            async def __write(
-                data_partitions_path=self.data_partitions_path, data=data, chunk_size=chunk_size
-            ):
-                await to_parquet_async(data_partitions_path, df=data, chunk_size=chunk_size)
-
-            if self.monitor_memory:
-                with self.build_memory_manager():
-                    await __write()
-            else:
-                await __write()
+            await to_parquet_async(self.data_partitions_path, df=data, chunk_size=chunk_size)

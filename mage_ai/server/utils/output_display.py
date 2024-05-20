@@ -84,12 +84,16 @@ def get_content_inside_triple_quotes(parts):
         if re.search(r'[\w]+[ ]*=[ ]*[f]*"""', first_line):
             variable = first_line.split('=')[0].strip()
 
-        return '\n'.join(parts[start_index + 1: -1]).replace('"', '\\"'), variable
+        return '\n'.join(
+            parts[start_index + 1 : -1],
+        ).replace('"', '\\"'), variable  # ruff: ignore=E203
 
     return None, None
 
 
-def add_internal_output_info(block, code: str) -> str:
+def add_internal_output_info(
+    block, code: str, extension_uuid: Optional[str] = None, widget: bool = False
+) -> str:
     if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
         return code
     code_lines = remove_comments(code.split('\n'))
@@ -114,9 +118,7 @@ def add_internal_output_info(block, code: str) -> str:
 
     last_line_in_block = False
     if len(code_lines) >= 2:
-        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(
-            REGEX_PATTERN, code_lines[-1]
-        ):
+        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(REGEX_PATTERN, code_lines[-1]):
             last_line_in_block = True
     elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
         last_line_in_block = True
@@ -128,11 +130,7 @@ def add_internal_output_info(block, code: str) -> str:
         elif triple_quotes_content:
             return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
-    if (
-        not last_line
-        or last_line_in_block
-        or re.match(r'^from|^import|^\%\%', last_line.strip())
-    ):
+    if not last_line or last_line_in_block or re.match(r'^from|^import|^\%\%', last_line.strip()):
         return code
     else:
         if matches:
@@ -149,20 +147,27 @@ def add_internal_output_info(block, code: str) -> str:
         repo_path = block.pipeline.repo_path if block.pipeline else None
         block_uuid = block.uuid
 
+        replacements = [
+            ('DATAFRAME_ANALYSIS_MAX_COLUMNS', DATAFRAME_ANALYSIS_MAX_COLUMNS),
+            ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
+            ('block_uuid', f"'{block_uuid}'"),
+            ('has_reduce_output', has_reduce_output),
+            ('is_dynamic', is_dynamic),
+            ('is_dynamic_child', is_dynamic_child),
+            ('is_print_statement', is_print_statement),
+            ('last_line', last_line),
+            ('pipeline_uuid', f"'{pipeline_uuid}'"),
+            ('repo_path', f"'{repo_path}'"),
+            ('widget', widget),
+        ]
+        replacements.append((
+            'extension_uuid',
+            f"'{extension_uuid}'" if extension_uuid else 'None',
+        ))
+
         custom_output_function_code = __interpolate_code_content(
             'custom_output.py',
-            [
-                ('DATAFRAME_ANALYSIS_MAX_COLUMNS', DATAFRAME_ANALYSIS_MAX_COLUMNS),
-                ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
-                ('block_uuid', f"'{block_uuid}'"),
-                ('has_reduce_output', has_reduce_output),
-                ('is_dynamic', is_dynamic),
-                ('is_dynamic_child', is_dynamic_child),
-                ('is_print_statement', is_print_statement),
-                ('last_line', last_line),
-                ('pipeline_uuid', f"'{pipeline_uuid}'"),
-                ('repo_path', f"'{repo_path}'"),
-            ],
+            replacements,
         )
 
         internal_output = f"""
@@ -270,9 +275,7 @@ spark = SparkSession.builder.getOrCreate()
     if execution_uuid:
         replacements.append(('execution_uuid', f"'{execution_uuid}'"))
 
-    replacements.append(
-        ('extension_uuid', f"'{extension_uuid}'" if extension_uuid else 'None')
-    )
+    replacements.append(('extension_uuid', f"'{extension_uuid}'" if extension_uuid else 'None'))
 
     if upstream_blocks:
         upstream_blocks = ', '.join([f"'{u}'" for u in upstream_blocks])

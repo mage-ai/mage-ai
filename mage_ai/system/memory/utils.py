@@ -20,7 +20,27 @@ import pyarrow.parquet as pq
 from memory_profiler import memory_usage
 
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.system.constants import LogType
+from mage_ai.settings.repo import get_variables_dir
+from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
+
+
+def get_log_directory(
+    scope_uuid: str,
+    repo_path: Optional[str] = None,
+) -> str:
+    """
+    /root/.mage_data/[project]
+        /system/logs
+            /pipelines/[pipeline_uuid]/[block_uuid]
+    """
+    variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
+
+    return os.path.join(
+        variables_dir,
+        SYSTEM_DIRECTORY,
+        LOGS_DIRECTORY,
+        scope_uuid,  # pipelines/[pipeline_uuid]/[block_uuid]
+    )
 
 
 def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):

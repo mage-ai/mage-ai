@@ -31,10 +31,12 @@ import ConfigurationOptionType, {
 } from '@interfaces/ConfigurationOptionType';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
+import { CustomEventUUID, CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
+import { CommandCenterStateEnum } from '@interfaces/CommandCenterType';
 import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import Link from '@oracle/elements/Link';
@@ -284,6 +286,7 @@ function PipelineDetail({
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
   const blockOutputRefs = useRef({});
+  const commandCenterStateRef = useRef(null);
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
   const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
@@ -531,6 +534,26 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setTextareaFocused,
   ]);
 
+  useEffect(() => {
+    const handleState = ({
+      detail,
+    }) => {
+      commandCenterStateRef.current = detail?.state;
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+      }
+    };
+  }, []);
+
   const uuidKeyboard = 'PipelineDetail/index';
   const {
     disableGlobalKeyboardShortcuts,
@@ -545,6 +568,10 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
+      if (CommandCenterStateEnum.OPEN === commandCenterStateRef?.current) {
+        return;
+      }
+
       if (pipelineContentTouched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
         event.preventDefault();
         const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';

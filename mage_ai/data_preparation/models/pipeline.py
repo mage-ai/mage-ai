@@ -1336,12 +1336,16 @@ class Pipeline:
                             block_data['callback_content'],
                             widget=widget,
                         )
-                    if 'outputs' in block_data:
-                        if not is_dynamic_block(block) and not is_dynamic_block_child(block):
-                            await block.save_outputs_async(
-                                block_data['outputs'],
-                                override=True,
-                            )
+                    if (
+                        'outputs' in block_data
+                        and not widget
+                        and not is_dynamic_block(block)
+                        and not is_dynamic_block_child(block)
+                    ):
+                        await block.save_outputs_async(
+                            block_data['outputs'],
+                            override=True,
+                        )
 
                     name = block_data.get('name')
 
