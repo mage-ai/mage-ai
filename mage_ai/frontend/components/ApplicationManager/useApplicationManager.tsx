@@ -460,9 +460,8 @@ export default function useApplicationManager({
   const {
     setElementObject,
     setInteractiveElementsObjects,
-  } = useDraggableElement({
-    onChange: onChangePosition,
-  });
+    setOnChange,
+  } = useDraggableElement();
 
   function renderApplications() {
     return (
@@ -607,6 +606,8 @@ export default function useApplicationManager({
       ], {
         tries: 10,
       });
+
+      setOnChange(onChangePosition);
 
       setElementObject(uuid, ref, {
         tries: 10,

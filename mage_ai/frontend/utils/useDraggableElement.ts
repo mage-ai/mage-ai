@@ -2,41 +2,55 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ElementType from '@interfaces/ElementType';
 import { BuildSetFunctionProps, buildSetFunction } from './elements';
+import { RefType } from '@interfaces/ElementType';
+
+type MappingType = {
+  [uuid: string]: Element;
+};
 
 export default function useDraggableElement({
-  onChange,
   onStart,
 }: {
-  onChange?: (uuid: string, opts?: {
-    event: Event;
-    x: number;
-    y: number;
-  }) => void;
   onStart?: (uuid: string, opts?: {
     event: Event;
     x: number;
     y: number;
   }) => void;
-}): {
+} = {}): {
   setElementObject: BuildSetFunctionProps;
   setInteractiveElementsObjects: BuildSetFunctionProps;
+  setOnChange: (onChange?: (uuid: string, opts?: {
+    event: Event;
+    x: number;
+    y: number;
+  }) => void) => void;
 } {
   const refStateMapping = useRef({});
   const refRecentValuesMapping = useRef({});
   const refHandlers = useRef({});
 
-  const [elementMapping, setElementRefState] = useState<{
-    [uuid: string]: ElementType;
-  }>({});
-  const [interactiveElementsMapping, setInteractiveElementsRefState] = useState<{
-    [uuid: string]: ElementType[];
-  }>({});
+  const elementMappingRef: RefType = useRef(null);
+  const [interactiveElementsMapping, setInteractiveElementsMapping] = useState<RefType>({});
+  const onChangeRef: RefType = useRef(null);
+  function setOnChangeRef(onChange?: (uuid: string, opts?: {
+    event: Event;
+    x: number;
+    y: number;
+  }) => void) {
+    onChangeRef.current = onChange;
+  }
+
+  function setElementRefState(prev: (mapping: MappingType) => MappingType | MappingType) {
+    elementMappingRef.current = typeof prev === 'function'
+      ? prev(elementMappingRef?.current || {})
+      : prev;
+  }
 
   const setElementObject = buildSetFunction(setElementRefState);
-  const setInteractiveElementsObjects = buildSetFunction(setInteractiveElementsRefState);
+  const setInteractiveElementsObjects = buildSetFunction(setInteractiveElementsMapping);
 
   useEffect(() => {
-    Object.entries(elementMapping || {})?.forEach(([uuid, element]: [string, ElementType]) => {
+    Object.entries(elementMappingRef?.current || {})?.forEach(([uuid, element]: [string, ElementType]) => {
       const interactiveElements = interactiveElementsMapping?.[uuid];
 
       const startExecution = (e) => {
@@ -51,8 +65,8 @@ export default function useDraggableElement({
         element.style.left = `${x}px`;
         element.style.top = `${y}px`;
 
-        if (onChange) {
-          onChange?.(uuid, {
+        if (onChangeRef?.current) {
+          onChangeRef?.current?.(uuid, {
             event: e,
             x,
             y,
@@ -109,10 +123,11 @@ export default function useDraggableElement({
         });
       });
     };
-  }, [elementMapping, interactiveElementsMapping, onChange, onStart]);
+  }, [interactiveElementsMapping]);
 
   return {
     setElementObject,
     setInteractiveElementsObjects,
+    setOnChange: setOnChangeRef,
   };
 }
