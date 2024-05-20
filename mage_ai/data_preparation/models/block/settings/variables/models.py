@@ -26,7 +26,7 @@ class InputType(str, Enum):
 class VariablSettings(BaseDataClass):
     batch_settings: Optional[BatchSettings] = None
     chunks: Optional[List[ChunkKeyTypeUnion]] = None
-    input_type: Optional[InputType] = None
+    input_type: Optional[InputType] = InputType.DEFAULT
 
     def __post_init__(self):
         self.serialize_attribute_class('batch_settings', BatchSettings)
@@ -39,13 +39,15 @@ class VariableConfiguration(BaseDataClass):
     upstream: Optional[Dict[str, VariablSettings]] = None
 
     def __post_init__(self):
-        if self.downstream:
-            self.downstream = {
-                k: VariablSettings.load(**v) if isinstance(v, dict) else v
-                for k, v in self.downstream.items()
-            }
-        if self.upstream:
-            self.upstream = {
-                k: VariablSettings.load(**v) if isinstance(v, dict) else v
-                for k, v in self.upstream.items()
-            }
+        self.downstream = {
+            k: VariablSettings.load(**v) if isinstance(v, dict) else v
+            for k, v in (self.downstream or {}).items()
+        }
+        self.upstream = {
+            k: VariablSettings.load(**v) if isinstance(v, dict) else v
+            for k, v in (self.upstream or {}).items()
+        }
+
+    def upstream_settings(self, block_uuid: str) -> VariablSettings:
+        settings = self.upstream.get(block_uuid) if self.upstream else None
+        return settings or VariablSettings()
