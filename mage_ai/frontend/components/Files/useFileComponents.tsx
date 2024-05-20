@@ -783,12 +783,12 @@ function useFileComponents({
   const controller = useMemo(() => (
     <Controller
       addNewBlock={addNewBlock}
+      codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
       contained={contained}
       containerRef={containerRef}
       disableRefreshWarning
       fetchPipeline={fetchPipeline}
       fetchVariables={fetchVariables}
-      codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
       onFileFetched={onFileFetched}
       onUpdateFileSuccess={onUpdateFileSuccess}
       openFilePaths={openFilePaths}
@@ -1117,17 +1117,15 @@ function useFileComponents({
     status,
   ]);
 
-  const footerMemo = useMemo(() => {
-    return (
-      <StatusFooter
+  const footerMemo = useMemo(() => (
+    <StatusFooter
         inline
         pipelineContentTouched={!!contentTouchedMapping?.[selectedFilePath]}
         pipelineLastSaved={Number(lastSavedMapping?.[selectedFilePath])}
         refreshInterval={0}
         saveStatus={saveStatus}
       />
-    );
-  }, [
+    ), [
     contentTouchedMapping,
     lastSavedMapping,
     saveStatus,

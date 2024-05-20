@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BuildSetFunctionProps, buildSetFunction } from './elements';
+import { RefType } from '@interfaces/ElementType';
+
+type MappingType = {
+  [uuid: string]: Element;
+};
 
 export default function useClickOutside({
   onClick,
@@ -24,15 +29,24 @@ export default function useClickOutside({
   tries?: number;
 }) => void;
 } {
-  const [elementMapping, setElementRefState] = useState<{
-    [uuid: string]: Element;
-  }>({});
-  const [interactiveElementsMapping, setInteractiveElementsRefState] = useState<{
-    [uuid: string]: Element[];
-  }>({});
-  const [uuidToGroupMapping, setUUIDToGroupMapping] = useState<{
-    [uuid: string]: string;
-  }>({});
+  const elementMappingRef: RefType = useRef(null);
+  const interactiveElementsMappingRef: RefType = useRef(null);
+  const uuidToGroupMappingRef: RefType = useRef(null);
+  function setElementRefState(prev: (mapping: MappingType) => MappingType | MappingType) {
+    elementMappingRef.current = typeof prev === 'function'
+      ? prev(elementMappingRef?.current || {})
+      : prev;
+  }
+  function setInteractiveElementsRefState(prev: (mapping: MappingType) => MappingType | MappingType) {
+    interactiveElementsMappingRef.current = typeof prev === 'function'
+      ? prev(interactiveElementsMappingRef?.current || {})
+      : prev;
+  }
+  function setUUIDToGroupMapping(prev: (mapping: MappingType) => MappingType | MappingType) {
+    uuidToGroupMappingRef.current = typeof prev === 'function'
+    ? prev(uuidToGroupMappingRef?.current || {})
+    : prev;
+  }
 
   function setElementObject(uuid, ref, groupUUID, opts) {
     buildSetFunction(setElementRefState)(uuid, ref, opts);
@@ -42,7 +56,7 @@ export default function useClickOutside({
         [uuid]: groupUUID,
       }));
     }
-  };
+  }
 
   function setInteractiveElementsObjects(uuid, ref, groupUUID, opts) {
     buildSetFunction(setInteractiveElementsRefState)(uuid, ref, opts);
@@ -52,12 +66,18 @@ export default function useClickOutside({
         [uuid]: groupUUID,
       }));
     }
-  };
+  }
 
   function calculateOutside(e: any, elementItem: any): boolean {
     let isOutside = true;
     // @ts-ignore
     if (elementItem) {
+      const {
+        height,
+        width,
+        x,
+        y,
+      } = elementItem?.getBoundingClientRect() || {};
       if (elementItem?.contains?.(e.target)) {
         isOutside = false;
       } else {
@@ -65,12 +85,6 @@ export default function useClickOutside({
           clientX,
           clientY,
         } = e;
-        const {
-          height,
-          width,
-          x,
-          y,
-        } = elementItem?.getBoundingClientRect() || {};
 
         isOutside = clientX > (x + width)
           || clientX < x
@@ -92,9 +106,22 @@ export default function useClickOutside({
       } = {};
       const resultsGroup = {};
 
-      Object.entries(elementMapping || {})?.forEach(([uuid, element]) => {
-        const interactiveElements = interactiveElementsMapping?.[uuid];
+      Object.entries(elementMappingRef?.current || {})?.forEach(([uuid, element]) => {
+        if (!element) {
+          return;
+        } else {
+          const {
+            height,
+            width,
+            x,
+            y,
+          } = element?.getBoundingClientRect() || {};
+          if (height === 0 && width === 0 && x === 0 && y === 0) {
+            return;
+          }
+        }
 
+        const interactiveElements = interactiveElementsMappingRef?.current?.[uuid];
         const isOutside = calculateOutside(e, element);
         const isOutsides = interactiveElements?.map((elementItem) => calculateOutside(e, elementItem));
 
@@ -103,7 +130,7 @@ export default function useClickOutside({
           isOutsides,
         };
 
-        const groupUUID = uuidToGroupMapping?.[uuid];
+        const groupUUID = uuidToGroupMappingRef?.current?.[uuid];
         if (groupUUID) {
           resultsGroup[groupUUID] = {
             ...(resultsGroup?.[groupUUID] || {}),
@@ -121,7 +148,7 @@ export default function useClickOutside({
             uuid,
             isOutside,
             {
-              group: resultsGroup?.[uuidToGroupMapping?.[uuid]],
+              group: resultsGroup?.[uuidToGroupMappingRef?.current?.[uuid]],
               isOutsidesInteractiveElements: isOutsides,
             },
           );
@@ -130,13 +157,13 @@ export default function useClickOutside({
     };
 
     if (typeof document !== 'undefined') {
-      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('mouseup', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('mouseup', handleClickOutside);
     };
-  }, [elementMapping, interactiveElementsMapping, uuidToGroupMapping]);
+  }, []);
 
   return {
     setElementObject,

@@ -61,6 +61,13 @@ from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
 from mage_ai.data_preparation.models.block.platform.utils import from_another_project
+from mage_ai.data_preparation.models.block.settings.dynamic.mixins import DynamicMixin
+from mage_ai.data_preparation.models.block.settings.global_data_products.mixins import (
+    GlobalDataProductsMixin,
+)
+from mage_ai.data_preparation.models.block.settings.variables.mixins import (
+    VariablesMixin,
+)
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -304,7 +311,14 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
+class Block(
+    DataIntegrationMixin,
+    SparkBlock,
+    ProjectPlatformAccessible,
+    DynamicMixin,
+    GlobalDataProductsMixin,
+    VariablesMixin,
+):
     def __init__(
         self,
         name: str,

@@ -134,8 +134,18 @@ export function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
   });
 }
 
-export function getCurrentlyOpenedApplications(): ApplicationManagerApplication[] {
-  return getApplications()?.filter(({ state }) => state?.status !== StatusEnum.CLOSED);
+export function getCurrentlyOpenedApplications(opts: {
+  activeOnly?: boolean;
+} = {
+  activeOnly: false,
+}): ApplicationManagerApplication[] {
+  return getApplications()?.filter(({ state }) => {
+    if (opts?.activeOnly && [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(state?.status)) {
+      return true;
+    }
+
+    return state?.status !== StatusEnum.CLOSED;
+  });
 }
 
 export function getApplications({

@@ -46,12 +46,10 @@ export function buildSetFunction(updateFunction) {
 
     const values = Object.values(mapping || {});
 
-    updateFunction((prev) => {
-      return {
+    updateFunction((prev) => ({
         ...prev,
         [uuid]: valueIsArray ? values : values?.[0],
-      };
-    });
+      }));
   }
 
   return setObject;

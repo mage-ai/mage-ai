@@ -98,11 +98,14 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
       };
     }
   }, [
-    keyHistory.current,
-    keyMapping.current,
+    // keyHistory.current,
+    // keyMapping.current,
     onKeyDownRegistry,
     onKeyUpRegistry,
-  ].concat(...Object.values(onKeyDownDependencies)));
+  ],
+  // .concat(...Object.values(onKeyDownDependencies))
+  );
+
 
   useEffect(() => {
     const handleKeyUp = (event) => {
@@ -155,11 +158,13 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
       };
     }
   }, [
-    keyHistory.current,
-    keyMapping.current,
+    // keyHistory.current,
+    // keyMapping.current,
     onKeyDownRegistry,
     onKeyUpRegistry,
-  ].concat(...Object.values(onKeyUpDependencies)));
+  ],
+  // .concat(...Object.values(onKeyUpDependencies))
+  );
 
   useEffect(() => {
     const handleFocus = () => {

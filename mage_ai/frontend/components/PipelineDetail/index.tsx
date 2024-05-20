@@ -32,6 +32,9 @@ import ConfigurationOptionType, {
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import { CustomEventUUID, CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED } from '@utils/events/constants';
+import { StatusEnum } from '@storage/ApplicationManager/constants';
+import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
+import { getCurrentlyOpenedApplications } from '@storage/ApplicationManager/cache';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
@@ -286,6 +289,7 @@ function PipelineDetail({
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
   const blockOutputRefs = useRef({});
+  const activeApplicationsRef = useRef(null);
   const commandCenterStateRef = useRef(null);
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
@@ -535,21 +539,29 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   ]);
 
   useEffect(() => {
-    const handleState = ({
+    const handleStateCommandCenter = ({
       detail,
     }) => {
       commandCenterStateRef.current = detail?.state;
     };
 
+    const handleStateApplicationManager = () => {
+      activeApplicationsRef.current = getCurrentlyOpenedApplications({ activeOnly: true });
+    };
+
     if (typeof window !== 'undefined') {
       // @ts-ignore
-      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+      window.addEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleStateApplicationManager);
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleStateCommandCenter);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         // @ts-ignore
-        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleState);
+        window.removeEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleStateApplicationManager);
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED, handleStateCommandCenter);
       }
     };
   }, []);
@@ -568,7 +580,9 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (CommandCenterStateEnum.OPEN === commandCenterStateRef?.current) {
+      if (CommandCenterStateEnum.OPEN === commandCenterStateRef?.current
+        || activeApplicationsRef?.current?.length >= 1
+    ) {
         return;
       }
 
