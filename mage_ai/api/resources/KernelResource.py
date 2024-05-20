@@ -76,7 +76,3 @@ class KernelResource(GenericResource):
         self.on_update_callback = _callback
 
         return self
-
-    @safe_db_query
-    async def delete(self, **kwargs):
-        self.model.terminate_inactive_kernels()

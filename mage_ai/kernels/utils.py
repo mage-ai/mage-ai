@@ -1,6 +1,9 @@
 import datetime
 import os
+from queue import Empty
+from typing import Any, Dict, Optional
 
+import jupyter_client
 import psutil
 
 
@@ -28,7 +31,7 @@ def is_cmdline_contains_ipykernel(cmdline, search_term='ipykernel_launcher'):
     return False
 
 
-def find_ipykernel_launchers_info():
+def find_ipykernel_launchers_info(check_active_status: bool = False):
     arr = []
     for proc in psutil.process_iter(['pid', 'ppid', 'name', 'cmdline', 'memory_info']):
         try:
@@ -36,22 +39,17 @@ def find_ipykernel_launchers_info():
             cmdline = proc.info['cmdline']
             if cmdline and 'ipykernel_launcher' in ' '.join(proc.info['cmdline']):
                 pid = proc.info['pid']
-                info = dict(pid=pid)
-                info.update(get_process_info(pid) or {})
-
-                # Extract and add the connection file path
-                for arg in cmdline:
-                    if arg and arg.endswith('.json'):
-                        info['connection_file'] = arg
-                        break  # Break after finding the first .json argument
-
-                arr.append(info)
+                process = dict(pid=pid)
+                process.update(
+                    get_process_info(pid, check_active_status=check_active_status) or {}
+                )
+                arr.append(process)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass  # Process has been terminated or access was denied
     return arr
 
 
-def get_process_info(pid):
+def get_process_info(pid: int, check_active_status: bool = False) -> Optional[Dict]:
     """
     Retrieves information about a process given its PID.
 
@@ -78,13 +76,14 @@ def get_process_info(pid):
             ),
         }
         """
-        process = psutil.Process(pid)
+        process = psutil.Process(int(pid))
+        cmdline = process.cmdline()
         proc_info = {
             'pid': process.pid,
             'ppid': process.ppid(),
             'name': process.name(),
             'exe': process.exe(),
-            'cmdline': ' '.join(process.cmdline()),
+            'cmdline': ' '.join(cmdline),
             # If there are more than 1, kill the ones that are "sleeping"
             # Kernels that are busy can still show status as "sleeping"
             # ESTABLISHED
@@ -97,12 +96,21 @@ def get_process_info(pid):
             'connections': process.connections(),
             'num_threads': process.num_threads(),
         }
+
+        # Extract and add the connection file path
+        for arg in cmdline:
+            if arg and arg.endswith('.json'):
+                proc_info['connection_file'] = arg
+                break  # Break after finding the first .json argument
+
+        if check_active_status:
+            proc_info['active'] = is_kernel_process_active(pid, proc_info.get('connection_file'))
         return proc_info
     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-        return None  # Process does not exist or access is denied
+        return None
 
 
-def terminate_process(pid):
+def terminate_process(pid: int) -> bool:
     """
     Attempt to terminate the process with the given PID.
     """
@@ -110,15 +118,35 @@ def terminate_process(pid):
         process = psutil.Process(pid)
         process.terminate()  # Requests the process to terminate
         process.wait(timeout=3)  # Wait up to 3 seconds for the process to end
-
-        print(f'Process {pid} has been terminated.')
-
+        return True
     except psutil.NoSuchProcess:
         print(f'No process with PID {pid} exists.')
+        return False
     except psutil.AccessDenied:
         print(f'Permission denied to terminate process {pid}.')
+        return False
     except psutil.TimeoutExpired:
         print(f'Process {pid} did not terminate within the timeout period.')
         # Optionally use process.kill() if you must forcibly stop the process
+        # return False
     except Exception as e:
         print(f'An unexpected error occurred: {e}')
+        return False
+    return False
+
+
+def is_kernel_process_active(pid: int, connection_file: Any) -> bool:
+    if not connection_file:
+        return False
+
+    km = jupyter_client.BlockingKernelClient()
+    km.load_connection_file(connection_file)
+
+    km.execute('1 + 1', connection_file)
+    try:
+        km.get_shell_msg(timeout=1)
+        return False
+    except Empty:
+        return True
+
+    return False

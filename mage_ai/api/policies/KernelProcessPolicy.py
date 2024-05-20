@@ -1,18 +1,20 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.KernelPresenter import KernelPresenter
+from mage_ai.api.presenters.KernelProcessPresenter import KernelProcessPresenter
 from mage_ai.orchestration.constants import Entity
 
 
-class KernelPolicy(BasePolicy):
+class KernelProcessPolicy(BasePolicy):
     @property
     def entity(self):
+        # Adjust the entity to reflect the KernelProcess's entity, if applicable
         return Entity.ANY, None
 
 
-KernelPolicy.allow_actions(
+KernelProcessPolicy.allow_actions(
     [
+        constants.DETAIL,
         constants.LIST,
     ],
     scopes=[
@@ -21,9 +23,9 @@ KernelPolicy.allow_actions(
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
-KernelPolicy.allow_actions(
+KernelProcessPolicy.allow_actions(
     [
-        constants.UPDATE,
+        constants.DELETE,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -31,38 +33,24 @@ KernelPolicy.allow_actions(
     condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )
 
-KernelPolicy.allow_read(
-    KernelPresenter.default_attributes + [],
+
+KernelProcessPolicy.allow_read(
+    KernelProcessPresenter.default_attributes,
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
+        constants.DETAIL,
         constants.LIST,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
-
-KernelPolicy.allow_read(
-    KernelPresenter.default_attributes + [],
-    scopes=[
-        OauthScope.CLIENT_PRIVATE,
-    ],
+KernelProcessPolicy.allow_query(
+    ['check_active_status'],
     on_action=[
-        constants.UPDATE,
+        constants.DETAIL,
+        constants.LIST,
     ],
-    condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
-)
-
-KernelPolicy.allow_write(
-    [
-        'action_type',
-    ],
-    scopes=[
-        OauthScope.CLIENT_PRIVATE,
-    ],
-    on_action=[
-        constants.UPDATE,
-    ],
-    condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
+    condition=lambda policy: policy.has_at_least_viewer_role(),
 )
