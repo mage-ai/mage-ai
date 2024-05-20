@@ -194,7 +194,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             ).first()
             if oauth_client:
                 oauth_token, _ = authenticate_client_and_token(oauth_client.id, token)
-                user = oauth_token.user
+                if oauth_token:
+                    user = oauth_token.user
 
         repo_path = get_repo_path(user=user)
         pipeline = None
