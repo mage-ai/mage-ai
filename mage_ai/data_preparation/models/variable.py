@@ -21,8 +21,6 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_MAX_COLUMNS,
     VARIABLE_DIR,
 )
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     AMBIGUOUS_COLUMN_TYPES,
     STRING_SERIALIZABLE_COLUMN_TYPES,
@@ -50,6 +48,7 @@ from mage_ai.data_preparation.models.variables.constants import (
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
@@ -228,7 +227,7 @@ class Variable:
                 spark=spark,
             )
 
-        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+        if MEMORY_MANAGER_V2:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
                 return __read()
         return __read()
@@ -325,7 +324,7 @@ class Variable:
                 spark=spark,
             )
 
-        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+        if MEMORY_MANAGER_V2:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
             ):
@@ -454,7 +453,7 @@ class Variable:
         return self.variable_path
 
     def write_data(self, data: Any) -> None:
-        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+        if MEMORY_MANAGER_V2:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
                 self.__write_data(data)
         else:
@@ -531,7 +530,7 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
-        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+        if MEMORY_MANAGER_V2:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
             ):

@@ -5,10 +5,14 @@ from typing import Dict, Optional
 import aiofiles
 
 from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.settings.server import SYSTEM_LOGS_PARTITIONS
+from mage_ai.settings.server import (
+    MEMORY_MANAGER_PANDAS_VERSION,
+    MEMORY_MANAGER_POLARS_VERSION,
+    MEMORY_MANAGER_VERSION,
+    SYSTEM_LOGS_PARTITIONS,
+    SYSTEM_LOGS_POLL_INTERVAL,
+)
 from mage_ai.shared.files import makedirs_async, makedirs_sync
 from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
 from mage_ai.system.memory.constants import MEMORY_LOGS_DIRECTORY
@@ -18,8 +22,6 @@ from mage_ai.system.memory.utils import (
     monitor_memory_usage,
     monitor_memory_usage_async,
 )
-
-DEFAULT_POLL_INTERVAL = 0.1
 
 
 class MemoryManager:
@@ -47,7 +49,7 @@ class MemoryManager:
         """
         self.monitor = None
         self.monitor_thread = None
-        self.poll_interval = poll_interval or DEFAULT_POLL_INTERVAL
+        self.poll_interval = poll_interval or SYSTEM_LOGS_POLL_INTERVAL
         self.process_uuid = process_uuid
         self.scope_uuid = scope_uuid
         self.stop_event = None
@@ -86,17 +88,14 @@ class MemoryManager:
 
     @property
     def metadata(self) -> Dict:
-        project = Project()
-        features_enabled = []
-        for feature in [FeatureUUID.MEMORY_V2_PANDAS, FeatureUUID.MEMORY_V2_POLARS]:
-            if project.is_feature_enabled(feature):
-                features_enabled.append(feature.value)
         supported_variable_types = [v.value for v in SUPPORTED_VARIABLE_TYPES]
 
         self._metadata.update(
             dict(
-                features_enabled=','.join(features_enabled),
-                supported_variable_types=','.join(supported_variable_types),
+                memory_manager_version=MEMORY_MANAGER_VERSION,
+                memory_manager_pandas_version=MEMORY_MANAGER_PANDAS_VERSION,
+                memory_manager_polars_version=MEMORY_MANAGER_POLARS_VERSION,
+                supported_variable_types=supported_variable_types,
             ),
         )
         return self._metadata

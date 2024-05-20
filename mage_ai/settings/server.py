@@ -128,9 +128,6 @@ SERVER_LOGGING_TEMPLATE = os.getenv(
     'SERVER_LOGGING_TEMPLATE',
     '%(levelname)s:%(name)s:%(message)s',
 )
-SYSTEM_LOGS_PARTITIONS = [
-    str(partition).strip() for partition in os.getenv('SYSTEM_LOGS_PARTITIONS', 'ds').split(',')
-]
 
 
 # --------------------
@@ -164,6 +161,10 @@ OTEL_PYTHON_TORNADO_EXCLUDED_URLS = (
     os.getenv('OTEL_PYTHON_TORNADO_EXCLUDED_URLS') or '/api/statuses'
 )
 
+SYSTEM_LOGS_PARTITIONS = [
+    str(partition).strip() for partition in os.getenv('SYSTEM_LOGS_PARTITIONS', 'ds').split(',')
+]
+SYSTEM_LOGS_POLL_INTERVAL = float(os.getenv('SYSTEM_LOGS_POLL_INTERVAL', 0.1))
 
 # -----------------------------
 # Mage URL and PATH Settings
@@ -193,6 +194,15 @@ try:
 except ValueError:
     SCHEDULER_TRIGGER_INTERVAL = 10
 
+# -------------------------
+# System level features
+# -------------------------
+MEMORY_MANAGER_VERSION = int(os.getenv('MEMORY_MANAGER_VERSION', '1'))
+MEMORY_MANAGER_PANDAS_VERSION = int(os.getenv('MEMORY_MANAGER_PANDAS_VERSION', '1'))
+MEMORY_MANAGER_POLARS_VERSION = int(os.getenv('MEMORY_MANAGER_POLARS_VERSION', '1'))
+MEMORY_MANAGER_V2 = MEMORY_MANAGER_VERSION >= 2
+MEMORY_MANAGER_PANDAS_V2 = MEMORY_MANAGER_PANDAS_VERSION >= 2
+MEMORY_MANAGER_POLARS_V2 = MEMORY_MANAGER_POLARS_VERSION >= 2
 
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.

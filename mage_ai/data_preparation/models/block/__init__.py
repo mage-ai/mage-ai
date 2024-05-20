@@ -90,8 +90,6 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
@@ -104,6 +102,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -1411,7 +1410,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             return output
 
-        if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+        if MEMORY_MANAGER_V2:
             metadata = {}
             if execution_partition:
                 metadata['execution_partition'] = execution_partition
