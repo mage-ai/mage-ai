@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 
-import dark from '@oracle/styles/themes/dark';;
+import dark from '@oracle/styles/themes/dark';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
@@ -87,7 +87,7 @@ export const RootApplicationStyle = styled.div`
 
       &:hover {
         ${transition()}
-        transform: translateY(-56px);
+        // transform: translateY(-56px);
       }
 
       .minimized {

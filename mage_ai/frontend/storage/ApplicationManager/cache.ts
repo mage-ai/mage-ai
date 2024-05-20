@@ -142,7 +142,7 @@ export function getCurrentlyOpenedApplications(opts: {
 }): ApplicationManagerApplication[] {
   return getApplications()?.filter(({ state }) => {
     if (opts?.activeOnly) {
-      return [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(state?.status);
+      return [StatusEnum.ACTIVE].includes(state?.status);
     }
 
     return state?.status !== StatusEnum.CLOSED;

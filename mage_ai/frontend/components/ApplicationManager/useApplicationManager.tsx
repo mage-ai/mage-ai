@@ -126,6 +126,7 @@ export default function useApplicationManager({
       }
     });
 
+
     apps?.forEach(({
       element,
       uuid: uuidApp,
@@ -541,7 +542,10 @@ export default function useApplicationManager({
       state,
     } = updateApplication({
       applicationConfiguration,
-      state: stateProp || {
+      state:
+      // All open apps won’t start minimized, too buggy
+      // stateProp ||
+      {
         status: StatusEnum.OPEN,
       },
       uuid,
@@ -589,9 +593,10 @@ export default function useApplicationManager({
 
     const onMountCallback = () => {
       setTimeout(() => {
-        if (StatusEnum.MINIMIZED === state?.status) {
-          minimizeApplication(uuid);
-        }
+        // BUGGY
+        // if (StatusEnum.MINIMIZED === state?.status) {
+        //   minimizeApplication(uuid);
+        // }
         ref.current.style.display = 'block';
       }, 1);
 
@@ -657,18 +662,6 @@ export default function useApplicationManager({
             e.stopPropagation();
             pauseEvent(e);
             minimizeApplication(uuid, true);
-          }}
-          onMouseEnter={(e) => {
-            if (ref?.current?.className?.includes('minimized') && getApplicationsFromCache({ uuid })?.[0]?.state?.status !== StatusEnum.MINIMIZED) {
-              e.stopPropagation();
-              pauseEvent(e);
-              ref.current.className = removeClassNames(
-                ref?.current?.className || '',
-                [
-                  'minimized',
-                ],
-              );
-            }
           }}
         />
 

@@ -73,13 +73,26 @@ export default function useAutoResizer({
       if (element?.current) {
         const rect = element?.current?.getBoundingClientRect();
 
-        const width = rect?.width * widthFactor;
-        const height = rect?.height * heightFactor;
-        const x = rect?.x * widthFactor;
-        const y = rect?.y * widthFactor;
+        let width = rect?.width * widthFactor;
+        let height = rect?.height * heightFactor;
+        let x = rect?.x * widthFactor;
+        let y = rect?.y * widthFactor;
 
         if (!rect?.width || !rect?.height) {
           return;
+        }
+
+        if (y > dimensions?.height || y < 0) {
+          y = (dimensions.height - height) / 2;
+        }
+        if (x > dimensions?.width || x < 0) {
+          x = (dimensions.width - width) / 2;
+        }
+        if (width > dimensions?.width || width < 0) {
+          width = dimensions.width * 0.8;
+        }
+        if (height > dimensions?.height || height < 0) {
+          height = dimensions.height * 0.8;
         }
 
         element.current.style.height = `${height}px`;

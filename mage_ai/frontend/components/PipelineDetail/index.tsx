@@ -538,6 +538,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setTextareaFocused,
   ]);
 
+  console.log(activeApplicationsRef.current);
   useEffect(() => {
     const handleStateCommandCenter = ({
       detail,
