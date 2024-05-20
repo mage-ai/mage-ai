@@ -688,7 +688,7 @@ class Pipeline:
         if repo_paths:
             paths.extend(repo_paths)
 
-        for path in paths:
+        for path in set(paths):
             pipelines_folder = os.path.join(path, PIPELINES_FOLDER)
             pipelines_folder_exists = os.path.exists(pipelines_folder)
             if not pipelines_folder_exists and not disable_pipelines_folder_creation:
