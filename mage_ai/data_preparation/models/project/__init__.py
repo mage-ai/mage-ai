@@ -28,9 +28,12 @@ class Project:
         user=None,
     ):
         # print(f'Project context_data {id(context_data)} {context_data}')
+        if context_data is None:
+            context_data = dict()
         self.context_data = context_data
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(
+            context_data=context_data,
             root_project=self.root_project,
             user=user,
         )

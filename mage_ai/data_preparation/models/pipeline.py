@@ -661,6 +661,7 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
+                    context_data=kwargs.get('context_data'),
                     mage_projects_only=True
                 ).values()
             ]
@@ -679,6 +680,7 @@ class Pipeline:
         repo_paths: List[str] = None,
         disable_pipelines_folder_creation: bool = False,
         include_repo_path: bool = False,
+        **kwargs,
     ) -> Union[List[str], List[Tuple[str, str]]]:
         arr = []
 
@@ -1261,6 +1263,8 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
+            # Force updating the config path
+            self._config_path = None
             await self.save_async()
             transfer_related_models_for_pipeline(old_uuid, new_uuid)
 

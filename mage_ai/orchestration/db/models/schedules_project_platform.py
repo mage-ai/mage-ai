@@ -39,13 +39,22 @@ class PipelineScheduleProjectPlatformMixin:
     def repo_query_project_platform(cls):
         repo_paths = []
 
-        queries = Project().repo_path_for_database_query('pipeline_schedules')
+        context_data = dict()
+        queries = Project(
+            context_data=context_data,
+        ).repo_path_for_database_query('pipeline_schedules')
         if queries:
             repo_paths.extend(queries)
 
-        repo_paths.extend([d.get(
-            'full_path',
-        ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()])
+        repo_paths.extend([
+            d.get(
+                'full_path',
+            )
+            for d in build_repo_path_for_all_projects(
+                context_data=context_data,
+                mage_projects_only=True,
+            ).values()
+        ])
 
         return cls.query.filter(
             or_(

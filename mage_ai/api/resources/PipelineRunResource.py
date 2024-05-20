@@ -189,6 +189,7 @@ class PipelineRunResource(DatabaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
+        context_data = kwargs.get('context_data')
         total_results = await self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
@@ -299,8 +300,11 @@ class PipelineRunResource(DatabaseResource):
         }
 
         if include_pipeline_uuids:
-            repo_path = get_repo_path(user=user)
-            pipeline_uuids = Pipeline.get_all_pipelines_all_projects(repo_path=repo_path)
+            repo_path = get_repo_path(context_data=context_data, user=user)
+            pipeline_uuids = Pipeline.get_all_pipelines_all_projects(
+                context_data=context_data,
+                repo_path=repo_path,
+            )
             result_set.metadata['pipeline_uuids'] = pipeline_uuids
 
         return result_set
