@@ -101,7 +101,7 @@ export default function useApplicationManager({
   } = {
     ascending: false,
   }): ApplicationManagerApplication[] {
-    const apps = getApplicationsFromCache({ status: StatusEnum.OPEN })?.map((app) => ({
+    const apps = getApplicationsFromCache({ statuses: [StatusEnum.ACTIVE, StatusEnum.OPEN] })?.map((app) => ({
       ...app,
       element: refExpansions?.current?.[app?.uuid],
     }));
@@ -243,62 +243,82 @@ export default function useApplicationManager({
     return app;
   }
 
-  function minimizeApplication(uuid: ApplicationExpansionUUIDEnum, reverse: boolean = false) {
-    let app = getApplicationsFromCache({
-      uuid,
-    })?.[0];
+  function minimizeApplication(uuidInit: ApplicationExpansionUUIDEnum, opts: {
+    all?: boolean;
+    inactive?: boolean;
+    reverse?: boolean;
+  } = {
+    all: false,
+    inactive: false,
+    reverse: false,
+  }) {
+    const { all, inactive, reverse } = opts || {};
 
-    app = updateApplicationLayoutAndState(uuid, {
-      layout: reverse ? app?.layout : buildDefaultLayout(),
-      state: {
-        status: reverse ? StatusEnum.OPEN : StatusEnum.MINIMIZED,
-      },
-    }, {
-      layout: false,
-      state: true,
-    });
-
-    const refExpansion = refExpansions?.current?.[uuid];
-    let refContainer = refContainers?.current?.[uuid];
-
-    if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
-      const arcaneLibraryContainerNode = document.getElementById(uuid);
-      if (arcaneLibraryContainerNode) {
-        refContainer = { current: arcaneLibraryContainerNode };
-      }
-    }
-
-    if (refExpansion?.current) {
-      if (reverse) {
-        updateZIndex(uuid);
-      } else {
-        refExpansion.current.style.bottom = null;
-        refExpansion.current.style.left = null;
-        refExpansion.current.style.right = null;
-        refExpansion.current.style.top = null;
-      }
-    }
-
-    [refExpansion, refContainer].forEach((ref) => {
-      if (ref?.current) {
-        const func = reverse ? removeClassNames : addClassNames;
-        ref.current.className = func(
-          ref?.current?.className || '',
-          [
-            'minimized',
-          ],
-        );
-      }
-    });
-
-    if (reverse) {
-      observeThenResizeElements({
-        [uuid]: refExpansion,
+    getApplicationsFromCache(all ? {} : { uuid: uuidInit })?.forEach((app, idx: number) => {
+      const uuid = app?.uuid;
+      const appUpdated = updateApplicationLayoutAndState(uuid, {
+        layout: reverse ? app?.layout : buildDefaultLayout(),
+        state: {
+          status: reverse
+            ? idx === 0
+              ? StatusEnum.ACTIVE
+              : StatusEnum.OPEN
+            : inactive
+              ? StatusEnum.INACTIVE
+              : StatusEnum.MINIMIZED,
+        },
+      }, {
+        layout: false,
+        state: true,
       });
-      setOnResize(onResizeCallback);
-    } else {
-      deregisterElementUUIDs([uuid]);
-    }
+
+      const refExpansion = refExpansions?.current?.[uuid];
+      let refContainer = refContainers?.current?.[uuid];
+
+      if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
+        const arcaneLibraryContainerNode = document.getElementById(uuid);
+        if (arcaneLibraryContainerNode) {
+          refContainer = { current: arcaneLibraryContainerNode };
+        }
+      }
+
+      const classNames = [];
+      if (StatusEnum.INACTIVE === appUpdated?.state?.status) {
+        classNames.push('inactive');
+      } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
+        classNames.push('minimized');
+      }
+
+      if (refExpansion?.current) {
+        if (reverse) {
+          updateZIndex(uuid);
+        } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
+          refExpansion.current.style.bottom = null;
+          refExpansion.current.style.left = null;
+          refExpansion.current.style.right = null;
+          refExpansion.current.style.top = null;
+        }
+      }
+
+      [refExpansion, refContainer].forEach((ref) => {
+        if (ref?.current) {
+          const func = reverse ? removeClassNames : addClassNames;
+          ref.current.className = func(
+            ref?.current?.className || '',
+            classNames,
+          );
+        }
+      });
+
+      if (reverse) {
+        observeThenResizeElements({
+          [uuid]: refExpansion,
+        });
+        setOnResize(onResizeCallback);
+      } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
+        deregisterElementUUIDs([uuid]);
+      }
+    });
   }
 
   function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
@@ -315,7 +335,7 @@ export default function useApplicationManager({
     z?: number;
   }) {
     const apps = getApplicationsFromCache({
-      status: StatusEnum.OPEN,
+      statuses: [StatusEnum.ACTIVE, StatusEnum.OPEN],
       uuid,
     });
     const app = apps?.[0];
@@ -430,13 +450,58 @@ export default function useApplicationManager({
     }
   }
 
-  function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, {
-    group,
-  }) {
-    // Don’t minimize when clicking outside
-    // if (Object.values(group || {})?.every(({ isOutside }) => isOutside)) {
-    //   getApplicationsFromCache().forEach(({ uuid }) => minimizeApplication(uuid));
-    // }
+  function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, { group }) {
+    const allOutside = Object.values(group || {})?.every(({ isOutside }) => isOutside);
+
+    let statusChange;
+    const app = getOpenApplications()?.find(a => uuid === a?.uuid);
+    const status = app?.state?.status;
+
+    if (StatusEnum.MINIMIZED === status) {
+      return;
+    }
+
+    const ref= refContainers?.current?.[uuid];
+    removeClassNames(
+      ref?.current?.className || '',
+      [
+        'inactive',
+        'minimized',
+      ],
+    );
+
+    if (StatusEnum.INACTIVE === status && !isOutside) {
+      statusChange = StatusEnum.ACTIVE;
+    } else if ([StatusEnum.ACTIVE, StatusEnum.OPEN].includes(status)) {
+      if (allOutside) {
+        statusChange = StatusEnum.INACTIVE;
+      } else {
+        if (isOutside) {
+          if (StatusEnum.ACTIVE === status) {
+            statusChange = StatusEnum.OPEN;
+          }
+        } else {
+          if (StatusEnum.OPEN === status) {
+            statusChange = StatusEnum.ACTIVE;
+          }
+        }
+      }
+    }
+
+    if (StatusEnum.INACTIVE === statusChange) {
+      minimizeApplication(uuid, {
+        inactive: true,
+      });
+    } else if (statusChange) {
+      updateApplicationLayoutAndState(uuid, {
+        state: {
+          status: statusChange,
+        },
+      }, {
+        layout: false,
+        state: true,
+      });
+    }
   }
 
   const {
@@ -537,6 +602,8 @@ export default function useApplicationManager({
     const ref = refExpansions?.current?.[uuid] || createRef();
     refExpansions.current[uuid] = ref;
 
+    const noApps = !getOpenApplications()?.length;
+
     const {
       layout,
       state,
@@ -546,7 +613,7 @@ export default function useApplicationManager({
       // All open apps won’t start minimized, too buggy
       // stateProp ||
       {
-        status: StatusEnum.OPEN,
+        status: noApps ? StatusEnum.ACTIVE : StatusEnum.OPEN,
       },
       uuid,
     });
@@ -661,7 +728,11 @@ export default function useApplicationManager({
           onClick={(e) => {
             e.stopPropagation();
             pauseEvent(e);
-            minimizeApplication(uuid, true);
+            minimizeApplication(uuid, {
+              // BUGGY un-minimizing 1
+              all: true,
+              reverse: true,
+            });
           }}
         />
 
@@ -721,11 +792,11 @@ export default function useApplicationManager({
       state,
       uuid,
     }) => {
-      if (StatusEnum.OPEN === state?.status || StatusEnum.MINIMIZED === state?.status) {
+      if (StatusEnum.CLOSED === state?.status) {
         if (applicationConfiguration?.application) {
-          startApplication(applicationConfiguration, state);
-        } else {
           closeApplication(uuid);
+        } else {
+          startApplication(applicationConfiguration, state);
         }
       }
     });

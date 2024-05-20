@@ -538,7 +538,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setTextareaFocused,
   ]);
 
-  console.log(activeApplicationsRef.current);
   useEffect(() => {
     const handleStateCommandCenter = ({
       detail,
@@ -583,7 +582,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     (event, keyMapping, keyHistory) => {
       if (CommandCenterStateEnum.OPEN === commandCenterStateRef?.current
         || activeApplicationsRef?.current?.length >= 1
-    ) {
+      ) {
         return;
       }
 

@@ -151,15 +151,20 @@ export function getCurrentlyOpenedApplications(opts: {
 
 export function getApplications({
   status,
+  statuses,
   uuid,
 }: {
   status?: StatusEnum;
+  statuses?: StatusEnum[];
   uuid?: ApplicationExpansionUUIDEnum;
 } = {}): ApplicationManagerApplication[] {
   const arr = (get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER) || [])?.filter(a => !!a);
 
   if (status || uuid) {
-    return arr?.filter(app => (!status || app?.state?.status === status) && (!uuid || app?.uuid === uuid));
+    return arr?.filter(app => (
+      (!status && !statuses)
+      || (app?.state?.status === status || (statuses?.length >= 1 && statuses?.includes(app?.state?.status))
+      )) && (!uuid || app?.uuid === uuid));
   }
 
   return arr;

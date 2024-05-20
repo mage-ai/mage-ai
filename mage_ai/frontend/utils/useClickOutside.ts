@@ -157,11 +157,11 @@ export default function useClickOutside({
     };
 
     if (typeof document !== 'undefined') {
-      document.addEventListener('mouseup', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mouseup', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 

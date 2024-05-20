@@ -76,6 +76,10 @@ function minimizedDimensions(): {
 
 export const RootApplicationStyle = styled.div`
   ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+    #${uuid}.inactive {
+      opacity: 0.5;
+    }
+
     #${uuid}.minimized {
       bottom: ${minimizedDimensions().height * 0.5}px;
       margin-left: 8px;

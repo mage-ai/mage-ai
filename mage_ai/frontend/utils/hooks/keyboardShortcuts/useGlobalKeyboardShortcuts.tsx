@@ -102,9 +102,8 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
     // keyMapping.current,
     onKeyDownRegistry,
     onKeyUpRegistry,
-  ],
-  // .concat(...Object.values(onKeyDownDependencies))
-  );
+    // ...Object.values(onKeyDownDependencies),
+  ]);
 
 
   useEffect(() => {
@@ -162,9 +161,8 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
     // keyMapping.current,
     onKeyDownRegistry,
     onKeyUpRegistry,
-  ],
-  // .concat(...Object.values(onKeyUpDependencies))
-  );
+    // ...Object.values(onKeyUpDependencies),
+  ]);
 
   useEffect(() => {
     const handleFocus = () => {
