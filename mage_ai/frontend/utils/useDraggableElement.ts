@@ -31,6 +31,7 @@ export default function useDraggableElement({
 
   const elementMappingRef: RefType = useRef(null);
   const [interactiveElementsMapping, setInteractiveElementsMapping] = useState<RefType>({});
+
   const onChangeRef: RefType = useRef(null);
   function setOnChangeRef(onChange?: (uuid: string, opts?: {
     event: Event;
@@ -74,7 +75,12 @@ export default function useDraggableElement({
         }
       };
 
+      const preventSelection = (event) => {
+        event.preventDefault();
+      };
+
       const stopExecution = (e) => {
+        document.removeEventListener('selectstart', preventSelection);
         refStateMapping.current[uuid] = null;
         refRecentValuesMapping.current[uuid] = {
           offsetLeft: null,
@@ -85,10 +91,13 @@ export default function useDraggableElement({
         window.removeEventListener('mouseup', stopExecution, true);
       };
 
+
       const initalize = (e) => {
         if (e.which !== 1) {
           return;
         }
+
+        document.addEventListener('selectstart', preventSelection);
 
         if (onStart) {
           onStart?.(uuid, {

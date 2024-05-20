@@ -5,27 +5,51 @@ import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { buildSetFunction } from './elements';
 import { isEmptyObject, selectEntriesWithValues } from './hash';
 import { pauseEvent } from '@utils/events';
+import { RefType } from '@interfaces/ElementType';
 
-export default function useResizeElement({
-  onResizeCallback,
-  onStart,
-}: {
-  onResizeCallback?: (uuid: string, opts?: {
+type MappingType = {
+  [uuid: string]: Element;
+};
+
+export default function useResizeElement(): {
+  setOnResize: (onResizeCallback?: (uuid: string, opts?: {
     height?: number;
     width?: number;
     x?: number;
     y?: number;
-  }) => void;
-  onStart?: (uuid: string, opts?: {
+  }) => void) => void;
+  setOnStart: (onResizeCallback?: (uuid: string, opts?: {
     height?: number;
     width?: number;
     x?: number;
     y?: number;
-  }) => void;
-}) {
+  }) => void) => void;
+  setResizableObject: any;
+  setResizersObjects: any;
+} {
   const refOrientationMapping = useRef({});
   const refRecentValuesMapping = useRef({});
   const refHandlers = useRef({});
+
+  const onResizeRef: RefType = useRef(null);
+  function setOnResizeRef(onResizeCallback?: (uuid: string, opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) => void) {
+    onResizeRef.current = onResizeCallback;
+  }
+
+  const onStartRef: RefType = useRef(null);
+  function setOnStartRef(onStartCallback?: (uuid: string, opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) => void) {
+    onStartRef.current = onStartCallback;
+  }
 
   const [elementMapping, setElementRefState] = useState<{
     [uuid: string]: ElementType;
@@ -209,6 +233,7 @@ export default function useResizeElement({
           }
         }
 
+        const onResizeCallback = onResizeRef?.current;
         if (onResizeCallback && !isEmptyObject(selectEntriesWithValues(dataForCallback))) {
           onResizeCallback?.(uuid, selectEntriesWithValues(dataForCallback));
         }
@@ -217,7 +242,12 @@ export default function useResizeElement({
         refRecentValuesMapping.current[uuid].height = element?.getBoundingClientRect()?.height;
       };
 
+      const preventSelection = (event) => {
+        event.preventDefault();
+      };
+
       const stopResize = (e) => {
+        document.removeEventListener('selectstart', preventSelection);
         refOrientationMapping.current[uuid] = null;
         window.removeEventListener('mousemove', Resize, false);
         window.removeEventListener('mouseup', stopResize, false);
@@ -228,6 +258,9 @@ export default function useResizeElement({
           return;
         }
 
+        document.addEventListener('selectstart', preventSelection);
+
+        const onStart = onStartRef?.current;
         if (onStart) {
           onStart?.(uuid, refRecentValuesMapping?.current?.[uuid]);
         }
@@ -255,9 +288,11 @@ export default function useResizeElement({
         });
       });
     };
-  }, [onResizeCallback, onStart]);
+  }, [elementMapping, resizersMapping]);
 
   return {
+    setOnResize: setOnResizeRef,
+    setOnStart: setOnStartRef,
     setResizableObject,
     setResizersObjects,
   };

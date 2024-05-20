@@ -168,23 +168,26 @@ export default function useApplicationManager({
     data: DimensionDataType,
     elementRect: RectType,
   ): void {
-    updateApplicationLayoutAndState(uuid, {
-      layout: {
-        dimension: selectEntriesWithValues(selectKeys(elementRect, ['height', 'width'])),
-        position: selectEntriesWithValues(selectKeys(elementRect, ['x', 'y'])),
-      },
-    }, {
-      layout: true,
-      state: false,
-    });
+    const app = getApplicationsFromCache({ uuid })?.[0];
+
+    if ([StatusEnum.ACTIVE, StatusEnum.OPEN].includes(app?.state?.status)) {
+      updateApplicationLayoutAndState(uuid, {
+        layout: {
+          dimension: selectEntriesWithValues(selectKeys(elementRect, ['height', 'width'])),
+          position: selectEntriesWithValues(selectKeys(elementRect, ['x', 'y'])),
+        },
+      }, {
+        layout: true,
+        state: false,
+      });
+    }
   }
 
   const {
     deregisterElementUUIDs,
     observeThenResizeElements,
-  } = useAutoResizer({
-    onResize: onResizeCallback,
-  });
+    setOnResize,
+  } = useAutoResizer();
 
   function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
     closeApplicationFromCache(uuid);
@@ -291,6 +294,7 @@ export default function useApplicationManager({
       observeThenResizeElements({
         [uuid]: refExpansion,
       });
+      setOnResize(onResizeCallback);
     } else {
       deregisterElementUUIDs([uuid]);
     }
@@ -452,10 +456,9 @@ export default function useApplicationManager({
   const {
     setResizableObject,
     setResizersObjects,
-  } = useResizeElement({
-    onResizeCallback: onChangeLayoutPosition,
-    onStart: onStartResize,
-  });
+    setOnResize: setOnResizeElement,
+    setOnStart,
+  } = useResizeElement();
 
   const {
     setElementObject,
@@ -606,6 +609,8 @@ export default function useApplicationManager({
       ], {
         tries: 10,
       });
+      setOnResizeElement(onChangeLayoutPosition);
+      setOnStart(onStartResize);
 
       setOnChange(onChangePosition);
 
@@ -623,6 +628,7 @@ export default function useApplicationManager({
       observeThenResizeElements({
         [uuid]: ref,
       });
+      setOnResize(onResizeCallback);
     };
 
     const expansion = (

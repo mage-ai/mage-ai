@@ -3,10 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ignoreKeys } from '@utils/hash';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { DimensionType } from '@storage/ApplicationManager/constants';
+import { RefType } from '@interfaces/ElementType';
 
 export enum ResizeStrategy {
   PROPORTIONAL = 'PROPORTIONAL',
 }
+
+type MappingType = {
+  [uuid: string]: Element;
+};
 
 export type DimensionDataType = {
   height?: number;
@@ -28,18 +33,22 @@ export type RectType = {
 };
 
 export default function useAutoResizer({
-  onResize,
   strategy = ResizeStrategy.PROPORTIONAL,
 }: {
-  onResize?: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void;
   strategy?: ResizeStrategy;
 } = {}): {
   deregisterElementUUIDs: (uuids: string[]) => void;
   observeThenResizeElements: (opts: ResizableElements) => void;
+  setOnResize: (onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void) => void;
 } {
   const observerRef = useRef(null);
   const dimensionsRef = useRef(null);
   const [elementsMapping, setElementsMapping] = useState<ResizableElements>({});
+
+  const onResizeRef: RefType = useRef(null);
+  function setOnResizeRef(onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void) {
+    onResizeRef.current = onResize;
+  }
 
   const removeElements = useCallback((uuids: string[]) => {
     setElementsMapping(prev => ignoreKeys(prev, uuids));
@@ -78,6 +87,7 @@ export default function useAutoResizer({
         element.current.style.left = `${x}px`;
         element.current.style.top = `${y}px`;
 
+        const onResize = onResizeRef?.current;
         if (onResize) {
           onResize?.(uuid, dimensions, {
             height,
@@ -118,6 +128,6 @@ export default function useAutoResizer({
   return {
     deregisterElementUUIDs: removeElements,
     observeThenResizeElements,
+    setOnResize: setOnResizeRef,
   };
 }
-
