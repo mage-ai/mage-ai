@@ -112,13 +112,13 @@ class MemoryManager:
 
         with open(self.log_path, 'a') as f:
             f.write(format_log_message(log_type=LogType.START, metadata=self.metadata))
-        self.__write_sync(current_memory_usage())
+            f.write(format_log_message(message=current_memory_usage()))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         try:
-            self.__write_sync(current_memory_usage())
             with open(self.log_path, 'a') as f:
+                f.write(format_log_message(message=current_memory_usage()))
                 f.write(format_log_message(log_type=LogType.END, metadata=self.metadata))
         finally:
             self.stop()
@@ -134,13 +134,13 @@ class MemoryManager:
 
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
             await fp.write(format_log_message(log_type=LogType.START, metadata=self.metadata))
-        await self.__write_async(current_memory_usage())
+            await fp.write(format_log_message(message=current_memory_usage()))
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         try:
-            await self.__write_async(current_memory_usage())
             async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
+                await fp.write(format_log_message(message=current_memory_usage()))
                 await fp.write(format_log_message(log_type=LogType.END, metadata=self.metadata))
         finally:
             self.stop()
@@ -151,7 +151,7 @@ class MemoryManager:
 
     async def __write_async(self, memory: float) -> None:
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
-            await fp.write(format_log_message(metadata=dict(memory=memory, unit='mb')))
+            await fp.write(format_log_message(message=memory))
 
     def stop(self) -> None:
         if self.stop_event:

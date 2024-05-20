@@ -1412,12 +1412,19 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return output
 
         if Project().is_feature_enabled(FeatureUUID.MEMORY_V2):
+            metadata = {}
+            if execution_partition:
+                metadata['execution_partition'] = execution_partition
+            if from_notebook:
+                metadata['origin'] = 'ide'
             with MemoryManager(
                 scope_uuid=os.path.join(
                     *([PIPELINES_FOLDER, self.pipeline.uuid] if self.pipeline else ['']),
                     self.uuid,
                 ),
                 process_uuid='block.execute_sync',
+                repo_path=self.repo_path,
+                metadata=metadata,
             ):
                 return __execute()
         return __execute()
