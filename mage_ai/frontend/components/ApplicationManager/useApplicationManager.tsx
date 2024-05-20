@@ -15,7 +15,6 @@ import useDraggableElement from '@utils/useDraggableElement';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
-import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
 import { ErrorProvider } from '@context/Error';
 import {
   LayoutType,
@@ -294,15 +293,6 @@ export default function useApplicationManager({
       });
     } else {
       deregisterElementUUIDs([uuid]);
-    }
-
-    if (typeof window !== 'undefined') {
-      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, {
-        detail: {
-          item: app,
-        },
-      });
-      window.dispatchEvent(eventCustom);
     }
   }
 
@@ -646,19 +636,32 @@ export default function useApplicationManager({
           width,
           zIndex: (getOpenApplications()?.[0]?.layout?.position?.z || z) + 1,
       }}>
-        <ResizeBottomStyle ref={rr?.bottom} onClick={() => updateZIndex(uuid)} />
-        <ResizeCornerStyle left bottom ref={rr?.bottomLeft} onClick={() => updateZIndex(uuid)} />
-        <ResizeCornerStyle left top ref={rr?.topLeft} onClick={() => updateZIndex(uuid)} />
-        <ResizeCornerStyle right bottom ref={rr?.bottomRight} onClick={() => updateZIndex(uuid)} />
-        <ResizeCornerStyle right top ref={rr?.topRight} onClick={() => updateZIndex(uuid)} />
-        <ResizeLeftStyle ref={rr?.left} onClick={() => updateZIndex(uuid)} />
-        <ResizeRightStyle ref={rr?.right} onClick={() => updateZIndex(uuid)} />
+        <ResizeBottomStyle onClick={() => updateZIndex(uuid)} ref={rr?.bottom} />
+        <ResizeCornerStyle bottom left onClick={() => updateZIndex(uuid)} ref={rr?.bottomLeft} />
+        <ResizeCornerStyle left onClick={() => updateZIndex(uuid)} ref={rr?.topLeft} top />
+        <ResizeCornerStyle bottom onClick={() => updateZIndex(uuid)} ref={rr?.bottomRight} right />
+        <ResizeCornerStyle onClick={() => updateZIndex(uuid)} ref={rr?.topRight} right top />
+        <ResizeLeftStyle onClick={() => updateZIndex(uuid)} ref={rr?.left} />
+        <ResizeRightStyle onClick={() => updateZIndex(uuid)} ref={rr?.right} />
 
         <OverlayStyle
           className={OVERLAY_ID}
           onClick={(e) => {
+            e.stopPropagation();
             pauseEvent(e);
             minimizeApplication(uuid, true);
+          }}
+          onMouseEnter={(e) => {
+            if (ref?.current?.className?.includes('minimized') && getApplicationsFromCache({ uuid })?.[0]?.state?.status !== StatusEnum.MINIMIZED) {
+              e.stopPropagation();
+              pauseEvent(e);
+              ref.current.className = removeClassNames(
+                ref?.current?.className || '',
+                [
+                  'minimized',
+                ],
+              );
+            }
           }}
         />
 

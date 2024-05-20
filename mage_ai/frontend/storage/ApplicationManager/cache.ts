@@ -8,6 +8,7 @@ import {
   StatusEnum,
 } from './constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
 import {
   ApplicationConfiguration,
 } from '@components/CommandCenter/constants';
@@ -140,8 +141,8 @@ export function getCurrentlyOpenedApplications(opts: {
   activeOnly: false,
 }): ApplicationManagerApplication[] {
   return getApplications()?.filter(({ state }) => {
-    if (opts?.activeOnly && [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(state?.status)) {
-      return true;
+    if (opts?.activeOnly) {
+      return [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(state?.status);
     }
 
     return state?.status !== StatusEnum.CLOSED;
@@ -264,6 +265,8 @@ export function updateApplication(application: {
   let appUpdated;
   let apps = getApplications();
 
+  const statusChanged = state?.status !== apps?.find(a => a?.uuid === uuid)?.state?.status;
+
   if (state?.status === StatusEnum.CLOSED) {
     apps = apps?.filter(({ uuid: uuid2 }) => uuid !== uuid2);
   } else {
@@ -286,6 +289,17 @@ export function updateApplication(application: {
   }
 
   set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER, apps?.filter(a => !!a));
+
+  if (statusChanged) {
+    if (typeof window !== 'undefined') {
+      const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, {
+        detail: {
+          item: appUpdated || application,
+        },
+      });
+      window.dispatchEvent(eventCustom);
+    }
+  }
 
   return appUpdated;
 }

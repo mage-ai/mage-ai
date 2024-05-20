@@ -64,6 +64,7 @@ import {
 import {
   CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN,
   CUSTOM_EVENT_NAME_COMMAND_CENTER_STATE_CHANGED,
+  CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED,
 } from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -108,6 +109,7 @@ import { mergeDeep, setNested } from '@utils/hash';
 import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+import { StatusEnum } from '@storage/ApplicationManager/constants';
 
 function CommandCenter({
   router: routerProp,
@@ -254,7 +256,7 @@ function CommandCenter({
         application={currentApplicationConfig?.application}
         applicationsRef={refApplications}
         item={currentApplicationConfig?.item}
-      />
+      />,
     );
 
     activateClassNamesForRefs([refHeaderTitle]);
@@ -379,7 +381,7 @@ function CommandCenter({
           removeApplication={removeApplication}
           router={router}
           showError={showError}
-        />
+        />,
       );
 
       addHeaderTitle();
@@ -427,7 +429,7 @@ function CommandCenter({
         refError={refError}
         removeApplication={removeApplication}
         router={router}
-      />
+      />,
     );
   }
 
@@ -464,7 +466,7 @@ function CommandCenter({
     }
 
     let resetCallback;
-    let shouldReset = count === 1;
+    const shouldReset = count === 1;
 
     if (count >= 2) {
       // Remove the next application from the stack, then re-add it so that all the
@@ -797,7 +799,7 @@ function CommandCenter({
     refRootOutputContainer?.current?.render(
       <ItemOutput
         {...refOutputContainerState.current}
-      />
+      />,
     );
 
     openOutput();
@@ -826,7 +828,7 @@ function CommandCenter({
       item,
       focusedItemIndex,
       fallbackCallback ? fallbackCallback : (i, f) => executeAction(i, f),
-    )
+    );
   }
 
   function renderItems(
@@ -840,7 +842,7 @@ function CommandCenter({
 
     refItems.current = rankItems(opts?.shouldFilter
       ? filterItems(refInput?.current?.value, items)
-      : items
+      : items,
     );
 
     if (!refRootItems?.current) {
@@ -1195,7 +1197,7 @@ function CommandCenter({
             || refSelectedSearchHistoryIndex?.current !== null
           ) {
             refFocusedSearchHistoryIndex.current = null;
-            refSelectedSearchHistoryIndex.current = null
+            refSelectedSearchHistoryIndex.current = null;
           }
 
           // Reset the items to the original list of items.
@@ -1357,7 +1359,7 @@ function CommandCenter({
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
-    }
+    };
   }, []);
 
   useEffect(() => {
@@ -1367,13 +1369,26 @@ function CommandCenter({
       }
     };
 
+    const handleApplicationStateChange = ({
+      detail,
+    }) => {
+      if ([StatusEnum.CLOSED, StatusEnum.MINIMIZED].includes(detail?.item?.state?.status)) {
+        removeApplication(detail?.item?.applicationConfiguration);
+      }
+    };
+
     if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleApplicationStateChange);
       // @ts-ignore
       window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN, handleOpen);
     }
 
+
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED, handleApplicationStateChange);
         // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN, handleOpen);
       }
@@ -1423,6 +1438,9 @@ function CommandCenter({
               autoComplete="off"
               className="inactive"
               id={MAIN_TEXT_INPUT_ID}
+              onBlur={() => {
+                refFocusedElement.current = null;
+              }}
               onChange={(e) => {
                 // There is no need to set refInput.current.value = searchText,
                 // this is already done when typing in the input element.
@@ -1455,9 +1473,6 @@ function CommandCenter({
               }}
               onFocus={() => {
                 refFocusedElement.current = InputElementEnum.MAIN;
-              }}
-              onBlur={() => {
-                refFocusedElement.current = null;
               }}
               placeholder={getInputPlaceholder(getCurrentApplicationConfiguration())}
               ref={refInput}

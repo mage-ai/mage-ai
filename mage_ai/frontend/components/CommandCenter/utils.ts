@@ -47,6 +47,9 @@ export function filterItems(
   searchText: string,
   items: CommandCenterItemType[],
 ): CommandCenterItemType[] {
+  // Let the server take care of it all
+  return items;
+
   if (!searchText) {
     return items;
   }
@@ -74,6 +77,9 @@ export function filterItems(
 }
 
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
+  // Let the server take care of it all
+  return items;
+
   return sortByKey(
     items || [],
     ({ score, title }) => `${score}${122 - (title || 'z').charCodeAt(0)}`,
@@ -127,7 +133,7 @@ export function updateActionFromUpstreamResults(
     upstream_action_value_key_mapping: upstreamActionValueKeyMapping,
   } = action;
 
-  let actionCopy = { ...action };
+  const actionCopy = { ...action };
 
   if (upstreamActionValueKeyMapping) {
     Object.entries(upstreamActionValueKeyMapping || {})?.forEach(([
