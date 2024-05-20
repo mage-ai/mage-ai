@@ -211,7 +211,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             valid = not REQUIRE_USER_AUTHENTICATION
 
             if oauth_client:
-                valid = oauth_token.is_valid()
+                valid = (oauth_token is not None) and oauth_token.is_valid()
                 if valid and oauth_token and user:
                     try:
                         if pipeline_uuid:
