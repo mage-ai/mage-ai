@@ -33,7 +33,7 @@ import {
   VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
   buildMetricName,
 } from '@interfaces/ChartBlockType';
-import { DATE_FORMAT_LONG, DATE_FORMAT_SHORT } from '@utils/date';
+import { DATE_FORMAT_LONG, DATE_FORMAT_SHORT, convertToMillisecondsTimestamp } from '@utils/date';
 import { numberWithCommas, roundNumber } from '@utils/string';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { range, sortByKey } from '@utils/array';
@@ -76,9 +76,13 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
       }[],
     ) {
       try {
-        const dynamicFunction = new Function('value', 'index', 'values', functionCode);
-        return dynamicFunction(value, index, values);
-      } catch (e) {}
+        const dynamicFunction = new Function('value', 'index', 'values', 'modules', functionCode);
+        return dynamicFunction(value, index, values, {
+          moment,
+        });
+      } catch (e) {
+        console.log(e);
+      }
 
       return value;
     }
@@ -89,9 +93,13 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
   function buildFormatFunctionTooltip(functionCode?: any): (...args: any[]) => any {
     function formatter(value: string | undefined, index: number, values: TooltipData) {
       try {
-        const dynamicFunction = new Function('value', 'index', 'values', functionCode);
-        return dynamicFunction(value, index, values);
-      } catch (e) {}
+        const dynamicFunction = new Function('value', 'index', 'values', 'modules', functionCode);
+        return dynamicFunction(value, index, values, {
+          moment,
+        });
+      } catch (e) {
+        console.log(e);
+      }
 
       return value;
     }
@@ -218,12 +226,12 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
 
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                val = moment(Number(ts) * 1000).format(xAxisLabelFormatValue);
+                val = moment(convertToMillisecondsTimestamp(ts)).format(xAxisLabelFormatValue);
               } else {
                 val = xAxisLabelFormat(ts, index, values);
               }
             } else if (isTimeSeries) {
-              val = moment(Number(ts) * 1000).format(variableDateFormat);
+              val = moment(convertToMillisecondsTimestamp(ts)).format(variableDateFormat);
             }
 
             return val;
@@ -377,7 +385,7 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
             }
 
             if (isTimeSeries) {
-              xValueText = moment(Number(x) * 1000).format(variableDateFormat);
+              xValueText = moment(convertToMillisecondsTimestamp(Number(x))).format(variableDateFormat);
             }
 
             return (
@@ -422,12 +430,12 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
 
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                val = moment(Number(ts) * 1000).format(xAxisLabelFormatValue);
+                val = moment(convertToMillisecondsTimestamp(ts)).format(xAxisLabelFormatValue);
               } else {
                 val = xAxisLabelFormat(ts, index, values);
               }
             } else if (isTimeSeries) {
-              val = moment(Number(ts) * 1000).format(variableDateFormat);
+              val = moment(convertToMillisecondsTimestamp(ts)).format(variableDateFormat);
             }
 
             return val;

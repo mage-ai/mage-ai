@@ -777,6 +777,7 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
             DataSourceEnum.BLOCK_RUNS,
             DataSourceEnum.PIPELINE_RUNS,
             DataSourceEnum.PIPELINE_SCHEDULES,
+            DataSourceEnum.SYSTEM_METRICS,
           ].includes(objectAttributes?.data_source?.type) && (
             <>
               <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>

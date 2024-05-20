@@ -530,7 +530,6 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
-        print('WTFFFFFFFFFFFFFFFFFFFFFF!!!!!!!!!!!!!!!!!!!!', data)
         if MEMORY_MANAGER_V2:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'

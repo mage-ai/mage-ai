@@ -21,7 +21,7 @@ from memory_profiler import memory_usage
 
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.system.constants import LOGS_DIRECTORY, SYSTEM_DIRECTORY, LogType
+from mage_ai.system.constants import METRICS_DIRECTORY, SYSTEM_DIRECTORY, LogType
 
 
 def get_log_directory(
@@ -30,7 +30,7 @@ def get_log_directory(
 ) -> str:
     """
     /root/.mage_data/[project]
-        /system/logs
+        /system/metrics
             /pipelines/[pipeline_uuid]/[block_uuid]
     """
     variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
@@ -38,7 +38,7 @@ def get_log_directory(
     return os.path.join(
         variables_dir,
         SYSTEM_DIRECTORY,
-        LOGS_DIRECTORY,
+        METRICS_DIRECTORY,
         scope_uuid,  # pipelines/[pipeline_uuid]/[block_uuid]
     )
 

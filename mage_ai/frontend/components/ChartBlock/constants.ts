@@ -332,7 +332,19 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: timeSeriesConfiguration,
   [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
     ...timeSeriesConfiguration,
-    noCode: timeSeriesConfiguration.noCode.concat(SHARED_DESIGN_PROPS),
+    noCode: timeSeriesConfiguration.noCode.concat([
+      {
+        ...SHARED_CODE_PROPS,
+        label: () => 'X tooltip format',
+        uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
+      },
+      {
+        ...SHARED_CODE_PROPS,
+        label: () => 'Y tooltip format',
+        uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
+      },
+      ...SHARED_DESIGN_PROPS,
+    ]),
   },
 };
 

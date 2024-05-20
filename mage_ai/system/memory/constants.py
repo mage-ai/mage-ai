@@ -1,1 +1,1 @@
-MEMORY_LOGS_DIRECTORY = 'memory'
+MEMORY_DIRECTORY = 'memory'

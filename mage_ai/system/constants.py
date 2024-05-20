@@ -10,5 +10,5 @@ class LogType(str, Enum):
     START = 'START'
 
 
-LOGS_DIRECTORY = 'logs'
+METRICS_DIRECTORY = 'metrics'
 SYSTEM_DIRECTORY = 'system'

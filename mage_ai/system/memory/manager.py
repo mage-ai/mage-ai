@@ -14,7 +14,7 @@ from mage_ai.settings.server import (
 )
 from mage_ai.shared.files import makedirs_async, makedirs_sync
 from mage_ai.system.constants import LogType
-from mage_ai.system.memory.constants import MEMORY_LOGS_DIRECTORY
+from mage_ai.system.memory.constants import MEMORY_DIRECTORY
 from mage_ai.system.memory.utils import (
     current_memory_usage,
     format_log_message,
@@ -61,7 +61,7 @@ class MemoryManager:
     def log_path(self) -> str:
         """
         /root/.mage_data/[project]
-            /system/logs
+            /system/metrics
                 /pipelines/[pipeline_uuid]/[block_uuid]
                     /[date]/[hour]
                         /[metric]
@@ -80,7 +80,7 @@ class MemoryManager:
             self._log_path = os.path.join(
                 get_log_directory(self.scope_uuid, repo_path=self.repo_path),
                 *datetime_partitions,
-                MEMORY_LOGS_DIRECTORY,
+                MEMORY_DIRECTORY,
                 f'{self.process_uuid}.log',
             )
         return self._log_path
