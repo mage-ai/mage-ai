@@ -1240,7 +1240,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     [BlockType.DBT == b.type for b in not_executed_upstream_blocks]
                 )
                 if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
-                    upstream_block_uuids = list(map(lambda b: b.uuid, not_executed_upstream_blocks))
+                    upstream_block_uuids = list(
+                        map(lambda b: b.uuid, not_executed_upstream_blocks)
+                    )
                     raise Exception(
                         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
                         f'Please run upstream blocks {upstream_block_uuids} '
@@ -2754,7 +2756,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         test_function = getattr(self.module, func.__name__)
                     try:
                         sig = signature(test_function)
-                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                        has_kwargs = any(
+                            [p.kind == p.VAR_KEYWORD for p in sig.parameters.values()]
+                        )
                         if has_kwargs and global_vars is not None and len(global_vars) != 0:
                             test_function(*outputs, **global_vars)
                         else:

@@ -483,9 +483,9 @@ def combined_memory_util(runs=1, return_output=False):
 
 def current_memory_usage() -> float:
     """
-    Returns the current memory usage of the process in MB.
+    Returns the current memory usage of the process in bytes.
     """
-    return memory_usage(-1)[0]
+    return memory_usage(-1)[0] / 1024**2
 
 
 def format_metadata_message(metadata: Dict) -> str:

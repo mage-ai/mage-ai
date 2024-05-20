@@ -108,7 +108,9 @@ class MemoryManager:
 
         if self.metadata:
             async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
-                await fp.write(format_log_message(log_type=LogType.INITIAL, metadata=self.metadata))
+                await fp.write(
+                    format_log_message(log_type=LogType.INITIAL, metadata=self.metadata)
+                )
         await self.__write_async(current_memory_usage())
         return self
 
@@ -120,7 +122,7 @@ class MemoryManager:
 
     def __write_sync(self, memory: float) -> None:
         with open(self.log_path, 'a') as f:
-            f.write(format_log_message(metadata=dict(memory=memory, unit='mb')))
+            f.write(format_log_message(metadata=dict(memory=memory, unit='bytes')))
 
     async def __write_async(self, memory: float) -> None:
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:

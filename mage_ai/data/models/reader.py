@@ -45,6 +45,11 @@ class Reader(BaseData):
             else:
                 batches = __read()
 
+            print(
+                'WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+                batches,
+            )
+
             return batches
 
     async def read_async(

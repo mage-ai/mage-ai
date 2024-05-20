@@ -27,15 +27,21 @@ from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.models import BaseDataClass
 
-RecordBatch = Union[
+ScanBatchDatasetResult = Union[
     Optional[Dict[str, str]],
     ds.TaggedRecordBatch,
     pa.RecordBatch,
     pl.DataFrame,
 ]
-RecordBatchIterator = Iterator[RecordBatch]
+RecordBatchIterator = Iterator[ScanBatchDatasetResult]
 
-AsyncRecordBatchIterator = AsyncIterator[RecordBatch]
+AsyncRecordBatchIterator = AsyncIterator[ScanBatchDatasetResult]
+
+
+async def run_in_executor(func, *args):
+    executor = ThreadPoolExecutor()
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, func, *args)
 
 
 @dataclass
@@ -52,10 +58,26 @@ class ScanDatasetParameters(BaseDataClass):
         self.serialize_attribute_class('settings', BatchSettings)
 
 
-async def run_in_executor(func, *args):
-    executor = ThreadPoolExecutor()
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(executor, func, *args)
+class Delegator:
+    def __init__(self, target):
+        self._target = target
+
+    def __getattr__(self, item):
+        return getattr(self._target, item)
+
+
+class PyArrowRecordBatch:
+    def __init__(
+        self,
+        target: Union[pa.RecordBatch, ds.TaggedRecordBatch],
+        object_metadata: Optional[Dict[str, str]] = None,
+    ):
+        self.target = target
+        self.delegate = Delegator(self.target)
+        self.object_metadata = object_metadata
+
+    def deserialize(self):
+        return deserialize_batch(self.target, object_metadata=self.object_metadata)
 
 
 def create_filter(*args) -> ds.Expression:
@@ -455,11 +477,8 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
 
     def custom_generator_wrapper(generator=generator, object_metadata=object_metadata):
         for tagged_or_record_batch in generator:
-            yield (
-                deserialize_batch(tagged_or_record_batch, object_metadata=object_metadata)
-                if deserialize
-                else tagged_or_record_batch
-            )
+            batch = PyArrowRecordBatch(tagged_or_record_batch, object_metadata=object_metadata)
+            yield batch.deserialize() if deserialize else batch
 
     return custom_generator_wrapper()
 
@@ -501,7 +520,7 @@ def sample_batch_datasets(
     sample_count: Optional[int] = None,
     settings: Optional[BatchSettings] = None,
     **kwargs,
-) -> Optional[RecordBatch]:
+) -> Optional[ScanBatchDatasetResult]:
     settings = BatchSettings.load(
         **{
             **(settings.to_dict() if settings is not None else {}),
@@ -524,7 +543,7 @@ async def sample_batch_datasets_async(
     sample_count: Optional[int] = None,
     settings: Optional[BatchSettings] = None,
     **kwargs,
-) -> Optional[RecordBatch]:
+) -> Optional[ScanBatchDatasetResult]:
     settings = BatchSettings.load(
         **{
             **(settings.to_dict() if settings is not None else {}),

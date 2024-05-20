@@ -212,6 +212,8 @@ class Variable:
         Used by
             block.get_outputs
                 WebSocker server sending block output to the IDE
+            fetch_input_variables
+                pipeline.get_block_variable
         """
 
         def __read(

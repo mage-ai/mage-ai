@@ -1,4 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.kernels.models import KernelWrapper
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -19,7 +20,7 @@ class KernelResource(GenericResource):
         for kernel_name in KernelName:
             kernel = kernel_managers[kernel_name]
             if kernel.has_kernel:
-                kernels.append(kernel)
+                kernels.append(KernelWrapper(kernel))
 
         return self.build_result_set(
             kernels,
@@ -47,7 +48,7 @@ class KernelResource(GenericResource):
         if not kernel:
             kernel = kernel_managers[DEFAULT_KERNEL_NAME]
 
-        return self(kernel, user, **kwargs)
+        return self(KernelWrapper(kernel), user, **kwargs)
 
     @safe_db_query
     def update(self, payload, **kwargs):
@@ -75,3 +76,7 @@ class KernelResource(GenericResource):
         self.on_update_callback = _callback
 
         return self
+
+    @safe_db_query
+    async def delete(self, **kwargs):
+        self.model.terminate_inactive_kernels()
