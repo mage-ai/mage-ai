@@ -50,7 +50,7 @@ class EmrClusterManager(ClusterManager):
 
     def set_active_cluster(
         self,
-        repo_path: str,
+        repo_path: str = None,
         auto_creation: bool = True,
         auto_selection: bool = False,
         cluster_id=None,

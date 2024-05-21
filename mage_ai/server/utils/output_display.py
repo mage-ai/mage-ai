@@ -285,10 +285,6 @@ spark = SparkSession.builder.getOrCreate()
 
     code_content = __interpolate_code_content('execute_custom_code.py', replacements)
 
-    print('\n')
-    print(code_content)
-    print('\n')
-
     return f"""{magic_header}
 
 import datetime
