@@ -8,6 +8,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDefaultLayout } from '@storage/ApplicationManager/cache';
 import { hexToRgb } from '@utils/string';
 import { transition } from '@oracle/styles/mixins';
+import { StatusEnum } from '@storage/ApplicationManager/constants';
 
 const SCALE_PERCENTAGE = 0.1;
 export const HEADER_HEIGHT = 6 * UNIT;
@@ -157,7 +158,24 @@ export const DockStyle = styled.div`
 
 export const OverlayStyle = styled.div``;
 
-export const ContainerStyle = styled.div`
+export const ApplicationMountStyle = styled.div<{
+  status: StatusEnum;
+}>`
+`;
+
+export const MinimizedApplicationStyle = styled.div`
+  background-color: #18181C;
+  bottom: 100px;
+  position: relative;
+  height: 200px;
+  width: 200px;
+  z-index: 100;
+}
+`;
+
+export const ContainerStyle = styled.div<{
+  status: StatusEnum;
+}>`
   border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
   border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);

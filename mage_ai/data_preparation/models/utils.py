@@ -184,7 +184,7 @@ def infer_variable_type(
         or (basic_iterable and len(data) >= 1 and all(isinstance(d, pl.DataFrame) for d in data))
     ) and Project(repo_path=repo_path).is_feature_enabled(FeatureUUID.POLARS):
         variable_type_use = VariableType.POLARS_DATAFRAME
-    elif IsADirectoryError(data, pd.DataFrame):
+    elif isinstance(data, pd.DataFrame):
         variable_type_use = VariableType.DATAFRAME
     elif is_spark_dataframe(data):
         variable_type_use = VariableType.SPARK_DATAFRAME

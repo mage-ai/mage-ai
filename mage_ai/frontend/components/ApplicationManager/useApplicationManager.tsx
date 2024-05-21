@@ -12,6 +12,7 @@ import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useAutoResizer, { DimensionDataType, RectType } from '@utils/useAutoResizer';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
+import Text from 'oracle/elements/Text';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
@@ -32,9 +33,11 @@ import {
   OverlayStyle,
   ResizeBottomStyle,
   ResizeCornerStyle,
+  ApplicationMountStyle,
   ResizeLeftStyle,
   ResizeRightStyle,
   RootApplicationStyle,
+  MinimizedApplicationStyle,
 } from './index.style';
 import { KEY_CODE_ALT_STRING, KEY_CODE_TAB } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyValueType } from '@interfaces/CommandCenterType';
@@ -81,6 +84,9 @@ export default function useApplicationManager({
   const keyboardContext = useContext(KeyboardContext);
 
   const [selectedTab, setSelectedTab] = useState();
+  const [statusMapping, setStatusMapping] = useState<{
+    [key: string]: StatusEnum;
+  }>({});
 
   const refRootApplication = useRef(null);
   // References to the application configurations in memory.
@@ -240,85 +246,80 @@ export default function useApplicationManager({
       element.current.style.width = `${dimension?.width}px`;
     }
 
+    setStatusMapping(prev => ({
+      ...prev,
+      [uuid]: app?.state?.status,
+    }));
+
     return app;
   }
 
-  function minimizeApplication(uuidInit: ApplicationExpansionUUIDEnum, opts: {
+  function setApplicationInactive(uuidInit: ApplicationExpansionUUIDEnum, opts: {
     all?: boolean;
-    inactive?: boolean;
     reverse?: boolean;
   } = {
     all: false,
-    inactive: false,
     reverse: false,
   }) {
-    const { all, inactive, reverse } = opts || {};
+    const { all, reverse } = opts || {};
 
     getApplicationsFromCache(all ? {} : { uuid: uuidInit })?.forEach((app, idx: number) => {
       const uuid = app?.uuid;
       const appUpdated = updateApplicationLayoutAndState(uuid, {
-        layout: reverse ? app?.layout : buildDefaultLayout(),
         state: {
           status: reverse
             ? idx === 0
               ? StatusEnum.ACTIVE
               : StatusEnum.OPEN
-            : inactive
-              ? StatusEnum.INACTIVE
-              : StatusEnum.MINIMIZED,
+            : StatusEnum.MINIMIZED,
+        },
+      }, {
+        layout: false,
+        state: true,
+      });
+    });
+  }
+
+  function changeApplicationStatus(
+    uuidInit: ApplicationExpansionUUIDEnum,
+    status: StatusEnum,
+    opts: { all?: boolean } = {},
+  ) {
+    getApplicationsFromCache(opts?.all ? {} : { uuid: uuidInit })?.forEach((app) => {
+      const uuid = app?.uuid;
+      updateApplicationLayoutAndState(uuid, {
+        state: {
+          status,
         },
       }, {
         layout: false,
         state: true,
       });
 
-      const refExpansion = refExpansions?.current?.[uuid];
       let refContainer = refContainers?.current?.[uuid];
-
       if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
         const arcaneLibraryContainerNode = document.getElementById(uuid);
         if (arcaneLibraryContainerNode) {
           refContainer = { current: arcaneLibraryContainerNode };
         }
       }
-
-      const classNames = [];
-      if (StatusEnum.INACTIVE === appUpdated?.state?.status) {
-        classNames.push('inactive');
-      } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
-        classNames.push('minimized');
-      }
-
-      if (refExpansion?.current) {
-        if (reverse) {
-          updateZIndex(uuid);
-        } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
-          refExpansion.current.style.bottom = null;
-          refExpansion.current.style.left = null;
-          refExpansion.current.style.right = null;
-          refExpansion.current.style.top = null;
-        }
-      }
-
-      [refExpansion, refContainer].forEach((ref) => {
-        if (ref?.current) {
-          const func = reverse ? removeClassNames : addClassNames;
-          ref.current.className = func(
-            ref?.current?.className || '',
-            classNames,
-          );
-        }
-      });
-
-      if (reverse) {
-        observeThenResizeElements({
-          [uuid]: refExpansion,
-        });
-        setOnResize(onResizeCallback);
-      } else if (StatusEnum.MINIMIZED === appUpdated?.state?.status) {
-        deregisterElementUUIDs([uuid]);
-      }
     });
+  }
+
+  function restoreApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, StatusEnum.ACTIVE, opts);
+  }
+
+  function pauseApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, StatusEnum.INACTIVE, opts);
+  }
+
+  function minimizeApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, StatusEnum.MINIMIZED, opts);
+  }
+
+  function openApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, StatusEnum.OPEN, opts);
   }
 
   function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
@@ -453,54 +454,37 @@ export default function useApplicationManager({
   function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, { group }) {
     const allOutside = Object.values(group || {})?.every(({ isOutside }) => isOutside);
 
-    let statusChange;
-    const app = getOpenApplications()?.find(a => uuid === a?.uuid);
-    const status = app?.state?.status;
+    const apps = getOpenApplications();
+    const app = apps?.find(a => uuid === a?.uuid);
+    let status = app?.state?.status;
+    const minimized = StatusEnum.MINIMIZED === status;
 
-    if (StatusEnum.MINIMIZED === status) {
-      return;
-    }
-
-    const ref= refContainers?.current?.[uuid];
-    removeClassNames(
-      ref?.current?.className || '',
-      [
-        'inactive',
-        'minimized',
-      ],
-    );
-
-    if (StatusEnum.INACTIVE === status && !isOutside) {
-      statusChange = StatusEnum.ACTIVE;
-    } else if ([StatusEnum.ACTIVE, StatusEnum.OPEN].includes(status)) {
+    if (apps?.length >= 2) {
       if (allOutside) {
-        statusChange = StatusEnum.INACTIVE;
+        status = StatusEnum.MINIMIZED;
+      } else if (isOutside && !minimized) {
+        status = StatusEnum.OPEN;
       } else {
-        if (isOutside) {
-          if (StatusEnum.ACTIVE === status) {
-            statusChange = StatusEnum.OPEN;
-          }
-        } else {
-          if (StatusEnum.OPEN === status) {
-            statusChange = StatusEnum.ACTIVE;
-          }
-        }
+        status = StatusEnum.ACTIVE;
+      }
+    } else {
+      if (allOutside && !minimized) {
+        status = StatusEnum.INACTIVE;
+      } else if (isOutside && !minimized) {
+        status = StatusEnum.INACTIVE;
+      } else {
+        status = StatusEnum.ACTIVE;
       }
     }
 
-    if (StatusEnum.INACTIVE === statusChange) {
-      minimizeApplication(uuid, {
-        inactive: true,
-      });
-    } else if (statusChange) {
-      updateApplicationLayoutAndState(uuid, {
-        state: {
-          status: statusChange,
-        },
-      }, {
-        layout: false,
-        state: true,
-      });
+    if (StatusEnum.ACTIVE === status) {
+      restoreApplication(uuid);
+    } else if (StatusEnum.INACTIVE === status) {
+      pauseApplication(uuid);
+    } else if (StatusEnum.MINIMIZED === status) {
+      minimizeApplication(uuid);
+    } else if (StatusEnum.OPEN === status) {
+      openApplication(uuid);
     }
   }
 
@@ -510,12 +494,7 @@ export default function useApplicationManager({
     onClick: onClickOutside,
   });
 
-  function onStartResize(uuid: ApplicationExpansionUUIDEnum, opts?: {
-    height?: number;
-    width?: number;
-    x?: number;
-    y?: number;
-  }) {
+  function onStartResize(uuid: ApplicationExpansionUUIDEnum) {
     updateZIndex(uuid);
   }
 
@@ -536,6 +515,23 @@ export default function useApplicationManager({
     return (
       <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
         <DockStyle>
+          {getApplicationsFromCache()?.map(({
+            applicationConfiguration,
+            uuid,
+          }) => {
+            const status = statusMapping?.[uuid];
+            if (StatusEnum.MINIMIZED === status) {
+              return (
+                <MinimizedApplicationStyle key={uuid}>
+                  <Text>
+                    {applicationConfiguration?.item?.title}
+                    {applicationConfiguration?.item?.description}
+                  </Text>
+                </MinimizedApplicationStyle>
+              );
+            }
+          })}
+
           {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
             if (!refContainers?.current) {
               refContainers.current = {};
@@ -545,10 +541,11 @@ export default function useApplicationManager({
             refContainers.current[uuid] = ref;
 
             return (
-              <div
+              <ApplicationMountStyle
                 id={uuid}
                 key={uuid}
                 ref={ref}
+                status={statusMapping?.[uuid]}
               />
             );
           })}
@@ -609,10 +606,7 @@ export default function useApplicationManager({
       state,
     } = updateApplication({
       applicationConfiguration,
-      state:
-      // All open apps won’t start minimized, too buggy
-      // stateProp ||
-      {
+      state: stateProp || {
         status: noApps ? StatusEnum.ACTIVE : StatusEnum.OPEN,
       },
       uuid,
@@ -645,7 +639,7 @@ export default function useApplicationManager({
       },
     } = layout;
 
-    let AppComponent;
+    let AppComponent = null;
     if (ApplicationExpansionUUIDEnum.ArcaneLibrary === uuid) {
       AppComponent = ArcaneLibrary;
     } else if (ApplicationExpansionUUIDEnum.PortalTerminal === uuid) {
@@ -660,10 +654,9 @@ export default function useApplicationManager({
 
     const onMountCallback = () => {
       setTimeout(() => {
-        // BUGGY
-        // if (StatusEnum.MINIMIZED === state?.status) {
-        //   minimizeApplication(uuid);
-        // }
+        if (StatusEnum.MINIMIZED === state?.status) {
+          minimizeApplication(uuid);
+        }
         ref.current.style.display = 'block';
       }, 1);
 
@@ -703,10 +696,12 @@ export default function useApplicationManager({
       setOnResize(onResizeCallback);
     };
 
+    const status = statusMapping?.[uuid];
     const expansion = (
       <ContainerStyle
         onClick={() => updateZIndex(uuid)}
         ref={ref}
+        status={status}
         style={{
           display: 'none',
           height,
@@ -728,11 +723,7 @@ export default function useApplicationManager({
           onClick={(e) => {
             e.stopPropagation();
             pauseEvent(e);
-            minimizeApplication(uuid, {
-              // BUGGY un-minimizing 1
-              all: true,
-              reverse: true,
-            });
+            restoreApplication(uuid);
           }}
         />
 
@@ -803,9 +794,7 @@ export default function useApplicationManager({
   }, []);
 
   const {
-    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
-    registerOnKeyUp,
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   } = useKeyboardContext();
@@ -813,9 +802,9 @@ export default function useApplicationManager({
   useEffect(() => () => {
     unregisterOnKeyDown(COMPONENT_UUID);
     unregisterOnKeyUp(COMPONENT_UUID);
-  }, [unregisterOnKeyDown, unregisterOnKeyUp, COMPONENT_UUID]);
+  }, [unregisterOnKeyDown, unregisterOnKeyUp]);
 
-  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
+  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping) => {
     if (onlyKeysPresent([KEY_CODE_ALT_STRING, KEY_CODE_TAB], keyMapping)) {
       const uuidBottom = getOpenApplications({ ascending: true })?.[0]?.uuid;
       if (uuidBottom) {
@@ -823,8 +812,7 @@ export default function useApplicationManager({
         updateZIndex(uuidBottom);
       }
     }
-  }, [
-  ]);
+  }, []);
 
   return {
     closeApplication,

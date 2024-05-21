@@ -91,14 +91,14 @@ function MultiColumnController({
             // backgroundColorHover={dividerBackgroundColorHover}
             key={keyDivider}
             ref={ref}
-          />
+          />,
         );
       }
 
       const column = [];
 
       setOfItems?.forEach((item, idx) => {
-        const key = `column-{colNumber}-item-{idx}`;
+        const key = 'column-{colNumber}-item-{idx}';
         if (!(key in refItems.current)) {
           refItems.current[key] = createRef();
         }
@@ -111,7 +111,7 @@ function MultiColumnController({
               numberOfColumns,
               width,
             })}
-          </div>
+          </div>,
         );
       });
 
@@ -123,13 +123,13 @@ function MultiColumnController({
 
       arr.push(
         <ColumnStyle
+          height={fullHeight ? heightColumn : null}
           key={key2}
           ref={ref}
-          height={fullHeight ? heightColumn : null}
           width={columnWidth}
         >
           {column}
-        </ColumnStyle>
+        </ColumnStyle>,
       );
     });
 
@@ -150,7 +150,6 @@ function MultiColumnController({
   //     return;
   //   }
 
-  //   console.log('omgggggggggggggggggggggg', activeColumnNumber)
   //   const eventX = e.x;
   //   let colNumber = activeColumnNumber;
 
