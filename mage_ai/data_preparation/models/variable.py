@@ -126,7 +126,6 @@ class Variable:
 
     @property
     def data_manager(self) -> Optional[DataManager]:
-        print('OMMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', self.read_batch_settings)
         if self._data_manager is None:
             self._data_manager = DataManager(
                 input_data_types=self.input_data_types,

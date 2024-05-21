@@ -1842,8 +1842,6 @@ class Pipeline:
                 stream_id=variable_name,
             )
 
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF', read_batch_settings)
-
         variable = block.get_variable(
             block_uuid=block_uuid,
             partition=partition,
