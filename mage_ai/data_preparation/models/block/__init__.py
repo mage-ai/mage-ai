@@ -406,6 +406,8 @@ class Block(
         # Needs to after self._project_platform_activated = None
         self.configuration = configuration
 
+        self._store_variables_in_block_function = None
+
     @property
     def uuid(self) -> str:
         return self._uuid
@@ -1303,6 +1305,28 @@ class Block(
                     dynamic_block_index=dynamic_block_index,
                 )
 
+                def __store_variables(
+                    variable_mapping: Dict[str, Any],
+                    block=self,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_uuid=dynamic_block_uuid,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
+                    override_outputs=override_outputs,
+                ) -> None:
+                    block.store_variables(
+                        variable_mapping,
+                        execution_partition=execution_partition,
+                        override_outputs=override_outputs,
+                        spark=block.__get_spark_session_from_global_vars(
+                            global_vars=global_vars,
+                        ),
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_uuid=dynamic_block_uuid,
+                    )
+
+                self._store_variables_in_block_function = __store_variables
+
                 if output_messages_to_logs and not logger:
                     from mage_ai.data_preparation.models.block.constants import (
                         LOG_PARTITION_EDIT_PIPELINE,
@@ -1339,6 +1363,7 @@ class Block(
                     data_integration_runtime_settings=data_integration_runtime_settings,
                     execution_partition_previous=execution_partition_previous,
                     metadata=metadata,
+                    override_outputs=override_outputs,
                     **kwargs,
                 )
 
@@ -1380,16 +1405,10 @@ class Block(
                                 __uuid='store_variables',
                             )
 
-                            self.store_variables(
-                                variable_mapping,
-                                execution_partition=execution_partition,
-                                override_outputs=override_outputs,
-                                spark=self.__get_spark_session_from_global_vars(
-                                    global_vars=global_vars,
-                                ),
-                                dynamic_block_index=dynamic_block_index,
-                                dynamic_block_uuid=dynamic_block_uuid,
-                            )
+                            if self._store_variables_in_block_function and isinstance(
+                                variable_mapping, dict
+                            ):
+                                self._store_variables_in_block_function(variable_mapping)
                         except ValueError as e:
                             if str(e) == 'Circular reference detected':
                                 raise ValueError(
@@ -1802,6 +1821,7 @@ class Block(
                     input_vars,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
+                    execution_partition=execution_partition,
                 )
 
         block_function = self._validate_execution(decorated_functions, input_vars)
@@ -1844,7 +1864,7 @@ class Block(
         block_function: Callable,
         input_vars: List,
         from_notebook: bool = False,
-        global_vars: Dict = None,
+        global_vars: Optional[Dict] = None,
         initialize_decorator_modules: bool = True,
     ) -> Dict:
         block_function_updated = block_function
@@ -1862,6 +1882,31 @@ class Block(
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
+
+        if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
+            output_count = 0
+            for data in output:
+                if self._store_variables_in_block_function is None:
+                    raise Exception(
+                        'Store variables function isn’t defined, '
+                        'don’t proceed or else no data will be persisted'
+                    )
+
+                store_options = {}
+                if output_count >= 1:
+                    store_options['override_outputs'] = False
+
+                self._store_variables_in_block_function(
+                    variable_mapping={
+                        f'output_{output_count}': data,
+                    },
+                    **store_options,
+                )
+
+                output_count += 1
+
+            self._store_variables_in_block_function = None
+            output = {}
 
         return output
 
