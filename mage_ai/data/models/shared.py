@@ -5,6 +5,9 @@ from typing import Any, List, Optional
 from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES, InputDataType
 from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -23,6 +26,7 @@ class BaseData:
         variable_dir_path: str,
         variable_path: str,
         batch_settings: Optional[BatchSettings] = None,
+        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         input_data_types: Optional[List[InputDataType]] = None,
         poll_interval: Optional[int] = None,
         uuid: Optional[str] = None,
@@ -45,8 +49,8 @@ class BaseData:
             /9/20240518T144726_954384/load_models
             /output_0
         """
-
         self.batch_settings = batch_settings
+        self.chunks = chunks
         self.poll_interval = poll_interval
         self.variable_path = variable_path
         self.variable_type = variable_type

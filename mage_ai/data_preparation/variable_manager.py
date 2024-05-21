@@ -4,6 +4,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -58,6 +61,10 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         disable_variable_type_inference: bool = False,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
         """
         Used by:
@@ -79,6 +86,10 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
         # Delete data if it exists
@@ -101,8 +112,9 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_variable_uuid: bool = True,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
         return Variable(
             clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
@@ -111,7 +123,8 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
-            batch_settings=batch_settings,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
             input_data_types=input_data_types,
         )
 
@@ -124,8 +137,11 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
         """
         Used by:
@@ -145,8 +161,11 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
         # Delete data if it exists
@@ -231,8 +250,11 @@ class VariableManager:
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
         clean_block_uuid: bool = True,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Any:
         variable = self.get_variable_object(
             pipeline_uuid,
@@ -242,8 +264,11 @@ class VariableManager:
             variable_type=variable_type,
             spark=spark,
             clean_block_uuid=clean_block_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
@@ -262,8 +287,11 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         spark=None,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
@@ -276,8 +304,11 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:

@@ -17,6 +17,9 @@ from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
@@ -71,8 +74,11 @@ class Variable:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         validate_pipeline_path: bool = False,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -99,8 +105,11 @@ class Variable:
         self.variable_type = variable_type
         self.check_variable_type(spark=spark)
 
-        self.batch_settings = batch_settings
         self.input_data_types = input_data_types
+        self.read_batch_settings = read_batch_settings
+        self.read_chunks = read_chunks
+        self.write_batch_settings = write_batch_settings
+        self.write_chunks = write_chunks
         self._data_manager = None
 
     @classmethod
@@ -117,15 +126,19 @@ class Variable:
 
     @property
     def data_manager(self) -> Optional[DataManager]:
+        print('OMMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', self.read_batch_settings)
         if self._data_manager is None:
             self._data_manager = DataManager(
-                batch_settings=self.batch_settings,
                 input_data_types=self.input_data_types,
+                read_batch_settings=self.read_batch_settings,
+                read_chunks=self.read_chunks,
                 storage=self.storage,
                 uuid=self.__scope_uuid(),
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
                 variable_type=self.variable_type,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
             )
         return self._data_manager
 

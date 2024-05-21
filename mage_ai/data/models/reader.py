@@ -18,7 +18,6 @@ from mage_ai.data.tabular.reader import (
 class Reader(BaseData):
     def read_sync(
         self,
-        chunks: Optional[List[int]] = None,
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
         sample: bool = False,
@@ -28,7 +27,7 @@ class Reader(BaseData):
             if sample and sample_count:
                 return sample_batch_datasets(
                     self.data_partitions_path,
-                    chunks=chunks,
+                    chunks=self.chunks,
                     columns=columns,
                     deserialize=True,
                     sample_count=sample_count,
@@ -36,7 +35,7 @@ class Reader(BaseData):
                 )
             return scan_batch_datasets_generator(
                 self.data_partitions_path,
-                chunks=chunks,
+                chunks=self.chunks,
                 columns=columns,
                 deserialize=deserialize,
                 settings=self.batch_settings,
@@ -44,7 +43,6 @@ class Reader(BaseData):
 
     async def read_async(
         self,
-        chunks: Optional[List[int]] = None,
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
         sample: bool = False,
@@ -54,7 +52,7 @@ class Reader(BaseData):
             if sample and sample_count:
                 return await sample_batch_datasets_async(
                     self.data_partitions_path,
-                    chunks=chunks,
+                    chunks=self.chunks,
                     columns=columns,
                     deserialize=True,
                     sample_count=sample_count,
@@ -62,7 +60,7 @@ class Reader(BaseData):
                 )
             return await scan_batch_datasets_generator_async(
                 self.data_partitions_path,
-                chunks=chunks,
+                chunks=self.chunks,
                 columns=columns,
                 deserialize=deserialize,
                 settings=self.batch_settings,

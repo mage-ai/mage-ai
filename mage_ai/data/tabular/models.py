@@ -62,9 +62,24 @@ class BatchSettings(BaseDataClass):
             Memory peak : 15.057 gb
     """
 
-    count: Optional[Settings] = field(default=None)
-    items: Optional[Settings] = field(default=None)
-    size: Optional[Settings] = field(default=None)
+    count: Optional[Settings] = field(
+        default_factory=lambda: Settings(
+            maximum=0,
+            minimum=0,
+        )
+    )
+    items: Optional[Settings] = field(
+        default_factory=lambda: Settings(
+            maximum=0,
+            minimum=0,
+        )
+    )
+    size: Optional[Settings] = field(
+        default_factory=lambda: Settings(
+            maximum=0,
+            minimum=0,
+        )
+    )
 
     def __post_init__(self):
         self.serialize_attribute_class('count', Settings)

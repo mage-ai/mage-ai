@@ -70,6 +70,9 @@ from mage_ai.data_preparation.models.block.settings.global_data_products.mixins 
 from mage_ai.data_preparation.models.block.settings.variables.mixins import (
     VariablesMixin,
 )
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -2093,8 +2096,11 @@ class Block(
         partition: str = None,
         raise_exception: bool = False,
         spark=None,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ):
         variable_manager = self.pipeline.variable_manager
 
@@ -2113,8 +2119,11 @@ class Block(
             raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
         return value
@@ -2125,8 +2134,11 @@ class Block(
         variable_uuid: Optional[str] = None,
         dynamic_block_index: Optional[int] = None,
         partition: Optional[str] = None,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
         variable_manager = self.pipeline.variable_manager
 
@@ -2143,8 +2155,11 @@ class Block(
             partition=partition,
             spark=self.get_spark_session(),
             variable_uuid=variable_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
     def get_raw_outputs(
@@ -2155,6 +2170,11 @@ class Block(
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> List[Any]:
         all_variables = self.get_variables_by_block(
             block_uuid=block_uuid,
@@ -2179,6 +2199,11 @@ class Block(
                 spark=self.__get_spark_session_from_global_vars(global_vars),
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
+                input_data_types=input_data_types,
+                read_batch_settings=read_batch_settings,
+                read_chunks=read_chunks,
+                write_batch_settings=write_batch_settings,
+                write_chunks=write_chunks,
             )
             outputs.append(variable)
 
@@ -3274,6 +3299,8 @@ class Block(
                 data,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
             )
 
         if not is_dynamic_child:
@@ -3327,6 +3354,8 @@ class Block(
                 data,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
             )
 
         if not is_dynamic_child:

@@ -18,6 +18,9 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
 )
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT,
@@ -433,7 +436,6 @@ def get_outputs_for_display_dynamic_block(
 def handle_variables(
     block,
     items: List[Dict[str, Any]],
-    batch_settings: Optional[BatchSettings] = None,
     block_groups: Optional[
         List[Dict[str, Union[List[str], Optional[List[Any]], Optional[str]]]]
     ] = None,
@@ -444,6 +446,8 @@ def handle_variables(
     include_print_outputs: bool = True,
     input_data_types: Optional[List[InputDataType]] = None,
     max_results: Optional[int] = None,
+    read_batch_settings: Optional[BatchSettings] = None,
+    read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     sample: bool = True,
     sample_count: Optional[int] = None,
     selected_variables: Optional[List[str]] = None,
@@ -485,15 +489,16 @@ def handle_variables(
 
             def __callback(
                 data_from_yield,
-                block=block,
                 b_uuid=b_uuid,
+                block=block,
                 csv_lines_only=csv_lines_only,
                 execution_partition=execution_partition,
-                variable_uuid=variable_uuid,
                 idx=idx,
                 idx_inner=idx_inner,
-                batch_settings=batch_settings,
                 input_data_types=input_data_types,
+                read_batch_settings=read_batch_settings,
+                read_chunks=read_chunks,
+                variable_uuid=variable_uuid,
             ):
                 data, is_data_product = format_output_data(
                     block,
@@ -521,8 +526,9 @@ def handle_variables(
                     block_uuid=b_uuid,
                     partition=execution_partition,
                     variable_uuid=variable_uuid,
-                    batch_settings=batch_settings,
                     input_data_types=input_data_types,
+                    read_batch_settings=read_batch_settings,
+                    read_chunks=read_chunks,
                 )
 
                 if variable_type is not None and variable_object.variable_type != variable_type:

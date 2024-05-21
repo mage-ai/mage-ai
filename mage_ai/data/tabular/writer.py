@@ -9,6 +9,7 @@ import pyarrow as pa
 from pyarrow import parquet as pq
 
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
+from mage_ai.data.tabular.models import DEFAULT_BATCH_ITEMS_VALUE, BatchSettings
 from mage_ai.data.tabular.utils import multi_series_to_frame
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import object_to_dict
@@ -84,19 +85,17 @@ def to_parquet_sync(
     output_dir: str,
     df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
-    chunk_size: Optional[int] = None,
     metadata: Optional[Dict] = None,
-    num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
+    settings: Optional[BatchSettings] = None,
 ):
     for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
         dfs=dfs,
-        chunk_size=chunk_size,
         metadata=metadata,
-        num_buckets=num_buckets,
         partition_cols=partition_cols,
+        settings=settings,
     ):
         pq.write_to_dataset(
             table,
@@ -111,19 +110,17 @@ async def to_parquet_async(
     output_dir: str,
     df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
-    chunk_size: Optional[int] = None,
     metadata: Optional[Dict] = None,
-    num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
+    settings: Optional[BatchSettings] = None,
 ):
     for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
         dfs=dfs,
-        chunk_size=chunk_size,
         metadata=metadata,
-        num_buckets=num_buckets,
         partition_cols=partition_cols,
+        settings=settings,
     ):
         await __write_to_dataset_async(table, output_dir, partition_columns)
 
@@ -149,10 +146,9 @@ def __prepare_data(
     output_dir: str,
     df: Optional[Union[pd.DataFrame, pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pd.DataFrame], List[pl.DataFrame], pl.Series, pd.Series]] = None,
-    chunk_size: Optional[int] = None,
     metadata: Optional[Dict] = None,
-    num_buckets: Optional[int] = None,
     partition_cols: Optional[List[str]] = None,
+    settings: Optional[BatchSettings] = None,
 ):
     """
     Writes a Polars DataFrame to partitioned Parquet files directly using PyArrow,
@@ -163,6 +159,18 @@ def __prepare_data(
     :param chunk_size: Number of rows per chunk.
     :param metadata: Dictionary with custom metadata to add to the Parquet files.
     """
+    if not settings:
+        settings = BatchSettings()
+
+    chunk_size = None
+    num_buckets = None
+    if settings.items and settings.items.maximum:
+        chunk_size = settings.items.maximum
+    elif settings.count and settings.count.maximum:
+        num_buckets = settings.count.maximum
+
+    if chunk_size is not None and num_buckets is not None:
+        chunk_size = DEFAULT_BATCH_ITEMS_VALUE
 
     df, dfs, series_sample = multi_series_to_frame(df, dfs)
 

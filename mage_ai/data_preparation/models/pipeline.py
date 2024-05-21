@@ -29,6 +29,9 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
@@ -1813,8 +1816,11 @@ class Pipeline:
         sample_count: int = None,
         dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
-        batch_settings: Optional[BatchSettings] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ):
         block = self.get_block(block_uuid)
         data_integration_settings = block.get_data_integration_settings(
@@ -1836,6 +1842,8 @@ class Pipeline:
                 stream_id=variable_name,
             )
 
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFF', read_batch_settings)
+
         variable = block.get_variable(
             block_uuid=block_uuid,
             partition=partition,
@@ -1844,8 +1852,11 @@ class Pipeline:
             variable_uuid=variable_name,
             dynamic_block_index=dynamic_block_index,
             dynamic_block_uuid=dynamic_block_uuid,
-            batch_settings=batch_settings,
             input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
         return variable

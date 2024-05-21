@@ -592,7 +592,9 @@ def fetch_input_variables(
                             raise_exception=True,
                             spark=spark,
                             dynamic_block_index=dynamic_block_index_for_output_variable,
-                            batch_settings=current_block.batch_settings(upstream_block_uuid)
+                            read_batch_settings=current_block.upstream_batch_settings(
+                                upstream_block_uuid
+                            )
                             if current_block
                             else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)
@@ -729,7 +731,9 @@ def fetch_input_variables(
                             input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
-                            batch_settings=current_block.input_data_types(upstream_block_uuid)
+                            read_batch_settings=current_block.upstream_batch_settings(
+                                upstream_block_uuid
+                            )
                             if current_block
                             else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)
@@ -762,7 +766,9 @@ def fetch_input_variables(
                             input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
-                            batch_settings=current_block.input_data_types(upstream_block_uuid)
+                            read_batch_settings=current_block.upstream_batch_settings(
+                                upstream_block_uuid
+                            )
                             if current_block
                             else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)

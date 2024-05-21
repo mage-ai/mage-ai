@@ -11,14 +11,30 @@ from mage_ai.data.constants import (
 from mage_ai.data.models.reader import Reader
 from mage_ai.data.models.shared import BaseData
 from mage_ai.data.models.writer import Writer
-from mage_ai.data.tabular.constants import DEFAULT_BATCH_ITEMS_VALUE
+from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.utils import infer_variable_type
 
 
 class DataManager(BaseData):
-    def __init__(self, input_data_types: Optional[List[InputDataType]], *args, **kwargs):
+    def __init__(
+        self,
+        input_data_types: Optional[List[InputDataType]],
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.input_data_types = input_data_types or [InputDataType.DEFAULT]
+        self.read_batch_settings = read_batch_settings
+        self.read_chunks = read_chunks
+        self.write_batch_settings = write_batch_settings
+        self.write_chunks = write_chunks
         self._reader = None
         self._writer = None
 
@@ -42,7 +58,8 @@ class DataManager(BaseData):
     def reader(self) -> Reader:
         if not self._reader:
             self._reader = Reader(
-                batch_settings=self.batch_settings,
+                batch_settings=self.read_batch_settings,
+                chunks=self.read_chunks,
                 storage=self.storage,
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
@@ -54,6 +71,8 @@ class DataManager(BaseData):
     def writer(self) -> Writer:
         if not self._writer:
             self._writer = Writer(
+                batch_settings=self.write_batch_settings,
+                chunks=self.write_chunks,
                 storage=self.storage,
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
@@ -95,11 +114,11 @@ class DataManager(BaseData):
 
     async def write_async(self, data: Any, chunk_size: Optional[int] = None) -> None:
         self.__prepare(data, self.writer)
-        await self.writer.write_async(data, chunk_size=chunk_size or DEFAULT_BATCH_ITEMS_VALUE)
+        await self.writer.write_async(data)
 
     def write_sync(self, data: Any, chunk_size: Optional[int] = None) -> None:
         self.__prepare(data, self.writer)
-        self.writer.write_sync(data, chunk_size=chunk_size or DEFAULT_BATCH_ITEMS_VALUE)
+        self.writer.write_sync(data)
 
     def readable(self) -> bool:
         return self.reader.supported()
