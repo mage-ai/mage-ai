@@ -2,12 +2,12 @@ import asyncio
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from functools import reduce
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Union
 
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
@@ -18,31 +18,16 @@ from mage_ai.data.constants import (
     ScanBatchDatasetResult,
     TaggedRecordBatch,
 )
-from mage_ai.data.tabular.constants import COLUMN_CHUNK, FilterComparison
+from mage_ai.data.tabular.constants import FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.utils import compare_object
 from mage_ai.shared.array import find, flatten
-from mage_ai.shared.models import BaseDataClass
 
 
 async def run_in_executor(func, *args):
     executor = ThreadPoolExecutor()
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(executor, func, *args)
-
-
-@dataclass
-class ScanDatasetParameters(BaseDataClass):
-    chunks: Optional[List[int]] = None
-    columns: Optional[List[str]] = None
-    deserialize: Optional[bool] = False
-    filter: Optional[ds.Expression] = None
-    filters: Optional[List[List[str]]] = None
-    scan: Optional[bool] = False
-    settings: Optional[BatchSettings] = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('settings', BatchSettings)
 
 
 def create_filter(*args) -> ds.Expression:
@@ -309,7 +294,17 @@ def get_series_object_metadata(
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
-def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> RecordBatchGenerator:
+def scan_batch_datasets_generator(
+    source: Union[List[str], str],
+    chunks: Optional[List[int]] = None,
+    columns: Optional[List[str]] = None,
+    deserialize: Optional[bool] = False,
+    filter: Optional[ds.Expression] = None,
+    filters: Optional[List[List[str]]] = None,
+    scan: Optional[bool] = False,
+    settings: Optional[BatchSettings] = None,
+    **kwargs,
+) -> RecordBatchGenerator:
     """
     Scans and optionally deserializes batches of records from a dataset.
 
@@ -336,15 +331,6 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
-    params = ScanDatasetParameters.load(**kwargs)
-
-    chunks = params.chunks
-    columns = params.columns
-    deserialize = params.deserialize
-    filter = params.filter
-    filters = params.filters
-    scan = params.scan
-    settings = params.settings
 
     dataset = ds.dataset(source, format='parquet', partitioning='hive')
     metadatas = []
@@ -352,16 +338,49 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
         metadatas.append(read_metadata(directory, include_schema=True))
     object_metadata = get_series_object_metadata(metadatas=metadatas)
 
-    if settings is None:
+    if settings and isinstance(settings, dict):
+        settings = BatchSettings.load(**settings)
+    else:
         settings = BatchSettings()
-    batch_size = settings.batch_size(metadatas)
+    batch_size = settings.items.minimum or settings.items.maximum
+
+    def __create_filter(chunk_query: str, dataset=dataset):
+        column, value = chunk_query.split('=')
+        # Find the actual data type of the column in the dataset
+        actual_type = dataset.schema.field(column).type
+
+        # Attempt to convert the value to the actual data type of the column
+        if pa.types.is_string(actual_type):
+            # If the field is of string type, ensure the value is also treated as a string
+            value = str(value)
+        elif pa.types.is_integer(actual_type):
+            # If the field is of integer type, try converting the value to an integer
+            try:
+                value = int(value)
+            except ValueError:
+                raise ValueError(
+                    f"Could not convert value '{value}' to integer for column '{column}'."
+                )
+        elif pa.types.is_float(actual_type):
+            # Similar conversion for floating-point types, as needed
+            try:
+                value = float(value)
+            except ValueError:
+                raise ValueError(
+                    f"Could not convert value '{value}' to float for column '{column}'."
+                )
+        # Add more type checks as necessary for your use cases
+
+        # Return the filter expression
+        return ds.field(column) == value
 
     filters_list = []
     if chunks:
+        # ["chunk=1", "chunk=100", "chunk=1000"]
         filters_list.append(
             reduce(
                 lambda a, b: a | b,
-                [create_filter(COLUMN_CHUNK, FilterComparison.EQUAL, chunk) for chunk in chunks],
+                [__create_filter(str(chunk)) for chunk in chunks],
             )
         )
 
@@ -388,11 +407,12 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
     - `use_threads=True` enables multithreading to potentially speed up the data loading process.
     """
     scanner_settings = dict(
-        batch_size=batch_size,
         columns=columns,
         filter=expression,
         use_threads=True,
     )
+    if batch_size and batch_size >= 1:
+        scanner_settings['batch_size'] = batch_size
 
     if scan:
         generator = dataset.scanner(**scanner_settings).scan_batches()

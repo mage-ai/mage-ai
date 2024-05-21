@@ -16,6 +16,24 @@ from mage_ai.data.tabular.reader import (
 
 
 class Reader(BaseData):
+    """
+    - all_upstream_blocks_executed: false
+      color: null
+      configuration:
+        file_source:
+          path: memory_upgrade_v2/transformers/reader.py
+        variables:
+          upstream:
+            someblock:
+              batch_settings:
+                count:
+                  maximum: 1
+                items:
+                  minimum: 100000
+              input_data_types:
+              - generator
+    """
+
     def read_sync(
         self,
         columns: Optional[List[str]] = None,

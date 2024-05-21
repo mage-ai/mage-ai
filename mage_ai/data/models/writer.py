@@ -11,6 +11,21 @@ from mage_ai.shared.files import (
 
 
 class Writer(BaseData):
+    """
+    - all_upstream_blocks_executed: false
+      color: null
+      configuration:
+        file_source:
+          path: memory_upgrade_v2/data_exporters/bold_portal.py
+        variables:
+          write:
+            batch_settings:
+              items:
+                maximum: 170000
+            chunks:
+            - key
+    """
+
     def write_sync(self, data: Any, replace: bool = True) -> None:
         makedirs_sync(self.data_partitions_path)
         if replace:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from functools import reduce
 from math import ceil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mage_ai.data.tabular.constants import (
     DEFAULT_BATCH_BYTE_VALUE,
@@ -14,8 +14,8 @@ from mage_ai.shared.models import BaseDataClass
 
 @dataclass
 class Settings(BaseDataClass):
-    maximum: Optional[int] = field(default=None)
-    minimum: Optional[int] = field(default=None)
+    maximum: int = 0
+    minimum: int = 0
 
 
 @dataclass
@@ -62,24 +62,9 @@ class BatchSettings(BaseDataClass):
             Memory peak : 15.057 gb
     """
 
-    count: Optional[Settings] = field(
-        default_factory=lambda: Settings(
-            maximum=0,
-            minimum=0,
-        )
-    )
-    items: Optional[Settings] = field(
-        default_factory=lambda: Settings(
-            maximum=0,
-            minimum=0,
-        )
-    )
-    size: Optional[Settings] = field(
-        default_factory=lambda: Settings(
-            maximum=0,
-            minimum=0,
-        )
-    )
+    count: Settings = field(default_factory=Settings)
+    items: Settings = field(default_factory=Settings)
+    size: Settings = field(default_factory=Settings)
 
     def __post_init__(self):
         self.serialize_attribute_class('count', Settings)
