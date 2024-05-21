@@ -96,7 +96,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         try:
             if retry_config is None:
                 retry_config = self.pipeline.retry_config or dict()
-            infinite_retries = False if retry_config else False
+            infinite_retries = False if retry_config else True
 
             if type(retry_config) is not RetryConfig:
                 retry_config = RetryConfig.load(config=retry_config)
