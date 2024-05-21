@@ -5,17 +5,29 @@ import { createRoot } from 'react-dom/client';
 
 import ArcaneLibrary from '@components/Applications/ArcaneLibrary';
 import ArcaneLibraryConfiguration from '@components/Applications/ArcaneLibrary/configuration.json';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
 import Header from './Header';
 import KeyboardContext from '@context/Keyboard';
 import PortalTerminal from '@components/Applications/PortalTerminal';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useAutoResizer, { DimensionDataType, RectType } from '@utils/useAutoResizer';
+import Button from '@oracle/elements/Button';
+import {
+  ExpandWindow,
+  ExpandWindowFilled,
+} from '@oracle/icons';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
 import Text from 'oracle/elements/Text';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
+import WithOnMount from '@components/shared/WithOnMount';
+import { getIcon } from '@components/CommandCenter/ItemRow/constants';
+import { BUTTON_STYLE_PROPS, ButtonStyle, HeaderStyle, getApplicationColors } from '@components/ApplicationManager/index.style';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ErrorProvider } from '@context/Error';
 import {
   LayoutType,
@@ -51,12 +63,15 @@ import {
   closeApplication as closeApplicationFromCache,
   getApplications as getApplicationsFromCache,
   updateApplication,
+  buildGrid,
+  inactiveLayouts,
 } from '@storage/ApplicationManager/cache';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { selectEntriesWithValues, selectKeys } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
+import { capitalize } from '@utils/string';
 
 const COMPONENT_UUID = 'ApplicationManager';
 const GROUP_ID = 'ApplicationManagerGroup';
@@ -88,6 +103,8 @@ export default function useApplicationManager({
     [key: string]: StatusEnum;
   }>({});
 
+  const [currentApplications, setCurrentApplications] = useState({});
+
   const refRootApplication = useRef(null);
   // References to the application configurations in memory.
   const refApplications = useRef({});
@@ -99,6 +116,7 @@ export default function useApplicationManager({
   const refRoots = useRef({});
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
+  const refDockedApps = useRef({});
 
   function getOpenApplications({
     ascending,
@@ -211,6 +229,10 @@ export default function useApplicationManager({
   function updateApplicationLayoutAndState(uuid: ApplicationExpansionUUIDEnum, opts?: {
     layout?: LayoutType;
     state?: StateType;
+    updateElement?: (
+      app: ApplicationManagerApplication,
+      elementRef: React.RefObject<HTMLDivElement>,
+    ) => void;
   }, cache: {
     layout?: boolean;
     state?: boolean;
@@ -218,7 +240,6 @@ export default function useApplicationManager({
     layout: true,
     state: true,
   }): ApplicationManagerApplication {
-    const element = refExpansions?.current?.[uuid];
     const data: {
       layout?: LayoutType;
       state?: StateType;
@@ -231,95 +252,165 @@ export default function useApplicationManager({
       data.state = opts?.state;
     }
 
-    let app;
-    if (element && element.current) {
-      app = updateApplication({
-        ...data,
-        uuid,
-      });
+    const appUpdated = updateApplication({
+      ...data,
+      uuid,
+    });
 
-      const { dimension, position } = opts?.layout || app?.layout;
+    const refExpansion = refExpansions?.current?.[uuid];
+    let refContainer = refContainers?.current?.[uuid];
+
+    if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
+      const arcaneLibraryContainerNode = document.getElementById(uuid);
+      if (arcaneLibraryContainerNode) {
+        refContainer = { current: arcaneLibraryContainerNode };
+      }
+    }
+
+    if (refExpansion?.current) {
+      if (opts?.updateElement) {
+        opts?.updateElement?.(appUpdated, refExpansion);
+      }
+    }
+
+    return appUpdated;
+  }
+
+
+  function changeApplicationStatus(
+    uuidInit: ApplicationExpansionUUIDEnum,
+    status: StatusEnum,
+    opts: {
+      all?: boolean;
+      layout?: LayoutType;
+      state?: StateType;
+      updateElement?: (
+        app: ApplicationManagerApplication,
+        elementRef: React.RefObject<HTMLDivElement>,
+      ) => void;
+    } = {},
+  ) {
+    const app = getOpenApplications()?.find(({ uuid }) => uuid === uuidInit);
+    const uuid = app?.uuid;
+    updateApplicationLayoutAndState(uuid, {
+      ...opts,
+      state: {
+        status,
+      },
+    }, {
+      layout: false,
+      state: true,
+    });
+  }
+
+  function sharedApplication(status: StatusEnum, updateElement: (
+    app: ApplicationManagerApplication,
+    elementRef: React.RefObject<HTMLDivElement>,
+  ) => void, uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, status, {
+      ...opts,
+      updateElement: (appUpdated, element) => {
+        if (appUpdated?.uuid === uuid) {
+          element.current.style.display = 'block';
+          if (updateElement) {
+            updateElement(appUpdated, element);
+          }
+
+          const dockedElement = refDockedApps?.current?.[uuid];
+          if (dockedElement?.current) {
+            dockedElement.current.style.display = 'none';
+          }
+        }
+      },
+    });
+  }
+
+  function pauseApplication(uuid: ApplicationExpansionUUIDEnum, ...args) {
+    sharedApplication(StatusEnum.INACTIVE, (appUpdated, element) => {
+      const apps = getOpenApplications();
+      const index = apps?.findIndex(a => a.uuid === appUpdated?.uuid);
+      const {
+        dimension,
+        position,
+      } = inactiveLayouts(apps?.length, index);
 
       element.current.style.height = `${dimension?.height}px`;
       element.current.style.left = `${position?.x}px`;
       element.current.style.top = `${position?.y}px`;
       element.current.style.width = `${dimension?.width}px`;
-    }
-
-    setStatusMapping(prev => ({
-      ...prev,
-      [uuid]: app?.state?.status,
-    }));
-
-    return app;
+      element.current.style.opacity = 0.3;
+    }, uuid, ...args);
   }
 
-  function setApplicationInactive(uuidInit: ApplicationExpansionUUIDEnum, opts: {
-    all?: boolean;
-    reverse?: boolean;
-  } = {
-    all: false,
-    reverse: false,
-  }) {
-    const { all, reverse } = opts || {};
+  function restoreApplication(uuid: ApplicationExpansionUUIDEnum, ...args) {
+    sharedApplication(StatusEnum.ACTIVE, (appUpdated, element) => {
+      const apps = getOpenApplications();
+      element.current.style.opacity = 1;
 
-    getApplicationsFromCache(all ? {} : { uuid: uuidInit })?.forEach((app, idx: number) => {
-      const uuid = app?.uuid;
-      const appUpdated = updateApplicationLayoutAndState(uuid, {
-        state: {
-          status: reverse
-            ? idx === 0
-              ? StatusEnum.ACTIVE
-              : StatusEnum.OPEN
-            : StatusEnum.MINIMIZED,
-        },
-      }, {
-        layout: false,
-        state: true,
-      });
-    });
-  }
+      if (appUpdated?.uuid === uuid) {
+        const {
+          dimension,
+          position,
+        } = buildGrid(
+          1,
+          apps?.length || 1,
+          0,
+          (apps?.filter(a => StatusEnum.INACTIVE !== a?.state?.status)?.length || 1) - 1,
+        );
 
-  function changeApplicationStatus(
-    uuidInit: ApplicationExpansionUUIDEnum,
-    status: StatusEnum,
-    opts: { all?: boolean } = {},
-  ) {
-    getApplicationsFromCache(opts?.all ? {} : { uuid: uuidInit })?.forEach((app) => {
-      const uuid = app?.uuid;
-      updateApplicationLayoutAndState(uuid, {
-        state: {
-          status,
-        },
-      }, {
-        layout: false,
-        state: true,
-      });
-
-      let refContainer = refContainers?.current?.[uuid];
-      if (uuid === ApplicationExpansionUUIDEnum.ArcaneLibrary && !refContainer) {
-        const arcaneLibraryContainerNode = document.getElementById(uuid);
-        if (arcaneLibraryContainerNode) {
-          refContainer = { current: arcaneLibraryContainerNode };
-        }
+        element.current.style.height = `${dimension?.height}px`;
+        element.current.style.left = `${position?.x}px`;
+        element.current.style.top = `${position?.y}px`;
+        element.current.style.width = `${dimension?.width}px`;
       }
+    }, uuid, ...args);
+  }
+
+  function openApplication(...args) {
+    sharedApplication(StatusEnum.OPEN, (appUpdated, element) => {
+      element.current.style.opacity = 1;
+    }, ...args);
+  }
+
+  function maximizeApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+    changeApplicationStatus(uuid, StatusEnum.ACTIVE, {
+      ...opts,
+      layout: buildMaximumLayout(),
+      updateElement: (appUpdated, element) => {
+        if (appUpdated?.uuid === uuid) {
+          const { dimension, position } = appUpdated?.layout;
+
+          element.current.style.height = `${dimension?.height}px`;
+          element.current.style.left = `${position?.x}px`;
+          element.current.style.top = `${position?.y}px`;
+          element.current.style.width = `${dimension?.width}px`;
+          element.current.style.display = 'block';
+          element.current.style.opacity = 1;
+
+          const dockedElement = refDockedApps?.current?.[uuid];
+          if (dockedElement?.current) {
+            dockedElement.current.style.display = 'none';
+          }
+        }
+      },
     });
-  }
-
-  function restoreApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
-    changeApplicationStatus(uuid, StatusEnum.ACTIVE, opts);
-  }
-
-  function pauseApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
-    changeApplicationStatus(uuid, StatusEnum.INACTIVE, opts);
   }
 
   function minimizeApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
-    changeApplicationStatus(uuid, StatusEnum.MINIMIZED, opts);
-  }
+    changeApplicationStatus(uuid, StatusEnum.MINIMIZED, {
+      ...opts,
+      updateElement: (appUpdated, element) => {
+        if (appUpdated?.uuid === uuid) {
+          element.current.style.display = 'none';
+          element.current.style.opacity = 1;
 
-  function openApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
-    changeApplicationStatus(uuid, StatusEnum.OPEN, opts);
+          const dockedElement = refDockedApps?.current?.[uuid];
+          if (dockedElement?.current) {
+            dockedElement.current.style.display = 'block';
+          }
+        }
+      },
+    });
   }
 
   function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
@@ -453,38 +544,24 @@ export default function useApplicationManager({
 
   function onClickOutside(uuid: ApplicationExpansionUUIDEnum, isOutside: boolean, { group }) {
     const allOutside = Object.values(group || {})?.every(({ isOutside }) => isOutside);
-
     const apps = getOpenApplications();
     const app = apps?.find(a => uuid === a?.uuid);
-    let status = app?.state?.status;
-    const minimized = StatusEnum.MINIMIZED === status;
+    const status = app?.state?.status;
 
-    if (apps?.length >= 2) {
-      if (allOutside) {
-        status = StatusEnum.MINIMIZED;
-      } else if (isOutside && !minimized) {
-        status = StatusEnum.OPEN;
-      } else {
-        status = StatusEnum.ACTIVE;
-      }
-    } else {
-      if (allOutside && !minimized) {
-        status = StatusEnum.INACTIVE;
-      } else if (isOutside && !minimized) {
-        status = StatusEnum.INACTIVE;
-      } else {
-        status = StatusEnum.ACTIVE;
-      }
+    if (apps?.some(a => StatusEnum.MINIMIZED === a?.state?.status)) {
+      return;
     }
 
-    if (StatusEnum.ACTIVE === status) {
+    if (!isOutside && StatusEnum.ACTIVE !== status) {
       restoreApplication(uuid);
-    } else if (StatusEnum.INACTIVE === status) {
-      pauseApplication(uuid);
-    } else if (StatusEnum.MINIMIZED === status) {
-      minimizeApplication(uuid);
-    } else if (StatusEnum.OPEN === status) {
-      openApplication(uuid);
+    } else if (apps?.length >= 2) {
+      if (allOutside && apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))) {
+        pauseApplication(uuid);
+      }
+    } else {
+      if (allOutside && apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))) {
+        pauseApplication(uuid);
+      }
     }
   }
 
@@ -513,25 +590,101 @@ export default function useApplicationManager({
 
   function renderApplications() {
     return (
-      <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
+      <>
         <DockStyle>
           {getApplicationsFromCache()?.map(({
             applicationConfiguration,
+            state,
             uuid,
           }) => {
-            const status = statusMapping?.[uuid];
-            if (StatusEnum.MINIMIZED === status) {
-              return (
-                <MinimizedApplicationStyle key={uuid}>
-                  <Text>
-                    {applicationConfiguration?.item?.title}
-                    {applicationConfiguration?.item?.description}
-                  </Text>
-                </MinimizedApplicationStyle>
-              );
+            if (!refDockedApps?.current) {
+              refDockedApps.current = {};
             }
-          })}
 
+            const ref = refDockedApps?.current?.[uuid] || createRef();
+            refDockedApps.current[uuid] = ref;
+
+            const Icon = getIcon(applicationConfiguration?.item);
+
+            return (
+              <WithOnMount
+                key={uuid}
+                onMount={() => {
+                  setTimeout(() => {
+                    if (StatusEnum.MINIMIZED === state?.status) {
+                      ref.current.style.display = 'block';
+                    }
+                  }, 1);
+                }}
+              >
+                <MinimizedApplicationStyle
+                  // onClick={(e) => {
+                  //   e.stopPropagation();
+                  //   e.preventDefault();
+                  //   pauseEvent(e);
+                  //   maximizeApplication(uuid);
+                  // }}
+                  ref={ref}
+                  style={{
+                    display: 'none',
+                  }}
+                >
+                  <FlexContainer flexDirection="column" fullHeight fullWidth>
+                    <HeaderStyle id={`${uuid}-header`} relative>
+                      <FlexContainer alignItems="center" fullHeight>
+                        <Spacing ml={1} />
+
+                        {Icon && <Icon size={3 * UNIT} />}
+
+                        <Spacing mr={1} />
+
+                        <Flex flex={1}>
+                          <Text>
+                            {applicationConfiguration?.item?.title}
+                          </Text>
+                        </Flex>
+
+                        <ButtonStyle {...BUTTON_STYLE_PROPS}>
+                          <Button
+                            iconOnly
+                            noBackground
+                            noBorder
+                            noPadding
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              pauseEvent(e);
+                              maximizeApplication(uuid);
+                            }}
+                          >
+                            <>
+                              <div className="empty" style={{ display: 'none' }}>
+                                <ExpandWindow size={2 * UNIT} success />
+                              </div>
+                              <div className="filled">
+                                <ExpandWindowFilled size={2 * UNIT} success />
+                              </div>
+                            </>
+                          </Button>
+                        </ButtonStyle>
+
+                        <Spacing ml={1} />
+                      </FlexContainer>
+                    </HeaderStyle>
+
+                    <Spacing p={1}>
+                      <Text default small>
+                        {capitalize(applicationConfiguration?.item?.description || '')}
+                      </Text>
+                    </Spacing>
+                  </FlexContainer>
+                </MinimizedApplicationStyle>
+              </WithOnMount>
+            );
+          })}
+        </DockStyle>
+
+        <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
           {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
             if (!refContainers?.current) {
               refContainers.current = {};
@@ -543,14 +696,13 @@ export default function useApplicationManager({
             return (
               <ApplicationMountStyle
                 id={uuid}
-                key={uuid}
+                key={`${uuid}-${statusMapping?.[uuid]}`}
                 ref={ref}
-                status={statusMapping?.[uuid]}
               />
             );
           })}
-        </DockStyle>
-      </RootApplicationStyle>
+        </RootApplicationStyle>
+      </>
     );
   }
 
@@ -653,13 +805,6 @@ export default function useApplicationManager({
     }
 
     const onMountCallback = () => {
-      setTimeout(() => {
-        if (StatusEnum.MINIMIZED === state?.status) {
-          minimizeApplication(uuid);
-        }
-        ref.current.style.display = 'block';
-      }, 1);
-
       setResizableObject(uuid, ref, {
         tries: 10,
       });
@@ -696,12 +841,11 @@ export default function useApplicationManager({
       setOnResize(onResizeCallback);
     };
 
-    const status = statusMapping?.[uuid];
     const expansion = (
       <ContainerStyle
+        id={`${uuid}-container`}
         onClick={() => updateZIndex(uuid)}
         ref={ref}
-        status={status}
         style={{
           display: 'none',
           height,
@@ -721,9 +865,7 @@ export default function useApplicationManager({
         <OverlayStyle
           className={OVERLAY_ID}
           onClick={(e) => {
-            e.stopPropagation();
-            pauseEvent(e);
-            restoreApplication(uuid);
+            maximizeApplication(uuid);
           }}
         />
 
@@ -731,14 +873,11 @@ export default function useApplicationManager({
           applications={getApplicationsFromCache({ uuid })}
           closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
           maximizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
-            updateApplicationLayoutAndState(uuidApp, {
-              layout: buildMaximumLayout(),
-            }, {
-              layout: true,
-              state: false,
-            });
+            maximizeApplication(uuidApp);
           }}
-          minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => minimizeApplication(uuidApp)}
+          minimizeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => {
+            minimizeApplication(uuidApp);
+          }}
           ref={rr?.top}
           setSelectedTab={setSelectedTab}
         />
@@ -769,7 +908,19 @@ export default function useApplicationManager({
         <ThemeProvider theme={themeContext}>
           <ModalProvider>
             <ErrorProvider>
-              {expansion}
+              <WithOnMount
+                onMount={() => {
+                  setTimeout(() => {
+                    if (StatusEnum.MINIMIZED === state?.status) {
+                      minimizeApplication(uuid);
+                    } else {
+                      ref.current.style.display = 'block';
+                    }
+                  }, 1);
+                }}
+              >
+                {expansion}
+              </WithOnMount>
             </ErrorProvider>
           </ModalProvider>
         </ThemeProvider>
@@ -783,8 +934,9 @@ export default function useApplicationManager({
       state,
       uuid,
     }) => {
-      if (StatusEnum.CLOSED === state?.status) {
-        if (applicationConfiguration?.application) {
+
+      if (applicationConfiguration?.application) {
+        if (StatusEnum.CLOSED === state?.status) {
           closeApplication(uuid);
         } else {
           startApplication(applicationConfiguration, state);

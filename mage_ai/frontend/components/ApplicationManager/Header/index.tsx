@@ -15,7 +15,7 @@ import {
   ExpandWindow,
   ExpandWindowFilled,
 } from '@oracle/icons';
-import { ButtonStyle, HeaderStyle, getApplicationColors } from '../index.style';
+import { BUTTON_STYLE_PROPS, ButtonStyle, HeaderStyle, getApplicationColors } from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
@@ -28,24 +28,7 @@ const TOOLTIP_PROPS = {
   widthFitContent: true,
 };
 
-const BUTTON_STYLE_PROPS = {
-  onMouseEnter: (e) => {
-    if (e?.currentTarget?.querySelector('.empty')) {
-      e.currentTarget.querySelector('.empty').style.display = 'block';
-    }
-    if (e?.currentTarget?.querySelector('.filled')) {
-      e.currentTarget.querySelector('.filled').style.display = 'none';
-    }
-  },
-  onMouseLeave: (e) => {
-    if (e?.currentTarget?.querySelector('.empty')) {
-      e.currentTarget.querySelector('.empty').style.display = 'none';
-    }
-    if (e?.currentTarget?.querySelector('.filled')) {
-      e.currentTarget.querySelector('.filled').style.display = 'block';
-    }
-  },
-};
+
 
 function Header({
   applications,
@@ -54,9 +37,9 @@ function Header({
   minimizeApplication,
 }: {
   applications: ApplicationManagerApplication[];
-  closeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  maximizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  minimizeApplication: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+  closeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+  maximizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+  minimizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
   setSelectedTab?: (prevState: (value: TabType) => TabType) => void;
 }, ref) {
   const tabs = useMemo(() => applications?.map(({
@@ -102,47 +85,53 @@ function Header({
                 noBorder
                 noPadding
                 onClick={(e) => {
+                  e.stopPropagation();
                   pauseEvent(e);
                   application && maximizeApplication(application?.uuid);
                 }}
               >
                 <>
                   <div className="empty" style={{ display: 'none' }}>
-                    <ExpandWindow success size={2 * UNIT} />
+                    <ExpandWindow size={2 * UNIT} success />
                   </div>
                   <div className="filled">
-                    <ExpandWindowFilled success size={2 * UNIT} />
+                    <ExpandWindowFilled size={2 * UNIT} success />
                   </div>
                 </>
               </Button>
             </ButtonStyle>
           </Tooltip>
 
-          <div style={{ paddingLeft: 1 * UNIT }} />
+          {minimizeApplication && (
+            <>
+              <div style={{ paddingLeft: 1 * UNIT }} />
 
-          <Tooltip {...TOOLTIP_PROPS} label="Minimize application">
-            <ButtonStyle {...BUTTON_STYLE_PROPS}>
-              <Button
-                iconOnly
-                noBackground
-                noBorder
-                noPadding
-                onClick={(e) => {
-                  pauseEvent(e);
-                  application && minimizeApplication(application?.uuid);
-                }}
-              >
-                <>
-                  <div className="empty" style={{ display: 'none' }}>
-                    <CollapseWindow warning size={2 * UNIT} />
-                  </div>
-                  <div className="filled">
-                    <CollapseWindowFilled warning size={2 * UNIT} />
-                  </div>
-                </>
-              </Button>
-            </ButtonStyle>
-          </Tooltip>
+              <Tooltip {...TOOLTIP_PROPS} label="Minimize application">
+                <ButtonStyle {...BUTTON_STYLE_PROPS}>
+                  <Button
+                    iconOnly
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pauseEvent(e);
+                      application && minimizeApplication(application?.uuid);
+                    }}
+                  >
+                    <>
+                      <div className="empty" style={{ display: 'none' }}>
+                        <CollapseWindow size={2 * UNIT} warning />
+                      </div>
+                      <div className="filled">
+                        <CollapseWindowFilled size={2 * UNIT} warning />
+                      </div>
+                    </>
+                  </Button>
+                </ButtonStyle>
+              </Tooltip>
+            </>
+          )}
 
           <div style={{ paddingLeft: 1 * UNIT }} />
 
@@ -154,6 +143,7 @@ function Header({
                 noBorder
                 noPadding
                 onClick={(e) => {
+                  e.stopPropagation();
                   pauseEvent(e);
                   application && closeApplication(application?.uuid);
                 }}

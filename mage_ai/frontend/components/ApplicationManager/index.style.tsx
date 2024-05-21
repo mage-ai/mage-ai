@@ -16,6 +16,25 @@ export const OVERLAY_ID = 'application-minimized-overlay';
 const RESIZE_SIZE = 1 * UNIT;
 const RESIZE_SIZE_CORNER = 2 * UNIT;
 
+export const BUTTON_STYLE_PROPS = {
+  onMouseEnter: (e) => {
+    if (e?.currentTarget?.querySelector('.empty')) {
+      e.currentTarget.querySelector('.empty').style.display = 'block';
+    }
+    if (e?.currentTarget?.querySelector('.filled')) {
+      e.currentTarget.querySelector('.filled').style.display = 'none';
+    }
+  },
+  onMouseLeave: (e) => {
+    if (e?.currentTarget?.querySelector('.empty')) {
+      e.currentTarget.querySelector('.empty').style.display = 'none';
+    }
+    if (e?.currentTarget?.querySelector('.filled')) {
+      e.currentTarget.querySelector('.filled').style.display = 'block';
+    }
+  },
+};
+
 function getRGBA(color: string, opts?: {
   transparency?: number;
 }) {
@@ -135,25 +154,27 @@ export const RootApplicationStyle = styled.div`
 `;
 
 export const DockStyle = styled.div`
-  ${transition()}
-
-  bottom: 0;
-  display: flex;
-  height: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(${30 * UNIT}px, auto));
   justify-content: center;
+  grid-gap: ${UNIT * 5}px;
+  align-items: center;
+  bottom: 0;
   position: fixed;
   width: 100%;
-  z-index: 10;
+  z-index: 20;
+`;
 
-  // ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
-  //   :has(#${uuid}.minimized) {
-  //     &:hover {
-  //       border-bottom: 40px solid rgba(0, 0, 0, 0.5);
-  //       cursor: pointer;
-  //       height: 130px;
-  //     }
-  //   }
-  // `)}
+export const MinimizedApplicationStyle = styled.div`
+  backdrop-filter: saturate(140%) blur(${30 * UNIT}px);
+  background-color: rgb(0, 0, 0, 0.1);
+  border-radius: ${BORDER_RADIUS_XLARGE}px;
+  bottom: ${-2 * UNIT}px;
+  height: ${16 * UNIT}px;
+  position: relative;
+  width: ${30 * UNIT}px;
+  z-index: 100;
+}
 `;
 
 export const OverlayStyle = styled.div``;
@@ -161,16 +182,12 @@ export const OverlayStyle = styled.div``;
 export const ApplicationMountStyle = styled.div<{
   status: StatusEnum;
 }>`
-`;
-
-export const MinimizedApplicationStyle = styled.div`
-  background-color: #18181C;
-  bottom: 100px;
-  position: relative;
-  height: 200px;
-  width: 200px;
-  z-index: 100;
-}
+  ${props => StatusEnum.INACTIVE === props?.status && `
+    // opacity: 0.5;
+  `}
+  ${props => StatusEnum.MINIMIZED === props?.status && `
+    // display: none;
+  `}
 `;
 
 export const ContainerStyle = styled.div<{
@@ -181,6 +198,18 @@ export const ContainerStyle = styled.div<{
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: fixed;
+
+  // &.active {
+  //   opacity: 1;
+  // }
+
+  // &.minimized {
+  //   height: 0;
+  //   left: 100%;
+  //   opacity: 0;
+  //   top: 100%;
+  //   width: 0;
+  // }
 `;
 
 export const ContentStyle = styled.div`
@@ -208,16 +237,21 @@ export const ContentStyle = styled.div`
   width 100%;
 `;
 
-export const HeaderStyle = styled.div`
+export const HeaderStyle = styled.div<{
+  relative?: boolean;
+}>`
   backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   background-color: rgb(0, 0, 0, 0.9);
   border-bottom: 1px solid #2E3036;
   border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
   border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
   height: ${HEADER_HEIGHT}px;
-  position: fixed;
   width: inherit;
   z-index: 5;
+
+  ${props => `
+    position: ${props?.relative ? 'relative' : 'fixed'};
+  `}
 
   ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
     &#${uuid}-header {

@@ -247,7 +247,7 @@ export default function useResizeElement(): {
       };
 
       const stopResize = (e) => {
-        document.removeEventListener('selectstart', preventSelection);
+        // document.removeEventListener('selectstart', preventSelection);
         refOrientationMapping.current[uuid] = null;
         window.removeEventListener('mousemove', Resize, false);
         window.removeEventListener('mouseup', stopResize, false);
@@ -258,7 +258,7 @@ export default function useResizeElement(): {
           return;
         }
 
-        document.addEventListener('selectstart', preventSelection);
+        // document.addEventListener('selectstart', preventSelection);
 
         const onStart = onStartRef?.current;
         if (onStart) {

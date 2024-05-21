@@ -66,6 +66,63 @@ export function buildDefaultLayout({
   };
 }
 
+export function inactiveLayouts(apps: number, index: number) {
+  const totalHeight = typeof window !== 'undefined' ? window?.innerHeight : 1200;
+  const totalWidth = typeof window !== 'undefined' ? window?.innerWidth : 1500;
+
+  const spaces = (APPLICATION_PADDING * 2) + ((apps - 1) * APPLICATION_PADDING);
+  const height = (totalHeight - spaces) / apps;
+  const width = Math.max(0.15 * totalWidth, 300);
+
+  return {
+    dimension: {
+      height,
+      width,
+    },
+    position: {
+      x: totalWidth - (width + APPLICATION_PADDING),
+      y: (APPLICATION_PADDING * (index + 1)) + (height * index),
+      z: DEFAULT_Z_INDEX,
+    },
+  };
+}
+
+export function buildGrid(
+  rows: number = 1,
+  columns: number = 1,
+  rowIndex: number = 0,
+  columnIndex: number = 0,
+  padding: number = APPLICATION_PADDING,
+): LayoutType {
+  const totalHeight = typeof window !== 'undefined' ? window?.innerHeight : 1200; // fallback value used if window is not defined
+  const totalWidth = typeof window !== 'undefined' ? window?.innerWidth : 1500;   // fallback value used if window is not defined
+
+  // Calculate the usable area by subtracting padding
+  const usableWidth = totalWidth - padding * (columns + 1);
+  const usableHeight = totalHeight - padding * (rows + 1);
+
+  // Calculate width and height of each grid cell
+  const cellWidth = usableWidth / columns;
+  const cellHeight = usableHeight / rows;
+
+  // Calculate the position of the current grid cell
+  const xPosition = columnIndex * (cellWidth + padding) + padding;
+  const yPosition = rowIndex * (cellHeight + padding) + padding;
+
+  // Return the LayoutType for the cell at (rowIndex, columnIndex)
+  return {
+    dimension: {
+      height: cellHeight,
+      width: cellWidth,
+    },
+    position: {
+      x: xPosition,
+      y: yPosition,
+      z: DEFAULT_Z_INDEX, // Use the default z-index value
+    },
+  };
+}
+
 export function buildMaximumLayout(dimension?: DimensionType, {
   height: heightPercentage,
   width: widthPercentage,
