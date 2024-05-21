@@ -17,6 +17,8 @@ from jinja2 import Template
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.pipeline import PipelineCache
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.block.data_integration.utils import (
@@ -282,7 +284,7 @@ class Pipeline:
                 zip_size = sum(e.file_size for e in zipf.infolist())  # calc zip size in bytes
                 if zip_size / 1000 > PIPELINE_MAX_FILE_SIZE:  # prevention against zip-bombs
                     raise PipelineZipTooLargeError(
-                        f'Pipeline zip exceeds size limit {PIPELINE_MAX_FILE_SIZE/1000}Kb'
+                        f'Pipeline zip exceeds size limit {PIPELINE_MAX_FILE_SIZE / 1000}Kb'
                     )
 
                 # Ignore `__MACOSX` for zips created on macOS systems
@@ -617,13 +619,11 @@ class Pipeline:
                     pipelines_folder_exists = True
 
             if pipelines_folder_exists:
-                arr.extend(
-                    [
-                        (d, path) if include_repo_path else d
-                        for d in os.listdir(pipelines_folder)
-                        if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
-                    ]
-                )
+                arr.extend([
+                    (d, path) if include_repo_path else d
+                    for d in os.listdir(pipelines_folder)
+                    if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
+                ])
 
         return arr
 
@@ -1063,40 +1063,36 @@ class Pipeline:
         )
         if include_block_pipelines:
             shared_kwargs['block_cache'] = BlockCache()
-        blocks_data = await asyncio.gather(
-            *[
-                b.to_dict_async(
-                    **merge_dict(
-                        shared_kwargs,
-                        dict(
-                            include_block_catalog=include_block_catalog,
-                            include_block_pipelines=include_block_pipelines,
-                            include_outputs_spark=include_outputs_spark,
-                            disable_output_preview=disable_block_output_previews,
-                            exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-                            max_results=max_results,
-                        ),
-                    )
+        blocks_data = await asyncio.gather(*[
+            b.to_dict_async(
+                **merge_dict(
+                    shared_kwargs,
+                    dict(
+                        include_block_catalog=include_block_catalog,
+                        include_block_pipelines=include_block_pipelines,
+                        include_outputs_spark=include_outputs_spark,
+                        disable_output_preview=disable_block_output_previews,
+                        exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+                        max_results=max_results,
+                    ),
                 )
-                for b in self.blocks_by_uuid.values()
-            ]
-        )
-        callbacks_data = await asyncio.gather(
-            *[b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()]
-        )
-        conditionals_data = await asyncio.gather(
-            *[b.to_dict_async(**shared_kwargs) for b in self.conditionals_by_uuid.values()]
-        )
-        widgets_data = await asyncio.gather(
-            *[
-                b.to_dict_async(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=sample_count,
-                )
-                for b in self.widgets_by_uuid.values()
-            ]
-        )
+            )
+            for b in self.blocks_by_uuid.values()
+        ])
+        callbacks_data = await asyncio.gather(*[
+            b.to_dict_async(**shared_kwargs) for b in self.callbacks_by_uuid.values()
+        ])
+        conditionals_data = await asyncio.gather(*[
+            b.to_dict_async(**shared_kwargs) for b in self.conditionals_by_uuid.values()
+        ])
+        widgets_data = await asyncio.gather(*[
+            b.to_dict_async(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+            )
+            for b in self.widgets_by_uuid.values()
+        ])
         data = dict(
             blocks=blocks_data,
             callbacks=callbacks_data,
@@ -1109,16 +1105,14 @@ class Pipeline:
             for extension_uuid, extension in self.extensions.items():
                 blocks = []
                 if 'blocks_by_uuid' in extension:
-                    blocks = await asyncio.gather(
-                        *[
-                            b.to_dict_async(
-                                include_content=include_content,
-                                include_outputs=include_outputs,
-                                sample_count=sample_count,
-                            )
-                            for b in extension['blocks_by_uuid'].values()
-                        ]
-                    )
+                    blocks = await asyncio.gather(*[
+                        b.to_dict_async(
+                            include_content=include_content,
+                            include_outputs=include_outputs,
+                            sample_count=sample_count,
+                        )
+                        for b in extension['blocks_by_uuid'].values()
+                    ])
                 extensions_data[extension_uuid] = merge_dict(
                     ignore_keys(
                         extension,
@@ -1259,13 +1253,11 @@ class Pipeline:
             if 'extensions' in data:
                 for extension_uuid, extension in data['extensions'].items():
                     if 'blocks' in extension:
-                        arr.append(
-                            (
-                                'extension_blocks',
-                                extension['blocks'],
-                                self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {}),
-                            )
-                        )
+                        arr.append((
+                            'extension_blocks',
+                            extension['blocks'],
+                            self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {}),
+                        ))
 
             global_hooks = None
             if len(arr) >= 1:
@@ -1821,9 +1813,10 @@ class Pipeline:
         sample_count: int = None,
         dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ):
         block = self.get_block(block_uuid)
-
         data_integration_settings = block.get_data_integration_settings(
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -1851,6 +1844,8 @@ class Pipeline:
             variable_uuid=variable_name,
             dynamic_block_index=dynamic_block_index,
             dynamic_block_uuid=dynamic_block_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
         return variable
@@ -2004,11 +1999,9 @@ class Pipeline:
         elif is_extension:
             if 'blocks_by_uuid' not in self.extensions[block.extension_uuid]:
                 self.extensions[block.extension_uuid]['blocks_by_uuid'] = {}
-            self.extensions[block.extension_uuid]['blocks_by_uuid'].update(
-                {
-                    block.uuid: block,
-                }
-            )
+            self.extensions[block.extension_uuid]['blocks_by_uuid'].update({
+                block.uuid: block,
+            })
         elif is_callback:
             self.callbacks_by_uuid[block.uuid] = block
         elif is_conditional:

@@ -427,8 +427,9 @@ def fetch_input_variables(
         upstream_block_uuids = upstream_block_uuids_override
 
     kwargs_vars = []
-
     input_vars = []
+    input_variables_by_uuid = None
+
     if input_args is not None:
         input_vars = input_args
         if upstream_block_uuids and not upstream_block_uuids_override:
@@ -591,6 +592,12 @@ def fetch_input_variables(
                             raise_exception=True,
                             spark=spark,
                             dynamic_block_index=dynamic_block_index_for_output_variable,
+                            batch_settings=current_block.batch_settings(upstream_block_uuid)
+                            if current_block
+                            else None,
+                            input_data_types=current_block.input_data_types(upstream_block_uuid)
+                            if current_block
+                            else None,
                         )
                         for var in variables
                     ]
@@ -722,6 +729,12 @@ def fetch_input_variables(
                             input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
+                            batch_settings=current_block.input_data_types(upstream_block_uuid)
+                            if current_block
+                            else None,
+                            input_data_types=current_block.input_data_types(upstream_block_uuid)
+                            if current_block
+                            else None,
                         )
 
                         if type(variable_values) is list and len(variable_values) == 1:
@@ -749,6 +762,12 @@ def fetch_input_variables(
                             input_args=input_args,
                             partition=execution_partition,
                             spark=spark,
+                            batch_settings=current_block.input_data_types(upstream_block_uuid)
+                            if current_block
+                            else None,
+                            input_data_types=current_block.input_data_types(upstream_block_uuid)
+                            if current_block
+                            else None,
                         )
                         if dynamic_block_index < len(variable_values):
                             val = variable_values[dynamic_block_index]

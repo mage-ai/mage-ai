@@ -19,7 +19,7 @@ def deserialize_batch(
     record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
     table = pa.Table.from_batches([record_batch])
     if COLUMN_CHUNK in table.column_names:
-        table = table.drop(columns=[COLUMN_CHUNK])
+        table = table.drop([COLUMN_CHUNK])
 
     if object_metadata is not None and table.num_columns >= 1:
         if compare_object(pd.Series, object_metadata):

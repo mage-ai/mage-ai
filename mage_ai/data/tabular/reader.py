@@ -4,40 +4,25 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import reduce
-from typing import (
-    Any,
-    AsyncGenerator,
-    AsyncIterator,
-    Dict,
-    Generator,
-    Iterator,
-    List,
-    Optional,
-    Union,
-)
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Union
 
 import pandas as pd
 import polars as pl
-import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
-from mage_ai.data.models.pyarrow.record_batch import RecordBatch, TaggedRecordBatch
+from mage_ai.data.constants import (
+    AsyncRecordBatchGenerator,
+    RecordBatch,
+    RecordBatchGenerator,
+    ScanBatchDatasetResult,
+    TaggedRecordBatch,
+)
 from mage_ai.data.tabular.constants import COLUMN_CHUNK, FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.utils import compare_object
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.models import BaseDataClass
-
-ScanBatchDatasetResult = Union[
-    Optional[Dict[str, str]],
-    ds.TaggedRecordBatch,
-    pa.RecordBatch,
-    pl.DataFrame,
-]
-RecordBatchIterator = Iterator[ScanBatchDatasetResult]
-
-AsyncRecordBatchIterator = AsyncIterator[ScanBatchDatasetResult]
 
 
 async def run_in_executor(func, *args):
@@ -299,15 +284,13 @@ def get_all_objects_metadata(
     if metadatas is None:
         return []
 
-    return flatten(
+    return flatten([
         [
-            [
-                get_object_metadata(get_file_metadata(file_details))
-                for file_details in get_file_details(metadata)
-            ]
-            for metadata in metadatas
+            get_object_metadata(get_file_metadata(file_details))
+            for file_details in get_file_details(metadata)
         ]
-    )
+        for metadata in metadatas
+    ])
 
 
 def get_series_object_metadata(
@@ -326,7 +309,7 @@ def get_series_object_metadata(
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
-def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> RecordBatchIterator:
+def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> RecordBatchGenerator:
     """
     Scans and optionally deserializes batches of records from a dataset.
 
@@ -427,7 +410,7 @@ def scan_batch_datasets_generator(source: Union[List[str], str], **kwargs) -> Re
 
 async def scan_batch_datasets_generator_async(
     source: Union[List[str], str], **kwargs
-) -> AsyncRecordBatchIterator:
+) -> AsyncRecordBatchGenerator:
     generator = scan_batch_datasets_generator(source, **kwargs)
 
     async def async_generator_wrapper():
@@ -463,12 +446,10 @@ def sample_batch_datasets(
     settings: Optional[BatchSettings] = None,
     **kwargs,
 ) -> Optional[ScanBatchDatasetResult]:
-    settings = BatchSettings.load(
-        **{
-            **(settings.to_dict() if settings is not None else {}),
-            **dict(items=dict(maximum=sample_count)),
-        }
-    )
+    settings = BatchSettings.load(**{
+        **(settings.to_dict() if settings is not None else {}),
+        **dict(items=dict(maximum=sample_count)),
+    })
 
     generator = scan_batch_datasets_generator(source, **kwargs, settings=settings)
 
@@ -486,12 +467,10 @@ async def sample_batch_datasets_async(
     settings: Optional[BatchSettings] = None,
     **kwargs,
 ) -> Optional[ScanBatchDatasetResult]:
-    settings = BatchSettings.load(
-        **{
-            **(settings.to_dict() if settings is not None else {}),
-            **dict(items=dict(maximum=sample_count)),
-        }
-    )
+    settings = BatchSettings.load(**{
+        **(settings.to_dict() if settings is not None else {}),
+        **dict(items=dict(maximum=sample_count)),
+    })
 
     generator = await scan_batch_datasets_generator_async(source, **kwargs, settings=settings)
 

@@ -13,7 +13,9 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
+from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.manager import DataManager
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
@@ -69,6 +71,8 @@ class Variable:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         validate_pipeline_path: bool = False,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -95,6 +99,8 @@ class Variable:
         self.variable_type = variable_type
         self.check_variable_type(spark=spark)
 
+        self.batch_settings = batch_settings
+        self.input_data_types = input_data_types
         self._data_manager = None
 
     @classmethod
@@ -113,6 +119,8 @@ class Variable:
     def data_manager(self) -> Optional[DataManager]:
         if self._data_manager is None:
             self._data_manager = DataManager(
+                batch_settings=self.batch_settings,
+                input_data_types=self.input_data_types,
                 storage=self.storage,
                 uuid=self.__scope_uuid(),
                 variable_dir_path=self.variable_dir_path,
@@ -304,6 +312,7 @@ class Variable:
         sample: bool = False,
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> Any:
         """
         Used by

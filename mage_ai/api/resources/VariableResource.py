@@ -25,8 +25,8 @@ def get_variable_value(
         variable_uuid,
     )
     if variable.variable_type in [VariableType.DATAFRAME, VariableType.GEO_DATAFRAME]:
-        value = "DataFrame"
-        variable_type = "pandas.DataFrame"
+        value = 'DataFrame'
+        variable_type = 'pandas.DataFrame'
     else:
         value = variable.read_data(sample=True)
         variable_type = str(type(value))
@@ -41,9 +41,9 @@ class VariableResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
-        pipeline_uuid = kwargs["parent_model"].uuid
+        pipeline_uuid = kwargs['parent_model'].uuid
 
-        global_only = query.get("global_only", [False])
+        global_only = query.get('global_only', [False])
         if global_only:
             global_only = global_only[0]
 
@@ -54,7 +54,7 @@ class VariableResource(GenericResource):
         ]
         global_variables_arr = [
             dict(
-                block=dict(uuid="global"),
+                block=dict(uuid='global'),
                 pipeline=dict(uuid=pipeline_uuid),
                 variables=global_variables,
             )
@@ -76,11 +76,11 @@ class VariableResource(GenericResource):
                         )
                         for var in arr
                         # Not return printed outputs
-                        if var == "df" or var.startswith("output")
+                        if var == 'df' or var.startswith('output')
                     ],
                 )
                 for uuid, arr in variables_dict.items()
-                if uuid != "global"
+                if uuid != 'global'
             ] + global_variables_arr
 
         return self.build_result_set(
@@ -91,21 +91,21 @@ class VariableResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def create(self, payload: Dict, user, **kwargs) -> "VariableResource":
-        pipeline_uuid = kwargs["parent_model"].uuid
+    def create(self, payload: Dict, user, **kwargs) -> 'VariableResource':
+        pipeline_uuid = kwargs['parent_model'].uuid
 
         error = ApiError.RESOURCE_INVALID.copy()
 
-        variable_uuid = payload.get("name")
+        variable_uuid = payload.get('name')
         if not variable_uuid.isidentifier():
             error.update(
-                message=f"Invalid variable name syntax for variable name {variable_uuid}."
+                message=f'Invalid variable name syntax for variable name {variable_uuid}.'
             )
             raise ApiError(error)
 
-        variable_value = payload.get("value")
+        variable_value = payload.get('value')
         if variable_value is None:
-            error.update(message=f"Value is empty for variable name {variable_uuid}.")
+            error.update(message=f'Value is empty for variable name {variable_uuid}.')
             raise ApiError(error)
 
         set_global_variable(
@@ -118,7 +118,7 @@ class VariableResource(GenericResource):
 
         return self(
             dict(
-                block=dict(uuid="global"),
+                block=dict(uuid='global'),
                 name=variable_uuid,
                 pipeline=dict(uuid=pipeline_uuid),
                 value=variable_value,
@@ -135,20 +135,18 @@ class VariableResource(GenericResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
-        pipeline_uuid = kwargs["parent_model"].uuid
+        pipeline_uuid = kwargs['parent_model'].uuid
 
         error = ApiError.RESOURCE_INVALID.copy()
 
-        variable_uuid = payload.get("name")
+        variable_uuid = payload.get('name')
         if not variable_uuid.isidentifier():
-            error.update(
-                message=f"Invalid variable name syntax for variable name {self.name}."
-            )
+            error.update(message=f'Invalid variable name syntax for variable name {self.name}.')
             raise ApiError(error)
 
-        variable_value = payload.get("value")
+        variable_value = payload.get('value')
         if variable_value is None:
-            error.update(message=f"Value is empty for variable name {self.name}.")
+            error.update(message=f'Value is empty for variable name {self.name}.')
             raise ApiError(error)
 
         set_global_variable(
@@ -161,7 +159,7 @@ class VariableResource(GenericResource):
 
         self.model.update(
             dict(
-                block=dict(uuid="global"),
+                block=dict(uuid='global'),
                 name=variable_uuid,
                 pipeline=dict(uuid=pipeline_uuid),
                 value=variable_value,
@@ -173,6 +171,6 @@ class VariableResource(GenericResource):
 
     @safe_db_query
     def delete(self, **kwargs):
-        pipeline_uuid = kwargs["parent_model"].uuid
+        pipeline_uuid = kwargs['parent_model'].uuid
         delete_global_variable(pipeline_uuid, self.name)
         return self

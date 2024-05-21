@@ -32,6 +32,9 @@ def is_cmdline_contains_ipykernel(cmdline, search_term='ipykernel_launcher'):
 
 
 def find_ipykernel_launchers_info(check_active_status: bool = False):
+    """
+    ps aux | grep ipykernel_launcher
+    """
     arr = []
     for proc in psutil.process_iter(['pid', 'ppid', 'name', 'cmdline', 'memory_info']):
         try:

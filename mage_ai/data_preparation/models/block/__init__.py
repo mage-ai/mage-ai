@@ -25,6 +25,8 @@ from jinja2 import Template
 
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -2046,6 +2048,8 @@ class Block(
         partition: str = None,
         raise_exception: bool = False,
         spark=None,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ):
         variable_manager = self.pipeline.variable_manager
 
@@ -2064,6 +2068,8 @@ class Block(
             raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
         return value
@@ -2074,6 +2080,8 @@ class Block(
         variable_uuid: Optional[str] = None,
         dynamic_block_index: Optional[int] = None,
         partition: Optional[str] = None,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> Variable:
         variable_manager = self.pipeline.variable_manager
 
@@ -2090,6 +2098,8 @@ class Block(
             partition=partition,
             spark=self.get_spark_session(),
             variable_uuid=variable_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
     def get_raw_outputs(

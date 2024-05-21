@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, List, Optional
 
-from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
+from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES, InputDataType
 from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -21,6 +22,8 @@ class BaseData:
         storage: BaseStorage,
         variable_dir_path: str,
         variable_path: str,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
         poll_interval: Optional[int] = None,
         uuid: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
@@ -43,6 +46,7 @@ class BaseData:
             /output_0
         """
 
+        self.batch_settings = batch_settings
         self.poll_interval = poll_interval
         self.variable_path = variable_path
         self.variable_type = variable_type

@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -99,6 +101,8 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_variable_uuid: bool = True,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> Variable:
         return Variable(
             clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
@@ -107,6 +111,8 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
     async def add_variable_async(
@@ -118,6 +124,8 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> None:
         """
         Used by:
@@ -137,6 +145,8 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
         # Delete data if it exists
@@ -221,6 +231,8 @@ class VariableManager:
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
         clean_block_uuid: bool = True,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> Any:
         variable = self.get_variable_object(
             pipeline_uuid,
@@ -230,6 +242,8 @@ class VariableManager:
             variable_type=variable_type,
             spark=spark,
             clean_block_uuid=clean_block_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
@@ -248,6 +262,8 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         spark=None,
+        batch_settings: Optional[BatchSettings] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
@@ -260,6 +276,8 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
+            batch_settings=batch_settings,
+            input_data_types=input_data_types,
         )
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:

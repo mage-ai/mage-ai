@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import isawaitable
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from mage_ai.kernels.utils import (
     find_ipykernel_launchers_info,
@@ -84,12 +84,10 @@ class KernelProcess(BaseDataClass):
         self.serialize_attribute_classes('open_files', POpenFile)
 
         self.cpu = (
-            sum(
-                [
-                    float(val) if val is not None else 0
-                    for val in [self.cpu_times.user, self.cpu_times.system]
-                ]
-            )
+            sum([
+                float(val) if val is not None else 0
+                for val in [self.cpu_times.user, self.cpu_times.system]
+            ])
             if self.cpu_times
             else 0
         )
@@ -103,10 +101,17 @@ class KernelProcess(BaseDataClass):
         ]
 
     @classmethod
-    def terminate_inactive(cls) -> None:
-        for kernel_process in cls.load_all(check_active_status=True):
-            if not kernel_process.active:
-                kernel_process.terminate()
+    def terminate_inactive(cls) -> Tuple[int, int]:
+        memory_usage = []
+
+        arr = cls.load_all(check_active_status=True)
+        if len(arr) >= 2:
+            for kernel_process in arr:
+                if not kernel_process.active:
+                    if kernel_process.terminate():
+                        memory_usage.append(kernel_process.memory)
+
+        return len(memory_usage), sum(memory_usage)
 
     def check_active_status(self) -> bool:
         if not self.pid or not self.connection_file:

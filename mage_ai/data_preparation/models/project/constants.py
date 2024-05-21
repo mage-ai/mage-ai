@@ -3,6 +3,7 @@ from enum import Enum
 
 class FeatureUUID(str, Enum):
     ADD_NEW_BLOCK_V2 = 'add_new_block_v2'
+    AUTOMATIC_KERNEL_CLEANUP = 'automatic_kernel_cleanup'
     CODE_BLOCK_V2 = 'code_block_v2'
     COMMAND_CENTER = 'command_center'
     COMPUTE_MANAGEMENT = 'compute_management'

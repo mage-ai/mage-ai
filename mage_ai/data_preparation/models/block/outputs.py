@@ -7,6 +7,8 @@ import simplejson
 from sklearn.utils import estimator_html_repr
 
 from mage_ai.ai.utils.xgboost import render_tree_visualization
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
@@ -420,6 +422,7 @@ def get_outputs_for_display_dynamic_block(
 def handle_variables(
     block,
     items: List[Dict[str, Any]],
+    batch_settings: Optional[BatchSettings] = None,
     block_groups: Optional[
         List[Dict[str, Union[List[str], Optional[List[Any]], Optional[str]]]]
     ] = None,
@@ -428,6 +431,7 @@ def handle_variables(
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     include_print_outputs: bool = True,
+    input_data_types: Optional[List[InputDataType]] = None,
     max_results: Optional[int] = None,
     sample: bool = True,
     sample_count: Optional[int] = None,
@@ -477,6 +481,8 @@ def handle_variables(
                 variable_uuid=variable_uuid,
                 idx=idx,
                 idx_inner=idx_inner,
+                batch_settings=batch_settings,
+                input_data_types=input_data_types,
             ):
                 data, is_data_product = format_output_data(
                     block,
@@ -504,6 +510,8 @@ def handle_variables(
                     block_uuid=b_uuid,
                     partition=execution_partition,
                     variable_uuid=variable_uuid,
+                    batch_settings=batch_settings,
+                    input_data_types=input_data_types,
                 )
 
                 if variable_type is not None and variable_object.variable_type != variable_type:
