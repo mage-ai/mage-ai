@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import multiprocessing
 import os
@@ -9,6 +10,7 @@ from datetime import datetime, timedelta
 from distutils.file_util import copy_file
 from typing import Dict, List
 
+import simplejson
 import tornado.websocket
 from jupyter_client import KernelClient
 
@@ -458,6 +460,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block.cache_spark_application()
                     block.set_spark_job_execution_start(execution_uuid=execution_uuid)
 
+                pipeline_config = pipeline.get_config_from_yaml()
+                repo_config = pipeline.repo_config.to_dict(remote=remote_execution)
+
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
@@ -469,8 +474,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
-                    pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
+                    pipeline_config=pipeline_config,
+                    pipeline_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(pipeline_config).encode()
+                    ).decode(),
+                    repo_config=repo_config,
+                    repo_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(repo_config).encode()
+                    ).decode(),
                     # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
                     # The UI can execute a block and send run_settings to control the behavior
