@@ -9,6 +9,7 @@ import pyarrow as pa
 from pyarrow import parquet as pq
 
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
+from mage_ai.data.tabular.utils import multi_series_to_frame
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import object_to_dict
 
@@ -77,12 +78,6 @@ def add_custom_metadata_to_table(table: pa.Table, metadata: Dict) -> pa.Table:
     # Update PyArrow Table schema with merged metadata
     new_schema = table.schema.with_metadata(updated_metadata)
     return table.replace_schema_metadata(new_schema.metadata)
-
-
-def series_to_dataframe(series: Union[pd.Series, pl.Series]) -> pl.DataFrame:
-    if isinstance(series, pd.Series):
-        series = pl.Series(series.name, series.to_numpy())
-    return pl.DataFrame(series)
 
 
 def to_parquet_sync(
@@ -169,22 +164,7 @@ def __prepare_data(
     :param metadata: Dictionary with custom metadata to add to the Parquet files.
     """
 
-    series_sample = None
-    if dfs is not None:
-        if all([isinstance(item, (pd.Series, pl.Series)) for item in dfs]):
-            series_sample = dfs[0]
-            dfs = [
-                series_to_dataframe(item)
-                for item in dfs
-                if isinstance(item, (pd.Series, pl.Series))
-            ]
-        elif all([isinstance(item, pd.DataFrame) for item in dfs]):
-            dfs = [pl.from_pandas(item) for item in dfs if isinstance(item, pd.DataFrame)]
-    elif isinstance(df, (pd.Series, pl.Series)):
-        series_sample = df
-        df = series_to_dataframe(df)
-    elif isinstance(df, pd.DataFrame):
-        df = pl.from_pandas(df)
+    df, dfs, series_sample = multi_series_to_frame(df, dfs)
 
     chunk_sizes = [] + ([chunk_size] if chunk_size else [])
     if dfs is not None:

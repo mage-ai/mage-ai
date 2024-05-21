@@ -77,10 +77,14 @@ class DataManager(BaseData):
         if self.generator_type:
             return generator
 
+        batches = [batch.deserialize() for batch in generator if batch is not None]
         if self.batch_type:
-            return [batch.deserialize() for batch in generator if batch is not None]
+            return batches
 
-        return pl.concat([batch.deserialize() for batch in generator if batch is not None])
+        if len(batches) >= 1:
+            if isinstance(batches[0], pl.DataFrame):
+                return pl.concat(batches)
+            return batches
 
     async def read_async(
         self,

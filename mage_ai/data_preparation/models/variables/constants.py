@@ -29,4 +29,5 @@ class VariableType(str, Enum):
     MODEL_XGBOOST = 'model_xgboost'
     POLARS_DATAFRAME = 'polars_dataframe'
     SERIES_PANDAS = 'series_pandas'
+    SERIES_POLARS = 'series_polars'
     SPARK_DATAFRAME = 'spark_dataframe'

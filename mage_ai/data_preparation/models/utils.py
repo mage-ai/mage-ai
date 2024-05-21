@@ -198,6 +198,10 @@ def infer_variable_type(
         basic_iterable and len(data) >= 1 and all(isinstance(d, pd.Series) for d in data)
     ):
         variable_type_use = VariableType.SERIES_PANDAS
+    elif isinstance(data, pl.Series) or (
+        basic_iterable and len(data) >= 1 and all(isinstance(d, pl.Series) for d in data)
+    ):
+        variable_type_use = VariableType.SERIES_POLARS
     elif is_model_sklearn(data) or (
         basic_iterable and len(data) >= 1 and all(is_model_sklearn(d) for d in data)
     ):

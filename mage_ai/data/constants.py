@@ -11,6 +11,7 @@ SUPPORTED_VARIABLE_TYPES = [
     VariableType.DATAFRAME,
     VariableType.POLARS_DATAFRAME,
     VariableType.SERIES_PANDAS,
+    VariableType.SERIES_POLARS,
 ]
 
 ScanBatchDatasetResult = Union[RecordBatch, TaggedRecordBatch, pl.DataFrame]

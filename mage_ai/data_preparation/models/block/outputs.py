@@ -9,6 +9,10 @@ from sklearn.utils import estimator_html_repr
 from mage_ai.ai.utils.xgboost import render_tree_visualization
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.utils import (
+    convert_series_list_to_dataframe,
+    series_to_dataframe,
+)
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
@@ -65,6 +69,13 @@ def format_output_data(
             data = pd.DataFrame(data).T
         else:
             data = data.to_frame()
+    elif VariableType.SERIES_POLARS == variable_type:
+        if automatic_sampling and not sample_count:
+            sample_count = min(len(data), DATAFRAME_SAMPLE_COUNT)
+        if basic_iterable:
+            data = convert_series_list_to_dataframe(data)
+        else:
+            data = series_to_dataframe(data)
     elif VariableType.ITERABLE == variable_type and isinstance(data, list):
         data = pd.Series(data).to_frame()
 

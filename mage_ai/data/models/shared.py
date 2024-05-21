@@ -63,6 +63,7 @@ class BaseData:
             VariableType.DATAFRAME,
             VariableType.POLARS_DATAFRAME,
             VariableType.SERIES_PANDAS,
+            VariableType.SERIES_POLARS,
         ]
 
     def supported(self, data: Optional[Any] = None) -> bool:
@@ -77,7 +78,14 @@ class BaseData:
         if self.variable_type not in SUPPORTED_VARIABLE_TYPES:
             return False
 
-        if VariableType.POLARS_DATAFRAME == self.variable_type and not MEMORY_MANAGER_POLARS_V2:
+        if (
+            self.variable_type
+            in [
+                VariableType.POLARS_DATAFRAME,
+                VariableType.SERIES_POLARS,
+            ]
+            and not MEMORY_MANAGER_POLARS_V2
+        ):
             return False
 
         if (
