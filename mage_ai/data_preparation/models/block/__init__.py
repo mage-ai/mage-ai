@@ -1824,7 +1824,6 @@ class Block(
                     input_vars,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
-                    execution_partition=execution_partition,
                 )
 
         block_function = self._validate_execution(decorated_functions, input_vars)
