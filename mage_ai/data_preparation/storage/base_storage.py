@@ -123,6 +123,3 @@ class BaseStorage(ABC):
     @abstractmethod
     async def read_async(self, file_path: str) -> str:
         pass
-
-    def write_csv(self, df: pd.DataFrame, file_path: str) -> None:
-        pass

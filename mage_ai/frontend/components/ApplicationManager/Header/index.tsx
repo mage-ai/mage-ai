@@ -1,4 +1,4 @@
-import  { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -28,33 +28,35 @@ const TOOLTIP_PROPS = {
   widthFitContent: true,
 };
 
-
-
-function Header({
-  applications,
-  closeApplication,
-  maximizeApplication,
-  minimizeApplication,
-}: {
-  applications: ApplicationManagerApplication[];
-  closeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  maximizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  minimizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
-  setSelectedTab?: (prevState: (value: TabType) => TabType) => void;
-}, ref) {
-  const tabs = useMemo(() => applications?.map(({
-    applicationConfiguration,
-    uuid,
-  }) => ({
-    label: () => applicationConfiguration?.item?.title,
-    uuid,
-  })), [applications]);
+function Header(
+  {
+    applications,
+    closeApplication,
+    maximizeApplication,
+    minimizeApplication,
+  }: {
+    applications: ApplicationManagerApplication[];
+    closeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+    maximizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+    minimizeApplication?: (uuidApp: ApplicationExpansionUUIDEnum) => void;
+    setSelectedTab?: (prevState: (value: TabType) => TabType) => void;
+  },
+  ref,
+) {
+  const tabs = useMemo(
+    () =>
+      applications?.map(({ applicationConfiguration, uuid }) => ({
+        label: () => applicationConfiguration?.item?.title,
+        uuid,
+      })),
+    [applications],
+  );
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs?.length >= 1 ? tabs?.[0] : null);
-  const application = useMemo(() => applications?.find((app) => app.uuid === selectedTab?.uuid), [
-    applications,
-    selectedTab,
-  ]);
+  const application = useMemo(
+    () => applications?.find(app => app.uuid === selectedTab?.uuid),
+    [applications, selectedTab],
+  );
 
   return (
     <HeaderStyle id={`${selectedTab?.uuid}-header`} ref={ref}>
@@ -68,7 +70,9 @@ function Header({
             }}
             selectedTabUUID={selectedTab?.uuid}
             tabs={tabs}
-            underlineColor={getApplicationColors(selectedTab?.uuid as ApplicationExpansionUUIDEnum)?.accent}
+            underlineColor={
+              getApplicationColors(selectedTab?.uuid as ApplicationExpansionUUIDEnum)?.accent
+            }
             underlineStyle
             uppercase={false}
           />
@@ -84,7 +88,7 @@ function Header({
                 noBackground
                 noBorder
                 noPadding
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   pauseEvent(e);
                   application && maximizeApplication(application?.uuid);
@@ -113,7 +117,7 @@ function Header({
                     noBackground
                     noBorder
                     noPadding
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       pauseEvent(e);
                       application && minimizeApplication(application?.uuid);
@@ -142,7 +146,7 @@ function Header({
                 noBackground
                 noBorder
                 noPadding
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   pauseEvent(e);
                   application && closeApplication(application?.uuid);

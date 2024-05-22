@@ -37,7 +37,11 @@ function TableOutput({
   uuid,
 }: TableOutputProps) {
   const { data, sample_data: sampleData } = output;
-  const shape = useMemo(() => output?.data?.shape || output?.shape, [output]);
+  const shape = useMemo(
+    // @ts-ignore
+    () => (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape,
+    [output],
+  );
 
   const {
     columns,
@@ -157,7 +161,7 @@ function TableOutput({
       <Spacing pb={1} px={PADDING_UNITS}>
         <Text monospace muted small>
           {pluralize('row', shape?.[0])} x {pluralize('column', shape?.[1])}&nbsp;/&nbsp;
-          {shape?.[2] && `${(shape?.[0] / 1024**2).toFixed(3)} MB`}
+          {shape?.[2] && `${(shape?.[0] / 1024 ** 2).toFixed(3)} MB`}
         </Text>
       </Spacing>
     </>

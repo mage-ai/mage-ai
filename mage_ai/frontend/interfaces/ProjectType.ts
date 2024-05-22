@@ -51,7 +51,7 @@ export interface SparkConfigType {
   };
   others?: {
     [key: string]: boolean | number | string;
-  }
+  };
   spark_home?: string;
   spark_jars?: string[];
   spark_master?: string;
@@ -125,7 +125,7 @@ export default interface ProjectType {
     active: boolean;
     path: string;
     uuid: string;
-  }
+  };
   spark_config?: SparkConfigType;
   version?: string;
   workspace_config_defaults?: WorkspaceConfigType;

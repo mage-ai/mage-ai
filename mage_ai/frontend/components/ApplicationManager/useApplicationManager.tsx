@@ -14,10 +14,7 @@ import PortalTerminal from '@components/Applications/PortalTerminal';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useAutoResizer, { DimensionDataType, RectType } from '@utils/useAutoResizer';
 import Button from '@oracle/elements/Button';
-import {
-  ExpandWindow,
-  ExpandWindowFilled,
-} from '@oracle/icons';
+import { ExpandWindow, ExpandWindowFilled } from '@oracle/icons';
 import useClickOutside from '@utils/useClickOutside';
 import useDraggableElement from '@utils/useDraggableElement';
 import Text from 'oracle/elements/Text';
@@ -25,7 +22,12 @@ import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import WithOnMount from '@components/shared/WithOnMount';
 import { getIcon } from '@components/CommandCenter/ItemRow/constants';
-import { BUTTON_STYLE_PROPS, ButtonStyle, HeaderStyle, getApplicationColors } from '@components/ApplicationManager/index.style';
+import {
+  BUTTON_STYLE_PROPS,
+  ButtonStyle,
+  HeaderStyle,
+  getApplicationColors,
+} from '@components/ApplicationManager/index.style';
 import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ErrorProvider } from '@context/Error';
@@ -118,23 +120,25 @@ export default function useApplicationManager({
   const refResizers = useRef({});
   const refDockedApps = useRef({});
 
-  function getOpenApplications({
-    ascending,
-  }: {
-    ascending?: boolean;
-  } = {
-    ascending: false,
-  }): ApplicationManagerApplication[] {
-    const apps = getApplicationsFromCache({ statuses: [StatusEnum.ACTIVE, StatusEnum.OPEN] })?.map((app) => ({
-      ...app,
-      element: refExpansions?.current?.[app?.uuid],
-    }));
-
-    return sortByKey(
-      apps,
-      ({ element }) => Number(element?.current?.style?.zIndex || 0),
-      { ascending },
+  function getOpenApplications(
+    {
+      ascending,
+    }: {
+      ascending?: boolean;
+    } = {
+      ascending: false,
+    },
+  ): ApplicationManagerApplication[] {
+    const apps = getApplicationsFromCache({ statuses: [StatusEnum.ACTIVE, StatusEnum.OPEN] })?.map(
+      app => ({
+        ...app,
+        element: refExpansions?.current?.[app?.uuid],
+      }),
     );
+
+    return sortByKey(apps, ({ element }) => Number(element?.current?.style?.zIndex || 0), {
+      ascending,
+    });
   }
 
   function updateZIndex(uuid: ApplicationExpansionUUIDEnum) {
@@ -142,7 +146,7 @@ export default function useApplicationManager({
     const apps = [];
     getOpenApplications({
       ascending: true,
-    })?.forEach((app) => {
+    })?.forEach(app => {
       if (app?.uuid === uuid) {
         pick = app;
       } else {
@@ -150,41 +154,45 @@ export default function useApplicationManager({
       }
     });
 
-
-    apps?.forEach(({
-      element,
-      uuid: uuidApp,
-    }, idx: number) => {
+    apps?.forEach(({ element, uuid: uuidApp }, idx: number) => {
       const z = DEFAULT_Z_INDEX + idx;
       if (element && element.current) {
         element.current.style.zIndex = z;
       }
 
-      updateApplicationLayoutAndState(uuidApp, {
-        layout: {
-          position: {
-            z,
+      updateApplicationLayoutAndState(
+        uuidApp,
+        {
+          layout: {
+            position: {
+              z,
+            },
           },
         },
-      }, {
-        layout: true,
-        state: false,
-      });
+        {
+          layout: true,
+          state: false,
+        },
+      );
     });
 
     if (pick?.element?.current) {
       const z = DEFAULT_Z_INDEX + (apps?.length || 0);
       pick.element.current.style.zIndex = z;
-      updateApplicationLayoutAndState(uuid, {
-        layout: {
-          position: {
-            z,
+      updateApplicationLayoutAndState(
+        uuid,
+        {
+          layout: {
+            position: {
+              z,
+            },
           },
         },
-      }, {
-        layout: true,
-        state: false,
-      });
+        {
+          layout: true,
+          state: false,
+        },
+      );
     }
   }
 
@@ -196,23 +204,23 @@ export default function useApplicationManager({
     const app = getApplicationsFromCache({ uuid })?.[0];
 
     if ([StatusEnum.ACTIVE, StatusEnum.OPEN].includes(app?.state?.status)) {
-      updateApplicationLayoutAndState(uuid, {
-        layout: {
-          dimension: selectEntriesWithValues(selectKeys(elementRect, ['height', 'width'])),
-          position: selectEntriesWithValues(selectKeys(elementRect, ['x', 'y'])),
+      updateApplicationLayoutAndState(
+        uuid,
+        {
+          layout: {
+            dimension: selectEntriesWithValues(selectKeys(elementRect, ['height', 'width'])),
+            position: selectEntriesWithValues(selectKeys(elementRect, ['x', 'y'])),
+          },
         },
-      }, {
-        layout: true,
-        state: false,
-      });
+        {
+          layout: true,
+          state: false,
+        },
+      );
     }
   }
 
-  const {
-    deregisterElementUUIDs,
-    observeThenResizeElements,
-    setOnResize,
-  } = useAutoResizer();
+  const { deregisterElementUUIDs, observeThenResizeElements, setOnResize } = useAutoResizer();
 
   function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
     closeApplicationFromCache(uuid);
@@ -226,20 +234,24 @@ export default function useApplicationManager({
     deregisterElementUUIDs([uuid]);
   }
 
-  function updateApplicationLayoutAndState(uuid: ApplicationExpansionUUIDEnum, opts?: {
-    layout?: LayoutType;
-    state?: StateType;
-    updateElement?: (
-      app: ApplicationManagerApplication,
-      elementRef: React.RefObject<HTMLDivElement>,
-    ) => void;
-  }, cache: {
-    layout?: boolean;
-    state?: boolean;
-  } = {
-    layout: true,
-    state: true,
-  }): ApplicationManagerApplication {
+  function updateApplicationLayoutAndState(
+    uuid: ApplicationExpansionUUIDEnum,
+    opts?: {
+      layout?: LayoutType;
+      state?: StateType;
+      updateElement?: (
+        app: ApplicationManagerApplication,
+        elementRef: React.RefObject<HTMLDivElement>,
+      ) => void;
+    },
+    cache: {
+      layout?: boolean;
+      state?: boolean;
+    } = {
+      layout: true,
+      state: true,
+    },
+  ): ApplicationManagerApplication {
     const data: {
       layout?: LayoutType;
       state?: StateType;
@@ -276,7 +288,6 @@ export default function useApplicationManager({
     return appUpdated;
   }
 
-
   function changeApplicationStatus(
     uuidInit: ApplicationExpansionUUIDEnum,
     status: StatusEnum,
@@ -292,21 +303,30 @@ export default function useApplicationManager({
   ) {
     const app = getOpenApplications()?.find(({ uuid }) => uuid === uuidInit);
     const uuid = app?.uuid;
-    updateApplicationLayoutAndState(uuid, {
-      ...opts,
-      state: {
-        status,
+    updateApplicationLayoutAndState(
+      uuid,
+      {
+        ...opts,
+        state: {
+          status,
+        },
       },
-    }, {
-      layout: false,
-      state: true,
-    });
+      {
+        layout: false,
+        state: true,
+      },
+    );
   }
 
-  function sharedApplication(status: StatusEnum, updateElement: (
-    app: ApplicationManagerApplication,
-    elementRef: React.RefObject<HTMLDivElement>,
-  ) => void, uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
+  function sharedApplication(
+    status: StatusEnum,
+    updateElement: (
+      app: ApplicationManagerApplication,
+      elementRef: React.RefObject<HTMLDivElement>,
+    ) => void,
+    uuid: ApplicationExpansionUUIDEnum,
+    opts: { all?: boolean } = {},
+  ) {
     changeApplicationStatus(uuid, status, {
       ...opts,
       updateElement: (appUpdated, element) => {
@@ -326,50 +346,59 @@ export default function useApplicationManager({
   }
 
   function pauseApplication(uuid: ApplicationExpansionUUIDEnum, ...args) {
-    sharedApplication(StatusEnum.INACTIVE, (appUpdated, element) => {
-      const apps = getOpenApplications();
-      const index = apps?.findIndex(a => a.uuid === appUpdated?.uuid);
-      const {
-        dimension,
-        position,
-      } = inactiveLayouts(apps?.length, index);
-
-      element.current.style.height = `${dimension?.height}px`;
-      element.current.style.left = `${position?.x}px`;
-      element.current.style.top = `${position?.y}px`;
-      element.current.style.width = `${dimension?.width}px`;
-      element.current.style.opacity = 0.3;
-    }, uuid, ...args);
-  }
-
-  function restoreApplication(uuid: ApplicationExpansionUUIDEnum, ...args) {
-    sharedApplication(StatusEnum.ACTIVE, (appUpdated, element) => {
-      const apps = getOpenApplications();
-      element.current.style.opacity = 1;
-
-      if (appUpdated?.uuid === uuid) {
-        const {
-          dimension,
-          position,
-        } = buildGrid(
-          1,
-          apps?.length || 1,
-          0,
-          (apps?.filter(a => StatusEnum.INACTIVE !== a?.state?.status)?.length || 1) - 1,
-        );
+    sharedApplication(
+      StatusEnum.INACTIVE,
+      (appUpdated, element) => {
+        const apps = getOpenApplications();
+        const index = apps?.findIndex(a => a.uuid === appUpdated?.uuid);
+        const { dimension, position } = inactiveLayouts(apps?.length, index);
 
         element.current.style.height = `${dimension?.height}px`;
         element.current.style.left = `${position?.x}px`;
         element.current.style.top = `${position?.y}px`;
         element.current.style.width = `${dimension?.width}px`;
-      }
-    }, uuid, ...args);
+        element.current.style.opacity = '0.3';
+      },
+      uuid,
+      ...args,
+    );
+  }
+
+  function restoreApplication(uuid: ApplicationExpansionUUIDEnum, ...args) {
+    sharedApplication(
+      StatusEnum.ACTIVE,
+      (appUpdated, element) => {
+        const apps = getOpenApplications();
+        element.current.style.opacity = '1';
+
+        if (appUpdated?.uuid === uuid) {
+          const { dimension, position } = buildGrid(
+            1,
+            apps?.length || 1,
+            0,
+            (apps?.filter(a => StatusEnum.INACTIVE !== a?.state?.status)?.length || 1) - 1,
+          );
+
+          element.current.style.height = `${dimension?.height}px`;
+          element.current.style.left = `${position?.x}px`;
+          element.current.style.top = `${position?.y}px`;
+          element.current.style.width = `${dimension?.width}px`;
+        }
+      },
+      uuid,
+      ...args,
+    );
   }
 
   function openApplication(...args) {
-    sharedApplication(StatusEnum.OPEN, (appUpdated, element) => {
-      element.current.style.opacity = 1;
-    }, ...args);
+    sharedApplication(
+      StatusEnum.OPEN,
+      (appUpdated, element) => {
+        element.current.style.opacity = '1';
+      },
+      // @ts-ignore
+      ...args,
+    );
   }
 
   function maximizeApplication(uuid: ApplicationExpansionUUIDEnum, opts: { all?: boolean } = {}) {
@@ -385,7 +414,7 @@ export default function useApplicationManager({
           element.current.style.top = `${position?.y}px`;
           element.current.style.width = `${dimension?.width}px`;
           element.current.style.display = 'block';
-          element.current.style.opacity = 1;
+          element.current.style.opacity = '1';
 
           const dockedElement = refDockedApps?.current?.[uuid];
           if (dockedElement?.current) {
@@ -402,7 +431,7 @@ export default function useApplicationManager({
       updateElement: (appUpdated, element) => {
         if (appUpdated?.uuid === uuid) {
           element.current.style.display = 'none';
-          element.current.style.opacity = 1;
+          element.current.style.opacity = '1';
 
           const dockedElement = refDockedApps?.current?.[uuid];
           if (dockedElement?.current) {
@@ -413,19 +442,22 @@ export default function useApplicationManager({
     });
   }
 
-  function onChangeLayoutPosition(uuid: ApplicationExpansionUUIDEnum, {
-    height,
-    width,
-    x,
-    y,
-    z,
-  }: {
-    height?: number;
-    width?: number;
-    x?: number;
-    y?: number;
-    z?: number;
-  }) {
+  function onChangeLayoutPosition(
+    uuid: ApplicationExpansionUUIDEnum,
+    {
+      height,
+      width,
+      x,
+      y,
+      z,
+    }: {
+      height?: number;
+      width?: number;
+      x?: number;
+      y?: number;
+      z?: number;
+    },
+  ) {
     const apps = getApplicationsFromCache({
       statuses: [StatusEnum.ACTIVE, StatusEnum.OPEN],
       uuid,
@@ -452,10 +484,7 @@ export default function useApplicationManager({
   }
 
   function onChangePosition(uuid: ApplicationExpansionUUIDEnum, opts) {
-    const {
-      clientX,
-      clientY,
-    } = opts?.event || {
+    const { clientX, clientY } = opts?.event || {
       clientX: null,
       clientY: null,
     };
@@ -468,7 +497,10 @@ export default function useApplicationManager({
     const percentageY = clientY / (typeof window === 'undefined' ? 0 : window.innerHeight);
     const percentageX = clientX / (typeof window === 'undefined' ? 0 : window.innerWidth);
 
-    if (clientX <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientX + APPLICATION_PADDING) >= window.innerWidth)) {
+    if (
+      clientX <= APPLICATION_PADDING ||
+      (typeof window !== 'undefined' && clientX + APPLICATION_PADDING >= window.innerWidth)
+    ) {
       pauseEvent(opts?.event);
 
       height = 1;
@@ -491,18 +523,25 @@ export default function useApplicationManager({
         x = 0.5;
       }
 
-      updateApplicationLayoutAndState(uuid, {
-        layout: buildMaximumLayout(null, {
-          height,
-          width,
-          x,
-          y,
-        }),
-      }, {
-        layout: true,
-        state: false,
-      });
-    } else if (clientY <= APPLICATION_PADDING || (typeof window !== 'undefined' && (clientY + APPLICATION_PADDING) >= window.innerHeight)) {
+      updateApplicationLayoutAndState(
+        uuid,
+        {
+          layout: buildMaximumLayout(null, {
+            height,
+            width,
+            x,
+            y,
+          }),
+        },
+        {
+          layout: true,
+          state: false,
+        },
+      );
+    } else if (
+      clientY <= APPLICATION_PADDING ||
+      (typeof window !== 'undefined' && clientY + APPLICATION_PADDING >= window.innerHeight)
+    ) {
       pauseEvent(opts?.event);
 
       height = 0.5;
@@ -526,17 +565,21 @@ export default function useApplicationManager({
         y = 0.5;
       }
 
-      updateApplicationLayoutAndState(uuid, {
-        layout: buildMaximumLayout(null, {
-          height,
-          width,
-          x,
-          y,
-        }),
-      }, {
-        layout: true,
-        state: false,
-      });
+      updateApplicationLayoutAndState(
+        uuid,
+        {
+          layout: buildMaximumLayout(null, {
+            height,
+            width,
+            x,
+            y,
+          }),
+        },
+        {
+          layout: true,
+          state: false,
+        },
+      );
     } else {
       onChangeLayoutPosition(uuid, opts);
     }
@@ -555,19 +598,23 @@ export default function useApplicationManager({
     if (!isOutside && StatusEnum.ACTIVE !== status) {
       restoreApplication(uuid);
     } else if (apps?.length >= 2) {
-      if (allOutside && apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))) {
+      if (
+        allOutside &&
+        apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))
+      ) {
         pauseApplication(uuid);
       }
     } else {
-      if (allOutside && apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))) {
+      if (
+        allOutside &&
+        apps?.some(a => [StatusEnum.ACTIVE, StatusEnum.OPEN].includes(a?.state?.status))
+      ) {
         pauseApplication(uuid);
       }
     }
   }
 
-  const {
-    setElementObject: setElementObjectClickOutside,
-  } = useClickOutside({
+  const { setElementObject: setElementObjectClickOutside } = useClickOutside({
     onClick: onClickOutside,
   });
 
@@ -582,21 +629,13 @@ export default function useApplicationManager({
     setOnStart,
   } = useResizeElement();
 
-  const {
-    setElementObject,
-    setInteractiveElementsObjects,
-    setOnChange,
-  } = useDraggableElement();
+  const { setElementObject, setInteractiveElementsObjects, setOnChange } = useDraggableElement();
 
   function renderApplications() {
     return (
       <>
         <DockStyle>
-          {getApplicationsFromCache()?.map(({
-            applicationConfiguration,
-            state,
-            uuid,
-          }) => {
+          {getApplicationsFromCache()?.map(({ applicationConfiguration, state, uuid }) => {
             if (!refDockedApps?.current) {
               refDockedApps.current = {};
             }
@@ -639,9 +678,7 @@ export default function useApplicationManager({
                         <Spacing mr={1} />
 
                         <Flex flex={1}>
-                          <Text>
-                            {applicationConfiguration?.item?.title}
-                          </Text>
+                          <Text>{applicationConfiguration?.item?.title}</Text>
                         </Flex>
 
                         <ButtonStyle {...BUTTON_STYLE_PROPS}>
@@ -650,7 +687,7 @@ export default function useApplicationManager({
                             noBackground
                             noBorder
                             noPadding
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               e.preventDefault();
                               pauseEvent(e);
@@ -685,7 +722,7 @@ export default function useApplicationManager({
         </DockStyle>
 
         <RootApplicationStyle id={ROOT_APPLICATION_UUID} ref={refRootApplication}>
-          {Object.keys(ApplicationExpansionUUIDEnum).map((uuid) => {
+          {Object.keys(ApplicationExpansionUUIDEnum).map(uuid => {
             if (!refContainers?.current) {
               refContainers.current = {};
             }
@@ -694,11 +731,7 @@ export default function useApplicationManager({
             refContainers.current[uuid] = ref;
 
             return (
-              <ApplicationMountStyle
-                id={uuid}
-                key={`${uuid}-${statusMapping?.[uuid]}`}
-                ref={ref}
-              />
+              <ApplicationMountStyle id={uuid} key={`${uuid}-${statusMapping?.[uuid]}`} ref={ref} />
             );
           })}
         </RootApplicationStyle>
@@ -728,12 +761,8 @@ export default function useApplicationManager({
       return;
     }
 
-    const {
-      application,
-    } = applicationConfiguration;
-    const {
-      expansion_settings: expansionSettings,
-    } = application;
+    const { application } = applicationConfiguration;
+    const { expansion_settings: expansionSettings } = application;
     const uuid: ApplicationExpansionUUIDEnum = expansionSettings?.uuid;
 
     if (!refApplications?.current) {
@@ -753,10 +782,7 @@ export default function useApplicationManager({
 
     const noApps = !getOpenApplications()?.length;
 
-    const {
-      layout,
-      state,
-    } = updateApplication({
+    const { layout, state } = updateApplication({
       applicationConfiguration,
       state: stateProp || {
         status: noApps ? StatusEnum.ACTIVE : StatusEnum.OPEN,
@@ -780,15 +806,8 @@ export default function useApplicationManager({
     const rr = refResizers?.current?.[uuid];
 
     const {
-      dimension: {
-        height,
-        width,
-      },
-      position: {
-        x,
-        y,
-        z,
-      },
+      dimension: { height, width },
+      position: { x, y, z },
     } = layout;
 
     let AppComponent = null;
@@ -808,17 +827,21 @@ export default function useApplicationManager({
       setResizableObject(uuid, ref, {
         tries: 10,
       });
-      setResizersObjects(uuid, [
-        rr?.bottom,
-        rr?.bottomLeft,
-        rr?.bottomRight,
-        rr?.left,
-        rr?.right,
-        rr?.topLeft,
-        rr?.topRight,
-      ], {
-        tries: 10,
-      });
+      setResizersObjects(
+        uuid,
+        [
+          rr?.bottom,
+          rr?.bottomLeft,
+          rr?.bottomRight,
+          rr?.left,
+          rr?.right,
+          rr?.topLeft,
+          rr?.topRight,
+        ],
+        {
+          tries: 10,
+        },
+      );
       setOnResizeElement(onChangeLayoutPosition);
       setOnStart(onStartResize);
 
@@ -853,7 +876,8 @@ export default function useApplicationManager({
           top: y,
           width,
           zIndex: (getOpenApplications()?.[0]?.layout?.position?.z || z) + 1,
-      }}>
+        }}
+      >
         <ResizeBottomStyle onClick={() => updateZIndex(uuid)} ref={rr?.bottom} />
         <ResizeCornerStyle bottom left onClick={() => updateZIndex(uuid)} ref={rr?.bottomLeft} />
         <ResizeCornerStyle left onClick={() => updateZIndex(uuid)} ref={rr?.topLeft} top />
@@ -864,7 +888,7 @@ export default function useApplicationManager({
 
         <OverlayStyle
           className={OVERLAY_ID}
-          onClick={(e) => {
+          onClick={e => {
             maximizeApplication(uuid);
           }}
         />
@@ -889,7 +913,7 @@ export default function useApplicationManager({
               applicationState={applicationState}
               containerRef={ref}
               headerOffset={HEADER_HEIGHT}
-              onChangeState={(prev) => {
+              onChangeState={prev => {
                 if (onChangeState) {
                   onChangeState?.(prev);
                 }
@@ -929,12 +953,7 @@ export default function useApplicationManager({
   }
 
   useEffect(() => {
-    getApplicationsFromCache().forEach(({
-      applicationConfiguration,
-      state,
-      uuid,
-    }) => {
-
+    getApplicationsFromCache().forEach(({ applicationConfiguration, state, uuid }) => {
       if (applicationConfiguration?.application) {
         if (StatusEnum.CLOSED === state?.status) {
           closeApplication(uuid);
@@ -943,28 +962,32 @@ export default function useApplicationManager({
         }
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const {
-    registerOnKeyDown,
-    unregisterOnKeyDown,
-    unregisterOnKeyUp,
-  } = useKeyboardContext();
+  const { registerOnKeyDown, unregisterOnKeyDown, unregisterOnKeyUp } = useKeyboardContext();
 
-  useEffect(() => () => {
-    unregisterOnKeyDown(COMPONENT_UUID);
-    unregisterOnKeyUp(COMPONENT_UUID);
-  }, [unregisterOnKeyDown, unregisterOnKeyUp]);
+  useEffect(
+    () => () => {
+      unregisterOnKeyDown(COMPONENT_UUID);
+      unregisterOnKeyUp(COMPONENT_UUID);
+    },
+    [unregisterOnKeyDown, unregisterOnKeyUp],
+  );
 
-  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping) => {
-    if (onlyKeysPresent([KEY_CODE_ALT_STRING, KEY_CODE_TAB], keyMapping)) {
-      const uuidBottom = getOpenApplications({ ascending: true })?.[0]?.uuid;
-      if (uuidBottom) {
-        pauseEvent(event);
-        updateZIndex(uuidBottom);
+  registerOnKeyDown(
+    COMPONENT_UUID,
+    (event, keyMapping) => {
+      if (onlyKeysPresent([KEY_CODE_ALT_STRING, KEY_CODE_TAB], keyMapping)) {
+        const uuidBottom = getOpenApplications({ ascending: true })?.[0]?.uuid;
+        if (uuidBottom) {
+          pauseEvent(event);
+          updateZIndex(uuidBottom);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     closeApplication,

@@ -143,7 +143,7 @@ function BlockLayoutItem({
   useEffect(() => {
     doFetch();
     // If we add doFetch in this array, it will cause an infinite loop.
-    // @ts-ignore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Minimum 1000ms refresh interval
@@ -168,7 +168,7 @@ function BlockLayoutItem({
       }
     };
     // If we add doFetch in this array, it will cause an infinite loop.
-    // @ts-ignore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockLayoutItemProp, refreshInterval]);
 
   const isLoading: boolean = useMemo(

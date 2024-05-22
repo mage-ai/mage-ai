@@ -17,7 +17,7 @@ const RESIZE_SIZE = 1 * UNIT;
 const RESIZE_SIZE_CORNER = 2 * UNIT;
 
 export const BUTTON_STYLE_PROPS = {
-  onMouseEnter: (e) => {
+  onMouseEnter: e => {
     if (e?.currentTarget?.querySelector('.empty')) {
       e.currentTarget.querySelector('.empty').style.display = 'block';
     }
@@ -25,7 +25,7 @@ export const BUTTON_STYLE_PROPS = {
       e.currentTarget.querySelector('.filled').style.display = 'none';
     }
   },
-  onMouseLeave: (e) => {
+  onMouseLeave: e => {
     if (e?.currentTarget?.querySelector('.empty')) {
       e.currentTarget.querySelector('.empty').style.display = 'none';
     }
@@ -35,22 +35,24 @@ export const BUTTON_STYLE_PROPS = {
   },
 };
 
-function getRGBA(color: string, opts?: {
-  transparency?: number;
-}) {
-  const {
-    r,
-    g,
-    b,
-  } = hexToRgb(color);
+function getRGBA(
+  color: string,
+  opts?: {
+    transparency?: number;
+  },
+) {
+  const { r, g, b } = hexToRgb(color);
 
   return `rgba(${r}, ${g}, ${b}, ${opts?.transparency || 1})`;
 }
 
-export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: {
-  theme?: any;
-  transparency?: number;
-} = {}): {
+export function getApplicationColors(
+  uuid: ApplicationExpansionUUIDEnum,
+  props: {
+    theme?: any;
+    transparency?: number;
+  } = {},
+): {
   accent: string;
   background: string;
   border: string;
@@ -70,10 +72,12 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props: 
   return {
     accent,
     background: background || getRGBA(accent, props),
-    border: border || getRGBA(accent, {
-      ...props,
-      transparency: 0.3,
-    }),
+    border:
+      border ||
+      getRGBA(accent, {
+        ...props,
+        transparency: 0.3,
+      }),
   };
 }
 
@@ -82,10 +86,7 @@ function minimizedDimensions(): {
   width: number;
 } {
   const {
-    dimension: {
-      height,
-      width,
-    },
+    dimension: { height, width },
   } = buildDefaultLayout();
 
   return {
@@ -95,7 +96,8 @@ function minimizedDimensions(): {
 }
 
 export const RootApplicationStyle = styled.div`
-  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+  ${Object.keys(ApplicationExpansionUUIDEnum).map(
+    (uuid: ApplicationExpansionUUIDEnum) => `
     #${uuid}.inactive {
       opacity: 0.5;
     }
@@ -150,7 +152,8 @@ export const RootApplicationStyle = styled.div`
         }
       }
     }
-  `)}
+  `,
+  )}
 `;
 
 export const DockStyle = styled.div`
@@ -179,20 +182,9 @@ export const MinimizedApplicationStyle = styled.div`
 
 export const OverlayStyle = styled.div``;
 
-export const ApplicationMountStyle = styled.div<{
-  status: StatusEnum;
-}>`
-  ${props => StatusEnum.INACTIVE === props?.status && `
-    // opacity: 0.5;
-  `}
-  ${props => StatusEnum.MINIMIZED === props?.status && `
-    // display: none;
-  `}
-`;
+export const ApplicationMountStyle = styled.div``;
 
-export const ContainerStyle = styled.div<{
-  status: StatusEnum;
-}>`
+export const ContainerStyle = styled.div`
   border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
   border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
@@ -242,7 +234,7 @@ export const HeaderStyle = styled.div<{
 }>`
   backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   background-color: rgb(0, 0, 0, 0.9);
-  border-bottom: 1px solid #2E3036;
+  border-bottom: 1px solid #2e3036;
   border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
   border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
   height: ${HEADER_HEIGHT}px;
@@ -253,11 +245,13 @@ export const HeaderStyle = styled.div<{
     position: ${props?.relative ? 'relative' : 'fixed'};
   `}
 
-  ${Object.keys(ApplicationExpansionUUIDEnum).map((uuid: ApplicationExpansionUUIDEnum) => `
+  ${Object.keys(ApplicationExpansionUUIDEnum).map(
+    (uuid: ApplicationExpansionUUIDEnum) => `
     &#${uuid}-header {
       background-color: ${getApplicationColors(uuid, { transparency: 0.5 })?.background};
     }
-  `)}
+  `,
+  )}
 `;
 
 export const InnerStyle = styled.div`
@@ -290,7 +284,8 @@ export const ResizeLeftStyle = styled.div`
   height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover, &:active {
+  &:hover,
+  &:active {
     cursor: col-resize;
   }
 `;
@@ -304,7 +299,8 @@ export const ResizeRightStyle = styled.div`
   height: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
   width: ${RESIZE_SIZE}px;
 
-  &:hover, &:active {
+  &:hover,
+  &:active {
     cursor: col-resize;
   }
 `;
@@ -318,7 +314,8 @@ export const ResizeTopStyle = styled.div`
   height: ${RESIZE_SIZE}px;
   width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover, &:active {
+  &:hover,
+  &:active {
     cursor: row-resize;
   }
 `;
@@ -332,16 +329,17 @@ export const ResizeBottomStyle = styled.div`
   height: ${RESIZE_SIZE}px;
   width: calc(100% - ${RESIZE_SIZE_CORNER * 2}px);
 
-  &:hover, &:active {
+  &:hover,
+  &:active {
     cursor: row-resize;
   }
 `;
 
 export const ResizeCornerStyle = styled.div<{
-  bottom?: boolean,
-  left?: boolean,
-  right?: boolean,
-  top?: boolean,
+  bottom?: boolean;
+  left?: boolean;
+  right?: boolean;
+  top?: boolean;
 }>`
   ${RESIZE_STYLES}
 
@@ -352,35 +350,53 @@ export const ResizeCornerStyle = styled.div<{
     background-color: transparent;
   }
 
-  ${props => ((props.top && props.left) || (props.bottom && props.right)) && `
+  ${props =>
+    ((props.top && props.left) || (props.bottom && props.right)) &&
+    `
     &:hover, &:active {
       cursor: nwse-resize;
     }
   `}
 
-  ${props => ((props.top && props.right) || (props.bottom && props.left)) && `
+  ${props =>
+    ((props.top && props.right) || (props.bottom && props.left)) &&
+    `
     &:hover, &:active {
       cursor: nesw-resize;
     }
   `}
 
-  ${props => (props.top && props.left) &&`
+  ${props =>
+    props.top &&
+    props.left &&
+    `
     border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
-  ${props => (props.top && props.right) &&`
+  ${props =>
+    props.top &&
+    props.right &&
+    `
     border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
-  ${props => (props.bottom && props.left) &&`
+  ${props =>
+    props.bottom &&
+    props.left &&
+    `
     border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
-  ${props => (props.bottom && props.right) &&`
+  ${props =>
+    props.bottom &&
+    props.right &&
+    `
     border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
-  ${props => props.bottom && `
+  ${props =>
+    props.bottom &&
+    `
     bottom: 0;
 
     &:hover {
@@ -388,7 +404,9 @@ export const ResizeCornerStyle = styled.div<{
     }
   `}
 
-  ${props => props.left && `
+  ${props =>
+    props.left &&
+    `
     left: 0;
 
     &:hover {
@@ -396,7 +414,9 @@ export const ResizeCornerStyle = styled.div<{
     }
   `}
 
-  ${props => props.right && `
+  ${props =>
+    props.right &&
+    `
     right: 0;
 
     &:hover {
@@ -404,7 +424,9 @@ export const ResizeCornerStyle = styled.div<{
     }
   `}
 
-  ${props => props.top && `
+  ${props =>
+    props.top &&
+    `
     top: 0;
 
     &:hover {

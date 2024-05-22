@@ -123,7 +123,7 @@ def read_metadata(
 
     # List all Parquet files in the directory
     parquet_files = []
-    for root, dirs, files in os.walk(directory):
+    for root, _dirs, files in os.walk(directory):
         for file in files:
             if file.endswith('.parquet'):
                 parquet_files.append(os.path.join(root, file))
@@ -442,7 +442,7 @@ async def scan_batch_datasets_generator_async(
 
     async def async_generator_wrapper():
         for item in generator:
-            yield await run_in_executor(lambda: item)
+            yield await run_in_executor(lambda item=item: item)
 
     return async_generator_wrapper()
 

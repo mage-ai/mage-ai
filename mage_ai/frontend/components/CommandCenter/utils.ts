@@ -1,4 +1,9 @@
-import { ApplicationConfiguration, ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from './constants';
+import {
+  ApplicationConfiguration,
+  ExecuteActionableType,
+  FetchItemsType,
+  HandleSelectItemRowType,
+} from './constants';
 import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
@@ -15,7 +20,10 @@ import {
   TYPE_TITLE_MAPPING,
   TYPE_TITLE_MAPPING_NORMAL,
 } from '@interfaces/CommandCenterType';
-import { CUSTOM_EVENT_NAME_COMMAND_CENTER, CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
+import {
+  CUSTOM_EVENT_NAME_COMMAND_CENTER,
+  CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN,
+} from '@utils/events/constants';
 import { capitalize, stringSimilarity } from '@utils/string';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
@@ -25,7 +33,7 @@ const FILTER_KEYS = ['title', 'description', 'uuid', 'item_type', 'object_type']
 
 function getSearchableText(item: CommandCenterItemType): string {
   const arr = [];
-  FILTER_KEYS.forEach((key) => {
+  FILTER_KEYS.forEach(key => {
     let value = item?.[key];
     if (value) {
       value = value?.toLowerCase();
@@ -116,10 +124,7 @@ export function getDisplayCategory(item: CommandCenterItemType, normal: boolean 
       return capitalize(part2 || '');
     }
 
-    return [
-      part1,
-      part2,
-    ].join(' ');
+    return [part1, part2].join(' ');
   }
 
   return TYPE_TITLE_MAPPING[item?.item_type];
@@ -129,23 +134,15 @@ export function updateActionFromUpstreamResults(
   action: CommandCenterActionType,
   results: KeyValueType,
 ): CommandCenterActionType {
-  const {
-    upstream_action_value_key_mapping: upstreamActionValueKeyMapping,
-  } = action;
+  const { upstream_action_value_key_mapping: upstreamActionValueKeyMapping } = action;
 
   const actionCopy = { ...action };
 
   if (upstreamActionValueKeyMapping) {
-    Object.entries(upstreamActionValueKeyMapping || {})?.forEach(([
-      actionUUID,
-      mapping,
-    ]) => {
+    Object.entries(upstreamActionValueKeyMapping || {})?.forEach(([actionUUID, mapping]) => {
       const result = results?.[actionUUID];
       if (result) {
-        Object.entries(mapping || {})?.forEach(([
-          parentKeyGetter,
-          childKeySetter,
-        ]) => {
+        Object.entries(mapping || {})?.forEach(([parentKeyGetter, childKeySetter]) => {
           const value = dig(result, parentKeyGetter);
           setNested(actionCopy, childKeySetter, conditionallyEncodeValue(childKeySetter, value));
         });
@@ -179,12 +176,14 @@ export function executeButtonActions({
   itemsRef?: any;
   refError: any;
   removeApplication: () => void;
-} & ExecuteActionableType & FetchItemsType & HandleSelectItemRowType) {
+} & ExecuteActionableType &
+  FetchItemsType &
+  HandleSelectItemRowType) {
   const actionTypes = button?.action_types || [];
 
   const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
     const actionType = actionTypes?.[index];
-    let actionFunction = (result: KeyValueType = {}) => {};
+    let actionFunction: (result: KeyValueType) => void;
 
     if (ButtonActionTypeEnum.RESET_FORM === actionType) {
       if (typeof window !== 'undefined') {
@@ -196,9 +195,12 @@ export function executeButtonActions({
         });
 
         actionFunction = (result: KeyValueType = {}) => {
-          if (item?.actions?.some(({
-            interaction,
-          }) => CommandCenterActionInteractionTypeEnum.RESET_FORM === interaction?.type)) {
+          if (
+            item?.actions?.some(
+              ({ interaction }) =>
+                CommandCenterActionInteractionTypeEnum.RESET_FORM === interaction?.type,
+            )
+          ) {
             // Let the useExecuteAction hook take care of this because that action may have
             // custom validations and parsers.
             return;
@@ -211,9 +213,12 @@ export function executeButtonActions({
       actionFunction = (result: KeyValueType = {}) => executeAction(item, focusedItemIndex);
     } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
       actionFunction = (result: KeyValueType = {}) => {
-        if (item?.actions?.some(({
-          interaction,
-        }) => CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === interaction?.type)) {
+        if (
+          item?.actions?.some(
+            ({ interaction }) =>
+              CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === interaction?.type,
+          )
+        ) {
           // Let the useExecuteAction hook take care of this because that action may have
           // custom validations and parsers.
           return;
@@ -221,11 +226,14 @@ export function executeButtonActions({
           removeApplication();
         }
       };
-    }  else if (ButtonActionTypeEnum.CLOSE_COMMAND_CENTER === actionType) {
+    } else if (ButtonActionTypeEnum.CLOSE_COMMAND_CENTER === actionType) {
       actionFunction = (result: KeyValueType = {}) => {
-        if (item?.actions?.some(({
-          interaction,
-        }) => CommandCenterActionInteractionTypeEnum.CLOSE_COMMAND_CENTER === interaction?.type)) {
+        if (
+          item?.actions?.some(
+            ({ interaction }) =>
+              CommandCenterActionInteractionTypeEnum.CLOSE_COMMAND_CENTER === interaction?.type,
+          )
+        ) {
           // Let the useExecuteAction hook take care of this because that action may have
           // custom validations and parsers.
           return;
@@ -234,18 +242,16 @@ export function executeButtonActions({
         }
       };
     } else if (ButtonActionTypeEnum.CUSTOM_ACTIONS === actionType) {
-      actionFunction = (result: KeyValueType = {}) => executeAction(
-        item,
-        focusedItemIndex,
-        button?.actions,
-      );
+      actionFunction = (result: KeyValueType = {}) =>
+        executeAction(item, focusedItemIndex, button?.actions);
     } else if (ButtonActionTypeEnum.SELECT_ITEM_FROM_REQUEST === actionType) {
-      actionFunction = (result: KeyValueType = {}) => fetchItems({
-        results: getItemsActionResults?.(),
-      }).then((response) => {
-        const items = rankItems(response?.data?.command_center_item?.items || []);
-        handleSelectItemRow(items?.[0], 0);
-      });
+      actionFunction = (result: KeyValueType = {}) =>
+        fetchItems({
+          results: getItemsActionResults?.(),
+        }).then(response => {
+          const items = rankItems(response?.data?.command_center_item?.items || []);
+          handleSelectItemRow(items?.[0], 0);
+        });
     }
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
@@ -266,11 +272,7 @@ export function executeButtonActions({
 }
 
 export function interpolatePagePath(page: CommandCenterActionPageType): string {
-  const {
-    parameters,
-    path,
-    query,
-  } = page;
+  const { parameters, path, query } = page;
 
   const queryS = query ? queryString(query) : '';
   let pathUse = path;
@@ -291,9 +293,9 @@ export function getCurrentApplicationForItem(
     beforeAddingNextApplication: false,
   },
 ): ItemApplicationType {
-  const configsForItem = applicationsConfigurations?.filter(({
-    item: itemInner,
-  }) => itemInner?.uuid === item?.uuid);
+  const configsForItem = applicationsConfigurations?.filter(
+    ({ item: itemInner }) => itemInner?.uuid === item?.uuid,
+  );
   let index = configsForItem?.length || 0;
   if (!opts?.beforeAddingNextApplication) {
     index -= 1;

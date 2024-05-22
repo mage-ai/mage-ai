@@ -94,7 +94,7 @@ def parse_directory_to_df(
     - A Polars DataFrame containing the merged logs with potential extra columns.
     """
     all_dataframes = []
-    for root, dirs, files in os.walk(directory_path):
+    for root, _dirs, files in os.walk(directory_path):
         for file_name in files:
             if file_name.endswith('.log'):
                 process_uuid = file_name.replace('.log', '')

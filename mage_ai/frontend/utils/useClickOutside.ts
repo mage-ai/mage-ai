@@ -1,51 +1,62 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { BuildSetFunctionProps, buildSetFunction } from './elements';
-import { RefType } from '@interfaces/ElementType';
-
-type MappingType = {
-  [uuid: string]: Element;
-};
+import { RefMappingType, RefType } from '@interfaces/ElementType';
 
 export default function useClickOutside({
   onClick,
 }: {
-  onClick?: (uuid: string, isOutside: boolean, opts?: {
-    group?: {
-      [uuid: string]: {
-        isOutside: boolean;
-        isOutsides: boolean;
+  onClick?: (
+    uuid: string,
+    isOutside: boolean,
+    opts?: {
+      group?: {
+        [uuid: string]: {
+          isOutside: boolean;
+          isOutsides: boolean;
+        };
       };
-    };
-    isOutsidesInteractiveElements?: boolean[];
-  }) => void;
+      isOutsidesInteractiveElements?: boolean[];
+    },
+  ) => void;
 }): {
-  setElementObject: (uuid: string, nodeOrNodes: any | any[], groupUUID: string, opts?: {
-  delay?: number;
-  tries?: number;
-}) => void;
-  setInteractiveElementsObjects: (uuid: string, nodeOrNodes: any | any[], groupUUID: string, opts?: {
-  delay?: number;
-  tries?: number;
-}) => void;
+  setElementObject: (
+    uuid: string,
+    nodeOrNodes: any | any[],
+    groupUUID: string,
+    opts?: {
+      delay?: number;
+      tries?: number;
+    },
+  ) => void;
+  setInteractiveElementsObjects: (
+    uuid: string,
+    nodeOrNodes: any | any[],
+    groupUUID: string,
+    opts?: {
+      delay?: number;
+      tries?: number;
+    },
+  ) => void;
 } {
   const elementMappingRef: RefType = useRef(null);
   const interactiveElementsMappingRef: RefType = useRef(null);
   const uuidToGroupMappingRef: RefType = useRef(null);
-  function setElementRefState(prev: (mapping: MappingType) => MappingType | MappingType) {
-    elementMappingRef.current = typeof prev === 'function'
-      ? prev(elementMappingRef?.current || {})
-      : prev;
+  function setElementRefState(prev: (mapping: RefMappingType) => RefMappingType | RefMappingType) {
+    elementMappingRef.current =
+      typeof prev === 'function' ? prev(elementMappingRef?.current || {}) : prev;
   }
-  function setInteractiveElementsRefState(prev: (mapping: MappingType) => MappingType | MappingType) {
-    interactiveElementsMappingRef.current = typeof prev === 'function'
-      ? prev(interactiveElementsMappingRef?.current || {})
-      : prev;
+  function setInteractiveElementsRefState(
+    prev: (mapping: RefMappingType) => RefMappingType | RefMappingType,
+  ) {
+    interactiveElementsMappingRef.current =
+      typeof prev === 'function' ? prev(interactiveElementsMappingRef?.current || {}) : prev;
   }
-  function setUUIDToGroupMapping(prev: (mapping: MappingType) => MappingType | MappingType) {
-    uuidToGroupMappingRef.current = typeof prev === 'function'
-    ? prev(uuidToGroupMappingRef?.current || {})
-    : prev;
+  function setUUIDToGroupMapping(
+    prev: (mapping: RefMappingType) => RefMappingType | RefMappingType,
+  ) {
+    uuidToGroupMappingRef.current =
+      typeof prev === 'function' ? prev(uuidToGroupMappingRef?.current || {}) : prev;
   }
 
   function setElementObject(uuid, ref, groupUUID, opts) {
@@ -72,24 +83,13 @@ export default function useClickOutside({
     let isOutside = true;
     // @ts-ignore
     if (elementItem) {
-      const {
-        height,
-        width,
-        x,
-        y,
-      } = elementItem?.getBoundingClientRect() || {};
+      const { height, width, x, y } = elementItem?.getBoundingClientRect() || {};
       if (elementItem?.contains?.(e.target)) {
         isOutside = false;
       } else {
-        const {
-          clientX,
-          clientY,
-        } = e;
+        const { clientX, clientY } = e;
 
-        isOutside = clientX > (x + width)
-          || clientX < x
-          || clientY > (y + height)
-          || clientY < y;
+        isOutside = clientX > x + width || clientX < x || clientY > y + height || clientY < y;
       }
     }
 
@@ -97,7 +97,7 @@ export default function useClickOutside({
   }
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = e => {
       const results: {
         [uuid: string]: {
           isOutside: boolean;
@@ -110,12 +110,8 @@ export default function useClickOutside({
         if (!element) {
           return;
         } else {
-          const {
-            height,
-            width,
-            x,
-            y,
-          } = element?.getBoundingClientRect() || {};
+          // @ts-ignore
+          const { height, width, x, y } = element?.getBoundingClientRect() || {};
           if (height === 0 && width === 0 && x === 0 && y === 0) {
             return;
           }
@@ -123,7 +119,9 @@ export default function useClickOutside({
 
         const interactiveElements = interactiveElementsMappingRef?.current?.[uuid];
         const isOutside = calculateOutside(e, element);
-        const isOutsides = interactiveElements?.map((elementItem) => calculateOutside(e, elementItem));
+        const isOutsides = interactiveElements?.map(elementItem =>
+          calculateOutside(e, elementItem),
+        );
 
         results[uuid] = {
           isOutside,
@@ -140,18 +138,11 @@ export default function useClickOutside({
       });
 
       if (onClick) {
-        Object.entries(results)?.forEach(([uuid, {
-          isOutside,
-          isOutsides,
-        }]) => {
-          onClick?.(
-            uuid,
-            isOutside,
-            {
-              group: resultsGroup?.[uuidToGroupMappingRef?.current?.[uuid]],
-              isOutsidesInteractiveElements: isOutsides,
-            },
-          );
+        Object.entries(results)?.forEach(([uuid, { isOutside, isOutsides }]) => {
+          onClick?.(uuid, isOutside, {
+            group: resultsGroup?.[uuidToGroupMappingRef?.current?.[uuid]],
+            isOutsidesInteractiveElements: isOutsides,
+          });
         });
       }
     };
@@ -163,7 +154,7 @@ export default function useClickOutside({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [onClick]);
 
   return {
     setElementObject,

@@ -39,14 +39,18 @@ export default function useAutoResizer({
 } = {}): {
   deregisterElementUUIDs: (uuids: string[]) => void;
   observeThenResizeElements: (opts: ResizableElements) => void;
-  setOnResize: (onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void) => void;
+  setOnResize: (
+    onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void,
+  ) => void;
 } {
   const observerRef = useRef(null);
   const dimensionsRef = useRef(null);
   const [elementsMapping, setElementsMapping] = useState<ResizableElements>({});
 
   const onResizeRef: RefType = useRef(null);
-  function setOnResizeRef(onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void) {
+  function setOnResizeRef(
+    onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void,
+  ) {
     onResizeRef.current = onResize;
   }
 
@@ -121,13 +125,12 @@ export default function useAutoResizer({
       ...resizeElements,
     }));
 
-    observerRef.current = new ResizeObserver(observedElements => handleResize(
-      observedElements,
-      {
+    observerRef.current = new ResizeObserver(observedElements =>
+      handleResize(observedElements, {
         ...elementsMapping,
         ...resizeElements,
-      },
-    ));
+      }),
+    );
     observerRef.current.observe(document.body);
     return observerRef.current;
   }

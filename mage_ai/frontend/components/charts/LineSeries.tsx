@@ -57,18 +57,24 @@ type SharedProps = {
   noCurve?: boolean;
   numYTicks?: number;
   renderXTooltipContent?: (
-    y: string | number | {
-      x: string | number;
-      y: string | number | (string | number)[];
-    },
+    y:
+      | string
+      | number
+      | {
+          x: string | number;
+          y: string | number | (string | number)[];
+        },
     x: string | number | null,
     tooltip: TooltipData,
   ) => JSX.Element;
   renderYTooltipContent?: (
-    y: string | number | {
-      x: string | number;
-      y: string | number | (string | number)[];
-    },
+    y:
+      | string
+      | number
+      | {
+          x: string | number;
+          y: string | number | (string | number)[];
+        },
     x: string | number | null,
     tooltip: TooltipData,
   ) => JSX.Element;
@@ -249,7 +255,6 @@ const LineSeries = withTooltip<LineSeriesProps>(
     if (width < 10) {
       return <div />;
     }
-
 
     return (
       <>

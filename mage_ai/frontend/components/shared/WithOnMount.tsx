@@ -5,15 +5,13 @@ export type OnMountType = {
   onMount?: () => void;
 };
 
-export default function WithOnMount({
-  children,
-  onMount,
-}: OnMountType) {
+export default function WithOnMount({ children, onMount }: OnMountType) {
   useEffect(() => {
     if (onMount) {
       onMount?.();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return children;
+  return <>{children}</>;
 }

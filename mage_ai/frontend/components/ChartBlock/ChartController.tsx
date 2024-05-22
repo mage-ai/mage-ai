@@ -224,7 +224,9 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
           xLabelFormat={(ts: string, index, values) => {
             if (xAxisLabelFormatValue) {
               if (isTimeSeries) {
-                return moment(convertToMillisecondsTimestamp(Number(ts))).format(xAxisLabelFormatValue);
+                return moment(convertToMillisecondsTimestamp(Number(ts))).format(
+                  xAxisLabelFormatValue,
+                );
               } else {
                 return xAxisLabelFormat(ts, index, values);
               }
@@ -383,7 +385,9 @@ function ChartController({ block, data, width, xAxisLabel: xAxisLabelProp }: Cha
             }
 
             if (isTimeSeries) {
-              xValueText = moment(convertToMillisecondsTimestamp(Number(x))).format(variableDateFormat);
+              xValueText = moment(convertToMillisecondsTimestamp(Number(x))).format(
+                variableDateFormat,
+              );
             }
 
             return (
