@@ -179,11 +179,28 @@ def infer_variable_type(
     basic_iterable = is_basic_iterable(data)
     variable_type_use = variable_type
 
-    if (
-        isinstance(data, pl.DataFrame)
-        or (basic_iterable and len(data) >= 1 and all(isinstance(d, pl.DataFrame) for d in data))
-    ) and Project(repo_path=repo_path).is_feature_enabled(FeatureUUID.POLARS):
-        variable_type_use = VariableType.POLARS_DATAFRAME
+    if isinstance(data, pl.DataFrame) or (
+        basic_iterable and len(data) >= 1 and all(isinstance(d, pl.DataFrame) for d in data)
+    ):
+        if Project(repo_path=repo_path).is_feature_enabled(FeatureUUID.POLARS):
+            variable_type_use = VariableType.POLARS_DATAFRAME
+        # If Polars is not enabled, we will fall back to the original logic in variable_manager
+        # before this change:
+        # if type(data) is pd.DataFrame:
+        #     variable_type = VariableType.DATAFRAME
+        # elif is_spark_dataframe(data):
+        #     variable_type = VariableType.SPARK_DATAFRAME
+        # elif is_geo_dataframe(data):
+        #     variable_type = VariableType.GEO_DATAFRAME
+        # variable = Variable(
+        #     clean_name(variable_uuid),
+        #     self.pipeline_path(pipeline_uuid),
+        #     block_uuid,
+        #     partition=partition,
+        #     storage=self.storage,
+        #     variable_type=variable_type,
+        #     clean_block_uuid=clean_block_uuid,
+        # )
     elif isinstance(data, pd.DataFrame):
         variable_type_use = VariableType.DATAFRAME
     elif is_spark_dataframe(data):
