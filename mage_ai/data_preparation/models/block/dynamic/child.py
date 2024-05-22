@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_child,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun
-from mage_ai.shared.memory import get_memory_usage
+from mage_ai.system.memory.utils import get_memory_usage
 
 
 class DynamicChildController:

@@ -152,6 +152,7 @@ class VariableResource(GenericResource):
 
         variable_uuid = payload.get('name')
         if not variable_uuid.isidentifier():
+            error.update(message=f'Invalid variable name syntax for variable name {self.name}.')
             error.update(
                 message=f'Invalid variable name syntax for variable name {self.name}.'
             )

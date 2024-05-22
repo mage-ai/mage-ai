@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -7,10 +8,21 @@ import simplejson
 from sklearn.utils import estimator_html_repr
 
 from mage_ai.ai.utils.xgboost import render_tree_visualization
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
+from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.reader import read_metadata
+from mage_ai.data.tabular.utils import (
+    convert_series_list_to_dataframe,
+    series_to_dataframe,
+)
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
+)
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
 )
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
@@ -63,6 +75,13 @@ def format_output_data(
             data = pd.DataFrame(data).T
         else:
             data = data.to_frame()
+    elif VariableType.SERIES_POLARS == variable_type:
+        if automatic_sampling and not sample_count:
+            sample_count = min(len(data), DATAFRAME_SAMPLE_COUNT)
+        if basic_iterable:
+            data = convert_series_list_to_dataframe(data)
+        else:
+            data = series_to_dataframe(data)
     elif VariableType.ITERABLE == variable_type and isinstance(data, list):
         data = pd.Series(data).to_frame()
 
@@ -101,8 +120,7 @@ def format_output_data(
 
         return return_output, True
     elif (
-        VariableType.MODEL_SKLEARN == variable_type
-        or VariableType.MODEL_XGBOOST == variable_type
+        VariableType.MODEL_SKLEARN == variable_type or VariableType.MODEL_XGBOOST == variable_type
     ):
 
         def __render(
@@ -160,11 +178,7 @@ def format_output_data(
             coerce_into_dataframe,
         )
 
-        if (
-            VariableType.LIST_COMPLEX == variable_type
-            and basic_iterable
-            and len(data) >= 1
-        ):
+        if VariableType.LIST_COMPLEX == variable_type and basic_iterable and len(data) >= 1:
             data = [encode_complex(item) for item in data]
 
         return format_output_data(
@@ -181,9 +195,7 @@ def format_output_data(
         )
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
-            data = dict(
-                table=data.to_csv(header=True, index=False).strip('\n').split('\n')
-            )
+            data = dict(table=data.to_csv(header=True, index=False).strip('\n').split('\n'))
         else:
             try:
                 analysis = variable_manager.get_variable(
@@ -198,9 +210,7 @@ def format_output_data(
                 print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
                 analysis = None
 
-            if analysis is not None and (
-                analysis.get('statistics') or analysis.get('metadata')
-            ):
+            if analysis is not None and (analysis.get('statistics') or analysis.get('metadata')):
                 stats = analysis.get('statistics', {})
                 column_types = (analysis.get('metadata') or {}).get('column_types', {})
                 row_count = stats.get('original_row_count', stats.get('count'))
@@ -219,9 +229,7 @@ def format_output_data(
                 sample_data=dict(
                     columns=columns_to_display,
                     rows=json.loads(
-                        data[columns_to_display].to_json(
-                            orient='split', date_format='iso'
-                        ),
+                        data[columns_to_display].to_json(orient='split', date_format='iso'),
                     )['data'],
                 ),
                 shape=[row_count, column_count],
@@ -230,6 +238,11 @@ def format_output_data(
             )
         return data, True
     elif isinstance(data, pl.DataFrame):
+        variable_uuids = block.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+        n_vars = len(variable_uuids)
         try:
             analysis = variable_manager.get_variable(
                 block.pipeline.uuid,
@@ -239,7 +252,8 @@ def format_output_data(
                 partition=execution_partition,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
             )
-        except Exception:
+        except Exception as err:
+            raise err
             analysis = None
         if analysis is not None:
             stats = analysis.get('statistics', {})
@@ -247,20 +261,46 @@ def format_output_data(
             column_count = stats.get('original_column_count')
         else:
             row_count, column_count = data.shape
+        variable = block.get_variable_object(
+            block_uuid=block_uuid,
+            variable_uuid=variable_uuid,
+            partition=execution_partition,
+        )
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-        if sample_count:
-            data = data[:sample_count]
+        sample_count = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+
+        metadata = read_metadata(
+            os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
+            include_schema=True,
+        )
+        byte_size = None
+        if metadata:
+            try:
+                row_count = metadata.get('num_rows') or row_count
+                byte_size = metadata.get('total_byte_size')
+                column_count = (
+                    len(metadata.get('schema') or {}) if metadata.get('schema') else column_count
+                )
+
+                # idx = variable_uuids.index(variable_uuid)
+                # metadata = metadata_list['files'][idx]
+                # row_count = metadata.get('num_rows') or row_count
+                # column_count = metadata.get('num_columns') or column_count
+                # byte_size = metadata.get('byte_size')
+            except ValueError:
+                pass
+
+        data = data[: round(sample_count / n_vars)]
+
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
                 rows=[
                     list(row.values())
-                    for row in json.loads(
-                        data[columns_to_display].write_json(row_oriented=True)
-                    )
+                    for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
-            shape=[row_count, column_count],
+            shape=[row_count, column_count] + [byte_size] if byte_size else [],
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
         )
@@ -398,9 +438,7 @@ def get_outputs_for_display_dynamic_block(
             (child_data, 'dynamic output data'),
             (metadata, 'metadata'),
         ]:
-            if output is None or (
-                exclude_blank_variable_uuids and variable_uuid.strip() == ''
-            ):
+            if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue
 
             data, is_data_product = format_output_data(
@@ -443,6 +481,10 @@ def handle_variables(
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     include_print_outputs: bool = True,
+    input_data_types: Optional[List[InputDataType]] = None,
+    max_results: Optional[int] = None,
+    read_batch_settings: Optional[BatchSettings] = None,
+    read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     sample: bool = True,
     sample_count: Optional[int] = None,
     selected_variables: Optional[List[str]] = None,
@@ -463,12 +505,14 @@ def handle_variables(
 
         all_variables = block.get_variables_by_block(
             block_uuid=block_uuid,
+            max_results=max_results,
             partition=execution_partition,
         )
 
         if not include_print_outputs:
             all_variables = block.output_variables(
                 execution_partition=execution_partition,
+                max_results=max_results,
             )
 
         block_groups = [dict(block_uuid=block_uuid, variable_uuids=all_variables)]
@@ -482,13 +526,16 @@ def handle_variables(
 
             def __callback(
                 data_from_yield,
-                block=block,
                 b_uuid=b_uuid,
+                block=block,
                 csv_lines_only=csv_lines_only,
                 execution_partition=execution_partition,
-                variable_uuid=variable_uuid,
                 idx=idx,
                 idx_inner=idx_inner,
+                input_data_types=input_data_types,
+                read_batch_settings=read_batch_settings,
+                read_chunks=read_chunks,
+                variable_uuid=variable_uuid,
             ):
                 data, is_data_product = format_output_data(
                     block,
@@ -516,21 +563,19 @@ def handle_variables(
                     block_uuid=b_uuid,
                     partition=execution_partition,
                     variable_uuid=variable_uuid,
+                    input_data_types=input_data_types,
+                    read_batch_settings=read_batch_settings,
+                    read_chunks=read_chunks,
                 )
 
-                if (
-                    variable_type is not None
-                    and variable_object.variable_type != variable_type
-                ):
+                if variable_type is not None and variable_object.variable_type != variable_type:
                     continue
 
                 if variable_object.variable_type is not None:
                     variable_type_mapping[variable_object.variable_type] = (
                         variable_type_mapping.get(variable_object.variable_type, [])
                     )
-                    variable_type_mapping[variable_object.variable_type].append(
-                        variable_uuid
-                    )
+                    variable_type_mapping[variable_object.variable_type].append(variable_uuid)
 
                 yield (variable_object, sample, sample_count, __callback)
 

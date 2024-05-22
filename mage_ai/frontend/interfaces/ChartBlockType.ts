@@ -7,6 +7,7 @@ import { IngestModeEnum } from './DataIntegrationBlockType';
 export const VARIABLE_NAME_BUCKETS = 'buckets';
 export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
 export const VARIABLE_NAME_GROUP_BY = 'group_by';
+export const VARIABLE_NAME_ORDER_BY = 'order_by';
 export const VARIABLE_NAME_HEIGHT = 'height';
 export const VARIABLE_NAME_INDEX = 'index';
 export const VARIABLE_NAME_LEGEND_LABELS = 'legend_labels';

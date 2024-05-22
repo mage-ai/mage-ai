@@ -1478,7 +1478,7 @@ function CodeBlock(
                 }
           }
           onContentSizeChangeCallback={sideBySideEnabled ? () => dispatchEventChanged() : null}
-          onDidChangeCursorPosition={onDidChangeCursorPosition}
+          onDidChangeCursorPosition={isReplicated ? null : onDidChangeCursorPosition}
           onMountCallback={editor => {
             if (sideBySideEnabled) {
               setMounted(true);

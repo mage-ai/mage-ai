@@ -2,6 +2,7 @@ import base64
 import inspect
 import io
 import traceback
+from collections.abc import Generator
 from datetime import datetime
 from enum import Enum
 from json import JSONDecoder
@@ -79,6 +80,8 @@ def encode_complex(obj):
         return object_to_uuid(obj)
     elif has_to_dict(obj):
         return obj.to_dict()
+    elif isinstance(obj, Generator):
+        return object_to_uuid(obj)
     elif isinstance(obj, Exception):
         # Serialize the exception
         return {
@@ -157,9 +160,7 @@ def deserialize_matrix(json_dict: Dict) -> scipy.sparse._csr.csr_matrix:
 def convert_matrix_to_dataframe(csr_matrix: scipy.sparse.csr_matrix) -> pd.DataFrame:
     if isinstance(csr_matrix, scipy.sparse.csr_matrix):
         n_columns = csr_matrix.shape[1]
-        return pd.DataFrame(
-            csr_matrix.toarray(), columns=[str(i) for i in range(n_columns)]
-        )
+        return pd.DataFrame(csr_matrix.toarray(), columns=[str(i) for i in range(n_columns)])
     return csr_matrix
 
 
@@ -196,16 +197,14 @@ def object_to_uuid(obj: Any, include_hash: bool = False) -> str:
         hash_uuid = object_to_hash(obj)
 
     parts = object_uuid_parts(obj)
-    uuid = '.'.join(
-        [
-            t
-            for t in [
-                str(parts['module']),
-                str(parts['name']),
-            ]
-            if t
+    uuid = '.'.join([
+        t
+        for t in [
+            str(parts['module']),
+            str(parts['name']),
         ]
-    )
+        if t
+    ])
 
     if hash_uuid:
         return f'{uuid} {hash_uuid}'
@@ -215,6 +214,8 @@ def object_to_uuid(obj: Any, include_hash: bool = False) -> str:
 
 def object_to_dict(
     obj: Any,
+    include_hash: bool = True,
+    include_uuid: bool = True,
     variable_type: Optional[VariableType] = None,
 ) -> Dict[str, Union[bool, str, List[str]]]:
     is_class = inspect.isclass(obj)
@@ -223,7 +224,10 @@ def object_to_dict(
     data_dict['type'] = 'class' if is_class else 'instance'
     data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
 
-    if not is_class:
+    if include_uuid:
+        data_dict['uuid'] = object_to_uuid(obj, include_hash=False)
+
+    if include_hash and not is_class:
         data_dict['hash'] = object_to_hash(obj)
 
     if variable_type:

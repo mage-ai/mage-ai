@@ -23,9 +23,11 @@ from .constants import (
     VARIABLE_NAME_INDEX,
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_METRICS,
+    VARIABLE_NAME_ORDER_BY,
     VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
+    VARIABLE_NAME_Y_SORT_ORDER,
     VARIABLE_NAMES_BY_CHART_TYPE,
     ChartType,
 )
@@ -51,11 +53,10 @@ class Widget(Block):
 
     @property
     def output_variable_names(self):
-        chart_type = (self.configuration or {}).get("chart_type")
+        chart_type = (self.configuration or {}).get('chart_type')
         var_names = VARIABLE_NAMES_BY_CHART_TYPE.get(chart_type, [])
         return [
-            (var_name_orig, self.configuration.get(var_name_orig))
-            for var_name_orig in var_names
+            (var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names
         ]
 
     def delete(self, commit=True):
@@ -94,10 +95,7 @@ class Widget(Block):
             for key in upstream_block_uuids:
                 if results and key in results.keys():
                     dfs.append(results[key])
-        elif (
-            input_vars_from_data_source is not None
-            and len(input_vars_from_data_source) >= 1
-        ):
+        elif input_vars_from_data_source is not None and len(input_vars_from_data_source) >= 1:
             for input_var in input_vars_from_data_source:
                 if isinstance(input_var, list):
                     dfs += input_var
@@ -140,9 +138,7 @@ class Widget(Block):
                 data[VARIABLE_NAME_X] = encode_values_in_list(
                     convert_to_list(variables[VARIABLE_NAME_X])
                 )
-                y_values = encode_values_in_list(
-                    convert_to_list(variables[VARIABLE_NAME_Y])
-                )
+                y_values = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_Y]))
                 data[VARIABLE_NAME_Y] = [y_values]
         elif ChartType.HISTOGRAM == chart_type:
             arr = []
@@ -169,13 +165,11 @@ class Widget(Block):
                     data = build_x_y(df, group_by_columns, metrics)
             else:
                 for var_name_orig, _var_name in self.output_variable_names:
-                    data.update(
-                        {
-                            var_name_orig: encode_values_in_list(
-                                convert_to_list(variables[var_name_orig])
-                            ),
-                        }
-                    )
+                    data.update({
+                        var_name_orig: encode_values_in_list(
+                            convert_to_list(variables[var_name_orig])
+                        ),
+                    })
         elif ChartType.PIE_CHART == chart_type:
             arr1 = []
             data_key = VARIABLE_NAME_X
@@ -212,14 +206,22 @@ class Widget(Block):
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
             limit_config = (
-                self.configuration.get(VARIABLE_NAME_LIMIT)
-                or DATAFRAME_SAMPLE_COUNT_PREVIEW
+                self.configuration.get(VARIABLE_NAME_LIMIT) or DATAFRAME_SAMPLE_COUNT_PREVIEW
             )
             if is_number(limit_config):
                 limit_config = int(limit_config)
 
             if should_use_no_code:
-                df = dfs[0].iloc[:limit_config]
+                df = dfs[0]
+                order_by = self.configuration.get(VARIABLE_NAME_ORDER_BY)
+                if order_by:
+                    df.sort_values(
+                        by=order_by,
+                        ascending=self.configuration.get(VARIABLE_NAME_Y_SORT_ORDER)
+                        != 'descending',
+                        inplace=True,
+                    )
+                df = df.iloc[:limit_config]
                 if group_by_columns:
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
@@ -232,13 +234,11 @@ class Widget(Block):
                         if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
                             limit = limit_config
 
-                        data.update(
-                            {
-                                var_name_orig: encode_values_in_list(
-                                    convert_to_list(arr, limit=limit)
-                                ),
-                            }
-                        )
+                        data.update({
+                            var_name_orig: encode_values_in_list(
+                                convert_to_list(arr, limit=limit)
+                            ),
+                        })
         elif chart_type in [
             ChartType.TIME_SERIES_BAR_CHART,
             ChartType.TIME_SERIES_LINE_CHART,
@@ -249,9 +249,7 @@ class Widget(Block):
                     tup = build_time_series_buckets(
                         df,
                         group_by_columns[0],
-                        self.configuration.get(
-                            VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL
-                        ),
+                        self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
                         metrics,
                     )
 
@@ -263,10 +261,8 @@ class Widget(Block):
         return data
 
     def get_chart_configuration_settings(self, configuration: Dict = None) -> Dict:
-        chart_type = (configuration or self.configuration or {}).get("chart_type")
-        group_by_columns = (configuration or self.configuration or {}).get(
-            VARIABLE_NAME_GROUP_BY
-        )
+        chart_type = (configuration or self.configuration or {}).get('chart_type')
+        group_by_columns = (configuration or self.configuration or {}).get(VARIABLE_NAME_GROUP_BY)
         metrics = (configuration or self.configuration or {}).get(VARIABLE_NAME_METRICS)
 
         return dict(
@@ -314,8 +310,8 @@ class Widget(Block):
 
         chart_configuration_settings = self.get_chart_configuration_settings()
 
-        group_by_columns = chart_configuration_settings["group_by_columns"]
-        metrics = chart_configuration_settings["metrics"]
+        group_by_columns = chart_configuration_settings['group_by_columns']
+        metrics = chart_configuration_settings['metrics']
 
         if custom_code is not None and custom_code.strip():
             exec(custom_code, results)
@@ -396,14 +392,14 @@ class Widget(Block):
             if item is not None:
                 if isinstance(item, dict):
                     columns = list(item.keys())
-                elif hasattr(item, "columns"):
+                elif hasattr(item, 'columns'):
                     columns = list(item.columns)
 
         if x is not None:
-            options["x_values"] = x
+            options['x_values'] = x
 
         if y is not None:
-            options["y_values"] = y
+            options['y_values'] = y
 
         if len(decorated_functions_configuration) >= 1:
             configuration = self.execute_block_function(
@@ -412,13 +408,11 @@ class Widget(Block):
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
-            chart_configuration_settings = self.get_chart_configuration_settings(
-                configuration
-            )
+            chart_configuration_settings = self.get_chart_configuration_settings(configuration)
 
-        chart_type = chart_configuration_settings["chart_type"]
-        group_by_columns = chart_configuration_settings["group_by_columns"]
-        metrics = chart_configuration_settings["metrics"]
+        chart_type = chart_configuration_settings['chart_type']
+        group_by_columns = chart_configuration_settings['group_by_columns']
+        metrics = chart_configuration_settings['metrics']
 
         variables = self.get_variables_from_code_execution(results)
 

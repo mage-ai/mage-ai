@@ -12,15 +12,12 @@ import TripleLayout from '@components/TripleLayout';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { useError } from '@context/Error';
 import BlockLayoutItemType, {
-    DATA_SOURCES,
-    DATA_SOURCES_HUMAN_READABLE_MAPPING,
-    DataSourceEnum,
+  DATA_SOURCES,
+  DATA_SOURCES_HUMAN_READABLE_MAPPING,
+  DataSourceEnum,
 } from '@interfaces/BlockLayoutItemType';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import {
-    CHART_TYPES,
-    ChartTypeEnum,
-} from '@interfaces/ChartBlockType';
+import { CHART_TYPES, ChartTypeEnum } from '@interfaces/ChartBlockType';
 import PageBlockLayoutType, { ColumnType } from '@interfaces/PageBlockLayoutType';
 import PipelineType from '@interfaces/PipelineType';
 import Flex from '@oracle/components/Flex';
@@ -38,10 +35,10 @@ import Text from '@oracle/elements/Text';
 import { Add } from '@oracle/icons';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
-    PADDING_UNITS,
-    UNIT,
-    UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-    UNITS_BETWEEN_SECTIONS,
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { pushAtIndex, removeAtIndex, sortByKey, sum } from '@utils/array';
@@ -777,6 +774,7 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
             DataSourceEnum.BLOCK_RUNS,
             DataSourceEnum.PIPELINE_RUNS,
             DataSourceEnum.PIPELINE_SCHEDULES,
+            DataSourceEnum.SYSTEM_METRICS,
           ].includes(objectAttributes?.data_source?.type) && (
             <>
               <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
@@ -863,7 +861,9 @@ function BlockLayout({ leftOffset, pageBlockLayoutTemplate, topOffset, uuid }: B
             </>
           )}
 
-          {DataSourceEnum.BLOCK === objectAttributes?.data_source?.type && (
+          {[DataSourceEnum.BLOCK, DataSourceEnum.SYSTEM_METRICS].includes(
+            objectAttributes?.data_source?.type,
+          ) && (
             <>
               <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
                 <Spacing mb={1}>

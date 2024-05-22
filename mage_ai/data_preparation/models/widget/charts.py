@@ -44,11 +44,13 @@ def build_buckets(min_value, max_value, max_buckets):
         min_v = min_value + (i * bucket_interval)
         max_v = min_value + ((i + 1) * bucket_interval)
         if max_value >= min_v:
-            buckets.append(dict(
-                max_value=max_v,
-                min_value=min_v,
-                values=[],
-            ))
+            buckets.append(
+                dict(
+                    max_value=max_v,
+                    min_value=min_v,
+                    values=[],
+                )
+            )
 
     return buckets, bucket_interval
 
@@ -69,16 +71,26 @@ def build_histogram_data(arr, max_buckets):
     y = []
 
     for idx, bucket in enumerate(buckets):
-        x.append(dict(
-            max=bucket['max_value'],
-            min=bucket['min_value'],
-        ))
+        x.append(
+            dict(
+                max=bucket['max_value'],
+                min=bucket['min_value'],
+            )
+        )
         y.append(dict(value=count[idx]))
 
     return dict(
         x=x,
         y=y,
     )
+
+
+def convert_to_datetime(dt):
+    if len(str(dt)) == 10 and str(dt).isdigit():
+        return datetime.fromtimestamp(int(dt))
+    elif type(dt) is np.datetime64:
+        return pd.to_datetime(dt.astype(datetime)).to_pydatetime()
+    return dt
 
 
 def build_time_series_buckets(
@@ -94,8 +106,9 @@ def build_time_series_buckets(
         return []
 
     datetimes = datetimes.unique()
-    min_value_datetime = datetimes.min()
-    max_value_datetime = datetimes.max()
+    datetimes_are_timestamps = all([len(str(dt)) == 10 and str(dt).isdigit() for dt in datetimes])
+    min_value_datetime = convert_to_datetime(datetimes.min())
+    max_value_datetime = convert_to_datetime(datetimes.max())
 
     if type(min_value_datetime) is str:
         min_value_datetime = dateutil.parser.parse(min_value_datetime)
@@ -104,12 +117,7 @@ def build_time_series_buckets(
 
     # If you manually convert the datetime column to a datetime, Pandas will use numpy.datetime64
     # type. This type does not have the methods year, month, day, etc that is used down below.
-    datetimes_temp = []
-    for dt in datetimes:
-        if type(dt) is np.datetime64:
-            datetimes_temp.append(pd.to_datetime(dt.astype(datetime)).to_pydatetime())
-        else:
-            datetimes_temp.append(dt)
+    datetimes_temp = [convert_to_datetime(dt) for dt in datetimes]
     datetimes = datetimes_temp
     if type(min_value_datetime) is np.datetime64:
         min_value_datetime = pd.to_datetime(min_value_datetime.astype(datetime)).to_pydatetime()
@@ -169,8 +177,14 @@ def build_time_series_buckets(
         start_datetime = datetime(year, 1, 1, 0, 0, 0)
 
     df_copy = df.copy()
-    df_copy[datetime_column] = \
-        pd.to_datetime(df[datetime_column]).apply(lambda x: x if pd.isnull(x) else x.timestamp())
+    if datetimes_are_timestamps:
+        df_copy[datetime_column] = df[datetime_column].apply(
+            lambda x: x if pd.isnull(x) else int(x)
+        )
+    else:
+        df_copy[datetime_column] = pd.to_datetime(df[datetime_column]).apply(
+            lambda x: x if pd.isnull(x) else x.timestamp()
+        )
 
     values = [[] for _ in metrics]
     buckets = []
@@ -182,9 +196,9 @@ def build_time_series_buckets(
         now + TIME_INTERVAL_TO_TIME_DELTA[time_interval]
     ).timestamp() - now.timestamp()
 
-    number_of_buckets = math.ceil(
-        max_value_datetime_ts - min_value_datetime.timestamp()
-    ) / interval_seconds
+    number_of_buckets = (
+        math.ceil(max_value_datetime_ts - min_value_datetime.timestamp()) / interval_seconds
+    )
 
     max_buckets_to_use = max_buckets or MAX_BUCKETS
 
@@ -204,11 +218,10 @@ def build_time_series_buckets(
         )
         buckets.append(max_date.timestamp())
 
-        df_in_range = df_copy[(
-            df_copy[datetime_column] >= min_date_ts
-        ) & (
-            df_copy[datetime_column] < max_date.timestamp()
-        )]
+        df_in_range = df_copy[
+            (df_copy[datetime_column] >= min_date_ts)
+            & (df_copy[datetime_column] < max_date.timestamp())
+        ]
 
         for idx, metric in enumerate(metrics):
             aggregation = metric['aggregation']

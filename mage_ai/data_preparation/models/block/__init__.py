@@ -25,6 +25,8 @@ from jinja2 import Template
 
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -61,6 +63,16 @@ from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
 from mage_ai.data_preparation.models.block.platform.utils import from_another_project
+from mage_ai.data_preparation.models.block.settings.dynamic.mixins import DynamicMixin
+from mage_ai.data_preparation.models.block.settings.global_data_products.mixins import (
+    GlobalDataProductsMixin,
+)
+from mage_ai.data_preparation.models.block.settings.variables.mixins import (
+    VariablesMixin,
+)
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -80,6 +92,7 @@ from mage_ai.data_preparation.models.constants import (
     DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    PIPELINES_FOLDER,
     BlockColor,
     BlockLanguage,
     BlockStatus,
@@ -101,6 +114,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -117,6 +131,7 @@ from mage_ai.shared.path_fixer import (
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
+from mage_ai.system.memory.manager import MemoryManager
 
 PYTHON_COMMAND = 'python3'
 BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]'
@@ -195,9 +210,7 @@ async def run_blocks(
         tries_by_block_uuid[block.uuid] += 1
         tries = tries_by_block_uuid[block.uuid]
         if tries >= 1000:
-            raise Exception(
-                f'Block {block.uuid} has tried to execute {tries} times; exiting.'
-            )
+            raise Exception(f'Block {block.uuid} has tried to execute {tries} times; exiting.')
 
         skip = False
         for upstream_block in block.upstream_blocks:
@@ -255,9 +268,7 @@ def run_blocks_sync(
         tries_by_block_uuid[block.uuid] += 1
         tries = tries_by_block_uuid[block.uuid]
         if tries >= 1000:
-            raise Exception(
-                f'Block {block.uuid} has tried to execute {tries} times; exiting.'
-            )
+            raise Exception(f'Block {block.uuid} has tried to execute {tries} times; exiting.')
 
         skip = False
         for upstream_block in block.upstream_blocks:
@@ -305,7 +316,14 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
+class Block(
+    DataIntegrationMixin,
+    SparkBlock,
+    ProjectPlatformAccessible,
+    DynamicMixin,
+    GlobalDataProductsMixin,
+    VariablesMixin,
+):
     def __init__(
         self,
         name: str,
@@ -391,6 +409,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         # Needs to after self._project_platform_activated = None
         self.configuration = configuration
 
+        self._store_variables_in_block_function = None
+
     @property
     def uuid(self) -> str:
         return self._uuid
@@ -433,9 +453,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return self._replicated_block_object
 
         if self.replicated_block and self.pipeline:
-            self._replicated_block_object = self.pipeline.get_block(
-                self.replicated_block
-            )
+            self._replicated_block_object = self.pipeline.get_block(self.replicated_block)
             if self._replicated_block_object:
                 self._replicated_block_object.replicated_blocks[self.uuid] = self
 
@@ -500,17 +518,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             upstream_block_uuids = self.upstream_block_uuids
 
         if outputs_from_input_vars is None:
-            if BlockLanguage.SQL == self.language and any(
-                [
-                    is_dynamic_block(
-                        upstream_block,
-                    )
-                    or is_dynamic_block_child(
-                        upstream_block,
-                    )
-                    for upstream_block in self.upstream_blocks
-                ]
-            ):
+            if BlockLanguage.SQL == self.language and any([
+                is_dynamic_block(
+                    upstream_block,
+                )
+                or is_dynamic_block_child(
+                    upstream_block,
+                )
+                for upstream_block in self.upstream_blocks
+            ]):
                 (
                     outputs_from_input_vars,
                     _kwargs_vars,
@@ -619,11 +635,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def __outputs_async(self, exclude_blank_variable_uuids: bool = False) -> List:
+    async def __outputs_async(
+        self, exclude_blank_variable_uuids: bool = False, max_results: Optional[int] = None
+    ) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = await self.__get_outputs_async(
                     exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+                    max_results=max_results,
                 )
         return self._outputs
 
@@ -662,9 +681,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         relative_path: bool = False,
     ) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-        block_directory = (
-            f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
-        )
+        block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
 
         parts = []
         if not relative_path:
@@ -711,9 +728,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
 
         if not file_path:
-            file_path = self.get_file_path_from_source() or self.configuration.get(
-                'file_path'
-            )
+            file_path = self.get_file_path_from_source() or self.configuration.get('file_path')
 
         if not file_path:
             file_path = self.__build_file_path(
@@ -758,12 +773,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         new_file = File.from_path(self.file_path, repo_path=repo_path)
 
         if not new_file.filename or not new_file.dir_path:
-            new_file = File.from_path(self.__build_file_path(
-                new_file.repo_path,
-                self.uuid,
-                self.type,
-                self.language,
-            ))
+            new_file = File.from_path(
+                self.__build_file_path(
+                    new_file.repo_path,
+                    self.uuid,
+                    self.type,
+                    self.language,
+                )
+            )
 
         return new_file
 
@@ -773,8 +790,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return self.configuration['data_provider_table']
 
         table_name = (
-            f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_'
-            f'{self.pipeline.version_name}'
+            f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_' f'{self.pipeline.version_name}'
         )
 
         env = (self.global_vars or dict()).get('env')
@@ -927,9 +943,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             if not configuration.get('file_source'):
                 configuration['file_source'] = {}
             if not configuration['file_source'].get('path'):
-                relative_path = str(
-                    Path(repo_path).relative_to(base_repo_path_directory_name())
-                )
+                relative_path = str(Path(repo_path).relative_to(base_repo_path_directory_name()))
                 configuration['file_source']['path'] = self.__build_file_path(
                     relative_path,
                     uuid,
@@ -955,11 +969,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block.already_exists = already_exists
 
         if BlockType.DBT == block.type:
-            if (
-                block.file_path
-                and not block.file.exists()
-                and not file_is_from_another_project
-            ):
+            if block.file_path and not block.file.exists() and not file_is_from_another_project:
                 block.file.create_parent_directories(block.file_path)
                 block.file.update_content('')
 
@@ -1096,9 +1106,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     widget=widget,
                 )
                 pipelines = [
-                    pipeline
-                    for pipeline in pipelines
-                    if self.pipeline.uuid != pipeline.uuid
+                    pipeline for pipeline in pipelines if self.pipeline.uuid != pipeline.uuid
                 ]
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
@@ -1106,9 +1114,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
-        pipelines = Pipeline.get_pipelines_by_block(
-            self, repo_path=self.repo_path, widget=widget
-        )
+        pipelines = Pipeline.get_pipelines_by_block(self, repo_path=self.repo_path, widget=widget)
         if not force:
             for p in pipelines:
                 if not p.block_deletable(self):
@@ -1167,9 +1173,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             # Print result to block output
             if not result:
-                conditional_message += (
-                    'This block would not be executed in a trigger run.\n'
-                )
+                conditional_message += 'This block would not be executed in a trigger run.\n'
             conditional_json = json.dumps(
                 dict(
                     message=conditional_message,
@@ -1246,156 +1250,219 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         override_outputs: bool = True,
         **kwargs,
     ) -> Dict:
-        if logging_tags is None:
-            logging_tags = dict()
+        def __execute(
+            self=self,
+            analyze_outputs=analyze_outputs,
+            block_run_outputs_cache=block_run_outputs_cache,
+            build_block_output_stdout=build_block_output_stdout,
+            custom_code=custom_code,
+            data_integration_runtime_settings=data_integration_runtime_settings,
+            disable_json_serialization=disable_json_serialization,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_block_uuid=dynamic_block_uuid,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            execution_partition_previous=execution_partition_previous,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+            input_from_output=input_from_output,
+            kwargs=kwargs,
+            logger=logger,
+            logging_tags=logging_tags,
+            metadata=metadata,
+            output_messages_to_logs=output_messages_to_logs,
+            override_outputs=override_outputs,
+            run_all_blocks=run_all_blocks,
+            run_settings=run_settings,
+            runtime_arguments=runtime_arguments,
+            store_variables=store_variables,
+            update_status=update_status,
+            verify_output=verify_output,
+        ) -> Dict:
+            if logging_tags is None:
+                logging_tags = dict()
 
-        try:
-            if not run_all_blocks:
-                not_executed_upstream_blocks = list(
-                    filter(
-                        lambda b: b.status == BlockStatus.NOT_EXECUTED,
-                        self.upstream_blocks,
+            try:
+                if not run_all_blocks:
+                    not_executed_upstream_blocks = list(
+                        filter(
+                            lambda b: b.status == BlockStatus.NOT_EXECUTED,
+                            self.upstream_blocks,
+                        )
                     )
-                )
-                all_upstream_is_dbt = all(
-                    [BlockType.DBT == b.type for b in not_executed_upstream_blocks]
-                )
-                if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
-                    upstream_block_uuids = list(
-                        map(lambda b: b.uuid, not_executed_upstream_blocks)
-                    )
-                    raise Exception(
-                        f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                        f'Please run upstream blocks {upstream_block_uuids} '
-                        'before running the current block.'
-                    )
-            global_vars = self.enrich_global_vars(
-                global_vars,
-                dynamic_block_index=dynamic_block_index,
-            )
-
-            if output_messages_to_logs and not logger:
-                from mage_ai.data_preparation.models.block.constants import (
-                    LOG_PARTITION_EDIT_PIPELINE,
+                    all_upstream_is_dbt = all([
+                        BlockType.DBT == b.type for b in not_executed_upstream_blocks
+                    ])
+                    if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
+                        upstream_block_uuids = list(
+                            map(lambda b: b.uuid, not_executed_upstream_blocks)
+                        )
+                        raise Exception(
+                            f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                            f'Please run upstream blocks {upstream_block_uuids} '
+                            'before running the current block.'
+                        )
+                global_vars = self.enrich_global_vars(
+                    global_vars,
+                    dynamic_block_index=dynamic_block_index,
                 )
 
-                logger_manager = LoggerManagerFactory.get_logger_manager(
-                    block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
-                    partition=LOG_PARTITION_EDIT_PIPELINE,
-                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
-                    subpartition=clean_name(self.uuid),
-                )
-                logger = DictLogger(logger_manager.logger)
-                logging_tags = dict(
-                    block_type=self.type,
-                    block_uuid=self.uuid,
-                    pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
-                )
-
-            output = self.execute_block(
-                block_run_outputs_cache=block_run_outputs_cache,
-                build_block_output_stdout=build_block_output_stdout,
-                custom_code=custom_code,
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                logger=logger,
-                logging_tags=logging_tags,
-                input_from_output=input_from_output,
-                runtime_arguments=runtime_arguments,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_indexes=dynamic_block_indexes,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                run_settings=run_settings,
-                data_integration_runtime_settings=data_integration_runtime_settings,
-                execution_partition_previous=execution_partition_previous,
-                metadata=metadata,
-                **kwargs,
-            )
-
-            if self.configuration and self.configuration.get(
-                'disable_query_preprocessing'
-            ):
-                output = dict(output=None)
-            else:
-                block_output = self.post_process_output(output)
-                variable_mapping = dict()
-
-                if BlockType.CHART == self.type:
-                    variable_mapping = block_output
-                    output = dict(
-                        output=(
-                            simplejson.dumps(
-                                block_output,
-                                default=encode_complex,
-                                ignore_nan=True,
-                            )
-                            if not disable_json_serialization
-                            else block_output
+                def __store_variables(
+                    variable_mapping: Dict[str, Any],
+                    block=self,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_uuid=dynamic_block_uuid,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
+                    override_outputs=override_outputs,
+                ) -> None:
+                    block.store_variables(
+                        variable_mapping,
+                        execution_partition=execution_partition,
+                        override_outputs=override_outputs,
+                        spark=block.__get_spark_session_from_global_vars(
+                            global_vars=global_vars,
                         ),
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_uuid=dynamic_block_uuid,
                     )
+
+                self._store_variables_in_block_function = __store_variables
+
+                if output_messages_to_logs and not logger:
+                    from mage_ai.data_preparation.models.block.constants import (
+                        LOG_PARTITION_EDIT_PIPELINE,
+                    )
+
+                    logger_manager = LoggerManagerFactory.get_logger_manager(
+                        block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
+                        partition=LOG_PARTITION_EDIT_PIPELINE,
+                        pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                        subpartition=clean_name(self.uuid),
+                    )
+                    logger = DictLogger(logger_manager.logger)
+                    logging_tags = dict(
+                        block_type=self.type,
+                        block_uuid=self.uuid,
+                        pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                    )
+
+                output = self.execute_block(
+                    block_run_outputs_cache=block_run_outputs_cache,
+                    build_block_output_stdout=build_block_output_stdout,
+                    custom_code=custom_code,
+                    execution_partition=execution_partition,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                    input_from_output=input_from_output,
+                    runtime_arguments=runtime_arguments,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_indexes=dynamic_block_indexes,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    run_settings=run_settings,
+                    data_integration_runtime_settings=data_integration_runtime_settings,
+                    execution_partition_previous=execution_partition_previous,
+                    metadata=metadata,
+                    override_outputs=override_outputs,
+                    **kwargs,
+                )
+
+                if self.configuration and self.configuration.get('disable_query_preprocessing'):
+                    output = dict(output=None)
                 else:
-                    output_count = len(block_output)
-                    variable_keys = [f'output_{idx}' for idx in range(output_count)]
-                    variable_mapping = dict(zip(variable_keys, block_output))
+                    block_output = self.post_process_output(output)
+                    variable_mapping = dict()
 
-                if (
-                    store_variables
-                    and self.pipeline
-                    and self.pipeline.type != PipelineType.INTEGRATION
-                ):
-                    try:
-                        DX_PRINTER.critical(
-                            block=self,
-                            execution_partition=execution_partition,
-                            override_outputs=override_outputs,
-                            dynamic_block_uuid=dynamic_block_uuid,
-                            __uuid='store_variables',
-                        )
-
-                        self.store_variables(
-                            variable_mapping,
-                            execution_partition=execution_partition,
-                            override_outputs=override_outputs,
-                            spark=self.__get_spark_session_from_global_vars(
-                                global_vars=global_vars,
+                    if BlockType.CHART == self.type:
+                        variable_mapping = block_output
+                        output = dict(
+                            output=(
+                                simplejson.dumps(
+                                    block_output,
+                                    default=encode_complex,
+                                    ignore_nan=True,
+                                )
+                                if not disable_json_serialization
+                                else block_output
                             ),
-                            dynamic_block_index=dynamic_block_index,
-                            dynamic_block_uuid=dynamic_block_uuid,
-                        )
-                    except ValueError as e:
-                        if str(e) == 'Circular reference detected':
-                            raise ValueError(
-                                'Please provide dataframe or json serializable data as output.'
-                            )
-                        raise e
-                # Reset outputs cache
-                self._outputs = None
-
-                if BlockType.CHART != self.type:
-                    if analyze_outputs:
-                        self.analyze_outputs(
-                            variable_mapping,
-                            execution_partition=execution_partition,
                         )
                     else:
-                        self.analyze_outputs(
-                            variable_mapping,
-                            execution_partition=execution_partition,
-                            shape_only=True,
-                        )
+                        output_count = len(block_output)
+                        variable_keys = [f'output_{idx}' for idx in range(output_count)]
+                        variable_mapping = dict(zip(variable_keys, block_output))
 
-            if update_status:
-                self.status = BlockStatus.EXECUTED
-        except Exception as err:
-            if update_status:
-                self.status = BlockStatus.FAILED
-            raise err
-        finally:
-            if update_status:
-                self.__update_pipeline_block(widget=BlockType.CHART == self.type)
+                    if (
+                        store_variables
+                        and self.pipeline
+                        and self.pipeline.type != PipelineType.INTEGRATION
+                    ):
+                        try:
+                            DX_PRINTER.critical(
+                                block=self,
+                                execution_partition=execution_partition,
+                                override_outputs=override_outputs,
+                                dynamic_block_uuid=dynamic_block_uuid,
+                                __uuid='store_variables',
+                            )
 
-        return output
+                            if self._store_variables_in_block_function and isinstance(
+                                variable_mapping, dict
+                            ):
+                                self._store_variables_in_block_function(variable_mapping)
+                        except ValueError as e:
+                            if str(e) == 'Circular reference detected':
+                                raise ValueError(
+                                    'Please provide dataframe or json serializable data as output.'
+                                )
+                            raise e
+                    # Reset outputs cache
+                    self._outputs = None
+
+                    if BlockType.CHART != self.type:
+                        if analyze_outputs:
+                            self.analyze_outputs(
+                                variable_mapping,
+                                execution_partition=execution_partition,
+                            )
+                        else:
+                            self.analyze_outputs(
+                                variable_mapping,
+                                execution_partition=execution_partition,
+                                shape_only=True,
+                            )
+
+                if update_status:
+                    self.status = BlockStatus.EXECUTED
+            except Exception as err:
+                if update_status:
+                    self.status = BlockStatus.FAILED
+                raise err
+            finally:
+                if update_status:
+                    self.__update_pipeline_block(widget=BlockType.CHART == self.type)
+
+            return output
+
+        if MEMORY_MANAGER_V2:
+            metadata = {}
+            if execution_partition:
+                metadata['execution_partition'] = execution_partition
+            if from_notebook:
+                metadata['origin'] = 'ide'
+            with MemoryManager(
+                scope_uuid=os.path.join(
+                    *([PIPELINES_FOLDER, self.pipeline.uuid] if self.pipeline else ['']),
+                    self.uuid,
+                ),
+                process_uuid='block.execute_sync',
+                repo_path=self.repo_path,
+                metadata=metadata,
+            ):
+                return __execute()
+        return __execute()
 
     def post_process_output(self, output: Dict) -> List:
         return output['output'] or []
@@ -1609,9 +1676,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
                 if kwargs_var:
-                    if isinstance(global_vars_copy, dict) and isinstance(
-                        kwargs_var, dict
-                    ):
+                    if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
                         global_vars_copy.update(kwargs_var)
 
             outputs = self._execute_block(
@@ -1801,7 +1866,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_function: Callable,
         input_vars: List,
         from_notebook: bool = False,
-        global_vars: Dict = None,
+        global_vars: Optional[Dict] = None,
         initialize_decorator_modules: bool = True,
     ) -> Dict:
         block_function_updated = block_function
@@ -1819,6 +1884,31 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
+
+        if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
+            output_count = 0
+            for data in output:
+                if self._store_variables_in_block_function is None:
+                    raise Exception(
+                        'Store variables function isn’t defined, '
+                        'don’t proceed or else no data will be persisted'
+                    )
+
+                store_options = {}
+                if output_count >= 1:
+                    store_options['override_outputs'] = False
+
+                self._store_variables_in_block_function(
+                    variable_mapping={
+                        f'output_{output_count}': data,
+                    },
+                    **store_options,
+                )
+
+                output_count += 1
+
+            self._store_variables_in_block_function = None
+            output = {}
 
         return output
 
@@ -1898,17 +1988,15 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 upstream block UUIDs.
         """
 
-        if any(
-            [
-                is_dynamic_block(
-                    upstream_block,
-                )
-                or is_dynamic_block_child(
-                    upstream_block,
-                )
-                for upstream_block in self.upstream_blocks
-            ]
-        ):
+        if any([
+            is_dynamic_block(
+                upstream_block,
+            )
+            or is_dynamic_block_child(
+                upstream_block,
+            )
+            for upstream_block in self.upstream_blocks
+        ]):
             return fetch_input_variables_for_dynamic_upstream_blocks(
                 self,
                 input_args,
@@ -2007,6 +2095,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         partition: str = None,
         raise_exception: bool = False,
         spark=None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ):
         variable_manager = self.pipeline.variable_manager
 
@@ -2025,6 +2118,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
+            input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
         return value
@@ -2035,6 +2133,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         variable_uuid: Optional[str] = None,
         dynamic_block_index: Optional[int] = None,
         partition: Optional[str] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
         variable_manager = self.pipeline.variable_manager
 
@@ -2051,6 +2154,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             partition=partition,
             spark=self.get_spark_session(),
             variable_uuid=variable_uuid,
+            input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+            write_batch_settings=write_batch_settings,
+            write_chunks=write_chunks,
         )
 
     def get_raw_outputs(
@@ -2061,6 +2169,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_block_uuid: str = None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        read_batch_settings: Optional[BatchSettings] = None,
+        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_batch_settings: Optional[BatchSettings] = None,
+        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> List[Any]:
         all_variables = self.get_variables_by_block(
             block_uuid=block_uuid,
@@ -2085,6 +2198,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 spark=self.__get_spark_session_from_global_vars(global_vars),
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
+                input_data_types=input_data_types,
+                read_batch_settings=read_batch_settings,
+                read_chunks=read_chunks,
+                write_batch_settings=write_batch_settings,
+                write_chunks=write_chunks,
             )
             outputs.append(variable)
 
@@ -2162,9 +2280,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
         variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        child_data_sets = [
-            lazy_variable_set.read_data() for lazy_variable_set in variable_sets
-        ]
+        child_data_sets = [lazy_variable_set.read_data() for lazy_variable_set in variable_sets]
 
         return get_outputs_for_display_dynamic_block(
             self,
@@ -2192,6 +2308,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         metadata: Optional[Dict] = None,
         dynamic_block_index: Optional[int] = None,
         exclude_blank_variable_uuids: bool = False,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
@@ -2208,6 +2325,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
                 selected_variables=selected_variables,
                 variable_type=variable_type,
+                max_results=max_results,
             )
 
         sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
@@ -2245,12 +2363,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         # Limit the number of dynamic block children we display output for in the UI
         output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
         variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        child_data_sets = await asyncio.gather(
-            *[
-                lazy_variable_set.read_data_async()
-                for lazy_variable_set in variable_sets
-            ]
-        )
+        child_data_sets = await asyncio.gather(*[
+            lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets
+        ])
 
         return get_outputs_for_display_dynamic_block(
             self,
@@ -2268,9 +2383,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def __format_output_data(self, *args, **kwargs) -> Tuple[Dict, bool]:
         return format_output_data(self, *args, **kwargs)
 
-    def __save_outputs_prepare(
-        self, outputs, override_output_variable: bool = False
-    ) -> Dict:
+    def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -2339,9 +2452,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     def get_executor_type(self) -> str:
         if self.executor_type:
-            block_executor_type = Template(self.executor_type).render(
-                **get_template_vars()
-            )
+            block_executor_type = Template(self.executor_type).render(**get_template_vars())
         else:
             block_executor_type = None
         if not block_executor_type or block_executor_type == ExecutorType.LOCAL_PYTHON:
@@ -2377,16 +2488,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         data = dict(
             all_upstream_blocks_executed=all(
-                block.status == BlockStatus.EXECUTED
-                for block in self.get_all_upstream_blocks()
+                block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
             color=self.color,
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
-            executor_type=(
-                format_enum(self.executor_type) if self.executor_type else None
-            ),
+            executor_type=(format_enum(self.executor_type) if self.executor_type else None),
             has_callback=self.has_callback,
             name=self.name,
             language=language,
@@ -2476,6 +2584,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         check_if_file_exists: bool = False,
         disable_output_preview: bool = False,
         exclude_blank_variable_uuids: bool = False,
+        max_results: Optional[int] = None,
         **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
@@ -2514,6 +2623,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 else:
                     data['outputs'] = await self.__outputs_async(
                         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+                        max_results=max_results,
                     )
 
                     if (
@@ -2560,10 +2670,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         check_upstream_block_order = kwargs.get('check_upstream_block_order', False)
         if 'upstream_blocks' in data and (
-            (
-                check_upstream_block_order
-                and data['upstream_blocks'] != self.upstream_block_uuids
-            )
+            (check_upstream_block_order and data['upstream_blocks'] != self.upstream_block_uuids)
             or set(data['upstream_blocks']) != set(self.upstream_block_uuids)
         ):
             self.__update_upstream_blocks(
@@ -2634,9 +2741,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return self
 
         if error_if_file_missing and not self.file.exists():
-            raise Exception(
-                f'File for block {self.uuid} does not exist at {self.file.file_path}.'
-            )
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         if content != self.content:
             self.status = BlockStatus.UPDATED
@@ -2655,9 +2760,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             return self
 
         if error_if_file_missing and not self.file.exists():
-            raise Exception(
-                f'File for block {self.uuid} does not exist at {self.file.file_path}.'
-            )
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         block_content = await self.content_async()
         if content != block_content:
@@ -2800,22 +2903,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         test_function = getattr(self.module, func.__name__)
                     try:
                         sig = signature(test_function)
-                        has_kwargs = any(
-                            [p.kind == p.VAR_KEYWORD for p in sig.parameters.values()]
-                        )
-                        if (
-                            has_kwargs
-                            and global_vars is not None
-                            and len(global_vars) != 0
-                        ):
+                        has_kwargs = any([
+                            p.kind == p.VAR_KEYWORD for p in sig.parameters.values()
+                        ])
+                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
                             test_function(*outputs, **global_vars)
                         else:
                             test_function(*outputs)
                         tests_passed += 1
                     except AssertionError as err:
-                        error_message = (
-                            f'FAIL: {test_function.__name__} (block: {self.uuid})'
-                        )
+                        error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
                         stacktrace = traceback.format_exc()
 
                         if from_notebook:
@@ -2828,13 +2925,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                             )
                             print(f'[__internal_test__]{error_json}')
                         else:
-                            print(
-                                '=============================================================='
-                            )
+                            print('==============================================================')
                             print(error_message)
-                            print(
-                                '--------------------------------------------------------------'
-                            )
+                            print('--------------------------------------------------------------')
                             print(stacktrace)
 
                 message = f'{tests_passed}/{len(test_functions)} tests passed.'
@@ -2847,9 +2940,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         )
                         print(f'[__internal_test__]{success_json}')
                 else:
-                    print(
-                        '--------------------------------------------------------------'
-                    )
+                    print('--------------------------------------------------------------')
                     print(message)
 
                 if tests_passed != len(test_functions):
@@ -2889,12 +2980,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         ),
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
+                        disable_variable_type_inference=True,
                     )
                     continue
                 if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
-                    data_for_analysis = data.sample(
-                        DATAFRAME_ANALYSIS_MAX_ROWS
-                    ).reset_index(
+                    data_for_analysis = data.sample(DATAFRAME_ANALYSIS_MAX_ROWS).reset_index(
                         drop=True,
                     )
                 else:
@@ -2940,6 +3030,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     ),
                     partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    disable_variable_type_inference=True,
                 )
 
     def set_global_vars(self, global_vars: Dict) -> None:
@@ -2949,18 +3040,12 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     def __consolidate_variables(self, variable_mapping: Dict) -> Dict:
         # Consolidate print variables
-        output_variables = {
-            k: v for k, v in variable_mapping.items() if is_output_variable(k)
-        }
+        output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
         print_variables = {
-            k: v
-            for k, v in variable_mapping.items()
-            if is_valid_print_variable(k, v, self.uuid)
+            k: v for k, v in variable_mapping.items() if is_valid_print_variable(k, v, self.uuid)
         }
 
-        print_variables_keys = sorted(
-            print_variables.keys(), key=lambda k: int(k.split('_')[-1])
-        )
+        print_variables_keys = sorted(print_variables.keys(), key=lambda k: int(k.split('_')[-1]))
 
         consolidated_print_variables = dict()
         state = dict(
@@ -2973,9 +3058,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         def save_variable_and_reset_state() -> None:
             if state['msg_key'] is not None and state['msg_value'] is not None:
                 state['msg_value']['data'] = state['consolidated_data']
-                consolidated_print_variables[state['msg_key']] = json.dumps(
-                    state['msg_value']
-                )
+                consolidated_print_variables[state['msg_key']] = json.dumps(state['msg_value'])
             state['msg_key'] = None
             state['msg_value'] = None
             state['msg_type'] = None
@@ -2995,17 +3078,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 save_variable_and_reset_state()
                 continue
 
-            if (
-                state['msg_key'] is not None
-                and json_value['msg_type'] != state['msg_type']
-            ):
+            if state['msg_key'] is not None and json_value['msg_type'] != state['msg_type']:
                 save_variable_and_reset_state()
 
-            data = (
-                json_value['data']
-                if type(json_value['data']) is list
-                else [json_value['data']]
-            )
+            data = json_value['data'] if type(json_value['data']) is list else [json_value['data']]
             if state['msg_key'] is None:
                 state['msg_key'] = k
                 state['msg_type'] = json_value['msg_type']
@@ -3222,6 +3298,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 data,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
             )
 
         if not is_dynamic_child:
@@ -3275,6 +3353,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 data,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
             )
 
         if not is_dynamic_child:
@@ -3294,9 +3374,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         Returns:
             Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
         """
-        return input_variables(
-            self.pipeline, self.upstream_block_uuids, execution_partition
-        )
+        return input_variables(self.pipeline, self.upstream_block_uuids, execution_partition)
 
     def input_variable_objects(self, execution_partition: str = None) -> List:
         """Get input variable objects from upstream blocks' output variables.
@@ -3328,6 +3406,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         from_notebook: bool = False,
         global_vars: Dict = None,
         input_args: List[Any] = None,
+        max_results: Optional[int] = None,
         block_uuid: str = None,
     ) -> List[str]:
         return output_variables(
@@ -3339,6 +3418,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
+            max_results=max_results,
         )
 
     def output_variable_objects(
@@ -3357,9 +3437,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         if self.pipeline is None:
             return []
 
-        output_variables = self.output_variables(
-            execution_partition=execution_partition
-        )
+        output_variables = self.output_variables(execution_partition=execution_partition)
 
         if len(output_variables) == 0:
             return []
@@ -3374,9 +3452,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             for v in output_variables
         ]
         if variable_type is not None:
-            variable_objects = [
-                v for v in variable_objects if v.variable_type == variable_type
-            ]
+            variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
         return variable_objects
 
     def tags(self) -> List[str]:
@@ -3466,9 +3542,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
 
             # perftools/mage/data_loaders/team
-            old_file_path_without_repo_path = remove_base_repo_path(
-                old_file_path_without_uuid
-            )
+            old_file_path_without_repo_path = remove_base_repo_path(old_file_path_without_uuid)
             # perftools/mage
             path_without_block_directory = str(old_file_path_without_repo_path).split(
                 directory_name,
@@ -3550,9 +3624,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:
-            self.pipeline.update_block_uuid(
-                self, old_uuid, widget=BlockType.CHART == self.type
-            )
+            self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
             cache = BlockCache()
             if detach:
@@ -3572,9 +3644,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     language=self.language,
                     pipeline=self.pipeline,
                 )
-                cache.remove_pipeline(
-                    old_block, self.pipeline.uuid, self.pipeline.repo_path
-                )
+                cache.remove_pipeline(old_block, self.pipeline.uuid, self.pipeline.repo_path)
             else:
                 cache.move_pipelines(
                     self,
@@ -3668,19 +3738,13 @@ class SensorBlock(Block):
             )
         else:
             sig = signature(block_function)
-            has_args = any(
-                [p.kind == p.VAR_POSITIONAL for p in sig.parameters.values()]
-            )
+            has_args = any([p.kind == p.VAR_POSITIONAL for p in sig.parameters.values()])
             has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-            use_global_vars = (
-                has_kwargs and global_vars is not None and len(global_vars) != 0
-            )
+            use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
             args = input_vars if has_args else []
             while True:
                 condition = (
-                    block_function(*args, **global_vars)
-                    if use_global_vars
-                    else block_function()
+                    block_function(*args, **global_vars) if use_global_vars else block_function()
                 )
                 if condition:
                     break
@@ -3720,24 +3784,13 @@ class AddonBlock(Block):
             global_vars = merge_dict(parent_block.global_vars, global_vars)
             global_vars['parent_block_uuid'] = parent_block.uuid
 
-            if (
-                parent_block.pipeline
-                and PipelineType.INTEGRATION == parent_block.pipeline.type
-            ):
-                template_runtime_configuration = (
-                    parent_block.template_runtime_configuration
-                )
+            if parent_block.pipeline and PipelineType.INTEGRATION == parent_block.pipeline.type:
+                template_runtime_configuration = parent_block.template_runtime_configuration
                 index = template_runtime_configuration.get('index', None)
-                is_last_block_run = template_runtime_configuration.get(
-                    'is_last_block_run', False
-                )
-                selected_streams = template_runtime_configuration.get(
-                    'selected_streams', []
-                )
+                is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
+                selected_streams = template_runtime_configuration.get('selected_streams', [])
                 stream = selected_streams[0] if len(selected_streams) >= 1 else None
-                destination_table = template_runtime_configuration.get(
-                    'destination_table', stream
-                )
+                destination_table = template_runtime_configuration.get('destination_table', stream)
 
                 global_vars['index'] = index
                 global_vars['is_last_block_run'] = is_last_block_run
@@ -3886,9 +3939,7 @@ class CallbackBlock(AddonBlock):
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
                 if kwargs_var:
-                    if isinstance(global_vars_copy, dict) and isinstance(
-                        kwargs_var, dict
-                    ):
+                    if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
                         global_vars_copy.update(kwargs_var)
 
             callback_kwargs = merge_dict(
@@ -3920,12 +3971,10 @@ class CallbackBlock(AddonBlock):
                     # As of version 0.8.81, callback functions have access to the parent block’s
                     # data output. If the callback function has any positional arguments, we will
                     # pass in the input variables as positional arguments.
-                    if not input_vars or any(
-                        [
-                            p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
-                            for p in sig.parameters.values()
-                        ]
-                    ):
+                    if not input_vars or any([
+                        p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
+                        for p in sig.parameters.values()
+                    ]):
                         inner_function(
                             *input_vars,
                             **callback_kwargs,
@@ -3944,9 +3993,7 @@ class CallbackBlock(AddonBlock):
 
     def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
-            raise Exception(
-                f'File for block {self.uuid} does not exist at {self.file.file_path}.'
-            )
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
         if content != self.content:
             self._content = content
@@ -3961,9 +4008,7 @@ class CallbackBlock(AddonBlock):
         return self
 
     def _block_decorator(self, decorated_functions) -> Callable:
-        def custom_code(
-            callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs
-        ):
+        def custom_code(callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs):
             # If the decorator is just @callback with no arguments, default to success callback
             if isfunction(callback_status):
 

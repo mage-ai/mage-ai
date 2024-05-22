@@ -80,6 +80,8 @@ def cast_column_types(df: pd.DataFrame, column_types: Dict):
     for column, column_type in column_types.items():
         if column_type in CAST_TYPE_COLUMN_TYPES:
             try:
+                if df is None or df.empty:
+                    continue
                 df[column] = df[column].astype(column_type)
             except Exception:
                 traceback.print_exc()
@@ -90,6 +92,8 @@ def cast_column_types_polars(df: pl.DataFrame, column_types: Dict):
     for column, column_type in column_types.items():
         if column_type in POLARS_CAST_TYPE_COLUMN_TYPES:
             try:
+                if df is None or df.is_empty():
+                    continue
                 df = df.cast({column: POLARS_CAST_TYPE_COLUMN_TYPES.get(column_type)})
             except Exception:
                 traceback.print_exc()
@@ -104,11 +108,7 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
         val = row[column]
         if val is not None and isinstance(val, str):
             row[column] = simplejson.loads(val)
-        elif (
-            val is not None
-            and isinstance(val, np.ndarray)
-            and column_type == list.__name__
-        ):
+        elif val is not None and isinstance(val, np.ndarray) and column_type == list.__name__:
             row[column] = list(val)
 
     return row
@@ -116,9 +116,7 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
 
 def dask_from_pandas(df: pd.DataFrame) -> dd:
     ddf = dd.from_pandas(df, npartitions=1)
-    npartitions = (
-        1 + ddf.memory_usage(deep=True).sum().compute() // MAX_PARTITION_BYTE_SIZE
-    )
+    npartitions = 1 + ddf.memory_usage(deep=True).sum().compute() // MAX_PARTITION_BYTE_SIZE
     ddf = ddf.repartition(npartitions=npartitions)
 
     return ddf
@@ -181,31 +179,29 @@ def infer_variable_type(
     basic_iterable = is_basic_iterable(data)
     variable_type_use = variable_type
 
-    if isinstance(data, pl.DataFrame) or (
-        basic_iterable
-        and len(data) >= 1
-        and all(isinstance(d, pl.DataFrame) for d in data)
-    ):
-        if Project(repo_path=repo_path).is_feature_enabled(FeatureUUID.POLARS):
-            variable_type_use = VariableType.POLARS_DATAFRAME
-    if isinstance(data, pd.DataFrame):
+    if (
+        isinstance(data, pl.DataFrame)
+        or (basic_iterable and len(data) >= 1 and all(isinstance(d, pl.DataFrame) for d in data))
+    ) and Project(repo_path=repo_path).is_feature_enabled(FeatureUUID.POLARS):
+        variable_type_use = VariableType.POLARS_DATAFRAME
+    elif isinstance(data, pd.DataFrame):
         variable_type_use = VariableType.DATAFRAME
     elif is_spark_dataframe(data):
         variable_type_use = VariableType.SPARK_DATAFRAME
     elif is_geo_dataframe(data):
         variable_type_use = VariableType.GEO_DATAFRAME
     elif isinstance(data, csr_matrix) or (
-        basic_iterable
-        and len(data) >= 1
-        and all(isinstance(d, csr_matrix) for d in data)
+        basic_iterable and len(data) >= 1 and all(isinstance(d, csr_matrix) for d in data)
     ):
         variable_type_use = VariableType.MATRIX_SPARSE
     elif isinstance(data, pd.Series) or (
-        basic_iterable
-        and len(data) >= 1
-        and all(isinstance(d, pd.Series) for d in data)
+        basic_iterable and len(data) >= 1 and all(isinstance(d, pd.Series) for d in data)
     ):
         variable_type_use = VariableType.SERIES_PANDAS
+    elif isinstance(data, pl.Series) or (
+        basic_iterable and len(data) >= 1 and all(isinstance(d, pl.Series) for d in data)
+    ):
+        variable_type_use = VariableType.SERIES_POLARS
     elif is_model_sklearn(data) or (
         basic_iterable and len(data) >= 1 and all(is_model_sklearn(d) for d in data)
     ):
@@ -217,15 +213,12 @@ def infer_variable_type(
     elif is_list_complex(data) or (
         basic_iterable
         and len(data) >= 1
-        and len(data)
-        <= 100  # If there are over 100 complex items in this list, we won’t handle.
+        and len(data) <= 100  # If there are over 100 complex items in this list, we won’t handle.
         and all(is_list_complex(d) for d in data)
     ):
         variable_type_use = VariableType.LIST_COMPLEX
     elif is_dictionary_complex(data) or (
-        basic_iterable
-        and len(data) >= 1
-        and all(is_dictionary_complex(d) for d in data)
+        basic_iterable and len(data) >= 1 and all(is_dictionary_complex(d) for d in data)
     ):
         variable_type_use = VariableType.DICTIONARY_COMPLEX
     elif is_custom_object(data) or (
@@ -239,15 +232,11 @@ def infer_variable_type(
 
 
 def is_dictionary_complex(data: Any) -> bool:
-    return isinstance(data, dict) and any(
-        is_user_defined_complex(v) for v in data.values()
-    )
+    return isinstance(data, dict) and any(is_user_defined_complex(v) for v in data.values())
 
 
 def is_list_complex(data: Any) -> bool:
-    return isinstance(data, (list, set, tuple)) and any(
-        is_user_defined_complex(v) for v in data
-    )
+    return isinstance(data, (list, set, tuple)) and any(is_user_defined_complex(v) for v in data)
 
 
 def is_primitive(value: Any) -> bool:
@@ -281,9 +270,7 @@ def serialize_complex(
         value: Any,
         key_path: str,
         full_save_path: Optional[str] = None,
-        serialized_value: Optional[
-            Union[bool, int, float, str, List, Dict, DataFrame]
-        ] = None,
+        serialized_value: Optional[Union[bool, int, float, str, List, Dict, DataFrame]] = None,
         variable_type: Optional[VariableType] = None,
         combine_values_and_column_types=combine_values_and_column_types,
     ):
@@ -324,9 +311,7 @@ def serialize_complex(
         variable_type, _ = infer_variable_type(value)
 
         if isinstance(value, dict):
-            serialized_value = {
-                k: serialize(v, current_path + [k]) for k, v in value.items()
-            }
+            serialized_value = {k: serialize(v, current_path + [k]) for k, v in value.items()}
         elif is_basic_iterable(value):
             value_iter = list(value) if isinstance(value, set) else value
             serialized_value = [
@@ -344,9 +329,7 @@ def serialize_complex(
             ]:
                 if full_save_path:
                     os.makedirs(os.path.dirname(full_save_path), exist_ok=True)
-                    _, full_save_path = save_custom_object(
-                        value, full_save_path, variable_type
-                    )
+                    _, full_save_path = save_custom_object(value, full_save_path, variable_type)
 
             serialized_value, _ = prepare_data_for_output(value)
 
@@ -457,9 +440,7 @@ def deserialize_element(value: Any, path: str, column_types: Dict[str, Dict]):
     return value
 
 
-def unflatten_and_deserialize(
-    flattened_data: Dict, column_types: Dict[str, Dict]
-) -> Dict:
+def unflatten_and_deserialize(flattened_data: Dict, column_types: Dict[str, Dict]) -> Dict:
     staging_data = {}
 
     for key, value in flattened_data.items():
@@ -469,9 +450,7 @@ def unflatten_and_deserialize(
     return unflatten_dict(staging_data)
 
 
-def deserialize_complex(
-    data: Any, column_types: Dict[str, Dict], unflatten: bool = False
-) -> Dict:
+def deserialize_complex(data: Any, column_types: Dict[str, Dict], unflatten: bool = False) -> Dict:
     """
     Deserialize serialized data (from JSON) back to its original structure and types.
     """
@@ -479,10 +458,7 @@ def deserialize_complex(
         return unflatten_and_deserialize(data, column_types)
 
     if isinstance(data, dict):
-        return {
-            key: deserialize_element(value, key, column_types)
-            for key, value in data.items()
-        }
+        return {key: deserialize_element(value, key, column_types) for key, value in data.items()}
     elif isinstance(data, list):
         # Assuming top-level list doesn't have a path, use an empty string as a placeholder path
         return [
@@ -561,7 +537,7 @@ def prepare_data_for_output(
     return data, variable_type
 
 
-def warn_for_repo_path(repo_path: str) -> None:
+def warn_for_repo_path(repo_path: Optional[str]) -> None:
     """
     Warn if repo_path is not provided when using project platform and user
     authentication is enabled.

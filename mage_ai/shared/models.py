@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass, make_dataclass
 from enum import Enum
 from functools import reduce
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import inflection
 
@@ -85,11 +85,14 @@ class BaseClass:
             if ignore_empty and len(value) == 0:
                 return None
 
-            return [self.convert_value(
-                v,
-                convert_enum=convert_enum,
-                ignore_empty=ignore_empty,
-            ) for v in value]
+            return [
+                self.convert_value(
+                    v,
+                    convert_enum=convert_enum,
+                    ignore_empty=ignore_empty,
+                )
+                for v in value
+            ]
 
         if not annotation:
             annotation = type(value)
@@ -133,9 +136,13 @@ class BaseClass:
                     ignore_empty=ignore_empty,
                 )
 
-        is_enum_class = value is not None and inspect.isclass(
-            annotation,
-        ) and issubclass(annotation, Enum)
+        is_enum_class = (
+            value is not None
+            and inspect.isclass(
+                annotation,
+            )
+            and issubclass(annotation, Enum)
+        )
         is_enum = isinstance(value, Enum)
         if is_enum_class and not is_enum:
             try:
@@ -230,10 +237,11 @@ class BaseClass:
                 if self.attribute_aliases and key in self.attribute_aliases:
                     key = self.attribute_aliases[key]
 
-                if ignore_empty and \
-                        (isinstance(value, list) or isinstance(value, dict)) and \
-                        len(value) == 0:
-
+                if (
+                    ignore_empty
+                    and (isinstance(value, list) or isinstance(value, dict))
+                    and len(value) == 0
+                ):
                     continue
 
                 data[key] = encode_complex(value)
@@ -264,3 +272,17 @@ class BaseDataClass(BaseClass):
         BaseClass.__init__(obj, *args, **kwargs)
 
         return obj
+
+
+class DelegatorTarget:
+    def __init__(self, target):
+        self._target = target
+
+    def __getattr__(self, item):
+        return getattr(self._target, item)
+
+
+class Delegator:
+    def __init__(self, target: Any):
+        self.target = target
+        self.delegate = DelegatorTarget(self.target)

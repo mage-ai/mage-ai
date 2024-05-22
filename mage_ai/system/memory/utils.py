@@ -1,19 +1,46 @@
+import asyncio
+import functools
 import io
 import json
 import os
 import sys
+import threading
+import time
 from collections import deque
 from collections.abc import Container, Iterable, Mapping
+from datetime import datetime
 from logging import Logger
 from sys import getsizeof
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import joblib
 import pandas as pd
 import psutil
 import pyarrow.parquet as pq
+from memory_profiler import memory_usage
 
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.settings.repo import get_variables_dir
+from mage_ai.system.constants import METRICS_DIRECTORY, SYSTEM_DIRECTORY, LogType
+
+
+def get_log_directory(
+    scope_uuid: str,
+    repo_path: Optional[str] = None,
+) -> str:
+    """
+    /root/.mage_data/[project]
+        /system/metrics
+            /pipelines/[pipeline_uuid]/[block_uuid]
+    """
+    variables_dir = get_variables_dir(repo_path=repo_path, root_project=False)
+
+    return os.path.join(
+        variables_dir,
+        SYSTEM_DIRECTORY,
+        METRICS_DIRECTORY,
+        scope_uuid,  # pipelines/[pipeline_uuid]/[block_uuid]
+    )
 
 
 def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
@@ -109,10 +136,10 @@ def estimate_parquet_memory_usage(file_path: str) -> float:
     Returns:
         float: The estimated memory usage in bytes.
     """
-    if not file_path.endswith(".parquet"):
-        raise ValueError("Not a Parquet file.")
+    if not file_path.endswith('.parquet'):
+        raise ValueError('Not a Parquet file.')
     if not os.path.isfile(file_path):
-        raise FileNotFoundError(f"File {file_path} not found.")
+        raise FileNotFoundError(f'File {file_path} not found.')
 
     # Use PyArrow to read metadata
     parquet_file = pq.ParquetFile(file_path)
@@ -154,37 +181,35 @@ def estimate_file_memory_usage(file_path: str) -> Dict[str, float]:
     estimated_memory_usage = file_size
 
     # Estimate memory usage based on file type
-    if file_path.endswith(".txt"):
+    if file_path.endswith('.txt'):
         # Assume each character takes 1 byte
         estimated_memory_usage = file_size
-    elif file_path.endswith(".csv"):
+    elif file_path.endswith('.csv'):
         # Assume each character takes 1 byte and add overhead for data structures
         estimated_memory_usage = file_size * 1.2
-    elif file_path.endswith(".json"):
+    elif file_path.endswith('.json'):
         # Assume each character takes 1 byte and add overhead for data structures
         estimated_memory_usage = file_size * 1.5
-    elif file_path.endswith(".parquet"):
+    elif file_path.endswith('.parquet'):
         # Estimate memory usage based on the Parquet file format
         estimated_memory_usage = estimate_parquet_memory_usage(file_path)
-    elif file_path.endswith(".ubj"):
+    elif file_path.endswith('.ubj'):
         # Assuming UBJ files expand less than JSON due to their efficient binary format
         # This is a heuristic and may need adjustment based on actual data
         estimated_memory_usage *= 2  # Assuming some expansion in memory
-    elif file_path.endswith(".joblib"):
+    elif file_path.endswith('.joblib'):
         # Joblib files are used for serializing Python objects. The memory usage
         # Could be quite different from the file size depending on the object.
         # Using a heuristic here, but for accurate measurements, deserialization might be necessary.
-        estimated_memory_usage *= (
-            4  # Assuming significant expansion due to decompression
-        )
+        estimated_memory_usage *= 4  # Assuming significant expansion due to decompression
 
     # If you want to add specific estimates for different file types
     # (e.g., images, serialized objects),
     # you could extend this function with more logic.
 
     return {
-        "size_on_disk_bytes": file_size,
-        "estimated_memory_usage_bytes": estimated_memory_usage,
+        'size_on_disk_bytes': file_size,
+        'estimated_memory_usage_bytes': estimated_memory_usage,
     }
 
 
@@ -200,9 +225,7 @@ def deep_getsizeof(o, ids) -> float:
         return size
 
     if isinstance(o, Mapping):
-        size += sum(
-            (deep_getsizeof(k, ids) + deep_getsizeof(v, ids) for k, v in o.items())
-        )
+        size += sum((deep_getsizeof(k, ids) + deep_getsizeof(v, ids) for k, v in o.items()))
 
     elif isinstance(o, Container):
         size += sum((deep_getsizeof(i, ids) for i in o))
@@ -226,33 +249,33 @@ def estimate_memory_usage(obj) -> float:
     - The estimated memory size in bytes.
     """
     if isinstance(obj, dict):
-        return sum(
-            (getsizeof(key) + getsizeof(value) for key, value in obj.items())
-        ) + getsizeof(obj)
+        return sum((getsizeof(key) + getsizeof(value) for key, value in obj.items())) + getsizeof(
+            obj
+        )
     elif isinstance(obj, Iterable) and not isinstance(obj, str):
         return sum((getsizeof(item) for item in obj)) + getsizeof(obj)
     try:
         # Use specialized methods for complex types if available.
         obj_type = type(obj).__name__.lower()
-        if obj_type == "dataframe":
+        if obj_type == 'dataframe':
             return obj.memory_usage(deep=True).sum()
-        elif obj_type == "geodataframe":
+        elif obj_type == 'geodataframe':
             return obj.memory_usage(deep=True).sum() + getsizeof(obj.geometry)
-        elif obj_type in ["series", "series_pandas"]:
+        elif obj_type in ['series', 'series_pandas']:
             return obj.memory_usage(deep=True)
-        elif obj_type == "matrix_sparse":
+        elif obj_type == 'matrix_sparse':
             return getsizeof(obj.data) + getsizeof(obj.indices) + getsizeof(obj.indptr)
-        elif obj_type in ["model_sklearn", "model_xgboost"]:
+        elif obj_type in ['model_sklearn', 'model_xgboost']:
             import joblib
 
             return len(joblib.dumps(obj))
-        elif obj_type == "polars_dataframe":
+        elif obj_type == 'polars_dataframe':
             return obj.heap_size()
-        elif obj_type == "spark_dataframe":
+        elif obj_type == 'spark_dataframe':
             # Spark DataFrames are distributed, it's tricky to estimate accurately without scanning.
             # This would just be a placeholder as actual memory usage requires cluster state.
             return 0
-        elif obj_type == "custom_object":
+        elif obj_type == 'custom_object':
             # A more complex heuristic might be necessary here.
             return getsizeof(obj)  # Likely an underestimate for complex custom objects.
         else:
@@ -289,9 +312,9 @@ def enhanced_estimate_memory_usage(obj) -> float:
             queue.extend(current_obj.values())
         elif isinstance(current_obj, (list, tuple, set, frozenset)):
             queue.extend(current_obj)
-        elif hasattr(current_obj, "__dict__"):
+        elif hasattr(current_obj, '__dict__'):
             queue.append(current_obj.__dict__)
-        elif hasattr(current_obj, "__slots__"):
+        elif hasattr(current_obj, '__slots__'):
             queue.extend(
                 getattr(
                     current_obj,
@@ -311,8 +334,8 @@ def enhanced_estimate_memory_usage(obj) -> float:
 
         # Handle serialization-based estimation for complex objects
         elif type(current_obj).__name__ in [
-            "Booster",
-            "XGBModel",
+            'Booster',
+            'XGBModel',
         ]:  # Example for ML models
             # Serialize the object into a bytes buffer and measure its size
             buffer = io.BytesIO()
@@ -339,3 +362,229 @@ def get_csr_matrix_memory_usage(csr):
 
     total_size = base_size + data_size + indices_size + indptr_size
     return total_size
+
+
+def print_nice_lines(data, column_padding=2):
+    """
+    Prints a list of dictionaries (data) as a nicely formatted table.
+    Args:
+        data (list of dict): The table data, where each dictionary represents a row.
+        column_padding (int): The padding spaces between columns for readability.
+    """
+
+    if not data:
+        print('No data to display.')
+        return
+
+    # Extract headers
+    headers = data[0].keys()
+
+    # Find the maximum length of the value for each header for alignment
+    column_widths = {header: len(header) for header in headers}
+    for row in data:
+        for header in headers:
+            column_widths[header] = max(column_widths[header], len(str(row.get(header, ''))))
+
+    # Create a format string for padding the columns
+    row_format = ''.join([f'{{:<{column_widths[header] + column_padding}}}' for header in headers])
+
+    # Print headers
+    print(row_format.format(*headers))
+
+    # Print rows
+    for row in data:
+        print(row_format.format(*[row.get(header, '') for header in headers]))
+
+
+def combined_memory_util(runs=1, return_output=False):
+    """
+    Decorator to measure both memory usage in GB and execution time of `func`,
+    running the function `runs` times and averaging the results.
+    Args:
+    runs (int): The number of times to run the decorated function.
+    """
+
+    def decorator(func, return_output=return_output):
+        @functools.wraps(func)
+        def wrapper(*args, return_output=return_output, **kwargs):
+            times = []
+            mem_starts_ps = []
+            mem_starts_mp = []
+            mem_ends_ps = []
+            mem_ends_mp = []
+            mem_diff_ps = []
+            mem_diff_mp = []
+            result = None
+
+            for idx in range(runs):
+                print(f'Run {idx + 1}/{runs}...')
+
+                # Measure initial memory using psutil (in bytes)
+                process = psutil.Process(os.getpid())
+                mem_before_psutil = process.memory_info().rss
+                mem_starts_ps.append(mem_before_psutil)
+
+                # Measure initial memory using memory_profiler (in bytes)
+                mem_usage_before = (
+                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True) * 1024 * 1024
+                )
+                mem_starts_mp.append(mem_usage_before)
+
+                # Start timing
+                start_time = time.time()
+
+                if return_output and idx == runs - 1:
+                    result = func(*args, **kwargs)
+                else:
+                    func(*args, **kwargs)
+
+                # End timing
+                elapsed_time = time.time() - start_time
+                times.append(elapsed_time)
+
+                # Measure memory after execution using psutil (in bytes)
+                mem_after_psutil = process.memory_info().rss
+                mem_ends_ps.append(mem_after_psutil)
+
+                # Measure memory after execution using memory_profiler (in bytes)
+                mem_usage_after = (
+                    memory_usage(-1, interval=0.1, timeout=1, max_usage=True) * 1024 * 1024
+                )
+                mem_ends_mp.append(mem_usage_after)
+
+                # Update the total memory usage differences
+                mem_diff_ps.append(mem_after_psutil - mem_before_psutil)
+                mem_diff_mp.append(mem_usage_after - mem_usage_before)
+
+            # Calculate averages
+            stats = [
+                sum(arr) / runs
+                for arr in [
+                    mem_starts_mp,
+                    mem_ends_mp,
+                    mem_diff_mp,
+                    mem_starts_ps,
+                    mem_ends_ps,
+                    mem_diff_ps,
+                ]
+            ]
+
+            # Print average results
+            factor = 1 / (1024**3)
+            data = [
+                {
+                    ' ': 'mp',
+                    'Str': f'{(stats[0] * factor):.3f} GB',
+                    'End': f'{(stats[1] * factor):.3f} GB',
+                    'Use': f'{(stats[2] * factor):.3f} GB',
+                },
+                {
+                    ' ': 'ps',
+                    'Str': f'{(stats[3] * factor):.3f} GB',
+                    'End': f'{(stats[4] * factor):.3f} GB',
+                    'Use': f'{(stats[5] * factor):.3f} GB',
+                },
+                {
+                    ' ': ' ',
+                    'Str': '',
+                    'End': '',
+                    'Use': f'{(sum(times) / runs):.3f} secs',
+                },
+            ]
+
+            print_nice_lines(data)
+
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def current_memory_usage() -> int:
+    """
+    Returns the current memory usage of the process in bytes.
+
+    Original value is MB, but we convert it to bytes.
+    """
+    return int(memory_usage(-1)[0] * 1024**2)
+
+
+def format_metadata_message(metadata: Dict) -> str:
+    return ' '.join([f'{k}={v}' for k, v in metadata.items() if v is not None])
+
+
+def format_log_message(
+    log_type: Optional[LogType] = None,
+    message: Optional[Any] = None,
+    metadata: Optional[Dict] = None,
+) -> str:
+    log_type = log_type or LogType.MEMORY
+    timestamp = round(datetime.utcnow().timestamp())
+    metadata = metadata or {}
+
+    msg = f'[{timestamp}][{log_type.value}]'
+    if message:
+        msg += f' {message}'
+
+    if metadata:
+        msg += f' {format_metadata_message(metadata)}'
+
+    return f'{msg}\n'
+
+
+def monitor_memory_usage(
+    callback: Optional[Callable[[float], Any]],
+    interval_seconds: float = 1.0,
+):
+    """
+    Monitor and logs memory usage periodically to the same log file.
+    """
+
+    def monitor():
+        while not stop_event.is_set():
+            # Memory usage of the current process
+            if callback:
+                callback(current_memory_usage())
+            time.sleep(interval_seconds)
+
+    stop_event = threading.Event()
+    monitor_thread = threading.Thread(target=monitor)
+    monitor_thread.start()
+
+    return stop_event, monitor_thread
+
+
+def thread_target(monitor, loop):
+    """
+    This function is intended to be run in a separate thread.
+    It sets up an event loop and runs an asynchronous function within that loop.
+    """
+    # Set the event loop for the current thread
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(monitor())
+    loop.close()
+
+
+async def monitor_memory_usage_async(
+    callback: Optional[Callable[[float], Any]],
+    interval_seconds: float = 1.0,
+):
+    """
+    Monitor and logs memory usage periodically to the same log file.
+    """
+    new_loop = asyncio.new_event_loop()
+
+    async def monitor():
+        while not stop_event.is_set():
+            # Memory usage of the current process
+            if callback:
+                memory = current_memory_usage()
+                await callback(memory)
+            await asyncio.sleep(interval_seconds)
+
+    stop_event = threading.Event()
+    monitor_thread = threading.Thread(target=thread_target, args=(monitor, new_loop))
+    monitor_thread.start()
+
+    return stop_event, monitor_thread

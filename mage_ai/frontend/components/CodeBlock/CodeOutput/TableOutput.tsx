@@ -9,7 +9,7 @@ import { HTMLOutputStyle } from './index.style';
 import { OutputType, SampleDataType } from '@interfaces/BlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { containsOnlySpecialCharacters, containsHTML } from '@utils/string';
+import { containsOnlySpecialCharacters, containsHTML, pluralize } from '@utils/string';
 import { isObject } from 'utils/hash';
 
 type TableOutputProps = {
@@ -36,7 +36,12 @@ function TableOutput({
   setShapeCallback,
   uuid,
 }: TableOutputProps) {
-  const { data, sample_data: sampleData, shape } = output;
+  const { data, sample_data: sampleData } = output;
+  const shape = useMemo(
+    // @ts-ignore
+    () => (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape,
+    [output],
+  );
 
   const {
     columns,
@@ -55,19 +60,6 @@ function TableOutput({
       },
     [data, sampleData],
   );
-
-  useEffect(() => {
-    if (shape && setShapeCallback) {
-      setShapeCallback?.(shape);
-      if (uuid) {
-        // @ts-ignore
-        setShapeCallback((prev: number[]) => ({
-          ...prev,
-          [uuid]: shape,
-        }));
-      }
-    }
-  }, [setShapeCallback, shape, uuid]);
 
   if (columns?.some(header => header === '')) {
     return (
@@ -116,55 +108,63 @@ function TableOutput({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      disableScrolling={!selected}
-      key={`data-table-${order}`}
-      maxHeight={UNIT * 60}
-      noBorderBottom
-      noBorderLeft
-      noBorderRight
-      noBorderTop={!borderTop}
-      renderColumnHeaderCell={(
-        { Header: columnName },
-        _,
-        {
-          index: columnIndex,
-          key: columnKey,
-          props: columnProps,
-          style: columnStyle,
-          // width: columnWidth,
-        },
-      ) => {
-        const empty = columnName?.length === 0 || containsOnlySpecialCharacters(columnName);
-        return (
-          <div
-            {...columnProps}
-            className="th"
-            key={columnKey}
-            style={{
-              ...columnStyle,
-              paddingBottom: 0,
-              paddingTop: 0,
-            }}
-            title={columnIndex ? 'Row number' : undefined}
-          >
-            <FlexContainer alignItems="center" fullHeight fullWidth>
-              <Text disabled monospace small>
-                {empty ? '' : columnName}
-              </Text>
-            </FlexContainer>
-          </div>
-        );
-      }}
-      rows={rows}
-      // Remove border 2px and padding from each side
-      width={
-        containerWidth
-          ? containerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)
-          : null
-      }
-    />
+    <>
+      <DataTable
+        columns={columns}
+        disableScrolling={!selected}
+        key={`data-table-${order}`}
+        maxHeight={UNIT * 60}
+        noBorderBottom
+        noBorderLeft
+        noBorderRight
+        noBorderTop={!borderTop}
+        renderColumnHeaderCell={(
+          { Header: columnName },
+          _,
+          {
+            index: columnIndex,
+            key: columnKey,
+            props: columnProps,
+            style: columnStyle,
+            // width: columnWidth,
+          },
+        ) => {
+          const empty = columnName?.length === 0 || containsOnlySpecialCharacters(columnName);
+          return (
+            <div
+              {...columnProps}
+              className="th"
+              key={columnKey}
+              style={{
+                ...columnStyle,
+                paddingBottom: 0,
+                paddingTop: 0,
+              }}
+              title={columnIndex ? 'Row number' : undefined}
+            >
+              <FlexContainer alignItems="center" fullHeight fullWidth>
+                <Text disabled monospace small>
+                  {empty ? '' : columnName}
+                </Text>
+              </FlexContainer>
+            </div>
+          );
+        }}
+        rows={rows}
+        // Remove border 2px and padding from each side
+        width={
+          containerWidth
+            ? containerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH)
+            : null
+        }
+      />
+      <Spacing pb={1} px={PADDING_UNITS}>
+        <Text monospace muted small>
+          {pluralize('row', shape?.[0])} x {pluralize('column', shape?.[1])}&nbsp;/&nbsp;
+          {shape?.[2] && `${(shape?.[0] / 1024 ** 2).toFixed(3)} MB`}
+        </Text>
+      </Spacing>
+    </>
   );
 }
 

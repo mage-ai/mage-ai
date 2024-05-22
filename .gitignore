@@ -187,3 +187,4 @@ package.json
 yarn.lock
 mlfow.db
 mlruns/
+test.py

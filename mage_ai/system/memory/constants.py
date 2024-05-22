@@ -1,0 +1,1 @@
+MEMORY_DIRECTORY = 'memory'

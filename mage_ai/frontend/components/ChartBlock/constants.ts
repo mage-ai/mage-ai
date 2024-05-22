@@ -22,6 +22,7 @@ import {
   VARIABLE_NAME_Y_SORT_ORDER,
   VARIABLE_GROUP_NAME_DESIGN,
   VARIABLE_GROUP_NAME_DESIGN_Y_VALUES_SMOOTH,
+  VARIABLE_NAME_ORDER_BY,
   VARIABLE_GROUP_NAME_DESIGN_X_GRID_LINES_HIDDEN,
   VARIABLE_GROUP_NAME_DESIGN_Y_GRID_LINES_HIDDEN,
 } from '@interfaces/ChartBlockType';
@@ -161,6 +162,11 @@ const timeSeriesConfiguration: {
       ...SHARED_CODE_PROPS,
       label: () => 'Y axis label format',
       uuid: VARIABLE_NAME_Y_AXIS_LABEL_FORMAT,
+    },
+    {
+      ...SHARED_CODE_PROPS,
+      label: () => 'Y tooltip format',
+      uuid: VARIABLE_NAME_Y_TOOLTIP_LABEL_FORMAT,
     },
   ],
 };
@@ -315,6 +321,20 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_LIMIT,
       },
+      {
+        label: () => 'order by column',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_ORDER_BY,
+      },
+      {
+        autoRun: true,
+        label: () => 'sort direction',
+        options: [null, SortOrderEnum.ASCENDING, SortOrderEnum.DESCENDING],
+        uuid: VARIABLE_NAME_Y_SORT_ORDER,
+      },
     ],
     code: [
       {
@@ -332,7 +352,14 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.TIME_SERIES_BAR_CHART]: timeSeriesConfiguration,
   [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
     ...timeSeriesConfiguration,
-    noCode: timeSeriesConfiguration.noCode.concat(SHARED_DESIGN_PROPS),
+    noCode: timeSeriesConfiguration.noCode.concat([
+      {
+        ...SHARED_CODE_PROPS,
+        label: () => 'X tooltip format',
+        uuid: VARIABLE_NAME_X_TOOLTIP_LABEL_FORMAT,
+      },
+      ...SHARED_DESIGN_PROPS,
+    ]),
   },
 };
 

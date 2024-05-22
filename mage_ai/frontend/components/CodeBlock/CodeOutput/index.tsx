@@ -299,8 +299,13 @@ function CodeOutput(
         const renderOutputMatches = [];
         const leftOverMessages = [];
 
+        let skip = false;
         if (currentData && Array.isArray(currentData)) {
           currentData?.forEach((textData: string) => {
+            if (!textData) {
+              skip = true;
+            }
+
             const match =
               textData &&
               typeof textData === 'string' &&
@@ -355,6 +360,10 @@ function CodeOutput(
 
           currentData = leftOverMessages;
           arrRender.push(...renderOutputMatches);
+        }
+
+        if (skip) {
+          return;
         }
 
         const last = arr.at(-1);

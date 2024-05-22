@@ -171,6 +171,7 @@ export enum StatusTypeEnum {
 export interface SampleDataType {
   columns: string[];
   rows: string[][] | number[][];
+  shape?: number[];
 }
 
 export interface OutputType {

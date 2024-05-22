@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.repo import get_repo_path
@@ -24,5 +25,5 @@ class ChartDataSourceBase(ABC):
         return self._pipeline
 
     @abstractmethod
-    def load_data(self, **kwargs):
+    def load_data(self, **kwargs) -> Any:
         pass

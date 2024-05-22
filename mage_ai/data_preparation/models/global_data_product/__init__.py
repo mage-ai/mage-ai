@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import yaml
 from dateutil.relativedelta import relativedelta
 
-from mage_ai.data_preparation.models.global_data_product.constants import (
+from mage_ai.data_preparation.models.block.settings.global_data_products.models import (
     GlobalDataProductObjectType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -74,9 +74,7 @@ class GlobalDataProduct:
         return arr
 
     @classmethod
-    def get(
-        cls, uuid: str, repo_path: Optional[str] = None, project: Optional[str] = None
-    ):
+    def get(cls, uuid: str, repo_path: Optional[str] = None, project: Optional[str] = None):
         if project:
             repo_path = add_absolute_path(project)
 
@@ -104,18 +102,14 @@ class GlobalDataProduct:
 
         return arr
 
-    def get_outputs(
-        self, from_notebook: bool = False, global_vars: Dict = None, **kwargs
-    ) -> Dict:
+    def get_outputs(self, from_notebook: bool = False, global_vars: Dict = None, **kwargs) -> Dict:
         data = {}
 
         if not self.settings or len(self.settings) == 0:
             return data
 
         if GlobalDataProductObjectType.PIPELINE == self.object_type:
-            pipeline_runs = self.pipeline_runs(
-                status=PipelineRun.PipelineRunStatus.COMPLETED
-            )
+            pipeline_runs = self.pipeline_runs(status=PipelineRun.PipelineRunStatus.COMPLETED)
 
             for block_uuid, block_settings in self.settings.items():
                 block = self.pipeline.get_block(block_uuid)
@@ -180,9 +174,7 @@ class GlobalDataProduct:
 
         return None
 
-    def is_outdated_after(
-        self, now: datetime = None, return_values: bool = False
-    ) -> bool:
+    def is_outdated_after(self, now: datetime = None, return_values: bool = False) -> bool:
         values = {}
         outdated_starting_at = self.outdated_starting_at or {}
         if len(outdated_starting_at) == 0:

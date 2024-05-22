@@ -1,4 +1,7 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.kernels.models import KernelProcess, KernelWrapper
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -16,10 +19,17 @@ class KernelResource(GenericResource):
     def collection(self, query, meta, user, **kwargs):
         kernels = []
 
+        if Project().is_feature_enabled(FeatureUUID.AUTOMATIC_KERNEL_CLEANUP):
+            kill_count, memory_freed = KernelProcess.terminate_inactive()
+            print(
+                f'[KernelResource] Automatic kernel cleanup: {kill_count} kernels terminated, '
+                f'{(memory_freed / 1024**3):.3f} GBs if memory freed.'
+            )
+
         for kernel_name in KernelName:
             kernel = kernel_managers[kernel_name]
             if kernel.has_kernel:
-                kernels.append(kernel)
+                kernels.append(KernelWrapper(kernel))
 
         return self.build_result_set(
             kernels,
@@ -47,7 +57,7 @@ class KernelResource(GenericResource):
         if not kernel:
             kernel = kernel_managers[DEFAULT_KERNEL_NAME]
 
-        return self(kernel, user, **kwargs)
+        return self(KernelWrapper(kernel), user, **kwargs)
 
     @safe_db_query
     def update(self, payload, **kwargs):

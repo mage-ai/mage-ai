@@ -113,6 +113,7 @@ def collect_decorated_objs(decorated_objs):
     """
     Method to collect the decorated objects (function or class)
     """
+
     def custom_code(obj):
         decorated_objs.append(obj)
         return obj
