@@ -62,7 +62,11 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
 @safe_db_query
-def query_pipeline_schedules(pipeline_uuids: List[str]):
+def query_pipeline_schedules(
+    pipeline_uuids: List[str],
+    context_data: Dict = None,
+    repo_path: str = None,
+):
     a = aliased(PipelineSchedule, name='a')
     result = (
         PipelineSchedule.select(
@@ -81,7 +85,10 @@ def query_pipeline_schedules(pipeline_uuids: List[str]):
             a.pipeline_uuid.in_(pipeline_uuids),
             or_(
                 a.repo_path.in_(
-                    Project().repo_path_for_database_query(
+                    Project(
+                        context_data=context_data,
+                        repo_path=repo_path,
+                    ).repo_path_for_database_query(
                         'pipeline_schedules',
                     )
                 ),
@@ -96,6 +103,7 @@ class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
+        context_data = kwargs.get('context_data')
         limit = (meta or {}).get(META_KEY_LIMIT, None)
         if limit is not None:
             limit = int(limit)
@@ -125,7 +133,11 @@ class PipelineResource(BaseResource):
         if repo_path:
             repo_path = repo_path[0]
         if not repo_path:
-            repo_path = get_repo_path(root_project=False, user=user)
+            repo_path = get_repo_path(
+                context_data=context_data,
+                root_project=False,
+                user=user,
+            )
 
         search_query = query.get('search', [None])
         if search_query:
@@ -155,7 +167,6 @@ class PipelineResource(BaseResource):
             from_history_days = from_history_days[0]
 
         history_by_pipeline_uuid = {}
-
         if from_history_days is not None and is_number(from_history_days):
             timestamp_start = (
                 datetime.utcnow()
@@ -206,7 +217,9 @@ class PipelineResource(BaseResource):
             )
 
         total_count = len(pipeline_uuids)
-        await UsageStatisticLogger().pipelines_impression(lambda: total_count)
+        await UsageStatisticLogger(
+            context_data=context_data, repo_path=repo_path,
+        ).pipelines_impression(lambda: total_count)
 
         if not sorts:
             pipeline_uuids = sorted(pipeline_uuids, reverse=reverse_sort)
@@ -293,7 +306,11 @@ class PipelineResource(BaseResource):
 
         mapping = {}
         if include_schedules:
-            mapping = query_pipeline_schedules(pipeline_uuids)
+            mapping = query_pipeline_schedules(
+                pipeline_uuids,
+                context_data=context_data,
+                repo_path=repo_path,
+            )
 
         filtered_pipelines = []
         for pipeline in pipelines:
@@ -403,12 +420,15 @@ class PipelineResource(BaseResource):
             'results': len(arr),
             'next': has_next,
         }
-
+        for p in arr:
+            p.context_data = context_data
         return result_set
 
     @classmethod
     @safe_db_query
     async def create(self, payload, user, **kwargs):
+        context_data = kwargs.get('context_data')
+
         clone_pipeline_uuid = payload.get('clone_pipeline_uuid')
         template_uuid = payload.get('custom_template_uuid')
         name = payload.get('name')
@@ -418,7 +438,7 @@ class PipelineResource(BaseResource):
         llm_payload = payload.get('llm')
         pipeline = None
 
-        repo_path = get_repo_path(user=user)
+        repo_path = get_repo_path(context_data=context_data, user=user)
         if template_uuid:
             custom_template = CustomPipelineTemplate.load(
                 repo_path,
@@ -508,7 +528,10 @@ class PipelineResource(BaseResource):
                             block.update(dict(upstream_blocks=arr))
 
         if pipeline:
-            await UsageStatisticLogger().pipeline_create(
+            await UsageStatisticLogger(
+                context_data=context_data,
+                repo_path=repo_path,
+            ).pipeline_create(
                 pipeline,
                 clone_pipeline_uuid=clone_pipeline_uuid,
                 llm_payload=llm_payload,
@@ -535,6 +558,7 @@ class PipelineResource(BaseResource):
 
         self.on_create_callback = _on_create_callback
 
+        pipeline.context_data = context_data
         return self(pipeline, user, **kwargs)
 
     @classmethod
@@ -546,6 +570,7 @@ class PipelineResource(BaseResource):
             return await get_pipeline_from_platform_async(
                 pipeline_uuid,
                 repo_path=repo_path,
+                context_data=kwargs.get('context_data'),
             )
 
         return await Pipeline.get_async(
@@ -563,13 +588,15 @@ class PipelineResource(BaseResource):
     ):
         pipeline_uuid = urllib.parse.unquote(pk)
         user = kwargs.get('user')
-        repo_path = get_repo_path(user=user)
+        repo_path = get_repo_path(context_data=kwargs.get('context_data'), user=user)
         return await self.__fetch_model(pipeline_uuid, repo_path, **kwargs)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        repo_path = get_repo_path(user=user)
+        context_data = kwargs.get('context_data')
+
+        repo_path = get_repo_path(context_data=context_data, user=user)
         pipeline = await self.__fetch_model(pk, repo_path, **kwargs)
 
         api_operation_action = kwargs.get('api_operation_action', None)
@@ -583,7 +610,10 @@ class PipelineResource(BaseResource):
             )
 
         if api_operation_action == DETAIL:
-            if Project(pipeline.repo_config).is_feature_enabled(
+            if Project(
+                context_data=context_data,
+                repo_config=pipeline.repo_config,
+            ).is_feature_enabled(
                 FeatureUUID.OPERATION_HISTORY,
             ):
                 record_detail_pipeline(
@@ -610,6 +640,7 @@ class PipelineResource(BaseResource):
             if mapping.get(pipeline.uuid):
                 pipeline.schedules = mapping[pipeline.uuid] or []
 
+        pipeline.context_data = context_data
         return self(pipeline, user, **kwargs)
 
     @safe_db_query
@@ -645,6 +676,7 @@ class PipelineResource(BaseResource):
 
     @safe_db_query
     async def update(self, payload, **kwargs):
+        context_data = kwargs.get('context_data')
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']
             block = self.model.get_block(block_uuid, widget=False)
@@ -657,7 +689,7 @@ class PipelineResource(BaseResource):
                 self.model.save()
             return self
 
-        repo_path = get_repo_path(user=self.current_user)
+        repo_path = get_repo_path(context_data=context_data, user=self.current_user)
 
         query = kwargs.get('query', {})
         update_content = query.get('update_content', [False])

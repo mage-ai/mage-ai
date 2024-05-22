@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import multiprocessing
 import os
@@ -9,6 +10,7 @@ from datetime import datetime, timedelta
 from distutils.file_util import copy_file
 from typing import Dict, List
 
+import simplejson
 import tornado.websocket
 from jupyter_client import KernelClient
 
@@ -195,7 +197,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             ).first()
             if oauth_client:
                 oauth_token, _ = authenticate_client_and_token(oauth_client.id, token)
-                user = oauth_token.user
+                if oauth_token:
+                    user = oauth_token.user
 
         repo_path = get_repo_path(user=user)
         pipeline = None
@@ -211,7 +214,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             valid = not REQUIRE_USER_AUTHENTICATION
 
             if oauth_client:
-                valid = oauth_token.is_valid()
+                valid = (oauth_token is not None) and oauth_token.is_valid()
                 if valid and oauth_token and user:
                     try:
                         if pipeline_uuid:
@@ -471,6 +474,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block.cache_spark_application()
                     block.set_spark_job_execution_start(execution_uuid=execution_uuid)
 
+                pipeline_config = pipeline.get_config_from_yaml()
+                repo_config = pipeline.repo_config.to_dict(remote=remote_execution)
+
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
@@ -482,8 +488,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
-                    pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
+                    pipeline_config=pipeline_config,
+                    pipeline_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(pipeline_config).encode()
+                    ).decode(),
+                    repo_config=repo_config,
+                    repo_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(repo_config).encode()
+                    ).decode(),
                     # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
                     # The UI can execute a block and send run_settings to control the behavior

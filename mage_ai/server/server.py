@@ -672,7 +672,10 @@ async def main(
         try:
             from mage_ai.services.ssh.aws.emr.models import create_tunnel
 
-            tunnel = create_tunnel(clean_up_on_failure=True, project=project_model)
+            tunnel = create_tunnel(
+                clean_up_on_failure=True,
+                project=project_model,
+            )
             if tunnel:
                 print(f'SSH tunnel active: {tunnel.is_active()}')
         except Exception as err:

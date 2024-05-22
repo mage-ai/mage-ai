@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -214,7 +216,9 @@ def add_execution_code(
     kernel_name: Optional[str] = None,
     output_messages_to_logs: bool = False,
     pipeline_config: Optional[Dict] = None,
+    pipeline_config_json_encoded: Optional[str] = None,
     repo_config: Optional[Dict] = None,
+    repo_config_json_encoded: Optional[str] = None,
     run_incomplete_upstream: bool = False,
     run_settings: Optional[Dict] = None,
     run_tests: bool = False,
@@ -240,7 +244,7 @@ def add_execution_code(
         else:
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 magic_header = '%%spark -o df --maxrows 10000'
-    elif pipeline_config['type'] == 'databricks':
+    elif pipeline_config and pipeline_config['type'] == 'databricks':
         spark_session_init = """
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
@@ -257,9 +261,9 @@ spark = SparkSession.builder.getOrCreate()
         ),
         ('global_vars', global_vars),
         ('output_messages_to_logs', output_messages_to_logs),
-        ('pipeline_config', pipeline_config),
+        ('pipeline_config_json_encoded', f"'{pipeline_config_json_encoded}'"),
         ('pipeline_uuid', f"'{pipeline_uuid}'"),
-        ('repo_config', repo_config),
+        ('repo_config_json_encoded', f"'{repo_config_json_encoded}'"),
         ('repo_path', f"'{repo_path}'"),
         ('run_incomplete_upstream', run_incomplete_upstream),
         ('run_settings_json', f"'{run_settings_json}'"),

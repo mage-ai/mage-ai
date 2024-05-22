@@ -26,8 +26,19 @@ from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
-async def build_project(repo_config=None, root_project: bool = False, user=None, **kwargs):
-    project = Project(repo_config=repo_config, root_project=root_project, user=user)
+async def build_project(
+    repo_config=None,
+    repo_path: str = None,
+    root_project: bool = False,
+    user=None,
+    **kwargs,
+):
+    project = Project(
+        repo_config=repo_config,
+        context_data=kwargs.get('context_data'),
+        root_project=root_project,
+        user=user,
+    )
 
     model = merge_dict(project.repo_config.to_dict(), dict(
         emr_config=project.emr_config,

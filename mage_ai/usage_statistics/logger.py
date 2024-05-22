@@ -45,8 +45,13 @@ from mage_ai.usage_statistics.utils import build_event_data_for_chart
 
 
 class UsageStatisticLogger():
-    def __init__(self, project=None):
-        self.project = project or Project()
+    def __init__(
+        self,
+        context_data: Dict = None,
+        project=None,
+        repo_path: str = None,
+    ):
+        self.project = project or Project(context_data=context_data, repo_path=repo_path)
 
     async def block_create(
         self,

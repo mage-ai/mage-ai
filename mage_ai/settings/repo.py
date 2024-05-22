@@ -32,6 +32,7 @@ def base_repo_path_directory_name() -> str:
 
 
 def get_repo_path(
+    context_data: Dict = None,
     file_path: str = None,
     root_project: bool = False,
     absolute_path: bool = True,
@@ -91,7 +92,11 @@ def get_repo_path(
                     repo_path_use = settings.get('full_path')
 
             if not repo_path_use:
-                repo_path_use = build_active_project_repo_path(repo_path, user=user)
+                repo_path_use = build_active_project_repo_path(
+                    context_data=context_data,
+                    repo_path=repo_path,
+                    user=user,
+                )
 
     if repo_path_use:
         repo_path = repo_path_use
@@ -145,8 +150,13 @@ def get_data_dir() -> str:
     return os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR
 
 
-def get_metadata_path(root_project: bool = False):
-    return os.path.join(get_repo_path(root_project=root_project), PROJECT_METADATA_FILENAME)
+def get_metadata_path(
+    repo_path: str = None,
+    root_project: bool = False
+):
+    if repo_path is None:
+        repo_path = get_repo_path(root_project=root_project)
+    return os.path.join(repo_path, PROJECT_METADATA_FILENAME)
 
 
 def get_variables_dir(
@@ -184,7 +194,10 @@ def get_variables_dir(
         else:
             from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
 
-            metadata_path = get_metadata_path(root_project=root_project)
+            metadata_path = get_metadata_path(
+                repo_path=repo_path,
+                root_project=root_project,
+            )
             if os.path.exists(metadata_path):
                 with open(metadata_path, 'r', encoding='utf-8') as f:
                     config_file_raw = f.read()

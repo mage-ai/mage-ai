@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 
@@ -23,11 +24,18 @@ def execute_custom_code():
     block_uuid = '{block_uuid}'
     run_incomplete_upstream = bool('{run_incomplete_upstream}')
     run_upstream = bool('{run_upstream}')
+
+    pipeline_config_json = base64.b64decode('{pipeline_config_json_encoded}').decode()
+    pipeline_config = json.loads(pipeline_config_json)
+
+    repo_config_json = base64.b64decode('{repo_config_json_encoded}').decode()
+    repo_config = json.loads(repo_config_json)
+
     pipeline = Pipeline(
         uuid='{pipeline_uuid}',
         repo_path='{repo_path}',
-        repo_config='{repo_config}',
-        config='{pipeline_config}',
+        repo_config=repo_config,
+        config=pipeline_config,
     )
 
     block = pipeline.get_block(

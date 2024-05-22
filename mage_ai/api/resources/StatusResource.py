@@ -31,9 +31,10 @@ class StatusResource(GenericResource):
             KUBE_NAMESPACE,
         )
 
+        context_data = kwargs.get('context_data')
         instance_type = None
-        project_type = get_project_type()
-        repo_config = get_repo_config()
+        repo_config = get_repo_config(context_data=context_data, user=user)
+        project_type = get_project_type(repo_config=repo_config)
         if repo_config.cluster_type:
             instance_type = repo_config.cluster_type
         elif os.getenv(ECS_CLUSTER_NAME):
@@ -53,10 +54,22 @@ class StatusResource(GenericResource):
 
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
-            'repo_path': get_repo_path(root_project=False, user=user),
-            'repo_path_relative': get_repo_path(root_project=False, absolute_path=False, user=user),
-            'repo_path_relative_root': get_repo_path(root_project=True, absolute_path=False),
-            'repo_path_root': get_repo_path(root_project=True),
+            'repo_path': get_repo_path(
+                context_data=context_data,
+                root_project=False,
+                user=user),
+            'repo_path_relative': get_repo_path(
+                context_data=context_data,
+                root_project=False,
+                absolute_path=False,
+                user=user),
+            'repo_path_relative_root': get_repo_path(
+                context_data=context_data,
+                root_project=True,
+                absolute_path=False),
+            'repo_path_root': get_repo_path(
+                context_data=context_data,
+                root_project=True),
             'server_process_id': os.getpid(),
             'scheduler_process_id': scheduler_manager.get_scheduler_pid(),
             'scheduler_status': scheduler_manager.get_status(),
