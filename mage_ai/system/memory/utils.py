@@ -11,7 +11,7 @@ from collections.abc import Container, Iterable, Mapping
 from datetime import datetime
 from logging import Logger
 from sys import getsizeof
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import joblib
 import pandas as pd
@@ -22,6 +22,7 @@ from memory_profiler import memory_usage
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.system.constants import METRICS_DIRECTORY, SYSTEM_DIRECTORY, LogType
+from mage_ai.system.models import MemoryUsage, ResourceUsage
 
 
 def get_log_directory(
@@ -43,7 +44,14 @@ def get_log_directory(
     )
 
 
-def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
+def log_or_print(
+    log_message: str,
+    logger: Optional[Logger] = None,
+    logging_tags: Optional[Dict] = None,
+    message_prefix: Optional[str] = None,
+):
+    if message_prefix:
+        log_message = f'{message_prefix} {log_message}'
     if logger:
         if isinstance(logger, DictLogger):
             logger.info(log_message, tags=logging_tags)
@@ -59,54 +67,76 @@ def __log(log_message: str, logger: Logger = None, logging_tags: Dict = None):
 
 def get_memory_usage(
     log: bool = True,
-    logger: Logger = None,
-    logging_tags: Dict = None,
-    message_prefix: str = None,
-    wrapped_function: Callable = None,
-) -> Any:
+    logger: Optional[Logger] = None,
+    logging_tags: Optional[Dict] = None,
+    message_prefix: Optional[str] = None,
+    wrapped_function: Optional[Callable] = None,
+) -> Tuple[Optional[Any], ResourceUsage]:
     process = psutil.Process(os.getpid())
-    value = process.memory_info().rss
+
+    info_start = process.memory_info()
+    value_start = info_start.rss
+
+    memory = [
+        MemoryUsage.load(
+            pageins=getattr(info_start, 'pageins', 0),
+            pfaults=getattr(info_start, 'pfaults', 0),
+            rss=value_start,
+            timestamp=int(datetime.utcnow().timestamp() * 1000),  # in milliseconds
+            vms=info_start.vms,
+        ),
+    ]
 
     if log or logger:
-        message = (
-            f'{message_prefix + " " if message_prefix else ""}'
-            f"Memory usage: {value / (1024 * 1024)} MB"
+        message = f'Memory usage: {value_start / (1024 * 1024)} MB'
+        log_or_print(
+            message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
         )
-        __log(message, logger=logger, logging_tags=logging_tags)
 
     if wrapped_function:
         result = wrapped_function()
 
-        value_after = process.memory_info().rss
+        info_end = process.memory_info()
+        value_end = info_end.rss
+        memory.append(
+            MemoryUsage.load(
+                pageins=getattr(info_end, 'pageins', 0),
+                pfaults=getattr(info_end, 'pfaults', 0),
+                rss=value_end,
+                timestamp=int(datetime.utcnow().timestamp() * 1000),  # in milliseconds
+                vms=info_end.vms,
+            )
+        )
+
         if log or logger:
             message = (
-                f'{message_prefix + " " if message_prefix else ""}'
-                f"Memory usage after function: {value_after / (1024 * 1024)} MB "
-                f"(added {(value_after - value) / (1024 * 1024)} MB)"
+                f'Memory usage after function: {value_end / (1024 * 1024)} MB '
+                f'(added {(value_end - value_start) / (1024 * 1024)} MB)'
             )
-            __log(message, logger=logger, logging_tags=logging_tags)
+            log_or_print(
+                message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
+            )
 
-        return result
+        return result, ResourceUsage.load(memory=memory)
 
-    return value
+    return None, ResourceUsage.load(memory=memory)
 
 
 async def get_memory_usage_async(
     log: bool = True,
-    logger: Logger = None,
-    logging_tags: Dict = None,
-    message_prefix: str = None,
-    wrapped_function: Callable = None,
+    logger: Optional[Logger] = None,
+    logging_tags: Optional[Dict] = None,
+    message_prefix: Optional[str] = None,
+    wrapped_function: Optional[Callable] = None,
 ) -> Any:
     process = psutil.Process(os.getpid())
     value = process.memory_info().rss
 
     if log or logger:
-        message = (
-            f'{message_prefix + " " if message_prefix else ""}'
-            f"Memory usage: {value / (1024 * 1024)} MB"
+        message = f'Memory usage: {value / (1024 * 1024)} MB'
+        log_or_print(
+            message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
         )
-        __log(message, logger=logger, logging_tags=logging_tags)
 
     if wrapped_function:
         result = await wrapped_function()
@@ -114,11 +144,12 @@ async def get_memory_usage_async(
         value_after = process.memory_info().rss
         if log or logger:
             message = (
-                f'{message_prefix + " " if message_prefix else ""}'
-                f"Memory usage after function: {value_after / (1024 * 1024)} MB "
-                f"(added {(value_after - value) / (1024 * 1024)} MB)"
+                f'Memory usage after function: {value_after / (1024 * 1024)} MB '
+                f'(added {(value_after - value) / (1024 * 1024)} MB)'
             )
-            __log(message, logger=logger, logging_tags=logging_tags)
+            log_or_print(
+                message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
+            )
 
         return result
 

@@ -6,6 +6,22 @@ from openai import OpenAI
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 
+def run_shell_command(command, raise_on_error: bool = True):
+    """
+    Runs the provided shell command and returns its output.
+    """
+    try:
+        # This will capture the output of the command and store it
+        output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
+        return output
+    except subprocess.CalledProcessError as e:
+        if raise_on_error:
+            # If an error occurs while running the command, this will raise the exception
+            raise e
+        print(f'Command failed with exit code {e.returncode}, that’s suppose to happen...\n')
+        return e.output
+
+
 def build_prompt(file_content: str, errors: list[str]) -> str:
     errors_str = '\n'.join(errors)
     return f"""
@@ -48,22 +64,6 @@ def extract_errors(output):
                 errors_dict[current_file].append(line.strip())
 
     return errors_dict
-
-
-def run_shell_command(command, raise_on_error: bool = True):
-    """
-    Runs the provided shell command and returns its output.
-    """
-    try:
-        # This will capture the output of the command and store it
-        output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
-        return output
-    except subprocess.CalledProcessError as e:
-        if raise_on_error:
-            # If an error occurs while running the command, this will raise the exception
-            raise e
-        print(f'Command failed with exit code {e.returncode}, that’s suppose to happen...\n')
-        return e.output
 
 
 def fix_errors(output: str):
