@@ -351,7 +351,8 @@ export default function useApplicationManager({
       (appUpdated, element) => {
         const apps = getOpenApplications();
         const index = apps?.findIndex(a => a.uuid === appUpdated?.uuid);
-        const { dimension, position } = inactiveLayouts(apps?.length, index);
+        const napps = apps?.length || 1;
+        const { dimension, position } = inactiveLayouts(Math.max(napps, 2), napps >= 2 ? index : 1);
 
         element.current.style.height = `${dimension?.height}px`;
         element.current.style.left = `${position?.x}px`;

@@ -10,6 +10,8 @@ from sklearn.utils import estimator_html_repr
 from mage_ai.ai.utils.xgboost import render_tree_visualization
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
+from mage_ai.data.models.outputs.manager import OutputManager
+from mage_ai.data.models.outputs.models import BlockOutput
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data.tabular.utils import (
@@ -32,7 +34,6 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.utils import infer_variable_type, is_primitive
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import (
     convert_matrix_to_dataframe,
     encode_complex,
@@ -273,25 +274,16 @@ def format_output_data(
             os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
             include_schema=True,
         )
-        byte_size = None
         if metadata:
             try:
                 row_count = metadata.get('num_rows') or row_count
-                byte_size = metadata.get('total_byte_size')
-                column_count = (
-                    len(metadata.get('schema') or {}) if metadata.get('schema') else column_count
-                )
-
-                # idx = variable_uuids.index(variable_uuid)
-                # metadata = metadata_list['files'][idx]
-                # row_count = metadata.get('num_rows') or row_count
-                # column_count = metadata.get('num_columns') or column_count
-                # byte_size = metadata.get('byte_size')
+                schema = metadata.get('schema')
+                if schema and isinstance(schema, dict):
+                    column_count = len(schema) or column_count
             except ValueError:
                 pass
 
         data = data[: round(sample_count / n_vars)]
-
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
@@ -300,7 +292,11 @@ def format_output_data(
                     for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
-            shape=[row_count, column_count] + [byte_size] if byte_size else [],
+            resource_usage=block.get_resource_usage(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+            ),
+            shape=[row_count, column_count],
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
         )
@@ -470,158 +466,166 @@ def get_outputs_for_display_dynamic_block(
     return outputs + data_products
 
 
-def handle_variables(
+def build_output_manager(
     block,
-    items: List[Dict[str, Any]],
+    # items: List[Dict[str, Any]],
     block_groups: Optional[
         List[Dict[str, Union[List[str], Optional[List[Any]], Optional[str]]]]
     ] = None,
     block_uuid: Optional[str] = None,
     csv_lines_only: bool = False,
+    dynamic_block_index: Optional[int] = None,
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     include_print_outputs: bool = True,
-    input_data_types: Optional[List[InputDataType]] = None,
-    max_results: Optional[int] = None,
-    read_batch_settings: Optional[BatchSettings] = None,
-    read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+    metadata: Optional[Dict] = None,
     sample: bool = True,
     sample_count: Optional[int] = None,
     selected_variables: Optional[List[str]] = None,
     variable_type: Optional[VariableType] = None,
-):
-    data_products = []
-    outputs = []
+    # Used to limit the number of variable UUIDs to retrieve
+    max_results: Optional[int] = None,
+    # For reading data using the data manager
+    input_data_types: Optional[List[InputDataType]] = None,
+    read_batch_settings: Optional[BatchSettings] = None,
+    read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+) -> OutputManager:
+    # data_products = []
+    # outputs = []
 
-    all_variables = []
-    variable_type_mapping = {}
+    # variable_type_mapping = {}
+    manager = OutputManager()
 
     if not block_groups:
-        if block.pipeline is None:
-            return []
-
-        if not block_uuid:
-            block_uuid = block.uuid
-
-        all_variables = block.get_variables_by_block(
-            block_uuid=block_uuid,
-            max_results=max_results,
-            partition=execution_partition,
-        )
-
-        if not include_print_outputs:
-            all_variables = block.output_variables(
+        block_uuid = block_uuid or block.uuid
+        if include_print_outputs:
+            variable_uuids = block.output_variables(
                 execution_partition=execution_partition,
                 max_results=max_results,
             )
+        else:
+            variable_uuids = block.get_variables_by_block(
+                block_uuid=block_uuid,
+                max_results=max_results,
+                partition=execution_partition,
+            )
 
-        block_groups = [dict(block_uuid=block_uuid, variable_uuids=all_variables)]
+        block_groups = [dict(block_uuid=block_uuid, variable_uuids=variable_uuids)]
 
-    for idx, block_group in enumerate(block_groups):
-        b_uuid = block_group['block_uuid']
-        variable_uuids = block_group['variable_uuids'] or []
-        block_outputs = block_group.get('outputs')
-
-        for idx_inner, variable_uuid in enumerate(variable_uuids):
-
-            def __callback(
-                data_from_yield,
-                b_uuid=b_uuid,
-                block=block,
-                csv_lines_only=csv_lines_only,
-                execution_partition=execution_partition,
-                idx=idx,
-                idx_inner=idx_inner,
-                input_data_types=input_data_types,
-                read_batch_settings=read_batch_settings,
-                read_chunks=read_chunks,
-                variable_uuid=variable_uuid,
-            ):
-                data, is_data_product = format_output_data(
-                    block,
-                    data_from_yield,
-                    variable_uuid,
-                    block_uuid=b_uuid,
-                    csv_lines_only=csv_lines_only,
-                    execution_partition=execution_partition,
-                )
-
-                if is_data_product:
-                    data_products.append(((idx, idx_inner), data, is_data_product))
-                else:
-                    outputs.append(((idx, idx_inner), data, is_data_product))
-
+    for block_group in block_groups:
+        for idx_inner, variable_uuid in enumerate(block_group['variable_uuids'] or []):
             if (selected_variables and variable_uuid not in selected_variables) or (
                 exclude_blank_variable_uuids and variable_uuid.strip() == ''
             ):
                 continue
 
-            if block_outputs and idx_inner < len(block_outputs):
-                yield (block_outputs[idx_inner], sample, sample_count, __callback)
-            else:
-                variable_object = block.get_variable_object(
-                    block_uuid=b_uuid,
-                    partition=execution_partition,
-                    variable_uuid=variable_uuid,
-                    input_data_types=input_data_types,
-                    read_batch_settings=read_batch_settings,
-                    read_chunks=read_chunks,
-                )
-
-                if variable_type is not None and variable_object.variable_type != variable_type:
-                    continue
-
-                if variable_object.variable_type is not None:
-                    variable_type_mapping[variable_object.variable_type] = (
-                        variable_type_mapping.get(variable_object.variable_type, [])
+            outputs = block_group.get('outputs')
+            output_data = outputs[idx_inner] if outputs and idx_inner < len(outputs) else None
+            manager.append(
+                BlockOutput(
+                    block,
+                    data=output_data,
+                    variable=block.get_variable_object(
+                        block_uuid=block_group.get('block_uuid'),
+                        partition=execution_partition,
+                        variable_uuid=variable_uuid,
+                        input_data_types=input_data_types,
+                        read_batch_settings=read_batch_settings,
+                        read_chunks=read_chunks,
                     )
-                    variable_type_mapping[variable_object.variable_type].append(variable_uuid)
+                    if output_data is None
+                    else None,
+                )
+            )
 
-                yield (variable_object, sample, sample_count, __callback)
+    return manager
 
-    arr = outputs + data_products
-    arr_sorted = sorted(arr, key=lambda x: x[0])
+    # def __callback(
+    #     data_from_yield,
+    #     b_uuid=b_uuid,
+    #     block=block,
+    #     csv_lines_only=csv_lines_only,
+    #     execution_partition=execution_partition,
+    #     idx=idx,
+    #     idx_inner=idx_inner,
+    #     input_data_types=input_data_types,
+    #     read_batch_settings=read_batch_settings,
+    #     read_chunks=read_chunks,
+    #     variable_uuid=variable_uuid,
+    # ):
+    #     data, is_data_product = format_output_data(
+    #         block,
+    #         data_from_yield,
+    #         variable_uuid,
+    #         block_uuid=b_uuid,
+    #         csv_lines_only=csv_lines_only,
+    #         execution_partition=execution_partition,
+    #     )
 
-    if len(data_products) >= len(outputs):
-        arr_sorted = [x[1] for x in arr_sorted]
-    else:
-        arr_sorted = [x[1] for x in arr_sorted]
+    #     if is_data_product:
+    #         data_products.append(((idx, idx_inner), data, is_data_product))
+    #     else:
+    #         outputs.append(((idx, idx_inner), data, is_data_product))
 
-    if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
-        for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
-            if isinstance(item, dict):
-                items.append(merge_dict(item, dict(multi_output=True)))
-            else:
-                items.append(item)
-    else:
-        items.extend(arr_sorted)
+    # if (
+    #     not output_data
+    #     and variable_type is not None
+    #     and block_output.variable is not None
+    #     and block_output.variable.variable_type != variable_type
+    # ):
+    #     continue
+
+    # if variable_object.variable_type is not None:
+    #     variable_type_mapping[variable_object.variable_type] = variable_type_mapping.get(
+    #         variable_object.variable_type, []
+    #     )
+    #     variable_type_mapping[variable_object.variable_type].append(variable_uuid)
+
+    # yield (variable_object, sample, sample_count, __callback)
+
+    # arr = outputs + data_products
+    # arr_sorted = sorted(arr, key=lambda x: x[0])
+
+    # if len(data_products) >= len(outputs):
+    #     arr_sorted = [x[1] for x in arr_sorted]
+    # else:
+    #     arr_sorted = [x[1] for x in arr_sorted]
+
+    # if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
+    #     for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
+    #         if isinstance(item, dict):
+    #             items.append(merge_dict(item, dict(multi_output=True)))
+    #         else:
+    #             items.append(item)
+    # else:
+    #     items.extend(arr_sorted)
 
 
-def get_outputs_for_display_sync(block, **kwargs) -> List[Dict[str, Any]]:
-    items = []
+# def get_outputs_for_display_sync(block, **kwargs) -> List[Dict[str, Any]]:
+#     items = []
 
-    for outputs in handle_variables(block, items, **kwargs):
-        variable_object, sample, sample_count, __callback = outputs
-        data = variable_object.read_data(
-            sample=sample,
-            sample_count=sample_count,
-            spark=block.get_spark_session(),
-        )
-        __callback(data)
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample, sample_count, __callback = outputs
+#         data = variable_object.read_data(
+#             sample=sample,
+#             sample_count=sample_count,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
 
-    return items
+#     return items
 
 
-async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]:
-    items = []
+# async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]:
+#     items = []
 
-    for outputs in handle_variables(block, items, **kwargs):
-        variable_object, sample, sample_count, __callback = outputs
-        data = await variable_object.read_data_async(
-            sample=sample,
-            sample_count=sample_count,
-            spark=block.get_spark_session(),
-        )
-        __callback(data)
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample, sample_count, __callback = outputs
+#         data = await variable_object.read_data_async(
+#             sample=sample,
+#             sample_count=sample_count,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
 
-    return items
+#     return items
