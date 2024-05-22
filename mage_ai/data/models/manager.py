@@ -8,8 +8,8 @@ from mage_ai.data.constants import (
     RecordBatchGenerator,
     ScanBatchDatasetResult,
 )
+from mage_ai.data.models.base import BaseData
 from mage_ai.data.models.reader import Reader
-from mage_ai.data.models.shared import BaseData
 from mage_ai.data.models.writer import Writer
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block.settings.variables.models import (

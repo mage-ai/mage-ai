@@ -1,6 +1,6 @@
 from typing import Any
 
-from mage_ai.data.models.shared import BaseData
+from mage_ai.data.models.base import BaseData
 from mage_ai.data.tabular.writer import to_parquet_async, to_parquet_sync
 from mage_ai.shared.files import (
     makedirs_async,

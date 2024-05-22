@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -8,7 +9,9 @@ from sklearn.utils import estimator_html_repr
 
 from mage_ai.ai.utils.xgboost import render_tree_visualization
 from mage_ai.data.constants import InputDataType
+from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data.tabular.utils import (
     convert_series_list_to_dataframe,
     series_to_dataframe,
@@ -235,6 +238,11 @@ def format_output_data(
             )
         return data, True
     elif isinstance(data, pl.DataFrame):
+        variable_uuids = block.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+        n_vars = len(variable_uuids)
         try:
             analysis = variable_manager.get_variable(
                 block.pipeline.uuid,
@@ -244,7 +252,8 @@ def format_output_data(
                 partition=execution_partition,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
             )
-        except Exception:
+        except Exception as err:
+            raise err
             analysis = None
         if analysis is not None:
             stats = analysis.get('statistics', {})
@@ -252,9 +261,37 @@ def format_output_data(
             column_count = stats.get('original_column_count')
         else:
             row_count, column_count = data.shape
+        variable = block.get_variable_object(
+            block_uuid=block_uuid,
+            variable_uuid=variable_uuid,
+            partition=execution_partition,
+        )
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-        if sample_count:
-            data = data[:sample_count]
+        sample_count = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+
+        metadata = read_metadata(
+            os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
+            include_schema=True,
+        )
+        byte_size = None
+        if metadata:
+            try:
+                row_count = metadata.get('num_rows') or row_count
+                byte_size = metadata.get('total_byte_size')
+                column_count = (
+                    len(metadata.get('schema') or {}) if metadata.get('schema') else column_count
+                )
+
+                # idx = variable_uuids.index(variable_uuid)
+                # metadata = metadata_list['files'][idx]
+                # row_count = metadata.get('num_rows') or row_count
+                # column_count = metadata.get('num_columns') or column_count
+                # byte_size = metadata.get('byte_size')
+            except ValueError:
+                pass
+
+        data = data[: round(sample_count / n_vars)]
+
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
@@ -263,7 +300,7 @@ def format_output_data(
                     for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
-            shape=[row_count, column_count],
+            shape=[row_count, column_count] + [byte_size] if byte_size else [],
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
         )

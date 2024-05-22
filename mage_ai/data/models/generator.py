@@ -1,4 +1,5 @@
-from typing import Any, Callable, Optional
+from collections.abc import Generator
+from typing import Any, Callable, Dict, List, Optional
 
 
 class DataGenerator:
@@ -80,3 +81,35 @@ class DataGenerator:
                 return result
 
         return SeqIterator(self.data)
+
+
+class GeneratorWithMetadata:
+    def __init__(self, generator: Generator, metadata: Optional[List[Dict[str, Any]]]):
+        """
+        Initializes the custom generator wrapper with a generator and associated metadata.
+
+        :param generator: The generator to wrap.
+        :param metadata: A dictionary containing metadata related to the generator.
+        """
+        self._generator = generator
+        self.metadata = metadata
+
+    def __iter__(self):
+        """
+        Returns the iterator object itself.
+        """
+        return self
+
+    def __next__(self):
+        """
+        Returns the next item from the generator.
+        """
+        return next(self._generator)
+
+    def get_metadata(self) -> Dict[str, Any]:
+        """
+        Returns the stored metadata.
+
+        :return: A dictionary containing metadata.
+        """
+        return self.metadata

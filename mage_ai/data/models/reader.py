@@ -6,7 +6,7 @@ from mage_ai.data.constants import (
     RecordBatchGenerator,
     ScanBatchDatasetResult,
 )
-from mage_ai.data.models.shared import BaseData
+from mage_ai.data.models.base import BaseData
 from mage_ai.data.tabular.reader import (
     sample_batch_datasets,
     sample_batch_datasets_async,

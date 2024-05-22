@@ -18,6 +18,7 @@ from mage_ai.data.constants import (
     ScanBatchDatasetResult,
     TaggedRecordBatch,
 )
+from mage_ai.data.models.generator import GeneratorWithMetadata
 from mage_ai.data.tabular.constants import FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.utils import compare_object
@@ -331,8 +332,12 @@ def scan_batch_datasets_generator(
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
+    try:
+        dataset = ds.dataset(source, format='parquet', partitioning='hive')
+    except FileNotFoundError as err:
+        print(f'[ERROR] scan_batch_datasets_generator: {err}')
+        return []
 
-    dataset = ds.dataset(source, format='parquet', partitioning='hive')
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:
         metadatas.append(read_metadata(directory, include_schema=True))
@@ -418,6 +423,8 @@ def scan_batch_datasets_generator(
         generator = dataset.scanner(**scanner_settings).scan_batches()
     else:
         generator = dataset.to_batches(**scanner_settings)
+
+    generator = GeneratorWithMetadata(generator, metadata=metadatas)
 
     def custom_generator_wrapper(generator=generator, object_metadata=object_metadata, scan=scan):
         for tagged_or_record_batch in generator:
