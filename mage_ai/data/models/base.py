@@ -30,6 +30,7 @@ class BaseData:
         poll_interval: Optional[int] = None,
         uuid: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
+        variables_dir: str = None,
     ):
         self.storage = storage
         """
@@ -53,8 +54,9 @@ class BaseData:
         self.poll_interval = poll_interval
         self.variable_path = variable_path
         self.variable_type = variable_type
+        self.variables_dir = variables_dir or get_variables_dir(root_project=False)
         self.uuid = uuid or str(
-            Path(self.variable_dir_path).relative_to(Path(get_variables_dir(root_project=False)))
+            Path(self.variable_dir_path).relative_to(Path(self.variables_dir))
         )
 
     @property

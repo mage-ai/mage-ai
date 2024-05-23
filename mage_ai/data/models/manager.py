@@ -64,6 +64,7 @@ class DataManager(BaseData):
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
                 variable_type=self.variable_type,
+                variables_dir=self.variables_dir,
             )
         return self._reader
 
@@ -77,6 +78,7 @@ class DataManager(BaseData):
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
                 variable_type=self.variable_type,
+                variables_dir=self.variables_dir,
             )
         return self._writer
 
