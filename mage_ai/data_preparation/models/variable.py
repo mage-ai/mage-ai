@@ -13,13 +13,10 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
-from mage_ai.data.constants import InputDataType
+from mage_ai.data.constants import ChunkKeyTypeUnion, InputDataType
 from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,

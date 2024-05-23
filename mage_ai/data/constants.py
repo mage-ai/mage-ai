@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import AsyncGenerator, Generator, Iterable, List, Union
+from typing import AsyncGenerator, Dict, Generator, Iterable, List, Union
 
 import polars as pl
 
@@ -13,6 +13,10 @@ SUPPORTED_VARIABLE_TYPES = [
     VariableType.SERIES_PANDAS,
     VariableType.SERIES_POLARS,
 ]
+
+ChunkKeyTypeBase = Union[bool, float, int, str]
+ChunkKeyTypeDict = Dict[str, ChunkKeyTypeBase]
+ChunkKeyTypeUnion = Union[ChunkKeyTypeDict, ChunkKeyTypeBase]
 
 ScanBatchDatasetResult = Union[RecordBatch, TaggedRecordBatch, pl.DataFrame]
 OutputData = Union[

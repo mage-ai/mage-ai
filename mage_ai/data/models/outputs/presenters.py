@@ -1,408 +1,117 @@
-# def build_output_manager(
-#     block,
-#     block_groups: Optional[
-#         List[Dict[str, Union[List[str], Optional[List[Any]], Optional[str]]]]
-#     ] = None,
-#     block_uuid: Optional[str] = None,
-#     csv_lines_only: bool = False,
-#     dynamic_block_index: Optional[int] = None,
-#     exclude_blank_variable_uuids: bool = False,
-#     execution_partition: Optional[str] = None,
-#     include_print_outputs: bool = True,
-#     metadata: Optional[Dict] = None,
-#     sample: bool = True,
-#     sample_count: Optional[int] = None,
-#     selected_variables: Optional[List[str]] = None,
-#     variable_type: Optional[VariableType] = None,
-#     # Used to limit the number of variable UUIDs to retrieve
-#     max_results: Optional[int] = None,
-#     # For reading data using the data manager
-#     input_data_types: Optional[List[InputDataType]] = None,
-#     read_batch_settings: Optional[BatchSettings] = None,
-#     read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-# ) -> OutputManager:
-#     manager = OutputManager()
+# from typing import Any, Dict, List, Optional, Tuple, Union
 
-#     if not block_groups:
-#         block_uuid = block_uuid or block.uuid
-#         if include_print_outputs:
-#             variable_uuids = block.output_variables(
-#                 execution_partition=execution_partition,
-#                 max_results=max_results,
-#             )
-#         else:
-#             variable_uuids = block.get_variable_uuids(
-#                 block_uuid=block_uuid,
-#                 max_results=max_results,
-#                 partition=execution_partition,
-#             )
-
-#         block_groups = [dict(block_uuid=block_uuid, variable_uuids=variable_uuids)]
-
-#     for block_group in block_groups:
-#         for idx_inner, variable_uuid in enumerate(block_group['variable_uuids'] or []):
-#             if (selected_variables and variable_uuid not in selected_variables) or (
-#                 exclude_blank_variable_uuids and variable_uuid.strip() == ''
-#             ):
-#                 continue
-
-#             outputs = block_group.get('outputs')
-#             output_data = outputs[idx_inner] if outputs and idx_inner < len(outputs) else None
-#             manager.append(
-#                 BlockOutput(
-#                     block,
-#                     data=output_data,
-#                     variable=block.pipeline.variable_manager.get_variable(
-#                         variable_uuid,
-#                         block_uuid=block_group.get('block_uuid'),
-#                         partition=execution_partition,
-#                         read_data=False,
-#                         # Data reader and writer settings
-#                         input_data_types=input_data_types,
-#                         read_batch_settings=read_batch_settings,
-#                         read_chunks=read_chunks,
-#                     )
-#                     if output_data is None
-#                     else None,
-#                 )
-#             )
-
-#     return manager
+# from mage_ai.data.models.generator import DataGenerator
+# from mage_ai.data.models.outputs.formatter import format_output_data
+# from mage_ai.data_preparation.models.constants import (
+#     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+#     DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
+# )
+# from mage_ai.data_preparation.models.interfaces import BlockInterface
 
 
-# def format_output_data(
-#     block,
-#     data: Any,
-#     variable_uuid: str,
-#     block_uuid: Optional[str] = None,
-#     csv_lines_only: Optional[bool] = False,
-#     execution_partition: Optional[str] = None,
-#     skip_dynamic_block: bool = False,
-#     automatic_sampling: bool = False,
-#     sample_count: Optional[int] = None,
-# ) -> Tuple[Dict, bool]:
-#     """
-#     Takes variable data and formats it to return to the frontend.
+# def present_block_outputs(
+#     block: BlockInterface,
+#     manager: DataGenerator,
+#     sample_data: Optional[bool] = None,
+#     take: Optional[int] = None,
+# ) -> List[Dict[str, Any]]:
+#     items = []
 
-#     Returns:
-#         Tuple[Dict, bool]: Tuple of the formatted data and is_data_product boolean. Data product
-#             outputs and non data product outputs are handled slightly differently.
-#     """
-#     if not block_uuid:
-#         block_uuid = block.uuid
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample_data, take, __callback = outputs
+#         data = variable_object.read_data(
+#             sample_data=sample_data,
+#             take=take,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
 
-#     variable_type, basic_iterable = infer_variable_type(data)
+#     return items
 
-#     variable_manager = block.pipeline.variable_manager
+# async def present_block_outputs_async(
+#     block: BlockInterface,
+#     manager: DataGenerator,
+#     sample_data: Optional[bool] = None,
+#     take: Optional[int] = None,
+# ) -> List[Dict[str, Any]]:*kwargs) -> List[Dict[str, Any]]:
+#     items = []
 
-#     is_dynamic_child = is_dynamic_block_child(block)
-#     is_dynamic = is_dynamic_block(block)
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample, sample_count, __callback = outputs
+#         data = await variable_object.read_data_async(
+#             sample=sample,
+#             sample_count=sample_count,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
 
-#     if VariableType.SERIES_PANDAS == variable_type:
-#         if automatic_sampling and not sample_count:
-#             sample_count = min(len(data), DATAFRAME_SAMPLE_COUNT)
-#         if basic_iterable:
-#             data = pd.DataFrame(data).T
-#         else:
-#             data = data.to_frame()
-#     elif VariableType.SERIES_POLARS == variable_type:
-#         if automatic_sampling and not sample_count:
-#             sample_count = min(len(data), DATAFRAME_SAMPLE_COUNT)
-#         if basic_iterable:
-#             data = convert_series_list_to_dataframe(data)
-#         else:
-#             data = series_to_dataframe(data)
-#     elif VariableType.ITERABLE == variable_type and isinstance(data, list):
-#         data = pd.Series(data).to_frame()
+#     return items
 
-#     if VariableType.MATRIX_SPARSE == variable_type:
-#         if automatic_sampling and not sample_count:
-#             n_rows, n_cols = data.shape
-#             max_dims = min(
-#                 DATAFRAME_ANALYSIS_MAX_COLUMNS * DATAFRAME_SAMPLE_COUNT, n_rows * n_cols
-#             )
-#             sample_count = round(max_dims / n_cols)
-#         if basic_iterable:
-#             data = convert_matrix_to_dataframe(data[0])
-#         else:
-#             data = convert_matrix_to_dataframe(data)
 
-#         return format_output_data(
+# def present_dynamic_block_outputs(
+#     block: BlockInterface,
+#     manager: DataGenerator,
+#     dynamic: Optional[bool] = None,
+#     dynamic_child: Optional[bool] = None,
+#     sample_data: Optional[bool] = None,
+#     take: Optional[int] = None,
+# ) -> List[Dict[str, Any]]:
+#     sample_count_use = take or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
+#     output_sets = []
+#     variable_sets = []
+
+#     if dynamic_child:
+#         pass
+#         lazy_variable_controller = get_outputs_for_dynamic_child(
 #             block,
-#             data,
-#             variable_uuid=variable_uuid,
-#             block_uuid=block_uuid,
-#             csv_lines_only=csv_lines_only,
 #             execution_partition=execution_partition,
-#             skip_dynamic_block=skip_dynamic_block,
-#             automatic_sampling=automatic_sampling,
-#             sample_count=sample_count,
+#             sample=sample_data or False,
+#             sample_count=sample_count_use,
 #         )
-#     elif VariableType.CUSTOM_OBJECT == variable_type:
-#         return_output = dict(
-#             text_data=encode_complex(data),
-#             variable_uuid=variable_uuid,
+#         variable_sets: List[
+#             Union[
+#                 Tuple[Optional[Any], Dict],
+#                 List[LazyVariableSet],
+#             ],
+#         ] = lazy_variable_controller.render(
+#             dynamic_block_index=dynamic_block_index,
+#             lazy_load=True,
 #         )
-#         if has_to_dict(data):
-#             return_output['type'] = DataType.OBJECT
-#         else:
-#             return_output['type'] = DataType.TEXT
-
-#         return return_output, True
-#     elif (
-#         VariableType.MODEL_SKLEARN == variable_type or VariableType.MODEL_XGBOOST == variable_type
-#     ):
-
-#         def __render(
-#             model: Any,
-#             partition=execution_partition,
-#             block_uuid=block_uuid,
-#             variable_manager=variable_manager,
-#             variable_uuid=variable_uuid,
-#         ) -> Dict[str, Optional[str]]:
-#             data_type = None
-#             text_data = None
-
-#             if VariableType.MODEL_SKLEARN == variable_type:
-#                 data_type = DataType.TEXT_HTML
-#                 text_data = estimator_html_repr(model)
-#             elif variable_manager:
-#                 image_dir = variable_manager.variable_dir_path(
-#                     block_uuid=block_uuid,
-#                     partition=partition,
-#                     variable_uuid=variable_uuid,
-#                 )
-#                 text_data, success = render_tree_visualization(image_dir)
-
-#                 if success:
-#                     data_type = DataType.IMAGE_PNG
-#                 else:
-#                     data_type = DataType.TEXT
-
-#             return dict(
-#                 text_data=text_data,
-#                 type=data_type,
-#                 variable_uuid=variable_uuid,
-#             )
-
-#         if not basic_iterable:
-#             return __render(data), True
-
-#         data = dict(
-#             text_data=simplejson.dumps(
-#                 [__render(d) for d in data],
-#                 default=encode_complex,
-#                 ignore_nan=True,
-#             ),
-#             type=DataType.TEXT,
-#             variable_uuid=variable_uuid,
+#     elif dynamic:
+#         output_pair: List[
+#             Optional[
+#                 Union[
+#                     Any,
+#                     Dict,
+#                     int,
+#                     pd.DataFrame,
+#                     str,
+#                 ]
+#             ]
+#         ] = get_outputs_for_dynamic_block(
+#             self,
+#             execution_partition=execution_partition,
+#             sample_data=sample_data,
+#             take=sample_count_use,
 #         )
+#         output_sets.append(output_pair)
 
-#         return data, True
-#     elif (is_dynamic_child or is_dynamic) and not skip_dynamic_block:
-#         from mage_ai.data_preparation.models.block.dynamic.utils import (
-#             coerce_into_dataframe,
-#         )
+#     output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     child_data_sets = [lazy_variable_set.read_data() for lazy_variable_set in variable_sets]
 
-#         if VariableType.LIST_COMPLEX == variable_type and basic_iterable and len(data) >= 1:
-#             data = [encode_complex(item) for item in data]
-
-#         return format_output_data(
-#             block,
-#             coerce_into_dataframe(
-#                 data,
-#                 is_dynamic=is_dynamic,
-#                 is_dynamic_child=is_dynamic_child,
-#             ),
-#             variable_uuid=variable_uuid,
-#             skip_dynamic_block=True,
-#             automatic_sampling=automatic_sampling,
-#             sample_count=sample_count,
-#         )
-#     elif isinstance(data, pd.DataFrame):
-#         if csv_lines_only:
-#             data = dict(table=data.to_csv(header=True, index=False).strip('\n').split('\n'))
-#         else:
-#             try:
-#                 analysis = variable_manager.get_variable(
-#                     block.pipeline.uuid,
-#                     block_uuid,
-#                     variable_uuid,
-#                     dataframe_analysis_keys=['metadata', 'statistics'],
-#                     partition=execution_partition,
-#                     variable_type=VariableType.DATAFRAME_ANALYSIS,
-#                 )
-#             except Exception as err:
-#                 print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
-#                 analysis = None
-
-#             if analysis is not None and (analysis.get('statistics') or analysis.get('metadata')):
-#                 stats = analysis.get('statistics', {})
-#                 column_types = (analysis.get('metadata') or {}).get('column_types', {})
-#                 row_count = stats.get('original_row_count', stats.get('count'))
-#                 column_count = stats.get('original_column_count', len(column_types))
-#             else:
-#                 row_count, column_count = data.shape
-
-#             columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-
-#             if automatic_sampling and not sample_count:
-#                 data = data.iloc[:DATAFRAME_SAMPLE_COUNT]
-#             elif sample_count:
-#                 data = data.iloc[:sample_count]
-
-#             data = dict(
-#                 sample_data=dict(
-#                     columns=columns_to_display,
-#                     rows=json.loads(
-#                         data[columns_to_display].to_json(orient='split', date_format='iso'),
-#                     )['data'],
-#                 ),
-#                 shape=[row_count, column_count],
-#                 type=DataType.TABLE,
-#                 variable_uuid=variable_uuid,
-#             )
-#         return data, True
-#     elif isinstance(data, pl.DataFrame):
-#         variable_uuids = block.get_variable_uuids(
-#             block_uuid=block_uuid,
-#             partition=execution_partition,
-#         )
-#         n_vars = len(variable_uuids)
-#         try:
-#             analysis = variable_manager.get_variable(
-#                 block.pipeline.uuid,
-#                 block_uuid,
-#                 variable_uuid,
-#                 dataframe_analysis_keys=['statistics'],
-#                 partition=execution_partition,
-#                 variable_type=VariableType.DATAFRAME_ANALYSIS,
-#             )
-#         except Exception as err:
-#             raise err
-#             analysis = None
-#         if analysis is not None:
-#             stats = analysis.get('statistics', {})
-#             row_count = stats.get('original_row_count')
-#             column_count = stats.get('original_column_count')
-#         else:
-#             row_count, column_count = data.shape
-#         variable = variable_manager.get_variable(
-#             variable_uuid,
-#             block_uuid=block_uuid,
-#             partition=execution_partition,
-#             read_data=False,
-#         )
-#         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-#         sample_count = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
-
-#         metadata = read_metadata(
-#             os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
-#             include_schema=True,
-#         )
-#         if metadata:
-#             try:
-#                 row_count = metadata.get('num_rows') or row_count
-#                 schema = metadata.get('schema')
-#                 if schema and isinstance(schema, dict):
-#                     column_count = len(schema) or column_count
-#             except ValueError:
-#                 pass
-
-#         data = data[: round(sample_count / n_vars)]
-#         data = dict(
-#             sample_data=dict(
-#                 columns=columns_to_display,
-#                 rows=[
-#                     list(row.values())
-#                     for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
-#                 ],
-#             ),
-#             resource_usage=block.get_resource_usage(
-#                 block_uuid=block_uuid,
-#                 partition=execution_partition,
-#             ),
-#             shape=[row_count, column_count],
-#             type=DataType.TABLE,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, True
-#     elif is_geo_dataframe(data):
-#         data = dict(
-#             text_data=f"""Use the code in a scratchpad to get the output of the block:
-
-# from mage_ai.data_preparation.variable_manager import get_variable
-# df = get_variable('{block.pipeline.uuid}', '{block_uuid}', 'df')
-# """,
-#             type=DataType.TEXT,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, False
-#     elif is_primitive(data):
-#         data = dict(
-#             text_data=str(data),
-#             type=DataType.TEXT,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, False
-#     elif basic_iterable:
-#         data = dict(
-#             text_data=simplejson.dumps(
-#                 data,
-#                 default=encode_complex,
-#                 ignore_nan=True,
-#             ),
-#             type=DataType.TEXT,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, False
-#     elif isinstance(data, dict):
-#         try:
-#             pair = format_output_data(
-#                 block,
-#                 pd.DataFrame([data]),
-#                 variable_uuid=variable_uuid,
-#                 block_uuid=block_uuid,
-#                 csv_lines_only=csv_lines_only,
-#                 execution_partition=execution_partition,
-#                 skip_dynamic_block=skip_dynamic_block,
-#                 automatic_sampling=automatic_sampling,
-#                 sample_count=sample_count,
-#             )
-#             if len(pair) >= 1:
-#                 return pair[0], True
-#         except Exception as err:
-#             print(
-#                 f'[ERROR] Block.format_output_data for block '
-#                 f'{block_uuid} variable {variable_uuid}: {err}',
-#             )
-
-#         data = dict(
-#             text_data=simplejson.dumps(
-#                 data,
-#                 default=encode_complex,
-#                 ignore_nan=True,
-#             ),
-#             type=DataType.TEXT,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, False
-#     elif is_spark_dataframe(data):
-#         df = data.toPandas()
-#         columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-#         data = dict(
-#             sample_data=dict(
-#                 columns=columns_to_display,
-#                 rows=json.loads(
-#                     df[columns_to_display].to_json(orient='split', date_format='iso'),
-#                 )['data'],
-#             ),
-#             type=DataType.TABLE,
-#             variable_uuid=variable_uuid,
-#         )
-#         return data, True
-
-#     return data, False
+#     return get_outputs_for_display_dynamic_block(
+#         self,
+#         output_sets,
+#         child_data_sets,
+#         block_uuid=block_uuid,
+#         csv_lines_only=csv_lines_only,
+#         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+#         execution_partition=execution_partition,
+#         metadata=metadata,
+#         sample_data=sample_data,
+#         take=sample_count_use,
+#     )
 
 
 # def get_outputs_for_display_dynamic_block(
@@ -492,272 +201,61 @@
 #     return outputs + data_products
 
 
-# async def __get_outputs_async(
-#     self,
-#     execution_partition: Optional[str] = None,
-#     include_print_outputs: bool = True,
-#     csv_lines_only: bool = False,
-#     sample: bool = True,
-#     sample_count: Optional[int] = None,
-#     variable_type: Optional[VariableType] = None,
-#     block_uuid: Optional[str] = None,
-#     selected_variables: Optional[List[str]] = None,
-#     metadata: Optional[Dict] = None,
-#     dynamic_block_index: Optional[int] = None,
-#     exclude_blank_variable_uuids: bool = False,
-#     max_results: Optional[int] = None,
-# ) -> List[Dict[str, Any]]:
-#     is_dynamic_child = is_dynamic_block_child(self)
-#     is_dynamic = is_dynamic_block(self)
+# # Data integrations
+# # from mage_ai/data_preparation/models/pipeline.py
+# # def get_block_variable(
+# #     self,
+# #     block_uuid: str,
+# #     variable_name: str,
+# #     from_notebook: bool = False,
+# #     global_vars: Dict = None,
+# #     input_args: List[Any] = None,
+# #     partition: str = None,
+# #     raise_exception: bool = False,
+# #     spark=None,
+# #     index: int = None,
+# #     sample_count: int = None,
+# #     dynamic_block_index: int = None,
+# #     dynamic_block_uuid: str = None,
+# #     input_data_types: Optional[List[InputDataType]] = None,
+# #     read_batch_settings: Optional[BatchSettings] = None,
+# #     read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+# #     write_batch_settings: Optional[BatchSettings] = None,
+# #     write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+# # ):
+# #     block = self.get_block(block_uuid)
+# #     data_integration_settings = block.get_data_integration_settings(
+# #         from_notebook=from_notebook,
+# #         global_vars=global_vars,
+# #         input_vars=input_args,
+# #         partition=partition,
+# #     )
 
-#     if not is_dynamic and not is_dynamic_child:
-#         return await get_outputs_for_display_async(
-#             self,
-#             block_uuid=block_uuid,
-#             csv_lines_only=csv_lines_only,
-#             exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-#             execution_partition=execution_partition,
-#             include_print_outputs=include_print_outputs,
-#             sample=sample,
-#             sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
-#             selected_variables=selected_variables,
-#             variable_type=variable_type,
-#             max_results=max_results,
-#         )
+# #     if data_integration_settings:
+# #         return convert_outputs_to_data(
+# #             block,
+# #             data_integration_settings.get('catalog'),
+# #             from_notebook=from_notebook,
+# #             index=index,
+# #             partition=partition,
+# #             sample_count=sample_count,
+# #             data_integration_uuid=data_integration_settings.get('data_integration_uuid'),
+# #             stream_id=variable_name,
+# #         )
 
-#     sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-#     output_sets = []
-#     variable_sets = []
+# #     variable = block.get_variable(
+# #         block_uuid=block_uuid,
+# #         partition=partition,
+# #         raise_exception=raise_exception,
+# #         spark=spark,
+# #         variable_uuid=variable_name,
+# #         dynamic_block_index=dynamic_block_index,
+# #         dynamic_block_uuid=dynamic_block_uuid,
+# #         input_data_types=input_data_types,
+# #         read_batch_settings=read_batch_settings,
+# #         read_chunks=read_chunks,
+# #         write_batch_settings=write_batch_settings,
+# #         write_chunks=write_chunks,
+# #     )
 
-#     if is_dynamic_child:
-#         lazy_variable_controller = get_outputs_for_dynamic_child(
-#             self,
-#             execution_partition=execution_partition,
-#             sample=sample,
-#             sample_count=sample_count_use,
-#         )
-#         variable_sets: List[
-#             Union[
-#                 Tuple[Optional[Any], Dict],
-#                 List[LazyVariableSet],
-#             ],
-#         ] = await lazy_variable_controller.render_async(
-#             dynamic_block_index=dynamic_block_index,
-#             lazy_load=True,
-#         )
-
-#     elif is_dynamic:
-#         output_pair: List[
-#             Optional[Union[Dict, int, str, pd.DataFrame, Any]],
-#         ] = await get_outputs_for_dynamic_block_async(
-#             self,
-#             execution_partition=execution_partition,
-#             sample=sample,
-#             sample_count=sample_count_use,
-#         )
-#         output_sets.append(output_pair)
-
-#     # Limit the number of dynamic block children we display output for in the UI
-#     output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-#     variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-#     child_data_sets = await asyncio.gather(*[
-#         lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets
-#     ])
-
-#     return get_outputs_for_display_dynamic_block(
-#         self,
-#         output_sets,
-#         child_data_sets,
-#         block_uuid=block_uuid,
-#         csv_lines_only=csv_lines_only,
-#         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-#         execution_partition=execution_partition,
-#         metadata=metadata,
-#         sample=sample,
-#         sample_count=sample_count_use,
-#     )
-
-
-# def get_outputs(
-#     self,
-#     execution_partition: Optional[str] = None,
-#     include_print_outputs: bool = True,
-#     csv_lines_only: bool = False,
-#     sample: bool = True,
-#     sample_count: Optional[int] = None,
-#     variable_type: Optional[VariableType] = None,
-#     block_uuid: Optional[str] = None,
-#     selected_variables: Optional[List[str]] = None,
-#     metadata: Optional[Dict] = None,
-#     dynamic_block_index: Optional[int] = None,
-#     exclude_blank_variable_uuids: bool = False,
-# ) -> List[Dict[str, Any]]:
-#     is_dynamic_child = is_dynamic_block_child(self)
-#     is_dynamic = is_dynamic_block(self)
-
-#     if not is_dynamic and not is_dynamic_child:
-#         return get_outputs_for_display_sync(
-#             self,
-#             block_uuid=block_uuid,
-#             csv_lines_only=csv_lines_only,
-#             exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-#             execution_partition=execution_partition,
-#             include_print_outputs=include_print_outputs,
-#             sample=sample,
-#             sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
-#             selected_variables=selected_variables,
-#             variable_type=variable_type,
-#         )
-
-#     sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-#     output_sets = []
-#     variable_sets = []
-
-#     if is_dynamic_child:
-#         lazy_variable_controller = get_outputs_for_dynamic_child(
-#             self,
-#             execution_partition=execution_partition,
-#             sample=sample,
-#             sample_count=sample_count_use,
-#         )
-#         variable_sets: List[
-#             Union[
-#                 Tuple[Optional[Any], Dict],
-#                 List[LazyVariableSet],
-#             ],
-#         ] = lazy_variable_controller.render(
-#             dynamic_block_index=dynamic_block_index,
-#             lazy_load=True,
-#         )
-#     elif is_dynamic:
-#         output_pair: List[
-#             Optional[
-#                 Union[
-#                     Any,
-#                     Dict,
-#                     int,
-#                     pd.DataFrame,
-#                     str,
-#                 ]
-#             ]
-#         ] = get_outputs_for_dynamic_block(
-#             self,
-#             execution_partition=execution_partition,
-#             sample=sample,
-#             sample_count=sample_count_use,
-#         )
-#         output_sets.append(output_pair)
-
-#     output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-#     variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-#     child_data_sets = [lazy_variable_set.read_data() for lazy_variable_set in variable_sets]
-
-#     return get_outputs_for_display_dynamic_block(
-#         self,
-#         output_sets,
-#         child_data_sets,
-#         block_uuid=block_uuid,
-#         csv_lines_only=csv_lines_only,
-#         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-#         execution_partition=execution_partition,
-#         metadata=metadata,
-#         sample=sample,
-#         sample_count=sample_count_use,
-#     )
-
-
-# data_products = []
-# outputs = []
-
-# variable_type_mapping = {}
-
-
-# def __callback(
-#     data_from_yield,
-#     b_uuid=b_uuid,
-#     block=block,
-#     csv_lines_only=csv_lines_only,
-#     execution_partition=execution_partition,
-#     idx=idx,
-#     idx_inner=idx_inner,
-#     input_data_types=input_data_types,
-#     read_batch_settings=read_batch_settings,
-#     read_chunks=read_chunks,
-#     variable_uuid=variable_uuid,
-# ):
-#     data, is_data_product = format_output_data(
-#         block,
-#         data_from_yield,
-#         variable_uuid,
-#         block_uuid=b_uuid,
-#         csv_lines_only=csv_lines_only,
-#         execution_partition=execution_partition,
-#     )
-
-#     if is_data_product:
-#         data_products.append(((idx, idx_inner), data, is_data_product))
-#     else:
-#         outputs.append(((idx, idx_inner), data, is_data_product))
-
-#     if (
-#         not output_data
-#         and variable_type is not None
-#         and block_output.variable is not None
-#         and block_output.variable.variable_type != variable_type
-#     ):
-#         continue
-
-#     if variable_object.variable_type is not None:
-#         variable_type_mapping[variable_object.variable_type] = variable_type_mapping.get(
-#             variable_object.variable_type, []
-#         )
-#         variable_type_mapping[variable_object.variable_type].append(variable_uuid)
-
-#     yield (variable_object, sample, sample_count, __callback)
-
-#     arr = outputs + data_products
-#     arr_sorted = sorted(arr, key=lambda x: x[0])
-
-#     if len(data_products) >= len(outputs):
-#         arr_sorted = [x[1] for x in arr_sorted]
-#     else:
-#         arr_sorted = [x[1] for x in arr_sorted]
-
-#     if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
-#         for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
-#             if isinstance(item, dict):
-#                 items.append(merge_dict(item, dict(multi_output=True)))
-#             else:
-#                 items.append(item)
-#     else:
-#         items.extend(arr_sorted)
-
-
-# def get_outputs_for_display_sync(block, **kwargs) -> List[Dict[str, Any]]:
-#     items = []
-
-#     for outputs in handle_variables(block, items, **kwargs):
-#         variable_object, sample, sample_count, __callback = outputs
-#         data = variable_object.read_data(
-#             sample=sample,
-#             sample_count=sample_count,
-#             spark=block.get_spark_session(),
-#         )
-#         __callback(data)
-
-#     return items
-
-
-# async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]:
-#     items = []
-
-#     for outputs in handle_variables(block, items, **kwargs):
-#         variable_object, sample, sample_count, __callback = outputs
-#         data = await variable_object.read_data_async(
-#             sample=sample,
-#             sample_count=sample_count,
-#             spark=block.get_spark_session(),
-#         )
-#         __callback(data)
-
-#     return items
+# #     return variable

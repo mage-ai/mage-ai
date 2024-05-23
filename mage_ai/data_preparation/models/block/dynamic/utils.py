@@ -607,6 +607,7 @@ def build_combinations_for_dynamic_child(
                 )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
+                        # This is loading too much data!!!
                         values, _metadata = get_outputs_for_dynamic_block(
                             upstream_block,
                             execution_partition=execution_partition,
@@ -619,6 +620,7 @@ def build_combinations_for_dynamic_child(
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
+                # This is loading too much data!!!
                 arr, _metadata = get_outputs_for_dynamic_block(
                     upstream_block,
                     execution_partition=execution_partition,

@@ -1,13 +1,9 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from mage_ai.data.constants import InputDataType
+from mage_ai.data.constants import ChunkKeyTypeUnion, InputDataType
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.shared.models import BaseDataClass
-
-ChunkKeyTypeBase = Union[bool, float, int, str]
-ChunkKeyTypeDict = Dict[str, ChunkKeyTypeBase]
-ChunkKeyTypeUnion = Union[ChunkKeyTypeDict, ChunkKeyTypeBase]
 
 
 @dataclass

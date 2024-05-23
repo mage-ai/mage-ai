@@ -2,12 +2,9 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from mage_ai.data.constants import InputDataType
+from mage_ai.data.constants import ChunkKeyTypeUnion, InputDataType
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.variables.constants import GLOBAL_DIRECTORY_NAME
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
