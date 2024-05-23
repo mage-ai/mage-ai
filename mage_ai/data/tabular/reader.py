@@ -332,9 +332,6 @@ def scan_batch_datasets_generator(
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
-    import os
-
-    print(os.listdir(source))
     try:
         dataset = ds.dataset(source, format='parquet', partitioning='hive')
     except FileNotFoundError as err:
