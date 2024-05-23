@@ -54,9 +54,10 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.outputs import (
-    build_output_manager,
     format_output_data,
+    get_outputs_for_display_async,
     get_outputs_for_display_dynamic_block,
+    get_outputs_for_display_sync,
 )
 from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
@@ -2252,7 +2253,7 @@ class Block(
         is_dynamic = is_dynamic_block(self)
 
         if not is_dynamic and not is_dynamic_child:
-            return build_output_manager(
+            return get_outputs_for_display_sync(
                 self,
                 block_uuid=block_uuid,
                 csv_lines_only=csv_lines_only,
@@ -2263,7 +2264,7 @@ class Block(
                 sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
                 selected_variables=selected_variables,
                 variable_type=variable_type,
-            ).render()
+            )
 
         sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
         output_sets = []
@@ -2340,7 +2341,7 @@ class Block(
         is_dynamic = is_dynamic_block(self)
 
         if not is_dynamic and not is_dynamic_child:
-            return await build_output_manager(
+            return await get_outputs_for_display_async(
                 self,
                 block_uuid=block_uuid,
                 csv_lines_only=csv_lines_only,
@@ -2352,7 +2353,7 @@ class Block(
                 selected_variables=selected_variables,
                 variable_type=variable_type,
                 max_results=max_results,
-            ).render_async()
+            )
 
         sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
         output_sets = []
