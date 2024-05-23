@@ -1,9 +1,8 @@
 from typing import Dict, List, Optional
 
-from mage_ai.data.constants import InputDataType
+from mage_ai.data.constants import ChunkKeyTypeUnion, InputDataType
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
     VariableConfiguration,
     VariableSettings,
 )

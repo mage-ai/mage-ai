@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
-DEFAULT_ROWS = 100_000_000
+DEFAULT_ROWS = 1_000_000
 DEFAULT_COLUMNS = 10
 
 

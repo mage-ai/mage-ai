@@ -6,6 +6,7 @@ import jwt
 from tornado import gen, iostream
 
 from mage_ai.api.utils import authenticate_client_and_token
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
@@ -32,9 +33,7 @@ class ApiDownloadHandler(BaseHandler):
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
                     user = oauth_token.user
-                    authenticated = valid and \
-                        oauth_token and \
-                        oauth_token.user
+                    authenticated = valid and oauth_token and oauth_token.user
             if not authenticated:
                 raise Exception('Unauthorized access to download block output.')
 
@@ -51,13 +50,15 @@ class ApiDownloadHandler(BaseHandler):
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
 
-        tables = block.get_outputs(
-            execution_partition=execution_partition,
-            include_print_outputs=False,
+        output_query = BlockOutputQuery(block=block, pipeline=pipeline)
+        output_manager = output_query.fetch(partition=execution_partition)
+        tables = output_manager.present(
             csv_lines_only=True,
-            sample=False,
+            include_print_outputs=False,
+            sample_data=False,
             variable_type=VariableType.DATAFRAME,
         )
+
         for data in tables:
             table = data.get('table', [])
             line_count = len(table)
@@ -75,7 +76,6 @@ class ApiDownloadHandler(BaseHandler):
 
 
 class ApiResourceDownloadHandler(BaseHandler):
-
     def get(self, token):
         try:
             decoded_payload = jwt.decode(token, JWT_DOWNLOAD_SECRET, algorithms=['HS256'])
@@ -141,6 +141,8 @@ class ApiResourceDownloadHandler(BaseHandler):
         if common_ground != self.abs_repo_path:
             raise ValueError(abs_path)
 
-        return (os.path.basename(abs_path)
-                if self.ignore_folder_structure
-                else os.path.relpath(abs_path, common_ground))
+        return (
+            os.path.basename(abs_path)
+            if self.ignore_folder_structure
+            else os.path.relpath(abs_path, common_ground)
+        )

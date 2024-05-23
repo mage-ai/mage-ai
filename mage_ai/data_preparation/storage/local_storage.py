@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from contextlib import contextmanager
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import aiofiles
 import pandas as pd
@@ -23,7 +23,7 @@ class LocalStorage(BaseStorage):
         self,
         path: str,
         suffix: str = None,
-        max_results: int = None,
+        max_results: Optional[int] = None,
     ) -> List[str]:
         paths = []
         if not os.path.exists(path):

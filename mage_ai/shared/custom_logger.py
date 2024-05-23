@@ -10,16 +10,16 @@ from mage_ai.shared.parsers import encode_complex
 
 
 class Color(str, Enum):
-    BLUE = "\x1b[1;34m"
-    BOLD_RED = "\x1b[31;1m"
-    GREEN = "\x1b[1;32m"
-    GREY = "\x1b[38;20m"
-    LIGHT_BLUE = "\x1b[1;36m"
-    PINK = "\x1b[35m"
-    PURPLE = "\x1b[1;35m"
-    RED = "\x1b[31;20m"
-    RESET = "\x1b[0m"
-    YELLOW = "\x1b[33;21m"
+    BLUE = '\x1b[1;34m'
+    BOLD_RED = '\x1b[31;1m'
+    GREEN = '\x1b[1;32m'
+    GREY = '\x1b[38;20m'
+    LIGHT_BLUE = '\x1b[1;36m'
+    PINK = '\x1b[35m'
+    PURPLE = '\x1b[1;35m'
+    RED = '\x1b[31;20m'
+    RESET = '\x1b[0m'
+    YELLOW = '\x1b[33;21m'
 
 
 BLOCK_TYPE_COLOR_MAPPING = {
@@ -48,7 +48,6 @@ def targets():
         # 'get_outputs',
         # 'get_callers',
         # 'get_variable',
-        # 'get_variables_by_block',
         # 'fetch_input_variables',
         # 'output_variables',
         # 'uuid_for_output_variables',
@@ -64,19 +63,19 @@ class ColorPrinter:
         self.label = None
 
     def debug(self, *args, **kwargs):
-        self.print(color=Color.PURPLE, *args, **kwargs)
+        self.print(*args, color=Color.PURPLE, **kwargs)
 
     def info(self, *args, **kwargs):
-        self.print(color=Color.BLUE, *args, **kwargs)
+        self.print(*args, color=Color.BLUE, **kwargs)
 
     def warning(self, *args, **kwargs):
-        self.print(color=Color.GREEN, *args, **kwargs)
+        self.print(*args, color=Color.GREEN, **kwargs)
 
     def error(self, *args, **kwargs):
-        self.print(color=Color.RED, *args, **kwargs)
+        self.print(*args, color=Color.RED, **kwargs)
 
     def critical(self, *args, **kwargs):
-        self.print(color=Color.BOLD_RED, *args, **kwargs)
+        self.print(*args, color=Color.BOLD_RED, **kwargs)
 
     def print(self, *args, **kwargs):
         if not is_deus_ex_machina():
@@ -144,11 +143,7 @@ class ColorPrinter:
             else:
                 callers.append(caller)
 
-        self.debug(
-            function_name,
-            callers=callers,
-            __uuid='get_callers'
-        )
+        self.debug(function_name, callers=callers, __uuid='get_callers')
 
     def print_call_stack(self):
         stack = inspect.stack()
@@ -164,7 +159,7 @@ class ColorPrinter:
 
 class CustomFormatter(logging.Formatter):
     # https://stackoverflow.com/a/56944256/1084284
-    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)'
 
     FORMATS = {
         logging.CRITICAL: Color.BOLD_RED + format + Color.RESET,
@@ -183,35 +178,35 @@ class CustomFormatter(logging.Formatter):
     def debug(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.PURPLE, *args, **kwargs)
+                self.print(*args, color=Color.PURPLE, **kwargs)
             else:
                 super().debug(*args, **kwargs)
 
     def info(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.BLUE, *args, **kwargs)
+                self.print(*args, color=Color.BLUE, **kwargs)
             else:
                 super().info(*args, **kwargs)
 
     def warning(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.YELLOW, *args, **kwargs)
+                self.print(*args, color=Color.YELLOW, **kwargs)
             else:
                 super().warning(*args, **kwargs)
 
     def error(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.RED, *args, **kwargs)
+                self.print(*args, color=Color.RED, **kwargs)
             else:
                 super().error(*args, **kwargs)
 
     def critical(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.BOLD_RED, *args, **kwargs)
+                self.print(*args, color=Color.BOLD_RED, **kwargs)
             else:
                 super().critical(*args, **kwargs)
 

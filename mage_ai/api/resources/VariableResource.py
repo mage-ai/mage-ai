@@ -2,6 +2,7 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
@@ -14,22 +15,21 @@ from mage_ai.settings.repo import get_repo_path, get_variables_dir
 
 
 def get_variable_value(
-    variable_manager: VariableManager,
-    pipeline_uuid: str,
+    pipeline,
     block_uuid: str,
     variable_uuid: str,
 ) -> Dict:
-    variable = variable_manager.get_variable_object(
-        pipeline_uuid,
-        block_uuid,
-        variable_uuid,
-    )
+    output_query = BlockOutputQuery(block_uuid=block_uuid, pipeline=pipeline)
+    block_output = output_query.find(variable_uuid)
+    variable = block_output.variable
+
     if variable.variable_type in [VariableType.DATAFRAME, VariableType.GEO_DATAFRAME]:
         value = 'DataFrame'
         variable_type = 'pandas.DataFrame'
     else:
         value = variable.read_data(sample=True)
         variable_type = str(type(value))
+
     return dict(
         uuid=variable_uuid,
         type=variable_type,
@@ -44,7 +44,8 @@ class VariableResource(GenericResource):
         context_data = kwargs.get('context_data')
         repo_path = get_repo_path(context_data=context_data, user=user)
         variables_dir = get_variables_dir(repo_path=repo_path)
-        pipeline_uuid = kwargs['parent_model'].uuid
+        pipeline = kwargs['parent_model']
+        pipeline_uuid = pipeline.uuid
 
         global_only = query.get('global_only', [False])
         if global_only:
@@ -80,8 +81,7 @@ class VariableResource(GenericResource):
                     pipeline=dict(uuid=pipeline_uuid),
                     variables=[
                         get_variable_value(
-                            variable_manager,
-                            pipeline_uuid,
+                            pipeline,
                             uuid,
                             var,
                         )
@@ -153,9 +153,7 @@ class VariableResource(GenericResource):
         variable_uuid = payload.get('name')
         if not variable_uuid.isidentifier():
             error.update(message=f'Invalid variable name syntax for variable name {self.name}.')
-            error.update(
-                message=f'Invalid variable name syntax for variable name {self.name}.'
-            )
+            error.update(message=f'Invalid variable name syntax for variable name {self.name}.')
             raise ApiError(error)
 
         variable_value = payload.get('value')

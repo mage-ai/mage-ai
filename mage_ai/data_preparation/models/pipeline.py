@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 import pytz
@@ -17,21 +17,13 @@ from jinja2 import Template
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.pipeline import PipelineCache
-from mage_ai.data.constants import InputDataType
-from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.block_factory import BlockFactory
-from mage_ai.data_preparation.models.block.data_integration.utils import (
-    convert_outputs_to_data,
-)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
@@ -49,6 +41,7 @@ from mage_ai.data_preparation.models.errors import (
     SerializationError,
 )
 from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.interfaces import PipelineInterface
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -85,7 +78,7 @@ from mage_ai.shared.utils import clean_name
 CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 
 
-class Pipeline:
+class Pipeline(PipelineInterface):
     def __init__(
         self,
         uuid,
@@ -140,8 +133,9 @@ class Pipeline:
             self.repo_config = repo_config
 
         self.variable_manager = VariableManager.get_manager(
-            self.repo_path,
-            self.remote_variables_dir or self.variables_dir,
+            repo_path=self.repo_path,
+            variables_dir=self.remote_variables_dir or self.variables_dir,
+            pipeline_uuid=self.uuid,
         )
 
         # Used for showing the operation history. For example: recently viewed pipelines.
@@ -643,8 +637,7 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'),
-                    mage_projects_only=True
+                    context_data=kwargs.get('context_data'), mage_projects_only=True
                 ).values()
             ]
 
@@ -1862,63 +1855,6 @@ class Pipeline:
             )
 
         return block
-
-    def get_block_variable(
-        self,
-        block_uuid: str,
-        variable_name: str,
-        from_notebook: bool = False,
-        global_vars: Dict = None,
-        input_args: List[Any] = None,
-        partition: str = None,
-        raise_exception: bool = False,
-        spark=None,
-        index: int = None,
-        sample_count: int = None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
-        input_data_types: Optional[List[InputDataType]] = None,
-        read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ):
-        block = self.get_block(block_uuid)
-        data_integration_settings = block.get_data_integration_settings(
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            input_vars=input_args,
-            partition=partition,
-        )
-
-        if data_integration_settings:
-            return convert_outputs_to_data(
-                block,
-                data_integration_settings.get('catalog'),
-                from_notebook=from_notebook,
-                index=index,
-                partition=partition,
-                sample_count=sample_count,
-                data_integration_uuid=data_integration_settings.get('data_integration_uuid'),
-                stream_id=variable_name,
-            )
-
-        variable = block.get_variable(
-            block_uuid=block_uuid,
-            partition=partition,
-            raise_exception=raise_exception,
-            spark=spark,
-            variable_uuid=variable_name,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-            input_data_types=input_data_types,
-            read_batch_settings=read_batch_settings,
-            read_chunks=read_chunks,
-            write_batch_settings=write_batch_settings,
-            write_chunks=write_chunks,
-        )
-
-        return variable
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

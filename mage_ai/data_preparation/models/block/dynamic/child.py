@@ -14,7 +14,6 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_child,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun
-from mage_ai.system.memory.utils import get_memory_usage
 
 
 class DynamicChildController:
@@ -95,27 +94,11 @@ class DynamicChildController:
                 count = 0
                 while tries < 12 and count == 0:
                     # If this block tries to get the data too soon, it’ll return empty.
-                    def __get(
+                    lazy_variable_controller = get_outputs_for_dynamic_child(
+                        upstream_block,
                         execution_partition=execution_partition,
                         logger=logger,
                         logging_tags=logging_tags,
-                        upstream_block=upstream_block,
-                    ):
-                        return get_outputs_for_dynamic_child(
-                            upstream_block,
-                            execution_partition=execution_partition,
-                            logger=logger,
-                            logging_tags=logging_tags,
-                        )
-
-                    lazy_variable_controller = get_memory_usage(
-                        logger=logger,
-                        logging_tags=logging_tags,
-                        message_prefix=(
-                            f'DynamicChild {self.block.uuid} '
-                            'execute_sync get_outputs_for_dynamic_child'
-                        ),
-                        wrapped_function=__get,
                     )
 
                     if lazy_variable_controller is not None:
@@ -129,8 +112,7 @@ class DynamicChildController:
 
                 if is_dynamic:
                     metadata_by_upstream_block_uuid[upstream_block.uuid] = [
-                        lazy_var_set.read_metadata()
-                        for lazy_var_set in lazy_variable_controller
+                        lazy_var_set.read_metadata() for lazy_var_set in lazy_variable_controller
                     ]
             elif is_dynamic:
                 tries = 0
@@ -188,11 +170,7 @@ class DynamicChildController:
                         if is_dynamic_child:
                             block_runs = block_runs_by_block_uuid[upstream_block.uuid]
                             block_runs = sorted(
-                                [
-                                    br
-                                    for br in block_runs
-                                    if br.block_uuid != upstream_block.uuid
-                                ],
+                                [br for br in block_runs if br.block_uuid != upstream_block.uuid],
                                 key=lambda br: br.id,
                             )
                             # This errors list index out of range
@@ -202,9 +180,7 @@ class DynamicChildController:
                                 )
 
                         if metadata_by_upstream_block_uuid.get(upstream_block.uuid):
-                            metadata = metadata_by_upstream_block_uuid[
-                                upstream_block.uuid
-                            ]
+                            metadata = metadata_by_upstream_block_uuid[upstream_block.uuid]
                             if parent_index < len(metadata):
                                 metadata = metadata[parent_index]
 
@@ -224,12 +200,10 @@ class DynamicChildController:
             if upstream_blocks_from_metadata:
                 block_run_dict['upstream_blocks'] = upstream_blocks_from_metadata
 
-            block_run_dicts.append(
-                (
-                    f'{self.block.uuid}:{block_run_block_uuid}',
-                    block_run_dict,
-                )
-            )
+            block_run_dicts.append((
+                f'{self.block.uuid}:{block_run_block_uuid}',
+                block_run_dict,
+            ))
 
         block_runs = []
         pipeline_run = self.pipeline_run()

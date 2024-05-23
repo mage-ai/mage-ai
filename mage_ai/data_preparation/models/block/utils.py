@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import simplejson
 
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     get_selected_streams,
@@ -76,43 +77,15 @@ def dynamic_block_values_and_metadata(
     Returns:
         Tuple: A tuple containing the values and metadata of the dynamic block.
     """
-    block_uuid_original = block.uuid
-    block_uuid = block_uuid_original if block_uuid is None else block_uuid
+    block_uuid = block_uuid if block_uuid is not None else block.uuid
 
-    values = []
-    block_metadata = []
-    output_vars = block.output_variables(
-        block_uuid=block_uuid,
+    output_query = BlockOutputQuery(block=block, block_uuid=block_uuid, pipeline=block.pipeline)
+    block_outputs = output_query.fetch(
         dynamic_block_index=dynamic_block_index,
-        execution_partition=execution_partition,
-    )
-    for idx, output_name in enumerate(output_vars):
-        if idx == 0:
-            values = block.pipeline.get_block_variable(
-                block_uuid,
-                output_name,
-                partition=execution_partition,
-            )
-        elif idx == 1:
-            block_metadata = block.pipeline.get_block_variable(
-                block_uuid,
-                output_name,
-                partition=execution_partition,
-            )
-
-    DX_PRINTER.error(
-        'dynamic_block_values_and_metadata/output_variables',
-        block=block,
-        block_metadata=len(block_metadata),
-        block_uuid=block_uuid,
-        block_uuid_original=block_uuid_original,
-        execution_partition=execution_partition,
-        output_vars=output_vars,
-        values=values,
-        __uuid='dynamic_block_values_and_metadata',
+        partition=execution_partition,
     )
 
-    return values, block_metadata
+    return [output.render() for output in block_outputs]
 
 
 def get_all_ancestors(block) -> List:
@@ -191,15 +164,15 @@ def get_leaf_nodes(
 def output_variables(
     pipeline,
     block_uuid: str,
-    execution_partition: str = None,
-    dynamic_block_index: int = None,
-    dynamic_block_indexes: Dict = None,
-    dynamic_upstream_block_uuids: List[str] = None,
+    execution_partition: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+    dynamic_block_indexes: Optional[Dict] = None,
+    dynamic_upstream_block_uuids: Optional[List[str]] = None,
     from_notebook: bool = False,
-    global_vars: Dict = None,
+    global_vars: Optional[Dict] = None,
     include_df: bool = True,
-    input_args: List[Any] = None,
-    data_integration_settings_mapping: Dict = None,
+    input_args: Optional[List[Any]] = None,
+    data_integration_settings_mapping: Optional[Dict] = None,
     max_results: Optional[int] = None,
 ) -> List[str]:
     """
@@ -249,12 +222,17 @@ def output_variables(
             partition=execution_partition,
         )
     else:
-        all_variables = block.get_variables_by_block(
-            block_uuid=block_uuid,
-            dynamic_block_index=dynamic_block_index,
-            max_results=max_results,
-            partition=execution_partition,
+        output_query = BlockOutputQuery(
+            block=block, block_uuid=block_uuid, pipeline=block.pipeline
         )
+        all_variables: List[str] = [
+            output.variable.uuid
+            for output in output_query.fetch(
+                dynamic_block_index=dynamic_block_index,
+                limit=max_results,
+                partition=execution_partition,
+            )
+        ]
 
     output_variables = [v for v in all_variables if is_output_variable(v, include_df=include_df)]
 
@@ -529,15 +507,12 @@ def fetch_input_variables(
                 input_vars[idx] = global_data_product.get_outputs()
 
                 mds = {}
-                variable_uuids = upstream_block.output_variables(
-                    execution_partition=execution_partition,
+                output_query = BlockOutputQuery(
+                    block=upstream_block, block_uuid=upstream_block_uuid, pipeline=pipeline
                 )
-                for variable_uuid in variable_uuids:
-                    md = pipeline.get_block_variable(
-                        upstream_block_uuid,
-                        variable_uuid,
-                        partition=execution_partition,
-                    )
+                block_outputs = output_query.fetch(partition=execution_partition)
+                for output in block_outputs:
+                    md = output.render()
                     if isinstance(md, dict):
                         mds.update(md)
 
@@ -548,7 +523,7 @@ def fetch_input_variables(
             # Block output variables for upstream_block_uuid
             variables = input_variables_by_uuid[upstream_block_uuid]
 
-            dynamic_block_index_for_output_variable = (
+            dynamic_block_index_for_output_variable: int = (
                 dynamic_block_index_values_for_output_variables.get('dynamic_block_index')
             )
 
@@ -557,7 +532,7 @@ def fetch_input_variables(
                 and dynamic_block_index_mapping
                 and upstream_block_uuid in dynamic_block_index_mapping
             ):
-                dynamic_block_index_for_output_variable = dynamic_block_index_mapping[
+                dynamic_block_index_for_output_variable: int = dynamic_block_index_mapping[
                     upstream_block_uuid
                 ]
 
@@ -581,30 +556,33 @@ def fetch_input_variables(
                 if block_run_outputs_cache:
                     variable_values = block_run_outputs_cache.get(upstream_block_uuid, [])
                 else:
+                    output_query = BlockOutputQuery(
+                        block_uuid=upstream_block_uuid,
+                        batch_settings=current_block.upstream_batch_settings(upstream_block_uuid)
+                        if current_block
+                        else None,
+                        chunks=current_block.upstream_chunks(upstream_block_uuid)
+                        if current_block
+                        else None,
+                        pipeline=pipeline,
+                        spark=spark,
+                    )
+
                     variable_values = [
-                        pipeline.get_block_variable(
-                            upstream_block_uuid,
-                            var,
+                        output_query.find(
+                            var_uuid,
+                            dynamic_block_index=dynamic_block_index_for_output_variable,
+                            partition=execution_partition,
+                            raise_exception=True,
+                        ).render(
                             from_notebook=from_notebook,
                             global_vars=global_vars,
                             input_args=input_args,
-                            partition=execution_partition,
-                            raise_exception=True,
-                            spark=spark,
-                            dynamic_block_index=dynamic_block_index_for_output_variable,
-                            read_chunks=current_block.upstream_chunks(upstream_block_uuid)
-                            if current_block
-                            else None,
-                            read_batch_settings=current_block.upstream_batch_settings(
-                                upstream_block_uuid
-                            )
-                            if current_block
-                            else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)
                             if current_block
                             else None,
                         )
-                        for var in variables
+                        for var_uuid in variables
                     ]
 
             upstream_in_dynamic_upstream = False
@@ -725,23 +703,27 @@ def fetch_input_variables(
                 final_value = []
                 for upstream_block_uuid, variables in input_variables_by_uuid.items():
                     end_idx = 1 if upstream_is_dynamic else len(variables)
-                    for var in variables[:end_idx]:
-                        variable_values = pipeline.get_block_variable(
-                            upstream_block_uuid,
-                            var,
+
+                    output_query = BlockOutputQuery(
+                        block_uuid=upstream_block_uuid,
+                        batch_settings=current_block.upstream_batch_settings(upstream_block_uuid)
+                        if current_block
+                        else None,
+                        chunks=current_block.upstream_chunks(upstream_block_uuid)
+                        if current_block
+                        else None,
+                        pipeline=pipeline,
+                        spark=spark,
+                    )
+
+                    for var_uuid in variables[:end_idx]:
+                        variable_values = output_query.find(
+                            var_uuid,
+                            partition=execution_partition,
+                        ).render(
                             from_notebook=from_notebook,
                             global_vars=global_vars,
                             input_args=input_args,
-                            partition=execution_partition,
-                            spark=spark,
-                            read_chunks=current_block.upstream_chunks(upstream_block_uuid)
-                            if current_block
-                            else None,
-                            read_batch_settings=current_block.upstream_batch_settings(
-                                upstream_block_uuid
-                            )
-                            if current_block
-                            else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)
                             if current_block
                             else None,
@@ -763,27 +745,20 @@ def fetch_input_variables(
                         and upstream_is_dynamic
                         and len(variables) >= 2
                     ):
-                        var = variables[1]
-                        variable_values = pipeline.get_block_variable(
-                            upstream_block_uuid,
-                            var,
+                        var_uuid = variables[1]
+
+                        variable_values = output_query.find(
+                            var_uuid,
+                            partition=execution_partition,
+                        ).render(
                             from_notebook=from_notebook,
                             global_vars=global_vars,
                             input_args=input_args,
-                            partition=execution_partition,
-                            spark=spark,
-                            read_chunks=current_block.upstream_chunks(upstream_block_uuid)
-                            if current_block
-                            else None,
-                            read_batch_settings=current_block.upstream_batch_settings(
-                                upstream_block_uuid
-                            )
-                            if current_block
-                            else None,
                             input_data_types=current_block.input_data_types(upstream_block_uuid)
                             if current_block
                             else None,
                         )
+
                         if dynamic_block_index < len(variable_values):
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)

@@ -5,9 +5,6 @@ from typing import Any, List, Optional
 from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES, InputDataType
 from mage_ai.data.models.constants import CHUNKS_DIRECTORY_NAME
 from mage_ai.data.tabular.models import BatchSettings
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -17,6 +14,8 @@ from mage_ai.settings.server import (
     MEMORY_MANAGER_POLARS_V2,
     MEMORY_MANAGER_V2,
 )
+from mage_ai.system.models import ResourceUsage
+from mage_ai.system.storage.utils import size_of_path
 
 
 class BaseData:
@@ -26,7 +25,7 @@ class BaseData:
         variable_dir_path: str,
         variable_path: str,
         batch_settings: Optional[BatchSettings] = None,
-        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        chunks: Optional[List[Any]] = None,
         input_data_types: Optional[List[InputDataType]] = None,
         poll_interval: Optional[int] = None,
         uuid: Optional[str] = None,
@@ -69,6 +68,13 @@ class BaseData:
             VariableType.SERIES_PANDAS,
             VariableType.SERIES_POLARS,
         ]
+
+    @property
+    def resource_usage(self) -> ResourceUsage:
+        return ResourceUsage.load(
+            directory=self.data_partitions_path,
+            size=size_of_path(self.data_partitions_path, file_extension='parquet'),
+        )
 
     def supported(self, data: Optional[Any] = None) -> bool:
         from mage_ai.data_preparation.models.utils import is_user_defined_complex

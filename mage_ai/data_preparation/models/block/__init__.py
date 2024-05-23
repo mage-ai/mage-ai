@@ -25,8 +25,7 @@ from jinja2 import Template
 
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
-from mage_ai.data.constants import InputDataType
-from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -44,21 +43,11 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     uuid_for_output_variables,
 )
 from mage_ai.data_preparation.models.block.dynamic.variables import (
-    LazyVariableSet,
     delete_variable_objects_for_dynamic_child,
     fetch_input_variables_for_dynamic_upstream_blocks,
-    get_outputs_for_dynamic_block,
-    get_outputs_for_dynamic_block_async,
-    get_outputs_for_dynamic_child,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
-from mage_ai.data_preparation.models.block.outputs import (
-    format_output_data,
-    get_outputs_for_display_async,
-    get_outputs_for_display_dynamic_block,
-    get_outputs_for_display_sync,
-)
 from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
@@ -70,9 +59,6 @@ from mage_ai.data_preparation.models.block.settings.global_data_products.mixins 
 from mage_ai.data_preparation.models.block.settings.variables.mixins import (
     VariablesMixin,
 )
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -80,7 +66,6 @@ from mage_ai.data_preparation.models.block.utils import (
     input_variables,
     is_output_variable,
     is_valid_print_variable,
-    output_variables,
 )
 from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
@@ -88,8 +73,6 @@ from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-    DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     PIPELINES_FOLDER,
@@ -102,6 +85,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.models.interfaces import BlockInterface
 from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
@@ -132,6 +116,8 @@ from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 from mage_ai.system.memory.manager import MemoryManager
+from mage_ai.system.memory.wrappers import execute_with_memory_tracking
+from mage_ai.system.models import ResourceUsage
 
 PYTHON_COMMAND = 'python3'
 BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]'
@@ -323,6 +309,7 @@ class Block(
     DynamicMixin,
     GlobalDataProductsMixin,
     VariablesMixin,
+    BlockInterface,
 ):
     def __init__(
         self,
@@ -409,6 +396,7 @@ class Block(
         # Needs to after self._project_platform_activated = None
         self.configuration = configuration
 
+        self.resource_usage = None
         self._store_variables_in_block_function = None
 
     @property
@@ -483,6 +471,16 @@ class Block(
                 pipeline=self.pipeline,
             )
         return None
+
+    def get_resource_usage(
+        self,
+        variable_uuid: Optional[str] = None,
+        block_uuid: Optional[str] = None,
+        partition: Optional[str] = None,
+    ) -> Optional[ResourceUsage]:
+        output_query = BlockOutputQuery(block=self, block_uuid=block_uuid or self.uuid)
+        block_output = output_query.find(variable_uuid, partition=partition)
+        return block_output.variable.get_resource_usage()
 
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
@@ -632,7 +630,9 @@ class Block(
     def outputs(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = self.get_outputs()
+                output_query = BlockOutputQuery(block=self)
+                output_manager = output_query.fetch()
+                self._outputs = output_manager.present()
         return self._outputs
 
     async def __outputs_async(
@@ -640,10 +640,16 @@ class Block(
     ) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.__get_outputs_async(
-                    exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-                    max_results=max_results,
+                output_query = BlockOutputQuery(block=self)
+                output_manager = output_query.fetch(
+                    limit=max_results,
+                    scan_filter=lambda variable_uuid,
+                    exclude_blank_variable_uuids=exclude_blank_variable_uuids: (
+                        not exclude_blank_variable_uuids
+                        or (variable_uuid is not None and variable_uuid.strip() != '')
+                    ),
                 )
+                self._outputs = await output_manager.present_async()
         return self._outputs
 
     @property
@@ -1321,7 +1327,8 @@ class Block(
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
-                        spark=block.__get_spark_session_from_global_vars(
+                        # Use this when constructing BlockOutputQuery(spark=...)
+                        spark=block.get_spark_session_from_global_vars(
                             global_vars=global_vars,
                         ),
                         dynamic_block_index=dynamic_block_index,
@@ -1824,6 +1831,8 @@ class Block(
                     input_vars,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
                 )
 
         block_function = self._validate_execution(decorated_functions, input_vars)
@@ -1843,6 +1852,8 @@ class Block(
                 input_vars,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
             )
 
             if track_spark:
@@ -1868,7 +1879,9 @@ class Block(
         from_notebook: bool = False,
         global_vars: Optional[Dict] = None,
         initialize_decorator_modules: bool = True,
-    ) -> Dict:
+        logger: Optional[Logger] = None,
+        logging_tags: Optional[Dict] = None,
+    ) -> List[Dict[str, Any]]:
         block_function_updated = block_function
 
         if from_notebook and initialize_decorator_modules:
@@ -1880,10 +1893,20 @@ class Block(
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
-        if has_kwargs and global_vars is not None and len(global_vars) != 0:
-            output = block_function_updated(*input_vars, **global_vars)
-        else:
-            output = block_function_updated(*input_vars)
+        log_message_prefix = self.uuid
+        if self.pipeline:
+            log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
+
+        output, self.resource_usage = execute_with_memory_tracking(
+            block_function_updated,
+            args=input_vars,
+            kwargs=global_vars
+            if has_kwargs and global_vars is not None and len(global_vars) != 0
+            else None,
+            logger=logger,
+            logging_tags=logging_tags,
+            log_message_prefix=f'[{log_message_prefix}]',
+        )
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
             output_count = 0
@@ -1908,7 +1931,7 @@ class Block(
                 output_count += 1
 
             self._store_variables_in_block_function = None
-            output = {}
+            output = []
 
         return output
 
@@ -2033,11 +2056,14 @@ class Block(
     def get_analyses(self) -> List:
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
-        output_variable_objects = self.output_variable_objects()
-        if len(output_variable_objects) == 0:
+
+        output_query = BlockOutputQuery(block=self)
+        variables = [output.variable for output in output_query.fetch()]
+
+        if len(variables) == 0:
             return []
         analyses = []
-        for v in output_variable_objects:
+        for v in variables:
             if v.variable_type != VariableType.DATAFRAME:
                 continue
             data = self.pipeline.variable_manager.get_variable(
@@ -2049,339 +2075,6 @@ class Block(
             data['variable_uuid'] = v.uuid
             analyses.append(data)
         return analyses
-
-    def get_variables_by_block(
-        self,
-        block_uuid: str,
-        dynamic_block_index: Optional[int] = None,
-        dynamic_block_uuid: Optional[str] = None,
-        max_results: Optional[int] = None,
-        partition: Optional[str] = None,
-    ) -> List[str]:
-        variable_manager = self.pipeline.variable_manager
-
-        block_uuid_use, changed = uuid_for_output_variables(
-            self,
-            block_uuid=block_uuid,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-        )
-
-        res = variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            block_uuid=block_uuid_use,
-            clean_block_uuid=not changed,
-            max_results=max_results,
-            partition=partition,
-        )
-
-        DX_PRINTER.debug(
-            str(res),
-            block=self,
-            block_uuid_use=block_uuid_use,
-            clean_block_uuid=not changed,
-            partition=partition,
-            __uuid='get_variables_by_block',
-        )
-
-        return res
-
-    def get_variable(
-        self,
-        block_uuid: str,
-        variable_uuid: str,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
-        partition: str = None,
-        raise_exception: bool = False,
-        spark=None,
-        input_data_types: Optional[List[InputDataType]] = None,
-        read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ):
-        variable_manager = self.pipeline.variable_manager
-
-        block_uuid_use, changed = uuid_for_output_variables(
-            self,
-            block_uuid=block_uuid,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-        )
-
-        value = variable_manager.get_variable(
-            self.pipeline.uuid,
-            block_uuid=block_uuid_use,
-            clean_block_uuid=not changed,
-            partition=partition,
-            raise_exception=raise_exception,
-            spark=spark,
-            variable_uuid=variable_uuid,
-            input_data_types=input_data_types,
-            read_batch_settings=read_batch_settings,
-            read_chunks=read_chunks,
-            write_batch_settings=write_batch_settings,
-            write_chunks=write_chunks,
-        )
-
-        return value
-
-    def get_variable_object(
-        self,
-        block_uuid: str,
-        variable_uuid: Optional[str] = None,
-        dynamic_block_index: Optional[int] = None,
-        partition: Optional[str] = None,
-        input_data_types: Optional[List[InputDataType]] = None,
-        read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ) -> Variable:
-        variable_manager = self.pipeline.variable_manager
-
-        block_uuid, changed = uuid_for_output_variables(
-            self,
-            block_uuid=block_uuid,
-            dynamic_block_index=dynamic_block_index,
-        )
-
-        return variable_manager.get_variable_object(
-            self.pipeline.uuid,
-            block_uuid=block_uuid,
-            clean_block_uuid=not changed,
-            partition=partition,
-            spark=self.get_spark_session(),
-            variable_uuid=variable_uuid,
-            input_data_types=input_data_types,
-            read_batch_settings=read_batch_settings,
-            read_chunks=read_chunks,
-            write_batch_settings=write_batch_settings,
-            write_chunks=write_chunks,
-        )
-
-    def get_raw_outputs(
-        self,
-        block_uuid: str,
-        execution_partition: str = None,
-        from_notebook: bool = False,
-        global_vars: Dict = None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
-        input_data_types: Optional[List[InputDataType]] = None,
-        read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ) -> List[Any]:
-        all_variables = self.get_variables_by_block(
-            block_uuid=block_uuid,
-            partition=execution_partition,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_block_uuid=dynamic_block_uuid,
-        )
-
-        outputs = []
-
-        for variable_uuid in all_variables:
-            if not is_output_variable(variable_uuid):
-                continue
-
-            variable = self.pipeline.get_block_variable(
-                block_uuid,
-                variable_uuid,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                partition=execution_partition,
-                raise_exception=True,
-                spark=self.__get_spark_session_from_global_vars(global_vars),
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_uuid=dynamic_block_uuid,
-                input_data_types=input_data_types,
-                read_batch_settings=read_batch_settings,
-                read_chunks=read_chunks,
-                write_batch_settings=write_batch_settings,
-                write_chunks=write_chunks,
-            )
-            outputs.append(variable)
-
-        return outputs
-
-    def get_outputs(
-        self,
-        execution_partition: Optional[str] = None,
-        include_print_outputs: bool = True,
-        csv_lines_only: bool = False,
-        sample: bool = True,
-        sample_count: Optional[int] = None,
-        variable_type: Optional[VariableType] = None,
-        block_uuid: Optional[str] = None,
-        selected_variables: Optional[List[str]] = None,
-        metadata: Optional[Dict] = None,
-        dynamic_block_index: Optional[int] = None,
-        exclude_blank_variable_uuids: bool = False,
-    ) -> List[Dict[str, Any]]:
-        is_dynamic_child = is_dynamic_block_child(self)
-        is_dynamic = is_dynamic_block(self)
-
-        if not is_dynamic and not is_dynamic_child:
-            return get_outputs_for_display_sync(
-                self,
-                block_uuid=block_uuid,
-                csv_lines_only=csv_lines_only,
-                exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-                execution_partition=execution_partition,
-                include_print_outputs=include_print_outputs,
-                sample=sample,
-                sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                selected_variables=selected_variables,
-                variable_type=variable_type,
-            )
-
-        sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-        output_sets = []
-        variable_sets = []
-
-        if is_dynamic_child:
-            lazy_variable_controller = get_outputs_for_dynamic_child(
-                self,
-                execution_partition=execution_partition,
-                sample=sample,
-                sample_count=sample_count_use,
-            )
-            variable_sets: List[
-                Union[
-                    Tuple[Optional[Any], Dict],
-                    List[LazyVariableSet],
-                ],
-            ] = lazy_variable_controller.render(
-                dynamic_block_index=dynamic_block_index,
-                lazy_load=True,
-            )
-        elif is_dynamic:
-            output_pair: List[
-                Optional[
-                    Union[
-                        Any,
-                        Dict,
-                        int,
-                        pd.DataFrame,
-                        str,
-                    ]
-                ]
-            ] = get_outputs_for_dynamic_block(
-                self,
-                execution_partition=execution_partition,
-                sample=sample,
-                sample_count=sample_count_use,
-            )
-            output_sets.append(output_pair)
-
-        output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        child_data_sets = [lazy_variable_set.read_data() for lazy_variable_set in variable_sets]
-
-        return get_outputs_for_display_dynamic_block(
-            self,
-            output_sets,
-            child_data_sets,
-            block_uuid=block_uuid,
-            csv_lines_only=csv_lines_only,
-            exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-            execution_partition=execution_partition,
-            metadata=metadata,
-            sample=sample,
-            sample_count=sample_count_use,
-        )
-
-    async def __get_outputs_async(
-        self,
-        execution_partition: Optional[str] = None,
-        include_print_outputs: bool = True,
-        csv_lines_only: bool = False,
-        sample: bool = True,
-        sample_count: Optional[int] = None,
-        variable_type: Optional[VariableType] = None,
-        block_uuid: Optional[str] = None,
-        selected_variables: Optional[List[str]] = None,
-        metadata: Optional[Dict] = None,
-        dynamic_block_index: Optional[int] = None,
-        exclude_blank_variable_uuids: bool = False,
-        max_results: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        is_dynamic_child = is_dynamic_block_child(self)
-        is_dynamic = is_dynamic_block(self)
-
-        if not is_dynamic and not is_dynamic_child:
-            return await get_outputs_for_display_async(
-                self,
-                block_uuid=block_uuid,
-                csv_lines_only=csv_lines_only,
-                exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-                execution_partition=execution_partition,
-                include_print_outputs=include_print_outputs,
-                sample=sample,
-                sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                selected_variables=selected_variables,
-                variable_type=variable_type,
-                max_results=max_results,
-            )
-
-        sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
-        output_sets = []
-        variable_sets = []
-
-        if is_dynamic_child:
-            lazy_variable_controller = get_outputs_for_dynamic_child(
-                self,
-                execution_partition=execution_partition,
-                sample=sample,
-                sample_count=sample_count_use,
-            )
-            variable_sets: List[
-                Union[
-                    Tuple[Optional[Any], Dict],
-                    List[LazyVariableSet],
-                ],
-            ] = await lazy_variable_controller.render_async(
-                dynamic_block_index=dynamic_block_index,
-                lazy_load=True,
-            )
-
-        elif is_dynamic:
-            output_pair: List[
-                Optional[Union[Dict, int, str, pd.DataFrame, Any]],
-            ] = await get_outputs_for_dynamic_block_async(
-                self,
-                execution_partition=execution_partition,
-                sample=sample,
-                sample_count=sample_count_use,
-            )
-            output_sets.append(output_pair)
-
-        # Limit the number of dynamic block children we display output for in the UI
-        output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-        child_data_sets = await asyncio.gather(*[
-            lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets
-        ])
-
-        return get_outputs_for_display_dynamic_block(
-            self,
-            output_sets,
-            child_data_sets,
-            block_uuid=block_uuid,
-            csv_lines_only=csv_lines_only,
-            exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-            execution_partition=execution_partition,
-            metadata=metadata,
-            sample=sample,
-            sample_count=sample_count_use,
-        )
-
-    def __format_output_data(self, *args, **kwargs) -> Tuple[Dict, bool]:
-        return format_output_data(self, *args, **kwargs)
 
     def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
@@ -2431,18 +2124,14 @@ class Block(
 
         if override_conditionally:
             for variable_uuid, _ in variable_mapping.items():
-                variable = self.get_variable_object(
-                    self.uuid,
+                variable = self.pipeline.variable_manager.get_variable(
                     variable_uuid,
+                    block_uuid=self.uuid,
+                    read_data=False,
                 )
-                if not variable or not variable.variable_type:
-                    continue
 
-                # if VariableType
-                # variable = self.get_variable_object(variable_uuid=variable_uuid)
-                # if variable.exists():
-                #     variable_mapping.pop(variable_uuid)
-                pass
+                if variable and variable.variable_type and variable.exists():
+                    variable_mapping.pop(variable_uuid)
 
         await self.store_variables_async(
             variable_mapping,
@@ -2877,14 +2566,17 @@ class Block(
             test_functions = self.test_functions
 
         if outputs is None:
-            outputs = self.get_raw_outputs(
-                dynamic_block_uuid or self.uuid,
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
+            output_query = BlockOutputQuery(block=self, block_uuid=dynamic_block_uuid)
+            block_outputs = output_query.fetch(
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
+                partition=execution_partition,
+                scan_filter=lambda variable_uuid: is_output_variable(variable_uuid),
             )
+            outputs = [
+                output.render(from_notebook=from_notebook, global_vars=global_vars)
+                for output in block_outputs
+            ]
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
@@ -2969,7 +2661,6 @@ class Block(
             if isinstance(data, pd.DataFrame):
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS or shape_only:
                     self.pipeline.variable_manager.add_variable(
-                        self.pipeline.uuid,
                         self.uuid,
                         uuid,
                         dict(
@@ -2978,9 +2669,9 @@ class Block(
                                 original_column_count=data.shape[1],
                             ),
                         ),
+                        disable_variable_type_inference=True,
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
-                        disable_variable_type_inference=True,
                     )
                     continue
                 if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
@@ -2999,7 +2690,6 @@ class Block(
                         verbose=False,
                     )
                     self.pipeline.variable_manager.add_variable(
-                        self.pipeline.uuid,
                         self.uuid,
                         uuid,
                         dict(
@@ -3019,7 +2709,6 @@ class Block(
                     # print(traceback.format_exc())
             elif isinstance(data, pl.DataFrame):
                 self.pipeline.variable_manager.add_variable(
-                    self.pipeline.uuid,
                     self.uuid,
                     uuid,
                     dict(
@@ -3028,9 +2717,9 @@ class Block(
                             original_column_count=data.shape[1],
                         ),
                     ),
+                    disable_variable_type_inference=True,
                     partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
-                    disable_variable_type_inference=True,
                 )
 
     def set_global_vars(self, global_vars: Dict) -> None:
@@ -3157,9 +2846,7 @@ class Block(
         # Remote blocks
         if global_vars.get('remote_blocks'):
             global_vars['remote_blocks'] = [
-                RemoteBlock.load(
-                    **remote_block_dict,
-                ).get_outputs()
+                RemoteBlock.load(**remote_block_dict).get_outputs()
                 for remote_block_dict in global_vars['remote_blocks']
             ]
 
@@ -3189,7 +2876,7 @@ class Block(
         self.spark_init = True
         return self.spark
 
-    def __get_spark_session_from_global_vars(self, global_vars: Dict = None):
+    def get_spark_session_from_global_vars(self, global_vars: Dict = None):
         if global_vars is None:
             global_vars = dict()
         spark = global_vars.get('spark')
@@ -3228,7 +2915,7 @@ class Block(
         if self.pipeline is None:
             return
 
-        all_variables = self.pipeline.variable_manager.get_variables_by_block(
+        all_variables = self.pipeline.variable_manager.get_variable_uuids(
             self.pipeline.uuid,
             block_uuid=block_uuid,
             partition=execution_partition,
@@ -3255,12 +2942,12 @@ class Block(
     def store_variables(
         self,
         variable_mapping: Dict,
-        execution_partition: str = None,
+        execution_partition: Optional[str] = None,
         override: bool = False,
         override_outputs: bool = False,
         spark=None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
     ) -> None:
         variables_data = self.__store_variables_prepare(
             variable_mapping,
@@ -3292,12 +2979,12 @@ class Block(
             ):
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
-                self.pipeline.uuid,
                 block_uuid,
                 uuid,
                 data,
-                partition=execution_partition,
                 clean_block_uuid=not changed,
+                partition=execution_partition,
+                resource_usage=self.resource_usage,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
             )
@@ -3342,17 +3029,17 @@ class Block(
                 execution_partition=execution_partition,
             )
 
-        for uuid, data in variables_data['variable_mapping'].items():
+        for variable_uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
 
             await self.pipeline.variable_manager.add_variable_async(
-                self.pipeline.uuid,
                 block_uuid,
-                uuid,
+                variable_uuid,
                 data,
-                partition=execution_partition,
                 clean_block_uuid=not changed,
+                partition=execution_partition,
+                resource_usage=self.resource_usage,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
             )
@@ -3376,7 +3063,7 @@ class Block(
         """
         return input_variables(self.pipeline, self.upstream_block_uuids, execution_partition)
 
-    def input_variable_objects(self, execution_partition: str = None) -> List:
+    def input_variable_objects(self, execution_partition: Optional[str] = None) -> List[Variable]:
         """Get input variable objects from upstream blocks' output variables.
 
         Args:
@@ -3385,75 +3072,12 @@ class Block(
         Returns:
             List: List of input variable objects.
         """
-        objs = []
-        for b in self.upstream_blocks:
-            for v in b.output_variables(execution_partition=execution_partition):
-                objs.append(
-                    self.pipeline.variable_manager.get_variable_object(
-                        self.pipeline.uuid,
-                        b.uuid,
-                        v,
-                        partition=execution_partition,
-                    ),
-                )
-        return objs
+        block_outputs = []
+        for upstream_block in self.upstream_blocks:
+            output_query = BlockOutputQuery(block=upstream_block)
+            block_outputs += output_query.fetch(partition=execution_partition)
 
-    def output_variables(
-        self,
-        execution_partition: str = None,
-        dynamic_block_index: int = None,
-        dynamic_upstream_block_uuids: List[str] = None,
-        from_notebook: bool = False,
-        global_vars: Dict = None,
-        input_args: List[Any] = None,
-        max_results: Optional[int] = None,
-        block_uuid: str = None,
-    ) -> List[str]:
-        return output_variables(
-            self.pipeline,
-            block_uuid or self.uuid,
-            execution_partition,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            input_args=input_args,
-            max_results=max_results,
-        )
-
-    def output_variable_objects(
-        self,
-        execution_partition: str = None,
-        variable_type: VariableType = None,
-    ) -> List:
-        """Get output variable objects.
-
-        Args:
-            execution_partition (str, optional): The execution paratition string.
-
-        Returns:
-            List: List of output variable objects.
-        """
-        if self.pipeline is None:
-            return []
-
-        output_variables = self.output_variables(execution_partition=execution_partition)
-
-        if len(output_variables) == 0:
-            return []
-
-        variable_objects = [
-            self.pipeline.variable_manager.get_variable_object(
-                self.pipeline.uuid,
-                self.uuid,
-                v,
-                partition=execution_partition,
-            )
-            for v in output_variables
-        ]
-        if variable_type is not None:
-            variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
-        return variable_objects
+        return [output.variable for output in block_outputs]
 
     def tags(self) -> List[str]:
         from mage_ai.data_preparation.models.block.constants import (
@@ -3478,27 +3102,6 @@ class Block(
             arr.append(TAG_REPLICA)
 
         return arr
-
-    def variable_object(
-        self,
-        variable_uuid: str,
-        execution_partition: str = None,
-    ) -> Any:
-        if self.pipeline is None:
-            return []
-        return self.pipeline.variable_manager.get_variable_object(
-            self.pipeline.uuid,
-            self.uuid,
-            variable_uuid,
-            partition=execution_partition,
-        )
-
-    def _block_decorator(self, decorated_functions) -> Callable:
-        def custom_code(function) -> Callable:
-            decorated_functions.append(function)
-            return function
-
-        return custom_code
 
     # TODO: Update all pipelines that use this block
     def __update_name(
