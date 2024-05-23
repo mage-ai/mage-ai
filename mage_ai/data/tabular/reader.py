@@ -284,12 +284,19 @@ def get_series_object_metadata(
     source: Optional[Union[List[str], str]] = None,
 ) -> Optional[Dict[str, str]]:
     def __check(object_metadata: Dict[str, str]) -> bool:
-        return compare_object(
-            pd.Series,
-            object_metadata,
-        ) or compare_object(
-            pl.Series,
-            object_metadata,
+        return (
+            compare_object(
+                pd.Series,
+                object_metadata,
+            )
+            or compare_object(
+                pl.Series,
+                object_metadata,
+            )
+            or compare_object(
+                pd.DataFrame,
+                object_metadata,
+            )
         )
 
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))

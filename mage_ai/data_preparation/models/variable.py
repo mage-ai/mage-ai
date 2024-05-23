@@ -310,10 +310,11 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.data_manager and self.data_manager.readable():
-            return self.data_manager.read_sync(
+            data = self.data_manager.read_sync(
                 sample=sample,
                 sample_count=sample_count,
             )
+            return data
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -545,7 +546,6 @@ class Variable:
         Used by:
             VariableManager
         """
-
         if self.data_manager and self.data_manager.writeable(data):
             # self.__write_dataframe_analysis
             self.data_manager.write_sync(data)

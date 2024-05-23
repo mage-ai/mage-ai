@@ -214,7 +214,8 @@ function estimateCellHeight({
     original?.every(o => Array.isArray(o) || isObject(o)) &&
     variableListProps
   ) {
-    const { columnHeaderHeight, height, maxHeight } = variableListProps;
+    const { columnHeaderHeight, height, maxHeight, width: width2 } = variableListProps;
+
     return original?.reduce((acc: number, vals: any) => {
       let rows = [];
 
@@ -537,6 +538,7 @@ function Table({ ...props }: TableProps) {
                         height={height}
                         maxHeight={1000}
                         numberOfIndexes={0}
+                        width={props.width - maxWidthOfIndexColumns[idx]}
                       />
                     );
                     cellStyle.padding = 0;
@@ -612,6 +614,7 @@ function Table({ ...props }: TableProps) {
       props,
       rows,
       shouldUseIndexProp,
+      width,
     ],
   );
 

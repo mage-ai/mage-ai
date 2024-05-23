@@ -12,7 +12,6 @@ from mage_ai.data.tabular.constants import COLUMN_CHUNK
 from mage_ai.data.tabular.models import DEFAULT_BATCH_ITEMS_VALUE, BatchSettings
 from mage_ai.data.tabular.utils import multi_series_to_frame
 from mage_ai.shared.environments import is_debug
-from mage_ai.shared.parsers import object_to_dict
 
 
 def append_chunk_column(
@@ -172,7 +171,7 @@ def __prepare_data(
     if chunk_size is not None and num_buckets is not None:
         chunk_size = DEFAULT_BATCH_ITEMS_VALUE
 
-    df, dfs, series_sample = multi_series_to_frame(df, dfs)
+    df, dfs, series_sample, object_metadata = multi_series_to_frame(df, dfs)
 
     chunk_sizes = [] + ([chunk_size] if chunk_size else [])
     if dfs is not None:
@@ -208,10 +207,8 @@ def __prepare_data(
         metadata['chunk_sizes'] = chunk_sizes
     if num_buckets:
         metadata['num_buckets'] = num_buckets
-    if series_sample is not None:
-        metadata['object'] = json.dumps(
-            object_to_dict(series_sample, include_hash=False, include_uuid=False)
-        )
+    if object_metadata:
+        metadata['object'] = json.dumps(object_metadata)
 
     # Convert the Polars DataFrame to a PyArrow Table first
     table = add_custom_metadata_to_table(df.to_arrow(), metadata)

@@ -183,15 +183,16 @@ def format_output_data(
 
         return format_output_data(
             block,
-            coerce_into_dataframe(
+            data=coerce_into_dataframe(
                 data,
                 is_dynamic=is_dynamic,
                 is_dynamic_child=is_dynamic_child,
             ),
-            variable_uuid=variable_uuid,
-            skip_dynamic_block=True,
             automatic_sampling=automatic_sampling,
+            execution_partition=execution_partition,
             sample_count=sample_count,
+            skip_dynamic_block=True,
+            variable_uuid=variable_uuid,
         )
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
@@ -408,7 +409,7 @@ def get_outputs_for_display_dynamic_block(
                 output_formatted, _ = format_output_data(
                     block,
                     output,
-                    f'output {output_idx}',
+                    f'output_{output_idx}',
                     block_uuid=block_uuid,
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
@@ -434,8 +435,8 @@ def get_outputs_for_display_dynamic_block(
                 metadata = output_pair[1]
 
         for output, variable_uuid in [
-            (child_data, 'dynamic output data'),
-            (metadata, 'metadata'),
+            (child_data, 'output_0'),
+            (metadata, 'output_1'),
         ]:
             if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue

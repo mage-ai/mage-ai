@@ -1,6 +1,7 @@
 import os
+import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
@@ -20,6 +21,7 @@ from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.models import ResourceUsage
 
@@ -362,12 +364,14 @@ class VariableManager:
         variables = self.storage.listdir(variable_dir_path, **opts)
         variables = [v for v in variables if v.split('.')[0]]
 
-        def __sort(variable_uuid: str) -> List[Union[int, str]]:
-            key = variable_uuid.split('.')[0]
-            parts = key.split('_')
-            return [int(k) if k.isdigit() else k for k in parts]
+        def __sort_variables(text):
+            number = re.findall('\\d+', text)
+            if number:
+                return number[0]
+            else:
+                return to_ordinal_integers(text)[0]
 
-        return sorted(variables, key=__sort)
+        return sorted(variables, key=__sort_variables)
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
         path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 from collections.abc import Sequence
 from logging import Logger
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
+import polars as pl
 
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
@@ -116,10 +118,7 @@ class LazyVariableSet(Sequence):
         return None
 
     def read_child_data(self) -> Any:
-        if (
-            not isinstance(self.lazy_child_data, pd.DataFrame)
-            and not self.lazy_child_data
-        ):
+        if not isinstance(self.lazy_child_data, pd.DataFrame) and not self.lazy_child_data:
             return None
 
         if isinstance(self.lazy_child_data, list):
@@ -207,7 +206,7 @@ class LazyVariableController(Sequence):
             if self.is_dynamic:
                 if isinstance(child_data, pd.DataFrame):
                     index = child_dynamic_block_index % len(child_data.index)
-                    child_data = child_data.iloc[index: index + 1]
+                    child_data = child_data.iloc[index : index + 1]
                 else:
                     index = child_dynamic_block_index % len(child_data)
                     child_data = child_data[index]
@@ -216,7 +215,7 @@ class LazyVariableController(Sequence):
             return [child_data, metadata]
 
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index: dynamic_block_index + 1]
+            arr = arr[dynamic_block_index : dynamic_block_index + 1]
 
         if lazy_load:
             return arr
@@ -231,7 +230,7 @@ class LazyVariableController(Sequence):
         arr = self.lazy_variable_sets
 
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index: dynamic_block_index + 1]
+            arr = arr[dynamic_block_index : dynamic_block_index + 1]
 
         if lazy_load:
             return arr
@@ -263,6 +262,22 @@ def get_dynamic_child_block_indexes(
     )
 
     return [i for i in range(count)]
+
+
+def sort_variables(variable_object):
+    # Using regular expressions to find all digits in the directory path
+    numbers = []
+    for text in [
+        str(variable_object.block_dir_name),
+        str(variable_object.uuid),
+    ]:
+        number = re.findall('\\d+', text)
+        if number:
+            numbers += number
+        else:
+            numbers.append(to_ordinal_integers(text)[0])
+    # Convert found strings to integers for correct numeric sort
+    return tuple(map(int, numbers))
 
 
 def get_variable_objects(
@@ -302,14 +317,6 @@ def get_variable_objects(
         partition=execution_partition,
     )
 
-    def __sort(variable_object: str):
-        if not variable_object:
-            return -96, -96
-        return (
-            to_ordinal_integers(variable_object.block_dir_name)[0],
-            variable_object.uuid,
-        )
-
     return sorted(
         [
             variable_manager.get_variable_object(
@@ -322,7 +329,7 @@ def get_variable_objects(
             for variable_uuid in variable_uuids
             if variable_uuid != ''
         ],
-        key=__sort,
+        key=sort_variables,
     )
 
 
@@ -351,9 +358,7 @@ def __get_all_variable_objects_for_dynamic_child(
     """
     variable_objects_arr = []
 
-    indexes = get_dynamic_child_block_indexes(
-        block, execution_partition=execution_partition
-    )
+    indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
     for dynamic_block_index in indexes:
         # 0/output_0,
         # 0/output_1,
@@ -366,15 +371,7 @@ def __get_all_variable_objects_for_dynamic_child(
             dynamic_block_index=dynamic_block_index,
         )
 
-        def __sort(variable_object: str):
-            if not variable_object:
-                return -96, -96
-            return (
-                to_ordinal_integers(variable_object.block_dir_name)[0],
-                variable_object.uuid,
-            )
-
-        variable_objects_arr.append(sorted(arr, key=__sort))
+        variable_objects_arr.append(sorted(arr, key=sort_variables))
 
     return variable_objects_arr
 
@@ -392,15 +389,13 @@ async def get_outputs_async(
         dynamic_block_index=dynamic_block_index,
     )
 
-    return await asyncio.gather(
-        *[
-            variable_object.read_data_async(
-                sample=sample,
-                sample_count=sample_count,
-            )
-            for variable_object in variable_objects
-        ]
-    )
+    return await asyncio.gather(*[
+        variable_object.read_data_async(
+            sample=sample,
+            sample_count=sample_count,
+        )
+        for variable_object in variable_objects
+    ])
 
 
 def get_outputs(
@@ -523,10 +518,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if (
-                should_reduce_output(upstream_block)
-                and block.type != BlockType.EXTENSION
-            ):
+            if should_reduce_output(upstream_block) and block.type != BlockType.EXTENSION:
                 child_data = []
                 metadata = {}
                 for lazy_variable_set in lazy_variable_controller:
@@ -552,13 +544,18 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 upstream_block,
                 execution_partition=execution_partition,
             )
-            index = dynamic_block_index % len(child_data)
+            index = dynamic_block_index % (
+                len(child_data) if hasattr(child_data, '__len__') else 0
+            )
 
             if isinstance(child_data, list):
                 input_vars.append(child_data[index])
-            elif isinstance(child_data, pd.DataFrame):
+            elif isinstance(child_data, (pd.DataFrame,)):
                 row = child_data.iloc[index]
-                input_vars.append(row.to_dict() if row is not None else row)
+                input_vars.append(row)
+            elif isinstance(child_data, (pl.DataFrame,)):
+                row = child_data[index]
+                input_vars.append(row)
             elif isinstance(child_data, dict):
                 input_vars.append(child_data.get(index))
 
