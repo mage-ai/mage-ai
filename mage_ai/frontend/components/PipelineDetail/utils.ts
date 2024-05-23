@@ -31,7 +31,6 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { isEmptyObject } from '@utils/hash';
 
 export function prepareOutput(output) {
-  console.log(output);
   let data;
   let type;
 
