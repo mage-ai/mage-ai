@@ -490,3 +490,274 @@
 #                     outputs.append(data)
 
 #     return outputs + data_products
+
+
+# async def __get_outputs_async(
+#     self,
+#     execution_partition: Optional[str] = None,
+#     include_print_outputs: bool = True,
+#     csv_lines_only: bool = False,
+#     sample: bool = True,
+#     sample_count: Optional[int] = None,
+#     variable_type: Optional[VariableType] = None,
+#     block_uuid: Optional[str] = None,
+#     selected_variables: Optional[List[str]] = None,
+#     metadata: Optional[Dict] = None,
+#     dynamic_block_index: Optional[int] = None,
+#     exclude_blank_variable_uuids: bool = False,
+#     max_results: Optional[int] = None,
+# ) -> List[Dict[str, Any]]:
+#     is_dynamic_child = is_dynamic_block_child(self)
+#     is_dynamic = is_dynamic_block(self)
+
+#     if not is_dynamic and not is_dynamic_child:
+#         return await get_outputs_for_display_async(
+#             self,
+#             block_uuid=block_uuid,
+#             csv_lines_only=csv_lines_only,
+#             exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+#             execution_partition=execution_partition,
+#             include_print_outputs=include_print_outputs,
+#             sample=sample,
+#             sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
+#             selected_variables=selected_variables,
+#             variable_type=variable_type,
+#             max_results=max_results,
+#         )
+
+#     sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
+#     output_sets = []
+#     variable_sets = []
+
+#     if is_dynamic_child:
+#         lazy_variable_controller = get_outputs_for_dynamic_child(
+#             self,
+#             execution_partition=execution_partition,
+#             sample=sample,
+#             sample_count=sample_count_use,
+#         )
+#         variable_sets: List[
+#             Union[
+#                 Tuple[Optional[Any], Dict],
+#                 List[LazyVariableSet],
+#             ],
+#         ] = await lazy_variable_controller.render_async(
+#             dynamic_block_index=dynamic_block_index,
+#             lazy_load=True,
+#         )
+
+#     elif is_dynamic:
+#         output_pair: List[
+#             Optional[Union[Dict, int, str, pd.DataFrame, Any]],
+#         ] = await get_outputs_for_dynamic_block_async(
+#             self,
+#             execution_partition=execution_partition,
+#             sample=sample,
+#             sample_count=sample_count_use,
+#         )
+#         output_sets.append(output_pair)
+
+#     # Limit the number of dynamic block children we display output for in the UI
+#     output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     child_data_sets = await asyncio.gather(*[
+#         lazy_variable_set.read_data_async() for lazy_variable_set in variable_sets
+#     ])
+
+#     return get_outputs_for_display_dynamic_block(
+#         self,
+#         output_sets,
+#         child_data_sets,
+#         block_uuid=block_uuid,
+#         csv_lines_only=csv_lines_only,
+#         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+#         execution_partition=execution_partition,
+#         metadata=metadata,
+#         sample=sample,
+#         sample_count=sample_count_use,
+#     )
+
+
+# def get_outputs(
+#     self,
+#     execution_partition: Optional[str] = None,
+#     include_print_outputs: bool = True,
+#     csv_lines_only: bool = False,
+#     sample: bool = True,
+#     sample_count: Optional[int] = None,
+#     variable_type: Optional[VariableType] = None,
+#     block_uuid: Optional[str] = None,
+#     selected_variables: Optional[List[str]] = None,
+#     metadata: Optional[Dict] = None,
+#     dynamic_block_index: Optional[int] = None,
+#     exclude_blank_variable_uuids: bool = False,
+# ) -> List[Dict[str, Any]]:
+#     is_dynamic_child = is_dynamic_block_child(self)
+#     is_dynamic = is_dynamic_block(self)
+
+#     if not is_dynamic and not is_dynamic_child:
+#         return get_outputs_for_display_sync(
+#             self,
+#             block_uuid=block_uuid,
+#             csv_lines_only=csv_lines_only,
+#             exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+#             execution_partition=execution_partition,
+#             include_print_outputs=include_print_outputs,
+#             sample=sample,
+#             sample_count=sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW,
+#             selected_variables=selected_variables,
+#             variable_type=variable_type,
+#         )
+
+#     sample_count_use = sample_count or DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW
+#     output_sets = []
+#     variable_sets = []
+
+#     if is_dynamic_child:
+#         lazy_variable_controller = get_outputs_for_dynamic_child(
+#             self,
+#             execution_partition=execution_partition,
+#             sample=sample,
+#             sample_count=sample_count_use,
+#         )
+#         variable_sets: List[
+#             Union[
+#                 Tuple[Optional[Any], Dict],
+#                 List[LazyVariableSet],
+#             ],
+#         ] = lazy_variable_controller.render(
+#             dynamic_block_index=dynamic_block_index,
+#             lazy_load=True,
+#         )
+#     elif is_dynamic:
+#         output_pair: List[
+#             Optional[
+#                 Union[
+#                     Any,
+#                     Dict,
+#                     int,
+#                     pd.DataFrame,
+#                     str,
+#                 ]
+#             ]
+#         ] = get_outputs_for_dynamic_block(
+#             self,
+#             execution_partition=execution_partition,
+#             sample=sample,
+#             sample_count=sample_count_use,
+#         )
+#         output_sets.append(output_pair)
+
+#     output_sets = output_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     variable_sets = variable_sets[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+#     child_data_sets = [lazy_variable_set.read_data() for lazy_variable_set in variable_sets]
+
+#     return get_outputs_for_display_dynamic_block(
+#         self,
+#         output_sets,
+#         child_data_sets,
+#         block_uuid=block_uuid,
+#         csv_lines_only=csv_lines_only,
+#         exclude_blank_variable_uuids=exclude_blank_variable_uuids,
+#         execution_partition=execution_partition,
+#         metadata=metadata,
+#         sample=sample,
+#         sample_count=sample_count_use,
+#     )
+
+
+# data_products = []
+# outputs = []
+
+# variable_type_mapping = {}
+
+
+# def __callback(
+#     data_from_yield,
+#     b_uuid=b_uuid,
+#     block=block,
+#     csv_lines_only=csv_lines_only,
+#     execution_partition=execution_partition,
+#     idx=idx,
+#     idx_inner=idx_inner,
+#     input_data_types=input_data_types,
+#     read_batch_settings=read_batch_settings,
+#     read_chunks=read_chunks,
+#     variable_uuid=variable_uuid,
+# ):
+#     data, is_data_product = format_output_data(
+#         block,
+#         data_from_yield,
+#         variable_uuid,
+#         block_uuid=b_uuid,
+#         csv_lines_only=csv_lines_only,
+#         execution_partition=execution_partition,
+#     )
+
+#     if is_data_product:
+#         data_products.append(((idx, idx_inner), data, is_data_product))
+#     else:
+#         outputs.append(((idx, idx_inner), data, is_data_product))
+
+#     if (
+#         not output_data
+#         and variable_type is not None
+#         and block_output.variable is not None
+#         and block_output.variable.variable_type != variable_type
+#     ):
+#         continue
+
+#     if variable_object.variable_type is not None:
+#         variable_type_mapping[variable_object.variable_type] = variable_type_mapping.get(
+#             variable_object.variable_type, []
+#         )
+#         variable_type_mapping[variable_object.variable_type].append(variable_uuid)
+
+#     yield (variable_object, sample, sample_count, __callback)
+
+#     arr = outputs + data_products
+#     arr_sorted = sorted(arr, key=lambda x: x[0])
+
+#     if len(data_products) >= len(outputs):
+#         arr_sorted = [x[1] for x in arr_sorted]
+#     else:
+#         arr_sorted = [x[1] for x in arr_sorted]
+
+#     if len(arr_sorted) >= 2 and any([vt for vt in variable_type_mapping.keys()]):
+#         for item in arr_sorted[:DATAFRAME_SAMPLE_COUNT_PREVIEW]:
+#             if isinstance(item, dict):
+#                 items.append(merge_dict(item, dict(multi_output=True)))
+#             else:
+#                 items.append(item)
+#     else:
+#         items.extend(arr_sorted)
+
+
+# def get_outputs_for_display_sync(block, **kwargs) -> List[Dict[str, Any]]:
+#     items = []
+
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample, sample_count, __callback = outputs
+#         data = variable_object.read_data(
+#             sample=sample,
+#             sample_count=sample_count,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
+
+#     return items
+
+
+# async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]:
+#     items = []
+
+#     for outputs in handle_variables(block, items, **kwargs):
+#         variable_object, sample, sample_count, __callback = outputs
+#         data = await variable_object.read_data_async(
+#             sample=sample,
+#             sample_count=sample_count,
+#             spark=block.get_spark_session(),
+#         )
+#         __callback(data)
+
+#     return items

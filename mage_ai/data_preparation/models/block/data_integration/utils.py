@@ -9,6 +9,7 @@ import pandas as pd
 import simplejson
 import yaml
 
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_integrations.logger.utils import (
     print_log_from_line,
     print_logs_from_output,
@@ -1559,21 +1560,33 @@ def read_data_from_cache(
     sample: bool = True,
     sample_count: int = None,
 ) -> List[Union[Dict, List, pd.DataFrame]]:
-    data = block.get_outputs(
-        execution_partition=partition,
-        sample=sample,
-        sample_count=sample_count,
-        selected_variables=[stream_id],
+    output_query = BlockOutputQuery(block=block)
+    output_manager = output_query.fetch(
+        partition=partition,
+        scan_filter=lambda variable_uuid, stream_id=stream_id: variable_uuid == stream_id,
+    )
+    data = output_manager.present(
+        # sample=sample, This gets passed to read_data and read_data_async
+        # If sample, read the smaller sample file so the larger file doesn’t
+        # need to be loaded into memory
+        sample_data=sample,
+        take=sample_count,  # Of the results, take only N items to return to the client
     )
 
     if data is None and block.is_destination():
         upstream_block = block.pipeline.get_block(parent_stream)
 
-        data = upstream_block.get_outputs(
-            execution_partition=partition,
-            sample=sample,
-            sample_count=sample_count,
-            selected_variables=[stream_id],
+        output_query = BlockOutputQuery(block=upstream_block)
+        output_manager = output_query.fetch(
+            partition=partition,
+            scan_filter=lambda variable_uuid, stream_id=stream_id: variable_uuid == stream_id,
+        )
+        data = output_manager.present(
+            # sample=sample, This gets passed to read_data and read_data_async
+            # If sample, read the smaller sample file so the larger file doesn’t
+            # need to be loaded into memory
+            sample_data=sample,
+            take=sample_count,  # Of the results, take only N items to return to the client
         )
 
     return data

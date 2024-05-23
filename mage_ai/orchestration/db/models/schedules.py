@@ -1720,7 +1720,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
                             ),
                         ]
                     else:
-                        output_query = BlockOutputQuery(block=block)
+                        output_query = BlockOutputQuery(block=block, pipeline=pipeline)
                         data = output_query.find(
                             stream,
                             partition=self.pipeline_run.execution_partition,
@@ -1765,13 +1765,20 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
                     ),
                 ]
 
-        return block.get_outputs(
-            exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-            execution_partition=self.pipeline_run.execution_partition,
-            sample_count=sample_count,
-            block_uuid=block_uuid,
-            metadata=self.metrics.get('metadata') if self.metrics else None,
+        output_query = BlockOutputQuery(block=block, block_uuid=block_uuid, pipeline=pipeline)
+        output_manager = output_query.fetch(
+            partition=self.pipeline_run.execution_partition,
             dynamic_block_index=self.metrics.get('dynamic_block_index') if self.metrics else None,
+            scan_filter=lambda variable_uuid,
+            exclude_blank_variable_uuids=exclude_blank_variable_uuids: (
+                not exclude_blank_variable_uuids
+                or (variable_uuid is not None and variable_uuid.strip() != '')
+            ),
+        )
+
+        return output_manager.present(
+            metadata=self.metrics.get('metadata') if self.metrics else None,
+            take=sample_count,
         )
 
 

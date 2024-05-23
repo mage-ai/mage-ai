@@ -630,7 +630,9 @@ class Block(
     def outputs(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = self.get_outputs()
+                output_query = BlockOutputQuery(block=self)
+                output_manager = output_query.fetch()
+                self._outputs = output_manager.present()
         return self._outputs
 
     async def __outputs_async(
@@ -2838,9 +2840,7 @@ class Block(
         # Remote blocks
         if global_vars.get('remote_blocks'):
             global_vars['remote_blocks'] = [
-                RemoteBlock.load(
-                    **remote_block_dict,
-                ).get_outputs()
+                RemoteBlock.load(**remote_block_dict).get_outputs()
                 for remote_block_dict in global_vars['remote_blocks']
             ]
 

@@ -3,7 +3,7 @@ from typing import Any, List, Optional
 
 from pandas.core.internals.managers import Callable
 
-from mage_ai.data.models.outputs.models import BlockOutput
+from mage_ai.data.models.outputs.models import BlockOutput, OutputManager
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.variables.constants import GLOBAL_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dynamic.utils import (
@@ -82,7 +82,6 @@ class BlockOutputQuery(BaseOutputQuery):
         dynamic_block_uuid: Optional[str] = None,
         partition: Optional[str] = None,
         pipeline_uuid: Optional[str] = None,
-        limit: Optional[int] = None,  # sample_count
         raise_exception: Optional[bool] = None,
     ) -> BlockOutput:
         """
@@ -139,7 +138,7 @@ class BlockOutputQuery(BaseOutputQuery):
         clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
-        limit: Optional[int] = None,  # sample_count
+        limit: Optional[int] = None,
         load_filter: Optional[Callable[[BlockOutput], bool]] = None,
         partition: Optional[str] = None,
         pipeline_uuid: Optional[str] = None,
@@ -147,7 +146,7 @@ class BlockOutputQuery(BaseOutputQuery):
         scan: Optional[bool] = None,
         scan_filter: Optional[Callable[[str], bool]] = None,
         sort: Optional[Callable[[BlockOutput], Any]] = None,
-    ) -> List[BlockOutput]:
+    ) -> OutputManager:
         """
         From: fetch_output_variables
 
@@ -160,24 +159,6 @@ class BlockOutputQuery(BaseOutputQuery):
         pipeline.get_block_variable
             -> block.get_variable: data loaded from disk
         """
-
-        variables_with_uuid = self.variable_manager.get_variable_uuids(
-            block_uuid=self.block.uuid if self.block else None,
-            max_results=limit,
-            partition=partition,
-            pipeline_uuid=pipeline_uuid,
-        )
-
-        if scan_filter:
-            variables_with_uuid = [
-                variable for variable in variables_with_uuid if scan_filter(variable.uuid)
-            ]
-
-        if scan:
-            return [
-                BlockOutput(block=self.block, variable=variable)
-                for variable in variables_with_uuid
-            ]
 
         def __load_output(
             acc: List[BlockOutput],
@@ -201,7 +182,27 @@ class BlockOutputQuery(BaseOutputQuery):
 
             return acc
 
-        block_outputs = reduce(__load_output, variables_with_uuid, [])
+        variables_with_uuid = self.variable_manager.get_variable_uuids(
+            block_uuid=self.block.uuid if self.block else None,
+            max_results=limit,
+            partition=partition,
+            pipeline_uuid=pipeline_uuid,
+        )
+
+        if scan_filter:
+            variables_with_uuid = [
+                variable for variable in variables_with_uuid if scan_filter(variable.uuid)
+            ]
+
+        if scan:
+            block_outputs = [
+                BlockOutput(block=self.block, variable=variable)
+                for variable in variables_with_uuid
+            ]
+        else:
+            block_outputs = reduce(__load_output, variables_with_uuid, [])
+
         if sort:
             block_outputs = sorted(block_outputs, key=sort)
-        return block_outputs
+
+        return OutputManager(data=block_outputs)
