@@ -232,6 +232,11 @@ def format_output_data(
                         data[columns_to_display].to_json(orient='split', date_format='iso'),
                     )['data'],
                 ),
+                resource_usage=block.get_resource_usage(
+                    block_uuid=block_uuid,
+                    partition=execution_partition,
+                    variable_uuid=variable_uuid,
+                ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
                 variable_uuid=variable_uuid,
@@ -292,8 +297,7 @@ def format_output_data(
                 ],
             ),
             resource_usage=block.get_resource_usage(
-                block_uuid=block_uuid,
-                partition=execution_partition,
+                block_uuid=block_uuid, partition=execution_partition, variable_uuid=variable_uuid
             ),
             shape=[row_count, column_count],
             type=DataType.TABLE,

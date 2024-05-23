@@ -31,6 +31,7 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { isEmptyObject } from '@utils/hash';
 
 export function prepareOutput(output) {
+  console.log(output);
   let data;
   let type;
 
@@ -63,6 +64,7 @@ export function prepareOutput(output) {
   }
 
   return {
+    ...output,
     data,
     type,
   };
@@ -81,6 +83,7 @@ export function prepareOutputsForDisplay(outputs: OutputType[]) {
 
     if (!!data || outputs?.length === 1) {
       outputsFinal.push({
+        ...output,
         data,
         type,
       });

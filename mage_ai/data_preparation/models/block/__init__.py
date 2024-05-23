@@ -491,9 +491,16 @@ class Block(
         self,
         block_uuid: Optional[str] = None,
         partition: Optional[str] = None,
+        variable_uuid: Optional[str] = None,
     ) -> Optional[ResourceUsage]:
-        variable = self.get_variable_object(block_uuid or self.uuid, partition=partition)
-        return variable.get_resource_usage()
+        try:
+            variable = self.get_variable_object(
+                block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+            )
+            return variable.get_resource_usage()
+        except Exception as err:
+            print(f'[ERROR] Block.get_resource_usage: {err}')
+            return {}
 
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
@@ -3756,7 +3763,9 @@ class SensorBlock(Block):
         block_function: Callable,
         input_vars: List,
         from_notebook: bool = False,
-        global_vars: Dict = None,
+        global_vars: Optional[Dict] = None,
+        *args,
+        **kwargs,
     ) -> List:
         if from_notebook:
             return super().execute_block_function(

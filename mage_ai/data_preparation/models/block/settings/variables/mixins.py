@@ -33,12 +33,12 @@ class VariablesMixin:
             .batch_settings
         ) or BatchSettings()
 
-    def upstream_chunks(self, block_uuid: str) -> BatchSettings:
+    def upstream_chunks(self, block_uuid: str) -> Optional[List[ChunkKeyTypeUnion]]:
         return (
             (self.variables_configuration or VariableConfiguration())
             .upstream_settings(block_uuid)
             .chunks
-        ) or BatchSettings()
+        )
 
     def input_data_types(self, block_uuid: str) -> List[InputDataType]:
         return (

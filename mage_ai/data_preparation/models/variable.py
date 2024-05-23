@@ -165,7 +165,10 @@ class Variable:
                     raise_exception=False,
                 )
                 if data:
-                    self.resource_usage.update_attributes(**data)
+                    self._resource_usage = ResourceUsage.load(**{
+                        **self.resource_usage.to_dict(),
+                        **data,
+                    })
             except Exception as err:
                 print(f'[ERROR] Variable.resource_usage: {err}')
         return self.resource_usage
