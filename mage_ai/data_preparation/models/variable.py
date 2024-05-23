@@ -77,6 +77,7 @@ class Variable:
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        variables_dir: str = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
@@ -108,6 +109,7 @@ class Variable:
         self.input_data_types = input_data_types
         self.read_batch_settings = read_batch_settings
         self.read_chunks = read_chunks
+        self.variables_dir = variables_dir or get_variables_dir()
         self.write_batch_settings = write_batch_settings
         self.write_chunks = write_chunks
         self._data_manager = None
@@ -135,6 +137,7 @@ class Variable:
                 uuid=self.__scope_uuid(),
                 variable_dir_path=self.variable_dir_path,
                 variable_path=self.variable_path,
+                variables_dir=self.variables_dir,
                 variable_type=self.variable_type,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
@@ -145,7 +148,7 @@ class Variable:
         path_parts = [self.block_dir_name or '']
         try:
             path_parts.insert(
-                0, str(Path(self.pipeline_path).relative_to(Path(get_variables_dir())))
+                0, str(Path(self.pipeline_path).relative_to(Path(self.variables_dir)))
             )
         except ValueError:
             pass

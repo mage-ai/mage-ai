@@ -28,7 +28,7 @@ class VariableManager:
         warn_for_repo_path(repo_path)
         self.repo_path = repo_path or get_repo_path()
         if variables_dir is None:
-            self.variables_dir = self.repo_path
+            self.variables_dir = get_variables_dir(repo_path=self.repo_path)
         else:
             self.variables_dir = variables_dir
         self.storage = LocalStorage()
@@ -307,6 +307,7 @@ class VariableManager:
             input_data_types=input_data_types,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
+            variables_dir=self.variables_dir,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
         )
