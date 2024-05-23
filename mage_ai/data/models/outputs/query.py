@@ -171,7 +171,6 @@ class BlockOutputQuery(BaseOutputQuery):
                 # Dynamic blocks
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
-                limit=limit,
                 partition=partition,
                 pipeline_uuid=pipeline_uuid,
                 raise_exception=raise_exception,

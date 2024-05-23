@@ -640,10 +640,16 @@ class Block(
     ) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.__get_outputs_async(
-                    exclude_blank_variable_uuids=exclude_blank_variable_uuids,
-                    max_results=max_results,
+                output_query = BlockOutputQuery(block=self)
+                output_manager = output_query.fetch(
+                    limit=max_results,
+                    scan_filter=lambda variable_uuid,
+                    exclude_blank_variable_uuids=exclude_blank_variable_uuids: (
+                        not exclude_blank_variable_uuids
+                        or (variable_uuid is not None and variable_uuid.strip() != '')
+                    ),
                 )
+                self._outputs = await output_manager.present_async()
         return self._outputs
 
     @property
