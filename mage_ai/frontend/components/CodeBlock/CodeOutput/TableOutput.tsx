@@ -133,7 +133,7 @@ function TableOutput({
       <Text monospace muted small>
         {arr?.map((text: str, idx: number) => (
           <span key={text}>
-            {idx >= 1  && <>&nbsp;/&nbsp;</>}
+            {idx >= 1 && <>&nbsp;/&nbsp;</>}
             {text}
           </span>
         ))}
