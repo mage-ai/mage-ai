@@ -174,10 +174,18 @@ export interface SampleDataType {
   shape?: number[];
 }
 
+export interface ResourceUsage {
+  directory?: string;
+  path: string;
+  memory_usage: number;
+  size: number;
+}
+
 export interface OutputType {
   data?: SampleDataType | string | string[];
   multi_output?: boolean;
   outputs?: OutputType[];
+  resource_usage?: ResourceUsage;
   sample_data?: SampleDataType;
   shape?: number[];
   text_data?: string;

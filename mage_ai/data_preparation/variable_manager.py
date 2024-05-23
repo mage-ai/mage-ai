@@ -21,6 +21,7 @@ from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.utils import clean_name
+from mage_ai.system.models import ResourceUsage
 
 
 class VariableManager:
@@ -61,6 +62,8 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         disable_variable_type_inference: bool = False,
+        input_data_types: Optional[List[InputDataType]] = None,
+        resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
@@ -86,6 +89,8 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
+            input_data_types=input_data_types,
+            resource_usage=resource_usage,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
             write_batch_settings=write_batch_settings,
@@ -138,6 +143,7 @@ class VariableManager:
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
         input_data_types: Optional[List[InputDataType]] = None,
+        resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
@@ -162,6 +168,7 @@ class VariableManager:
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
             input_data_types=input_data_types,
+            resource_usage=resource_usage,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
             write_batch_settings=write_batch_settings,
@@ -413,8 +420,7 @@ def get_global_variables(
     else:
         variables_dir = variables_dir or get_variables_dir()
         variables = VariableManager(
-            repo_path=repo_path,
-            variables_dir=variables_dir
+            repo_path=repo_path, variables_dir=variables_dir
         ).get_variables_by_block(
             pipeline_uuid,
             'global',

@@ -362,10 +362,6 @@ function CodeOutput(
           arrRender.push(...renderOutputMatches);
         }
 
-        if (skip) {
-          return;
-        }
-
         const last = arr.at(-1);
 
         if (

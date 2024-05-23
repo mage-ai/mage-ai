@@ -63,6 +63,7 @@ export function prepareOutput(output) {
   }
 
   return {
+    ...output,
     data,
     type,
   };
@@ -81,6 +82,7 @@ export function prepareOutputsForDisplay(outputs: OutputType[]) {
 
     if (!!data || outputs?.length === 1) {
       outputsFinal.push({
+        ...output,
         data,
         type,
       });

@@ -13,6 +13,7 @@ MATRIX_NPZ_FILE = 'matrix.npz'
 MATRIX_SAMPLE_NPZ_FILE = 'matrix.npz'
 MEDIA_IMAGE_VISUALIZATION_FILE = 'visualization.png'
 METADATA_FILE = 'type.json'
+RESOURCE_USAGE_FILE = 'resources.json'
 UBJSON_MODEL_FILENAME = 'model.ubj'
 
 

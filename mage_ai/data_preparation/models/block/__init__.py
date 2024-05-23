@@ -132,6 +132,8 @@ from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 from mage_ai.system.memory.manager import MemoryManager
+from mage_ai.system.memory.wrappers import execute_with_memory_tracking
+from mage_ai.system.models import ResourceUsage
 
 PYTHON_COMMAND = 'python3'
 BLOCK_EXISTS_ERROR = '[ERR_BLOCK_EXISTS]'
@@ -409,6 +411,7 @@ class Block(
         # Needs to after self._project_platform_activated = None
         self.configuration = configuration
 
+        self.resource_usage = None
         self._store_variables_in_block_function = None
 
     @property
@@ -483,6 +486,21 @@ class Block(
                 pipeline=self.pipeline,
             )
         return None
+
+    def get_resource_usage(
+        self,
+        block_uuid: Optional[str] = None,
+        partition: Optional[str] = None,
+        variable_uuid: Optional[str] = None,
+    ) -> Optional[ResourceUsage]:
+        try:
+            variable = self.get_variable_object(
+                block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+            )
+            return variable.get_resource_usage()
+        except Exception as err:
+            print(f'[ERROR] Block.get_resource_usage: {err}')
+            return {}
 
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
@@ -1824,6 +1842,8 @@ class Block(
                     input_vars,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
                 )
 
         block_function = self._validate_execution(decorated_functions, input_vars)
@@ -1843,6 +1863,8 @@ class Block(
                 input_vars,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
             )
 
             if track_spark:
@@ -1868,7 +1890,9 @@ class Block(
         from_notebook: bool = False,
         global_vars: Optional[Dict] = None,
         initialize_decorator_modules: bool = True,
-    ) -> Dict:
+        logger: Optional[Logger] = None,
+        logging_tags: Optional[Dict] = None,
+    ) -> List[Dict[str, Any]]:
         block_function_updated = block_function
 
         if from_notebook and initialize_decorator_modules:
@@ -1880,10 +1904,20 @@ class Block(
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
-        if has_kwargs and global_vars is not None and len(global_vars) != 0:
-            output = block_function_updated(*input_vars, **global_vars)
-        else:
-            output = block_function_updated(*input_vars)
+        log_message_prefix = self.uuid
+        if self.pipeline:
+            log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
+
+        output, self.resource_usage = execute_with_memory_tracking(
+            block_function_updated,
+            args=input_vars,
+            kwargs=global_vars
+            if has_kwargs and global_vars is not None and len(global_vars) != 0
+            else None,
+            logger=logger,
+            logging_tags=logging_tags,
+            log_message_prefix=f'[{log_message_prefix}]',
+        )
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
             output_count = 0
@@ -1908,7 +1942,7 @@ class Block(
                 output_count += 1
 
             self._store_variables_in_block_function = None
-            output = {}
+            output = []
 
         return output
 
@@ -2210,17 +2244,17 @@ class Block(
 
     def get_outputs(
         self,
-        execution_partition: Optional[str] = None,
-        include_print_outputs: bool = True,
-        csv_lines_only: bool = False,
-        sample: bool = True,
-        sample_count: Optional[int] = None,
-        variable_type: Optional[VariableType] = None,
         block_uuid: Optional[str] = None,
-        selected_variables: Optional[List[str]] = None,
-        metadata: Optional[Dict] = None,
+        csv_lines_only: bool = False,
         dynamic_block_index: Optional[int] = None,
         exclude_blank_variable_uuids: bool = False,
+        execution_partition: Optional[str] = None,
+        include_print_outputs: bool = True,
+        metadata: Optional[Dict] = None,
+        sample: bool = True,
+        sample_count: Optional[int] = None,
+        selected_variables: Optional[List[str]] = None,
+        variable_type: Optional[VariableType] = None,
     ) -> List[Dict[str, Any]]:
         is_dynamic_child = is_dynamic_block_child(self)
         is_dynamic = is_dynamic_block(self)
@@ -3255,12 +3289,12 @@ class Block(
     def store_variables(
         self,
         variable_mapping: Dict,
-        execution_partition: str = None,
+        execution_partition: Optional[str] = None,
         override: bool = False,
         override_outputs: bool = False,
         spark=None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
     ) -> None:
         variables_data = self.__store_variables_prepare(
             variable_mapping,
@@ -3300,6 +3334,7 @@ class Block(
                 clean_block_uuid=not changed,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
+                resource_usage=self.resource_usage,
             )
 
         if not is_dynamic_child:
@@ -3355,6 +3390,7 @@ class Block(
                 clean_block_uuid=not changed,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
+                resource_usage=self.resource_usage,
             )
 
         if not is_dynamic_child:
@@ -3727,7 +3763,9 @@ class SensorBlock(Block):
         block_function: Callable,
         input_vars: List,
         from_notebook: bool = False,
-        global_vars: Dict = None,
+        global_vars: Optional[Dict] = None,
+        *args,
+        **kwargs,
     ) -> List:
         if from_notebook:
             return super().execute_block_function(

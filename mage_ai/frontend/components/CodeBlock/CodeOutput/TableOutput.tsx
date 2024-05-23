@@ -36,7 +36,7 @@ function TableOutput({
   setShapeCallback,
   uuid,
 }: TableOutputProps) {
-  const { data, sample_data: sampleData } = output;
+  const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
   const shape = useMemo(
     // @ts-ignore
     () => (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape,
@@ -107,6 +107,51 @@ function TableOutput({
     );
   }
 
+  const resourcesDisplay = useMemo(() => {
+    const arr1 = [];
+    const arr2 = [];
+
+    if (shape?.length >= 1) {
+      const r = pluralize('row', shape?.[0]);
+      if (shape?.length >= 2) {
+        const c = pluralize('column', shape?.[1]);
+        arr1.push(`${r} x ${c}`);
+      } else {
+        arr1.push(r);
+      }
+    }
+
+    if (resourceUsage) {
+      if (typeof resourceUsage?.size !== 'undefined') {
+        arr2.push(`Size: ${(resourceUsage?.size / 1024 ** 2).toFixed(2)}MB`);
+      }
+      if (typeof resourceUsage?.memory_usage !== 'undefined') {
+        arr2.push(`Memory: ${(resourceUsage?.memory_usage / 1024 ** 2).toFixed(2)}MB`);
+      }
+    }
+
+    return (
+      <>
+        <Text monospace muted small>
+          {arr1?.map((text: string, idx: number) => (
+            <span key={text}>
+              {idx >= 1 && <>&nbsp;/&nbsp;</>}
+              {text}
+            </span>
+          ))}
+        </Text>
+        <Text monospace muted small>
+          {arr2?.map((text: string, idx: number) => (
+            <span key={text}>
+              {idx >= 1 && <>&nbsp;/&nbsp;</>}
+              {text}
+            </span>
+          ))}
+        </Text>
+      </>
+    );
+  }, [shape, resourceUsage]);
+
   return (
     <>
       <DataTable
@@ -159,10 +204,7 @@ function TableOutput({
         }
       />
       <Spacing pb={1} px={PADDING_UNITS}>
-        <Text monospace muted small>
-          {pluralize('row', shape?.[0])} x {pluralize('column', shape?.[1])}&nbsp;/&nbsp;
-          {shape?.[2] && `${(shape?.[0] / 1024 ** 2).toFixed(3)} MB`}
-        </Text>
+        {resourcesDisplay}
       </Spacing>
     </>
   );

@@ -48,6 +48,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     JSON_FILE,
     JSON_SAMPLE_FILE,
     METADATA_FILE,
+    RESOURCE_USAGE_FILE,
     VariableType,
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -60,6 +61,8 @@ from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.memory.manager import MemoryManager
+from mage_ai.system.models import ResourceUsage
+from mage_ai.system.storage.utils import size_of_path
 
 
 class Variable:
@@ -75,6 +78,7 @@ class Variable:
         clean_block_uuid: bool = True,
         validate_pipeline_path: bool = False,
         input_data_types: Optional[List[InputDataType]] = None,
+        resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
@@ -111,6 +115,7 @@ class Variable:
         self.write_batch_settings = write_batch_settings
         self.write_chunks = write_chunks
         self._data_manager = None
+        self._resource_usage = resource_usage
 
     @classmethod
     def dir_path(cls, pipeline_path, block_uuid):
@@ -123,6 +128,10 @@ class Variable:
     @property
     def metadata_path(self):
         return os.path.join(self.variable_path, METADATA_FILE)
+
+    @property
+    def resource_usage_path(self):
+        return os.path.join(self.variable_path, RESOURCE_USAGE_FILE)
 
     @property
     def data_manager(self) -> Optional[DataManager]:
@@ -140,6 +149,29 @@ class Variable:
                 write_chunks=self.write_chunks,
             )
         return self._data_manager
+
+    @property
+    def resource_usage(self) -> ResourceUsage:
+        if self._resource_usage is None:
+            self._resource_usage = ResourceUsage()
+        return self._resource_usage
+
+    def get_resource_usage(self) -> Optional[ResourceUsage]:
+        if self.storage.path_exists(self.resource_usage_path):
+            try:
+                data = self.storage.read_json_file(
+                    self.resource_usage_path,
+                    default_value={},
+                    raise_exception=False,
+                )
+                if data:
+                    self._resource_usage = ResourceUsage.load(**{
+                        **self.resource_usage.to_dict(),
+                        **data,
+                    })
+            except Exception as err:
+                print(f'[ERROR] Variable.resource_usage: {err}')
+        return self.resource_usage
 
     def __scope_uuid(self) -> str:
         path_parts = [self.block_dir_name or '']
@@ -436,10 +468,15 @@ class Variable:
             flatten_dict(data) if isinstance(data, dict) else data,
             save_path=self.variable_path,
         )
+
         self.storage.write_json_file(
-            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
-            column_types,
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), column_types
         )
+        self.resource_usage.update_attributes(
+            directory=self.variable_path,
+            size=size_of_path(self.variable_path),
+        )
+
         return data
 
     async def __save_complex_object_async(self, data: Union[Dict, List]) -> Union[Dict, List]:
@@ -451,10 +488,25 @@ class Variable:
             os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
             column_types,
         )
+
+        self.resource_usage.update_attributes(
+            directory=self.variable_path,
+            size=size_of_path(self.variable_path),
+        )
+
         return data
 
-    def __should_save_object(self, data: Any) -> Tuple[Dict, Optional[str]]:
-        return save_custom_object(data, self.variable_path, variable_type=self.variable_type)
+    def __should_save_object(self, data: Any) -> Dict[str, Any]:
+        data, full_path = save_custom_object(
+            data, self.variable_path, variable_type=self.variable_type
+        )
+
+        self.resource_usage.update_attributes(
+            directory=self.variable_path,
+            size=size_of_path(self.variable_path),
+        )
+
+        return data
 
     def __should_load_object(self) -> Optional[Any]:
         return load_custom_object(self.variable_path, self.variable_type)
@@ -494,6 +546,10 @@ class Variable:
         if self.data_manager and self.data_manager.writeable(data):
             # self.__write_dataframe_analysis
             self.data_manager.write_sync(data)
+            self.resource_usage.update_attributes(
+                directory=self.data_manager.resource_usage.directory,
+                size=self.data_manager.resource_usage.size,
+            )
         else:
             if isinstance(data, pd.Series) and self.variable_type != VariableType.SERIES_PANDAS:
                 data = data.to_list()
@@ -533,13 +589,15 @@ class Variable:
                 ):
                     data = self.__save_complex_object(data)
                 else:
-                    data, _ = self.__should_save_object(data)
+                    data = self.__should_save_object(data)
 
                 self.__write_json(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error
             self.write_metadata()
+
+        self.__write_resource_usage()
 
         if VariableType.ITERABLE == self.variable_type:
             self.__write_dataframe_analysis(
@@ -571,7 +629,10 @@ class Variable:
         """
         if self.data_manager and self.data_manager.writeable(data):
             await self.data_manager.write_async(data)
-            # self.__write_dataframe_analysis
+            self.resource_usage.update_attributes(
+                directory=self.data_manager.resource_usage.size,
+                size=self.data_manager.resource_usage.size,
+            )
         else:
             if self.variable_type is None and isinstance(data, pd.DataFrame):
                 self.variable_type = VariableType.DATAFRAME
@@ -606,12 +667,14 @@ class Variable:
                 ):
                     data = await self.__save_complex_object_asycn(data)
                 else:
-                    data, _ = self.__should_save_object(data)
+                    data = self.__should_save_object(data)
                 await self.__write_json_async(data)
 
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error
             self.write_metadata()
+
+        self.__write_resource_usage()
 
         if VariableType.ITERABLE == self.variable_type:
             self.__write_dataframe_analysis(
@@ -634,6 +697,11 @@ class Variable:
             ),
         )
         self.storage.write_json_file(self.metadata_path, metadata)
+
+    def __write_resource_usage(self) -> None:
+        if self.resource_usage:
+            os.makedirs(self.variable_dir_path, exist_ok=True)
+            self.storage.write_json_file(self.resource_usage_path, self.resource_usage.to_dict())
 
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
@@ -727,19 +795,34 @@ class Variable:
             data = sample_output(data)[0]
         return data
 
-    def __write_json(self, data) -> None:
+    def __write_json(self, data) -> Any:
         if not self.storage.isdir(self.variable_path):
             self.storage.makedirs(self.variable_path, exist_ok=True)
+
         file_path = os.path.join(self.variable_path, JSON_FILE)
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
         self.storage.write_json_file(file_path, data)
         self.storage.write_json_file(sample_file_path, sample_output(data)[0])
 
+        self.resource_usage.update_attributes(
+            size=size_of_path(self.variable_path),
+            path=file_path,
+        )
+
+        return data
+
     async def __write_json_async(self, data) -> None:
         if not self.storage.isdir(self.variable_path):
             self.storage.makedirs(self.variable_path, exist_ok=True)
+
         file_path = os.path.join(self.variable_path, JSON_FILE)
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+
+        self.resource_usage.update_attributes(
+            size=size_of_path(self.variable_path),
+            path=file_path,
+        )
+
         try:
             await self.storage.write_json_file_async(file_path, data)
             await self.storage.write_json_file_async(sample_file_path, sample_output(data)[0])
