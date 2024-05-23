@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 import yaml
 from dateutil.relativedelta import relativedelta
 
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_preparation.models.block.settings.global_data_products.models import (
     GlobalDataProductObjectType,
 )
@@ -114,6 +115,10 @@ class GlobalDataProduct:
             for block_uuid, block_settings in self.settings.items():
                 block = self.pipeline.get_block(block_uuid)
 
+                output_query = BlockOutputQuery(
+                    block=block, block_uuid=block_uuid, pipeline=self.pipeline
+                )
+
                 partitions = 1
                 if block_settings and 'partitions' in block_settings:
                     partitions = int(block_settings.get('partitions', 1))
@@ -124,6 +129,7 @@ class GlobalDataProduct:
                     arr = pipeline_runs
 
                 data[block_uuid] = []
+
                 for row in arr:
                     pipeline_run = PipelineRun(
                         execution_date=row.execution_date,
@@ -131,22 +137,17 @@ class GlobalDataProduct:
                         variables=row.variables,
                     )
 
-                    output_variables = block.output_variables(
-                        execution_partition=pipeline_run.execution_partition,
-                        global_vars=global_vars,
-                        from_notebook=from_notebook,
+                    block_outputs = output_query.fetch(
+                        partition=pipeline_run.execution_partition,
+                        raise_exception=True,
                     )
-
-                    for variable_name in output_variables:
-                        result = self.pipeline.get_block_variable(
-                            block_uuid=block.uuid,
-                            variable_name=variable_name,
-                            raise_exception=True,
-                            partition=pipeline_run.execution_partition,
-                            global_vars=global_vars,
+                    data[block_uuid] = [
+                        output.render(
                             from_notebook=from_notebook,
+                            global_vars=global_vars,
                         )
-                        data[block_uuid].append(result)
+                        for output in block_outputs
+                    ]
 
         return data
 

@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 from logging import Logger
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import simplejson
@@ -61,10 +61,11 @@ from mage_ai.shared.utils import clean_name
 
 
 def get_destination(block) -> str:
-    if BlockType.DATA_EXPORTER == block.type and \
-            BlockLanguage.YAML == block.language and \
-            block.content:
-
+    if (
+        BlockType.DATA_EXPORTER == block.type
+        and BlockLanguage.YAML == block.language
+        and block.content
+    ):
         config = yaml.safe_load(block.content)
 
         return config.get('destination')
@@ -149,10 +150,12 @@ def extract_stream_ids_from_streams(streams: List[Dict]) -> List[str]:
 
 
 def get_streams_from_catalog(catalog: Dict, streams: List[str]) -> List[Dict]:
-    return list(filter(
-        lambda x: x.get('tap_stream_id') in streams or x.get('stream') in streams,
-        catalog.get('streams', []),
-    ))
+    return list(
+        filter(
+            lambda x: x.get('tap_stream_id') in streams or x.get('stream') in streams,
+            catalog.get('streams', []),
+        )
+    )
 
 
 def get_metadata_from_stream(stream: Dict) -> Dict:
@@ -216,12 +219,13 @@ def build_variable(
     else:
         variable_uuid = ''
 
-    variable = block.pipeline.variable_manager.build_variable(
-        block.pipeline.uuid,
-        block.uuid,
+    variable = block.pipeline.variable_manager.add_variable(
         variable_uuid,
-        partition,
+        block.uuid,
         clean_variable_uuid=False,
+        disable_variable_type_inference=True,
+        partition=partition,
+        persist=False,
     )
 
     return variable
@@ -339,11 +343,12 @@ def get_state_data(
                     row = json.loads(line)
                     row_type = row.get(KEY_TYPE)
 
-                    if include_record and \
-                            OUTPUT_TYPE_RECORD == row_type and \
-                            KEY_RECORD in row and \
-                            (not stream_id or stream_id == row.get(KEY_STREAM)):
-
+                    if (
+                        include_record
+                        and OUTPUT_TYPE_RECORD == row_type
+                        and KEY_RECORD in row
+                        and (not stream_id or stream_id == row.get(KEY_STREAM))
+                    ):
                         record = row[KEY_RECORD]
                     elif OUTPUT_TYPE_STATE == row_type and KEY_VALUE in row:
                         # If it finds a state again even before it find a record, break.
@@ -385,10 +390,13 @@ def execute_data_integration(
     if logging_tags is None:
         logging_tags = dict()
 
-    global_vars_more = merge_dict(global_vars, {
-        'pipeline.name': block.pipeline.name if block.pipeline else None,
-        'pipeline.uuid': block.pipeline.uuid if block.pipeline else None,
-    })
+    global_vars_more = merge_dict(
+        global_vars,
+        {
+            'pipeline.name': block.pipeline.name if block.pipeline else None,
+            'pipeline.uuid': block.pipeline.uuid if block.pipeline else None,
+        },
+    )
 
     data_integration_settings = block.get_data_integration_settings(
         dynamic_block_index=dynamic_block_index,
@@ -457,13 +465,16 @@ def execute_data_integration(
             batch_fetch_limit = get_batch_fetch_limit(config)
             stream_catalogs = get_streams_from_catalog(catalog, [stream]) or []
 
-            if len(stream_catalogs) == 1 and \
-                    REPLICATION_METHOD_INCREMENTAL == stream_catalogs[0].get('replication_method'):
-
+            if len(stream_catalogs) == 1 and REPLICATION_METHOD_INCREMENTAL == stream_catalogs[
+                0
+            ].get('replication_method'):
                 if global_vars_more and VARIABLE_BOOKMARK_VALUES_KEY in global_vars_more:
-                    bookmark_values_by_block_uuid = global_vars_more.get(
-                        VARIABLE_BOOKMARK_VALUES_KEY,
-                    ) or {}
+                    bookmark_values_by_block_uuid = (
+                        global_vars_more.get(
+                            VARIABLE_BOOKMARK_VALUES_KEY,
+                        )
+                        or {}
+                    )
 
                     if bookmark_values_by_block_uuid.get(block.uuid):
                         state_data = dict(
@@ -486,12 +497,14 @@ def execute_data_integration(
             if not is_last_block_run:
                 query_data['_limit'] = batch_fetch_limit
 
-        tags = dict(block_tags=dict(
-            index=index,
-            stream=stream,
-            type=block.type,
-            uuid=block.uuid,
-        ))
+        tags = dict(
+            block_tags=dict(
+                index=index,
+                stream=stream,
+                type=block.type,
+                uuid=block.uuid,
+            )
+        )
 
         args = [
             PYTHON_COMMAND,
@@ -562,7 +575,8 @@ def execute_data_integration(
         filename = output_filename(index) if index is not None else None
         with variable.open_to_write(filename) as f:
             for line in proc.stdout:
-                f.write(line.decode()),
+                line = line.decode()
+                f.write(line)
                 print_log_from_line(
                     line,
                     config=config,
@@ -601,8 +615,10 @@ def execute_data_integration(
     if is_source:
         if output_file_path and os.path.exists(output_file_path):
             file_size = os.path.getsize(output_file_path)
-            msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
+            msg = (
+                f'Finished writing {file_size} bytes with {lines_in_file} lines to output '
                 f'file {output_file_path}.'
+            )
 
             updated_logging_tags = merge_dict(
                 logging_tags,
@@ -663,21 +679,20 @@ def convert_block_output_data_for_destination(
     # If not source, get the output data from upstream block,
     # then convert it to Singer Spec format.
 
-    input_vars_fetched, _kwargs_vars, upstream_block_uuids = \
-        block.fetch_input_variables(
-            None,
-            dynamic_block_index=dynamic_block_index,
-            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-            execution_partition=partition,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            upstream_block_uuids=[stream],
-        )
+    input_vars_fetched, _kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
+        None,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        execution_partition=partition,
+        from_notebook=from_notebook,
+        global_vars=global_vars,
+        upstream_block_uuids=[stream],
+    )
 
     data = input_vars_fetched[0] if input_vars_fetched else None
 
     if data is None:
-        msg = f'No data for stream {stream}.',
+        msg = (f'No data for stream {stream}.',)
         if logger:
             logger.info(msg, **logging_tags)
         else:
@@ -814,8 +829,9 @@ def __execute_destination(
 
         # TESTING PURPOSES ONLY
         if not selected_streams_init and catalog_from_source:
-            selected_streams = \
-                [s.get('tap_stream_id') for s in get_selected_streams(catalog_from_source)]
+            selected_streams = [
+                s.get('tap_stream_id') for s in get_selected_streams(catalog_from_source)
+            ]
             stream = selected_streams[0] if len(selected_streams) >= 1 else None
 
     ingest_mode = IngestMode.DISK
@@ -823,14 +839,19 @@ def __execute_destination(
         if configuration_data_integration.get('ingest_mode').get(stream):
             ingest_mode = configuration_data_integration.get('ingest_mode').get(stream)
 
-    tags = merge_dict(logging_tags, dict(block_tags=dict(
-        index=index,
-        ingest_mode=ingest_mode,
-        parent_stream=parent_stream,
-        stream=stream,
-        type=block.type,
-        uuid=block.uuid,
-    )))
+    tags = merge_dict(
+        logging_tags,
+        dict(
+            block_tags=dict(
+                index=index,
+                ingest_mode=ingest_mode,
+                parent_stream=parent_stream,
+                stream=stream,
+                type=block.type,
+                uuid=block.uuid,
+            )
+        ),
+    )
 
     output_file_path = None
 
@@ -876,7 +897,6 @@ def __execute_destination(
                 execution_partition=partition,
                 from_notebook=from_notebook,
                 stream=stream,
-
             )
             output_file_path = output_full_path(
                 index=index,
@@ -997,19 +1017,21 @@ def __execute_destination(
             if schema_dict and schema_dict.get(KEY_PROPERTIES):
                 schema_properties = __select_selected_columns(stream_settings_inner, schema_dict)
 
-        catalog_final = dict(streams=[
-            merge_dict(
-                stream_settings_final,
-                dict(
-                    schema=merge_dict(
-                        schema_final,
-                        {
-                            KEY_PROPERTIES: schema_properties,
-                        },
+        catalog_final = dict(
+            streams=[
+                merge_dict(
+                    stream_settings_final,
+                    dict(
+                        schema=merge_dict(
+                            schema_final,
+                            {
+                                KEY_PROPERTIES: schema_properties,
+                            },
+                        ),
                     ),
                 ),
-            ),
-        ])
+            ]
+        )
 
         args += [
             '--catalog_json',
@@ -1082,13 +1104,13 @@ def get_output_file_paths(
 
 def convert_outputs_to_data(
     block,
-    catalog: Dict,
-    from_notebook: bool = False,
-    index: int = None,
-    partition: str = None,
-    data_integration_uuid: str = None,
-    stream_id: str = None,
-    sample_count: int = None,
+    catalog: Optional[Dict[str, Union[str, Dict]]],
+    from_notebook: Optional[bool] = False,
+    index: Optional[int] = None,
+    partition: Optional[str] = None,
+    data_integration_uuid: Optional[str] = None,
+    stream_id: Optional[str] = None,
+    sample_count: Optional[int] = None,
 ) -> Dict:
     output_file_paths = get_output_file_paths(
         block,
@@ -1116,10 +1138,12 @@ def convert_outputs_to_data(
             if breadcrumb:
                 column = breadcrumb[-1]
                 if md.get('metadata', {}).get('selected', False):
-                    columns.append(dict(
-                        column=column,
-                        properties=schema_properties.get(column),
-                    ))
+                    columns.append(
+                        dict(
+                            column=column,
+                            properties=schema_properties.get(column),
+                        )
+                    )
 
         columns_to_select = [d.get('column') for d in columns]
 
@@ -1282,13 +1306,16 @@ def count_records(
                         'this is unexpected.',
                     )
 
-                if stream_dict and \
-                        REPLICATION_METHOD_INCREMENTAL == stream_dict.get(KEY_REPLICATION_METHOD):
-
+                if stream_dict and REPLICATION_METHOD_INCREMENTAL == stream_dict.get(
+                    KEY_REPLICATION_METHOD
+                ):
                     if variables and VARIABLE_BOOKMARK_VALUES_KEY in variables:
-                        bookmark_values_by_block_uuid = variables.get(
-                            VARIABLE_BOOKMARK_VALUES_KEY,
-                        ) or {}
+                        bookmark_values_by_block_uuid = (
+                            variables.get(
+                                VARIABLE_BOOKMARK_VALUES_KEY,
+                            )
+                            or {}
+                        )
 
                         if bookmark_values_by_block_uuid.get(block.uuid):
                             state_data = dict(
@@ -1512,11 +1539,13 @@ def __fetch_data_from_source_block(
                     error = line
         error = filter_out_config_values(error, config)
         if not error:
-            raise Exception('The sample data was not able to be loaded. Please check if the ' +
-                            'stream still exists. If it does not, click the "View and select ' +
-                            'streams" button and confirm the valid streams. If it does, ' +
-                            'loading sample data for this source may not currently ' +
-                            'be supported.')
+            raise Exception(
+                'The sample data was not able to be loaded. Please check if the '
+                + 'stream still exists. If it does not, click the "View and select '
+                + 'streams" button and confirm the valid streams. If it does, '
+                + 'loading sample data for this source may not currently '
+                + 'be supported.'
+            )
         raise Exception(error)
 
     return outputs
@@ -1557,7 +1586,6 @@ def persist_data_for_stream(
     partition: str = None,
 ) -> None:
     block.pipeline.variable_manager.add_variable(
-        block.pipeline.uuid,
         block.uuid,
         stream_id,
         output,

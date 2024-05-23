@@ -1,7 +1,7 @@
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from pandas.core.construction import Optional
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 
 
 def all_variable_uuids(
@@ -29,18 +29,17 @@ def reduce_output_from_block(
     partition: str = None,
     raise_exception: bool = False,
     spark=None,
-) -> List:
+) -> List[Any]:
     block_uuid = block.uuid
-    variable_object_for_base_block = block.get_variable_object(
-        block_uuid=block_uuid,
-        partition=partition,
-    )
-
     output = []
 
     # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
     # /.variables/415/20230930T135530/child_b_30
-    variable_dir_path = variable_object_for_base_block.variable_dir_path
+    variable_dir_path = block.pipeline.variable_manager.variable_dir_path(
+        block_uuid=block_uuid,
+        partition=partition,
+        pipeline_uuid=block.pipeline.uuid,
+    )
 
     arr = __all_variable_uuids_and_file_paths_for_reducing_block_output(
         block,
@@ -63,19 +62,14 @@ def reduce_output_from_block(
         )
 
         block_uuid_dynamic = ':'.join([block_uuid] + list(os.path.split(subdirs)))
-
-        variable = block.pipeline.get_block_variable(
-            block_uuid_dynamic,
+        output_query = BlockOutputQuery(block=block, block_uuid=block_uuid_dynamic, spark=spark)
+        block_output = output_query.find(
             variable_uuid,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-            input_args=input_args,
             partition=partition,
             raise_exception=raise_exception,
-            spark=spark,
         )
 
-        output.append(variable)
+        output.append(block_output.render())
 
     return output
 
@@ -85,16 +79,17 @@ def __all_variable_uuids_and_file_paths_for_reducing_block_output(
     partition: str = None,
 ) -> List[Tuple]:
     block_uuid = block.uuid
-    variable_object_for_base_block = block.get_variable_object(
-        block_uuid=block_uuid,
-        partition=partition,
-    )
 
     variable_uuid_and_file_paths = []
 
     # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
     # /.variables/415/20230930T135530/child_b_30
-    variable_dir_path = variable_object_for_base_block.variable_dir_path
+    variable_dir_path = block.pipeline.variable_manager.variable_dir_path(
+        block_uuid=block_uuid,
+        partition=partition,
+        pipeline_uuid=block.pipeline.uuid,
+    )
+
     for tup in os.walk(variable_dir_path):
         # ('../child_b_30/0/0/output_0', [], ['data.json', 'sample_data.json'])
         dir_path, subdirs, _filenames = tup
@@ -108,11 +103,9 @@ def __all_variable_uuids_and_file_paths_for_reducing_block_output(
             # e.g. output_0
             dir_name = os.path.basename(os.path.normpath(dir_path))
 
-            variable_uuid_and_file_paths.append(
-                (
-                    dir_name,
-                    dir_path,
-                )
-            )
+            variable_uuid_and_file_paths.append((
+                dir_name,
+                dir_path,
+            ))
 
     return variable_uuid_and_file_paths

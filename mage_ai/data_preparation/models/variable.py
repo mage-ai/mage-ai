@@ -71,12 +71,13 @@ class Variable:
         uuid: str,
         pipeline_path: str,
         block_uuid: str,
-        partition: Optional[str] = None,
-        spark=None,
-        storage: Optional[BaseStorage] = None,
-        variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        partition: Optional[str] = None,
+        spark: Optional[Any] = None,
+        storage: Optional[BaseStorage] = None,
         validate_pipeline_path: bool = False,
+        variable_type: Optional[VariableType] = None,
+        # Data reader and writer settings
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
@@ -253,14 +254,6 @@ class Variable:
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
     ) -> Any:
-        """
-        Used by
-            block.get_outputs
-                WebSocker server sending block output to the IDE
-            fetch_input_variables
-                pipeline.get_block_variable
-        """
-
         def __read(
             dataframe_analysis_keys=dataframe_analysis_keys,
             raise_exception=raise_exception,

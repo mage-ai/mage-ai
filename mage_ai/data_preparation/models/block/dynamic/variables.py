@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
+from mage_ai.data.models.outputs.models import BlockOutput
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.shared.strings import to_ordinal_integers
@@ -116,10 +118,7 @@ class LazyVariableSet(Sequence):
         return None
 
     def read_child_data(self) -> Any:
-        if (
-            not isinstance(self.lazy_child_data, pd.DataFrame)
-            and not self.lazy_child_data
-        ):
+        if not isinstance(self.lazy_child_data, pd.DataFrame) and not self.lazy_child_data:
             return None
 
         if isinstance(self.lazy_child_data, list):
@@ -207,7 +206,7 @@ class LazyVariableController(Sequence):
             if self.is_dynamic:
                 if isinstance(child_data, pd.DataFrame):
                     index = child_dynamic_block_index % len(child_data.index)
-                    child_data = child_data.iloc[index: index + 1]
+                    child_data = child_data.iloc[index : index + 1]
                 else:
                     index = child_dynamic_block_index % len(child_data)
                     child_data = child_data[index]
@@ -216,7 +215,7 @@ class LazyVariableController(Sequence):
             return [child_data, metadata]
 
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index: dynamic_block_index + 1]
+            arr = arr[dynamic_block_index : dynamic_block_index + 1]
 
         if lazy_load:
             return arr
@@ -231,7 +230,7 @@ class LazyVariableController(Sequence):
         arr = self.lazy_variable_sets
 
         if dynamic_block_index is not None:
-            arr = arr[dynamic_block_index: dynamic_block_index + 1]
+            arr = arr[dynamic_block_index : dynamic_block_index + 1]
 
         if lazy_load:
             return arr
@@ -281,9 +280,6 @@ def get_variable_objects(
         output_0/
         output_1/
     """
-    pipeline = block.pipeline
-    pipeline_uuid = pipeline.uuid
-    variable_manager = pipeline.variable_manager
 
     """
     If block is a dynamic child block, get the variable objects specifically in the directory
@@ -295,35 +291,26 @@ def get_variable_objects(
     if dynamic_block_index is not None:
         block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
 
-    variable_uuids = variable_manager.get_variables_by_block(
-        block.pipeline.uuid,
-        block_uuid=block_uuid,
-        clean_block_uuid=dynamic_block_index is None,
-        partition=execution_partition,
-    )
+    output_query = BlockOutputQuery(block=block, block_uuid=block_uuid, pipeline=block.pipeline)
 
-    def __sort(variable_object: str):
-        if not variable_object:
+    def __sort(block_output: BlockOutput):
+        if block_output is None or block_output.variable is None:
             return -96, -96
+
         return (
-            to_ordinal_integers(variable_object.block_dir_name)[0],
-            variable_object.uuid,
+            to_ordinal_integers(block_output.variable.block_dir_name)[0],
+            block_output.variable.uuid,
         )
 
-    return sorted(
-        [
-            variable_manager.get_variable_object(
-                block_uuid=block_uuid,
-                clean_block_uuid=dynamic_block_index is None,
-                partition=execution_partition,
-                pipeline_uuid=pipeline_uuid,
-                variable_uuid=variable_uuid,
-            )
-            for variable_uuid in variable_uuids
-            if variable_uuid != ''
-        ],
-        key=__sort,
-    )
+    return [
+        output.variable
+        for output in output_query.fetch(
+            clean_block_uuid=dynamic_block_index is None,
+            scan_filter=lambda variable_uuid: variable_uuid != '',
+            partition=execution_partition,
+            sort=__sort,
+        )
+    ]
 
 
 def delete_variable_objects_for_dynamic_child(
@@ -351,9 +338,7 @@ def __get_all_variable_objects_for_dynamic_child(
     """
     variable_objects_arr = []
 
-    indexes = get_dynamic_child_block_indexes(
-        block, execution_partition=execution_partition
-    )
+    indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
     for dynamic_block_index in indexes:
         # 0/output_0,
         # 0/output_1,
@@ -392,15 +377,13 @@ async def get_outputs_async(
         dynamic_block_index=dynamic_block_index,
     )
 
-    return await asyncio.gather(
-        *[
-            variable_object.read_data_async(
-                sample=sample,
-                sample_count=sample_count,
-            )
-            for variable_object in variable_objects
-        ]
-    )
+    return await asyncio.gather(*[
+        variable_object.read_data_async(
+            sample=sample,
+            sample_count=sample_count,
+        )
+        for variable_object in variable_objects
+    ])
 
 
 def get_outputs(
@@ -523,10 +506,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if (
-                should_reduce_output(upstream_block)
-                and block.type != BlockType.EXTENSION
-            ):
+            if should_reduce_output(upstream_block) and block.type != BlockType.EXTENSION:
                 child_data = []
                 metadata = {}
                 for lazy_variable_set in lazy_variable_controller:

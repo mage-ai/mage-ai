@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.presenters.charts.data_sources.base import ChartDataSourceBase
@@ -39,13 +40,9 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                     )
 
                 if partitions >= 0:
-                    pipeline_runs = pipeline_runs.order_by(
-                        PipelineRun.execution_date.desc()
-                    )
+                    pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.desc())
                 else:
-                    pipeline_runs = pipeline_runs.order_by(
-                        PipelineRun.execution_date.asc()
-                    )
+                    pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.asc())
 
                 pipeline_runs = pipeline_runs.limit(abs(partitions))
 
@@ -53,18 +50,10 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                     execution_partitions.append(pipeline_run.execution_partition)
 
             for execution_partition in execution_partitions:
-                output_variable_objects = block.output_variable_objects(
-                    execution_partition=execution_partition,
-                )
-
-                for v in output_variable_objects:
-                    arr.append(
-                        self.pipeline.variable_manager.get_variable(
-                            self.pipeline.uuid,
-                            block.uuid,
-                            v.uuid,
-                        )
-                    )
+                output_query = BlockOutputQuery(block=block)
+                arr += [
+                    output.render() for output in output_query.fetch(partition=execution_partition)
+                ]
         elif block:
             block_output = block.execute_with_callback(
                 global_vars=merge_dict(
@@ -72,6 +61,6 @@ class ChartDataSourceBlock(ChartDataSourceBase):
                     variables or {},
                 ),
             )
-            arr += block_output["output"] or []
+            arr += block_output['output'] or []
 
         return arr

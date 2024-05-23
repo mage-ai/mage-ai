@@ -1,0 +1,1 @@
+GLOBAL_DIRECTORY_NAME = 'global'

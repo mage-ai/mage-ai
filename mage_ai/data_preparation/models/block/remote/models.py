@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, List
 
+from mage_ai.data.models.outputs.query import BlockOutputQuery
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -41,18 +42,13 @@ class RemoteBlock(BaseDataClass):
 
         return self._block
 
-    @property
-    def variable_uuids(self):
-        return self.block.output_variables(execution_partition=self.execution_partition)
-
     def get_outputs(self, **kwargs) -> List[Any]:
-        arr = []
-        for variable_uuid in self.variable_uuids:
-            output = self.pipeline.get_block_variable(
-                self.block_uuid,
-                variable_uuid,
+        output_query = BlockOutputQuery(
+            block=self.block, block_uuid=self.block_uuid, pipeline=self.pipeline
+        )
+        return [
+            output.render()
+            for output in output_query.fetch(
                 partition=self.execution_partition,
             )
-            arr.append(output)
-
-        return arr
+        ]

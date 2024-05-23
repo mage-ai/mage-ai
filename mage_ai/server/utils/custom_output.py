@@ -13,6 +13,7 @@ def __custom_output():
     import simplejson
 
     from mage_ai.ai.utils.xgboost import create_tree_visualization
+    from mage_ai.data.models.outputs.query import BlockOutputQuery
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         combine_transformed_output_for_multi_output,
         transform_output_for_display,
@@ -44,7 +45,8 @@ def __custom_output():
     )
 
     if block.executable:
-        outputs = block.get_outputs()
+        output_query = BlockOutputQuery(block=block)
+        outputs = [output.render() for output in output_query.fetch()]
 
         if outputs is not None and isinstance(outputs, list):
             outputs = outputs[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
