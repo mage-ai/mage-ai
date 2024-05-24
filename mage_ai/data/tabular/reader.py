@@ -3,7 +3,7 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Union
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
@@ -18,11 +18,31 @@ from mage_ai.data.constants import (
     ScanBatchDatasetResult,
     TaggedRecordBatch,
 )
-from mage_ai.data.models.generator import DataGenerator, GeneratorWithMetadata
+from mage_ai.data.models.generator import GeneratorWithMetadata
 from mage_ai.data.tabular.constants import FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.utils import compare_object
 from mage_ai.shared.array import find, flatten
+
+DatasetMetadata = Dict[
+    str,
+    Union[
+        int,
+        Dict[
+            str,
+            Dict[
+                str,
+                List[str],
+            ],
+        ],
+        List[
+            Dict[
+                str,
+                Union[str, int, Dict[str, str]],
+            ]
+        ],
+    ],
+]
 
 
 async def run_in_executor(func, *args):
@@ -90,25 +110,7 @@ def partition_from_path(file_path: str) -> Optional[Dict[str, str]]:
 
 def read_metadata(
     directory: str, include_row_groups: bool = False, include_schema: bool = False
-) -> Dict[
-    str,
-    Union[
-        int,
-        Dict[
-            str,
-            Dict[
-                str,
-                List[str],
-            ],
-        ],
-        List[
-            Dict[
-                str,
-                Union[str, int, Dict[str, str]],
-            ]
-        ],
-    ],
-]:
+) -> DatasetMetadata:
     """
     Reads metadata and optionally the schema from all Parquet files in the specified directory
     without loading the full datasets into memory.
@@ -302,17 +304,19 @@ def get_series_object_metadata(
     return find(__check, get_all_objects_metadata(metadatas=metadatas, source=source))
 
 
-def scan_batch_datasets_generator(
+def __builder_scanner_generator_configurations(
     source: Union[List[str], str],
     chunks: Optional[List[int]] = None,
     columns: Optional[List[str]] = None,
-    deserialize: Optional[bool] = None,
     filter: Optional[ds.Expression] = None,
     filters: Optional[List[List[str]]] = None,
-    scan: Optional[bool] = False,
     settings: Optional[BatchSettings] = None,
     **kwargs,
-) -> RecordBatchGenerator:
+) -> Tuple[
+    ds.Dataset,
+    Dict[str, Optional[Union[bool, int, List[str]]]],
+    List[DatasetMetadata],
+]:
     """
     Scans and optionally deserializes batches of records from a dataset.
 
@@ -334,6 +338,8 @@ def scan_batch_datasets_generator(
         Use scan_batches which yields record batches directly from the scan operation
     - settings: Optional[BatchSettings] = None - Additional settings for batch scanning,
         not used in this function but provided for extension.
+    - start_row: The starting row index.
+    - end_row: The ending row index.
 
     Returns:
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
@@ -348,12 +354,11 @@ def scan_batch_datasets_generator(
             dataset = ds.dataset(source, format='parquet', partitioning='hive')
     except FileNotFoundError as err:
         print(f'[ERROR] scan_batch_datasets_generator: {err}')
-        return DataGenerator([])
+        return None, {}, []
 
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:
         metadatas.append(read_metadata(directory, include_schema=True))
-    object_metadata = get_series_object_metadata(metadatas=metadatas)
 
     if settings:
         if isinstance(settings, dict):
@@ -424,7 +429,7 @@ def scan_batch_datasets_generator(
     - `filter` allows filtering rows based on specific criteria before they are loaded.
     - `use_threads=True` enables multithreading to potentially speed up the data loading process.
     """
-    scanner_settings = dict(
+    scanner_settings: Dict[str, Optional[Union[bool, int, List[str]]]] = dict(
         columns=columns,
         filter=expression,
         use_threads=True,
@@ -432,20 +437,102 @@ def scan_batch_datasets_generator(
     if batch_size and batch_size >= 1:
         scanner_settings['batch_size'] = batch_size
 
+    return dataset, scanner_settings, metadatas
+
+
+def __wrap_generator(
+    generator: Generator,
+    metadatas: List[DatasetMetadata],
+    deserialize: Optional[bool] = None,
+    scan: Optional[bool] = False,
+) -> RecordBatchGenerator:
+    object_metadata = get_series_object_metadata(metadatas=metadatas)
+    for tagged_or_record_batch in GeneratorWithMetadata(generator, metadata=metadatas):
+        record_batch_class = TaggedRecordBatch if scan else RecordBatch
+        batch: Union[TaggedRecordBatch, RecordBatch] = record_batch_class(
+            tagged_or_record_batch,
+            object_metadata=object_metadata,
+        )
+        if deserialize:
+            yield batch.deserialize()
+        else:
+            yield batch
+
+
+def scan_dataset_parts(
+    *args,
+    deserialize: Optional[bool] = None,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    **kwargs,
+) -> Any:
+    dataset, scanner_settings, metadatas = __builder_scanner_generator_configurations(
+        *args, **kwargs
+    )
+
+    num_rows = 0
+    if len(metadatas) >= 1:
+        num_rows = metadatas[0]['num_rows']
+        if not isinstance(num_rows, int):
+            num_rows = 0
+
+    offset = offset or 0
+    limit = limit or num_rows
+
+    total_rows_scanned = 0
+    start_row = offset or 0
+    rows_to_process = limit
+
+    generator = dataset.scanner(**scanner_settings).scan_batches()
+
+    for batch in generator:
+        if not batch:
+            break
+
+        if hasattr(batch, 'record_batch'):
+            batch = batch.record_batch
+
+        num_rows_in_batch = batch.num_rows
+        if total_rows_scanned + num_rows_in_batch < start_row:
+            # Entire batch is before the start_row; skip it.
+            total_rows_scanned += num_rows_in_batch
+            continue
+
+        # Calculate the slice of the current batch that is within [start_row, end_row].
+        offset_within_batch = max(start_row - total_rows_scanned, 0)
+        length_within_batch = min(rows_to_process, num_rows_in_batch - offset_within_batch)
+
+        if length_within_batch > 0:
+            object_metadata = get_series_object_metadata(metadatas=metadatas)
+            sliced_batch = batch.slice(offset=offset_within_batch, length=length_within_batch)
+            record_batch = RecordBatch(sliced_batch, object_metadata=object_metadata)
+            yield record_batch.deserialize() if deserialize else record_batch
+            rows_to_process -= length_within_batch
+
+        total_rows_scanned += num_rows_in_batch
+        if rows_to_process <= 0:
+            # Processed all rows in the range; exit loop.
+            break
+
+
+def scan_batch_datasets_generator(
+    *args, deserialize: Optional[bool] = None, scan: Optional[bool] = False, **kwargs
+) -> RecordBatchGenerator:
+    dataset, scanner_settings, metadatas = __builder_scanner_generator_configurations(
+        *args, **kwargs
+    )
+
     if scan:
         generator = dataset.scanner(**scanner_settings).scan_batches()
     else:
         generator = dataset.to_batches(**scanner_settings)
 
-    generator = GeneratorWithMetadata(generator, metadata=metadatas)
-
-    def custom_generator_wrapper(generator=generator, object_metadata=object_metadata, scan=scan):
-        for tagged_or_record_batch in generator:
-            record_batch_class = TaggedRecordBatch if scan else RecordBatch
-            batch = record_batch_class(tagged_or_record_batch, object_metadata=object_metadata)
-            yield batch.deserialize() if deserialize else batch
-
-    return custom_generator_wrapper()
+    return __wrap_generator(
+        generator,
+        metadatas,
+        deserialize=deserialize,
+        scan=scan,
+    )
 
 
 async def scan_batch_datasets_generator_async(

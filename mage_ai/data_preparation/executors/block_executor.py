@@ -41,6 +41,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.settings.server import DEBUG_MEMORY
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
@@ -97,6 +98,7 @@ class BlockExecutor:
             self.block = DynamicChildController(
                 self.block,
                 block_run_id=block_run_id,
+                logger=self.logger,
             )
 
         self.block_run = None
@@ -1136,30 +1138,34 @@ class BlockExecutor:
 
                     return arr
 
-        result, _ = execute_with_memory_tracking(
-            self.block.execute_sync,
-            args=[],
-            kwargs=dict(
-                analyze_outputs=analyze_outputs,
-                block_run_outputs_cache=block_run_outputs_cache,
-                execution_partition=self.execution_partition,
-                global_vars=global_vars,
-                logger=self.logger,
-                logging_tags=logging_tags,
-                run_all_blocks=True,
-                update_status=update_status,
-                input_from_output=input_from_output,
-                verify_output=verify_output,
-                runtime_arguments=runtime_arguments,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_indexes=dynamic_block_indexes,
-                dynamic_block_uuid=dynamic_block_uuid,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                store_variables=store_variables,
-            ),
-            log_message_prefix=f'[BlockExecutor:{self.block_uuid}]',
+        kwargs_shared = dict(
+            analyze_outputs=analyze_outputs,
+            block_run_outputs_cache=block_run_outputs_cache,
+            execution_partition=self.execution_partition,
+            global_vars=global_vars,
             logger=self.logger,
+            logging_tags=logging_tags,
+            run_all_blocks=True,
+            update_status=update_status,
+            input_from_output=input_from_output,
+            verify_output=verify_output,
+            runtime_arguments=runtime_arguments,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_block_uuid=dynamic_block_uuid,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            store_variables=store_variables,
         )
+        if DEBUG_MEMORY:
+            result, _ = execute_with_memory_tracking(
+                self.block.execute_sync,
+                args=[],
+                kwargs=kwargs_shared,
+                log_message_prefix=f'[{self.block_uuid}:execute_sync]',
+                logger=self.logger,
+            )
+        else:
+            result = self.block.execute_sync(**kwargs_shared)
 
         if BlockType.DBT == self.block.type:
             self.block.run_tests(

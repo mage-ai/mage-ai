@@ -16,6 +16,7 @@ from pandas.core.indexes.range import RangeIndex
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
@@ -35,6 +36,7 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     deserialize_columns,
     deserialize_complex,
     infer_variable_type,
+    is_basic_iterable,
     serialize_columns,
     serialize_complex,
     should_deserialize_pandas,
@@ -54,7 +56,11 @@ from mage_ai.data_preparation.models.variables.constants import (
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.settings.server import MEMORY_MANAGER_V2
+from mage_ai.settings.server import (
+    MEMORY_MANAGER_PANDAS_V2,
+    MEMORY_MANAGER_POLARS_V2,
+    MEMORY_MANAGER_V2,
+)
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import flatten_dict
@@ -121,6 +127,8 @@ class Variable:
         self.write_chunks = write_chunks
         self._data_manager = None
         self._resource_usage = resource_usage
+        self._part_uuids = None
+        self._parts = None
 
     @classmethod
     def dir_path(cls, pipeline_path, block_uuid):
@@ -164,6 +172,49 @@ class Variable:
             self._resource_usage = ResourceUsage()
         return self._resource_usage
 
+    @property
+    def part_uuids(self) -> Optional[List[str]]:
+        from mage_ai.data_preparation.models.block.utils import is_output_variable
+
+        if (
+            not is_output_variable(self.uuid)
+            or self._part_uuids is not None
+            or not self.storage.isdir(self.variable_path)
+        ):
+            return self._part_uuids
+
+        part_uuids = []
+        for chunk_uuid in self.storage.listdir(self.variable_path):
+            if chunk_uuid.isdigit() and self.storage.isdir(
+                os.path.join(self.variable_path, chunk_uuid)
+            ):
+                part_uuids.append(chunk_uuid)
+
+        if len(part_uuids) >= 1:
+            self._part_uuids = part_uuids
+
+        return self._part_uuids
+
+    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
+        if MEMORY_MANAGER_V2:
+            row_count = None
+            if self.part_uuids is not None:
+                if include_parts:
+                    row_count = self.__parquet_num_rows(self.variable_path)
+                else:
+                    row_count = len(self.part_uuids)
+            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
+                statistics = self.storage.read_json_file(
+                    os.path.join(self.variable_path, 'statistics.json')
+                )
+                if statistics and isinstance(statistics, dict):
+                    row_count = statistics.get('original_row_count')
+            else:
+                row_count = self.__parquet_num_rows(self.variable_path)
+
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
+
     def get_resource_usage(self, index: Optional[int] = None) -> Optional[ResourceUsage]:
         if self.storage.path_exists(self.resource_usage_path(index)):
             try:
@@ -180,17 +231,6 @@ class Variable:
             except Exception as err:
                 print(f'[ERROR] Variable.resource_usage: {err}')
         return self.resource_usage
-
-    def __scope_uuid(self) -> str:
-        path_parts = [self.block_dir_name or '']
-        try:
-            path_parts.insert(
-                0, str(Path(self.pipeline_path).relative_to(Path(self.variables_dir)))
-            )
-        except ValueError:
-            pass
-
-        return os.path.join(*path_parts)
 
     def check_variable_type(self, spark: Optional[Any] = None) -> Optional[VariableType]:
         """
@@ -258,6 +298,73 @@ class Variable:
         # TODO (dangerous): How do we delete other variable types?
 
         return self.__delete_json()
+
+    def is_partial_data_readable(
+        self, part_uuid: Optional[Union[int, str]] = None, path: Optional[str] = None
+    ) -> bool:
+        """
+        We can only read partial data if 1 of the following criteria is met:
+            - The variable has parts: e.g. output_0/0, output_0/1, output_0/2, etc
+            - The variable is stored as a parquet file
+        """
+
+        return MEMORY_MANAGER_V2 and (
+            self.__is_part_readable(part_uuid) or self.__is_parquet_readable(path)
+        )
+
+    def read_partial_data(
+        self,
+        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        batch_settings: Optional[BatchSettings] = None,
+        part_uuid: Optional[Union[int, str]] = None,
+    ) -> Any:
+        """
+        We can only read partial data if:
+            - The variable has parts: e.g. output_0/0, output_0/1, output_0/2, etc
+            - The variable is stored as a parquet file
+        """
+        if part_uuid is not None and self.__is_part_readable(part_uuid):
+            return self.__class__(
+                os.path.join(self.uuid, str(part_uuid)),
+                self.pipeline_path,
+                self.block_uuid,
+                partition=self.partition,
+                storage=self.storage,
+                variable_type=self.variable_type,
+                variable_types=self.variable_types,
+                clean_block_uuid=False,
+                validate_pipeline_path=False,
+                input_data_types=self.input_data_types,
+                resource_usage=self.resource_usage,
+                read_batch_settings=self.read_batch_settings,
+                read_chunks=self.read_chunks,
+                variables_dir=self.variables_dir,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
+            ).read_data()
+        elif self.__is_parquet_readable():
+            data_manager = self.__class__(
+                self.uuid,
+                self.pipeline_path,
+                self.block_uuid,
+                partition=self.partition,
+                storage=self.storage,
+                variable_type=self.variable_type,
+                variable_types=self.variable_types,
+                clean_block_uuid=False,
+                validate_pipeline_path=False,
+                input_data_types=self.input_data_types,
+                resource_usage=self.resource_usage,
+                read_batch_settings=batch_settings,
+                read_chunks=chunks,
+                variables_dir=self.variables_dir,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
+            ).data_manager
+            if data_manager:
+                return data_manager.read_sync(
+                    part=int(part_uuid) if part_uuid is not None else None
+                )
 
     def read_data(
         self,
@@ -555,7 +662,6 @@ class Variable:
             VariableManager
         """
         if self.data_manager and self.data_manager.writeable(data):
-            # self.__write_dataframe_analysis
             self.data_manager.write_sync(data)
             self.resource_usage.update_attributes(
                 directory=self.data_manager.resource_usage.directory,
@@ -610,7 +716,10 @@ class Variable:
 
         self.__write_resource_usage()
 
-        if VariableType.ITERABLE == self.variable_type:
+        if self.variable_type in [
+            VariableType.ITERABLE,
+            VariableType.LIST_COMPLEX,
+        ]:
             self.__write_dataframe_analysis(
                 dict(
                     statistics=dict(
@@ -687,7 +796,15 @@ class Variable:
 
         self.__write_resource_usage()
 
-        if VariableType.ITERABLE == self.variable_type:
+        if (
+            self.variable_type
+            in [
+                VariableType.DICTIONARY_COMPLEX,
+                VariableType.ITERABLE,
+                VariableType.LIST_COMPLEX,
+            ]
+            or is_basic_iterable(data)
+        ) and hasattr(data, '__len__'):
             self.__write_dataframe_analysis(
                 dict(
                     statistics=dict(
@@ -1341,3 +1458,37 @@ class Variable:
         data = serialize_matrix(csr_matrix)
 
         return data, data_sample
+
+    def __parquet_num_rows(self, path: str) -> Optional[int]:
+        if self.data_manager and self.data_manager.readable():
+            metadata = read_metadata(path)
+            row_count = metadata.get('num_rows')
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
+
+    def __scope_uuid(self) -> str:
+        path_parts = [self.block_dir_name or '']
+        try:
+            path_parts.insert(
+                0, str(Path(self.pipeline_path).relative_to(Path(self.variables_dir)))
+            )
+        except ValueError:
+            pass
+
+        return os.path.join(*path_parts)
+
+    def __is_part_readable(self, part_uuid: Optional[Union[int, str]] = None) -> bool:
+        if part_uuid is not None:
+            part_uuid = str(part_uuid) if not isinstance(part_uuid, str) else part_uuid
+
+        return (
+            self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+            and (part_uuid is None or part_uuid in self.part_uuids)
+        )
+
+    def __is_parquet_readable(self, path: Optional[str] = None) -> bool:
+        if MEMORY_MANAGER_PANDAS_V2 or MEMORY_MANAGER_POLARS_V2:
+            row_count = self.__parquet_num_rows(path or self.variable_path)
+            return row_count is not None and row_count >= 1
+        return False

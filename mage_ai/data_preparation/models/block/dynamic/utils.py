@@ -9,6 +9,7 @@ import polars as pl
 from scipy.sparse import csr_matrix
 
 from mage_ai.data_preparation.models.block.dynamic.variables import (
+    get_dynamic_children_count,
     get_outputs_for_dynamic_block,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -559,6 +560,7 @@ def create_combinations(combinations: List[Any]) -> List[Any]:
 def build_combinations_for_dynamic_child(
     block,
     execution_partition: str = None,
+    origin_block: Optional[Any] = None,
     **kwargs,
 ):
     """
@@ -581,6 +583,9 @@ def build_combinations_for_dynamic_child(
         [0, 1],
     ]
     """
+    if origin_block is None:
+        origin_block = block
+
     dynamic_counts = []
 
     for upstream_block in block.upstream_blocks:
@@ -605,26 +610,44 @@ def build_combinations_for_dynamic_child(
                 children_created = build_combinations_for_dynamic_child(
                     upstream_block,
                     execution_partition=execution_partition,
+                    origin_block=origin_block,
                 )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
-                        values, _metadata = get_outputs_for_dynamic_block(
+                        count = get_dynamic_children_count(
                             upstream_block,
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index,
                         )
-                        if values is not None:
-                            arr.extend([idx for idx in range(len(values))])
+                        if count is not None:
+                            arr.extend([idx for idx in range(count)])
                         else:
-                            arr.append(0)
+                            values, _metadata = get_outputs_for_dynamic_block(
+                                upstream_block,
+                                execution_partition=execution_partition,
+                                dynamic_block_index=dynamic_block_index,
+                                origin_block=origin_block,
+                            )
+                            if values is not None:
+                                arr.extend([idx for idx in range(len(values))])
+                            else:
+                                arr.append(0)
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
-                arr, _metadata = get_outputs_for_dynamic_block(
+                count = get_dynamic_children_count(
                     upstream_block,
                     execution_partition=execution_partition,
                 )
-            if arr is not None:
+                if count is not None:
+                    arr = [idx for idx in range(count)]
+                else:
+                    arr, _metadata = get_outputs_for_dynamic_block(
+                        upstream_block,
+                        execution_partition=execution_partition,
+                        origin_block=origin_block,
+                    )
+            if arr is not None and hasattr(arr, '__len__') and len(arr) > 0:
                 dynamic_counts.append([idx for idx in range(len(arr))])
             else:
                 dynamic_counts.append([0])

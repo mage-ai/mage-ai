@@ -87,6 +87,7 @@ class DataManager(BaseData):
 
     def read_sync(
         self,
+        part: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
     ) -> Optional[Union[OutputData, ScanBatchDatasetResult, RecordBatchGenerator]]:
@@ -110,7 +111,11 @@ class DataManager(BaseData):
 
             return batches
 
-        generator = self.reader.read_sync(sample=sample, sample_count=sample_count)
+        generator = self.reader.read_sync(
+            part=part,
+            sample=sample,
+            sample_count=sample_count,
+        )
 
         if sample:
             if self.number_of_outputs == 1:

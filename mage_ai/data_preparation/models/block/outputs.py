@@ -63,7 +63,6 @@ def format_output_data(
         Tuple[Dict, bool]: Tuple of the formatted data and is_data_product boolean. Data product
             outputs and non data product outputs are handled slightly differently.
     """
-    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', index)
     if not block_uuid:
         block_uuid = block.uuid
 

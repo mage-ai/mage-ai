@@ -37,6 +37,7 @@ def get_int_value(value: str) -> int:
 # ----------------------------------
 
 DEBUG = os.getenv('DEBUG', False)
+DEBUG_MEMORY = str(os.getenv('DEBUG_MEMORY', 0) or 0) in ['1', 'true', 'True']
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 
 

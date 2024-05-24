@@ -346,6 +346,7 @@ class VariableManager:
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
+
         return Variable(
             variable_uuid,
             self.pipeline_path(pipeline_uuid),
@@ -400,20 +401,25 @@ class VariableManager:
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
+
         opts = {}
         if max_results is not None:
             opts['max_results'] = max_results
-        variables = self.storage.listdir(variable_dir_path, **opts)
-        variables = [v for v in variables if v.split('.')[0]]
+
+        variable_uuids = self.storage.listdir(variable_dir_path, **opts)
+        variable_uuids = [v for v in variable_uuids if v.split('.')[0]]
 
         def __sort_variables(text):
             number = re.findall('\\d+', text)
             if number:
-                return number[0]
+                if len(number) == 1:
+                    number.append(0)
+                number = number[:2]
             else:
-                return to_ordinal_integers(text)[0]
+                number = to_ordinal_integers(text)[:2]
+            return [int(i) for i in number]
 
-        return sorted(variables, key=__sort_variables)
+        return sorted(variable_uuids, key=__sort_variables)
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
         path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)

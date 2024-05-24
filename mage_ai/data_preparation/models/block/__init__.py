@@ -102,7 +102,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.utils import warn_for_repo_path
+from mage_ai.data_preparation.models.utils import is_basic_iterable, warn_for_repo_path
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
@@ -114,7 +114,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
-from mage_ai.settings.server import MEMORY_MANAGER_V2
+from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
 from mage_ai.shared.array import unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -1329,6 +1329,7 @@ class Block(
 
                 def __store_variables(
                     variable_mapping: Dict[str, Any],
+                    delete_before_adding: Optional[bool] = None,
                     block=self,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
@@ -1340,6 +1341,7 @@ class Block(
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
+                        delete_before_adding=delete_before_adding,
                         spark=block.__get_spark_session_from_global_vars(
                             global_vars=global_vars,
                         ),
@@ -1599,10 +1601,12 @@ class Block(
         input_args: List = None,
         metadata: Dict = None,
     ) -> Tuple[Dict, List, Dict, List[str]]:
-        # Only fetch the input variables that the destination block explicitly declares.
-        # If all the input variables are fetched, there is a chance that a lot of data from
-        # an upstream source block is loaded just to be used as inputs for the block’s
-        # decorated functions. Only do this for the notebook because
+        """
+        Only fetch the input variables that the destination block explicitly declares.
+        If all the input variables are fetched, there is a chance that a lot of data from
+        an upstream source block is loaded just to be used as inputs for the block’s
+        decorated functions. Only do this for the notebook because
+        """
         if from_notebook and self.is_data_integration():
             (
                 input_vars,
@@ -1909,18 +1913,25 @@ class Block(
         if self.pipeline:
             log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
 
-        output, self.resource_usage = execute_with_memory_tracking(
-            block_function_updated,
-            args=input_vars,
-            kwargs=global_vars
-            if has_kwargs and global_vars is not None and len(global_vars) != 0
-            else None,
-            logger=logger,
-            logging_tags=logging_tags,
-            log_message_prefix=f'[{log_message_prefix}]',
-        )
+        if MEMORY_MANAGER_V2:
+            output, self.resource_usage = execute_with_memory_tracking(
+                block_function_updated,
+                args=input_vars,
+                kwargs=global_vars
+                if has_kwargs and global_vars is not None and len(global_vars) != 0
+                else None,
+                logger=logger,
+                logging_tags=logging_tags,
+                log_message_prefix=f'[{log_message_prefix}:execute_block_function]',
+            )
+        elif has_kwargs and global_vars is not None and len(global_vars) != 0:
+            output = block_function_updated(*input_vars, **global_vars)
+        else:
+            output = block_function_updated(*input_vars)
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
+            dynamic = is_dynamic_block(self)
+
             output_count = 0
             for data in output:
                 if self._store_variables_in_block_function is None:
@@ -1933,10 +1944,21 @@ class Block(
                 if output_count >= 1:
                     store_options['override_outputs'] = False
 
+                variable_mapping = {}
+
+                if dynamic:
+                    child_data_key = os.path.join('output_0', str(output_count))
+                    if is_basic_iterable(data) and len(data) == 2 and isinstance(data[1], dict):
+                        variable_mapping[child_data_key] = data[0]
+                        variable_mapping[os.path.join('output_1', str(output_count))] = data[1]
+                    else:
+                        variable_mapping[child_data_key] = data
+                else:
+                    variable_mapping[f'output_{output_count}'] = data
+
                 self._store_variables_in_block_function(
-                    variable_mapping={
-                        f'output_{output_count}': data,
-                    },
+                    variable_mapping=variable_mapping,
+                    delete_before_adding=dynamic,
                     **store_options,
                 )
 
@@ -2032,24 +2054,28 @@ class Block(
             )
             for upstream_block in self.upstream_blocks
         ]):
-            result, _ = execute_with_memory_tracking(
-                fetch_input_variables_for_dynamic_upstream_blocks,
-                args=[
-                    self,
-                    input_args,
-                ],
-                kwargs=dict(
-                    dynamic_block_index=dynamic_block_index,
-                    dynamic_block_indexes=dynamic_block_indexes,
-                    execution_partition=execution_partition,
-                    from_notebook=from_notebook,
-                    global_vars=global_vars,
-                    block_run_outputs_cache=block_run_outputs_cache,
-                    data_integration_settings_mapping=data_integration_settings_mapping,
-                    upstream_block_uuids_override=upstream_block_uuids_override,
-                    log_message_prefix=f'[fetch_input_variables:{self.uuid}]',
-                ),
+            args_shared = [self, input_args]
+            kwargs_shared = dict(
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                block_run_outputs_cache=block_run_outputs_cache,
+                data_integration_settings_mapping=data_integration_settings_mapping,
+                upstream_block_uuids_override=upstream_block_uuids_override,
+                log_message_prefix=f'[{self.uuid}:fetch_input_variables]',
             )
+            if DEBUG_MEMORY:
+                result, _ = execute_with_memory_tracking(
+                    fetch_input_variables_for_dynamic_upstream_blocks,
+                    args=args_shared,
+                    kwargs=kwargs_shared,
+                )
+            else:
+                result = fetch_input_variables_for_dynamic_upstream_blocks(
+                    *args_shared, **kwargs_shared
+                )
 
             return result
 
@@ -3300,6 +3326,7 @@ class Block(
         execution_partition: Optional[str] = None,
         override: bool = False,
         override_outputs: bool = False,
+        delete_before_adding: Optional[bool] = None,
         spark=None,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
@@ -3318,6 +3345,7 @@ class Block(
             dynamic_block_index=dynamic_block_index,
         )
 
+        is_dynamic = is_dynamic_block(self)
         is_dynamic_child = is_dynamic_block_child(self)
         if is_dynamic_child:
             delete_variable_objects_for_dynamic_child(
@@ -3325,6 +3353,19 @@ class Block(
                 dynamic_block_index=dynamic_block_index,
                 execution_partition=execution_partition,
             )
+
+        def __delete_removed_variables(
+            block_uuid=block_uuid, pipeline=self.pipeline, variables_data=variables_data
+        ):
+            for uuid in variables_data['removed_variables']:
+                pipeline.variable_manager.delete_variable(
+                    pipeline.uuid,
+                    block_uuid,
+                    uuid,
+                )
+
+        if delete_before_adding:
+            __delete_removed_variables()
 
         for uuid, data in variables_data['variable_mapping'].items():
             if (
@@ -3340,18 +3381,14 @@ class Block(
                 data,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
+                clean_variable_uuid=not is_dynamic,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
                 resource_usage=self.resource_usage,
             )
 
-        if not is_dynamic_child:
-            for uuid in variables_data['removed_variables']:
-                self.pipeline.variable_manager.delete_variable(
-                    self.pipeline.uuid,
-                    block_uuid,
-                    uuid,
-                )
+        if not is_dynamic_child and not delete_before_adding:
+            __delete_removed_variables()
 
     async def store_variables_async(
         self,

@@ -12,6 +12,10 @@ import polars as pl
 
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.data_preparation.models.variables.utils import (
+    get_first_data_output_variable,
+)
+from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
 from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
@@ -282,9 +286,9 @@ def sort_variables(variable_object):
 
 
 def get_variable_objects(
-    block,
-    execution_partition: str = None,
-    dynamic_block_index: int = None,
+    block: Any,
+    execution_partition: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
 ) -> List[Variable]:
     """
     If dynamic_block_index, get the folder names in the nested folder named after the
@@ -296,6 +300,14 @@ def get_variable_objects(
     Or else:
         output_0/
         output_1/
+
+    Or
+        output_0/
+            0/
+            1/
+        output_1/
+            0/
+            1/
     """
     pipeline = block.pipeline
     pipeline_uuid = pipeline.uuid
@@ -421,8 +433,49 @@ def get_outputs(
     ]
 
 
+def __get_first_data_output_variable(
+    block: Any,
+    execution_partition: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+):
+    variable_objects = get_variable_objects(
+        block,
+        execution_partition=execution_partition,
+        dynamic_block_index=dynamic_block_index,
+    )
+    return get_first_data_output_variable(variable_objects)
+
+
+def get_dynamic_children_count(
+    block: Any,
+    execution_partition: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+) -> Optional[int]:
+    output_variable = __get_first_data_output_variable(
+        block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
+    )
+    if output_variable:
+        return output_variable.items_count()
+
+
+def get_partial_dynamic_block_outputs(
+    block: Any,
+    index: int,
+    dynamic_block_index: Optional[int] = None,
+    execution_partition: Optional[str] = None,
+) -> Tuple[Optional[Any], Optional[Dict[str, Any]]]:
+    output_variable = __get_first_data_output_variable(
+        block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
+    )
+    result = None
+    if output_variable and output_variable.is_partial_data_readable():
+        result = output_variable.read_partial_data(part_uuid=int(index))
+
+    return result, None
+
+
 def get_outputs_for_dynamic_block(
-    block, **kwargs
+    block, origin_block: Optional[Any] = None, **kwargs
 ) -> List[Optional[Union[Dict, int, str, pd.DataFrame, Any]]]:
     def func():
         values = get_outputs(block, **kwargs)
@@ -437,11 +490,15 @@ def get_outputs_for_dynamic_block(
 
         return [None, None]
 
-    result, _ = execute_with_memory_tracking(
-        func,
-        log_message_prefix=f'[get_outputs_for_dynamic_block:{block.uuid}]',
-    )
-    return result
+    if DEBUG_MEMORY:
+        result, _ = execute_with_memory_tracking(
+            func,
+            log_message_prefix=f'[{(origin_block or block).uuid}:get_outputs_for_dynamic_block]',
+        )
+
+        return result
+
+    return func()
 
 
 async def get_outputs_for_dynamic_block_async(
@@ -492,7 +549,7 @@ def get_outputs_for_dynamic_child(
 
     result, _ = execute_with_memory_tracking(
         func,
-        log_message_prefix=f'[get_outputs_for_dynamic_child:{block.uuid}]',
+        log_message_prefix=f'[{block.uuid}:get_outputs_for_dynamic_child]',
     )
     return result
 
@@ -555,30 +612,50 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 input_vars.append(child_data)
                 kwargs_vars.append(metadata)
         elif is_dynamic:
-            child_data, metadata = get_outputs_for_dynamic_block(
-                upstream_block,
-                execution_partition=execution_partition,
-            )
-            index = dynamic_block_index % (
-                len(child_data) if hasattr(child_data, '__len__') else 0
-            )
+            child_data_count = None
+            if MEMORY_MANAGER_V2:
+                child_data_count = get_dynamic_children_count(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
 
-            if isinstance(child_data, list):
-                input_vars.append(child_data[index])
-            elif isinstance(child_data, (pd.DataFrame,)):
-                row = child_data.iloc[index]
-                input_vars.append(row)
-            elif isinstance(child_data, (pl.DataFrame,)):
-                row = child_data[index]
-                input_vars.append(row)
-            elif isinstance(child_data, dict):
-                input_vars.append(child_data.get(index))
+            if child_data_count is not None:
+                index = dynamic_block_index % child_data_count
+                child_data, metadata = get_partial_dynamic_block_outputs(
+                    upstream_block,
+                    index,
+                    execution_partition=execution_partition,
+                )
+                input_vars.append(child_data)
 
-            if metadata and index < len(metadata):
-                if isinstance(metadata, list):
-                    kwargs_vars.append(metadata[index])
-                elif isinstance(metadata, dict):
+                if metadata is not None and isinstance(metadata, dict):
                     kwargs_vars.append(metadata)
+            else:
+                child_data, metadata = get_outputs_for_dynamic_block(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
+                child_data_count = len(child_data) if hasattr(child_data, '__len__') else 0
+
+                if child_data_count >= 1:
+                    index = dynamic_block_index % child_data_count
+
+                    if isinstance(child_data, list):
+                        input_vars.append(child_data[index])
+                    elif isinstance(child_data, (pd.DataFrame,)):
+                        row = child_data.iloc[index]
+                        input_vars.append(row)
+                    elif isinstance(child_data, (pl.DataFrame,)):
+                        row = child_data[index]
+                        input_vars.append(row)
+                    elif isinstance(child_data, dict):
+                        input_vars.append(child_data.get(index))
+
+                    if metadata is not None:
+                        if isinstance(metadata, list) and index < len(metadata):
+                            kwargs_vars.append(metadata[index])
+                        elif isinstance(metadata, dict):
+                            kwargs_vars.append(metadata)
         else:
             from mage_ai.data_preparation.models.block.utils import (
                 fetch_input_variables,
