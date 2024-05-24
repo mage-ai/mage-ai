@@ -21,7 +21,7 @@ def convert_column_type(
     **kwargs,
 ) -> str:
     if COLUMN_TYPE_OBJECT == column_type:
-        return 'VARCHAR(65535)'
+        return 'SUPER'
     elif COLUMN_TYPE_STRING == column_type:
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
             return 'TIMESTAMPTZ'
