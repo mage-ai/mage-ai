@@ -1,7 +1,7 @@
 import os
 import shutil
 import traceback
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 import aiofiles
 
@@ -29,7 +29,9 @@ def chmod(path: Union[str, os.PathLike], mode: int, append: bool = True) -> None
         traceback.print_exc()
 
 
-def safe_write(filepath: str, content: str, write_func: Callable = None):
+def safe_write(
+    filepath: str, content: str, write_func: Optional[Callable] = None, write_mode: str = 'w'
+):
     temp_file_path = filepath + '.temp'
     if os.path.isfile(filepath):
         shutil.copy2(filepath, temp_file_path)
@@ -39,7 +41,7 @@ def safe_write(filepath: str, content: str, write_func: Callable = None):
 
     success = False
     try:
-        with open(filepath, 'w', encoding='utf-8') as fp:
+        with open(filepath, write_mode, encoding='utf-8') as fp:
             if write_func is not None:
                 write_func(fp, content)
             else:
@@ -57,7 +59,9 @@ def safe_write(filepath: str, content: str, write_func: Callable = None):
             traceback.print_exc()
 
 
-async def safe_write_async(filepath: str, content: str, write_func: Callable = None):
+async def safe_write_async(
+    filepath: str, content: str, write_func: Optional[Callable] = None, write_mode: str = 'w'
+):
     temp_file_path = filepath + '.temp'
     if os.path.isfile(filepath):
         shutil.copy2(filepath, temp_file_path)
@@ -67,7 +71,7 @@ async def safe_write_async(filepath: str, content: str, write_func: Callable = N
 
     success = False
     try:
-        async with aiofiles.open(filepath, mode='w', encoding='utf-8') as fp:
+        async with aiofiles.open(filepath, mode=write_mode, encoding='utf-8') as fp:
             if write_func is not None:
                 await write_func(fp, content)
             else:

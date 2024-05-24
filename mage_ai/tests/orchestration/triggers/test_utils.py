@@ -29,7 +29,7 @@ class TriggerUtilsTest(DBTestCase):
             self.pipeline.add_block(
                 Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
         except Exception:
-            self.pipeline = Pipeline.get('test_pipeline')
+            self.pipeline = Pipeline.get('test_pipeline', repo_path=self.repo_path)
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',
@@ -51,6 +51,7 @@ class TriggerUtilsTest(DBTestCase):
                 week_of_month=8,
                 week_of_year=9,
             ),
+            repo_path=self.repo_path,
             settings=dict(
                 data_exporter={},
                 data_loader=dict(partitions=1),
@@ -64,7 +65,7 @@ class TriggerUtilsTest(DBTestCase):
             self.repo_path,
             'global_data_products.yaml',
         )
-        self.global_data_product.save(file_path=self.file_path)
+        self.global_data_product.save()
 
     def tearDown(self):
         super().tearDown()

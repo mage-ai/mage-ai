@@ -61,28 +61,99 @@ class PostgreSQL(Source):
     def build_discover_query(self, streams: List[str] = None):
         schema = self.config['schema']
 
+        """
+        pg_constraint: stores information about constraints defined on tables in the database.
+        * conrelid: The OID of the table on which the constraint is defined.
+        * conkey: For FOREIGN KEY constraints, this column contains an array of the local column
+            numbers of the referencing columns.
+        * contype: A single-character code representing the type of constraint. Possible values are:
+            'p' for PRIMARY KEY constraints
+            'u' for UNIQUE constraints
+            'c' for CHECK constraints
+            'f' for FOREIGN KEY constraints
+            'x' for EXCLUSION constraints
+
+        pg_class: stores metadata about database objects, primarily tables and indexes.
+        * oid: used to uniquely identify database objects such as tables, indexes, sequences, and
+            other database elements.
+        * relnamespace: The OID of the namespace (schema) in which the table or index is defined.
+        * relkind: A single-character code representing the type of relation.
+            'r': Regular table
+            'v': View
+            'm': Materialized view
+            'f': Foreign table
+
+        pg_namespace: stores information about database namespaces, also known as schemas.
+        * oid: The OID (object identifier) column stores a unique identifier for each namespace.
+            This column serves as the primary key for the table.
+
+        pg_attribute: contains metadata about the attributes (columns) of tables.
+        * attrelid: stores the OID (object identifier) of the table.
+        * attname: stores the name of the attribute (column).
+        * atttypid: stores the OID of the data type of the attribute.
+        * atttypmod: stores the type modifier of the attribute. It specifies additional information
+            about the data type, such as length, precision, or scale.
+        * attnum: stores the attribute number (column number) within the table or composite type.
+            It serves as the ordinal position of the attribute within the table.
+        * attnotnull: stores information about whether an attribute allows NULL values or not.
+        * attisdropped: whether the attribute has been dropped (removed) from the table.
+
+        pg_attrdef: stores default values for table columns.
+        * adbin:  stores the binary representation of the default value expression. It contains the
+            actual expression defining the default value.
+        * adrelid: stores the OID (object identifier) of the table to which the default value
+            belongs. It serves as a foreign key referencing the pg_class table.
+        """
         query = f"""
-SELECT
-    c.table_name
-    , c.column_default
-    , tc.constraint_type AS column_key
-    , c.column_name
-    , c.data_type
-    , c.is_nullable
-FROM information_schema.columns c
-LEFT JOIN information_schema.constraint_column_usage AS ccu
-ON c.column_name = ccu.column_name
-    AND c.table_name = ccu.table_name
-    AND c.table_schema = ccu.table_schema
-LEFT JOIN information_schema.table_constraints AS tc
-ON tc.constraint_schema = ccu.constraint_schema
-    AND tc.constraint_name = ccu.constraint_name
-WHERE  c.table_schema = '{schema}'
+WITH unnested_constraints AS (
+    SELECT
+        conrelid,
+        UNNEST(conkey) AS conkey,
+        contype
+    FROM
+        pg_constraint
+)
+
+SELECT DISTINCT
+    pg_class.relname AS table_name,
+    pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) AS column_default,
+    CASE
+        WHEN contype = 'p'
+            THEN 'PRIMARY KEY'
+        WHEN contype = 'f'
+            THEN 'FOREIGN KEY'
+        WHEN contype = 'u'
+            THEN 'UNIQUE'
+    END AS column_key,
+    pg_attribute.attname AS column_name,
+    format_type(pg_attribute.atttypid, pg_attribute.atttypmod) AS data_type,
+    CASE
+        WHEN pg_attribute.attnotnull
+            THEN 'NO'
+        WHEN NOT pg_attribute.attnotnull
+            THEN 'YES'
+    END AS is_nullable
+FROM pg_class
+LEFT JOIN
+    pg_namespace ON pg_class.relnamespace = pg_namespace.oid
+LEFT JOIN
+    pg_attribute ON pg_class.oid = pg_attribute.attrelid
+LEFT JOIN
+    unnested_constraints ON pg_class.oid = unnested_constraints.conrelid
+        AND pg_attribute.attnum = unnested_constraints.conkey
+LEFT JOIN
+    pg_attrdef ON pg_class.oid = pg_attrdef.adrelid
+        AND pg_attribute.attnum = pg_attrdef.adnum
+WHERE
+  pg_attribute.attnum > -1
+    AND pg_attribute.attisdropped = 'f'
+    AND pg_class.relkind IN ('r', 'v', 'm', 'f')
+    AND nspname = '{schema}'
         """
 
         if streams:
             table_names = ', '.join([f"'{n}'" for n in streams])
-            query = f'{query}\nAND c.TABLE_NAME IN ({table_names})'
+            query = f'{query}\nAND pg_class.relname IN ({table_names})'
         return query
 
     def get_columns(self, table_name: str) -> List[str]:
@@ -94,13 +165,13 @@ SELECT
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
-        return [r[0].lower() for r in results]
+        return [r[0] for r in results]
 
     def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
             return {
                 INTERNAL_COLUMN_DELETED_AT: DATETIME_COLUMN_SCHEMA,
-                INTERNAL_COLUMN_LSN: {'type': ['integer']},
+                INTERNAL_COLUMN_LSN: {'type': ['null', 'integer']},
             }
         return dict()
 

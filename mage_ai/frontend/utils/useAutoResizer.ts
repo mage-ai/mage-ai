@@ -3,10 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ignoreKeys } from '@utils/hash';
 import { KeyValueType } from '@interfaces/CommandCenterType';
 import { DimensionType } from '@storage/ApplicationManager/constants';
+import { RefType } from '@interfaces/ElementType';
 
 export enum ResizeStrategy {
   PROPORTIONAL = 'PROPORTIONAL',
 }
+
+type MappingType = {
+  [uuid: string]: Element;
+};
 
 export type DimensionDataType = {
   height?: number;
@@ -28,18 +33,26 @@ export type RectType = {
 };
 
 export default function useAutoResizer({
-  onResize,
   strategy = ResizeStrategy.PROPORTIONAL,
 }: {
-  onResize?: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void;
   strategy?: ResizeStrategy;
 } = {}): {
   deregisterElementUUIDs: (uuids: string[]) => void;
   observeThenResizeElements: (opts: ResizableElements) => void;
+  setOnResize: (
+    onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void,
+  ) => void;
 } {
   const observerRef = useRef(null);
   const dimensionsRef = useRef(null);
   const [elementsMapping, setElementsMapping] = useState<ResizableElements>({});
+
+  const onResizeRef: RefType = useRef(null);
+  function setOnResizeRef(
+    onResize: (elementUUID: string, dimensions: DimensionDataType, elementRect: RectType) => void,
+  ) {
+    onResizeRef.current = onResize;
+  }
 
   const removeElements = useCallback((uuids: string[]) => {
     setElementsMapping(prev => ignoreKeys(prev, uuids));
@@ -64,13 +77,26 @@ export default function useAutoResizer({
       if (element?.current) {
         const rect = element?.current?.getBoundingClientRect();
 
-        const width = rect?.width * widthFactor;
-        const height = rect?.height * heightFactor;
-        const x = rect?.x * widthFactor;
-        const y = rect?.y * widthFactor;
+        let width = rect?.width * widthFactor;
+        let height = rect?.height * heightFactor;
+        let x = rect?.x * widthFactor;
+        let y = rect?.y * widthFactor;
 
         if (!rect?.width || !rect?.height) {
           return;
+        }
+
+        if (y > dimensions?.height || y < 0) {
+          y = (dimensions.height - height) / 2;
+        }
+        if (x > dimensions?.width || x < 0) {
+          x = (dimensions.width - width) / 2;
+        }
+        if (width > dimensions?.width || width < 0) {
+          width = dimensions.width * 0.8;
+        }
+        if (height > dimensions?.height || height < 0) {
+          height = dimensions.height * 0.8;
         }
 
         element.current.style.height = `${height}px`;
@@ -78,6 +104,7 @@ export default function useAutoResizer({
         element.current.style.left = `${x}px`;
         element.current.style.top = `${y}px`;
 
+        const onResize = onResizeRef?.current;
         if (onResize) {
           onResize?.(uuid, dimensions, {
             height,
@@ -98,13 +125,12 @@ export default function useAutoResizer({
       ...resizeElements,
     }));
 
-    observerRef.current = new ResizeObserver(observedElements => handleResize(
-      observedElements,
-      {
+    observerRef.current = new ResizeObserver(observedElements =>
+      handleResize(observedElements, {
         ...elementsMapping,
         ...resizeElements,
-      },
-    ));
+      }),
+    );
     observerRef.current.observe(document.body);
     return observerRef.current;
   }
@@ -118,6 +144,6 @@ export default function useAutoResizer({
   return {
     deregisterElementUUIDs: removeElements,
     observeThenResizeElements,
+    setOnResize: setOnResizeRef,
   };
 }
-

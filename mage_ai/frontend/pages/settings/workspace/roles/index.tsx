@@ -60,10 +60,10 @@ function RolesListPage() {
         response, {
           callback: () => {
             toast.success(
-              'Roles and permissions successfully created.',
+              'Started creating default roles and permissions. Check back later to see the roles.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `seed-create-success`,
+                toastId: 'seed-create-success',
               },
             );
           },

@@ -3,17 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
-import ConfigurationOptionType, {
-  ConfigurationTypeEnum,
-  OptionTypeEnum,
-  ResourceTypeEnum,
-} from '@interfaces/ConfigurationOptionType';
+import ConfigurationOptionType from '@interfaces/ConfigurationOptionType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 import {
   CONFIG_KEY_DBT,
   CONFIG_KEY_DBT_COMMAND,
@@ -22,75 +17,63 @@ import {
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
-import { Info } from '@oracle/icons';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SHARED_INPUT_PROPS, SHARED_SETUP_ROW_PROPS } from '../constants';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 type ConfigurationProps = {
   block: BlockType;
+  dbtConfigurationOptions: ConfigurationOptionType[];
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
-}
+};
 
 function Configuration({
   block,
+  dbtConfigurationOptions,
   pipeline,
   savePipelineContent,
 }: ConfigurationProps) {
   const [attributes, setAttributes] = useState(block);
   const [attributesManuallyEnter, setAttributesManuallyEnter] = useState({});
 
-  const {
-    data: dataConfigurationOptions,
-  } = api.configuration_options.pipelines.list(pipeline?.uuid,
-    {
-      configuration_type: ConfigurationTypeEnum.DBT,
-      option_type: OptionTypeEnum.PROJECTS,
-      resource_type: ResourceTypeEnum.Block,
-      resource_uuid: BlockLanguageEnum.SQL === block?.language ? block?.uuid : null,
-    }, {
-      revalidateOnFocus: false,
-    });
-  const configurationOptions: ConfigurationOptionType[] =
-    useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
-
-  const project = useMemo(() => configurationOptions?.find(({
+  const project = useMemo(() => dbtConfigurationOptions?.find(({
     option,
   }) => attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME] === option?.project?.uuid)?.option, [
     attributes,
-    configurationOptions,
+    dbtConfigurationOptions,
   ]);
-  const projects = useMemo(() => sortByKey(configurationOptions || [], ({ project }) => project?.uuid)?.map(({
+  const projects = useMemo(() => sortByKey(dbtConfigurationOptions || [], ({ project }) => project?.uuid)?.map(({
     option,
-  }) => option?.project), [configurationOptions]);
+  }) => option?.project), [dbtConfigurationOptions]);
 
   const profiles = useMemo(() => project?.profiles || [], [
     project,
   ]);
-  const profilesAll = useMemo(() => configurationOptions?.reduce((acc, { option }) => acc.concat(option?.profiles || []), []), [
-    projects
-  ]);
+  const profilesAll = useMemo(
+    () => dbtConfigurationOptions?.reduce((acc, { option }) => acc.concat(option?.profiles || []), []),
+    [dbtConfigurationOptions],
+  );
 
   const profile = useMemo(() => profiles?.find(({
     full_path: uuid,
   }) => uuid === attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]), [
     attributes,
     profiles,
-  ])
+  ]);
 
   const targets = useMemo(() => profile?.targets || [], [profile]);
-  const targetsAll = useMemo(() => configurationOptions?.reduce((acc, { option }) => acc.concat(
+  const targetsAll = useMemo(() => dbtConfigurationOptions?.reduce((acc, { option }) => acc.concat(
     option?.profiles?.reduce((acc2, pro) => acc2.concat(pro.targets), []) || [],
-  ), []), [
-    projects
-  ]);
-  const target = useMemo(() => targets?.find(targetName => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === targetName), [
-    targets,
-  ]);
+  ), []), [dbtConfigurationOptions]);
+  const target = useMemo(
+    () => targets?.find(targetName => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === targetName),
+    [attributes?.configuration, targets],
+  );
 
   useEffect(() => {
     const projectNamePath = attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME];
@@ -129,7 +112,7 @@ function Configuration({
   const inputProject = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -162,18 +145,17 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     projects,
   ]);
 
   const inputProfile = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -209,18 +191,17 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     profiles,
   ]);
 
   const inputTarget = useMemo(() => {
     let key = 'selectInput';
     let opts = {
-      monospace: true,
+      ...SHARED_INPUT_PROPS,
       onChange: e => setAttributes(prev => ({
         ...prev,
         configuration: {
@@ -253,11 +234,10 @@ function Configuration({
 
     return {
       [key]: opts,
-    }
+    };
   }, [
     attributes,
     attributesManuallyEnter,
-    configurationOptions,
     targets,
   ]);
 
@@ -267,8 +247,7 @@ function Configuration({
         title="Configuration"
       >
         <SetupSectionRow
-          title="Project"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -284,28 +263,29 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
+                <Text inline muted small>
                   Manually enter the full path from the root directory of the current project,
-                  to the dbt project directory that contains the <Text muted inline monospace small>
+                  to the dbt project directory that contains the <Text inline monospace muted small>
                     dbt_project.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME]}
+          title="Project"
           {...inputProject}
         />
 
         <SetupSectionRow
-          title="Profile"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -321,31 +301,32 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
-                  Manually enter the full path with the filename <Text muted inline monospace small>
+                <Text inline muted small>
+                  Manually enter the full path with the filename <Text inline monospace muted small>
                     profiles.yml
                   </Text>
                   from the root directory of the current project,
-                  to the dbt project directory that contains the <Text muted inline monospace small>
+                  to the dbt project directory that contains the <Text inline monospace muted small>
                     profiles.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]}
+          title="Profile"
           {...inputProfile}
         />
 
         <SetupSectionRow
-          title="Target"
-          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET]}
+          {...SHARED_SETUP_ROW_PROPS}
           description={(
             <Spacing mt={1}>
               <FlexContainer alignItems="center">
@@ -361,30 +342,32 @@ function Configuration({
 
                 <Spacing mr={1} />
 
-                <Text muted inline small>
-                  Manually enter the target name from the <Text muted inline monospace small>
+                <Text inline muted small>
+                  Manually enter the target name from the <Text inline monospace muted small>
                     dbt_project.yml
                   </Text> file.
                   Interpolate environment variables, runtime variables, etc.
                   using the following syntax:
-                  <Text muted inline monospace small>
+                  <Text inline monospace muted small>
                     {'{{ env_var(\'NAME\') }}'}
-                  </Text> or <Text muted inline monospace small>
+                  </Text> or <Text inline monospace muted small>
                     {'{{ variables(\'NAME\') }}'}
                   </Text>
                 </Text>
               </FlexContainer>
             </Spacing>
           )}
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET]}
+          title="Target"
           {...inputTarget}
         />
 
         <SetupSectionRow
-          title="Preview query result limit"
+          {...SHARED_SETUP_ROW_PROPS}
           description="Limit the number of rows that are fetched when compiling and previewing."
           textInput={{
+            ...SHARED_INPUT_PROPS,
             fullWidth: true,
-            monospace: true,
             onChange: e => setAttributes(prev => ({
               ...prev,
               configuration: {
@@ -392,11 +375,36 @@ function Configuration({
                 [CONFIG_KEY_LIMIT]: e.target.value,
               },
             })),
-            type: 'number',
             placeholder: 'e.g. 1000',
+            type: 'number',
             value: attributes?.configuration?.[CONFIG_KEY_LIMIT],
           }}
+          title="Preview query result limit"
         />
+
+        {BlockLanguageEnum.YAML === block?.language && (
+          <SetupSectionRow
+            {...SHARED_SETUP_ROW_PROPS}
+            description="Enter which dbt command to run."
+            textInput={{
+              ...SHARED_INPUT_PROPS,
+              fullWidth: true,
+              onChange: e => setAttributes(prev => ({
+                ...prev,
+                configuration: {
+                  ...(prev?.configuration || {}),
+                  [CONFIG_KEY_DBT]: {
+                    ...(prev?.configuration || {})?.[CONFIG_KEY_DBT],
+                    [CONFIG_KEY_DBT_COMMAND]: e.target.value,
+                  },
+                },
+              })),
+              placeholder: 'e.g. run, seed',
+              value: attributes?.configuration?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND],
+            }}
+            title="dbt command"
+          />
+        )}
       </SetupSection>
 
       <Spacing mt={PADDING_UNITS}>

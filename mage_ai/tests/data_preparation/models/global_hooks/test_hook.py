@@ -334,6 +334,7 @@ class HookTest(GlobalHooksMixin):
 
             mock_trigger_pipeline.assert_called_once_with(
                 hook.pipeline.uuid,
+                repo_path=self.repo_path,
                 variables=merge_dict(variables, kwargs),
                 check_status=True,
                 error_on_failure=True,
@@ -381,6 +382,7 @@ class HookTest(GlobalHooksMixin):
 
             mock_trigger_pipeline.assert_called_once_with(
                 hook.pipeline.uuid,
+                repo_path=self.repo_path,
                 variables=merge_dict(variables, kwargs),
                 check_status=False,
                 error_on_failure=True,
@@ -426,6 +428,7 @@ class HookTest(GlobalHooksMixin):
 
             mock_trigger_pipeline.assert_called_once_with(
                 hook.pipeline.uuid,
+                repo_path=self.repo_path,
                 variables=merge_dict(variables, dict(hook=kwargs['hook'], project=None)),
                 check_status=True,
                 error_on_failure=True,

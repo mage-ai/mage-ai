@@ -14,6 +14,7 @@ type ToggleSwitchProps = {
   checked?: boolean;
   compact?: boolean;
   disabled?: boolean;
+  id?: string;
   monotone?: boolean;
   onCheck?: Dispatch<SetStateAction<boolean>>;
   pauseEvent?: boolean;
@@ -50,7 +51,7 @@ const ToggleSwitchStyle = styled.label<
     cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
     background-color: ${({ disabled }) => (disabled ? dark.monotone.white : dark.monotone.black)};
     border-radius: 13px;
-    ${({ disabled }) => disabled && `border: 1px solid ${dark.monotone.grey200}`};
+    ${({ disabled, compact }) => (disabled && !compact) && `border: 1px solid ${dark.monotone.grey200}`};
     top: 0;
     right: 0;
     bottom: 0;
@@ -94,6 +95,7 @@ const ToggleSwitchStyle = styled.label<
 const ToggleSwitch = ({
   checked,
   disabled,
+  id,
   onCheck,
   pauseEvent = true,
   ...props
@@ -105,11 +107,13 @@ const ToggleSwitch = ({
       <ToggleSwitchStyle
         {...props}
         disabled={disabled}
+        id={id}
         noBackground
         noBorder
       >
         <input
           checked={checked}
+          id={id ? `${id}_input` : null}
           readOnly
           type="checkbox"
         />

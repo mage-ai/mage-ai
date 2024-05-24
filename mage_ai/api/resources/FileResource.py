@@ -148,7 +148,8 @@ class FileResource(GenericResource):
                 pipeline_file, pipeline_config = Pipeline.import_from_zip(content, overwrite)
                 tags = pipeline_config.get('tags', [])
                 pipeline_uuid = pipeline_config.get('uuid')
-                pipeline = Pipeline(pipeline_uuid, config=pipeline_config)
+                repo_path = get_repo_path(user=user)
+                pipeline = Pipeline(pipeline_uuid, config=pipeline_config, repo_path=repo_path)
                 if tags:
                     from mage_ai.cache.tag import TagCache
 
@@ -161,7 +162,7 @@ class FileResource(GenericResource):
 
                     block_cache = await BlockCache.initialize_cache()
                     for block in pipeline.blocks_by_uuid.values():
-                        block_cache.add_pipeline(block, pipeline)
+                        block_cache.add_pipeline(block, pipeline, repo_path)
 
                 return self(pipeline_file, user, **kwargs)
             else:
@@ -175,7 +176,9 @@ class FileResource(GenericResource):
                     overwrite=overwrite,
                 )
 
-                block_type = Block.block_type_from_path(dir_path)
+                block_type = Block.block_type_from_path(
+                    dir_path, repo_path=get_repo_path(user=user)
+                )
                 if block_type:
                     cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                     cache_block_action_object.update_block(block_file_absolute_path=file.file_path)
@@ -235,7 +238,10 @@ class FileResource(GenericResource):
 
     @safe_db_query
     async def update(self, payload, **kwargs):
-        block_type = Block.block_type_from_path(self.model.dir_path)
+        block_type = Block.block_type_from_path(
+            self.model.dir_path,
+            repo_path=get_repo_path(user=self.current_user),
+        )
         cache_block_action_object = None
         if block_type:
             cache_block_action_object = await BlockActionObjectCache.initialize_cache()

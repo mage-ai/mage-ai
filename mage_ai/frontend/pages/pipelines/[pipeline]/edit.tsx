@@ -98,11 +98,13 @@ import { DEBUG } from '@utils/environment';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
+  LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
+  LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION,
 } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -141,6 +143,7 @@ import { cleanName, randomNameGenerator } from '@utils/string';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockFromFilePath, getRelativePathFromBlock } from '@components/FileBrowser/utils';
+import { getOutputCollapsedUUID } from '@components/CodeBlock/utils';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
@@ -228,13 +231,24 @@ function PipelineDetailPage({
     };
   }>(null);
 
+  const qUrl = queryFromUrl();
+  const {
+    [VIEW_QUERY_PARAM]: activeSidekickView,
+    block_uuid: blockUUIDFromUrl,
+  } = qUrl;
+
   const setSelectedBlock = useCallback((block: BlockType) => {
     setSelectedBlockState(block);
     if (block && disableShortcuts) {
       setDisableShortcuts(false);
     }
     setSelectedBlockDetails(null);
-  }, [disableShortcuts]);
+    if (blockUUIDFromUrl && blockUUIDFromUrl?.split(':')?.[0] !== block?.uuid) {
+      goToWithQuery({
+        block_uuid: null,
+      });
+    }
+  }, [blockUUIDFromUrl, disableShortcuts]);
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
@@ -465,6 +479,29 @@ function PipelineDetailPage({
     setSideBySideEnabledState,
   ]);
 
+  const [hideBlockOutputOnExecution, setHideBlockOutputOnExecution] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION, false),
+  );
+  const toggleHideBlockOutputOnExecution = useCallback(() => {
+    const hideBlockOutputOnExecutionUpdated = !hideBlockOutputOnExecution;
+    setHideBlockOutputOnExecution(hideBlockOutputOnExecutionUpdated);
+    set(
+      LOCAL_STORAGE_KEY_HIDE_BLOCK_OUTPUT_ON_EXECUTION,
+      hideBlockOutputOnExecutionUpdated,
+    );
+  }, [hideBlockOutputOnExecution]);
+  const [disableAutosave, setDisableAutosave] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE, false),
+  );
+  const toggleDisableAutosave = useCallback(() => {
+    const disableAutosaveUpdated = !disableAutosave;
+    setDisableAutosave(disableAutosaveUpdated);
+    set(
+      LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE,
+      disableAutosaveUpdated,
+    );
+  }, [disableAutosave]);
+
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
       detail: {},
@@ -578,13 +615,6 @@ function PipelineDetailPage({
     data?.pipeline?.updated_at,
     pipelineLastSaved,
   ]);
-
-  const qUrl = queryFromUrl();
-  const {
-    [VIEW_QUERY_PARAM]: activeSidekickView,
-    block_uuid: blockUUIDFromUrl,
-    // file_path: filePathFromUrl,
-  } = qUrl;
 
   function setActiveSidekickView(
     newView: ViewKeyEnum,
@@ -917,7 +947,10 @@ function PipelineDetailPage({
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
   const [deleteWidget] = useMutation(
-    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(
+      encodeURIComponent(pipelineUUID),
+      encodeURIComponent(uuid),
+    )(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -1070,14 +1103,14 @@ function PipelineDetailPage({
   } = useFileComponents({
     addNewBlock: addNewBlockCallback,
     blocks,
-    deleteWidget,
     delayFetch: beforeHidden ? 7000 : 1000,
+    deleteWidget,
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
     onOpenFile: onOpenFileCallbackMemo,
-    onSelectFile: onSelectFileCallback,
     onSelectBlockFile,
+    onSelectFile: onSelectFileCallback,
     onUpdateFileSuccess,
     openSidekickView,
     pipeline,
@@ -1601,6 +1634,25 @@ function PipelineDetailPage({
     };
   }, [blocks]);
 
+  // const collapseAllBlockOutputs = useCallback((state: boolean = true) => {
+  //   if (blocksInNotebook.some(({ uuid: blockUUID }) =>
+  //     get(getOutputCollapsedUUID(pipelineUUID, blockUUID), false) !== state,
+  //   )) {
+  //     const blocksThatNeedToRefreshUpdated = {};
+  //     blocksInNotebook.forEach(({ type: blockType, uuid: blockUUID }) => {
+  //       set(getOutputCollapsedUUID(pipelineUUID, blockUUID), state);
+  //       if (!blocksThatNeedToRefreshUpdated[blockType]) {
+  //         blocksThatNeedToRefreshUpdated[blockType] = {};
+  //       }
+  //       blocksThatNeedToRefreshUpdated[blockType][blockUUID] = Number(new Date());
+  //     });
+  //     setBlocksThatNeedToRefresh((prev: any) => ({
+  //       ...prev,
+  //       ...blocksThatNeedToRefreshUpdated,
+  //     }));
+  //   }
+  // }, [blocksInNotebook, pipelineUUID]);
+
   const updatePipelineMetadata =
     useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
       pipeline: {
@@ -1718,7 +1770,7 @@ function PipelineDetailPage({
       }
 
       return api.blocks.pipelines.useDelete(
-        pipelineUUID,
+        encodeURIComponent(pipelineUUID),
         encodeURIComponent(uuid),
         query,
       )();
@@ -3079,6 +3131,7 @@ function PipelineDetailPage({
       blocksThatNeedToRefresh={blocksThatNeedToRefresh}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
+      disableAutosave={disableAutosave}
       disableShortcuts={disableShortcuts}
       fetchFileTree={fetchFiles}
       fetchPipeline={fetchPipeline}
@@ -3088,6 +3141,7 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
+      hideOutputOnExecution={hideBlockOutputOnExecution}
       interactionsMapping={interactionsMapping}
       interruptKernel={interruptKernel}
       mainContainerRef={mainContainerRef}
@@ -3144,6 +3198,7 @@ function PipelineDetailPage({
     blocksThatNeedToRefresh,
     dataProviders,
     deleteBlock,
+    disableAutosave,
     disableShortcuts,
     fetchFiles,
     fetchPipeline,
@@ -3151,6 +3206,7 @@ function PipelineDetailPage({
     files,
     globalDataProducts,
     globalVariables,
+    hideBlockOutputOnExecution,
     hiddenBlocks,
     interactionsMapping,
     interruptKernel,
@@ -3194,18 +3250,21 @@ function PipelineDetailPage({
         <FileHeaderMenu
           cancelPipeline={cancelPipeline}
           createPipeline={createPipeline}
+          disableAutosave={disableAutosave}
           executePipeline={executePipeline}
+          hideOutputOnExecution={hideBlockOutputOnExecution}
           interruptKernel={interruptKernel}
           isPipelineExecuting={isPipelineExecuting}
           pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
           scrollTogether={scrollTogether}
-          setActiveSidekickView={setActiveSidekickView}
           setMessages={setMessages}
           setScrollTogether={setScrollTogether}
           setSideBySideEnabled={setSideBySideEnabled}
           sideBySideEnabled={sideBySideEnabled}
+          toggleDisableAutosave={toggleDisableAutosave}
+          toggleHideOutputOnExecution={toggleHideBlockOutputOnExecution}
           updatePipelineMetadata={updatePipelineMetadata}
         />
       );
@@ -3213,7 +3272,9 @@ function PipelineDetailPage({
   }, [
     cancelPipeline,
     createPipeline,
+    disableAutosave,
     executePipeline,
+    hideBlockOutputOnExecution,
     interruptKernel,
     isPipelineExecuting,
     page,
@@ -3225,6 +3286,8 @@ function PipelineDetailPage({
     setScrollTogether,
     setSideBySideEnabled,
     sideBySideEnabled,
+    toggleDisableAutosave,
+    toggleHideBlockOutputOnExecution,
     updatePipelineMetadata,
   ]);
 

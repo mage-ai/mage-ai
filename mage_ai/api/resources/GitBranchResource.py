@@ -1,15 +1,22 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
-from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
+from mage_ai.data_preparation.git.utils import (
+    get_oauth_access_token_for_user,
+    get_provider_from_remote_url,
+)
 from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.server.logger import Logger
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import capitalize_remove_underscore_lower
+
+logger = Logger().new_server_logger(__name__)
 
 
 def build_file_object(obj):
@@ -29,9 +36,21 @@ def build_file_object(obj):
 class GitBranchResource(GenericResource):
     @classmethod
     def get_git_manager(
-        self, user, setup_repo: bool = False, config_overwrite: Dict = None
+        self,
+        user=None,
+        context_data: Dict = None,
+        preferences=None,
+        repo_path: str = None,
+        setup_repo: bool = False,
+        config_overwrite: Dict = None,
     ) -> Git:
-        return Git.get_manager(setup_repo=setup_repo, user=user)
+        return Git.get_manager(
+            context_data=context_data,
+            preferences=preferences,
+            repo_path=repo_path,
+            setup_repo=setup_repo,
+            user=user,
+        )
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
@@ -53,7 +72,7 @@ class GitBranchResource(GenericResource):
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
-            access_token = api.get_access_token_for_user(user, provider=provider)
+            access_token = get_oauth_access_token_for_user(user, provider=provider)
             if access_token:
                 branches = GitClient.get_client_for_provider(provider)(
                     access_token.token
@@ -64,7 +83,15 @@ class GitBranchResource(GenericResource):
             arr += [dict(name=branch) for branch in git_manager.branches]
 
             if include_remote_branches:
-                pass
+                try:
+                    git_manager.fetch()
+                    mage_remote = git_manager.origin
+                    arr += [
+                        dict(name=ref.name)
+                        for ref in mage_remote.refs
+                    ]
+                except Exception:
+                    logger.warning('Failed to fetch remote branches')
 
         return self.build_result_set(
             arr,
@@ -83,11 +110,22 @@ class GitBranchResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        preferences = get_preferences(user=user)
+        context_data = kwargs.get('context_data')
+        repo_path = get_repo_path(context_data=context_data, user=user)
+        preferences = get_preferences(
+            repo_path=repo_path,
+            user=user,
+        )
         setup_repo = False
         if preferences.is_git_integration_enabled():
             setup_repo = True
-        git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
+        git_manager = self.get_git_manager(
+            user=user,
+            context_data=context_data,
+            preferences=preferences,
+            repo_path=repo_path,
+            setup_repo=setup_repo,
+        )
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
@@ -98,7 +136,7 @@ class GitBranchResource(GenericResource):
                     modified_files=[],
                     name=git_manager.current_branch,
                     staged_files=[],
-                    sync_config=get_preferences().sync_config,
+                    sync_config=preferences.sync_config,
                     untracked_files=[],
                 ),
                 user,
@@ -116,12 +154,54 @@ class GitBranchResource(GenericResource):
                 modified_files=modified_files,
                 name=git_manager.current_branch,
                 staged_files=staged_files,
-                sync_config=get_preferences().sync_config,
+                sync_config=preferences.sync_config,
                 untracked_files=untracked_files,
             ),
             user,
             **kwargs,
         )
+
+    @classmethod
+    def get_oauth_config(
+        cls,
+        remote_url: str = None,
+        remote_name: str = None,
+        user=None,
+    ) -> Tuple[str, str, str, Dict]:
+        git_manager = cls.get_git_manager(user=user)
+        url = None
+        if remote_url:
+            url = remote_url
+        elif remote_name:
+            remote = git_manager.repo.remotes[remote_name]
+            url = list(remote.urls)[0]
+
+        provider = ProviderName.GITHUB
+        if url:
+            provider = get_provider_from_remote_url(url)
+
+        access_token = get_oauth_access_token_for_user(
+            user, provider=provider
+        )
+        http_access_token = git_manager.get_access_token()
+
+        config_overwrite = None
+        token = None
+        if access_token:
+            token = access_token.token
+            user_from_api = api.get_user(token, provider=provider)
+            # Default to mage user email if no email is returned from API
+            email = user_from_api.get('email')
+            if email is None and user:
+                email = user.email
+            config_overwrite = dict(
+                username=user_from_api.get('username'),
+                email=email,
+            )
+        elif http_access_token:
+            token = http_access_token
+
+        return token, provider, url, config_overwrite
 
     async def update(self, payload, **kwargs):
         query = kwargs.get('query') or {}
@@ -131,44 +211,26 @@ class GitBranchResource(GenericResource):
         action_payload = payload.get('action_payload', dict())
         action_remote = action_payload.get('remote', None)
         action_branch = action_payload.get('branch', None)
+        action_arg = action_payload.get('arg', None)
+
+        # Eventually we would want to give the user the ability to pass in multiple
+        # arguments to the action, but for now we will just pass in a single argument.
+        action_kwargs = dict()
+        if action_arg:
+            action_kwargs[action_arg] = True
 
         files = payload.get('files', None)
         message = payload.get('message', None)
 
-        url = None
         remote_url = query.get('remote_url', None)
         if remote_url:
-            url = remote_url[0]
-        elif action_remote:
-            remote = git_manager.repo.remotes[action_remote]
-            url = list(remote.urls)[0]
+            remote_url = remote_url[0]
 
-        provider = ProviderName.GITHUB
-        if url:
-            provider = get_provider_from_remote_url(url)
-
-        access_token = api.get_access_token_for_user(
-            self.current_user, provider=provider
+        token, provider, url, config_overwrite = self.get_oauth_config(
+            remote_url=remote_url,
+            remote_name=action_remote,
+            user=self.current_user,
         )
-        http_access_token = git_manager.get_access_token()
-
-        token = None
-        if access_token:
-            token = access_token.token
-        elif http_access_token:
-            token = http_access_token
-
-        config_overwrite = None
-        if token:
-            user_from_api = api.get_user(token, provider=provider)
-            # Default to mage user email if no email is returned from API
-            email = user_from_api.get(
-                'email', self.current_user.email if self.current_user else None
-            )
-            config_overwrite = dict(
-                username=user_from_api.get('username'),
-                email=email,
-            )
 
         # Recreate git manager with updated config
         git_manager = self.get_git_manager(
@@ -208,6 +270,7 @@ class GitBranchResource(GenericResource):
                             action_branch,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
                         if custom_progress.other_lines:
                             lines = custom_progress.other_lines
@@ -238,6 +301,7 @@ class GitBranchResource(GenericResource):
                                 action_branch,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
                         else:
                             custom_progress = api.fetch(
@@ -245,6 +309,7 @@ class GitBranchResource(GenericResource):
                                 url,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
 
                         if custom_progress and custom_progress.other_lines:
@@ -273,6 +338,7 @@ class GitBranchResource(GenericResource):
                             url,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
 
                         if custom_progress and custom_progress.other_lines:
@@ -306,6 +372,7 @@ class GitBranchResource(GenericResource):
                                 action_branch,
                                 token,
                                 config_overwrite=config_overwrite,
+                                **action_kwargs,
                             )
                         else:
                             self.model[
@@ -326,6 +393,7 @@ class GitBranchResource(GenericResource):
                             url,
                             token,
                             config_overwrite=config_overwrite,
+                            **action_kwargs,
                         )
                     else:
                         self.model[

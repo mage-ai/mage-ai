@@ -41,7 +41,7 @@ const BADGE_SPACING_HORIZONTAL = 4;
 const BADGE_SPACING_VERTICAL = 4;
 
 export function blockTagsText(block: BlockType): string {
-  const tags = buildTags(block);
+  const tags = buildTags(block || {});
 
   if (tags?.length >= 1) {
     return tags?.map(({ title }) => title).join(', ') || '';

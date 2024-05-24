@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
+from mage_ai.settings.repo import get_repo_path
 
 
 class PipelineTriggerResource(GenericResource):
@@ -16,7 +17,10 @@ class PipelineTriggerResource(GenericResource):
         parent_model = kwargs['parent_model']
 
         return self.build_result_set(
-            get_triggers_by_pipeline(parent_model.uuid),
+            get_triggers_by_pipeline(
+                parent_model.uuid,
+                repo_path=get_repo_path(context_data=kwargs.get('context_data'), user=user),
+            ),
             user,
             **kwargs,
         )
@@ -46,6 +50,7 @@ class PipelineTriggerResource(GenericResource):
                 sla=pipeline_schedule.sla,
                 start_time=pipeline_schedule.start_time,
                 status=pipeline_schedule.status,
+                token=pipeline_schedule.token,
                 variables=pipeline_schedule.variables,
             )
         else:

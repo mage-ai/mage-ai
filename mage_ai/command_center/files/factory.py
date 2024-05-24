@@ -23,13 +23,13 @@ class FileFactory(BaseFactory):
         files = []
 
         async def build_and_score(line: str, files=files, factory=self):
-            full_path, file_size, modified_timestamp = line.split(',')
+            full_path, file_size, modified_timestamp = line.split(",")
             filename = os.path.basename(full_path)
             modified_at = datetime.fromtimestamp(float(modified_timestamp)).isoformat()
 
             path_dict = shorten_directory(full_path)
-            extension = path_dict.get('extension')
-            directory = path_dict.get('directory')
+            extension = path_dict.get("extension")
+            directory = path_dict.get("directory")
 
             item_dict = dict(
                 item_type=ItemType.DETAIL,
@@ -55,7 +55,6 @@ class FileFactory(BaseFactory):
                     ),
                 ),
             )
-
             scored = factory.filter_score(item_dict)
             if scored:
                 files.append(scored)
@@ -64,23 +63,26 @@ class FileFactory(BaseFactory):
             now = datetime.utcnow().timestamp()
             cache = FileCache.initialize_cache_with_settings()
             lines = await cache.load() or []
-            print(f'[FileFactory] Load files: {len(lines)} - {datetime.utcnow().timestamp() - now}')
+            print(
+                f"[FileFactory] Load files: {len(lines)} - {datetime.utcnow().timestamp() - now}"
+            )
 
             now = datetime.utcnow().timestamp()
-            await asyncio.gather(
-                *[build_and_score(item_dict) for item_dict in lines]
-            )
+            await asyncio.gather(*[build_and_score(item_dict) for item_dict in lines])
             print(
-                f'[FileFactory] Search {self.search}: '
-                f'{len(files)} - {datetime.utcnow().timestamp() - now}',
+                f"[FileFactory] Search {self.search}: "
+                f"{len(files)} - {datetime.utcnow().timestamp() - now}",
             )
 
             now = datetime.utcnow().timestamp()
             files = await self.rank_items(files)
-            files = [merge_dict(
-                item_dict,
-                add_application_actions(item_dict),
-            ) for item_dict in files]
-            print(f'[FileFactory] Rank items: {datetime.utcnow().timestamp() - now}')
+            files = [
+                merge_dict(
+                    item_dict,
+                    add_application_actions(item_dict),
+                )
+                for item_dict in files
+            ]
+            print(f"[FileFactory] Rank items: {datetime.utcnow().timestamp() - now}")
 
         return files[:10] + items

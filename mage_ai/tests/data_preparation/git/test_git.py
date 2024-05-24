@@ -17,5 +17,8 @@ class GitProjectPlatformTest(ProjectPlatformMixin):
             path='mage_custom_path',
         )
         with patch('mage_ai.data_preparation.git.project_platform_activated', lambda: True):
-            with patch('mage_ai.data_preparation.git.git_settings', lambda: git_settings):
+            with patch(
+                'mage_ai.data_preparation.git.git_settings',
+                lambda user=None, **kwargs: git_settings,
+            ):
                 self.assertEqual(Git().repo_path, 'mage_custom_path')

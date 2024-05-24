@@ -32,6 +32,7 @@ BackfillPolicy.allow_actions([
 
 BackfillPolicy.allow_read([
     'pipeline_run_dates',
+    'run_status_counts',
     'total_run_count',
 ] + BackfillPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,

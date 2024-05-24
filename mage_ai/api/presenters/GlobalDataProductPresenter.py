@@ -7,9 +7,14 @@ class GlobalDataProductPresenter(BasePresenter):
         'object_uuid',
         'outdated_after',
         'outdated_starting_at',
+        'project',
+        'repo_path',
         'settings',
         'uuid',
     ]
 
     def present(self, **kwargs):
-        return self.model.to_dict(include_uuid=True)
+        if self.model:
+            return self.model.to_dict(include_uuid=True)
+
+        return {}

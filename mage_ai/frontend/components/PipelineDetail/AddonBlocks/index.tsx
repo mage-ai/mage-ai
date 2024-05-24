@@ -50,6 +50,7 @@ function AddonBlocks({
       addOnProps = {
         addOnBlockType: BlockTypeEnum.CALLBACK,
         addOnBlocks: props.pipeline?.callbacks,
+        description: 'Run 1 or more callback blocks whenever the main block succeeds or fails.',
         displayBlockName: 'callback',
       };
     }
@@ -57,6 +58,7 @@ function AddonBlocks({
       addOnProps = {
         addOnBlockType: BlockTypeEnum.CONDITIONAL,
         addOnBlocks: props.pipeline?.conditionals,
+        description: 'Run 1 or more conditional blocks to determine whether or not the main block should be run.',
         displayBlockName: 'conditional',
       };
     }

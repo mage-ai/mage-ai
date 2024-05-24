@@ -43,6 +43,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
   } = opts || {
     projectPlatformActivated: false,
   };
+  const hasAdminPrivileges = owner || roles === RoleValueEnum.ADMIN || (project_access & 3) !== 0;
 
   const workspaceItems = [
     {
@@ -68,11 +69,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
     },
   ];
 
-  if (!REQUIRE_USER_AUTHENTICATION()) {
-    return arr;
-  }
-
-  if (owner || roles === RoleValueEnum.ADMIN || (project_access & 3) !== 0) {
+  if (REQUIRE_USER_AUTHENTICATION() && hasAdminPrivileges) {
     const items = [
       {
         Icon: WorkspacesUsersIcon,
@@ -108,7 +105,9 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
     });
   }
 
-  if (projectPlatformActivated) {
+  if (projectPlatformActivated
+    && (!REQUIRE_USER_AUTHENTICATION() || hasAdminPrivileges)
+  ) {
     arr.push({
       items: [
         {
@@ -128,6 +127,10 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
       ],
       uuid: SectionEnum.PROJECT_PLATFORM,
     });
+  }
+
+  if (!REQUIRE_USER_AUTHENTICATION()) {
+    return arr;
   }
 
   return arr.concat([

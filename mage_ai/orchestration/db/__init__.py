@@ -13,7 +13,7 @@ from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
 from mage_ai.settings import OTEL_EXPORTER_OTLP_ENDPOINT
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.shared.environments import is_dev, is_test
+from mage_ai.shared.environments import is_debug, is_test
 
 DB_RETRY_COUNT = 2
 TEST_DB = 'test.db'
@@ -30,6 +30,7 @@ if OTEL_EXPORTER_OTLP_ENDPOINT:
 
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
+    db_kwargs['connect_args']['check_same_thread'] = False
 elif not db_connection_url:
     pg_db_connection_url = get_postgres_connection_url()
 
@@ -170,5 +171,5 @@ def safe_db_query(func):
 
 logging.basicConfig()
 
-if is_dev() and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
+if is_debug() and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)

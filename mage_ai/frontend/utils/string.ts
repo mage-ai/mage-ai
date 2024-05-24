@@ -22,10 +22,10 @@ export function isJsonString(str) {
 }
 
 export function isString(data) {
-  return (typeof data === 'string');
+  return typeof data === 'string';
 }
 
-export function replaceSpaces(string, replacement='_') {
+export function replaceSpaces(string, replacement = '_') {
   return string.split(' ').join(replacement);
 }
 
@@ -218,8 +218,8 @@ export function timeBetween(startAt, endAt) {
 
   return [
     String(hours).padStart(2, '0'),
-    String(minutes - (60 * hours)).padStart(2, '0'),
-    String(seconds - (60 * minutes)).padStart(2, '0'),
+    String(minutes - 60 * hours).padStart(2, '0'),
+    String(seconds - 60 * minutes).padStart(2, '0'),
   ].join(':');
 }
 
@@ -236,7 +236,7 @@ export function timeRemaining(startAt, timeToCompleteInSec) {
 
   return [
     String(minutes < 0 ? 0 : minutes).padStart(2, '0'),
-    String(seconds < 0 ? 0 : (seconds - (60 * minutes))).padStart(2, '0'),
+    String(seconds < 0 ? 0 : seconds - 60 * minutes).padStart(2, '0'),
   ].join(':');
 }
 
@@ -275,8 +275,12 @@ export function isNumeric(str) {
   return !isNaN(str);
 }
 
-export function isInteger(str) {
+export function isInteger(str: string) {
   return Number.isInteger(Number(str));
+}
+
+export function startsWithNumber(str: string) {
+  return isInteger(str.charAt(0));
 }
 
 export function extractNumber(text) {
@@ -286,11 +290,11 @@ export function extractNumber(text) {
 
 export function removePercent(text) {
   const matches = text.match(/\d+(\.?\d*)%/) || [];
-  return Number(matches[0]?.slice(0,-1));
+  return Number(matches[0]?.slice(0, -1));
 }
 
 export function changeDecimalToWholeNumber(number, floatingPoints = 2) {
-  return Math.round((number || 0) * (100 ** floatingPoints)) / 100;
+  return Math.round((number || 0) * 100 ** floatingPoints) / 100;
 }
 
 export function formatPercent(decimal) {
@@ -323,7 +327,10 @@ export function removeExtensionFromFilename(filename: string): string {
   } else {
     fn = fileParts.slice(0, -1).join('.');
   }
-  return parts.slice(0, parts.length - 1).concat(fn).join(osPath.sep);
+  return parts
+    .slice(0, parts.length - 1)
+    .concat(fn)
+    .join(osPath.sep);
 }
 
 export function formatNumberToDuration(duration: number): string {
@@ -334,7 +341,7 @@ export function formatNumberToDuration(duration: number): string {
     } else if (duration >= 1000 * 60) {
       displayText = `${roundNumber(duration / (1000 * 60), 2)}m`;
     } else if (duration >= 1000) {
-      displayText = `${roundNumber(duration / (1000), 2)}s`;
+      displayText = `${roundNumber(duration / 1000, 2)}s`;
     } else {
       displayText = `${duration}ms`;
     }
@@ -349,7 +356,7 @@ export function alphabet(): string[] {
 }
 
 export function removASCII(text: string): string {
-  return text?.replace(/[^\x00-\x7F]/g, "");
+  return text?.replace(/[^\x00-\x7F]/g, '');
 }
 
 export function hasANSI(text: string): boolean {
@@ -373,7 +380,9 @@ export function stringSimilarity(str1: string, str2: string, gramSize: number = 
     return v;
   }
 
-  if (!str1?.length || !str2?.length) { return 0.0; }
+  if (!str1?.length || !str2?.length) {
+    return 0.0;
+  }
 
   const s1 = str1.length < str2.length ? str1 : str2;
   const s2 = str1.length < str2.length ? str2 : str1;
@@ -395,12 +404,12 @@ export function stringSimilarity(str1: string, str2: string, gramSize: number = 
 export function longestCommonStartingSubstring(arr1: string[]): string {
   const arr = arr1.concat().sort();
   const a1 = arr[0];
-  const a2 = arr[arr.length-1];
+  const a2 = arr[arr.length - 1];
   const L = a1.length;
 
   let i = 0;
 
-  while(i < L && a1.charAt(i) === a2.charAt(i)) i++;
+  while (i < L && a1.charAt(i) === a2.charAt(i)) i++;
 
   return a1.substring(0, i);
 }
@@ -416,9 +425,28 @@ export function rgbToHex(r, g, b) {
 
 export function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16),
-  } : null;
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
+}
+
+export function containsHTML(str: string): boolean {
+  // Enhanced regex for detecting HTML structures
+  // Looks for opening and closing tags, comments, doctype, self-closing tags, etc.
+  const htmlRegex =
+    /<(?:!--[\s\S]*?--\s*|script\b[\s\S]*?<\/script\s*|style\b[\s\S]*?<\/style\s*|(?:\/?[a-z][\w:.-]*\b(?:\s+[a-z0-9:_-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[\w\-.:]+))?)*\s*\/?)|\[CDATA\[[\s\S]*?]]\s*)(>|\z)/i;
+  return htmlRegex.test(str);
+}
+
+export function containsOnlySpecialCharacters(word: string): boolean {
+  // This regex matches strings that consist only of the special characters you want to check for.
+  // You can add or remove characters from the character set based on your requirements.
+  // As an example, this set includes a few common special characters like !, -, +, @, #, etc.
+  const regex = /^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/;
+
+  return regex.test(word);
 }

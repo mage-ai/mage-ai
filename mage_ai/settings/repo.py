@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 from jinja2 import Template
@@ -32,9 +32,11 @@ def base_repo_path_directory_name() -> str:
 
 
 def get_repo_path(
+    context_data: Dict = None,
     file_path: str = None,
     root_project: bool = False,
     absolute_path: bool = True,
+    user=None,
 ) -> str:
     """
     Retrieve the repository path based on the given parameters.
@@ -44,6 +46,8 @@ def get_repo_path(
         root_project (bool, optional): If True, returns the root project's repository path.
         absolute_path (bool, optional): If True, returns the absolute repository path;
             if False, returns the path relative to the base repository directory.
+        user (str, optional): The user to use to get the active project. This only applies
+            if multi project is enabled and root_project = False.
 
     Returns:
         str: The repository path as per the specified parameters.
@@ -88,7 +92,11 @@ def get_repo_path(
                     repo_path_use = settings.get('full_path')
 
             if not repo_path_use:
-                repo_path_use = build_active_project_repo_path(repo_path)
+                repo_path_use = build_active_project_repo_path(
+                    context_data=context_data,
+                    repo_path=repo_path,
+                    user=user,
+                )
 
     if repo_path_use:
         repo_path = repo_path_use
@@ -142,13 +150,18 @@ def get_data_dir() -> str:
     return os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR
 
 
-def get_metadata_path(root_project: bool = False):
-    return os.path.join(get_repo_path(root_project=root_project), PROJECT_METADATA_FILENAME)
+def get_metadata_path(
+    repo_path: str = None,
+    root_project: bool = False
+):
+    if repo_path is None:
+        repo_path = get_repo_path(root_project=root_project)
+    return os.path.join(repo_path, PROJECT_METADATA_FILENAME)
 
 
 def get_variables_dir(
-    repo_path: str = None,
-    repo_config: Dict = None,
+    repo_path: Optional[str] = None,
+    repo_config: Optional[Dict] = None,
     root_project: bool = False,
 ) -> str:
     """
@@ -181,16 +194,17 @@ def get_variables_dir(
         else:
             from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
 
-            metadata_path = get_metadata_path(root_project=root_project)
+            metadata_path = get_metadata_path(
+                repo_path=repo_path,
+                root_project=root_project,
+            )
             if os.path.exists(metadata_path):
                 with open(metadata_path, 'r', encoding='utf-8') as f:
                     config_file_raw = f.read()
                     repo_config = yaml.full_load(config_file_raw) or {}
                     if repo_config.get('variables_dir'):
                         variables_dir = repo_config.get('variables_dir')
-                        variables_dir = Template(variables_dir).render(
-                            **get_template_vars_no_db()
-                        )
+                        variables_dir = Template(variables_dir).render(**get_template_vars_no_db())
         if variables_dir is None:
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)

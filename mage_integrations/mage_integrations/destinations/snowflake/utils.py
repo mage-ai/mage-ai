@@ -47,7 +47,7 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
         return 'ARRAY'
     elif COLUMN_TYPE_STRING == column_type \
             and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-        return 'TIMESTAMP_TZ'
+        return 'TIMESTAMP'
     elif COLUMN_TYPE_STRING == column_type:
         return 'VARCHAR'
 

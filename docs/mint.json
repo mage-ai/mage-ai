@@ -279,7 +279,8 @@
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
                 "streaming/sources/nats",
-                "streaming/sources/rabbitmq"
+                "streaming/sources/rabbitmq",
+                "streaming/sources/mongodb"
               ]
             },
             {
@@ -301,6 +302,7 @@
                 "streaming/destinations/mssql",
                 "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
+                "streaming/destinations/oracledb",
                 "streaming/destinations/postgres",
                 "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
@@ -375,10 +377,12 @@
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
                 "integrations/databases/trino",
-                "integrations/databases/weaviate"
+                "integrations/databases/Weaviate"
               ]
             },
-            "getting-started/kernels"
+            "getting-started/kernels",
+            "development/project/features",
+            "development/project/local-timezone"
           ]
         },
         {
@@ -770,7 +774,7 @@
           "icon": "code-branch",
           "pages": [
             "production/data-sync/git-sync",
-            "production/data-sync/github"
+            "production/data-sync/version-control"
           ]
         },
         {
@@ -1194,6 +1198,10 @@
     {
       "source": "/development/git/generate-an-ssh-token",
       "destination": "/development/git/configure#generate-ssh-token"
+    },
+    {
+      "source": "/production/data-sync/github",
+      "destination": "/production/data-sync/version-control"
     }
   ]
 }

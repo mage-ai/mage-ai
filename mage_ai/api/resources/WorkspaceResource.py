@@ -123,14 +123,15 @@ class WorkspaceResource(GenericResource):
         error = ApiError.RESOURCE_ERROR.copy()
         try:
             action = payload.pop('action')
-            args = ignore_keys(payload, ['name', 'cluster_type'])
             if action == 'stop':
-                workspace.stop(**args)
+                workspace.stop(**payload)
             elif action == 'resume':
-                workspace.resume(**args)
+                workspace.resume(**payload)
+            elif action == 'patch':
+                workspace.update(payload)
             elif action == 'add_to_ingress':
                 if isinstance(workspace, KubernetesWorkspace):
-                    workspace.add_to_ingress(**args)
+                    workspace.add_to_ingress(**payload)
                 else:
                     raise Exception('This workspace does not support ingress.')
         except Exception as ex:
@@ -162,7 +163,7 @@ class WorkspaceResource(GenericResource):
             raise ApiError(error)
 
         if project_type == ProjectType.MAIN and subproject:
-            repo_path = get_repo_path()
+            repo_path = get_repo_path(user=self.current_user)
             projects_folder = os.path.join(repo_path, 'projects')
             projects = [
                 f.name.split('.')[0]

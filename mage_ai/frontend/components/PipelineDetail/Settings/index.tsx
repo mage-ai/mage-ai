@@ -11,7 +11,7 @@ import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { ConcurrencyConfigRunLimitReachedActionEnum } from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
@@ -34,7 +34,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { isEqual } from '@utils/hash';
-import { isJsonString } from '@utils/string';
+import { capitalize, isJsonString } from '@utils/string';
 import { pushUnique } from '@utils/array';
 
 type PipelineSettingsProps = {
@@ -188,6 +188,18 @@ function PipelineSettings({
         />
 
         <SetupSectionRow
+          textInput={{
+            onChange: e => setPipelineAttributes(prev => ({
+              ...prev,
+              description: e.target.value,
+            })),
+            placeholder: 'Enter description...',
+            value: pipelineAttributes?.description || '',
+          }}
+          title="Pipeline description"
+        />
+
+        <SetupSectionRow
           description="When enabled, this setting allows sharing of objects and memory space across blocks within a single pipeline."
           title="Run pipeline in a single process"
           toggleSwitch={{
@@ -233,6 +245,108 @@ function PipelineSettings({
           }}
         />
       </SetupSection>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+        <SetupSection title="Pipeline level concurrency">
+          <SetupSectionRow
+            description={(
+              <>
+                <Text muted small>
+                  Limit the concurrent pipeline runs across all trigers in this pipeline.
+                </Text>
+              </>
+            )}
+            textInput={{
+              monospace: true,
+              onChange: e => setPipelineAttributes(prev => ({
+                ...prev,
+                concurrency_config: {
+                  ...prev?.concurrency_config,
+                  pipeline_run_limit_all_triggers: Number(e.target.value),
+                },
+              })),
+              placeholder: 'e.g. 40',
+              type: 'number',
+              value: String(pipelineAttributes?.concurrency_config?.pipeline_run_limit_all_triggers || ''),
+            }}
+            title="Pipeline run limit across all triggers"
+          />
+
+          <SetupSectionRow
+            description={(
+              <>
+                <Text muted small>
+                  Limit the concurrent pipeline runs in a single trigger for this pipeline.
+                </Text>
+              </>
+            )}
+            textInput={{
+              monospace: true,
+              onChange: e => setPipelineAttributes(prev => ({
+                ...prev,
+                concurrency_config: {
+                  ...prev?.concurrency_config,
+                  pipeline_run_limit: Number(e.target.value),
+                },
+              })),
+              placeholder: 'e.g. 10',
+              type: 'number',
+              value: String(pipelineAttributes?.concurrency_config?.pipeline_run_limit || ''),
+            }}
+            title="Pipeline run limit in 1 trigger"
+          />
+
+          <SetupSectionRow
+            description={(
+              <>
+                <Text muted small>
+                  Limit the concurrent blocks runs in one pipeline run.
+                </Text>
+              </>
+            )}
+            textInput={{
+              monospace: true,
+              onChange: e => setPipelineAttributes(prev => ({
+                ...prev,
+                concurrency_config: {
+                  ...prev?.concurrency_config,
+                  block_run_limit: Number(e.target.value),
+                },
+              })),
+              placeholder: 'e.g. 20',
+              type: 'number',
+              value: String(pipelineAttributes?.concurrency_config?.block_run_limit || ''),
+            }}
+            title="Block run limit"
+          />
+
+          <SetupSectionRow
+            description={(
+              <>
+                <Text muted small>
+                  Choose whether to wait or skip when the pipeline run limit is reached.
+                </Text>
+              </>
+            )}
+            selectInput={{
+              onChange: e => setPipelineAttributes(prev => ({
+                ...prev,
+                concurrency_config: {
+                  ...prev?.concurrency_config,
+                    on_pipeline_run_limit_reached: e.target.value,
+                },
+              })),
+              options: Object.values(ConcurrencyConfigRunLimitReachedActionEnum)?.map(key => ({
+                label: capitalize(key),
+                value: key,
+              })),
+              placeholder: 'Select an option',
+              value: pipelineAttributes?.concurrency_config?.on_pipeline_run_limit_reached || '',
+            }}
+            title="How to handle new pipeline runs when limit reached"
+          />
+        </SetupSection>
+      </Spacing>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Headline>
@@ -430,6 +544,8 @@ function PipelineSettings({
             loading={isPipelineUpdating}
             // @ts-ignore
             onClick={() => updatePipeline({
+              concurrency_config: pipelineAttributes?.concurrency_config,
+              description: pipelineAttributes?.description,
               executor_type: pipelineAttributes?.executor_type,
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,

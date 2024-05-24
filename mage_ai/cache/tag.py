@@ -144,6 +144,9 @@ class TagCache(BaseCache):
 
         mapping[key][KEY_FOR_PIPELINES] = pipelines_dict
 
+        if not pipelines_dict and mapping[key].keys() == set([KEY_FOR_PIPELINES]):
+            mapping.pop(key, None)
+
         self.set(self.cache_key, mapping)
 
     async def initialize_cache_for_all_objects(self) -> None:

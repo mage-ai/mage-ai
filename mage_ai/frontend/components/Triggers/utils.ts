@@ -8,7 +8,7 @@ import {
   DATE_FORMAT_LONG_T_SEP,
   dateFormatLong,
 } from '@utils/date';
-import { DEFAULT_PORT } from '@api/utils/url';
+import { DEFAULT_PORT, getHost } from '@api/utils/url';
 import {
   PipelineScheduleFilterQueryEnum,
   ScheduleIntervalEnum,
@@ -215,26 +215,18 @@ export function getTriggerApiEndpoint(
   useHeaderUrl: boolean = false,
 ) {
   let url = '';
-  let port: string;
 
   const windowIsDefined = typeof window !== 'undefined';
   if (windowIsDefined) {
+    const host = getHost();
     if (useHeaderUrl) {
-      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/api_trigger`;
+      url = `${host}/api/pipeline_schedules/${pipelineSchedule?.id}/api_trigger`;
     } else {
-      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+      url = `${host}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
 
       if (pipelineSchedule?.token) {
         url = `${url}/${pipelineSchedule.token}`;
       }
-    }
-  }
-
-  if (windowIsDefined) {
-    port = window.location.port;
-
-    if (port) {
-      url = url.replace(port, DEFAULT_PORT);
     }
   }
 

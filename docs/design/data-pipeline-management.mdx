@@ -236,6 +236,8 @@ concurrency_config:
   block_run_limit: 5
   pipeline_run_limit: 3
 ```
+The default value of `block_run_limit` and `pipeline_run_limit` can be set via environment variables: `CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT` and `CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT`
+
 * `block_run_limit`: limit the concurrent blocks runs in one pipeline run.
 * `pipeline_run_limit`: limit the concurrent pipeline runs in one pipeline trigger.
 * `pipeline_run_limit_all_triggers`: limit the concurrent pipeline runs across all trigers in a pipeline.

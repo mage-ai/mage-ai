@@ -3,7 +3,6 @@ import React, { Dispatch, SetStateAction, useMemo } from 'react';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Select from '@oracle/elements/Inputs/Select';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -13,6 +12,7 @@ import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 interface InputType {
+  compact?: boolean;
   fullWidth?: boolean;
   monospace?: boolean;
   multiline?: boolean;
@@ -25,6 +25,7 @@ interface InputType {
 type SetupSectionRowProps = {
   children?: any;
   description?: any | string;
+  inputFlex?: number;
   invalid?: boolean;
   large?: boolean;
   selectInput?: InputType & {
@@ -45,6 +46,7 @@ type SetupSectionRowProps = {
 function SetupSectionRow({
   children,
   description,
+  inputFlex = 3,
   invalid,
   large = true,
   selectInput,
@@ -69,24 +71,24 @@ function SetupSectionRow({
         afterIconSize={ICON_SIZE}
         alignRight
         autoComplete="off"
+        fullWidth
         large={large}
         noBackground
         noBorder
-        fullWidth
         paddingHorizontal={0}
         paddingVertical={0}
         setContentOnMount
         {...textInput}
       />
     );
-  }, [textInput]);
+  }, [large, textInput]);
 
   return (
     <div style={{ padding: PADDING_UNITS * UNIT }}>
       <FlexContainer alignItems="center">
         <FlexContainer
-          flexDirection="column"
           flex={1}
+          flexDirection="column"
           style={{ paddingRight: PADDING_UNITS * UNIT }}
         >
           <Text
@@ -110,7 +112,7 @@ function SetupSectionRow({
           {description && typeof description !== 'string' && description}
         </FlexContainer>
 
-        <Flex flex={3} justifyContent="flex-end">
+        <Flex flex={inputFlex} justifyContent="flex-end">
           {children}
 
           {textInputMemo}

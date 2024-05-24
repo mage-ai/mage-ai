@@ -3,6 +3,7 @@ import { PipelineSettingsType } from './PipelineType';
 
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
+  AUTOMATIC_KERNEL_CLEANUP = 'automatic_kernel_cleanup',
   CODE_BLOCK_V2 = 'code_block_v2',
   COMMAND_CENTER = 'command_center',
   COMPUTE_MANAGEMENT = 'compute_management',
@@ -50,7 +51,7 @@ export interface SparkConfigType {
   };
   others?: {
     [key: string]: boolean | number | string;
-  }
+  };
   spark_home?: string;
   spark_jars?: string[];
   spark_master?: string;
@@ -86,6 +87,16 @@ export interface ProjectPipelinesType {
   settings?: PipelineSettingsType;
 }
 
+export type ProjectRequestPayloadType = {
+  deny_improve_mage?: boolean;
+  features?: {
+    [key: string]: boolean;
+  };
+  help_improve_mage?: boolean;
+  openai_api_key?: string;
+  pipelines?: ProjectPipelinesType;
+};
+
 export default interface ProjectType {
   emr_config?: EMRConfigType;
   features?: {
@@ -114,7 +125,7 @@ export default interface ProjectType {
     active: boolean;
     path: string;
     uuid: string;
-  }
+  };
   spark_config?: SparkConfigType;
   version?: string;
   workspace_config_defaults?: WorkspaceConfigType;

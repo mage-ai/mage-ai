@@ -43,7 +43,7 @@ else:
                 Path(self.repo_path).mkdir()
             init_project_uuid()
             database_manager.run_migrations(log_level=logging.ERROR)
-            db_connection.start_session()
+            db_connection.start_session(force=True)
 
         @classmethod
         def tearDownClass(self):
@@ -73,7 +73,7 @@ class DBTestCase(unittest.TestCase):
             Path(self.repo_path).mkdir()
         init_project_uuid()
         database_manager.run_migrations(log_level=logging.ERROR)
-        db_connection.start_session()
+        db_connection.start_session(force=True)
 
     @classmethod
     def tearDownClass(self):

@@ -5,6 +5,7 @@ from mage_ai.api.resources.InteractionResource import InteractionResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import extract, merge_dict
 
 
@@ -13,13 +14,17 @@ class PipelineInteractionResource(GenericResource):
     @safe_db_query
     async def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
-        pipeline = await Pipeline.get_async(uuid)
+        user = kwargs.get('user')
+        repo_path = get_repo_path(user=user, root_project=True)
+        pipeline = await Pipeline.get_async(
+            uuid, all_projects=True, repo_path=repo_path
+        )
         return PipelineInteractions(pipeline)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        model = await self.get_model(pk)
+        model = await self.get_model(pk, user=user)
 
         query = kwargs.get('query', {})
         filter_for_permissions = query.get('filter_for_permissions', [False])
@@ -36,11 +41,14 @@ class PipelineInteractionResource(GenericResource):
         if 'content' in payload:
             payload_update['content'] = payload.get('content')
         else:
-            payload_update['content_parsed'] = extract(payload, [
-                'blocks',
-                'layout',
-                'permissions',
-            ])
+            payload_update['content_parsed'] = extract(
+                payload,
+                [
+                    'blocks',
+                    'layout',
+                    'permissions',
+                ],
+            )
 
         await self.model.update(**payload_update)
 
@@ -50,13 +58,21 @@ class PipelineInteractionResource(GenericResource):
                 resource = InteractionResource.member(
                     interaction_uuid,
                     self.current_user,
-                    **merge_dict(kwargs, dict(
-                        parent_model=self.model.pipeline,
-                    )),
+                    **merge_dict(
+                        kwargs,
+                        dict(
+                            parent_model=self.model.pipeline,
+                        ),
+                    ),
                 )
 
-                await resource.update(extract(interaction, [
-                    'inputs',
-                    'layout',
-                    'variables',
-                ]))
+                await resource.update(
+                    extract(
+                        interaction,
+                        [
+                            'inputs',
+                            'layout',
+                            'variables',
+                        ],
+                    )
+                )

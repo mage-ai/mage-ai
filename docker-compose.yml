@@ -1,4 +1,3 @@
-version: "3"
 x-server_settings: &server_settings
   image: mage/data
   build:
@@ -19,10 +18,9 @@ x-server_settings: &server_settings
     - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
     - ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
     - ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
-    - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-    - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}
-    - OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS
     - ENV=dev
+    - EXPERIMENTS_DB=$EXPERIMENTS_DB
+    - EXPERIMENTS_TRACKING_URI=$EXPERIMENTS_TRACKING_URI
     - GCP_PROJECT_ID=$GCP_PROJECT_ID
     - GCP_REGION=$GCP_REGION
     - HUGGINGFACE_API=$HUGGINGFACE_API
@@ -35,16 +33,27 @@ x-server_settings: &server_settings
     - LDAP_BIND_PASSWORD=$LDAP_BIND_PASSWORD
     - LDAP_SERVER=$LDAP_SERVER
     - MAGE_BASE_PATH=$MAGE_BASE_PATH
-    - MAGE_DATA_DIR=$MAGE_DATA_DIR
     - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+    - MAGE_DATA_DIR=$MAGE_DATA_DIR
+    - MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
     - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
+    - MEMORY_MANAGER_PANDAS_VERSION=1
+    - MEMORY_MANAGER_POLARS_VERSION=1
+    - MEMORY_MANAGER_VERSION=1
     - NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
     - OPENAI_API_KEY=$OPENAI_API_KEY
+    - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+    - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}
+    - OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS
     - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
     - REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
-    - SERVER_VERBOSITY=$SERVER_VERBOSITY
-    - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
     - SCHEDULER_TRIGGER_INTERVAL=$SCHEDULER_TRIGGER_INTERVAL
+    - SERVER_LOGGING_TEMPLATE=${SERVER_LOGGING_TEMPLATE:-%(levelname)s:%(name)s:%(message)s}
+    - SERVER_VERBOSITY=$SERVER_VERBOSITY
+    - SMTP_EMAIL=$SMTP_EMAIL
+    - SMTP_PASSWORD=$SMTP_PASSWORD
+
+    - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
   ports:
     - 6789:6789
   volumes:
@@ -59,8 +68,6 @@ x-app_settings: &app_settings
   build:
     context: .
     dockerfile: ./dev.Dockerfile
-  depends_on:
-    - server
   command: ./scripts/install_and_run.sh
   ports:
     - 3000:3000
@@ -92,6 +99,8 @@ services:
     <<: *server_settings
   app:
     <<: *app_settings
+    depends_on:
+      - server
   server_spark:
     <<: *server_settings
     image: mage/data_spark
@@ -106,3 +115,8 @@ services:
       dockerfile: ./dev.spark.Dockerfile
     depends_on:
       - server_spark
+  test-frontend:
+    <<: *app_settings
+  py:
+    <<: *server_settings
+    ports: []

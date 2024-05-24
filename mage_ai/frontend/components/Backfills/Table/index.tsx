@@ -23,6 +23,11 @@ import { isViewer } from '@utils/session';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { utcStringToElapsedTime } from '@utils/date';
 
+const SHARED_COLUMN_TEXT_PROPS = {
+  default: true,
+  monospace: true,
+};
+
 type BackfillsTableProps = {
   fetchBackfills: () => void;
   pipeline: {
@@ -52,7 +57,7 @@ function BackfillsTable({
     pipelineUUID,
   });
 
-  const columnFlex = [null, 1, null, null, null, 1, 1, null];
+  const columnFlex = [null, 1, 1, null, null, null, null, null, null, 1, 1, null, null, null, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -61,14 +66,26 @@ function BackfillsTable({
       uuid: 'Name',
     },
     {
-      uuid: 'Type',
-    },
-    {
-      uuid: 'Runs',
-    },
-    {
       ...timezoneTooltipProps,
       uuid: 'Backfill',
+    },
+    {
+      uuid: 'Ready',
+    },
+    {
+      uuid: 'Running',
+    },
+    {
+      uuid: 'Cancelled',
+    },
+    {
+      uuid: 'Completed',
+    },
+    {
+      uuid: 'Failed',
+    },
+    {
+      uuid: 'Total runs',
     },
     {
       ...timezoneTooltipProps,
@@ -77,6 +94,15 @@ function BackfillsTable({
     {
       ...timezoneTooltipProps,
       uuid: 'Completed at',
+    },
+    {
+      uuid: 'Interval',
+    },
+    {
+      uuid: 'Interval units',
+    },
+    {
+      uuid: 'Type',
     },
   ];
   if (!isViewerRole) {
@@ -97,7 +123,10 @@ function BackfillsTable({
         completed_at: completedAt,
         end_datetime: endDatetime,
         id,
+        interval_type: intervalType,
+        interval_units: intervalUnits,
         name,
+        run_status_counts: runStatusCounts = {},
         start_datetime: startDatetime,
         started_at: startedAt,
         status,
@@ -106,25 +135,25 @@ function BackfillsTable({
         const arr = [
           <Text
             {...getRunStatusTextProps(status)}
-            key="status"
+            key={`status_${idx}`}
           >
             {status || 'inactive'}
           </Text>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/backfills/${id}`}
             href={'/pipelines/[pipeline]/backfills/[...slug]'}
-            key="name"
+            key={`name_${idx}`}
             passHref
           >
             <Link bold sameColorAsText>
               {name}
             </Link>
           </NextLink>,
-          <Text default key="type" monospace>
-            {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
-          </Text>,
-          <Text default key="runs" monospace>{totalRunCount || 0}</Text>,
-          <Text default key="backfill" monospace small>
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`backfill_${idx}`}
+            small
+          >
             {(startDatetime && endDatetime) && (
               <>
                 {displayLocalOrUtcTime(startDatetime, displayLocalTimezone)}
@@ -135,9 +164,49 @@ function BackfillsTable({
             {!(startDatetime && endDatetime) && <>&#8212;</>}
           </Text>,
           <Text
-            default
-            key="started_at"
-            monospace
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`ready_${idx}`}
+          >
+            {runStatusCounts[RunStatus.INITIAL] || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            info={runStatusCounts[RunStatus.RUNNING] > 0}
+            key={`running_${idx}`}
+          >
+            {runStatusCounts[RunStatus.RUNNING] || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`cancelled_${idx}`}
+            warning={runStatusCounts[RunStatus.CANCELLED] > 0}
+          >
+            {runStatusCounts[RunStatus.CANCELLED] || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`completed_${idx}`}
+            success={runStatusCounts[RunStatus.COMPLETED] > 0}
+          >
+            {runStatusCounts[RunStatus.COMPLETED] || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            danger={runStatusCounts[RunStatus.FAILED] > 0}
+            key={`failed_${idx}`}
+          >
+            {runStatusCounts[RunStatus.FAILED] || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            bold
+            key={`total_runs_${idx}`}
+          >
+            {totalRunCount || 0}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`started_at_${idx}`}
             small
             title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
@@ -147,9 +216,8 @@ function BackfillsTable({
             }
           </Text>,
           <Text
-            default
-            key="completed_at"
-            monospace
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`completed_at_${idx}`}
             small
             title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
@@ -158,13 +226,31 @@ function BackfillsTable({
               : <>&#8212;</>
             }
           </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`interval_${idx}`}
+          >
+            {intervalType || <>&#8212;</>}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`interval_units_${idx}`}
+          >
+            {intervalUnits || <>&#8212;</>}
+          </Text>,
+          <Text
+            {...SHARED_COLUMN_TEXT_PROPS}
+            key={`type_${idx}`}
+          >
+            {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
+          </Text>,
         ];
         if (!isViewerRole) {
           arr.push(
             <FlexContainer key={`edit_delete_backfill_${idx}`}>
               <Button
                 default
-                disabled={status === RunStatus.COMPLETED}
+                disabled={!!startedAt}
                 iconOnly
                 key={`${idx}_edit_button`}
                 linkProps={{

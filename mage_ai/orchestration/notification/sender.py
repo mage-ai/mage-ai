@@ -1,4 +1,5 @@
 import os
+import traceback
 from typing import Dict
 
 from mage_ai.orchestration.notification.config import (
@@ -61,33 +62,54 @@ class NotificationSender:
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
-            send_slack_message(self.config.slack_config, details or summary, title)
+            try:
+                send_slack_message(self.config.slack_config, details or summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
-            send_teams_message(self.config.teams_config, summary)
+            try:
+                send_teams_message(self.config.teams_config, summary)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.discord_config is not None and self.config.discord_config.is_valid:
-            send_discord_message(self.config.discord_config, summary, title)
+            try:
+                send_discord_message(self.config.discord_config, summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.telegram_config is not None and self.config.telegram_config.is_valid:
-            send_telegram_message(self.config.telegram_config, summary, title)
+            try:
+                send_telegram_message(self.config.telegram_config, summary, title)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
-            send_google_chat_message(self.config.google_chat_config, summary)
+            try:
+                send_google_chat_message(self.config.google_chat_config, summary)
+            except Exception:
+                traceback.print_exc()
 
         if self.config.email_config is not None and title is not None:
-            send_email(
-                self.config.email_config,
-                subject=title,
-                message=details or summary,
-            )
+            try:
+                send_email(
+                    self.config.email_config,
+                    subject=title,
+                    message=details or summary,
+                )
+            except Exception:
+                traceback.print_exc()
 
         if self.config.opsgenie_config is not None and self.config.opsgenie_config.is_valid:
-            send_opsgenie_alert(
-                self.config.opsgenie_config,
-                message=title,
-                description=details or summary,
-            )
+            try:
+                send_opsgenie_alert(
+                    self.config.opsgenie_config,
+                    message=title,
+                    description=details or summary,
+                )
+            except Exception:
+                traceback.print_exc()
 
     def send_pipeline_run_success_message(self, pipeline, pipeline_run) -> None:
         if AlertOn.PIPELINE_RUN_SUCCESS in self.config.alert_on:
@@ -108,6 +130,7 @@ class NotificationSender:
         pipeline,
         pipeline_run,
         error: str = None,
+        stacktrace: str = None,
         summary: str = None,
     ) -> None:
         if AlertOn.PIPELINE_RUN_FAILURE in self.config.alert_on:
@@ -122,6 +145,7 @@ class NotificationSender:
                 pipeline_run,
                 error=error,
                 message_template=message_template,
+                stacktrace=stacktrace,
                 summary=summary,
             )
 
@@ -145,6 +169,7 @@ class NotificationSender:
         pipeline,
         pipeline_run,
         error: str = None,
+        stacktrace: str = None,
     ):
         if text is None or pipeline is None or pipeline_run is None:
             return text
@@ -155,6 +180,7 @@ class NotificationSender:
             pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
             pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
             pipeline_uuid=pipeline.uuid,
+            stacktrace=stacktrace,
         )
 
     def __send_pipeline_run_message(
@@ -164,6 +190,7 @@ class NotificationSender:
         pipeline_run,
         error: str = None,
         message_template: MessageTemplate = None,
+        stacktrace: str = None,
         summary: str = None,
     ):
         """Shared method to send pipeline run message of multiple types (success, failure, etc.).
@@ -207,18 +234,21 @@ class NotificationSender:
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
             summary=self.__interpolate_vars(
                 summary or default_summary,
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
             details=self.__interpolate_vars(
                 details or default_details,
                 pipeline,
                 pipeline_run,
                 error=error,
+                stacktrace=stacktrace,
             ),
         )
 

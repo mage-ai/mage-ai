@@ -144,7 +144,7 @@ export function splitIntoChunks(arr, numChunks) {
 }
 
 export function uniqueArray(arrArg) {
-  return arrArg.filter((elem, pos, arr) => arr.c(elem) === pos);
+  return [...new Set(arrArg)];
 }
 
 export function unique(arrArg, compare) {

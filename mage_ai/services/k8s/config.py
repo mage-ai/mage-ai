@@ -2,12 +2,13 @@ from dataclasses import dataclass
 from typing import Dict
 
 from kubernetes.client import (
-    V1Affinity,
     V1Container,
     V1EnvVar,
+    V1JobSpec,
     V1LocalObjectReference,
     V1ObjectMeta,
     V1PodSpec,
+    V1PodTemplateSpec,
     V1ResourceRequirements,
     V1Toleration,
     V1Volume,
@@ -15,8 +16,9 @@ from kubernetes.client import (
 )
 
 from mage_ai.services.k8s.constants import CONFIG_FILE, DEFAULT_NAMESPACE
+from mage_ai.services.k8s.utils import parse_affinity_config
 from mage_ai.shared.config import BaseConfig
-from mage_ai.shared.hash import camel_case_keys_to_snake_case, get_safe_value
+from mage_ai.shared.hash import get_safe_value
 
 # import traceback
 
@@ -43,8 +45,10 @@ class K8sExecutorConfig(BaseConfig):
     metadata: Dict = None
     container: Dict = None
     pod: Dict = None
+    job: Dict = None
     # parsed k8s objects
     pod_config: V1PodSpec = None
+    job_config: V1JobSpec = None
     meta: V1ObjectMeta = None
 
     @classmethod
@@ -61,8 +65,8 @@ class K8sExecutorConfig(BaseConfig):
                 executor_config.pod.get('service_account_name') or DEFAULT_SERVICE_ACCOUNT_NAME
             )
             if executor_config.pod.get('affinity'):
-                affinity = V1Affinity(
-                    **camel_case_keys_to_snake_case(executor_config.pod['affinity']))
+                # Convert the affinity to a V1Affinity object
+                affinity = parse_affinity_config(executor_config.pod['affinity'])
 
             if executor_config.pod.get('tolerations'):
                 tolerations += [V1Toleration(**e) for e in executor_config.pod['tolerations']]
@@ -119,6 +123,25 @@ class K8sExecutorConfig(BaseConfig):
             tolerations=tolerations,
             volumes=volumes,
         )
+
+        active_deadline_seconds = None
+        backoff_limit = 0
+        ttl_seconds_after_finished = None
+
+        if executor_config.job:
+            active_deadline_seconds = executor_config.job.get('active_deadline_seconds')
+            backoff_limit = executor_config.job.get('backoff_limit')
+            ttl_seconds_after_finished = executor_config.job.get('ttl_seconds_after_finished')
+
+        executor_config.job_config = V1JobSpec(
+            active_deadline_seconds=active_deadline_seconds,
+            backoff_limit=backoff_limit,
+            ttl_seconds_after_finished=ttl_seconds_after_finished,
+            template=V1PodTemplateSpec(
+                spec=executor_config.pod_config
+            )
+        )
+
         return executor_config
 
     @classmethod

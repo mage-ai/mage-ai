@@ -1,14 +1,23 @@
 import os
 from typing import Any, Dict, List, Tuple
 
+from pandas.core.construction import Optional
 
-def all_variable_uuids(block, partition: str = None) -> List[str]:
+
+def all_variable_uuids(
+    block, partition: Optional[str] = None, max_results: Optional[int] = None
+) -> List[str]:
     arr = __all_variable_uuids_and_file_paths_for_reducing_block_output(
         block,
         partition=partition,
     )
 
-    return list(set([tup[0] for tup in arr]))
+    arr = list(set([tup[0] for tup in arr]))
+
+    if max_results is not None:
+        arr = arr[:max_results]
+
+    return arr
 
 
 def reduce_output_from_block(
@@ -99,9 +108,11 @@ def __all_variable_uuids_and_file_paths_for_reducing_block_output(
             # e.g. output_0
             dir_name = os.path.basename(os.path.normpath(dir_path))
 
-            variable_uuid_and_file_paths.append((
-                dir_name,
-                dir_path,
-            ))
+            variable_uuid_and_file_paths.append(
+                (
+                    dir_name,
+                    dir_path,
+                )
+            )
 
     return variable_uuid_and_file_paths

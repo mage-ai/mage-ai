@@ -73,14 +73,23 @@ export default function useCodeBlockComponents({
     project,
   } = useProject();
 
-  const enabled = useMemo(() => [
-    PipelineTypeEnum.PYTHON,
-    PipelineTypeEnum.PYSPARK,
-  ].includes(pipeline?.type) && featureEnabled?.(featureUUIDs?.CODE_BLOCK_V2), [
-    featureEnabled,
-    featureUUIDs,
-    pipeline,
-  ]);
+  const enabled = useMemo(() =>
+    [
+      PipelineTypeEnum.PYTHON,
+      PipelineTypeEnum.PYSPARK,
+    ].includes(pipeline?.type)
+      /*
+       * Replace "featureUUIDs?.DBT_V2" with "featureUUIDs?.CODE_BLOCK_V2" when all
+       * block types (not just dbt blocks) are supported by V2 of the code block.
+       * Also update the codeBlockV2 variable in the CodeBlock component file.
+       */
+      && featureEnabled?.(featureUUIDs?.DBT_V2),
+    [
+      featureEnabled,
+      featureUUIDs,
+      pipeline,
+    ],
+  );
 
   const {
     type,
@@ -271,6 +280,7 @@ export default function useCodeBlockComponents({
     blocks,
     codeBlockProps,
     collapsed,
+    enabled,
     errorMessages,
     executionState,
     isHidden,

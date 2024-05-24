@@ -8,6 +8,7 @@ import pandas as pd
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import convert_matrix_to_dataframe
 from mage_ai.shared.strings import is_number
 
 from .charts import (
@@ -22,9 +23,11 @@ from .constants import (
     VARIABLE_NAME_INDEX,
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_METRICS,
+    VARIABLE_NAME_ORDER_BY,
     VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
+    VARIABLE_NAME_Y_SORT_ORDER,
     VARIABLE_NAMES_BY_CHART_TYPE,
     ChartType,
 )
@@ -99,8 +102,17 @@ class Widget(Block):
                 else:
                     dfs.append(input_var)
 
-        should_use_no_code = x_values is None and y_values is None and \
-            (group_by_columns or metrics)
+        arr = []
+        for d in dfs:
+            if isinstance(d, list):
+                arr += d
+            else:
+                arr.append(d)
+        dfs = [convert_matrix_to_dataframe(d) for d in arr]
+
+        should_use_no_code = (
+            x_values is None and y_values is None and (group_by_columns or metrics)
+        )
 
         if should_use_no_code and len(dfs) == 0:
             return data
@@ -153,13 +165,11 @@ class Widget(Block):
                     data = build_x_y(df, group_by_columns, metrics)
             else:
                 for var_name_orig, _var_name in self.output_variable_names:
-                    data.update(
-                        {
-                            var_name_orig: encode_values_in_list(
-                                convert_to_list(variables[var_name_orig])
-                            ),
-                        }
-                    )
+                    data.update({
+                        var_name_orig: encode_values_in_list(
+                            convert_to_list(variables[var_name_orig])
+                        ),
+                    })
         elif ChartType.PIE_CHART == chart_type:
             arr1 = []
             data_key = VARIABLE_NAME_X
@@ -188,20 +198,30 @@ class Widget(Block):
                         value_counts[key] = 0
                     value_counts[key] += 1
 
-            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS) or MAX_BUCKETS)
             arr = sorted(
                 list(zip(value_counts.values(), value_counts.keys())),
                 reverse=True,
             )[:buckets]
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == chart_type:
-            limit_config = self.configuration.get(VARIABLE_NAME_LIMIT) or \
-                DATAFRAME_SAMPLE_COUNT_PREVIEW
+            limit_config = (
+                self.configuration.get(VARIABLE_NAME_LIMIT) or DATAFRAME_SAMPLE_COUNT_PREVIEW
+            )
             if is_number(limit_config):
                 limit_config = int(limit_config)
 
             if should_use_no_code:
-                df = dfs[0].iloc[:limit_config]
+                df = dfs[0]
+                order_by = self.configuration.get(VARIABLE_NAME_ORDER_BY)
+                if order_by:
+                    df.sort_values(
+                        by=order_by,
+                        ascending=self.configuration.get(VARIABLE_NAME_Y_SORT_ORDER)
+                        != 'descending',
+                        inplace=True,
+                    )
+                df = df.iloc[:limit_config]
                 if group_by_columns:
                     data[VARIABLE_NAME_X] = group_by_columns
                     data[VARIABLE_NAME_Y] = df[group_by_columns].to_numpy()
@@ -214,14 +234,15 @@ class Widget(Block):
                         if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
                             limit = limit_config
 
-                        data.update(
-                            {
-                                var_name_orig: encode_values_in_list(
-                                    convert_to_list(arr, limit=limit)
-                                ),
-                            }
-                        )
-        elif chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
+                        data.update({
+                            var_name_orig: encode_values_in_list(
+                                convert_to_list(arr, limit=limit)
+                            ),
+                        })
+        elif chart_type in [
+            ChartType.TIME_SERIES_BAR_CHART,
+            ChartType.TIME_SERIES_LINE_CHART,
+        ]:
             if should_use_no_code:
                 df = dfs[0]
                 if group_by_columns and metrics:
@@ -269,16 +290,19 @@ class Widget(Block):
         decorated_functions_y = []
         test_functions = []
 
-        results = merge_dict(dict(
-            columns=self._block_decorator(decorated_functions_columns),
-            configuration=self._block_decorator(decorated_functions_configuration),
-            data_source=self._block_decorator(decorated_functions_data_source),
-            render=self._block_decorator_render(decorated_functions_render),
-            test=self._block_decorator(test_functions),
-            x=self._block_decorator(decorated_functions_x),
-            xy=self._block_decorator(decorated_functions_xy),
-            y=self._block_decorator(decorated_functions_y),
-        ), outputs_from_input_vars)
+        results = merge_dict(
+            dict(
+                columns=self._block_decorator(decorated_functions_columns),
+                configuration=self._block_decorator(decorated_functions_configuration),
+                data_source=self._block_decorator(decorated_functions_data_source),
+                render=self._block_decorator_render(decorated_functions_render),
+                test=self._block_decorator(test_functions),
+                x=self._block_decorator(decorated_functions_x),
+                xy=self._block_decorator(decorated_functions_xy),
+                y=self._block_decorator(decorated_functions_y),
+            ),
+            outputs_from_input_vars,
+        )
 
         inputs_vars_use = list()
         if input_vars is not None:
@@ -290,8 +314,7 @@ class Widget(Block):
         metrics = chart_configuration_settings['metrics']
 
         if custom_code is not None and custom_code.strip():
-            if not group_by_columns or not metrics:
-                exec(custom_code, results)
+            exec(custom_code, results)
         elif self.content is not None:
             exec(self.content, results)
         elif os.path.exists(self.file_path):
@@ -354,18 +377,16 @@ class Widget(Block):
         else:
             item = None
 
-            if input_vars_from_data_source is not None and \
-                    isinstance(input_vars_from_data_source, list) and \
-                    len(input_vars_from_data_source) >= 1:
-
+            if (
+                input_vars_from_data_source is not None
+                and isinstance(input_vars_from_data_source, list)
+                and len(input_vars_from_data_source) >= 1
+            ):
                 item = input_vars_from_data_source[0]
             else:
                 item = input_vars_from_data_source
 
-            if item is not None and \
-                    isinstance(item, list) and \
-                    len(item) >= 1:
-
+            if item is not None and isinstance(item, list) and len(item) >= 1:
                 item = item[0]
 
             if item is not None:
@@ -431,6 +452,7 @@ class Widget(Block):
                     render = function(*args_inner, **kwargs_inner)
 
                     return merge_dict(dict(render=render), kwargs or {})
+
                 decorated_functions.append(func)
 
             return inner

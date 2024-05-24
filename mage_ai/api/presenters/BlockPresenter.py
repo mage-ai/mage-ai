@@ -46,7 +46,7 @@ class BlockPresenter(BasePresenter):
         if display_format in [constants.CREATE, constants.UPDATE]:
             include_block_catalog = self.model.pipeline and \
                     PipelineType.PYTHON == self.model.pipeline and \
-                    Project(self.model.pipeline.repo_config).is_feature_enabled(
+                    Project(repo_config=self.model.pipeline.repo_config).is_feature_enabled(
                         FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
                     )
 

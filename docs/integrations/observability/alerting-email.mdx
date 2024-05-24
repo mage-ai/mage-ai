@@ -88,9 +88,17 @@ you can specify `title` and either `summary` or `details`.
 * If you specify the `summary`, the email body will be your `summary` + the url of the pipeline run page
 * If you specify the `details`, the `details` will be used as your email body
 
-To interpolate variables in the messaget template, you can use `{variable_name}` syntax.
-Hare are the supported variables: `error`, `execution_time`, `pipeline_run_url`, `pipeline_schedule_id`,
-`pipeline_schedule_name`, `pipeline_uuid`.
+To interpolate variables in the message template, you can use `{variable_name}` syntax.
+Here are the supported variables:
+1. `execution_time`
+1. `pipeline_run_url`
+1. `pipeline_schedule_id`
+1. `pipeline_schedule_name`
+1. `pipeline_uuid`
+1. `error`
+    * available only for the `failure` message template
+1. `stacktrace`
+    * available only for the `failure` message template
 
 For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
 the host url you want to use in the notification messages.

@@ -13,6 +13,7 @@ from typing import Optional, Union
 import pytz
 import tornado.ioloop
 import tornado.web
+from sqlalchemy import or_
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -42,7 +43,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection, set_db_schema
+from mage_ai.orchestration.db import db_connection, safe_db_query, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -55,6 +56,7 @@ from mage_ai.server.api.events import (
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
 )
+from mage_ai.server.api.runs import ApiRunHandler
 from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
@@ -321,6 +323,16 @@ def make_app(
             ApiTriggerPipelineHandler,
         ),
 
+        # Run a single block and get a response immediately
+        (
+            r'/api/runs',
+            ApiRunHandler,
+        ),
+        (
+            r'/api/runs/(?P<token>\w+)',
+            ApiRunHandler,
+        ),
+
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
@@ -444,6 +456,7 @@ def make_app(
     )
 
 
+@safe_db_query
 def initialize_user_authentication(project_type: ProjectType) -> Oauth2Application:
     logger.info('User authentication is enabled.')
     # We need to sleep for a few seconds after creating all the tables or else there
@@ -452,12 +465,14 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
 
     # Create new roles on existing users. This should only need to be run once.
     if project_type == ProjectType.SUB:
+        project_uuid = get_project_uuid()
+        project_uuid_truncated = project_uuid[:8]
         Role.create_default_roles(
             entity=Entity.PROJECT,
-            entity_id=get_project_uuid(),
-            prefix=get_repo_name(),
+            entity_id=project_uuid,
+            name_func=lambda role: f'{role}_{project_uuid_truncated}',
         )
-        default_owner_role = Role.get_role(f'{get_repo_name()}_{Role.DefaultRole.OWNER}')
+        default_owner_role = Role.get_role(f'{Role.DefaultRole.OWNER}_{project_uuid_truncated}')
     else:
         Role.create_default_roles()
         default_owner_role = Role.get_role(Role.DefaultRole.OWNER)
@@ -469,19 +484,29 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
     if not legacy_owner_user and len(owner_users) == 0:
         logger.info('User with owner permission doesn’t exist, creating owner user.')
         if AUTHENTICATION_MODE.lower() == 'ldap':
-            user = User.create(
-                roles_new=[default_owner_role],
-                username=get_settings_value(LDAP_ADMIN_USERNAME, 'admin'),
-            )
+            username = get_settings_value(LDAP_ADMIN_USERNAME, 'admin')
+            user = User.query.filter(User.username == username).first()
+            if not user:
+                user = User.create(
+                    roles_new=[default_owner_role],
+                    username=get_settings_value(LDAP_ADMIN_USERNAME, 'admin'),
+                )
         else:
             password_salt = generate_salt()
-            user = User.create(
-                email='admin@admin.com',
-                password_hash=create_bcrypt_hash('admin', password_salt),
-                password_salt=password_salt,
-                roles_new=[default_owner_role],
-                username='admin',
-            )
+            user = User.query.filter(
+                or_(
+                    User.email == 'admin@admin.com',
+                    User.username == 'admin',
+                ),
+            ).first()
+            if not user:
+                user = User.create(
+                    email='admin@admin.com',
+                    password_hash=create_bcrypt_hash('admin', password_salt),
+                    password_salt=password_salt,
+                    roles_new=[default_owner_role],
+                    username='admin',
+                )
         owner_user = user
     else:
         if legacy_owner_user and not legacy_owner_user.roles_new:
@@ -573,7 +598,7 @@ async def main(
             from mage_ai.data_preparation.sync.git_sync import GitSync
             sync_config = GitConfig.load(config=preferences.sync_config)
             sync = GitSync(sync_config, setup_repo=True)
-            if sync_config.sync_on_start:
+            if sync_config.remote_repo_link and sync_config.sync_on_start is True:
                 try:
                     sync.sync_data()
                     logger.info(
@@ -608,10 +633,10 @@ async def main(
         logger.info('Initializing tag cache.')
         await TagCache.initialize_cache(replace=True)
 
-        logger.info('Initializing block action object cache.')
-        await BlockActionObjectCache.initialize_cache(replace=True)
-
         project_model = Project(root_project=True)
+        logger.info('Initializing block action object cache.')
+        await BlockActionObjectCache.initialize_cache(project=project_model, replace=True)
+
         if project_model:
             if project_model.spark_config and \
                     project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
@@ -647,7 +672,10 @@ async def main(
         try:
             from mage_ai.services.ssh.aws.emr.models import create_tunnel
 
-            tunnel = create_tunnel(clean_up_on_failure=True)
+            tunnel = create_tunnel(
+                clean_up_on_failure=True,
+                project=project_model,
+            )
             if tunnel:
                 print(f'SSH tunnel active: {tunnel.is_active()}')
         except Exception as err:
@@ -671,7 +699,12 @@ async def main(
     update_settings_on_metadata_change()
     observer = Observer()
     event_handler = MetadataEventHandler()
-    observer.schedule(event_handler, path=get_metadata_path(root_project=True))
+    metadata_file = get_metadata_path(root_project=True)
+    if not os.path.exists(metadata_file):
+        os.makedirs(os.path.dirname(metadata_file), exist_ok=True)
+        with open(metadata_file, 'w') as f:
+            f.write('')
+    observer.schedule(event_handler, path=metadata_file)
     observer.start()
 
     get_messages(

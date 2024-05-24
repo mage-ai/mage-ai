@@ -15,6 +15,7 @@ export const LOCAL_STORAGE_KEY_OAUTH_STATE = 'oauth_state';
 export const LOCAL_STORAGE_KEY_FOLDERS_STATE = 'folders_state';
 export const LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY = 'generate_code_history';
 export const LOCAL_STORAGE_KEY_MULTI_COLUMN_WIDTHS_PREFIX = 'multi_column_widths';
+export const LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED = 'overview_tab_selected_recently';
 
 function getCustomCodeKey(featureSetId: string) {
   return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;
@@ -66,7 +67,7 @@ export function getCustomCodeState({
   defaultValue = {},
 }: {
   actionType: ActionTypeEnum;
-  featureSetId: string
+  featureSetId: string;
   defaultValue?: any;
 }) {
   const key = getCustomCodeKey(featureSetId);
@@ -79,7 +80,7 @@ export function setCustomCodeState({
   newValue,
 }: {
   actionType: ActionTypeEnum;
-  featureSetId: string
+  featureSetId: string;
   newValue: string;
 }) {
   const key = getCustomCodeKey(featureSetId);
@@ -89,7 +90,10 @@ export function setCustomCodeState({
   });
 }
 
-export function setLocalStorageValue(storageKey: string, value: boolean | string | number): boolean | string | number {
+export function setLocalStorageValue(
+  storageKey: string,
+  value: boolean | string | number,
+): boolean | string | number {
   if (typeof value !== 'undefined') {
     set(storageKey, value);
   }

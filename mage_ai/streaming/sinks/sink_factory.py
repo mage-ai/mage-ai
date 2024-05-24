@@ -59,6 +59,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.opensearch import OpenSearchSink
 
             return OpenSearchSink(config, **kwargs)
+        elif connector_type == SinkType.ORACLEDB:
+            from mage_ai.streaming.sinks.oracledb import OracleDbSink
+
+            return OracleDbSink(config, **kwargs)
         elif connector_type == SinkType.POSTGRES:
             from mage_ai.streaming.sinks.postgres import PostgresSink
 

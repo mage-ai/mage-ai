@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import multiprocessing
 import os
@@ -9,6 +10,7 @@ from datetime import datetime, timedelta
 from distutils.file_util import copy_file
 from typing import Dict, List
 
+import simplejson
 import tornado.websocket
 from jupyter_client import KernelClient
 
@@ -116,6 +118,7 @@ def run_pipeline(
         pipeline.execute_sync(
             global_vars=global_vars,
             build_block_output_stdout=build_block_output_stdout,
+            retry_config=dict(),
             run_sensors=False,
         )
         add_pipeline_message(
@@ -126,8 +129,9 @@ def run_pipeline(
         )
     except Exception:
         trace = traceback.format_exc().splitlines()
-        add_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:',
-                             metadata=metadata)
+        add_pipeline_message(
+            f'Pipeline {pipeline.uuid} execution failed with error:', metadata=metadata
+        )
         add_pipeline_message(trace, execution_state='idle', metadata=metadata)
 
     if pipeline.type == PipelineType.PYTHON:
@@ -185,45 +189,54 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         token = message.get('token')
 
         pipeline_uuid = message.get('pipeline_uuid')
+        oauth_client, oauth_token, user = None, None, None
+
+        if api_key and token:
+            oauth_client = Oauth2Application.query.filter(
+                Oauth2Application.client_id == api_key,
+            ).first()
+            if oauth_client:
+                oauth_token, _ = authenticate_client_and_token(oauth_client.id, token)
+                if oauth_token:
+                    user = oauth_token.user
+
+        repo_path = get_repo_path(user=user)
         pipeline = None
         if pipeline_uuid:
             pipeline = Pipeline.get(
                 pipeline_uuid,
-                repo_path=get_repo_path(),
                 all_projects=project_platform_activated(),
+                repo_path=repo_path,
+                use_repo_path=True,
             )
 
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = not REQUIRE_USER_AUTHENTICATION
 
-            if api_key and token:
-                oauth_client = Oauth2Application.query.filter(
-                    Oauth2Application.client_id == api_key,
-                ).first()
-                if oauth_client:
-                    oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    if valid and oauth_token and oauth_token.user:
-                        try:
-                            if pipeline_uuid:
-                                await PipelineResource.policy_class()(
-                                    PipelineResource(
-                                        pipeline,
-                                        oauth_token.user,
-                                    ),
-                                    oauth_token.user,
-                                ).authorize_action(action=OperationType.UPDATE)
-                            else:
-                                await ProjectResource.policy_class()(
-                                    ProjectResource(
-                                        {},
-                                        oauth_token.user,
-                                    ),
-                                    oauth_token.user,
-                                ).authorize_action(action=OperationType.UPDATE)
-                            valid = True
-                        except ApiError as err:
-                            print(f'[WARNING] WebSocketServer.on_message: {err}.')
-                            valid = False
+            if oauth_client:
+                valid = (oauth_token is not None) and oauth_token.is_valid()
+                if valid and oauth_token and user:
+                    try:
+                        if pipeline_uuid:
+                            await PipelineResource.policy_class()(
+                                PipelineResource(
+                                    pipeline,
+                                    user,
+                                ),
+                                user,
+                            ).authorize_action(action=OperationType.UPDATE)
+                        else:
+                            await ProjectResource.policy_class()(
+                                ProjectResource(
+                                    {},
+                                    user,
+                                ),
+                                user,
+                            ).authorize_action(action=OperationType.UPDATE)
+                        valid = True
+                    except ApiError as err:
+                        print(f'[WARNING] WebSocketServer.on_message: {err}.')
+                        valid = False
 
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
@@ -299,14 +312,19 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     @classmethod
     def send_message(cls, message: dict) -> None:
         def should_filter_message(message):
-            if message.get('data') is None and message.get('error') is None \
-                    and message.get('execution_state') is None and message.get('type') is None:
+            if (
+                message.get('data') is None
+                and message.get('error') is None
+                and message.get('execution_state') is None
+                and message.get('type') is None
+            ):
                 return True
 
             try:
                 # Filter out messages meant for jupyter widgets that we can't render
-                if message.get('msg_type') == 'display_data' and \
-                        message.get('data')[0].startswith('FloatProgress'):
+                if message.get('msg_type') == 'display_data' and message.get('data')[0].startswith(
+                    'FloatProgress'
+                ):
                     return True
             except IndexError:
                 pass
@@ -326,8 +344,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
-        if message.get('data') is None and message.get('error') is None \
-           and message.get('execution_state') is None and message.get('type') is None:
+        if (
+            message.get('data') is None
+            and message.get('error') is None
+            and message.get('execution_state') is None
+            and message.get('type') is None
+        ):
             return
 
         if should_filter_message(message):
@@ -336,8 +358,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         message = filter_out_sensitive_data(message)
 
         execution_metadata = message.get('execution_metadata')
-        msg_id_value = execution_metadata if execution_metadata is not None \
+        msg_id_value = (
+            execution_metadata
+            if execution_metadata is not None
             else WebSocketServer.running_executions_mapping.get(msg_id, dict())
+        )
         block_type = msg_id_value.get('block_type')
         block_uuid = msg_id_value.get('block_uuid')
         replicated_block = msg_id_value.get('replicated_block')
@@ -409,11 +434,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if is_disable_pipeline_edit_access():
             custom_code = block.content
 
-        reload_all_repo_modules(custom_code)
-
         code = custom_code
 
         client = self.init_kernel_client(kernel_name)
+
+        reload_all_repo_modules(custom_code, client)
 
         value = dict(
             block_type=block_type or block.type,
@@ -440,26 +465,37 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
                 execution_uuid = None
                 # Need to cache everything here
-                if block.should_track_spark() and \
-                        ComputeServiceUUID.AWS_EMR == block.compute_service_uuid:
-
+                if (
+                    block.should_track_spark()
+                    and ComputeServiceUUID.AWS_EMR == block.compute_service_uuid
+                ):
                     execution_uuid = str(uuid.uuid4()).split('-')[0]
                     block.clear_spark_jobs_cache()
                     block.cache_spark_application()
                     block.set_spark_job_execution_start(execution_uuid=execution_uuid)
+
+                pipeline_config = pipeline.get_config_from_yaml()
+                repo_config = pipeline.repo_config.to_dict(remote=remote_execution)
 
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
                     custom_code,
                     global_vars,
+                    pipeline.repo_path,
                     block_type=block_type,
                     execution_uuid=execution_uuid,
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
-                    pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
+                    pipeline_config=pipeline_config,
+                    pipeline_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(pipeline_config).encode()
+                    ).decode(),
+                    repo_config=repo_config,
+                    repo_config_json_encoded=base64.b64encode(
+                        simplejson.dumps(repo_config).encode()
+                    ).decode(),
                     # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
                     # The UI can execute a block and send run_settings to control the behavior
@@ -485,13 +521,21 @@ db_connection.start_session()
 """
                 client.execute(initialize_db_connection)
 
-            msg_id = client.execute(add_internal_output_info(block, code))
+            msg_id = client.execute(
+                add_internal_output_info(
+                    block,
+                    code,
+                    extension_uuid=extension_uuid,
+                    widget=widget,
+                )
+            )
 
             WebSocketServer.running_executions_mapping[msg_id] = value
 
             block_output_process_code = get_block_output_process_code(
                 pipeline_uuid,
                 block_uuid,
+                pipeline.repo_path,
                 block_type=block_type,
                 kernel_name=kernel_name,
             )
@@ -504,14 +548,18 @@ db_connection.start_session()
                     if BlockType.CHART != downstream_block.type:
                         continue
 
-                    await self.on_message(json.dumps(dict(
-                        api_key=message.get('api_key'),
-                        code=downstream_block.file.content(),
-                        pipeline_uuid=pipeline_uuid,
-                        token=message.get('token'),
-                        type=downstream_block.type,
-                        uuid=downstream_block.uuid,
-                    )))
+                    await self.on_message(
+                        json.dumps(
+                            dict(
+                                api_key=message.get('api_key'),
+                                code=downstream_block.file.content(),
+                                pipeline_uuid=pipeline_uuid,
+                                token=message.get('token'),
+                                type=downstream_block.type,
+                                uuid=downstream_block.uuid,
+                            )
+                        )
+                    )
 
     def __execute_pipeline(
         self,
@@ -524,6 +572,7 @@ db_connection.start_session()
         if kernel_name == KernelName.PYSPARK:
             code = get_pipeline_execution_code(
                 pipeline_uuid,
+                pipeline.repo_path,
                 global_vars=global_vars,
                 kernel_name=kernel_name,
                 pipeline_config=pipeline.to_dict(include_content=True),
@@ -533,9 +582,7 @@ db_connection.start_session()
             client = self.init_kernel_client(kernel_name)
             msg_id = client.execute(code)
 
-            WebSocketServer.running_executions_mapping[msg_id] = dict(
-                pipeline_uuid=pipeline_uuid
-            )
+            WebSocketServer.running_executions_mapping[msg_id] = dict(pipeline_uuid=pipeline_uuid)
         else:
             # TODO: save config for other kernel types.
             def save_pipeline_config() -> str:
@@ -570,8 +617,7 @@ db_connection.start_session()
 
             queue = multiprocessing.Queue()
             proc = multiprocessing.Process(
-                target=run_pipeline,
-                args=(pipeline, config_copy_path, global_vars, queue)
+                target=run_pipeline, args=(pipeline, config_copy_path, global_vars, queue)
             )
             proc.start()
             set_current_pipeline_process(proc)
@@ -589,8 +635,7 @@ db_connection.start_session()
                             metadata=metadata,
                             msg_type=msg.get('msg_type'),
                         )
-                        if execution_state == 'idle' and \
-                                metadata.get('block_uuid') is None:
+                        if execution_state == 'idle' and metadata.get('block_uuid') is None:
                             loop = False
                             break
                     await asyncio.sleep(0.5)
@@ -657,9 +702,9 @@ db_connection.start_session()
 
         try:
             if initial_idx and end_idx:
-                return error[:initial_idx - 1] + error[end_idx:]
+                return error[: initial_idx - 1] + error[end_idx:]
             elif initial_idx and custom_block_end_idx:
-                return error[:initial_idx - 1] + error[custom_block_end_idx:]
+                return error[: initial_idx - 1] + error[custom_block_end_idx:]
         except Exception:
             pass
 
@@ -671,6 +716,7 @@ class StreamBlockOutputToQueue(object):
     Fake file-like stream object that redirects block output to a queue
     to be streamed to the websocket.
     """
+
     def __init__(
         self,
         queue,
@@ -689,9 +735,11 @@ class StreamBlockOutputToQueue(object):
 
     def write(self, buf):
         for line in buf.rstrip().splitlines():
-            self.queue.put(dict(
-                message=f'[{self.block_uuid}] {line.rstrip()}',
-                execution_state=self.execution_state,
-                metadata=self.metadata,
-                msg_type=self.msg_type,
-            ))
+            self.queue.put(
+                dict(
+                    message=f'[{self.block_uuid}] {line.rstrip()}',
+                    execution_state=self.execution_state,
+                    metadata=self.metadata,
+                    msg_type=self.msg_type,
+                )
+            )

@@ -3,9 +3,6 @@ import shutil
 import uuid
 from typing import Dict
 
-from git.remote import RemoteProgress
-from git.repo.base import Repo
-
 from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
@@ -33,13 +30,53 @@ def get_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessT
         return access_tokens[0]
 
 
+def switch_branch(
+    remote_name: str,
+    remote_url: str,
+    branch_name: str,
+    token: str,
+    config_overwrite: Dict = None,
+    user: User = None,
+    **kwargs,
+):
+    from mage_ai.data_preparation.git import Git
+    provider = get_provider_from_remote_url(remote_url)
+    username = get_username(token, user=user, provider=provider)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    try:
+        git_manager.switch_remote_branch(branch_name, remote_name)
+    except Exception as err:
+        raise err
+    finally:
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
+
+
 def fetch(
     remote_name: str,
     remote_url: str,
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+    **kwargs,
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            fetch progress.
+    """
+    from git.remote import RemoteProgress
+
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
@@ -54,7 +91,7 @@ def fetch(
     remote.set_url(url)
 
     try:
-        remote.fetch(progress=custom_progress)
+        remote.fetch(progress=custom_progress, **kwargs)
     except Exception as err:
         raise err
     finally:
@@ -74,7 +111,15 @@ def pull(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+    **kwargs,
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            pull progress.
+    """
+    from git.remote import RemoteProgress
+
     from mage_ai.data_preparation.git import Git
 
     custom_progress = RemoteProgress()
@@ -110,7 +155,13 @@ def push_raw(
     token: str,
     user: User = None,
     **kwargs,
-) -> RemoteProgress:
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            push progress.
+    """
+    from git.remote import RemoteProgress
     custom_progress = RemoteProgress()
     provider = get_provider_from_remote_url(remote_url)
     username = get_username(token, user=user, provider=provider)
@@ -142,7 +193,13 @@ def push(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
-) -> RemoteProgress:
+    **kwargs,
+):
+    """
+    Returns:
+        git.remote.RemoteProgress: Custom progress object that can be used to monitor the
+            push progress.
+    """
     from mage_ai.data_preparation.git import Git
 
     git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
@@ -165,6 +222,7 @@ def reset_hard(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
@@ -195,6 +253,7 @@ def clone(
     token: str,
     user: User = None,
     config_overwrite: Dict = None,
+    **kwargs,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
@@ -213,6 +272,8 @@ def clone(
     tmp_path = f'{git_manager.repo_path}_{uuid.uuid4().hex}'
     os.mkdir(tmp_path)
     try:
+        from git.repo.base import Repo
+
         # Clone to a tmp folder first, then copy the folder to the actual repo path. Git
         # won't allow you to clone to a folder that is not empty.
         Repo.clone_from(

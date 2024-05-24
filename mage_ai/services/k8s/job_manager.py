@@ -24,6 +24,14 @@ class JobManager():
         logger=None,
         logging_tags: Dict = None,
     ):
+        """Initialize the kubernetes job manager.
+
+        Args:
+            job_name (str, optional): The name of the job.
+            namespace (str, optional): The namespace of the executor pod.
+            logger (None, optional): Logger to log the messages.
+            logging_tags (Dict, optional): Logging tags to be included in the log messages.
+        """
         self.job_name = job_name
         self.namespace = namespace
         self.logger = logger
@@ -129,7 +137,12 @@ class JobManager():
         )
 
         # Create the specification of deployment
-        spec = client.V1JobSpec(template=template, backoff_limit=0)
+        spec = client.V1JobSpec(
+            template=template,
+            active_deadline_seconds=k8s_config.job_config.active_deadline_seconds,
+            backoff_limit=k8s_config.job_config.backoff_limit,
+            ttl_seconds_after_finished=k8s_config.job_config.ttl_seconds_after_finished)
+
         # Instantiate the job object
         job = client.V1Job(
             api_version=self.api_version,

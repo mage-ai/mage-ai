@@ -43,6 +43,7 @@ spark_config:
   # e.g. kwargs['context']['spark'] = spark_session
   custom_session_var_name: 'spark'
 
+help_improve_mage: true
 notification_config:
   alert_on:
     - trigger_failure

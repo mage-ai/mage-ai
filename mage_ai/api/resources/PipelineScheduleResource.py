@@ -253,7 +253,10 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         if 'repo_path' not in payload:
-            payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
+            payload['repo_path'] = (
+                (pipeline.repo_path if pipeline else None)
+                or get_repo_path(user=user)
+            )
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
         if payload.get('status') == ScheduleStatus.ACTIVE and \
@@ -403,10 +406,13 @@ class PipelineScheduleResource(DatabaseResource):
         if updated_status == ScheduleStatus.ACTIVE and self.model.status == ScheduleStatus.INACTIVE:
             payload['last_enabled_at'] = datetime.now(tz=pytz.UTC)
 
+        old_name = self.model.name
+
         resource = super().update(payload)
         updated_model = resource.model
 
-        pipeline = Pipeline.get(updated_model.pipeline_uuid)
+        repo_path = get_repo_path(user=self.current_user)
+        pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path=repo_path)
         if pipeline:
             trigger = Trigger(
                 last_enabled_at=updated_model.last_enabled_at,
@@ -418,17 +424,20 @@ class PipelineScheduleResource(DatabaseResource):
                 sla=updated_model.sla,
                 start_time=updated_model.start_time,
                 status=updated_model.status,
+                token=updated_model.token,
                 variables=updated_model.variables,
             )
 
             update_only_if_exists = (
                 not pipeline.should_save_trigger_in_code_automatically()
             )
+            old_trigger_name = old_name if old_name != updated_model.name else None
 
             add_or_update_trigger_for_pipeline_and_persist(
                 trigger,
                 pipeline.uuid,
                 update_only_if_exists=update_only_if_exists,
+                old_trigger_name=old_trigger_name,
             )
 
         return self

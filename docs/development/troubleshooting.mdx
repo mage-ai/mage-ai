@@ -118,6 +118,14 @@ If Mage terminal or "Run block" button doesn't work, it usually means there's a 
         }
 ```
 
+## Block gets stuck in running status
+
+If your block gets stuck in running status in the Mage editor, you can try the following things:
+* [Restart the kernel](/getting-started/kernels#restart-kernel) and refresh the page.
+* Check whether the CPU and memory usage of the instance is too high. Increase the CPU and memory if the usage is above 50%.
+* Check whether the "Compute management" feature is enabled in the project settings. This feature sometimes causes the slowdown of the block execution in the Mage editor (notebook).
+
+
 ## Server fails to start or keeps restarting due to healthcheck failures
 
 When deploying your Mage server on Cloud (Kubernetes, AWS, GCP, Azure, etc.) with Terraform scripts or Helm chart, there're health checks set up for the

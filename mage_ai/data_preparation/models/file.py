@@ -145,6 +145,7 @@ class File:
         file_selector = None
 
         if exclude_pattern is not None or pattern is not None:
+
             def __select(x: Dict, check_file_path=check_file_path, pattern=pattern):
                 filename = x.get('path') if check_file_path else x.get('name')
                 checks = []
@@ -157,6 +158,7 @@ class File:
             file_selector = __select
 
         if exclude_dir_pattern is not None:
+
             def __select(x: Dict, pattern=pattern):
                 filename = x.get('name')
                 checks = []
@@ -169,6 +171,7 @@ class File:
         pipeline_count_mapping = None
         if include_pipeline_count:
             from mage_ai.cache.block import BlockCache
+
             pipeline_count_mapping = BlockCache().get_pipeline_count_mapping()
 
         return traverse(
@@ -200,7 +203,7 @@ class File:
         if dir_path.startswith(PIPELINES_FOLDER_PREFIX) and filename == 'triggers.yaml':
             from mage_ai.data_preparation.models.triggers import load_trigger_configs
 
-            pipeline_uuid = dir_path[len(PIPELINES_FOLDER_PREFIX):]
+            pipeline_uuid = dir_path[len(PIPELINES_FOLDER_PREFIX) :]
             load_trigger_configs(content, pipeline_uuid=pipeline_uuid, raise_exception=True)
 
     @classmethod
@@ -239,8 +242,9 @@ class File:
             number_of_file_versions = len(file_versions)
 
             if number_of_file_versions >= MAX_NUMBER_OF_FILE_VERSIONS:
-                number_of_file_versions_to_delete = 1 + \
-                    (number_of_file_versions - MAX_NUMBER_OF_FILE_VERSIONS)
+                number_of_file_versions_to_delete = 1 + (
+                    number_of_file_versions - MAX_NUMBER_OF_FILE_VERSIONS
+                )
                 for fn in sorted(file_versions)[:number_of_file_versions_to_delete]:
                     fn_path = os.path.join(file_path_versions_dir, fn)
                     os.remove(fn_path)
@@ -339,8 +343,9 @@ class File:
                 file_content = fp.read()
             return file_content
         except FileNotFoundError as err:
-            print('file.content')
-            print(err)
+            print(f'[ERROR] File.content: {err}')
+            if is_debug():
+                raise err
         return ''
 
     async def content_async(self):
@@ -370,11 +375,14 @@ class File:
             os.path.join(self.repo_path, ''),
             '',
         )
-        return [File(
-            v,
-            file_path_versions_dir_without_repo,
-            self.repo_path,
-        ) for v in sorted(file_versions, reverse=True)]
+        return [
+            File(
+                v,
+                file_path_versions_dir_without_repo,
+                self.repo_path,
+            )
+            for v in sorted(file_versions, reverse=True)
+        ]
 
     def update_content(self, content: str):
         self.write(
@@ -464,8 +472,7 @@ def ensure_file_is_in_project(file_path: str) -> None:
     full_file_path = get_absolute_path(file_path)
     full_repo_path = get_absolute_path(get_repo_path(file_path=file_path))
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
-        raise FileNotInProjectError(
-            f'File at path: {file_path} is not in the project directory.')
+        raise FileNotInProjectError(f'File at path: {file_path} is not in the project directory.')
 
 
 def traverse(
@@ -508,17 +515,25 @@ def traverse(
 
         entry_path = entry.path
         if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
-            return True if dir_selector is None else dir_selector(dict(
-                depth=depth + 1,
-                name=str(entry.name),
-                path=entry.path,
-            ))
+            return (
+                True
+                if dir_selector is None
+                else dir_selector(
+                    dict(
+                        depth=depth + 1,
+                        name=str(entry.name),
+                        path=entry.path,
+                    )
+                )
+            )
         else:
-            return file_selector(dict(
-                depth=depth + 1,
-                name=str(entry.name),
-                path=entry.path,
-            ))
+            return file_selector(
+                dict(
+                    depth=depth + 1,
+                    name=str(entry.name),
+                    path=entry.path,
+                )
+            )
 
         return True
 
@@ -533,7 +548,8 @@ def traverse(
             file_selector=file_selector,
             include_pipeline_count=include_pipeline_count,
             pipeline_count_mapping=pipeline_count_mapping,
-        ) for entry in sorted(
+        )
+        for entry in sorted(
             filter(__filter, os.scandir(path)),
             key=lambda entry: entry.name,
         )
@@ -546,11 +562,7 @@ def __should_update_dbt_cache(dir_path: str, filename: str) -> bool:
     project_model = Project(root_project=True)
     if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2) and dir_path:
         # If the file is a SQL or YAML file
-        if (
-            filename.endswith('.sql') or
-            filename.endswith('.yml') or
-            filename.endswith('.yaml')
-        ):
+        if filename.endswith('.sql') or filename.endswith('.yml') or filename.endswith('.yaml'):
             base_dir_path = Path(dir_path).parts[0].lower()
             # If the file doesn’t exist in a block’s folder (e.g. data_loaders/, pipelines/)
             if base_dir_path not in IGNORE_DIRECTORY_NAMES:
@@ -595,4 +607,5 @@ def update_file_cache() -> None:
     project_model = Project(root_project=True)
     if project_model and project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
         from mage_ai.cache.file import FileCache
+
         FileCache().invalidate()

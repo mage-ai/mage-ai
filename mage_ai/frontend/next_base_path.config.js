@@ -9,5 +9,8 @@ module.exports = removeImports({
   experimental: {
     esmExternals: true
   },
+  images: {
+    unoptimized: true,
+  },
   reactStrictMode: true,
 });

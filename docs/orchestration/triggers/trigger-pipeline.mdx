@@ -44,4 +44,5 @@ trigger_pipeline(
 | `error_on_failure` | Raise an exception if the triggered pipeline fails. | `False` | `False` or `True` | |
 | `poll_interval` | Check the status of triggered pipeline every N seconds. | `60` | `300` | |
 | `poll_timeout` | After N seconds have elapsed, raise an exception if the triggered pipeline hasn’t finished running successful. | `None` | `3600` | |
+| `schedule_name` | Specify the trigger name. If the trigger doesn't exist, it'll get created with the trigger name | `None` | `trigger_name` | |
 | `verbose` | Print status of triggered pipeline run. | `True` | `False` or `True` | |

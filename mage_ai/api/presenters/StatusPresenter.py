@@ -9,6 +9,8 @@ class StatusPresenter(BasePresenter):
         'repo_path_relative',
         'repo_path_relative_root',
         'repo_path_root',
+        'server_process_id',
+        'scheduler_process_id',
         'scheduler_status',
         'instance_type',
         'disable_pipeline_edit_access',

@@ -222,6 +222,15 @@ def d(df):
     pipelineUUID,
   ]);
 
+  const blockLayoutMemo = useMemo(() => (
+    <BlockLayout
+      leftOffset={9 * UNIT}
+      pageBlockLayoutTemplate={pageBlockLayoutTemplate}
+      topOffset={HEADER_HEIGHT}
+      uuid={`pipelines/${pipelineUUID}/dashboard`}
+    />
+  ), [pageBlockLayoutTemplate, pipelineUUID]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -234,12 +243,7 @@ def d(df):
       title={({ name }) => `${name} dashboard`}
       uuid={`${PageNameEnum.DASHBOARD}_${pipelineUUID}`}
     >
-      <BlockLayout
-        leftOffset={9 * UNIT}
-        pageBlockLayoutTemplate={pageBlockLayoutTemplate}
-        topOffset={HEADER_HEIGHT}
-        uuid={`pipelines/${pipelineUUID}/dashboard`}
-      />
+      {blockLayoutMemo}
     </PipelineDetailPage>
   );
 }

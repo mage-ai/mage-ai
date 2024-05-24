@@ -45,4 +45,5 @@ def handle_run_tests(
             global_vars=global_vars,
             logger=logger,
             logging_tags=logging_tags,
+            update_status=False,
         )

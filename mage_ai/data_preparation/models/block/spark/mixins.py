@@ -57,7 +57,8 @@ class SparkBlock:
             )
 
     def compute_management_enabled(self) -> bool:
-        return Project(self.pipeline.repo_config if self.pipeline else None).is_feature_enabled(
+        return Project(
+            repo_config=self.pipeline.repo_config if self.pipeline else None).is_feature_enabled(
             FeatureUUID.COMPUTE_MANAGEMENT,
         )
 

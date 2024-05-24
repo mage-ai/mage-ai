@@ -6,7 +6,7 @@ import urllib.parse
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.widget.constants import ChartType
 from mage_ai.data_preparation.variable_manager import get_global_variables
@@ -21,6 +21,9 @@ from mage_ai.presenters.charts.data_sources.pipeline_schedules import (
     ChartDataSourcePipelineSchedules,
 )
 from mage_ai.presenters.charts.data_sources.pipelines import ChartDataSourcePipelines
+from mage_ai.presenters.charts.data_sources.system_metrics import (
+    ChartDataSourceSystemMetrics,
+)
 from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -37,6 +40,13 @@ class BlockLayoutItemResource(GenericResource):
                 variables[k] = v[0]
             else:
                 variables[k] = v
+
+        content_override = query.get('content_override', [None])
+        if content_override:
+            content_override = content_override[0]
+        skip_render = query.get('skip_render', [False])
+        if skip_render:
+            skip_render = skip_render[0]
 
         configuration_override = variables.pop('configuration_override', None)
         if configuration_override:
@@ -57,6 +67,7 @@ class BlockLayoutItemResource(GenericResource):
 
         content = None
         data = None
+        error = None
         block_type = block_config.get('type')
 
         if BlockType.CHART == block_type:
@@ -67,39 +78,58 @@ class BlockLayoutItemResource(GenericResource):
                 else:
                     data_source_config = data_source_override
 
-            configuration_to_use = configuration_override or block_config.get('configuration')
+            configuration_to_use = (
+                configuration_override or block_config.get('configuration') or {}
+            )
 
-            if data_source_config or ChartType.CUSTOM == configuration_to_use.get('chart_type'):
+            block = BlockFactory.get_block(
+                block_config.get('name') or file_path or uuid,
+                block_uuid,
+                block_type,
+                configuration=configuration_to_use,
+                **extract(
+                    block_config,
+                    [
+                        'language',
+                    ],
+                ),
+            )
+
+            content = content_override
+            if not content and block.file and block.file.exists():
+                content = block.content
+
+            if data_source_config or (
+                configuration_to_use and ChartType.CUSTOM == configuration_to_use.get('chart_type')
+            ):
                 data_source_type = data_source_config.get('type')
                 pipeline_uuid = data_source_config.get('pipeline_uuid')
-
-                block = Block.get_block(
-                    block_config.get('name') or file_path or uuid,
-                    block_uuid,
-                    block_type,
-                    configuration=configuration_to_use,
-                    **extract(block_config, [
-                        'language',
-                    ]),
-                )
-
-                content = block.content
 
                 if ChartDataSourceType.CHART_CODE == data_source_type:
                     data_source = ChartDataSourceChartCode(
                         block_uuid=block.uuid,
                         pipeline_uuid=pipeline_uuid,
                     )
-                    data = data_source.load_data(block=block)
+                    data = data_source.load_data(
+                        block=block,
+                        configuration=configuration_to_use,
+                        custom_code=content_override,
+                    )
                 else:
                     data_source_block_uuid = data_source_config.get('block_uuid')
 
-                    data_source_class_options = merge_dict(extract(data_source_config, [
-                        'pipeline_schedule_id',
-                    ]), dict(
-                        block_uuid=data_source_block_uuid,
-                        pipeline_uuid=pipeline_uuid,
-                    ))
+                    data_source_class_options = merge_dict(
+                        extract(
+                            data_source_config,
+                            [
+                                'pipeline_schedule_id',
+                            ],
+                        ),
+                        dict(
+                            block_uuid=data_source_block_uuid,
+                            pipeline_uuid=pipeline_uuid,
+                        ),
+                    )
                     data_source_output = None
 
                     if ChartDataSourceType.BLOCK == data_source_type:
@@ -132,25 +162,32 @@ class BlockLayoutItemResource(GenericResource):
                             user=user,
                             **kwargs,
                         )
+                    elif ChartDataSourceType.SYSTEM_METRICS == data_source_type:
+                        data_source = ChartDataSourceSystemMetrics(**data_source_class_options)
+                        data_source_output = data_source.load_data(
+                            user=user,
+                            **kwargs,
+                        )
 
-                    try:
-                        input_args = None
-                        if data_source_output is not None:
-                            input_args = [data_source_output]
+                    if not skip_render:
+                        try:
+                            input_args = None
+                            if data_source_output is not None:
+                                input_args = [data_source_output]
 
-                        data = block.execute_with_callback(
-                            disable_json_serialization=True,
-                            input_args=input_args,
-                            global_vars=merge_dict(
-                                get_global_variables(pipeline_uuid) if pipeline_uuid else {},
-                                variables or {},
-                            ),
-                        ).get('output', None)
-                    except Exception as err:
-                        error = ApiError(ApiError.RESOURCE_NOT_FOUND.copy())
-                        error.message = str(err)
-                        error.errors = traceback.format_exc()
-                        raise error
+                            data = block.execute_with_callback(
+                                custom_code=content_override,
+                                disable_json_serialization=True,
+                                input_args=input_args,
+                                global_vars=merge_dict(
+                                    get_global_variables(pipeline_uuid) if pipeline_uuid else {},
+                                    variables or {},
+                                ),
+                            ).get('output', None)
+                        except Exception as err:
+                            error = ApiError(ApiError.RESOURCE_NOT_FOUND.copy())
+                            error.message = str(err)
+                            error.errors = traceback.format_exc()
 
         block_config_to_show = {}
         block_config_to_show.update(block_config)
@@ -162,8 +199,17 @@ class BlockLayoutItemResource(GenericResource):
 
         await UsageStatisticLogger().chart_impression(block_config_to_show)
 
-        return self(merge_dict(block_config_to_show, dict(
-            content=content,
-            data=data,
-            uuid=uuid,
-        )), user, **kwargs)
+        return self(
+            merge_dict(
+                block_config_to_show,
+                dict(
+                    content=content,
+                    data=data,
+                    error=error,
+                    skip_render=skip_render,
+                    uuid=uuid,
+                ),
+            ),
+            user,
+            **kwargs,
+        )

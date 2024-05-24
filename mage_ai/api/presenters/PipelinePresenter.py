@@ -2,6 +2,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    MAX_RESULTS_FOR_BLOCK_OUTPUTS_PREVIEW,
     PipelineType,
 )
 from mage_ai.data_preparation.models.project import Project
@@ -68,10 +69,18 @@ class PipelinePresenter(BasePresenter):
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
 
-            include_block_catalog = PipelineType.PYTHON == self.model.type and \
-                Project(self.model.repo_config).is_feature_enabled(
-                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-                )
+            max_results_for_block_outputs = query.get(
+                'max_results_for_block_outputs', [MAX_RESULTS_FOR_BLOCK_OUTPUTS_PREVIEW]
+            )
+            if max_results_for_block_outputs:
+                max_results_for_block_outputs = max_results_for_block_outputs[0]
+
+            include_block_catalog = PipelineType.PYTHON == self.model.type and Project(
+                context_data=kwargs.get('context_data'),
+                repo_config=self.model.repo_config,
+            ).is_feature_enabled(
+                FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+            )
 
             data = await self.model.to_dict_async(
                 include_block_catalog=include_block_catalog,
@@ -85,6 +94,9 @@ class PipelinePresenter(BasePresenter):
                 include_outputs=include_outputs,
                 include_outputs_spark=include_outputs_spark,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                max_results=max_results_for_block_outputs,
+                disable_block_output_previews=True,
+                exclude_blank_variable_uuids=True,
             )
         elif constants.UPDATE == display_format:
             data = self.model.to_dict(include_extensions=include_extensions)
@@ -103,7 +115,8 @@ class PipelinePresenter(BasePresenter):
 
 PipelinePresenter.register_format(
     constants.LIST,
-    PipelinePresenter.default_attributes + [
+    PipelinePresenter.default_attributes
+    + [
         'schedules',
     ],
 )

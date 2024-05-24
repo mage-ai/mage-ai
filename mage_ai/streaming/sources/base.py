@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Callable, Dict
 
+from mage_ai.shared.environments import is_test
+
 
 class SourceConsumeMethod(str, Enum):
     BATCH_READ = 'BATCH_READ'
@@ -22,6 +24,9 @@ class BaseSource(ABC):
         self.checkpoint_path = kwargs.get('checkpoint_path')
         self.checkpoint = self.read_checkpoint()
         self.init_client()
+        if not is_test():
+            # Not test the connection in unit tests
+            self.test_connection()
 
     @abstractmethod
     def init_client(self):

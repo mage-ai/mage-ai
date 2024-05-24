@@ -3,14 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FileHeaderMenuItem, { blankIcon } from './FileHeaderMenuItem';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import KernelType, { KernelNameEnum } from '@interfaces/KernelType';
 import PipelineType, {
   KERNEL_NAME_TO_PIPELINE_TYPE,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useKernel from '@utils/models/kernel/useKernel';
 import useProject from '@utils/models/project/useProject';
@@ -19,6 +18,7 @@ import {
   LayoutSplit,
   LayoutStacked,
 } from '@oracle/icons';
+import { KernelNameEnum } from '@interfaces/KernelType';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
@@ -32,56 +32,58 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SHARED_FILE_HEADER_BUTTON_PROPS } from './constants';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
-const ICON_SIZE = 1.5 * UNIT;
 const INDEX_COMPUTE = 4;
 
 type FileHeaderMenuProps = {
   cancelPipeline: () => void;
   children?: any;
+  collapseAllBlockOutputs?: (state: boolean) => void;
   createPipeline: (data: any) => void;
+  disableAutosave?: boolean;
   executePipeline: () => void;
+  hideOutputOnExecution?: boolean;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
   scrollTogether?: boolean;
-  setActiveSidekickView: (
-    newView: ViewKeyEnum,
-    pushHistory?: boolean,
-  ) => void;
   setMessages: (message: {
     [uuid: string]: KernelOutputType[];
   }) => void;
-  sideBySideEnabled?: boolean;
   setScrollTogether?: (prev: any) => void;
   setSideBySideEnabled?: (prev: any) => void;
+  sideBySideEnabled?: boolean;
+  toggleDisableAutosave?: () => void;
+  toggleHideOutputOnExecution?: () => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
 function FileHeaderMenu({
   cancelPipeline,
   children,
+  collapseAllBlockOutputs,
   createPipeline,
+  disableAutosave,
   executePipeline,
+  hideOutputOnExecution,
   interruptKernel,
   isPipelineExecuting,
   pipeline,
   restartKernel,
   savePipelineContent,
   scrollTogether,
-  setActiveSidekickView,
   setMessages,
   setScrollTogether,
   setSideBySideEnabled,
   sideBySideEnabled,
+  toggleDisableAutosave,
+  toggleHideOutputOnExecution,
   updatePipelineMetadata,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
@@ -99,6 +101,7 @@ function FileHeaderMenu({
 
   const fileItems = [
     {
+      beforeIcon: blankIcon,
       label: () => 'New standard pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
@@ -109,6 +112,7 @@ function FileHeaderMenu({
       uuid: 'new_standard_pipeline',
     },
     {
+      beforeIcon: blankIcon,
       label: () => 'New streaming pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
@@ -120,6 +124,7 @@ function FileHeaderMenu({
       uuid: 'new_streaming_pipeline',
     },
     {
+      beforeIcon: blankIcon,
       keyTextGroups: [[
         isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
         KEY_SYMBOL_S,
@@ -127,6 +132,12 @@ function FileHeaderMenu({
       label: () => 'Save pipeline',
       onClick: () => savePipelineContent(),
       uuid: 'save_pipeline',
+    },
+    {
+      beforeIcon: disableAutosave ? <Check /> : blankIcon,
+      label: () => 'Disable autosave',
+      onClick: toggleDisableAutosave,
+      uuid: 'Disable_autosave',
     },
   ];
   const runItems = useMemo(() => {
@@ -146,20 +157,20 @@ function FileHeaderMenu({
       //   uuid: 'Delete selected block',
       // },
       {
-        label: () => 'Interrupt kernel',
         keyTextGroups: [
           [KEY_SYMBOL_I],
           [KEY_SYMBOL_I],
         ],
+        label: () => 'Interrupt kernel',
         onClick: () => interruptKernel(),
         uuid: 'Interrupt kernel',
       },
       {
-        label: () => 'Restart kernel',
         keyTextGroups: [
           [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
           [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
         ],
+        label: () => 'Restart kernel',
         onClick: () => restartKernel(),
         uuid: 'Restart kernel',
       },
@@ -230,15 +241,38 @@ function FileHeaderMenu({
   const viewItems = useMemo(() => [
     {
       label: () => (
-        <FlexContainer alignItems="center">
-          <LayoutStacked success={!sideBySideEnabled} />
-
-          <Spacing mr={1} />
-
-          <Text noWrapping>
-            Show output below block
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          checked={hideOutputOnExecution}
+          label="Hide output on execution"
+        />
+      ),
+      onClick: toggleHideOutputOnExecution,
+      uuid: 'Hide output on execution',
+    },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Collapse all outputs"
+    //     />
+    //   ),
+    //   onClick: () => collapseAllBlockOutputs(true),
+    //   uuid: 'Collapse all outputs',
+    // },
+    // {
+    //   label: () => (
+    //     <FileHeaderMenuItem
+    //       label="Expand all outputs"
+    //     />
+    //   ),
+    //   onClick: () => collapseAllBlockOutputs(false),
+    //   uuid: 'Expand all outputs',
+    // },
+    {
+      label: () => (
+        <FileHeaderMenuItem
+          beforeIcon={<LayoutStacked success={!sideBySideEnabled} />}
+          label="Show output below block"
+        />
       ),
       onClick: () => {
         setSideBySideEnabled(false);
@@ -247,15 +281,10 @@ function FileHeaderMenu({
     },
     {
       label: () => (
-        <FlexContainer alignItems="center">
-          <LayoutSplit success={sideBySideEnabled} />
-
-          <Spacing mr={1} />
-
-          <Text noWrapping>
-            Show output next to code (beta)
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          beforeIcon={<LayoutSplit success={sideBySideEnabled} />}
+          label="Show output next to code (beta)"
+        />
       ),
       onClick: () => {
         setSideBySideEnabled(true);
@@ -265,24 +294,22 @@ function FileHeaderMenu({
     {
       disabled: !sideBySideEnabled,
       label: () => (
-        <FlexContainer alignItems="center">
-          {scrollTogether ? <Check /> : <div style={{ width: ICON_SIZE}} />}
-
-          <Spacing mr={1} />
-
-          <Text disabled={!sideBySideEnabled} noWrapping>
-            Scroll output alongside code (beta)
-          </Text>
-        </FlexContainer>
+        <FileHeaderMenuItem
+          checked={scrollTogether}
+          label="Scroll output alongside code (beta)"
+          muted={!sideBySideEnabled}
+        />
       ),
       onClick: () => setScrollTogether(!scrollTogether),
       uuid: 'Scroll output alongside code',
     },
   ], [
+    hideOutputOnExecution,
     scrollTogether,
     setScrollTogether,
     setSideBySideEnabled,
     sideBySideEnabled,
+    toggleHideOutputOnExecution,
   ]);
 
   const computeItems = useMemo(() => {

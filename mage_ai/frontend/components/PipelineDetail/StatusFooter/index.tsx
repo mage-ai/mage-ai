@@ -1,11 +1,8 @@
 import React from 'react';
-import moment from 'moment';
 import { useMemo } from 'react';
 
 import Divider from '@oracle/elements/Divider';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelType from '@interfaces/KernelType';
 import KeyboardText from '@oracle/elements/KeyboardText';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -13,8 +10,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import useKernel from '@utils/models/kernel/useKernel';
 import { AlertTriangle, File as FileIcon, HexagonAll, Lightning } from '@oracle/icons';
 import {
-  KEY_CODE_ENTER,
-  KEY_CODE_META,
   KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
@@ -84,7 +79,6 @@ function StatusFooter({
       <Divider light />
 
       <Spacing px={PADDING_UNITS} py={1}>
-
       <FlexContainer alignItems="center" justifyContent="space-between">
         {usage && (
           <>
@@ -105,8 +99,8 @@ function StatusFooter({
                     small
                   >
                     CPU: <Text
-                      inline
                       danger={cpu >= 90}
+                      inline
                       muted={cpu < 50}
                       small
                       warning={cpu >= 50 && cpu < 90}
@@ -171,7 +165,7 @@ function StatusFooter({
 
               <Spacing mt={1}>
                 <Text default>
-                  Or, go to <Text inline monospace>
+                  Or go to <Text inline monospace>
                     File
                   </Text>{' › '}<Text inline monospace>
                     Save pipeline
@@ -192,8 +186,8 @@ function StatusFooter({
             )}
             {!pipelineContentTouched && (
               <FileIcon
-                size={ICON_SIZE}
                 muted
+              size={ICON_SIZE}
               />
             )}
 

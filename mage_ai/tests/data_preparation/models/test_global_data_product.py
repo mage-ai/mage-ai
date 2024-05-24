@@ -27,12 +27,17 @@ class GlobalDataProductTest(DBTestCase):
                 'test pipeline',
                 repo_path=self.repo_path,
             )
-            self.pipeline.add_block(Block('data_loader', 'data_loader', BlockType.DATA_LOADER))
-            self.pipeline.add_block(Block('transformer', 'transformer', BlockType.TRANSFORMER))
             self.pipeline.add_block(
-                Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER))
+                Block('data_loader', 'data_loader', BlockType.DATA_LOADER)
+            )
+            self.pipeline.add_block(
+                Block('transformer', 'transformer', BlockType.TRANSFORMER)
+            )
+            self.pipeline.add_block(
+                Block('data_exporter', 'data_exporter', BlockType.DATA_EXPORTER)
+            )
         except Exception:
-            self.pipeline = Pipeline.get('test_pipeline')
+            self.pipeline = Pipeline.get('test_pipeline', repo_path=self.repo_path)
 
         self.global_data_product = GlobalDataProduct(
             object_type='pipeline',
@@ -54,6 +59,7 @@ class GlobalDataProductTest(DBTestCase):
                 week_of_month=8,
                 week_of_year=9,
             ),
+            repo_path=self.repo_path,
             settings=dict(
                 data_exporter={},
                 data_loader=dict(partitions=1),
@@ -61,13 +67,15 @@ class GlobalDataProductTest(DBTestCase):
             ),
             uuid='mage',
         )
-        self.pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
+        self.pipeline_schedule = fetch_or_create_pipeline_schedule(
+            self.global_data_product
+        )
 
         self.file_path = os.path.join(
             self.repo_path,
             'global_data_products.yaml',
         )
-        self.global_data_product.save(file_path=self.file_path)
+        self.global_data_product.save()
 
     def tearDown(self):
         super().tearDown()
@@ -80,7 +88,7 @@ class GlobalDataProductTest(DBTestCase):
         )
 
     def test_load_all(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
         gdp = arr[0]
@@ -95,7 +103,7 @@ class GlobalDataProductTest(DBTestCase):
             self.assertEqual(getattr(gdp, key), getattr(self.global_data_product, key))
 
     def test_get(self):
-        gdp = GlobalDataProduct.get('mage', file_path=self.file_path)
+        gdp = GlobalDataProduct.get('mage', self.repo_path)
 
         for key in [
             'object_type',
@@ -343,12 +351,16 @@ class GlobalDataProductTest(DBTestCase):
         )
 
         pipeline_run1 = PipelineRun.create(
-            execution_date=datetime(2023, 10, 11, 2, 13, 13).replace(tzinfo=timezone.utc),
+            execution_date=datetime(2023, 10, 11, 2, 13, 13).replace(
+                tzinfo=timezone.utc
+            ),
             pipeline_schedule_id=self.pipeline_schedule.id,
             pipeline_uuid=self.global_data_product.pipeline.uuid,
             status=PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        pipeline_run1.execution_date = pipeline_run1.execution_date.replace(tzinfo=timezone.utc)
+        pipeline_run1.execution_date = pipeline_run1.execution_date.replace(
+            tzinfo=timezone.utc
+        )
 
         self.global_data_product.outdated_after = dict(seconds=60 * 60 * 10)
         self.assertEqual(
@@ -408,6 +420,8 @@ class GlobalDataProductTest(DBTestCase):
             outdated_after=self.global_data_product.outdated_after,
             outdated_starting_at=self.global_data_product.outdated_starting_at,
             settings=self.global_data_product.settings,
+            project=self.global_data_product.project_name,
+            repo_path=self.global_data_product.repo_path,
         )
 
         self.assertEqual(
@@ -422,34 +436,37 @@ class GlobalDataProductTest(DBTestCase):
         )
 
     def test_delete(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
         self.global_data_product.delete()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 0)
 
     def test_save(self):
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
         self.global_data_product.delete()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 0)
 
         self.global_data_product.save()
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         self.assertEqual(len(arr), 1)
 
     def test_update(self):
-        self.global_data_product.update(dict(
-            object_type='test1',
-            object_uuid='test2',
-            outdated_after=dict(seconds=777),
-            outdated_starting_at=dict(day_of_month=40),
-            settings=dict(mage=dict(partitions=3)),
-        ))
+        self.global_data_product.update(
+            dict(
+                object_type='test1',
+                object_uuid='test2',
+                outdated_after=dict(seconds=777),
+                outdated_starting_at=dict(day_of_month=40),
+                repo_path=self.repo_path,
+                settings=dict(mage=dict(partitions=3)),
+            )
+        )
 
-        arr = GlobalDataProduct.load_all(file_path=self.file_path)
+        arr = GlobalDataProduct.load_all(self.repo_path)
         gdp = arr[0]
 
         self.assertEqual(gdp.object_type, 'test1')

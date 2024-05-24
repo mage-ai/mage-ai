@@ -10,12 +10,37 @@ The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `
 
 ## Server logging format
 
+You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable. By default it is set as
+`SERVER_LOGGING_FORMAT=plaintext`. If it is set to unknown format it will use default value instead.
+
+### Plaintext format
+
+The plaintext logging format will be used by default. Or it can be set explicitly by setting the
+`SERVER_LOGGING_FORMAT=plaintext` environment variable.
+
 By default, the server will log messages in the following format:
 ```
-[%(levelname)s]:[%(name)s]:%(message)s
+%(levelname)s:%(name)s:%(message)s
 ```
 
-You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable.
+It can be customized by setting the `SERVER_LOGGING_TEMPLATE` environment variable.
+Example:
+```
+SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'
+```
+
+<Warning>
+    **Important**
+
+    Format string with special characters like `\t`, `\n`, etc. can't be passed through `.env` file as they are getting
+    escaped.
+
+    To pass such string you can
+    1. Use `export SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'` syntax for local
+    python deployment or docker compose with exported env variables
+    2. Use combination of `.env` file and `-e` flag for plain docker deployment
+    `docker run -d --env-file .env -e SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t\t[%(name)25.25s]\t%(levelname)5s: %(message)s' mageai/mageai:latest`
+</Warning>
 
 ### JSON format
 
@@ -117,7 +142,7 @@ logging_config:
   type: gcs
   level: INFO
   destination_config:
-    path_to_credentials: <path to gcp credentials json file>
+    path_to_credentials: <(optional) path to gcp credentials json file>
     bucket: <bucket name>
     prefix: <prefix path>
 ```

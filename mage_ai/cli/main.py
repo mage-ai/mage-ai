@@ -22,6 +22,7 @@ class OrderCommands(TyperGroup):
 
 app = typer.Typer(
     cls=OrderCommands,
+    pretty_exceptions_show_locals=False,
 )
 
 # Defaults

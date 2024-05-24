@@ -1,13 +1,16 @@
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
-import { TSettingFeaturesToDisable, enableSettings } from '@utils/testing';
+import { TSettingFeaturesToDisable, enableSettings } from './utils';
 
 export const test = base.extend<{
   failOnClientError: boolean;
   settingFeaturesToDisable: TSettingFeaturesToDisable,
 }>({
   failOnClientError: true,
-  settingFeaturesToDisable: { [FeatureUUIDEnum.LOCAL_TIMEZONE]: true },
+  settingFeaturesToDisable: {
+    [FeatureUUIDEnum.CODE_BLOCK_V2]: true,
+    [FeatureUUIDEnum.LOCAL_TIMEZONE]: true,
+  },
   // eslint-disable-next-line sort-keys
   page: async ({ page, failOnClientError, settingFeaturesToDisable }, use) => {
     const pageErrors: Error[] = [];
@@ -27,12 +30,6 @@ export const test = base.extend<{
      * or /pipelines (if no pipeline runs exist), to load after signing in.
      */
     await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
-
-    const improveMageModalCloseButton = page.getByTestId('help_mage_close_button');
-    const improveMageModalCloseButtonIsVisible = await improveMageModalCloseButton.isVisible();
-    if (improveMageModalCloseButtonIsVisible) {
-      await improveMageModalCloseButton.click();
-    }
 
     await enableSettings(page, settingFeaturesToDisable);
 

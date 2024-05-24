@@ -100,7 +100,7 @@ class ConfigurationOptionTest(AsyncDBTestCase):
             self.faker.unique.name(),
             os.path.join(self.repo_path, 'mage_platform'),
         )
-        block = DBTBlock(
+        block = DBTBlock.create(
             block_type='dbt',
             configuration=dict(file_path='dir2/mage.sql'),
             language='sql',
@@ -139,7 +139,7 @@ class ConfigurationOptionTest(AsyncDBTestCase):
                         self.faker.unique.name(),
                         os.path.join(self.repo_path, 'mage_platform'),
                     )
-                    block = DBTBlock(
+                    block = DBTBlock.create(
                         block_type='dbt',
                         configuration=dict(file_path='dir2/mage.sql'),
                         language='sql',

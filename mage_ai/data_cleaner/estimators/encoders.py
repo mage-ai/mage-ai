@@ -1,9 +1,11 @@
 from collections import OrderedDict
+
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+
 from mage_ai.data_cleaner.estimators.base import BaseEstimator
 from mage_ai.shared.conversions import fd_to_df, np_to_fd
 from mage_ai.shared.multi import execute_parallel
-from sklearn.preprocessing import LabelEncoder
-import numpy as np
 
 
 class CustomLabelEncoder(BaseEstimator):
@@ -37,6 +39,7 @@ class CustomLabelEncoder(BaseEstimator):
             if v is None:
                 return missing_value
             return v
+
         if unknown_found:
             # TODO(christhetree): why are these multiplied by 2?
             if np.issubdtype(X.dtype, np.floating):

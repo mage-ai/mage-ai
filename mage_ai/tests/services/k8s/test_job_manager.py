@@ -7,6 +7,11 @@ from kubernetes.client import (
     V1Container,
     V1EnvFromSource,
     V1EnvVar,
+    V1JobSpec,
+    V1NodeAffinity,
+    V1NodeSelector,
+    V1NodeSelectorRequirement,
+    V1NodeSelectorTerm,
     V1Pod,
     V1PodSpec,
     V1SecretEnvSource,
@@ -54,6 +59,10 @@ MOCK_POD_CONFIG = V1Pod(
         volumes=[],
     )
 )
+MOCK_JOB_CONFIG = V1JobSpec(template=MOCK_POD_CONFIG,
+                            active_deadline_seconds=120,
+                            backoff_limit=5,
+                            ttl_seconds_after_finished=86400)
 
 
 class TestK8sUtilities(TestCase):
@@ -223,7 +232,9 @@ class JobManagerTests(TestCase):
         )
         mock_client.V1JobSpec.assert_called_once_with(
             template=mock_v1_pod_template_spec,
+            active_deadline_seconds=None,
             backoff_limit=0,
+            ttl_seconds_after_finished=None
         )
         mock_client.V1Job.assert_called_once_with(
             api_version='batch/v1',
@@ -251,6 +262,7 @@ class JobManagerTests(TestCase):
             'env': [dict(name='spark_host', value='127.0.0.1')],
             'resources': dict(limits={'cpu': '1000m'}, requests={'cpu': '500m'}),
         }
+        k8s_config.job_config = MOCK_JOB_CONFIG
 
         # Call the method to create the job object
         command = "echo 'hello world'"
@@ -351,6 +363,11 @@ class JobManagerTests(TestCase):
                     },
                 ],
             },
+            'job': {
+                'active_deadline_seconds': 0,
+                'backoff_limit': 3,
+                'ttl_seconds_after_finished': 100
+            }
         }
         mock_getenv.return_value = 'pod_name'
 
@@ -377,13 +394,12 @@ class JobManagerTests(TestCase):
 
         # Pod
         self.assertEqual(job.spec.template.spec.affinity, V1Affinity(
-            **dict(
-                node_affinity=dict(
-                    required_during_scheduling_ignored_during_execution=dict(
+                node_affinity=V1NodeAffinity(
+                    required_during_scheduling_ignored_during_execution=V1NodeSelector(
                         node_selector_terms=[
-                            dict(
+                            V1NodeSelectorTerm(
                                 match_expressions=[
-                                    dict(
+                                    V1NodeSelectorRequirement(
                                         key='kubernetes.io/os',
                                         operator='In',
                                         values=['linux']
@@ -394,7 +410,7 @@ class JobManagerTests(TestCase):
                     )
                 )
             )
-        ))
+        )
 
         self.assertEqual(job.spec.template.spec.service_account_name, 'secretaccount')
         self.assertEqual(job.spec.template.spec.image_pull_secrets,
@@ -424,6 +440,11 @@ class JobManagerTests(TestCase):
                 name='data-pvc',
             )
         )
+
+        # Job
+        self.assertEqual(job.spec.active_deadline_seconds, 0)
+        self.assertEqual(job.spec.backoff_limit, 3)
+        self.assertEqual(job.spec.ttl_seconds_after_finished, 100)
 
     @patch('mage_ai.services.k8s.job_manager.client')
     @patch('mage_ai.services.k8s.job_manager.config')

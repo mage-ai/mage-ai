@@ -27,6 +27,7 @@ import {
   ACTION_PULL,
   ACTION_RESET,
   ACTION_RESET_HARD,
+  ADDITIONAL_ARGUMENTS,
 } from '../constants';
 import {
   Add,
@@ -78,6 +79,7 @@ function Remote({
   const [actionError, setActionError] = useState<string>(null);
   const [actionName, setActionName] = useState<string>(null);
   const [actionProgress, setActionProgress] = useState<string>(null);
+  const [actionArgument, setActionArgument] = useState<string>(null);
   const [editRepoPathActive, setEditRepoPathActive] = useState<boolean>(false);
   const [remoteNameActive, setRemoteNameActive] = useState<string>(null);
   const [remoteNameNew, setRemoteNameNew] = useState<string>('');
@@ -94,12 +96,12 @@ function Remote({
 
   const branches = useMemo(() => remotes?.find(({
     name,
-  }) => name === actionRemoteName)?.refs?.map(({
-    name,
-  }) => {
-    const parts = name.split('/');
+  }) => name === actionRemoteName)?.refs?.map((ref) => {
+    const {
+      name,
+    } = ref;
     return {
-      name: parts[parts.length - 1],
+      name: name.substring(actionRemoteName.length + 1),
     };
   }), [
     actionRemoteName,
@@ -125,7 +127,7 @@ function Remote({
   );
 
   const [actionGitBranch, { isLoading: isLoadingAction }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -156,7 +158,7 @@ function Remote({
   );
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -175,7 +177,7 @@ function Remote({
   );
 
   const [removeRemote, { isLoading: isLoadingRemoveRemote }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -620,7 +622,7 @@ function Remote({
                   ))}
                 </Select>
                 
-                {![ACTION_FETCH, ACTION_CLONE].includes(actionName) && (
+                {[ACTION_PULL, ACTION_RESET_HARD].includes(actionName) && (
                   <Spacing ml={1}>
                     <Select
                       beforeIcon={<Branch />}
@@ -633,6 +635,23 @@ function Remote({
                       {branches?.map(({ name }) => (
                         <option key={name} value={name}>
                           {name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+                )}
+
+                {ADDITIONAL_ARGUMENTS[actionName] && (
+                  <Spacing ml={1}>
+                    <Select
+                      label="Additional argument"
+                      monospace
+                      onChange={e => setActionArgument(e.target.value)}
+                      value={actionArgument || ''}
+                    >
+                      {ADDITIONAL_ARGUMENTS[actionName]?.map((name) => (
+                        <option key={name} value={name}>
+                          {capitalizeRemoveUnderscoreLower(name)}
                         </option>
                       ))}
                     </Select>
@@ -711,6 +730,7 @@ function Remote({
                       actionGitBranch({
                         git_custom_branch: {
                           action_payload: {
+                            arg: actionArgument,
                             branch: actionBranchName,
                             remote: actionRemoteName,
                           },

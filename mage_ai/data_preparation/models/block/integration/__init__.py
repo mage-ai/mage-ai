@@ -155,7 +155,7 @@ class IntegrationBlock(Block):
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
-                    f.write(line.decode()),
+                    f.write(line.decode())
                     print_log_from_line(
                         line,
                         config=config,
@@ -416,9 +416,10 @@ class SourceBlock(IntegrationBlock):
 class DestinationBlock(IntegrationBlock):
     def to_dict(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        include_block_pipelines: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
         destination_table: str = None,
         state_stream: str = None,
@@ -428,7 +429,9 @@ class DestinationBlock(IntegrationBlock):
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
             )
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
+            integration_pipeline = IntegrationPipeline(
+                self.pipeline.uuid, repo_path=self.repo_path
+            )
             destination_state_file_path = integration_pipeline.destination_state_file_path(
                 destination_table=destination_table,
                 stream=state_stream,
@@ -444,6 +447,7 @@ class DestinationBlock(IntegrationBlock):
             super().to_dict(
                 include_content=include_content,
                 include_outputs=include_outputs,
+                include_block_pipelines=include_block_pipelines,
                 sample_count=sample_count,
                 check_if_file_exists=check_if_file_exists,
             ),
@@ -452,9 +456,10 @@ class DestinationBlock(IntegrationBlock):
 
     async def to_dict_async(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        include_block_pipelines: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
         destination_table: str = None,
         state_stream: str = None,
@@ -463,13 +468,14 @@ class DestinationBlock(IntegrationBlock):
         return self.to_dict(
             include_content=include_content,
             include_outputs=include_outputs,
+            include_block_pipelines=include_block_pipelines,
             sample_count=sample_count,
             check_if_file_exists=check_if_file_exists,
             destination_table=destination_table,
             state_stream=state_stream,
         )
 
-    def update(self, data, update_state=False):
+    def update(self, data, update_state=False, **kwargs):
         if update_state:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
                 IntegrationPipeline,
@@ -478,7 +484,9 @@ class DestinationBlock(IntegrationBlock):
                 update_destination_state_bookmarks,
             )
 
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
+            integration_pipeline = IntegrationPipeline(
+                self.pipeline.uuid, repo_path=self.repo_path
+            )
             tap_stream_id = data.get('tap_stream_id')
             destination_table = data.get('destination_table')
             bookmark_values = data.get('bookmark_values', {})
@@ -493,7 +501,7 @@ class DestinationBlock(IntegrationBlock):
                     bookmark_values=bookmark_values
                 )
 
-        return super().update(data)
+        return super().update(data, **kwargs)
 
     def output_variables(self, execution_partition: str = None) -> List[str]:
         return []

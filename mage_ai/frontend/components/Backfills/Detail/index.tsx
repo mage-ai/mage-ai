@@ -31,6 +31,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 import {
@@ -44,6 +45,7 @@ import {
   Switch,
 } from '@oracle/icons';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { ICON_SIZE_DEFAULT } from '@oracle/styles/units/icons';
 import {
   PADDING_UNITS,
   UNIT,
@@ -51,7 +53,6 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { capitalize } from '@utils/string';
-import { datetimeInLocalTimezone } from '@utils/date';
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import {
   getFormattedVariable,
@@ -97,6 +98,7 @@ function BackfillDetail({
     name: modelName,
     pipeline_run_dates: pipelineRunDates,
     start_datetime: startDatetime,
+    started_at: startedAt,
     status,
     total_run_count: totalRunCount,
     variables: modelVariablesInit = {},
@@ -162,6 +164,7 @@ function BackfillDetail({
             : 'No runs available'
           }
           fetchPipelineRuns={fetchPipelineRuns}
+          hidePipelineColumn
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
 
@@ -202,6 +205,7 @@ function BackfillDetail({
     selectedRun,
     setErrors,
     showPreviewRuns,
+    status,
     totalRuns,
   ]);
 
@@ -371,6 +375,13 @@ function BackfillDetail({
             <Text default>
               Total runs
             </Text>
+            <Spacing mr={1} />
+            <Tooltip
+              default
+              label="This count does not include retries."
+              size={ICON_SIZE_DEFAULT}
+              widthFitContent
+            />
           </FlexContainer>,
           <Text
             key="total_runs"
@@ -569,65 +580,61 @@ function BackfillDetail({
               </>
             )}
 
-            {!isViewerRole &&
-              <>
-                {status === RunStatus.COMPLETED
-                  ?
-                    <Text bold default large>
-                      Filter runs by status:
-                    </Text>
-                  :
-                    <Button
-                      linkProps={{
-                        as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
-                        href: '/pipelines/[pipeline]/backfills/[...slug]',
-                      }}
-                      noHoverUnderline
-                      outline
-                      sameColorAsText
-                    >
-                      Edit backfill
-                    </Button>
-                }
-
-                <Spacing mr={PADDING_UNITS} />
-              </>
+            {(!isViewerRole && !startedAt) &&
+              <Button
+                linkProps={{
+                  as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
+                  href: '/pipelines/[pipeline]/backfills/[...slug]',
+                }}
+                noHoverUnderline
+                outline
+                sameColorAsText
+                title="Backfills cannot be edited once they've been started."
+              >
+                Edit backfill
+              </Button>
             }
 
             {!showPreviewRuns &&
-              <Select
-                compact
-                defaultColor
-                onChange={e => {
-                  e.preventDefault();
-                  const updatedStatus = e.target.value;
-                  if (updatedStatus === 'all') {
-                    router.push(
-                      '/pipelines/[pipeline]/backfills/[...slug]',
-                      `/pipelines/${pipelineUUID}/backfills/${modelID}`,
-                    );
-                  } else {
-                    goToWithQuery(
-                      {
-                        page: 0,
-                        status: e.target.value,
-                      },
-                    );
-                  }
-                }}
-                paddingRight={UNIT * 4}
-                placeholder="Select run status"
-                value={q?.status || 'all'}
-              >
-                <option key="all_statuses" value="all">
-                  All statuses
-                </option>
-                {PIPELINE_RUN_STATUSES.map(status => (
-                  <option key={status} value={status}>
-                    {RUN_STATUS_TO_LABEL[status]}
+              <>
+                <Text bold default large>
+                  Filter runs by status:
+                </Text>
+                <Spacing mr={PADDING_UNITS} />
+                <Select
+                  compact
+                  defaultColor
+                  onChange={e => {
+                    e.preventDefault();
+                    const updatedStatus = e.target.value;
+                    if (updatedStatus === 'all') {
+                      router.push(
+                        '/pipelines/[pipeline]/backfills/[...slug]',
+                        `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+                      );
+                    } else {
+                      goToWithQuery(
+                        {
+                          page: 0,
+                          status: e.target.value,
+                        },
+                      );
+                    }
+                  }}
+                  paddingRight={UNIT * 4}
+                  placeholder="Select run status"
+                  value={q?.status || 'all'}
+                >
+                  <option key="all_statuses" value="all">
+                    All statuses
                   </option>
-                ))}
-              </Select>
+                  {PIPELINE_RUN_STATUSES.map(status => (
+                    <option key={status} value={status}>
+                      {RUN_STATUS_TO_LABEL[status]}
+                    </option>
+                  ))}
+                </Select>
+              </>
             }
           </FlexContainer>
         )}

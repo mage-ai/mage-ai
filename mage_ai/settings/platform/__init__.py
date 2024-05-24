@@ -12,13 +12,14 @@ from mage_ai.settings.platform.constants import (  # noqa: F401
     platform_settings_full_path,
     project_platform_activated,
 )
+from mage_ai.settings.server import ENABLE_USER_PROJECTS
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import combine_into, dig, extract, merge_dict
 from mage_ai.shared.io import safe_write
 
 
-def activate_project(project_name: str) -> None:
+def activate_project(project_name: str, user=None) -> None:
     """
     Activate a specified project and update local platform settings accordingly.
 
@@ -37,33 +38,48 @@ def activate_project(project_name: str) -> None:
         added to the 'projects' dictionary with the 'active' attribute set to True.
     """
     if project_name:
-        platform_settings = __local_platform_settings() or {}
-        if 'projects' not in platform_settings:
-            platform_settings['projects'] = {}
+        if user and ENABLE_USER_PROJECTS:
+            from mage_ai.data_preparation.repo_manager import get_project_uuid
+            from mage_ai.orchestration.db.models.utils import activate_project_for_user
+            activate_project_for_user(user, get_project_uuid(), project_name)
 
-        platform_settings['projects'][project_name] = merge_dict(
-            platform_settings['projects'].get(project_name) or {},
-            dict(active=True),
-        )
+        else:
+            platform_settings = __local_platform_settings() or {}
+            if 'projects' not in platform_settings:
+                platform_settings['projects'] = {}
 
-        projects = platform_settings['projects'] or {}
-        for key in projects.keys():
-            if key == project_name:
-                continue
-            platform_settings['projects'][key] = merge_dict(
-                platform_settings['projects'].get(key) or {},
-                dict(active=False),
+            platform_settings['projects'][project_name] = merge_dict(
+                platform_settings['projects'].get(project_name) or {},
+                dict(active=True),
             )
 
-        __update_local_platform_settings(platform_settings)
+            projects = platform_settings['projects'] or {}
+            for key in projects.keys():
+                if key == project_name:
+                    continue
+                platform_settings['projects'][key] = merge_dict(
+                    platform_settings['projects'].get(key) or {},
+                    dict(active=False),
+                )
+
+            __update_local_platform_settings(platform_settings)
 
 
+# default repo_path will be the root project repo path if not provided downstream
 def build_repo_path_for_all_projects(
     repo_path: str = None,
+    context_data: Dict = None,
     mage_projects_only: bool = False
 ) -> Dict:
+    # from mage_ai.shared.custom_logger import DX_PRINTER
+    # DX_PRINTER.info('build repo path for all projects')
+    # DX_PRINTER.print_call_stack()
     mapping = {}
-    settings = project_platform_settings(repo_path=repo_path, mage_projects_only=mage_projects_only)
+    settings = project_platform_settings(
+        repo_path=repo_path,
+        context_data=context_data,
+        mage_projects_only=mage_projects_only,
+    )
     root_project_path = base_repo_path()
     root_project_name = base_repo_name()
 
@@ -84,15 +100,24 @@ def build_repo_path_for_all_projects(
 def repo_path_from_database_query_to_project_repo_path(
     key: str,
     repo_path: str = None,
+    context_data: Dict = None,
 ) -> Dict:
     mapping = {}
 
-    repo_paths = build_repo_path_for_all_projects(repo_path=repo_path, mage_projects_only=True)
+    repo_paths = build_repo_path_for_all_projects(
+        repo_path=repo_path,
+        context_data=context_data,
+        mage_projects_only=True,
+    )
     for paths in repo_paths.values():
         full_path = paths['full_path']
         mapping[full_path] = full_path
 
-    settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
+    settings = project_platform_settings(
+        repo_path=repo_path,
+        context_data=context_data,
+        mage_projects_only=True,
+    )
     for project_name, setting in settings.items():
         query_arr_paths = []
         query_arr = dig(setting, ['database', 'query', key])
@@ -114,6 +139,7 @@ def repo_path_from_database_query_to_project_repo_path(
 def get_repo_paths_for_file_path(
     file_path: str,
     repo_path: str = None,
+    repo_paths_all: Dict = None,
     mage_projects_only: bool = False,
 ) -> Dict:
     if not file_path:
@@ -121,10 +147,11 @@ def get_repo_paths_for_file_path(
 
     result = None
 
-    repo_paths_all = build_repo_path_for_all_projects(
-        repo_path=repo_path,
-        mage_projects_only=mage_projects_only,
-    )
+    if repo_paths_all is None:
+        repo_paths_all = build_repo_path_for_all_projects(
+            repo_path=repo_path,
+            mage_projects_only=mage_projects_only,
+        )
 
     matches = []
 
@@ -185,12 +212,28 @@ def get_repo_paths_for_file_path(
     return result
 
 
-def build_active_project_repo_path(repo_path: str = None) -> str:
+def build_active_project_repo_path(
+    context_data: Dict = None,
+    repo_path: str = None,
+    user=None,
+) -> str:
     if not repo_path:
         repo_path = base_repo_path()
 
-    settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
-    active_project = active_project_settings(settings=settings)
+    if context_data is None:
+        context_data = dict()
+
+    settings = project_platform_settings(
+        context_data=context_data,
+        repo_path=repo_path,
+        mage_projects_only=True,
+    )
+
+    active_project = active_project_settings(
+        context_data=context_data,
+        settings=settings,
+        user=user,
+    )
     no_active_project = not active_project
 
     items = list(settings.items() or [])
@@ -231,9 +274,11 @@ def platform_settings(mage_projects_only: bool = False) -> Dict:
 
 
 def active_project_settings(
+    context_data: Dict = None,
     get_default: bool = False,
     repo_path: str = None,
     settings: Dict = None,
+    user=None,
 ) -> Dict:
     """
     Retrieve the settings of the active project or the default project.
@@ -245,6 +290,8 @@ def active_project_settings(
             are fetched for the specific repository.
         settings (Dict, optional): Pre-existing project platform settings. If not provided,
             settings are fetched using project_platform_settings.
+        user (User, optional): When provided, we will fetch the settings for the active project
+            for the user. The active project can be different depending on the user.
 
     Returns:
         Dict: A dictionary containing the settings of the active or default project.
@@ -262,17 +309,48 @@ def active_project_settings(
         >>> active_project_settings(get_default=True, repo_path='/path/to/repo')
         {'uuid': 'default_project_uuid', 'active': 'true', 'path': 'relative/path'}
     """
+    from mage_ai.data_preparation.repo_manager import get_project_uuid
+
+    if context_data is None:
+        context_data = dict()
+
+    if context_data.get('active_project_settings'):
+        return context_data['active_project_settings']
+
+    # from mage_ai.shared.custom_logger import DX_PRINTER
+    # DX_PRINTER.info(f'active project settings {id(context_data)} context '
+    #                 f'{context_data} user {user}')
+    # DX_PRINTER.print_call_stack()
+
     if not settings:
-        settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
+        settings = project_platform_settings(
+            context_data=context_data,
+            repo_path=repo_path,
+            mage_projects_only=True,
+        )
+
+    # print(f'active project settings {settings}')
 
     items = list(settings.items())
     if not items:
         return
 
-    project_settings_tup = find(
-        lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
-        items,
-    )
+    user_active_project = None
+    if user and ENABLE_USER_PROJECTS:
+        from mage_ai.orchestration.db.models.utils import get_active_project_for_user
+
+        user_active_project = get_active_project_for_user(user, get_project_uuid())
+    if user_active_project:
+        key = user_active_project.project_name
+        project_settings_tup = find(
+            lambda tup: tup and tup[0] == key,
+            items,
+        )
+    else:
+        project_settings_tup = find(
+            lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
+            items,
+        )
 
     if not project_settings_tup and get_default:
         # Get the first item in the settings by default
@@ -281,13 +359,30 @@ def active_project_settings(
     if project_settings_tup:
         project_name, project_settings = project_settings_tup
 
-        return merge_dict(
+        active_project_settings = merge_dict(
             project_settings or {},
             dict(uuid=project_name),
         )
+        context_data['active_project_settings'] = active_project_settings
+        return active_project_settings
 
 
-def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
+def project_platform_settings(
+    repo_path: str = None,
+    context_data: Dict = None,
+    mage_projects_only: bool = False,
+    user=None,
+) -> Dict:
+    if context_data is None:
+        context_data = dict()
+
+    settings = context_data.get('platform_settings')
+    if settings:
+        return settings
+
+    # from mage_ai.shared.custom_logger import DX_PRINTER
+    # DX_PRINTER.info(f'project_platform_settings {repo_path} {id(context_data)} {context_data}')
+    # DX_PRINTER.print_call_stack()
     mapping = (__combined_platform_settings(
         repo_path=repo_path,
         mage_projects_only=mage_projects_only,
@@ -299,9 +394,9 @@ def project_platform_settings(repo_path: str = None, mage_projects_only: bool = 
         for project_name, settings in mapping.items():
             if 'is_project' not in settings or settings.get('is_project'):
                 select_keys.append(project_name)
+        mapping = extract(mapping, select_keys)
 
-        return extract(mapping, select_keys)
-
+    context_data['platform_settings'] = mapping
     return mapping
 
 
@@ -331,10 +426,19 @@ def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool
     return parent
 
 
-def git_settings(repo_path: str = None) -> Dict:
+def git_settings(
+    repo_path: str = None,
+    context_data: Dict = None,
+    user=None,
+) -> Dict:
     git_dict = {}
 
-    settings = active_project_settings(get_default=True, repo_path=repo_path)
+    settings = active_project_settings(
+        context_data=context_data,
+        get_default=True,
+        repo_path=repo_path,
+        user=user,
+    )
     if settings and settings.get('git'):
         git_dict = settings.get('git') or {}
 
@@ -344,12 +448,29 @@ def git_settings(repo_path: str = None) -> Dict:
             git_dict['path'],
         )
     else:
-        git_dict['path'] = build_active_project_repo_path(repo_path=repo_path)
+        git_dict['path'] = build_active_project_repo_path(
+            context_data=context_data,
+            repo_path=repo_path,
+            user=user,
+        )
 
     return git_dict
 
 
 def __get_projects_of_any_type() -> Dict:
+    """
+    Retrieves projects of any type from the repository directory.
+
+    Returns:
+        Dict: A dictionary containing project information with the following structure:
+        {
+            'project_name': {
+                'is_project': bool,  # Indicates if it's a project based on metadata presence
+                'is_project_platform': bool,  # If it's a project platform based on settings.yaml
+                'uuid': str  # Unique identifier of the project
+            }
+        }
+    """
     mapping = {}
 
     repo_path = base_repo_path()

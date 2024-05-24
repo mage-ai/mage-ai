@@ -23,6 +23,8 @@ import {
 import { OutputContainerStyle, OutputHeaderStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { removeKeyboardFocus } from '@context/shared/utils';
+import { SampleDataType } from '@interfaces/BlockType';
+import Image from 'next/image';
 
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
@@ -150,7 +152,7 @@ function PipelineExecution({
                 data: dataInit,
                 type: dataType,
               }: KernelOutputType, idx: number) => {
-                let dataArray: string[] = [];
+                let dataArray: (string | SampleDataType)[] = [];
                 if (Array.isArray(dataInit)) {
                   dataArray = dataInit;
                 } else {
@@ -181,8 +183,9 @@ function PipelineExecution({
                   } else if (dataType === DataTypeEnum.IMAGE_PNG) {
                     displayElement = (
                       <div style={{ backgroundColor: 'white' }}>
-                        <img
+                        <Image
                           alt={`Image ${idx} from code output`}
+                          layout="responsive"
                           src={`data:image/png;base64, ${data}`}
                         />
                       </div>

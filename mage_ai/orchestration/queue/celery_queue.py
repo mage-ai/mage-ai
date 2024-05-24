@@ -1,6 +1,7 @@
+from typing import Callable
+
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
-from typing import Callable
 
 
 class CeleryQueue(Queue):
@@ -26,4 +27,10 @@ class CeleryQueue(Queue):
         return False
 
     def kill_job(self, job_id: str):
+        pass
+
+    def start(self):
+        pass
+
+    def stop(self):
         pass

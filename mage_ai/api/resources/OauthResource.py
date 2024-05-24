@@ -20,7 +20,7 @@ from mage_ai.authentication.oauth.utils import (
     refresh_token_for_client,
 )
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
-from mage_ai.data_preparation.git.api import get_oauth_client_id
+from mage_ai.data_preparation.git.utils import get_oauth_client_id
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
 

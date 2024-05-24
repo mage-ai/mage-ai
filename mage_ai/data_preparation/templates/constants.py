@@ -612,6 +612,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='OracleDB',
+        path='data_exporters/oracledb.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='PostgreSQL',
         path='data_exporters/postgres.py',
     ),

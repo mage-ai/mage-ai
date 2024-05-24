@@ -1,9 +1,12 @@
 import * as gtag from '@utils/gtag';
+import { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { ScreenSizeEnum, screenSizeName } from '@styles/theme';
 import { isDemo } from '@utils/environment';
 
 export const EVENT_ACTION_TYPE_CLICK = 'click';
 export const EVENT_ACTION_TYPE_IMPRESSION = 'impression';
+export const EVENT_ACTION_TYPE_SELECT = 'select';
+export const EVENT_COMPONENT_TYPE_AUTOCOMPLETE_RESULT = 'autocomplete_result';
 export const EVENT_COMPONENT_TYPE_BUTTON = 'button';
 export const EVENT_COMPONENT_TYPE_KS_BUTTON = 'keyboard_shortcut_button';
 export const EVENT_COMPONENT_TYPE_LINK = 'link';
@@ -14,23 +17,30 @@ export const EVENT_COMPONENT_TYPE_PAGE = 'page';
 // with Google Analytics' event parameters.
 export interface EventParametersType {
   action_type?: string;
+  block_type?: BlockTypeEnum;
   browser?: string;
   component_type?: string;
+  description?: string;
   href?: string;
+  item_type?: string;
   label?: string;
+  language?: BlockLanguageEnum;
+  object_type?: string;
   page?: string;
   page_path?: string;
   pipeline_uuid?: string;
   screen_size?: ScreenSizeEnum;
+  search_query?: string;
+  title?: string;
   used_keyboard_shortcut?: boolean;
   uuid?: string;
   width?: number;
 }
 
 export default interface EventPropertiesType {
-  eventActionType: string;
-  eventComponentType: string;
-  eventParameters: EventParametersType;
+  eventActionType?: string;
+  eventComponentType?: string;
+  eventParameters?: EventParametersType;
 }
 
 export function buildEventParameters(
@@ -85,7 +95,9 @@ export function getDefaultEventParameters(
   eventParameters: EventParametersType = {},
   query: any,
 ) {
-  const defaultEventParameters: EventParametersType = {};
+  const defaultEventParameters: EventParametersType = {
+    ...eventParameters,
+  };
 
   const { pipeline: pipelineUUID } = query || {};
   if (pipelineUUID) {
@@ -109,7 +121,7 @@ export function getDefaultEventParameters(
 
 export function logEventCustom(
   eventName: string,
-  eventParameters = {},
+  eventParameters: EventParametersType = {},
 ) {
   // This method currently only logs Google Analytics events in the Mage demo app.
   if (isDemo()) {

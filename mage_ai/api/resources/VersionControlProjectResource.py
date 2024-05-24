@@ -1,3 +1,4 @@
+import inspect
 import urllib.parse
 from typing import Dict
 
@@ -41,11 +42,14 @@ class VersionControlProjectResource(VersionControlErrors, AsyncBaseResource):
         model = self.get_model(pk)
 
         sync_resource = SyncResource.member(None, user, repo_path=model.repo_path)
-        model.sync_config = await SyncResource.presenter_class()(
+        result = SyncResource.presenter_class()(
             sync_resource,
             user,
             **kwargs,
         ).present()
+        if result and inspect.isawaitable(result):
+            result = await result
+        model.sync_config = result
 
         res = self(model, user, **kwargs)
         res.validate_output()
@@ -71,11 +75,14 @@ class VersionControlProjectResource(VersionControlErrors, AsyncBaseResource):
                 self.current_user,
                 repo_path=self.model.repo_path,
             )
-            self.model.sync_config = await SyncResource.presenter_class()(
+            result = SyncResource.presenter_class()(
                 sync_resource,
                 self.current_user,
                 **kwargs,
             ).present()
+            if result and inspect.isawaitable(result):
+                result = await result
+            self.model.sync_config = result
 
         self.model.update_attributes()
         self.validate_output()

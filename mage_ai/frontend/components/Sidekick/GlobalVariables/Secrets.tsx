@@ -22,7 +22,6 @@ import { VariableType } from '@interfaces/PipelineVariableType';
 import { onSuccess } from '@api/utils/response';
 import { removeKeyboardFocus } from '@context/shared/utils';
 
-
 type SecretsProps = {
   fetchSecrets: () => void;
   pipelineUUID: string;
@@ -31,99 +30,76 @@ type SecretsProps = {
   width: number;
 };
 
-function Secrets({
-  fetchSecrets,
-  pipelineUUID,
-  secrets,
-  setErrorMessages,
-  width,
-}: SecretsProps) {
+function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width }: SecretsProps) {
   const [showNewSecret, setShowNewSecret] = useState<boolean>(false);
   const [newSecretName, setNewSecretName] = useState<string>();
   const [newSecretValue, setNewSecretValue] = useState<string>();
 
-  const tableWidth = useMemo(() => width - (PADDING_UNITS * UNIT * 2), [width]);
+  const tableWidth = useMemo(() => width - PADDING_UNITS * UNIT * 2, [width]);
 
-  const [createSecret] = useMutation(
-    api.secrets.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: ({
-            error: {
-              message,
-              exception,
-            },
-          }) => {
-            // @ts-ignore
-            setErrorMessages((errorMessages) => {
-              let messagesToDisplay = errorMessages || [];
-              if (exception) {
-                messagesToDisplay = messagesToDisplay.concat(exception);
-              }
-              if (message) {
-                messagesToDisplay = messagesToDisplay.concat(message);
-              }
-              return messagesToDisplay;
-            });
-          },
+  const [createSecret] = useMutation(api.secrets.useCreate(), {
+    onSuccess: (response: any) =>
+      onSuccess(response, {
+        onErrorCallback: ({ error: { message, exception } }) => {
+          // @ts-ignore
+          setErrorMessages(errorMessages => {
+            let messagesToDisplay = errorMessages || [];
+            if (exception) {
+              messagesToDisplay = messagesToDisplay.concat(exception);
+            }
+            if (message) {
+              messagesToDisplay = messagesToDisplay.concat(message);
+            }
+            return messagesToDisplay;
+          });
         },
-      ),
+      }),
+  });
+
+  const [deleteSecret] = useMutation((name: string) => api.secrets.useDelete(name)(), {
+    onSuccess: (response: any) =>
+      onSuccess(response, {
+        callback: () => {
+          fetchSecrets();
+        },
+        onErrorCallback: ({ error: { errors, message } }) => {
+          // @ts-ignore
+          setErrorMessages(errorMessages => errorMessages.concat(message));
+        },
+      }),
+  });
+
+  const handleKeyDown = useCallback(
+    e => {
+      if (e.key === 'Enter') {
+        // @ts-ignore
+        createSecret({
+          secret: {
+            name: newSecretName,
+            value: newSecretValue,
+          },
+        }).then(() => {
+          fetchSecrets();
+          setNewSecretName(null);
+          setNewSecretValue(null);
+        });
+        removeKeyboardFocus();
+        setShowNewSecret(false);
+      } else if (e.key === 'Escape') {
+        removeKeyboardFocus();
+        setShowNewSecret(false);
+      }
     },
+    [createSecret, fetchSecrets, newSecretName, newSecretValue],
   );
 
-  const [deleteSecret] = useMutation(
-    (name: string) => api.secrets.useDelete(name)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchSecrets();
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            // @ts-ignore
-            setErrorMessages((errorMessages) => errorMessages.concat(message));
-          },
-        },
-      ),
+  const handleDelete = useCallback(
+    secretName => {
+      removeKeyboardFocus();
+      deleteSecret(secretName);
     },
+    [deleteSecret],
   );
-
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter') {
-      // @ts-ignore
-      createSecret({
-        secret: {
-          name: newSecretName,
-          value: newSecretValue,
-        },
-      }).then(() => {
-        fetchSecrets();
-        setNewSecretName(null);
-        setNewSecretValue(null);
-      });
-      removeKeyboardFocus();
-      setShowNewSecret(false);
-    } else if (e.key === 'Escape') {
-      removeKeyboardFocus();
-      setShowNewSecret(false);
-    }
-  }, [
-    createSecret,
-    fetchSecrets,
-    newSecretName,
-    newSecretValue,
-  ]);
-
-  const handleDelete = useCallback((secretName) => {
-    removeKeyboardFocus();
-    deleteSecret(secretName);
-  }, [deleteSecret]);
 
   const SAMPLE_SECRET_VALUE = `
     "{{ mage_secret_var('<secret_name>') }}"
@@ -156,19 +132,25 @@ function Secrets({
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          <Text inline warning>WARNING:</Text> the encryption key is stored in a file
-          on your machine. If you need more secure encryption, we recommend
-          using a secrets manager.
+          <Text inline warning>
+            WARNING:
+          </Text>{' '}
+          the encryption key is stored in a file on your machine. If you need more secure
+          encryption, we recommend using a secrets manager.
         </Text>
       </Spacing>
       {showNewSecret && (
         <Spacing mb={PADDING_UNITS}>
           <Text muted>
-            Press <Text bold default inline monospace>
+            Press{' '}
+            <Text bold default inline monospace>
               Enter
-            </Text> or <Text bold default inline monospace>
+            </Text>{' '}
+            or{' '}
+            <Text bold default inline monospace>
               Return
-            </Text> to save changes.
+            </Text>{' '}
+            to save changes.
           </Text>
         </Spacing>
       )}
@@ -185,13 +167,10 @@ function Secrets({
                     muted
                     onClick={() => {
                       navigator.clipboard.writeText(`{{ mage_secret_var(${newSecretName}) }}`);
-                      toast.success(
-                        'Successfully copied to clipboard.',
-                        {
-                          position: toast.POSITION.BOTTOM_RIGHT,
-                          toastId: newSecretName,
-                        },
-                      );
+                      toast.success('Successfully copied to clipboard.', {
+                        position: toast.POSITION.BOTTOM_RIGHT,
+                        toastId: newSecretName,
+                      });
                     }}
                     uuid={`Sidekick/Secrets/${newSecretName}`}
                     withIcon
@@ -200,14 +179,14 @@ function Secrets({
                   </KeyboardShortcutButton>
                 </CellStyle>
               </Col>
-              <Col md={4}>
+              <Col md={5}>
                 <CellStyle>
                   <TextInput
                     borderless
                     compact
                     fullWidth
                     monospace
-                    onChange={(e) => {
+                    onChange={e => {
                       setNewSecretName(e.target.value);
                       e.preventDefault();
                     }}
@@ -219,14 +198,14 @@ function Secrets({
                   />
                 </CellStyle>
               </Col>
-              <Col md={7}>
+              <Col md={6}>
                 <CellStyle>
                   <TextInput
                     borderless
                     compact
                     fullWidth
                     monospace
-                    onChange={(e) => {
+                    onChange={e => {
                       setNewSecretValue(e.target.value);
                       e.preventDefault();
                     }}
@@ -249,28 +228,25 @@ function Secrets({
               key={secret.name}
               obfuscate
               pipelineUUID={pipelineUUID}
-              variable={{
-                uuid: secret.name,
-                value: secret.value,
-              } as VariableType}
+              variable={
+                {
+                  uuid: secret.name,
+                  value: secret.value,
+                } as VariableType
+              }
             />
           ))}
         </TableStyle>
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          Secrets are not editable, they can only be created and deleted.
-          Secrets are shared across the project, and can be used in configuration fields.
-          To reference a secret, use the following templating syntax:
+          Secrets are not editable, they can only be created and deleted. Secrets are shared across
+          the project, and can be used in configuration fields. To reference a secret, use the
+          following templating syntax:
         </Text>
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
-        <CodeBlock
-          language="yaml"
-          maxWidth={tableWidth}
-          small
-          source={SAMPLE_SECRET_VALUE}
-        />
+        <CodeBlock language="yaml" maxWidth={tableWidth} small source={SAMPLE_SECRET_VALUE} />
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
         <Text>
@@ -278,12 +254,7 @@ function Secrets({
         </Text>
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
-        <CodeBlock
-          language="python"
-          maxWidth={tableWidth}
-          small
-          source={SECRET_IN_CODE}
-        />
+        <CodeBlock language="python" maxWidth={tableWidth} small source={SECRET_IN_CODE} />
       </Spacing>
     </Spacing>
   );

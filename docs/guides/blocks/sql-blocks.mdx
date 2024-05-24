@@ -97,6 +97,13 @@ a table created in your database or data warehouse.
 
 ### Using raw SQL
 
+<Warning>
+If you’re using version `0.9.69` or less and interpolating a SQL command from an upstream block that uses raw SQL:
+if the downstream block’s SQL command is referencing the upstream block using a variable such as `{{ df_1 }}` and ends the statement with a semi-colon (`;`), there is an interpolation error.
+To work around the error, remove the semi-colon `;`.
+A fix will be available in `0.9.70`.
+</Warning>
+
 If you toggle this setting, you’re responsible for writing the `CREATE TABLE` command and the
 `INSERT` command.
 

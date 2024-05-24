@@ -178,7 +178,9 @@ class SessionOperationTests(BaseApiTestCase):
     @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
-    async def test_ldap_login_with_role_mapping(self, mock_authenticate, mock_authorize):
+    async def test_ldap_login_with_role_mapping(
+        self, mock_authenticate, mock_authorize
+    ):
         mock_authenticate.return_value = (
             True,
             "Yami_Sukehiro",
@@ -188,7 +190,9 @@ class SessionOperationTests(BaseApiTestCase):
 
         Role.create_default_roles()
 
-        with patch.dict(os.environ, dict(LDAP_ROLES_MAPPING=json.dumps(dict(Admin=['Admin'])))):
+        with patch.dict(
+            os.environ, dict(LDAP_ROLES_MAPPING=json.dumps(dict(Admin=['Admin'])))
+        ):
             username = self.faker.email()
             operation = self.build_operation(
                 action=constants.CREATE,
@@ -208,3 +212,50 @@ class SessionOperationTests(BaseApiTestCase):
             user = User.query.filter(User.username == username).first()
             self.assertIsNotNone(user)
             self.assertEqual(user.roles_new[0].name, 'Admin')
+
+    @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
+    @patch.object(LDAPConnection, 'authorize')
+    @patch.object(LDAPConnection, 'authenticate')
+    async def test_ldap_update_roles_on_login(self, mock_authenticate, mock_authorize):
+        mock_authenticate.return_value = (
+            True,
+            "Yami_Sukehiro",
+            dict(memberOf=['Admin']),
+        )
+        mock_authorize.return_value = True
+
+        Role.create_default_roles()
+
+        username = self.faker.email()
+
+        User.create(
+            username=username,
+            email=username,
+            roles_new=[Role.query.filter(Role.name == 'Admin').first()],
+        )
+
+        with patch.dict(
+            os.environ,
+            dict(
+                LDAP_ROLES_MAPPING=json.dumps(dict(Admin=['Editor'])),
+                UPDATE_ROLES_ON_LOGIN='1',
+            ),
+        ):
+            operation = self.build_operation(
+                action=constants.CREATE,
+                payload=dict(
+                    session=dict(
+                        email=username,
+                        password="black bull",
+                    )
+                ),
+                resource='sessions',
+                user=None,
+            )
+            await operation.execute()
+
+            mock_authenticate.assert_called_once_with(username, "black bull")
+            mock_authorize.assert_called_once_with("Yami_Sukehiro")
+            user = User.query.filter(User.username == username).first()
+            self.assertIsNotNone(user)
+            self.assertEqual(user.roles_new[0].name, 'Editor')

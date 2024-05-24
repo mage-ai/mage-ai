@@ -164,6 +164,7 @@ class InfluxDbSource(BaseSource):
                         'data': {record.get_field(): record.get_value()},
                         'metadata': {
                             'time': int(1e3 * record.get_time().timestamp()),
+                            'measurement': record['_measurement'],
                             'tags': {
                                 k: v
                                 for k, v in record.values.items()
@@ -201,6 +202,7 @@ class InfluxDbSource(BaseSource):
                         'data': {record.get_field(): record.get_value()},
                         'metadata': {
                             'time': int(1e3 * record.get_time().timestamp()),
+                            'measurement': record['_measurement'],
                             'tags': {
                                 k: v
                                 for k, v in record.values.items()

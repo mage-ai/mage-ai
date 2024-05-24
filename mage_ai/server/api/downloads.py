@@ -22,6 +22,7 @@ class ApiDownloadHandler(BaseHandler):
 
         api_key = self.get_argument('api_key', None, True)
         token = self.get_argument('token', None, True)
+        user = None
         if REQUIRE_USER_AUTHENTICATION:
             authenticated = False
             if api_key and token:
@@ -30,13 +31,16 @@ class ApiDownloadHandler(BaseHandler):
                 ).first()
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
+                    user = oauth_token.user
                     authenticated = valid and \
                         oauth_token and \
                         oauth_token.user
             if not authenticated:
                 raise Exception('Unauthorized access to download block output.')
 
-        pipeline = Pipeline.get(pipeline_uuid)
+        repo_path = get_repo_path(user=user)
+
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
         block = pipeline.get_block(block_uuid)
         pipeline_run_id = self.get_argument('pipeline_run_id', None)
         execution_partition = None
@@ -114,7 +118,10 @@ class ApiResourceDownloadHandler(BaseHandler):
     # file pointer points to either a singular file or a temporary zip
     def get_file_pointer(self, file_list, relative_file_list):
         if len(file_list) == 1:
-            return open(file_list[0])
+            if file_list[0].endswith('.xlsx'):  # Check if it's an XLSX file
+                return open(file_list[0], 'rb')  # Open in binary mode for XLSX
+            else:
+                return open(file_list[0])
         return self.zip_files(file_list, relative_file_list)
 
     # creates a temporary zip and returns the (open) file pointer

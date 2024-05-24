@@ -34,10 +34,11 @@ class ADProvider(SsoProvider, OauthProvider):
         self.client_secret = get_settings_value(ACTIVE_DIRECTORY_CLIENT_SECRET)
         self.__validate()
 
-        self.roles_mapping = get_settings_value(ACTIVE_DIRECTORY_ROLES_MAPPING)
-        if self.roles_mapping:
+        self.roles_mapping = {}
+        roles_mapping = get_settings_value(ACTIVE_DIRECTORY_ROLES_MAPPING)
+        if roles_mapping:
             try:
-                self.roles_mapping = json.loads(self.roles_mapping)
+                self.roles_mapping = json.loads(roles_mapping)
             except Exception:
                 logger.exception('Failed to parse roles mapping.')
 

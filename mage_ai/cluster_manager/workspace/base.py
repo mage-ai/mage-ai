@@ -33,7 +33,7 @@ class Workspace(abc.ABC):
 
     @classproperty
     def project_folder(self) -> str:
-        return os.path.join(get_repo_path(), 'projects')
+        return os.path.join(get_repo_path(root_project=True), 'projects')
 
     @property
     def config_path(self) -> str:
@@ -147,6 +147,12 @@ class Workspace(abc.ABC):
             Workspace: the initialized workspace
         """
         raise NotImplementedError('Initialize method not implemented')
+
+    def update(self, payload: Dict, **kwargs):
+        """
+        Update the workspace configuration.
+        """
+        raise NotImplementedError('Update method not implemented')
 
     @abc.abstractmethod
     @safe_db_query

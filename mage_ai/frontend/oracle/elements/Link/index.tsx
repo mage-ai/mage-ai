@@ -40,6 +40,7 @@ export type LinkProps = {
   hoverBackground?: boolean;
   inline?: boolean;
   large?: boolean;
+  largeSm?: boolean;
   minWidth?: number;
   monospace?: boolean;
   muted?: boolean;

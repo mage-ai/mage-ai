@@ -98,17 +98,16 @@ class RepoManagerTest(DBTestCase):
         shutil.rmtree(test_dir)
 
     def test_set_project_uuid_from_metadata(self):
-        test_metadata_file = os.path.join(self.repo_path, 'test_repo_manager.yaml')
+        test_metadata_file = os.path.join(self.repo_path, 'metadata.yaml')
         with open(test_metadata_file, 'w', encoding='utf-8') as f:
             yaml.dump(dict(project_uuid='123456789'), f)
 
-        with patch(
-            'mage_ai.data_preparation.repo_manager.get_metadata_path',
-            return_value=test_metadata_file
-        ):
+        set_project_uuid_from_metadata()
+        self.assertEqual(get_project_uuid(), '123456789')
+        # Reset the project metadata.yaml
+        with open(os.path.join(self.repo_path, 'metadata.yaml'), 'w', encoding='utf-8') as f:
+            yaml.dump(dict(), f)
             set_project_uuid_from_metadata()
-            self.assertEqual(get_project_uuid(), '123456789')
-        os.remove(test_metadata_file)
 
     @patch('uuid.uuid4')
     def test_init_project_uuid(self, mock_uuid):

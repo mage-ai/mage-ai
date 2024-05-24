@@ -26,8 +26,19 @@ from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
-async def build_project(repo_config=None, root_project: bool = False, **kwargs):
-    project = Project(repo_config=repo_config, root_project=root_project)
+async def build_project(
+    repo_config=None,
+    repo_path: str = None,
+    root_project: bool = False,
+    user=None,
+    **kwargs,
+):
+    project = Project(
+        repo_config=repo_config,
+        context_data=kwargs.get('context_data'),
+        root_project=root_project,
+        user=user,
+    )
 
     model = merge_dict(project.repo_config.to_dict(), dict(
         emr_config=project.emr_config,
@@ -36,7 +47,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         features_override=project.features_override,
         latest_version=await project.latest_version(),
         name=project.name,
-        platform_settings=project.platform_settings,
+        platform_settings=project.platform_settings(),
         project_uuid=project.project_uuid,
         projects=project.projects(),
         remote_variables_dir=project.remote_variables_dir,
@@ -137,13 +148,13 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def member(self, _, user, **kwargs):
-        model = await build_project(**kwargs)
+        model = await build_project(user=user, **kwargs)
         return self(model, user, **kwargs)
 
     @safe_db_query
     async def update(self, payload, **kwargs):
         if payload.get('activate_project'):
-            activate_project(payload.get('activate_project'))
+            activate_project(payload.get('activate_project'), user=self.current_user)
 
         platform_settings = payload.get('platform_settings')
         root_project = payload.get('root_project')
@@ -151,7 +162,7 @@ class ProjectResource(GenericResource):
 
         if root_project and platform_settings:
             update_settings(settings=platform_settings)
-            self.model = await build_project(repo_config)
+            self.model = await build_project(repo_config, user=self.current_user)
             return self
 
         data = {}
@@ -206,7 +217,7 @@ class ProjectResource(GenericResource):
         if len(data.keys()) >= 1:
             repo_config.save(**data)
 
-        self.model = await build_project(repo_config)
+        self.model = await build_project(repo_config, user=self.current_user)
 
         if should_log_project:
             await UsageStatisticLogger().project_impression()

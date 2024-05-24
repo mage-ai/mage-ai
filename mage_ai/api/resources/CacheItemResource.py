@@ -50,7 +50,7 @@ class CacheItemResource(AsyncBaseResource):
         )
 
         if CacheItemType.DBT == item_type:
-            block = DBTBlock(
+            block = DBTBlock.create(
                 pk,
                 pk,
                 BlockType.DBT,

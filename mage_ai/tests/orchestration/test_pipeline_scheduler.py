@@ -396,6 +396,7 @@ class PipelineSchedulerTests(DBTestCase):
                 error=f'Failed blocks: {block_runs[0].block_uuid}.',
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
+                stacktrace=None,
             )
 
     def test_schedule_with_block_failures(self):
@@ -419,6 +420,7 @@ class PipelineSchedulerTests(DBTestCase):
                 error=f'Failed blocks: {block_runs[0].block_uuid}.',
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
+                stacktrace=None,
             )
 
     @patch('mage_ai.orchestration.pipeline_scheduler_original.run_pipeline')
@@ -451,6 +453,7 @@ class PipelineSchedulerTests(DBTestCase):
                 execution_date=None,
                 execution_partition=f'{pipeline_run.pipeline_schedule_id}',
                 event={},
+                pipeline_run_id=pipeline_run.id,
             ),
             dict(
                 pipeline_run_id=pipeline_run.id,

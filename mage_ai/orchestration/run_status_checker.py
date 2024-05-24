@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.utils import warn_for_repo_path
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
@@ -23,10 +24,11 @@ BLOCK_FAILURE_STATUSES = [
 def check_status(
     pipeline_uuid: str,
     execution_date: datetime,
+    repo_path: str = None,
     block_uuid: str = None,
     hours: int = 24,
 ) -> bool:
-    __validate_pipeline_and_block(pipeline_uuid, block_uuid)
+    __validate_pipeline_and_block(pipeline_uuid, block_uuid, repo_path=repo_path)
 
     execution_date = execution_date.replace(tzinfo=timezone.utc)
     pipeline_run = (
@@ -62,11 +64,16 @@ def check_status(
             return pipeline_run.status == PipelineRun.PipelineRunStatus.COMPLETED
 
 
-def __validate_pipeline_and_block(pipeline_uuid, block_uuid):
-    if pipeline_uuid not in Pipeline.get_all_pipelines(get_repo_path()):
+def __validate_pipeline_and_block(pipeline_uuid: str, block_uuid: str, repo_path: str = None):
+    warn_for_repo_path(repo_path=repo_path)
+
+    if repo_path is None:
+        repo_path = get_repo_path()
+
+    if pipeline_uuid not in Pipeline.get_all_pipelines(repo_path=repo_path):
         raise Exception('Pipeline not found, stopping sensor...')
 
-    pipeline = Pipeline(pipeline_uuid, get_repo_path())
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     if block_uuid is not None:
         block = pipeline.get_block(block_uuid)

@@ -61,6 +61,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.MSSQL,
         DataSourceTypeEnum.MYSQL,
         DataSourceTypeEnum.OPENSEARCH,
+        DataSourceTypeEnum.ORACLEDB,
         DataSourceTypeEnum.POSTGRES,
         DataSourceTypeEnum.RABBITMQ,
         DataSourceTypeEnum.REDSHIFT,

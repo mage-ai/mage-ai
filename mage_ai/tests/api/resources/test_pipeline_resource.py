@@ -76,6 +76,7 @@ class PipelineResourceTest(BaseApiTestCase):
             model,
             number_of_pipelines_to_caches=number_of_pipelines_to_caches,
             pipelines=pipelines,
+            **kwargs,
         ):
             mapping = {}
 
@@ -115,7 +116,7 @@ class PipelineResourceTest(BaseApiTestCase):
         async def __initialize_cache():
             return self.cache
 
-        with patch.object(self.cache, 'get_model', lambda _x: None):
+        with patch.object(self.cache, 'get_model', lambda _x, repo_path=None: None):
             with patch.object(Pipeline, 'get_async', wraps=Pipeline.get_async) as mock_get_async:
                 with patch(
                     'mage_ai.cache.pipeline.PipelineCache.initialize_cache',
@@ -129,7 +130,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline1.uuid,
                             self.pipeline2.uuid,
                             self.pipeline3.uuid,
@@ -172,7 +173,7 @@ class PipelineResourceTest(BaseApiTestCase):
                     )
 
                     mock_get_async.assert_has_calls(
-                        [call.get_async(uuid) for uuid in [
+                        [call.get_async(uuid, repo_path=self.repo_path) for uuid in [
                             self.pipeline3.uuid,
                         ]],
                         any_order=True,
@@ -331,6 +332,8 @@ class PipelineResourceTest(BaseApiTestCase):
                 await PipelineResource.get_model(self.pipeline1.uuid)
                 mock.assert_called_once_with(
                     self.pipeline1.uuid,
+                    repo_path=self.repo_path,
+                    context_data=None,
                 )
 
     async def test_member(self):
@@ -343,4 +346,8 @@ class PipelineResourceTest(BaseApiTestCase):
                 wraps=Pipeline.get_async,
             ) as mock:
                 await PipelineResource.member(self.pipeline1.uuid, None)
-                mock.assert_called_once_with(self.pipeline1.uuid)
+                mock.assert_called_once_with(
+                    self.pipeline1.uuid,
+                    repo_path=self.repo_path,
+                    context_data=None,
+                )

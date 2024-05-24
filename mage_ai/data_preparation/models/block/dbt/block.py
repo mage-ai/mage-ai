@@ -26,19 +26,17 @@ from mage_ai.shared.parsers import encode_complex
 
 
 class DBTBlock(Block):
-    def __new__(cls, *args, **kwargs) -> 'DBTBlock':
+    @classmethod
+    def create(cls, *args, **kwargs) -> 'DBTBlock':
         """
         Factory for the child blocks
         """
         # Import Child blocks here to prevent cycle import
         from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
         from mage_ai.data_preparation.models.block.dbt.block_yaml import DBTBlockYAML
-        if cls is DBTBlock:
-            if kwargs.get('language', BlockLanguage.SQL) == BlockLanguage.YAML:
-                return super(DBTBlock, cls).__new__(DBTBlockYAML)
-            return super(DBTBlock, cls).__new__(DBTBlockSQL)
-        else:
-            return super(DBTBlock, cls).__new__(cls, *args, **kwargs)
+        if kwargs.get('language', BlockLanguage.SQL) == BlockLanguage.YAML:
+            return DBTBlockYAML(*args, **kwargs)
+        return DBTBlockSQL(*args, **kwargs)
 
     @property
     def base_project_path(self) -> Union[str, os.PathLike]:

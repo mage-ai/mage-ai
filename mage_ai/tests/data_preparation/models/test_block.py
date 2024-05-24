@@ -7,14 +7,18 @@ from faker import Faker
 from pandas.testing import assert_frame_equal
 
 # from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_preparation.models.block import Block, BlockType
+from mage_ai.data_preparation.models.block import Block, BlockType, CallbackBlock
+from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
 from mage_ai.tests.base_test import DBTestCase
-from mage_ai.tests.factory import create_integration_pipeline_with_blocks
+from mage_ai.tests.factory import (
+    create_integration_pipeline_with_blocks,
+    create_pipeline,
+)
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
@@ -22,14 +26,18 @@ class BlockTest(DBTestCase):
     def test_create(self):
         block1 = Block.create('test_transformer', 'transformer', self.repo_path)
         block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path, 'transformers', 'test_transformer.py')))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path, 'transformers', '__init__.py')))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path, 'data_loaders', 'test_data_loader.py')))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.repo_path, 'data_loaders', '__init__.py')))
+        self.assertTrue(
+            os.path.exists(os.path.join(self.repo_path, 'transformers', 'test_transformer.py'))
+        )
+        self.assertTrue(
+            os.path.exists(os.path.join(self.repo_path, 'transformers', '__init__.py'))
+        )
+        self.assertTrue(
+            os.path.exists(os.path.join(self.repo_path, 'data_loaders', 'test_data_loader.py'))
+        )
+        self.assertTrue(
+            os.path.exists(os.path.join(self.repo_path, 'data_loaders', '__init__.py'))
+        )
         self.assertEqual(block1.name, 'test_transformer')
         self.assertEqual(block1.uuid, 'test_transformer')
         self.assertEqual(block1.type, 'transformer')
@@ -51,20 +59,20 @@ class BlockTest(DBTestCase):
             upstream_block_uuids=['test_data_loader'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 1, 3], 'col2': [2, 2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def remove_duplicate_rows(df):
     df_transformed = df.drop_duplicates()
     return [df_transformed]
-            ''')
+            """)
         asyncio.run(block1.execute(analyze_outputs=True))
         asyncio.run(block2.execute(analyze_outputs=True))
 
@@ -72,10 +80,7 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'output_0',
-            variable_type='dataframe'
+            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
         )
         # analysis = variable_manager.get_variable(
         #     pipeline.uuid,
@@ -107,7 +112,7 @@ def remove_duplicate_rows(df):
             upstream_block_uuids=['test_data_loader'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @preprocesser
 def preprocesser0(*args, **kwargs):
     kwargs['context']['count'] = 1
@@ -125,14 +130,14 @@ def load_data(**kwargs):
     data = {'col1': [i * count for i in [1, 1, 3]], 'col2': [i * count for i in [2, 2, 4]]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def remove_duplicate_rows(df):
     df_transformed = df.drop_duplicates()
     return [df_transformed]
-            ''')
+            """)
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
 
@@ -140,10 +145,7 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'output_0',
-            variable_type='dataframe'
+            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
         )
 
         df_final = pd.DataFrame({'col1': [2, 2, 6], 'col2': [4, 4, 8]}).drop_duplicates()
@@ -168,7 +170,7 @@ def remove_duplicate_rows(df):
             upstream_block_uuids=['test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {
@@ -179,14 +181,14 @@ def load_data():
     }
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def remove_duplicate_rows(df):
     df_transformed = df
     return [df_transformed]
-            ''')
+            """)
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
 
@@ -194,10 +196,7 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'output_0',
-            variable_type='dataframe'
+            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
         )
         df_final = pd.DataFrame({
             'col1': [1, 1, 3],
@@ -232,28 +231,28 @@ def remove_duplicate_rows(df):
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [5], 'col2': [6]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def union_datasets(df1, df2):
     df_union = pd.concat([df1, df2]).reset_index(drop=True)
     return [df_union]
-            ''')
+            """)
         asyncio.run(block1.execute(analyze_outputs=True))
         asyncio.run(block2.execute(analyze_outputs=True))
         asyncio.run(block3.execute(analyze_outputs=True))
@@ -262,10 +261,7 @@ def union_datasets(df1, df2):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block3.uuid,
-            'output_0',
-            variable_type='dataframe'
+            pipeline.uuid, block3.uuid, 'output_0', variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
@@ -315,48 +311,48 @@ def union_datasets(df1, df2):
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [5], 'col2': [6]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def incorrect_function(df1):
     return df1
-            ''')
+            """)
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
         with self.assertRaisesRegex(
             Exception,
-            'Block test_transformer may have too many upstream dependencies. It expected to have' +
-            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
-            'the correct number of arguments.'
+            'Block test_transformer may have too many upstream dependencies. It expected to have'
+            + ' 1 arguments, but received 2. Confirm that the @transformer method declaration has '
+            + 'the correct number of arguments.',
         ):
             asyncio.run(block3.execute())
 
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @transformer
 def incorrect_function(df1, df2, df3):
     return df1
-            ''')
+            """)
         with self.assertRaisesRegex(
             Exception,
-            'Block test_transformer may have too many upstream dependencies. It expected to have' +
-            ' 1 arguments, but received 2. Confirm that the @transformer method declaration has ' +
-            'the correct number of arguments.'
+            'Block test_transformer may have too many upstream dependencies. It expected to have'
+            + ' 1 arguments, but received 2. Confirm that the @transformer method declaration has '
+            + 'the correct number of arguments.',
         ):
             asyncio.run(block3.execute())
 
@@ -380,20 +376,20 @@ def incorrect_function(df1, df2, df3):
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @sensor
 def sensor(*args):
     df = args[0]
     return df is not None
-            ''')
+            """)
         asyncio.run(block1.execute())
         output = block2.execute_sync(from_notebook=True)
         self.assertEqual(output['output'][0], True)
@@ -411,20 +407,20 @@ def sensor(*args):
             pipeline=pipeline,
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            """)
         block1.update(dict(has_callback=True))
         with open(block1.callback_block.file_path, 'w') as file:
-            file.write('''
+            file.write("""
 @on_success
 def on_success_callback(**kwargs):
     print('SUCCESS')
-            ''')
+            """)
         block1.execute_with_callback()
         mock_print.assert_called_with('SUCCESS')
 
@@ -441,18 +437,18 @@ def on_success_callback(**kwargs):
             pipeline=pipeline,
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write("""import pandas as pd
 @data_loader
 def load_data():
     raise Exception('failed')
-            ''')
+            """)
         block1.update(dict(has_callback=True))
         with open(block1.callback_block.file_path, 'w') as file:
-            file.write('''
+            file.write("""
 @on_failure
 def on_failure_callback(**kwargs):
     print('FAILED')
-            ''')
+            """)
 
         with self.assertRaisesRegex(Exception, 'failed'):
             block1.execute_with_callback()
@@ -473,40 +469,46 @@ def on_failure_callback(**kwargs):
         )
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
-        self.assertEqual(block1.to_dict(), dict(
-            all_upstream_blocks_executed=True,
-            color=None,
-            configuration={},
-            downstream_blocks=['test_data_exporter'],
-            executor_config=None,
-            executor_type='local_python',
-            has_callback=False,
-            language='sql',
-            name='test_transformer_2',
-            retry_config=None,
-            status='not_executed',
-            timeout=None,
-            type='transformer',
-            upstream_blocks=[],
-            uuid='test_transformer_2',
-        ))
-        self.assertEqual(block2.to_dict(), dict(
-            all_upstream_blocks_executed=False,
-            color=None,
-            configuration={},
-            downstream_blocks=[],
-            executor_config=None,
-            executor_type='local_python',
-            has_callback=False,
-            language='python',
-            name='test_data_exporter',
-            retry_config=None,
-            status='not_executed',
-            timeout=None,
-            type='data_exporter',
-            upstream_blocks=['test_transformer_2'],
-            uuid='test_data_exporter',
-        ))
+        self.assertEqual(
+            block1.to_dict(),
+            dict(
+                all_upstream_blocks_executed=True,
+                color=None,
+                configuration={},
+                downstream_blocks=['test_data_exporter'],
+                executor_config=None,
+                executor_type='local_python',
+                has_callback=False,
+                language='sql',
+                name='test_transformer_2',
+                retry_config=None,
+                status='not_executed',
+                timeout=None,
+                type='transformer',
+                upstream_blocks=[],
+                uuid='test_transformer_2',
+            ),
+        )
+        self.assertEqual(
+            block2.to_dict(),
+            dict(
+                all_upstream_blocks_executed=False,
+                color=None,
+                configuration={},
+                downstream_blocks=[],
+                executor_config=None,
+                executor_type='local_python',
+                has_callback=False,
+                language='python',
+                name='test_data_exporter',
+                retry_config=None,
+                status='not_executed',
+                timeout=None,
+                type='data_exporter',
+                upstream_blocks=['test_transformer_2'],
+                uuid='test_data_exporter',
+            ),
+        )
 
     def test_full_table_name(self):
         faker = Faker()
@@ -514,7 +516,7 @@ def on_failure_callback(**kwargs):
         block = Block.create(faker.name(), 'data_loader', self.repo_path, pipeline=pipeline)
 
         def get_block():
-            return Pipeline.get(pipeline.uuid).get_block(block.uuid)
+            return Pipeline.get(pipeline.uuid, repo_path=self.repo_path).get_block(block.uuid)
 
         with open(block.file_path, 'w') as file:
             file.write('')
@@ -603,14 +605,14 @@ SELECT 1 AS id;
             upstream_block_uuids=['test_data_loader'],
         )
 
-        test_block = Block.get_block('test_data_loader', 'test_data_loader', 'data_loader')
+        test_block = BlockFactory.get_block('test_data_loader', 'test_data_loader', 'data_loader')
 
         self.assertRaises(HasDownstreamDependencies, block1.delete)
         self.assertRaises(HasDownstreamDependencies, test_block.delete)
 
         test_block.delete(force=True)
 
-        pipeline = Pipeline.get('test_pipeline_delete_force')
+        pipeline = Pipeline.get('test_pipeline_delete_force', repo_path=self.repo_path)
         self.assertIsNone(pipeline.get_block('test_data_loader'))
 
         block2 = pipeline.get_block('test_transformer')
@@ -728,19 +730,20 @@ def test_output(output, *args) -> None:
             columns=['id', 'email', 'zip_code'],
         )
 
-        block.store_variables({
-            'output_sample_data_stream1': df
-        })
+        block.store_variables({'output_sample_data_stream1': df})
         output_variables = block.output_variables()
         self.assertTrue('output_sample_data_stream1' in output_variables)
 
     def test_file_path(self):
         block = Block.create('test_transformer', 'transformer', self.repo_path)
-        self.assertEqual(block.file_path, os.path.join(
-            self.repo_path,
-            'transformers',
-            f'{block.uuid}.py',
-        ))
+        self.assertEqual(
+            block.file_path,
+            os.path.join(
+                self.repo_path,
+                'transformers',
+                f'{block.uuid}.py',
+            ),
+        )
 
 
 class BlockProjectPlatformTests(ProjectPlatformMixin):
@@ -759,7 +762,37 @@ class BlockProjectPlatformTests(ProjectPlatformMixin):
                     'test_transformer',
                     'transformer',
                     self.repo_path,
-                    configuration=dict(file_source=dict(path=path))
+                    configuration=dict(file_source=dict(path=path)),
                 )
 
                 self.assertEqual(block.file_path, add_root_repo_path_to_relative_path(path))
+
+
+class CallbackBlockTest(DBTestCase):
+    def setUp(self):
+        self.pipeline = create_pipeline('callback_pipeline', self.repo_path)
+
+    def tearDown(self):
+        self.pipeline.delete()
+
+    def test_create_global_vars_from_parent_block(self):
+        parent_block = Block.create(
+            'test_data_loader',
+            'data_loader',
+            self.repo_path,
+            pipeline=self.pipeline,
+        )
+        callback_block = CallbackBlock.create(parent_block.name, self.repo_path)
+        self.pipeline.add_block(callback_block)
+        parent_block = parent_block.update(dict(callback_blocks=[callback_block.uuid]))
+        parent_block.global_vars = dict(configuration=dict(table_name='load_data_table'))
+
+        global_vars = dict(
+            random_var=1,
+        )
+        new_vars = callback_block._create_global_vars(
+            global_vars,
+            parent_block=parent_block,
+        )
+
+        self.assertIsNotNone(new_vars.get('configuration'))

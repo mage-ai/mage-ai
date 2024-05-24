@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { forwardRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 import EventPropertiesType, {
@@ -35,6 +35,7 @@ export type KeyboardShortcutWrapperProps = {
     eventParameters: EventParametersType;
     eventName: string;
     onClick?: (e?: Event) => void;
+    ref?: any;
   }) => any;
 } & KeyboardShortcutSharedProps;
 
@@ -48,7 +49,7 @@ function KeyboardShortcutWrapper({
   openNewTab,
   requireKeyUp,
   uuid,
-}: KeyboardShortcutWrapperProps) {
+}: KeyboardShortcutWrapperProps, ref) {
   const router = useRouter();
   const query = router?.query;
 
@@ -111,10 +112,8 @@ function KeyboardShortcutWrapper({
           logEventCustom(
             eventName,
             {
-              eventParameters: {
-                ...eventParameters,
-                usedKeyboardShortcut: true,
-              },
+              ...eventParameters,
+              used_keyboard_shortcut: true,
             },
           );
           onClick(event);
@@ -132,7 +131,8 @@ function KeyboardShortcutWrapper({
     eventName,
     eventParameters,
     onClick,
+    ref,
   });
 }
 
-export default KeyboardShortcutWrapper;
+export default forwardRef(KeyboardShortcutWrapper);

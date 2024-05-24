@@ -3,7 +3,25 @@ import { ScheduleTypeEnum } from './PipelineScheduleType';
 
 export const RunStatus = RunStatusEnum;
 
+/*
+ * LAST_RUN_FAILED_STATUS is a pipeline run status filter used for
+ * fetching the last pipeline run retry (or individual pipeline
+ * run if there are no retries) that has failed for each grouping
+ * of pipeline runs with the same execution date, pipeline uuid,
+ * and pipeline schedule ID.
+ */
+export const LAST_RUN_FAILED_STATUS = 'last_run_failed';
+
 export const PIPELINE_RUN_STATUSES = [
+  RunStatus.FAILED,
+  LAST_RUN_FAILED_STATUS,
+  RunStatus.COMPLETED,
+  RunStatus.RUNNING,
+  RunStatus.CANCELLED,
+  RunStatus.INITIAL,
+];
+
+export const PIPELINE_RUN_STATUSES_NO_LAST_RUN_FAILED = [
   RunStatus.FAILED,
   RunStatus.COMPLETED,
   RunStatus.RUNNING,
@@ -25,6 +43,7 @@ export const COMPLETED_STATUSES = [
 export const MAGE_VARIABLES_KEY = '__mage_variables';
 
 export const RUN_STATUS_TO_LABEL = {
+  [LAST_RUN_FAILED_STATUS]: 'Last run failed',
   [RunStatus.CANCELLED]: 'Cancelled',
   [RunStatus.COMPLETED]: 'Done',
   [RunStatus.FAILED]: 'Failed',

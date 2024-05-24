@@ -1120,7 +1120,7 @@ def run_block(
             repo_path = get_repo_path()
 
         retry_config = merge_dict(
-            get_repo_config(repo_path).retry_config or dict(),
+            get_repo_config(repo_path=repo_path).retry_config or dict(),
             block.retry_config or dict(),
         )
 

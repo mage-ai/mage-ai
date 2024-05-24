@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from time import sleep
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
+from mage_ai.data_preparation.models.block.remote.models import RemoteBlock
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -84,6 +85,7 @@ def create_and_start_pipeline_run(
     pipeline_schedule: PipelineSchedule,
     payload: Dict = None,
     should_schedule: bool = False,
+    remote_blocks: List[Union[Dict, RemoteBlock]] = None,
 ) -> PipelineRun:
     if payload is None:
         payload = {}
@@ -93,6 +95,13 @@ def create_and_start_pipeline_run(
         pipeline.type,
         payload,
     )
+
+    if remote_blocks:
+        variables = configured_payload.get('variables', {})
+        if variables.get('remote_blocks'):
+            remote_blocks = variables.get('remote_blocks', []) + remote_blocks
+        variables['remote_blocks'] = remote_blocks
+        configured_payload['variables'] = variables
 
     pipeline_run = PipelineRun.create(**configured_payload)
 

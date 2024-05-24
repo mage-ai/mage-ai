@@ -96,12 +96,17 @@ function FileBrowser({
   fetchFiles: fetchFileTree,
   fetchPipeline,
   files,
-  onClickFile,
-  onClickFolder,
+  // eslint-disable-next-line react/prop-types
+  onClickFile,        // included in FolderSharedProps
+  // eslint-disable-next-line react/prop-types
+  onClickFolder,      // included in FolderSharedProps
   onCreateFile,
-  onSelectBlockFile,
-  openFile,
-  openSidekickView,
+  // eslint-disable-next-line react/prop-types
+  onSelectBlockFile,  // included in FolderSharedProps
+  // eslint-disable-next-line react/prop-types
+  openFile,           // included in FolderSharedProps
+  // eslint-disable-next-line react/prop-types
+  openSidekickView,   // included in FolderSharedProps
   pipeline,
   renderAfterContent,
   showError,

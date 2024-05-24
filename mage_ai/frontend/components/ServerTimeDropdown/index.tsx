@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ServerTimeButton from './ServerTimeButton';
@@ -9,14 +8,14 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BREAKPOINT_MEDIUM } from '@styles/theme';
-import { 
-  DropdownCellStyle, 
-  DropdownContainerStyle, 
-  DropdownHeaderStyle, 
+import {
+  DropdownCellStyle,
+  DropdownContainerStyle,
+  DropdownHeaderStyle,
   TimeColumnStyle,
   TimeListContainerStyle,
   ToggleDropdownCellStyle,
-  ToggleGroupStyle, 
+  ToggleGroupStyle,
 } from './index.style';
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
@@ -28,19 +27,23 @@ import {
 import { PURPLE2 } from '@oracle/styles/colors/main';
 import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
 import { onSuccess } from '@api/utils/response';
-import { 
-  shouldIncludeServerTimeSeconds, 
-  storeIncludeServerTimeSeconds, 
+import {
+  shouldIncludeServerTimeSeconds,
+  storeIncludeServerTimeSeconds,
 } from '../../storage/serverTime';
 import { useError } from '@context/Error';
 
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
 type ServerTimeDropdownProps = {
+  disabled?: boolean;
+  disableTimezoneToggle?: boolean;
   projectName: string;
 };
 
 function ServerTimeDropdown({
+  disabled,
+  disableTimezoneToggle,
   projectName,
 }: ServerTimeDropdownProps) {
   const [displayLocalTimezone, setDisplayLocalTimezone] = useState<boolean>(shouldDisplayLocalTimezone());
@@ -52,7 +55,7 @@ function ServerTimeDropdown({
   const [top, setTop] = useState<number>(0);
 
   const defaultTimeZone = displayLocalTimezone
-    ? TimeZoneEnum.LOCAL 
+    ? TimeZoneEnum.LOCAL
     : TimeZoneEnum.UTC;
 
   const isSmallBreakpoint = window.innerWidth < BREAKPOINT_MEDIUM;
@@ -81,16 +84,16 @@ function ServerTimeDropdown({
     setTop(top);
   }, []);
   const updateTimes = useCallback(() => {
-    const updatedTimes = currentTimes({ 
-      includeSeconds: includeServerTimeSeconds, 
-      timeZones: DISPLAYED_TIME_ZONES, 
+    const updatedTimes = currentTimes({
+      includeSeconds: includeServerTimeSeconds,
+      timeZones: DISPLAYED_TIME_ZONES,
     });
     setTimes(prevState => {
-      if (prevState.size === updatedTimes.size 
+      if (prevState.size === updatedTimes.size
         && prevState.get(TimeZoneEnum.UTC) === updatedTimes.get(TimeZoneEnum.UTC)) {
         return prevState;
       }
-      
+
       return updatedTimes;
     });
   }, [includeServerTimeSeconds]);
@@ -113,7 +116,10 @@ function ServerTimeDropdown({
   const toggleOptions = [
     {
       checked: displayLocalTimezone,
-      label: 'Display local timezone (requires refresh)',
+      disabled: disableTimezoneToggle,
+      label: disableTimezoneToggle
+        ? 'Display local timezone (must be changed in platform preferences)'
+        : 'Display local timezone (requires refresh)',
       onCheck: toggleDisplayLocalServerTime,
       uuid: FeatureUUIDEnum.LOCAL_TIMEZONE,
     },
@@ -144,9 +150,9 @@ function ServerTimeDropdown({
   return (
     <ClickOutside onClickOutside={() => setShowDropdown(false)} open>
       <div style={{ position: 'relative' }}>
-        <ServerTimeButton 
+        <ServerTimeButton
           active={showDropdown}
-          disabled={isSmallBreakpoint}
+          disabled={isSmallBreakpoint || disabled}
           mountedCallback={setDropdownPosition}
           onClick={handleButtonClick}
           time={times.get(defaultTimeZone)}
@@ -181,13 +187,14 @@ function ServerTimeDropdown({
             <ToggleGroupStyle>
               {toggleOptions.map((option) => (
                 <ToggleDropdownCellStyle key={option.label}>
-                  <ToggleSwitch 
+                  <ToggleSwitch
                     checked={option.checked}
-                    compact 
-                    onCheck={option.onCheck} 
-                    purpleBackground
+                    compact
+                    disabled={option.disabled}
+                    onCheck={option.onCheck}
+                    purpleBackground={!option.disabled}
                   />
-                  
+
                   <Text>{option.label}</Text>
 
                   {option.uuid === FeatureUUIDEnum.LOCAL_TIMEZONE &&

@@ -103,6 +103,7 @@ Here are the keyword arguments that are  available in each callback function:
 | Name | Description | Sample value |
 | --- | --- | --- |
 | `block_uuid` | Callback block UUID. | `'fireball_callback'` |
+| `parent_block_uuid` | The block UUID of the parent block. | `'parent_block'` |
 | `ds` | Date string when the parent block started executing. | `'2023-12-25'` |
 | `event` | A dictionary containing metadata from an event triggered pipeline. | `{}` |
 | `execution_date` | Python datetime object for when the parent block started executing. | `datetime.datetime(2023, 4, 26, 20, 28, 17, 335254, tzinfo=datetime.timezone.utc)` |

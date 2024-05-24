@@ -5,8 +5,17 @@ description: "Use the output of a block to dynamically create more blocks."
 ---
 
 <Frame>
-  <img alt="Dynamic blocks" src="https://giffiles.alphacoders.com/126/126373.gif" />
+    <iframe
+        width="560"
+        height="315"
+        src="https://www.youtube.com/embed/jQZb3lrAb8w?si=VF28Os4XbinyVOi8"
+        title="YouTube video player" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+    />
 </Frame>
+
+<br />
 
 A dynamic block will create multiple downstream blocks at runtime.
 
@@ -40,6 +49,22 @@ If the above data loader has 2 downstream blocks (e.g. 2 blocks that depend on t
 then this dynamic block will create 6 total downstream blocks at runtime
 (3 users multiplied by 2 downstream blocks).
 
+<br />
+
+<AccordionGroup>
+    <Accordion title="Krichkorn Oparad" icon="block-brick-fire" iconType="duotone" defaultOpen>
+        > This feature saves me when I need to securely transfer multiple media files from one location to another (SCP), especially when the files are spread across different directories and across the network. Typically, one would have to loop through each file, but secure copy (SCP) operations can fail for various reasons, and dealing with exceptions can be error-prone.
+        >
+        > An alternative approach would be to use an API trigger (like the one provided by Mage AI) to receive POST requests for each file that needs to be securely copied. However, this method can be highly resource-intensive, particularly when dealing with thousands of pipeline runs.
+        >
+        > Dynamic block, which allows me to manage source and destination specifications in a DataFrame and then dynamically execute SCP operations without having to handle exceptions manually (thanks to the "retry incomplete block" feature), is a game-changer. Not only does it save me from the hassle of exception handling, but it also keeps computational resources in check by avoiding unnecessary pipeline triggers.
+        >
+        > Thank you for your world-class project. Keep up the excellent work.
+        >
+        > <img src="https://yt3.googleusercontent.com/ytc/AIdro_kcyWKgnvWDUDD6iOcxByIKb4E4zXJGYlT52Mtorrljo98f=s176-c-k-c0x00ffffff-no-rj" />
+    </Accordion>
+</AccordionGroup>
+
 ### Data output shape of a dynamic block
 
 A dynamic block must return a list of 2 lists of dictionaries
@@ -49,31 +74,31 @@ For example, a data loader block returns the following output:
 
 ```json
 [
-  [
-    {
-      "id": 1,
-      "name": "user_1"
-    },
-    {
-      "id": 2,
-      "name": "user_2"
-    },
-    {
-      "id": 3,
-      "name": "user_3"
-    }
-  ],
-  [
-    {
-      "block_uuid": "for_user_1"
-    },
-    {
-      "block_uuid": "for_user_2"
-    },
-    {
-      "block_uuid": "for_user_3"
-    }
-  ]
+    [
+        {
+            "id": 1,
+            "name": "user_1"
+        },
+        {
+            "id": 2,
+            "name": "user_2"
+        },
+        {
+            "id": 3,
+            "name": "user_3"
+        }
+    ],
+    [
+        {
+            "block_uuid": "for_user_1"
+        },
+        {
+            "block_uuid": "for_user_2"
+        },
+        {
+            "block_uuid": "for_user_3"
+        }
+    ]
 ]
 ```
 
@@ -84,18 +109,18 @@ These dictionaries contain data that will be passed down to all its downstream b
 
 ```json
 [
-  {
-    "id": 1,
-    "name": "user_1"
-  },
-  {
-    "id": 2,
-    "name": "user_2"
-  },
-  {
-    "id": 3,
-    "name": "user_3"
-  }
+    {
+        "id": 1,
+        "name": "user_1"
+    },
+    {
+        "id": 2,
+        "name": "user_2"
+    },
+    {
+        "id": 3,
+        "name": "user_3"
+    }
 ]
 ```
 
@@ -118,10 +143,10 @@ The return output data of this downstream transformer block will be:
 
 ```json
 [
-  {
-    "id": 100,
-    "name": "user_1"
-  }
+    {
+        "id": 100,
+        "name": "user_1"
+    }
 ]
 ```
 
@@ -137,24 +162,24 @@ These dictionaries contain metadata for each downstream block.
 
 ```json
 [
-  {
-    "block_uuid": "for_user_1"
-  },
-  {
-    "block_uuid": "for_user_2"
-  },
-  {
-    "block_uuid": "for_user_3"
-  }
+    {
+        "block_uuid": "for_user_1"
+    },
+    {
+        "block_uuid": "for_user_2"
+    },
+    {
+        "block_uuid": "for_user_3"
+    }
 ]
 ```
 
 This metadata is used to uniquely identify and create each dynamically created downstream block.
 The keys in each metadata dictionary are:
 
-| Key | Description | Required |
-| --- | --- | --- |
-| `block_uuid` | This value is used in combination with the downstream block’s original UUID to construct a unique UUID across all dynamic blocks. This value must be unique within the same list of metadata dictionaries. | Yes |
+| Key          | Description                                                                                                                                                                                                | Required |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `block_uuid` | This value is used in combination with the downstream block’s original UUID to construct a unique UUID across all dynamic blocks. This value must be unique within the same list of metadata dictionaries. | Yes      |
 
 If the above transformer block UUID is `anonymize_user_data` and the metadata for the 1st
 dynamically created block is `{ "block_uuid": "for_user_1" }`, then the dynamically created block’s
@@ -172,31 +197,31 @@ For example, if a dynamic block returns the following data:
 
 ```json
 [
-  [
-    {
-      "id": 1,
-      "name": "user_1"
-    },
-    {
-      "id": 2,
-      "name": "user_2"
-    },
-    {
-      "id": 3,
-      "name": "user_3"
-    }
-  ],
-  [
-    {
-      "block_uuid": "for_user_1"
-    },
-    {
-      "block_uuid": "for_user_2"
-    },
-    {
-      "block_uuid": "for_user_3"
-    }
-  ]
+    [
+        {
+            "id": 1,
+            "name": "user_1"
+        },
+        {
+            "id": 2,
+            "name": "user_2"
+        },
+        {
+            "id": 3,
+            "name": "user_3"
+        }
+    ],
+    [
+        {
+            "block_uuid": "for_user_1"
+        },
+        {
+            "block_uuid": "for_user_2"
+        },
+        {
+            "block_uuid": "for_user_3"
+        }
+    ]
 ]
 ```
 
@@ -219,8 +244,8 @@ def transform(data: Dict, *args, **kwargs) -> List[Dict]:
 
 There will be 3 dynamically created blocks with the following UUID and return output data:
 
-| Dynamic block UUID | Return output data |
-| --- | --- |
+| Dynamic block UUID               | Return output data                  |
+| -------------------------------- | ----------------------------------- |
 | `anonymize_user_data:for_user_1` | `[{ "id": 100, "name": "user_1" }]` |
 | `anonymize_user_data:for_user_2` | `[{ "id": 200, "name": "user_2" }]` |
 | `anonymize_user_data:for_user_3` | `[{ "id": 300, "name": "user_3" }]` |
@@ -240,18 +265,21 @@ For example, if the transformer block `anonymize_user_data` has 2 downstream blo
 dynamically created:
 
 1. `anonymize_user_data:for_user_1`
+
 ```
 → clean_column_names:for_user_1
 → compute_engagement_score:for_user_1
 ```
 
 2. `anonymize_user_data:for_user_2`
+
 ```
 → clean_column_names:for_user_2
 → compute_engagement_score:for_user_2
 ```
 
 3. `anonymize_user_data:for_user_3`
+
 ```
 → clean_column_names:for_user_3
 → compute_engagement_score:for_user_3
@@ -266,8 +294,8 @@ will have input data with the following shape and value:
 
 ```json
 {
-  "id": 100,
-  "name": "user_1"
+    "id": 100,
+    "name": "user_1"
 }
 ```
 
@@ -288,18 +316,18 @@ The input data to each of these 2 downstream blocks will be:
 
 ```json
 [
-  {
-    "id": 100,
-    "name": "user_1"
-  },
-  {
-    "id": 200,
-    "name": "user_2"
-  },
-  {
-    "id": 300,
-    "name": "user_3"
-  }
+    {
+        "id": 100,
+        "name": "user_1"
+    },
+    {
+        "id": 200,
+        "name": "user_2"
+    },
+    {
+        "id": 300,
+        "name": "user_3"
+    }
 ]
 ```
 

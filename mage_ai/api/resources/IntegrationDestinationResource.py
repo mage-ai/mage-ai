@@ -1,9 +1,12 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+    IntegrationPipeline,
+)
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.api.integration_sources import get_collection
+from mage_ai.settings.repo import get_repo_path
 
 
 class IntegrationDestinationResource(GenericResource):
@@ -27,7 +30,8 @@ class IntegrationDestinationResource(GenericResource):
         action_type = payload['action_type']
         if 'test_connection' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
-            pipeline = IntegrationPipeline.get(pipeline_uuid)
+            repo_path = get_repo_path(user=user)
+            pipeline = IntegrationPipeline.get(pipeline_uuid, repo_path=repo_path)
             config = payload['config']
 
             try:

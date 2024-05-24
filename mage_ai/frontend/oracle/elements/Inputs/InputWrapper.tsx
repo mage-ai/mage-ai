@@ -100,6 +100,7 @@ export type InputWrapperProps = {
   primary?: boolean;
   readOnly?: boolean;
   required?: boolean;
+  rows?: number;  // Used for textarea
   setContentOnMount?: boolean;
   shadow?: boolean;
   showLabelRequirement?: (opts: any) => boolean;

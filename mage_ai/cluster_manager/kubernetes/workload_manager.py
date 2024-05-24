@@ -477,6 +477,57 @@ class WorkloadManager:
 
         return k8s_service
 
+    def patch_workload(
+        self,
+        name: str,
+        workspace_config: KubernetesWorkspaceConfig,
+        update_workspace_settings: bool = False,
+    ) -> None:
+        """
+        Update workload for k8s. Currently the only fields that can be updated are
+        container_config and workspace settings.
+
+        Args:
+            name (str): name of the workload/workspace
+            workspace_config (KubernetesWorkspaceConfig): new workspace config
+            update_workspace_settings (bool): whether to update workspace settings with
+                the current pod's environment variables.
+        """
+        container_config_yaml = workspace_config.container_config
+        container_config = dict()
+        if isinstance(container_config_yaml, str):
+            container_config = yaml.full_load(container_config_yaml)
+
+        if update_workspace_settings:
+            env_vars = self.__populate_env_vars(
+                name,
+                container_config=container_config,
+            )
+            container_config['env'] = env_vars
+
+        mage_container_config = {
+            'name': f'{name}-container',
+            **container_config,
+        }
+
+        stateful_set_template_spec = {
+            'containers': [mage_container_config],
+        }
+
+        updated_stateful_set = {
+            'spec': {
+                'template': {
+                    'spec': stateful_set_template_spec,
+                },
+            },
+        }
+
+        self.apps_client.patch_namespaced_stateful_set(
+            name,
+            namespace=self.namespace,
+            body=updated_stateful_set,
+        )
+
     def add_service_to_ingress_paths(
         self,
         ingress_name: str,
@@ -712,7 +763,7 @@ class WorkloadManager:
     def __populate_env_vars(
         self,
         name,
-        project_type: str = 'standalone',
+        project_type: str = None,
         project_uuid: str = None,
         container_config: Dict = None,
         initial_metadata: Dict = None,

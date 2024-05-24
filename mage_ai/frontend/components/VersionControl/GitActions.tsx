@@ -55,10 +55,11 @@ function GitActions({
 
   const {
     data: dataAllGitBranches,
+    isValidating,
     mutate: fetchAllBranches,
-  } = api.git_custom_branches.list();
+  } = api.git_branches.list({ include_remote_branches: 1 });
   const allBranches = useMemo(
-    () => dataAllGitBranches?.['git_custom_branches'],
+    () => dataAllGitBranches?.['git_branches'],
     [dataAllGitBranches],
   );
 
@@ -92,7 +93,7 @@ function GitActions({
   );
 
   const [getStatus] = useMutation(
-    () => api.git_branches.useUpdate(branch)({ git_branch: { action_type: 'status' } }),
+    () => api.git_branches.useUpdate(encodeURIComponent(branch))({ git_branch: { action_type: 'status' } }),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -109,7 +110,7 @@ function GitActions({
   );
 
   const [performAction, { isLoading: isLoadingPerformAction }] = useMutation(
-    api.git_branches.useUpdate(branch),
+    api.git_branches.useUpdate(encodeURIComponent(branch)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -133,7 +134,7 @@ function GitActions({
     performActionWithRefresh,
     { isLoading: isLoadingPerformActionWithRefresh },
   ] = useMutation(
-    api.git_branches.useUpdate(branch),
+    api.git_branches.useUpdate(encodeURIComponent(branch)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -181,7 +182,11 @@ function GitActions({
     ],
   );
 
-  useEffect(() => updateStatus(), [action, updateStatus]);
+  useEffect(() => {
+    if (!isValidating) {
+      updateStatus();
+    }
+  }, [action, isValidating, updateStatus]);
   
   const user = useMemo(() => getUser() || {}, []);
   const sharedWebsocketData = useMemo(() => {
@@ -487,6 +492,7 @@ function GitActions({
                 switchBranch({
                   git_branch: {
                     name: e.target.value,
+                    remote: 'mage-repo',
                   },
                 });
               }}

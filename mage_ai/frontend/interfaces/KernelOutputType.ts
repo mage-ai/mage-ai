@@ -1,4 +1,4 @@
-import { BlockTypeEnum } from './BlockType';
+import { BlockTypeEnum, SampleDataType } from './BlockType';
 
 export enum ExecutionStateEnum {
   BUSY = 'busy', // Code is being executed
@@ -7,7 +7,9 @@ export enum ExecutionStateEnum {
 }
 
 export enum DataTypeEnum {
+  GROUP = 'group',
   IMAGE_PNG = 'image/png',
+  OBJECT = 'object',
   PROGRESS = 'progress',
   TABLE = 'table',
   TEXT = 'text',
@@ -15,10 +17,7 @@ export enum DataTypeEnum {
   TEXT_PLAIN = 'text/plain',
 }
 
-export const DATA_TYPE_TEXTLIKE = [
-  DataTypeEnum.TEXT,
-  DataTypeEnum.TEXT_PLAIN,
-];
+export const DATA_TYPE_TEXTLIKE = [DataTypeEnum.TEXT, DataTypeEnum.TEXT_PLAIN];
 
 export enum MsgType {
   DISPLAY_DATA = 'display_data',
@@ -28,17 +27,22 @@ export enum MsgType {
 }
 
 export default interface KernelOutputType {
-  data?: string | string[];
+  data?: SampleDataType | string | string[];
   block_type?: BlockTypeEnum;
   error?: string;
   execution_state?: ExecutionStateEnum;
+  group_id?: string | number;
   metadata?: {
     [key: string]: string;
   };
   multi_output?: boolean;
   msg_id?: string;
   msg_type?: MsgType;
+  outputs?: KernelOutputType[];
   pipeline_uuid?: string;
   type: DataTypeEnum;
   uuid?: string;
+  sample_data?: SampleDataType;
+  text_data?: string;
+  variable_uuid?: string;
 }

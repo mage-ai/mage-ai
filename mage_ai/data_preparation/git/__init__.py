@@ -19,9 +19,11 @@ from mage_ai.data_preparation.git.utils import (
     check_connection_async,
     create_ssh_keys,
     get_access_token,
+    get_oauth_access_token_for_user,
     get_provider_from_remote_url,
     poll_process_with_timeout,
     run_command,
+    validate_authentication_for_remote_url,
 )
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.sync import AuthType, GitConfig
@@ -40,22 +42,32 @@ class Git:
     def __init__(
         self,
         auth_type: AuthType = None,
+        context_data: Dict = None,
         git_config: GitConfig = None,
+        repo_path: str = None,
         setup_repo: bool = False,
+        user: User = None,
     ) -> None:
         import git
         import git.exc
 
         self.auth_type = auth_type if auth_type else AuthType.SSH
+        self.context_data = context_data if context_data is not None else dict()
         self.git_config = git_config
+        self.user = user
         self.origin = None
         self.remote_repo_link = None
         self.repo = None
 
-        self.repo_path = os.getcwd()
+        self.project_repo_path = repo_path or get_repo_path(user=user)
 
+        self.repo_path = os.getcwd()
         if project_platform_activated():
-            git_dict = git_settings()
+            git_dict = git_settings(
+                context_data=self.context_data,
+                repo_path=self.project_repo_path,
+                user=user,
+            )
             if git_dict and git_dict.get('path'):
                 self.repo_path = git_dict.get('path')
 
@@ -79,8 +91,7 @@ class Git:
             if setup_repo:
                 self.__setup_repo()
 
-        if self.repo and self.git_config:
-            self.__set_git_config()
+        self.__set_git_config()
 
         if self.remote_repo_link and self.repo:
             try:
@@ -148,12 +159,19 @@ class Git:
     @classmethod
     def get_manager(
         self,
-        user: User = None,
-        setup_repo: bool = False,
         auth_type: str = None,
         config_overwrite: Dict = None,
+        context_data: Dict = None,
+        preferences=None,
+        repo_path: str = None,
+        setup_repo: bool = False,
+        user: User = None,
     ) -> 'Git':
-        preferences = get_preferences(user=user)
+        if preferences is None:
+            preferences = get_preferences(
+                repo_path=repo_path,
+                user=user,
+            )
         git_config = None
         config = preferences.sync_config if preferences and preferences.sync_config else {}
 
@@ -162,10 +180,16 @@ class Git:
 
         git_config = GitConfig.load(config=config)
 
+        if auth_type is None:
+            auth_type = git_config.auth_type
+
         return Git(
             auth_type=auth_type,
+            context_data=context_data,
             git_config=git_config,
+            repo_path=repo_path,
             setup_repo=setup_repo,
+            user=user,
         )
 
     @property
@@ -182,8 +206,11 @@ class Git:
 
         return [branch.name for branch in self.repo.branches]
 
-    async def check_connection(self) -> None:
-        await check_connection_async(self.repo.git, self.origin.name)
+    async def check_connection(self, remote_url: str = None) -> None:
+        if remote_url:
+            await validate_authentication_for_remote_url(self.repo.git, remote_url)
+        else:
+            await check_connection_async(self.repo.git, self.origin.name)
 
     def _remote_command(func: Callable) -> None:
         """
@@ -224,19 +251,19 @@ class Git:
             elif self.auth_type == AuthType.HTTPS:
                 token = self.get_access_token()
                 url_original = list(self.origin.urls)[0]
+                remote_repo_link = self.remote_repo_link
                 if self.git_config and self.remote_repo_link and token:
-                    self.remote_repo_link = build_authenticated_remote_url(
+                    remote_repo_link = build_authenticated_remote_url(
                         self.remote_repo_link,
                         self.git_config.username,
                         token,
                     )
-                    self.origin.set_url(self.remote_repo_link)
+                    self.origin.set_url(remote_repo_link)
                 try:
-                    asyncio.run(self.check_connection())
+                    asyncio.run(self.check_connection(remote_url=remote_repo_link))
                     return func(self, *args, **kwargs)
                 finally:
                     self.origin.set_url(url_original)
-                    self.remote_repo_link = url_original
         return wrapper
 
     def add_remote(self, name: str, url: str) -> None:
@@ -433,6 +460,10 @@ class Git:
         self.__pip_install()
 
     @_remote_command
+    def fetch(self) -> None:
+        self.origin.fetch()
+
+    @_remote_command
     def push(self) -> None:
         self.repo.git.push(
             '--set-upstream',
@@ -564,7 +595,7 @@ class Git:
                 if len(remote_refs) == 0 and user:
                     from mage_ai.data_preparation.git import api
 
-                    access_token = api.get_access_token_for_user(user)
+                    access_token = get_oauth_access_token_for_user(user)
                     if access_token:
 
                         if remote_exists:
@@ -685,14 +716,21 @@ class Git:
         elif remote:
             # For remote branches, switch to the local branch if it exists. Otherwise create a new
             # branch using the remote branch as the starting point.
-            if branch.startswith(remote):
-                branch = branch[len(remote) + 1:]
-            if branch in self.repo.heads:
-                self.repo.git.switch(branch)
-            else:
-                self.repo.git.switch('-c', branch, f'{remote}/{branch}')
+            self._switch_remote_branch(branch, remote)
         else:
             self.repo.git.switch('-c', branch)
+
+    @_remote_command
+    def _switch_remote_branch(self, branch: str, remote: str) -> None:
+        self.switch_remote_branch(branch, remote)
+
+    def switch_remote_branch(self, branch: str, remote: str) -> None:
+        if branch.startswith(remote):
+            branch = branch[len(remote) + 1:]
+        if branch in self.repo.heads:
+            self.repo.git.switch(branch)
+        else:
+            self.repo.git.switch('-c', branch, f'{remote}/{branch}')
 
     @_remote_command
     def clone(self, sync_submodules: bool = False) -> None:
@@ -729,13 +767,23 @@ class Git:
             shutil.rmtree(tmp_path)
 
     def __set_git_config(self):
-        if self.git_config.username:
-            self.repo.config_writer().set_value(
-                'user', 'name', self.git_config.username).release()
-        if self.git_config.email:
-            self.repo.config_writer().set_value(
-                'user', 'email', self.git_config.email).release()
-        self.repo.config_writer('global').set_value(
+        from git.config import GitConfigParser
+        if self.git_config:
+            if self.git_config.username:
+                self.repo.config_writer().set_value(
+                    'user', 'name', self.git_config.username).release()
+            if self.git_config.email:
+                self.repo.config_writer().set_value(
+                    'user', 'email', self.git_config.email).release()
+
+        # This GitConfigParser is created in the same way that GitPython creates a
+        # global config parser. We create it this way to avoid needing to create a
+        # git.Repo object.
+        global_config = GitConfigParser(
+            os.path.normpath(os.path.expanduser("~/.gitconfig")),
+            read_only=False,
+        )
+        global_config.set_value(
             'safe', 'directory', Path(self.repo_path).as_posix()).release()
 
     def __pip_install(self) -> None:
@@ -756,10 +804,10 @@ class Git:
                 pass
 
     def __create_ssh_keys(self, overwrite: bool = False) -> str:
-        return create_ssh_keys(self.git_config, get_repo_path(), overwrite=overwrite)
+        return create_ssh_keys(self.git_config, self.project_repo_path, overwrite=overwrite)
 
     def __add_host_to_known_hosts(self):
         return add_host_to_known_hosts_util(self.git_config.remote_repo_link)
 
     def get_access_token(self) -> str:
-        return get_access_token(self.git_config)
+        return get_access_token(self.git_config, self.project_repo_path)

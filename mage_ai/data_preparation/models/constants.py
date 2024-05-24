@@ -15,14 +15,18 @@ DATAFRAME_ANALYSIS_MAX_ROWS = 100_000
 DATAFRAME_SAMPLE_COUNT = 1000
 DATAFRAME_SAMPLE_COUNT_PREVIEW = 10
 DATAFRAME_SAMPLE_MAX_COLUMNS = 1000
-LOGS_DIR = '.logs'
+DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW = 10
+LOGS_SUBDIR = '.logs'
 MAX_PRINT_OUTPUT_LINES = int(os.getenv('MAX_PRINT_OUTPUT_LINES', 1000) or 1000)
+MAX_RESULTS_FOR_BLOCK_OUTPUTS_PREVIEW = 10
 PIPELINE_CONFIG_FILE = 'metadata.yaml'
 PIPELINE_MAX_FILE_SIZE = 500000  # maximum size of a pipeline import zip in kb (500Mb)
 PIPELINES_FOLDER = 'pipelines'
 PREFERENCES_FILE = '.preferences.yaml'
 REPO_CONFIG_FILE = 'metadata.yaml'
 VARIABLE_DIR = '.variables'
+
+PIPELINE_RUN_STATUS_LAST_RUN_FAILED = 'last_run_failed'
 
 
 class AIMode(str, Enum):
@@ -101,9 +105,9 @@ class PipelineType(str, Enum):
 
 
 class PipelineStatus(str, Enum):
-    ACTIVE = 'active',              # At least one active trigger
-    INACTIVE = 'inactive',          # All inactive triggers
-    NO_SCHEDULES = 'no_schedules',  # No triggers
+    ACTIVE = ('active',)  # At least one active trigger
+    INACTIVE = ('inactive',)  # All inactive triggers
+    NO_SCHEDULES = ('no_schedules',)  # No triggers
 
 
 BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
@@ -155,8 +159,9 @@ SINGULAR_FOLDER_BLOCK_TYPES = [
     BlockType.CUSTOM,
 ]
 
-BLOCK_TYPE_DIRECTORY_NAME = \
-    {v: f'{v.value}s' for v in BlockType if v not in SINGULAR_FOLDER_BLOCK_TYPES}
+BLOCK_TYPE_DIRECTORY_NAME = {
+    v: f'{v.value}s' for v in BlockType if v not in SINGULAR_FOLDER_BLOCK_TYPES
+}
 
 
 PIPELINE_TYPE_DISPLAY_NAME_MAPPING = {

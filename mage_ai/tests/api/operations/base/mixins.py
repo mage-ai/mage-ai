@@ -34,7 +34,7 @@ class BaseOperationMixin:
                 self.faker.unique.random_int(),
             ],
         )
-        self.user = User(username=self.faker.unique.name())
+        self.user = User.create(username=self.faker.unique.name())
 
         self.tags = [
             dict(

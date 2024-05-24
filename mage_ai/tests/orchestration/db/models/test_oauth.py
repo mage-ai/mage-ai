@@ -17,7 +17,7 @@ class RoleTests(DBTestCase):
         Role.create_default_roles(
             entity=Entity.PROJECT,
             entity_id=test_entity_id,
-            prefix='test',
+            name_func=lambda x: f'test_{x}',
         )
         owner = Role.query.filter(Role.name == 'test_Owner').one_or_none()
 
@@ -29,12 +29,12 @@ class RoleTests(DBTestCase):
         Role.create_default_roles(
             entity=Entity.PROJECT,
             entity_id=test_entity_id,
-            prefix='test-2',
+            name_func=lambda x: f'test-2_{x}',
         )
         Role.create_default_roles(
             entity=Entity.PROJECT,
             entity_id=test_entity_id2,
-            prefix='test-2',
+            name_func=lambda x: f'test-2_{x}',
         )
         owner = Role.query.filter(Role.name == 'test-2_Owner').one_or_none()
 

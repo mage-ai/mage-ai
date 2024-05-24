@@ -230,12 +230,18 @@ function BlockRuntimeMonitor({
                     top: 10,
                   }}
                   noCurve
-                  renderXTooltipContent={data => (
+                  renderXTooltipContent={(data: {
+                    x: string | number;
+                    y: string | number | (string | number)[];
+                  }) => (
                     <Text center inverted small>
                       {moment(data.x).format('MMM DD')}
                     </Text>
                   )}
-                  renderYTooltipContent={(data, idx) => {
+                  renderYTooltipContent={(data: {
+                    x: string | number;
+                    y: string | number | (string | number)[];
+                  }, idx) => {
                     const yValue = data?.y?.[idx];
                     if (blockUuid === ALL_BLOCKS_KEY) {
                       const individualBlockUUID = yValue?.blockUUID;

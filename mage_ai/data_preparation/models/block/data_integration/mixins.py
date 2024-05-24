@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
     BlockLanguage,
     BlockType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -202,23 +203,34 @@ class DataIntegrationMixin:
             with open(catalog_full_path, mode='w') as f:
                 f.write(json.dumps(catalog))
 
-    def is_data_integration(self) -> bool:
+    def is_data_integration(self, pipeline_project: Project = None) -> bool:
         """
         Check if the block is a data integration block.
         If the data_integration_in_batch_pipeline feature is not enabled, return False.
 
+        Args:
+            pipeline_project (Project, optional): A cached Project value to avoid
+                looking it up many times when called inside loops. Defaults to None.
+
         Returns:
             bool: True if it's a data integration block, False otherwise.
         """
-        if not self.pipeline or not \
-                Project(self.pipeline.repo_config).is_feature_enabled(
-                    FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-                ):
+        if not self.pipeline:
+            return False
+
+        actual_project: Project = pipeline_project
+        if not actual_project:
+            actual_project = self.pipeline.project
+
+        if not actual_project.is_feature_enabled(
+                        FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
+                    ):
 
             return False
 
         if self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
-                BlockLanguage.YAML == self.language:
+                BlockLanguage.YAML == self.language and \
+                self.pipeline.type != PipelineType.STREAMING:
 
             return True
 

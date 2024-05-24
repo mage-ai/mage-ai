@@ -7,11 +7,12 @@ from datetime import datetime
 from typing import Callable, Dict, List
 
 from mage_ai.data_preparation.logging import LoggingConfig
-from mage_ai.data_preparation.models.constants import LOGS_DIR
+from mage_ai.data_preparation.models.constants import LOGS_SUBDIR
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.server import LOGS_DIR_PATH
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import str_to_timedelta
 
@@ -175,13 +176,13 @@ class LoggerManager:
             str: The log file path prefix based on pipeline_uuid, logs_dir, partition, and
                  subpartition.
         """
-        logs_dir = self.logs_dir or self.repo_config.variables_dir
+        logs_dir = self.logs_dir or LOGS_DIR_PATH or self.repo_config.variables_dir
 
         return os.path.join(
             logs_dir,
             'pipelines',
             pipeline_uuid or self.pipeline_uuid or 'all_pipelines',
-            LOGS_DIR,
+            LOGS_SUBDIR,
             self.partition or '',
             self.subpartition or '',
         )

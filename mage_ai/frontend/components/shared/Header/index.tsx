@@ -44,9 +44,11 @@ import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getSetSettings } from '@storage/CommandCenter/utils';
+import { isEmptyObject } from '@utils/hash';
 import { launchCommandCenter } from '@components/CommandCenter/utils';
 import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
+import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
 
@@ -61,6 +63,7 @@ export type MenuItemType = {
 
 export type HeaderProps = {
   breadcrumbs?: BreadcrumbType[];
+  hideActions?: boolean;
   menuItems?: MenuItemType[];
   project?: ProjectType;
   version?: string;
@@ -68,6 +71,7 @@ export type HeaderProps = {
 
 function Header({
   breadcrumbs: breadcrumbsProp,
+  hideActions,
   menuItems,
   project: projectProp,
   version: versionProp,
@@ -121,11 +125,12 @@ function Header({
   const {
     featureEnabled,
     featureUUIDs,
+    isLoadingProject,
     isLoadingUpdate,
     project: projectInit,
     rootProject,
     updateProject,
-  } = useProject();
+  } = useProject({ showError: hideActions ? null : showError });
   const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
   const commandCenterEnabled = useMemo(() =>
@@ -136,6 +141,7 @@ function Header({
     featureEnabled,
     featureUUIDs,
   ]);
+  const projectPlatformOverrideFeaturesEnabled = !isEmptyObject(project?.features_override);
   projectRef.current = project;
 
   const launchCommandCenterWrapper = useCallback(() => {
@@ -211,6 +217,8 @@ function Header({
                 response,
               });
             } else {
+              const displayLocalTimeUpdated: boolean = !!response?.data?.project?.features?.display_local_timezone;
+              storeLocalTimezoneSetting(displayLocalTimeUpdated);
               if (typeof window !== 'undefined') {
                 window.location.reload();
               }
@@ -227,23 +235,18 @@ function Header({
     }
 
     breadcrumbProjects.push(crumb);
+  } else if (!isLoadingProject && !hideActions) {
+    breadcrumbProjects.push({
+      bold: true,
+      danger: true,
+      label: () => 'Error loading project configuration',
+    });
   }
 
-  const breadcrumbs = useMemo(() => {
-    // breadcrumbsProp || [{
-    //   bold: true,
-    //   label: () => project?.name,
-    //   linkProps: {
-    //     href: '/',
-    //     sameColorText: true,
-    //   },
-    // }]
-
-    return [
+  const breadcrumbs = useMemo(() => [
       ...breadcrumbProjects,
       ...(breadcrumbsProp || []),
-    ];
-  }, [
+    ], [
     breadcrumbProjects,
     breadcrumbsProp,
     project,
@@ -320,23 +323,25 @@ function Header({
     design,
   ]);
 
-  const userDropdown: FlyoutMenuItemType[] = [
-    {
-      label: () => 'Settings',
-      linkProps: {
-        href: '/settings/workspace/preferences',
+  const userDropdown: FlyoutMenuItemType[] = hideActions
+    ? []
+    : [
+      {
+        label: () => 'Settings',
+        linkProps: {
+          href: '/settings/workspace/preferences',
+        },
+        uuid: 'user_settings',
       },
-      uuid: 'user_settings',
-    },
-    {
-      label: () => 'Launch command center',
-      onClick: (e) => {
-        pauseEvent(e);
-        launchCommandCenterWrapper();
+      {
+        label: () => 'Launch command center',
+        onClick: (e) => {
+          pauseEvent(e);
+          launchCommandCenterWrapper();
+        },
+        uuid: 'Launch command center',
       },
-      uuid: 'Launch command center',
-    },
-  ];
+    ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
@@ -467,7 +472,7 @@ function Header({
             />
           </Flex>
 
-          {!!project && (
+          {(!!project && !hideActions) && (
             <Flex flex={1} alignItems="center" justifyContent="center">
               <Spacing ml={PADDING_UNITS} />
 
@@ -594,6 +599,8 @@ function Header({
 
             <Spacing ml={1}>
               <ServerTimeDropdown
+                disableTimezoneToggle={projectPlatformOverrideFeaturesEnabled}
+                disabled={hideActions}
                 projectName={project?.name}
               />
             </Spacing>

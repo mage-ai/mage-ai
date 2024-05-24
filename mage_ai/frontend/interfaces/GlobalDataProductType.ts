@@ -27,6 +27,8 @@ export default interface GlobalDataProductType {
   object_uuid?: string;
   outdated_after?: GlobalDataProductOutdatedAfterType;
   outdated_starting_at?: GlobalDataProductOutdatedStartingAtType;
+  project?: string;
+  repo_path?: string;
   settings?: {
     [block_uuid: string]: {
       partitions?: number;

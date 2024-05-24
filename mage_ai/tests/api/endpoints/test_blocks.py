@@ -2,6 +2,7 @@ import os
 
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_create_endpoint_tests,
@@ -14,7 +15,7 @@ from mage_ai.tests.shared.mixins import DBTMixin
 
 
 def get_pipeline(self):
-    return Pipeline.get(self.pipeline.uuid)
+    return Pipeline.get(self.pipeline.uuid, repo_path=get_repo_path())
 
 
 class BlockAPIEndpointTest(BaseAPIEndpointTest):

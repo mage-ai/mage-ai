@@ -108,6 +108,7 @@ def gen_table_creation_query(
     case_sensitive: bool = False,
     unique_constraints: List[str] = None,
     overwrite_types: Dict = None,
+    skip_semicolon_at_end: bool = False,
 ) -> str:
     """
     Generates a database table creation query from a data frame.
@@ -157,4 +158,6 @@ def gen_table_creation_query(
         query.append(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
         )
+    if skip_semicolon_at_end:
+        return f'CREATE TABLE {full_table_name} (' + ','.join(query) + ')'
     return f'CREATE TABLE {full_table_name} (' + ','.join(query) + ');'

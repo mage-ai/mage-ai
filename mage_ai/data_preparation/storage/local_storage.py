@@ -92,12 +92,18 @@ class LocalStorage(BaseStorage):
             os.makedirs(dirname, exist_ok=True)
 
         with open(file_path, 'w') as file:
-            simplejson.dump(
-                data,
-                file,
-                default=encode_complex,
-                ignore_nan=True,
-            )
+            try:
+                simplejson.dump(
+                    data,
+                    file,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            except ValueError as err:
+                if is_debug():
+                    raise err
+                else:
+                    print(f'[ERROR] LocalStorage.write_json_file: {err}')
 
     async def write_json_file_async(self, file_path: str, data) -> None:
         async with aiofiles.open(file_path, mode='w') as file:

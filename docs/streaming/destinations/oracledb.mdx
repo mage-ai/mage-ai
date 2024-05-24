@@ -1,0 +1,30 @@
+---
+title: "Oracle Database"
+---
+
+## Basic config
+
+```yaml
+connector_type: oracledb
+user: your_user_name
+password: your_user_password
+host: host_name
+port: port_number
+table: exported_table_name
+service_name: exported_service_name
+```
+
+* `user`: Ther user account in Oracle Database to export data with.
+* `password`: password of the user account.
+* `host`: Oracle Database host name.
+* `port`: Oracle Database port number.
+* `table`: Table name to export.
+* `service_name`: Oracle Database service name.
+
+## Optional fields
+
+```yaml
+mode: mode_to_export
+```
+
+* `mode`: Export mode. Available values: `thin`, `thick`.

@@ -21,7 +21,7 @@ class ApplicationFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
         items = []
 
-        for item_dict in (self.page_history or []):
+        for item_dict in self.page_history or []:
             item_scored = self.filter_score(item_dict)
             if item_scored:
                 items.append(item_scored)
@@ -70,12 +70,15 @@ class ApplicationFactory(BaseFactory):
                 if app:
                     status = (app.get('state') or {}).get('status')
                     if ApplicationExpansionStatus.MINIMIZED == status:
-                        pass
-
-                    self.filter_score_mutate_accumulator(
-                        await build_close_application(uuid),
-                        items,
-                    )
+                        self.filter_score_mutate_accumulator(
+                            await build_open_application(uuid),
+                            items,
+                        )
+                    else:
+                        self.filter_score_mutate_accumulator(
+                            await build_close_application(uuid),
+                            items,
+                        )
 
             if not app:
                 self.filter_score_mutate_accumulator(

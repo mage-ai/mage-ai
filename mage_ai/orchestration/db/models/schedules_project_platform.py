@@ -39,13 +39,22 @@ class PipelineScheduleProjectPlatformMixin:
     def repo_query_project_platform(cls):
         repo_paths = []
 
-        queries = Project().repo_path_for_database_query('pipeline_schedules')
+        context_data = dict()
+        queries = Project(
+            context_data=context_data,
+        ).repo_path_for_database_query('pipeline_schedules')
         if queries:
             repo_paths.extend(queries)
 
-        repo_paths.extend([d.get(
-            'full_path',
-        ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()])
+        repo_paths.extend([
+            d.get(
+                'full_path',
+            )
+            for d in build_repo_path_for_all_projects(
+                context_data=context_data,
+                mage_projects_only=True,
+            ).values()
+        ])
 
         return cls.query.filter(
             or_(
@@ -149,14 +158,11 @@ class PipelineScheduleProjectPlatformMixin:
 
         pipeline_use = pipeline or self.pipeline
         if not pipeline_use:
-            try:
-                Pipeline.get(self.pipeline_uuid)
-            except Exception:
-                print(
-                    f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
-                    + f'for pipeline schedule ID {self.id}.',
-                )
-                return False
+            print(
+                f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
+                + f'for pipeline schedule ID {self.id}.',
+            )
+            return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
             pipeline_run_count = self.pipeline_runs_count
