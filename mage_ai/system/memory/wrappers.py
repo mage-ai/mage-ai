@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from logging import Logger
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from mage_ai.settings.server import DEBUG_MEMORY
 from mage_ai.shared.environments import is_debug
 from mage_ai.system.memory.utils import get_memory_usage, log_or_print
 from mage_ai.system.models import ResourceUsage
@@ -81,7 +82,7 @@ def execute_with_memory_tracking(
     # Pass the wrapped function to get_memory_usage for execution and memory tracking
     result, resource_usage = get_memory_usage(
         wrapped_function=wrapped_function,
-        log=True,
+        log=DEBUG_MEMORY,
         message_prefix=log_message_prefix,
     )
 

@@ -354,7 +354,7 @@ def __builder_scanner_generator_configurations(
             dataset = ds.dataset(source, format='parquet', partitioning='hive')
     except FileNotFoundError as err:
         print(f'[ERROR] scan_batch_datasets_generator: {err}')
-        return None, {}, []
+        return ds.dataset([]), {}, []
 
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:

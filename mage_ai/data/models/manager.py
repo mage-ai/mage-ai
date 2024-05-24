@@ -92,9 +92,10 @@ class DataManager(BaseData):
         sample_count: Optional[int] = None,
     ) -> Optional[Union[OutputData, ScanBatchDatasetResult, RecordBatchGenerator]]:
         def __process_batch(batch: ScanBatchDatasetResult):
-            if isinstance(batch, (pd.DataFrame, pd.Series, pl.DataFrame, pl.Series)):
-                return batch
-            return batch.deserialize()
+            if batch is not None:
+                if isinstance(batch, (pd.DataFrame, pd.Series, pl.DataFrame, pl.Series)):
+                    return batch
+                return batch.deserialize()
 
         def __process_generator(generator_batch):
             batches = [__process_batch(batch) for batch in generator_batch if batch is not None]

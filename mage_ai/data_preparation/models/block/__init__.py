@@ -1330,6 +1330,7 @@ class Block(
                 def __store_variables(
                     variable_mapping: Dict[str, Any],
                     delete_before_adding: Optional[bool] = None,
+                    skip_delete: Optional[bool] = None,
                     block=self,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
@@ -1342,6 +1343,7 @@ class Block(
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
                         delete_before_adding=delete_before_adding,
+                        skip_delete=skip_delete,
                         spark=block.__get_spark_session_from_global_vars(
                             global_vars=global_vars,
                         ),
@@ -1931,6 +1933,7 @@ class Block(
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
             dynamic = is_dynamic_block(self)
+            dynamic_child = is_dynamic_block_child(self)
 
             output_count = 0
             for data in output:
@@ -1959,6 +1962,7 @@ class Block(
                 self._store_variables_in_block_function(
                     variable_mapping=variable_mapping,
                     delete_before_adding=dynamic,
+                    skip_delete=dynamic_child and output_count >= 1,
                     **store_options,
                 )
 
@@ -3327,7 +3331,8 @@ class Block(
         override: bool = False,
         override_outputs: bool = False,
         delete_before_adding: Optional[bool] = None,
-        spark=None,
+        skip_delete: Optional[bool] = None,
+        spark: Optional[bool] = None,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
     ) -> None:
@@ -3347,7 +3352,7 @@ class Block(
 
         is_dynamic = is_dynamic_block(self)
         is_dynamic_child = is_dynamic_block_child(self)
-        if is_dynamic_child:
+        if is_dynamic_child and not skip_delete:
             delete_variable_objects_for_dynamic_child(
                 self,
                 dynamic_block_index=dynamic_block_index,

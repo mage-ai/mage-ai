@@ -442,7 +442,7 @@ def get_outputs_for_display_dynamic_block(
         child_data, metadata = pairs
         formatted_outputs = []
 
-        if child_data and isinstance(child_data, list) and len(child_data) >= 1:
+        if child_data is not None and isinstance(child_data, list) and len(child_data) >= 1:
             for output_idx, output in enumerate(child_data):
                 output_formatted, _ = format_output_data(
                     block,
