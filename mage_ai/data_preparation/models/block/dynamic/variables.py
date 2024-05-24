@@ -13,6 +13,7 @@ import polars as pl
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.shared.strings import to_ordinal_integers
+from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
 
 class LazyVariable:
@@ -423,17 +424,24 @@ def get_outputs(
 def get_outputs_for_dynamic_block(
     block, **kwargs
 ) -> List[Optional[Union[Dict, int, str, pd.DataFrame, Any]]]:
-    values = get_outputs(block, **kwargs)
+    def func():
+        values = get_outputs(block, **kwargs)
 
-    if BlockLanguage.SQL == block.language:
-        return [values[0] if len(values) == 1 else values, None]
+        if BlockLanguage.SQL == block.language:
+            return [values[0] if len(values) == 1 else values, None]
 
-    if len(values) >= 2:
-        return values[0], values[1]
-    elif len(values) >= 1:
-        return [values[0], None]
+        if len(values) >= 2:
+            return values[0], values[1]
+        elif len(values) >= 1:
+            return [values[0], None]
 
-    return [None, None]
+        return [None, None]
+
+    result, _ = execute_with_memory_tracking(
+        func,
+        log_message_prefix=f'[get_outputs_for_dynamic_block:{block.uuid}]',
+    )
+    return result
 
 
 async def get_outputs_for_dynamic_block_async(
@@ -460,26 +468,33 @@ def get_outputs_for_dynamic_child(
     sample: bool = False,
     sample_count: Optional[int] = None,
 ) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
-    # List[List[Variable]]
-    list_of_lists_of_variables = __get_all_variable_objects_for_dynamic_child(
-        block,
-        execution_partition=execution_partition,
-    )
-
-    # List[List[LazyVariableSet]]
-    lazy_variables_sets = [
-        LazyVariableSet(
+    def func():
+        # List[List[Variable]]
+        list_of_lists_of_variables = __get_all_variable_objects_for_dynamic_child(
             block,
-            variable_objects,
-            logger=logger,
-            logging_tags=logging_tags,
-            sample=sample,
-            sample_count=sample_count,
+            execution_partition=execution_partition,
         )
-        for variable_objects in list_of_lists_of_variables
-    ]
 
-    return LazyVariableController(block, lazy_variables_sets)
+        # List[List[LazyVariableSet]]
+        lazy_variables_sets = [
+            LazyVariableSet(
+                block,
+                variable_objects,
+                logger=logger,
+                logging_tags=logging_tags,
+                sample=sample,
+                sample_count=sample_count,
+            )
+            for variable_objects in list_of_lists_of_variables
+        ]
+
+        return LazyVariableController(block, lazy_variables_sets)
+
+    result, _ = execute_with_memory_tracking(
+        func,
+        log_message_prefix=f'[get_outputs_for_dynamic_child:{block.uuid}]',
+    )
+    return result
 
 
 def fetch_input_variables_for_dynamic_upstream_blocks(

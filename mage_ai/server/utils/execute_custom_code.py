@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
+from mage_ai.system.memory.manager import MemoryManager
 
 db_connection.start_session()
 '{spark_session_init}'
@@ -91,21 +92,25 @@ def execute_custom_code():
 
     if is_dynamic_child:
         outputs = []
-        settings = build_combinations_for_dynamic_child(block, **options)
-        for dynamic_block_index, config in enumerate(settings):
-            output_dict = block.execute_with_callback(**merge_dict(options, config))
-            if output_dict and output_dict.get('output'):
-                outputs.append(output_dict.get('output'))
+        with MemoryManager(
+            scope_uuid='dynamic_blocks', process_uuid='build_combinations_for_dynamic_child'
+        ):
+            settings = build_combinations_for_dynamic_child(block, **options)
+        with MemoryManager(scope_uuid='dynamic_blocks', process_uuid='execute_with_callback'):
+            for dynamic_block_index, config in enumerate(settings):
+                output_dict = block.execute_with_callback(**merge_dict(options, config))
+                if output_dict and output_dict.get('output'):
+                    outputs.append(output_dict.get('output'))
 
-            if bool('{run_tests}'):
-                block.run_tests(
-                    custom_code=code,
-                    dynamic_block_index=dynamic_block_index,
-                    from_notebook=True,
-                    logger=logger,
-                    global_vars=global_vars,
-                    update_tests=False,
-                )
+                if bool('{run_tests}'):
+                    block.run_tests(
+                        custom_code=code,
+                        dynamic_block_index=dynamic_block_index,
+                        from_notebook=True,
+                        logger=logger,
+                        global_vars=global_vars,
+                        update_tests=False,
+                    )
 
         block_output['output'] = outputs
     else:

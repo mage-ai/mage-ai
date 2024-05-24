@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from mage_ai.data.constants import InputDataType
+from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
@@ -18,6 +19,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.environments import is_debug
@@ -63,6 +65,7 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        clean_variable_uuid: bool = True,
         disable_variable_type_inference: bool = False,
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
@@ -70,46 +73,85 @@ class VariableManager:
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ) -> None:
+    ) -> Variable:
         """
         Used by:
             block
             block/data_integration/utils
         """
+        basic_iterable = False
         if not disable_variable_type_inference:
-            variable_type, _ = infer_variable_type(
+            variable_type, basic_iterable = infer_variable_type(
                 data,
                 repo_path=self.repo_path,
                 variable_type=variable_type,
             )
 
         variable = Variable(
-            clean_name(variable_uuid),
+            clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
             self.pipeline_path(pipeline_uuid),
             block_uuid,
-            partition=partition,
-            storage=self.storage,
-            variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
             input_data_types=input_data_types,
-            resource_usage=resource_usage,
+            partition=partition,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
+            resource_usage=resource_usage,
+            storage=self.storage,
+            variable_type=variable_type,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
         )
 
         # Delete data if it exists
         variable.delete()
-        variable.variable_type = variable_type
-        variable.write_data(data)
+
+        if (
+            basic_iterable
+            and MEMORY_MANAGER_V2
+            and variable_type
+            in [
+                VariableType.DATAFRAME,
+                VariableType.POLARS_DATAFRAME,
+                VariableType.SERIES_PANDAS,
+                VariableType.SERIES_POLARS,
+            ]
+        ):
+            for idx, data_nested in enumerate(DataGenerator(data)):
+                variable_nested = self.add_variable(
+                    pipeline_uuid,
+                    block_uuid,
+                    os.path.join(str(variable_uuid), str(idx)),
+                    data_nested,
+                    clean_block_uuid=clean_block_uuid,
+                    clean_variable_uuid=False,
+                    input_data_types=input_data_types,
+                    partition=partition,
+                    read_batch_settings=read_batch_settings,
+                    read_chunks=read_chunks,
+                    resource_usage=resource_usage,
+                    variable_type=variable_type,
+                    write_batch_settings=write_batch_settings,
+                    write_chunks=write_chunks,
+                )
+                if variable_nested.variable_type:
+                    variable.variable_types.append(variable_nested.variable_type)
+
+            variable.variable_type = VariableType.ITERABLE
+            variable.write_metadata()
+        else:
+            variable.variable_type = variable_type
+            variable.write_data(data)
 
         if is_debug():
             print(
-                f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
-                f"in pipeline {pipeline_uuid} "
-                f"stored in {variable.variable_path}"
+                f'Variable {variable_uuid} ({variable_type or "no type"}) '
+                f'for block {block_uuid} '
+                f'in pipeline {pipeline_uuid} '
+                f'stored in {variable.variable_path}'
             )
+
+        return variable
 
     def build_variable(
         self,

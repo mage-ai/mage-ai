@@ -81,7 +81,7 @@ def execute_with_memory_tracking(
     # Pass the wrapped function to get_memory_usage for execution and memory tracking
     result, resource_usage = get_memory_usage(
         wrapped_function=wrapped_function,
-        log=is_debug(),
+        log=True,
         message_prefix=log_message_prefix,
     )
 

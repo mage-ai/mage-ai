@@ -18,7 +18,7 @@ from mage_ai.data.constants import (
     ScanBatchDatasetResult,
     TaggedRecordBatch,
 )
-from mage_ai.data.models.generator import GeneratorWithMetadata
+from mage_ai.data.models.generator import DataGenerator, GeneratorWithMetadata
 from mage_ai.data.tabular.constants import FilterComparison
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.utils import compare_object
@@ -306,7 +306,7 @@ def scan_batch_datasets_generator(
     source: Union[List[str], str],
     chunks: Optional[List[int]] = None,
     columns: Optional[List[str]] = None,
-    deserialize: Optional[bool] = False,
+    deserialize: Optional[bool] = None,
     filter: Optional[ds.Expression] = None,
     filters: Optional[List[List[str]]] = None,
     scan: Optional[bool] = False,
@@ -340,18 +340,24 @@ def scan_batch_datasets_generator(
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
     try:
-        dataset = ds.dataset(source, format='parquet', partitioning='hive')
+        if isinstance(source, list):
+            dataset = ds.dataset(
+                [ds.dataset(path, format='parquet', partitioning='hive') for path in source],
+            )
+        else:
+            dataset = ds.dataset(source, format='parquet', partitioning='hive')
     except FileNotFoundError as err:
         print(f'[ERROR] scan_batch_datasets_generator: {err}')
-        return []
+        return DataGenerator([])
 
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:
         metadatas.append(read_metadata(directory, include_schema=True))
     object_metadata = get_series_object_metadata(metadatas=metadatas)
 
-    if settings and isinstance(settings, dict):
-        settings = BatchSettings.load(**settings)
+    if settings:
+        if isinstance(settings, dict):
+            settings = BatchSettings.load(**settings)
     else:
         settings = BatchSettings()
     batch_size = settings.items.minimum or settings.items.maximum
@@ -480,10 +486,9 @@ def sample_batch_datasets(
     settings: Optional[BatchSettings] = None,
     **kwargs,
 ) -> Optional[ScanBatchDatasetResult]:
-    settings = BatchSettings.load(**{
-        **(settings.to_dict() if settings is not None else {}),
-        **dict(items=dict(maximum=sample_count)),
-    })
+    settings = settings if settings else BatchSettings()
+    if sample_count:
+        settings.items.maximum = sample_count
 
     generator = scan_batch_datasets_generator(source, **kwargs, settings=settings)
 
@@ -501,14 +506,13 @@ async def sample_batch_datasets_async(
     settings: Optional[BatchSettings] = None,
     **kwargs,
 ) -> Optional[ScanBatchDatasetResult]:
-    settings = BatchSettings.load(**{
-        **(settings.to_dict() if settings is not None else {}),
-        **dict(items=dict(maximum=sample_count)),
-    })
+    settings = settings if settings else BatchSettings()
+    if sample_count:
+        settings.items.maximum = sample_count
 
     generator = await scan_batch_datasets_generator_async(source, **kwargs, settings=settings)
 
     async for batch in generator:
         if batch is not None:
             return batch
-        break
+            break

@@ -73,10 +73,8 @@ def get_memory_usage(
     wrapped_function: Optional[Callable] = None,
 ) -> Tuple[Optional[Any], ResourceUsage]:
     process = psutil.Process(os.getpid())
-
     info_start = process.memory_info()
     value_start = info_start.rss
-
     memory = [
         MemoryUsage.load(
             pageins=getattr(info_start, 'pageins', 0),
@@ -87,11 +85,11 @@ def get_memory_usage(
         ),
     ]
 
-    if log or logger:
-        message = f'Memory usage: {value_start / (1024 * 1024)} MB'
-        log_or_print(
-            message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
-        )
+    # if log or logger:
+    #     message = f'Starting memory: {(value_start / (1024 * 1024)):.3f}MB'
+    #     log_or_print(
+    #         message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
+    #     )
 
     if wrapped_function:
         result = wrapped_function()
@@ -109,13 +107,21 @@ def get_memory_usage(
         )
 
         if log or logger:
-            message = (
-                f'Memory usage after function: {value_end / (1024 * 1024)} MB '
-                f'(added {(value_end - value_start) / (1024 * 1024)} MB)'
-            )
+            # message = f'Ending memory: {(value_end / (1024 * 1024)):.3f}MB'
+            # log_or_print(
+            #     message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
+            # )
+            message = f'Memory: {((value_end - value_start) / (1024 * 1024)):.3f}MB'
             log_or_print(
                 message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
             )
+            # message = (
+            #     f'Time elapsed: {round((memory[-1].timestamp - memory[0].timestamp) / 1000)} '
+            #     'seconds'
+            # )
+            # log_or_print(
+            #     message, logger=logger, logging_tags=logging_tags, message_prefix=message_prefix
+            # )
 
         return result, ResourceUsage.load(memory=memory)
 

@@ -490,6 +490,7 @@ class Block(
     def get_resource_usage(
         self,
         block_uuid: Optional[str] = None,
+        index: Optional[int] = None,
         partition: Optional[str] = None,
         variable_uuid: Optional[str] = None,
     ) -> Optional[ResourceUsage]:
@@ -497,7 +498,7 @@ class Block(
             variable = self.get_variable_object(
                 block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
             )
-            return variable.get_resource_usage()
+            return variable.get_resource_usage(index=index)
         except Exception as err:
             print(f'[ERROR] Block.get_resource_usage: {err}')
             return {}
@@ -2031,19 +2032,26 @@ class Block(
             )
             for upstream_block in self.upstream_blocks
         ]):
-            return fetch_input_variables_for_dynamic_upstream_blocks(
-                self,
-                input_args,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_indexes=dynamic_block_indexes,
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                # For non-dynamic upstream blocks
-                block_run_outputs_cache=block_run_outputs_cache,
-                data_integration_settings_mapping=data_integration_settings_mapping,
-                upstream_block_uuids_override=upstream_block_uuids_override,
+            result, _ = execute_with_memory_tracking(
+                fetch_input_variables_for_dynamic_upstream_blocks,
+                args=[
+                    self,
+                    input_args,
+                ],
+                kwargs=dict(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_indexes=dynamic_block_indexes,
+                    execution_partition=execution_partition,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    block_run_outputs_cache=block_run_outputs_cache,
+                    data_integration_settings_mapping=data_integration_settings_mapping,
+                    upstream_block_uuids_override=upstream_block_uuids_override,
+                    log_message_prefix=f'[fetch_input_variables:{self.uuid}]',
+                ),
             )
+
+            return result
 
         variables = fetch_input_variables(
             self.pipeline,

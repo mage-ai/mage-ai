@@ -56,6 +56,7 @@ from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.array import is_iterable
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
@@ -72,16 +73,17 @@ class Variable:
         pipeline_path: str,
         block_uuid: str,
         partition: Optional[str] = None,
-        spark=None,
+        spark: Optional[Any] = None,
         storage: Optional[BaseStorage] = None,
         variable_type: Optional[VariableType] = None,
+        variable_types: Optional[List[VariableType]] = None,
         clean_block_uuid: bool = True,
         validate_pipeline_path: bool = False,
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        variables_dir: str = None,
+        variables_dir: Optional[str] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
@@ -108,6 +110,7 @@ class Variable:
             self.storage.makedirs(self.variable_dir_path)
 
         self.variable_type = variable_type
+        self.variable_types = variable_types or []
         self.check_variable_type(spark=spark)
 
         self.input_data_types = input_data_types
@@ -131,9 +134,10 @@ class Variable:
     def metadata_path(self):
         return os.path.join(self.variable_path, METADATA_FILE)
 
-    @property
-    def resource_usage_path(self):
-        return os.path.join(self.variable_path, RESOURCE_USAGE_FILE)
+    def resource_usage_path(self, index: Optional[int] = None) -> str:
+        return os.path.join(
+            self.variable_path, str(index) if index is not None else '', RESOURCE_USAGE_FILE
+        )
 
     @property
     def data_manager(self) -> Optional[DataManager]:
@@ -148,6 +152,7 @@ class Variable:
                 variable_path=self.variable_path,
                 variables_dir=self.variables_dir,
                 variable_type=self.variable_type,
+                variable_types=self.variable_types,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
             )
@@ -159,11 +164,11 @@ class Variable:
             self._resource_usage = ResourceUsage()
         return self._resource_usage
 
-    def get_resource_usage(self) -> Optional[ResourceUsage]:
-        if self.storage.path_exists(self.resource_usage_path):
+    def get_resource_usage(self, index: Optional[int] = None) -> Optional[ResourceUsage]:
+        if self.storage.path_exists(self.resource_usage_path(index)):
             try:
                 data = self.storage.read_json_file(
-                    self.resource_usage_path,
+                    self.resource_usage_path(index),
                     default_value={},
                     raise_exception=False,
                 )
@@ -192,14 +197,17 @@ class Variable:
         If the variable has a metadata file, read the variable type from the metadata file.
         Fallback to inferring variable type based on data in the storage.
         """
-        if self.variable_type is None:
+        if self.variable_type is None or self.variable_types is None:
             try:
                 if self.storage.path_exists(self.metadata_path):
-                    # Consider removing raise_exception=True
                     metadata = self.storage.read_json_file(
-                        self.metadata_path, raise_exception=True
+                        self.metadata_path, raise_exception=is_debug()
                     )
                     self.variable_type = metadata.get('type')
+                    if self.variable_type:
+                        self.variable_type = VariableType(self.variable_type)
+                    self.variable_types = metadata.get('types') or []
+                    self.variable_types = [VariableType(t) for t in (self.variable_types or [])]
             except Exception:
                 traceback.print_exc()
 
@@ -699,12 +707,19 @@ class Variable:
                 else self.variable_type
             ),
         )
+
+        if self.variable_types:
+            metadata['types'] = [
+                variable_type.value if isinstance(variable_type, VariableType) else variable_type
+                for variable_type in self.variable_types
+            ]
+
         self.storage.write_json_file(self.metadata_path, metadata)
 
     def __write_resource_usage(self) -> None:
         if self.resource_usage:
             os.makedirs(self.variable_dir_path, exist_ok=True)
-            self.storage.write_json_file(self.resource_usage_path, self.resource_usage.to_dict())
+            self.storage.write_json_file(self.resource_usage_path(), self.resource_usage.to_dict())
 
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
