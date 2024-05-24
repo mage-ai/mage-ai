@@ -10,6 +10,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pandas as pd
 import polars as pl
 
+from mage_ai.data.constants import InputDataType
+from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.settings.variables.models import (
+    ChunkKeyTypeUnion,
+)
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.utils import (
@@ -461,15 +466,23 @@ def get_dynamic_children_count(
 def get_partial_dynamic_block_outputs(
     block: Any,
     index: int,
+    batch_settings: Optional[BatchSettings] = None,
+    chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     dynamic_block_index: Optional[int] = None,
     execution_partition: Optional[str] = None,
+    input_data_types: Optional[List[InputDataType]] = None,
 ) -> Tuple[Optional[Any], Optional[Dict[str, Any]]]:
     output_variable = __get_first_data_output_variable(
         block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
     )
     result = None
     if output_variable and output_variable.is_partial_data_readable():
-        result = output_variable.read_partial_data(part_uuid=int(index))
+        result = output_variable.read_partial_data(
+            batch_settings=batch_settings,
+            chunks=chunks,
+            input_data_types=input_data_types,
+            part_uuid=int(index),
+        )
 
     return result, None
 
@@ -624,7 +637,10 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 child_data, metadata = get_partial_dynamic_block_outputs(
                     upstream_block,
                     index,
+                    batch_settings=block.upstream_batch_settings(upstream_block.uuid),
+                    chunks=block.upstream_chunks(upstream_block.uuid),
                     execution_partition=execution_partition,
+                    input_data_types=block.input_data_types(upstream_block.uuid),
                 )
                 input_vars.append(child_data)
 

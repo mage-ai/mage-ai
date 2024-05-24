@@ -8,6 +8,13 @@ import pyarrow.dataset as ds
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
 from mage_ai.shared.parsers import object_to_dict
 
+DeserializedBatch = Union[
+    pd.DataFrame,
+    pd.Series,
+    pl.DataFrame,
+    pl.Series,
+]
+
 
 def convert_series_list_to_dataframe(series_list: List[pl.Series]) -> pl.DataFrame:
     """
@@ -25,15 +32,15 @@ def series_to_dataframe(series: Union[pd.Series, pl.Series]) -> pl.DataFrame:
 
 
 def deserialize_batch(
-    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch],
+    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch, pa.Table],
     object_metadata: Optional[Dict[str, str]] = None,
-) -> Union[
-    pd.Series,
-    pl.DataFrame,
-    pl.Series,
-]:
-    record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
-    table = pa.Table.from_batches([record_batch])
+) -> DeserializedBatch:
+    if isinstance(batch, pa.Table):
+        table = batch
+    else:
+        record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
+        table = pa.Table.from_batches([record_batch])
+
     if COLUMN_CHUNK in table.column_names:
         table = table.drop([COLUMN_CHUNK])
 

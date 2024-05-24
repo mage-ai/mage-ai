@@ -1,35 +1,55 @@
-from typing import Dict, Optional
+import math
+from typing import Optional
 
 import pyarrow as pa
 import pyarrow.dataset as ds
+from pandas.io.formats.style_render import Union
 
-from mage_ai.data.tabular.utils import deserialize_batch
-from mage_ai.shared.models import Delegator
+from mage_ai.data.models.generator import DataGenerator
+from mage_ai.data.models.pyarrow.shared import Base
+from mage_ai.data.models.pyarrow.table import Table
+from mage_ai.data.tabular.constants import DEFAULT_BATCH_ITEMS_VALUE
+from mage_ai.data.tabular.utils import DeserializedBatch
 
 
-class RecordBatch(Delegator):
-    def __init__(
-        self,
-        target: pa.RecordBatch,
-        object_metadata: Optional[Dict[str, str]] = None,
+class Batch(Base):
+    def __init__(self, target: Union[pa.RecordBatch, ds.TaggedRecordBatch], **kwargs):
+        super().__init__(target, **kwargs)
+
+    def generator(
+        self, batch_size: Optional[int] = None, deserialize_on_consumption: Optional[bool] = False
     ):
-        self.target = target
-        self.delegate = Delegator(self.target)
-        self.object_metadata = object_metadata
+        batch_size = batch_size or DEFAULT_BATCH_ITEMS_VALUE
+        table = pa.Table.from_batches([self.record_batch])
+        num_rows = table.num_rows
 
-    def deserialize(self):
-        return deserialize_batch(self.target, object_metadata=self.object_metadata)
+        def __load(
+            index: int,
+            batch_size=batch_size,
+            deserialize_on_consumption=deserialize_on_consumption,
+            object_metadata=self.object_metadata,
+            table=table,
+        ) -> Union[DeserializedBatch, pa.Table]:
+            table_part = Table(
+                table.slice(offset=index * batch_size, length=batch_size),
+            )
+            return table_part.deserialize() if deserialize_on_consumption else table_part
+
+        def __measure(_index: int, batch_size=batch_size, num_rows=num_rows) -> int:
+            return math.ceil(num_rows / batch_size)
+
+        return DataGenerator(load_data=__load, measure_data=__measure)
+
+    @property
+    def record_batch(self) -> pa.RecordBatch:
+        return self.target
 
 
-class TaggedRecordBatch(Delegator):
-    def __init__(
-        self,
-        target: ds.TaggedRecordBatch,
-        object_metadata: Optional[Dict[str, str]] = None,
-    ):
-        self.target = target
-        self.delegate = Delegator(self.target)
-        self.object_metadata = object_metadata
+class RecordBatch(Batch):
+    pass
 
-    def deserialize(self):
-        return deserialize_batch(self.target, object_metadata=self.object_metadata)
+
+class TaggedRecordBatch(Batch):
+    @property
+    def record_batch(self) -> pa.RecordBatch:
+        return self.target.record_batch
