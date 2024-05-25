@@ -21,6 +21,6 @@ class BlockInterface:
 @dataclass
 class VariableInterface:
     is_partial_data_readable: Callable[[], bool]
-    items_count: Callable[[bool], Optional[int]]
+    items_count: Callable[..., Optional[int]]
     read_partial_data: Callable
     uuid: str

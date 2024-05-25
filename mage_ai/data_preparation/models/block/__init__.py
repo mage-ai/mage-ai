@@ -1962,73 +1962,71 @@ class Block(
             variable_types = []
             dynamic_child = is_dynamic_block_child(self)
             output_count = 0
-            if output is None or not is_iterable(output):
-                return output or []
-
-            if dynamic_child:
-                # Each child will delete its own data
-                # How do we delete everything ahead of time?
-                delete_variable_objects_for_dynamic_child(
-                    self,
-                    dynamic_block_index=dynamic_block_index,
-                    execution_partition=execution_partition,
-                )
-            else:
-                self.__delete_variables(
-                    dynamic_block_index=dynamic_block_index,
-                    dynamic_block_uuid=dynamic_block_uuid,
-                    execution_partition=execution_partition,
-                )
-
-            for data in output:
-                if self._store_variables_in_block_function is None:
-                    raise Exception(
-                        'Store variables function isn’t defined, '
-                        'don’t proceed or else no data will be persisted'
+            if output is not None and is_iterable(output):
+                if dynamic_child:
+                    # Each child will delete its own data
+                    # How do we delete everything ahead of time?
+                    delete_variable_objects_for_dynamic_child(
+                        self,
+                        dynamic_block_index=dynamic_block_index,
+                        execution_partition=execution_partition,
+                    )
+                else:
+                    self.__delete_variables(
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_uuid=dynamic_block_uuid,
+                        execution_partition=execution_partition,
                     )
 
-                store_options = {}
-                if output_count >= 1:
-                    store_options['override_outputs'] = False
+                for data in output:
+                    if self._store_variables_in_block_function is None:
+                        raise Exception(
+                            'Store variables function isn’t defined, '
+                            'don’t proceed or else no data will be persisted'
+                        )
 
-                variable_mapping = {}
+                    store_options = {}
+                    if output_count >= 1:
+                        store_options['override_outputs'] = False
 
-                def __output_key(order: int, output_count=output_count):
-                    return os.path.join(f'output_{order}', str(output_count))
+                    variable_mapping = {}
 
-                if is_basic_iterable(data):
-                    if len(data) == 2 and isinstance(data[1], dict):
-                        variable_mapping[__output_key(0)] = data[0]
-                        variable_mapping[__output_key(1)] = data[1]
-                    elif len(data) == 1:
-                        variable_mapping[__output_key(0)] = data
+                    def __output_key(order: int, output_count=output_count):
+                        return os.path.join(f'output_{order}', str(output_count))
+
+                    if is_basic_iterable(data):
+                        if len(data) == 2 and isinstance(data[1], dict):
+                            variable_mapping[__output_key(0)] = data[0]
+                            variable_mapping[__output_key(1)] = data[1]
+                        elif len(data) == 1:
+                            variable_mapping[__output_key(0)] = data
+                        else:
+                            for idx, item in enumerate(data):
+                                variable_mapping[__output_key(idx)] = item
                     else:
-                        for idx, item in enumerate(data):
-                            variable_mapping[__output_key(idx)] = item
-                else:
-                    variable_mapping[__output_key(0)] = data
+                        variable_mapping[__output_key(0)] = data
 
-                variables = self._store_variables_in_block_function(
-                    variable_mapping=variable_mapping,
-                    skip_delete=True,
-                    **store_options,
-                )
-                if variables is not None and isinstance(variables, list):
-                    variable_types += [
-                        variable.variable_type
-                        for variable in variables
-                        if isinstance(variable, Variable)
-                    ]
+                    variables = self._store_variables_in_block_function(
+                        variable_mapping=variable_mapping,
+                        skip_delete=True,
+                        **store_options,
+                    )
+                    if variables is not None and isinstance(variables, list):
+                        variable_types += [
+                            variable.variable_type
+                            for variable in variables
+                            if isinstance(variable, Variable)
+                        ]
 
-                output_count += 1
+                    output_count += 1
 
-            if len(variable_types) >= 1 and self._store_variables_in_block_function:
-                self._store_variables_in_block_function(
-                    {'output_0': variable_types},
-                    save_variable_types_only=True,
-                )
+                if len(variable_types) >= 1 and self._store_variables_in_block_function:
+                    self._store_variables_in_block_function(
+                        {'output_0': variable_types},
+                        save_variable_types_only=True,
+                    )
 
-            self._store_variables_in_block_function = None
+                self._store_variables_in_block_function = None
 
         return output or []
 
@@ -3505,7 +3503,7 @@ class Block(
                 )
             )
 
-        if not skip_delete and not is_dynamic_child:
+        if not skip_delete and not is_dynamic_child and variables_data.get('removed_variables'):
             self.__delete_variables(
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,

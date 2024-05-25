@@ -614,12 +614,12 @@ def build_combinations_for_dynamic_child(
                 )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
-                        count = get_dynamic_children_count(
+                        count, is_partial_data_readable = get_dynamic_children_count(
                             upstream_block,
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index,
                         )
-                        if count is not None:
+                        if count is not None and is_partial_data_readable:
                             arr.extend([idx for idx in range(count)])
                         else:
                             values, _metadata = get_outputs_for_dynamic_block(
@@ -635,11 +635,11 @@ def build_combinations_for_dynamic_child(
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
-                count = get_dynamic_children_count(
+                count, is_partial_data_readable = get_dynamic_children_count(
                     upstream_block,
                     execution_partition=execution_partition,
                 )
-                if count is not None:
+                if count is not None and is_partial_data_readable:
                     arr = [idx for idx in range(count)]
                 else:
                     arr, _metadata = get_outputs_for_dynamic_block(

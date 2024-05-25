@@ -461,12 +461,14 @@ def get_dynamic_children_count(
     block: Any,
     dynamic_block_index: Optional[int] = None,
     execution_partition: Optional[str] = None,
-) -> Optional[int]:
+) -> Tuple[Optional[int], bool]:
     output_variable = __get_first_data_output_variable(
         block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
     )
     if output_variable:
-        return output_variable.items_count()
+        return output_variable.items_count(), output_variable.is_partial_data_readable()
+
+    return None, False
 
 
 def get_partial_dynamic_block_outputs(
@@ -634,13 +636,15 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 kwargs_vars.append(metadata)
         elif is_dynamic:
             child_data_count = None
+            is_partial_data_readable = False
+
             if MEMORY_MANAGER_V2:
-                child_data_count = get_dynamic_children_count(
+                child_data_count, is_partial_data_readable = get_dynamic_children_count(
                     upstream_block,
                     execution_partition=execution_partition,
                 )
 
-            if child_data_count is not None:
+            if child_data_count is not None and is_partial_data_readable:
                 index = dynamic_block_index % child_data_count
                 child_data, metadata = get_partial_dynamic_block_outputs(
                     upstream_block,
