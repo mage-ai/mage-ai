@@ -30,6 +30,7 @@ type PipelineDetailPageProps = {
     height: number;
     heightOffset?: number;
     pipeline: PipelineType;
+    width: number;
   }) => any;
   children: any;
   errors?: ErrorsType;
@@ -85,6 +86,8 @@ function PipelineDetailPage({
     displayErrorFromReadResponse(data, setErrors);
   }, [data, setErrors]);
 
+  const afterWidth = afterWidthProp || ((afterProp || buildSidekick) ? 50 * UNIT : null);
+
   const after = useMemo(() => {
     if (afterProp) {
       return afterProp;
@@ -93,17 +96,18 @@ function PipelineDetailPage({
         height,
         heightOffset: HEADER_HEIGHT,
         pipeline,
+        width: afterWidth,
       });
     }
 
     return null;
   }, [
     afterProp,
+    afterWidth,
     buildSidekick,
     height,
     pipeline,
   ]);
-  const afterWidth = afterWidthProp || (after ? 50 * UNIT : null);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];

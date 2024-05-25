@@ -122,10 +122,10 @@ function TableOutput({
     }
 
     if (resourceUsage) {
-      if (typeof resourceUsage?.size !== 'undefined') {
+      if (typeof resourceUsage?.size !== 'undefined' && resourceUsage?.size !== null) {
         arr2.push(`Size: ${(resourceUsage?.size / 1024 ** 2).toFixed(2)}MB`);
       }
-      if (typeof resourceUsage?.memory_usage !== 'undefined') {
+      if (typeof resourceUsage?.memory_usage !== 'undefined' && resourceUsage?.memory_usage !== null) {
         arr2.push(`Memory: ${(resourceUsage?.memory_usage / 1024 ** 2).toFixed(2)}MB`);
       }
     }

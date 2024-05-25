@@ -239,6 +239,7 @@ function PipelineBlockRuns({
 
   const buildSidekick = useCallback(props => buildTableSidekick({
     ...props,
+    blocks: dataBlocks?.blocks,
     blockRuns,
     blocksOverride: totalBlockRuns <= ROW_LIMIT && dataBlocks?.blocks,
     loadingData: loadingOutput,
