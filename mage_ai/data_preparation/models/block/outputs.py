@@ -332,7 +332,8 @@ def format_output_data(
                 except ValueError:
                     pass
 
-            data = data[: round(sample_count / n_vars)]
+            if n_vars and isinstance(n_vars, (float, int)) and n_vars >= 1:
+                data = data[: round(sample_count / n_vars)]
 
             resource_usage = block.get_resource_usage(
                 block_uuid=block_uuid,
