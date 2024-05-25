@@ -53,6 +53,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     RESOURCE_USAGE_FILE,
     VariableType,
 )
+from mage_ai.data_preparation.models.variables.utils import is_output_variable
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
@@ -115,9 +116,10 @@ class Variable:
         if not self.storage.path_exists(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
 
-        self.variable_type = variable_type
-        self.variable_types = variable_types or []
-        self.check_variable_type(spark=spark)
+        self._data_manager = None
+        self._part_uuids = None
+        self._parts = None
+        self._resource_usage = resource_usage
 
         self.input_data_types = input_data_types
         self.read_batch_settings = read_batch_settings
@@ -125,10 +127,10 @@ class Variable:
         self.variables_dir = variables_dir or get_variables_dir()
         self.write_batch_settings = write_batch_settings
         self.write_chunks = write_chunks
-        self._data_manager = None
-        self._resource_usage = resource_usage
-        self._part_uuids = None
-        self._parts = None
+
+        self.variable_type = variable_type
+        self.variable_types = variable_types or []
+        self.check_variable_type(spark=spark)
 
     @classmethod
     def dir_path(cls, pipeline_path, block_uuid):
@@ -174,8 +176,6 @@ class Variable:
 
     @property
     def part_uuids(self) -> Optional[List[str]]:
-        from mage_ai.data_preparation.models.block.utils import is_output_variable
-
         if (
             not is_output_variable(self.uuid)
             or self._part_uuids is not None
@@ -232,12 +232,18 @@ class Variable:
                 print(f'[ERROR] Variable.resource_usage: {err}')
         return self.resource_usage
 
+    def get_analysis(self, index: Optional[int] = None) -> Dict[str, Dict]:
+        return self.__read_dataframe_analysis(
+            dataframe_analysis_keys=['statistics'],
+            index=index,
+        )
+
     def check_variable_type(self, spark: Optional[Any] = None) -> Optional[VariableType]:
         """
         If the variable has a metadata file, read the variable type from the metadata file.
         Fallback to inferring variable type based on data in the storage.
         """
-        if self.variable_type is None or self.variable_types is None:
+        if self.variable_type is None:
             try:
                 if self.storage.path_exists(self.metadata_path):
                     metadata = self.storage.read_json_file(
@@ -248,6 +254,29 @@ class Variable:
                         self.variable_type = VariableType(self.variable_type)
                     self.variable_types = metadata.get('types') or []
                     self.variable_types = [VariableType(t) for t in (self.variable_types or [])]
+            except Exception:
+                traceback.print_exc()
+
+        if (
+            self.variable_type is None
+            and not self.variable_types
+            and MEMORY_MANAGER_V2
+            and self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+        ):
+            try:
+                variable_types = []
+                for part_uuid in self.part_uuids:
+                    path = os.path.join(self.variable_path, str(part_uuid), METADATA_FILE)
+                    if self.storage.path_exists(path):
+                        metadata = self.storage.read_json_file(path, raise_exception=is_debug())
+                        var_type = metadata.get('type')
+                        if var_type:
+                            variable_types.append(var_type)
+                if len(variable_types) >= 1:
+                    self.variable_type = VariableType.ITERABLE
+                    self.variable_types = [VariableType(t) for t in (variable_types or [])]
+                    self.write_metadata()
             except Exception:
                 traceback.print_exc()
 
@@ -325,7 +354,7 @@ class Variable:
             - The variable is stored as a parquet file
         """
         if part_uuid is not None and self.__is_part_readable(part_uuid):
-            return self.__class__(
+            variable = self.__class__(
                 os.path.join(self.uuid, str(part_uuid)),
                 self.pipeline_path,
                 self.block_uuid,
@@ -337,12 +366,16 @@ class Variable:
                 resource_usage=self.resource_usage,
                 storage=self.storage,
                 validate_pipeline_path=False,
-                variable_type=self.variable_type,
-                variable_types=self.variable_types,
+                # DO NOT PASS variable_types
+                # this in or else the data_manager will add its own part to the path
+                # variable_type=self.variable_type,
+                # variable_types=self.variable_types,
                 variables_dir=self.variables_dir,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
-            ).read_data()
+            )
+
+            return variable.read_data()
         elif self.__is_parquet_readable():
             data_manager = self.__class__(
                 self.uuid,
@@ -426,10 +459,25 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.data_manager and self.data_manager.readable():
-            data = self.data_manager.read_sync(
-                sample=sample,
-                sample_count=sample_count,
-            )
+            try:
+                data = self.data_manager.read_sync(
+                    sample=sample,
+                    sample_count=sample_count,
+                )
+            except FileNotFoundError as err:
+                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
+                print(f'variable_type:     {self.variable_type}')
+                print(f'variable_types:    {self.variable_types}')
+                print(f'variable_uuid:     {self.uuid}')
+                print(f'variable_dir_path: {self.variable_dir_path}')
+                print(f'variable_path:     {self.variable_path}')
+                print('Data sources:')
+                for source in self.data_manager.data_source:
+                    print(f'  {source}')
+                print('\n')
+
+                traceback.print_exc()
+                return None
             return data
 
         if (
@@ -476,6 +524,7 @@ class Variable:
         sample: bool = False,
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
+        limit_parts: Optional[int] = None,
         input_data_types: Optional[List[InputDataType]] = None,
     ) -> Any:
         """
@@ -486,12 +535,14 @@ class Variable:
 
         async def __read(
             dataframe_analysis_keys=dataframe_analysis_keys,
+            limit_parts=limit_parts,
             sample=sample,
             sample_count=sample_count,
             spark=spark,
         ):
             return await self.__read_data_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
+                limit_parts=limit_parts,
                 sample=sample,
                 sample_count=sample_count,
                 spark=spark,
@@ -510,6 +561,7 @@ class Variable:
     async def __read_data_async(
         self,
         dataframe_analysis_keys: Optional[List[str]] = None,
+        limit_parts: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
@@ -530,13 +582,27 @@ class Variable:
             block.to_dict_async
                 GET /pipelines/[:uuid]
         """
-        if self.data_manager and self.data_manager.readable():
+        try:
             data = await self.data_manager.read_async(
+                limit_parts=limit_parts,
                 sample=sample,
                 sample_count=sample_count,
             )
-
             return data
+        except FileNotFoundError as err:
+            print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
+            print(f'variable_type:     {self.variable_type}')
+            print(f'variable_types:    {self.variable_types}')
+            print(f'variable_uuid:     {self.uuid}')
+            print(f'variable_dir_path: {self.variable_dir_path}')
+            print(f'variable_path:     {self.variable_path}')
+            print('Data sources:')
+            for source in self.data_manager.data_source:
+                print(f'  {source}')
+            print('\n')
+
+            traceback.print_exc()
+            return None
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -1333,7 +1399,8 @@ class Variable:
 
     def __read_dataframe_analysis(
         self,
-        dataframe_analysis_keys: List[str] = None,
+        dataframe_analysis_keys: Optional[List[str]] = None,
+        index: Optional[int] = None,
     ) -> Dict[str, Dict]:
         """
         Read the following files
@@ -1342,13 +1409,14 @@ class Variable:
         3. insights.json
         4. suggestions.json
         """
-        if not self.storage.path_exists(self.variable_path):
+        base_path = os.path.join(self.variable_path, str(index) if index is not None else '')
+        if not self.storage.path_exists(base_path):
             return dict()
         result = dict()
         for k in DATAFRAME_ANALYSIS_KEYS:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
-            result[k] = self.storage.read_json_file(os.path.join(self.variable_path, f'{k}.json'))
+            result[k] = self.storage.read_json_file(os.path.join(base_path, f'{k}.json'))
         return result
 
     async def __read_dataframe_analysis_async(

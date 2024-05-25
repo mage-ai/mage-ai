@@ -36,6 +36,7 @@ from mage_ai.data_preparation.models.utils import (
 )
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import (
     convert_matrix_to_dataframe,
@@ -233,13 +234,11 @@ def format_output_data(
             data = dict(table=data.to_csv(header=True, index=False).strip('\n').split('\n'))
         else:
             try:
-                analysis = variable_manager.get_variable(
-                    block.pipeline.uuid,
-                    block_uuid,
-                    variable_uuid,
-                    dataframe_analysis_keys=['metadata', 'statistics'],
+                analysis = block.get_analysis(
+                    block_uuid=block_uuid,
+                    index=index,
                     partition=execution_partition,
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    variable_uuid=variable_uuid,
                 )
             except Exception as err:
                 print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
@@ -267,31 +266,27 @@ def format_output_data(
                         data[columns_to_display].to_json(orient='split', date_format='iso'),
                     )['data'],
                 ),
-                resource_usage=block.get_resource_usage(
-                    block_uuid=block_uuid,
-                    partition=execution_partition,
-                    variable_uuid=variable_uuid,
-                    index=index,
-                ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
                 variable_uuid=variable_uuid,
             )
+
+            if MEMORY_MANAGER_V2:
+                data['resource_usage'] = block.get_resource_usage(
+                    block_uuid=block_uuid,
+                    partition=execution_partition,
+                    variable_uuid=variable_uuid,
+                    index=index,
+                )
+
         return data, True
     elif isinstance(data, pl.DataFrame):
-        variable_uuids = block.get_variables_by_block(
-            block_uuid=block_uuid,
-            partition=execution_partition,
-        )
-        n_vars = len(variable_uuids)
         try:
-            analysis = variable_manager.get_variable(
-                block.pipeline.uuid,
-                block_uuid,
-                variable_uuid,
-                dataframe_analysis_keys=['statistics'],
+            analysis = block.get_analysis(
+                block_uuid=block_uuid,
+                index=index,
                 partition=execution_partition,
-                variable_type=VariableType.DATAFRAME_ANALYSIS,
+                variable_uuid=variable_uuid,
             )
         except Exception as err:
             raise err
@@ -302,28 +297,50 @@ def format_output_data(
             column_count = stats.get('original_column_count')
         else:
             row_count, column_count = data.shape
-        variable = block.get_variable_object(
-            block_uuid=block_uuid,
-            variable_uuid=variable_uuid,
-            partition=execution_partition,
-        )
+
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
         sample_count = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+        resource_usage = None
 
-        metadata = read_metadata(
-            os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
-            include_schema=True,
-        )
-        if metadata:
-            try:
-                row_count = metadata.get('num_rows') or row_count
-                schema = metadata.get('schema')
-                if schema and isinstance(schema, dict):
-                    column_count = len(schema) or column_count
-            except ValueError:
-                pass
+        if MEMORY_MANAGER_V2:
+            variable_uuids = block.get_variables_by_block(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+            )
+            n_vars = len(variable_uuids)
+            variable = block.get_variable_object(
+                block_uuid=block_uuid,
+                variable_uuid=variable_uuid,
+                partition=execution_partition,
+            )
 
-        data = data[: round(sample_count / n_vars)]
+            metadata = read_metadata(
+                os.path.join(
+                    variable.variable_dir_path,
+                    variable_uuid,
+                    str(index) if index is not None else '',
+                    CHUNKS_DIRECTORY_NAME,
+                ),
+                include_schema=True,
+            )
+            if metadata:
+                try:
+                    row_count = metadata.get('num_rows') or row_count
+                    schema = metadata.get('schema')
+                    if schema and isinstance(schema, dict):
+                        column_count = len(schema) or column_count
+                except ValueError:
+                    pass
+
+            data = data[: round(sample_count / n_vars)]
+
+            resource_usage = block.get_resource_usage(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+                variable_uuid=variable_uuid,
+                index=index,
+            )
+
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
@@ -332,12 +349,7 @@ def format_output_data(
                     for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
-            resource_usage=block.get_resource_usage(
-                block_uuid=block_uuid,
-                partition=execution_partition,
-                variable_uuid=variable_uuid,
-                index=index,
-            ),
+            resource_usage=resource_usage,
             shape=[row_count, column_count],
             type=DataType.TABLE,
             variable_uuid=variable_uuid,

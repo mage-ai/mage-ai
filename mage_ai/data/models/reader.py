@@ -38,6 +38,7 @@ class Reader(BaseData):
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
         limit: Optional[int] = None,
+        limit_parts: Optional[int] = None,
         offset: Optional[int] = None,
         part: Optional[int] = None,
         sample: bool = False,
@@ -95,5 +96,8 @@ class Reader(BaseData):
             )
 
         if self.number_of_outputs >= 2:
-            return DataGenerator([__process_source(source) for source in self.data_source])
+            sources = self.data_source
+            if limit_parts is not None:
+                sources = sources[:limit_parts]
+            return DataGenerator([__process_source(source) for source in sources])
         return __process_source(self.data_source)

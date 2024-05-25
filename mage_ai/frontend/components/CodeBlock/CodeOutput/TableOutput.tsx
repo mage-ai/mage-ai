@@ -39,7 +39,7 @@ function TableOutput({
   const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
   const shape = useMemo(
     // @ts-ignore
-    () => (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape,
+    () => ((output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape)?.filter(v => v !== null && typeof v !== 'undefined'),
     [output],
   );
 

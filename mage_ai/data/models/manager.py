@@ -87,6 +87,7 @@ class DataManager(BaseData):
 
     def read_sync(
         self,
+        limit_parts: Optional[int] = None,
         part: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
@@ -113,6 +114,7 @@ class DataManager(BaseData):
             return batches
 
         generator = self.reader.read_sync(
+            limit_parts=limit_parts,
             part=part,
             sample=sample,
             sample_count=sample_count,
@@ -134,10 +136,11 @@ class DataManager(BaseData):
 
     async def read_async(
         self,
+        limit_parts: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
     ) -> Optional[Union[Any, str]]:
-        return self.read_sync(sample=sample, sample_count=sample_count)
+        return self.read_sync(limit_parts=limit_parts, sample=sample, sample_count=sample_count)
 
     async def write_async(self, data: Any, chunk_size: Optional[int] = None) -> None:
         self.__prepare(data, self.writer)

@@ -252,7 +252,7 @@ class LazyVariableController(Sequence):
 
 def get_dynamic_child_block_indexes(
     block,
-    execution_partition: str = None,
+    execution_partition: Optional[str] = None,
 ) -> List[int]:
     from mage_ai.data_preparation.models.block.dynamic.utils import (
         build_combinations_for_dynamic_child,
@@ -353,8 +353,8 @@ def get_variable_objects(
 
 def delete_variable_objects_for_dynamic_child(
     block,
-    dynamic_block_index: int = None,
-    execution_partition: str = None,
+    dynamic_block_index: Optional[int] = None,
+    execution_partition: Optional[str] = None,
 ) -> None:
     variable_objects = get_variable_objects(
         block,
@@ -369,6 +369,7 @@ def delete_variable_objects_for_dynamic_child(
 def __get_all_variable_objects_for_dynamic_child(
     block,
     execution_partition: Optional[str] = None,
+    limit_parts: Optional[int] = None,
 ) -> List[List[Variable]]:
     """
     This method will get the nested outputs (output_0) in every numeric folder
@@ -391,6 +392,9 @@ def __get_all_variable_objects_for_dynamic_child(
 
         variable_objects_arr.append(sorted(arr, key=sort_variables))
 
+    if limit_parts is not None:
+        variable_objects_arr = variable_objects_arr[:limit_parts]
+
     return variable_objects_arr
 
 
@@ -398,6 +402,7 @@ async def get_outputs_async(
     block,
     execution_partition: Optional[str] = None,
     dynamic_block_index: Optional[int] = None,
+    limit_parts: Optional[int] = None,
     sample: bool = False,
     sample_count: Optional[int] = None,
 ) -> List[Optional[Union[Dict, int, str, pd.DataFrame, Any]]]:
@@ -409,6 +414,7 @@ async def get_outputs_async(
 
     return await asyncio.gather(*[
         variable_object.read_data_async(
+            limit_parts=limit_parts,
             sample=sample,
             sample_count=sample_count,
         )
@@ -453,8 +459,8 @@ def __get_first_data_output_variable(
 
 def get_dynamic_children_count(
     block: Any,
-    execution_partition: Optional[str] = None,
     dynamic_block_index: Optional[int] = None,
+    execution_partition: Optional[str] = None,
 ) -> Optional[int]:
     output_variable = __get_first_data_output_variable(
         block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
@@ -533,6 +539,7 @@ async def get_outputs_for_dynamic_block_async(
 def get_outputs_for_dynamic_child(
     block,
     execution_partition: Optional[str] = None,
+    limit_parts: Optional[int] = None,
     logger: Optional[Logger] = None,
     logging_tags: Optional[Dict] = None,
     sample: bool = False,
@@ -543,6 +550,7 @@ def get_outputs_for_dynamic_child(
         list_of_lists_of_variables = __get_all_variable_objects_for_dynamic_child(
             block,
             execution_partition=execution_partition,
+            limit_parts=limit_parts,
         )
 
         # List[List[LazyVariableSet]]

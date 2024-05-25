@@ -13,6 +13,7 @@ from mage_ai.settings.server import (
     SYSTEM_LOGS_POLL_INTERVAL,
 )
 from mage_ai.shared.files import makedirs_async, makedirs_sync
+from mage_ai.shared.singletons.memory import get_memory_manager_controller
 from mage_ai.system.constants import LogType
 from mage_ai.system.memory.constants import MEMORY_DIRECTORY
 from mage_ai.system.memory.utils import (
@@ -48,12 +49,10 @@ class MemoryManager:
         print(emu.report())
         """
         self.monitor = None
-        self.monitor_thread = None
         self.poll_interval = poll_interval or SYSTEM_LOGS_POLL_INTERVAL
         self.process_uuid = process_uuid  # [process_uuid]
         self.repo_path = repo_path
         self.scope_uuid = scope_uuid  # [pipeline_uuid]/[block_uuid]
-        self.stop_event = None
         self._log_path = None
         self._metadata = metadata or {}
 
@@ -103,9 +102,11 @@ class MemoryManager:
         makedirs_sync(os.path.dirname(self.log_path))
 
         self.stop()
-        self.stop_event, self.monitor_thread = monitor_memory_usage(
-            callback=self.__write_sync,
-            interval_seconds=self.poll_interval,
+        self.start(
+            *monitor_memory_usage(
+                callback=self.__write_sync,
+                interval_seconds=self.poll_interval,
+            )
         )
 
         with open(self.log_path, 'a') as f:
@@ -125,9 +126,13 @@ class MemoryManager:
         await makedirs_async(os.path.dirname(self.log_path))
 
         self.stop()
-        self.stop_event, self.monitor_thread = await monitor_memory_usage_async(
-            callback=self.__write_async,
-            interval_seconds=self.poll_interval,
+        self.start(
+            *(
+                await monitor_memory_usage_async(
+                    callback=self.__write_async,
+                    interval_seconds=self.poll_interval,
+                )
+            )
         )
 
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
@@ -151,10 +156,10 @@ class MemoryManager:
         async with aiofiles.open(self.log_path, mode='a', encoding='utf-8') as fp:
             await fp.write(format_log_message(message=memory))
 
+    def start(self, stop_event, monitor_thread) -> None:
+        get_memory_manager_controller().add_event_monitor(
+            self.log_path, stop_event, monitor_thread
+        )
+
     def stop(self) -> None:
-        if self.stop_event:
-            self.stop_event.set()
-            self.stop_event = None
-        if self.monitor_thread:
-            self.monitor_thread.join()
-            self.monitor_thread = None
+        get_memory_manager_controller().stop_event(self.log_path)

@@ -115,7 +115,7 @@ from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
 from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
-from mage_ai.shared.array import unique_by
+from mage_ai.shared.array import is_iterable, unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
@@ -412,7 +412,9 @@ class Block(
         self.configuration = configuration
 
         self.resource_usage = None
-        self._store_variables_in_block_function = None
+        self._store_variables_in_block_function: Optional[
+            Callable[..., Optional[List[VariableType]]]
+        ] = None
 
     @property
     def uuid(self) -> str:
@@ -501,6 +503,22 @@ class Block(
             return variable.get_resource_usage(index=index)
         except Exception as err:
             print(f'[ERROR] Block.get_resource_usage: {err}')
+            return ResourceUsage()
+
+    def get_analysis(
+        self,
+        block_uuid: Optional[str] = None,
+        index: Optional[int] = None,
+        partition: Optional[str] = None,
+        variable_uuid: Optional[str] = None,
+    ) -> Optional[Dict]:
+        try:
+            variable = self.get_variable_object(
+                block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+            )
+            return variable.get_analysis(index=index)
+        except Exception as err:
+            print(f'[ERROR] Block.get_analysis: {err}')
             return {}
 
     async def content_async(self) -> str:
@@ -1331,14 +1349,15 @@ class Block(
                     variable_mapping: Dict[str, Any],
                     delete_before_adding: Optional[bool] = None,
                     skip_delete: Optional[bool] = None,
+                    save_variable_types_only: Optional[bool] = None,
                     block=self,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
                     execution_partition=execution_partition,
                     global_vars=global_vars,
                     override_outputs=override_outputs,
-                ) -> None:
-                    block.store_variables(
+                ) -> Optional[List[VariableType]]:
+                    return block.store_variables(
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
@@ -1349,6 +1368,7 @@ class Block(
                         ),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_block_uuid=dynamic_block_uuid,
+                        save_variable_types_only=save_variable_types_only,
                     )
 
                 self._store_variables_in_block_function = __store_variables
@@ -1932,10 +1952,13 @@ class Block(
             output = block_function_updated(*input_vars)
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
+            variable_types = []
             dynamic = is_dynamic_block(self)
             dynamic_child = is_dynamic_block_child(self)
-
             output_count = 0
+            if output is None or not is_iterable(output):
+                return output or []
+
             for data in output:
                 if self._store_variables_in_block_function is None:
                     raise Exception(
@@ -1949,29 +1972,45 @@ class Block(
 
                 variable_mapping = {}
 
-                if dynamic:
-                    child_data_key = os.path.join('output_0', str(output_count))
-                    if is_basic_iterable(data) and len(data) == 2 and isinstance(data[1], dict):
-                        variable_mapping[child_data_key] = data[0]
-                        variable_mapping[os.path.join('output_1', str(output_count))] = data[1]
-                    else:
-                        variable_mapping[child_data_key] = data
-                else:
-                    variable_mapping[f'output_{output_count}'] = data
+                def __output_key(order: int, output_count=output_count):
+                    return os.path.join(f'output_{order}', str(output_count))
 
-                self._store_variables_in_block_function(
+                if is_basic_iterable(data):
+                    if len(data) == 2 and isinstance(data[1], dict):
+                        variable_mapping[__output_key(0)] = data[0]
+                        variable_mapping[__output_key(1)] = data[1]
+                    elif len(data) == 1:
+                        variable_mapping[__output_key(0)] = data
+                    else:
+                        for idx, item in enumerate(data):
+                            variable_mapping[__output_key(idx)] = item
+                else:
+                    variable_mapping[__output_key(0)] = data
+
+                variables = self._store_variables_in_block_function(
                     variable_mapping=variable_mapping,
                     delete_before_adding=dynamic,
                     skip_delete=dynamic_child and output_count >= 1,
                     **store_options,
                 )
+                if variables is not None and isinstance(variables, list):
+                    variable_types += [
+                        variable.variable_type
+                        for variable in variables
+                        if isinstance(variable, Variable)
+                    ]
 
                 output_count += 1
 
-            self._store_variables_in_block_function = None
-            output = []
+            if variable_types and self._store_variables_in_block_function:
+                self._store_variables_in_block_function(
+                    {'output_0': variable_types},
+                    save_variable_types_only=True,
+                )
 
-        return output
+            self._store_variables_in_block_function = None
+
+        return output or []
 
     def __initialize_decorator_modules(
         self,
@@ -2408,6 +2447,7 @@ class Block(
             lazy_variable_controller = get_outputs_for_dynamic_child(
                 self,
                 execution_partition=execution_partition,
+                limit_parts=max_results,
                 sample=sample,
                 sample_count=sample_count_use,
             )
@@ -2427,6 +2467,7 @@ class Block(
             ] = await get_outputs_for_dynamic_block_async(
                 self,
                 execution_partition=execution_partition,
+                limit_parts=max_results,
                 sample=sample,
                 sample_count=sample_count_use,
             )
@@ -3282,11 +3323,11 @@ class Block(
     def __store_variables_prepare(
         self,
         variable_mapping: Dict,
-        execution_partition: str = None,
+        execution_partition: Optional[str] = None,
         override: bool = False,
         override_outputs: bool = False,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
     ) -> Dict:
         self.dynamic_block_uuid = dynamic_block_uuid
 
@@ -3332,17 +3373,14 @@ class Block(
         override_outputs: bool = False,
         delete_before_adding: Optional[bool] = None,
         skip_delete: Optional[bool] = None,
-        spark: Optional[bool] = None,
+        spark: Optional[Any] = None,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
-    ) -> None:
-        variables_data = self.__store_variables_prepare(
-            variable_mapping,
-            execution_partition,
-            override,
-            override_outputs,
-            dynamic_block_index=dynamic_block_index,
-        )
+        save_variable_types_only: Optional[Any] = None,
+    ) -> Optional[List[Variable]]:
+        variable_manager = self.pipeline.variable_manager if self.pipeline else None
+        if variable_manager is None:
+            return []
 
         block_uuid, changed = uuid_for_output_variables(
             self,
@@ -3352,7 +3390,33 @@ class Block(
 
         is_dynamic = is_dynamic_block(self)
         is_dynamic_child = is_dynamic_block_child(self)
-        if is_dynamic_child and not skip_delete:
+
+        shared_args = dict(
+            clean_block_uuid=not changed,
+            clean_variable_uuid=not is_dynamic and not is_dynamic_child,
+            partition=execution_partition,
+        )
+
+        if save_variable_types_only:
+            for variable_uuid, variable_types in variable_mapping.items():
+                variable_manager.add_variable_types(
+                    self.pipeline.uuid if self.pipeline else None,
+                    block_uuid,
+                    variable_uuid,
+                    variable_types,
+                    **shared_args,
+                )
+            return []
+
+        variables_data = self.__store_variables_prepare(
+            variable_mapping,
+            execution_partition,
+            override,
+            override_outputs,
+            dynamic_block_index=dynamic_block_index,
+        )
+
+        if not skip_delete:
             delete_variable_objects_for_dynamic_child(
                 self,
                 dynamic_block_index=dynamic_block_index,
@@ -3360,11 +3424,14 @@ class Block(
             )
 
         def __delete_removed_variables(
-            block_uuid=block_uuid, pipeline=self.pipeline, variables_data=variables_data
+            block_uuid=block_uuid,
+            pipeline=self.pipeline,
+            variables_data=variables_data,
+            variable_manager=variable_manager,
         ):
             for uuid in variables_data['removed_variables']:
-                pipeline.variable_manager.delete_variable(
-                    pipeline.uuid,
+                variable_manager.delete_variable(
+                    pipeline.uuid if pipeline else None,
                     block_uuid,
                     uuid,
                 )
@@ -3372,28 +3439,32 @@ class Block(
         if delete_before_adding:
             __delete_removed_variables()
 
+        variables = []
         for uuid, data in variables_data['variable_mapping'].items():
             if (
                 spark is not None
+                and self.pipeline is not None
                 and self.pipeline.type == PipelineType.PYSPARK
-                and type(data) is pd.DataFrame
+                and isinstance(data, pd.DataFrame)
             ):
                 data = spark.createDataFrame(data)
-            self.pipeline.variable_manager.add_variable(
-                self.pipeline.uuid,
-                block_uuid,
-                uuid,
-                data,
-                partition=execution_partition,
-                clean_block_uuid=not changed,
-                clean_variable_uuid=not is_dynamic,
-                write_batch_settings=self.write_batch_settings,
-                write_chunks=self.write_chunks,
-                resource_usage=self.resource_usage,
+            variables.append(
+                variable_manager.add_variable(
+                    self.pipeline.uuid if self.pipeline else None,
+                    block_uuid,
+                    uuid,
+                    data,
+                    resource_usage=self.resource_usage,
+                    write_batch_settings=self.write_batch_settings,
+                    write_chunks=self.write_chunks,
+                    **shared_args,
+                )
             )
 
-        if not is_dynamic_child and not delete_before_adding:
+        if not delete_before_adding and not is_dynamic_child:
             __delete_removed_variables()
+
+        return variables
 
     async def store_variables_async(
         self,

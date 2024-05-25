@@ -153,6 +153,28 @@ class VariableManager:
 
         return variable
 
+    def add_variable_types(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        variable_types: List[VariableType],
+        clean_block_uuid: bool = True,
+        clean_variable_uuid: bool = True,
+        partition: Optional[str] = None,
+    ) -> None:
+        variable = self.build_variable(
+            pipeline_uuid,
+            block_uuid,
+            variable_uuid,
+            clean_block_uuid=clean_block_uuid,
+            clean_variable_uuid=clean_variable_uuid,
+            partition=partition,
+            variable_type=VariableType.ITERABLE,
+        )
+        variable.variable_types = variable_types
+        variable.write_metadata()
+
     def build_variable(
         self,
         pipeline_uuid: str,
@@ -160,6 +182,7 @@ class VariableManager:
         variable_uuid: str,
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
+        clean_block_uuid: bool = True,
         clean_variable_uuid: bool = True,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
@@ -172,6 +195,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
             input_data_types=input_data_types,

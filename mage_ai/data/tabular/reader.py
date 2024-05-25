@@ -345,16 +345,12 @@ def __builder_scanner_generator_configurations(
     Iterator[Union[pa.RecordBatch, ds.TaggedRecordBatch]] -
         An iterator over the scanned (and optionally deserialized) batches of records.
     """
-    try:
-        if isinstance(source, list):
-            dataset = ds.dataset(
-                [ds.dataset(path, format='parquet', partitioning='hive') for path in source],
-            )
-        else:
-            dataset = ds.dataset(source, format='parquet', partitioning='hive')
-    except FileNotFoundError as err:
-        print(f'[ERROR] scan_batch_datasets_generator: {err}')
-        return ds.dataset([]), {}, []
+    if isinstance(source, list):
+        dataset = ds.dataset(
+            [ds.dataset(path, format='parquet', partitioning='hive') for path in source],
+        )
+    else:
+        dataset = ds.dataset(source, format='parquet', partitioning='hive')
 
     metadatas = []
     for directory in source if isinstance(source, list) else [source]:

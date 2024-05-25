@@ -186,10 +186,10 @@ def is_original_dynamic_child_block(
 
 def uuid_for_output_variables(
     block,
-    block_uuid: str = None,
-    dynamic_block_index: int = None,
-    dynamic_block_uuid: str = None,
-    join_character: str = None,
+    block_uuid: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+    dynamic_block_uuid: Optional[str] = None,
+    join_character: Optional[str] = None,
     **kwargs,
 ) -> Tuple[str, bool]:
     changed = False

@@ -11,6 +11,7 @@ from mage_ai.server.active_kernel import (
 )
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 from mage_ai.services.ssh.aws.emr.utils import tunnel
+from mage_ai.shared.singletons.memory import get_memory_manager_controller
 
 
 class KernelResource(GenericResource):
@@ -66,13 +67,16 @@ class KernelResource(GenericResource):
         switch_active_kernel(self.model.kernel_name)
 
         if 'interrupt' == action_type:
+            get_memory_manager_controller().stop_all_events()
             interrupt_kernel()
         elif 'restart' == action_type:
             try:
+                get_memory_manager_controller().stop_all_events()
                 restart_kernel()
             except RuntimeError as e:
                 # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
                 if 'start_kernel' in str(e):
+                    get_memory_manager_controller().stop_all_events()
                     start_kernel()
 
         def _callback(*args, **kwargs):
