@@ -139,7 +139,7 @@ class Pipeline:
         else:
             self.repo_config = repo_config
 
-        self.variable_manager = VariableManager.get_manager(
+        self.variable_manager: VariableManager = VariableManager.get_manager(
             self.repo_path,
             self.remote_variables_dir or self.variables_dir,
         )
@@ -643,8 +643,7 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'),
-                    mage_projects_only=True
+                    context_data=kwargs.get('context_data'), mage_projects_only=True
                 ).values()
             ]
 

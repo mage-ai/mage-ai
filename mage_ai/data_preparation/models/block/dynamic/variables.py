@@ -314,9 +314,6 @@ def get_variable_objects(
             0/
             1/
     """
-    pipeline = block.pipeline
-    pipeline_uuid = pipeline.uuid
-    variable_manager = pipeline.variable_manager
 
     """
     If block is a dynamic child block, get the variable objects specifically in the directory
@@ -328,21 +325,19 @@ def get_variable_objects(
     if dynamic_block_index is not None:
         block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
 
-    variable_uuids = variable_manager.get_variables_by_block(
-        block.pipeline.uuid,
-        block_uuid=block_uuid,
+    variable_uuids = block.get_variables_by_block(
+        block_uuid,
         clean_block_uuid=dynamic_block_index is None,
         partition=execution_partition,
     )
 
     return sorted(
         [
-            variable_manager.get_variable_object(
-                block_uuid=block_uuid,
+            block.get_variable_object(
+                block_uuid,
+                variable_uuid,
                 clean_block_uuid=dynamic_block_index is None,
                 partition=execution_partition,
-                pipeline_uuid=pipeline_uuid,
-                variable_uuid=variable_uuid,
             )
             for variable_uuid in variable_uuids
             if variable_uuid != ''

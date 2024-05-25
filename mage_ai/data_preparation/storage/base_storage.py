@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import polars as pl
@@ -67,7 +67,7 @@ class BaseStorage(ABC):
     def read_json_file(
         self,
         file_path: str,
-        default_value: Dict = None,
+        default_value: Optional[Union[Dict, List]] = None,
         raise_exception: bool = False,
     ) -> Dict:
         """

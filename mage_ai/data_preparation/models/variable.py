@@ -42,7 +42,9 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
+from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import (
+    DATA_TYPE_FILENAME,
     DATAFRAME_COLUMN_TYPES_FILE,
     DATAFRAME_CSV_FILE,
     DATAFRAME_PARQUET_FILE,
@@ -51,6 +53,9 @@ from mage_ai.data_preparation.models.variables.constants import (
     JSON_SAMPLE_FILE,
     METADATA_FILE,
     RESOURCE_USAGE_FILE,
+    VariableAggregateDataType,
+    VariableAggregateDataTypeFilename,
+    VariableAggregateSummaryGroupType,
     VariableType,
 )
 from mage_ai.data_preparation.models.variables.utils import is_output_variable
@@ -64,7 +69,7 @@ from mage_ai.settings.server import (
 )
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.environments import is_debug
-from mage_ai.shared.hash import flatten_dict
+from mage_ai.shared.hash import flatten_dict, set_value
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
 from mage_ai.shared.utils import clean_name
@@ -80,6 +85,7 @@ class Variable:
         pipeline_path: str,
         block_uuid: str,
         partition: Optional[str] = None,
+        skip_check_variable_type: Optional[bool] = None,
         spark: Optional[Any] = None,
         storage: Optional[BaseStorage] = None,
         variable_type: Optional[VariableType] = None,
@@ -130,7 +136,9 @@ class Variable:
 
         self.variable_type = variable_type
         self.variable_types = variable_types or []
-        self.check_variable_type(spark=spark)
+
+        if not skip_check_variable_type:
+            self.check_variable_type(spark=spark)
 
     @classmethod
     def dir_path(cls, pipeline_path, block_uuid):
@@ -183,12 +191,7 @@ class Variable:
         ):
             return self._part_uuids
 
-        part_uuids = []
-        for chunk_uuid in self.storage.listdir(self.variable_path):
-            if chunk_uuid.isdigit() and self.storage.isdir(
-                os.path.join(self.variable_path, chunk_uuid)
-            ):
-                part_uuids.append(chunk_uuid)
+        part_uuids = self.__get_part_uuids(self.variable_path)
 
         if len(part_uuids) >= 1:
             self._part_uuids = part_uuids
@@ -711,6 +714,180 @@ class Variable:
             return os.path.join(self.variable_path, filename)
 
         return self.variable_path
+
+    def aggregate_summary_info(self):
+        """
+        Only consolidate summary files if at least 1 of the following criteria are met:
+            - Dynamic child block
+            - Variable has parts (e.g. output_0/[part_uuid])
+        Consolidate summary files from all subfolders (except data.json):
+            - insights.json
+            - metadata.json
+            - resources.json
+            - sample_data.json
+            - statistics.json
+            - suggestions.json
+            - type.json
+
+        Directory structure
+        [block_uuid]/                  -> self.variable_dir_path
+            [variable_uuid: output_0]/ -> self.variable_path
+                0/
+                    type.json
+                1/
+                    type.json
+                type.json
+            [dynamic_block_index]/
+                [variable_uuid: output_0]/
+                    0/
+                        type.json
+                    1/
+                        type.json
+                    type.json
+        """
+
+        filenames = [key.value for key in VariableAggregateDataTypeFilename]
+
+        """
+        [block_uuid]/                  -> self.variable_dir_path
+            [variable_uuid: output_0]/ -> self.variable_path
+                0/
+                    type.json
+                1/
+                    type.json
+                type.json
+        """
+        mapping_parts = {}
+        if self.part_uuids:
+            for part_uuid in self.part_uuids:  # part_uuid: 0/
+                for filename in filenames:  # filename: type.json
+                    if not mapping_parts.get(filename):
+                        mapping_parts[filename] = []
+
+                    file_path = os.path.join(self.variable_path, part_uuid, filename)
+                    if self.storage.path_exists(file_path):
+                        mapping_parts[filename].append(
+                            self.storage.read_json_file(
+                                file_path,
+                                default_value={},
+                                raise_exception=False,
+                            ),
+                        )
+                    else:
+                        mapping_parts[filename].append({})
+
+        """
+        [block_uuid]/                      -> self.variable_dir_path
+            [dynamic_block_index]/         -> [read all of them]
+                [variable_uuid: output_0]/ -> self.uuid
+                    0/
+                        type.json
+                    1/
+                        type.json
+                    type.json
+        """
+        mapping_dynamic_blocks = {}
+        # dynamic_block_index: 0
+        # index_path:  [block_uuid]/[dynamic_block_index: 0]/
+        # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
+        for _dynamic_block_index, _index_path, output_path in self.__dynamic_block_index_paths():
+            mapping_dynamic_children = {}
+            for filename in filenames:  # filename: type.json
+                if not mapping_dynamic_children.get(filename):
+                    mapping_dynamic_children[filename] = []
+
+                # Check if the output directory has parts e.g 0/
+                part_uuids = self.__get_part_uuids(output_path)
+                if part_uuids and len(part_uuids) >= 1:
+                    arr = []
+                    for part_uuid in part_uuids:
+                        part_path = os.path.join(output_path, part_uuid, filename)
+                        if self.storage.path_exists(part_path):
+                            arr.append(
+                                self.storage.read_json_file(
+                                    part_path,
+                                    default_value={},
+                                    raise_exception=False,
+                                ),
+                            )
+                    mapping_dynamic_children[filename].append(arr)
+                else:
+                    file_path = os.path.join(output_path, filename)
+                    if self.storage.path_exists(file_path):
+                        mapping_dynamic_children[filename].append(
+                            self.storage.read_json_file(
+                                file_path,
+                                default_value={},
+                                raise_exception=False,
+                            ),
+                        )
+                    else:
+                        mapping_dynamic_children[filename].append({})
+
+            for filename, arr in mapping_dynamic_children.items():
+                if not mapping_dynamic_blocks.get(filename):
+                    mapping_dynamic_blocks[filename] = []
+                mapping_dynamic_blocks[filename].append(arr)
+
+        for directory, mapping in [
+            (VariableAggregateSummaryGroupType.DYNAMIC, mapping_dynamic_blocks),
+            (VariableAggregateSummaryGroupType.PARTS, mapping_parts),
+        ]:
+            if len(mapping) == 0:
+                continue
+
+            path = os.path.join(self.variable_path, directory)
+            if not self.storage.isdir(path):
+                self.storage.makedirs(path, exist_ok=True)
+            for filename, data in mapping.items():
+                self.storage.write_json_file(os.path.join(path, filename), data)
+
+    def get_aggregate_summary_info(
+        self,
+        data_type: VariableAggregateDataType,
+        default_group_type: Optional[VariableAggregateSummaryGroupType] = None,
+        group_type: Optional[VariableAggregateSummaryGroupType] = None,
+    ) -> VariableAggregateCache:
+        """
+        Get aggregate summary information for the variable.
+
+        Args:
+            group_type (VariableAggregateSummaryGroupType): Group type of the variable.
+
+        Returns:
+            Optional[AggregateInformationData]: Aggregate summary information for the variable.
+
+        Used
+        """
+        cache_dict = {}
+
+        path = os.path.join(
+            self.variable_path,
+            group_type.value if group_type else '',
+            DATA_TYPE_FILENAME[data_type],
+        )
+
+        if self.storage.path_exists(path):
+            data = self.storage.read_json_file(
+                path,
+                default_value=None,
+                raise_exception=False,
+            )
+            keys = [v.value for v in [group_type, data_type] if v is not None]
+
+            if VariableAggregateDataType.TYPE == data_type:
+                var_types = data.get('types')
+                if default_group_type is not None and var_types:
+                    cache_dict = set_value(
+                        cache_dict,
+                        [default_group_type.value, data_type.value],
+                        [dict(type=val) for val in var_types],
+                    )
+                if group_type is None:
+                    data = {data_type.value: data.get('type')}
+            cache_dict = set_value(cache_dict, keys, data)
+
+        return VariableAggregateCache.load(**cache_dict)
 
     def write_data(self, data: Any) -> None:
         if MEMORY_MANAGER_V2:
@@ -1562,3 +1739,24 @@ class Variable:
             row_count = self.__parquet_num_rows(path or self.variable_path)
             return row_count is not None and row_count >= 1
         return False
+
+    def __dynamic_block_index_paths(self) -> List[Tuple[int, str, str]]:
+        if not self.storage.isdir(self.variable_dir_path):
+            return []
+
+        indexes = []
+        for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
+            index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
+            if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
+                output_path = os.path.join(index_path, self.uuid)
+                if self.storage.isdir(output_path):
+                    indexes.append((int(dynamic_block_index), index_path, output_path))
+
+        return indexes
+
+    def __get_part_uuids(self, path: str) -> List[str]:
+        part_uuids = []
+        for chunk_uuid in self.storage.listdir(path):
+            if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
+                part_uuids.append(chunk_uuid)
+        return part_uuids

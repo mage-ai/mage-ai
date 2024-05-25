@@ -1,5 +1,3 @@
-from mage_ai.presenters.utils import render_output_tags
-
 INTERNAL_PREFIX = '__internal_output__'
 
 
@@ -21,6 +19,7 @@ def __custom_output():
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.models.utils import infer_variable_type
     from mage_ai.data_preparation.models.variable import VariableType
+    from mage_ai.presenters.utils import render_output_tags
     from mage_ai.server.kernel_output_parser import DataType
     from mage_ai.shared.parsers import (
         convert_matrix_to_dataframe,
@@ -41,7 +40,14 @@ def __custom_output():
         '{block_uuid}', extension_uuid='{extension_uuid}', widget=bool('{widget}')
     )
 
+    is_dynamic = bool('{is_dynamic}')
+    is_dynamic_child = bool('{is_dynamic_child}')
+
     if block.executable:
+        if is_dynamic_child:
+            # The output of a dynamic child block is printed to the client from execute_custom_code
+            return
+
         outputs = block.get_outputs()
 
         if outputs is not None and isinstance(outputs, list):
@@ -58,8 +64,6 @@ def __custom_output():
 
     _internal_output_return = '{last_line}'
     variable_type, basic_iterable = infer_variable_type(_internal_output_return)
-    is_dynamic = bool('{is_dynamic}')
-    is_dynamic_child = bool('{is_dynamic_child}')
 
     if (
         not is_dynamic

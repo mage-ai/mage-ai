@@ -104,12 +104,22 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.utils import is_basic_iterable, warn_for_repo_path
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.data_preparation.models.variables.cache import (
+    AggregateInformationData,
+    InformationData,
+    VariableAggregateCache,
+)
+from mage_ai.data_preparation.models.variables.constants import (
+    VariableAggregateDataType,
+    VariableAggregateSummaryGroupType,
+    VariableType,
+)
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
@@ -416,6 +426,8 @@ class Block(
             Callable[..., Optional[List[VariableType]]]
         ] = None
 
+        self._variable_aggregate_cache = None
+
     @property
     def uuid(self) -> str:
         return self._uuid
@@ -489,6 +501,82 @@ class Block(
             )
         return None
 
+    @property
+    def variable_manager(self) -> VariableManager:
+        if not self.pipeline:
+            raise Exception(
+                f'Block {self.uuid} requires a pipeline to access the variable manager'
+            )
+        return self.pipeline.variable_manager
+
+    @property
+    def pipeline_uuid(self) -> str:
+        return self.pipeline.uuid if self.pipeline else ''
+
+    def __load_variable_aggregate_cache(self, variable_uuid: str) -> VariableAggregateCache:
+        if not self._variable_aggregate_cache:
+            self._variable_aggregate_cache = {variable_uuid: VariableAggregateCache()}
+
+        if variable_uuid not in self._variable_aggregate_cache:
+            self._variable_aggregate_cache[variable_uuid] = VariableAggregateCache()
+
+        return self._variable_aggregate_cache[variable_uuid]
+
+    def get_variable_aggregate_cache(
+        self,
+        variable_uuid: str,
+        data_type: VariableAggregateDataType,
+        default_group_type: Optional[VariableAggregateSummaryGroupType] = None,
+        group_type: Optional[VariableAggregateSummaryGroupType] = None,
+        infer_group_type: Optional[bool] = None,
+        partition: Optional[str] = None,
+    ) -> Optional[Union[AggregateInformationData, InformationData]]:
+        cache = self.__load_variable_aggregate_cache(variable_uuid)
+
+        if infer_group_type:
+            group_type = (
+                VariableAggregateSummaryGroupType.DYNAMIC
+                if is_dynamic_block_child(self)
+                else VariableAggregateSummaryGroupType.PARTS
+            )
+
+        keys = [v.value for v in [group_type, data_type] if v is not None]
+        value = functools.reduce(getattr, keys, cache)
+
+        if not value:
+            cache_new = self.variable_manager.get_aggregate_summary_info(
+                self.pipeline_uuid,
+                self.uuid,
+                variable_uuid,
+                data_type,
+                default_group_type=default_group_type,
+                group_type=group_type,
+                partition=partition,
+            )
+            group = (group_type.value if group_type else None) or (
+                default_group_type.value if default_group_type else None
+            )
+            if group is not None:
+                cache_group_new = getattr(cache_new, group)
+                cache_group = getattr(cache, group) or cache_group_new
+                for data in VariableAggregateDataType:
+                    val = getattr(cache_group, data)
+                    val_new = getattr(cache_group_new, data)
+                    setattr(cache_group or cache_group_new, data, val_new or val)
+                setattr(cache, group, cache_group)
+
+            for data in VariableAggregateDataType:
+                val = getattr(cache, data)
+                val_new = getattr(cache_new, data)
+                setattr(cache, data, val_new or val)
+            self._variable_aggregate_cache = merge_dict(
+                self._variable_aggregate_cache or {},
+                {variable_uuid: cache},
+            )
+            value = functools.reduce(getattr, keys, cache)
+
+        return value
+
     def get_resource_usage(
         self,
         block_uuid: Optional[str] = None,
@@ -511,12 +599,20 @@ class Block(
         index: Optional[int] = None,
         partition: Optional[str] = None,
         variable_uuid: Optional[str] = None,
-    ) -> Optional[Dict]:
+    ) -> Optional[InformationData]:
         try:
-            variable = self.get_variable_object(
-                block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+            values = self.get_variable_aggregate_cache(
+                variable_uuid,
+                VariableAggregateDataType.STATISTICS,
+                infer_group_type=index is not None,
+                partition=partition,
             )
-            return variable.get_analysis(index=index)
+
+            if index is not None:
+                if values and isinstance(values, list) and len(values) > index:
+                    return values[index]
+            else:
+                return values
         except Exception as err:
             print(f'[ERROR] Block.get_analysis: {err}')
             return {}
@@ -827,7 +923,7 @@ class Block(
             return self.configuration['data_provider_table']
 
         table_name = (
-            f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_' f'{self.pipeline.version_name}'
+            f'{self.pipeline_uuid}_{clean_name_orig(self.uuid)}_' f'{self.pipeline.version_name}'
         )
 
         env = (self.global_vars or dict()).get('env')
@@ -1143,7 +1239,7 @@ class Block(
                     widget=widget,
                 )
                 pipelines = [
-                    pipeline for pipeline in pipelines if self.pipeline.uuid != pipeline.uuid
+                    pipeline for pipeline in pipelines if self.pipeline_uuid != pipeline.uuid
                 ]
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
@@ -1379,14 +1475,14 @@ class Block(
                     logger_manager = LoggerManagerFactory.get_logger_manager(
                         block_uuid=datetime.utcnow().strftime(format='%Y%m%dT%H%M%S'),
                         partition=LOG_PARTITION_EDIT_PIPELINE,
-                        pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                        pipeline_uuid=self.pipeline_uuid,
                         subpartition=clean_name(self.uuid),
                     )
                     logger = DictLogger(logger_manager.logger)
                     logging_tags = dict(
                         block_type=self.type,
                         block_uuid=self.uuid,
-                        pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
+                        pipeline_uuid=self.pipeline_uuid,
                     )
 
                 output = self.execute_block(
@@ -1453,6 +1549,8 @@ class Block(
                                 variable_mapping, dict
                             ):
                                 self._store_variables_in_block_function(variable_mapping)
+
+                            self.__aggregate_summary_info()
                         except ValueError as e:
                             if str(e) == 'Circular reference detected':
                                 raise ValueError(
@@ -1495,7 +1593,7 @@ class Block(
                 metadata['origin'] = 'ide'
             with MemoryManager(
                 scope_uuid=os.path.join(
-                    *([PIPELINES_FOLDER, self.pipeline.uuid] if self.pipeline else ['']),
+                    *([PIPELINES_FOLDER, self.pipeline_uuid] if self.pipeline else ['']),
                     self.uuid,
                 ),
                 process_uuid='block.execute_sync',
@@ -1940,7 +2038,7 @@ class Block(
         if MEMORY_MANAGER_V2:
             log_message_prefix = self.uuid
             if self.pipeline:
-                log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
+                log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
             log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
 
             output, self.resource_usage = execute_with_memory_tracking(
@@ -2171,8 +2269,8 @@ class Block(
         for v in output_variable_objects:
             if v.variable_type != VariableType.DATAFRAME:
                 continue
-            data = self.pipeline.variable_manager.get_variable(
-                self.pipeline.uuid,
+            data = self.variable_manager.get_variable(
+                self.pipeline_uuid,
                 self.uuid,
                 v.uuid,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
@@ -2184,13 +2282,12 @@ class Block(
     def get_variables_by_block(
         self,
         block_uuid: str,
+        clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
         max_results: Optional[int] = None,
         partition: Optional[str] = None,
     ) -> List[str]:
-        variable_manager = self.pipeline.variable_manager
-
         block_uuid_use, changed = uuid_for_output_variables(
             self,
             block_uuid=block_uuid,
@@ -2198,10 +2295,10 @@ class Block(
             dynamic_block_uuid=dynamic_block_uuid,
         )
 
-        res = variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
+        res = self.variable_manager.get_variables_by_block(
+            self.pipeline_uuid,
             block_uuid=block_uuid_use,
-            clean_block_uuid=not changed,
+            clean_block_uuid=not changed and clean_block_uuid,
             max_results=max_results,
             partition=partition,
         )
@@ -2232,8 +2329,6 @@ class Block(
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ):
-        variable_manager = self.pipeline.variable_manager
-
         block_uuid_use, changed = uuid_for_output_variables(
             self,
             block_uuid=block_uuid,
@@ -2241,8 +2336,8 @@ class Block(
             dynamic_block_uuid=dynamic_block_uuid,
         )
 
-        value = variable_manager.get_variable(
-            self.pipeline.uuid,
+        value = self.variable_manager.get_variable(
+            self.pipeline_uuid,
             block_uuid=block_uuid_use,
             clean_block_uuid=not changed,
             partition=partition,
@@ -2261,29 +2356,47 @@ class Block(
     def get_variable_object(
         self,
         block_uuid: str,
-        variable_uuid: Optional[str] = None,
+        variable_uuid: str,
+        clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
-        partition: Optional[str] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        partition: Optional[str] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
-        variable_manager = self.pipeline.variable_manager
-
         block_uuid, changed = uuid_for_output_variables(
             self,
             block_uuid=block_uuid,
             dynamic_block_index=dynamic_block_index,
         )
+        dynamic_child = is_dynamic_block_child(self)
+        group_type = (
+            VariableAggregateSummaryGroupType.DYNAMIC
+            if dynamic_child
+            else VariableAggregateSummaryGroupType.PARTS
+        )
+        variable_type_information = self.get_variable_aggregate_cache(
+            variable_uuid, VariableAggregateDataType.TYPE, default_group_type=group_type
+        )
+        variable_types_information = self.get_variable_aggregate_cache(
+            variable_uuid,
+            VariableAggregateDataType.TYPE,
+            group_type=group_type,
+            partition=partition,
+        )
 
-        return variable_manager.get_variable_object(
-            self.pipeline.uuid,
+        return self.variable_manager.get_variable_object(
+            self.pipeline_uuid,
             block_uuid=block_uuid,
-            clean_block_uuid=not changed,
+            clean_block_uuid=not changed and clean_block_uuid,
             partition=partition,
             spark=self.get_spark_session(),
+            variable_type=variable_type_information.type if variable_type_information else None,
+            variable_types=[v.type for v in variable_types_information]
+            if variable_types_information
+            else None,
             variable_uuid=variable_uuid,
             input_data_types=input_data_types,
             read_batch_settings=read_batch_settings,
@@ -3102,8 +3215,8 @@ class Block(
         for uuid, data in variable_mapping.items():
             if isinstance(data, pd.DataFrame):
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS or shape_only:
-                    self.pipeline.variable_manager.add_variable(
-                        self.pipeline.uuid,
+                    self.variable_manager.add_variable(
+                        self.pipeline_uuid,
                         self.uuid,
                         uuid,
                         dict(
@@ -3132,8 +3245,8 @@ class Block(
                         transform=False,
                         verbose=False,
                     )
-                    self.pipeline.variable_manager.add_variable(
-                        self.pipeline.uuid,
+                    self.variable_manager.add_variable(
+                        self.pipeline_uuid,
                         self.uuid,
                         uuid,
                         dict(
@@ -3152,8 +3265,8 @@ class Block(
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())
             elif isinstance(data, pl.DataFrame):
-                self.pipeline.variable_manager.add_variable(
-                    self.pipeline.uuid,
+                self.variable_manager.add_variable(
+                    self.pipeline_uuid,
                     self.uuid,
                     uuid,
                     dict(
@@ -3282,7 +3395,7 @@ class Block(
             global_vars['context'] = dict()
 
         # Add pipeline uuid and block uuid to global_vars
-        global_vars['pipeline_uuid'] = self.pipeline.uuid if self.pipeline else None
+        global_vars['pipeline_uuid'] = self.pipeline_uuide
         global_vars['block_uuid'] = self.uuid
 
         if dynamic_block_index is not None:
@@ -3360,8 +3473,8 @@ class Block(
         )
 
         return (
-            self.pipeline.variable_manager.get_variables_by_block(
-                self.pipeline.uuid,
+            self.variable_manager.get_variables_by_block(
+                self.pipeline_uuid,
                 block_uuid=block_uuid,
                 partition=execution_partition,
                 clean_block_uuid=not changed,
@@ -3419,11 +3532,23 @@ class Block(
         )
 
         for variable_uuid in variable_uuids or variable_uuids_all:
-            self.pipeline.variable_manager.delete_variable(
-                self.pipeline.uuid,
+            self.variable_manager.delete_variable(
+                self.pipeline_uuid,
                 block_uuid,
                 variable_uuid,
             )
+
+    def __aggregate_summary_info(self, execution_partition: Optional[str] = None):
+        """
+        Run this only after executing blocks in a notebook so that reading pipelines
+        don’t take forever to load while waiting for all the nested variable folders
+        to be read.
+        """
+        self.variable_manager.aggregate_summary_info_for_all_variables(
+            self.pipeline_uuid,
+            self.uuid,
+            partition=execution_partition,
+        )
 
     def store_variables(
         self,
@@ -3437,10 +3562,6 @@ class Block(
         spark: Optional[Any] = None,
         save_variable_types_only: Optional[Any] = None,
     ) -> Optional[List[Variable]]:
-        variable_manager = self.pipeline.variable_manager if self.pipeline else None
-        if variable_manager is None:
-            return []
-
         block_uuid, changed = uuid_for_output_variables(
             self,
             block_uuid=self.uuid,
@@ -3458,8 +3579,8 @@ class Block(
 
         if save_variable_types_only:
             for variable_uuid, variable_types in variable_mapping.items():
-                variable_manager.add_variable_types(
-                    self.pipeline.uuid if self.pipeline else None,
+                self.variable_manager.add_variable_types(
+                    self.pipeline_uuid,
                     block_uuid,
                     variable_uuid,
                     variable_types,
@@ -3493,8 +3614,8 @@ class Block(
             ):
                 data = spark.createDataFrame(data)
             variables.append(
-                variable_manager.add_variable(
-                    self.pipeline.uuid if self.pipeline else None,
+                self.variable_manager.add_variable(
+                    self.pipeline_uuid,
                     block_uuid,
                     uuid,
                     data,
@@ -3551,8 +3672,8 @@ class Block(
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
 
-            await self.pipeline.variable_manager.add_variable_async(
-                self.pipeline.uuid,
+            await self.variable_manager.add_variable_async(
+                self.pipeline_uuid,
                 block_uuid,
                 uuid,
                 data,
@@ -3565,8 +3686,8 @@ class Block(
 
         if not is_dynamic_child:
             for uuid in variables_data['removed_variables']:
-                self.pipeline.variable_manager.delete_variable(
-                    self.pipeline.uuid,
+                self.variable_manager.delete_variable(
+                    self.pipeline_uuid,
                     block_uuid,
                     uuid,
                     clean_block_uuid=not changed,
@@ -3595,8 +3716,8 @@ class Block(
         for b in self.upstream_blocks:
             for v in b.output_variables(execution_partition=execution_partition):
                 objs.append(
-                    self.pipeline.variable_manager.get_variable_object(
-                        self.pipeline.uuid,
+                    self.get_variable_object(
+                        self.pipeline_uuid,
                         b.uuid,
                         v,
                         partition=execution_partition,
@@ -3649,8 +3770,8 @@ class Block(
             return []
 
         variable_objects = [
-            self.pipeline.variable_manager.get_variable_object(
-                self.pipeline.uuid,
+            self.variable_manager.get_variable_object(
+                self.pipeline_uuid,
                 self.uuid,
                 v,
                 partition=execution_partition,
@@ -3692,8 +3813,8 @@ class Block(
     ) -> Any:
         if self.pipeline is None:
             return []
-        return self.pipeline.variable_manager.get_variable_object(
-            self.pipeline.uuid,
+        return self.variable_manager.get_variable_object(
+            self.pipeline_uuid,
             self.uuid,
             variable_uuid,
             partition=execution_partition,
@@ -3794,7 +3915,7 @@ class Block(
                 name=self.name,
                 uuid=self.uuid,
                 file_path=new_file_path,
-                pipeline=self.pipeline.uuid,
+                pipeline=self.pipeline_uuid,
                 repo_path=self.pipeline.repo_path,
                 configuration=self.configuration,
                 __uuid='__update_name',
@@ -3850,7 +3971,7 @@ class Block(
                     language=self.language,
                     pipeline=self.pipeline,
                 )
-                cache.remove_pipeline(old_block, self.pipeline.uuid, self.pipeline.repo_path)
+                cache.remove_pipeline(old_block, self.pipeline_uuid, self.pipeline.repo_path)
             else:
                 cache.move_pipelines(
                     self,
@@ -3973,7 +4094,7 @@ class AddonBlock(Block):
         global_vars = merge_dict(
             global_vars or dict(),
             dict(
-                pipeline_uuid=self.pipeline.uuid,
+                pipeline_uuid=self.pipeline_uuid,
                 block_uuid=self.uuid,
                 pipeline_run=pipeline_run,
             ),

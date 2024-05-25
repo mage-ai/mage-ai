@@ -1,15 +1,17 @@
 import os
 from enum import Enum
 
-DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
-DATAFRAME_ANALYSIS_KEYS = frozenset(
-    [
-        'metadata',
-        'statistics',
-        'insights',
-        'suggestions',
-    ]
+from mage_ai.data_preparation.models.variables.constants import (
+    VariableAggregateDataType,
 )
+
+DATAFRAME_ANALYSIS_KEYS = frozenset([
+    VariableAggregateDataType.INSIGHTS.value,
+    VariableAggregateDataType.METADATA.value,
+    VariableAggregateDataType.STATISTICS.value,
+    VariableAggregateDataType.SUGGESTIONS.value,
+])
+DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
 DATAFRAME_ANALYSIS_MAX_COLUMNS = 100
 DATAFRAME_ANALYSIS_MAX_ROWS = 100_000
 DATAFRAME_SAMPLE_COUNT = 1000
