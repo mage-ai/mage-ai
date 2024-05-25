@@ -2028,7 +2028,9 @@ class Block(
 
                 self._store_variables_in_block_function = None
 
-        return output or []
+        if output is None:
+            return []
+        return output
 
     def __initialize_decorator_modules(
         self,
