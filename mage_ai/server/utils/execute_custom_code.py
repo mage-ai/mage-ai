@@ -1,6 +1,10 @@
+import asyncio
 import base64
 import json
 import logging
+from typing import Any, Dict, List, Optional
+
+import simplejson
 
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
@@ -10,8 +14,10 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.orchestration.db import db_connection
+from mage_ai.presenters.utils import render_output_tags
 from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.system.memory.manager import MemoryManager
 
 db_connection.start_session()
@@ -21,7 +27,89 @@ if 'context' not in globals():
     context = dict()
 
 
-def execute_custom_code():
+async def task(
+    block: Any,
+    execute_kwargs: Dict[str, Any],
+    custom_code: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+    global_vars: Optional[Dict[str, Any]] = None,
+    logger: Optional[logging.Logger] = None,
+):
+    output_dict = block.execute_with_callback(**execute_kwargs)
+
+    if bool('{run_tests}'):
+        block.run_tests(
+            custom_code=custom_code,
+            dynamic_block_index=dynamic_block_index,
+            from_notebook=True,
+            logger=logger,
+            global_vars=global_vars,
+            update_tests=False,
+        )
+
+    outputs = block.get_outputs(dynamic_block_index=dynamic_block_index)
+
+    if outputs is not None and isinstance(outputs, list):
+        outputs = outputs[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
+
+    if outputs is not None and len(outputs) >= 1:
+        _json_string = simplejson.dumps(
+            outputs,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(render_output_tags(_json_string))
+
+    output = []
+    if output_dict and output_dict.get('output'):
+        output = output_dict.get('output')
+
+    return output
+
+
+async def run_tasks(
+    block: Any,
+    settings: List[Dict[str, Any]],
+    options: Dict[str, Any],
+) -> List[Any]:
+    # Create a list of coroutine objects directly
+    tasks = [
+        task(
+            block,
+            merge_dict(options, config),
+            custom_code=options.get('custom_code'),
+            dynamic_block_index=dynamic_block_index,
+            global_vars=options.get('global_vars'),
+            logger=options.get('logger'),
+        )
+        for dynamic_block_index, config in enumerate(settings)
+    ]
+
+    # Await the tasks gathered together
+    return await asyncio.gather(*tasks)
+
+    # completed, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+
+    # # Collect results from all completed tasks
+    # results = [task.result() for task in completed]
+    # return results
+
+    # Create an asyncio.Task for each coroutine to manage their execution
+    # tasks = [asyncio.create_task(asyncio.to_thread(run_task, t)) for t in tasks]
+
+    # # Wait for all tasks to complete
+    # for task in asyncio.as_completed(tasks):
+    #     # As results become available, process them
+    #     async for step_result in await task:
+    #         print(step_result)  # Process intermediate results here
+
+
+# async def run_task(coroutine):
+#     async for result in coroutine:
+#         yield result
+
+
+async def execute_custom_code():
     block_uuid = '{block_uuid}'
     run_incomplete_upstream = bool('{run_incomplete_upstream}')
     run_upstream = bool('{run_upstream}')
@@ -91,28 +179,15 @@ def execute_custom_code():
     is_dynamic_child = is_dynamic_block_child(block)
 
     if is_dynamic_child:
-        outputs = []
         with MemoryManager(
             scope_uuid='dynamic_blocks', process_uuid='build_combinations_for_dynamic_child'
         ):
-            settings = build_combinations_for_dynamic_child(block, **options)
+            settings = build_combinations_for_dynamic_child(
+                block,
+                **options,
+            )[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
         with MemoryManager(scope_uuid='dynamic_blocks', process_uuid='execute_with_callback'):
-            for dynamic_block_index, config in enumerate(settings):
-                output_dict = block.execute_with_callback(**merge_dict(options, config))
-                if output_dict and output_dict.get('output'):
-                    outputs.append(output_dict.get('output'))
-
-                if bool('{run_tests}'):
-                    block.run_tests(
-                        custom_code=code,
-                        dynamic_block_index=dynamic_block_index,
-                        from_notebook=True,
-                        logger=logger,
-                        global_vars=global_vars,
-                        update_tests=False,
-                    )
-
-        block_output['output'] = outputs
+            block_output['output'] = await run_tasks(block, settings, options)
     else:
         block_output = block.execute_with_callback(**options)
 

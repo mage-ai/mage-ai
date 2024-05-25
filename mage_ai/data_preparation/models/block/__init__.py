@@ -1347,23 +1347,21 @@ class Block(
 
                 def __store_variables(
                     variable_mapping: Dict[str, Any],
-                    delete_before_adding: Optional[bool] = None,
                     skip_delete: Optional[bool] = None,
                     save_variable_types_only: Optional[bool] = None,
-                    block=self,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
                     execution_partition=execution_partition,
                     global_vars=global_vars,
                     override_outputs=override_outputs,
-                ) -> Optional[List[VariableType]]:
-                    return block.store_variables(
+                    self=self,
+                ) -> Optional[List[Variable]]:
+                    return self.store_variables(
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
-                        delete_before_adding=delete_before_adding,
                         skip_delete=skip_delete,
-                        spark=block.__get_spark_session_from_global_vars(
+                        spark=self.__get_spark_session_from_global_vars(
                             global_vars=global_vars,
                         ),
                         dynamic_block_index=dynamic_block_index,
@@ -1867,6 +1865,8 @@ class Block(
                 self.execute_block_function(
                     preprocesser_function,
                     input_vars,
+                    dynamic_block_index=dynamic_block_index,
+                    execution_partition=execution_partition,
                     from_notebook=from_notebook,
                     global_vars=global_vars,
                     logger=logger,
@@ -1888,6 +1888,8 @@ class Block(
             outputs = self.execute_block_function(
                 block_function,
                 input_vars,
+                dynamic_block_index=dynamic_block_index,
+                execution_partition=execution_partition,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
                 logger=logger,
@@ -1914,28 +1916,33 @@ class Block(
         self,
         block_function: Callable,
         input_vars: List,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
+        execution_partition: Optional[str] = None,
         from_notebook: bool = False,
         global_vars: Optional[Dict] = None,
         initialize_decorator_modules: bool = True,
         logger: Optional[Logger] = None,
         logging_tags: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
-        block_function_updated = block_function
-
-        if from_notebook and initialize_decorator_modules:
-            block_function_updated = self.__initialize_decorator_modules(
-                block_function,
-                [self.type],
-            )
-
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
-        log_message_prefix = self.uuid
-        if self.pipeline:
-            log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
+        block_function_updated = block_function
+        if from_notebook and initialize_decorator_modules:
+            block_function_updated = self.__initialize_decorator_modules(
+                block_function,
+                [str(self.type.value) if not isinstance(self.type, str) else str(self.type)]
+                if self.type
+                else [],
+            )
 
         if MEMORY_MANAGER_V2:
+            log_message_prefix = self.uuid
+            if self.pipeline:
+                log_message_prefix = f'{self.pipeline.uuid}:{log_message_prefix}'
+            log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
+
             output, self.resource_usage = execute_with_memory_tracking(
                 block_function_updated,
                 args=input_vars,
@@ -1944,7 +1951,7 @@ class Block(
                 else None,
                 logger=logger,
                 logging_tags=logging_tags,
-                log_message_prefix=f'[{log_message_prefix}:execute_block_function]',
+                log_message_prefix=log_message_prefix,
             )
         elif has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
@@ -1953,11 +1960,25 @@ class Block(
 
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
             variable_types = []
-            dynamic = is_dynamic_block(self)
             dynamic_child = is_dynamic_block_child(self)
             output_count = 0
             if output is None or not is_iterable(output):
                 return output or []
+
+            if dynamic_child:
+                # Each child will delete its own data
+                # How do we delete everything ahead of time?
+                delete_variable_objects_for_dynamic_child(
+                    self,
+                    dynamic_block_index=dynamic_block_index,
+                    execution_partition=execution_partition,
+                )
+            else:
+                self.__delete_variables(
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_uuid=dynamic_block_uuid,
+                    execution_partition=execution_partition,
+                )
 
             for data in output:
                 if self._store_variables_in_block_function is None:
@@ -1989,8 +2010,7 @@ class Block(
 
                 variables = self._store_variables_in_block_function(
                     variable_mapping=variable_mapping,
-                    delete_before_adding=dynamic,
-                    skip_delete=dynamic_child and output_count >= 1,
+                    skip_delete=True,
                     **store_options,
                 )
                 if variables is not None and isinstance(variables, list):
@@ -2002,7 +2022,7 @@ class Block(
 
                 output_count += 1
 
-            if variable_types and self._store_variables_in_block_function:
+            if len(variable_types) >= 1 and self._store_variables_in_block_function:
                 self._store_variables_in_block_function(
                     {'output_0': variable_types},
                     save_variable_types_only=True,
@@ -2399,6 +2419,7 @@ class Block(
             child_data_sets,
             block_uuid=block_uuid,
             csv_lines_only=csv_lines_only,
+            dynamic_block_index=dynamic_block_index,
             exclude_blank_variable_uuids=exclude_blank_variable_uuids,
             execution_partition=execution_partition,
             metadata=metadata,
@@ -3320,15 +3341,15 @@ class Block(
             )
         return spark
 
-    def __store_variables_prepare(
+    def __get_variable_uuids(
         self,
-        variable_mapping: Dict,
-        execution_partition: Optional[str] = None,
-        override: bool = False,
-        override_outputs: bool = False,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
-    ) -> Dict:
+        execution_partition: Optional[str] = None,
+    ) -> Tuple[List[str], str, bool]:
+        if self.pipeline is None:
+            return []
+
         self.dynamic_block_uuid = dynamic_block_uuid
 
         block_uuid, changed = uuid_for_output_variables(
@@ -3338,21 +3359,37 @@ class Block(
             dynamic_block_uuid=dynamic_block_uuid,
         )
 
-        if self.pipeline is None:
-            return
+        return (
+            self.pipeline.variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                block_uuid=block_uuid,
+                partition=execution_partition,
+                clean_block_uuid=not changed,
+            ),
+            block_uuid,
+            changed,
+        )
 
-        all_variables = self.pipeline.variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            block_uuid=block_uuid,
-            partition=execution_partition,
-            clean_block_uuid=not changed,
+    def __store_variables_prepare(
+        self,
+        variable_mapping: Dict,
+        execution_partition: Optional[str] = None,
+        override: bool = False,
+        override_outputs: bool = False,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
+    ) -> Dict:
+        variable_uuids, _block_uuid, _changed = self.__get_variable_uuids(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
+            execution_partition=execution_partition,
         )
 
         variable_mapping = self.__consolidate_variables(variable_mapping)
 
         variable_names = [clean_name_orig(v) for v in variable_mapping]
         removed_variables = []
-        for v in all_variables:
+        for v in variable_uuids:
             if v in variable_names:
                 continue
 
@@ -3365,17 +3402,39 @@ class Block(
             variable_mapping=variable_mapping,
         )
 
+    def __delete_variables(
+        self,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
+        execution_partition: Optional[str] = None,
+        variable_uuids: Optional[List[str]] = None,
+    ) -> None:
+        if self.pipeline is None:
+            return
+
+        variable_uuids_all, block_uuid, _changed = self.__get_variable_uuids(
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
+            execution_partition=execution_partition,
+        )
+
+        for variable_uuid in variable_uuids or variable_uuids_all:
+            self.pipeline.variable_manager.delete_variable(
+                self.pipeline.uuid,
+                block_uuid,
+                variable_uuid,
+            )
+
     def store_variables(
         self,
         variable_mapping: Dict,
+        dynamic_block_index: Optional[int] = None,
+        dynamic_block_uuid: Optional[str] = None,
         execution_partition: Optional[str] = None,
         override: bool = False,
         override_outputs: bool = False,
-        delete_before_adding: Optional[bool] = None,
         skip_delete: Optional[bool] = None,
         spark: Optional[Any] = None,
-        dynamic_block_index: Optional[int] = None,
-        dynamic_block_uuid: Optional[str] = None,
         save_variable_types_only: Optional[Any] = None,
     ) -> Optional[List[Variable]]:
         variable_manager = self.pipeline.variable_manager if self.pipeline else None
@@ -3416,28 +3475,13 @@ class Block(
             dynamic_block_index=dynamic_block_index,
         )
 
-        if not skip_delete:
+        if not skip_delete and is_dynamic_child:
+            # execute_block_function will take care of this if decorated function is a generator
             delete_variable_objects_for_dynamic_child(
                 self,
                 dynamic_block_index=dynamic_block_index,
                 execution_partition=execution_partition,
             )
-
-        def __delete_removed_variables(
-            block_uuid=block_uuid,
-            pipeline=self.pipeline,
-            variables_data=variables_data,
-            variable_manager=variable_manager,
-        ):
-            for uuid in variables_data['removed_variables']:
-                variable_manager.delete_variable(
-                    pipeline.uuid if pipeline else None,
-                    block_uuid,
-                    uuid,
-                )
-
-        if delete_before_adding:
-            __delete_removed_variables()
 
         variables = []
         for uuid, data in variables_data['variable_mapping'].items():
@@ -3461,8 +3505,13 @@ class Block(
                 )
             )
 
-        if not delete_before_adding and not is_dynamic_child:
-            __delete_removed_variables()
+        if not skip_delete and not is_dynamic_child:
+            self.__delete_variables(
+                dynamic_block_index=dynamic_block_index,
+                dynamic_block_uuid=dynamic_block_uuid,
+                execution_partition=execution_partition,
+                variable_uuids=variables_data['removed_variables'],
+            )
 
         return variables
 

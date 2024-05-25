@@ -292,6 +292,7 @@ function CodeOutput(
   const combinedMessages = useMemo(() => {
     const arr = [];
     const arrRender = [];
+    const variableMapping = {};
 
     if (messages?.length >= 1) {
       messages.map((curr, idx: number) => {
@@ -299,13 +300,8 @@ function CodeOutput(
         const renderOutputMatches = [];
         const leftOverMessages = [];
 
-        let skip = false;
         if (currentData && Array.isArray(currentData)) {
           currentData?.forEach((textData: string) => {
-            if (!textData) {
-              skip = true;
-            }
-
             const match =
               textData &&
               typeof textData === 'string' &&
@@ -315,6 +311,7 @@ function CodeOutput(
               const outputs = [];
 
               const output = JSON.parse(match[1]);
+
               if (Array.isArray(output)) {
                 outputs.push(...output);
               } else {
@@ -322,12 +319,28 @@ function CodeOutput(
               }
 
               outputs?.forEach((item, idxInner) => {
+                const {
+                  data,
+                  multi_output: multiOutput,
+                  sample_data: sampleData,
+                  text_data: textData,
+                  type: outputType,
+                  variable_uuid: variableUuid,
+                } = item;
+
+                // WARNING: server must return unique variable UUIDs or they won’t show up here.
+                if (variableMapping?.[variableUuid]) {
+                  return;
+                } else {
+                  variableMapping[variableUuid] = item;
+                }
+
                 if (
                   isObject(item) &&
-                  item?.type &&
-                  (item?.variable_uuid || item?.data || item?.sample_data || item?.text_data)
+                  outputType &&
+                  (variableUuid || data || sampleData || textData)
                 ) {
-                  if (item?.multi_output || DataTypeEnum.GROUP === item?.type) {
+                  if (multiOutput || DataTypeEnum.GROUP === outputType) {
                     renderOutputMatches.push(item);
                   } else {
                     renderOutputMatches.push({

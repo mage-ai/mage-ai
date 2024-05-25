@@ -439,6 +439,7 @@ def get_outputs_for_display_dynamic_block(
     child_data_sets: List[Tuple[Any, Any]],
     block_uuid: Optional[str] = None,
     csv_lines_only: bool = False,
+    dynamic_block_index: Optional[int] = None,
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     metadata: Optional[Dict] = None,
@@ -466,11 +467,16 @@ def get_outputs_for_display_dynamic_block(
                 )
                 formatted_outputs.append(output_formatted)
 
+            # Override this with dynamic_block_index because execute_code_output from the IDE
+            # runs each dynamic child block asynchronously and prints the output immediately.
+            var_uuid = (
+                f'Dynamic child {dynamic_block_index if dynamic_block_index is not None else idx}'
+            )
             data_products.append(
                 dict(
                     outputs=formatted_outputs,
                     type=DataType.GROUP,
-                    variable_uuid=f'Dynamic child {idx}',
+                    variable_uuid=var_uuid,
                 )
             )
         else:

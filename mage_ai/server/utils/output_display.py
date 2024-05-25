@@ -294,7 +294,7 @@ import datetime
 
 {code_content}
 
-df = execute_custom_code()
+df = await execute_custom_code()
 """
 
 

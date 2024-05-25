@@ -8,6 +8,7 @@ from mage_ai.data.constants import SUPPORTED_VARIABLE_TYPES
 from mage_ai.settings.server import (
     MEMORY_MANAGER_PANDAS_VERSION,
     MEMORY_MANAGER_POLARS_VERSION,
+    MEMORY_MANAGER_V2,
     MEMORY_MANAGER_VERSION,
     SYSTEM_LOGS_PARTITIONS,
     SYSTEM_LOGS_POLL_INTERVAL,
@@ -99,6 +100,9 @@ class MemoryManager:
         return self._metadata
 
     def __enter__(self):
+        if not MEMORY_MANAGER_V2:
+            return self
+
         makedirs_sync(os.path.dirname(self.log_path))
 
         self.stop()
@@ -115,6 +119,9 @@ class MemoryManager:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if not MEMORY_MANAGER_V2:
+            return
+
         try:
             with open(self.log_path, 'a') as f:
                 f.write(format_log_message(message=current_memory_usage()))

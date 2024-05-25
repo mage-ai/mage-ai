@@ -38,6 +38,7 @@ class MemoryManagerController(SingletonBase):
     def stop_all_events(self):
         for key, pair in self.events.items():
             self.stop_event(key, *pair)
+            print(f'Event stopped: {key}')
 
 
 def get_memory_manager_controller():
