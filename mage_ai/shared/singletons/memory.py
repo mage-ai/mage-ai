@@ -1,10 +1,6 @@
 from typing import Any, Optional
 
-from mage_ai.shared.singletons.base import (
-    SingletonBase,
-    asynchronized_method,
-    singleton,
-)
+from mage_ai.shared.singletons.base import SingletonBase, singleton
 
 
 @singleton
@@ -13,12 +9,10 @@ class MemoryManagerController(SingletonBase):
         super().__init__()  # Ensures self._lock is initialized
         self.events = {}
 
-    @asynchronized_method
     def add_event_monitor(self, key: str, stop_event, monitor_thread):
         self.stop_event(key)
         self.events[key] = (stop_event, monitor_thread)
 
-    @asynchronized_method
     def stop_event(
         self, key, stop_event: Optional[Any] = None, monitor_thread: Optional[Any] = None
     ):
@@ -34,7 +28,6 @@ class MemoryManagerController(SingletonBase):
                 monitor_thread = None
             del self.events[key]
 
-    @asynchronized_method
     def stop_all_events(self):
         for key, pair in self.events.items():
             self.stop_event(key, *pair)

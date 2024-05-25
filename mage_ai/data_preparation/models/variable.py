@@ -582,27 +582,28 @@ class Variable:
             block.to_dict_async
                 GET /pipelines/[:uuid]
         """
-        try:
-            data = await self.data_manager.read_async(
-                limit_parts=limit_parts,
-                sample=sample,
-                sample_count=sample_count,
-            )
-            return data
-        except FileNotFoundError as err:
-            print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
-            print(f'variable_type:     {self.variable_type}')
-            print(f'variable_types:    {self.variable_types}')
-            print(f'variable_uuid:     {self.uuid}')
-            print(f'variable_dir_path: {self.variable_dir_path}')
-            print(f'variable_path:     {self.variable_path}')
-            print('Data sources:')
-            for source in self.data_manager.data_source:
-                print(f'  {source}')
-            print('\n')
+        if self.data_manager and self.data_manager.readable():
+            try:
+                data = await self.data_manager.read_async(
+                    limit_parts=limit_parts,
+                    sample=sample,
+                    sample_count=sample_count,
+                )
+                return data
+            except FileNotFoundError as err:
+                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
+                print(f'variable_type:     {self.variable_type}')
+                print(f'variable_types:    {self.variable_types}')
+                print(f'variable_uuid:     {self.uuid}')
+                print(f'variable_dir_path: {self.variable_dir_path}')
+                print(f'variable_path:     {self.variable_path}')
+                print('Data sources:')
+                for source in self.data_manager.data_source:
+                    print(f'  {source}')
+                print('\n')
 
-            traceback.print_exc()
-            return None
+                traceback.print_exc()
+                return None
 
         if (
             self.variable_type == VariableType.DATAFRAME

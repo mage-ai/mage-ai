@@ -67,7 +67,7 @@ function OutputRenderer({
         header={
           DataTypeEnum.GROUP === dataType ? (
             <Spacing px={PADDING_UNITS}>
-              <Text color={blockColor?.accent}>{variableUuid}</Text>
+              <Text color={blockColor?.accent} monospace small>{variableUuid}</Text>
             </Spacing>
           ) : null
         }
@@ -78,7 +78,7 @@ function OutputRenderer({
 
             return (
               <>
-                {(DataTypeEnum.TABLE !== itemType || index === 0) && <Divider medium />}
+                {(DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && <Divider medium />}
 
                 <OutputRenderer
                   {...outputRowSharedProps}

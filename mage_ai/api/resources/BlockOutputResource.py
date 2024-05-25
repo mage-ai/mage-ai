@@ -14,30 +14,54 @@ class BlockOutputResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def member(self, pk, user, **kwargs):
+    def member(cls, pk, user, **kwargs):
+        query = kwargs.get('query', {})
         block_uuid = pk
 
-        query = kwargs.get("query", {})
-        pipeline_uuid = query.get("pipeline_uuid", [None])
+        pipeline_uuid = query.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
+
+        outputs_query = {}
+        for key in [
+            'block_uuid',
+            'csv_lines_only',
+            'dynamic_block_index',
+            'exclude_blank_variable_uuids',
+            'execution_partition',
+            'include_print_outputs',
+            'sample',
+            'sample_count',
+            'variable_type',
+        ]:
+            value = query.get(key, [None])
+            if value:
+                value = value[0]
+                outputs_query[key] = value
+
+        for key, value in [
+            ('exclude_blank_variable_uuids', True),
+            ('include_print_outputs', False),
+            ('sample_count', None),
+            ('variable_type', VariableType.DATAFRAME),
+        ]:
+            if key not in outputs_query:
+                outputs_query[key] = value
+
         outputs = []
         if pipeline_uuid is not None:
             repo_path = get_repo_path(user=user)
             pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
             block = pipeline.get_block(block_uuid)
+
             error = ApiError.RESOURCE_ERROR.copy()
             if block is None:
                 error.update(
-                    message=f"Block {block_uuid} does not exist in pipeline {pipeline_uuid}"
+                    message=f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}'
                 )
                 raise ApiError(error)
-            # Only fetch dataframe variables by default
-            outputs = block.get_outputs(
-                exclude_blank_variable_uuids=True,
-                include_print_outputs=False,
-                sample_count=None,
-                variable_type=VariableType.DATAFRAME,
-            )
 
-        return self(dict(outputs=outputs), user, **kwargs)
+            # Only fetch dataframe variables by default
+            outputs = block.get_outputs(**outputs_query)
+
+        return cls(dict(outputs=outputs), user, **kwargs)

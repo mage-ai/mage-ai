@@ -101,16 +101,32 @@ class KernelProcess(BaseDataClass):
         ]
 
     @classmethod
-    def terminate_inactive(cls) -> Tuple[int, int]:
+    def terminate_inactive(
+        cls,
+        process_dicts: Optional[List[Dict]] = None,
+    ) -> Tuple[int, int]:
+        print('Terminating inactive kernels...')
         memory_usage = []
 
-        arr = cls.load_all(check_active_status=True)
+        if process_dicts:
+            arr = [cls.load(**d) for d in process_dicts]
+        else:
+            arr = cls.load_all(check_active_status=True)
         if len(arr) >= 2:
             for kernel_process in arr:
                 if not kernel_process.active:
+                    print(f'Terminating process {kernel_process.pid}...')
                     if kernel_process.terminate():
                         memory_usage.append(kernel_process.memory)
 
+        if len(memory_usage) == 0:
+            print('No inactive kernels found.')
+            return 0, 0
+
+        print(
+            f'{sum(memory_usage)} bytes of memory freed '
+            f'from {len(memory_usage)} inactive kernel(s).'
+        )
         return len(memory_usage), sum(memory_usage)
 
     def check_active_status(self) -> bool:
