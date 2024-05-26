@@ -126,6 +126,10 @@ from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateSummaryGroupType,
     VariableType,
 )
+from mage_ai.data_preparation.models.variables.summarizer import (
+    aggregate_summary_info_for_all_variables,
+    get_aggregate_summary_info,
+)
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
@@ -558,7 +562,8 @@ class Block(
         value = functools.reduce(getattr, keys, cache)
 
         if not value:
-            cache_new = self.variable_manager.get_aggregate_summary_info(
+            cache_new = get_aggregate_summary_info(
+                self.variable_manager,
                 self.pipeline_uuid,
                 self.uuid,
                 variable_uuid,
@@ -1500,6 +1505,7 @@ class Block(
                     variable_mapping: Dict[str, Any],
                     skip_delete: Optional[bool] = None,
                     save_variable_types_only: Optional[bool] = None,
+                    clean_variable_uuid: Optional[bool] = None,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
                     execution_partition=execution_partition,
@@ -1509,6 +1515,7 @@ class Block(
                 ) -> Optional[List[Variable]]:
                     return self.store_variables(
                         variable_mapping,
+                        clean_variable_uuid=clean_variable_uuid,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
                         skip_delete=skip_delete,
@@ -2166,6 +2173,7 @@ class Block(
 
                     variables = self._store_variables_in_block_function(
                         variable_mapping=variable_mapping,
+                        clean_variable_uuid=False,
                         skip_delete=True,
                         **store_options,
                     )
@@ -3670,7 +3678,8 @@ class Block(
         if not VARIABLE_DATA_OUTPUT_META_CACHE or not self.variable_manager:
             return
 
-        self.variable_manager.aggregate_summary_info_for_all_variables(
+        aggregate_summary_info_for_all_variables(
+            self.variable_manager,
             self.pipeline_uuid,
             self.uuid,
             partition=execution_partition,
@@ -3679,6 +3688,7 @@ class Block(
     def store_variables(
         self,
         variable_mapping: Dict,
+        clean_variable_uuid: Optional[bool] = True,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
         execution_partition: Optional[str] = None,
@@ -3699,7 +3709,7 @@ class Block(
 
         shared_args = dict(
             clean_block_uuid=not changed,
-            clean_variable_uuid=not is_dynamic and not is_dynamic_child,
+            clean_variable_uuid=not is_dynamic and not is_dynamic_child and clean_variable_uuid,
             partition=execution_partition,
         )
 
@@ -3739,6 +3749,7 @@ class Block(
                 and isinstance(data, pd.DataFrame)
             ):
                 data = spark.createDataFrame(data)
+
             variables.append(
                 self.variable_manager.add_variable(
                     self.pipeline_uuid,
@@ -3751,7 +3762,6 @@ class Block(
                     **shared_args,
                 )
             )
-
         if not skip_delete and not is_dynamic_child and variables_data.get('removed_variables'):
             self.__delete_variables(
                 dynamic_block_index=dynamic_block_index,

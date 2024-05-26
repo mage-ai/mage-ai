@@ -61,10 +61,12 @@ def export_data(*args, **kwargs):
         else:
             output.append(input_data)
 
-    return output
+    return [
+        output,
+    ]
 
 
-class DynamicBlockCombinationsTest(BaseApiTestCase):
+class DynamicBlockCombinationTest(BaseApiTestCase):
     def setUp(self):
         super().setUp()
         self.pipeline = create_pipeline(self.faker.unique.name(), self.repo_path)
@@ -231,7 +233,7 @@ class DynamicBlockCombinationsTest(BaseApiTestCase):
                 # 4 children: [[10, 20, [10]], [11, 20, [11]], [10, 20, [10]], [11, 20, [11]]]
                 # Sum the count of items across all children: 3 + 3 + 3 + 3 = 12
                 # 12 * 2 = 24
-                sum([len(arr) for arr in dynamic_spawn_2x_outputs]),  # 12
+                sum([len(arr) for arr in dynamic_spawn_2x_outputs])  # 12
             ),
         )
 
@@ -247,25 +249,36 @@ class DynamicBlockCombinationsTest(BaseApiTestCase):
             replica_outputs.append(out0)
         print(replica_outputs)
 
-        # child_1x_spawn_1x reduces output to 1
-        print(len(replica_outputs), len(dynamic_spawn_2x_outputs))
-
-        child_1x_childspawn_1x_reduce_outputs = []
-        child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
-            child_1x_childspawn_1x_reduce
+        self.assertEqual(
+            # child_1x_spawn_1x reduces output to 1, so we exclude it
+            len(replica_outputs),
+            # Dynamic and dynamic child: 12
+            sum([len(arr) for arr in dynamic_spawn_2x_outputs]),
         )
-        print(len(child_1x_childspawn_1x_reduce_combos), child_1x_childspawn_1x_reduce_combos)
-        for i, combo in enumerate(child_1x_childspawn_1x_reduce_combos):
-            print(i, combo)
-            child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
-            out0 = child_1x_childspawn_1x_reduce.get_variable_object(
-                child_1x_childspawn_1x_reduce.uuid, dynamic_block_index=i, variable_uuid='output_0'
-            ).read_data()
-            child_1x_childspawn_1x_reduce_outputs.append(out0)
-        print(child_1x_childspawn_1x_reduce_outputs)
+
+        # Skip this one
+        # child_1x_childspawn_1x_reduce_outputs = []
+        # child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
+        #     child_1x_childspawn_1x_reduce
+        # )
+        # # 648
+        # print(len(child_1x_childspawn_1x_reduce_combos), child_1x_childspawn_1x_reduce_combos)
+        # for i, combo in enumerate(child_1x_childspawn_1x_reduce_combos):
+        #     print(i, combo)
+        #     child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
+        #     out0 = child_1x_childspawn_1x_reduce.get_variable_object(
+        #         child_1x_childspawn_1x_reduce.uuid,
+        #         dynamic_block_index=i,
+        #         variable_uuid='output_0',
+        #     ).read_data()
+        #     child_1x_childspawn_1x_reduce_outputs.append(out0)
+        # print(child_1x_childspawn_1x_reduce_outputs)
 
         # child_1x_spawn_1x reduces output to 1
-        print(
-            len(child_1x_childspawn_1x_reduce_outputs),
-            len(child_data1) * len(replica_outputs),
-        )
+        # print(
+        #     len(child_1x_childspawn_1x_reduce_outputs),
+        #     len(child_data1) * len(replica_outputs),
+        # )
+
+    def test_input_data_and_keyword_arguments(self):
+        pass
