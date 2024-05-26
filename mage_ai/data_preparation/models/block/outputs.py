@@ -248,9 +248,9 @@ def format_output_data(
                 stats = analysis.get('statistics', {})
                 column_types = (analysis.get('metadata') or {}).get('column_types', {})
                 row_count = stats.get('original_row_count', stats.get('count'))
-                row_count, column_count = data.shape
-            else:
                 column_count = stats.get('original_column_count', len(column_types))
+            else:
+                row_count, column_count = data.shape
 
             columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
 
