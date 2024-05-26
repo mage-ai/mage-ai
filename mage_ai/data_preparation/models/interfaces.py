@@ -16,6 +16,7 @@ class BlockInterface:
     get_spark_session_from_global_vars: Callable[..., Any]
     pipeline: PipelineInterface
     uuid: str
+    variable_manager: Any
 
 
 @dataclass

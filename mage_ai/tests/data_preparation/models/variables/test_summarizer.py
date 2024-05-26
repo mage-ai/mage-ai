@@ -64,7 +64,7 @@ def load_dataframes_for_dynamic_children(*args, **kwargs):
     ]
 
 
-def load_dataframes(*args, **kwargs):
+def load_dataframe(*args, **kwargs):
     from mage_ai.data.tabular.mocks import create_dataframe
 
     return create_dataframe(n_rows=1200, use_pandas=False)
@@ -193,7 +193,7 @@ class VariableSummarizerTest(BaseApiTestCase):
     )
     @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_input_data_type_generator_on_upstream_data(self, *args, **kwargs):
-        block = self.create_block(func=load_dataframes)
+        block = self.create_block(func=load_dataframe)
         transformer = self.create_block(
             func=process_generator,
             configuration=dict(

@@ -292,6 +292,10 @@ def __get_aggregate_summary_info(
                         default_group_type.value: group_info,
                     })
 
+            else:
+                cache.update_attributes(**{
+                    data_type.value: data,
+                })
     return VariableAggregateCache.load(**cache.to_dict())
 
 
