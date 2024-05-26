@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateSummaryGroupType,
 )
 from mage_ai.data_preparation.models.variables.summarizer import (
+    aggregate_summary_info_for_all_variables,
     dynamic_block_index_paths,
     get_aggregate_summary_info,
     get_part_uuids,
@@ -140,22 +141,6 @@ class DynamicBlockItemCounter(DynamicItemCounter):
 
 class DynamicChildItemCounter(DynamicItemCounter):
     @property
-    def summary_information(self) -> Optional[VariableAggregateCache]:
-        if self._summary_information is not None:
-            return self._summary_information
-
-        self._summary_information = get_aggregate_summary_info(
-            self.block.variable_manager,
-            pipeline_uuid=self.block.pipeline.uuid,
-            block_uuid=self.block.uuid,
-            variable_uuid=CHILD_DATA_VARIABLE_UUID,
-            data_type=VariableAggregateDataType.STATISTICS,
-            group_type=VariableAggregateSummaryGroupType.DYNAMIC,
-            partition=self.partition,
-        )
-        return self._summary_information
-
-    @property
     def part_uuids(self) -> Optional[Sequence]:
         return dynamic_block_index_paths(self.variable)
 
@@ -182,6 +167,29 @@ class DynamicChildItemCounter(DynamicItemCounter):
 
 
 class DynamicDuoItemCounter(DynamicItemCounter):
+    @property
+    def summary_information(self) -> Optional[VariableAggregateCache]:
+        if self._summary_information is not None:
+            return self._summary_information
+
+        aggregate_summary_info_for_all_variables(
+            self.block.variable_manager,
+            pipeline_uuid=self.block.pipeline.uuid,
+            block_uuid=self.block.uuid,
+            partition=self.partition,
+        )
+        self._summary_information = get_aggregate_summary_info(
+            self.block.variable_manager,
+            self.block.pipeline.uuid,
+            self.block.uuid,
+            self.variable_uuid,
+            VariableAggregateDataType.STATISTICS,
+            group_type=VariableAggregateSummaryGroupType.DYNAMIC,
+            partition=self.partition,
+        )
+
+        return self._summary_information
+
     @property
     def indexes(self) -> List[int]:
         dynamic_child_counter = DynamicChildItemCounter(
@@ -218,6 +226,16 @@ class DynamicDuoItemCounter(DynamicItemCounter):
                     data.json
                     statistics.json
         """
+        if (
+            self.summary_information
+            and self.summary_information.dynamic
+            and self.summary_information.dynamic.statistics
+        ):
+            return sum(
+                sum(i.original_row_count for i in arr)
+                for arr in self.summary_information.dynamic.statistics
+            )
+
         return sum([
             DynamicBlockItemCounter(
                 self.block,
