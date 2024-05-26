@@ -150,7 +150,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
         metadata1 = dynamic1.get_variable_object(
             dynamic1.uuid, variable_uuid='output_1'
         ).read_data()
-        print(child_data1, metadata1)
+        print(dynamic1.uuid, len(child_data1), len(metadata1))  # 2
         self.assertEqual(len(child_data1), len(metadata1))
 
         child_data2 = dynamic2.get_variable_object(
@@ -159,7 +159,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
         metadata2 = dynamic2.get_variable_object(
             dynamic2.uuid, variable_uuid='output_1'
         ).read_data()
-        print(child_data2, metadata2)
+        print(dynamic2.uuid, len(child_data2), len(metadata2))  # 1
         self.assertEqual(len(child_data2), len(metadata2))
 
         child2x_outputs = []
@@ -175,7 +175,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
             ).read_data()
             child2x_outputs.append(out0)
             child2x_metadata.append(out1)
-        print(child2x_outputs, child2x_metadata)
+        print(child2x.uuid, len(child2x_outputs), len(child2x_metadata))  # 2
 
         self.assertEqual(len(child2x_outputs), len(child2x_metadata))
         self.assertEqual(len(child2x_outputs), len(child_data1) * len(child_data2))
@@ -188,13 +188,13 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 child1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
             ).read_data()
             child1x_outputs.append(out0)
-        print(child1x_outputs)
+        print(child1x_outputs)  # 1
 
         self.assertEqual(len(child1x_outputs), len(child2x_outputs))
 
         dynamic_spawn_2x_outputs = []
         dynamic_spawn_2x_combos = build_combinations_for_dynamic_child(dynamic_spawn_2x)
-        print(len(dynamic_spawn_2x_combos), dynamic_spawn_2x_combos)
+        print(len(dynamic_spawn_2x_combos), dynamic_spawn_2x_combos)  # 4
         for i in range(len(dynamic_spawn_2x_combos)):
             dynamic_spawn_2x.execute_sync(dynamic_block_index=i)
             out = dynamic_spawn_2x.get_variable_object(
@@ -209,7 +209,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
 
         child_1x_spawn_1x_outputs = []
         child_1x_spawn_1x_combos = build_combinations_for_dynamic_child(child_1x_spawn_1x)
-        print(len(child_1x_spawn_1x_combos), child_1x_spawn_1x_combos)
+        print(len(child_1x_spawn_1x_combos), child_1x_spawn_1x_combos)  # 24
         for i in range(len(child_1x_spawn_1x_combos)):
             child_1x_spawn_1x.execute_sync(dynamic_block_index=i)
             out = child_1x_spawn_1x.get_variable_object(
@@ -237,9 +237,9 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
             ),
         )
 
-        replica_outputs = []
+        replica_outputs = []  # A lot
         replica_combos = build_combinations_for_dynamic_child(replica)
-        print(len(replica_combos), replica_combos)
+        print(len(replica_combos), replica_combos)  # 12
         for i, combo in enumerate(replica_combos):
             print(i, combo)
             replica.execute_sync(dynamic_block_index=i)
