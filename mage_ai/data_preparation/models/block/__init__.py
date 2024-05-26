@@ -14,7 +14,18 @@ from inspect import Parameter, isfunction, signature
 from logging import Logger
 from pathlib import Path
 from queue import Queue
-from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import inflection
 import pandas as pd
@@ -540,6 +551,7 @@ class Block(
             return
 
         cache = self.__load_variable_aggregate_cache(variable_uuid)
+        cache = VariableAggregateCache.load(cache)
 
         if infer_group_type:
             group_type = (
@@ -561,23 +573,31 @@ class Block(
                 group_type=group_type,
                 partition=partition,
             )
-            group = (group_type.value if group_type else None) or (
+            group_value_use = (group_type.value if group_type else None) or (
                 default_group_type.value if default_group_type else None
             )
-            if group is not None:
-                cache_group = getattr(cache, group) or AggregateInformation()
-                cache_group_new = getattr(cache_new, group)
+            if group_value_use is not None:
+                cache_group = AggregateInformation.load(getattr(cache, group_value_use))
+                cache_group_new = AggregateInformation.load(getattr(cache_new, group_value_use))
                 if cache_group_new:
                     for data in VariableAggregateDataType:
-                        val = getattr(cache_group, data)
-                        val_new = getattr(cache_group_new, data)
-                        setattr(cache_group or cache_group_new, data, val_new or val)
-                setattr(cache, group, cache_group)
+                        val = getattr(cache_group, data.value)
+                        val_new = getattr(cache_group_new, data.value)
+                        cache_group.update_attributes(**{
+                            data.value: val_new or val,
+                        })
+                cache.update_attributes(**{
+                    group_value_use: AggregateInformation.load(cache_group)
+                })
 
             for data in VariableAggregateDataType:
-                val = getattr(cache, data)
-                val_new = getattr(cache_new, data)
-                setattr(cache, data, val_new or val)
+                val = getattr(cache, data.value)
+                val_new = getattr(cache_new, data.value)
+                cache.update_attributes(**{
+                    data.value: val_new or val,
+                })
+
+            cache = VariableAggregateCache.load(cache)
             self._variable_aggregate_cache = merge_dict(
                 self._variable_aggregate_cache or {},
                 {variable_uuid: cache},
@@ -1583,13 +1603,18 @@ class Block(
                             ):
                                 self._store_variables_in_block_function(variable_mapping)
 
-                            self.__aggregate_summary_info()
                         except ValueError as e:
                             if str(e) == 'Circular reference detected':
                                 raise ValueError(
                                     'Please provide dataframe or json serializable data as output.'
                                 )
                             raise e
+
+                    if not is_dynamic_block_child(self):
+                        # This will be handled in the execute_custom_code file so that it’s only
+                        # invoked once.
+                        self.aggregate_summary_info()
+
                     # Reset outputs cache
                     self._outputs = None
 
@@ -2386,6 +2411,24 @@ class Block(
 
         return value
 
+    def read_partial_data(
+        self,
+        variable_uuid: str,
+        batch_settings: Optional[BatchSettings] = None,
+        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        part_uuid: Optional[Union[int, str]] = None,
+    ):
+        return self.get_variable_object(
+            self.uuid,
+            variable_uuid,
+        ).read_partial_data(
+            batch_settings=batch_settings,
+            chunks=chunks,
+            input_data_types=input_data_types,
+            part_uuid=part_uuid,
+        )
+
     def get_variable_object(
         self,
         block_uuid: str,
@@ -2407,7 +2450,7 @@ class Block(
 
         variable_type_information = None
         variable_types_information = None
-
+        skip_check_variable_type = False
         if VARIABLE_DATA_OUTPUT_META_CACHE:
             dynamic_child = is_dynamic_block_child(self)
             group_type = (
@@ -2425,18 +2468,35 @@ class Block(
                 partition=partition,
             )
 
+            if (
+                variable_type_information
+                and variable_type_information.type == VariableType.ITERABLE
+                and not variable_types_information
+            ):
+                # If the dynamic parent block is an interable with no types information,
+                # then the data from the parent block won’t have any type information.
+                # Skip variable type check when instantiating a variable object for the children.
+                skip_check_variable_type = True
+
+        variable_types = []
+        if isinstance(variable_types_information, Iterable):
+            for v in variable_types_information:
+                if isinstance(v, list):
+                    variable_types += [vv.type for vv in v]
+                else:
+                    variable_types.append(v.type)
+
         return self.variable_manager.get_variable_object(
             self.pipeline_uuid,
             block_uuid=block_uuid,
             clean_block_uuid=not changed and clean_block_uuid,
             partition=partition,
             spark=self.get_spark_session(),
+            skip_check_variable_type=skip_check_variable_type,
             variable_type=variable_type_information.type
             if variable_type_information is not None
             else None,
-            variable_types=[v.type for v in variable_types_information]
-            if variable_types_information is not None
-            else None,
+            variable_types=variable_types,
             variable_uuid=variable_uuid,
             input_data_types=input_data_types,
             read_batch_settings=read_batch_settings,
@@ -3578,7 +3638,7 @@ class Block(
                 variable_uuid,
             )
 
-    def __aggregate_summary_info(self, execution_partition: Optional[str] = None):
+    def aggregate_summary_info(self, execution_partition: Optional[str] = None):
         """
         Run this only after executing blocks in a notebook so that reading pipelines
         don’t take forever to load while waiting for all the nested variable folders

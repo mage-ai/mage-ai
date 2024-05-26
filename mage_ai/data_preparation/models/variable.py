@@ -42,7 +42,11 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
-from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
+from mage_ai.data_preparation.models.variables.cache import (
+    AggregateInformation,
+    VariableAggregateCache,
+    VariableTypeInformation,
+)
 from mage_ai.data_preparation.models.variables.constants import (
     DATA_TYPE_FILENAME,
     DATAFRAME_COLUMN_TYPES_FILE,
@@ -69,7 +73,7 @@ from mage_ai.settings.server import (
 )
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.environments import is_debug
-from mage_ai.shared.hash import flatten_dict, set_value
+from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
 from mage_ai.shared.utils import clean_name
@@ -285,8 +289,11 @@ class Variable:
                     self.write_metadata()
             except Exception:
                 traceback.print_exc()
+        # import traceback
 
-        print('CHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK')
+        # stack = traceback.format_stack()
+        # print(''.join(stack))
+        # print('CHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK')
         if self.variable_type is None and self.storage.path_exists(
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         ):
@@ -361,6 +368,7 @@ class Variable:
             - The variable is stored as a parquet file
         """
         if part_uuid is not None and self.__is_part_readable(part_uuid):
+            print('EEEEEEEEEEEEEEEEEEEE', self.variable_type, self.variable_types)
             variable = self.__class__(
                 os.path.join(self.uuid, str(part_uuid)),
                 self.pipeline_path,
@@ -790,17 +798,26 @@ class Variable:
                         type.json
                     type.json
         """
+
+        for dirname in VariableAggregateSummaryGroupType:
+            path = os.path.join(self.variable_dir_path, dirname.value)
+            if self.storage.path_exists(path):
+                self.storage.remove_dir(path)
+
         mapping_dynamic_blocks = {}
         # dynamic_block_index: 0
         # index_path:  [block_uuid]/[dynamic_block_index: 0]/
         # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
+        print(
+            '==================================',
+            self.__dynamic_block_index_paths(),
+        )
         for _dynamic_block_index, _index_path, output_path in self.__dynamic_block_index_paths():
             mapping_dynamic_children = {}
             for filename in filenames:  # filename: type.json
                 if not mapping_dynamic_children.get(filename):
                     mapping_dynamic_children[filename] = []
 
-                # Check if the output directory has parts e.g 0/
                 part_uuids = self.__get_part_uuids(output_path)
                 if part_uuids and len(part_uuids) >= 1:
                     arr = []
@@ -817,12 +834,21 @@ class Variable:
                     mapping_dynamic_children[filename].append(arr)
                 else:
                     file_path = os.path.join(output_path, filename)
+                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', file_path)
                     if self.storage.path_exists(file_path):
-                        mapping_dynamic_children[filename].append(
+                        print(
+                            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!22222222222222222',
                             self.storage.read_json_file(
                                 file_path,
                                 default_value={},
                                 raise_exception=False,
+                            ),
+                        )
+                        mapping_dynamic_children[filename].append(
+                            self.storage.read_json_file(
+                                file_path,
+                                default_value={},
+                                raise_exception=True,
                             ),
                         )
                     else:
@@ -841,10 +867,13 @@ class Variable:
                 continue
 
             path = os.path.join(self.variable_path, directory)
+
+            print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', path)
             if not self.storage.isdir(path):
                 self.storage.makedirs(path, exist_ok=True)
             for filename, data in mapping.items():
                 self.storage.write_json_file(os.path.join(path, filename), data)
+                print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', filename, data)
 
     def get_aggregate_summary_info(
         self,
@@ -863,7 +892,7 @@ class Variable:
 
         Used
         """
-        cache_dict = {}
+        cache = VariableAggregateCache()
 
         path = os.path.join(
             self.variable_path,
@@ -877,21 +906,57 @@ class Variable:
                 default_value=None,
                 raise_exception=False,
             )
-            keys = [v.value for v in [group_type, data_type] if v is not None]
 
-            if VariableAggregateDataType.TYPE == data_type:
-                var_types = data.get('types')
-                if default_group_type is not None and var_types:
-                    cache_dict = set_value(
-                        cache_dict,
-                        [default_group_type.value, data_type.value],
-                        [dict(type=val) for val in var_types],
+            if group_type:
+                group_info = getattr(cache, group_type.value)
+                group_info = AggregateInformation.load(
+                    **(
+                        group_info
+                        if isinstance(group_info, dict)
+                        else group_info.to_dict()
+                        if group_info is not None
+                        else {}
                     )
-                if group_type is None:
-                    data = {data_type.value: data.get('type')}
-            cache_dict = set_value(cache_dict, keys, data)
+                )
+                group_info.update_attributes(**{
+                    data_type.value: data,
+                })
+                cache.update_attributes(**{
+                    group_type.value: group_info,
+                })
+            else:
+                if (
+                    VariableAggregateDataType.TYPE == data_type.value
+                    and data is not None
+                    and isinstance(data, dict)
+                ):
+                    if data.get('type'):
+                        cache.update_attributes(**{
+                            'type': VariableTypeInformation.load(type=data.get('type')),
+                        })
 
-        return VariableAggregateCache.load(**cache_dict)
+                    if default_group_type is not None and data.get('types'):
+                        var_types = data.get('types') or []
+                        group_info = getattr(cache, default_group_type.value)
+                        group_info = AggregateInformation.load(
+                            **(
+                                group_info
+                                if isinstance(group_info, dict)
+                                else group_info.to_dict()
+                                if group_info is not None
+                                else {}
+                            )
+                        )
+                        group_info.update_attributes(**{
+                            data_type.value: [
+                                VariableTypeInformation.load(type=val) for val in var_types
+                            ],
+                        })
+                        cache.update_attributes(**{
+                            default_group_type.value: group_info,
+                        })
+
+        return VariableAggregateCache.load(**cache.to_dict())
 
     def write_data(self, data: Any) -> None:
         if MEMORY_MANAGER_V2:
@@ -911,7 +976,16 @@ class Variable:
             VariableManager
         """
         if self.data_manager and self.data_manager.writeable(data):
-            self.data_manager.write_sync(data)
+            metadata = self.data_manager.write_sync(data)
+            if metadata:
+                self.__write_dataframe_analysis(
+                    dict(
+                        statistics=dict(
+                            original_row_count=metadata.get('rows'),
+                            original_column_count=metadata.get('columns'),
+                        ),
+                    )
+                )
             self.resource_usage.update_attributes(
                 directory=self.data_manager.resource_usage.directory,
                 size=self.data_manager.resource_usage.size,
@@ -997,7 +1071,16 @@ class Variable:
             VariableManager
         """
         if self.data_manager and self.data_manager.writeable(data):
-            await self.data_manager.write_async(data)
+            metadata = await self.data_manager.write_async(data)
+            if metadata:
+                self.__write_dataframe_analysis(
+                    dict(
+                        statistics=dict(
+                            original_row_count=metadata.get('rows'),
+                            original_column_count=metadata.get('columns'),
+                        ),
+                    )
+                )
             self.resource_usage.update_attributes(
                 directory=self.data_manager.resource_usage.size,
                 size=self.data_manager.resource_usage.size,
@@ -1749,7 +1832,7 @@ class Variable:
             return []
 
         indexes = []
-        print('DYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY')
+        # print('-> DYNAMIC')
         for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
             index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
             if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
@@ -1761,7 +1844,7 @@ class Variable:
 
     def __get_part_uuids(self, path: str) -> List[str]:
         part_uuids = []
-        print('PARTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTS')
+        # print('-> PARTS')
         for chunk_uuid in self.storage.listdir(path):
             if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
                 part_uuids.append(chunk_uuid)

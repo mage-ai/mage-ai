@@ -87,7 +87,10 @@ def to_parquet_sync(
     metadata: Optional[Dict] = None,
     partition_cols: Optional[List[str]] = None,
     settings: Optional[BatchSettings] = None,
-):
+) -> Dict[str, int]:
+    total_rows = 0
+    total_columns = 0
+
     for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
@@ -103,6 +106,13 @@ def to_parquet_sync(
             use_dictionary=True,
             compression='snappy',
         )
+        total_rows += table.num_rows
+        total_columns = max(len(table.schema.names), total_columns)
+
+    return dict(
+        columns=total_columns,
+        rows=total_rows,
+    )
 
 
 async def to_parquet_async(
@@ -112,7 +122,10 @@ async def to_parquet_async(
     metadata: Optional[Dict] = None,
     partition_cols: Optional[List[str]] = None,
     settings: Optional[BatchSettings] = None,
-):
+) -> Dict[str, int]:
+    total_rows = 0
+    total_columns = 0
+
     for table, partition_columns in __prepare_data(
         output_dir=output_dir,
         df=df,
@@ -122,6 +135,13 @@ async def to_parquet_async(
         settings=settings,
     ):
         await __write_to_dataset_async(table, output_dir, partition_columns)
+        total_rows += table.num_rows
+        total_columns = max(len(table.schema.names), total_columns)
+
+    return dict(
+        columns=total_columns,
+        rows=total_rows,
+    )
 
 
 async def __write_to_dataset_async(

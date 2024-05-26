@@ -480,7 +480,8 @@ def get_partial_dynamic_block_outputs(
     )
     result = None
     if output_variable and output_variable.is_partial_data_readable():
-        result = output_variable.read_partial_data(
+        result = block.read_partial_data(
+            output_variable.uuid,
             batch_settings=batch_settings,
             chunks=chunks,
             input_data_types=input_data_types,

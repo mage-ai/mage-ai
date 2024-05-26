@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import polars as pl
@@ -142,13 +142,15 @@ class DataManager(BaseData):
     ) -> Optional[Union[Any, str]]:
         return self.read_sync(limit_parts=limit_parts, sample=sample, sample_count=sample_count)
 
-    async def write_async(self, data: Any, chunk_size: Optional[int] = None) -> None:
+    async def write_async(
+        self, data: Any, chunk_size: Optional[int] = None
+    ) -> Optional[Dict[str, int]]:
         self.__prepare(data, self.writer)
-        await self.writer.write_async(data)
+        return await self.writer.write_async(data)
 
-    def write_sync(self, data: Any, chunk_size: Optional[int] = None) -> None:
+    def write_sync(self, data: Any, chunk_size: Optional[int] = None) -> Optional[Dict[str, int]]:
         self.__prepare(data, self.writer)
-        self.writer.write_sync(data)
+        return self.writer.write_sync(data)
 
     def readable(self) -> bool:
         return self.reader.supported()

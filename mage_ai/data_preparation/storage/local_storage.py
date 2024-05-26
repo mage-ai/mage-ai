@@ -27,8 +27,8 @@ class LocalStorage(BaseStorage):
         suffix: str = None,
         max_results: int = None,
     ) -> List[str]:
-        if '.variables' in path:
-            print('LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL listdir: start', path)
+        # if '.variables' in path:
+        # print('LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL listdir: start', path)
         paths = []
         if not os.path.exists(path):
             return paths
@@ -66,8 +66,8 @@ class LocalStorage(BaseStorage):
     ) -> Dict:
         # stack = traceback.format_stack()
         # print(''.join(stack))
-        if '.variables' in file_path:
-            print(f'JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ read_json_file: {file_path}')
+        # if '.variables' in file_path:
+        # print(f'JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ read_json_file: {file_path}')
         if not self.path_exists(file_path):
             return default_value or {}
         with open(file_path) as file:

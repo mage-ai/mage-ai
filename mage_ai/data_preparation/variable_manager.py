@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateSummaryGroupType,
     VariableType,
 )
+from mage_ai.data_preparation.models.variables.utils import is_output_variable
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.platform import project_platform_activated
@@ -425,6 +426,7 @@ class VariableManager:
         partition: Optional[str] = None,
         clean_block_uuid: bool = True,
         max_results: Optional[int] = None,
+        output_variable_only: Optional[bool] = None,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),
@@ -440,7 +442,11 @@ class VariableManager:
             opts['max_results'] = max_results
 
         variable_uuids = self.storage.listdir(variable_dir_path, **opts)
-        variable_uuids = [v for v in variable_uuids if v.split('.')[0]]
+        variable_uuids = [
+            v
+            for v in variable_uuids
+            if v.split('.')[0] and (not output_variable_only or is_output_variable(v))
+        ]
 
         def __sort_variables(text):
             number = re.findall('\\d+', text)
@@ -469,11 +475,32 @@ class VariableManager:
     ):
         block_uuid = clean_name(block_uuid)
         variable_uuids = self.get_variables_by_block(
-            pipeline_uuid, block_uuid, partition=partition
+            pipeline_uuid,
+            block_uuid,
+            partition=partition,
         )
+
+        if variable_uuids and all(not is_output_variable(v) for v in variable_uuids):
+            """
+            Dynamic child blocks have this directory structure:
+                [block_uuid]/
+                    [dynamic_block_index]/
+                        [variable_uuid]/
+            """
+            variable_uuids = self.get_variables_by_block(
+                pipeline_uuid,
+                os.path.join(block_uuid, str(variable_uuids[0])),
+                clean_block_uuid=False,
+                partition=partition,
+            )
+
         for variable_uuid in variable_uuids:
             variable = self.get_variable_object(
-                pipeline_uuid, block_uuid, variable_uuid, partition=partition
+                pipeline_uuid,
+                block_uuid,
+                variable_uuid,
+                partition=partition,
+                skip_check_variable_type=True,
             )
             variable.aggregate_summary_info()
 

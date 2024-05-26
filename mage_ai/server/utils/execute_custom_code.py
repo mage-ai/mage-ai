@@ -188,6 +188,7 @@ async def execute_custom_code():
             )[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
         with MemoryManager(scope_uuid='dynamic_blocks', process_uuid='execute_with_callback'):
             block_output['output'] = await run_tasks(block, settings, options)
+            block.aggregate_summary_info()
     else:
         block_output = block.execute_with_callback(**options)
 
