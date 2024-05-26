@@ -246,9 +246,6 @@ class Variable:
         )
 
     def check_variable_type(self, spark: Optional[Any] = None) -> Optional[VariableType]:
-        # stack = traceback.format_stack()
-        # print(''.join(stack))
-
         """
         If the variable has a metadata file, read the variable type from the metadata file.
         Fallback to inferring variable type based on data in the storage.
@@ -289,11 +286,7 @@ class Variable:
                     self.write_metadata()
             except Exception:
                 traceback.print_exc()
-        # import traceback
 
-        # stack = traceback.format_stack()
-        # print(''.join(stack))
-        # print('CHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK')
         if self.variable_type is None and self.storage.path_exists(
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         ):
@@ -368,7 +361,6 @@ class Variable:
             - The variable is stored as a parquet file
         """
         if part_uuid is not None and self.__is_part_readable(part_uuid):
-            print('EEEEEEEEEEEEEEEEEEEE', self.variable_type, self.variable_types)
             variable = self.__class__(
                 os.path.join(self.uuid, str(part_uuid)),
                 self.pipeline_path,
@@ -808,10 +800,6 @@ class Variable:
         # dynamic_block_index: 0
         # index_path:  [block_uuid]/[dynamic_block_index: 0]/
         # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
-        print(
-            '==================================',
-            self.__dynamic_block_index_paths(),
-        )
         for _dynamic_block_index, _index_path, output_path in self.__dynamic_block_index_paths():
             mapping_dynamic_children = {}
             for filename in filenames:  # filename: type.json
@@ -834,16 +822,7 @@ class Variable:
                     mapping_dynamic_children[filename].append(arr)
                 else:
                     file_path = os.path.join(output_path, filename)
-                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', file_path)
                     if self.storage.path_exists(file_path):
-                        print(
-                            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!22222222222222222',
-                            self.storage.read_json_file(
-                                file_path,
-                                default_value={},
-                                raise_exception=False,
-                            ),
-                        )
                         mapping_dynamic_children[filename].append(
                             self.storage.read_json_file(
                                 file_path,
@@ -868,12 +847,10 @@ class Variable:
 
             path = os.path.join(self.variable_path, directory)
 
-            print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', path)
             if not self.storage.isdir(path):
                 self.storage.makedirs(path, exist_ok=True)
             for filename, data in mapping.items():
                 self.storage.write_json_file(os.path.join(path, filename), data)
-                print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', filename, data)
 
     def get_aggregate_summary_info(
         self,
@@ -1832,7 +1809,6 @@ class Variable:
             return []
 
         indexes = []
-        # print('-> DYNAMIC')
         for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
             index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
             if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
@@ -1844,7 +1820,6 @@ class Variable:
 
     def __get_part_uuids(self, path: str) -> List[str]:
         part_uuids = []
-        # print('-> PARTS')
         for chunk_uuid in self.storage.listdir(path):
             if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
                 part_uuids.append(chunk_uuid)

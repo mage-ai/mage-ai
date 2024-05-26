@@ -48,10 +48,6 @@ async def task(
         )
 
     outputs = block.get_outputs(dynamic_block_index=dynamic_block_index)
-
-    if outputs is not None and isinstance(outputs, list):
-        outputs = outputs[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
-
     if outputs is not None and len(outputs) >= 1:
         _json_string = simplejson.dumps(
             outputs,

@@ -1,8 +1,6 @@
 import json
 import os
 import shutil
-
-# import traceback
 from contextlib import contextmanager
 from typing import Dict, List, Optional, Union
 
@@ -27,8 +25,6 @@ class LocalStorage(BaseStorage):
         suffix: str = None,
         max_results: int = None,
     ) -> List[str]:
-        if '.variables' in path:
-            print('LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL listdir: start', path)
         paths = []
         if not os.path.exists(path):
             return paths
@@ -64,12 +60,6 @@ class LocalStorage(BaseStorage):
         default_value: Optional[Union[Dict, List]] = None,
         raise_exception: bool = False,
     ) -> Dict:
-        import traceback
-
-        stack = traceback.format_stack()
-        print(''.join(stack[-10:]))
-        if '.variables' in file_path:
-            print(f'JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ read_json_file: {file_path}')
         if not self.path_exists(file_path):
             return default_value or {}
         with open(file_path) as file:
@@ -86,8 +76,6 @@ class LocalStorage(BaseStorage):
         default_value: Dict = None,
         raise_exception: bool = False,
     ) -> Dict:
-        if '.variables' in file_path:
-            print(f'JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ read_json_file_async: {file_path}')
         if not self.path_exists(file_path):
             return default_value or {}
         async with aiofiles.open(file_path, mode='r') as file:
@@ -161,7 +149,6 @@ class LocalStorage(BaseStorage):
             file.close()
 
     async def read_async(self, file_path: str) -> str:
-        print(f'REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED async: {file_path}')
         dirname = os.path.dirname(file_path)
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
@@ -174,7 +161,6 @@ class LocalStorage(BaseStorage):
                     print(f'[ERROR] LocalStorage.read_async: {err}')
 
     def read(self, file_path: str) -> str:
-        print(f'REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED sync: {file_path}')
         dirname = os.path.dirname(file_path)
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
