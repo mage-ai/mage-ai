@@ -465,6 +465,7 @@ def get_outputs_for_display_dynamic_block(
                     block_uuid=block_uuid,
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
+                    index=output_idx,
                 )
                 formatted_outputs.append(output_formatted)
 

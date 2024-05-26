@@ -337,6 +337,9 @@ def get_variable_objects(
                 block_uuid,
                 variable_uuid,
                 clean_block_uuid=dynamic_block_index is None,
+                ordinal_position=int(dynamic_block_index)
+                if dynamic_block_index is not None
+                else None,
                 partition=execution_partition,
             )
             for variable_uuid in variable_uuids

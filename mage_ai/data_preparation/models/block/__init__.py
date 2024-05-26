@@ -629,9 +629,14 @@ class Block(
 
             if index is not None:
                 if values and isinstance(values, list) and len(values) > index:
-                    return values[index]
+                    value = values[index]
             else:
-                return values
+                value = values
+
+            if isinstance(value, Iterable) and len(value) >= 1:
+                value = value[0]
+
+            return value
         except Exception as err:
             print(f'[ERROR] Block.get_resource_usage: {err}')
             return ResourceUsage()
@@ -664,11 +669,14 @@ class Block(
             else:
                 value = values
 
+            if isinstance(value, Iterable) and len(value) >= 1:
+                value = value[0]
+
             if value is not None:
                 return dict(statistics=value.to_dict())
         except Exception as err:
             print(f'[ERROR] Block.get_analysis: {err}')
-            return InformationData()
+            return {}
 
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
@@ -2436,9 +2444,11 @@ class Block(
         clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
         input_data_types: Optional[List[InputDataType]] = None,
+        ordinal_position: Optional[int] = None,  # Used to get cached variable information
         partition: Optional[str] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        skip_check_variable_type: Optional[bool] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
@@ -2450,7 +2460,7 @@ class Block(
 
         variable_type_information = None
         variable_types_information = None
-        skip_check_variable_type = False
+        skip_check_variable_type = skip_check_variable_type or False
         if VARIABLE_DATA_OUTPUT_META_CACHE:
             dynamic_child = is_dynamic_block_child(self)
             group_type = (
@@ -2477,6 +2487,37 @@ class Block(
                 # then the data from the parent block won’t have any type information.
                 # Skip variable type check when instantiating a variable object for the children.
                 skip_check_variable_type = True
+            elif (
+                dynamic_child
+                and variable_types_information is not None
+                and isinstance(variable_types_information, Iterable)
+                and (
+                    (
+                        dynamic_block_index is not None
+                        and int(dynamic_block_index) < len(variable_types_information)
+                    )
+                    or (
+                        ordinal_position is not None
+                        and int(ordinal_position) < len(variable_types_information)
+                    )
+                )
+            ):
+                position = (
+                    int(ordinal_position)
+                    if ordinal_position is not None
+                    else int(dynamic_block_index)
+                    if dynamic_block_index is not None
+                    else None
+                )
+                if position is not None and isinstance(variable_types_information, Iterable):
+                    variable_type_information = variable_types_information[position]
+                    if (
+                        isinstance(variable_type_information, Iterable)
+                        and len(variable_type_information) >= 1
+                    ):
+                        variable_type_information = variable_type_information[0]
+
+                    variable_types_information = None
 
         variable_types = []
         if isinstance(variable_types_information, Iterable):
@@ -3644,6 +3685,9 @@ class Block(
         don’t take forever to load while waiting for all the nested variable folders
         to be read.
         """
+        if not VARIABLE_DATA_OUTPUT_META_CACHE:
+            return
+
         self.variable_manager.aggregate_summary_info_for_all_variables(
             self.pipeline_uuid,
             self.uuid,
