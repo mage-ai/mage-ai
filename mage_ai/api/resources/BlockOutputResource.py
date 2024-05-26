@@ -1,5 +1,6 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.orchestration.db import safe_db_query
@@ -35,14 +36,15 @@ class BlockOutputResource(GenericResource):
             'variable_type',
         ]:
             value = query.get(key, [None])
-            if value:
+            if value is not None:
                 value = value[0]
-                outputs_query[key] = value
+                if value is not None:
+                    outputs_query[key] = value
 
         for key, value in [
             ('exclude_blank_variable_uuids', True),
             ('include_print_outputs', False),
-            ('sample_count', None),
+            ('sample_count', DATAFRAME_SAMPLE_COUNT),
             ('variable_type', VariableType.DATAFRAME),
         ]:
             if key not in outputs_query:
@@ -62,6 +64,8 @@ class BlockOutputResource(GenericResource):
                 raise ApiError(error)
 
             # Only fetch dataframe variables by default
-            outputs = block.get_outputs(**outputs_query)
+            outputs = block.get_outputs(
+                **outputs_query,
+            )
 
         return cls(dict(outputs=outputs), user, **kwargs)
