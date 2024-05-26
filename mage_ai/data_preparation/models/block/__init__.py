@@ -629,14 +629,14 @@ class Block(
 
             if index is not None:
                 if values and isinstance(values, list) and len(values) > index:
-                    value = values[index]
+                    values = values[index]
             else:
-                value = values
+                values = values
 
-            if isinstance(value, Iterable) and len(value) >= 1:
-                value = value[0]
+            if isinstance(values, Iterable) and len(values) >= 1:
+                values = values[0]
 
-            return value
+            return values
         except Exception as err:
             print(f'[ERROR] Block.get_resource_usage: {err}')
             return ResourceUsage()
@@ -673,7 +673,7 @@ class Block(
                 value = value[0]
 
             if value is not None:
-                return dict(statistics=value.to_dict())
+                return dict(statistics=value.to_dict() if value else {})
         except Exception as err:
             print(f'[ERROR] Block.get_analysis: {err}')
             return {}

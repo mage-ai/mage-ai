@@ -76,6 +76,7 @@ export default function ({
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
 
+  console.log(blocks, blocksOverride);
   const blocksMap = indexBy(blocks, ({ uuid }) => uuid);
   const blocksOverrideMap = indexBy(blocksOverride, ({ uuid }) => uuid);
   const blocksMapping = { ...blocksMap, ...blocksOverrideMap };

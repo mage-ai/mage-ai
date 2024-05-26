@@ -41,7 +41,7 @@ import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-const ROW_LIMIT = 100;
+const ROW_LIMIT = 200;
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
@@ -241,7 +241,7 @@ function PipelineBlockRuns({
     ...props,
     blocks: dataBlocks?.blocks,
     blockRuns,
-    blocksOverride: totalBlockRuns <= ROW_LIMIT && dataBlocks?.blocks,
+    blocksOverride: totalBlockRuns <= ROW_LIMIT ? dataBlocks?.blocks : null,
     loadingData: loadingOutput,
     outputs: dataOutput?.outputs,
     selectedRun,
