@@ -5,8 +5,8 @@ import Spacing from '@oracle/elements/Spacing';
 
 type ProgressOutputProps = {
   color?: {
-    accent: string;
-    accentLight: string;
+    accent?: string;
+    accentLight?: string;
   };
   progress: number;
 } & TextOutputProps;

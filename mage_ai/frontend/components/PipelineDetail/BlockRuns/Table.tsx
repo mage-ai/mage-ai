@@ -130,7 +130,10 @@ function BlockRunsTable({
     [blockRuns],
   );
 
-  const timezoneTooltipProps = useMemo(() => displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}, [displayLocalTimezone]);
+  const timezoneTooltipProps = useMemo(
+    () => (displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}),
+    [displayLocalTimezone],
+  );
   const { columns, columnFlex } = useMemo(() => {
     const colFlex = [1, null, 2, 2, 1, 1, 1, null];
     const arr = [
