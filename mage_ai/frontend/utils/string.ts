@@ -98,10 +98,10 @@ export function numberWithCommas(x) {
 export function pascalize(word) {
   return word
     .split(' ')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('_')
     .split('_')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('');
 }
 
@@ -159,10 +159,10 @@ export function singularize(string) {
 export function titleize(word) {
   return word
     .split(' ')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('_')
     .split('_')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join(' ');
 }
 
@@ -353,7 +353,7 @@ export function formatNumberToDuration(duration: number): string {
 
 export function alphabet(): string[] {
   const alpha = Array.from(Array(26)).map((e, i) => i + 65);
-  return alpha.map((x) => String.fromCharCode(x));
+  return alpha.map(x => String.fromCharCode(x));
 }
 
 export function removASCII(text: string): string {

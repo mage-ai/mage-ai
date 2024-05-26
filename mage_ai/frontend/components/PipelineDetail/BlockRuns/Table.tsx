@@ -69,67 +69,69 @@ function BlockRunsTable({
   const themeContext = useContext(ThemeContext);
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
   const [blockRunIdDownloading, setBlockRunIdDownloading] = useState<number>(null);
-  const {
-    uuid: pipelineUUID,
-    type: pipelineType,
-  } = pipeline || {};
+  const { uuid: pipelineUUID, type: pipelineType } = pipeline || {};
 
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
-  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipelineType, [pipelineType]);
-  const isStandardPipeline = useMemo(() => PipelineTypeEnum.PYTHON === pipelineType, [pipelineType]);
+  const isIntegration = useMemo(
+    () => PipelineTypeEnum.INTEGRATION === pipelineType,
+    [pipelineType],
+  );
+  const isStandardPipeline = useMemo(
+    () => PipelineTypeEnum.PYTHON === pipelineType,
+    [pipelineType],
+  );
 
   const q = queryFromUrl();
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
-  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
-      ?
-        {
-          columnIndex: +sortColumnIndexQuery,
-          sortDirection: q?.[SortQueryEnum.SORT_DIRECTION] || SortDirectionEnum.ASC,
-        }
-      : undefined
-  ), [q, sortColumnIndexQuery]);
-
-  const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
-  const [
-    downloadBlockOutputAsCsvFile,
-    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
-  ]: any = useMutation(
-    ({ blockUUID, pipelineRunId }: any) => api.block_outputs.pipelines.downloads.detailAsync(
-      pipeline?.uuid,
-      blockUUID,
-      { pipeline_run_id: pipelineRunId, token },
-      {
-        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
-        responseType: ResponseTypeEnum.BLOB,
-      },
-    ),
-    {
-      onSuccess: (response: any) => onSuccess(
-          response, {
-            callback: (blobResponse) => {
-              setBlockRunIdDownloading(null);
-              openSaveFileDialog(
-                blobResponse,
-                `block_output.${FileExtensionEnum.CSV}`,
-              );
-            },
-            onErrorCallback: (response, errors) => setErrors?.({
-              errors,
-              response,
-            }),
-          },
-        ),
-    },
+  const sortedColumnInit: SortedColumnType = useMemo(
+    () =>
+      sortColumnIndexQuery
+        ? {
+            columnIndex: +sortColumnIndexQuery,
+            sortDirection: q?.[SortQueryEnum.SORT_DIRECTION] || SortDirectionEnum.ASC,
+          }
+        : undefined,
+    [q, sortColumnIndexQuery],
   );
 
-  const atLeastOneCompleted = useMemo(() => blockRuns.some(({ completed_at }) => !!completed_at), [blockRuns]);
+  const token = useMemo(() => new AuthToken()?.decodedToken?.token, []);
+  const [downloadBlockOutputAsCsvFile, { isLoading: isLoadingDownloadBlockOutputAsCsvFile }]: any =
+    useMutation(
+      ({ blockUUID, pipelineRunId }: any) =>
+        api.block_outputs.pipelines.downloads.detailAsync(
+          pipeline?.uuid,
+          blockUUID,
+          { pipeline_run_id: pipelineRunId, token },
+          {
+            onDownloadProgress: p =>
+              setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+            responseType: ResponseTypeEnum.BLOB,
+          },
+        ),
+      {
+        onSuccess: (response: any) =>
+          onSuccess(response, {
+            callback: blobResponse => {
+              setBlockRunIdDownloading(null);
+              openSaveFileDialog(blobResponse, `block_output.${FileExtensionEnum.CSV}`);
+            },
+            onErrorCallback: (response, errors) =>
+              setErrors?.({
+                errors,
+                response,
+              }),
+          }),
+      },
+    );
+
+  const atLeastOneCompleted = useMemo(
+    () => blockRuns.some(({ completed_at }) => !!completed_at),
+    [blockRuns],
+  );
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const {
-    columns,
-    columnFlex,
-  } = useMemo(() => {
+  const { columns, columnFlex } = useMemo(() => {
     const colFlex = [1, null, 2, 2, 1, 1, 1, null];
     const arr = [
       {
@@ -160,30 +162,24 @@ function BlockRunsTable({
     ];
 
     if (atLeastOneCompleted) {
-      arr.push(
-        {
-          center: true,
-          uuid: 'Runtime',
-        },
-      );
+      arr.push({
+        center: true,
+        uuid: 'Runtime',
+      });
       colFlex.push(null);
     }
 
     if (isStandardPipeline) {
-      arr.push(
-        {
-          uuid: 'Output',
-        },
-      );
+      arr.push({
+        uuid: 'Output',
+      });
     }
 
     return {
       columnFlex: colFlex,
       columns: arr,
     };
-  }, [isStandardPipeline, atLeastOneCompleted]);
-
-
+  }, [isStandardPipeline, atLeastOneCompleted, timezoneTooltipProps]);
 
   return (
     <Table
@@ -209,8 +205,8 @@ function BlockRunsTable({
         let streamID;
         let index;
         const parts = blockUUID.split(':');
-        const downloadingOutput = blockRunIdDownloading === id
-          && isLoadingDownloadBlockOutputAsCsvFile;
+        const downloadingOutput =
+          blockRunIdDownloading === id && isLoadingDownloadBlockOutputAsCsvFile;
 
         if (isIntegration) {
           blockUUID = parts[0];
@@ -223,15 +219,11 @@ function BlockRunsTable({
           block = blocksByUUID[parts[0]];
         }
 
-        const runtime = startedAt && completedAt
-          ? moment(completedAt).diff(moment(startedAt), 'seconds')
-          : null;
+        const runtime =
+          startedAt && completedAt ? moment(completedAt).diff(moment(startedAt), 'seconds') : null;
 
         const rows = [
-          <Text
-            {...getRunStatusTextProps(status)}
-            key={`${id}_status`}
-          >
+          <Text {...getRunStatusTextProps(status)} key={`${id}_status`}>
             {status}
           </Text>,
           <Button
@@ -239,9 +231,7 @@ function BlockRunsTable({
             iconOnly
             key={`${id}_logs`}
             noBackground
-            onClick={() => Router.push(
-              `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
-            )}
+            onClick={() => Router.push(`/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`)}
           >
             <Logs default size={2 * UNIT} />
           </Button>,
@@ -251,26 +241,28 @@ function BlockRunsTable({
             key={`${id}_block_uuid`}
             passHref
           >
-            <Link
-              bold
-              fitContentWidth
-              verticalAlignContent
-            >
+            <Link bold fitContentWidth verticalAlignContent>
               <Circle
-                color={getColorsForBlockType(block?.type, {
-                  blockColor: block?.color,
-                  theme: themeContext,
-                }).accent}
+                color={
+                  getColorsForBlockType(block?.type, {
+                    blockColor: block?.color,
+                    theme: themeContext,
+                  }).accent
+                }
                 size={UNIT * 1.5}
                 square
               />
               <Spacing mr={1} />
               <Text monospace sky>
-                {blockUUID}{streamID && ':'}{streamID && (
+                {blockUUID}
+                {streamID && ':'}
+                {streamID && (
                   <Text default inline monospace>
                     {streamID}
                   </Text>
-                )}{index >= 0 && ':'}{index >= 0 && (
+                )}
+                {index >= 0 && ':'}
+                {index >= 0 && (
                   <Text default inline monospace>
                     {index}
                   </Text>
@@ -297,8 +289,7 @@ function BlockRunsTable({
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
-              : dateFormatLong(createdAt, { includeSeconds: true })
-            }
+              : dateFormatLong(createdAt, { includeSeconds: true })}
           </Text>,
           <Text
             default
@@ -307,14 +298,15 @@ function BlockRunsTable({
             small
             title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
-            {startedAt
-              ? (displayLocalTimezone
-                ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
-                : dateFormatLong(startedAt, { includeSeconds: true })
-              ): (
-                <>&#8212;</>
+            {startedAt ? (
+              displayLocalTimezone ? (
+                datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+              ) : (
+                dateFormatLong(startedAt, { includeSeconds: true })
               )
-            }
+            ) : (
+              <>&#8212;</>
+            )}
           </Text>,
           <Text
             default
@@ -323,48 +315,43 @@ function BlockRunsTable({
             small
             title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
-            {completedAt
-              ? (displayLocalTimezone
-                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
-                : dateFormatLong(completedAt, { includeSeconds: true })
-              ): (
-                <>&#8212;</>
+            {completedAt ? (
+              displayLocalTimezone ? (
+                datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+              ) : (
+                dateFormatLong(completedAt, { includeSeconds: true })
               )
-            }
+            ) : (
+              <>&#8212;</>
+            )}
           </Text>,
-          <Text
-            default
-            key={`${id}_runtime`}
-            monospace
-            small
-          >
+          <Text default key={`${id}_runtime`} monospace small>
             {runtime ? prettyUnitOfTime(runtime) : '-'}
           </Text>,
         ];
 
         if (isStandardPipeline) {
           rows.push(
-            <FlexContainer
-              alignItems="center"
-              justifyContent="center"
-              key={`${id}_save_output`}
-            >
+            <FlexContainer alignItems="center" justifyContent="center" key={`${id}_save_output`}>
               <Tooltip
                 appearBefore
                 autoHide={!downloadingOutput}
                 block
                 forceVisible={downloadingOutput}
-                label={downloadingOutput
-                  ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                  : 'Save block run output as CSV file (not supported for dynamic blocks)'
+                label={
+                  downloadingOutput
+                    ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                    : 'Save block run output as CSV file (not supported for dynamic blocks)'
                 }
                 size={null}
               >
                 <Button
                   default
-                  disabled={!isStandardPipeline
-                    || !(RunStatus.COMPLETED === status)
-                    || isLoadingDownloadBlockOutputAsCsvFile}
+                  disabled={
+                    !isStandardPipeline ||
+                    !(RunStatus.COMPLETED === status) ||
+                    isLoadingDownloadBlockOutputAsCsvFile
+                  }
                   iconOnly
                   loading={downloadingOutput}
                   noBackground

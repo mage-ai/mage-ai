@@ -67,7 +67,12 @@ import {
   openSaveFileDialog,
   prepareOutput,
 } from '@components/PipelineDetail/utils';
-import { getNewUUID, containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
+import {
+  getNewUUID,
+  containsOnlySpecialCharacters,
+  containsHTML,
+  isJsonString,
+} from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
 import { range } from '@utils/array';
@@ -331,7 +336,10 @@ function CodeOutput(
                 } = itemInit;
                 const item = {
                   ...itemInit,
-                  priority: typeof priority !== 'undefined' && priority !== null ? [priority] : [idxOutter, idxMiddle, idxInner],
+                  priority:
+                    typeof priority !== 'undefined' && priority !== null
+                      ? [priority]
+                      : [idxOutter, idxMiddle, idxInner],
                   indexes: [idxOutter, idxMiddle, idxInner],
                 };
 
@@ -414,28 +422,30 @@ function CodeOutput(
       arr.push(...(messagesAll || []));
     }
 
-    const combined = arr.concat(arrRender).filter((output) => {
-      const {
-        variable_uuid: variableUuid,
-        indexes,
-      } = output;
+    const combined = arr
+      .concat(arrRender)
+      .filter(output => {
+        const { variable_uuid: variableUuid, indexes } = output;
 
-      const existingItem = variableMapping?.[variableUuid];
-      return !existingItem || indexes === existingItem?.indexes;
-    }).sort((a, b) => {
-      const aPriority = a?.priority;
-      const bPriority = b?.priority;
+        const existingItem = variableMapping?.[variableUuid];
+        return !existingItem || indexes === existingItem?.indexes;
+      })
+      .sort((a, b) => {
+        const aPriority = a?.priority;
+        const bPriority = b?.priority;
 
-      if (aPriority && bPriority) {
-        return aPriority[0] - bPriority[0]
-          || aPriority?.slice(0, 2)?.length - bPriority?.slice(0, 2)?.length
-          || aPriority[1] - bPriority[1]
-          || aPriority?.slice(0, 3)?.length - bPriority?.slice(0, 3)?.length
-          || aPriority[2] - bPriority[2];
-      }
+        if (aPriority && bPriority) {
+          return (
+            aPriority[0] - bPriority[0] ||
+            aPriority?.slice(0, 2)?.length - bPriority?.slice(0, 2)?.length ||
+            aPriority[1] - bPriority[1] ||
+            aPriority?.slice(0, 3)?.length - bPriority?.slice(0, 3)?.length ||
+            aPriority[2] - bPriority[2]
+          );
+        }
 
-      return 0;
-    });
+        return 0;
+      });
     const separateRows = [];
     const multiOutputs = [];
 

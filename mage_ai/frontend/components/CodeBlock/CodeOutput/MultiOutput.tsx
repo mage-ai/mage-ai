@@ -19,30 +19,25 @@ type MultiOutputProps = {
   onTabChange?: (tab: TabType) => void;
 };
 
-function MultiOutput({
-  color,
-  header,
-  hideTabs,
-  outputs,
-  onTabChange,
-}: MultiOutputProps) {
+function MultiOutput({ color, header, hideTabs, outputs, onTabChange }: MultiOutputProps) {
   const outputsRef = useRef({});
 
-  const tabs = useMemo(() => outputs.map(({ uuid }, idx) => ({
-    index: idx,
-    label: () => uuid,
-    uuid: `${uuid}_${idx}`,
-  })), [outputs]);
+  const tabs = useMemo(
+    () =>
+      outputs.map(({ uuid }, idx) => ({
+        index: idx,
+        label: () => uuid,
+        uuid: `${uuid}_${idx}`,
+      })),
+    [outputs],
+  );
 
   const [selectedTab, setSelectedTab] = useState<TabType>(tabs?.[0]);
 
   const outputsMemo = useMemo(() => {
     const arr = [];
 
-    outputs?.forEach(({
-      render,
-      uuid: uuidInit,
-    }, idx: number) => {
+    outputs?.forEach(({ render, uuid: uuidInit }, idx: number) => {
       const uuid = `${uuidInit}_${idx}`;
       outputsRef.current[uuid] = outputsRef?.current?.[uuid] || createRef<HTMLDivElement>();
       const ref = outputsRef?.current?.[uuid];
@@ -64,7 +59,7 @@ function MultiOutput({
           {!hideTabs && (
             <ButtonTabs
               allowScroll
-              onClickTab={(tab) => {
+              onClickTab={tab => {
                 setSelectedTab(tab);
 
                 Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
@@ -75,18 +70,14 @@ function MultiOutput({
                       ref.current.className = removeClassNames(
                         // @ts-ignore
                         ref.current.className || '',
-                        [
-                          'inactive',
-                        ],
+                        ['inactive'],
                       );
                     } else {
                       // @ts-ignore
                       ref.current.className = addClassNames(
                         // @ts-ignore
                         ref.current.className || '',
-                        [
-                          'inactive',
-                        ],
+                        ['inactive'],
                       );
                     }
                   }

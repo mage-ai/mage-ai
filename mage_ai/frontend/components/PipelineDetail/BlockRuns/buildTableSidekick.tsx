@@ -75,8 +75,6 @@ export default function ({
 }) {
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
-
-  console.log(blocks, blocksOverride);
   const blocksMap = indexBy(blocks, ({ uuid }) => uuid);
   const blocksOverrideMap = indexBy(blocksOverride, ({ uuid }) => uuid);
   const blocksMapping = { ...blocksMap, ...blocksOverrideMap };
@@ -109,118 +107,116 @@ export default function ({
 
         const arrGroup = [];
 
-        outputsInGroup?.forEach(
-          (output, idx: number) => {
-            const { sample_data: blockSampleData, text_data: textData, type: dataType } = output;
+        outputsInGroup?.forEach((output, idx: number) => {
+          const { sample_data: blockSampleData, text_data: textData, type: dataType } = output;
 
-            const emptyOutputMessageEl = (
-              <Spacing key={`output-empty-${idx1}-${idx}`} ml={2}>
-                <Text>This block run has no output.</Text>
-              </Spacing>
+          const emptyOutputMessageEl = (
+            <Spacing key={`output-empty-${idx1}-${idx}`} ml={2}>
+              <Text>This block run has no output.</Text>
+            </Spacing>
+          );
+
+          let el = <div />;
+
+          if (dataType) {
+            el = (
+              <OutputRenderer
+                block={selectedBlock}
+                contained
+                containerWidth={width}
+                disableSpacingBetweenGroups
+                first={idx === 0}
+                // 44 tabs, 42 inner tabs, 16 padding
+                height={height - (heightOffset + 90) - (44 + 42 + 16)}
+                index={idx}
+                key={`output-${idx}`}
+                last={idx === outputsInGroup.length - 1}
+                normalPadding
+                output={output}
+                selected
+              />
             );
+          } else if (dataType === DataTypeEnum.TABLE) {
+            const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
+            const rows = blockSampleData?.rows || [];
 
-            let el = <div />;
-
-            if (dataType) {
+            if (rows && rows?.length >= 1) {
               el = (
-                <OutputRenderer
-                  block={selectedBlock}
-                  contained
-                  containerWidth={width}
-                  disableSpacingBetweenGroups
-                  first={idx === 0}
-                  // 44 tabs, 42 inner tabs, 16 padding
-                  height={height - (heightOffset + 90) - (44 + 42 + 16)}
-                  index={idx}
-                  key={`output-${idx}`}
-                  last={idx === outputsInGroup.length - 1}
-                  normalPadding
-                  output={output}
-                  selected
+                <DataTable
+                  columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
+                  columns={columns}
+                  height={height - heightOffset - 90}
+                  key={`output-table-${idx1}-${idx}`}
+                  noBorderBottom
+                  noBorderLeft
+                  noBorderRight
+                  renderColumnHeader={renderColumnHeader}
+                  rows={rows}
                 />
               );
-            } else if (dataType === DataTypeEnum.TABLE) {
-              const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
-              const rows = blockSampleData?.rows || [];
-
-              if (rows && rows?.length >= 1) {
-                el = (
-                  <DataTable
-                    columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
-                    columns={columns}
-                    height={height - heightOffset - 90}
-                    key={`output-table-${idx1}-${idx}`}
-                    noBorderBottom
-                    noBorderLeft
-                    noBorderRight
-                    renderColumnHeader={renderColumnHeader}
-                    rows={rows}
-                  />
-                );
-              } else {
-                el = emptyOutputMessageEl;
-              }
-            } else if (DataTypeEnum.IMAGE_PNG === dataType && textData) {
-              el = (
-                <div
-                  style={{
-                    backgroundColor: 'white',
-                    maxHeight: height - heightOffset - 90,
-                    overflow: 'auto',
-                  }}
-                >
-                  <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
-                </div>
-              );
-            } else if (DataTypeEnum.TEXT_HTML === dataType && textData) {
-              const key = String(hashCode(textData));
-              el = (
-                // We need to force the key change or else it doesn’t update.
-                <OutputRowStyle contained key={key} normalPadding>
-                  <HTMLOutputStyle monospace>
-                    <InnerHTML html={textData} />
-                  </HTMLOutputStyle>
-                </OutputRowStyle>
-              );
             } else {
-              const parsedText = isJsonString(textData)
-                ? JSON.stringify(JSON.parse(textData), null, 2)
-                : textData;
-
-              const blockOutputText =
-                typeof textData !== 'undefined' && textData !== null ? (
-                  <Spacing key={`output-text-${idx1}-${idx}`} ml={2}>
-                    <Text monospace>
-                      <pre>{parsedText}</pre>
-                    </Text>
-                  </Spacing>
-                ) : (
-                  emptyOutputMessageEl
-                );
-
-              el = blockOutputText;
+              el = emptyOutputMessageEl;
             }
+          } else if (DataTypeEnum.IMAGE_PNG === dataType && textData) {
+            el = (
+              <div
+                style={{
+                  backgroundColor: 'white',
+                  maxHeight: height - heightOffset - 90,
+                  overflow: 'auto',
+                }}
+              >
+                <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
+              </div>
+            );
+          } else if (DataTypeEnum.TEXT_HTML === dataType && textData) {
+            const key = String(hashCode(textData));
+            el = (
+              // We need to force the key change or else it doesn’t update.
+              <OutputRowStyle contained key={key} normalPadding>
+                <HTMLOutputStyle monospace>
+                  <InnerHTML html={textData} />
+                </HTMLOutputStyle>
+              </OutputRowStyle>
+            );
+          } else {
+            const parsedText = isJsonString(textData)
+              ? JSON.stringify(JSON.parse(textData), null, 2)
+              : textData;
 
-            const letter = alpha[idx1];
+            const blockOutputText =
+              typeof textData !== 'undefined' && textData !== null ? (
+                <Spacing key={`output-text-${idx1}-${idx}`} ml={2}>
+                  <Text monospace>
+                    <pre>{parsedText}</pre>
+                  </Text>
+                </Spacing>
+              ) : (
+                emptyOutputMessageEl
+              );
 
-            // If output is text, group them into 1 tab
-            if (DataTypeEnum.TEXT === dataTypeInit) {
-              arrGroup.push(el);
+            el = blockOutputText;
+          }
 
-              if (idx === 0) {
-                tabsMoreInner.push({
-                  uuid: `Block output ${idx + 1}${letter}`,
-                });
-              }
-            } else {
-              arr.push(el);
+          const letter = alpha[idx1];
 
+          // If output is text, group them into 1 tab
+          if (DataTypeEnum.TEXT === dataTypeInit) {
+            arrGroup.push(el);
+
+            if (idx === 0) {
               tabsMoreInner.push({
                 uuid: `Block output ${idx + 1}${letter}`,
               });
             }
-          },
-        );
+          } else {
+            arr.push(el);
+
+            tabsMoreInner.push({
+              uuid: `Block output ${idx + 1}${letter}`,
+            });
+          }
+        });
 
         if (DataTypeEnum.TEXT === dataTypeInit) {
           arr.push(arrGroup);

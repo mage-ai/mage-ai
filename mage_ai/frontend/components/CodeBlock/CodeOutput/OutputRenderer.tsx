@@ -74,7 +74,9 @@ function OutputRenderer({
         header={
           DataTypeEnum.GROUP === dataType && !progressOnly ? (
             <Spacing px={PADDING_UNITS}>
-              <Text color={blockColor?.accent} monospace small>{variableUuid}</Text>
+              <Text color={blockColor?.accent} monospace small>
+                {variableUuid}
+              </Text>
             </Spacing>
           ) : null
         }
@@ -86,7 +88,9 @@ function OutputRenderer({
 
             return (
               <>
-                {!progressOnly && (DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && <Divider medium />}
+                {!progressOnly && (DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && (
+                  <Divider medium />
+                )}
 
                 <OutputRenderer
                   {...outputRowSharedProps}
@@ -113,11 +117,25 @@ function OutputRenderer({
 
     return el;
   } else if (DataTypeEnum.PROGRESS === dataType) {
-    return <ProgressOutput {...outputRowSharedProps} color={blockColor} progress={progress} value={textValue} />;
+    return (
+      <ProgressOutput
+        {...outputRowSharedProps}
+        color={blockColor}
+        progress={progress}
+        value={textValue}
+      />
+    );
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
     return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {
-    return <TableOutput containerWidth={containerWidth} maxHeight={height} output={output} selected={selected} />;
+    return (
+      <TableOutput
+        containerWidth={containerWidth}
+        maxHeight={height}
+        output={output}
+        selected={selected}
+      />
+    );
   } else if (DataTypeEnum.IMAGE_PNG === dataType) {
     return <ImageOutput data={textValue} />;
   } else {

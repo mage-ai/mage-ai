@@ -44,7 +44,6 @@ function ProgressOutput({ color, progress, value, ...outputRowSharedProps }: Pro
           loadingStyle={LoadingStyleEnum.DEFAULT}
           width={`${progressValue * 100}%`}
         />
-
       )}
     </div>
   );

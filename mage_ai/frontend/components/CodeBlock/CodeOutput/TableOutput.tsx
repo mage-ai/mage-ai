@@ -41,7 +41,10 @@ function TableOutput({
   const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
   const shape = useMemo(
     // @ts-ignore
-    () => ((output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape)?.filter(v => v !== null && typeof v !== 'undefined'),
+    () =>
+      (
+        (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape
+      )?.filter(v => v !== null && typeof v !== 'undefined'),
     [output],
   );
 
@@ -127,7 +130,10 @@ function TableOutput({
       if (typeof resourceUsage?.size !== 'undefined' && resourceUsage?.size !== null) {
         arr2.push(`Size: ${(resourceUsage?.size / 1024 ** 2).toFixed(2)}MB`);
       }
-      if (typeof resourceUsage?.memory_usage !== 'undefined' && resourceUsage?.memory_usage !== null) {
+      if (
+        typeof resourceUsage?.memory_usage !== 'undefined' &&
+        resourceUsage?.memory_usage !== null
+      ) {
         arr2.push(`Memory: ${(resourceUsage?.memory_usage / 1024 ** 2).toFixed(2)}MB`);
       }
     }

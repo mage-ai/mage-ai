@@ -614,7 +614,6 @@ function Table({ ...props }: TableProps) {
       props,
       rows,
       shouldUseIndexProp,
-      width,
     ],
   );
 
