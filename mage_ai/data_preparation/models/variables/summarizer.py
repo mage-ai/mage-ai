@@ -135,13 +135,13 @@ def __aggregate_summary_info(variable):
     # dynamic_block_index: 0
     # index_path:  [block_uuid]/[dynamic_block_index: 0]/
     # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
-    for _dynamic_block_index, _index_path, output_path in __dynamic_block_index_paths(variable):
+    for _dynamic_block_index, _index_path, output_path in dynamic_block_index_paths(variable):
         mapping_dynamic_children = {}
         for filename in filenames:  # filename: type.json
             if not mapping_dynamic_children.get(filename):
                 mapping_dynamic_children[filename] = []
 
-            part_uuids = variable.__get_part_uuids(output_path)
+            part_uuids = __get_part_uuids(variable, output_path)
             if part_uuids and len(part_uuids) >= 1:
                 arr = []
                 for part_uuid in part_uuids:
@@ -184,6 +184,7 @@ def __aggregate_summary_info(variable):
 
         if not variable.storage.isdir(path):
             variable.storage.makedirs(path, exist_ok=True)
+
         for filename, data in mapping.items():
             variable.storage.write_json_file(os.path.join(path, filename), data)
 
@@ -301,15 +302,7 @@ def get_part_uuids(variable) -> Optional[List[str]]:
     return __get_part_uuids(variable, variable.variable_path)
 
 
-def __get_part_uuids(variable, path: str) -> List[str]:
-    part_uuids = []
-    for chunk_uuid in variable.storage.listdir(path):
-        if chunk_uuid.isdigit() and variable.storage.isdir(os.path.join(path, chunk_uuid)):
-            part_uuids.append(chunk_uuid)
-    return part_uuids
-
-
-def __dynamic_block_index_paths(variable) -> List[Tuple[int, str, str]]:
+def dynamic_block_index_paths(variable) -> List[Tuple[int, str, str]]:
     if not variable.storage.isdir(variable.variable_dir_path):
         return []
 
@@ -322,3 +315,11 @@ def __dynamic_block_index_paths(variable) -> List[Tuple[int, str, str]]:
                 indexes.append((int(dynamic_block_index), index_path, output_path))
 
     return indexes
+
+
+def __get_part_uuids(variable, path: str) -> List[str]:
+    part_uuids = []
+    for chunk_uuid in variable.storage.listdir(path):
+        if chunk_uuid.isdigit() and variable.storage.isdir(os.path.join(path, chunk_uuid)):
+            part_uuids.append(chunk_uuid)
+    return part_uuids

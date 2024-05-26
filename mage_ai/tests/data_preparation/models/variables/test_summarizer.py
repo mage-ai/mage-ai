@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.variables.constants import (
 )
 from mage_ai.data_preparation.models.variables.summarizer import (
     aggregate_summary_info_for_all_variables,
+    dynamic_block_index_paths,
     get_aggregate_summary_info,
     get_part_uuids,
 )
@@ -51,6 +52,18 @@ def load_generators(*args, **kwargs):
         yield data
 
 
+def load_dataframes_for_dynamic_children(*args, **kwargs):
+    from mage_ai.data.tabular.mocks import create_dataframe
+
+    return [
+        [
+            create_dataframe(n_rows=100, use_pandas=True),
+            create_dataframe(n_rows=100, use_pandas=True),
+            create_dataframe(n_rows=100, use_pandas=True),
+        ],
+    ]
+
+
 def load_dataframes(*args, **kwargs):
     from mage_ai.data.tabular.mocks import create_dataframe
 
@@ -69,14 +82,6 @@ def passthrough(data, **kwargs):
     return data
 
 
-@patch(
-    'mage_ai.data.models.manager.DataManager.writeable',
-    lambda data_manager, _data: data_manager.is_dataframe(),
-)
-@patch(
-    'mage_ai.data.models.manager.DataManager.readable',
-    lambda _data_manager: True,
-)
 class VariableSummarizerTest(BaseApiTestCase):
     def setUp(self):
         super().setUp()
@@ -111,6 +116,11 @@ class VariableSummarizerTest(BaseApiTestCase):
 
         return block
 
+    @patch(
+        'mage_ai.data.models.manager.DataManager.writeable',
+        lambda data_manager, _data: data_manager.is_dataframe(),
+    )
+    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_generators(self, *args, **kwargs):
         block = self.create_block(func=load)
         transformer = self.create_block(func=transform_data)
@@ -177,6 +187,11 @@ class VariableSummarizerTest(BaseApiTestCase):
                     5500,
                 )
 
+    @patch(
+        'mage_ai.data.models.manager.DataManager.writeable',
+        lambda data_manager, _data: data_manager.is_dataframe(),
+    )
+    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_input_data_type_generator_on_upstream_data(self, *args, **kwargs):
         block = self.create_block(func=load_dataframes)
         transformer = self.create_block(
@@ -250,6 +265,11 @@ class VariableSummarizerTest(BaseApiTestCase):
                     1200,
                 )
 
+    @patch(
+        'mage_ai.data.models.manager.DataManager.writeable',
+        lambda data_manager, _data: data_manager.is_dataframe(),
+    )
+    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_input_data_type_default_on_upstream_generator(self, *args, **kwargs):
         block = self.create_block(func=load_generators)
         transformer = self.create_block(
@@ -318,6 +338,11 @@ class VariableSummarizerTest(BaseApiTestCase):
                     7800,
                 )
 
+    @patch(
+        'mage_ai.data.models.manager.DataManager.writeable',
+        lambda data_manager, _data: data_manager.is_dataframe(),
+    )
+    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_input_data_type_default_no_downstream_block_generator(
         self, *args, **kwargs
     ):
@@ -383,3 +408,74 @@ class VariableSummarizerTest(BaseApiTestCase):
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts
                 )
+
+    @patch(
+        'mage_ai.data.models.manager.DataManager.writeable',
+        lambda data_manager, _data: data_manager.is_dataframe(),
+    )
+    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: False)
+    def test_dynamic_blocks_yield(self, *args, **kwargs):
+        block = self.create_block(
+            func=load_dataframes_for_dynamic_children, configuration=dict(dynamic=True)
+        )
+        transformer = self.create_block(
+            func=passthrough,
+        )
+        self.pipeline.add_block(block)
+        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+
+        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
+            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
+                block.execute_sync()
+                transformer.execute_sync(dynamic_block_index=0)
+                transformer.execute_sync(dynamic_block_index=1)
+                transformer.execute_sync(dynamic_block_index=2)
+
+                variable_manager = self.pipeline.variable_manager
+                variable = variable_manager.get_variable_object(
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=block.uuid,
+                    variable_uuid='output_0',
+                )
+                variable_transformer = variable_manager.get_variable_object(
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=transformer.uuid,
+                    variable_uuid='output_0',
+                )
+                aggregate_summary_info_for_all_variables(
+                    variable_manager,
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=block.uuid,
+                )
+
+                self.assertEqual(len(dynamic_block_index_paths(variable)), 0)
+                self.assertIsNone(
+                    get_aggregate_summary_info(
+                        variable_manager,
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=block.uuid,
+                        variable_uuid='output_0',
+                        data_type=VariableAggregateDataType.STATISTICS,
+                        group_type=VariableAggregateSummaryGroupType.PARTS,
+                    ).parts
+                )
+
+                aggregate_summary_info_for_all_variables(
+                    variable_manager,
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=transformer.uuid,
+                )
+
+                self.assertEqual(len(dynamic_block_index_paths(variable_transformer)), 3)
+
+                total = 0
+                for info in get_aggregate_summary_info(
+                    variable_manager,
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=transformer.uuid,
+                    variable_uuid='output_0',
+                    data_type=VariableAggregateDataType.STATISTICS,
+                    group_type=VariableAggregateSummaryGroupType.DYNAMIC,
+                ).dynamic.statistics:
+                    total += sum(i.original_row_count for i in info)
+                self.assertEqual(total, 300)
