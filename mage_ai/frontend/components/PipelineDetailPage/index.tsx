@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -88,7 +88,9 @@ function PipelineDetailPage({
 
   const afterWidth = afterWidthProp || ((afterProp || buildSidekick) ? 50 * UNIT : null);
 
-  const after = useMemo(() => {
+  const after = useCallback(({
+    width,
+  }) => {
     if (afterProp) {
       return afterProp;
     } else if (buildSidekick) {
@@ -96,7 +98,7 @@ function PipelineDetailPage({
         height,
         heightOffset: HEADER_HEIGHT,
         pipeline,
-        width: afterWidth,
+        width: width || afterWidth,
       });
     }
 

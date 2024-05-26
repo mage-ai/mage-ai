@@ -303,11 +303,6 @@ def format_output_data(
         resource_usage = None
 
         if MEMORY_MANAGER_V2:
-            variable_uuids = block.get_variables_by_block(
-                block_uuid=block_uuid,
-                partition=execution_partition,
-            )
-            n_vars = len(variable_uuids)
             variable = block.get_variable_object(
                 block_uuid=block_uuid,
                 variable_uuid=variable_uuid,
@@ -332,8 +327,8 @@ def format_output_data(
                 except ValueError:
                     pass
 
-            if n_vars and isinstance(n_vars, (float, int)) and n_vars >= 1:
-                data = data[: round(sample_count / n_vars)]
+            if sample_count is not None:
+                data = data[:sample_count]
 
             resource_usage = block.get_resource_usage(
                 block_uuid=block_uuid,
@@ -465,7 +460,9 @@ def get_outputs_for_display_dynamic_block(
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
                     index=output_idx,
-                    sample_count=sample_count,
+                    sample_count=sample_count // len(child_data)
+                    if sample_count is not None
+                    else None,
                 )
                 formatted_outputs.append(output_formatted)
 
@@ -514,7 +511,9 @@ def get_outputs_for_display_dynamic_block(
                         csv_lines_only=csv_lines_only,
                         execution_partition=execution_partition,
                         index=output_idx,
-                        sample_count=sample_count,
+                        sample_count=sample_count // len(output)
+                        if sample_count is not None
+                        else None,
                     )
                     data_products.append(
                         dict(

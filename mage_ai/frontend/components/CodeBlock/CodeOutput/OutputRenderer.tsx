@@ -21,8 +21,10 @@ import { ignoreKeys, isObject } from '@utils/hash';
 type OutputRendererProps = {
   block: BlockType;
   containerWidth?: number;
+  disableSpacingBetweenGroups?: boolean;
   index?: number;
   output: OutputType;
+  height?: number;
   onTabChangeCallback?: (tab: TabType) => void;
   selected: boolean;
   singleOutput?: boolean;
@@ -34,6 +36,8 @@ function OutputRenderer({
   index,
   onTabChangeCallback,
   output,
+  disableSpacingBetweenGroups,
+  height,
   selected,
   singleOutput,
   ...outputRowSharedProps
@@ -88,6 +92,8 @@ function OutputRenderer({
                   {...outputRowSharedProps}
                   block={block}
                   containerWidth={containerWidth}
+                  disableSpacingBetweenGroups={disableSpacingBetweenGroups}
+                  height={height}
                   index={index}
                   onTabChangeCallback={onTabChangeCallback}
                   output={ignoreKeys(item, ['multi_output', 'outputs'])}
@@ -101,7 +107,7 @@ function OutputRenderer({
       />
     );
 
-    if (DataTypeEnum.GROUP === dataType) {
+    if (DataTypeEnum.GROUP === dataType && !disableSpacingBetweenGroups) {
       return <Spacing mt={index >= 1 ? PADDING_UNITS : 0}>{el}</Spacing>;
     }
 
@@ -111,7 +117,7 @@ function OutputRenderer({
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
     return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {
-    return <TableOutput containerWidth={containerWidth} output={output} selected={selected} />;
+    return <TableOutput containerWidth={containerWidth} maxHeight={height} output={output} selected={selected} />;
   } else if (DataTypeEnum.IMAGE_PNG === dataType) {
     return <ImageOutput data={textValue} />;
   } else {

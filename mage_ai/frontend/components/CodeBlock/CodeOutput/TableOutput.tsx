@@ -22,6 +22,7 @@ type TableOutputProps = {
   output: OutputType;
   setShapeCallback?: (shape: number[]) => void;
   borderTop?: boolean;
+  maxHeight?: number;
   multiOutputInit?: boolean;
   selected: boolean;
   uuid?: string;
@@ -30,6 +31,7 @@ type TableOutputProps = {
 function TableOutput({
   borderTop,
   containerWidth,
+  maxHeight,
   order,
   output,
   selected,
@@ -158,7 +160,7 @@ function TableOutput({
         columns={columns}
         disableScrolling={!selected}
         key={`data-table-${order}`}
-        maxHeight={UNIT * 60}
+        maxHeight={maxHeight || UNIT * 60}
         noBorderBottom
         noBorderLeft
         noBorderRight

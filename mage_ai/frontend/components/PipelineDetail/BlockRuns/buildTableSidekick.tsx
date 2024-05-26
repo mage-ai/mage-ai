@@ -126,10 +126,13 @@ export default function ({
                   block={selectedBlock}
                   contained
                   containerWidth={width}
+                  disableSpacingBetweenGroups
                   first={idx === 0}
+                  // 44 tabs, 42 inner tabs, 16 padding
+                  height={height - (heightOffset + 90) - (44 + 42 + 16)}
                   index={idx}
                   key={`output-${idx}`}
-                  last={idx === outputsInGroup?.length - 1}
+                  last={idx === outputsInGroup.length - 1}
                   normalPadding
                   output={output}
                   selected
