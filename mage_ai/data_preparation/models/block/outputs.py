@@ -29,9 +29,14 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from mage_ai.data_preparation.models.utils import infer_variable_type, is_primitive
+from mage_ai.data_preparation.models.utils import (
+    infer_variable_type,
+    is_basic_iterable,
+    is_primitive,
+)
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import (
     convert_matrix_to_dataframe,
@@ -47,6 +52,7 @@ def format_output_data(
     block_uuid: Optional[str] = None,
     csv_lines_only: Optional[bool] = False,
     execution_partition: Optional[str] = None,
+    index: Optional[int] = None,
     skip_dynamic_block: bool = False,
     automatic_sampling: bool = False,
     sample_count: Optional[int] = None,
@@ -68,7 +74,34 @@ def format_output_data(
     is_dynamic_child = is_dynamic_block_child(block)
     is_dynamic = is_dynamic_block(block)
 
-    if VariableType.SERIES_PANDAS == variable_type:
+    if (
+        variable_type in [VariableType.DATAFRAME, VariableType.POLARS_DATAFRAME]
+        and is_basic_iterable
+        and isinstance(data, list)
+        and not is_dynamic
+    ):
+        formatted_outputs = []
+        for output_idx, output in enumerate(data):
+            output_formatted, _ = format_output_data(
+                block,
+                output,
+                os.path.join(variable_uuid, str(output_idx)),
+                automatic_sampling=automatic_sampling,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+                index=index,
+                sample_count=sample_count,
+                skip_dynamic_block=skip_dynamic_block,
+            )
+            formatted_outputs.append(output_formatted)
+
+        return dict(
+            outputs=formatted_outputs,
+            type=DataType.GROUP,
+            variable_uuid=variable_uuid,
+        ), True
+    elif VariableType.SERIES_PANDAS == variable_type:
         if automatic_sampling and not sample_count:
             sample_count = min(len(data), DATAFRAME_SAMPLE_COUNT)
         if basic_iterable:
@@ -106,6 +139,7 @@ def format_output_data(
             execution_partition=execution_partition,
             skip_dynamic_block=skip_dynamic_block,
             automatic_sampling=automatic_sampling,
+            index=index,
             sample_count=sample_count,
         )
     elif VariableType.CUSTOM_OBJECT == variable_type:
@@ -183,28 +217,28 @@ def format_output_data(
 
         return format_output_data(
             block,
-            coerce_into_dataframe(
+            data=coerce_into_dataframe(
                 data,
                 is_dynamic=is_dynamic,
                 is_dynamic_child=is_dynamic_child,
             ),
-            variable_uuid=variable_uuid,
-            skip_dynamic_block=True,
             automatic_sampling=automatic_sampling,
+            execution_partition=execution_partition,
+            index=index,
             sample_count=sample_count,
+            skip_dynamic_block=True,
+            variable_uuid=variable_uuid,
         )
     elif isinstance(data, pd.DataFrame):
         if csv_lines_only:
             data = dict(table=data.to_csv(header=True, index=False).strip('\n').split('\n'))
         else:
             try:
-                analysis = variable_manager.get_variable(
-                    block.pipeline.uuid,
-                    block_uuid,
-                    variable_uuid,
-                    dataframe_analysis_keys=['metadata', 'statistics'],
+                analysis = block.get_analysis(
+                    block_uuid=block_uuid,
+                    index=index,
                     partition=execution_partition,
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    variable_uuid=variable_uuid,
                 )
             except Exception as err:
                 print(f'Error getting dataframe analysis for block {block_uuid}: {err}')
@@ -232,30 +266,27 @@ def format_output_data(
                         data[columns_to_display].to_json(orient='split', date_format='iso'),
                     )['data'],
                 ),
-                resource_usage=block.get_resource_usage(
-                    block_uuid=block_uuid,
-                    partition=execution_partition,
-                    variable_uuid=variable_uuid,
-                ),
                 shape=[row_count, column_count],
                 type=DataType.TABLE,
                 variable_uuid=variable_uuid,
             )
+
+            if MEMORY_MANAGER_V2:
+                data['resource_usage'] = block.get_resource_usage(
+                    block_uuid=block_uuid,
+                    partition=execution_partition,
+                    variable_uuid=variable_uuid,
+                    index=index,
+                )
+
         return data, True
     elif isinstance(data, pl.DataFrame):
-        variable_uuids = block.get_variables_by_block(
-            block_uuid=block_uuid,
-            partition=execution_partition,
-        )
-        n_vars = len(variable_uuids)
         try:
-            analysis = variable_manager.get_variable(
-                block.pipeline.uuid,
-                block_uuid,
-                variable_uuid,
-                dataframe_analysis_keys=['statistics'],
+            analysis = block.get_analysis(
+                block_uuid=block_uuid,
+                index=index,
                 partition=execution_partition,
-                variable_type=VariableType.DATAFRAME_ANALYSIS,
+                variable_uuid=variable_uuid,
             )
         except Exception as err:
             raise err
@@ -266,28 +297,46 @@ def format_output_data(
             column_count = stats.get('original_column_count')
         else:
             row_count, column_count = data.shape
-        variable = block.get_variable_object(
-            block_uuid=block_uuid,
-            variable_uuid=variable_uuid,
-            partition=execution_partition,
-        )
+
         columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
         sample_count = sample_count or DATAFRAME_SAMPLE_COUNT_PREVIEW
+        resource_usage = None
 
-        metadata = read_metadata(
-            os.path.join(variable.variable_dir_path, variable_uuid, CHUNKS_DIRECTORY_NAME),
-            include_schema=True,
-        )
-        if metadata:
-            try:
-                row_count = metadata.get('num_rows') or row_count
-                schema = metadata.get('schema')
-                if schema and isinstance(schema, dict):
-                    column_count = len(schema) or column_count
-            except ValueError:
-                pass
+        if MEMORY_MANAGER_V2:
+            variable = block.get_variable_object(
+                block_uuid=block_uuid,
+                variable_uuid=variable_uuid,
+                partition=execution_partition,
+            )
 
-        data = data[: round(sample_count / n_vars)]
+            metadata = read_metadata(
+                os.path.join(
+                    variable.variable_dir_path,
+                    variable_uuid,
+                    str(index) if index is not None else '',
+                    CHUNKS_DIRECTORY_NAME,
+                ),
+                include_schema=True,
+            )
+            if metadata:
+                try:
+                    row_count = metadata.get('num_rows') or row_count
+                    schema = metadata.get('schema')
+                    if schema and isinstance(schema, dict):
+                        column_count = len(schema) or column_count
+                except ValueError:
+                    pass
+
+            if sample_count is not None:
+                data = data[:sample_count]
+
+            resource_usage = block.get_resource_usage(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+                variable_uuid=variable_uuid,
+                index=index,
+            )
+
         data = dict(
             sample_data=dict(
                 columns=columns_to_display,
@@ -296,9 +345,7 @@ def format_output_data(
                     for row in json.loads(data[columns_to_display].write_json(row_oriented=True))
                 ],
             ),
-            resource_usage=block.get_resource_usage(
-                block_uuid=block_uuid, partition=execution_partition, variable_uuid=variable_uuid
-            ),
+            resource_usage=resource_usage,
             shape=[row_count, column_count],
             type=DataType.TABLE,
             variable_uuid=variable_uuid,
@@ -388,6 +435,7 @@ def get_outputs_for_display_dynamic_block(
     child_data_sets: List[Tuple[Any, Any]],
     block_uuid: Optional[str] = None,
     csv_lines_only: bool = False,
+    dynamic_block_index: Optional[int] = None,
     exclude_blank_variable_uuids: bool = False,
     execution_partition: Optional[str] = None,
     metadata: Optional[Dict] = None,
@@ -396,30 +444,38 @@ def get_outputs_for_display_dynamic_block(
 ) -> List[Dict[str, Any]]:
     data_products = []
     outputs = []
-
     block_uuid = block_uuid if block_uuid else block.uuid
 
     for idx, pairs in enumerate(child_data_sets):
         child_data, metadata = pairs
         formatted_outputs = []
 
-        if child_data and isinstance(child_data, list) and len(child_data) >= 1:
+        if child_data is not None and isinstance(child_data, list) and len(child_data) >= 1:
             for output_idx, output in enumerate(child_data):
                 output_formatted, _ = format_output_data(
                     block,
                     output,
-                    f'output {output_idx}',
+                    f'output_{output_idx}',
                     block_uuid=block_uuid,
                     csv_lines_only=csv_lines_only,
                     execution_partition=execution_partition,
+                    index=output_idx,
+                    sample_count=sample_count // len(child_data)
+                    if sample_count is not None
+                    else None,
                 )
                 formatted_outputs.append(output_formatted)
 
+            # Override this with dynamic_block_index because execute_code_output from the IDE
+            # runs each dynamic child block asynchronously and prints the output immediately.
+            var_uuid = (
+                f'Dynamic child {dynamic_block_index if dynamic_block_index is not None else idx}'
+            )
             data_products.append(
                 dict(
                     outputs=formatted_outputs,
                     type=DataType.GROUP,
-                    variable_uuid=f'Dynamic child {idx}',
+                    variable_uuid=var_uuid,
                 )
             )
         else:
@@ -434,37 +490,65 @@ def get_outputs_for_display_dynamic_block(
                 metadata = output_pair[1]
 
         for output, variable_uuid in [
-            (child_data, 'dynamic output data'),
-            (metadata, 'metadata'),
+            (child_data, 'output_0'),
+            (metadata, 'output_1'),
         ]:
             if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue
 
-            data, is_data_product = format_output_data(
-                block,
-                output,
-                variable_uuid,
-                block_uuid=block_uuid,
-                csv_lines_only=csv_lines_only,
-                execution_partition=execution_partition,
-            )
-
-            outputs_below_limit = not sample or not sample_count
-            if is_data_product:
-                outputs_below_limit = outputs_below_limit or (
-                    sample_count is not None and len(data_products) < sample_count
-                )
+            variable_type, basic_iterable = infer_variable_type(output)
+            if (
+                variable_type in [VariableType.DATAFRAME, VariableType.POLARS_DATAFRAME]
+                and is_basic_iterable
+                and isinstance(output, list)
+            ):
+                for output_idx, output_data in enumerate(output):
+                    output_formatted, _ = format_output_data(
+                        block,
+                        output_data,
+                        variable_uuid,
+                        block_uuid=block_uuid,
+                        csv_lines_only=csv_lines_only,
+                        execution_partition=execution_partition,
+                        index=output_idx,
+                        sample_count=sample_count // len(output)
+                        if sample_count is not None
+                        else None,
+                    )
+                    data_products.append(
+                        dict(
+                            outputs=[output_formatted],
+                            type=DataType.GROUP,
+                            variable_uuid=os.path.join(variable_uuid, str(output_idx)),
+                        )
+                    )
             else:
-                outputs_below_limit = outputs_below_limit or (
-                    sample_count is not None and len(outputs) < sample_count
+                data, is_data_product = format_output_data(
+                    block,
+                    output,
+                    variable_uuid,
+                    block_uuid=block_uuid,
+                    csv_lines_only=csv_lines_only,
+                    execution_partition=execution_partition,
+                    sample_count=sample_count,
                 )
 
-            if outputs_below_limit:
-                data['multi_output'] = True
+                outputs_below_limit = not sample or not sample_count
                 if is_data_product:
-                    data_products.append(data)
+                    outputs_below_limit = outputs_below_limit or (
+                        sample_count is not None and len(data_products) < sample_count
+                    )
                 else:
-                    outputs.append(data)
+                    outputs_below_limit = outputs_below_limit or (
+                        sample_count is not None and len(outputs) < sample_count
+                    )
+
+                if outputs_below_limit:
+                    data['multi_output'] = True
+                    if is_data_product:
+                        data_products.append(data)
+                    else:
+                        outputs.append(data)
 
     return outputs + data_products
 

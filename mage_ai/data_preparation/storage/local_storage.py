@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from contextlib import contextmanager
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import aiofiles
 import pandas as pd
@@ -11,6 +11,7 @@ import simplejson
 
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
+from mage_ai.settings.server import DEBUG_FILE_IO
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.parsers import encode_complex
 
@@ -57,9 +58,11 @@ class LocalStorage(BaseStorage):
     def read_json_file(
         self,
         file_path: str,
-        default_value: Dict = None,
+        default_value: Optional[Union[Dict, List]] = None,
         raise_exception: bool = False,
     ) -> Dict:
+        if DEBUG_FILE_IO and '.variables' in file_path:
+            print(f'[READ JSON FILE]: {file_path}')
         if not self.path_exists(file_path):
             return default_value or {}
         with open(file_path) as file:

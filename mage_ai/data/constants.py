@@ -22,7 +22,7 @@ OutputData = Union[
     List[ScanBatchDatasetResult],
 ]
 
-RecordBatchGenerator = Generator[ScanBatchDatasetResult, None, None]
+RecordBatchGenerator = Union[Generator[ScanBatchDatasetResult, None, None], DataGenerator]
 
 AsyncRecordBatchGenerator = AsyncGenerator[ScanBatchDatasetResult, None]
 

@@ -1,7 +1,8 @@
+import asyncio
 import datetime
 import os
 from queue import Empty
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import jupyter_client
 import psutil
@@ -31,7 +32,20 @@ def is_cmdline_contains_ipykernel(cmdline, search_term='ipykernel_launcher'):
     return False
 
 
-def find_ipykernel_launchers_info(check_active_status: bool = False):
+async def find_ipykernel_launchers_info_async(timeout: int = 5) -> List[Dict]:
+    loop = asyncio.get_running_loop()
+    try:
+        # Run the synchronous function in a separate thread with a timeout
+        arr = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: find_ipykernel_launchers_info(True)), timeout
+        )
+        return arr
+    except asyncio.TimeoutError:
+        print(f'Operation timed out after {timeout} seconds')
+        return []
+
+
+def find_ipykernel_launchers_info(check_active_status: bool = False) -> List[Dict]:
     """
     ps aux | grep ipykernel_launcher
     """

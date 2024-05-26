@@ -97,7 +97,6 @@ class DynamicChildController:
                     lazy_variable_controller = get_outputs_for_dynamic_child(
                         upstream_block,
                         execution_partition=execution_partition,
-                        logger=logger,
                         logging_tags=logging_tags,
                     )
 

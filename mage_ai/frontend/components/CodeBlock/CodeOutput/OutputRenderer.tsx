@@ -8,6 +8,7 @@ import ImageOutput from './ImageOutput';
 import MultiOutput from './MultiOutput';
 import Spacing from '@oracle/elements/Spacing';
 import TableOutput from './TableOutput';
+import ProgressOutput from './ProgressOutput';
 import Text from '@oracle/elements/Text';
 import TextOutput from './TextOutput';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
@@ -20,8 +21,10 @@ import { ignoreKeys, isObject } from '@utils/hash';
 type OutputRendererProps = {
   block: BlockType;
   containerWidth?: number;
+  disableSpacingBetweenGroups?: boolean;
   index?: number;
   output: OutputType;
+  height?: number;
   onTabChangeCallback?: (tab: TabType) => void;
   selected: boolean;
   singleOutput?: boolean;
@@ -33,6 +36,8 @@ function OutputRenderer({
   index,
   onTabChangeCallback,
   output,
+  disableSpacingBetweenGroups,
+  height,
   selected,
   singleOutput,
   ...outputRowSharedProps
@@ -42,6 +47,7 @@ function OutputRenderer({
     data,
     multi_output: multiOutput,
     outputs,
+    progress,
     text_data: textData,
     type: dataType,
     variable_uuid: variableUuid,
@@ -61,16 +67,20 @@ function OutputRenderer({
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
   if ((DataTypeEnum.GROUP === dataType || multiOutput || singleOutput) && outputsLength >= 1) {
+    const progressOnly = outputs?.every(({ type }) => DataTypeEnum.PROGRESS === type);
     const el = (
       <MultiOutput
         color={blockColor?.accent}
         header={
-          DataTypeEnum.GROUP === dataType ? (
+          DataTypeEnum.GROUP === dataType && !progressOnly ? (
             <Spacing px={PADDING_UNITS}>
-              <Text color={blockColor?.accent}>{variableUuid}</Text>
+              <Text color={blockColor?.accent} monospace small>
+                {variableUuid}
+              </Text>
             </Spacing>
           ) : null
         }
+        hideTabs={progressOnly}
         onTabChange={onTabChangeCallback}
         outputs={outputs?.map((item, idx) => ({
           render: () => {
@@ -78,12 +88,16 @@ function OutputRenderer({
 
             return (
               <>
-                {(DataTypeEnum.TABLE !== itemType || index === 0) && <Divider medium />}
+                {!progressOnly && (DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && (
+                  <Divider medium />
+                )}
 
                 <OutputRenderer
                   {...outputRowSharedProps}
                   block={block}
                   containerWidth={containerWidth}
+                  disableSpacingBetweenGroups={disableSpacingBetweenGroups}
+                  height={height}
                   index={index}
                   onTabChangeCallback={onTabChangeCallback}
                   output={ignoreKeys(item, ['multi_output', 'outputs'])}
@@ -97,15 +111,31 @@ function OutputRenderer({
       />
     );
 
-    if (DataTypeEnum.GROUP === dataType) {
+    if (DataTypeEnum.GROUP === dataType && !disableSpacingBetweenGroups) {
       return <Spacing mt={index >= 1 ? PADDING_UNITS : 0}>{el}</Spacing>;
     }
 
     return el;
+  } else if (DataTypeEnum.PROGRESS === dataType) {
+    return (
+      <ProgressOutput
+        {...outputRowSharedProps}
+        color={blockColor}
+        progress={progress}
+        value={textValue}
+      />
+    );
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
     return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {
-    return <TableOutput containerWidth={containerWidth} output={output} selected={selected} />;
+    return (
+      <TableOutput
+        containerWidth={containerWidth}
+        maxHeight={height}
+        output={output}
+        selected={selected}
+      />
+    );
   } else if (DataTypeEnum.IMAGE_PNG === dataType) {
     return <ImageOutput data={textValue} />;
   } else {

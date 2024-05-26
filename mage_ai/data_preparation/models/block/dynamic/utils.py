@@ -5,9 +5,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
+import polars as pl
 from scipy.sparse import csr_matrix
 
 from mage_ai.data_preparation.models.block.dynamic.variables import (
+    get_dynamic_children_count,
     get_outputs_for_dynamic_block,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -23,13 +25,13 @@ from mage_ai.shared.models import BaseDataClass
 
 
 class DynamicBlockFlag(str, Enum):
-    CLONE_OF_ORIGINAL = "clone_of_original"
-    DYNAMIC = "dynamic"
-    DYNAMIC_CHILD = "dynamic_child"
-    ORIGINAL = "original"
-    REDUCE_OUTPUT = "reduce_output"
-    REPLICATED = "replicated"
-    SPAWN_OF_DYNAMIC_CHILD = "spawn_of_dynamic_child"
+    CLONE_OF_ORIGINAL = 'clone_of_original'
+    DYNAMIC = 'dynamic'
+    DYNAMIC_CHILD = 'dynamic_child'
+    ORIGINAL = 'original'
+    REDUCE_OUTPUT = 'reduce_output'
+    REPLICATED = 'replicated'
+    SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
 
 
 def build_dynamic_block_uuid(
@@ -52,29 +54,27 @@ def build_dynamic_block_uuid(
     Returns:
         str: The generated dynamic block UUID.
     """
-    block_uuid_subname = metadata.get("block_uuid", index) if metadata else index
-    uuid = f"{block_uuid}:{block_uuid_subname}"
+    block_uuid_subname = metadata.get('block_uuid', index) if metadata else index
+    uuid = f'{block_uuid}:{block_uuid_subname}'
 
     if upstream_block_uuids:
-        uuid = ":".join(
-            [
-                str(block_uuid),
-                "__".join([str(i) for i in upstream_block_uuids]),
-                str(block_uuid_subname),
-            ]
-        )
+        uuid = ':'.join([
+            str(block_uuid),
+            '__'.join([str(i) for i in upstream_block_uuids]),
+            str(block_uuid_subname),
+        ])
     elif upstream_block_uuid:
-        parts = upstream_block_uuid.split(":")
+        parts = upstream_block_uuid.split(':')
         if len(parts) >= 2:
-            upstream_indexes = ":".join(parts[1:])
-            uuid = f"{uuid}:{upstream_indexes}"
+            upstream_indexes = ':'.join(parts[1:])
+            uuid = f'{uuid}:{upstream_indexes}'
 
     return uuid
 
 
 def extract_dynamic_block_index(block_run_block_uuid: str) -> int:
     if block_run_block_uuid:
-        parts = block_run_block_uuid.split(":")
+        parts = block_run_block_uuid.split(':')
         if len(parts) >= 2:
             return parts[-1]
 
@@ -89,7 +89,7 @@ def is_dynamic_block(block) -> bool:
     Returns:
         bool: True if the block is a dynamic block, False otherwise.
     """
-    return block and block.configuration and block.configuration.get("dynamic", False)
+    return block and block.configuration and block.configuration.get('dynamic', False)
 
 
 def should_reduce_output(block) -> bool:
@@ -102,28 +102,17 @@ def should_reduce_output(block) -> bool:
     Returns:
         bool: True if the block should reduce its output, False otherwise.
     """
-    if (
-        not block
-        or not block.configuration
-        or not block.configuration.get("reduce_output", False)
-    ):
+    if not block or not block.configuration or not block.configuration.get('reduce_output', False):
         return False
     return True
 
 
 def has_reduce_output_from_upstreams(block) -> bool:
-    return any(
-        [
-            should_reduce_output(upstream_block)
-            for upstream_block in block.upstream_blocks
-        ]
-    )
+    return any([should_reduce_output(upstream_block) for upstream_block in block.upstream_blocks])
 
 
 def has_dynamic_block_upstream_parent(block) -> bool:
-    return block.upstream_blocks and any(
-        [is_dynamic_block(b) for b in block.upstream_blocks]
-    )
+    return block.upstream_blocks and any([is_dynamic_block(b) for b in block.upstream_blocks])
 
 
 def is_dynamic_block_child(block) -> bool:
@@ -197,10 +186,10 @@ def is_original_dynamic_child_block(
 
 def uuid_for_output_variables(
     block,
-    block_uuid: str = None,
-    dynamic_block_index: int = None,
-    dynamic_block_uuid: str = None,
-    join_character: str = None,
+    block_uuid: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+    dynamic_block_uuid: Optional[str] = None,
+    join_character: Optional[str] = None,
     **kwargs,
 ) -> Tuple[str, bool]:
     changed = False
@@ -220,7 +209,7 @@ def uuid_for_output_variables(
     if (not is_dynamic and (dynamic_block_index is None or is_dynamic_child)) or (
         is_dynamic and is_dynamic_child
     ):
-        parts = block_uuid.split(":")
+        parts = block_uuid.split(':')
 
         if len(parts) >= 2:
             block_uuid = parts[0]
@@ -251,7 +240,7 @@ def uuid_for_output_variables(
         dynamic_block_index=dynamic_block_index,
         dynamic_block_index_0=dynamic_block_index_0,
         dynamic_block_uuid=dynamic_block_uuid,
-        __uuid="uuid_for_output_variables",
+        __uuid='uuid_for_output_variables',
     )
 
     return (block_uuid, changed)
@@ -267,11 +256,11 @@ def transform_dataframe_for_display(
 ) -> Dict:
     data = None
 
-    column_name = "-"
+    column_name = '-'
     if is_dynamic:
-        column_name = "dynamic child blocks"
+        column_name = 'dynamic child blocks'
     elif is_dynamic_child:
-        column_name = "output"
+        column_name = 'output'
 
     if isinstance(dataframe, pd.DataFrame):
         columns_to_display = dataframe.columns.tolist()[:sample_columns]
@@ -281,7 +270,7 @@ def transform_dataframe_for_display(
 
         data = dict(
             columns=columns_to_display,
-            rows=json.loads(df.to_json(orient="split"))["data"],
+            rows=json.loads(df.to_json(orient='split'))['data'],
             shape=[row_count, column_count],
         )
     else:
@@ -309,15 +298,13 @@ def coerce_into_dataframe(
     is_dynamic_child: bool = False,
     single_item_only: bool = False,
 ) -> pd.DataFrame:
-    child_data, _ = prepare_data_for_output(
-        child_data, single_item_only=single_item_only
-    )
+    child_data, _ = prepare_data_for_output(child_data, single_item_only=single_item_only)
 
-    column_name = "-"
+    column_name = '-'
     if is_dynamic:
-        column_name = "dynamic child blocks"
+        column_name = 'dynamic child blocks'
     elif is_dynamic_child:
-        column_name = "output"
+        column_name = 'output'
 
     if isinstance(child_data, list) and len(child_data) >= 1:
         item = child_data[0]
@@ -334,16 +321,14 @@ def coerce_into_dataframe(
                     for value in child_data
                 ],
             )
-    elif isinstance(child_data, pd.DataFrame):
+    elif isinstance(child_data, (pd.DataFrame, pl.DataFrame)):
         return child_data
     else:
-        child_data = pd.DataFrame(
-            [
-                {
-                    column_name: child_data,
-                }
-            ]
-        )
+        child_data = pd.DataFrame([
+            {
+                column_name: child_data,
+            }
+        ])
 
     return child_data
 
@@ -371,9 +356,7 @@ def limit_output(
 
 
 def transform_output(
-    output: Tuple[
-        Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]
-    ],
+    output: Tuple[Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]],
     is_dynamic: bool = False,
     is_dynamic_child: bool = False,
 ):
@@ -431,9 +414,7 @@ def transform_output(
 
 
 def transform_output_for_display(
-    output: Tuple[
-        Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]
-    ],
+    output: Tuple[Union[List[Union[Dict, int, str, pd.DataFrame]], pd.DataFrame], List[Dict]],
     is_dynamic: bool = False,
     is_dynamic_child: bool = False,
     sample_count: Optional[int] = None,
@@ -449,7 +430,7 @@ def transform_output_for_display(
 
     return dict(
         data=dict(
-            columns=["dynamic children data", "metadata"],
+            columns=['dynamic children data', 'metadata'],
             rows=[child_data, metadata],
             shape=[2, 2],
         ),
@@ -474,15 +455,13 @@ def transform_output_for_display_reduce_output(
         for values in output
     ]
 
-    output = limit_output(
-        output, sample_count=sample_count, sample_columns=sample_columns
-    )
+    output = limit_output(output, sample_count=sample_count, sample_columns=sample_columns)
 
     arr = [
         dict(
             text_data=data,
             type=DataType.TEXT,
-            variable_uuid=f"reduced output {idx}",
+            variable_uuid=f'reduced output {idx}',
         )
         for idx, data in enumerate(output)
     ]
@@ -498,7 +477,7 @@ def combine_transformed_output_for_multi_output(
     columns_use = columns or []
     for i in range(len(transform_outputs)):
         if not columns:
-            columns_use.append(f"output {i}")
+            columns_use.append(f'output {i}')
 
     return dict(
         data=dict(
@@ -544,7 +523,7 @@ def transform_output_for_display_dynamic_child(
             df = pd.concat([df, df_inner], axis=1, ignore_index=True)
 
     shape = None
-    if hasattr(df, "shape"):
+    if hasattr(df, 'shape'):
         shape = df.shape
 
     if isinstance(df, pd.DataFrame) and len(set(df.columns)) == 1:
@@ -564,7 +543,7 @@ def create_combinations(combinations: List[Any]) -> List[Any]:
 
         for idx, arr in enumerate(combinations_inner):
             for value in arr:
-                combinations_next = combinations_inner[(idx + 1):]
+                combinations_next = combinations_inner[(idx + 1) :]
                 if len(combinations_next) >= 1:
                     for combos_down in __create_combinations(combinations_next):
                         combos.append([value] + combos_down)
@@ -581,6 +560,7 @@ def create_combinations(combinations: List[Any]) -> List[Any]:
 def build_combinations_for_dynamic_child(
     block,
     execution_partition: str = None,
+    origin_block: Optional[Any] = None,
     **kwargs,
 ):
     """
@@ -603,6 +583,9 @@ def build_combinations_for_dynamic_child(
         [0, 1],
     ]
     """
+    if origin_block is None:
+        origin_block = block
+
     dynamic_counts = []
 
     for upstream_block in block.upstream_blocks:
@@ -627,26 +610,44 @@ def build_combinations_for_dynamic_child(
                 children_created = build_combinations_for_dynamic_child(
                     upstream_block,
                     execution_partition=execution_partition,
+                    origin_block=origin_block,
                 )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
-                        values, _metadata = get_outputs_for_dynamic_block(
+                        count, is_partial_data_readable = get_dynamic_children_count(
                             upstream_block,
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index,
                         )
-                        if values is not None:
-                            arr.extend([idx for idx in range(len(values))])
+                        if count is not None and is_partial_data_readable:
+                            arr.extend([idx for idx in range(count)])
                         else:
-                            arr.append(0)
+                            values, _metadata = get_outputs_for_dynamic_block(
+                                upstream_block,
+                                execution_partition=execution_partition,
+                                dynamic_block_index=dynamic_block_index,
+                                origin_block=origin_block,
+                            )
+                            if values is not None:
+                                arr.extend([idx for idx in range(len(values))])
+                            else:
+                                arr.append(0)
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
-                arr, _metadata = get_outputs_for_dynamic_block(
+                count, is_partial_data_readable = get_dynamic_children_count(
                     upstream_block,
                     execution_partition=execution_partition,
                 )
-            if arr is not None:
+                if count is not None and is_partial_data_readable:
+                    arr = [idx for idx in range(count)]
+                else:
+                    arr, _metadata = get_outputs_for_dynamic_block(
+                        upstream_block,
+                        execution_partition=execution_partition,
+                        origin_block=origin_block,
+                    )
+            if arr is not None and hasattr(arr, '__len__') and len(arr) > 0:
                 dynamic_counts.append([idx for idx in range(len(arr))])
             else:
                 dynamic_counts.append([0])
@@ -702,9 +703,7 @@ class DynamicBlockWrapperBase(BaseDataClass):
     siblings: List[BaseDataClass] = field(default_factory=lambda: [])
     spawns: List[BaseDataClass] = field(default_factory=lambda: [])
     upstream_dynamic_blocks: List[BaseDataClass] = field(default_factory=lambda: [])
-    upstream_dynamic_child_blocks: List[BaseDataClass] = field(
-        default_factory=lambda: []
-    )
+    upstream_dynamic_child_blocks: List[BaseDataClass] = field(default_factory=lambda: [])
     uuid: str = None
 
 
@@ -732,9 +731,7 @@ class DynamicBlockWrapper(BaseDataClass):
     # dynamic block’s (e.g. a direct parent block) output.
     spawns: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     # Upstream blocks that are dynamic blocks.
-    upstream_dynamic_blocks: List[DynamicBlockWrapperBase] = field(
-        default_factory=lambda: []
-    )
+    upstream_dynamic_blocks: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     # Upstream blocks that are dynamic child blocks.
     upstream_dynamic_child_blocks: List[DynamicBlockWrapperBase] = field(
         default_factory=lambda: []
@@ -754,30 +751,30 @@ class DynamicBlockWrapper(BaseDataClass):
 
         if block_run:
             config = block_run.metrics or {}
-            self.dynamic_block_index = config.get("dynamic_block_index")
-            self.dynamic_block_indexes = config.get("dynamic_block_indexes")
+            self.dynamic_block_index = config.get('dynamic_block_index')
+            self.dynamic_block_indexes = config.get('dynamic_block_indexes')
 
-            metadata = config.get("metadata") or {}
+            metadata = config.get('metadata') or {}
 
-            self.flags = [DynamicBlockFlag(v) for v in metadata.get("flags") or []]
-            if metadata.get("clone_original", False):
+            self.flags = [DynamicBlockFlag(v) for v in metadata.get('flags') or []]
+            if metadata.get('clone_original', False):
                 self.flags.append(DynamicBlockFlag.CLONE_OF_ORIGINAL)
             self.flags = list(set(self.flags))
 
             for key in [
-                "uuid",
+                'uuid',
             ]:
                 value = metadata.get(key) or None
                 if value:
                     setattr(self, key, value)
 
             for key in [
-                "children",
-                "clones",
-                "siblings",
-                "spawns",
-                "upstream_dynamic_blocks",
-                "upstream_dynamic_child_blocks",
+                'children',
+                'clones',
+                'siblings',
+                'spawns',
+                'upstream_dynamic_blocks',
+                'upstream_dynamic_child_blocks',
             ]:
                 values = metadata.get(key) or None
                 if values:
@@ -793,20 +790,14 @@ class DynamicBlockWrapper(BaseDataClass):
             return False
 
         return self.block.uuid == self.block_run_block_uuid or (
-            self.is_replicated()
-            and self.block.uuid_replicated == self.block_run_block_uuid
+            self.is_replicated() and self.block.uuid_replicated == self.block_run_block_uuid
         )
 
     def is_replicated(self) -> bool:
-        return DynamicBlockFlag.REPLICATED in (self.flags or []) or is_replicated_block(
-            self.block
-        )
+        return DynamicBlockFlag.REPLICATED in (self.flags or []) or is_replicated_block(self.block)
 
     def is_clone_of_original(self) -> bool:
-        return (
-            DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or [])
-            and not self.is_original()
-        )
+        return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or []) and not self.is_original()
 
     def is_dynamic(self) -> bool:
         if DynamicBlockFlag.DYNAMIC in (self.flags or []):
@@ -848,7 +839,7 @@ class DynamicBlockWrapper(BaseDataClass):
             block_run = self.factory.block_run()
             if block_run and block_run.metrics:
                 self.dynamic_block_indexes = (block_run.metrics or {}).get(
-                    "dynamic_block_indexes",
+                    'dynamic_block_indexes',
                 )
 
         if self.dynamic_block_indexes:
@@ -867,7 +858,7 @@ class DynamicBlockWrapper(BaseDataClass):
             block,
             block_uuid=block_run_block_uuid,
             dynamic_block_index=dynamic_block_index_from_parent,
-            join_character=":",
+            join_character=':',
         )[0]
 
     def get_dynamic_block_index(self) -> int:
@@ -877,7 +868,7 @@ class DynamicBlockWrapper(BaseDataClass):
         block_run = self.factory.block_run()
         if block_run and block_run.metrics:
             self.dynamic_block_index = (block_run.metrics or {}).get(
-                "dynamic_block_index",
+                'dynamic_block_index',
             )
 
         return self.dynamic_block_index
@@ -903,12 +894,12 @@ class DynamicBlockWrapper(BaseDataClass):
 
         flags = list(set(flags + (self.flags or [])))
         if len(flags) >= 1:
-            data["flags"] = [v.value for v in flags if isinstance(v, DynamicBlockFlag)]
+            data['flags'] = [v.value for v in flags if isinstance(v, DynamicBlockFlag)]
 
         for key in [
-            "block_run_block_uuid",
-            "block_uuid",
-            "uuid",
+            'block_run_block_uuid',
+            'block_uuid',
+            'uuid',
         ]:
             if getattr(self, key) is not None:
                 data[key] = getattr(self, key)
@@ -933,12 +924,12 @@ class DynamicBlockWrapper(BaseDataClass):
         data = self.to_dict_base(**kwargs)
         if include_all:
             for key in [
-                "children",
-                "clones",
-                "siblings",
-                "spawns",
-                "upstream_dynamic_blocks",
-                "upstream_dynamic_child_blocks",
+                'children',
+                'clones',
+                'siblings',
+                'spawns',
+                'upstream_dynamic_blocks',
+                'upstream_dynamic_child_blocks',
             ]:
                 values = getattr(self, key) or None
                 if values:
@@ -955,9 +946,9 @@ class MetadataInstructions(BaseDataClass):
     upstream: DynamicBlockWrapper = None
 
     def __post_init__(self):
-        self.serialize_attribute_class("original", DynamicBlockWrapper)
-        self.serialize_attribute_class("parent", DynamicBlockWrapper)
-        self.serialize_attribute_class("upstream", DynamicBlockWrapper)
+        self.serialize_attribute_class('original', DynamicBlockWrapper)
+        self.serialize_attribute_class('parent', DynamicBlockWrapper)
+        self.serialize_attribute_class('upstream', DynamicBlockWrapper)
 
 
 def dynamically_created_child_block_runs(pipeline, block, block_runs: List):
@@ -979,8 +970,8 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
     upstream_block_uuids_mapping = {}
     for br in block_runs_for_current_block:
         # If this dynamic child block has upstream blocks that were dynamically created:
-        if br.metrics and br.metrics.get("dynamic_upstream_block_uuids"):
-            for up_uuid in br.metrics.get("dynamic_upstream_block_uuids") or []:
+        if br.metrics and br.metrics.get('dynamic_upstream_block_uuids'):
+            for up_uuid in br.metrics.get('dynamic_upstream_block_uuids') or []:
                 up_block = pipeline.get_block(up_uuid)
                 if up_block and up_block.uuid not in upstream_block_uuids_mapping:
                     upstream_block_uuids_mapping[up_block.uuid] = []
@@ -1002,7 +993,7 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
                 )
 
                 if up_block_run:
-                    completed = "completed" == up_block_run.status
+                    completed = 'completed' == up_block_run.status
                     completed_checks.append(completed)
                     if not completed:
                         return False
@@ -1026,13 +1017,12 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
             # If the upstream block has no upstream blocks,
             # check to see if its single block run is completed.
             up_block_run = find(
-                lambda br, upstream_block=upstream_block: br.block_uuid
-                == upstream_block.uuid,
+                lambda br, upstream_block=upstream_block: br.block_uuid == upstream_block.uuid,
                 block_runs,
             )
 
             if up_block_run:
-                completed = "completed" == up_block_run.status
+                completed = 'completed' == up_block_run.status
                 completed_checks.append(completed)
                 if not completed:
                     return False
@@ -1062,16 +1052,14 @@ def check_all_dynamic_upstreams_completed(
 
         from mage_ai.orchestration.db.models.schedules import BlockRun
 
-        upstreams_done = all(
-            [
-                check_all_dynamic_upstreams_completed(
-                    b,
-                    block_runs=block_runs,
-                    execution_partition=execution_partition,
-                )
-                for b in upstream_block.upstream_blocks
-            ]
-        )
+        upstreams_done = all([
+            check_all_dynamic_upstreams_completed(
+                b,
+                block_runs=block_runs,
+                execution_partition=execution_partition,
+            )
+            for b in upstream_block.upstream_blocks
+        ])
 
         if not upstreams_done:
             return False
@@ -1096,20 +1084,15 @@ def check_all_dynamic_upstreams_completed(
             if len(list(selected)) < len(combos) + 1:
                 return False
 
-        return all(
-            [
-                br.status == BlockRun.BlockRunStatus.COMPLETED
-                for br in filter(
-                    lambda br: pipeline.get_block(br.block_uuid).uuid
-                    == upstream_block.uuid,
-                    block_runs,
-                )
-            ]
-        )
+        return all([
+            br.status == BlockRun.BlockRunStatus.COMPLETED
+            for br in filter(
+                lambda br: pipeline.get_block(br.block_uuid).uuid == upstream_block.uuid,
+                block_runs,
+            )
+        ])
 
     # 1. Are all the upstream blocks for my upstream blocks completed?
     # 2. Then, are my immediate upstream blocks completed?
-    checks = [
-        __is_completed(upstream_block) for upstream_block in block.upstream_blocks
-    ]
+    checks = [__is_completed(upstream_block) for upstream_block in block.upstream_blocks]
     return all(checks)

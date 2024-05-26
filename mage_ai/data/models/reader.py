@@ -1,17 +1,16 @@
 from typing import List, Optional, Union
 
 from mage_ai.data.constants import (
-    AsyncRecordBatchGenerator,
     OutputData,
     RecordBatchGenerator,
     ScanBatchDatasetResult,
 )
 from mage_ai.data.models.base import BaseData
+from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.reader import (
+    read_metadata,
     sample_batch_datasets,
-    sample_batch_datasets_async,
     scan_batch_datasets_generator,
-    scan_batch_datasets_generator_async,
 )
 
 
@@ -38,48 +37,67 @@ class Reader(BaseData):
         self,
         columns: Optional[List[str]] = None,
         deserialize: Optional[bool] = False,
+        limit: Optional[int] = None,
+        limit_parts: Optional[int] = None,
+        offset: Optional[int] = None,
+        part: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
-    ) -> Optional[Union[OutputData, ScanBatchDatasetResult, RecordBatchGenerator]]:
-        if self.is_dataframe():
+    ) -> Optional[
+        Union[
+            OutputData,
+            ScanBatchDatasetResult,
+            RecordBatchGenerator,
+        ]
+    ]:
+        if not self.is_dataframe():
+            return
+
+        def __process_source(
+            source,
+            chunks=self.chunks,
+            columns=columns,
+            deserialize=deserialize,
+            limit=limit,
+            offset=offset,
+            part=part,
+            sample_count=sample_count,
+            settings=self.batch_settings,
+        ):
+            if part is not None and settings is not None and limit is None and offset is None:
+                metadata = read_metadata(source)
+                if metadata:
+                    num_rows = metadata.get('num_rows')
+                    if num_rows:
+                        batch_size = settings.items.maximum or settings.items.minimum
+                        if batch_size:
+                            offset = part * batch_size
+                            limit = batch_size
+
             if sample and sample_count:
                 return sample_batch_datasets(
-                    self.data_partitions_path,
-                    chunks=self.chunks,
+                    source,
+                    chunks=chunks,
                     columns=columns,
-                    deserialize=True,
+                    deserialize=deserialize,
+                    limit=limit,
+                    offset=offset,
                     sample_count=sample_count,
-                    settings=self.batch_settings,
+                    settings=settings,
                 )
             return scan_batch_datasets_generator(
-                self.data_partitions_path,
-                chunks=self.chunks,
+                source,
+                chunks=chunks,
                 columns=columns,
                 deserialize=deserialize,
-                settings=self.batch_settings,
+                limit=limit,
+                offset=offset,
+                settings=settings,
             )
 
-    async def read_async(
-        self,
-        columns: Optional[List[str]] = None,
-        deserialize: Optional[bool] = False,
-        sample: bool = False,
-        sample_count: Optional[int] = None,
-    ) -> Optional[Union[OutputData, ScanBatchDatasetResult, AsyncRecordBatchGenerator]]:
-        if self.is_dataframe():
-            if sample and sample_count:
-                return await sample_batch_datasets_async(
-                    self.data_partitions_path,
-                    chunks=self.chunks,
-                    columns=columns,
-                    deserialize=True,
-                    sample_count=sample_count,
-                    settings=self.batch_settings,
-                )
-            return await scan_batch_datasets_generator_async(
-                self.data_partitions_path,
-                chunks=self.chunks,
-                columns=columns,
-                deserialize=deserialize,
-                settings=self.batch_settings,
-            )
+        if self.number_of_outputs >= 2:
+            sources = self.data_source
+            if limit_parts is not None:
+                sources = sources[:limit_parts]
+            return DataGenerator([__process_source(source) for source in sources])
+        return __process_source(self.data_source)

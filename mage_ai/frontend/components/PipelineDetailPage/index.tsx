@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -15,11 +15,7 @@ import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
-import {
-  PADDING_UNITS,
-  UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-} from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from './utils';
 import { displayErrorFromReadResponse } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
@@ -30,11 +26,12 @@ type PipelineDetailPageProps = {
     height: number;
     heightOffset?: number;
     pipeline: PipelineType;
+    width: number;
   }) => any;
   children: any;
   errors?: ErrorsType;
   headline?: string;
-  pageName: PageNameEnum,
+  pageName: PageNameEnum;
   pipeline: {
     uuid: string;
   };
@@ -47,76 +44,85 @@ type PipelineDetailPageProps = {
   title?: (pipeline: PipelineType) => string;
 } & DashboardSharedProps;
 
-function PipelineDetailPage({
-  after: afterProp,
-  afterHidden,
-  afterWidth: afterWidthProp,
-  before,
-  beforeWidth,
-  breadcrumbs: breadcrumbsProp,
-  buildSidekick,
-  children,
-  errors,
-  headline,
-  pageName,
-  pipeline: pipelineProp,
-  setErrors,
-  subheader,
-  subheaderBackground,
-  subheaderBackgroundImage,
-  subheaderButton,
-  subheaderNoPadding,
-  subheaderText,
-  title,
-  uuid,
-}: PipelineDetailPageProps, ref) {
+function PipelineDetailPage(
+  {
+    after: afterProp,
+    afterHidden,
+    afterWidth: afterWidthProp,
+    before,
+    beforeWidth,
+    breadcrumbs: breadcrumbsProp,
+    buildSidekick,
+    children,
+    errors,
+    headline,
+    pageName,
+    pipeline: pipelineProp,
+    setErrors,
+    subheader,
+    subheaderBackground,
+    subheaderBackgroundImage,
+    subheaderButton,
+    subheaderNoPadding,
+    subheaderText,
+    title,
+    uuid,
+  }: PipelineDetailPageProps,
+  ref,
+) {
   const { height } = useWindowSize();
   const router = useRouter();
   const { pipeline: pipelineUUIDFromUrl }: any = router.query;
 
   const pipelineUUID = pipelineProp?.uuid;
-  const { data } = api.pipelines.detail(pipelineUUID, {
-    includes_outputs: false,
-  }, {
-    revalidateOnFocus: false,
-  });
+  const { data } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      includes_outputs: false,
+    },
+    {
+      revalidateOnFocus: false,
+    },
+  );
   const pipeline = data?.pipeline;
   useEffect(() => {
     displayErrorFromReadResponse(data, setErrors);
   }, [data, setErrors]);
 
-  const after = useMemo(() => {
-    if (afterProp) {
-      return afterProp;
-    } else if (buildSidekick) {
-      return buildSidekick({
-        height,
-        heightOffset: HEADER_HEIGHT,
-        pipeline,
-      });
-    }
+  const afterWidth = afterWidthProp || (afterProp || buildSidekick ? 50 * UNIT : null);
 
-    return null;
-  }, [
-    afterProp,
-    buildSidekick,
-    height,
-    pipeline,
-  ]);
-  const afterWidth = afterWidthProp || (after ? 50 * UNIT : null);
+  const after = useCallback(
+    ({ width }) => {
+      if (afterProp) {
+        return afterProp;
+      } else if (buildSidekick) {
+        return buildSidekick({
+          height,
+          heightOffset: HEADER_HEIGHT,
+          pipeline,
+          width: width || afterWidth,
+        });
+      }
+
+      return null;
+    },
+    [afterProp, afterWidth, buildSidekick, height, pipeline],
+  );
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
 
     if (pipeline) {
-      arr.push(...[
-        {
-          label: () => 'Pipelines',
-          linkProps: {
-            href: '/pipelines',
+      arr.push(
+        ...[
+          {
+            label: () => 'Pipelines',
+            linkProps: {
+              href: '/pipelines',
+            },
           },
-        },
-      ]);
+        ],
+      );
 
       if (breadcrumbsProp) {
         arr.push({
@@ -143,12 +149,7 @@ function PipelineDetailPage({
     }
 
     return arr;
-  }, [
-    breadcrumbsProp,
-    data?.error,
-    pipeline,
-    pipelineUUID,
-  ]);
+  }, [breadcrumbsProp, data?.error, pipeline, pipelineUUID]);
 
   return (
     <>
@@ -167,12 +168,11 @@ function PipelineDetailPage({
         uuid={uuid}
       >
         {(subheaderButton || subheaderText) && (
-          <Spacing
-            mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
-            mt={PADDING_UNITS}
-            mx={PADDING_UNITS}
-          >
-            <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} mt={PADDING_UNITS} mx={PADDING_UNITS}>
+            <BannerStyle
+              background={subheaderBackground}
+              backgroundImage={subheaderBackgroundImage}
+            >
               <FlexContainer alignItems="center">
                 {subheaderButton}
                 {subheaderText && <Spacing ml={3} />}
@@ -185,9 +185,7 @@ function PipelineDetailPage({
         {headline && (
           <Spacing p={PADDING_UNITS}>
             <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-              <Headline level={5}>
-                {headline}
-              </Headline>
+              <Headline level={5}>{headline}</Headline>
               <Divider light mt={PADDING_UNITS} short />
             </Spacing>
           </Spacing>
@@ -197,15 +195,8 @@ function PipelineDetailPage({
       </Dashboard>
 
       {errors && (
-        <ClickOutside
-          disableClickOutside
-          isOpen
-          onClickOutside={() => setErrors?.(null)}
-        >
-          <ErrorPopup
-            {...errors}
-            onClose={() => setErrors?.(null)}
-          />
+        <ClickOutside disableClickOutside isOpen onClickOutside={() => setErrors?.(null)}>
+          <ErrorPopup {...errors} onClose={() => setErrors?.(null)} />
         </ClickOutside>
       )}
     </>

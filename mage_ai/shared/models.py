@@ -34,32 +34,39 @@ class BaseClass:
         return annotations
 
     @classmethod
-    def load(self, **kwargs):
-        annotations = self.all_annotations()
+    def load(cls, *args, **kwargs):
+        annotations = cls.all_annotations()
 
-        props_init = self.load_to_dict(**kwargs)
+        if args is not None and len(args) >= 1:
+            kwargs = kwargs or {}
+            if isinstance(args[0], dict):
+                kwargs.update(args[0])
+            elif isinstance(args[0], cls):
+                kwargs.update(args[0].to_dict())
+
+        props_init = cls.load_to_dict(**kwargs)
 
         props = {}
         props_not_set = {}
         if props_init:
             for key, value in props_init.items():
-                if self.attribute_aliases and key in self.attribute_aliases:
-                    key = self.attribute_aliases[key]
+                if cls.attribute_aliases and key in cls.attribute_aliases:
+                    key = cls.attribute_aliases[key]
 
                 annotation = annotations.get(key)
                 if annotation:
-                    props[key] = self.convert_value(value, annotation)
+                    props[key] = cls.convert_value(value, annotation)
                 else:
                     props_not_set[key] = value
 
-        model = self(**props)
+        model = cls(**props)
 
         for key, value in props_not_set.items():
             try:
                 if not callable(getattr(model, key)):
                     model.set_value(key, value)
             except AttributeError as err:
-                print(f'[WARNING] {self.__name__}.load: {err}')
+                print(f'[WARNING] {cls.__name__}.load: {err}')
                 raise err
 
         return model

@@ -16,6 +16,7 @@ from pandas.core.indexes.range import RangeIndex
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
@@ -35,12 +36,19 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     deserialize_columns,
     deserialize_complex,
     infer_variable_type,
+    is_basic_iterable,
     serialize_columns,
     serialize_complex,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
+from mage_ai.data_preparation.models.variables.cache import (
+    AggregateInformation,
+    VariableAggregateCache,
+    VariableTypeInformation,
+)
 from mage_ai.data_preparation.models.variables.constants import (
+    DATA_TYPE_FILENAME,
     DATAFRAME_COLUMN_TYPES_FILE,
     DATAFRAME_CSV_FILE,
     DATAFRAME_PARQUET_FILE,
@@ -49,13 +57,22 @@ from mage_ai.data_preparation.models.variables.constants import (
     JSON_SAMPLE_FILE,
     METADATA_FILE,
     RESOURCE_USAGE_FILE,
+    VariableAggregateDataType,
+    VariableAggregateDataTypeFilename,
+    VariableAggregateSummaryGroupType,
     VariableType,
 )
+from mage_ai.data_preparation.models.variables.utils import is_output_variable
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.settings.server import MEMORY_MANAGER_V2
+from mage_ai.settings.server import (
+    MEMORY_MANAGER_PANDAS_V2,
+    MEMORY_MANAGER_POLARS_V2,
+    MEMORY_MANAGER_V2,
+)
 from mage_ai.shared.array import is_iterable
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import flatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
 from mage_ai.shared.parsers import deserialize_matrix, sample_output, serialize_matrix
@@ -72,16 +89,18 @@ class Variable:
         pipeline_path: str,
         block_uuid: str,
         partition: Optional[str] = None,
-        spark=None,
+        skip_check_variable_type: Optional[bool] = None,
+        spark: Optional[Any] = None,
         storage: Optional[BaseStorage] = None,
         variable_type: Optional[VariableType] = None,
+        variable_types: Optional[List[VariableType]] = None,
         clean_block_uuid: bool = True,
         validate_pipeline_path: bool = False,
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-        variables_dir: str = None,
+        variables_dir: Optional[str] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> None:
@@ -107,8 +126,10 @@ class Variable:
         if not self.storage.path_exists(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
 
-        self.variable_type = variable_type
-        self.check_variable_type(spark=spark)
+        self._data_manager = None
+        self._part_uuids = None
+        self._parts = None
+        self._resource_usage = resource_usage
 
         self.input_data_types = input_data_types
         self.read_batch_settings = read_batch_settings
@@ -116,8 +137,12 @@ class Variable:
         self.variables_dir = variables_dir or get_variables_dir()
         self.write_batch_settings = write_batch_settings
         self.write_chunks = write_chunks
-        self._data_manager = None
-        self._resource_usage = resource_usage
+
+        self.variable_type = variable_type
+        self.variable_types = variable_types or []
+
+        if not skip_check_variable_type:
+            self.check_variable_type(spark=spark)
 
     @classmethod
     def dir_path(cls, pipeline_path, block_uuid):
@@ -131,9 +156,10 @@ class Variable:
     def metadata_path(self):
         return os.path.join(self.variable_path, METADATA_FILE)
 
-    @property
-    def resource_usage_path(self):
-        return os.path.join(self.variable_path, RESOURCE_USAGE_FILE)
+    def resource_usage_path(self, index: Optional[int] = None) -> str:
+        return os.path.join(
+            self.variable_path, str(index) if index is not None else '', RESOURCE_USAGE_FILE
+        )
 
     @property
     def data_manager(self) -> Optional[DataManager]:
@@ -148,6 +174,7 @@ class Variable:
                 variable_path=self.variable_path,
                 variables_dir=self.variables_dir,
                 variable_type=self.variable_type,
+                variable_types=self.variable_types,
                 write_batch_settings=self.write_batch_settings,
                 write_chunks=self.write_chunks,
             )
@@ -159,11 +186,47 @@ class Variable:
             self._resource_usage = ResourceUsage()
         return self._resource_usage
 
-    def get_resource_usage(self) -> Optional[ResourceUsage]:
-        if self.storage.path_exists(self.resource_usage_path):
+    @property
+    def part_uuids(self) -> Optional[List[str]]:
+        if (
+            not is_output_variable(self.uuid)
+            or self._part_uuids is not None
+            or not self.storage.isdir(self.variable_path)
+        ):
+            return self._part_uuids
+
+        part_uuids = self.__get_part_uuids(self.variable_path)
+
+        if len(part_uuids) >= 1:
+            self._part_uuids = part_uuids
+
+        return self._part_uuids
+
+    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
+        if MEMORY_MANAGER_V2:
+            row_count = None
+            if self.part_uuids is not None:
+                if include_parts:
+                    row_count = self.__parquet_num_rows(self.variable_path)
+                else:
+                    row_count = len(self.part_uuids)
+            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
+                statistics = self.storage.read_json_file(
+                    os.path.join(self.variable_path, 'statistics.json')
+                )
+                if statistics and isinstance(statistics, dict):
+                    row_count = statistics.get('original_row_count')
+            else:
+                row_count = self.__parquet_num_rows(self.variable_path)
+
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
+
+    def get_resource_usage(self, index: Optional[int] = None) -> Optional[ResourceUsage]:
+        if self.storage.path_exists(self.resource_usage_path(index)):
             try:
                 data = self.storage.read_json_file(
-                    self.resource_usage_path,
+                    self.resource_usage_path(index),
                     default_value={},
                     raise_exception=False,
                 )
@@ -176,16 +239,11 @@ class Variable:
                 print(f'[ERROR] Variable.resource_usage: {err}')
         return self.resource_usage
 
-    def __scope_uuid(self) -> str:
-        path_parts = [self.block_dir_name or '']
-        try:
-            path_parts.insert(
-                0, str(Path(self.pipeline_path).relative_to(Path(self.variables_dir)))
-            )
-        except ValueError:
-            pass
-
-        return os.path.join(*path_parts)
+    def get_analysis(self, index: Optional[int] = None) -> Dict[str, Dict]:
+        return self.__read_dataframe_analysis(
+            dataframe_analysis_keys=['statistics'],
+            index=index,
+        )
 
     def check_variable_type(self, spark: Optional[Any] = None) -> Optional[VariableType]:
         """
@@ -195,11 +253,37 @@ class Variable:
         if self.variable_type is None:
             try:
                 if self.storage.path_exists(self.metadata_path):
-                    # Consider removing raise_exception=True
                     metadata = self.storage.read_json_file(
-                        self.metadata_path, raise_exception=True
+                        self.metadata_path, raise_exception=is_debug()
                     )
                     self.variable_type = metadata.get('type')
+                    if self.variable_type:
+                        self.variable_type = VariableType(self.variable_type)
+                    self.variable_types = metadata.get('types') or []
+                    self.variable_types = [VariableType(t) for t in (self.variable_types or [])]
+            except Exception:
+                traceback.print_exc()
+
+        if (
+            self.variable_type is None
+            and not self.variable_types
+            and MEMORY_MANAGER_V2
+            and self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+        ):
+            try:
+                variable_types = []
+                for part_uuid in self.part_uuids:
+                    path = os.path.join(self.variable_path, str(part_uuid), METADATA_FILE)
+                    if self.storage.path_exists(path):
+                        metadata = self.storage.read_json_file(path, raise_exception=is_debug())
+                        var_type = metadata.get('type')
+                        if var_type:
+                            variable_types.append(var_type)
+                if len(variable_types) >= 1:
+                    self.variable_type = VariableType.ITERABLE
+                    self.variable_types = [VariableType(t) for t in (variable_types or [])]
+                    self.write_metadata()
             except Exception:
                 traceback.print_exc()
 
@@ -250,6 +334,78 @@ class Variable:
         # TODO (dangerous): How do we delete other variable types?
 
         return self.__delete_json()
+
+    def is_partial_data_readable(
+        self, part_uuid: Optional[Union[int, str]] = None, path: Optional[str] = None
+    ) -> bool:
+        """
+        We can only read partial data if 1 of the following criteria is met:
+            - The variable has parts: e.g. output_0/0, output_0/1, output_0/2, etc
+            - The variable is stored as a parquet file
+        """
+
+        return MEMORY_MANAGER_V2 and (
+            self.__is_part_readable(part_uuid) or self.__is_parquet_readable(path)
+        )
+
+    def read_partial_data(
+        self,
+        batch_settings: Optional[BatchSettings] = None,
+        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        input_data_types: Optional[List[InputDataType]] = None,
+        part_uuid: Optional[Union[int, str]] = None,
+    ) -> Any:
+        """
+        We can only read partial data if:
+            - The variable has parts: e.g. output_0/0, output_0/1, output_0/2, etc
+            - The variable is stored as a parquet file
+        """
+        if part_uuid is not None and self.__is_part_readable(part_uuid):
+            variable = self.__class__(
+                os.path.join(self.uuid, str(part_uuid)),
+                self.pipeline_path,
+                self.block_uuid,
+                clean_block_uuid=False,
+                input_data_types=input_data_types or self.input_data_types,
+                partition=self.partition,
+                read_batch_settings=batch_settings or self.read_batch_settings,
+                read_chunks=chunks or self.read_chunks,
+                resource_usage=self.resource_usage,
+                storage=self.storage,
+                validate_pipeline_path=False,
+                # DO NOT PASS variable_types
+                # this in or else the data_manager will add its own part to the path
+                # variable_type=self.variable_type,
+                # variable_types=self.variable_types,
+                variables_dir=self.variables_dir,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
+            )
+
+            return variable.read_data()
+        elif self.__is_parquet_readable():
+            data_manager = self.__class__(
+                self.uuid,
+                self.pipeline_path,
+                self.block_uuid,
+                clean_block_uuid=False,
+                input_data_types=input_data_types or self.input_data_types,
+                partition=self.partition,
+                read_batch_settings=batch_settings or self.read_batch_settings,
+                read_chunks=chunks or self.read_chunks,
+                resource_usage=self.resource_usage,
+                storage=self.storage,
+                validate_pipeline_path=False,
+                variable_type=self.variable_type,
+                variable_types=self.variable_types,
+                variables_dir=self.variables_dir,
+                write_batch_settings=self.write_batch_settings,
+                write_chunks=self.write_chunks,
+            ).data_manager
+            if data_manager:
+                return data_manager.read_sync(
+                    part=int(part_uuid) if part_uuid is not None else None
+                )
 
     def read_data(
         self,
@@ -310,10 +466,26 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.data_manager and self.data_manager.readable():
-            return self.data_manager.read_sync(
-                sample=sample,
-                sample_count=sample_count,
-            )
+            try:
+                data = self.data_manager.read_sync(
+                    sample=sample,
+                    sample_count=sample_count,
+                )
+            except FileNotFoundError as err:
+                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
+                print(f'variable_type:     {self.variable_type}')
+                print(f'variable_types:    {self.variable_types}')
+                print(f'variable_uuid:     {self.uuid}')
+                print(f'variable_dir_path: {self.variable_dir_path}')
+                print(f'variable_path:     {self.variable_path}')
+                print('Data sources:')
+                for source in self.data_manager.data_source:
+                    print(f'  {source}')
+                print('\n')
+
+                traceback.print_exc()
+                return None
+            return data
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -359,6 +531,7 @@ class Variable:
         sample: bool = False,
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
+        limit_parts: Optional[int] = None,
         input_data_types: Optional[List[InputDataType]] = None,
     ) -> Any:
         """
@@ -369,12 +542,14 @@ class Variable:
 
         async def __read(
             dataframe_analysis_keys=dataframe_analysis_keys,
+            limit_parts=limit_parts,
             sample=sample,
             sample_count=sample_count,
             spark=spark,
         ):
             return await self.__read_data_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
+                limit_parts=limit_parts,
                 sample=sample,
                 sample_count=sample_count,
                 spark=spark,
@@ -393,6 +568,7 @@ class Variable:
     async def __read_data_async(
         self,
         dataframe_analysis_keys: Optional[List[str]] = None,
+        limit_parts: Optional[int] = None,
         sample: bool = False,
         sample_count: Optional[int] = None,
         spark: Optional[Any] = None,
@@ -414,12 +590,27 @@ class Variable:
                 GET /pipelines/[:uuid]
         """
         if self.data_manager and self.data_manager.readable():
-            data = await self.data_manager.read_async(
-                sample=sample,
-                sample_count=sample_count,
-            )
+            try:
+                data = await self.data_manager.read_async(
+                    limit_parts=limit_parts,
+                    sample=sample,
+                    sample_count=sample_count,
+                )
+                return data
+            except FileNotFoundError as err:
+                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
+                print(f'variable_type:     {self.variable_type}')
+                print(f'variable_types:    {self.variable_types}')
+                print(f'variable_uuid:     {self.uuid}')
+                print(f'variable_dir_path: {self.variable_dir_path}')
+                print(f'variable_path:     {self.variable_path}')
+                print('Data sources:')
+                for source in self.data_manager.data_source:
+                    print(f'  {source}')
+                print('\n')
 
-            return data
+                traceback.print_exc()
+                return None
 
         if (
             self.variable_type == VariableType.DATAFRAME
@@ -528,6 +719,222 @@ class Variable:
 
         return self.variable_path
 
+    def aggregate_summary_info(self):
+        """
+        Only consolidate summary files if at least 1 of the following criteria are met:
+            - Dynamic child block
+            - Variable has parts (e.g. output_0/[part_uuid])
+        Consolidate summary files from all subfolders (except data.json):
+            - insights.json
+            - metadata.json
+            - resources.json
+            - sample_data.json
+            - statistics.json
+            - suggestions.json
+            - type.json
+
+        Directory structure
+        [block_uuid]/                  -> self.variable_dir_path
+            [variable_uuid: output_0]/ -> self.variable_path
+                0/
+                    type.json
+                1/
+                    type.json
+                type.json
+            [dynamic_block_index]/
+                [variable_uuid: output_0]/
+                    0/
+                        type.json
+                    1/
+                        type.json
+                    type.json
+        """
+
+        filenames = [key.value for key in VariableAggregateDataTypeFilename]
+
+        """
+        [block_uuid]/                  -> self.variable_dir_path
+            [variable_uuid: output_0]/ -> self.variable_path
+                0/
+                    type.json
+                1/
+                    type.json
+                type.json
+        """
+        mapping_parts = {}
+        if self.part_uuids:
+            for part_uuid in self.part_uuids:  # part_uuid: 0/
+                for filename in filenames:  # filename: type.json
+                    if not mapping_parts.get(filename):
+                        mapping_parts[filename] = []
+
+                    file_path = os.path.join(self.variable_path, part_uuid, filename)
+                    if self.storage.path_exists(file_path):
+                        mapping_parts[filename].append(
+                            self.storage.read_json_file(
+                                file_path,
+                                default_value={},
+                                raise_exception=False,
+                            ),
+                        )
+                    else:
+                        mapping_parts[filename].append({})
+
+        """
+        [block_uuid]/                      -> self.variable_dir_path
+            [dynamic_block_index]/         -> [read all of them]
+                [variable_uuid: output_0]/ -> self.uuid
+                    0/
+                        type.json
+                    1/
+                        type.json
+                    type.json
+        """
+
+        for dirname in VariableAggregateSummaryGroupType:
+            path = os.path.join(self.variable_dir_path, dirname.value)
+            if self.storage.path_exists(path):
+                self.storage.remove_dir(path)
+
+        mapping_dynamic_blocks = {}
+        # dynamic_block_index: 0
+        # index_path:  [block_uuid]/[dynamic_block_index: 0]/
+        # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
+        for _dynamic_block_index, _index_path, output_path in self.__dynamic_block_index_paths():
+            mapping_dynamic_children = {}
+            for filename in filenames:  # filename: type.json
+                if not mapping_dynamic_children.get(filename):
+                    mapping_dynamic_children[filename] = []
+
+                part_uuids = self.__get_part_uuids(output_path)
+                if part_uuids and len(part_uuids) >= 1:
+                    arr = []
+                    for part_uuid in part_uuids:
+                        part_path = os.path.join(output_path, part_uuid, filename)
+                        if self.storage.path_exists(part_path):
+                            arr.append(
+                                self.storage.read_json_file(
+                                    part_path,
+                                    default_value={},
+                                    raise_exception=False,
+                                ),
+                            )
+                    mapping_dynamic_children[filename].append(arr)
+                else:
+                    file_path = os.path.join(output_path, filename)
+                    if self.storage.path_exists(file_path):
+                        mapping_dynamic_children[filename].append(
+                            self.storage.read_json_file(
+                                file_path,
+                                default_value={},
+                                raise_exception=True,
+                            ),
+                        )
+                    else:
+                        mapping_dynamic_children[filename].append({})
+
+            for filename, arr in mapping_dynamic_children.items():
+                if not mapping_dynamic_blocks.get(filename):
+                    mapping_dynamic_blocks[filename] = []
+                mapping_dynamic_blocks[filename].append(arr)
+
+        for directory, mapping in [
+            (VariableAggregateSummaryGroupType.DYNAMIC, mapping_dynamic_blocks),
+            (VariableAggregateSummaryGroupType.PARTS, mapping_parts),
+        ]:
+            if len(mapping) == 0:
+                continue
+
+            path = os.path.join(self.variable_path, directory)
+
+            if not self.storage.isdir(path):
+                self.storage.makedirs(path, exist_ok=True)
+            for filename, data in mapping.items():
+                self.storage.write_json_file(os.path.join(path, filename), data)
+
+    def get_aggregate_summary_info(
+        self,
+        data_type: VariableAggregateDataType,
+        default_group_type: Optional[VariableAggregateSummaryGroupType] = None,
+        group_type: Optional[VariableAggregateSummaryGroupType] = None,
+    ) -> VariableAggregateCache:
+        """
+        Get aggregate summary information for the variable.
+
+        Args:
+            group_type (VariableAggregateSummaryGroupType): Group type of the variable.
+
+        Returns:
+            Optional[AggregateInformationData]: Aggregate summary information for the variable.
+
+        Used
+        """
+        cache = VariableAggregateCache()
+
+        path = os.path.join(
+            self.variable_path,
+            group_type.value if group_type else '',
+            DATA_TYPE_FILENAME[data_type],
+        )
+
+        if self.storage.path_exists(path):
+            data = self.storage.read_json_file(
+                path,
+                default_value=None,
+                raise_exception=False,
+            )
+
+            if group_type:
+                group_info = getattr(cache, group_type.value)
+                group_info = AggregateInformation.load(
+                    **(
+                        group_info
+                        if isinstance(group_info, dict)
+                        else group_info.to_dict()
+                        if group_info is not None
+                        else {}
+                    )
+                )
+                group_info.update_attributes(**{
+                    data_type.value: data,
+                })
+                cache.update_attributes(**{
+                    group_type.value: group_info,
+                })
+            else:
+                if (
+                    VariableAggregateDataType.TYPE == data_type.value
+                    and data is not None
+                    and isinstance(data, dict)
+                ):
+                    if data.get('type'):
+                        cache.update_attributes(**{
+                            'type': VariableTypeInformation.load(type=data.get('type')),
+                        })
+
+                    if default_group_type is not None and data.get('types'):
+                        var_types = data.get('types') or []
+                        group_info = getattr(cache, default_group_type.value)
+                        group_info = AggregateInformation.load(
+                            **(
+                                group_info
+                                if isinstance(group_info, dict)
+                                else group_info.to_dict()
+                                if group_info is not None
+                                else {}
+                            )
+                        )
+                        group_info.update_attributes(**{
+                            data_type.value: [
+                                VariableTypeInformation.load(type=val) for val in var_types
+                            ],
+                        })
+                        cache.update_attributes(**{
+                            default_group_type.value: group_info,
+                        })
+
+        return VariableAggregateCache.load(**cache.to_dict())
+
     def write_data(self, data: Any) -> None:
         if MEMORY_MANAGER_V2:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
@@ -545,10 +952,17 @@ class Variable:
         Used by:
             VariableManager
         """
-
         if self.data_manager and self.data_manager.writeable(data):
-            # self.__write_dataframe_analysis
-            self.data_manager.write_sync(data)
+            metadata = self.data_manager.write_sync(data)
+            if metadata:
+                self.__write_dataframe_analysis(
+                    dict(
+                        statistics=dict(
+                            original_row_count=metadata.get('rows'),
+                            original_column_count=metadata.get('columns'),
+                        ),
+                    )
+                )
             self.resource_usage.update_attributes(
                 directory=self.data_manager.resource_usage.directory,
                 size=self.data_manager.resource_usage.size,
@@ -602,7 +1016,10 @@ class Variable:
 
         self.__write_resource_usage()
 
-        if VariableType.ITERABLE == self.variable_type:
+        if self.variable_type in [
+            VariableType.ITERABLE,
+            VariableType.LIST_COMPLEX,
+        ]:
             self.__write_dataframe_analysis(
                 dict(
                     statistics=dict(
@@ -631,7 +1048,16 @@ class Variable:
             VariableManager
         """
         if self.data_manager and self.data_manager.writeable(data):
-            await self.data_manager.write_async(data)
+            metadata = await self.data_manager.write_async(data)
+            if metadata:
+                self.__write_dataframe_analysis(
+                    dict(
+                        statistics=dict(
+                            original_row_count=metadata.get('rows'),
+                            original_column_count=metadata.get('columns'),
+                        ),
+                    )
+                )
             self.resource_usage.update_attributes(
                 directory=self.data_manager.resource_usage.size,
                 size=self.data_manager.resource_usage.size,
@@ -679,7 +1105,15 @@ class Variable:
 
         self.__write_resource_usage()
 
-        if VariableType.ITERABLE == self.variable_type:
+        if (
+            self.variable_type
+            in [
+                VariableType.DICTIONARY_COMPLEX,
+                VariableType.ITERABLE,
+                VariableType.LIST_COMPLEX,
+            ]
+            or is_basic_iterable(data)
+        ) and hasattr(data, '__len__'):
             self.__write_dataframe_analysis(
                 dict(
                     statistics=dict(
@@ -699,12 +1133,19 @@ class Variable:
                 else self.variable_type
             ),
         )
+
+        if self.variable_types:
+            metadata['types'] = [
+                variable_type.value if isinstance(variable_type, VariableType) else variable_type
+                for variable_type in self.variable_types
+            ]
+
         self.storage.write_json_file(self.metadata_path, metadata)
 
     def __write_resource_usage(self) -> None:
         if self.resource_usage:
             os.makedirs(self.variable_dir_path, exist_ok=True)
-            self.storage.write_json_file(self.resource_usage_path, self.resource_usage.to_dict())
+            self.storage.write_json_file(self.resource_usage_path(), self.resource_usage.to_dict())
 
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
@@ -1200,7 +1641,8 @@ class Variable:
 
     def __read_dataframe_analysis(
         self,
-        dataframe_analysis_keys: List[str] = None,
+        dataframe_analysis_keys: Optional[List[str]] = None,
+        index: Optional[int] = None,
     ) -> Dict[str, Dict]:
         """
         Read the following files
@@ -1209,13 +1651,14 @@ class Variable:
         3. insights.json
         4. suggestions.json
         """
-        if not self.storage.path_exists(self.variable_path):
+        base_path = os.path.join(self.variable_path, str(index) if index is not None else '')
+        if not self.storage.path_exists(base_path):
             return dict()
         result = dict()
         for k in DATAFRAME_ANALYSIS_KEYS:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
-            result[k] = self.storage.read_json_file(os.path.join(self.variable_path, f'{k}.json'))
+            result[k] = self.storage.read_json_file(os.path.join(base_path, f'{k}.json'))
         return result
 
     async def __read_dataframe_analysis_async(
@@ -1326,3 +1769,58 @@ class Variable:
         data = serialize_matrix(csr_matrix)
 
         return data, data_sample
+
+    def __parquet_num_rows(self, path: str) -> Optional[int]:
+        if self.data_manager and self.data_manager.readable():
+            metadata = read_metadata(path)
+            row_count = metadata.get('num_rows')
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
+
+    def __scope_uuid(self) -> str:
+        path_parts = [self.block_dir_name or '']
+        try:
+            path_parts.insert(
+                0, str(Path(self.pipeline_path).relative_to(Path(self.variables_dir)))
+            )
+        except ValueError:
+            pass
+
+        return os.path.join(*path_parts)
+
+    def __is_part_readable(self, part_uuid: Optional[Union[int, str]] = None) -> bool:
+        if part_uuid is not None:
+            part_uuid = str(part_uuid) if not isinstance(part_uuid, str) else part_uuid
+
+        return (
+            self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+            and (part_uuid is None or part_uuid in self.part_uuids)
+        )
+
+    def __is_parquet_readable(self, path: Optional[str] = None) -> bool:
+        if MEMORY_MANAGER_PANDAS_V2 or MEMORY_MANAGER_POLARS_V2:
+            row_count = self.__parquet_num_rows(path or self.variable_path)
+            return row_count is not None and row_count >= 1
+        return False
+
+    def __dynamic_block_index_paths(self) -> List[Tuple[int, str, str]]:
+        if not self.storage.isdir(self.variable_dir_path):
+            return []
+
+        indexes = []
+        for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
+            index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
+            if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
+                output_path = os.path.join(index_path, self.uuid)
+                if self.storage.isdir(output_path):
+                    indexes.append((int(dynamic_block_index), index_path, output_path))
+
+        return indexes
+
+    def __get_part_uuids(self, path: str) -> List[str]:
+        part_uuids = []
+        for chunk_uuid in self.storage.listdir(path):
+            if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
+                part_uuids.append(chunk_uuid)
+        return part_uuids

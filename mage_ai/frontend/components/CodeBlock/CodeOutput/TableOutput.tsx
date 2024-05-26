@@ -22,6 +22,7 @@ type TableOutputProps = {
   output: OutputType;
   setShapeCallback?: (shape: number[]) => void;
   borderTop?: boolean;
+  maxHeight?: number;
   multiOutputInit?: boolean;
   selected: boolean;
   uuid?: string;
@@ -30,6 +31,7 @@ type TableOutputProps = {
 function TableOutput({
   borderTop,
   containerWidth,
+  maxHeight,
   order,
   output,
   selected,
@@ -39,7 +41,13 @@ function TableOutput({
   const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
   const shape = useMemo(
     // @ts-ignore
-    () => (output?.data && isObject(output?.data) ? output?.data?.shape : null) || output?.shape,
+    () =>
+      (
+        (output?.data && isObject(output?.data)
+          ? // @ts-ignore
+            output?.data?.shape
+          : null) || output?.shape
+      )?.filter(v => v !== null && typeof v !== 'undefined'),
     [output],
   );
 
@@ -122,10 +130,13 @@ function TableOutput({
     }
 
     if (resourceUsage) {
-      if (typeof resourceUsage?.size !== 'undefined') {
+      if (typeof resourceUsage?.size !== 'undefined' && resourceUsage?.size !== null) {
         arr2.push(`Size: ${(resourceUsage?.size / 1024 ** 2).toFixed(2)}MB`);
       }
-      if (typeof resourceUsage?.memory_usage !== 'undefined') {
+      if (
+        typeof resourceUsage?.memory_usage !== 'undefined' &&
+        resourceUsage?.memory_usage !== null
+      ) {
         arr2.push(`Memory: ${(resourceUsage?.memory_usage / 1024 ** 2).toFixed(2)}MB`);
       }
     }
@@ -158,7 +169,7 @@ function TableOutput({
         columns={columns}
         disableScrolling={!selected}
         key={`data-table-${order}`}
-        maxHeight={UNIT * 60}
+        maxHeight={maxHeight || UNIT * 60}
         noBorderBottom
         noBorderLeft
         noBorderRight

@@ -1,6 +1,10 @@
+import asyncio
 import base64
 import json
 import logging
+from typing import Any, Callable, Dict, List, Optional
+
+import simplejson
 
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
@@ -10,8 +14,12 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.orchestration.db import db_connection
+from mage_ai.presenters.utils import render_output_tags
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import encode_complex
+from mage_ai.system.memory.manager import MemoryManager
 
 db_connection.start_session()
 '{spark_session_init}'
@@ -20,7 +28,113 @@ if 'context' not in globals():
     context = dict()
 
 
-def execute_custom_code():
+async def send_status_update(
+    message: str,
+    progress: Optional[float] = None,
+    uuid: Optional[str] = ' Status',
+):
+    import datetime
+
+    print(
+        render_output_tags(
+            simplejson.dumps(
+                [
+                    dict(
+                        outputs=[
+                            dict(
+                                progress=progress,
+                                text_data=message,
+                                type=DataType.PROGRESS,
+                            ),
+                        ],
+                        priority=0,
+                        timestamp=int(datetime.datetime.utcnow().timestamp() * 1000),
+                        type=DataType.GROUP,
+                        variable_uuid=uuid,
+                    ),
+                ],
+                default=encode_complex,
+                ignore_nan=True,
+            )
+        )
+    )
+
+
+async def task(
+    block: Any,
+    execute_kwargs: Dict[str, Any],
+    callback: Optional[Callable[..., None]] = None,
+    custom_code: Optional[str] = None,
+    dynamic_block_index: Optional[int] = None,
+    global_vars: Optional[Dict[str, Any]] = None,
+    logger: Optional[logging.Logger] = None,
+):
+    output_dict = block.execute_with_callback(**execute_kwargs)
+
+    if callback:
+        await callback(block)
+
+    if bool('{run_tests}'):
+        block.run_tests(
+            custom_code=custom_code,
+            dynamic_block_index=dynamic_block_index,
+            from_notebook=True,
+            logger=logger,
+            global_vars=global_vars,
+            update_tests=False,
+        )
+
+    outputs = block.get_outputs(dynamic_block_index=dynamic_block_index)
+    if outputs is not None and len(outputs) >= 1:
+        _json_string = simplejson.dumps(
+            outputs,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(render_output_tags(_json_string))
+
+    output = []
+    if output_dict and output_dict.get('output'):
+        output = output_dict.get('output')
+
+    return output
+
+
+async def run_tasks(
+    block: Any,
+    settings: List[Dict[str, Any]],
+    options: Dict[str, Any],
+) -> List[Any]:
+    blocks_count = len(settings)
+    blocks_completed = []
+
+    async def __callback(block, blocks_completed=blocks_completed, blocks_count=blocks_count):
+        blocks_completed.append(block)
+        await send_status_update(
+            f'{len(blocks_completed)} of {blocks_count} dynamic child blocks completed.',
+            progress=len(blocks_completed) / blocks_count,
+        )
+
+    # Create a list of coroutine objects directly
+    tasks = [
+        task(
+            block,
+            merge_dict(options, config),
+            callback=__callback,
+            custom_code=options.get('custom_code'),
+            dynamic_block_index=dynamic_block_index,
+            global_vars=options.get('global_vars'),
+            logger=options.get('logger'),
+        )
+        for dynamic_block_index, config in enumerate(settings)
+    ]
+
+    await send_status_update(f'Running {blocks_count} dynamic child blocks...')
+
+    return await asyncio.gather(*tasks)
+
+
+async def execute_custom_code():
     block_uuid = '{block_uuid}'
     run_incomplete_upstream = bool('{run_incomplete_upstream}')
     run_upstream = bool('{run_upstream}')
@@ -90,24 +204,16 @@ def execute_custom_code():
     is_dynamic_child = is_dynamic_block_child(block)
 
     if is_dynamic_child:
-        outputs = []
-        settings = build_combinations_for_dynamic_child(block, **options)
-        for dynamic_block_index, config in enumerate(settings):
-            output_dict = block.execute_with_callback(**merge_dict(options, config))
-            if output_dict and output_dict.get('output'):
-                outputs.append(output_dict.get('output'))
-
-            if bool('{run_tests}'):
-                block.run_tests(
-                    custom_code=code,
-                    dynamic_block_index=dynamic_block_index,
-                    from_notebook=True,
-                    logger=logger,
-                    global_vars=global_vars,
-                    update_tests=False,
-                )
-
-        block_output['output'] = outputs
+        with MemoryManager(
+            scope_uuid='dynamic_blocks', process_uuid='build_combinations_for_dynamic_child'
+        ):
+            settings = build_combinations_for_dynamic_child(
+                block,
+                **options,
+            )[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
+        with MemoryManager(scope_uuid='dynamic_blocks', process_uuid='execute_with_callback'):
+            block_output['output'] = await run_tasks(block, settings, options)
+            block.aggregate_summary_info()
     else:
         block_output = block.execute_with_callback(**options)
 

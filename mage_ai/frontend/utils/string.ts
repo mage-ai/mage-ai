@@ -98,10 +98,10 @@ export function numberWithCommas(x) {
 export function pascalize(word) {
   return word
     .split(' ')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('_')
     .split('_')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('');
 }
 
@@ -159,10 +159,10 @@ export function singularize(string) {
 export function titleize(word) {
   return word
     .split(' ')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join('_')
     .split('_')
-    .map((wrd) => capitalize(wrd))
+    .map(wrd => capitalize(wrd))
     .join(' ');
 }
 
@@ -240,15 +240,15 @@ export function timeRemaining(startAt, timeToCompleteInSec) {
   ].join(':');
 }
 
-export function prettyUnitOfTime(secs) {
+export function prettyUnitOfTime(secs: number, abreve: boolean = false) {
   const arr = [
-    ['second', 60],
-    ['minute', 60],
-    ['hour', 24],
-    ['day', 7],
-    ['week', 4],
-    ['month', 12],
-    ['year', null],
+    [abreve ? 'sec' : 'second', 60],
+    [abreve ? 'min' : 'minute', 60],
+    [abreve ? 'hr' : 'hour', 24],
+    [abreve ? 'day' : 'day', 7],
+    [abreve ? 'wk' : 'week', 4],
+    [abreve ? 'mt' : 'month', 12],
+    [abreve ? 'yr' : 'year', null],
   ];
   let value;
 
@@ -260,7 +260,8 @@ export function prettyUnitOfTime(secs) {
     const [unit, interval] = pair;
     const intervalPrevious = arr.slice(0, idx).reduce((acc, i) => acc * Number(i[1]), 1);
     if (secs < Number(interval) * intervalPrevious) {
-      value = pluralize(unit, Math.round(secs / intervalPrevious));
+      const n = Math.round(secs / intervalPrevious);
+      value = abreve ? `${n} ${unit}` : pluralize(unit, n);
     }
   });
 
@@ -352,7 +353,7 @@ export function formatNumberToDuration(duration: number): string {
 
 export function alphabet(): string[] {
   const alpha = Array.from(Array(26)).map((e, i) => i + 65);
-  return alpha.map((x) => String.fromCharCode(x));
+  return alpha.map(x => String.fromCharCode(x));
 }
 
 export function removASCII(text: string): string {

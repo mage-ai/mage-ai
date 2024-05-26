@@ -67,7 +67,12 @@ import {
   openSaveFileDialog,
   prepareOutput,
 } from '@components/PipelineDetail/utils';
-import { containsOnlySpecialCharacters, containsHTML, isJsonString } from '@utils/string';
+import {
+  getNewUUID,
+  containsOnlySpecialCharacters,
+  containsHTML,
+  isJsonString,
+} from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
 import { range } from '@utils/array';
@@ -292,20 +297,16 @@ function CodeOutput(
   const combinedMessages = useMemo(() => {
     const arr = [];
     const arrRender = [];
+    const variableMapping = {};
 
     if (messages?.length >= 1) {
-      messages.map((curr, idx: number) => {
+      messages.map((curr, idxOutter: number) => {
         let currentData = curr?.data;
         const renderOutputMatches = [];
         const leftOverMessages = [];
 
-        let skip = false;
         if (currentData && Array.isArray(currentData)) {
-          currentData?.forEach((textData: string) => {
-            if (!textData) {
-              skip = true;
-            }
-
+          currentData?.forEach((textData: string, idxMiddle: number) => {
             const match =
               textData &&
               typeof textData === 'string' &&
@@ -315,19 +316,45 @@ function CodeOutput(
               const outputs = [];
 
               const output = JSON.parse(match[1]);
+
               if (Array.isArray(output)) {
                 outputs.push(...output);
               } else {
                 outputs.push(output);
               }
 
-              outputs?.forEach((item, idxInner) => {
+              outputs?.forEach((itemInit, idxInner: number) => {
+                const {
+                  data,
+                  priority,
+                  multi_output: multiOutput,
+                  sample_data: sampleData,
+                  text_data: textData,
+                  timestamp = 0,
+                  type: outputType,
+                  variable_uuid: variableUuid,
+                } = itemInit;
+                const item = {
+                  ...itemInit,
+                  priority:
+                    typeof priority !== 'undefined' && priority !== null
+                      ? [priority]
+                      : [idxOutter, idxMiddle, idxInner],
+                  indexes: [idxOutter, idxMiddle, idxInner],
+                };
+
+                // WARNING: server must return unique variable UUIDs or they won’t show up here.
+                const existingItem = variableMapping?.[variableUuid];
+                if (!existingItem || (timestamp || 0) > (existingItem?.timestamp || 0)) {
+                  variableMapping[variableUuid] = item;
+                }
+
                 if (
                   isObject(item) &&
-                  item?.type &&
-                  (item?.variable_uuid || item?.data || item?.sample_data || item?.text_data)
+                  outputType &&
+                  (variableUuid || data || sampleData || textData)
                 ) {
-                  if (item?.multi_output || DataTypeEnum.GROUP === item?.type) {
+                  if (multiOutput || DataTypeEnum.GROUP === outputType) {
                     renderOutputMatches.push(item);
                   } else {
                     renderOutputMatches.push({
@@ -342,6 +369,7 @@ function CodeOutput(
                   });
                 } else {
                   renderOutputMatches.push({
+                    ...item,
                     multi_output: true,
                     sample_data: {
                       columns: ['value'],
@@ -394,7 +422,30 @@ function CodeOutput(
       arr.push(...(messagesAll || []));
     }
 
-    const combined = arr.concat(arrRender);
+    const combined = arr
+      .concat(arrRender)
+      .filter(output => {
+        const { variable_uuid: variableUuid, indexes } = output;
+
+        const existingItem = variableMapping?.[variableUuid];
+        return !existingItem || indexes === existingItem?.indexes;
+      })
+      .sort((a, b) => {
+        const aPriority = a?.priority;
+        const bPriority = b?.priority;
+
+        if (aPriority && bPriority) {
+          return (
+            aPriority[0] - bPriority[0] ||
+            aPriority?.slice(0, 2)?.length - bPriority?.slice(0, 2)?.length ||
+            aPriority[1] - bPriority[1] ||
+            aPriority?.slice(0, 3)?.length - bPriority?.slice(0, 3)?.length ||
+            aPriority[2] - bPriority[2]
+          );
+        }
+
+        return 0;
+      });
     const separateRows = [];
     const multiOutputs = [];
 

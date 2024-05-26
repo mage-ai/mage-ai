@@ -6,6 +6,14 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 
 from mage_ai.data.tabular.constants import COLUMN_CHUNK
+from mage_ai.shared.parsers import object_to_dict
+
+DeserializedBatch = Union[
+    pd.DataFrame,
+    pd.Series,
+    pl.DataFrame,
+    pl.Series,
+]
 
 
 def convert_series_list_to_dataframe(series_list: List[pl.Series]) -> pl.DataFrame:
@@ -24,20 +32,22 @@ def series_to_dataframe(series: Union[pd.Series, pl.Series]) -> pl.DataFrame:
 
 
 def deserialize_batch(
-    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch],
+    batch: Union[pa.RecordBatch, ds.TaggedRecordBatch, pa.Table],
     object_metadata: Optional[Dict[str, str]] = None,
-) -> Union[
-    pd.Series,
-    pl.DataFrame,
-    pl.Series,
-]:
-    record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
-    table = pa.Table.from_batches([record_batch])
+) -> DeserializedBatch:
+    if isinstance(batch, pa.Table):
+        table = batch
+    else:
+        record_batch = batch if isinstance(batch, pa.RecordBatch) else batch.record_batch
+        table = pa.Table.from_batches([record_batch])
+
     if COLUMN_CHUNK in table.column_names:
         table = table.drop([COLUMN_CHUNK])
 
     if object_metadata is not None and table.num_columns >= 1:
-        if compare_object(pd.Series, object_metadata):
+        if compare_object(pd.DataFrame, object_metadata):
+            return table.to_pandas()
+        elif compare_object(pd.Series, object_metadata):
             column_name = table.column_names[0]
             return pd.Series(table.column(column_name).to_pandas())
         elif compare_object(pl.Series, object_metadata):
@@ -66,8 +76,14 @@ def multi_series_to_frame(
     df: Optional[Union[pd.DataFrame, pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pd.DataFrame], List[pl.DataFrame], pl.Series, pd.Series]] = None,
 ):
+    object_metadata = (
+        object_to_dict(df, include_hash=False, include_uuid=False) if df is not None else None
+    )
+
     series_sample = None
     if dfs is not None:
+        if object_metadata is None:
+            object_metadata = object_to_dict(dfs[0], include_hash=False, include_uuid=False)
         if all([isinstance(item, (pd.Series, pl.Series)) for item in dfs]):
             series_sample = dfs[0]
             dfs = [
@@ -83,4 +99,4 @@ def multi_series_to_frame(
     elif isinstance(df, pd.DataFrame):
         df = pl.from_pandas(df)
 
-    return df, dfs, series_sample
+    return df, dfs, series_sample, object_metadata

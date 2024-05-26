@@ -18,44 +18,76 @@ class OutputPolicy(BasePolicy):
         return Entity.PROJECT, get_project_uuid()
 
 
-OutputPolicy.allow_actions([
-    constants.CREATE,
-    constants.DETAIL,
-    constants.LIST,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_actions(
+    [
+        constants.CREATE,
+        constants.DETAIL,
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-OutputPolicy.allow_read(OutputPresenter.default_attributes + [], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.CREATE,
-    constants.DETAIL,
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_read(
+    OutputPresenter.default_attributes + [],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.CREATE,
+        constants.DETAIL,
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-OutputPolicy.allow_write([
-    'block_uuid',
-    'partition',
-    'persist',
-    'pipeline_uuid',
-    'refresh',
-    'sample_count',
-    'streams',
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.CREATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_write(
+    [
+        'block_uuid',
+        'partition',
+        'persist',
+        'pipeline_uuid',
+        'refresh',
+        'sample_count',
+        'streams',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.CREATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-OutputPolicy.allow_query([
-    'block_uuid',
-    'parent_stream',
-    'partition',
-    'sample_count',
-    'stream',
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.DETAIL,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_query(
+    [
+        'block_uuid',
+        'parent_stream',
+        'partition',
+        'sample_count',
+        'stream',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+OutputPolicy.allow_query(
+    [
+        'sample_count',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

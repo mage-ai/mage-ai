@@ -1,8 +1,10 @@
 import os
+import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from mage_ai.data.constants import InputDataType
+from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
@@ -12,14 +14,22 @@ from mage_ai.data_preparation.models.utils import (
     warn_for_repo_path,
 )
 from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
-from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
+from mage_ai.data_preparation.models.variables.constants import (
+    VariableAggregateDataType,
+    VariableAggregateSummaryGroupType,
+    VariableType,
+)
+from mage_ai.data_preparation.models.variables.utils import is_output_variable
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
+from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.models import ResourceUsage
 
@@ -61,6 +71,7 @@ class VariableManager:
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         clean_block_uuid: bool = True,
+        clean_variable_uuid: bool = True,
         disable_variable_type_inference: bool = False,
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
@@ -68,46 +79,107 @@ class VariableManager:
         read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    ) -> None:
+    ) -> Variable:
         """
         Used by:
             block
             block/data_integration/utils
         """
+        basic_iterable = False
         if not disable_variable_type_inference:
-            variable_type, _ = infer_variable_type(
+            variable_type, basic_iterable = infer_variable_type(
                 data,
                 repo_path=self.repo_path,
                 variable_type=variable_type,
             )
 
         variable = Variable(
-            clean_name(variable_uuid),
+            clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
             self.pipeline_path(pipeline_uuid),
             block_uuid,
-            partition=partition,
-            storage=self.storage,
-            variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
             input_data_types=input_data_types,
-            resource_usage=resource_usage,
+            partition=partition,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
+            resource_usage=resource_usage,
+            storage=self.storage,
+            variable_type=variable_type,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
         )
 
         # Delete data if it exists
         variable.delete()
-        variable.variable_type = variable_type
-        variable.write_data(data)
+
+        if (
+            basic_iterable
+            and MEMORY_MANAGER_V2
+            and variable_type
+            in [
+                VariableType.DATAFRAME,
+                VariableType.POLARS_DATAFRAME,
+                VariableType.SERIES_PANDAS,
+                VariableType.SERIES_POLARS,
+            ]
+        ):
+            for idx, data_nested in enumerate(DataGenerator(data)):
+                variable_nested = self.add_variable(
+                    pipeline_uuid,
+                    block_uuid,
+                    os.path.join(str(variable_uuid), str(idx)),
+                    data_nested,
+                    clean_block_uuid=clean_block_uuid,
+                    clean_variable_uuid=False,
+                    input_data_types=input_data_types,
+                    partition=partition,
+                    read_batch_settings=read_batch_settings,
+                    read_chunks=read_chunks,
+                    resource_usage=resource_usage,
+                    variable_type=variable_type,
+                    write_batch_settings=write_batch_settings,
+                    write_chunks=write_chunks,
+                )
+                if variable_nested.variable_type:
+                    variable.variable_types.append(variable_nested.variable_type)
+
+            variable.variable_type = VariableType.ITERABLE
+            variable.write_metadata()
+        else:
+            variable.variable_type = variable_type
+            variable.write_data(data)
 
         if is_debug():
             print(
-                f'Variable {variable_uuid} ({variable_type or "no type"}) for block {block_uuid} '
-                f"in pipeline {pipeline_uuid} "
-                f"stored in {variable.variable_path}"
+                f'Variable {variable_uuid} ({variable_type or "no type"}) '
+                f'for block {block_uuid} '
+                f'in pipeline {pipeline_uuid} '
+                f'stored in {variable.variable_path}'
             )
+
+        return variable
+
+    def add_variable_types(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        variable_types: List[VariableType],
+        clean_block_uuid: bool = True,
+        clean_variable_uuid: bool = True,
+        partition: Optional[str] = None,
+    ) -> None:
+        variable = self.build_variable(
+            pipeline_uuid,
+            block_uuid,
+            variable_uuid,
+            clean_block_uuid=clean_block_uuid,
+            clean_variable_uuid=clean_variable_uuid,
+            partition=partition,
+            variable_type=VariableType.ITERABLE,
+        )
+        variable.variable_types = variable_types
+        variable.write_metadata()
 
     def build_variable(
         self,
@@ -116,6 +188,7 @@ class VariableManager:
         variable_uuid: str,
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
+        clean_block_uuid: bool = True,
         clean_variable_uuid: bool = True,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
@@ -128,6 +201,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
             input_data_types=input_data_types,
@@ -292,7 +366,9 @@ class VariableManager:
         variable_uuid: str,
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
+        variable_types: Optional[List[VariableType]] = None,
         clean_block_uuid: bool = True,
+        skip_check_variable_type: Optional[bool] = None,
         spark=None,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
@@ -302,6 +378,7 @@ class VariableManager:
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
+
         return Variable(
             variable_uuid,
             self.pipeline_path(pipeline_uuid),
@@ -310,10 +387,12 @@ class VariableManager:
             spark=spark,
             storage=self.storage,
             variable_type=variable_type,
+            variable_types=variable_types,
             clean_block_uuid=clean_block_uuid,
             input_data_types=input_data_types,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
+            skip_check_variable_type=skip_check_variable_type,
             variables_dir=self.variables_dir,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
@@ -347,6 +426,7 @@ class VariableManager:
         partition: Optional[str] = None,
         clean_block_uuid: bool = True,
         max_results: Optional[int] = None,
+        output_variable_only: Optional[bool] = None,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.pipeline_path(pipeline_uuid),
@@ -356,18 +436,29 @@ class VariableManager:
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
+
         opts = {}
         if max_results is not None:
             opts['max_results'] = max_results
-        variables = self.storage.listdir(variable_dir_path, **opts)
-        variables = [v for v in variables if v.split('.')[0]]
 
-        def __sort(variable_uuid: str) -> List[Union[int, str]]:
-            key = variable_uuid.split('.')[0]
-            parts = key.split('_')
-            return [int(k) if k.isdigit() else k for k in parts]
+        variable_uuids = self.storage.listdir(variable_dir_path, **opts)
+        variable_uuids = [
+            v
+            for v in variable_uuids
+            if v.split('.')[0] and (not output_variable_only or is_output_variable(v))
+        ]
 
-        return sorted(variables, key=__sort)
+        def __sort_variables(text):
+            number = re.findall('\\d+', text)
+            if number:
+                if len(number) == 1:
+                    number.append(0)
+                number = number[:2]
+            else:
+                number = to_ordinal_integers(text)[:2]
+            return [int(i) for i in number]
+
+        return sorted(variable_uuids, key=__sort_variables)
 
     def pipeline_path(self, pipeline_uuid: str) -> str:
         path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
@@ -375,6 +466,64 @@ class VariableManager:
             if not self.storage.path_exists(path):
                 self.storage.makedirs(path, exist_ok=True)
         return path
+
+    def aggregate_summary_info_for_all_variables(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,  # Make sure this is the base block_uuid, not with the dynamic block index
+        partition: Optional[str] = None,
+    ):
+        block_uuid = clean_name(block_uuid)
+        variable_uuids = self.get_variables_by_block(
+            pipeline_uuid,
+            block_uuid,
+            partition=partition,
+        )
+
+        if variable_uuids and all(not is_output_variable(v) for v in variable_uuids):
+            """
+            Dynamic child blocks have this directory structure:
+                [block_uuid]/
+                    [dynamic_block_index]/
+                        [variable_uuid]/
+            """
+            variable_uuids = self.get_variables_by_block(
+                pipeline_uuid,
+                os.path.join(block_uuid, str(variable_uuids[0])),
+                clean_block_uuid=False,
+                partition=partition,
+            )
+
+        for variable_uuid in variable_uuids:
+            variable = self.get_variable_object(
+                pipeline_uuid,
+                block_uuid,
+                variable_uuid,
+                partition=partition,
+                skip_check_variable_type=True,
+            )
+            variable.aggregate_summary_info()
+
+    def get_aggregate_summary_info(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        data_type: VariableAggregateDataType,
+        default_group_type: Optional[VariableAggregateSummaryGroupType],
+        group_type: Optional[VariableAggregateSummaryGroupType],
+        partition: Optional[str] = None,
+    ) -> VariableAggregateCache:
+        variable = self.get_variable_object(
+            pipeline_uuid,
+            block_uuid,
+            variable_uuid,
+            partition=partition,
+            skip_check_variable_type=True,
+        )
+        return variable.get_aggregate_summary_info(
+            data_type, default_group_type=default_group_type, group_type=group_type
+        )
 
 
 class S3VariableManager(VariableManager):

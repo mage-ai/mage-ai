@@ -5,7 +5,7 @@ import Text from '@oracle/elements/Text';
 import { OutputRowStyle, OutputRowProps } from './index.style';
 import { isObject } from '@utils/hash';
 
-type TextOutputProps = {
+export type TextOutputProps = {
   value: string | { text_data: string } | { text_data: string }[];
 } & OutputRowProps;
 
