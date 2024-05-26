@@ -520,9 +520,7 @@ class Block(
     @property
     def variable_manager(self) -> VariableManager:
         if not self.pipeline:
-            raise Exception(
-                f'Block {self.uuid} requires a pipeline to access the variable manager'
-            )
+            return
         return self.pipeline.variable_manager
 
     @property
@@ -3685,7 +3683,7 @@ class Block(
         don’t take forever to load while waiting for all the nested variable folders
         to be read.
         """
-        if not VARIABLE_DATA_OUTPUT_META_CACHE:
+        if not VARIABLE_DATA_OUTPUT_META_CACHE or not self.variable_manager:
             return
 
         self.variable_manager.aggregate_summary_info_for_all_variables(
