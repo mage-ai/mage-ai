@@ -14,6 +14,7 @@ type OutputType = {
 type MultiOutputProps = {
   color?: string;
   header?: JSX.Element;
+  hideTabs?: boolean;
   outputs: OutputType[];
   onTabChange?: (tab: TabType) => void;
 };
@@ -21,6 +22,7 @@ type MultiOutputProps = {
 function MultiOutput({
   color,
   header,
+  hideTabs,
   outputs,
   onTabChange,
 }: MultiOutputProps) {
@@ -59,45 +61,47 @@ function MultiOutput({
     <MultiOutputStyle>
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex flex={1}>
-          <ButtonTabs
-            allowScroll
-            onClickTab={(tab) => {
-              setSelectedTab(tab);
+          {!hideTabs && (
+            <ButtonTabs
+              allowScroll
+              onClickTab={(tab) => {
+                setSelectedTab(tab);
 
-              Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
-                // @ts-ignore
-                if (ref?.current) {
-                  if (tab?.uuid === uuid) {
-                    // @ts-ignore
-                    ref.current.className = removeClassNames(
+                Object.entries(outputsRef?.current || {})?.forEach(([uuid, ref]) => {
+                  // @ts-ignore
+                  if (ref?.current) {
+                    if (tab?.uuid === uuid) {
                       // @ts-ignore
-                      ref.current.className || '',
-                      [
-                        'inactive',
-                      ],
-                    );
-                  } else {
-                    // @ts-ignore
-                    ref.current.className = addClassNames(
+                      ref.current.className = removeClassNames(
+                        // @ts-ignore
+                        ref.current.className || '',
+                        [
+                          'inactive',
+                        ],
+                      );
+                    } else {
                       // @ts-ignore
-                      ref.current.className || '',
-                      [
-                        'inactive',
-                      ],
-                    );
+                      ref.current.className = addClassNames(
+                        // @ts-ignore
+                        ref.current.className || '',
+                        [
+                          'inactive',
+                        ],
+                      );
+                    }
                   }
-                }
-              });
+                });
 
-              if (onTabChange) {
-                onTabChange?.(tab);
-              }
-            }}
-            selectedTabUUID={selectedTab?.uuid}
-            tabs={tabs}
-            underlineColor={color}
-            underlineStyle
-          />
+                if (onTabChange) {
+                  onTabChange?.(tab);
+                }
+              }}
+              selectedTabUUID={selectedTab?.uuid}
+              tabs={tabs}
+              underlineColor={color}
+              underlineStyle
+            />
+          )}
         </Flex>
 
         {header}

@@ -185,6 +185,7 @@ export interface OutputType {
   data?: SampleDataType | string | string[];
   multi_output?: boolean;
   outputs?: OutputType[];
+  progress?: number;
   resource_usage?: ResourceUsage;
   sample_data?: SampleDataType;
   shape?: number[];

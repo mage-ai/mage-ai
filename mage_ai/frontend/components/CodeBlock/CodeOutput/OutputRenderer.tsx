@@ -8,6 +8,7 @@ import ImageOutput from './ImageOutput';
 import MultiOutput from './MultiOutput';
 import Spacing from '@oracle/elements/Spacing';
 import TableOutput from './TableOutput';
+import ProgressOutput from './ProgressOutput';
 import Text from '@oracle/elements/Text';
 import TextOutput from './TextOutput';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
@@ -42,6 +43,7 @@ function OutputRenderer({
     data,
     multi_output: multiOutput,
     outputs,
+    progress,
     text_data: textData,
     type: dataType,
     variable_uuid: variableUuid,
@@ -61,16 +63,18 @@ function OutputRenderer({
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
   if ((DataTypeEnum.GROUP === dataType || multiOutput || singleOutput) && outputsLength >= 1) {
+    const progressOnly = outputs?.every(({ type }) => DataTypeEnum.PROGRESS === type);
     const el = (
       <MultiOutput
         color={blockColor?.accent}
         header={
-          DataTypeEnum.GROUP === dataType ? (
+          DataTypeEnum.GROUP === dataType && !progressOnly ? (
             <Spacing px={PADDING_UNITS}>
               <Text color={blockColor?.accent} monospace small>{variableUuid}</Text>
             </Spacing>
           ) : null
         }
+        hideTabs={progressOnly}
         onTabChange={onTabChangeCallback}
         outputs={outputs?.map((item, idx) => ({
           render: () => {
@@ -78,7 +82,7 @@ function OutputRenderer({
 
             return (
               <>
-                {(DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && <Divider medium />}
+                {!progressOnly && (DataTypeEnum.TABLE !== itemType || index === 0 || idx === 0) && <Divider medium />}
 
                 <OutputRenderer
                   {...outputRowSharedProps}
@@ -102,6 +106,8 @@ function OutputRenderer({
     }
 
     return el;
+  } else if (DataTypeEnum.PROGRESS === dataType) {
+    return <ProgressOutput {...outputRowSharedProps} color={blockColor} progress={progress} value={textValue} />;
   } else if (DataTypeEnum.TEXT_HTML === dataType) {
     return <HTMLOutput {...outputRowSharedProps} value={textValue} />;
   } else if (DataTypeEnum.TABLE === dataType) {

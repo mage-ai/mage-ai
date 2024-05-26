@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.orchestration.db import db_connection
 from mage_ai.presenters.utils import render_output_tags
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find, is_iterable
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
@@ -29,6 +30,7 @@ if 'context' not in globals():
 
 async def send_status_update(
     message: str,
+    progress: Optional[float] = None,
     uuid: Optional[str] = ' Status',
 ):
     import datetime
@@ -39,11 +41,15 @@ async def send_status_update(
                 [
                     dict(
                         outputs=[
-                            dict(text_data=message),
+                            dict(
+                                progress=progress,
+                                text_data=message,
+                                type=DataType.PROGRESS,
+                            ),
                         ],
                         priority=0,
                         timestamp=int(datetime.datetime.utcnow().timestamp() * 1000),
-                        type='group',
+                        type=DataType.GROUP,
                         variable_uuid=uuid,
                     ),
                 ],
@@ -105,7 +111,8 @@ async def run_tasks(
     async def __callback(block, blocks_completed=blocks_completed, blocks_count=blocks_count):
         blocks_completed.append(block)
         await send_status_update(
-            f'{len(blocks_completed)} of {blocks_count} dynamic child blocks completed.'
+            f'{len(blocks_completed)} of {blocks_count} dynamic child blocks completed.',
+            progress=len(blocks_completed) / blocks_count,
         )
 
     # Create a list of coroutine objects directly
