@@ -177,16 +177,18 @@ scratch*
 playwright-report/
 
 # Testing files
+!mage_ai/test/
 **/TEST_CATALOG.json
+**/TEST_CONFIG*.json
 **/TEST_CONFIG_D.json
 **/TEST_CONFIG_S.json
 **/TEST_OUTPUT
 **/TEST_STATE.json
-**/TEST_CONFIG*.json
-package-lock.json
-package.json
-yarn.lock
 mlfow.db
 mlruns/
+package-lock.json
+package.json
 test.py
+test/
 test_data*
+yarn.lock

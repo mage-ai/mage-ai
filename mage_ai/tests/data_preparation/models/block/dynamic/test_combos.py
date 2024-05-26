@@ -1,0 +1,257 @@
+import inspect
+from typing import Callable, Optional
+
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    build_combinations_for_dynamic_child,
+)
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
+from mage_ai.tests.factory import create_pipeline
+
+
+def load_data1(*args, **kwargs):
+    arr = [i + 10 for i in range(0, 2)]
+    return [
+        arr,
+        [dict(block_uuid=f'child_{i}') for i in arr],
+    ]
+
+
+def load_data2(*args, **kwargs):
+    arr = [i + 20 for i in range(0, 1)]
+    return [
+        arr,
+        [dict(block_uuid=f'child_{i}') for i in arr],
+    ]
+
+
+def transform_multiple(data1, data2, *args, **kwargs):
+    return [data1, dict(upstream_data=data2)]
+
+
+def transform(data, *args, **kwargs):
+    return data
+
+
+def transform_2_1(arr, number, **kwargs):
+    arr = [arr, kwargs['upstream_data'], number]
+    return [
+        arr,
+    ]
+
+
+def multiple_inputs(data1, data2, data3, **kwargs):
+    return [
+        [
+            data1,
+            data2,
+            data3,
+            kwargs.get('block_uuid'),
+        ],
+    ]
+
+
+def export_data(*args, **kwargs):
+    output = []
+    for input_data in args:
+        if isinstance(input_data, list):
+            for data in input_data:
+                output.append(data)
+        else:
+            output.append(input_data)
+
+    return output
+
+
+class DynamicBlockCombinationsTest(BaseApiTestCase):
+    def setUp(self):
+        super().setUp()
+        self.pipeline = create_pipeline(self.faker.unique.name(), self.repo_path)
+
+    def create_block(
+        self,
+        name: Optional[str] = None,
+        content: Optional[str] = None,
+        func: Optional[Callable] = None,
+        **kwargs,
+    ):
+        block = Block.create(
+            name or self.faker.unique.name(),
+            BlockType.TRANSFORMER,
+            self.pipeline.repo_path,
+            language=BlockLanguage.PYTHON,
+            **kwargs,
+        )
+
+        if func:
+            content = inspect.getsource(func)
+
+        if content:
+            block.update_content(f'@{block.type}\n{content}')
+
+        return block
+
+    def test_combos(self):
+        dynamic1 = self.create_block(
+            name='dynamic1', func=load_data1, configuration=dict(dynamic=True)
+        )
+        self.pipeline.add_block(dynamic1)
+
+        dynamic2 = self.create_block(
+            name='dynamic2', func=load_data2, configuration=dict(dynamic=True)
+        )
+        self.pipeline.add_block(dynamic2)
+
+        child2x = self.create_block(name='child2x', func=transform_multiple)
+        self.pipeline.add_block(child2x, upstream_block_uuids=[dynamic1.uuid, dynamic2.uuid])
+
+        child1x = self.create_block(name='child1x', func=transform)
+        self.pipeline.add_block(child1x, upstream_block_uuids=[child2x.uuid])
+
+        dynamic_spawn_2x = self.create_block(
+            name='dynamic_spawn_2x', func=transform_2_1, configuration=dict(dynamic=True)
+        )
+        self.pipeline.add_block(
+            dynamic_spawn_2x, upstream_block_uuids=[child2x.uuid, child1x.uuid]
+        )
+
+        child_1x_spawn_1x = self.create_block(
+            name='child_1x_spawn_1x', func=multiple_inputs, configuration=dict(reduce_output=True)
+        )
+        self.pipeline.add_block(
+            child_1x_spawn_1x,
+            upstream_block_uuids=[dynamic2.uuid, child1x.uuid, dynamic_spawn_2x.uuid],
+        )
+
+        replica = self.create_block(name='replica', configuration=dict(dynamic=True))
+
+        child_1x_childspawn_1x_reduce = self.create_block(
+            name='child_1x_childspawn_1x_reduce', func=export_data
+        )
+
+        replica.replicated_block = child_1x_childspawn_1x_reduce.uuid
+        self.pipeline.add_block(
+            replica, upstream_block_uuids=[dynamic_spawn_2x.uuid, child_1x_spawn_1x.uuid]
+        )
+        self.pipeline.add_block(
+            child_1x_childspawn_1x_reduce,
+            upstream_block_uuids=[dynamic1.uuid, child_1x_spawn_1x.uuid, replica.uuid],
+        )
+
+        dynamic1.execute_sync()
+        dynamic2.execute_sync()
+
+        child_data1 = dynamic1.get_variable_object(
+            dynamic1.uuid, variable_uuid='output_0'
+        ).read_data()
+        metadata1 = dynamic1.get_variable_object(
+            dynamic1.uuid, variable_uuid='output_1'
+        ).read_data()
+        print(child_data1, metadata1)
+        self.assertEqual(len(child_data1), len(metadata1))
+
+        child_data2 = dynamic2.get_variable_object(
+            dynamic2.uuid, variable_uuid='output_0'
+        ).read_data()
+        metadata2 = dynamic2.get_variable_object(
+            dynamic2.uuid, variable_uuid='output_1'
+        ).read_data()
+        print(child_data2, metadata2)
+        self.assertEqual(len(child_data2), len(metadata2))
+
+        child2x_outputs = []
+        child2x_metadata = []
+        child2x_combos = build_combinations_for_dynamic_child(child2x)
+        for i in range(len(child2x_combos)):
+            child2x.execute_sync(dynamic_block_index=i)
+            out0 = child2x.get_variable_object(
+                child2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            out1 = child2x.get_variable_object(
+                child2x.uuid, dynamic_block_index=i, variable_uuid='output_1'
+            ).read_data()
+            child2x_outputs.append(out0)
+            child2x_metadata.append(out1)
+        print(child2x_outputs, child2x_metadata)
+
+        self.assertEqual(len(child2x_outputs), len(child2x_metadata))
+        self.assertEqual(len(child2x_outputs), len(child_data1) * len(child_data2))
+
+        child1x_outputs = []
+        for i, combo in enumerate(child2x_outputs):
+            print(i, combo)
+            child1x.execute_sync(dynamic_block_index=i)
+            out0 = child1x.get_variable_object(
+                child1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            child1x_outputs.append(out0)
+        print(child1x_outputs)
+
+        self.assertEqual(len(child1x_outputs), len(child2x_outputs))
+
+        dynamic_spawn_2x_outputs = []
+        dynamic_spawn_2x_combos = build_combinations_for_dynamic_child(dynamic_spawn_2x)
+        print(len(dynamic_spawn_2x_combos), dynamic_spawn_2x_combos)
+        for i in range(len(dynamic_spawn_2x_combos)):
+            dynamic_spawn_2x.execute_sync(dynamic_block_index=i)
+            out = dynamic_spawn_2x.get_variable_object(
+                dynamic_spawn_2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            dynamic_spawn_2x_outputs.append(out)
+        print(dynamic_spawn_2x_outputs)
+
+        self.assertEqual(
+            len(dynamic_spawn_2x_outputs), len(child1x_outputs) * len(child2x_outputs)
+        )
+
+        child_1x_spawn_1x_outputs = []
+        child_1x_spawn_1x_combos = build_combinations_for_dynamic_child(child_1x_spawn_1x)
+        print(len(child_1x_spawn_1x_combos), child_1x_spawn_1x_combos)
+        for i in range(len(child_1x_spawn_1x_combos)):
+            child_1x_spawn_1x.execute_sync(dynamic_block_index=i)
+            out = child_1x_spawn_1x.get_variable_object(
+                child_1x_spawn_1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            child_1x_spawn_1x_outputs.append(out)
+        print(child_1x_spawn_1x_outputs)
+
+        self.assertEqual(
+            len(child_1x_spawn_1x_outputs),
+            len(child_data2) * len(child1x_outputs) * len(dynamic_spawn_2x_outputs),
+        )
+
+        replica_outputs = []
+        replica_combos = build_combinations_for_dynamic_child(replica)
+        print(len(replica_combos), replica_combos)
+        for i, combo in enumerate(replica_combos):
+            print(i, combo)
+            replica.execute_sync(dynamic_block_index=i)
+            out0 = replica.get_variable_object(
+                replica.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            replica_outputs.append(out0)
+        print(replica_outputs)
+
+        # child_1x_spawn_1x reduces output to 1
+        self.assertEqual(len(replica_outputs), len(dynamic_spawn_2x_outputs))
+
+        child_1x_childspawn_1x_reduce_outputs = []
+        child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
+            child_1x_childspawn_1x_reduce
+        )
+        print(len(child_1x_childspawn_1x_reduce_combos), child_1x_childspawn_1x_reduce_combos)
+        for i, combo in enumerate(child_1x_childspawn_1x_reduce_combos):
+            print(i, combo)
+            child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
+            out0 = child_1x_childspawn_1x_reduce.get_variable_object(
+                child_1x_childspawn_1x_reduce.uuid, dynamic_block_index=i, variable_uuid='output_0'
+            ).read_data()
+            child_1x_childspawn_1x_reduce_outputs.append(out0)
+        print(child_1x_childspawn_1x_reduce_outputs)
+
+        # child_1x_spawn_1x reduces output to 1
+        self.assertEqual(
+            len(child_1x_childspawn_1x_reduce_outputs),
+            len(child_data1) * len(replica_outputs),
+        )

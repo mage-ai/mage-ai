@@ -136,11 +136,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
-from mage_ai.settings.server import (
-    DEBUG_MEMORY,
-    MEMORY_MANAGER_V2,
-    VARIABLE_DATA_OUTPUT_META_CACHE,
-)
+from mage_ai.settings.server import MEMORY_MANAGER_V2, VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.array import is_iterable, unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -2279,8 +2275,9 @@ class Block(
             )
             for upstream_block in self.upstream_blocks
         ]):
-            args_shared = [self, input_args]
-            kwargs_shared = dict(
+            return fetch_input_variables_for_dynamic_upstream_blocks(
+                self,
+                input_args,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_indexes=dynamic_block_indexes,
                 execution_partition=execution_partition,
@@ -2289,20 +2286,7 @@ class Block(
                 block_run_outputs_cache=block_run_outputs_cache,
                 data_integration_settings_mapping=data_integration_settings_mapping,
                 upstream_block_uuids_override=upstream_block_uuids_override,
-                log_message_prefix=f'[{self.uuid}:fetch_input_variables]',
             )
-            if DEBUG_MEMORY:
-                result, _ = execute_with_memory_tracking(
-                    fetch_input_variables_for_dynamic_upstream_blocks,
-                    args=args_shared,
-                    kwargs=kwargs_shared,
-                )
-            else:
-                result = fetch_input_variables_for_dynamic_upstream_blocks(
-                    *args_shared, **kwargs_shared
-                )
-
-            return result
 
         variables = fetch_input_variables(
             self.pipeline,
