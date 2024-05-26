@@ -2,7 +2,7 @@ import asyncio
 import base64
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import simplejson
 
@@ -27,15 +27,46 @@ if 'context' not in globals():
     context = dict()
 
 
+async def send_status_update(
+    message: str,
+    uuid: Optional[str] = ' Status',
+):
+    import datetime
+
+    print(
+        render_output_tags(
+            simplejson.dumps(
+                [
+                    dict(
+                        outputs=[
+                            dict(text_data=message),
+                        ],
+                        priority=0,
+                        timestamp=int(datetime.datetime.utcnow().timestamp() * 1000),
+                        type='group',
+                        variable_uuid=uuid,
+                    ),
+                ],
+                default=encode_complex,
+                ignore_nan=True,
+            )
+        )
+    )
+
+
 async def task(
     block: Any,
     execute_kwargs: Dict[str, Any],
+    callback: Optional[Callable[..., None]] = None,
     custom_code: Optional[str] = None,
     dynamic_block_index: Optional[int] = None,
     global_vars: Optional[Dict[str, Any]] = None,
     logger: Optional[logging.Logger] = None,
 ):
     output_dict = block.execute_with_callback(**execute_kwargs)
+
+    if callback:
+        await callback(block)
 
     if bool('{run_tests}'):
         block.run_tests(
@@ -68,11 +99,21 @@ async def run_tasks(
     settings: List[Dict[str, Any]],
     options: Dict[str, Any],
 ) -> List[Any]:
+    blocks_count = len(settings)
+    blocks_completed = []
+
+    async def __callback(block, blocks_completed=blocks_completed, blocks_count=blocks_count):
+        blocks_completed.append(block)
+        await send_status_update(
+            f'{len(blocks_completed)} of {blocks_count} dynamic child blocks completed.'
+        )
+
     # Create a list of coroutine objects directly
     tasks = [
         task(
             block,
             merge_dict(options, config),
+            callback=__callback,
             custom_code=options.get('custom_code'),
             dynamic_block_index=dynamic_block_index,
             global_vars=options.get('global_vars'),
@@ -81,28 +122,9 @@ async def run_tasks(
         for dynamic_block_index, config in enumerate(settings)
     ]
 
-    # Await the tasks gathered together
+    await send_status_update(f'Running {blocks_count} dynamic child blocks...')
+
     return await asyncio.gather(*tasks)
-
-    # completed, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
-
-    # # Collect results from all completed tasks
-    # results = [task.result() for task in completed]
-    # return results
-
-    # Create an asyncio.Task for each coroutine to manage their execution
-    # tasks = [asyncio.create_task(asyncio.to_thread(run_task, t)) for t in tasks]
-
-    # # Wait for all tasks to complete
-    # for task in asyncio.as_completed(tasks):
-    #     # As results become available, process them
-    #     async for step_result in await task:
-    #         print(step_result)  # Process intermediate results here
-
-
-# async def run_task(coroutine):
-#     async for result in coroutine:
-#         yield result
 
 
 async def execute_custom_code():

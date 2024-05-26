@@ -189,6 +189,7 @@ export interface OutputType {
   sample_data?: SampleDataType;
   shape?: number[];
   text_data?: string;
+  timestamp?: number;
   type: DataTypeEnum;
   variable_uuid: string;
 }
