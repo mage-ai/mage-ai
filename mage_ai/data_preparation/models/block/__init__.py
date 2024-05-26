@@ -105,6 +105,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.utils import is_basic_iterable, warn_for_repo_path
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.cache import (
+    AggregateInformation,
     AggregateInformationData,
     InformationData,
     VariableAggregateCache,
@@ -124,7 +125,11 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
-from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
+from mage_ai.settings.server import (
+    DEBUG_MEMORY,
+    MEMORY_MANAGER_V2,
+    VARIABLE_DATA_OUTPUT_META_CACHE,
+)
 from mage_ai.shared.array import is_iterable, unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -531,6 +536,9 @@ class Block(
         infer_group_type: Optional[bool] = None,
         partition: Optional[str] = None,
     ) -> Optional[Union[AggregateInformationData, InformationData]]:
+        if not VARIABLE_DATA_OUTPUT_META_CACHE:
+            return
+
         cache = self.__load_variable_aggregate_cache(variable_uuid)
 
         if infer_group_type:
@@ -557,12 +565,13 @@ class Block(
                 default_group_type.value if default_group_type else None
             )
             if group is not None:
+                cache_group = getattr(cache, group) or AggregateInformation()
                 cache_group_new = getattr(cache_new, group)
-                cache_group = getattr(cache, group) or cache_group_new
-                for data in VariableAggregateDataType:
-                    val = getattr(cache_group, data)
-                    val_new = getattr(cache_group_new, data)
-                    setattr(cache_group or cache_group_new, data, val_new or val)
+                if cache_group_new:
+                    for data in VariableAggregateDataType:
+                        val = getattr(cache_group, data)
+                        val_new = getattr(cache_group_new, data)
+                        setattr(cache_group or cache_group_new, data, val_new or val)
                 setattr(cache, group, cache_group)
 
             for data in VariableAggregateDataType:
@@ -585,25 +594,15 @@ class Block(
         variable_uuid: Optional[str] = None,
     ) -> Optional[ResourceUsage]:
         try:
-            variable = self.get_variable_object(
-                block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
-            )
-            return variable.get_resource_usage(index=index)
-        except Exception as err:
-            print(f'[ERROR] Block.get_resource_usage: {err}')
-            return ResourceUsage()
+            if not VARIABLE_DATA_OUTPUT_META_CACHE:
+                variable = self.get_variable_object(
+                    block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+                )
+                return variable.get_resource_usage(index=index)
 
-    def get_analysis(
-        self,
-        block_uuid: Optional[str] = None,
-        index: Optional[int] = None,
-        partition: Optional[str] = None,
-        variable_uuid: Optional[str] = None,
-    ) -> Optional[InformationData]:
-        try:
             values = self.get_variable_aggregate_cache(
                 variable_uuid,
-                VariableAggregateDataType.STATISTICS,
+                VariableAggregateDataType.RESOURCE_USAGE,
                 infer_group_type=index is not None,
                 partition=partition,
             )
@@ -614,8 +613,42 @@ class Block(
             else:
                 return values
         except Exception as err:
+            print(f'[ERROR] Block.get_resource_usage: {err}')
+            return ResourceUsage()
+
+    def get_analysis(
+        self,
+        block_uuid: Optional[str] = None,
+        index: Optional[int] = None,
+        partition: Optional[str] = None,
+        variable_uuid: Optional[str] = None,
+    ) -> Optional[Dict]:
+        try:
+            if not VARIABLE_DATA_OUTPUT_META_CACHE:
+                variable = self.get_variable_object(
+                    block_uuid or self.uuid, partition=partition, variable_uuid=variable_uuid
+                )
+                return variable.get_analysis(index=index)
+
+            values = self.get_variable_aggregate_cache(
+                variable_uuid,
+                VariableAggregateDataType.STATISTICS,
+                infer_group_type=index is not None,
+                partition=partition,
+            )
+
+            value = None
+            if index is not None:
+                if values and isinstance(values, list) and len(values) > index:
+                    value = values[index]
+            else:
+                value = values
+
+            if value is not None:
+                return dict(statistics=value.to_dict())
+        except Exception as err:
             print(f'[ERROR] Block.get_analysis: {err}')
-            return {}
+            return InformationData()
 
     async def content_async(self) -> str:
         if self.replicated_block and self.replicated_block_object:
@@ -2371,21 +2404,26 @@ class Block(
             block_uuid=block_uuid,
             dynamic_block_index=dynamic_block_index,
         )
-        dynamic_child = is_dynamic_block_child(self)
-        group_type = (
-            VariableAggregateSummaryGroupType.DYNAMIC
-            if dynamic_child
-            else VariableAggregateSummaryGroupType.PARTS
-        )
-        variable_type_information = self.get_variable_aggregate_cache(
-            variable_uuid, VariableAggregateDataType.TYPE, default_group_type=group_type
-        )
-        variable_types_information = self.get_variable_aggregate_cache(
-            variable_uuid,
-            VariableAggregateDataType.TYPE,
-            group_type=group_type,
-            partition=partition,
-        )
+
+        variable_type_information = None
+        variable_types_information = None
+
+        if VARIABLE_DATA_OUTPUT_META_CACHE:
+            dynamic_child = is_dynamic_block_child(self)
+            group_type = (
+                VariableAggregateSummaryGroupType.DYNAMIC
+                if dynamic_child
+                else VariableAggregateSummaryGroupType.PARTS
+            )
+            variable_type_information = self.get_variable_aggregate_cache(
+                variable_uuid, VariableAggregateDataType.TYPE, default_group_type=group_type
+            )
+            variable_types_information = self.get_variable_aggregate_cache(
+                variable_uuid,
+                VariableAggregateDataType.TYPE,
+                group_type=group_type,
+                partition=partition,
+            )
 
         return self.variable_manager.get_variable_object(
             self.pipeline_uuid,
@@ -2393,9 +2431,11 @@ class Block(
             clean_block_uuid=not changed and clean_block_uuid,
             partition=partition,
             spark=self.get_spark_session(),
-            variable_type=variable_type_information.type if variable_type_information else None,
+            variable_type=variable_type_information.type
+            if variable_type_information is not None
+            else None,
             variable_types=[v.type for v in variable_types_information]
-            if variable_types_information
+            if variable_types_information is not None
             else None,
             variable_uuid=variable_uuid,
             input_data_types=input_data_types,
@@ -3395,7 +3435,7 @@ class Block(
             global_vars['context'] = dict()
 
         # Add pipeline uuid and block uuid to global_vars
-        global_vars['pipeline_uuid'] = self.pipeline_uuide
+        global_vars['pipeline_uuid'] = self.pipeline_uuid
         global_vars['block_uuid'] = self.uuid
 
         if dynamic_block_index is not None:

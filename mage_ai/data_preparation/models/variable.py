@@ -242,6 +242,9 @@ class Variable:
         )
 
     def check_variable_type(self, spark: Optional[Any] = None) -> Optional[VariableType]:
+        # stack = traceback.format_stack()
+        # print(''.join(stack))
+
         """
         If the variable has a metadata file, read the variable type from the metadata file.
         Fallback to inferring variable type based on data in the storage.
@@ -283,6 +286,7 @@ class Variable:
             except Exception:
                 traceback.print_exc()
 
+        print('CHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK')
         if self.variable_type is None and self.storage.path_exists(
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         ):
@@ -1745,6 +1749,7 @@ class Variable:
             return []
 
         indexes = []
+        print('DYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY')
         for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
             index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
             if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
@@ -1756,6 +1761,7 @@ class Variable:
 
     def __get_part_uuids(self, path: str) -> List[str]:
         part_uuids = []
+        print('PARTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTS')
         for chunk_uuid in self.storage.listdir(path):
             if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
                 part_uuids.append(chunk_uuid)

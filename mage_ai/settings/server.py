@@ -204,6 +204,11 @@ MEMORY_MANAGER_POLARS_VERSION = int(os.getenv('MEMORY_MANAGER_POLARS_VERSION', '
 MEMORY_MANAGER_V2 = MEMORY_MANAGER_VERSION >= 2
 MEMORY_MANAGER_PANDAS_V2 = MEMORY_MANAGER_PANDAS_VERSION >= 2
 MEMORY_MANAGER_POLARS_V2 = MEMORY_MANAGER_POLARS_VERSION >= 2
+VARIABLE_DATA_OUTPUT_META_CACHE = str(os.getenv('VARIABLE_DATA_OUTPUT_META_CACHE', 0) or 0) in [
+    '1',
+    'true',
+    'True',
+]
 
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
