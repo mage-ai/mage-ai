@@ -27,12 +27,22 @@ class BlockRunResource(DatabaseResource):
                 started_at = tup.started_at if hasattr(tup, 'started_at') else None
                 status = tup.status if hasattr(tup, 'status') else None
                 updated_at = tup.updated_at if hasattr(tup, 'updated_at') else None
-                pipeline_schedule_id = tup.pipeline_schedule_id if hasattr(
-                    tup, 'pipeline_schedule_id',
-                ) else None
-                pipeline_schedule_name = tup.pipeline_schedule_name if hasattr(
-                    tup, 'pipeline_schedule_name',
-                ) else None
+                pipeline_schedule_id = (
+                    tup.pipeline_schedule_id
+                    if hasattr(
+                        tup,
+                        'pipeline_schedule_id',
+                    )
+                    else None
+                )
+                pipeline_schedule_name = (
+                    tup.pipeline_schedule_name
+                    if hasattr(
+                        tup,
+                        'pipeline_schedule_name',
+                    )
+                    else None
+                )
             else:
                 (
                     block_uuid,
@@ -98,29 +108,22 @@ class BlockRunResource(DatabaseResource):
         ]
 
         query = (
-            BlockRun.
-            select(*columns).
-            join(b, a.pipeline_run_id == b.id).
-            join(c, b.pipeline_schedule_id == c.id)
+            BlockRun.select(*columns)
+            .join(b, a.pipeline_run_id == b.id)
+            .join(c, b.pipeline_schedule_id == c.id)
         )
 
         pipeline_run_id = query_arg.get('pipeline_run_id', [None])
         if pipeline_run_id:
             pipeline_run_id = pipeline_run_id[0]
         if pipeline_run_id and is_number(pipeline_run_id):
-            query = (
-                query.
-                filter(a.pipeline_run_id == int(pipeline_run_id))
-            )
+            query = query.filter(a.pipeline_run_id == int(pipeline_run_id))
 
         pipeline_uuid = query_arg.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         if pipeline_uuid:
-            query = (
-                query.
-                filter(c.pipeline_uuid == pipeline_uuid)
-            )
+            query = query.filter(c.pipeline_uuid == pipeline_uuid)
 
         # The order_by value should be an attribute on the BlockRun model.
         order_by_arg = query_arg.get('order_by', [None])
@@ -138,10 +141,12 @@ class BlockRunResource(DatabaseResource):
             try:
                 br_col = getattr(a, col)
                 initial_results = query.order_by(getattr(br_col, asc_desc)())
-            except (AttributeError):
-                raise Exception('Block run sort column/query is invalid. The sort column ' +
-                                'must be an attribute of the BlockRun model. The sort direction ' +
-                                'is either "asc" (ascending order) or "desc" (descending order).')
+            except AttributeError:
+                raise Exception(
+                    'Block run sort column/query is invalid. The sort column '
+                    + 'must be an attribute of the BlockRun model. The sort direction '
+                    + 'is either "asc" (ascending order) or "desc" (descending order).'
+                )
         else:
             initial_results = query.order_by(
                 a.started_at.desc(),

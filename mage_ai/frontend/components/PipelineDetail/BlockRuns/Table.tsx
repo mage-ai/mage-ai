@@ -1,4 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
+import moment from 'moment';
 import NextLink from 'next/link';
 import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
@@ -31,6 +32,7 @@ import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from 
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { prettyUnitOfTime } from '@utils/string';
 import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -121,43 +123,67 @@ function BlockRunsTable({
     },
   );
 
-  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [1, null, 2, 2, 1, 1, 1, null];
-  const columns = [
-    {
-      uuid: 'Status',
-    },
-    {
-      center: true,
-      uuid: 'Logs',
-    },
-    {
-      uuid: 'Block',
-    },
-    {
-      uuid: 'Trigger',
-    },
-    {
-      ...timezoneTooltipProps,
-      uuid: 'Created at',
-    },
-    {
-      ...timezoneTooltipProps,
-      uuid: 'Started at',
-    },
-    {
-      ...timezoneTooltipProps,
-      uuid: 'Completed at',
-    },
-  ];
+  const atLeastOneCompleted = useMemo(() => blockRuns.some(({ completed_at }) => !!completed_at), [blockRuns]);
 
-  if (isStandardPipeline) {
-    columns.push(
+  const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
+  const {
+    columns,
+    columnFlex,
+  } = useMemo(() => {
+    const colFlex = [1, null, 2, 2, 1, 1, 1, null];
+    const arr = [
       {
-        uuid: 'Output',
+        uuid: 'Status',
       },
-    );
-  }
+      {
+        center: true,
+        uuid: 'Logs',
+      },
+      {
+        uuid: 'Block',
+      },
+      {
+        uuid: 'Trigger',
+      },
+      {
+        ...timezoneTooltipProps,
+        uuid: 'Created at',
+      },
+      {
+        ...timezoneTooltipProps,
+        uuid: 'Started at',
+      },
+      {
+        ...timezoneTooltipProps,
+        uuid: 'Completed at',
+      },
+    ];
+
+    if (atLeastOneCompleted) {
+      arr.push(
+        {
+          center: true,
+          uuid: 'Runtime',
+        },
+      );
+      colFlex.push(null);
+    }
+
+    if (isStandardPipeline) {
+      arr.push(
+        {
+          uuid: 'Output',
+        },
+      );
+    }
+
+    return {
+      columnFlex: colFlex,
+      columns: arr,
+    };
+  }, [isStandardPipeline, atLeastOneCompleted]);
+
+
 
   return (
     <Table
@@ -171,6 +197,7 @@ function BlockRunsTable({
           completed_at: completedAt,
           created_at: createdAt,
           id,
+          metrics,
           pipeline_run_id: pipelineRunId,
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
@@ -195,6 +222,10 @@ function BlockRunsTable({
         if (!block) {
           block = blocksByUUID[parts[0]];
         }
+
+        const runtime = startedAt && completedAt
+          ? moment(completedAt).diff(moment(startedAt), 'seconds')
+          : null;
 
         const rows = [
           <Text
@@ -300,6 +331,14 @@ function BlockRunsTable({
                 <>&#8212;</>
               )
             }
+          </Text>,
+          <Text
+            default
+            key={`${id}_runtime`}
+            monospace
+            small
+          >
+            {runtime ? prettyUnitOfTime(runtime) : '-'}
           </Text>,
         ];
 
