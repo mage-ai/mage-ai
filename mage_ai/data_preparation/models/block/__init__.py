@@ -2440,7 +2440,7 @@ class Block(
     def get_variable_object(
         self,
         block_uuid: str,
-        variable_uuid: str,
+        variable_uuid: Optional[str] = None,
         clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
         input_data_types: Optional[List[InputDataType]] = None,
