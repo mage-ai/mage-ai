@@ -1,10 +1,9 @@
 import time
 from logging import Logger
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import pandas as pd
 
-from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
     is_dynamic_block,
@@ -15,15 +14,12 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_child,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun
-from mage_ai.settings.server import DEBUG_MEMORY
-from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
 
 class DynamicChildController:
-    def __init__(self, block, block_run_id: int, logger: Optional[DictLogger] = None):
+    def __init__(self, block, block_run_id: int):
         self.block = block
         self.block_run_id = block_run_id
-        self.logger = logger
         self._block_run = None
         self._block_runs = None
         self._pipeline_run = None
@@ -101,7 +97,6 @@ class DynamicChildController:
                     lazy_variable_controller = get_outputs_for_dynamic_child(
                         upstream_block,
                         execution_partition=execution_partition,
-                        logger=logger,
                         logging_tags=logging_tags,
                     )
 
@@ -144,22 +139,10 @@ class DynamicChildController:
         combos = None
         while tries < 12 and combos is None:
             try:
-                if DEBUG_MEMORY:
-                    combos, _ = execute_with_memory_tracking(
-                        build_combinations_for_dynamic_child,
-                        args=[self.block],
-                        kwargs=dict(execution_partition=execution_partition),
-                        log_message_prefix=':'.join([
-                            f'[{self.block.uuid}',
-                            'build_combinations_for_dynamic_child]',
-                        ]),
-                        logger=self.logger,
-                    )
-                else:
-                    combos = build_combinations_for_dynamic_child(
-                        self.block,
-                        execution_partition=execution_partition,
-                    )
+                combos = build_combinations_for_dynamic_child(
+                    self.block,
+                    execution_partition=execution_partition,
+                )
             except Exception:
                 time.sleep(10)
                 tries += 1

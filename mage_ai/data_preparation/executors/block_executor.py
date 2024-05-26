@@ -41,10 +41,9 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.settings.server import DEBUG_MEMORY, VARIABLE_DATA_OUTPUT_META_CACHE
+from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
-from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -98,7 +97,6 @@ class BlockExecutor:
             self.block = DynamicChildController(
                 self.block,
                 block_run_id=block_run_id,
-                logger=self.logger,
             )
 
         self.block_run = None
@@ -1141,7 +1139,7 @@ class BlockExecutor:
 
                     return arr
 
-        kwargs_shared = dict(
+        result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
             block_run_outputs_cache=block_run_outputs_cache,
             execution_partition=self.execution_partition,
@@ -1158,17 +1156,8 @@ class BlockExecutor:
             dynamic_block_uuid=dynamic_block_uuid,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             store_variables=store_variables,
+            **extra_options,
         )
-        if DEBUG_MEMORY:
-            result, _ = execute_with_memory_tracking(
-                self.block.execute_sync,
-                args=[],
-                kwargs=kwargs_shared,
-                log_message_prefix=f'[{self.block_uuid}:execute_sync]',
-                logger=self.logger,
-            )
-        else:
-            result = self.block.execute_sync(**kwargs_shared)
 
         if BlockType.DBT == self.block.type:
             self.block.run_tests(
