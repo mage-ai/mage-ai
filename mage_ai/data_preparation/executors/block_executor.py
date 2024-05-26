@@ -41,7 +41,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.settings.server import DEBUG_MEMORY
+from mage_ai.settings.server import DEBUG_MEMORY, VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
@@ -750,6 +750,9 @@ class BlockExecutor:
                     logging_tags=tags,
                     pipeline_run=pipeline_run,
                 )
+
+            if VARIABLE_DATA_OUTPUT_META_CACHE:
+                self.block.aggregate_summary_info(execution_partition=self.execution_partition)
 
             return result
         finally:
