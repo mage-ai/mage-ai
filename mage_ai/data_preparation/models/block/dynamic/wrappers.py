@@ -6,10 +6,17 @@ from mage_ai.orchestration.db.models.schedules import BlockRun
 
 class DynamicBlockWrapperBase:
     def __init__(
-        self, block: Any, block_run_id: int, logger: Optional[DictLogger] = None, *args, **kwargs
+        self,
+        block: Any,
+        block_run_id: Optional[int] = None,
+        execution_partition: Optional[str] = None,
+        logger: Optional[DictLogger] = None,
+        *args,
+        **kwargs,
     ):
         self.block = block
         self.block_run_id = block_run_id
+        self.execution_partition = execution_partition
         self.logger = logger
 
         self._block_run = None

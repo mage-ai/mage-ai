@@ -49,7 +49,9 @@ class DynamicMixin:
 
     @property
     def is_dynamic_child_streaming(self) -> bool:
-        return any(
+        from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
+
+        return DYNAMIC_BLOCKS_V2 and any(
             (
                 upstream_block.should_dynamically_generate_block(self)
                 and upstream_block.is_dynamic_stream_mode_enabled

@@ -2,7 +2,7 @@ import asyncio
 import json
 import traceback
 from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import pytz
 import requests
@@ -59,8 +59,8 @@ class BlockExecutor:
         self,
         pipeline,
         block_uuid,
-        execution_partition: str = None,
-        block_run_id: int = None,
+        execution_partition: Optional[str] = None,
+        block_run_id: Optional[int] = None,
     ):
         """
         Initialize the BlockExecutor.
@@ -89,13 +89,14 @@ class BlockExecutor:
 
         # Ensure the original block run is wrapped only, not the clones.
         if self.block is not None and self.block.is_original_block(block_uuid):
-            if self.block.is_dynamic_streaming:
+            if self.block.is_dynamic_child_streaming:
                 self.block = DynamicBlockFactory(
                     self.block,
                     block_run_id=block_run_id,
+                    execution_partition=execution_partition,
                     logger=self.logger,
                 )
-            elif is_dynamic_block_child(self.block) and ():
+            elif is_dynamic_block_child(self.block):
                 self.block = DynamicChildController(
                     self.block,
                     block_run_id=block_run_id,
@@ -714,6 +715,9 @@ class BlockExecutor:
                     and is_data_integration_child
                     and self.block.is_destination()
                 )
+
+            if isinstance(self.block, DynamicBlockFactory):
+                should_finish = self.block.is_complete()
 
             if should_finish:
                 self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)

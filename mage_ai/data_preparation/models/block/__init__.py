@@ -2132,7 +2132,7 @@ class Block(
             dynamic_child = is_dynamic_block_child(self)
             output_count = 0
             if output is not None and is_iterable(output):
-                if dynamic_child:
+                if dynamic_child or self.is_dynamic_child:
                     # Each child will delete its own data
                     # How do we delete everything ahead of time?
                     delete_variable_objects_for_dynamic_child(
@@ -3671,6 +3671,7 @@ class Block(
                 self.pipeline_uuid,
                 block_uuid,
                 variable_uuid,
+                partition=execution_partition,
             )
 
     def aggregate_summary_info(self, execution_partition: Optional[str] = None):

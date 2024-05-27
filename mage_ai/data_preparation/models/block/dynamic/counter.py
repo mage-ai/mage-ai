@@ -196,6 +196,17 @@ class DynamicDuoItemCounter(DynamicItemCounter):
         )
         return [i for i in range(dynamic_child_counter.item_count())]
 
+    def calculate_item_count(self) -> int:
+        return sum([
+            DynamicBlockItemCounter(
+                self.block,
+                dynamic_block_index=dynamic_block_index,
+                partition=self.partition,
+                variable_uuid=self.variable_uuid,
+            ).item_count()
+            for dynamic_block_index in self.indexes
+        ])
+
     def item_count(self) -> int:
         """
         If block is dynamic and a dynamic child,
@@ -233,12 +244,4 @@ class DynamicDuoItemCounter(DynamicItemCounter):
                 for arr in self.summary_information.dynamic.statistics
             )
 
-        return sum([
-            DynamicBlockItemCounter(
-                self.block,
-                dynamic_block_index=dynamic_block_index,
-                partition=self.partition,
-                variable_uuid=self.variable_uuid,
-            ).item_count()
-            for dynamic_block_index in self.indexes
-        ])
+        return self.calculate_item_count()

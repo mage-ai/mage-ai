@@ -313,14 +313,17 @@ class BlockExecutorTest(BaseApiTestCase):
                 return value, kwargs['global_vars']
 
         with patch('mage_ai.data_preparation.models.block.hook.block.HookBlock', CustomHookBlock):
-            with patch('.'.join([
-                'mage_ai',
-                'data_preparation',
-                'executors',
-                'block_executor',
-                'Project',
-                'is_feature_enabled_in_root_or_active_project',
-            ]), __is_feature_enabled):
+            with patch(
+                '.'.join([
+                    'mage_ai',
+                    'data_preparation',
+                    'executors',
+                    'block_executor',
+                    'Project',
+                    'is_feature_enabled_in_root_or_active_project',
+                ]),
+                __is_feature_enabled,
+            ):
                 result, variables = executor.execute(block_run_id=block_run.id)
 
                 self.assertEqual(value, result)
@@ -368,10 +371,12 @@ class BlockExecutorTest(BaseApiTestCase):
             *args,
             **kwargs,
         ):
-            return dict(output=[
-                child_data,
-                child_metadata,
-            ])
+            return dict(
+                output=[
+                    child_data,
+                    child_metadata,
+                ]
+            )
 
         with patch.object(self.pipeline1, 'get_block', lambda _x: block1):
             with patch.object(block1, 'execute_sync', __execute_sync):
@@ -406,7 +411,7 @@ class BlockExecutorTest(BaseApiTestCase):
             execution_partition=pipeline_run.execution_partition,
         )
 
-        self.assertTrue(isinstance(executor.block, DynamicChildController))
+        self.assertEqual(executor.block.__class__, DynamicChildController)
 
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
@@ -415,9 +420,11 @@ class BlockExecutorTest(BaseApiTestCase):
         block_run_dynamic_child_spawn = BlockRun.create(
             block_uuid=f'{block2.uuid}:0',
             pipeline_run_id=pipeline_run.id,
-            metrics=dict(dynamic_block_indexes=dict({
-                block1.uuid: 0,
-            }))
+            metrics=dict(
+                dynamic_block_indexes=dict({
+                    block1.uuid: 0,
+                })
+            ),
         )
         executor = BlockExecutor(
             pipeline,
