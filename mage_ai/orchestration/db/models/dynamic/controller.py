@@ -69,6 +69,4 @@ def is_ready_to_process_data(pipeline, block_run, block_runs) -> bool:
     ]
     ready = all([t[1] or t[2] for t in results])
 
-    # print(block_run.id, block_run.block_uuid, ready, results)
-
     return ready
