@@ -9,6 +9,14 @@ from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline
 
 
+def load_dynamic_block_child_data(*args, **kwargs):
+    arr = [i + 10 for i in range(0, 2)]
+    return [
+        arr,
+        [dict(block_uuid=f'child_{i}') for i in arr],
+    ]
+
+
 def load(*args, **kwargs):
     buckets = 10
 

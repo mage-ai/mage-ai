@@ -41,7 +41,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
+from mage_ai.settings.server import DYNAMIC_BLOCKS_V2, VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
@@ -86,18 +86,19 @@ class BlockExecutor:
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
-        if (
-            self.block
-            and is_dynamic_block_child(self.block)
-            and (
-                self.block.uuid == block_uuid
-                or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
-            )
-        ):
-            self.block = DynamicChildController(
-                self.block,
-                block_run_id=block_run_id,
-            )
+        if not DYNAMIC_BLOCKS_V2:
+            if (
+                self.block
+                and is_dynamic_block_child(self.block)
+                and (
+                    self.block.uuid == block_uuid
+                    or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
+                )
+            ):
+                self.block = DynamicChildController(
+                    self.block,
+                    block_run_id=block_run_id,
+                )
 
         self.block_run = None
 
