@@ -321,9 +321,11 @@ def dynamic_block_index_paths(variable) -> List[Tuple[int, str, str]]:
     return indexes
 
 
-def __get_part_uuids(variable, path: str) -> List[str]:
-    part_uuids = []
+def __get_part_uuids(variable, path: str) -> Optional[List[str]]:
+    part_uuids = None
     for chunk_uuid in variable.storage.listdir(path):
         if chunk_uuid.isdigit() and variable.storage.isdir(os.path.join(path, chunk_uuid)):
+            if part_uuids is None:
+                part_uuids = []
             part_uuids.append(chunk_uuid)
     return part_uuids

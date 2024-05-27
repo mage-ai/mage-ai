@@ -12,6 +12,9 @@ import polars as pl
 
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.dynamic.counter import (
+    DynamicChildItemCounter,
+)
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
@@ -459,12 +462,18 @@ def get_dynamic_children_count(
     block: Any,
     dynamic_block_index: Optional[int] = None,
     execution_partition: Optional[str] = None,
+    variable_uuid: Optional[str] = None,
 ) -> Tuple[Optional[int], bool]:
     output_variable = __get_first_data_output_variable(
         block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index
     )
     if output_variable:
-        return output_variable.items_count(), output_variable.is_partial_data_readable()
+        return DynamicChildItemCounter(
+            block,
+            dynamic_block_index=dynamic_block_index,
+            partition=execution_partition,
+            variable_uuid=output_variable.uuid,
+        ).item_count(), output_variable.is_partial_data_readable()
 
     return None, False
 

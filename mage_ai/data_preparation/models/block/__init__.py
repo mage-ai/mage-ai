@@ -93,7 +93,7 @@ from mage_ai.data_preparation.models.block.utils import (
     is_valid_print_variable,
     output_variables,
 )
-from mage_ai.data_preparation.models.constants import (
+from mage_ai.data_preparation.models.constants import (  # PIPELINES_FOLDER,
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     CALLBACK_STATUSES,
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -103,7 +103,6 @@ from mage_ai.data_preparation.models.constants import (
     DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
-    PIPELINES_FOLDER,
     BlockColor,
     BlockLanguage,
     BlockStatus,
@@ -157,7 +156,8 @@ from mage_ai.shared.path_fixer import (
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
-from mage_ai.system.memory.manager import MemoryManager
+
+# from mage_ai.system.memory.manager import MemoryManager
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 from mage_ai.system.models import ResourceUsage
 
@@ -1652,22 +1652,22 @@ class Block(
 
             return output
 
-        if MEMORY_MANAGER_V2:
-            metadata = {}
-            if execution_partition:
-                metadata['execution_partition'] = execution_partition
-            if from_notebook:
-                metadata['origin'] = 'ide'
-            with MemoryManager(
-                scope_uuid=os.path.join(
-                    *([PIPELINES_FOLDER, self.pipeline_uuid] if self.pipeline else ['']),
-                    self.uuid,
-                ),
-                process_uuid='block.execute_sync',
-                repo_path=self.repo_path,
-                metadata=metadata,
-            ):
-                return __execute()
+        # if MEMORY_MANAGER_V2:
+        #     metadata = {}
+        #     if execution_partition:
+        #         metadata['execution_partition'] = execution_partition
+        #     if from_notebook:
+        #         metadata['origin'] = 'ide'
+        #     with MemoryManager(
+        #         scope_uuid=os.path.join(
+        #             *([PIPELINES_FOLDER, self.pipeline_uuid] if self.pipeline else ['']),
+        #             self.uuid,
+        #         ),
+        #         process_uuid='block.execute_sync',
+        #         repo_path=self.repo_path,
+        #         metadata=metadata,
+        #     ):
+        #         return __execute()
         return __execute()
 
     def post_process_output(self, output: Dict) -> List:

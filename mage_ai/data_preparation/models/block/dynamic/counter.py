@@ -4,11 +4,6 @@ from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data_preparation.models.block.dynamic.constants import (
     CHILD_DATA_VARIABLE_UUID,
 )
-from mage_ai.data_preparation.models.block.dynamic.utils import (
-    is_dynamic_block,
-    is_dynamic_block_child,
-    should_reduce_output,
-)
 from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
@@ -34,10 +29,6 @@ class DynamicItemCounter:
         self.dynamic_block_index = dynamic_block_index
         self.variable_uuid = variable_uuid or CHILD_DATA_VARIABLE_UUID
         self.partition = partition
-
-        self.dynamic = is_dynamic_block(self.block)
-        self.dynamic_child = is_dynamic_block_child(self.block)
-        self.reduce_output = should_reduce_output(self.block)
 
         self._output = None
         self._summary_information = None
@@ -95,6 +86,7 @@ class DynamicBlockItemCounter(DynamicItemCounter):
             num_rows = metadata.get('num_rows') or 0
             if num_rows is not None and str(num_rows).isdigit():
                 return int(str(num_rows))
+
         return 0
 
     def item_count(self) -> int:
@@ -120,6 +112,7 @@ class DynamicBlockItemCounter(DynamicItemCounter):
                         filename.parquet
         4. Read the file into memory (worst case)
         """
+
         if (
             self.summary_information is not None
             and self.summary_information.statistics is not None
@@ -154,6 +147,10 @@ class DynamicChildItemCounter(DynamicItemCounter):
                         filename.extension
         2. If dynamic child block reduces output, the count is 1
         """
+        from mage_ai.data_preparation.models.block.dynamic.utils import (
+            should_reduce_output,
+        )
+
         if should_reduce_output(self.block):
             return 1
 

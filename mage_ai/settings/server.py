@@ -199,6 +199,8 @@ except ValueError:
 # -------------------------
 # System level features
 # -------------------------
+DYNAMIC_BLOCKS_VERSION = int(os.getenv('MEMORY_MANAGER_VERSION', '1'))
+DYNAMIC_BLOCKS_V2 = DYNAMIC_BLOCKS_VERSION >= 2
 MEMORY_MANAGER_VERSION = int(os.getenv('MEMORY_MANAGER_VERSION', '1'))
 MEMORY_MANAGER_PANDAS_VERSION = int(os.getenv('MEMORY_MANAGER_PANDAS_VERSION', '1'))
 MEMORY_MANAGER_POLARS_VERSION = int(os.getenv('MEMORY_MANAGER_POLARS_VERSION', '1'))

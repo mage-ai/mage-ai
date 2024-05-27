@@ -150,8 +150,8 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
         metadata1 = dynamic1.get_variable_object(
             dynamic1.uuid, variable_uuid='output_1'
         ).read_data()
-        print(dynamic1.uuid, len(child_data1), len(metadata1))  # 2
         self.assertEqual(len(child_data1), len(metadata1))
+        self.assertEqual(len(child_data1), 2)
 
         child_data2 = dynamic2.get_variable_object(
             dynamic2.uuid, variable_uuid='output_0'
@@ -159,8 +159,8 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
         metadata2 = dynamic2.get_variable_object(
             dynamic2.uuid, variable_uuid='output_1'
         ).read_data()
-        print(dynamic2.uuid, len(child_data2), len(metadata2))  # 1
         self.assertEqual(len(child_data2), len(metadata2))
+        self.assertEqual(len(child_data2), 1)
 
         child2x_outputs = []
         child2x_metadata = []
@@ -175,49 +175,41 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
             ).read_data()
             child2x_outputs.append(out0)
             child2x_metadata.append(out1)
-        print(child2x.uuid, len(child2x_outputs), len(child2x_metadata))  # 2
-
         self.assertEqual(len(child2x_outputs), len(child2x_metadata))
         self.assertEqual(len(child2x_outputs), len(child_data1) * len(child_data2))
+        self.assertEqual(len(child2x_outputs), 2)
 
         child1x_outputs = []
-        for i, combo in enumerate(child2x_outputs):
-            print(i, combo)
+        for i, _combo in enumerate(child2x_outputs):
             child1x.execute_sync(dynamic_block_index=i)
             out0 = child1x.get_variable_object(
                 child1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
             ).read_data()
             child1x_outputs.append(out0)
-        print(child1x_outputs)  # 1
-
         self.assertEqual(len(child1x_outputs), len(child2x_outputs))
+        self.assertEqual(len(child1x_outputs), 2)
 
         dynamic_spawn_2x_outputs = []
         dynamic_spawn_2x_combos = build_combinations_for_dynamic_child(dynamic_spawn_2x)
-        print(len(dynamic_spawn_2x_combos), dynamic_spawn_2x_combos)  # 4
         for i in range(len(dynamic_spawn_2x_combos)):
             dynamic_spawn_2x.execute_sync(dynamic_block_index=i)
             out = dynamic_spawn_2x.get_variable_object(
                 dynamic_spawn_2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
             ).read_data()
             dynamic_spawn_2x_outputs.append(out)
-        print(dynamic_spawn_2x_outputs)
-
         self.assertEqual(
             len(dynamic_spawn_2x_outputs), len(child1x_outputs) * len(child2x_outputs)
         )
+        self.assertEqual(len(dynamic_spawn_2x_outputs), 4)
 
         child_1x_spawn_1x_outputs = []
         child_1x_spawn_1x_combos = build_combinations_for_dynamic_child(child_1x_spawn_1x)
-        print(len(child_1x_spawn_1x_combos), child_1x_spawn_1x_combos)  # 24
         for i in range(len(child_1x_spawn_1x_combos)):
             child_1x_spawn_1x.execute_sync(dynamic_block_index=i)
             out = child_1x_spawn_1x.get_variable_object(
                 child_1x_spawn_1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
             ).read_data()
             child_1x_spawn_1x_outputs.append(out)
-        print(child_1x_spawn_1x_outputs)
-
         self.assertEqual(
             len(child_1x_spawn_1x_outputs),
             (
@@ -236,49 +228,40 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 sum([len(arr) for arr in dynamic_spawn_2x_outputs])  # 12
             ),
         )
+        self.assertEqual(len(child_1x_spawn_1x_outputs), 24)
 
         replica_outputs = []  # A lot
         replica_combos = build_combinations_for_dynamic_child(replica)
-        print(len(replica_combos), replica_combos)  # 12
-        for i, combo in enumerate(replica_combos):
-            print(i, combo)
+        for i, _combo in enumerate(replica_combos):
             replica.execute_sync(dynamic_block_index=i)
             out0 = replica.get_variable_object(
                 replica.uuid, dynamic_block_index=i, variable_uuid='output_0'
             ).read_data()
             replica_outputs.append(out0)
-        print(replica_outputs)
-
         self.assertEqual(
             # child_1x_spawn_1x reduces output to 1, so we exclude it
             len(replica_outputs),
             # Dynamic and dynamic child: 12
             sum([len(arr) for arr in dynamic_spawn_2x_outputs]),
         )
+        self.assertEqual(len(replica_outputs), 12)
 
         # Skip this one
-        # child_1x_childspawn_1x_reduce_outputs = []
-        # child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
-        #     child_1x_childspawn_1x_reduce
-        # )
-        # # 648
-        # print(len(child_1x_childspawn_1x_reduce_combos), child_1x_childspawn_1x_reduce_combos)
-        # for i, combo in enumerate(child_1x_childspawn_1x_reduce_combos):
-        #     print(i, combo)
-        #     child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
-        #     out0 = child_1x_childspawn_1x_reduce.get_variable_object(
-        #         child_1x_childspawn_1x_reduce.uuid,
-        #         dynamic_block_index=i,
-        #         variable_uuid='output_0',
-        #     ).read_data()
-        #     child_1x_childspawn_1x_reduce_outputs.append(out0)
-        # print(child_1x_childspawn_1x_reduce_outputs)
+        child_1x_childspawn_1x_reduce_outputs = []
+        child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
+            child_1x_childspawn_1x_reduce
+        )
+        for i, _combo in enumerate(child_1x_childspawn_1x_reduce_combos):
+            child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
+            out0 = child_1x_childspawn_1x_reduce.get_variable_object(
+                child_1x_childspawn_1x_reduce.uuid,
+                dynamic_block_index=i,
+                variable_uuid='output_0',
+            ).read_data()
+            child_1x_childspawn_1x_reduce_outputs.append(out0)
 
         # child_1x_spawn_1x reduces output to 1
-        # print(
-        #     len(child_1x_childspawn_1x_reduce_outputs),
-        #     len(child_data1) * len(replica_outputs),
-        # )
+        self.assertEqual(len(child_1x_childspawn_1x_reduce_outputs), 648)
 
     def test_input_data_and_keyword_arguments(self):
         pass

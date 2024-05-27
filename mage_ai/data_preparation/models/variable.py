@@ -185,26 +185,6 @@ class Variable:
 
         return self._part_uuids
 
-    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
-        if MEMORY_MANAGER_V2:
-            row_count = None
-            if self.part_uuids is not None:
-                if include_parts:
-                    row_count = self.__parquet_num_rows(self.variable_path)
-                else:
-                    row_count = len(self.part_uuids)
-            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
-                statistics = self.storage.read_json_file(
-                    os.path.join(self.variable_path, 'statistics.json')
-                )
-                if statistics and isinstance(statistics, dict):
-                    row_count = statistics.get('original_row_count')
-            else:
-                row_count = self.__parquet_num_rows(self.variable_path)
-
-            if row_count is not None and isinstance(row_count, (float, int, str)):
-                return int(row_count)
-
     def get_resource_usage(self, index: Optional[int] = None) -> Optional[ResourceUsage]:
         if self.storage.path_exists(self.resource_usage_path(index)):
             try:
@@ -243,7 +223,9 @@ class Variable:
                     if self.variable_type:
                         self.variable_type = VariableType(self.variable_type)
                     self.variable_types = metadata.get('types') or []
-                    self.variable_types = [VariableType(t) for t in (self.variable_types or [])]
+                    self.variable_types = [
+                        VariableType(t) for t in (self.variable_types or []) if t is not None
+                    ]
             except Exception:
                 traceback.print_exc()
 
@@ -421,9 +403,9 @@ class Variable:
                 spark=spark,
             )
 
-        if MEMORY_MANAGER_V2:
-            with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
-                return __read()
+        # if MEMORY_MANAGER_V2 and False:
+        #     with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
+        #         return __read()
         return __read()
 
     def __read_data(
@@ -537,15 +519,15 @@ class Variable:
                 spark=spark,
             )
 
-        if MEMORY_MANAGER_V2:
-            with MemoryManager(
-                scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
-            ):
-                data = await __read()
-        else:
-            data = await __read()
+        # if MEMORY_MANAGER_V2 and False:
+        #     with MemoryManager(
+        #         scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
+        #     ):
+        #         data = await __read()
+        # else:
+        #     data = await __read()
 
-        return data
+        return await __read()
 
     async def __read_data_async(
         self,
@@ -703,7 +685,7 @@ class Variable:
         return self.variable_path
 
     def write_data(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2:
+        if MEMORY_MANAGER_V2 and False:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
                 self.__write_data(data)
         else:
@@ -797,7 +779,7 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2:
+        if MEMORY_MANAGER_V2 and False:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
             ):
