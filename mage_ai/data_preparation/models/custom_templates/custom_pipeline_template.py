@@ -83,6 +83,7 @@ class CustomPipelineTemplate(BaseConfig):
             description=description,
             name=name,
             pipeline=pipeline_dict,
+            repo_path=pipeline.repo_path,
             template_uuid=clean_name(template_uuid, [os.sep]) if template_uuid else template_uuid,
         )
 
@@ -164,10 +165,13 @@ class CustomPipelineTemplate(BaseConfig):
         return pipeline
 
     def to_dict(self) -> Dict:
-        return merge_dict(self.to_dict_base(), dict(
-            template_uuid=self.template_uuid,
-            uuid=self.uuid,
-        ))
+        return merge_dict(
+            self.to_dict_base(),
+            dict(
+                template_uuid=self.template_uuid,
+                uuid=self.uuid,
+            ),
+        )
 
     def to_dict_base(self) -> Dict:
         return dict(
