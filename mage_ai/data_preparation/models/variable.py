@@ -47,10 +47,13 @@ from mage_ai.data_preparation.models.variables.constants import (
     DATAFRAME_CSV_FILE,
     DATAFRAME_PARQUET_FILE,
     DATAFRAME_PARQUET_SAMPLE_FILE,
+    JOBLIB_FILE,
+    JOBLIB_OBJECT_FILE,
     JSON_FILE,
     JSON_SAMPLE_FILE,
     METADATA_FILE,
     RESOURCE_USAGE_FILE,
+    UBJSON_MODEL_FILENAME,
 )
 from mage_ai.data_preparation.models.variables.summarizer import get_part_uuids
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -294,6 +297,16 @@ class Variable:
         # TODO (dangerous): How do we delete other variable types?
 
         return self.__delete_json()
+
+    def data_exists(self) -> bool:
+        path = self.__data_file_path()
+        num_rows = self.__parquet_num_rows(path)
+        parts = self.part_uuids
+        return (
+            (parts is not None and len(parts) >= 1)
+            or (num_rows is not None and num_rows >= 1)
+            or self.storage.path_exists(path)
+        )
 
     def is_partial_data_readable(
         self, part_uuid: Optional[Union[int, str]] = None, path: Optional[str] = None
@@ -934,6 +947,24 @@ class Variable:
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
             self.storage.remove_dir(self.variable_path)
+
+    def __data_file_path(self) -> str:
+        if self.variable_type in [
+            VariableType.DATAFRAME,
+            VariableType.POLARS_DATAFRAME,
+            VariableType.SERIES_PANDAS,
+            VariableType.SERIES_POLARS,
+        ]:
+            return os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+        elif VariableType.GEO_DATAFRAME == self.variable_type:
+            return os.path.join(self.variable_path, 'data.sh')
+        elif VariableType.MODEL_SKLEARN == self.variable_type:
+            return os.path.join(self.variable_path, JOBLIB_FILE)
+        elif VariableType.MODEL_XGBOOST == self.variable_type:
+            return os.path.join(self.variable_path, UBJSON_MODEL_FILENAME)
+        elif VariableType.CUSTOM_OBJECT == self.variable_type:
+            return os.path.join(self.variable_path, JOBLIB_OBJECT_FILE)
+        return os.path.join(self.variable_path, JSON_FILE)
 
     def __read_json(
         self,

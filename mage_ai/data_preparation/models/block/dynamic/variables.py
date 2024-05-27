@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.variables.utils import (
     get_first_data_output_variable,
 )
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
 from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
@@ -360,7 +361,13 @@ def delete_variable_objects_for_dynamic_child(
         execution_partition=execution_partition,
     )
     if variable_objects:
+        write_policy = block.block.write_settings.mode
         for variable_object in variable_objects:
+            if write_policy and variable_object.data_exists():
+                if ExportWritePolicy.FAIL == write_policy:
+                    raise Exception(f'Write policy for block {block.uuid} is {write_policy}.')
+                elif ExportWritePolicy.APPEND == write_policy:
+                    return
             variable_object.delete()
 
 
@@ -488,6 +495,7 @@ def get_partial_dynamic_block_outputs(
             output_variable.uuid,
             batch_settings=batch_settings,
             chunks=chunks,
+            partition=execution_partition,
             input_data_types=input_data_types,
             part_uuid=int(index),
         )

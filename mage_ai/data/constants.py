@@ -39,3 +39,7 @@ class InputDataType(str, Enum):
     GENERATOR = 'generator'
     # Input variable will be a Callable function that loads the data; e.g. Variable object
     READER = 'reader'
+
+
+class ReadModeType(str, Enum):
+    pass

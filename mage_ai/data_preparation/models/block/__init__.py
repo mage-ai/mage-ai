@@ -135,6 +135,7 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
@@ -2106,6 +2107,24 @@ class Block(
                 else [],
             )
 
+        append_data = ExportWritePolicy.APPEND == self.write_settings.mode
+        part_index = None
+        if append_data:
+            block_uuid, changed = uuid_for_output_variables(
+                self,
+                block_uuid=self.uuid,
+                dynamic_block_index=dynamic_block_index,
+            )
+            variable_object = self.get_variable_object(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+            )
+            part_uuids = variable_object.part_uuids
+            if part_uuids is not None:
+                part_index = len(part_uuids)
+                if global_vars:
+                    global_vars.update(part_index=part_index)
+
         if MEMORY_MANAGER_V2:
             log_message_prefix = self.uuid
             if self.pipeline:
@@ -2130,7 +2149,7 @@ class Block(
         if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
             variable_types = []
             dynamic_child = is_dynamic_block_child(self)
-            output_count = 0
+            output_count = part_index if part_index is not None else 0
             if output is not None and is_iterable(output):
                 if dynamic_child or self.is_dynamic_child:
                     # Each child will delete its own data
@@ -2278,15 +2297,13 @@ class Block(
                 upstream block UUIDs.
         """
 
-        if any([
-            is_dynamic_block(
-                upstream_block,
-            )
-            or is_dynamic_block_child(
-                upstream_block,
-            )
-            for upstream_block in self.upstream_blocks
-        ]):
+        if (
+            any([
+                is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block)
+                for upstream_block in self.upstream_blocks
+            ])
+            or self.is_dynamic_child
+        ):
             return fetch_input_variables_for_dynamic_upstream_blocks(
                 self,
                 input_args,
@@ -2420,10 +2437,12 @@ class Block(
         chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         input_data_types: Optional[List[InputDataType]] = None,
         part_uuid: Optional[Union[int, str]] = None,
+        partition: Optional[str] = None,
     ):
         return self.get_variable_object(
             self.uuid,
             variable_uuid,
+            partition=partition,
         ).read_partial_data(
             batch_settings=batch_settings,
             chunks=chunks,
@@ -3667,12 +3686,20 @@ class Block(
         )
 
         for variable_uuid in variable_uuids or variable_uuids_all:
-            self.variable_manager.delete_variable(
+            variable_object = self.variable_manager.get_variable_object(
                 self.pipeline_uuid,
                 block_uuid,
                 variable_uuid,
                 partition=execution_partition,
             )
+            write_policy = self.write_settings.mode
+            if write_policy and variable_object.data_exists():
+                if ExportWritePolicy.FAIL == write_policy:
+                    raise Exception(f'Write policy for block {self.uuid} is {write_policy}.')
+                elif ExportWritePolicy.APPEND == write_policy:
+                    return
+
+            variable_object.delete()
 
     def aggregate_summary_info(self, execution_partition: Optional[str] = None):
         """
