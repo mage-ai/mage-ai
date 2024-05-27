@@ -80,7 +80,7 @@ def load_polars_dataframe(*args, **kwargs):
     from mage_ai.data.tabular.mocks import create_dataframe
 
     return [
-        create_dataframe(n_rows=3, use_pandas=False),
+        create_dataframe(n_rows=1, use_pandas=False),
     ]
 
 
@@ -121,7 +121,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 self.pipeline.add_block(dynamic1)
 
                 dynamic2 = self.create_block(
-                    name='dynamic2', func=load_data2, configuration=dict(dynamic=True)
+                    name='dynamic2', func=load_polars_dataframe, configuration=dict(dynamic=True)
                 )
                 self.pipeline.add_block(dynamic2)
 
@@ -135,7 +135,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
 
                 dynamic_spawn_2x = self.create_block(
                     name='dynamic_spawn_2x',
-                    func=load_polars_dataframe,
+                    func=transform_2_1,
                     configuration=dict(dynamic=True),
                 )
                 self.pipeline.add_block(
