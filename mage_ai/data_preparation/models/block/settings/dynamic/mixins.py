@@ -1,7 +1,11 @@
+from typing import Optional
+
 from mage_ai.data_preparation.models.block.settings.dynamic.constants import ModeType
 from mage_ai.data_preparation.models.block.settings.dynamic.models import (
     DynamicConfiguration,
+    ModeSettings,
 )
+from mage_ai.shared.array import find
 
 
 class DynamicMixin:
@@ -66,8 +70,12 @@ class DynamicMixin:
 
     @property
     def is_dynamic_stream_mode_enabled(self) -> bool:
+        return self.settings_for_mode(ModeType.STREAM) is not None
+
+    def settings_for_mode(self, mode_type: ModeType) -> Optional[ModeSettings]:
         modes = self.__dynamic_configuration().modes
-        return modes is not None and ModeType.STREAM in modes
+        if modes is not None:
+            return find(lambda ms: ms.type == mode_type, modes)
 
     def should_reduce_output_from_upstream_block(self, block) -> bool:
         reduce_output_upstream = self.__dynamic_configuration().reduce_output_upstream or []

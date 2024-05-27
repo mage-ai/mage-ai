@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 import inflection
 
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
@@ -67,7 +68,8 @@ class BaseClass:
                     model.set_value(key, value)
             except AttributeError as err:
                 print(f'[WARNING] {cls.__name__}.load: {err}')
-                raise err
+                if is_debug():
+                    raise err
 
         return model
 

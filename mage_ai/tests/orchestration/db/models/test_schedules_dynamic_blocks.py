@@ -63,7 +63,7 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
             'dynamic1',
             func=load_dynamic_block_child_data,
             configuration=dict(
-                dynamic=dict(parent=True, modes=[ModeType.STREAM.value]),
+                dynamic=dict(parent=True, modes=[dict(type=ModeType.STREAM.value)]),
             ),
         )
         self.pipeline.add_block(dynamic1)
@@ -72,7 +72,7 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
             'dynamic2',
             func=load_dynamic_block_child_data,
             configuration=dict(
-                dynamic=dict(parent=True, modes=[ModeType.STREAM.value]),
+                dynamic=dict(parent=True, modes=[dict(type=ModeType.STREAM.value)]),
             ),
         )
         self.pipeline.add_block(dynamic2, upstream_block_uuids=[block2.uuid])

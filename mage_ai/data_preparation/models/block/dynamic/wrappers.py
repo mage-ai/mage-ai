@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import BlockRun
 
 
@@ -33,6 +34,10 @@ class DynamicBlockWrapperBase:
             return _missing
 
         return val
+
+    @property
+    def pipeline(self) -> Pipeline:
+        return self.block.pipeline
 
     def block_run(self) -> BlockRun:
         if self._block_run:
