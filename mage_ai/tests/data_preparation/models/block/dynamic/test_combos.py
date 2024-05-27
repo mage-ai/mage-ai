@@ -73,6 +73,7 @@ def load_pandas_dataframe(*args, **kwargs):
 
     return [
         create_dataframe(n_rows=2, use_pandas=True),
+        [dict(block_uuid='child_0'), dict(block_uuid='child_1')],
     ]
 
 
@@ -81,6 +82,7 @@ def load_polars_dataframe(*args, **kwargs):
 
     return [
         create_dataframe(n_rows=1, use_pandas=False),
+        [dict(block_uuid='child_3')],
     ]
 
 

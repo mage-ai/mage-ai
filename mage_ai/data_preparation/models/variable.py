@@ -1350,6 +1350,7 @@ class Variable:
         else:
             df_output_serialized = df_output
 
+        df_output_serialized.columns = [str(col) for col in df_output_serialized.columns]
         self.storage.write_parquet(
             df_output_serialized,
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
