@@ -71,7 +71,6 @@ from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -1036,12 +1035,8 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         executable_block_runs = []
         for block_run in self.initial_block_runs:
             block = pipeline.get_block(block_run.block_uuid)
-            is_dynamic = block is not None and is_dynamic_block(block)
-            is_dynamic_child_or_reduce = block is not None and is_dynamic_block_child(
-                block, include_reduce_output=True
-            )
 
-            if DYNAMIC_BLOCKS_V2 and (is_dynamic or is_dynamic_child_or_reduce):
+            if block is not None and block.is_dynamic_streaming:
                 if is_ready_to_process_data(pipeline, block_run, block_runs_all):
                     executable_block_runs.append(block_run)
                 continue

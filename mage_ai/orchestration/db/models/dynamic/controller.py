@@ -1,9 +1,4 @@
 from mage_ai.data_preparation.models.block.dynamic.models import DynamicRun
-from mage_ai.data_preparation.models.block.dynamic.shared import (
-    is_dynamic_block,
-    is_dynamic_block_child,
-    should_reduce_output,
-)
 
 
 def is_ready_to_process_data(pipeline, block_run, block_runs) -> bool:
@@ -33,33 +28,33 @@ def is_ready_to_process_data(pipeline, block_run, block_runs) -> bool:
         run = mapping[block_inner.uuid]
         run.add(br)
 
-    def __condition_1(upstream_block, mapping=mapping) -> bool:
+    def __condition_1(upstream_block, block=block, mapping=mapping) -> bool:
         run = mapping.get(upstream_block.uuid)
         if not run:
             return False
 
         return (
             (
-                is_dynamic_block(upstream_block)
-                or is_dynamic_block_child(upstream_block, include_reduce_output=True)
+                upstream_block.should_dynamically_generate_block(block)
+                or upstream_block.is_dynamic_child
             )
-            and not should_reduce_output(upstream_block)
+            and not upstream_block.should_reduce_output
             and (
                 run.block_run.status
                 in [run.block_run.BlockRunStatus.COMPLETED, run.block_run.BlockRunStatus.RUNNING]
             )
         )
 
-    def __condition_2(upstream_block, mapping=mapping) -> bool:
+    def __condition_2(upstream_block, block=block, mapping=mapping) -> bool:
         run = mapping.get(upstream_block.uuid)
         if not run:
             return False
 
         return (
-            should_reduce_output(upstream_block)
+            upstream_block.should_reduce_output
             or not (
-                is_dynamic_block(upstream_block)
-                or is_dynamic_block_child(upstream_block, include_reduce_output=True)
+                upstream_block.should_dynamically_generate_block(block)
+                or upstream_block.is_dynamic_child
             )
         ) and (run.block_run.status in [run.block_run.BlockRunStatus.COMPLETED])
 

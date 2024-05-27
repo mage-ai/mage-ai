@@ -1,6 +1,6 @@
-import os
 from unittest.mock import patch
 
+from mage_ai.data_preparation.models.block.settings.dynamic.constants import ModeType
 from mage_ai.orchestration.db.models.schedules import BlockRun
 from mage_ai.tests.data_preparation.models.test_blocks_helper import (
     BlockHelperTest,
@@ -11,7 +11,6 @@ from mage_ai.tests.data_preparation.models.test_blocks_helper import (
 from mage_ai.tests.factory import create_pipeline_run
 
 
-@patch.dict(os.environ, {'DYNAMIC_BLOCKS_V2': '2'})
 class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
     def setUp(self):
         super().setUp()
@@ -21,6 +20,7 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
         self.pipeline.delete()
         super().tearDown()
 
+    @patch.multiple('mage_ai.settings.server', DYNAMIC_BLOCKS_V2=True)
     def test_executable_block_runs(self):
         """
         Combinations of upstream blocks:
@@ -60,12 +60,20 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
 
         # Dynamic blocks
         dynamic1 = self.create_block(
-            'dynamic1', func=load_dynamic_block_child_data, configuration=dict(dynamic=True)
+            'dynamic1',
+            func=load_dynamic_block_child_data,
+            configuration=dict(
+                dynamic=dict(parent=True, modes=[ModeType.STREAM.value]),
+            ),
         )
         self.pipeline.add_block(dynamic1)
 
         dynamic2 = self.create_block(
-            'dynamic2', func=load_dynamic_block_child_data, configuration=dict(dynamic=True)
+            'dynamic2',
+            func=load_dynamic_block_child_data,
+            configuration=dict(
+                dynamic=dict(parent=True, modes=[ModeType.STREAM.value]),
+            ),
         )
         self.pipeline.add_block(dynamic2, upstream_block_uuids=[block2.uuid])
 
@@ -98,7 +106,9 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
         # Reduce outputs
         # # Reduce output from dynamic1 children
         dynamic1_child1a_reduce1a = self.create_block(
-            'dynamic1_child1a_reduce1a', func=passthrough, configuration=dict(reduce_output=True)
+            'dynamic1_child1a_reduce1a',
+            func=passthrough,
+            configuration=dict(dynamic=dict(reduce_output=True)),
         )
         self.pipeline.add_block(
             dynamic1_child1a_reduce1a, upstream_block_uuids=[dynamic1_child1a.uuid]
@@ -107,7 +117,7 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
         dynamic1_child1a_child2a_reduce2a = self.create_block(
             'dynamic1_child1a_child2a_reduce2a',
             func=passthrough,
-            configuration=dict(reduce_output=True),
+            configuration=dict(dynamic=dict(reduce_output=True)),
         )
         self.pipeline.add_block(
             dynamic1_child1a_child2a_reduce2a,
@@ -115,7 +125,9 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
         )
         # Reduce output from dynamic2 children
         dynamic2_child1b_reduce1b = self.create_block(
-            'dynamic2_child1b_reduce1b', func=passthrough, configuration=dict(reduce_output=True)
+            'dynamic2_child1b_reduce1b',
+            func=passthrough,
+            configuration=dict(dynamic=dict(reduce_output=True)),
         )
         self.pipeline.add_block(
             dynamic2_child1b_reduce1b, upstream_block_uuids=[dynamic2_child1b.uuid]
@@ -124,7 +136,7 @@ class PipelineRunWithDynamicBlocksTests(BlockHelperTest):
         dynamic2_child1b_child2b_reduce2b = self.create_block(
             'dynamic2_child1b_child2b_reduce2b',
             func=passthrough,
-            configuration=dict(reduce_output=True),
+            configuration=dict(dynamic=dict(reduce_output=True)),
         )
         self.pipeline.add_block(
             dynamic2_child1b_child2b_reduce2b,

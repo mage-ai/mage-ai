@@ -85,34 +85,21 @@ class BlockExecutor:
         self.retry_metadata = dict(attempts=0)
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
+        self.block_run = None
 
-        from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
-
-        if DYNAMIC_BLOCKS_V2:
-            if (
-                self.block
-                and (self.block.is_dynamic_parent or self.block.is_dynamic_child)
-                and self.block.stream_mode_enabled
-            ):
+        # Ensure the original block run is wrapped only, not the clones.
+        if self.block is not None and self.block.is_original_block(block_uuid):
+            if self.block.is_dynamic_streaming:
                 self.block = DynamicBlockFactory(
                     self.block,
                     block_run_id=block_run_id,
                     logger=self.logger,
                 )
-        elif (
-            self.block
-            and is_dynamic_block_child(self.block)
-            and (
-                self.block.uuid == block_uuid
-                or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
-            )
-        ):
-            self.block = DynamicChildController(
-                self.block,
-                block_run_id=block_run_id,
-            )
-
-        self.block_run = None
+            elif is_dynamic_block_child(self.block) and ():
+                self.block = DynamicChildController(
+                    self.block,
+                    block_run_id=block_run_id,
+                )
 
     def execute(
         self,

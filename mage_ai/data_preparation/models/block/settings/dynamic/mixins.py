@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.models.block.dynamic.shared import is_dynamic_block_child
 from mage_ai.data_preparation.models.block.settings.dynamic.constants import ModeType
 from mage_ai.data_preparation.models.block.settings.dynamic.models import (
     DynamicConfiguration,
@@ -17,7 +16,24 @@ class DynamicMixin:
 
     configuration = dict(dynamic=None)
     downstream_blocks = []
+    replicated_block = None
     upstream_blocks = []
+    uuid = None
+    uuid_replicated = None
+
+    def is_original_block(self, block_uuid: str) -> bool:
+        return self.uuid == block_uuid or (
+            self.replicated_block is not None and self.uuid_replicated == block_uuid
+        )
+
+    @property
+    def is_dynamic_streaming(self) -> bool:
+        from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
+
+        return DYNAMIC_BLOCKS_V2 and (
+            (self.is_dynamic_parent and self.is_dynamic_stream_mode_enabled)
+            or self.is_dynamic_child_streaming
+        )
 
     @property
     def is_dynamic_parent(self) -> bool:
@@ -25,14 +41,29 @@ class DynamicMixin:
 
     @property
     def is_dynamic_child(self) -> bool:
-        return is_dynamic_block_child(self, include_reduce_output=True)
+        return any(
+            upstream_block.should_dynamically_generate_block(self)
+            or upstream_block.is_dynamic_child
+            for upstream_block in self.upstream_blocks
+        )
+
+    @property
+    def is_dynamic_child_streaming(self) -> bool:
+        return any(
+            (
+                upstream_block.should_dynamically_generate_block(self)
+                and upstream_block.is_dynamic_stream_mode_enabled
+            )
+            or upstream_block.is_dynamic_child_streaming
+            for upstream_block in self.upstream_blocks
+        )
 
     @property
     def should_reduce_output(self) -> bool:
         return self.__dynamic_configuration().reduce_output is not None
 
     @property
-    def stream_mode_enabled(self) -> bool:
+    def is_dynamic_stream_mode_enabled(self) -> bool:
         modes = self.__dynamic_configuration().modes
         return modes is not None and ModeType.STREAM in modes
 
