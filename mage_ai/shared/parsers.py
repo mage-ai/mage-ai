@@ -72,7 +72,9 @@ def encode_complex(obj):
         return None
     elif isinstance(obj, pd.DataFrame):
         return obj.to_dict(orient='records')
-    elif isinstance(obj, (pd.Index, pd.Series)):
+    elif isinstance(obj, pl.DataFrame):
+        return obj.to_dicts()
+    elif isinstance(obj, (pd.Index, pd.Series, pl.Series)):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)

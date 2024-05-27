@@ -394,15 +394,23 @@ def construct_value(type_info: Dict[str, Union[str, Optional[str]]], value: Any)
             VariableType(type_info['variable_type']),
         )
 
-    if 'Timestamp' == type_name:
+    if isinstance(value, pd.DataFrame):
+        return pd.DataFrame(value)
+    elif isinstance(value, pd.Series):
+        return pd.Series(value)
+    elif isinstance(value, pl.DataFrame):
+        return pl.DataFrame(value)
+    elif isinstance(value, pl.Series):
+        return pl.Series(value)
+    elif 'Timestamp' == type_name:
         return pd.Timestamp(value)
     elif 'datetime' == type_name:
         return datetime.fromisoformat(value)
     elif 'ndarray' == type_name:
         return np.array(value)
-    elif 'DataFrame' == type_name:
+    elif 'DataFrame' == type_name and not isinstance(value, str):
         return pd.DataFrame(value)
-    elif 'Series' == type_name:
+    elif 'Series' == type_name and not isinstance(value, str):
         return pd.Series(value)
     elif 'tuple' == type_name:
         return tuple(value)
