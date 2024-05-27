@@ -300,7 +300,11 @@ def __get_aggregate_summary_info(
 
 
 def get_part_uuids(variable) -> Optional[List[str]]:
-    if not is_output_variable(variable.uuid) or not variable.storage.isdir(variable.variable_path):
+    if (
+        not variable.uuid
+        or not is_output_variable(variable.uuid)
+        or not variable.storage.isdir(variable.variable_path)
+    ):
         return None
 
     return __get_part_uuids(variable, variable.variable_path)
