@@ -459,6 +459,7 @@ def get_dynamic_children_count(
     block: Any,
     dynamic_block_index: Optional[int] = None,
     execution_partition: Optional[str] = None,
+    variable_uuid: Optional[str] = None,
 ) -> Tuple[Optional[int], bool]:
     output_variable = __get_first_data_output_variable(
         block, execution_partition=execution_partition, dynamic_block_index=dynamic_block_index

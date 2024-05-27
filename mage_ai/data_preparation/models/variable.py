@@ -13,7 +13,7 @@ import scipy
 from pandas.api.types import infer_dtype, is_object_dtype
 from pandas.core.indexes.range import RangeIndex
 
-from mage_ai.data.constants import InputDataType
+from mage_ai.data.constants import InputDataType, VariableType
 from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.reader import read_metadata
@@ -42,13 +42,7 @@ from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
-from mage_ai.data_preparation.models.variables.cache import (
-    AggregateInformation,
-    VariableAggregateCache,
-    VariableTypeInformation,
-)
 from mage_ai.data_preparation.models.variables.constants import (
-    DATA_TYPE_FILENAME,
     DATAFRAME_COLUMN_TYPES_FILE,
     DATAFRAME_CSV_FILE,
     DATAFRAME_PARQUET_FILE,
@@ -57,20 +51,11 @@ from mage_ai.data_preparation.models.variables.constants import (
     JSON_SAMPLE_FILE,
     METADATA_FILE,
     RESOURCE_USAGE_FILE,
-    VariableAggregateDataType,
-    VariableAggregateDataTypeFilename,
-    VariableAggregateSummaryGroupType,
-    VariableType,
 )
-from mage_ai.data_preparation.models.variables.utils import is_output_variable
+from mage_ai.data_preparation.models.variables.summarizer import get_part_uuids
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.settings.server import (
-    MEMORY_MANAGER_PANDAS_V2,
-    MEMORY_MANAGER_POLARS_V2,
-    MEMORY_MANAGER_V2,
-)
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import flatten_dict
@@ -188,39 +173,12 @@ class Variable:
 
     @property
     def part_uuids(self) -> Optional[List[str]]:
-        if (
-            not is_output_variable(self.uuid)
-            or self._part_uuids is not None
-            or not self.storage.isdir(self.variable_path)
-        ):
+        if self._part_uuids is not None:
             return self._part_uuids
 
-        part_uuids = self.__get_part_uuids(self.variable_path)
-
-        if len(part_uuids) >= 1:
-            self._part_uuids = part_uuids
+        self._part_uuids = get_part_uuids(self)
 
         return self._part_uuids
-
-    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
-        if MEMORY_MANAGER_V2:
-            row_count = None
-            if self.part_uuids is not None:
-                if include_parts:
-                    row_count = self.__parquet_num_rows(self.variable_path)
-                else:
-                    row_count = len(self.part_uuids)
-            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
-                statistics = self.storage.read_json_file(
-                    os.path.join(self.variable_path, 'statistics.json')
-                )
-                if statistics and isinstance(statistics, dict):
-                    row_count = statistics.get('original_row_count')
-            else:
-                row_count = self.__parquet_num_rows(self.variable_path)
-
-            if row_count is not None and isinstance(row_count, (float, int, str)):
-                return int(row_count)
 
     def get_resource_usage(self, index: Optional[int] = None) -> Optional[ResourceUsage]:
         if self.storage.path_exists(self.resource_usage_path(index)):
@@ -260,14 +218,16 @@ class Variable:
                     if self.variable_type:
                         self.variable_type = VariableType(self.variable_type)
                     self.variable_types = metadata.get('types') or []
-                    self.variable_types = [VariableType(t) for t in (self.variable_types or [])]
+                    self.variable_types = [
+                        VariableType(t) for t in (self.variable_types or []) if t is not None
+                    ]
             except Exception:
                 traceback.print_exc()
 
         if (
             self.variable_type is None
             and not self.variable_types
-            and MEMORY_MANAGER_V2
+            and self.__memory_manager_v2_enabled
             and self.part_uuids is not None
             and len(self.part_uuids) >= 1
         ):
@@ -344,7 +304,7 @@ class Variable:
             - The variable is stored as a parquet file
         """
 
-        return MEMORY_MANAGER_V2 and (
+        return self.__memory_manager_v2_enabled and (
             self.__is_part_readable(part_uuid) or self.__is_parquet_readable(path)
         )
 
@@ -438,9 +398,9 @@ class Variable:
                 spark=spark,
             )
 
-        if MEMORY_MANAGER_V2:
-            with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
-                return __read()
+        # if self.__memory_manager_v2_enabled and False:
+        #     with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
+        #         return __read()
         return __read()
 
     def __read_data(
@@ -453,7 +413,6 @@ class Variable:
     ) -> Any:
         """
         Read variable data.
-
         Args:
             dataframe_analysis_keys (List[str], optional): For DATAFRAME_ANALYSIS variable,
                 only read the selected keys.
@@ -555,15 +514,15 @@ class Variable:
                 spark=spark,
             )
 
-        if MEMORY_MANAGER_V2:
-            with MemoryManager(
-                scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
-            ):
-                data = await __read()
-        else:
-            data = await __read()
+        # if self.__memory_manager_v2_enabled and False:
+        #     with MemoryManager(
+        #         scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
+        #     ):
+        #         data = await __read()
+        # else:
+        #     data = await __read()
 
-        return data
+        return await __read()
 
     async def __read_data_async(
         self,
@@ -589,6 +548,7 @@ class Variable:
             block.to_dict_async
                 GET /pipelines/[:uuid]
         """
+
         if self.data_manager and self.data_manager.readable():
             try:
                 data = await self.data_manager.read_async(
@@ -719,224 +679,8 @@ class Variable:
 
         return self.variable_path
 
-    def aggregate_summary_info(self):
-        """
-        Only consolidate summary files if at least 1 of the following criteria are met:
-            - Dynamic child block
-            - Variable has parts (e.g. output_0/[part_uuid])
-        Consolidate summary files from all subfolders (except data.json):
-            - insights.json
-            - metadata.json
-            - resources.json
-            - sample_data.json
-            - statistics.json
-            - suggestions.json
-            - type.json
-
-        Directory structure
-        [block_uuid]/                  -> self.variable_dir_path
-            [variable_uuid: output_0]/ -> self.variable_path
-                0/
-                    type.json
-                1/
-                    type.json
-                type.json
-            [dynamic_block_index]/
-                [variable_uuid: output_0]/
-                    0/
-                        type.json
-                    1/
-                        type.json
-                    type.json
-        """
-
-        filenames = [key.value for key in VariableAggregateDataTypeFilename]
-
-        """
-        [block_uuid]/                  -> self.variable_dir_path
-            [variable_uuid: output_0]/ -> self.variable_path
-                0/
-                    type.json
-                1/
-                    type.json
-                type.json
-        """
-        mapping_parts = {}
-        if self.part_uuids:
-            for part_uuid in self.part_uuids:  # part_uuid: 0/
-                for filename in filenames:  # filename: type.json
-                    if not mapping_parts.get(filename):
-                        mapping_parts[filename] = []
-
-                    file_path = os.path.join(self.variable_path, part_uuid, filename)
-                    if self.storage.path_exists(file_path):
-                        mapping_parts[filename].append(
-                            self.storage.read_json_file(
-                                file_path,
-                                default_value={},
-                                raise_exception=False,
-                            ),
-                        )
-                    else:
-                        mapping_parts[filename].append({})
-
-        """
-        [block_uuid]/                      -> self.variable_dir_path
-            [dynamic_block_index]/         -> [read all of them]
-                [variable_uuid: output_0]/ -> self.uuid
-                    0/
-                        type.json
-                    1/
-                        type.json
-                    type.json
-        """
-
-        for dirname in VariableAggregateSummaryGroupType:
-            path = os.path.join(self.variable_dir_path, dirname.value)
-            if self.storage.path_exists(path):
-                self.storage.remove_dir(path)
-
-        mapping_dynamic_blocks = {}
-        # dynamic_block_index: 0
-        # index_path:  [block_uuid]/[dynamic_block_index: 0]/
-        # output_path: [block_uuid]/[dynamic_block_index: 0]/[variable_uuid: output_0]/
-        for _dynamic_block_index, _index_path, output_path in self.__dynamic_block_index_paths():
-            mapping_dynamic_children = {}
-            for filename in filenames:  # filename: type.json
-                if not mapping_dynamic_children.get(filename):
-                    mapping_dynamic_children[filename] = []
-
-                part_uuids = self.__get_part_uuids(output_path)
-                if part_uuids and len(part_uuids) >= 1:
-                    arr = []
-                    for part_uuid in part_uuids:
-                        part_path = os.path.join(output_path, part_uuid, filename)
-                        if self.storage.path_exists(part_path):
-                            arr.append(
-                                self.storage.read_json_file(
-                                    part_path,
-                                    default_value={},
-                                    raise_exception=False,
-                                ),
-                            )
-                    mapping_dynamic_children[filename].append(arr)
-                else:
-                    file_path = os.path.join(output_path, filename)
-                    if self.storage.path_exists(file_path):
-                        mapping_dynamic_children[filename].append(
-                            self.storage.read_json_file(
-                                file_path,
-                                default_value={},
-                                raise_exception=True,
-                            ),
-                        )
-                    else:
-                        mapping_dynamic_children[filename].append({})
-
-            for filename, arr in mapping_dynamic_children.items():
-                if not mapping_dynamic_blocks.get(filename):
-                    mapping_dynamic_blocks[filename] = []
-                mapping_dynamic_blocks[filename].append(arr)
-
-        for directory, mapping in [
-            (VariableAggregateSummaryGroupType.DYNAMIC, mapping_dynamic_blocks),
-            (VariableAggregateSummaryGroupType.PARTS, mapping_parts),
-        ]:
-            if len(mapping) == 0:
-                continue
-
-            path = os.path.join(self.variable_path, directory)
-
-            if not self.storage.isdir(path):
-                self.storage.makedirs(path, exist_ok=True)
-            for filename, data in mapping.items():
-                self.storage.write_json_file(os.path.join(path, filename), data)
-
-    def get_aggregate_summary_info(
-        self,
-        data_type: VariableAggregateDataType,
-        default_group_type: Optional[VariableAggregateSummaryGroupType] = None,
-        group_type: Optional[VariableAggregateSummaryGroupType] = None,
-    ) -> VariableAggregateCache:
-        """
-        Get aggregate summary information for the variable.
-
-        Args:
-            group_type (VariableAggregateSummaryGroupType): Group type of the variable.
-
-        Returns:
-            Optional[AggregateInformationData]: Aggregate summary information for the variable.
-
-        Used
-        """
-        cache = VariableAggregateCache()
-
-        path = os.path.join(
-            self.variable_path,
-            group_type.value if group_type else '',
-            DATA_TYPE_FILENAME[data_type],
-        )
-
-        if self.storage.path_exists(path):
-            data = self.storage.read_json_file(
-                path,
-                default_value=None,
-                raise_exception=False,
-            )
-
-            if group_type:
-                group_info = getattr(cache, group_type.value)
-                group_info = AggregateInformation.load(
-                    **(
-                        group_info
-                        if isinstance(group_info, dict)
-                        else group_info.to_dict()
-                        if group_info is not None
-                        else {}
-                    )
-                )
-                group_info.update_attributes(**{
-                    data_type.value: data,
-                })
-                cache.update_attributes(**{
-                    group_type.value: group_info,
-                })
-            else:
-                if (
-                    VariableAggregateDataType.TYPE == data_type.value
-                    and data is not None
-                    and isinstance(data, dict)
-                ):
-                    if data.get('type'):
-                        cache.update_attributes(**{
-                            'type': VariableTypeInformation.load(type=data.get('type')),
-                        })
-
-                    if default_group_type is not None and data.get('types'):
-                        var_types = data.get('types') or []
-                        group_info = getattr(cache, default_group_type.value)
-                        group_info = AggregateInformation.load(
-                            **(
-                                group_info
-                                if isinstance(group_info, dict)
-                                else group_info.to_dict()
-                                if group_info is not None
-                                else {}
-                            )
-                        )
-                        group_info.update_attributes(**{
-                            data_type.value: [
-                                VariableTypeInformation.load(type=val) for val in var_types
-                            ],
-                        })
-                        cache.update_attributes(**{
-                            default_group_type.value: group_info,
-                        })
-
-        return VariableAggregateCache.load(**cache.to_dict())
-
     def write_data(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2:
+        if self.__memory_manager_v2_enabled and False:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
                 self.__write_data(data)
         else:
@@ -1010,6 +754,7 @@ class Variable:
 
                 self.__write_json(data)
 
+        # Shared logic across most variable types
         if self.variable_type != VariableType.SPARK_DATAFRAME:
             # Not write json file in spark data directory to avoid read error
             self.write_metadata()
@@ -1029,7 +774,7 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2:
+        if self.__memory_manager_v2_enabled and False:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
             ):
@@ -1059,7 +804,7 @@ class Variable:
                     )
                 )
             self.resource_usage.update_attributes(
-                directory=self.data_manager.resource_usage.size,
+                directory=self.data_manager.resource_usage.directory,
                 size=self.data_manager.resource_usage.size,
             )
         else:
@@ -1141,6 +886,26 @@ class Variable:
             ]
 
         self.storage.write_json_file(self.metadata_path, metadata)
+
+    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
+        if self.__memory_manager_v2_enabled:
+            row_count = None
+            if self.part_uuids is not None:
+                if include_parts:
+                    row_count = self.__parquet_num_rows(self.variable_path)
+                else:
+                    row_count = len(self.part_uuids)
+            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
+                statistics = self.storage.read_json_file(
+                    os.path.join(self.variable_path, 'statistics.json')
+                )
+                if statistics and isinstance(statistics, dict):
+                    row_count = statistics.get('original_row_count')
+            else:
+                row_count = self.__parquet_num_rows(self.variable_path)
+
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
 
     def __write_resource_usage(self) -> None:
         if self.resource_usage:
@@ -1580,6 +1345,7 @@ class Variable:
         else:
             df_output_serialized = df_output
 
+        df_output_serialized.columns = [str(col) for col in df_output_serialized.columns]
         self.storage.write_parquet(
             df_output_serialized,
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
@@ -1799,28 +1565,18 @@ class Variable:
         )
 
     def __is_parquet_readable(self, path: Optional[str] = None) -> bool:
+        from mage_ai.settings.server import (
+            MEMORY_MANAGER_PANDAS_V2,
+            MEMORY_MANAGER_POLARS_V2,
+        )
+
         if MEMORY_MANAGER_PANDAS_V2 or MEMORY_MANAGER_POLARS_V2:
             row_count = self.__parquet_num_rows(path or self.variable_path)
             return row_count is not None and row_count >= 1
         return False
 
-    def __dynamic_block_index_paths(self) -> List[Tuple[int, str, str]]:
-        if not self.storage.isdir(self.variable_dir_path):
-            return []
+    @property
+    def __memory_manager_v2_enabled(self):
+        from mage_ai.settings.server import MEMORY_MANAGER_V2
 
-        indexes = []
-        for dynamic_block_index in self.storage.listdir(self.variable_dir_path):
-            index_path = os.path.join(self.variable_dir_path, dynamic_block_index)
-            if dynamic_block_index.isdigit() and self.storage.isdir(index_path):
-                output_path = os.path.join(index_path, self.uuid)
-                if self.storage.isdir(output_path):
-                    indexes.append((int(dynamic_block_index), index_path, output_path))
-
-        return indexes
-
-    def __get_part_uuids(self, path: str) -> List[str]:
-        part_uuids = []
-        for chunk_uuid in self.storage.listdir(path):
-            if chunk_uuid.isdigit() and self.storage.isdir(os.path.join(path, chunk_uuid)):
-                part_uuids.append(chunk_uuid)
-        return part_uuids
+        return MEMORY_MANAGER_V2

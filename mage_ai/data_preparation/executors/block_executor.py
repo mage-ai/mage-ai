@@ -2,7 +2,7 @@ import asyncio
 import json
 import traceback
 from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import pytz
 import requests
@@ -22,7 +22,8 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.dynamic.child import DynamicChildController
-from mage_ai.data_preparation.models.block.dynamic.utils import (
+from mage_ai.data_preparation.models.block.dynamic.factory import DynamicBlockFactory
+from mage_ai.data_preparation.models.block.dynamic.shared import (
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
@@ -41,7 +42,6 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
@@ -59,8 +59,8 @@ class BlockExecutor:
         self,
         pipeline,
         block_uuid,
-        execution_partition: str = None,
-        block_run_id: int = None,
+        execution_partition: Optional[str] = None,
+        block_run_id: Optional[int] = None,
     ):
         """
         Initialize the BlockExecutor.
@@ -85,21 +85,22 @@ class BlockExecutor:
         self.retry_metadata = dict(attempts=0)
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
-
-        if (
-            self.block
-            and is_dynamic_block_child(self.block)
-            and (
-                self.block.uuid == block_uuid
-                or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
-            )
-        ):
-            self.block = DynamicChildController(
-                self.block,
-                block_run_id=block_run_id,
-            )
-
         self.block_run = None
+
+        # Ensure the original block run is wrapped only, not the clones.
+        if self.block is not None and self.block.is_original_block(block_uuid):
+            if self.block.is_dynamic_child_streaming:
+                self.block = DynamicBlockFactory(
+                    self.block,
+                    block_run_id=block_run_id,
+                    execution_partition=execution_partition,
+                    logger=self.logger,
+                )
+            elif is_dynamic_block_child(self.block):
+                self.block = DynamicChildController(
+                    self.block,
+                    block_run_id=block_run_id,
+                )
 
     def execute(
         self,
@@ -715,6 +716,9 @@ class BlockExecutor:
                     and self.block.is_destination()
                 )
 
+            if isinstance(self.block, DynamicBlockFactory):
+                should_finish = self.block.is_complete()
+
             if should_finish:
                 self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
 
@@ -748,6 +752,8 @@ class BlockExecutor:
                     logging_tags=tags,
                     pipeline_run=pipeline_run,
                 )
+
+            from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
 
             if VARIABLE_DATA_OUTPUT_META_CACHE:
                 self.block.aggregate_summary_info(execution_partition=self.execution_partition)

@@ -93,7 +93,7 @@ from mage_ai.data_preparation.models.block.utils import (
     is_valid_print_variable,
     output_variables,
 )
-from mage_ai.data_preparation.models.constants import (
+from mage_ai.data_preparation.models.constants import (  # PIPELINES_FOLDER,
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     CALLBACK_STATUSES,
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -103,7 +103,6 @@ from mage_ai.data_preparation.models.constants import (
     DYNAMIC_CHILD_BLOCK_SAMPLE_COUNT_PREVIEW,
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
-    PIPELINES_FOLDER,
     BlockColor,
     BlockLanguage,
     BlockStatus,
@@ -126,6 +125,10 @@ from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateSummaryGroupType,
     VariableType,
 )
+from mage_ai.data_preparation.models.variables.summarizer import (
+    aggregate_summary_info_for_all_variables,
+    get_aggregate_summary_info,
+)
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
@@ -136,11 +139,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
-from mage_ai.settings.server import (
-    DEBUG_MEMORY,
-    MEMORY_MANAGER_V2,
-    VARIABLE_DATA_OUTPUT_META_CACHE,
-)
+from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.array import is_iterable, unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -157,7 +156,8 @@ from mage_ai.shared.path_fixer import (
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
-from mage_ai.system.memory.manager import MemoryManager
+
+# from mage_ai.system.memory.manager import MemoryManager
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 from mage_ai.system.models import ResourceUsage
 
@@ -562,7 +562,8 @@ class Block(
         value = functools.reduce(getattr, keys, cache)
 
         if not value:
-            cache_new = self.variable_manager.get_aggregate_summary_info(
+            cache_new = get_aggregate_summary_info(
+                self.variable_manager,
                 self.pipeline_uuid,
                 self.uuid,
                 variable_uuid,
@@ -1504,6 +1505,7 @@ class Block(
                     variable_mapping: Dict[str, Any],
                     skip_delete: Optional[bool] = None,
                     save_variable_types_only: Optional[bool] = None,
+                    clean_variable_uuid: Optional[bool] = None,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
                     execution_partition=execution_partition,
@@ -1513,6 +1515,7 @@ class Block(
                 ) -> Optional[List[Variable]]:
                     return self.store_variables(
                         variable_mapping,
+                        clean_variable_uuid=clean_variable_uuid,
                         execution_partition=execution_partition,
                         override_outputs=override_outputs,
                         skip_delete=skip_delete,
@@ -1649,22 +1652,22 @@ class Block(
 
             return output
 
-        if MEMORY_MANAGER_V2:
-            metadata = {}
-            if execution_partition:
-                metadata['execution_partition'] = execution_partition
-            if from_notebook:
-                metadata['origin'] = 'ide'
-            with MemoryManager(
-                scope_uuid=os.path.join(
-                    *([PIPELINES_FOLDER, self.pipeline_uuid] if self.pipeline else ['']),
-                    self.uuid,
-                ),
-                process_uuid='block.execute_sync',
-                repo_path=self.repo_path,
-                metadata=metadata,
-            ):
-                return __execute()
+        # if MEMORY_MANAGER_V2:
+        #     metadata = {}
+        #     if execution_partition:
+        #         metadata['execution_partition'] = execution_partition
+        #     if from_notebook:
+        #         metadata['origin'] = 'ide'
+        #     with MemoryManager(
+        #         scope_uuid=os.path.join(
+        #             *([PIPELINES_FOLDER, self.pipeline_uuid] if self.pipeline else ['']),
+        #             self.uuid,
+        #         ),
+        #         process_uuid='block.execute_sync',
+        #         repo_path=self.repo_path,
+        #         metadata=metadata,
+        #     ):
+        #         return __execute()
         return __execute()
 
     def post_process_output(self, output: Dict) -> List:
@@ -2087,6 +2090,10 @@ class Block(
         logger: Optional[Logger] = None,
         logging_tags: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
+        from mage_ai.settings.server import (
+            MEMORY_MANAGER_V2,  # Need here to mock in tests
+        )
+
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
@@ -2125,7 +2132,7 @@ class Block(
             dynamic_child = is_dynamic_block_child(self)
             output_count = 0
             if output is not None and is_iterable(output):
-                if dynamic_child:
+                if dynamic_child or self.is_dynamic_child:
                     # Each child will delete its own data
                     # How do we delete everything ahead of time?
                     delete_variable_objects_for_dynamic_child(
@@ -2170,6 +2177,7 @@ class Block(
 
                     variables = self._store_variables_in_block_function(
                         variable_mapping=variable_mapping,
+                        clean_variable_uuid=False,
                         skip_delete=True,
                         **store_options,
                     )
@@ -2279,8 +2287,9 @@ class Block(
             )
             for upstream_block in self.upstream_blocks
         ]):
-            args_shared = [self, input_args]
-            kwargs_shared = dict(
+            return fetch_input_variables_for_dynamic_upstream_blocks(
+                self,
+                input_args,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_indexes=dynamic_block_indexes,
                 execution_partition=execution_partition,
@@ -2289,20 +2298,7 @@ class Block(
                 block_run_outputs_cache=block_run_outputs_cache,
                 data_integration_settings_mapping=data_integration_settings_mapping,
                 upstream_block_uuids_override=upstream_block_uuids_override,
-                log_message_prefix=f'[{self.uuid}:fetch_input_variables]',
             )
-            if DEBUG_MEMORY:
-                result, _ = execute_with_memory_tracking(
-                    fetch_input_variables_for_dynamic_upstream_blocks,
-                    args=args_shared,
-                    kwargs=kwargs_shared,
-                )
-            else:
-                result = fetch_input_variables_for_dynamic_upstream_blocks(
-                    *args_shared, **kwargs_shared
-                )
-
-            return result
 
         variables = fetch_input_variables(
             self.pipeline,
@@ -3675,6 +3671,7 @@ class Block(
                 self.pipeline_uuid,
                 block_uuid,
                 variable_uuid,
+                partition=execution_partition,
             )
 
     def aggregate_summary_info(self, execution_partition: Optional[str] = None):
@@ -3686,7 +3683,8 @@ class Block(
         if not VARIABLE_DATA_OUTPUT_META_CACHE or not self.variable_manager:
             return
 
-        self.variable_manager.aggregate_summary_info_for_all_variables(
+        aggregate_summary_info_for_all_variables(
+            self.variable_manager,
             self.pipeline_uuid,
             self.uuid,
             partition=execution_partition,
@@ -3695,6 +3693,7 @@ class Block(
     def store_variables(
         self,
         variable_mapping: Dict,
+        clean_variable_uuid: Optional[bool] = True,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
         execution_partition: Optional[str] = None,
@@ -3715,7 +3714,7 @@ class Block(
 
         shared_args = dict(
             clean_block_uuid=not changed,
-            clean_variable_uuid=not is_dynamic and not is_dynamic_child,
+            clean_variable_uuid=not is_dynamic and not is_dynamic_child and clean_variable_uuid,
             partition=execution_partition,
         )
 
@@ -3755,6 +3754,7 @@ class Block(
                 and isinstance(data, pd.DataFrame)
             ):
                 data = spark.createDataFrame(data)
+
             variables.append(
                 self.variable_manager.add_variable(
                     self.pipeline_uuid,
@@ -3767,7 +3767,6 @@ class Block(
                     **shared_args,
                 )
             )
-
         if not skip_delete and not is_dynamic_child and variables_data.get('removed_variables'):
             self.__delete_variables(
                 dynamic_block_index=dynamic_block_index,

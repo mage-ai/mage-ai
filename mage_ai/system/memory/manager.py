@@ -126,6 +126,8 @@ class MemoryManager:
             with open(self.log_path, 'a') as f:
                 f.write(format_log_message(message=current_memory_usage()))
                 f.write(format_log_message(log_type=LogType.END, metadata=self.metadata))
+        except Exception as err:
+            print(f'[MemoryManager] Error writing memory usage logs: {err}')
         finally:
             self.stop()
 

@@ -691,7 +691,7 @@ async def main(
         )
         periodic_callback.start()
 
-    print(get_memory_manager_controller().events)
+    get_memory_manager_controller().events
 
     update_settings_on_metadata_change()
     observer = Observer()

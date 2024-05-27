@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Union
+from random import randint
+from typing import Dict, Optional, Union
 
 from faker import Faker
 
@@ -20,11 +21,24 @@ from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 faker = Faker()
 
 
-def create_pipeline(name: str, repo_path: str):
-    pipeline = Pipeline.create(
-        name,
-        repo_path=repo_path,
-    )
+def create_pipeline(name: str, repo_path: str, pipeline_type: Optional[PipelineType] = None):
+    tries = 0
+    pipeline = None
+    while pipeline is None and tries < 100:
+        try:
+            name_use = name
+            if tries >= 1:
+                name_use = f'{name_use} {tries}'
+
+            pipeline = Pipeline.create(
+                name_use,
+                repo_path=repo_path,
+                pipeline_type=pipeline_type,
+            )
+        except Exception as err:
+            print(f'[ERROR] create_pipeline_with_blocks: {err}.')
+        tries += 1
+
     return pipeline
 
 
@@ -44,22 +58,7 @@ def create_pipeline_with_blocks(
     Returns:
         Pipeline: The created pipeline with added blocks.
     """
-    tries = 0
-    pipeline = None
-    while pipeline is None and tries < 100:
-        try:
-            name_use = name
-            if tries >= 1:
-                name_use = f'{name_use} {tries}'
-
-            pipeline = Pipeline.create(
-                name_use,
-                repo_path=repo_path,
-                pipeline_type=pipeline_type,
-            )
-        except Exception as err:
-            print(f'[ERROR] create_pipeline_with_blocks: {err}.')
-        tries += 1
+    pipeline = create_pipeline(name, repo_path, pipeline_type=pipeline_type)
 
     block1 = Block.create('block1', 'data_loader', repo_path, language='python')
     block2 = Block.create('block2', 'transformer', repo_path, language='python')
@@ -97,11 +96,11 @@ def create_integration_pipeline_with_blocks(name: str, repo_path: str):
     )
     with open(block1.file_path, 'w') as f:
         f.write(
-            '''config:
+            """config:
   host: host
   port: 22
 source: sftp
-'''
+"""
         )
     block2 = Block.create(
         'test integration transform',
@@ -117,7 +116,7 @@ source: sftp
     )
     with open(block3.file_path, 'w') as f:
         f.write(
-            '''config:
+            """config:
   database: postgres
   schema: public
   host: localhost
@@ -125,7 +124,7 @@ source: sftp
   username: postgres
   password: postgres
 destination: postgresql
-'''
+"""
         )
     pipeline.add_block(block1)
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
@@ -153,8 +152,8 @@ def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_run(pipeline_uuid: str, **kwargs):
-    pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', **kwargs)
+def create_pipeline_run(pipeline_uuid: Optional[str] = None, **kwargs):
+    pipeline_run = PipelineRun.create(pipeline_uuid=pipeline_uuid or 'test_pipeline', **kwargs)
     return pipeline_run
 
 
@@ -275,10 +274,13 @@ async def build_pipeline_with_blocks_and_content(
         block = Block.create(
             f'block{idx}_{test_case.faker.unique.name()}',
             **merge_dict(
-                merge_dict(dict(
-                    block_type=BlockType.DATA_LOADER,
-                    repo_path=repo_path,
-                ), block_dict or {}),
+                merge_dict(
+                    dict(
+                        block_type=BlockType.DATA_LOADER,
+                        repo_path=repo_path,
+                    ),
+                    block_dict or {},
+                ),
                 ignore_keys(
                     block_settings[idx] if block_settings and idx in block_settings else {},
                     [
@@ -292,17 +294,23 @@ async def build_pipeline_with_blocks_and_content(
         blocks.append(block)
 
     pipeline.save()
-    await pipeline.update(dict(
-        blocks=[merge_dict(
-            block.to_dict(include_content=True),
-            extract(
-                block_settings[idx] if block_settings and idx in block_settings else {},
-                [
-                    'content',
-                ],
-            ),
-        ) for idx, block in enumerate(blocks)],
-    ), update_content=True)
+    await pipeline.update(
+        dict(
+            blocks=[
+                merge_dict(
+                    block.to_dict(include_content=True),
+                    extract(
+                        block_settings[idx] if block_settings and idx in block_settings else {},
+                        [
+                            'content',
+                        ],
+                    ),
+                )
+                for idx, block in enumerate(blocks)
+            ],
+        ),
+        update_content=True,
+    )
 
     if hasattr(test_case, 'pipelines_created_for_testing'):
         if not test_case.pipelines_created_for_testing:
@@ -310,3 +318,16 @@ async def build_pipeline_with_blocks_and_content(
         test_case.pipelines_created_for_testing.append(pipeline)
 
     return pipeline, blocks
+
+
+def create_block(pipeline, name: Optional[str] = None):
+    block_type = [BlockType.DATA_LOADER, BlockType.TRANSFORMER, BlockType.DATA_EXPORTER][
+        randint(0, 2)
+    ]
+
+    return Block.create(
+        name or faker.unique.name(),
+        block_type,
+        pipeline.repo_path,
+        language='python',
+    )

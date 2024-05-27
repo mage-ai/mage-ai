@@ -70,10 +70,15 @@ class CustomTemplateResource(GenericResource):
             custom_template = CustomBlockTemplate.load(repo_path, template_uuid=template_uuid)
 
             if not custom_template:
-                custom_template = CustomBlockTemplate(**ignore_keys(payload, [
-                    'uuid',
-                    OBJECT_TYPE_KEY,
-                ]))
+                custom_template = CustomBlockTemplate(
+                    **ignore_keys(
+                        payload,
+                        [
+                            'uuid',
+                            OBJECT_TYPE_KEY,
+                        ],
+                    )
+                )
                 if user:
                     custom_template.user = dict(
                         username=user.username,
@@ -90,7 +95,9 @@ class CustomTemplateResource(GenericResource):
                 cache = await BlockActionObjectCache.initialize_cache()
                 cache.update_custom_block_template(custom_template)
         elif DIRECTORY_FOR_PIPELINE_TEMPLATES == object_type:
-            custom_template = CustomPipelineTemplate.load(template_uuid=template_uuid)
+            custom_template = CustomPipelineTemplate.load(
+                template_uuid=template_uuid, repo_path=repo_path
+            )
 
             if not custom_template:
                 pipeline = Pipeline.get(payload.get('pipeline_uuid'), repo_path=repo_path)
@@ -162,10 +169,13 @@ class CustomTemplateResource(GenericResource):
             cache = await BlockActionObjectCache.initialize_cache()
             cache.update_custom_block_template(self.model, remove=True)
 
-        for key, value in ignore_keys(payload, [
-            'uuid',
-            OBJECT_TYPE_KEY,
-        ]).items():
+        for key, value in ignore_keys(
+            payload,
+            [
+                'uuid',
+                OBJECT_TYPE_KEY,
+            ],
+        ).items():
             setattr(self.model, key, value)
         self.model.save()
 

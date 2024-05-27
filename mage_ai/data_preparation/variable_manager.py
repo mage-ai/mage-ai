@@ -14,12 +14,7 @@ from mage_ai.data_preparation.models.utils import (
     warn_for_repo_path,
 )
 from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
-from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
-from mage_ai.data_preparation.models.variables.constants import (
-    VariableAggregateDataType,
-    VariableAggregateSummaryGroupType,
-    VariableType,
-)
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.data_preparation.models.variables.utils import is_output_variable
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
@@ -466,64 +461,6 @@ class VariableManager:
             if not self.storage.path_exists(path):
                 self.storage.makedirs(path, exist_ok=True)
         return path
-
-    def aggregate_summary_info_for_all_variables(
-        self,
-        pipeline_uuid: str,
-        block_uuid: str,  # Make sure this is the base block_uuid, not with the dynamic block index
-        partition: Optional[str] = None,
-    ):
-        block_uuid = clean_name(block_uuid)
-        variable_uuids = self.get_variables_by_block(
-            pipeline_uuid,
-            block_uuid,
-            partition=partition,
-        )
-
-        if variable_uuids and all(not is_output_variable(v) for v in variable_uuids):
-            """
-            Dynamic child blocks have this directory structure:
-                [block_uuid]/
-                    [dynamic_block_index]/
-                        [variable_uuid]/
-            """
-            variable_uuids = self.get_variables_by_block(
-                pipeline_uuid,
-                os.path.join(block_uuid, str(variable_uuids[0])),
-                clean_block_uuid=False,
-                partition=partition,
-            )
-
-        for variable_uuid in variable_uuids:
-            variable = self.get_variable_object(
-                pipeline_uuid,
-                block_uuid,
-                variable_uuid,
-                partition=partition,
-                skip_check_variable_type=True,
-            )
-            variable.aggregate_summary_info()
-
-    def get_aggregate_summary_info(
-        self,
-        pipeline_uuid: str,
-        block_uuid: str,
-        variable_uuid: str,
-        data_type: VariableAggregateDataType,
-        default_group_type: Optional[VariableAggregateSummaryGroupType],
-        group_type: Optional[VariableAggregateSummaryGroupType],
-        partition: Optional[str] = None,
-    ) -> VariableAggregateCache:
-        variable = self.get_variable_object(
-            pipeline_uuid,
-            block_uuid,
-            variable_uuid,
-            partition=partition,
-            skip_check_variable_type=True,
-        )
-        return variable.get_aggregate_summary_info(
-            data_type, default_group_type=default_group_type, group_type=group_type
-        )
 
 
 class S3VariableManager(VariableManager):
