@@ -56,11 +56,6 @@ from mage_ai.data_preparation.models.variables.summarizer import get_part_uuids
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.settings.server import (
-    MEMORY_MANAGER_PANDAS_V2,
-    MEMORY_MANAGER_POLARS_V2,
-    MEMORY_MANAGER_V2,
-)
 from mage_ai.shared.array import is_iterable
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import flatten_dict
@@ -232,7 +227,7 @@ class Variable:
         if (
             self.variable_type is None
             and not self.variable_types
-            and MEMORY_MANAGER_V2
+            and self.__memory_manager_v2_enabled
             and self.part_uuids is not None
             and len(self.part_uuids) >= 1
         ):
@@ -309,7 +304,7 @@ class Variable:
             - The variable is stored as a parquet file
         """
 
-        return MEMORY_MANAGER_V2 and (
+        return self.__memory_manager_v2_enabled and (
             self.__is_part_readable(part_uuid) or self.__is_parquet_readable(path)
         )
 
@@ -403,7 +398,7 @@ class Variable:
                 spark=spark,
             )
 
-        # if MEMORY_MANAGER_V2 and False:
+        # if self.__memory_manager_v2_enabled and False:
         #     with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data'):
         #         return __read()
         return __read()
@@ -519,7 +514,7 @@ class Variable:
                 spark=spark,
             )
 
-        # if MEMORY_MANAGER_V2 and False:
+        # if self.__memory_manager_v2_enabled and False:
         #     with MemoryManager(
         #         scope_uuid=self.__scope_uuid(), process_uuid='variable.read_data_async'
         #     ):
@@ -685,7 +680,7 @@ class Variable:
         return self.variable_path
 
     def write_data(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2 and False:
+        if self.__memory_manager_v2_enabled and False:
             with MemoryManager(scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data'):
                 self.__write_data(data)
         else:
@@ -779,7 +774,7 @@ class Variable:
             )
 
     async def write_data_async(self, data: Any) -> None:
-        if MEMORY_MANAGER_V2 and False:
+        if self.__memory_manager_v2_enabled and False:
             with MemoryManager(
                 scope_uuid=self.__scope_uuid(), process_uuid='variable.write_data_async'
             ):
@@ -893,7 +888,7 @@ class Variable:
         self.storage.write_json_file(self.metadata_path, metadata)
 
     def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
-        if MEMORY_MANAGER_V2:
+        if self.__memory_manager_v2_enabled:
             row_count = None
             if self.part_uuids is not None:
                 if include_parts:
@@ -1570,7 +1565,18 @@ class Variable:
         )
 
     def __is_parquet_readable(self, path: Optional[str] = None) -> bool:
+        from mage_ai.settings.server import (
+            MEMORY_MANAGER_PANDAS_V2,
+            MEMORY_MANAGER_POLARS_V2,
+        )
+
         if MEMORY_MANAGER_PANDAS_V2 or MEMORY_MANAGER_POLARS_V2:
             row_count = self.__parquet_num_rows(path or self.variable_path)
             return row_count is not None and row_count >= 1
         return False
+
+    @property
+    def __memory_manager_v2_enabled(self):
+        from mage_ai.settings.server import MEMORY_MANAGER_V2
+
+        return MEMORY_MANAGER_V2

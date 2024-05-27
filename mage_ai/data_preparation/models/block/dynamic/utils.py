@@ -9,19 +9,19 @@ import polars as pl
 from scipy.sparse import csr_matrix
 
 from mage_ai.data_preparation.models.block.dynamic.shared import (
-    has_dynamic_block_upstream_parent as has_dynamic_block_upstream_parent_init,
+    has_dynamic_block_upstream_parent as has_dynamic_block_upstream_parent_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.shared import (
-    has_reduce_output_from_upstreams as has_reduce_output_from_upstreams_init,
+    has_reduce_output_from_upstreams as has_reduce_output_from_upstreams_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.shared import (
-    is_dynamic_block as is_dynamic_block_init,
+    is_dynamic_block as is_dynamic_block_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.shared import (
-    is_dynamic_block_child as is_dynamic_block_child_init,
+    is_dynamic_block_child as is_dynamic_block_child_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.shared import (
-    should_reduce_output as should_reduce_output_init,
+    should_reduce_output as should_reduce_output_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_dynamic_children_count,
@@ -95,23 +95,23 @@ def extract_dynamic_block_index(block_run_block_uuid: str) -> int:
 
 
 def is_dynamic_block(block) -> bool:
-    return is_dynamic_block_init(block)
+    return is_dynamic_block_v1(block)
 
 
 def should_reduce_output(block) -> bool:
-    return should_reduce_output_init(block)
+    return should_reduce_output_v1(block)
 
 
 def has_reduce_output_from_upstreams(block) -> bool:
-    return has_reduce_output_from_upstreams_init(block)
+    return has_reduce_output_from_upstreams_v1(block)
 
 
 def has_dynamic_block_upstream_parent(block) -> bool:
-    return has_dynamic_block_upstream_parent_init(block)
+    return has_dynamic_block_upstream_parent_v1(block)
 
 
 def is_dynamic_block_child(block, include_reduce_output: Optional[bool] = None) -> bool:
-    return is_dynamic_block_child_init(block, include_reduce_output=include_reduce_output)
+    return is_dynamic_block_child_v1(block, include_reduce_output=include_reduce_output)
 
 
 def is_replicated_block(block) -> bool:

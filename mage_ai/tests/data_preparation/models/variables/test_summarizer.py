@@ -116,366 +116,366 @@ class VariableSummarizerTest(BaseApiTestCase):
 
         return block
 
-    @patch(
-        'mage_ai.data.models.manager.DataManager.writeable',
-        lambda data_manager, _data: data_manager.is_dataframe(),
-    )
-    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
     def test_summarize_with_generators(self, *args, **kwargs):
-        block = self.create_block(func=load)
-        transformer = self.create_block(func=transform_data)
-        self.pipeline.add_block(block)
-        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+            VARIABLE_DATA_OUTPUT_META_CACHE=True,
+        ):
+            block = self.create_block(func=load)
+            transformer = self.create_block(func=transform_data)
+            self.pipeline.add_block(block)
+            self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
 
-        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
-            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
-                block.execute_sync()
-                transformer.execute_sync()
+            block.execute_sync()
+            transformer.execute_sync()
 
-                variable_manager = self.pipeline.variable_manager
-                variable = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                    variable_uuid='output_0',
-                )
-                variable_transformer = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                    variable_uuid='output_0',
-                )
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                )
+            variable_manager = self.pipeline.variable_manager
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+                variable_uuid='output_0',
+            )
+            variable_transformer = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+            )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+            )
 
-                self.assertEqual(len(get_part_uuids(variable)), 10)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=block.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    5500,
-                )
-
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable_transformer)), 10)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=transformer.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    5500,
-                )
-
-    @patch(
-        'mage_ai.data.models.manager.DataManager.writeable',
-        lambda data_manager, _data: data_manager.is_dataframe(),
-    )
-    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
-    def test_summarize_with_input_data_type_generator_on_upstream_data(self, *args, **kwargs):
-        block = self.create_block(func=load_dataframe)
-        transformer = self.create_block(
-            func=process_generator,
-            configuration=dict(
-                variables=dict(
-                    upstream={
-                        block.uuid: dict(
-                            input_data_types=['generator'],
-                        ),
-                    },
-                )
-            ),
-        )
-        self.pipeline.add_block(block)
-        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
-
-        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
-            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
-                block.execute_sync()
-                transformer.execute_sync()
-
-                variable_manager = self.pipeline.variable_manager
-                variable = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                    variable_uuid='output_0',
-                )
-                variable_transformer = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                    variable_uuid='output_0',
-                )
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable)), 0)
-                self.assertIsNone(
-                    get_aggregate_summary_info(
+            self.assertEqual(len(get_part_uuids(variable)), 10)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=block.uuid,
                         variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
-                    ).parts
-                )
+                    ).parts.statistics
+                ]),
+                5500,
+            )
 
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+            )
 
-                self.assertEqual(len(get_part_uuids(variable_transformer)), 16)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=transformer.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    1200,
-                )
-
-    @patch(
-        'mage_ai.data.models.manager.DataManager.writeable',
-        lambda data_manager, _data: data_manager.is_dataframe(),
-    )
-    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
-    def test_summarize_with_input_data_type_default_on_upstream_generator(self, *args, **kwargs):
-        block = self.create_block(func=load_generators)
-        transformer = self.create_block(
-            func=transform_data,
-        )
-        self.pipeline.add_block(block)
-        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
-
-        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
-            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
-                block.execute_sync()
-                transformer.execute_sync()
-
-                variable_manager = self.pipeline.variable_manager
-                variable = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                    variable_uuid='output_0',
-                )
-                variable_transformer = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                    variable_uuid='output_0',
-                )
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable)), 12)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=block.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    7800,
-                )
-
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable_transformer)), 12)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=transformer.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    7800,
-                )
-
-    @patch(
-        'mage_ai.data.models.manager.DataManager.writeable',
-        lambda data_manager, _data: data_manager.is_dataframe(),
-    )
-    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: True)
-    def test_summarize_with_input_data_type_default_no_downstream_block_generator(
-        self, *args, **kwargs
-    ):
-        block = self.create_block(func=load_generators)
-        transformer = self.create_block(
-            func=passthrough,
-        )
-        self.pipeline.add_block(block)
-        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
-
-        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
-            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
-                block.execute_sync()
-                transformer.execute_sync()
-
-                variable_manager = self.pipeline.variable_manager
-                variable = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                    variable_uuid='output_0',
-                )
-                variable_transformer = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                    variable_uuid='output_0',
-                )
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable)), 12)
-                self.assertEqual(
-                    sum([
-                        info.original_row_count
-                        for info in get_aggregate_summary_info(
-                            variable_manager,
-                            pipeline_uuid=self.pipeline.uuid,
-                            block_uuid=block.uuid,
-                            variable_uuid='output_0',
-                            data_type=VariableAggregateDataType.STATISTICS,
-                            group_type=VariableAggregateSummaryGroupType.PARTS,
-                        ).parts.statistics
-                    ]),
-                    7800,
-                )
-
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                )
-
-                self.assertEqual(len(get_part_uuids(variable_transformer)), 0)
-                self.assertIsNone(
-                    get_aggregate_summary_info(
+            self.assertEqual(len(get_part_uuids(variable_transformer)), 10)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=transformer.uuid,
                         variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
-                    ).parts
-                )
+                    ).parts.statistics
+                ]),
+                5500,
+            )
 
-    @patch(
-        'mage_ai.data.models.manager.DataManager.writeable',
-        lambda data_manager, _data: data_manager.is_dataframe(),
-    )
-    @patch('mage_ai.data.models.manager.DataManager.readable', lambda _data_manager: False)
-    def test_dynamic_blocks_yield(self, *args, **kwargs):
-        block = self.create_block(
-            func=load_dataframes_for_dynamic_children, configuration=dict(dynamic=True)
-        )
-        transformer = self.create_block(
-            func=passthrough,
-        )
-        self.pipeline.add_block(block)
-        self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+    def test_summarize_with_input_data_type_generator_on_upstream_data(self, *args, **kwargs):
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+            VARIABLE_DATA_OUTPUT_META_CACHE=True,
+        ):
+            block = self.create_block(func=load_dataframe)
+            transformer = self.create_block(
+                func=process_generator,
+                configuration=dict(
+                    variables=dict(
+                        upstream={
+                            block.uuid: dict(
+                                input_data_types=['generator'],
+                            ),
+                        },
+                    )
+                ),
+            )
+            self.pipeline.add_block(block)
+            self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
 
-        with patch('mage_ai.settings.server.MEMORY_MANAGER_V2', True):
-            with patch('mage_ai.settings.server.MEMORY_MANAGER_POLARS_V2', True):
-                block.execute_sync()
-                transformer.execute_sync(dynamic_block_index=0)
-                transformer.execute_sync(dynamic_block_index=1)
-                transformer.execute_sync(dynamic_block_index=2)
+            block.execute_sync()
+            transformer.execute_sync()
 
-                variable_manager = self.pipeline.variable_manager
-                variable = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=block.uuid,
-                    variable_uuid='output_0',
-                )
-                variable_transformer = variable_manager.get_variable_object(
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                    variable_uuid='output_0',
-                )
-                aggregate_summary_info_for_all_variables(
+            variable_manager = self.pipeline.variable_manager
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+                variable_uuid='output_0',
+            )
+            variable_transformer = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+            )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+            )
+
+            self.assertIsNone(get_part_uuids(variable))
+            self.assertIsNone(
+                get_aggregate_summary_info(
                     variable_manager,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=block.uuid,
-                )
+                    variable_uuid='output_0',
+                    data_type=VariableAggregateDataType.STATISTICS,
+                    group_type=VariableAggregateSummaryGroupType.PARTS,
+                ).parts
+            )
 
-                self.assertEqual(len(dynamic_block_index_paths(variable)), 0)
-                self.assertIsNone(
-                    get_aggregate_summary_info(
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+            )
+
+            self.assertEqual(len(get_part_uuids(variable_transformer)), 16)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
+                        variable_manager,
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=transformer.uuid,
+                        variable_uuid='output_0',
+                        data_type=VariableAggregateDataType.STATISTICS,
+                        group_type=VariableAggregateSummaryGroupType.PARTS,
+                    ).parts.statistics
+                ]),
+                1200,
+            )
+
+    def test_summarize_with_input_data_type_default_on_upstream_generator(self, *args, **kwargs):
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+            VARIABLE_DATA_OUTPUT_META_CACHE=True,
+        ):
+            block = self.create_block(func=load_generators)
+            transformer = self.create_block(
+                func=transform_data,
+            )
+            self.pipeline.add_block(block)
+            self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+
+            block.execute_sync()
+            transformer.execute_sync()
+
+            variable_manager = self.pipeline.variable_manager
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+                variable_uuid='output_0',
+            )
+            variable_transformer = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+            )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+            )
+
+            self.assertEqual(len(get_part_uuids(variable)), 12)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=block.uuid,
                         variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
-                    ).parts
-                )
+                    ).parts.statistics
+                ]),
+                7800,
+            )
 
-                aggregate_summary_info_for_all_variables(
-                    variable_manager,
-                    pipeline_uuid=self.pipeline.uuid,
-                    block_uuid=transformer.uuid,
-                )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+            )
 
-                self.assertEqual(len(dynamic_block_index_paths(variable_transformer)), 3)
+            self.assertEqual(len(get_part_uuids(variable_transformer)), 12)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
+                        variable_manager,
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=transformer.uuid,
+                        variable_uuid='output_0',
+                        data_type=VariableAggregateDataType.STATISTICS,
+                        group_type=VariableAggregateSummaryGroupType.PARTS,
+                    ).parts.statistics
+                ]),
+                7800,
+            )
 
-                total = 0
-                for info in get_aggregate_summary_info(
+    def test_summarize_with_input_data_type_default_no_downstream_block_generator(
+        self, *args, **kwargs
+    ):
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+            VARIABLE_DATA_OUTPUT_META_CACHE=True,
+        ):
+            block = self.create_block(func=load_generators)
+            transformer = self.create_block(
+                func=passthrough,
+            )
+            self.pipeline.add_block(block)
+            self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+
+            block.execute_sync()
+            transformer.execute_sync()
+
+            variable_manager = self.pipeline.variable_manager
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+                variable_uuid='output_0',
+            )
+            variable_transformer = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+            )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+            )
+
+            self.assertEqual(len(get_part_uuids(variable)), 12)
+            self.assertEqual(
+                sum([
+                    info.original_row_count
+                    for info in get_aggregate_summary_info(
+                        variable_manager,
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=block.uuid,
+                        variable_uuid='output_0',
+                        data_type=VariableAggregateDataType.STATISTICS,
+                        group_type=VariableAggregateSummaryGroupType.PARTS,
+                    ).parts.statistics
+                ]),
+                7800,
+            )
+
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+            )
+
+            self.assertIsNone(get_part_uuids(variable_transformer))
+            self.assertIsNone(
+                get_aggregate_summary_info(
                     variable_manager,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=transformer.uuid,
                     variable_uuid='output_0',
                     data_type=VariableAggregateDataType.STATISTICS,
-                    group_type=VariableAggregateSummaryGroupType.DYNAMIC,
-                ).dynamic.statistics:
-                    total += sum(i.original_row_count for i in info)
-                self.assertEqual(total, 300)
+                    group_type=VariableAggregateSummaryGroupType.PARTS,
+                ).parts
+            )
+
+    def test_dynamic_blocks_yield(self, *args, **kwargs):
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+            VARIABLE_DATA_OUTPUT_META_CACHE=True,
+        ):
+            block = self.create_block(
+                func=load_dataframes_for_dynamic_children, configuration=dict(dynamic=True)
+            )
+            transformer = self.create_block(
+                func=passthrough,
+            )
+            self.pipeline.add_block(block)
+            self.pipeline.add_block(transformer, upstream_block_uuids=[block.uuid])
+
+            block.execute_sync()
+            transformer.execute_sync(dynamic_block_index=0)
+            transformer.execute_sync(dynamic_block_index=1)
+            transformer.execute_sync(dynamic_block_index=2)
+
+            variable_manager = self.pipeline.variable_manager
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+                variable_uuid='output_0',
+            )
+            variable_transformer = variable_manager.get_variable_object(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+            )
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=block.uuid,
+            )
+
+            self.assertEqual(len(dynamic_block_index_paths(variable)), 0)
+            self.assertIsNone(
+                get_aggregate_summary_info(
+                    variable_manager,
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=block.uuid,
+                    variable_uuid='output_0',
+                    data_type=VariableAggregateDataType.STATISTICS,
+                    group_type=VariableAggregateSummaryGroupType.PARTS,
+                ).parts
+            )
+
+            aggregate_summary_info_for_all_variables(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+            )
+
+            self.assertEqual(len(dynamic_block_index_paths(variable_transformer)), 3)
+
+            total = 0
+            for info in get_aggregate_summary_info(
+                variable_manager,
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=transformer.uuid,
+                variable_uuid='output_0',
+                data_type=VariableAggregateDataType.STATISTICS,
+                group_type=VariableAggregateSummaryGroupType.DYNAMIC,
+            ).dynamic.statistics:
+                total += sum(i.original_row_count for i in info)
+            self.assertEqual(total, 300)
