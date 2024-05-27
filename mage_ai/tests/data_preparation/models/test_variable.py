@@ -251,20 +251,28 @@ class VariableTest(DBTestCase):
                 self.assertEqual(json.load(f)['original_row_count'], 2_000)
 
     def test_write_statistics_for_polars_dataframe(self):
-        with patch('mage_ai.data.models.manager.DataManager.writeable', return_value=True):
-            data = build_polars()
-            variable = Variable(
-                'var_polars',
-                self.pipeline.dir_path,
-                'block_polars',
-                variable_type=infer_variable_type(data)[0],
-            )
-            variable.write_data(data)
-            with open(
-                os.path.join(variable.variable_path, VariableAggregateDataTypeFilename.STATISTICS),
-                'r',
-            ) as f:
-                self.assertEqual(json.load(f)['original_row_count'], 3_000)
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_POLARS_V2=True,
+            MEMORY_MANAGER_V2=True,
+        ):
+            with patch('mage_ai.data.models.manager.DataManager.writeable', return_value=True):
+                data = build_polars()
+                variable = Variable(
+                    'var_polars',
+                    self.pipeline.dir_path,
+                    'block_polars',
+                    variable_type=infer_variable_type(data)[0],
+                )
+                variable.write_data(data)
+                with open(
+                    os.path.join(
+                        variable.variable_path, VariableAggregateDataTypeFilename.STATISTICS
+                    ),
+                    'r',
+                ) as f:
+                    self.assertEqual(json.load(f)['original_row_count'], 3_000)
 
     def test_write_statistics_for_polars_series(self):
         with patch('mage_ai.data.models.manager.DataManager.writeable', return_value=True):

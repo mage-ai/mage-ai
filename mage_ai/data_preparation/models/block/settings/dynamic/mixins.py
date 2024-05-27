@@ -6,6 +6,15 @@ from mage_ai.data_preparation.models.block.settings.dynamic.models import (
 
 
 class DynamicMixin:
+    """
+    How the configuration looks in a pipeline’s metadata.yaml
+
+    - uuid: block_uuid
+      configuration:
+          dynamic:
+              parent: true
+    """
+
     configuration = dict(dynamic=None)
 
     def dynamic_configuration(self) -> Optional[DynamicConfiguration]:
