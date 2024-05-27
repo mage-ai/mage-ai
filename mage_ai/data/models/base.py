@@ -110,7 +110,10 @@ class BaseData:
         ]
 
     def supported(self, data: Optional[Any] = None) -> bool:
-        return all(
-            variable_type and variable_type_supported(variable_type, data)
-            for variable_type in (self.variable_types or [self.variable_type])
-        )
+        if self.variable_types and len(self.variable_types) >= 1:
+            return all(
+                variable_type_supported(variable_type, data)
+                for variable_type in self.variable_types
+            )
+
+        return variable_type_supported(self.variable_type, data)

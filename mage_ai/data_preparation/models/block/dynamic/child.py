@@ -1,6 +1,5 @@
 import time
-from logging import Logger
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -13,62 +12,16 @@ from mage_ai.data_preparation.models.block.dynamic.variables import (
     get_outputs_for_dynamic_block,
     get_outputs_for_dynamic_child,
 )
-from mage_ai.orchestration.db.models.schedules import BlockRun
+from mage_ai.data_preparation.models.block.dynamic.wrappers import (
+    DynamicBlockWrapperBase,
+)
 
 
-class DynamicChildController:
-    def __init__(self, block, block_run_id: int):
-        self.block = block
-        self.block_run_id = block_run_id
-        self._block_run = None
-        self._block_runs = None
-        self._pipeline_run = None
-
-    def __getattr__(self, name):
-        val = getattr(self.block, name)
-
-        def _missing(val=val, *args, **kwargs):
-            return val(*args, **kwargs)
-
-        if callable(val):
-            return _missing
-
-        return val
-
-    def block_run(self) -> BlockRun:
-        if self._block_run:
-            return self._block_run
-
-        self._block_run = BlockRun.query.get(self.block_run_id)
-
-        return self._block_run
-
-    def pipeline_run(self):
-        if self._pipeline_run:
-            return self._pipeline_run
-
-        self._pipeline_run = self.block_run().pipeline_run
-
-        return self._pipeline_run
-
-    def block_runs(self) -> List[BlockRun]:
-        if self._block_runs:
-            return self._block_runs
-
-        self._block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == self.block_run().pipeline_run_id,
-        ).all()
-
-        return self._block_runs
-
-    def is_completed(self) -> bool:
-        return True
-
+class DynamicChildController(DynamicBlockWrapperBase):
     def execute_sync(
         self,
-        execution_partition: str = None,
-        logger: Logger = None,
-        logging_tags: Dict = None,
+        execution_partition: Optional[str] = None,
+        logging_tags: Optional[Dict] = None,
         **kwargs,
     ) -> List[Dict]:
         pipeline = self.block.pipeline
@@ -215,6 +168,3 @@ class DynamicChildController:
             block_runs.append(block_run)
 
         return block_runs
-
-    def run_tests(self, **kwargs):
-        pass

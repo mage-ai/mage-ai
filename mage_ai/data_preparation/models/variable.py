@@ -809,7 +809,7 @@ class Variable:
                     )
                 )
             self.resource_usage.update_attributes(
-                directory=self.data_manager.resource_usage.size,
+                directory=self.data_manager.resource_usage.directory,
                 size=self.data_manager.resource_usage.size,
             )
         else:

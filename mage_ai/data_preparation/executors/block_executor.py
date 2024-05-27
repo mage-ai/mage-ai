@@ -22,7 +22,8 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
     source_module_file_path,
 )
 from mage_ai.data_preparation.models.block.dynamic.child import DynamicChildController
-from mage_ai.data_preparation.models.block.dynamic.utils import (
+from mage_ai.data_preparation.models.block.dynamic.factory import DynamicBlockFactory
+from mage_ai.data_preparation.models.block.dynamic.shared import (
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
@@ -86,19 +87,28 @@ class BlockExecutor:
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
-        if not DYNAMIC_BLOCKS_V2:
-            if (
-                self.block
-                and is_dynamic_block_child(self.block)
-                and (
-                    self.block.uuid == block_uuid
-                    or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
-                )
+        if DYNAMIC_BLOCKS_V2:
+            if self.block and (
+                is_dynamic_block(self.block)
+                or is_dynamic_block_child(self.block, include_reduce_output=True)
             ):
-                self.block = DynamicChildController(
+                self.block = DynamicBlockFactory(
                     self.block,
                     block_run_id=block_run_id,
+                    logger=self.logger,
                 )
+        elif (
+            self.block
+            and is_dynamic_block_child(self.block)
+            and (
+                self.block.uuid == block_uuid
+                or (self.block.replicated_block and self.block.uuid_replicated == block_uuid)
+            )
+        ):
+            self.block = DynamicChildController(
+                self.block,
+                block_run_id=block_run_id,
+            )
 
         self.block_run = None
 

@@ -20,7 +20,6 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.settings.platform.constants import user_project_platform_activated
-from mage_ai.settings.server import MEMORY_MANAGER_POLARS_V2, MEMORY_MANAGER_V2
 from mage_ai.shared.complex import is_model_sklearn, is_model_xgboost
 from mage_ai.shared.hash import unflatten_dict
 from mage_ai.shared.outputs import load_custom_object, save_custom_object
@@ -183,6 +182,9 @@ def infer_variable_type(
     if isinstance(data, pl.DataFrame) or (
         basic_iterable and len(data) >= 1 and all(isinstance(d, pl.DataFrame) for d in data)
     ):
+        # Need to import here to mock in unit tests.
+        from mage_ai.settings.server import MEMORY_MANAGER_POLARS_V2, MEMORY_MANAGER_V2
+
         if (MEMORY_MANAGER_V2 and MEMORY_MANAGER_POLARS_V2) or Project(
             repo_path=repo_path
         ).is_feature_enabled(FeatureUUID.POLARS):

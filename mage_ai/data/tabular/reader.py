@@ -127,7 +127,7 @@ def read_metadata(
     parquet_files = []
     for root, _dirs, files in os.walk(directory):
         for file in files:
-            if file.endswith('.parquet'):
+            if file.endswith('.parquet') and not file.startswith('sample'):
                 parquet_files.append(os.path.join(root, file))
 
     schema_combined = {}

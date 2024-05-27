@@ -139,7 +139,7 @@ from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import SPARK_ENABLED, get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import base_repo_path_directory_name, get_repo_path
-from mage_ai.settings.server import MEMORY_MANAGER_V2, VARIABLE_DATA_OUTPUT_META_CACHE
+from mage_ai.settings.server import VARIABLE_DATA_OUTPUT_META_CACHE
 from mage_ai.shared.array import is_iterable, unique_by
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -2090,6 +2090,10 @@ class Block(
         logger: Optional[Logger] = None,
         logging_tags: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
+        from mage_ai.settings.server import (
+            MEMORY_MANAGER_V2,  # Need here to mock in tests
+        )
+
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
