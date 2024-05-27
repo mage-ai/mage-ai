@@ -383,9 +383,11 @@ function BackfillEdit({
         monospace
         onChange={(e) => {
           e.preventDefault();
+          const updatedPipelineRunLimit = e.target.value;
+          const invalidPipelineRunLimit = updatedPipelineRunLimit < 0 || updatedPipelineRunLimit === '';
           setSettings(s => ({
             ...s,
-            pipeline_run_limit: e.target.value,
+            pipeline_run_limit: invalidPipelineRunLimit ? null : updatedPipelineRunLimit,
           }));
         }}
         type="number"
