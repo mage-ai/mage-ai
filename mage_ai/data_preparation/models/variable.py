@@ -892,6 +892,26 @@ class Variable:
 
         self.storage.write_json_file(self.metadata_path, metadata)
 
+    def items_count(self, include_parts: Optional[bool] = None) -> Optional[int]:
+        if MEMORY_MANAGER_V2:
+            row_count = None
+            if self.part_uuids is not None:
+                if include_parts:
+                    row_count = self.__parquet_num_rows(self.variable_path)
+                else:
+                    row_count = len(self.part_uuids)
+            elif self.storage.path_exists(os.path.join(self.variable_path, 'statistics.json')):
+                statistics = self.storage.read_json_file(
+                    os.path.join(self.variable_path, 'statistics.json')
+                )
+                if statistics and isinstance(statistics, dict):
+                    row_count = statistics.get('original_row_count')
+            else:
+                row_count = self.__parquet_num_rows(self.variable_path)
+
+            if row_count is not None and isinstance(row_count, (float, int, str)):
+                return int(row_count)
+
     def __write_resource_usage(self) -> None:
         if self.resource_usage:
             os.makedirs(self.variable_dir_path, exist_ok=True)

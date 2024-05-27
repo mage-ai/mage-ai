@@ -224,6 +224,7 @@ def read_metadata(
 
     return {
         'files': file_details_list,
+        'num_files': len(parquet_files),
         'num_partitions': len(file_details_list),
         'num_rows': num_rows_total,
         'schema': schema_combined,
