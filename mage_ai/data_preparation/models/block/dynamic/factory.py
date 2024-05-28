@@ -61,7 +61,7 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
     def __fetch_cloned_block_runs(self) -> Dict[str, BlockRun]:
         cloned_block_runs = {}
         for block_run in self.block_runs():
-            if self.pipeline.get_block(block_run.block_uuid) == self.block.uuid:
+            if self.pipeline.get_block(block_run.block_uuid).uuid == self.block.uuid:
                 block_run_previous = cloned_block_runs.get(block_run.block_uuid)
                 if (
                     block_run_previous is None
