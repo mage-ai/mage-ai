@@ -18,9 +18,6 @@ from mage_ai.data.models.manager import DataManager
 from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
@@ -84,10 +81,10 @@ class Variable:
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         variables_dir: Optional[str] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -311,7 +308,7 @@ class Variable:
     def read_partial_data(
         self,
         batch_settings: Optional[BatchSettings] = None,
-        chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        chunks: Optional[List] = None,
         input_data_types: Optional[List[InputDataType]] = None,
         part_uuid: Optional[Union[int, str]] = None,
     ) -> Any:
