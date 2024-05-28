@@ -12,13 +12,21 @@ type ProgressOutputProps = {
     accent?: string;
     accentLight?: string;
   };
-  data?: string[];
+  data?: any;
   msgType: MsgTypeEnum;
-  dataType: DataTypeEnum
+  dataType: DataTypeEnum;
   progress: number;
 } & TextOutputProps;
 
-function ProgressOutput({ color, data, dataType, msgType, progress, value, ...outputRowSharedProps }: ProgressOutputProps) {
+function ProgressOutput({
+  color,
+  data,
+  dataType,
+  msgType,
+  progress,
+  value,
+  ...outputRowSharedProps
+}: ProgressOutputProps) {
   const timeout = useRef(null);
 
   const [hidden, setHidden] = useState(false);
@@ -45,10 +53,11 @@ function ProgressOutput({ color, data, dataType, msgType, progress, value, ...ou
       return (
         <>
           {data.map((line, index1) => (
-            <span  key={`${index1}-progress`} style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-              <Ansi>
-                {line}
-              </Ansi>
+            <span
+              key={`${index1}-progress`}
+              style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
+            >
+              <Ansi>{line}</Ansi>
             </span>
           ))}
         </>
