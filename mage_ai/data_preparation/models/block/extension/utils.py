@@ -4,7 +4,7 @@ from typing import Dict, List
 from mage_ai.extensions.great_expectations.constants import (
     EXTENSION_UUID as EXTENSION_UUID_GREAT_EXPECTATIONS,
 )
-from mage_ai.shared.hash import index_by
+from mage_ai.shared.hash import ignore_keys, index_by
 
 
 def handle_run_tests(
@@ -47,3 +47,14 @@ def handle_run_tests(
             logging_tags=logging_tags,
             update_status=False,
         )
+
+
+def compare_extension(extension_a: Dict, extension_b: Dict) -> bool:
+    extension_a_blocks = (extension_a or dict()).get('blocks', [])
+    extension_b_blocks = (extension_b or dict()).get('blocks', [])
+
+    extension_a_blocks = [ignore_keys(b, 'outputs') for b in extension_a_blocks]
+    extension_b_blocks = [ignore_keys(b, 'outputs') for b in extension_b_blocks]
+    print('extension_a_blocks', extension_a_blocks)
+    print('extension_b_blocks', extension_b_blocks)
+    return extension_a_blocks == extension_b_blocks

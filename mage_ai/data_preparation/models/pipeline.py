@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
+from mage_ai.data_preparation.models.block.extension.utils import compare_extension
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
@@ -139,7 +140,7 @@ class Pipeline:
         else:
             self.repo_config = repo_config
 
-        self.variable_manager: VariableManager = VariableManager.get_manager(
+        self.variable_manager = VariableManager.get_manager(
             self.repo_path,
             self.remote_variables_dir or self.variables_dir,
         )
@@ -643,7 +644,8 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'), mage_projects_only=True
+                    context_data=kwargs.get('context_data'),
+                    mage_projects_only=True
                 ).values()
             ]
 
@@ -1242,11 +1244,12 @@ class Pipeline:
             for extension_uuid, extension in data['extensions'].items():
                 if extension_uuid not in self.extensions:
                     self.extensions[extension_uuid] = {}
-                self.extensions[extension_uuid] = merge_dict(
-                    self.extensions[extension_uuid],
-                    extension,
-                )
-            should_save = True
+                if compare_extension(extension, self.extensions[extension_uuid]):
+                    self.extensions[extension_uuid] = merge_dict(
+                        self.extensions[extension_uuid],
+                        extension,
+                    )
+                    should_save = True
 
         if 'tags' in data:
             new_tags = data.get('tags', [])
@@ -1278,11 +1281,11 @@ class Pipeline:
             'retry_config',
             'run_pipeline_in_one_process',
         ]:
-            if key in data:
+            if key in data and data.get(key) != getattr(self, key):
                 setattr(self, key, data.get(key))
                 should_save = True
 
-        if 'settings' in data:
+        if 'settings' in data and data.get('settings') != self.settings.to_dict():
             self.settings = PipelineSettings.load(**(data.get('settings') or {}))
             should_save = True
 
@@ -1412,7 +1415,7 @@ class Pipeline:
                         block.update(extract(block_data, ['color']))
 
                     configuration = block_data.get('configuration')
-                    if configuration:
+                    if configuration and configuration != block.configuration:
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
@@ -1422,16 +1425,16 @@ class Pipeline:
                         if name and name != block.name:
                             keys_to_update.append('name')
 
-                        if block_data.get('upstream_blocks'):
+                        upstream_blocks = block_data.get('upstream_blocks') or []
+                        if upstream_blocks != block.upstream_block_uuids:
                             keys_to_update.append('upstream_blocks')
                             block_data['upstream_blocks'] = [
                                 block_uuid_mapping.get(b, b) for b in block_data['upstream_blocks']
                             ]
-
                         if len(keys_to_update) >= 1:
                             block.update(extract(block_data, keys_to_update))
+                            should_save_async = should_save_async or True
 
-                        should_save_async = should_save_async or True
                     elif name and name != block.name:
                         from mage_ai.cache.block_action_object import (
                             BlockActionObjectCache,
