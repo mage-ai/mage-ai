@@ -55,6 +55,4 @@ def compare_extension(extension_a: Dict, extension_b: Dict) -> bool:
 
     extension_a_blocks = [ignore_keys(b, 'outputs') for b in extension_a_blocks]
     extension_b_blocks = [ignore_keys(b, 'outputs') for b in extension_b_blocks]
-    print('extension_a_blocks', extension_a_blocks)
-    print('extension_b_blocks', extension_b_blocks)
     return extension_a_blocks == extension_b_blocks
