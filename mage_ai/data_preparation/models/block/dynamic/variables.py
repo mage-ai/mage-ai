@@ -215,7 +215,9 @@ class LazyVariableController(Sequence):
             child_data, metadata = lazy_variable_set.read_data()
 
             if self.is_dynamic:
-                if isinstance(child_data, pd.DataFrame):
+                if child_data is None:
+                    child_data = [None]
+                elif isinstance(child_data, pd.DataFrame):
                     index = child_dynamic_block_index % len(child_data.index)
                     child_data = child_data.iloc[index : index + 1]
                 else:
