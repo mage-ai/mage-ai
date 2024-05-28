@@ -6,7 +6,8 @@ from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
 class DataType(str, Enum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
-    PROGRESS = 'progress'
+    PROGRESS = 'progress'  # Deprecated; can come from Great Expectations
+    PROGRESS_STATUS = 'progress_status'  # Comes from execute_custom_code.py
     GROUP = 'group'
     OBJECT = 'object'
     TABLE = 'table'
@@ -48,10 +49,7 @@ def parse_output_message(message: dict) -> dict:
         text_stdout = content.get('text')
         data_content = text_stdout.split('\n')
         data_type = DataType.TEXT_PLAIN
-        if (
-            content.get('name') == 'stdout'
-            and len(data_content) > MAX_PRINT_OUTPUT_LINES
-        ):
+        if content.get('name') == 'stdout' and len(data_content) > MAX_PRINT_OUTPUT_LINES:
             data_content_truncated = data_content[:MAX_PRINT_OUTPUT_LINES]
             data_content = data_content_truncated + ['... (output truncated)']
     elif image:
