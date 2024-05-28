@@ -2165,7 +2165,7 @@ class Block(
                         execution_partition=execution_partition,
                     )
                 else:
-                    self.__delete_variables(
+                    self.delete_variables(
                         dynamic_block_index=dynamic_block_index,
                         dynamic_block_uuid=dynamic_block_uuid,
                         execution_partition=execution_partition,
@@ -3679,7 +3679,7 @@ class Block(
             variable_mapping=variable_mapping,
         )
 
-    def __delete_variables(
+    def delete_variables(
         self,
         dynamic_block_index: Optional[int] = None,
         dynamic_block_uuid: Optional[str] = None,
@@ -3809,7 +3809,7 @@ class Block(
                 )
             )
         if not skip_delete and not is_dynamic_child and variables_data.get('removed_variables'):
-            self.__delete_variables(
+            self.delete_variables(
                 dynamic_block_index=dynamic_block_index,
                 dynamic_block_uuid=dynamic_block_uuid,
                 execution_partition=execution_partition,
