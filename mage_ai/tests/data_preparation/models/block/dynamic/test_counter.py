@@ -156,9 +156,11 @@ class DynamicBlockCounterTest(BlockHelperTest):
             MEMORY_MANAGER_V2=True,
             VARIABLE_DATA_OUTPUT_META_CACHE=True,
         ):
-            block = self.create_block(func=load_basic_data, configuration=dict(dynamic=True))
+            block = self.create_block(
+                func=load_basic_data, configuration=dict(dynamic=dict(parent=True))
+            )
             child = self.create_block(
-                func=create_generator, configuration=dict(reduce_output=True)
+                func=load_dataframe, configuration=dict(dynamic=dict(reduce_output=True))
             )
             self.pipeline.add_block(block)
             self.pipeline.add_block(child, upstream_block_uuids=[block.uuid])
@@ -186,8 +188,12 @@ class DynamicBlockCounterTest(BlockHelperTest):
             MEMORY_MANAGER_V2=True,
             VARIABLE_DATA_OUTPUT_META_CACHE=True,
         ):
-            block = self.create_block(func=load_basic_data, configuration=dict(dynamic=True))
-            child = self.create_block(func=load_dataframe, configuration=dict(dynamic=True))
+            block = self.create_block(
+                func=load_basic_data, configuration=dict(dynamic=dict(parent=True))
+            )
+            child = self.create_block(
+                func=load_dataframe, configuration=dict(dynamic=dict(parent=True))
+            )
             self.pipeline.add_block(block)
             self.pipeline.add_block(child, upstream_block_uuids=[block.uuid])
 
