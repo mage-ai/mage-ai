@@ -180,6 +180,8 @@ class Variable:
             return self._part_uuids
 
         self._part_uuids = get_part_uuids(self)
+        if self._part_uuids is not None:
+            self._part_uuids = sorted(self._part_uuids)
 
         return self._part_uuids
 
@@ -327,6 +329,9 @@ class Variable:
         chunks: Optional[List[ChunkKeyTypeUnion]] = None,
         input_data_types: Optional[List[InputDataType]] = None,
         part_uuid: Optional[Union[int, str]] = None,
+        sample: bool = False,
+        sample_count: Optional[int] = None,
+        spark: Optional[Any] = None,
     ) -> Any:
         """
         We can only read partial data if:
@@ -437,7 +442,19 @@ class Variable:
                 DATAFRAME variable.
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
-        if self.data_manager and self.data_manager.readable():
+        if (
+            sample
+            and self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+            and self.is_partial_data_readable(self.part_uuids[0])
+        ):
+            return self.read_partial_data(
+                part_uuid=self.part_uuids[0],
+                sample=sample,
+                sample_count=sample_count,
+                spark=spark,
+            )
+        elif self.data_manager and self.data_manager.readable():
             try:
                 data = self.data_manager.read_sync(
                     sample=sample,
@@ -561,8 +578,19 @@ class Variable:
             block.to_dict_async
                 GET /pipelines/[:uuid]
         """
-
-        if self.data_manager and self.data_manager.readable():
+        if (
+            sample
+            and self.part_uuids is not None
+            and len(self.part_uuids) >= 1
+            and self.is_partial_data_readable(self.part_uuids[0])
+        ):
+            return self.read_partial_data(
+                part_uuid=self.part_uuids[0],
+                sample=sample,
+                sample_count=sample_count,
+                spark=spark,
+            )
+        elif self.data_manager and self.data_manager.readable():
             try:
                 data = await self.data_manager.read_async(
                     limit_parts=limit_parts,

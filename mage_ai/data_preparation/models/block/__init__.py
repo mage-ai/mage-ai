@@ -2107,7 +2107,12 @@ class Block(
                 else [],
             )
 
-        append_data = ExportWritePolicy.APPEND == self.write_settings.mode
+        write_policy = (
+            self.write_settings.batch_settings.mode
+            if self.write_settings and self.write_settings.batch_settings
+            else None
+        )
+        append_data = ExportWritePolicy.APPEND == write_policy
         part_index = None
         if append_data:
             block_uuid, changed = uuid_for_output_variables(
@@ -3692,7 +3697,11 @@ class Block(
                 variable_uuid,
                 partition=execution_partition,
             )
-            write_policy = self.write_settings.mode
+            write_policy = (
+                self.write_settings.batch_settings.mode
+                if self.write_settings and self.write_settings.batch_settings
+                else None
+            )
             if write_policy and variable_object.data_exists():
                 if ExportWritePolicy.FAIL == write_policy:
                     raise Exception(f'Write policy for block {self.uuid} is {write_policy}.')

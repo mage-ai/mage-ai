@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import AsyncGenerator, Generator, Iterable, List, Union
 
 import polars as pl
@@ -6,6 +5,7 @@ import polars as pl
 from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.models.pyarrow.record_batch import RecordBatch, TaggedRecordBatch
 from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.shared.models import BaseEnum
 
 SUPPORTED_VARIABLE_TYPES = [
     VariableType.DATAFRAME,
@@ -27,7 +27,7 @@ RecordBatchGenerator = Union[Generator[ScanBatchDatasetResult, None, None], Data
 AsyncRecordBatchGenerator = AsyncGenerator[ScanBatchDatasetResult, None]
 
 
-class InputDataType(str, Enum):
+class InputDataType(BaseEnum):
     # Batch settings will be used to fetch the data in batches,
     # and execute the decorated function inside a yield loop.
     BATCH = 'batch'
@@ -41,5 +41,5 @@ class InputDataType(str, Enum):
     READER = 'reader'
 
 
-class ReadModeType(str, Enum):
-    pass
+class ReadModeType(BaseEnum):
+    MEMORY = 'memory'

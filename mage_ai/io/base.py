@@ -8,6 +8,7 @@ from pandas import DataFrame
 
 from mage_ai.io.constants import SQL_RESERVED_WORDS
 from mage_ai.shared.logger import VerbosePrintHandler
+from mage_ai.shared.models import BaseEnum
 from mage_ai.shared.utils import clean_name
 
 QUERY_ROW_LIMIT = 10_000_000
@@ -47,7 +48,7 @@ class FileFormat(str, Enum):
     XML = 'xml'
 
 
-class ExportWritePolicy(str, Enum):
+class ExportWritePolicy(BaseEnum):
     APPEND = 'append'
     FAIL = 'fail'
     REPLACE = 'replace'
@@ -150,7 +151,7 @@ class BaseFile(BaseIO):
         elif format == FileFormat.XML:
             return pd.read_xml
         else:
-            raise ValueError(f'Invalid format \'{format}\' specified.')
+            raise ValueError(f"Invalid format '{format}' specified.")
 
     def _read(
         self,

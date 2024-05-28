@@ -143,12 +143,18 @@ class DataManager(BaseData):
         return self.read_sync(limit_parts=limit_parts, sample=sample, sample_count=sample_count)
 
     async def write_async(
-        self, data: Any, chunk_size: Optional[int] = None
+        self,
+        data: Any,
+        chunk_size: Optional[int] = None,
     ) -> Optional[Dict[str, int]]:
         self.__prepare(data, self.writer)
         return await self.writer.write_async(data)
 
-    def write_sync(self, data: Any, chunk_size: Optional[int] = None) -> Optional[Dict[str, int]]:
+    def write_sync(
+        self,
+        data: Any,
+        chunk_size: Optional[int] = None,
+    ) -> Optional[Dict[str, int]]:
         self.__prepare(data, self.writer)
         return self.writer.write_sync(data)
 

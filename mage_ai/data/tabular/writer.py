@@ -84,6 +84,8 @@ def to_parquet_sync(
     output_dir: str,
     df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
+    basename_template: Optional[str] = None,
+    existing_data_behavior: Optional[str] = None,
     metadata: Optional[Dict] = None,
     partition_cols: Optional[List[str]] = None,
     settings: Optional[BatchSettings] = None,
@@ -101,10 +103,12 @@ def to_parquet_sync(
     ):
         pq.write_to_dataset(
             table,
-            root_path=output_dir,
-            partition_cols=partition_columns,
-            use_dictionary=True,
+            basename_template=basename_template,
             compression='snappy',
+            existing_data_behavior=existing_data_behavior,
+            partition_cols=partition_columns,
+            root_path=output_dir,
+            use_dictionary=True,
         )
         total_rows += table.num_rows
         total_columns = max(len(table.schema.names), total_columns)
@@ -119,6 +123,8 @@ async def to_parquet_async(
     output_dir: str,
     df: Optional[Union[pl.DataFrame, pl.Series, pd.Series]] = None,
     dfs: Optional[Union[List[pl.DataFrame], pl.Series, pd.Series]] = None,
+    basename_template: Optional[str] = None,
+    existing_data_behavior: Optional[str] = None,
     metadata: Optional[Dict] = None,
     partition_cols: Optional[List[str]] = None,
     settings: Optional[BatchSettings] = None,
@@ -134,7 +140,12 @@ async def to_parquet_async(
         partition_cols=partition_cols,
         settings=settings,
     ):
-        await __write_to_dataset_async(table, output_dir, partition_columns)
+        await __write_to_dataset_async(
+            table,
+            root_path=output_dir,
+            existing_data_behavior=existing_data_behavior,
+            partition_cols=partition_columns,
+        )
         total_rows += table.num_rows
         total_columns = max(len(table.schema.names), total_columns)
 
@@ -146,7 +157,9 @@ async def to_parquet_async(
 
 async def __write_to_dataset_async(
     table: pa.Table,
-    output_dir: str,
+    root_path: str,
+    basename_template: Optional[str] = None,
+    existing_data_behavior: Optional[str] = None,
     partition_cols: Optional[List[str]] = None,
 ):
     loop = asyncio.get_event_loop()
@@ -154,9 +167,11 @@ async def __write_to_dataset_async(
         None,
         pq.write_to_dataset,
         table,
-        output_dir,
+        basename_template=basename_template,
         compression='snappy',
+        existing_data_behavior=existing_data_behavior,
         partition_cols=partition_cols,
+        root_path=root_path,
         use_dictionary=True,
     )
 

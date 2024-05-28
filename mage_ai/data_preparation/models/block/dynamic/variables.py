@@ -361,14 +361,17 @@ def delete_variable_objects_for_dynamic_child(
         execution_partition=execution_partition,
     )
     if variable_objects:
-        write_policy = block.block.write_settings.mode
+        write_policy = (
+            block.write_settings.batch_settings.mode
+            if block.write_settings and block.write_settings.batch_settings
+            else None
+        )
         for variable_object in variable_objects:
             if write_policy and variable_object.data_exists():
                 if ExportWritePolicy.FAIL == write_policy:
                     raise Exception(f'Write policy for block {block.uuid} is {write_policy}.')
-                elif ExportWritePolicy.APPEND == write_policy:
-                    return
-            variable_object.delete()
+                elif ExportWritePolicy.APPEND != write_policy:
+                    variable_object.delete()
 
 
 def __get_all_variable_objects_for_dynamic_child(

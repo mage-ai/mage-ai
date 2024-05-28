@@ -21,6 +21,7 @@ from mage_ai.data_preparation.models.variables.utils import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.settings.server import MEMORY_MANAGER_V2
@@ -107,8 +108,13 @@ class VariableManager:
             write_chunks=write_chunks,
         )
 
-        # Delete data if it exists
-        variable.delete()
+        if (
+            write_batch_settings
+            and write_batch_settings.mode
+            and ExportWritePolicy.APPEND != write_batch_settings.mode
+        ):
+            # Delete data if it exists
+            variable.delete()
 
         if (
             basic_iterable

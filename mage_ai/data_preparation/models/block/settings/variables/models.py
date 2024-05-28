@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from mage_ai.data.constants import InputDataType, ReadModeType
+from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
-from mage_ai.io.base import ExportWritePolicy
 from mage_ai.shared.models import BaseDataClass
 
 ChunkKeyTypeBase = Union[bool, float, int, str]
@@ -16,17 +15,10 @@ class VariableSettings(BaseDataClass):
     batch_settings: Optional[BatchSettings] = None
     chunks: Optional[List[ChunkKeyTypeUnion]] = None
     input_data_types: Optional[List[InputDataType]] = None
-    mode: Optional[Union[ReadModeType, ExportWritePolicy]] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('batch_settings', BatchSettings)
-        self.serialize_attribute_enums('input_data_types', InputDataType)
-
-        if self.mode and isinstance(self.mode, str):
-            if self.mode in ReadModeType.__members__:
-                self.mode = ReadModeType(self.mode)
-            elif self.mode in ExportWritePolicy.__members__:
-                self.mode = ExportWritePolicy(self.mode)
+        self.serialize_attribute_classes('input_data_types', InputDataType)
 
 
 @dataclass

@@ -3,7 +3,7 @@ import typing
 from dataclasses import dataclass, make_dataclass
 from enum import Enum
 from functools import reduce
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 import inflection
 
@@ -199,7 +199,13 @@ class BaseClass:
         try:
             value = getattr(self, attribute_name)
             if value and isinstance(value, str):
-                setattr(self, attribute_name, enum_class(value))
+                setattr(
+                    self,
+                    attribute_name,
+                    enum_class.from_value(value)
+                    if issubclass(enum_class, BaseEnum)
+                    else enum_class(value),
+                )
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enum: {err}')
 
@@ -210,7 +216,11 @@ class BaseClass:
                 arr = []
                 for value in values:
                     if isinstance(value, str):
-                        arr.append(enum_class(value))
+                        arr.append(
+                            enum_class.from_value(value)
+                            if issubclass(enum_class, BaseEnum)
+                            else enum_class(value)
+                        )
                     else:
                         arr.append(value)
                 setattr(self, attribute_name, arr)
@@ -295,3 +305,20 @@ class Delegator:
     def __init__(self, target: Any):
         self.target = target
         self.delegate = DelegatorTarget(self.target)
+
+
+class BaseEnum(Enum):
+    @classmethod
+    def has_value(cls, value: Union[Any, str]) -> bool:
+        if isinstance(value, cls):
+            return True
+        return isinstance(value, str) and value.upper() in (name for name in cls.__members__)
+
+    @classmethod
+    def from_value(cls, value: Union[Any, str]) -> Optional[Any]:
+        if not cls.has_value(value):
+            return None
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            return cls[value.upper()]
