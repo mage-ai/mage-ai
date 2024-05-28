@@ -228,7 +228,7 @@ def add_execution_code(
     variables: Optional[Dict] = None,
     widget: bool = False,
 ) -> str:
-    escaped_code = code.replace("'''", '"""')
+    escaped_code = code.replace("'''", '"""').replace("\\", "\\\\")
 
     run_settings_json = json.dumps(run_settings or {})
 
