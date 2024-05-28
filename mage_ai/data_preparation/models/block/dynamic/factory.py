@@ -32,10 +32,10 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         item_count_total = self.calculate_item_count()
 
         upstream_block_runs = self.__upstream_block_runs()
-        upstream_block_runs_completed = all(
+        upstream_block_runs_completed = len([
             block_run.status == BlockRun.BlockRunStatus.COMPLETED
             for block_run in upstream_block_runs
-        )
+        ])
 
         completed = (
             upstream_block_runs_completed >= len(upstream_block_runs)
@@ -61,7 +61,8 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
     def __fetch_cloned_block_runs(self) -> Dict[str, BlockRun]:
         cloned_block_runs = {}
         for block_run in self.block_runs():
-            if self.pipeline.get_block(block_run.block_uuid).uuid == self.block.uuid:
+            block = self.pipeline.get_block(block_run.block_uuid)
+            if block and block.uuid == self.block.uuid:
                 block_run_previous = cloned_block_runs.get(block_run.block_uuid)
                 if (
                     block_run_previous is None
@@ -98,7 +99,10 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
 
     def __upstream_block_runs(self) -> List[BlockRun]:
         upstream_block_uuids = [
-            upstream_block.uuid for upstream_block in self.block.upstream_blocks
+            upstream_block.uuid_replicated
+            if upstream_block.replicated_block
+            else upstream_block.uuid
+            for upstream_block in self.block.upstream_blocks
         ]
         return [
             block_run

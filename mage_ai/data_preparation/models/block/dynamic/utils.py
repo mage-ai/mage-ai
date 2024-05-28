@@ -32,6 +32,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.utils import (
     is_basic_iterable,
+    is_dataframe_or_series,
     prepare_data_for_output,
 )
 from mage_ai.server.kernel_output_parser import DataType
@@ -593,7 +594,7 @@ def build_combinations_for_dynamic_child(
                             origin_block=origin_block,
                         )
                         if values is not None:
-                            if is_basic_iterable(values) and hasattr(values, '__len__'):
+                            if is_basic_iterable(values) or is_dataframe_or_series(values):
                                 count = len(values)
                             else:
                                 count = 1
@@ -609,7 +610,7 @@ def build_combinations_for_dynamic_child(
                     origin_block=origin_block,
                 )
                 if arr is not None:
-                    if not is_basic_iterable(arr) or not hasattr(arr, '__len__'):
+                    if not is_basic_iterable(arr) and not is_dataframe_or_series(arr):
                         arr = [0]
             if arr is not None and hasattr(arr, '__len__') and len(arr) > 0:
                 dynamic_counts.append([idx for idx in range(len(arr))])

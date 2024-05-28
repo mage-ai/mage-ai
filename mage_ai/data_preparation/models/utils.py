@@ -169,6 +169,10 @@ def is_basic_iterable(data: Any) -> bool:
     return isinstance(data, (list, set, tuple))
 
 
+def is_dataframe_or_series(data: Any) -> bool:
+    return isinstance(data, (pd.DataFrame, pd.Series, pl.DataFrame, pl.Series))
+
+
 def infer_variable_type(
     data: Any,
     repo_path: Optional[str] = None,

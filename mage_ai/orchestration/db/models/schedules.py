@@ -1414,7 +1414,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             if block.replicated_block:
                 replicated_block = pipeline.get_block(block.replicated_block)
                 if replicated_block:
-                    block_uuid = f'{block.uuid}:{replicated_block.uuid}'
+                    block_uuid = block.uuid_replicated
                 else:
                     raise Exception(
                         f'Replicated block {block.replicated_block} '
