@@ -13,9 +13,6 @@ from mage_ai.data.models.base import BaseData
 from mage_ai.data.models.reader import Reader
 from mage_ai.data.models.writer import Writer
 from mage_ai.data.tabular.models import BatchSettings
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.utils import infer_variable_type
 
 
@@ -24,9 +21,9 @@ class DataManager(BaseData):
         self,
         input_data_types: Optional[List[InputDataType]],
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
         *args,
         **kwargs,
     ):
