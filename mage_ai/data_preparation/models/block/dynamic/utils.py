@@ -24,14 +24,16 @@ from mage_ai.data_preparation.models.block.dynamic.shared import (
     should_reduce_output as should_reduce_output_v1,
 )
 from mage_ai.data_preparation.models.block.dynamic.variables import (
-    get_dynamic_children_count,
     get_outputs_for_dynamic_block,
 )
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from mage_ai.data_preparation.models.utils import prepare_data_for_output
+from mage_ai.data_preparation.models.utils import (
+    is_basic_iterable,
+    prepare_data_for_output,
+)
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -584,39 +586,31 @@ def build_combinations_for_dynamic_child(
                 )
                 if is_dynamic:
                     for dynamic_block_index in range(len(children_created)):
-                        count, is_partial_data_readable = get_dynamic_children_count(
+                        values, _metadata = get_outputs_for_dynamic_block(
                             upstream_block,
                             execution_partition=execution_partition,
                             dynamic_block_index=dynamic_block_index,
+                            origin_block=origin_block,
                         )
-                        if count is not None and is_partial_data_readable:
+                        if values is not None:
+                            if is_basic_iterable(values) and hasattr(values, '__len__'):
+                                count = len(values)
+                            else:
+                                count = 1
                             arr.extend([idx for idx in range(count)])
                         else:
-                            values, _metadata = get_outputs_for_dynamic_block(
-                                upstream_block,
-                                execution_partition=execution_partition,
-                                dynamic_block_index=dynamic_block_index,
-                                origin_block=origin_block,
-                            )
-                            if values is not None:
-                                arr.extend([idx for idx in range(len(values))])
-                            else:
-                                arr.append(0)
+                            arr.append(0)
                 else:
                     arr.extend([idx for idx in range(len(children_created))])
             else:
-                count, is_partial_data_readable = get_dynamic_children_count(
+                arr, _metadata = get_outputs_for_dynamic_block(
                     upstream_block,
                     execution_partition=execution_partition,
+                    origin_block=origin_block,
                 )
-                if count is not None and is_partial_data_readable:
-                    arr = [idx for idx in range(count)]
-                else:
-                    arr, _metadata = get_outputs_for_dynamic_block(
-                        upstream_block,
-                        execution_partition=execution_partition,
-                        origin_block=origin_block,
-                    )
+                if arr is not None:
+                    if not is_basic_iterable(arr) or not hasattr(arr, '__len__'):
+                        arr = [0]
             if arr is not None and hasattr(arr, '__len__') and len(arr) > 0:
                 dynamic_counts.append([idx for idx in range(len(arr))])
             else:

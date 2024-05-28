@@ -18,7 +18,7 @@ class VariableSettings(BaseDataClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('batch_settings', BatchSettings)
-        self.serialize_attribute_classes('input_data_types', InputDataType)
+        self.serialize_attribute_enums('input_data_types', InputDataType)
 
 
 @dataclass
