@@ -8,7 +8,6 @@ from typing import Dict, Optional
 from warnings import warn
 
 import ruamel.yaml
-import yaml
 from jinja2 import Template
 
 from mage_ai.cluster_manager.constants import ClusterType
@@ -27,7 +26,7 @@ from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_debug
-from mage_ai.shared.yaml import trim_strings
+from mage_ai.shared.yaml import load_yaml, trim_strings
 
 yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
@@ -95,7 +94,7 @@ class RepoConfig:
                 if os.path.exists(self.metadata_path):
                     with open(self.metadata_path) as f:
                         config_file = Template(f.read()).render(**get_template_vars())
-                        repo_config = yaml.full_load(config_file) or {}
+                        repo_config = load_yaml(config_file) or {}
                         repo_config = trim_strings(repo_config)
                 else:
                     repo_config = dict()

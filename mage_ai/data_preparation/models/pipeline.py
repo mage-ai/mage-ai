@@ -11,7 +11,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 import pytz
-import yaml
 from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
@@ -82,6 +81,7 @@ from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
+from mage_ai.shared.yaml import load_yaml, yaml
 
 CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 
@@ -498,7 +498,7 @@ class Pipeline:
             return None
 
         with open(metadata_path) as fp:
-            config = yaml.full_load(fp) or {}
+            config = load_yaml(fp) or {}
         return config
 
     @classmethod
@@ -557,7 +557,7 @@ class Pipeline:
 
             config = None
             async with aiofiles.open(config_path, mode='r') as f:
-                config = yaml.safe_load(await f.read()) or {}
+                config = load_yaml(await f.read()) or {}
         except Exception as e:
             if raise_exception:
                 raise e
@@ -599,7 +599,7 @@ class Pipeline:
         if not config_path or not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
-            config = yaml.safe_load(await f.read()) or {}
+            config = load_yaml(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -817,7 +817,7 @@ class Pipeline:
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist in repo_path {self.repo_path}.')
         with open(self.config_path, encoding='utf-8') as fp:
-            config = yaml.full_load(fp) or {}
+            config = load_yaml(fp) or {}
         return config
 
     def get_catalog_from_json(self):
@@ -1603,7 +1603,7 @@ class Pipeline:
 
         files_to_be_written = []
         with open(config_zip_path, 'r') as pipeline_config:
-            config = yaml.safe_load(pipeline_config)
+            config = load_yaml(pipeline_config)
 
             # check if pipeline exists with same uuid and generate new one if necessary
             if not overwrite:
@@ -2410,7 +2410,7 @@ class Pipeline:
             success = True
             with open(test_path, mode='r', encoding='utf-8') as fp:
                 try:
-                    yaml.full_load(fp)
+                    load_yaml(fp)
                 except yaml.scanner.ScannerError:
                     success = False
 
