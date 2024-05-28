@@ -44,7 +44,9 @@ class LazyVariable:
     def is_dynamic(self):
         from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 
-        return is_dynamic_block(self.block)
+        return (self.block.is_dynamic_v2 and self.block.is_dynamic_parent) or is_dynamic_block(
+            self.block
+        )
 
     def read_data(self):
         result = self.variable.read_data(
@@ -114,7 +116,9 @@ class LazyVariableSet(Sequence):
     def is_dynamic(self):
         from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 
-        return is_dynamic_block(self.block)
+        return (self.block.is_dynamic_v2 and self.block.is_dynamic_parent) or is_dynamic_block(
+            self.block
+        )
 
     @property
     def lazy_child_data(self) -> Union[List[LazyVariable], LazyVariable]:
@@ -199,7 +203,9 @@ class LazyVariableController(Sequence):
     def is_dynamic(self):
         from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 
-        return is_dynamic_block(self.block)
+        return (self.block.is_dynamic_v2 and self.block.is_dynamic_parent) or is_dynamic_block(
+            self.block
+        )
 
     def render(
         self,
@@ -610,9 +616,16 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     upstream_block_uuids = []
 
     for upstream_block in block.upstream_blocks:
-        is_dynamic_child = is_dynamic_block_child(upstream_block)
-        is_dynamic = is_dynamic_block(upstream_block)
-        reduce_output = should_reduce_output(upstream_block)
+        if block.is_dynamic_v2:
+            is_dynamic_child = upstream_block.is_dynamic_child
+            is_dynamic = upstream_block.should_dynamically_generate_block(block)
+            reduce_output = upstream_block.should_reduce_output_for_downstream_block(
+                block
+            ) or block.should_reduce_output_from_upstream_block(upstream_block)
+        else:
+            is_dynamic_child = is_dynamic_block_child(upstream_block)
+            is_dynamic = is_dynamic_block(upstream_block)
+            reduce_output = should_reduce_output(upstream_block)
 
         upstream_block_uuid = upstream_block.uuid
 
@@ -626,7 +639,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
             # If dynamic child should reduce its output (which means it passes the entire
             # output to its downstream blocks):
-            if should_reduce_output(upstream_block) and block.type != BlockType.EXTENSION:
+            if reduce_output and block.type != BlockType.EXTENSION:
                 child_data = []
                 metadata = {}
                 for lazy_variable_set in lazy_variable_controller:

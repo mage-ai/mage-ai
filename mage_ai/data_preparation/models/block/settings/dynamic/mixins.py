@@ -31,10 +31,14 @@ class DynamicMixin:
         )
 
     @property
-    def is_dynamic_streaming(self) -> bool:
+    def is_dynamic_v2(self) -> bool:
         from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
 
-        return DYNAMIC_BLOCKS_V2 and (
+        return DYNAMIC_BLOCKS_V2
+
+    @property
+    def is_dynamic_streaming(self) -> bool:
+        return self.is_dynamic_v2 and (
             (self.is_dynamic_parent and self.is_dynamic_stream_mode_enabled)
             or self.is_dynamic_child_streaming
         )
@@ -53,9 +57,7 @@ class DynamicMixin:
 
     @property
     def is_dynamic_child_streaming(self) -> bool:
-        from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
-
-        return DYNAMIC_BLOCKS_V2 and any(
+        return self.is_dynamic_v2 and any(
             (
                 upstream_block.should_dynamically_generate_block(self)
                 and upstream_block.is_dynamic_stream_mode_enabled

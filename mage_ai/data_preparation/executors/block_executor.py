@@ -374,7 +374,13 @@ class BlockExecutor:
             should_run_conditional = True
 
             if is_dynamic_block_child(self.block):
-                if self.block_run and self.block_run.block_uuid == self.block.uuid:
+                if self.block_run and (
+                    self.block_run.block_uuid == self.block.uuid
+                    or (
+                        self.block.replicated_block
+                        and self.block_run.block_uuid == self.block.uuid_replicated
+                    )
+                ):
                     should_run_conditional = False
 
             if should_run_conditional:

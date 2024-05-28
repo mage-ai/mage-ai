@@ -77,6 +77,15 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         runs_count = len(cloned_block_runs)
         item_count = self.__calculate_item_count()
 
+        counts = ', '.join([
+            f'{block_uuid}={counter.item_count() if counter is not None else 1}'
+            for block_uuid, counter in self.__counters.items()
+        ])
+        print(
+            f'[DynamicBlockFactory.item_count] {self.block_run().block_uuid}: {item_count} '
+            f'items ({counts})'
+        )
+
         block_runs = []
         pipeline_run = self.pipeline_run()
 
@@ -103,14 +112,17 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
                         counter_class = DynamicDuoItemCounter
                     else:
                         counter_class = DynamicChildItemCounter
-                else:
+                elif is_dynamic_parent:
                     counter_class = DynamicBlockItemCounter
 
-                if counter_class is not None:
-                    self._counters[upstream_block.uuid] = counter_class(
+                self._counters[upstream_block.uuid] = (
+                    counter_class(
                         upstream_block,
                         partition=self.execution_partition,
                     )
+                    if counter_class is not None
+                    else None
+                )
 
         return self._counters
 
@@ -119,7 +131,10 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
             lambda a, b: a * b,
             # Multiply by 0 so that no block runs are created until all
             # upstream blocks have at least 1 output.
-            [counter.item_count() for counter in self.__counters.values()],
+            [
+                counter.item_count() if counter is not None else 1
+                for counter in self.__counters.values()
+            ],
             1,
         )
 
@@ -157,7 +172,8 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
 
     def __sleep(self) -> None:
         mode_settings = self.block.settings_for_mode(ModeType.STREAM)
+        poll_interval = mode_settings.poll_interval if mode_settings is not None else None
         poll_interval = (
-            mode_settings.poll_interval if mode_settings else DEFAULT_STREAM_POLL_INTERVAL
-        ) or DEFAULT_STREAM_POLL_INTERVAL
+            poll_interval if poll_interval is not None else DEFAULT_STREAM_POLL_INTERVAL
+        )
         time.sleep(poll_interval)

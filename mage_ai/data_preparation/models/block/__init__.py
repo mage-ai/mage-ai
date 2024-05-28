@@ -2302,12 +2302,17 @@ class Block(
                 upstream block UUIDs.
         """
 
-        if (
-            any([
-                is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block)
+        if (self.is_dynamic_v2 and self.is_dynamic_child) or (
+            not self.is_dynamic_v2
+            and any([
+                is_dynamic_block(
+                    upstream_block,
+                )
+                or is_dynamic_block_child(
+                    upstream_block,
+                )
                 for upstream_block in self.upstream_blocks
             ])
-            or self.is_dynamic_child
         ):
             return fetch_input_variables_for_dynamic_upstream_blocks(
                 self,

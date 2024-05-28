@@ -55,7 +55,7 @@ class DynamicItemCounter:
             self.pipeline.uuid, self.block.uuid, self.variable_uuid, partition=self.partition
         )
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         return 0
 
 
@@ -89,7 +89,7 @@ class DynamicBlockItemCounter(DynamicItemCounter):
 
         return 0
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         Try the following methods to calculate the item count by starting with the
         lowest resource consumption method first.
@@ -137,7 +137,7 @@ class DynamicChildItemCounter(DynamicItemCounter):
     def part_uuids(self) -> Optional[Sequence]:
         return dynamic_block_index_paths(self.variable)
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         1. Similar to counting the number of parts,
         count the number of dynamic child block directories
@@ -147,11 +147,14 @@ class DynamicChildItemCounter(DynamicItemCounter):
                         filename.extension
         2. If dynamic child block reduces output, the count is 1
         """
-        from mage_ai.data_preparation.models.block.dynamic.utils import (
-            should_reduce_output,
-        )
 
-        if should_reduce_output(self.block):
+        if (
+            downstream_block is not None
+            and (
+                self.block.should_reduce_output_for_downstream_block(downstream_block)
+                or downstream_block.should_reduce_output_from_upstream_block(self.block)
+            )
+        ) or self.block.should_reduce_output:
             return 1
 
         if self.part_uuids is not None:
@@ -207,7 +210,7 @@ class DynamicDuoItemCounter(DynamicItemCounter):
             for dynamic_block_index in self.indexes
         ])
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         If block is dynamic and a dynamic child,
         the count is the sum of dynamic_output_item_count() across all dynamic child blocks:
