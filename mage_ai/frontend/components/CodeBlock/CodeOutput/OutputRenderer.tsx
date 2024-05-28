@@ -68,9 +68,9 @@ function OutputRenderer({
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
   if ((DataTypeEnum.GROUP === dataType || multiOutput || singleOutput) && outputsLength >= 1) {
-    const progressOnly = outputs?.every(({
-      type,
-    }) => [DataTypeEnum.PROGRESS, DataTypeEnum.PROGRESS_STATUS].includes(type));
+    const progressOnly = outputs?.every(({ type }) =>
+      [DataTypeEnum.PROGRESS, DataTypeEnum.PROGRESS_STATUS].includes(type),
+    );
     const el = (
       <MultiOutput
         color={blockColor?.accent}
