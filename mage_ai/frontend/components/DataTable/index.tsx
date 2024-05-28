@@ -259,10 +259,9 @@ function estimateCellHeight({
   }
 
   const columns = original?.length;
-  console.log('original', original);
   const maxLength = Array.isArray(original)
     ? Math.max(...original.map(val => String(val)?.length || 0))
-    : original?.length;
+    : String(original)?.length || 0;
   const totalWidth = maxLength * WIDTH_OF_CHARACTER;
 
   const columnWidth = columns * totalWidth;

@@ -360,7 +360,8 @@ function TripleLayout({
           }
         >
           {typeof after === 'function'
-            ? !afterHidden && after?.({
+            ? !afterHidden &&
+              after?.({
                 width: afterWidthFinal,
               })
             : !afterHidden && after}
