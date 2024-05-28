@@ -7,9 +7,11 @@ import inflection
 
 def is_json(myjson):
     try:
-        json_object = json.loads(myjson)
-        return json_object
-    except ValueError:  # For Python versions < 3.5
+        json_object = json.loads(str(myjson))
+        if isinstance(json_object, dict):
+            return json_object
+        return False
+    except Exception:
         return False
 
 
