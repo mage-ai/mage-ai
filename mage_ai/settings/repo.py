@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
-import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_VAR
@@ -11,6 +10,7 @@ from mage_ai.settings.platform.constants import set_project_platform_activated_f
 from mage_ai.settings.platform.utils import project_platform_activated
 from mage_ai.settings.utils import base_repo_dirname, base_repo_path
 from mage_ai.shared.environments import is_test
+from mage_ai.shared.yaml import load_yaml
 
 MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
 MAGE_CLUSTER_TYPE_ENV_VAR = 'CLUSTER_TYPE'
@@ -201,7 +201,7 @@ def get_variables_dir(
             if os.path.exists(metadata_path):
                 with open(metadata_path, 'r', encoding='utf-8') as f:
                     config_file_raw = f.read()
-                    repo_config = yaml.full_load(config_file_raw) or {}
+                    repo_config = load_yaml(config_file_raw) or {}
                     if repo_config.get('variables_dir'):
                         variables_dir = repo_config.get('variables_dir')
                         variables_dir = Template(variables_dir).render(**get_template_vars_no_db())

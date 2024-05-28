@@ -3422,10 +3422,15 @@ class Block(
 
     def __consolidate_variables(self, variable_mapping: Dict) -> Dict:
         # Consolidate print variables
-        output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
-        print_variables = {
-            k: v for k, v in variable_mapping.items() if is_valid_print_variable(k, v, self.uuid)
-        }
+        if BlockType.SCRATCHPAD == self.type:
+            output_variables = {}
+            print_variables = variable_mapping.copy()
+        else:
+            output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
+            print_variables = {
+                k: v for k, v in variable_mapping.items()
+                if is_valid_print_variable(k, v, self.uuid)
+            }
 
         print_variables_keys = sorted(print_variables.keys(), key=lambda k: int(k.split('_')[-1]))
 
@@ -3458,6 +3463,10 @@ class Block(
             if 'msg_type' not in json_value or 'data' not in json_value:
                 consolidated_print_variables[k] = value
                 save_variable_and_reset_state()
+                continue
+
+            if json_value.get('msg_type') == 'status':
+                # Do not save status messages
                 continue
 
             if state['msg_key'] is not None and json_value['msg_type'] != state['msg_type']:

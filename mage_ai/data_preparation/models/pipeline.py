@@ -11,7 +11,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import aiofiles
 import pytz
-import yaml
 from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
@@ -29,6 +28,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
+from mage_ai.data_preparation.models.block.extension.utils import compare_extension
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
@@ -81,6 +81,7 @@ from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
+from mage_ai.shared.yaml import load_yaml, yaml
 
 CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 
@@ -139,7 +140,7 @@ class Pipeline:
         else:
             self.repo_config = repo_config
 
-        self.variable_manager: VariableManager = VariableManager.get_manager(
+        self.variable_manager = VariableManager.get_manager(
             self.repo_path,
             self.remote_variables_dir or self.variables_dir,
         )
@@ -497,7 +498,7 @@ class Pipeline:
             return None
 
         with open(metadata_path) as fp:
-            config = yaml.full_load(fp) or {}
+            config = load_yaml(fp) or {}
         return config
 
     @classmethod
@@ -556,7 +557,7 @@ class Pipeline:
 
             config = None
             async with aiofiles.open(config_path, mode='r') as f:
-                config = yaml.safe_load(await f.read()) or {}
+                config = load_yaml(await f.read()) or {}
         except Exception as e:
             if raise_exception:
                 raise e
@@ -598,7 +599,7 @@ class Pipeline:
         if not config_path or not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
-            config = yaml.safe_load(await f.read()) or {}
+            config = load_yaml(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -643,7 +644,8 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'), mage_projects_only=True
+                    context_data=kwargs.get('context_data'),
+                    mage_projects_only=True
                 ).values()
             ]
 
@@ -815,7 +817,7 @@ class Pipeline:
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist in repo_path {self.repo_path}.')
         with open(self.config_path, encoding='utf-8') as fp:
-            config = yaml.full_load(fp) or {}
+            config = load_yaml(fp) or {}
         return config
 
     def get_catalog_from_json(self):
@@ -1242,11 +1244,12 @@ class Pipeline:
             for extension_uuid, extension in data['extensions'].items():
                 if extension_uuid not in self.extensions:
                     self.extensions[extension_uuid] = {}
-                self.extensions[extension_uuid] = merge_dict(
-                    self.extensions[extension_uuid],
-                    extension,
-                )
-            should_save = True
+                if compare_extension(extension, self.extensions[extension_uuid]):
+                    self.extensions[extension_uuid] = merge_dict(
+                        self.extensions[extension_uuid],
+                        extension,
+                    )
+                    should_save = True
 
         if 'tags' in data:
             new_tags = data.get('tags', [])
@@ -1278,11 +1281,11 @@ class Pipeline:
             'retry_config',
             'run_pipeline_in_one_process',
         ]:
-            if key in data:
+            if key in data and data.get(key) != getattr(self, key):
                 setattr(self, key, data.get(key))
                 should_save = True
 
-        if 'settings' in data:
+        if 'settings' in data and data.get('settings') != self.settings.to_dict():
             self.settings = PipelineSettings.load(**(data.get('settings') or {}))
             should_save = True
 
@@ -1412,7 +1415,7 @@ class Pipeline:
                         block.update(extract(block_data, ['color']))
 
                     configuration = block_data.get('configuration')
-                    if configuration:
+                    if configuration and configuration != block.configuration:
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
@@ -1422,16 +1425,16 @@ class Pipeline:
                         if name and name != block.name:
                             keys_to_update.append('name')
 
-                        if block_data.get('upstream_blocks'):
+                        upstream_blocks = block_data.get('upstream_blocks') or []
+                        if upstream_blocks != block.upstream_block_uuids:
                             keys_to_update.append('upstream_blocks')
                             block_data['upstream_blocks'] = [
                                 block_uuid_mapping.get(b, b) for b in block_data['upstream_blocks']
                             ]
-
                         if len(keys_to_update) >= 1:
                             block.update(extract(block_data, keys_to_update))
+                            should_save_async = should_save_async or True
 
-                        should_save_async = should_save_async or True
                     elif name and name != block.name:
                         from mage_ai.cache.block_action_object import (
                             BlockActionObjectCache,
@@ -1600,7 +1603,7 @@ class Pipeline:
 
         files_to_be_written = []
         with open(config_zip_path, 'r') as pipeline_config:
-            config = yaml.safe_load(pipeline_config)
+            config = load_yaml(pipeline_config)
 
             # check if pipeline exists with same uuid and generate new one if necessary
             if not overwrite:
@@ -2407,7 +2410,7 @@ class Pipeline:
             success = True
             with open(test_path, mode='r', encoding='utf-8') as fp:
                 try:
-                    yaml.full_load(fp)
+                    load_yaml(fp)
                 except yaml.scanner.ScannerError:
                     success = False
 
