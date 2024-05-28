@@ -97,6 +97,7 @@ class VariableManager:
             resource_usage=resource_usage,
             storage=self.storage,
             variable_type=variable_type,
+            variables_dir=self.variables_dir,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
         )
@@ -197,6 +198,7 @@ class VariableManager:
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
             input_data_types=input_data_types,
+            variables_dir=self.variables_dir,
         )
 
     async def add_variable_async(
@@ -237,6 +239,7 @@ class VariableManager:
             resource_usage=resource_usage,
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
+            variables_dir=self.variables_dir,
             write_batch_settings=write_batch_settings,
             write_chunks=write_chunks,
         )
@@ -308,6 +311,7 @@ class VariableManager:
             storage=self.storage,
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
+            variables_dir=self.variables_dir,
         ).delete()
 
     def get_variable(
