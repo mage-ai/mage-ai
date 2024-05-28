@@ -265,12 +265,11 @@ def get_dynamic_child_block_indexes(
         1/
         2/
     """
-    count = len(
-        build_combinations_for_dynamic_child(
-            block,
-            execution_partition=execution_partition,
-        )
+    combos = build_combinations_for_dynamic_child(
+        block,
+        execution_partition=execution_partition,
     )
+    count = len(combos)
 
     return [i for i in range(count)]
 
@@ -386,6 +385,7 @@ def __get_all_variable_objects_for_dynamic_child(
     variable_objects_arr = []
 
     indexes = get_dynamic_child_block_indexes(block, execution_partition=execution_partition)
+
     for dynamic_block_index in indexes:
         # 0/output_0,
         # 0/output_1,

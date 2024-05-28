@@ -1,4 +1,5 @@
 import time
+from functools import reduce
 from typing import Dict, List, Optional
 
 from mage_ai.data_preparation.models.block.dynamic.counter import (
@@ -61,6 +62,9 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
     def __fetch_cloned_block_runs(self) -> Dict[str, BlockRun]:
         cloned_block_runs = {}
         for block_run in self.block_runs():
+            if block_run.block_uuid in [self.block.uuid, self.block.uuid_replicated]:
+                continue
+
             block = self.pipeline.get_block(block_run.block_uuid)
             if block and block.uuid == self.block.uuid:
                 block_run_previous = cloned_block_runs.get(block_run.block_uuid)
@@ -72,7 +76,11 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         return cloned_block_runs
 
     def calculate_item_count(self) -> int:
-        return sum([counter.item_count() for counter in self.counters.values()])
+        return reduce(
+            lambda a, b: a * b,
+            [max(1, counter.item_count()) for counter in self.counters.values()],
+            1,
+        )
 
     @property
     def counters(self) -> Dict[str, DynamicItemCounter]:
@@ -124,16 +132,13 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         **kwargs,
     ) -> List[Dict]:
         cloned_block_runs = self.__fetch_cloned_block_runs()
+        runs_count = len(cloned_block_runs)
         item_count = self.calculate_item_count()
-        diff = item_count - len(cloned_block_runs)
-        if diff <= 0:
-            return []
 
         block_runs = []
         pipeline_run = self.pipeline_run()
 
-        for i in range(diff):
-            dynamic_block_index = len(cloned_block_runs) + i
+        for dynamic_block_index in range(runs_count, item_count):
             block_run_uuid = ':'.join([self.block.uuid, str(dynamic_block_index)])
             block_run = pipeline_run.create_block_run(
                 block_run_uuid,

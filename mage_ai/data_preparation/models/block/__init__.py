@@ -2188,11 +2188,11 @@ class Block(
                         return os.path.join(f'output_{order}', str(output_count))
 
                     if is_basic_iterable(data):
-                        if len(data) == 2 and isinstance(data[1], dict):
+                        if data is None or len(data) == 1:
+                            variable_mapping[__output_key(0)] = data
+                        elif len(data) == 2 and isinstance(data[1], dict):
                             variable_mapping[__output_key(0)] = data[0]
                             variable_mapping[__output_key(1)] = data[1]
-                        elif len(data) == 1:
-                            variable_mapping[__output_key(0)] = data
                         else:
                             for idx, item in enumerate(data):
                                 variable_mapping[__output_key(idx)] = item
