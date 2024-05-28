@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+from mage_ai.shared.array import find
 from mage_ai.tests.data_preparation.models.test_blocks_helper import BlockHelperTest
 from mage_ai.tests.factory import create_pipeline_run_with_schedule
 
@@ -74,28 +75,16 @@ def child_1x_childspawn_1x_reduce_func(*args, **kwargs):
 
 class DynamicBlockFactoryTest(BlockHelperTest):
     """
-    dynamic1: 2
-    dynamic2: 2
-    child_2x: 4 = 4
-    child_1x: 4 = 4
-    dynamic_spawn_2x: 4*4 = 16 = 16
-    child_1x_spawn_1x: 16 * 4 * 2 = 128 = 128
-    replica: 16 * 1 = 16 = 16
-    child_1x_childspawn_1x_reduce: 48 * 1 * 2 = 32 = 96
+    dynamic1: 1 block run but outputs 2 items
+    dynamic2: 1 block run but outputs 2 items
+    child_2x: 4 block runs
+    child_1x: 4 block runs
+    dynamic_spawn_2x: 16 block runs
+    child_1x_spawn_1x: 128 bock runs (reduces output to 1)
+    replica: 16 block runs
+    child_1x_childspawn_1x_reduce: 96 block runs
     ---
-    Total: 8 + 4 + 4 + 16 + 128 + 16 + 32 = 208
-
-    dynamic1: 1 = 1
-    dynamic2: 1 = 1 (not dynamic)
-    child_2x: 2 = 2
-    child_1x: 2 = 2
-    dynamic_spawn_2x: 4 = 4
-    child_1x_spawn_1x: 4 * 2 * 1 = 8 = 8
-    replica: 4 * 1 = 4 = 4
-    child_1x_childspawn_1x_reduce: 4 * 1 * 1 = 4 = 4
-    ---
-    8 + 2 + 2 + 4 + 8 + 4 + 4 = 32 = 32
-
+    Total: 272 (including 1 for each original block’s block run)
     """
 
     def setUp(self):
@@ -195,13 +184,23 @@ class DynamicBlockFactoryTest(BlockHelperTest):
 
         self.assertEqual(len(pipeline_run.block_runs), 8)
 
-        max_loops = 4_00
-        loops = 0
-        while loops < max_loops and not all([
-            block_run.status == block_run.BlockRunStatus.COMPLETED
-            for block_run in pipeline_run.block_runs
-        ]):
-            print(f'Loop: {loops}')
+        completes = [
+            [dynamic1.uuid, dynamic2.uuid],
+            [child_2x.build_dynamic_uuid(i) for i in range(4)],
+            [child_2x.uuid],
+            [child_1x.build_dynamic_uuid(i) for i in range(4)],
+            [child_1x.uuid],
+            [dynamic_spawn_2x.build_dynamic_uuid(i) for i in range(16)],
+            [dynamic_spawn_2x.uuid],
+            [child_1x_spawn_1x.build_dynamic_uuid(i) for i in range(128)]
+            + [replica.build_dynamic_uuid(i) for i in range(16)],
+            [child_1x_spawn_1x.uuid, replica.uuid_replicated],
+            [child_1x_childspawn_1x_reduce.build_dynamic_uuid(i) for i in range(96)],
+            [child_1x_childspawn_1x_reduce.uuid],
+        ]
+
+        for loop, block_uuids in enumerate(completes):
+            print(f'Loop: {loop}\n')
             for block_run in pipeline_run.block_runs:
                 if block_run.status == block_run.BlockRunStatus.COMPLETED:
                     continue
@@ -212,24 +211,19 @@ class DynamicBlockFactoryTest(BlockHelperTest):
                     block_run_id=block_run.id,
                 )
                 block_executor.execute(block_run_id=block_run.id, skip_logging=True)
-            loops += 1
 
-        block_runs = [
-            br for br in pipeline_run.block_runs if br.status == br.BlockRunStatus.COMPLETED
-        ]
-        for block, count in [
-            (dynamic1, 2),
-            (dynamic2, 2),
-            (child_2x, 4),
-            (child_1x, 4),
-            (dynamic_spawn_2x, 16),
-            (child_1x_spawn_1x, 128),
-            (replica, 16),
-            (child_1x_childspawn_1x_reduce, 96),
-        ]:
-            runs = [
-                br
-                for br in block_runs
-                if self.pipeline.get_block(br.block_uuid).uuid == block.uuid
+            block_runs_completed = [
+                br for br in pipeline_run.block_runs if br.status == br.BlockRunStatus.COMPLETED
             ]
-            self.assertEqual(len(runs), count)
+            for block_uuid in block_uuids:
+                block_run = find(
+                    lambda br, block_uuid=block_uuid: br.block_uuid == block_uuid,
+                    block_runs_completed,
+                )
+                self.assertIsNotNone(block_run)
+
+        self.assertEqual(len(pipeline_run.block_runs), 272)
+        self.assertEqual(
+            [br for br in pipeline_run.block_runs if br.status == br.BlockRunStatus.COMPLETED],
+            pipeline_run.block_runs,
+        )

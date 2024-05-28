@@ -74,6 +74,9 @@ class DynamicMixin:
     def is_dynamic_stream_mode_enabled(self) -> bool:
         return self.settings_for_mode(ModeType.STREAM) is not None
 
+    def build_dynamic_uuid(self, index: int) -> str:
+        return ':'.join([self.uuid or '__missing_uuid__', str(index)])
+
     def settings_for_mode(self, mode_type: ModeType) -> Optional[ModeSettings]:
         modes = self.__dynamic_configuration().modes
         if modes is not None:
