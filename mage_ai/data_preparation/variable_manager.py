@@ -6,9 +6,6 @@ from typing import Any, Dict, List, Optional
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.models import BatchSettings
-from mage_ai.data_preparation.models.block.settings.variables.models import (
-    ChunkKeyTypeUnion,
-)
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -71,9 +68,9 @@ class VariableManager:
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
     ) -> Variable:
         """
         Used by:
@@ -187,7 +184,7 @@ class VariableManager:
         clean_variable_uuid: bool = True,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
     ) -> Variable:
         return Variable(
             clean_name(variable_uuid) if clean_variable_uuid else variable_uuid,
@@ -214,9 +211,9 @@ class VariableManager:
         input_data_types: Optional[List[InputDataType]] = None,
         resource_usage: Optional[ResourceUsage] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
     ) -> None:
         """
         Used by:
@@ -328,9 +325,9 @@ class VariableManager:
         clean_block_uuid: bool = True,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
     ) -> Any:
         variable = self.get_variable_object(
             pipeline_uuid,
@@ -367,9 +364,9 @@ class VariableManager:
         spark=None,
         input_data_types: Optional[List[InputDataType]] = None,
         read_batch_settings: Optional[BatchSettings] = None,
-        read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        read_chunks: Optional[List] = None,
         write_batch_settings: Optional[BatchSettings] = None,
-        write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+        write_chunks: Optional[List] = None,
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
