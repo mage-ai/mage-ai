@@ -87,12 +87,6 @@ class DynamicBlockFactoryTest(BlockHelperTest):
     Total: 272 (including 1 for each original block’s block run)
     """
 
-    def setUp(self):
-        super().setUp()
-
-    def test_is_complete(self):
-        pass
-
     @patch.multiple(
         'mage_ai.settings.server',
         DYNAMIC_BLOCKS_V2=True,

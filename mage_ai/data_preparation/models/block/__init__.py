@@ -2462,7 +2462,7 @@ class Block(
 
     def get_variable_object(
         self,
-        block_uuid: str,
+        block_uuid: Optional[str] = None,
         variable_uuid: Optional[str] = None,
         clean_block_uuid: bool = True,
         dynamic_block_index: Optional[int] = None,
@@ -2475,6 +2475,7 @@ class Block(
         write_batch_settings: Optional[BatchSettings] = None,
         write_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
     ) -> Variable:
+        block_uuid = block_uuid or self.uuid
         block_uuid, changed = uuid_for_output_variables(
             self,
             block_uuid=block_uuid,

@@ -12,6 +12,9 @@ import polars as pl
 
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
+from mage_ai.data_preparation.models.block.dynamic.data import (
+    calculate_dynamic_index_data_index,
+)
 from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
@@ -596,6 +599,19 @@ def get_outputs_for_dynamic_child(
     return result
 
 
+def dynamic_upstream_block_item_counts(block, partition: Optional[str] = None) -> List[int]:
+    from mage_ai.data_preparation.models.block.dynamic.counter import (
+        DynamicBlockItemCounter,
+    )
+    from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
+
+    return [
+        DynamicBlockItemCounter(b, partition=partition).item_count()
+        for b in block.upstream_blocks
+        if (b.is_dynamic_v2 and b.should_dynamically_generate_block(block)) or is_dynamic_block(b)
+    ]
+
+
 def fetch_input_variables_for_dynamic_upstream_blocks(
     block,
     input_args: List[Any] = None,
@@ -614,8 +630,11 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
     input_vars = []
     kwargs_vars = []
     upstream_block_uuids = []
+    dynamic_upstream_item_counts = dynamic_upstream_block_item_counts(
+        block, partition=execution_partition
+    )
 
-    for upstream_block in block.upstream_blocks:
+    for upstream_position_index, upstream_block in enumerate(block.upstream_blocks):
         if block.is_dynamic_v2:
             is_dynamic_child = upstream_block.is_dynamic_child
             is_dynamic = upstream_block.should_dynamically_generate_block(block)
@@ -671,7 +690,12 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 )
 
             if child_data_count is not None and is_partial_data_readable:
-                index = dynamic_block_index % child_data_count
+                index = calculate_dynamic_index_data_index(
+                    dynamic_block_index,
+                    upstream_position_index,
+                    child_data_count,
+                    dynamic_upstream_item_counts,
+                )
                 child_data, metadata = get_partial_dynamic_block_outputs(
                     upstream_block,
                     index,
@@ -690,9 +714,13 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                     execution_partition=execution_partition,
                 )
                 child_data_count = len(child_data) if hasattr(child_data, '__len__') else 0
-
                 if child_data_count >= 1:
-                    index = dynamic_block_index % child_data_count
+                    index = calculate_dynamic_index_data_index(
+                        dynamic_block_index,
+                        upstream_position_index,
+                        child_data_count,
+                        dynamic_upstream_item_counts,
+                    )
 
                     if isinstance(child_data, list):
                         input_vars.append(child_data[index])
