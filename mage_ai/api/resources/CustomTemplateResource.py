@@ -68,9 +68,9 @@ class CustomTemplateResource(GenericResource):
         repo_path = get_repo_path(user=user)
         if DIRECTORY_FOR_BLOCK_TEMPLATES == object_type:
             custom_template = CustomBlockTemplate.load(repo_path, template_uuid=template_uuid)
-
             if not custom_template:
                 custom_template = CustomBlockTemplate(
+                    repo_path=repo_path,
                     **ignore_keys(
                         payload,
                         [
