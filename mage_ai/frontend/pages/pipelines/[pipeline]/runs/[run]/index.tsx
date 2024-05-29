@@ -41,7 +41,7 @@ import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-const ROW_LIMIT = 200;
+const ROW_LIMIT = 100;
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
