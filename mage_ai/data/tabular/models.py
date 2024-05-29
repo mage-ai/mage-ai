@@ -1,14 +1,16 @@
 from dataclasses import dataclass, field
 from functools import reduce
 from math import ceil
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
+from mage_ai.data.constants import ReadModeType
 from mage_ai.data.tabular.constants import (
     DEFAULT_BATCH_BYTE_VALUE,
     DEFAULT_BATCH_COUNT_VALUE,
     DEFAULT_BATCH_ITEMS_VALUE,
     BatchStrategy,
 )
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -64,12 +66,19 @@ class BatchSettings(BaseDataClass):
 
     count: Settings = field(default_factory=Settings)
     items: Settings = field(default_factory=Settings)
+    mode: Optional[Union[ReadModeType, ExportWritePolicy]] = None
     size: Settings = field(default_factory=Settings)
 
     def __post_init__(self):
         self.serialize_attribute_class('count', Settings)
         self.serialize_attribute_class('items', Settings)
         self.serialize_attribute_class('size', Settings)
+
+        if self.mode:
+            for mode in (ReadModeType, ExportWritePolicy):
+                if mode.has_value(self.mode):
+                    self.mode = mode.from_value(self.mode)
+                    break
 
     @property
     def strategy(self) -> BatchStrategy:

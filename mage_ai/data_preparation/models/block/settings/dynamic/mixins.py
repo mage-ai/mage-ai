@@ -1,7 +1,11 @@
+from typing import Optional
+
 from mage_ai.data_preparation.models.block.settings.dynamic.constants import ModeType
 from mage_ai.data_preparation.models.block.settings.dynamic.models import (
     DynamicConfiguration,
+    ModeSettings,
 )
+from mage_ai.shared.array import find
 
 
 class DynamicMixin:
@@ -27,10 +31,14 @@ class DynamicMixin:
         )
 
     @property
-    def is_dynamic_streaming(self) -> bool:
+    def is_dynamic_v2(self) -> bool:
         from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
 
-        return DYNAMIC_BLOCKS_V2 and (
+        return DYNAMIC_BLOCKS_V2
+
+    @property
+    def is_dynamic_streaming(self) -> bool:
+        return self.is_dynamic_v2 and (
             (self.is_dynamic_parent and self.is_dynamic_stream_mode_enabled)
             or self.is_dynamic_child_streaming
         )
@@ -49,9 +57,7 @@ class DynamicMixin:
 
     @property
     def is_dynamic_child_streaming(self) -> bool:
-        from mage_ai.settings.server import DYNAMIC_BLOCKS_V2
-
-        return DYNAMIC_BLOCKS_V2 and any(
+        return self.is_dynamic_v2 and any(
             (
                 upstream_block.should_dynamically_generate_block(self)
                 and upstream_block.is_dynamic_stream_mode_enabled
@@ -66,8 +72,15 @@ class DynamicMixin:
 
     @property
     def is_dynamic_stream_mode_enabled(self) -> bool:
+        return self.settings_for_mode(ModeType.STREAM) is not None
+
+    def build_dynamic_uuid(self, index: int) -> str:
+        return ':'.join([self.uuid or '__missing_uuid__', str(index)])
+
+    def settings_for_mode(self, mode_type: ModeType) -> Optional[ModeSettings]:
         modes = self.__dynamic_configuration().modes
-        return modes is not None and ModeType.STREAM in modes
+        if modes is not None:
+            return find(lambda ms: ms.type == mode_type, modes)
 
     def should_reduce_output_from_upstream_block(self, block) -> bool:
         reduce_output_upstream = self.__dynamic_configuration().reduce_output_upstream or []

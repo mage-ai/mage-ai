@@ -100,6 +100,9 @@ class DynamicChildController(DynamicBlockWrapperBase):
                 time.sleep(10)
                 tries += 1
 
+        if combos is None:
+            return []
+
         block_run_dicts = []
 
         for combo in combos:

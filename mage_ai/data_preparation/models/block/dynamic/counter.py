@@ -4,6 +4,11 @@ from mage_ai.data.tabular.reader import read_metadata
 from mage_ai.data_preparation.models.block.dynamic.constants import (
     CHILD_DATA_VARIABLE_UUID,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
@@ -33,6 +38,44 @@ class DynamicItemCounter:
         self._output = None
         self._summary_information = None
 
+    @classmethod
+    def build_counter(
+        cls,
+        block: Any,
+        downstream_block: Optional[Any] = None,
+        dynamic_block_index: Optional[int] = None,
+        partition: Optional[str] = None,
+        variable_uuid: Optional[str] = None,
+    ):
+        counter_class = None
+        is_dynamic_parent = (
+            (
+                block.should_dynamically_generate_block(downstream_block)
+                if downstream_block is not None
+                else block.is_dynamic_parent
+            )
+            if block.is_dynamic_v2
+            else is_dynamic_block(block)
+        )
+        is_dynamic_child = (
+            block.is_dynamic_child if block.is_dynamic_v2 else is_dynamic_block_child(block)
+        )
+        if is_dynamic_child:
+            if is_dynamic_parent:
+                counter_class = DynamicDuoItemCounter
+            else:
+                counter_class = DynamicChildItemCounter
+        elif is_dynamic_parent:
+            counter_class = DynamicBlockItemCounter
+
+        if counter_class is not None:
+            return counter_class(
+                block,
+                dynamic_block_index=dynamic_block_index,
+                partition=partition,
+                variable_uuid=variable_uuid,
+            )
+
     @property
     def variable_manager(self):
         return self.block.variable_manager
@@ -55,7 +98,7 @@ class DynamicItemCounter:
             self.pipeline.uuid, self.block.uuid, self.variable_uuid, partition=self.partition
         )
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         return 0
 
 
@@ -89,7 +132,7 @@ class DynamicBlockItemCounter(DynamicItemCounter):
 
         return 0
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         Try the following methods to calculate the item count by starting with the
         lowest resource consumption method first.
@@ -137,7 +180,7 @@ class DynamicChildItemCounter(DynamicItemCounter):
     def part_uuids(self) -> Optional[Sequence]:
         return dynamic_block_index_paths(self.variable)
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         1. Similar to counting the number of parts,
         count the number of dynamic child block directories
@@ -147,11 +190,17 @@ class DynamicChildItemCounter(DynamicItemCounter):
                         filename.extension
         2. If dynamic child block reduces output, the count is 1
         """
-        from mage_ai.data_preparation.models.block.dynamic.utils import (
-            should_reduce_output,
-        )
 
-        if should_reduce_output(self.block):
+        if (
+            (not self.block.is_dynamic_v2 and should_reduce_output(self.block))
+            or (
+                downstream_block is not None
+                and (
+                    self.block.should_reduce_output_for_downstream_block(downstream_block)
+                    or downstream_block.should_reduce_output_from_upstream_block(self.block)
+                )
+            )
+        ) or self.block.should_reduce_output:
             return 1
 
         if self.part_uuids is not None:
@@ -207,7 +256,7 @@ class DynamicDuoItemCounter(DynamicItemCounter):
             for dynamic_block_index in self.indexes
         ])
 
-    def item_count(self) -> int:
+    def item_count(self, downstream_block: Optional[Any] = None) -> int:
         """
         If block is dynamic and a dynamic child,
         the count is the sum of dynamic_output_item_count() across all dynamic child blocks:

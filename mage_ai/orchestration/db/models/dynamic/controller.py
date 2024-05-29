@@ -30,7 +30,7 @@ def is_ready_to_process_data(pipeline, block_run, block_runs) -> bool:
 
     def __condition_1(upstream_block, block=block, mapping=mapping) -> bool:
         run = mapping.get(upstream_block.uuid)
-        if not run:
+        if run is None or run.block_run is None:
             return False
 
         return (
@@ -47,7 +47,7 @@ def is_ready_to_process_data(pipeline, block_run, block_runs) -> bool:
 
     def __condition_2(upstream_block, block=block, mapping=mapping) -> bool:
         run = mapping.get(upstream_block.uuid)
-        if not run:
+        if run is None or run.block_run is None:
             return False
 
         return (

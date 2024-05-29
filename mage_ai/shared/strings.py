@@ -1,7 +1,18 @@
+import json
 import re
 from typing import List
 
 import inflection
+
+
+def is_json(myjson):
+    try:
+        json_object = json.loads(str(myjson))
+        if isinstance(json_object, dict):
+            return json_object
+        return False
+    except Exception:
+        return False
 
 
 def camel_to_snake_case(name):

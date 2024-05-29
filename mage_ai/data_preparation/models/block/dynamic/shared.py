@@ -11,11 +11,17 @@ def is_dynamic_block(block) -> bool:
     Returns:
         bool: True if the block is a dynamic block, False otherwise.
     """
-    return (
-        block is not None
-        and block.configuration is not None
-        and block.configuration.get('dynamic', False)
-    )
+    if block is None or block.configuration is None:
+        return False
+
+    if block.is_dynamic_v2:
+        return block.is_dynamic_parent
+
+    dynamic = block.configuration.get('dynamic')
+    if isinstance(dynamic, bool):
+        return dynamic
+
+    return False
 
 
 def should_reduce_output(block) -> bool:
@@ -28,9 +34,17 @@ def should_reduce_output(block) -> bool:
     Returns:
         bool: True if the block should reduce its output, False otherwise.
     """
-    if not block or not block.configuration or not block.configuration.get('reduce_output', False):
+    if block is None or block.configuration is None:
         return False
-    return True
+
+    if block.is_dynamic_v2:
+        return block.should_reduce_output
+
+    reduce_output = block.configuration.get('reduce_output')
+    if isinstance(reduce_output, bool):
+        return reduce_output
+
+    return False
 
 
 def has_reduce_output_from_upstreams(block) -> bool:
@@ -53,6 +67,9 @@ def is_dynamic_block_child(block, include_reduce_output: Optional[bool] = None) 
     """
     if not block:
         return False
+
+    if block.is_dynamic_v2:
+        return block.is_dynamic_child
 
     dynamic_or_child = []
 

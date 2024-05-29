@@ -1,17 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
+import Ansi from 'ansi-to-react';
+
+import Text from '@oracle/elements/Text';
 import TextOutput, { TextOutputProps } from './TextOutput';
 import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
+import { DataTypeEnum, MsgTypeEnum } from '@interfaces/KernelOutputType';
 
 type ProgressOutputProps = {
   color?: {
     accent?: string;
     accentLight?: string;
   };
+  data?: any;
+  msgType: MsgTypeEnum;
+  dataType: DataTypeEnum;
   progress: number;
 } & TextOutputProps;
 
-function ProgressOutput({ color, progress, value, ...outputRowSharedProps }: ProgressOutputProps) {
+function ProgressOutput({
+  color,
+  data,
+  dataType,
+  msgType,
+  progress,
+  value,
+  ...outputRowSharedProps
+}: ProgressOutputProps) {
   const timeout = useRef(null);
 
   const [hidden, setHidden] = useState(false);
@@ -28,6 +43,27 @@ function ProgressOutput({ color, progress, value, ...outputRowSharedProps }: Pro
       }
     }
   }, [progressValue]);
+
+  if (msgType === MsgTypeEnum.COMM_MSG) {
+    return <div />;
+  }
+
+  if (DataTypeEnum.PROGRESS === dataType) {
+    if (Array.isArray(data)) {
+      return (
+        <>
+          {data.map((line, index1) => (
+            <span
+              key={`${index1}-progress`}
+              style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
+            >
+              <Ansi>{line}</Ansi>
+            </span>
+          ))}
+        </>
+      );
+    }
+  }
 
   return (
     <div>

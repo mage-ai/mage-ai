@@ -11,7 +11,7 @@ import TableOutput from './TableOutput';
 import ProgressOutput from './ProgressOutput';
 import Text from '@oracle/elements/Text';
 import TextOutput from './TextOutput';
-import { DataTypeEnum } from '@interfaces/KernelOutputType';
+import { DataTypeEnum, MsgTypeEnum } from '@interfaces/KernelOutputType';
 import { OutputRowProps } from './index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -45,6 +45,7 @@ function OutputRenderer({
   const themeContext = useContext(ThemeContext);
   const {
     data,
+    msg_type: msgType,
     multi_output: multiOutput,
     outputs,
     progress,
@@ -67,7 +68,9 @@ function OutputRenderer({
   const outputsLength = useMemo(() => outputs?.length, [outputs]);
 
   if ((DataTypeEnum.GROUP === dataType || multiOutput || singleOutput) && outputsLength >= 1) {
-    const progressOnly = outputs?.every(({ type }) => DataTypeEnum.PROGRESS === type);
+    const progressOnly = outputs?.every(({ type }) =>
+      [DataTypeEnum.PROGRESS, DataTypeEnum.PROGRESS_STATUS].includes(type),
+    );
     const el = (
       <MultiOutput
         color={blockColor?.accent}
@@ -116,11 +119,14 @@ function OutputRenderer({
     }
 
     return el;
-  } else if (DataTypeEnum.PROGRESS === dataType) {
+  } else if ([DataTypeEnum.PROGRESS, DataTypeEnum.PROGRESS_STATUS].includes(dataType)) {
     return (
       <ProgressOutput
         {...outputRowSharedProps}
         color={blockColor}
+        data={data}
+        dataType={dataType}
+        msgType={msgType}
         progress={progress}
         value={textValue}
       />

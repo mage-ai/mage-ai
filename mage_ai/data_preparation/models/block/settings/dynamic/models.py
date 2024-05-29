@@ -7,9 +7,18 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
+class ModeSettings(BaseDataClass):
+    type: ModeType
+    poll_interval: Optional[int] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enums('type', ModeType)
+
+
+@dataclass
 class DynamicConfiguration(BaseDataClass):
     batch_settings: Optional[BatchSettings] = None
-    modes: Optional[List[ModeType]] = None
+    modes: Optional[List[ModeSettings]] = None
     # Enable for all downstream or choose specific downstream blocks
     parent: Optional[Union[List[str], bool]] = None
     # Enable for all downstream or choose specific downstream blocks
@@ -19,4 +28,4 @@ class DynamicConfiguration(BaseDataClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('batch_settings', BatchSettings)
-        self.serialize_attribute_enums('modes', ModeType)
+        self.serialize_attribute_classes('modes', ModeSettings)

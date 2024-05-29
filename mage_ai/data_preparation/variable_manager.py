@@ -12,9 +12,13 @@ from mage_ai.data_preparation.models.utils import (
 )
 from mage_ai.data_preparation.models.variable import VARIABLE_DIR, Variable
 from mage_ai.data_preparation.models.variables.constants import VariableType
-from mage_ai.data_preparation.models.variables.utils import is_output_variable
+from mage_ai.data_preparation.models.variables.utils import (
+    get_first_data_output_variable_uuid,
+    is_output_variable,
+)
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.settings.server import MEMORY_MANAGER_V2
@@ -102,8 +106,13 @@ class VariableManager:
             write_chunks=write_chunks,
         )
 
-        # Delete data if it exists
-        variable.delete()
+        if (
+            write_batch_settings
+            and write_batch_settings.mode
+            and ExportWritePolicy.APPEND != write_batch_settings.mode
+        ):
+            # Delete data if it exists
+            variable.delete()
 
         if (
             basic_iterable
@@ -359,7 +368,7 @@ class VariableManager:
         self,
         pipeline_uuid: str,
         block_uuid: str,
-        variable_uuid: str,
+        variable_uuid: Optional[str] = None,
         partition: Optional[str] = None,
         variable_type: Optional[VariableType] = None,
         variable_types: Optional[List[VariableType]] = None,
@@ -374,6 +383,13 @@ class VariableManager:
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
+
+        if not variable_uuid:
+            variable_uuid = get_first_data_output_variable_uuid(
+                self.get_variables_by_block(pipeline_uuid, block_uuid, partition=partition)
+            )
+        if not variable_uuid:
+            variable_uuid = 'output_0'
 
         return Variable(
             variable_uuid,

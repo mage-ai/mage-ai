@@ -13,7 +13,7 @@ class DynamicRun(BaseDataClass):
     clones: List[Any] = field(default_factory=list)
 
     def add(self, block_run):
-        if block_run.block_uuid == self.block.uuid:
+        if block_run.block_uuid in [self.block.uuid_replicated, self.block.uuid]:
             self.block_run = block_run
         else:
             self.clones.append(block_run)

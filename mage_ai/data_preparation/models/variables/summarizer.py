@@ -332,4 +332,5 @@ def __get_part_uuids(variable, path: str) -> Optional[List[str]]:
             if part_uuids is None:
                 part_uuids = []
             part_uuids.append(chunk_uuid)
+
     return part_uuids

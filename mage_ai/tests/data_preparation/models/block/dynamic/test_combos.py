@@ -82,7 +82,7 @@ def load_polars_dataframe(*args, **kwargs):
 
     return [
         create_dataframe(n_rows=1, use_pandas=False),
-        [dict(block_uuid='child_3')],
+        [dict(block_uuid='child_2')],
     ]
 
 
@@ -181,6 +181,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 # self.assertEqual(len(child_data1), len(metadata1))
                 self.assertEqual(len(child_data1), 2)
 
+                print('dynamic1')
                 print(child_data1, metadata1)
 
                 child_data2 = dynamic2.get_variable_object(
@@ -192,21 +193,25 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 # self.assertEqual(len(child_data2), len(metadata2))
                 self.assertEqual(len(child_data2), 1)
 
+                print('dynamic2')
                 print(child_data2, metadata2)
 
                 child2x_outputs = []
                 child2x_metadata = []
                 child2x_combos = build_combinations_for_dynamic_child(child2x)
-                for i in range(len(child2x_combos)):
+                for i, combo in enumerate(child2x_combos):
                     child2x.execute_sync(dynamic_block_index=i)
                     out0 = child2x.get_variable_object(
                         child2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
+                    print('child2x', i, combo)
+                    print(out0)
                     out1 = child2x.get_variable_object(
                         child2x.uuid, dynamic_block_index=i, variable_uuid='output_1'
                     ).read_data()
                     child2x_outputs.append(out0)
                     child2x_metadata.append(out1)
+
                 self.assertEqual(len(child2x_outputs), len(child2x_metadata))
                 self.assertEqual(len(child2x_outputs), len(child_data1) * len(child_data2))
                 self.assertEqual(len(child2x_outputs), 2)

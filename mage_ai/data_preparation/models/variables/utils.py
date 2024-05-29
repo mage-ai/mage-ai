@@ -65,3 +65,13 @@ def get_first_data_output_variable(
         and variable_priority(variable.uuid) == 0,
         sort_variables(variables),
     )
+
+
+def get_first_data_output_variable_uuid(
+    variables: List[str],
+) -> Optional[str]:
+    return find(
+        lambda variable_uuid: is_output_variable(variable_uuid)
+        and variable_priority(variable_uuid) == 0,
+        sort_variable_uuids(variables),
+    )

@@ -1400,6 +1400,8 @@ class Pipeline:
                         and not is_dynamic_block(block)
                         and not is_dynamic_block_child(block)
                     ):
+                        if BlockType.SCRATCHPAD == block.type:
+                            block.delete_variables()
                         await block.save_outputs_async(
                             block_data['outputs'],
                             override=True,
