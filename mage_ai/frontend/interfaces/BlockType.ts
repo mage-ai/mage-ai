@@ -4,7 +4,7 @@ import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
 import { CatalogType } from './IntegrationSourceType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
-import { DataTypeEnum } from './KernelOutputType';
+import { DataTypeEnum, MsgTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 
@@ -186,6 +186,7 @@ export interface OutputType {
   multi_output?: boolean;
   outputs?: OutputType[];
   progress?: number;
+  msg_type?: MsgTypeEnum;
   resource_usage?: ResourceUsage;
   sample_data?: SampleDataType;
   shape?: number[];

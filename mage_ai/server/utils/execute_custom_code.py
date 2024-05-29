@@ -44,7 +44,7 @@ async def send_status_update(
                             dict(
                                 progress=progress,
                                 text_data=message,
-                                type=DataType.PROGRESS,
+                                type=DataType.PROGRESS_STATUS,
                             ),
                         ],
                         priority=0,
