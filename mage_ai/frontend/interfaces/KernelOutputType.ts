@@ -6,11 +6,16 @@ export enum ExecutionStateEnum {
   QUEUED = 'queued', // Block is being attempted to run but another block is still busy
 }
 
+export enum MsgTypeEnum {
+  COMM_MSG = 'comm_msg',
+}
+
 export enum DataTypeEnum {
   GROUP = 'group',
   IMAGE_PNG = 'image/png',
   OBJECT = 'object',
-  PROGRESS = 'progress',
+  PROGRESS = 'progress', // Deprecated; can come from Great Expectations
+  PROGRESS_STATUS = 'progress_status',
   TABLE = 'table',
   TEXT = 'text',
   TEXT_HTML = 'text/html',

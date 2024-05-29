@@ -45,6 +45,7 @@
     "d3-color": "^3.1.0",
     "dangerously-set-html-content": "^1.0.13",
     "global": "^4.4.0",
+    "html-react-parser": "^5.1.10",
     "js-cookie": "^3.0.1",
     "jwt-decode": "^3.1.2",
     "local-storage": "^2.0.0",
