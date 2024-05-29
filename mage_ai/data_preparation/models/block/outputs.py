@@ -43,6 +43,7 @@ from mage_ai.shared.parsers import (
     encode_complex,
     has_to_dict,
 )
+from mage_ai.shared.strings import is_json
 
 
 def format_output_data(
@@ -363,11 +364,22 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
         )
         return data, False
     elif is_primitive(data):
-        data = dict(
-            text_data=str(data),
-            type=DataType.TEXT,
-            variable_uuid=variable_uuid,
-        )
+        json_data = is_json(data)
+        if json_data:
+            text_data = json_data.get('data') or ''
+            if isinstance(text_data, list):
+                text_data = '\n'.join(text_data)
+            data = dict(
+                text_data=text_data,
+                type=DataType.TEXT_PLAIN,
+                variable_uuid=variable_uuid,
+            )
+        else:
+            data = dict(
+                text_data=str(data),
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            )
         return data, False
     elif basic_iterable:
         data = dict(

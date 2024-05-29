@@ -179,7 +179,6 @@ function TripleLayout({
     set(uuid || LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
   }, [afterHidden, setAfterHidden, uuid]);
 
-  console.log(afterHidden);
   const toggleBefore = useCallback(() => {
     const val = !beforeHidden;
     setBeforeHidden?.(val);
