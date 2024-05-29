@@ -522,16 +522,21 @@ def get_global_variables(
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:
-        variables_dir = variables_dir or get_variables_dir()
-        variables = VariableManager(
+        variables_dir = variables_dir or get_variables_dir(repo_path=repo_path)
+        variable_manager = VariableManager(
             repo_path=repo_path, variables_dir=variables_dir
-        ).get_variables_by_block(
+        )
+        variables = variable_manager.get_variables_by_block(
             pipeline_uuid,
             'global',
         )
         global_variables = dict()
         for variable in variables:
-            global_variables[variable] = get_global_variable(pipeline_uuid, variable)
+            global_variables[variable] = variable_manager.get_variable(
+                pipeline_uuid,
+                'global',
+                variable,
+            )
 
     return global_variables
 

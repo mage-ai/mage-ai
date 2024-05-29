@@ -27,7 +27,7 @@ class LocalStorage(BaseStorage):
         max_results: int = None,
     ) -> List[str]:
         paths = []
-        if not os.path.exists(path):
+        if not os.path.exists(path) or not os.path.isdir(path):
             return paths
 
         if max_results is not None:
