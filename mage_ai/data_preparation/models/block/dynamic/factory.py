@@ -2,12 +2,7 @@ import time
 from functools import reduce
 from typing import Dict, List, Optional
 
-from mage_ai.data_preparation.models.block.dynamic.counter import (
-    DynamicBlockItemCounter,
-    DynamicChildItemCounter,
-    DynamicDuoItemCounter,
-    DynamicItemCounter,
-)
+from mage_ai.data_preparation.models.block.dynamic.counter import DynamicItemCounter
 from mage_ai.data_preparation.models.block.dynamic.wrappers import (
     DynamicBlockWrapperBase,
 )
@@ -105,24 +100,13 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         if self._counters is None:
             self._counters = {}
             for upstream_block in self.block.upstream_blocks:
-                counter_class = None
-                is_dynamic_parent = upstream_block.should_dynamically_generate_block(self.block)
-                if upstream_block.is_dynamic_child:
-                    if is_dynamic_parent:
-                        counter_class = DynamicDuoItemCounter
-                    else:
-                        counter_class = DynamicChildItemCounter
-                elif is_dynamic_parent:
-                    counter_class = DynamicBlockItemCounter
-
-                self._counters[upstream_block.uuid] = (
-                    counter_class(
-                        upstream_block,
-                        partition=self.execution_partition,
-                    )
-                    if counter_class is not None
-                    else None
+                counter = DynamicItemCounter.build_counter(
+                    upstream_block,
+                    downstream_block=self.block,
+                    partition=self.execution_partition,
                 )
+                if counter is not None:
+                    self._counters[upstream_block.uuid] = counter
 
         return self._counters
 

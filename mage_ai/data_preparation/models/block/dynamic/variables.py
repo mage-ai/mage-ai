@@ -220,6 +220,7 @@ class LazyVariableController(Sequence):
 
         if child_dynamic_block_index is not None:
             index = child_dynamic_block_index % len(self)
+            print(index, child_dynamic_block_index, len(self))
             lazy_variable_set = arr[index]
             child_data, metadata = lazy_variable_set.read_data()
 
@@ -600,15 +601,19 @@ def get_outputs_for_dynamic_child(
 
 
 def dynamic_upstream_block_item_counts(block, partition: Optional[str] = None) -> List[int]:
-    from mage_ai.data_preparation.models.block.dynamic.counter import (
-        DynamicBlockItemCounter,
+    from mage_ai.data_preparation.models.block.dynamic.counter import DynamicItemCounter
+    from mage_ai.data_preparation.models.block.dynamic.utils import (
+        is_dynamic_block,
+        is_dynamic_block_child,
     )
-    from mage_ai.data_preparation.models.block.dynamic.utils import is_dynamic_block
 
     return [
-        DynamicBlockItemCounter(b, partition=partition).item_count()
+        DynamicItemCounter.build_counter(
+            b, downstream_block=block, partition=partition
+        ).item_count()
         for b in block.upstream_blocks
-        if (b.is_dynamic_v2 and b.should_dynamically_generate_block(block)) or is_dynamic_block(b)
+        if (b.is_dynamic_v2 and (b.should_dynamically_generate_block(block) or b.is_dynamic_child))
+        or (is_dynamic_block(b) or is_dynamic_block_child(b))
     ]
 
 
@@ -673,6 +678,12 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 # The first index is used to select which dynamic child to get data from
                 # the 2nd index is used to determine which value from the dynamic list to
                 # fetch as the input variable.
+                index = calculate_dynamic_index_data_index(
+                    dynamic_block_index,
+                    len(lazy_variable_controller),
+                    upstream_position_index,
+                    dynamic_upstream_item_counts,
+                )
                 pair = lazy_variable_controller.render(
                     child_dynamic_block_index=dynamic_block_index,
                 )
