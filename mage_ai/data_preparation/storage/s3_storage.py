@@ -39,8 +39,11 @@ class S3Storage(BaseStorage):
         if not path.endswith('/'):
             path += '/'
         path = s3_url_path(path)
-        keys = self.client.listdir(path, suffix=suffix, max_results=max_results)
-        return [k[len(path):].rstrip('/') for k in keys]
+        try:
+            keys = self.client.listdir(path, suffix=suffix, max_results=max_results)
+            return [k[len(path):].rstrip('/') for k in keys]
+        except Exception:
+            return []
 
     def makedirs(self, path: str, **kwargs) -> None:
         pass

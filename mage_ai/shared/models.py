@@ -307,7 +307,7 @@ class Delegator:
         self.delegate = DelegatorTarget(self.target)
 
 
-class BaseEnum(Enum):
+class BaseEnum(str, Enum):
     @classmethod
     def has_value(cls, value: Union[Any, str]) -> bool:
         if isinstance(value, cls):

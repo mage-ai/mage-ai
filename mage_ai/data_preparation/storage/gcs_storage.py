@@ -55,10 +55,13 @@ class GCSStorage(BaseStorage):
         Example block output path in GCS:
             gs://mage_demo/pipelines/example_pipeline/.variables/example_block/output_0/
         """
-        blobs = self.bucket.list_blobs(
-            prefix=path,
-            max_results=max_results,
-        )
+        try:
+            blobs = self.bucket.list_blobs(
+                prefix=path,
+                max_results=max_results,
+            )
+        except Exception:
+            return []
         keys = []
         for blob in blobs:
             # Avoid finding files recursevively in the dir path.
