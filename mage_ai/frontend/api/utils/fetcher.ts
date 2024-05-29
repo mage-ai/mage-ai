@@ -4,7 +4,7 @@ import AuthToken from '@api/utils/AuthToken';
 import { OAUTH2_APPLICATION_CLIENT_ID, ResponseTypeEnum } from '@api/constants';
 import { queryFromUrl } from '@utils/url';
 
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY || OAUTH2_APPLICATION_CLIENT_ID;
+export const API_KEY = process.env.NEXT_PUBLIC_API_KEY || OAUTH2_APPLICATION_CLIENT_ID;
 
 export type FetcherOptionsType = {
   body?: any;

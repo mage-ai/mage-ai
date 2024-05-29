@@ -67,6 +67,7 @@ from mage_ai.server.api.v1 import (
 )
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
+from mage_ai.server.events.sse_server import ServerSentEventHandler
 from mage_ai.server.file_observer import MetadataEventHandler
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
@@ -261,6 +262,7 @@ def make_app(
     ]
     routes_full = routes_base + [
         (r'/?', MainPageHandler),
+        (r'/server-sent-events/(?P<uuid>[\w\-\%2f\.]+)', ServerSentEventHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
         (r'/oauth', MainPageHandler),

@@ -74,6 +74,20 @@ export function getWebSocket(path='') {
   return `${prefix}${host}/websocket/${path}`;
 }
 
+export function getServerSentEventsUrl(uuid?: string): string {
+  const windowDefined = typeof window !== 'undefined';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
+
+  const host = getHostCore(windowDefined, LOCALHOST, PORT);
+
+  let prefix = 'http://';
+  if (windowDefined && window.location.protocol?.match(/https/)) {
+    prefix = 'https://';
+  }
+  return `${prefix}${host}/server-sent-events/${uuid || ''}`;
+}
+
 export function buildUrl(
   resource: string,
   id: string = null,
@@ -81,8 +95,11 @@ export function buildUrl(
   childId: string = null,
   query: any = {},
   grandchildResource: string = null,
+  opts?: {
+    excludeApi?: boolean;
+  },
 ): string {
-  let path: string =`${getHost()}/api/${resource}`;
+  let path: string =`${getHost()}${opts?.excludeApi ? '' : '/api'}/${resource}`;
 
   if (typeof id !== 'undefined' && id !== null) {
     path = `${path}/${id}`;

@@ -113,6 +113,7 @@ export const VERSION_CONTROL_PROJECTS: 'version_control_projects' = 'version_con
 export const VERSION_CONTROL_REMOTES: 'version_control_remotes' = 'version_control_remotes';
 export const WIDGETS: 'widgets' = 'widgets';
 export const WORKSPACES: 'workspaces' = 'workspaces';
+export const SERVER_SENT_EVENTS: 'server_sent_events' = 'server_sent_events';
 
 // Update this as routes get added
 const RESOURCES_PAIRS_ARRAY: any[][] = [
@@ -191,6 +192,7 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [SEARCH_RESULTS],
   [SECRETS],
   [SEEDS],
+  [SERVER_SENT_EVENTS],
   [SESSIONS],
   [SPARK_APPLICATIONS],
   [SPARK_ENVIRONMENTS],
