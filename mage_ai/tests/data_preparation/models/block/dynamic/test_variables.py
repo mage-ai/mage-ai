@@ -1,4 +1,5 @@
 from functools import reduce
+from typing import Any, Dict, Optional
 from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block.dynamic.data import (
@@ -57,7 +58,7 @@ def reduce1_child1_func(data, *args, **kwargs):
     return [arr]
 
 
-class DynamicBlockFactoryTest(BlockHelperTest):
+class DynamicBlockVariableDataTest(BlockHelperTest):
     def test_calculate_index(self):
         data1 = [
             [1, 2],
@@ -139,7 +140,58 @@ class DynamicBlockFactoryTest(BlockHelperTest):
     )
     def test_variables(self):
         config = dict(dynamic=True)
+        config_child = dict(reduce_output=True)
+        self.__run_with_configs(config, config_child)
 
+    @patch.multiple(
+        'mage_ai.settings.server',
+        DYNAMIC_BLOCKS_V2=True,
+        MEMORY_MANAGER_PANDAS_V2=True,
+        MEMORY_MANAGER_POLARS_V2=True,
+        MEMORY_MANAGER_V2=True,
+        VARIABLE_DATA_OUTPUT_META_CACHE=True,
+    )
+    def test_variables_v2(self):
+        # modes=[dict(type='stream')]
+        config = dict(dynamic=dict(parent=True))
+        config_child = dict(dynamic=dict(reduce_output=True))
+        self.__run_with_configs(config, config_child)
+
+    @patch.multiple(
+        'mage_ai.settings.server',
+        DYNAMIC_BLOCKS_V2=True,
+        MEMORY_MANAGER_PANDAS_V2=True,
+        MEMORY_MANAGER_POLARS_V2=True,
+        MEMORY_MANAGER_V2=True,
+        VARIABLE_DATA_OUTPUT_META_CACHE=True,
+    )
+    def test_variables_v2_stream(self):
+        # modes=[dict(type='stream')]
+        config = dict(
+            dynamic=dict(
+                parent=True,
+                modes=[
+                    dict(type='stream'),
+                ],
+            ),
+        )
+        config_child = dict(
+            dynamic=dict(
+                parent=False,
+                reduce_output=True,
+                modes=[
+                    dict(
+                        type='stream',
+                        poll_interval=1,
+                    ),
+                ],
+            )
+        )
+        self.__run_with_configs(config, config_child)
+
+    def __run_with_configs(
+        self, config: Dict[str, Any], config_child: Optional[Dict[str, Any]] = None
+    ):
         dynamic1 = self.create_block('dynamic1', func=dynamic1_func, configuration=config)
         dynamic2 = self.create_block('dynamic2', func=dynamic2_func, configuration=config)
         dynamic3 = self.create_block('dynamic3', func=dynamic3_func, configuration=config)
@@ -154,9 +206,7 @@ class DynamicBlockFactoryTest(BlockHelperTest):
             child1, upstream_block_uuids=[dynamic1.uuid, dynamic2.uuid, dynamic3.uuid]
         )
 
-        reduce1 = self.create_block(
-            'reduce1', func=reduce1_func, configuration=dict(reduce_output=True)
-        )
+        reduce1 = self.create_block('reduce1', func=reduce1_func, configuration=config_child)
         self.pipeline.add_block(
             reduce1, upstream_block_uuids=[dynamic2.uuid, dynamic3.uuid, block1.uuid]
         )
@@ -280,14 +330,3 @@ class DynamicBlockFactoryTest(BlockHelperTest):
             ),
             len(child2_output0s),
         )
-
-    # @patch.multiple(
-    #     'mage_ai.settings.server',
-    #     DYNAMIC_BLOCKS_V2=True,
-    #     MEMORY_MANAGER_PANDAS_V2=True,
-    #     MEMORY_MANAGER_POLARS_V2=True,
-    #     MEMORY_MANAGER_V2=True,
-    #     VARIABLE_DATA_OUTPUT_META_CACHE=True,
-    # )
-    # def test_variables_v2(self):
-    #     config_v2 = dict(dynamic=dict(parent=True, modes=[dict(type='stream')]))

@@ -220,7 +220,6 @@ class LazyVariableController(Sequence):
 
         if child_dynamic_block_index is not None:
             index = child_dynamic_block_index % len(self)
-            print(index, child_dynamic_block_index, len(self))
             lazy_variable_set = arr[index]
             child_data, metadata = lazy_variable_set.read_data()
 
