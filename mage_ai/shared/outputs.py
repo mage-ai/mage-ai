@@ -67,18 +67,21 @@ def load_custom_object(
     variable_path: str,
     variable_type: Optional[VariableType] = None,
 ) -> Optional[Any]:
-    if VariableType.MODEL_SKLEARN == variable_type:
-        return joblib.load(os.path.join(variable_path, JOBLIB_FILE))
-    elif VariableType.MODEL_XGBOOST == variable_type:
-        return load_model_xgboost(
-            model_dir=variable_path,
-            model_filename=UBJSON_MODEL_FILENAME,
-            config_filename=CONFIG_JSON_FILE,
-            raise_exception=False,
-        )
-    # elif VariableType.MATRIX_SPARSE == variable_type:
-    #     return load_npz(os.path.join(variable_path, MATRIX_NPZ_FILE))
-    elif VariableType.CUSTOM_OBJECT == variable_type:
-        return joblib.load(os.path.join(variable_path, JOBLIB_OBJECT_FILE))
-    elif VariableType.DICTIONARY_COMPLEX == variable_type:
-        pass
+    try:
+        if VariableType.MODEL_SKLEARN == variable_type:
+            return joblib.load(os.path.join(variable_path, JOBLIB_FILE))
+        elif VariableType.MODEL_XGBOOST == variable_type:
+            return load_model_xgboost(
+                model_dir=variable_path,
+                model_filename=UBJSON_MODEL_FILENAME,
+                config_filename=CONFIG_JSON_FILE,
+                raise_exception=False,
+            )
+        # elif VariableType.MATRIX_SPARSE == variable_type:
+        #     return load_npz(os.path.join(variable_path, MATRIX_NPZ_FILE))
+        elif VariableType.CUSTOM_OBJECT == variable_type:
+            return joblib.load(os.path.join(variable_path, JOBLIB_OBJECT_FILE))
+        elif VariableType.DICTIONARY_COMPLEX == variable_type:
+            pass
+    except Exception as e:
+        print(f'Error loading custom object: {e}')
