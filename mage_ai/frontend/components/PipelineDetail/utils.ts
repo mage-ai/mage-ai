@@ -72,7 +72,8 @@ export function prepareOutput(output) {
 export function prepareOutputsForDisplay(outputs: OutputType[]) {
   let outputsFinal = [];
   let multiOutput = false;
-  let outputType;
+  let outputType = null;
+
 
   outputs.forEach((output: OutputType) => {
     const { data, type } = prepareOutput(output);
@@ -80,7 +81,12 @@ export function prepareOutputsForDisplay(outputs: OutputType[]) {
     multiOutput = multiOutput || output?.multi_output;
     outputType = !data && !outputType && outputs?.length >= 2 ? null : outputType || type;
 
-    if (!!data || outputs?.length === 1) {
+    if (DataTypeEnum.TEXT_PLAIN === output?.type && output?.text_data?.length >= 1) {
+      outputsFinal.push({
+        ...output,
+        data: output?.text_data,
+      });
+    } else if (!!data || outputs?.length === 1) {
       outputsFinal.push({
         ...output,
         data,
@@ -88,6 +94,11 @@ export function prepareOutputsForDisplay(outputs: OutputType[]) {
       });
     }
   });
+  console.log('outputsFinal', outputsFinal);
+
+  if (DataTypeEnum.TEXT_PLAIN === outputType) {
+    return outputsFinal;
+  }
 
   if (multiOutput) {
     outputsFinal = [
