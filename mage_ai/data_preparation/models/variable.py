@@ -430,19 +430,7 @@ class Variable:
                     sample=sample,
                     sample_count=sample_count,
                 )
-            except FileNotFoundError as err:
-                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
-                print(f'variable_type:     {self.variable_type}')
-                print(f'variable_types:    {self.variable_types}')
-                print(f'variable_uuid:     {self.uuid}')
-                print(f'variable_dir_path: {self.variable_dir_path}')
-                print(f'variable_path:     {self.variable_path}')
-                print('Data sources:')
-                for source in self.data_manager.data_source:
-                    print(f'  {source}')
-                print('\n')
-
-                traceback.print_exc()
+            except FileNotFoundError:
                 return None
             return data
 
@@ -557,19 +545,7 @@ class Variable:
                     sample_count=sample_count,
                 )
                 return data
-            except FileNotFoundError as err:
-                print(f'[ERROR] Variable.read_data: {err}\n{traceback.format_exc()}')
-                print(f'variable_type:     {self.variable_type}')
-                print(f'variable_types:    {self.variable_types}')
-                print(f'variable_uuid:     {self.uuid}')
-                print(f'variable_dir_path: {self.variable_dir_path}')
-                print(f'variable_path:     {self.variable_path}')
-                print('Data sources:')
-                for source in self.data_manager.data_source:
-                    print(f'  {source}')
-                print('\n')
-
-                traceback.print_exc()
+            except FileNotFoundError:
                 return None
 
         if (
