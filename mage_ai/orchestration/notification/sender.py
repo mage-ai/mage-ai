@@ -179,6 +179,7 @@ class NotificationSender:
             pipeline_run_url=self.__pipeline_run_url(pipeline, pipeline_run),
             pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
             pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
+            pipeline_schedule_description=pipeline_run.pipeline_schedule.description,
             pipeline_uuid=pipeline.uuid,
             stacktrace=stacktrace,
         )
