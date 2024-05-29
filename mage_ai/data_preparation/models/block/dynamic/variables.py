@@ -679,8 +679,8 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 # fetch as the input variable.
                 index = calculate_dynamic_index_data_index(
                     dynamic_block_index,
-                    len(lazy_variable_controller),
                     upstream_position_index,
+                    len(lazy_variable_controller),
                     dynamic_upstream_item_counts,
                 )
                 pair = lazy_variable_controller.render(
