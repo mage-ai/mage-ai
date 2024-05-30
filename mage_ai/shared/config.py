@@ -7,6 +7,7 @@ import yaml
 
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.strings import camel_to_snake_case
+from mage_ai.shared.yaml import load_yaml
 
 
 @dataclass
@@ -77,7 +78,7 @@ class BaseConfig:
 
         try:
             with open(config_path, 'r') as stream:
-                file_config = yaml.load(stream, Loader=yaml.SafeLoader)
+                file_config = load_yaml(stream)
                 return merge_dict(config, file_config)
         except yaml.YAMLError as e:
             print(e)
