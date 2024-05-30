@@ -51,11 +51,15 @@ class ServerSentEventHandler(BaseHandler):
                 )
 
                 self.write(f'data: {event_stream_json}\n\n')
-                await self.flush()
 
                 if is_debug():
                     print(f'Sent event: {event_stream_json}')
 
+            try:
+                await self.flush()
+            except StreamClosedError as err:
+                print(f'[WARNING] ServerSentEventHandler Stream closed during flush: {err}')
+                break
             await asyncio.sleep(0)
 
     def __build_event_stream(self, execution_result: ExecutionResult, uuid: str) -> EventStream:

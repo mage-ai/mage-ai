@@ -1,5 +1,12 @@
 import { ErrorDetailsType } from './ErrorsType';
 
+// https://developer.mozilla.org/docs/Web/API/EventSource/readyState
+export enum EventSourceReadyState {
+  CONNECTING = 0,
+  OPEN = 1,
+  CLOSED = 2,
+}
+
 export enum ResultType {
   DATA = 'data',
   STDOUT = 'stdout',
@@ -44,6 +51,7 @@ export interface ProcessDetailsType {
 export interface ExecutionResultType {
   error?: ErrorDetailsType;
   output?: any;
+  output_text?: string;
   process: ProcessDetailsType;
   status: ExecutionStatusEnum;
 }

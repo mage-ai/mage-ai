@@ -1,9 +1,16 @@
+import Ansi from 'ansi-to-react';
 import { useMemo, useState } from 'react';
 
 import Spacing from '@oracle/elements/Spacing';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Flex from '@oracle/components/Flex';
 import useErrorViews from '@components/ErrorPopup/useErrorViews';
 import useServerSentEvents from '@utils/server/events/useServerSentEvents';
+import { DATE_FORMAT_LONG_MS } from '@utils/date';
+import moment from 'moment';
 import TextArea from '@oracle/elements/Inputs/TextArea';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import { ErrorDetailsType } from 'interfaces/ErrorsType';
@@ -65,6 +72,7 @@ function Test({
 }: {
   uuid: string;
 }) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const [message, setMessage] = useState('');
 
   const {
@@ -99,15 +107,35 @@ function Test({
         }: EventStreamType = eventStream;
         const {
           output,
+          output_text: outputText,
         } = result || {
           output: null,
+          output_text: null,
         };
+
+        const indexText = padString('', String(stdoutCount).length - String(idx).length, '&nbsp;') + `[${idx}]`;
 
         return (
           <div key={eventUUID}>
-            <Text monospace>
-              {padString(`[${idx}]`, stdoutCount - 1, ' ')} {output}
-            </Text>
+            <FlexContainer alignItems="flex-start" fullWidth justifyContent="space-between">
+              <Flex>
+                <Text monospace preWrap>
+                  <Text default inline monospace>
+                    <span dangerouslySetInnerHTML={{ __html: indexText }} />
+                  </Text> <Ansi>
+                    {outputText}
+                  </Ansi>
+                </Text>
+              </Flex>
+
+              <Text monospace muted>
+                {displayLocalOrUtcTime(
+                  moment(timestamp).format(DATE_FORMAT_LONG_MS),
+                  displayLocalTimezone,
+                  DATE_FORMAT_LONG_MS,
+                )}
+              </Text>
+            </FlexContainer>
           </div>
         );
       })}

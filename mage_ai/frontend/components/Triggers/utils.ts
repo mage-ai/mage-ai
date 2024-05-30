@@ -119,13 +119,13 @@ export function getTimeInUTC(dateTime: string): Date {
   return date;
 }
 
-export function getTimeInUTCString(dateTime: string) {
+export function getTimeInUTCString(dateTime: string, format: string = null) {
   if (typeof dateTime !== 'string') {
     return dateTime;
   }
   const formattedDate = dateTime.split('+')[0];
   const momentObj = moment(getTimeInUTC(formattedDate));
-  const datetimeString = momentObj.format(DATE_FORMAT_LONG_T_SEP);
+  const datetimeString = momentObj.format(format || DATE_FORMAT_LONG_T_SEP);
 
   return datetimeString;
 }
@@ -133,10 +133,11 @@ export function getTimeInUTCString(dateTime: string) {
 export function displayLocalOrUtcTime(
   datetime: string,
   displayLocalTimezone: boolean,
+  format: string = null,
 ) {
   return displayLocalTimezone
-    ? datetimeInLocalTimezone(datetime, displayLocalTimezone)
-    : getTimeInUTCString(datetime);
+    ? datetimeInLocalTimezone(datetime, displayLocalTimezone, format)
+    : getTimeInUTCString(datetime, format);
 }
 
 export enum TimeUnitEnum {

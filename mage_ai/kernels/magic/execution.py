@@ -6,7 +6,7 @@ from typing import Dict
 
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
-from mage_ai.kernels.magic.models import ExecutionResult, ProcessDetails
+from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.environments import is_debug
@@ -33,7 +33,9 @@ def read_stdout_continuously(async_stdout, queue, process, stop_event):
         time.sleep(0)  # Sleep a bit to avoid busy waiting
 
 
-async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict: Dict) -> None:
+async def execute_code_async(
+    message: str, queue: Queue, uuid: str, process_dict: Dict, context: ProcessContext
+) -> None:
     process = ProcessDetails.load(**process_dict)
 
     exec_globals = {}
@@ -41,11 +43,11 @@ async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict
     last_output = None
     stop_event = threading.Event()
 
-    if is_debug() or True:
+    if is_debug():
         print(f'Code lines: {code_lines}')
 
     try:
-        if is_debug() or True:
+        if is_debug():
             print('Executing full code block.')
 
         compiled_code = compile(message, '<string>', 'exec')
@@ -67,7 +69,7 @@ async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict
         reader_thread.join(timeout=1)  # Make sure reader thread finishes
 
         last_expr = code_lines[-1].strip()  # Get the last expression for evaluation
-        if is_debug() or True:
+        if is_debug():
             print(f'Last expression: {last_expr}')
 
         # Evaluate only the last expression if it's not a comment
@@ -75,20 +77,18 @@ async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict
             compiled_expr = compile(last_expr, '<string>', 'eval')
             output = eval(compiled_expr, exec_globals)
             if output is not None:  # Only print if there is output
-                print(output)
+                # print(output)
                 last_output = output  # Keep track of the last output
 
-        queue.put(
-            ExecutionResult.load(
-                output=last_output if 'last_output' in locals() else None,
-                process=process,
-                status=ExecutionStatus.SUCCESS,
-                type=ResultType.DATA,
-            ),
+        result = ExecutionResult.load(
+            output=last_output if 'last_output' in locals() else None,
+            process=process,
+            status=ExecutionStatus.SUCCESS,
+            type=ResultType.DATA,
         )
 
-        # Put a sentinel value to signal the end of output
-        queue.put(None)
+        queue.put(result)
+        queue.put(None)  # Put a sentinel value to signal the end of output
     except Exception as err:
         queue.put(
             ExecutionResult.load(

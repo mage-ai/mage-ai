@@ -1,26 +1,30 @@
 import asyncio
 from datetime import datetime
-from multiprocessing.context import BaseContext
-from typing import Dict, Optional
+from multiprocessing import Pool, Queue
+from typing import Any, Dict, Optional, Union
 from uuid import uuid4
 
-from faster_fifo import Queue
-
 from mage_ai.kernels.magic.execution import execute_code_async
-from mage_ai.kernels.magic.models import ProcessDetails
+from mage_ai.kernels.magic.models import ProcessContext, ProcessDetails
 
 
-def execute_code(message: str, queue: Queue, uuid: str, process_dict: Dict):
-    asyncio.run(execute_code_async(message, queue, uuid, process_dict))
+def execute_code(
+    message: str, queue: Queue, uuid: str, process_dict: Dict, context: ProcessContext
+):
+    # print(f'Executing code with message: {message} and uuid: {uuid}')
+    try:
+        asyncio.run(execute_code_async(message, queue, uuid, process_dict, context))
+    except Exception as e:
+        raise e
+        # print(f'Error executing code.async: {e}')
 
 
-class ProcessWrapper:
+class Process:
     def __init__(
         self,
         message: str,
-        queue: Queue,
+        queue: Union[Any, Queue],
         uuid: str,
-        ctx: Optional[BaseContext] = None,
         message_request_uuid: Optional[str] = None,
     ):
         """
@@ -35,57 +39,40 @@ class ProcessWrapper:
         that forks new processes upon request.
         This can be more secure but slightly more complex to set up and use.
         """
-        self.ctx = ctx
-        self.event = None
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
-        self.output_process = None
-        self.process = None
         self.queue = queue
+        self.result = None
         self.timestamp = None
         self.uuid = uuid
 
-    def start(self):
-        self.process = self.ctx.Process(
-            target=execute_code,
-            args=(
-                self.message,
-                self.queue,
-                self.uuid,
-                self.to_dict(),
-            ),
+    async def start(
+        self,
+        pool: Pool[Any],
+        context: ProcessContext,
+    ):
+        self.result = pool.apply_async(
+            execute_code,
+            args=(self.message, self.queue, self.uuid, self.to_dict(), context),
         )
-
-        self.process.start()
         self.timestamp = int(datetime.utcnow().timestamp() * 1000)
 
     def stop(self):
-        for process in [self.output_process, self.process]:
-            if process is not None and process.is_alive():
-                process.terminate()
-                process.join()
+        if self.result and not self.result.ready():
+            self.result.cancel()
 
     @property
     def exitcode(self) -> Optional[int]:
-        if self.process is None:
-            return
-
-        return self.process.exitcode
+        return None  # Not applicable when using Pool
 
     @property
     def is_alive(self) -> Optional[bool]:
-        if self.process is None:
-            return
-
-        return self.process.is_alive()
+        return self.result is not None and not self.result.ready()
 
     @property
-    def pid(self) -> Optional[int]:
-        if self.process is None:
-            return
-
-        return self.process.pid
+    def pid(self) -> Optional[Union[int, str]]:
+        return self.message_uuid  # Not applicable when using Pool
 
     @property
     def details(self) -> ProcessDetails:
@@ -101,4 +88,5 @@ class ProcessWrapper:
         )
 
     def to_dict(self) -> Dict:
-        return self.details.to_dict()
+        details_dict = self.details.to_dict()
+        return details_dict

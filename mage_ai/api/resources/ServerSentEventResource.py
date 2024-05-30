@@ -32,11 +32,12 @@ class ServerSentEventResource(GenericResource):
 
         from mage_ai.kernels.magic.queues.results import get_results_queue
 
-        process = Manager(uuid).start_process(
+        manager = Manager(uuid, get_results_queue())
+        process = manager.create_process(
             message=message,
             message_request_uuid=message_request_uuid,
-            queue=get_results_queue(),
         )
+        await manager.start_processes([process])
 
         async def _on_create_callback(resource):
             Manager.cleanup_processes()
