@@ -3,12 +3,14 @@ from datetime import datetime
 from multiprocessing import Queue
 from multiprocessing.context import BaseContext
 from typing import Dict, Optional
+from uuid import uuid4
 
 from mage_ai.kernels.magic.execution import execute_code_async
+from mage_ai.kernels.magic.models import ProcessDetails
 
 
-def execute_code(message: str, queue: Queue, uuid: str):
-    asyncio.run(execute_code_async(message, queue, uuid))
+def execute_code(message: str, queue: Queue, uuid: str, process_dict: Dict):
+    asyncio.run(execute_code_async(message, queue, uuid, process_dict))
 
 
 class ProcessWrapper:
@@ -33,6 +35,7 @@ class ProcessWrapper:
         """
         self.ctx = ctx
         self.message = message
+        self.message_uuid = uuid4().hex
         self.process = None
         self.queue = queue
         self.timestamp = None
@@ -45,10 +48,11 @@ class ProcessWrapper:
                 self.message,
                 self.queue,
                 self.uuid,
+                self.to_dict(),
             ),
         )
         self.process.start()
-        self.timestamp = datetime.utcnow().timestamp() * 1000
+        self.timestamp = int(datetime.utcnow().timestamp() * 1000)
 
     def stop(self):
         if self.process is not None and self.is_alive:
@@ -76,12 +80,17 @@ class ProcessWrapper:
 
         return self.process.pid
 
-    def to_dict(self) -> Dict:
-        return dict(
+    @property
+    def details(self) -> ProcessDetails:
+        return ProcessDetails.load(
             exitcode=self.exitcode,
             is_alive=self.is_alive,
             message=self.message,
+            message_uuid=self.message_uuid,
             pid=self.pid,
             timestamp=self.timestamp,
             uuid=self.uuid,
         )
+
+    def to_dict(self) -> Dict:
+        return self.details.to_dict()

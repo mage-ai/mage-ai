@@ -21,13 +21,14 @@ function Test({
   } = useServerSentEvents(uuid);
 
   console.log('recentEvent', recentEvent);
+  console.log('errors', errors);
 
   return (
     <div>
       {recentEvent && (
         <div>
           <Text>
-            {recentEvent?.data?.output}
+            {recentEvent?.result?.output}
           </Text>
         </div>
       )}

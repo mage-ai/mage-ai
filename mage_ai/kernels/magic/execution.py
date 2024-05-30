@@ -1,45 +1,47 @@
 import asyncio
-import traceback
 from multiprocessing.queues import Queue
+from typing import Dict
+
+from mage_ai.errors.models import ErrorDetails
+from mage_ai.kernels.magic.constants import ExecutionStatus
+from mage_ai.kernels.magic.models import ExecutionResult
+from mage_ai.shared.environments import is_debug
 
 
-async def execute_code_async(message: str, queue: Queue, uuid: str) -> None:
+async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict: Dict) -> None:
     exec_globals = {}
     code_lines = message.split('\n')
-    print(f'Code lines: {code_lines}')
+    if is_debug():
+        print(f'Code lines: {code_lines}')
 
     for index, line in enumerate(code_lines):
         try:
-            print(f'Executing line: {line}')
+            if is_debug():
+                print(f'Executing line: {line}')
             code = compile(line, '<string>', 'exec')
             exec(code, exec_globals)
 
             if line.strip():  # Avoid empty lines
                 last_expr = code_lines[index].strip()
-                print(f'Last expression: {last_expr}')
+                if is_debug():
+                    print(f'Last expression: {last_expr}')
                 if not last_expr.startswith('#'):  # Avoid comments
                     compiled_expr = compile(last_expr, '<string>', 'eval')
                     result = eval(compiled_expr, exec_globals)
-                    event = {
-                        'status': 'success',
-                        'output': result,
-                        'uuid': uuid,
-                    }
-                    print(
-                        f'Evaluated result: {result}',
-                        event,
-                        queue,
+                    queue.put(
+                        ExecutionResult.load(
+                            output=result,
+                            process=process_dict,
+                            status=ExecutionStatus.SUCCESS,
+                        ),
                     )
-                    queue.put(event)
-                    print(f'Result put in queue: {result}')
-        except Exception as err:
-            error_msg = traceback.format_exc()
-            queue.put({
-                'status': 'error',
-                'error': err,
-                'traceback': error_msg,
-                'uuid': uuid,
-            })
-            print(f'Error encountered: {error_msg}')
+        except Exception:
+            queue.put(
+                ExecutionResult.load(
+                    error=ErrorDetails.from_current_error(),
+                    process=process_dict,
+                    status=ExecutionStatus.ERROR,
+                ),
+            )
 
         await asyncio.sleep(1)

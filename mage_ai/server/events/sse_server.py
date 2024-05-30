@@ -1,12 +1,17 @@
 import asyncio
-import json
 from datetime import datetime
 from uuid import uuid4
 
+import simplejson
 from tornado.iostream import StreamClosedError
 
+from mage_ai.errors.models import ErrorDetails
+from mage_ai.kernels.magic.constants import EventStreamType
+from mage_ai.kernels.magic.models import EventStream, ExecutionResult
 from mage_ai.kernels.magic.queues.results import get_results_queue
 from mage_ai.server.api.base import BaseHandler
+from mage_ai.shared.environments import is_debug
+from mage_ai.shared.parsers import encode_complex
 
 
 class ServerSentEventHandler(BaseHandler):
@@ -17,26 +22,42 @@ class ServerSentEventHandler(BaseHandler):
 
         queue = get_results_queue()
 
-        try:
-            while True:
-                result = None
+        while True:
+            event_stream = None
+            try:
+                execution_result = None
                 if not queue.empty():
-                    result = queue.get()
-                    print(f'Retrieved from queue: {result}')
+                    execution_result = queue.get()
+                    if is_debug():
+                        print(f'Retrieved from queue: {execution_result}')
 
-                if result:
-                    event = json.dumps({
-                        'data': result,
-                        'event_id': uuid4().hex,
-                        'type': 'event',
-                        'timestamp': datetime.utcnow().timestamp() * 1000,
-                        'uuid': uuid,
-                    })
-                    self.write(f'data: {event}\n\n')
-                    print(f'Sent event: {event}')
-                await self.flush()
-                await asyncio.sleep(1)
-        except StreamClosedError:
-            print('Stream closed by client.')
-        except Exception as e:
-            print(f'Unexpected error: {e}')
+                if execution_result:
+                    event_stream = self.__build_event_stream(execution_result, uuid)
+            except (StreamClosedError, Exception):
+                event_stream = self.__build_event_stream(
+                    ExecutionResult.load(error=ErrorDetails.from_current_error()), uuid
+                )
+
+            if event_stream:
+                event_stream_json = simplejson.dumps(
+                    event_stream,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+
+                self.write(f'data: {event_stream_json}\n\n')
+
+                if is_debug():
+                    print(f'Sent event: {event_stream_json}')
+
+            await self.flush()
+            await asyncio.sleep(1)
+
+    def __build_event_stream(self, execution_result: ExecutionResult, uuid: str) -> EventStream:
+        return EventStream.load(
+            event_uuid=uuid4().hex,
+            result=execution_result,
+            timestamp=datetime.utcnow().timestamp() * 1000,
+            type=EventStreamType.EXECUTION,
+            uuid=uuid,
+        )

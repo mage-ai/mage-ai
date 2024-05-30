@@ -8,6 +8,7 @@ class ServerSentEventPresenter(BasePresenter):
         'exitcode',
         'is_alive',
         'message',
+        'message_uuid',
         'pid',
         'timestamp',
         'uuid',
