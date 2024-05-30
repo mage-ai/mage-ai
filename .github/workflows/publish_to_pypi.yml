@@ -38,3 +38,4 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1.8
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
+        verbose: true
