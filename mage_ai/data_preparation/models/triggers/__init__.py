@@ -158,31 +158,54 @@ def load_triggers_file_data(pipeline_uuid: str) -> Dict:
     return data
 
 
-def get_triggers_by_pipeline(
+def get_triggers_by_pipeline_with_cache(
     pipeline_uuid: str,
     repo_path: str = None,
-) -> List[Trigger]:
+):
+    """
+    Retrieve triggers for a given pipeline, utilizing a cache to avoid unnecessary file reads.
+
+    This function checks if the trigger file for the specified pipeline has been modified since
+    the last time it was cached. If the file has not been modified, the cached triggers are
+    returned. If the file has been modified or is not in the cache, it reads the file, updates
+    the cache, and returns the triggers.
+
+    Args:
+        pipeline_uuid (str): The unique identifier of the pipeline.
+        repo_path (str, optional): The path to the repository containing the pipeline. Defaults to
+            None.
+
+    Returns:
+        tuple: A tuple containing:
+            - triggers (list): A list of triggers for the specified pipeline.
+            - from_cache (bool): A boolean indicating whether the triggers were retrieved from the
+                cache.
+
+    Raises:
+        Exception: If there is an error loading the triggers file or parsing the triggers
+            configuration.
+    """
     trigger_file_path = get_triggers_file_path(
         pipeline_uuid,
         repo_path=repo_path,
     )
 
     if not os.path.exists(trigger_file_path):
-        return []
+        return [], False
 
     trigger_file_updated_at = datetime.fromtimestamp(
         os.path.getmtime(trigger_file_path),
         tz=timezone.utc,
     )
-    last_updated_at = None
+
     if trigger_file_path in triggers_cache:
         # Try reading triggers from cache first
         triggers_config = triggers_cache[trigger_file_path]
         last_updated_at = triggers_config.get('updated_at')
         triggers = triggers_config.get('triggers')
-        if last_updated_at is not None and triggers and last_updated_at >= trigger_file_updated_at:
+        if last_updated_at and triggers and last_updated_at >= trigger_file_updated_at:
             # Trigger file not modified since last time
-            return triggers
+            return triggers, True
 
     try:
         content = load_triggers_file_content(
@@ -194,14 +217,24 @@ def get_triggers_by_pipeline(
             pipeline_uuid=pipeline_uuid,
             repo_path=repo_path,
         )
-        triggers_cache[trigger_file_path] = dict(
-            updated_at=trigger_file_updated_at,
-            triggers=triggers,
-        )
+        # Update the cache with the new triggers and their update time
+        triggers_cache[trigger_file_path] = {
+            'updated_at': trigger_file_updated_at,
+            'triggers': triggers,
+        }
     except Exception:
         traceback.print_exc()
         triggers = []
 
+    return triggers, False
+
+
+def get_triggers_by_pipeline(
+    pipeline_uuid: str,
+    repo_path: str = None,
+) -> List[Trigger]:
+    # For backward compatibility
+    triggers, _ = get_triggers_by_pipeline_with_cache(pipeline_uuid, repo_path=repo_path)
     return triggers
 
 

@@ -23,7 +23,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
     ScheduleType,
-    get_triggers_by_pipeline,
+    get_triggers_by_pipeline_with_cache,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.sync.git_sync import get_sync_config
@@ -1832,8 +1832,12 @@ def sync_schedules(pipeline_uuids: List[str]):
 
     # Sync schedule configs from triggers.yaml to DB
     for pipeline_uuid in pipeline_uuids:
-        pipeline_triggers = get_triggers_by_pipeline(pipeline_uuid)
-        logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.')
+        pipeline_triggers, from_cache = get_triggers_by_pipeline_with_cache(pipeline_uuid)
+        logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.'
+                     f'From cache: {from_cache}')
+        if from_cache:
+            # No updates need to be made to database
+            continue
         for pipeline_trigger in pipeline_triggers:
             if pipeline_trigger.envs and get_env() not in pipeline_trigger.envs:
                 continue
