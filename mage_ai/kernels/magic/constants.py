@@ -2,9 +2,10 @@ from enum import Enum
 
 
 class ExecutionStatus(str, Enum):
-    SUCCESS = 0
-    FAILURE = 1
-    ERROR = 2
+    ERROR = 'error'
+    FAILURE = 'failure'
+    RUNNING = 'running'
+    SUCCESS = 'success'
 
 
 class EventStreamType(str, Enum):
@@ -12,3 +13,8 @@ class EventStreamType(str, Enum):
     EXECUTION_STATUS = 'execution_status'
     TASK = 'task'
     TASK_STATUS = 'task_status'
+
+
+class ResultType(str, Enum):
+    DATA = 'data'
+    STDOUT = 'stdout'

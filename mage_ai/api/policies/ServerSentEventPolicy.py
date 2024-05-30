@@ -38,8 +38,8 @@ ServerSentEventPolicy.allow_read(
 
 ServerSentEventPolicy.allow_write(
     [
-        'code',
         'message',
+        'message_request_uuid',
         'timestamp',
         'uuid',
     ],

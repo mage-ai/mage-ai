@@ -21,7 +21,8 @@ class ServerSentEventResource(GenericResource):
 
     @classmethod
     async def create(cls, payload, user, **kwargs) -> GenericResource:
-        code = payload.get('code', '')
+        message = payload.get('message', '')
+        message_request_uuid = payload.get('message_request_uuid')
         uuid = payload.get('uuid')
 
         if uuid is None:
@@ -32,7 +33,8 @@ class ServerSentEventResource(GenericResource):
         from mage_ai.kernels.magic.queues.results import get_results_queue
 
         process = Manager(uuid).start_process(
-            message=code,
+            message=message,
+            message_request_uuid=message_request_uuid,
             queue=get_results_queue(),
         )
 

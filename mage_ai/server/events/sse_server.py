@@ -33,12 +33,15 @@ class ServerSentEventHandler(BaseHandler):
 
                 if execution_result:
                     event_stream = self.__build_event_stream(execution_result, uuid)
-            except (StreamClosedError, Exception):
+            except StreamClosedError as err:
+                print(f'[ERROR] ServerSentEventHandler Stream closed error: {err}')
+                break
+            except Exception as err:
                 event_stream = self.__build_event_stream(
-                    ExecutionResult.load(error=ErrorDetails.from_current_error()), uuid
+                    ExecutionResult.load(error=ErrorDetails.from_current_error(err)), uuid
                 )
 
-            if event_stream:
+            if event_stream is not None:
                 event_stream_json = simplejson.dumps(
                     event_stream,
                     default=encode_complex,

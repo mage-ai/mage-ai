@@ -10,6 +10,7 @@ import EventStreamType, {
 import { getServerSentEventsUrl } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 import { isDebug } from '@utils/environment';
+import { getNewUUID } from '@utils/string';
 
 export default function useServerSentEvents(uuid: string, {
   autoReconnect,
@@ -18,7 +19,7 @@ export default function useServerSentEvents(uuid: string, {
 } = {
   autoReconnect: true,
 }): {
-  errors: EventStreamType[];
+  errors: Event[];
   events: EventStreamType[];
   messages: ProcessDetailsType[];
   status: ServerConnectionStatusType;
@@ -29,7 +30,8 @@ export default function useServerSentEvents(uuid: string, {
   }) => void;
 } {
   const eventSourceRef = useRef(null);
-  const [errors, setErrors] = useState<EventStreamType[]>([]);
+
+  const [errors, setErrors] = useState<Event[]>([]);
   const [events, setEvents] = useState<EventStreamType[]>([]);
   const [messages, setMessages] = useState<ProcessDetailsType[]>([]);
   const [status, setStatus] = useState<ServerConnectionStatusType>(ServerConnectionStatusType.CONNECTING);
@@ -42,13 +44,18 @@ export default function useServerSentEvents(uuid: string, {
   const [createMessage, { isLoading }] = useMutation(
     (payload: {
       message: string;
-    }) => api.server_sent_events.useCreate()({
-      server_sent_event: {
-        code: payload?.message,
-        timestamp: Number(new Date()),
-        uuid,
-      },
-    }),
+    }) => {
+      setEvents(prevData => [...prevData, null]);
+
+      return api.server_sent_events.useCreate()({
+        server_sent_event: {
+          message: payload?.message,
+          message_request_uuid: getNewUUID(),
+          timestamp: Number(new Date()),
+          uuid,
+        },
+      });
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -61,13 +68,8 @@ export default function useServerSentEvents(uuid: string, {
               setMessages(prevData => [...prevData, resp?.server_sent_event]);
             }
           }),
-          onErrorCallback: ({
-            error,
-          }) => {
-            setErrors((prevErrors) => [...prevErrors, {
-              ...error,
-              timestamp: Number(new Date()),
-            }]);
+          onErrorCallback: (error: any) => {
+            setErrors(prevData => [...prevData, error]);
           },
         },
       ),
@@ -83,8 +85,6 @@ export default function useServerSentEvents(uuid: string, {
         console.log('eventSource', eventSource);
       }
 
-      const timestamp = Number(new Date());
-
       eventSource.onopen = (event: Event) => {
         if (isDebug()) {
           console.log('useServerSentEvents.onopen', event);
@@ -97,28 +97,25 @@ export default function useServerSentEvents(uuid: string, {
           console.log('useServerSentEvents.onmessage', event);
         }
 
-        const response = JSON.parse(event.data);
-        if (response.uuid === uuid) {
-          setEvents((prevData) => [...prevData, response]);
+        const eventData = JSON.parse(event.data);
+        if (eventData.uuid === uuid) {
+          setEvents(prevData => [...prevData, eventData]);
         }
       };
 
-      eventSource.onerror = (error: EventStreamType) => {
+      eventSource.onerror = (error: Event) => {
         console.error('EventSource failed with error: ', error);
 
-        // setErrors((prevErrors) => [...prevErrors, {
-        //   ...error,
-        //   timestamp,
-        // }]);
-        // setStatus(ServerConnectionStatusType.CLOSED);
-        // close(eventSource);
+        setErrors(prevData => [...prevData, error]);
+        setStatus(ServerConnectionStatusType.CLOSED);
+        close(eventSource);
 
-        // if (autoReconnect) {
-        //   setTimeout(() => {
-        //     setStatus(ServerConnectionStatusType.CONNECTING);
-        //     eventSourceRef.current = new EventSource(getServerSentEventsUrl(uuid));
-        //   }, 5000); // Retry in 5 seconds
-        // }
+        if (autoReconnect) {
+          setTimeout(() => {
+            setStatus(ServerConnectionStatusType.CONNECTING);
+            eventSourceRef.current = new EventSource(getServerSentEventsUrl(uuid));
+          }, 5000);
+        }
       };
     }
 

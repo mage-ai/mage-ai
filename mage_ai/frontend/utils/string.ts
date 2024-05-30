@@ -451,3 +451,11 @@ export function containsOnlySpecialCharacters(word: string): boolean {
 
   return regex.test(word);
 }
+
+export function padString(inputString: string, length: number, padChar: string): string {
+  if (inputString.length >= length) {
+    return inputString;
+  }
+  const padding = padChar.repeat(length - inputString.length);
+  return padding + inputString;
+}

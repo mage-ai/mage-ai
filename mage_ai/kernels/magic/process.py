@@ -20,6 +20,7 @@ class ProcessWrapper:
         queue: Queue,
         uuid: str,
         ctx: Optional[BaseContext] = None,
+        message_request_uuid: Optional[str] = None,
     ):
         """
         1. Fork: Fast process creation, but only available on Unix-based systems.
@@ -35,6 +36,7 @@ class ProcessWrapper:
         """
         self.ctx = ctx
         self.message = message
+        self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
         self.process = None
         self.queue = queue
@@ -86,6 +88,7 @@ class ProcessWrapper:
             exitcode=self.exitcode,
             is_alive=self.is_alive,
             message=self.message,
+            message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
             pid=self.pid,
             timestamp=self.timestamp,

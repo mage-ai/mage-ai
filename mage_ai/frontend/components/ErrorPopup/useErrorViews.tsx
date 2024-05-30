@@ -23,6 +23,8 @@ export type UseErrorViewsProps = {
   }[];
   onClose?: () => void;
   response?: ErrorResponseType;
+  stackTraceVisible?: boolean;
+  tracebackVisible?: boolean;
 };
 
 export default function useErrorViews({
@@ -31,9 +33,11 @@ export default function useErrorViews({
   links,
   onClose,
   response,
+  stackTraceVisible: stackTraceVisibleProp,
+  tracebackVisible: tracebackVisibleProp,
 }: UseErrorViewsProps) {
-  const [stackTraceVisible, setStackTraceVisible] = useState(false);
-  const [tracebackVisible, setTracebackVisible] = useState(false);
+  const [stackTraceVisible, setStackTraceVisible] = useState(stackTraceVisibleProp);
+  const [tracebackVisible, setTracebackVisible] = useState(tracebackVisibleProp);
   const {
     messages: messagesProp,
   } = errorsProp || {};
@@ -47,7 +51,7 @@ export default function useErrorViews({
   let displayMessage = displayMessageProp;
   let messages = messagesProp;
   if (messageFromResponse) {
-    messages = messageFromResponse.split('\n');
+    messages = messageFromResponse?.split('\n');
   }
 
   if (!exception && !displayMessage && messages?.[0]) {

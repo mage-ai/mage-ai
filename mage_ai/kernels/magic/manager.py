@@ -34,12 +34,15 @@ class Manager:
     def get_process(cls, pid: Union[int, str]) -> Optional[ProcessWrapper]:
         return find(lambda mapping: pid in mapping, cls.processes.values())
 
-    def start_process(self, message: str, queue: Queue) -> ProcessWrapper:
+    def start_process(
+        self, message: str, queue: Queue, message_request_uuid: Optional[str] = None
+    ) -> ProcessWrapper:
         process = ProcessWrapper(
             message,
             queue,
             self.uuid,
             ctx=multiprocessing.get_context('spawn'),
+            message_request_uuid=message_request_uuid,
         )
         process.start()
 

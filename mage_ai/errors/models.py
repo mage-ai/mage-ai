@@ -16,7 +16,7 @@ class ErrorDetails(BaseDataClass):
     type: Optional[str] = None
 
     @classmethod
-    def from_current_error(cls):
+    def from_current_error(cls, error: Exception):
         exc_type, exc_value, exc_tb = sys.exc_info()
         errors = traceback.format_exception(exc_type, exc_value, exc_tb)
 
@@ -31,6 +31,6 @@ class ErrorDetails(BaseDataClass):
         return cls.load(
             code=ErrorCode.CODE_500,
             errors=errors,
-            message=exc_value,
+            message=str(error),
             type=exc_type.__name__ if exc_type else None,
         )

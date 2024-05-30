@@ -1,5 +1,10 @@
 import { ErrorDetailsType } from './ErrorsType';
 
+export enum ResultType {
+  DATA = 'data',
+  STDOUT = 'stdout',
+}
+
 export enum EventStreamTypeEnum {
   EXECUTION = 'execution',
   EXECUTION_STATUS = 'execution_status',
@@ -8,9 +13,10 @@ export enum EventStreamTypeEnum {
 }
 
 export enum ExecutionStatusEnum {
-  SUCCESS = 0,
-  FAILURE = 1,
-  ERROR = 2,
+  ERROR = 'error',
+  FAILURE = 'failure',
+  RUNNING = 'running',
+  SUCCESS = 'success',
 }
 
 export enum ServerConnectionStatusType {
@@ -24,11 +30,11 @@ export interface ServerSentEventResponseType {
   data: string;
 }
 
-
 export interface ProcessDetailsType {
   exitcode?: number;
   is_alive?: boolean;
   message?: string;
+  message_request_uuid: string;
   message_uuid: string;
   pid: number;
   timestamp: number;
