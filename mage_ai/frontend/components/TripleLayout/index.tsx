@@ -361,15 +361,17 @@ function TripleLayout({
               : null
           }
         >
-          {!afterHidden && typeof after !== 'undefined' && after !== null && (
-            <>
-              {
-                typeof after === 'function'
-                ? after?.({ width: afterWidthFinal })
-                : after
-              }
-            </>
-          )}
+          <>
+            {!afterHidden && typeof after !== 'undefined' && after !== null && (
+              <>
+                {
+                  typeof after === 'function'
+                  ? after?.({ width: afterWidthFinal })
+                  : after
+                }
+              </>
+            )}
+          </>
         </AfterInnerStyle>
 
         {afterFooter && !afterHidden && (
