@@ -14,6 +14,7 @@ from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.constants import VALID_ENVS
 from mage_ai.shared.hash import index_by
 from mage_ai.shared.io import safe_write
+from mage_ai.shared.yaml import load_yaml
 
 TRIGGER_FILE_NAME = 'triggers.yaml'
 
@@ -227,7 +228,7 @@ def load_trigger_configs(
     raise_exception: bool = False,
     user=None,
 ) -> List[Trigger]:
-    yaml_config = yaml.safe_load(content) or {}
+    yaml_config = load_yaml(content) or {}
     trigger_configs = yaml_config.get('triggers') or {}
 
     return build_triggers(

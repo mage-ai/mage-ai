@@ -1444,7 +1444,7 @@ def schedule_all():
     schedules, so that needs to be addressed at some point.
     """
     db_connection.session.expire_all()
-
+    repo_config = get_repo_config()
     repo_pipelines = set(Pipeline.get_all_pipelines_all_projects(
         get_repo_path(),
         disable_pipelines_folder_creation=True,
@@ -1509,6 +1509,7 @@ def schedule_all():
 
     for pipeline_uuid, pipeline, active_schedules in gen_pipeline_with_schedules(
         active_pipeline_schedules,
+        repo_config=repo_config,
     ):
         concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
         pipeline_runs_to_start = []
@@ -1539,6 +1540,7 @@ def schedule_all():
                 should_schedule = pipeline_schedule.should_schedule(
                     previous_runtimes=previous_runtimes,
                     pipeline=pipeline,
+                    repo_config=repo_config,
                 )
                 initial_pipeline_runs = [
                     r for r in pipeline_schedule.pipeline_runs
@@ -1676,6 +1678,7 @@ def schedule_all():
 
 def gen_pipeline_with_schedules_single_project(
     active_pipeline_schedules: List[PipelineSchedule],
+    repo_config=None,
 ) -> Generator[Tuple[str, Pipeline, List[PipelineSchedule]], None, None]:
     """
     Generate pipelines with associated schedules for a single project.
@@ -1689,6 +1692,8 @@ def gen_pipeline_with_schedules_single_project(
             - The pipeline object.
             - A list of active schedules associated with the pipeline.
     """
+    # Avoid calling get_repo_config repeatedly in Pipeline init method.
+    repo_config = repo_config or get_repo_config()
     pipeline_schedules_by_pipeline = collections.defaultdict(list)
     for schedule in active_pipeline_schedules:
         pipeline_schedules_by_pipeline[schedule.pipeline_uuid].append(schedule)
@@ -1697,7 +1702,11 @@ def gen_pipeline_with_schedules_single_project(
     # each pipeline.
     for pipeline_uuid, active_schedules in pipeline_schedules_by_pipeline.items():
         try:
-            pipeline = Pipeline.get(pipeline_uuid, repo_path=get_repo_path())
+            pipeline = Pipeline.get(
+                pipeline_uuid,
+                repo_path=get_repo_path(),
+                repo_config=repo_config,
+            )
         except Exception as e:
             print(f'Error fetching pipeline {pipeline_uuid}: {e}')
             traceback.print_exc()
@@ -1707,6 +1716,7 @@ def gen_pipeline_with_schedules_single_project(
 
 def gen_pipeline_with_schedules_project_platform(
     active_pipeline_schedules: List[PipelineSchedule],
+    repo_config=None,
 ) -> Generator[Tuple[str, Pipeline, List[PipelineSchedule]], None, None]:
     """
     Generate pipelines with associated schedules for project platform.

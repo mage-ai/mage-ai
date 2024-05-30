@@ -444,6 +444,7 @@ class Pipeline:
         cls,
         uuid,
         repo_path: str = None,
+        repo_config=None,
         check_if_exists: bool = False,
         all_projects: bool = False,
         context_data: Dict = None,
@@ -465,6 +466,7 @@ class Pipeline:
         pipeline = cls(
             uuid,
             repo_path=repo_path,
+            repo_config=repo_config,
             context_data=context_data,
             use_repo_path=use_repo_path,
         )
@@ -473,7 +475,12 @@ class Pipeline:
                 IntegrationPipeline,
             )
 
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, context_data=context_data)
+            pipeline = IntegrationPipeline(
+                uuid,
+                repo_path=repo_path,
+                repo_config=repo_config,
+                context_data=context_data,
+            )
 
         return pipeline
 

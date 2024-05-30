@@ -507,6 +507,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         self,
         previous_runtimes: List[int] = None,
         pipeline: Pipeline = None,
+        repo_config=None,
     ) -> bool:
         """
         Determine whether a pipeline schedule should be executed based on its configuration and
@@ -545,7 +546,12 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             return False
 
         try:
-            Pipeline.get(self.pipeline_uuid, repo_path=get_repo_path())
+            if pipeline is None:
+                pipeline = Pipeline.get(
+                    self.pipeline_uuid,
+                    repo_path=get_repo_path(),
+                    repo_config=repo_config,
+                )
         except Exception:
             print(
                 f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
@@ -557,7 +563,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
-            executor_count = self.pipeline.executor_count
+            executor_count = pipeline.executor_count
             # Used by streaming pipeline to launch multiple executors
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
