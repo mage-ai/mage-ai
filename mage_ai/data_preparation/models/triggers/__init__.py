@@ -2,7 +2,7 @@ import enum
 import os
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import yaml
@@ -117,6 +117,14 @@ class Trigger(BaseConfig):
         )
 
 
+"""
+Cache the triggers config by pipeline uuid
+  Key: trigger_file_path
+  Value: {"updated_at": xxx, "triggers": []}
+"""
+triggers_cache = dict()
+
+
 def get_triggers_file_path(
     pipeline_uuid: str,
     repo_path: str = None
@@ -162,6 +170,20 @@ def get_triggers_by_pipeline(
     if not os.path.exists(trigger_file_path):
         return []
 
+    trigger_file_updated_at = datetime.fromtimestamp(
+        os.path.getmtime(trigger_file_path),
+        tz=timezone.utc,
+    )
+    last_updated_at = None
+    if trigger_file_path in triggers_cache:
+        # Try reading triggers from cache first
+        triggers_config = triggers_cache[trigger_file_path]
+        last_updated_at = triggers_config.get('updated_at')
+        triggers = triggers_config.get('triggers')
+        if last_updated_at is not None and triggers and last_updated_at >= trigger_file_updated_at:
+            # Trigger file not modified since last time
+            return triggers
+
     try:
         content = load_triggers_file_content(
             pipeline_uuid,
@@ -171,6 +193,10 @@ def get_triggers_by_pipeline(
             content,
             pipeline_uuid=pipeline_uuid,
             repo_path=repo_path,
+        )
+        triggers_cache[trigger_file_path] = dict(
+            updated_at=trigger_file_updated_at,
+            triggers=triggers,
         )
     except Exception:
         traceback.print_exc()
