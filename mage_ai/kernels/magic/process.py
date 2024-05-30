@@ -54,7 +54,6 @@ class ProcessWrapper:
                 self.queue,
                 self.uuid,
                 self.to_dict(),
-                self.event,
             ),
         )
 
