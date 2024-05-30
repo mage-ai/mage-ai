@@ -89,6 +89,7 @@ from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     DISABLE_AUTO_BROWSER_OPEN,
+    DISABLE_AUTORELOAD,
     ENABLE_PROMETHEUS,
     OAUTH2_APPLICATION_CLIENT_ID,
     OTEL_EXPORTER_OTLP_ENDPOINT,
@@ -114,7 +115,7 @@ from mage_ai.settings.repo import (
     set_repo_path,
 )
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
-from mage_ai.shared.environments import is_debug
+from mage_ai.shared.environments import is_debug, is_dev
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel, set_logging_format
 from mage_ai.shared.singletons.memory import get_memory_manager_controller
@@ -434,19 +435,22 @@ def make_app(
     else:
         updated_routes = routes
 
-    autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
-
     file_path = file_path_aws_emr()
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as f:
             f.write(json.dumps({}))
 
-    autoreload.watch(file_path)
+    if is_dev() and not DISABLE_AUTORELOAD:
+        should_autoreload = True
+        autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
+        autoreload.watch(file_path)
+    else:
+        should_autoreload = False
 
     return tornado.web.Application(
         updated_routes,
-        autoreload=True,
+        autoreload=should_autoreload,
         template_path=template_dir,
     )
 
