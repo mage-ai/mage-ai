@@ -113,7 +113,7 @@ function TripleLayout({
   afterHeader,
   afterHeaderOffset,
   afterHeightOffset,
-  afterHidden,
+  afterHidden: afterHiddenProp,
   afterInnerHeightMinus,
   afterMousedownActive,
   afterNavigationItems,
@@ -167,6 +167,8 @@ function TripleLayout({
   function getOffsetLeft() {
     return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
   }
+
+  const afterHidden = afterHiddenProp !== false;
 
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
@@ -359,12 +361,16 @@ function TripleLayout({
               : null
           }
         >
-          {typeof after === 'function'
-            ? !afterHidden &&
-              after?.({
-                width: afterWidthFinal,
-              })
-            : !afterHidden && after}
+          {console.log(afterHidden, after)}
+          {!afterHidden && !after && (
+            <>
+              {
+                typeof after === 'function'
+                ? after?.({ width: afterWidthFinal })
+                : after
+              }
+            </>
+          )}
         </AfterInnerStyle>
 
         {afterFooter && !afterHidden && (
