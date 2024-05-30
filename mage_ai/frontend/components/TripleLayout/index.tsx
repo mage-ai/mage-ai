@@ -168,7 +168,7 @@ function TripleLayout({
     return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
   }
 
-  const afterHidden = afterHiddenProp !== false;
+  const afterHidden = afterHiddenProp === true;
 
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
@@ -361,8 +361,7 @@ function TripleLayout({
               : null
           }
         >
-          {console.log(afterHidden, after)}
-          {!afterHidden && !after && (
+          {!afterHidden && typeof after !== 'undefined' && after !== null && (
             <>
               {
                 typeof after === 'function'

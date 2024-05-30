@@ -154,7 +154,7 @@ function PipelineDetailPage(
   return (
     <>
       <Dashboard
-        after={afterProp ? after : null}
+        after={(afterProp || buildSidekick) ? after : null}
         afterHidden={afterHidden}
         afterWidth={afterWidth}
         before={before}
