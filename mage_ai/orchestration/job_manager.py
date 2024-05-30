@@ -1,4 +1,3 @@
-import traceback
 from enum import Enum
 from typing import Callable, Dict, Union
 
@@ -15,14 +14,7 @@ class JobManager:
     def __init__(self):
         self.queue = QueueFactory.get_queue()
 
-    def add_job(
-        self,
-        job_type: JobType,
-        uid: Union[str, int],
-        target: Callable,
-        *args,
-        **kwargs
-    ):
+    def add_job(self, job_type: JobType, uid: Union[str, int], target: Callable, *args, **kwargs):
         job_id = self.__job_id(job_type, uid)
 
         self.queue.enqueue(job_id, target, *args, **kwargs)
@@ -96,8 +88,16 @@ class JobManager:
         return f'{job_type}_{uid}'
 
 
-try:
-    job_manager = JobManager()
-except Exception:
-    traceback.print_exc()
-    job_manager = None
+job_manager = None
+
+
+def get_job_manager() -> JobManager:
+    global job_manager
+    if job_manager is None:
+        job_manager = JobManager()
+    return job_manager
+
+
+if __name__ == '__main__':
+    # Ensure it gets initialized when run directly
+    job_manager = get_job_manager()

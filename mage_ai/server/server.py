@@ -77,6 +77,7 @@ from mage_ai.server.scheduler_manager import (
     check_scheduler_status,
     scheduler_manager,
 )
+from mage_ai.server.setup import initialize_globals
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.terminal_server import (
     MageTermManager,
@@ -262,7 +263,6 @@ def make_app(
     ]
     routes_full = routes_base + [
         (r'/?', MainPageHandler),
-        (r'/server-sent-events/(?P<uuid>[\w\-\%2f\.]+)', ServerSentEventHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
         (r'/oauth', MainPageHandler),
@@ -278,6 +278,7 @@ def make_app(
         (r'/manage/(.*)', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),
+        (r'/server-sent-events/(?P<uuid>[\w\-\%2f\.]+)', ServerSentEventHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -717,6 +718,8 @@ async def main(
     )
 
     await asyncio.Event().wait()
+    # Used for the magic kernel
+    tornado.ioloop.IOLoop.current().start()
 
 
 def start_server(
@@ -818,6 +821,8 @@ if __name__ == '__main__':
     instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
     project_type = os.getenv(MAGE_PROJECT_TYPE_ENV_VAR, ProjectType.STANDALONE)
     cluster_type = os.getenv(MAGE_CLUSTER_TYPE_ENV_VAR)
+
+    initialize_globals()
 
     start_server(
         host=host,

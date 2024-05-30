@@ -30,9 +30,9 @@ export default function useServerSentEvents(uuid: string): {
   const [createMessage, { isLoading }] = useMutation(
     (payload: {
       message: string;
-    }) => api.serverSentEvents.useCreate({
-      server_side_event: {
-        ...payload,
+    }) => api.server_sent_events.useCreate()({
+      server_sent_event: {
+        code: payload?.message,
         timestamp: Number(new Date()),
         uuid,
       },
@@ -40,7 +40,7 @@ export default function useServerSentEvents(uuid: string): {
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (resp) => {
+          callback: (resp: any) => {
             if (isDebug()) {
               console.log('useServerSentEvents.createMessage', resp);
             }
@@ -69,7 +69,7 @@ export default function useServerSentEvents(uuid: string): {
 
       const timestamp = Number(new Date());
 
-      eventSource.onopen = (event) => {
+      eventSource.onopen = (event: Event) => {
         if (isDebug()) {
           console.log('useServerSentEvents.onopen', event);
         }

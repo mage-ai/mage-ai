@@ -26,8 +26,15 @@ export interface ServerSentEventErrorType {
   uuid: string;
 }
 
+export interface ServerSentEventDataType {
+  status: string;
+  error?: string;
+  traceback?: string;
+  uuid: string;
+}
+
 export default interface ServerSentEventType {
-  data: string;
+  data: ServerSentEventDataType;
   event_id: string;
   timestamp: number;
   type: ServerSentEventTypeEnum;

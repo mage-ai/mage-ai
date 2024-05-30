@@ -302,7 +302,7 @@ class DelegatorTarget:
 
 
 class Delegator:
-    def __init__(self, target: Any):
+    def __init__(self, target: Any, *args, **kwargs):
         self.target = target
         self.delegate = DelegatorTarget(self.target)
 

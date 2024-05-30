@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from inspect import isawaitable
 from typing import Dict, List, Optional, Tuple
 
-from mage_ai.kernels.utils import (
+from mage_ai.kernels.default.utils import (
     find_ipykernel_launchers_info,
     is_kernel_process_active,
     terminate_process,

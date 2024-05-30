@@ -19,14 +19,16 @@ from mage_ai.settings import (
 )
 from mage_ai.shared.logger import set_logging_format
 
-SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
+SCHEDULER_AUTO_RESTART_INTERVAL = 20_000  # in milliseconds
 
 logger = Logger().new_server_logger(__name__)
 
 
 def run_scheduler():
-    from mage_ai.orchestration.job_manager import job_manager
+    from mage_ai.orchestration.job_manager import get_job_manager
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+
+    job_manager = get_job_manager()
 
     sentry_dsn = SENTRY_DSN
     if sentry_dsn:
@@ -36,8 +38,11 @@ def run_scheduler():
         )
     (enable_new_relic, application) = initialize_new_relic()
     try:
-        with newrelic.agent.BackgroundTask(application, name="db-migration", group='Task') \
-             if enable_new_relic else nullcontext():
+        with (
+            newrelic.agent.BackgroundTask(application, name='db-migration', group='Task')
+            if enable_new_relic
+            else nullcontext()
+        ):
             database_manager.run_migrations()
     except Exception:
         traceback.print_exc()
@@ -107,7 +112,9 @@ class SchedulerManager:
                 time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL / 1000)
 
     def stop_scheduler(self):
-        from mage_ai.orchestration.job_manager import job_manager
+        from mage_ai.orchestration.job_manager import get_job_manager
+
+        job_manager = get_job_manager()
 
         logger.info('Stop scheduler.')
         if self.is_alive:

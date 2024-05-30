@@ -5,7 +5,11 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 
-function Test() {
+function Test({
+  uuid,
+}: {
+  uuid: string;
+}) {
   const [message, setMessage] = useState('');
 
   const {
@@ -14,14 +18,16 @@ function Test() {
     recentEvent,
     sendMessage,
     status,
-  } = useServerSentEvents('test');
+  } = useServerSentEvents(uuid);
+
+  console.log('recentEvent', recentEvent);
 
   return (
     <div>
       {recentEvent && (
         <div>
           <Text>
-            {recentEvent?.data}
+            {recentEvent?.data?.output}
           </Text>
         </div>
       )}
@@ -46,5 +52,13 @@ function Test() {
     </div>
   );
 }
+
+Test.getInitialProps = async (ctx: any) => {
+  const { uuid }: { uuid?: string } = ctx.query;
+
+  return {
+    uuid,
+  };
+};
 
 export default Test;

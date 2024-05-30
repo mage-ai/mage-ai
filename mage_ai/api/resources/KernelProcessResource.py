@@ -1,7 +1,7 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.kernels.models import KernelProcess
-from mage_ai.kernels.utils import get_process_info
+from mage_ai.kernels.default.models import KernelProcess
+from mage_ai.kernels.default.utils import get_process_info
 
 TERMINATE_INACTIVE = '__terminate_inactive__'
 
