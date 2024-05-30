@@ -1,9 +1,10 @@
 import asyncio
 from datetime import datetime
-from multiprocessing import Queue
 from multiprocessing.context import BaseContext
 from typing import Dict, Optional
 from uuid import uuid4
+
+from faster_fifo import Queue
 
 from mage_ai.kernels.magic.execution import execute_code_async
 from mage_ai.kernels.magic.models import ProcessDetails
@@ -35,9 +36,11 @@ class ProcessWrapper:
         This can be more secure but slightly more complex to set up and use.
         """
         self.ctx = ctx
+        self.event = None
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
+        self.output_process = None
         self.process = None
         self.queue = queue
         self.timestamp = None
@@ -51,15 +54,18 @@ class ProcessWrapper:
                 self.queue,
                 self.uuid,
                 self.to_dict(),
+                self.event,
             ),
         )
+
         self.process.start()
         self.timestamp = int(datetime.utcnow().timestamp() * 1000)
 
     def stop(self):
-        if self.process is not None and self.is_alive:
-            self.process.terminate()
-            self.process.join()
+        for process in [self.output_process, self.process]:
+            if process is not None and process.is_alive():
+                process.terminate()
+                process.join()
 
     @property
     def exitcode(self) -> Optional[int]:

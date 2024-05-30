@@ -20,6 +20,8 @@ class ServerSentEventHandler(BaseHandler):
         self.set_header('Cache-Control', 'no-cache')
         self.set_header('Connection', 'keep-alive')
 
+        await self.flush()
+
         queue = get_results_queue()
 
         while True:
@@ -49,12 +51,12 @@ class ServerSentEventHandler(BaseHandler):
                 )
 
                 self.write(f'data: {event_stream_json}\n\n')
+                await self.flush()
 
                 if is_debug():
                     print(f'Sent event: {event_stream_json}')
 
-            await self.flush()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0)
 
     def __build_event_stream(self, execution_result: ExecutionResult, uuid: str) -> EventStream:
         return EventStream.load(

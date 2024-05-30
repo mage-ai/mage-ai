@@ -1,5 +1,6 @@
 import multiprocessing
-from multiprocessing import Queue
+
+from faster_fifo import Queue
 
 # Define the results_queue as None initially
 results_queue = None

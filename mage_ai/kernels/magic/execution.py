@@ -30,7 +30,7 @@ def read_stdout_continuously(async_stdout, queue, process, stop_event):
                             type=ResultType.STDOUT,
                         ),
                     )
-        time.sleep(0.1)  # Sleep a bit to avoid busy waiting
+        time.sleep(0)  # Sleep a bit to avoid busy waiting
 
 
 async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict: Dict) -> None:
@@ -86,6 +86,9 @@ async def execute_code_async(message: str, queue: Queue, uuid: str, process_dict
                 type=ResultType.DATA,
             ),
         )
+
+        # Put a sentinel value to signal the end of output
+        queue.put(None)
     except Exception as err:
         queue.put(
             ExecutionResult.load(

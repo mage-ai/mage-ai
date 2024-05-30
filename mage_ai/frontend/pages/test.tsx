@@ -75,8 +75,9 @@ function Test({
     status,
   } = useServerSentEvents(uuid);
 
-  console.log(errors);
-  console.log(events);
+  if (errors?.length) {
+    console.log(errors);
+  }
 
   const executionResultError = useMemo(() => events?.[events?.length - 1]?.result?.error, [events]);
   const eventsDisplay = useMemo(() => events?.filter(event => !!event), [events]);
