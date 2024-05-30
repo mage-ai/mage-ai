@@ -113,7 +113,7 @@ function TripleLayout({
   afterHeader,
   afterHeaderOffset,
   afterHeightOffset,
-  afterHidden: afterHiddenProp,
+  afterHidden,
   afterInnerHeightMinus,
   afterMousedownActive,
   afterNavigationItems,
@@ -167,8 +167,6 @@ function TripleLayout({
   function getOffsetLeft() {
     return containerRef?.current ? containerRef?.current?.getBoundingClientRect?.()?.left : 0;
   }
-
-  const afterHidden = afterHiddenProp === true;
 
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
