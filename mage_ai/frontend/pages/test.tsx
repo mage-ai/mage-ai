@@ -18,13 +18,7 @@ import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
 import { padString } from '@utils/string';
 
 function ErrorDisplay({ error }: { error: ErrorDetailsType }) {
-  const {
-    displayMessage,
-    exception,
-    links,
-    stackTrace,
-    traceback,
-  } = useErrorViews({
+  const { displayMessage, exception, links, stackTrace, traceback } = useErrorViews({
     response: {
       error,
     },
@@ -38,50 +32,24 @@ function ErrorDisplay({ error }: { error: ErrorDetailsType }) {
         Error
       </Text>
 
-      {displayMessage && (
-      <Spacing mt={1}>
-        {displayMessage}
-      </Spacing>
-    )}
+      {displayMessage && <Spacing mt={1}>{displayMessage}</Spacing>}
 
-      {exception && (
-      <Spacing mt={1}>
-        {exception}
-      </Spacing>
-    )}
+      {exception && <Spacing mt={1}>{exception}</Spacing>}
 
-      {traceback && (
-      <Spacing mt={2}>
-        {traceback}
-      </Spacing>
-    )}
+      {traceback && <Spacing mt={2}>{traceback}</Spacing>}
 
-      {stackTrace && (
-      <Spacing mt={2}>
-        {stackTrace}
-      </Spacing>
-    )}
+      {stackTrace && <Spacing mt={2}>{stackTrace}</Spacing>}
 
       {links}
     </div>
   );
 }
 
-function Test({
-  uuid,
-}: {
-  uuid: string;
-}) {
+function Test({ uuid }: { uuid: string }) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const [message, setMessage] = useState('');
 
-  const {
-    errors,
-    events,
-    loading,
-    sendMessage,
-    status,
-  } = useEventStreams(uuid);
+  const { errors, events, loading, sendMessage, status } = useEventStreams(uuid);
 
   if (errors?.length) {
     console.log(errors);
@@ -89,7 +57,10 @@ function Test({
 
   const executionResultError = useMemo(() => events?.[events?.length - 1]?.result?.error, [events]);
   const eventsDisplay = useMemo(() => events?.filter(event => !!event), [events]);
-  const stdoutCount = useMemo(() => eventsDisplay?.filter(event => event?.result?.type === ResultType.STDOUT)?.length || 0, [eventsDisplay]);
+  const stdoutCount = useMemo(
+    () => eventsDisplay?.filter(event => event?.result?.type === ResultType.STDOUT)?.length || 0,
+    [eventsDisplay],
+  );
 
   console.log(events);
 
@@ -102,20 +73,14 @@ function Test({
           return null;
         }
 
-        const {
-          event_uuid: eventUUID,
-          result,
-          timestamp,
-        }: EventStreamType = eventStream;
-        const {
-          output,
-          output_text: outputText,
-        } = result || {
+        const { event_uuid: eventUUID, result, timestamp }: EventStreamType = eventStream;
+        const { output, output_text: outputText } = result || {
           output: null,
           output_text: null,
         };
 
-        const indexText = padString('', String(stdoutCount).length - String(idx).length, '&nbsp;') + `[${idx}]`;
+        const indexText =
+          padString('', String(stdoutCount).length - String(idx).length, '&nbsp;') + `[${idx}]`;
 
         return (
           <div key={eventUUID}>
@@ -124,9 +89,8 @@ function Test({
                 <Text monospace preWrap>
                   <Text default inline monospace>
                     <span dangerouslySetInnerHTML={{ __html: indexText }} />
-                  </Text> <Ansi>
-                    {outputText}
-                  </Ansi>
+                  </Text>{' '}
+                  <Ansi>{outputText}</Ansi>
                 </Text>
               </Flex>
 
@@ -147,13 +111,10 @@ function Test({
         label="Message"
         monospace
         name="message"
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={e => setMessage(e.target.value)}
         rows={12}
       />
-      <Button
-        loading={loading}
-        onClick={() => sendMessage({ message })}
-      >
+      <Button loading={loading} onClick={() => sendMessage({ message })}>
         Send Message ({status})
       </Button>
     </div>

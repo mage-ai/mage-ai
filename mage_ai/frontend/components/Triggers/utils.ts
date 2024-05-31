@@ -15,47 +15,40 @@ import {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
-import {
-  datetimeInLocalTimezone,
-  getDayRangeForCurrentMonth,
-} from '@utils/date';
+import { datetimeInLocalTimezone, getDayRangeForCurrentMonth } from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
 import { rangeSequential } from '@utils/array';
 
-export const checkIfCustomInterval = (
-  scheduleInterval: string,
-) => !!scheduleInterval &&
+export const checkIfCustomInterval = (scheduleInterval: string) =>
+  !!scheduleInterval &&
   !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum);
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
-  return blockRuns?.reduce(
-    (prev, blockRun) => {
-      const {
-        block_uuid: blockUuid,
-        completed_at: completedAt,
-        started_at: startedAt,
-        status,
-      } = blockRun;
+  return blockRuns?.reduce((prev, blockRun) => {
+    const {
+      block_uuid: blockUuid,
+      completed_at: completedAt,
+      started_at: startedAt,
+      status,
+    } = blockRun;
 
-      let runtime = null;
+    let runtime = null;
 
-      if (startedAt && completedAt) {
-        const completedAtTs = moment(completedAt).valueOf();
-        const startedAtTs = moment(startedAt).valueOf();
+    if (startedAt && completedAt) {
+      const completedAtTs = moment(completedAt).valueOf();
+      const startedAtTs = moment(startedAt).valueOf();
 
-        runtime = completedAtTs - startedAtTs;
-      }
+      runtime = completedAtTs - startedAtTs;
+    }
 
-      return {
-        ...prev,
-        [blockUuid]: {
-          runtime,
-          status: status,
-        },
-      };
-    },
-    {},
-  );
+    return {
+      ...prev,
+      [blockUuid]: {
+        runtime,
+        status: status,
+      },
+    };
+  }, {});
 }
 
 export const getTriggerTypes = (
@@ -83,21 +76,14 @@ export const getTriggerTypes = (
     },
   ];
 
-  return isStreamingPipeline
-    ? triggerTypes.slice(0, 1)
-    : triggerTypes;
+  return isStreamingPipeline ? triggerTypes.slice(0, 1) : triggerTypes;
 };
 
-export function getPipelineScheduleApiFilterQuery(
-  query: any,
-) {
-  const apiFilterQuery = ignoreKeys(
-    query,
-    [
-      PipelineScheduleFilterQueryEnum.INTERVAL,
-      PipelineScheduleFilterQueryEnum.TYPE,
-    ],
-  );
+export function getPipelineScheduleApiFilterQuery(query: any) {
+  const apiFilterQuery = ignoreKeys(query, [
+    PipelineScheduleFilterQueryEnum.INTERVAL,
+    PipelineScheduleFilterQueryEnum.TYPE,
+  ]);
   const intervalQueryValue = query[PipelineScheduleFilterQueryEnum.INTERVAL];
   if (intervalQueryValue) {
     apiFilterQuery['schedule_interval[]'] = encodeURIComponent(intervalQueryValue);
@@ -182,9 +168,9 @@ export function getDatetimeFromDateAndTime(
   date: Date,
   time: TimeType,
   opts?: {
-    convertToUtc?: boolean,
-    localTimezone?: boolean,
-    includeSeconds?: boolean,
+    convertToUtc?: boolean;
+    localTimezone?: boolean;
+    includeSeconds?: boolean;
   },
 ): string {
   let datetimeString;
@@ -201,10 +187,10 @@ export function getDatetimeFromDateAndTime(
   if (opts?.localTimezone) {
     datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
     if (opts?.convertToUtc) {
-      datetimeString = dateFormatLong(
-        datetimeString,
-        { includeSeconds: opts?.includeSeconds, utcFormat: true },
-      );
+      datetimeString = dateFormatLong(datetimeString, {
+        includeSeconds: opts?.includeSeconds,
+        utcFormat: true,
+      });
     }
   }
 
@@ -265,9 +251,8 @@ function calculateCronValueWithOffset(
     }
   }
 
-  const cronValueFinal = typeof range[currentIndex] === 'number'
-    ? range[currentIndex]
-    : timeUnitValue;
+  const cronValueFinal =
+    typeof range[currentIndex] === 'number' ? range[currentIndex] : timeUnitValue;
 
   return {
     additionalOffset: additionalOffsetForGreaterTimeUnit,
@@ -286,21 +271,14 @@ function adjustSingleCronValueForTimeOffset(
       cronValue,
     };
   } else {
-    return calculateCronValueWithOffset(
-      +cronValue,
-      timeOffset,
-      timeRange,
-    );
+    return calculateCronValueWithOffset(+cronValue, timeOffset, timeRange);
   }
 }
 
 const minuteRange = rangeSequential(60);
 const hourRange = rangeSequential(24);
 const dayRange = getDayRangeForCurrentMonth();
-export function convertUtcCronExpressionToLocalTimezone(
-  cronExpression: string,
-  reverse?: boolean,
-) {
+export function convertUtcCronExpressionToLocalTimezone(cronExpression: string, reverse?: boolean) {
   if (!cronExpression) {
     return cronExpression;
   }
@@ -308,9 +286,8 @@ export function convertUtcCronExpressionToLocalTimezone(
   const localTimezoneOffset = moment().local().format('Z');
   const offsetParts = localTimezoneOffset.split(':');
   const isNegativeOffset = localTimezoneOffset[0] === '-';
-  let hourOffset = offsetParts[0].length === 3
-    ? Number(offsetParts[0].slice(1))
-    : Number(offsetParts[0]);
+  let hourOffset =
+    offsetParts[0].length === 3 ? Number(offsetParts[0].slice(1)) : Number(offsetParts[0]);
   let minuteOffset = Number(offsetParts[1]);
   if ((isNegativeOffset && !reverse) || (!isNegativeOffset && reverse)) {
     hourOffset = -hourOffset;

@@ -98,7 +98,8 @@ export const SPARK_SQLS: 'spark_sqls' = 'spark_sqls';
 export const SPARK_STAGES: 'spark_stages' = 'spark_stages';
 export const SPARK_STAGE_ATTEMPTS: 'spark_stage_attempts' = 'spark_stage_attempts';
 export const SPARK_STAGE_ATTEMPT_TASKS: 'spark_stage_attempt_tasks' = 'spark_stage_attempt_tasks';
-export const SPARK_STAGE_ATTEMPT_TASK_SUMMARYS: 'spark_stage_attempt_task_summarys' = 'spark_stage_attempt_task_summarys';
+export const SPARK_STAGE_ATTEMPT_TASK_SUMMARYS: 'spark_stage_attempt_task_summarys' =
+  'spark_stage_attempt_task_summarys';
 export const SPARK_THREADS: 'spark_threads' = 'spark_threads';
 export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
@@ -219,9 +220,12 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
 ];
 
 // @ts-ignore
-export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce((keys: string[]) => ({
-  [keys[0]]: keys,
-}), {});
+export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce(
+  (keys: string[]) => ({
+    [keys[0]]: keys,
+  }),
+  {},
+);
 
 const apis: any = {};
 
@@ -240,27 +244,19 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
         customOptions?: {
           key?: string;
         },
-      ) => useDetail(
-        resource,
-        id,
-        query,
-        {
-          ...swrOptions,
-          ...swrOptionsRuntime,
-        },
-        customOptions,
-      ),
-      detailAsync: async (
-        id: string,
-        query?: any,
-        options?: FetcherOptionsType,
-      ) => {
-        const response = useDetailAsync(
+      ) =>
+        useDetail(
           resource,
           id,
           query,
-          options,
-        );
+          {
+            ...swrOptions,
+            ...swrOptionsRuntime,
+          },
+          customOptions,
+        ),
+      detailAsync: async (id: string, query?: any, options?: FetcherOptionsType) => {
+        const response = useDetailAsync(resource, id, query, options);
 
         return await handle(response);
       },
@@ -269,15 +265,8 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
 
         return await handle(response);
       },
-      listAsync: async (
-        query?: any,
-        options?: FetcherOptionsType,
-      ) => {
-        const response = useListAsync(
-          resource,
-          query,
-          options,
-        );
+      listAsync: async (query?: any, options?: FetcherOptionsType) => {
+        const response = useListAsync(resource, query, options);
 
         return await handle(response);
       },
@@ -286,7 +275,10 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
 
         return await handle(response);
       },
-      useUpdate: (id, query: any = {}) => async (body: any) => fetchUpdate(resource, id, body, query),
+      useUpdate:
+        (id, query: any = {}) =>
+        async (body: any) =>
+          fetchUpdate(resource, id, body, query),
     };
   }
 
@@ -304,19 +296,20 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       customOptions?: {
         key?: string;
       },
-    ) => useDetailWithParent(
-      resource,
-      id,
-      parentResource,
-      parentId,
-      query,
-      {
-        ...swrOptions,
-        ...swrOptionsRuntime,
-      },
-      grandchildResource,
-      customOptions,
-    );
+    ) =>
+      useDetailWithParent(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        {
+          ...swrOptions,
+          ...swrOptionsRuntime,
+        },
+        grandchildResource,
+        customOptions,
+      );
     apis[resource][parentResource][grandchildResource].detailAsync = async (
       parentId: string,
       id: string,
@@ -343,20 +336,24 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
     apis[resource][parentResource].useCreate = (parentId, opts?: any) => async (body: any) =>
       fetchCreateWithParent(resource, parentResource, parentId, body, opts);
 
-    apis[resource][parentResource].useCreateWithParent = (parentId: string, id: string, opts?: any) => async (body: any) =>
-      fetchCreateWithParentAndChild(resource, parentResource, parentId, id, body, opts);
+    apis[resource][parentResource].useCreateWithParent =
+      (parentId: string, id: string, opts?: any) => async (body: any) =>
+        fetchCreateWithParentAndChild(resource, parentResource, parentId, id, body, opts);
 
-    apis[resource][parentResource].useCreateWithParentIdLater = (opts?: any) => async (opts2: any) =>
-      fetchCreateWithParent(resource, parentResource, opts2.parentId, opts2.body, opts);
+    apis[resource][parentResource].useCreateWithParentIdLater =
+      (opts?: any) => async (opts2: any) =>
+        fetchCreateWithParent(resource, parentResource, opts2.parentId, opts2.body, opts);
 
-    apis[resource][parentResource].useUpdate = (parentId: string, id: string, opts?: any) => async (body: any) =>
-      fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
+    apis[resource][parentResource].useUpdate =
+      (parentId: string, id: string, opts?: any) => async (body: any) =>
+        fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
 
-    apis[resource][parentResource].useDelete = (parentId: string, id: string, query?: object) => async () => {
-      const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
+    apis[resource][parentResource].useDelete =
+      (parentId: string, id: string, query?: object) => async () => {
+        const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
 
-      return await handle(response);
-    };
+        return await handle(response);
+      };
 
     apis[resource][parentResource].detailAsync = async (
       parentId: string,
@@ -382,19 +379,23 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       query?: any,
       options?: FetcherOptionsType,
     ) => {
-      const response = useListWithParentAsync(
-        resource,
-        parentResource,
-        parentId,
-        query,
-        options,
-      );
+      const response = useListWithParentAsync(resource, parentResource, parentId, query, options);
 
       return await handle(response);
     };
 
-    apis[resource][parentResource].listAsyncServer = async (ctx: any, parentId: string, query: any = {}) => {
-      const response = await fetchListWithParentAsync(ctx, resource, parentResource, parentId, query);
+    apis[resource][parentResource].listAsyncServer = async (
+      ctx: any,
+      parentId: string,
+      query: any = {},
+    ) => {
+      const response = await fetchListWithParentAsync(
+        ctx,
+        resource,
+        parentResource,
+        parentId,
+        query,
+      );
 
       return await handle(response);
     };
@@ -403,16 +404,11 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       parentId: string,
       query: any = {},
       swrOptionsRuntime?: any,
-    ) => useListWithParent(
-      resource,
-      parentResource,
-      parentId,
-      query,
-      {
+    ) =>
+      useListWithParent(resource, parentResource, parentId, query, {
         ...swrOptions,
         ...swrOptionsRuntime,
-      },
-    );
+      });
 
     apis[resource][parentResource].detail = (
       parentId: string,
@@ -422,19 +418,20 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       customOptions?: {
         key?: string;
       },
-    ) => useDetailWithParent(
-      resource,
-      id,
-      parentResource,
-      parentId,
-      query,
-      {
-        ...swrOptions,
-        ...swrOptionsRuntime,
-      },
-      null,
-      customOptions,
-    );
+    ) =>
+      useDetailWithParent(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        {
+          ...swrOptions,
+          ...swrOptionsRuntime,
+        },
+        null,
+        customOptions,
+      );
   } else {
     apis[resource].create = async (body: any, opts?: any) => {
       const response = await fetchCreate(resource, body, opts);
@@ -442,8 +439,8 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       return await handle(response);
     };
 
-    apis[resource].useCreate = (opts?: any) =>
-      async (body: any) => fetchCreate(resource, body, opts);
+    apis[resource].useCreate = (opts?: any) => async (body: any) =>
+      fetchCreate(resource, body, opts);
 
     apis[resource].useDelete = (id: string, query?: object) => async () => {
       const response = await useDelete(resource, id, query);
@@ -451,14 +448,16 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       return await handle(response);
     };
 
-    apis[resource].list = (
-      query: any = {},
-      swrOptionsRuntime?: any,
-      opts?: any,
-    ) => useList(resource, query, {
-      ...swrOptions,
-      ...swrOptionsRuntime,
-    }, opts);
+    apis[resource].list = (query: any = {}, swrOptionsRuntime?: any, opts?: any) =>
+      useList(
+        resource,
+        query,
+        {
+          ...swrOptions,
+          ...swrOptionsRuntime,
+        },
+        opts,
+      );
   }
 });
 
@@ -467,36 +466,33 @@ export function useCustomFetchRequest({
   method,
   onSuccessCallback,
 }: {
-  endpoint: string,
-  method: string,
-  onSuccessCallback?: (any) => void,
+  endpoint: string;
+  method: string;
+  onSuccessCallback?: (any) => void;
 }): [(payload?: any) => void, boolean] {
   const errorMessage = 'Request failed.';
   const successMessage = 'Request successful.';
 
   const [fetchData, { isLoading }] = useMutation(
-    async (payload: any) => fetch(
-      `${endpoint}`,
-      {
-        body: (method === 'GET' || method === 'DELETE')
-          ? null
-          : JSON.stringify({
-            ...payload,
-          }),
+    async (payload: any) =>
+      fetch(`${endpoint}`, {
+        body:
+          method === 'GET' || method === 'DELETE'
+            ? null
+            : JSON.stringify({
+                ...payload,
+              }),
         method,
-      },
-    ),
+      }),
     {
       // @ts-ignore
-      onError: (error) => onError(
-        error, {
+      onError: error =>
+        onError(error, {
           errorMessage,
-        },
-      ),
-      onSuccess: (response: any) => onSuccess(
-        response,
-        {
-          callback: (res) => {
+        }),
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: res => {
             onSuccessCallback(res);
             if (!Array.isArray(res) && typeof res === 'object' && res.code && res.code >= 400) {
               console.error(errorMessage);
@@ -504,8 +500,7 @@ export function useCustomFetchRequest({
               // console.log(successMessage);
             }
           },
-        },
-      ),
+        }),
     },
   );
 

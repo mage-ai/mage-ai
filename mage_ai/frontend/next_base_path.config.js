@@ -7,7 +7,7 @@ module.exports = removeImports({
     ignoreDuringBuilds: true,
   },
   experimental: {
-    esmExternals: true
+    esmExternals: true,
   },
   images: {
     unoptimized: true,

@@ -7,14 +7,14 @@ function getHostCore(
   windowDefined: boolean,
   defaultHost: string = DEFAULT_HOST,
   defaultPort: string = DEFAULT_PORT,
-){
+) {
   let host = defaultHost;
   if (windowDefined) {
     host = window.location.hostname;
   }
   if (host === defaultHost) {
     host = `${host}:${defaultPort}`;
-  } else if (windowDefined && !!window.location.port){
+  } else if (windowDefined && !!window.location.port) {
     host = `${host}:${window.location.port}`;
   }
 
@@ -33,22 +33,18 @@ function getHostCore(
   return `${host}${basePath}`;
 }
 
-function getProtocol(
-  windowDefined: boolean,
-  host: string,
-  defaultHost: string = DEFAULT_HOST,
-){
+function getProtocol(windowDefined: boolean, host: string, defaultHost: string = DEFAULT_HOST) {
   let protocol = 'http://';
-  if(host !== defaultHost){
+  if (host !== defaultHost) {
     protocol = 'https://';
-    if(windowDefined && !window.location.protocol?.match(/https/)) {
+    if (windowDefined && !window.location.protocol?.match(/https/)) {
       protocol = 'http://';
     }
   }
   return protocol;
 }
 
-export function getHost(){
+export function getHost() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;
@@ -59,8 +55,7 @@ export function getHost(){
   return `${protocol}${host}`;
 }
 
-
-export function getWebSocket(path='') {
+export function getWebSocket(path = '') {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;
@@ -99,7 +94,7 @@ export function buildUrl(
     excludeApi?: boolean;
   },
 ): string {
-  let path: string =`${getHost()}${opts?.excludeApi ? '' : '/api'}/${resource}`;
+  let path: string = `${getHost()}${opts?.excludeApi ? '' : '/api'}/${resource}`;
 
   if (typeof id !== 'undefined' && id !== null) {
     path = `${path}/${id}`;

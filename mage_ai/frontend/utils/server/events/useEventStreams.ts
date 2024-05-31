@@ -13,25 +13,26 @@ import { onSuccess } from '@api/utils/response';
 import { isDebug } from '@utils/environment';
 import { getNewUUID } from '@utils/string';
 
-export default function useEventStreams(uuid: string, {
-  autoReconnect,
-  maxConnectionAttempts,
-}: {
-  autoReconnect?: boolean;
-  maxConnectionAttempts?: number;
-} = {
-  autoReconnect: true,
-  maxConnectionAttempts: 10,
-}): {
+export default function useEventStreams(
+  uuid: string,
+  {
+    autoReconnect,
+    maxConnectionAttempts,
+  }: {
+    autoReconnect?: boolean;
+    maxConnectionAttempts?: number;
+  } = {
+    autoReconnect: true,
+    maxConnectionAttempts: 10,
+  },
+): {
   errors: Event[];
   events: EventStreamType[];
   messages: ProcessDetailsType[];
   status: ServerConnectionStatusType;
   loading?: boolean;
   recentEvent?: EventStreamType;
-  sendMessage: (payload: {
-    message: string;
-  }) => void;
+  sendMessage: (payload: { message: string }) => void;
 } {
   const connectionAttemptsRemainingRef = useRef(maxConnectionAttempts);
   const eventSourceRef = useRef(null);
@@ -40,12 +41,12 @@ export default function useEventStreams(uuid: string, {
   const [errors, setErrors] = useState<Event[]>([]);
   const [events, setEvents] = useState<EventStreamType[]>([]);
   const [messages, setMessages] = useState<ProcessDetailsType[]>([]);
-  const [status, setStatus] = useState<ServerConnectionStatusType>(ServerConnectionStatusType.CONNECTING);
+  const [status, setStatus] = useState<ServerConnectionStatusType>(
+    ServerConnectionStatusType.CONNECTING,
+  );
 
   const [createMessage, { isLoading }] = useMutation(
-    (payload: {
-      message: string;
-    }) => {
+    (payload: { message: string }) => {
       setEvents(prevData => [...prevData, null]);
 
       return api.code_executions.useCreate()({
@@ -58,9 +59,9 @@ export default function useEventStreams(uuid: string, {
       });
     },
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ((resp: { server_sent_event: ProcessDetailsType }) => {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: (resp: { server_sent_event: ProcessDetailsType }) => {
             if (isDebug()) {
               console.log('useEventStreams.createMessage', resp);
             }
@@ -68,12 +69,11 @@ export default function useEventStreams(uuid: string, {
             if (resp?.server_sent_event) {
               setMessages(prevData => [...prevData, resp?.server_sent_event]);
             }
-          }),
+          },
           onErrorCallback: (error: any) => {
             setErrors(prevData => [...prevData, error]);
           },
-        },
-      ),
+        }),
     },
   );
 
@@ -143,10 +143,20 @@ export default function useEventStreams(uuid: string, {
             setStatus(ServerConnectionStatusType.RECONNECTING);
 
             clearTimeout(timeoutRef?.current);
-            timeoutRef.current = setTimeout(() => {
-              console.log(`Reconnecting to server witth ${connectionAttemptsRemaining} attempt(s) remaining...`);
-              connectEventSource(uuid, connectionAttemptsRemaining - 1);
-            }, 1000 * (Math.max(0, connectionAttemptsRemainingRef?.current - connectionAttemptsRemaining) + 1));
+            timeoutRef.current = setTimeout(
+              () => {
+                console.log(
+                  `Reconnecting to server witth ${connectionAttemptsRemaining} attempt(s) remaining...`,
+                );
+                connectEventSource(uuid, connectionAttemptsRemaining - 1);
+              },
+              1000 *
+                (Math.max(
+                  0,
+                  connectionAttemptsRemainingRef?.current - connectionAttemptsRemaining,
+                ) +
+                  1),
+            );
           }
         };
       }
@@ -154,16 +164,16 @@ export default function useEventStreams(uuid: string, {
   }
 
   useEffect(() => {
-   connectEventSource(
-     uuid,
-     1 + (autoReconnect ? (connectionAttemptsRemainingRef?.current || 0) : 0),
-   );
+    connectEventSource(
+      uuid,
+      1 + (autoReconnect ? connectionAttemptsRemainingRef?.current || 0 : 0),
+    );
 
-   const eventSource = eventSourceRef?.current;
-   return () => {
-     close(eventSource);
-   };
-   // eslint-disable-next-line react-hooks/exhaustive-deps
+    const eventSource = eventSourceRef?.current;
+    return () => {
+      close(eventSource);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoReconnect, uuid]);
 
   return {
