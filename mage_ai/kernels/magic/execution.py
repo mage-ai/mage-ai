@@ -1,7 +1,8 @@
-import threading
 import time
 from contextlib import redirect_stdout
+from multiprocessing import Process
 from multiprocessing.queues import Queue
+from threading import Event, Thread
 from typing import Dict
 
 from mage_ai.errors.models import ErrorDetails
@@ -12,10 +13,16 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.environments import is_debug
 
 
-def read_stdout_continuously(async_stdout, queue, process, stop_event):
-    while (
-        not stop_event.is_set() or async_stdout.get_output()
-    ):  # Continue until stop signal and buffer is empty
+def read_stdout_continuously(
+    uuid: str,
+    queue: Queue,
+    main_queue: Queue,
+    async_stdout: AsyncStdout,
+    stop_event: Event,
+    process: Process,
+) -> None:
+    # Continue until stop signal and buffer is empty
+    while not stop_event.is_set() or async_stdout.get_output():
         output = async_stdout.get_output()
         if output:
             for line in output.splitlines():
@@ -28,20 +35,27 @@ def read_stdout_continuously(async_stdout, queue, process, stop_event):
                             process=process,
                             status=ExecutionStatus.RUNNING,
                             type=ResultType.STDOUT,
+                            uuid=uuid,
                         ),
                     )
+                    main_queue.put(uuid)
         time.sleep(0)  # Sleep a bit to avoid busy waiting
 
 
 async def execute_code_async(
-    message: str, queue: Queue, uuid: str, process_dict: Dict, context: ProcessContext
+    uuid: str,
+    queue: Queue,
+    main_queue: Queue,
+    message: str,
+    process_details: Dict,
+    context: ProcessContext,
 ) -> None:
-    process = ProcessDetails.load(**process_dict)
+    process = ProcessDetails.load(**process_details)
 
     exec_globals = {}
     code_lines = message.split('\n')
     last_output = None
-    stop_event = threading.Event()
+    stop_event = Event()
 
     if is_debug():
         print(f'Code lines: {code_lines}')
@@ -54,9 +68,16 @@ async def execute_code_async(
         async_stdout = AsyncStdout()  # Initialize the custom stdout
 
         # Start a background thread to read from async_stdout
-        reader_thread = threading.Thread(
+        reader_thread = Thread(
             target=read_stdout_continuously,
-            args=(async_stdout, queue, process, stop_event),
+            args=(
+                uuid,
+                queue,
+                main_queue,
+                async_stdout,
+                stop_event,
+                process,
+            ),
             daemon=True,
         )
         reader_thread.start()
@@ -66,7 +87,7 @@ async def execute_code_async(
             exec(compiled_code, exec_globals)
 
         stop_event.set()  # Signal the reader thread to stop
-        reader_thread.join(timeout=1)  # Make sure reader thread finishes
+        reader_thread.join(timeout=0.5)  # Make sure reader thread finishes
 
         last_expr = code_lines[-1].strip()  # Get the last expression for evaluation
         if is_debug():
@@ -85,15 +106,19 @@ async def execute_code_async(
             process=process,
             status=ExecutionStatus.SUCCESS,
             type=ResultType.DATA,
+            uuid=uuid,
         )
-
         queue.put(result)
-        queue.put(None)  # Put a sentinel value to signal the end of output
     except Exception as err:
         queue.put(
             ExecutionResult.load(
                 error=ErrorDetails.from_current_error(err),
                 process=process,
                 status=ExecutionStatus.ERROR,
+                type=ResultType.STATUS,
+                uuid=uuid,
             ),
         )
+    finally:
+        main_queue.put(uuid)
+        queue.put(None)  # Put a sentinel value to signal the end of output

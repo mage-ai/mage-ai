@@ -161,10 +161,12 @@ class Kernel:
         active_kernels: Optional[List[Any]] = None,
         kernel_id: Optional[str] = None,
         kernel_name: Optional[str] = None,
+        processes: Optional[List[KernelProcess]] = None,
     ):
         self.active_kernels = active_kernels
         self.kernel = kernel
         self.inactive_kernels = None
+        self.processes = processes
         self.usage = None
 
         self._kernel_id = kernel_id
@@ -206,9 +208,9 @@ class Kernel:
 
     def to_dict(self) -> Dict:
         return dict(
-            active_kernels=self.active_kernels,
             alive=self.is_alive(),
             id=self.kernel_id,
             name=self.kernel_name,
+            processes=self.processes,
             usage=self.usage,
         )

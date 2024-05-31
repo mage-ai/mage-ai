@@ -5,10 +5,10 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class KernelPresenter(BasePresenter):
     default_attributes = [
-        'active_kernels',
         'alive',
         'id',
         'name',
+        'processes',
         'usage',
     ]
 

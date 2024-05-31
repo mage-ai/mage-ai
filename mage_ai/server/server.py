@@ -713,7 +713,12 @@ async def main(
     observer.schedule(event_handler, path=metadata_file)
     observer.start()
 
-    if not KERNEL_MAGIC:
+    if KERNEL_MAGIC:
+        from mage_ai.kernels.magic.manager import Manager
+
+        if Manager.active:
+            Manager.shutdown()
+    else:
         get_messages(
             lambda content: WebSocketServer.send_message(
                 parse_output_message(content),

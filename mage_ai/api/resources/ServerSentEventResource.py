@@ -37,21 +37,19 @@ class ServerSentEventResource(GenericResource):
             error.message = 'UUID is required'
             raise error
 
-        from mage_ai.kernels.magic.queues.results import get_results_queue
-
-        manager = Manager.get_instance(get_results_queue(), timestamp=now)
+        manager = Manager.get_instance(uuid, timestamp=now)
         process = manager.create_process(
             uuid,
             message,
             message_request_uuid=message_request_uuid,
             timestamp=now,
         )
-        manager.start_processes([process], timestamp=now)
+        manager.start_processes(uuid, [process], timestamp=now)
 
-        async def _on_create_callback(resource):
-            Manager.cleanup_processes()
+        # async def _on_create_callback(resource):
+        #     Manager.cleanup_resources()
 
-        cls.on_create_callback = _on_create_callback
+        # cls.on_create_callback = _on_create_callback
 
         if is_debug():
             print(f'[ServerSentEventResource.create] Process {process.message_uuid} started')

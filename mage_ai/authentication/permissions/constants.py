@@ -47,6 +47,7 @@ class EntityName(str, Enum):
     IntegrationSourceStream = 'IntegrationSourceStream'
     Interaction = 'Interaction'
     Kernel = 'Kernel'
+    KernelProcess = 'KernelProcess'
     Llm = 'Llm'
     Log = 'Log'
     MonitorStat = 'MonitorStat'
@@ -70,6 +71,7 @@ class EntityName(str, Enum):
     SearchResult = 'SearchResult'
     Secret = 'Secret'
     Seed = 'Seed'
+    ServerSentEvent = 'ServerSentEvent'
     Session = 'Session'
     SparkApplication = 'SparkApplication'
     SparkEnvironment = 'SparkEnvironment'
@@ -183,20 +185,36 @@ ACCESS_FOR_VIEWER = [
     PermissionAccess.READ,
     PermissionAccess.VIEWER,
 ]
-ACCESS_FOR_EDITOR = list(set(ACCESS_FOR_VIEWER + [
-    PermissionAccess.CREATE,
-    PermissionAccess.DELETE,
-    PermissionAccess.EDITOR,
-    PermissionAccess.QUERY,
-    PermissionAccess.UPDATE,
-    PermissionAccess.WRITE,
-]))
-ACCESS_FOR_ADMIN = list(set(ACCESS_FOR_VIEWER + ACCESS_FOR_EDITOR + [
-    PermissionAccess.ADMIN,
-]))
-ACCESS_FOR_OWNER = list(set(ACCESS_FOR_ADMIN + [
-    PermissionAccess.OWNER,
-]))
+ACCESS_FOR_EDITOR = list(
+    set(
+        ACCESS_FOR_VIEWER
+        + [
+            PermissionAccess.CREATE,
+            PermissionAccess.DELETE,
+            PermissionAccess.EDITOR,
+            PermissionAccess.QUERY,
+            PermissionAccess.UPDATE,
+            PermissionAccess.WRITE,
+        ]
+    )
+)
+ACCESS_FOR_ADMIN = list(
+    set(
+        ACCESS_FOR_VIEWER
+        + ACCESS_FOR_EDITOR
+        + [
+            PermissionAccess.ADMIN,
+        ]
+    )
+)
+ACCESS_FOR_OWNER = list(
+    set(
+        ACCESS_FOR_ADMIN
+        + [
+            PermissionAccess.OWNER,
+        ]
+    )
+)
 
 PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS = {
     f'{PermissionAccess.ADMIN}': ACCESS_FOR_ADMIN,

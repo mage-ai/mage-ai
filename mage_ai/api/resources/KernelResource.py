@@ -22,7 +22,6 @@ class KernelResource(GenericResource):
         kernels = []
 
         if KERNEL_MAGIC:
-            Manager.cleanup_processes()
             kernels.extend(Manager.get_kernels())
         else:
             if Project().is_feature_enabled(FeatureUUID.AUTOMATIC_KERNEL_CLEANUP):

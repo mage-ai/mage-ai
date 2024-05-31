@@ -10,22 +10,37 @@ from mage_ai.shared.environments import is_debug, is_test
 
 
 def execute_code(
-    message: str, queue: Queue, uuid: str, process_dict: Dict, context: ProcessContext
+    uuid: str,
+    queue: Queue,
+    main_queue: Queue,
+    message: str,
+    process_details: Dict,
+    context: ProcessContext,
 ):
-    # print(f'Executing code with message: {message} and uuid: {uuid}')
+    if is_debug():
+        print(f'[Process.execute_code:{uuid}] Executing code: {message}')
     try:
-        asyncio.run(execute_code_async(message, queue, uuid, process_dict, context))
-    except Exception as e:
-        raise e
-        # print(f'Error executing code.async: {e}')
+        asyncio.run(
+            execute_code_async(
+                uuid,
+                queue,
+                main_queue,
+                message,
+                process_details,
+                context,
+            )
+        )
+    except Exception as err:
+        print(f'[Process.execute_code:{uuid}] Error: {err}')
 
 
 class Process:
     def __init__(
         self,
-        message: str,
-        queue: Union[Any, Queue],
         uuid: str,
+        queue: Union[Any, Queue],
+        main_queue: Union[Any, Queue],
+        message: str,
         message_request_uuid: Optional[str] = None,
     ):
         """
@@ -40,6 +55,7 @@ class Process:
         that forks new processes upon request.
         This can be more secure but slightly more complex to set up and use.
         """
+        self.main_queue = main_queue
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
@@ -59,13 +75,20 @@ class Process:
     ):
         self.result = pool.apply_async(
             execute_code,
-            args=(self.message, self.queue, self.uuid, self.to_dict(), context),
+            args=(
+                self.uuid,
+                self.queue,
+                self.main_queue,
+                self.message,
+                self.to_dict(),
+                context,
+            ),
         )
         now = datetime.utcnow().timestamp()
         self.timestamp = int(now * 1000)
 
         if is_debug():
-            print('[Process.start]', now - (timestamp or 0))
+            print(f'[Process.start]: {pool}', now - (timestamp or 0))
 
         if is_test():
             # Mimic result production for testing purposes

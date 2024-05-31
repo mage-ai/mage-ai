@@ -15,4 +15,5 @@ class EventStreamType(str, Enum):
 
 class ResultType(str, Enum):
     DATA = 'data'
+    STATUS = 'status'
     STDOUT = 'stdout'

@@ -3,22 +3,27 @@ from datetime import datetime
 from multiprocessing import Pool, Queue
 from multiprocessing.managers import SyncManager
 from threading import Thread
-from typing import List, Optional, Union
+from typing import Dict, List, Optional
 
-from faster_fifo import Queue as FasterQueue
+import psutil
+from faster_fifo import Empty
 
+from mage_ai.kernels.default.utils import get_process_info
 from mage_ai.kernels.magic.models import Kernel, ProcessContext
 from mage_ai.kernels.magic.process import Process
-from mage_ai.shared.array import find
+from mage_ai.kernels.magic.queues.results import get_results_queue
+from mage_ai.kernels.models import KernelProcess
 from mage_ai.shared.environments import is_debug
 
 
 class Manager:
     _instance = None
     _lock = threading.Lock()
-    processes = {}
-    shared_context = {}
     active = False
+    main_queue: Optional[Queue] = None
+    pools: Dict[str, Pool] = {}
+    process_queues: Dict[str, Queue] = {}
+    shared_context = {}
     stopping = False
 
     @staticmethod
@@ -28,7 +33,6 @@ class Manager:
         # These need to go before starting the thread.
         Manager.shared_context = dict(
             context_manager=context_manager,
-            process_queue=context_manager.Queue(),
             shared_dict=context_manager.dict(),
             shared_list=context_manager.list(),
             lock=context_manager.Lock(),
@@ -36,26 +40,21 @@ class Manager:
         if is_debug():
             print('[Manager.pre_initialize_components] Components initialized')
 
-    def __init__(
-        self,
-        queue: FasterQueue,
-        num_processes: int = 4,
-        timestamp: Optional[float] = None,
-    ):
+    def __init__(self, timestamp: Optional[float] = None):
         if not Manager.shared_context:
             Manager.pre_initialize_components()
 
         if not Manager.active:
-            # A way to create shared objects that can be accessed and modified by multiple processes
-            # safely. This includes objects like dictionaries, lists, and other data structures that
-            # need to be manipulated across different processes with proper synchronization handled
-            # by the manager.
-            self.pool = Pool(processes=num_processes)
-            self.process_queue = Manager.shared_context['process_queue']
+            Manager.main_queue = Manager.shared_context['context_manager'].Queue()
 
             # Reader thread to read and forward results
             self.reader_thread = Thread(
-                target=self.read_and_forward_results, args=(queue,), daemon=True
+                target=self.read_queues,
+                args=(
+                    Manager.main_queue,
+                    Manager.process_queues,
+                ),
+                daemon=True,
             )
             self.reader_thread.start()
 
@@ -70,14 +69,135 @@ class Manager:
                 print('[Manager.__init__]', now - (timestamp or 0))
 
     @classmethod
+    def get_instance(
+        cls,
+        uuid: str,
+        num_processes: int = 4,
+        timestamp: Optional[float] = None,
+    ):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = cls(timestamp=timestamp)
+
+                if is_debug():
+                    print('[Manager.get_instance] New instance created')
+
+            if is_debug():
+                print('[Manager.get_instance] Returning existing instance')
+
+            # Initialize pool for this UUID if it doesn't exist
+            if uuid not in cls.pools:
+                cls.pools[uuid] = Pool(processes=num_processes)
+
+                if is_debug():
+                    now = datetime.utcnow().timestamp()
+                    print(
+                        f'[Manager.__init__] Pool created for UUID: {uuid}',
+                        now - (timestamp or 0),
+                    )
+
+            if uuid not in cls.process_queues:
+                cls.process_queues[uuid] = cls.shared_context['context_manager'].Queue()
+
+                if is_debug():
+                    now = datetime.utcnow().timestamp()
+                    print(
+                        f'[Manager.__init__] Process queue created for UUID: {uuid}',
+                        now - (timestamp or 0),
+                    )
+
+            return cls._instance
+
+    @classmethod
+    def shutdown(cls):
+        with cls._lock:
+            if cls._instance:
+                cls.main_queue.put(None)  # Sentinel to stop the reader thread
+
+                cls._instance.reader_thread.join()
+                cls._instance.stopping = True
+                cls._instance = None
+                cls.active = False
+
+                cls.cleanup_resources(clear=True)
+                cls.shared_context = {}
+
+    @classmethod
+    def cleanup_resources(cls, clear: Optional[bool] = None, uuid: Optional[str] = None) -> None:
+        cls.__cleanup_pools(clear=clear, uuid=uuid)
+        cls.__cleanup_queues(clear=clear, uuid=uuid)
+
+    @classmethod
+    def __cleanup_pools(cls, clear: Optional[bool] = None, uuid: Optional[str] = None) -> None:
+        keys_to_delete = []
+
+        for uuid_key, pool in cls.pools.items():
+            if uuid is not None and uuid_key != uuid:
+                continue
+
+            print(f'[Manager.cleanup_pools:{uuid_key}] Pool state: {pool._state}')
+            if pool._state != 'RUN':
+                pool.close()
+                pool.join()
+
+                if uuid_key in cls.pools:
+                    keys_to_delete.append(uuid_key)
+
+        for uuid_key in keys_to_delete:
+            del cls.pools[uuid_key]
+
+            if is_debug():
+                print(f'[Manager.cleanup_pools:{uuid_key}] Pool cleaned up')
+
+        if clear:
+            cls.pools.clear()
+
+    @classmethod
+    def __cleanup_queues(cls, clear: Optional[bool] = None, uuid: Optional[str] = None) -> None:
+        keys_to_delete = []
+
+        for uuid_key, queue in cls.process_queues.items():
+            if uuid is not None and uuid_key != uuid:
+                continue
+
+            try:
+                while True:
+                    queue.get_nowait()
+            except Empty:
+                pass
+
+            if queue.empty():
+                keys_to_delete.append(uuid_key)
+
+        for uuid_key in keys_to_delete:
+            if uuid_key in cls.process_queues:
+                del cls.process_queues[uuid_key]
+
+            if is_debug():
+                print(f'[Manager.cleanup_queues:{uuid_key}] Process queues cleaned up.')
+
+        if clear:
+            cls.process_queues.clear()
+
+    @classmethod
     def get_kernels(cls) -> List[Kernel]:
         kernels = []
-        for uuid, mapping in cls.processes.items():
+
+        for uuid, pool in cls.pools.items():
+            processes = []
+            for process in pool._pool:
+                try:
+                    info = get_process_info(process.pid)
+                    if info:
+                        processes.append(KernelProcess.load(**info))
+                except psutil.NoSuchProcess:
+                    # In case the process ends and no longer exists
+                    continue
             kernels.append(
                 Kernel(
-                    active_kernels=list(mapping.values()),
                     kernel_id=uuid,
-                ),
+                    processes=processes,
+                )
             )
 
         if len(kernels) == 0:
@@ -85,68 +205,39 @@ class Manager:
 
         return kernels
 
-    @classmethod
-    def get_instance(
-        cls,
-        queue: FasterQueue,
-        num_processes: int = 4,
-        timestamp: Optional[float] = None,
-    ):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = cls(queue, num_processes=num_processes, timestamp=timestamp)
-                if is_debug():
-                    print('[Manager.get_instance] New instance created')
-
-            if is_debug():
-                print('[Manager.get_instance] Returning existing instance')
-
-            return cls._instance
-
-    @classmethod
-    def cleanup_processes(cls):
-        uuids_to_delete = []
-        pids_to_delete = {}
-        for uuid, mapping in cls.processes.items():
-            pids_to_delete[uuid] = []
-            for pid, process in mapping.items():
-                if not process.is_alive:
-                    pids_to_delete[uuid].append(pid)
-
-        for uuid, arr in pids_to_delete.items():
-            for pid in arr:
-                del cls.processes[uuid][pid]
-
-        for uuid in uuids_to_delete:
-            if not cls.processes[uuid]:
-                del cls.processes[uuid]
-
-    def read_and_forward_results(self, results_queue: Queue):
+    def read_queues(self, main_queue, process_queues):
+        uuid = None
         while not self.stopping:
             try:
-                result = self.process_queue.get()
+                uuid = main_queue.get(timeout=0.05)
+                if uuid is None:
+                    if is_debug():
+                        print(
+                            '[Manager.read_queues] No UUID in main queue, stopping thread.',
+                        )
+                    break
+
+                result = process_queues[uuid].get()
                 if result is None:
                     if is_debug():
-                        print('[Manager.read_and_forward_results] Stopping thread')
+                        print(f'[Manager.read_queues:{uuid}] End of output.')
                     continue
 
                 if is_debug():
-                    print(f'[Manager.read_and_forward_results] Got result from queue: {result}')
-                results_queue.put(result)
+                    print(
+                        f'[Manager.read_queues:{uuid}] Result output dequeued: {result.output}',
+                    )
 
-                if is_debug():
-                    print(f'[Manager.read_and_forward_results] Put result into queue: {result}')
-            except Exception as e:
-                if is_debug():
-                    print(f'[Manager.read_and_forward_results] Error: {e}')
+                results_queue = get_results_queue().get(result.uuid)
+                if results_queue is not None:
+                    results_queue.put(result)
 
-    @classmethod
-    def get_process(cls, pid: Union[int, str]) -> Optional[Process]:
-        return find(lambda mapping: pid in mapping, cls.processes.values())
-
-    def stop_reader(self):
-        self.stopping = True
-        self.process_queue.put(None)  # Sentinel to stop the reader thread
+                    if is_debug():
+                        print(f'[Manager.read_queues:{uuid}] Result enqueued: {result}')
+            except Empty:
+                pass
+            except Exception as err:
+                print(f'[Manager.read_queues:{uuid}] Error: {err}')
 
     def create_process(
         self,
@@ -155,28 +246,31 @@ class Manager:
         message_request_uuid: Optional[str] = None,
         timestamp: Optional[float] = None,
     ) -> Process:
+        queue = self.process_queues[uuid]
         process = Process(
-            message,
-            self.process_queue,
             uuid,
+            queue,
+            Manager.main_queue,
+            message,
             message_request_uuid=message_request_uuid,
         )
 
         if is_debug():
             now = datetime.utcnow().timestamp()
-            print('[Manager.create_process]', now - (timestamp or 0))
+            print(f'[Manager.create_process:{uuid}]', now - (timestamp or 0))
 
         return process
 
-    def start_processes(self, processes: List[Process], timestamp: Optional[float] = None) -> None:
+    def start_processes(
+        self, uuid: str, processes: List[Process], timestamp: Optional[float] = None
+    ) -> None:
         now = datetime.utcnow().timestamp()
 
-        if is_debug():
-            print('[Manager.start_processes]', now - (timestamp or 0))
-
         for process in processes:
+            pool = Manager.pools[uuid]
+
             process.start(
-                self.pool,
+                pool,
                 context=ProcessContext(
                     lock=self.lock,
                     shared_dict=self.shared_dict,
@@ -185,16 +279,5 @@ class Manager:
                 timestamp=now,
             )
 
-            if process.uuid not in self.processes:
-                self.processes[process.uuid] = {}
-            self.processes[process.uuid][process.pid] = process
-
-    def stop(self):
-        for uuid in self.processes:
-            for process in self.processes[uuid].values():
-                process.stop()  # Attempt to stop each process
-
-        if self.pool:
-            self.pool.close()
-            self.pool.terminate()
-            self.pool.join()
+            if is_debug():
+                print(f'[Manager.start_processes:{uuid}]', now - (timestamp or 0))

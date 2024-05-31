@@ -30,6 +30,7 @@ class ExecutionResult(BaseDataClass):
     process: Optional[ProcessDetails] = None
     status: Optional[ExecutionStatus] = None
     type: Optional[ResultType] = None
+    uuid: Optional[str] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('error', ErrorDetails)
