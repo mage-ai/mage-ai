@@ -25,7 +25,7 @@ class WorkspaceResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        cluster_type = self.verify_project()
+        cluster_type = self.verify_project(user=user)
         if not cluster_type:
             cluster_type = query_arg.get('cluster_type', [None])
             if cluster_type:
@@ -155,7 +155,7 @@ class WorkspaceResource(GenericResource):
         return self
 
     @classmethod
-    def verify_project(self, subproject: str = None) -> str:
+    def verify_project(self, subproject: str = None, user=None) -> str:
         project_type = get_project_type()
         if project_type != ProjectType.MAIN and os.getenv(MANAGE_ENV_VAR) != '1':
             error = ApiError.RESOURCE_ERROR.copy()
@@ -163,7 +163,7 @@ class WorkspaceResource(GenericResource):
             raise ApiError(error)
 
         if project_type == ProjectType.MAIN and subproject:
-            repo_path = get_repo_path(user=self.current_user)
+            repo_path = get_repo_path(user=user)
             projects_folder = os.path.join(repo_path, 'projects')
             projects = [
                 f.name.split('.')[0]
