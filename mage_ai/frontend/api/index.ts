@@ -221,7 +221,8 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
 
 // @ts-ignore
 export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce(
-  (keys: string[]) => ({
+  (acc, keys: string[]) => ({
+    ...acc,
     [keys[0]]: keys,
   }),
   {},
