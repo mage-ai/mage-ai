@@ -3572,6 +3572,12 @@ class Block(
         global_vars['pipeline_uuid'] = self.pipeline_uuid
         global_vars['block_uuid'] = self.uuid
 
+        # Add repo_path to global_vars
+        if self.pipeline and self.pipeline.repo_path:
+            global_vars['repo_path'] = self.pipeline.repo_path
+            # Setting value in os.environ is local to python subprocess
+            os.environ['MAGE_RUNTIME__REPO_PATH'] = self.pipeline.repo_path
+
         if dynamic_block_index is not None:
             global_vars['dynamic_block_index'] = dynamic_block_index
 
