@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import EventStreamType, ExecutionStatus, ResultType
+from mage_ai.kernels.models import Kernel as KernelBase
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.models import BaseDataClass
 
@@ -67,3 +68,10 @@ class ProcessContext(BaseDataClass):
     lock: Lock
     shared_dict: DictProxy
     shared_list: ListProxy
+
+
+class Kernel(KernelBase):
+    def __init__(self, *args, kernel_id: Optional[str] = None, **kwargs):
+        super().__init__(
+            None, *args, kernel_id=kernel_id or 'magic', kernel_name='python3', **kwargs
+        )

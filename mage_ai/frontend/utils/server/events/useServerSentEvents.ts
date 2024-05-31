@@ -115,7 +115,9 @@ export default function useServerSentEvents(uuid: string, {
 
       if (eventSource) {
         eventSource.onopen = (event: Event) => {
-          console.log('useServerSentEvents.onopen', eventSource, event);
+          if (isDebug()) {
+            console.log('useServerSentEvents.onopen', eventSource, event);
+          }
           setStatus(ServerConnectionStatusType.OPEN);
         };
 

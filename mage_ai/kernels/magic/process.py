@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from mage_ai.kernels.magic.execution import execute_code_async
 from mage_ai.kernels.magic.models import ProcessContext, ProcessDetails
+from mage_ai.shared.environments import is_debug, is_test
 
 
 def execute_code(
@@ -47,16 +48,34 @@ class Process:
         self.timestamp = None
         self.uuid = uuid
 
-    async def start(
+        if is_debug():
+            print(f'[Process.__init__] Initialized process with UUID: {self.uuid}')
+
+    def start(
         self,
-        pool: Pool[Any],
+        pool: Union[Any, Pool],
         context: ProcessContext,
+        timestamp: Optional[float] = None,
     ):
         self.result = pool.apply_async(
             execute_code,
             args=(self.message, self.queue, self.uuid, self.to_dict(), context),
         )
-        self.timestamp = int(datetime.utcnow().timestamp() * 1000)
+        now = datetime.utcnow().timestamp()
+        self.timestamp = int(now * 1000)
+
+        if is_debug():
+            print('[Process.start]', now - (timestamp or 0))
+
+        if is_test():
+            # Mimic result production for testing purposes
+            pool.apply_async(self.mock_result_production)
+
+    def mock_result_production(self):
+        # Mock result to mimic producing a result as a placeholder
+        result = {'message': self.message, 'uuid': self.uuid, 'timestamp': self.timestamp}
+        print(f'[Process.mock_result_production] Placing result into process queue: {result}')
+        self.queue.put(result)
 
     def stop(self):
         if self.result and not self.result.ready():

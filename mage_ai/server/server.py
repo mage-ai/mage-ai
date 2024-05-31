@@ -47,7 +47,6 @@ from mage_ai.orchestration.db import db_connection, safe_db_query, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
-from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
 from mage_ai.server.api.downloads import ApiDownloadHandler, ApiResourceDownloadHandler
@@ -70,7 +69,6 @@ from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.events.sse_server import ServerSentEventHandler
 from mage_ai.server.file_observer import MetadataEventHandler
 from mage_ai.server.kernel_output_parser import parse_output_message
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
 from mage_ai.server.logger import Logger
 from mage_ai.server.scheduler_manager import (
     SCHEDULER_AUTO_RESTART_INTERVAL,
@@ -93,6 +91,7 @@ from mage_ai.settings import (
     DISABLE_AUTO_BROWSER_OPEN,
     DISABLE_AUTORELOAD,
     ENABLE_PROMETHEUS,
+    KERNEL_MAGIC,
     OAUTH2_APPLICATION_CLIENT_ID,
     OTEL_EXPORTER_OTLP_ENDPOINT,
     REDIS_URL,
@@ -537,7 +536,10 @@ async def main(
     project_type: ProjectType = ProjectType.STANDALONE,
     status_only: bool = False,
 ):
-    if not status_only:
+    if not status_only and not KERNEL_MAGIC:
+        from mage_ai.server.active_kernel import switch_active_kernel
+        from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
+
         switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     # Update base path if environment variable is set
@@ -711,11 +713,12 @@ async def main(
     observer.schedule(event_handler, path=metadata_file)
     observer.start()
 
-    get_messages(
-        lambda content: WebSocketServer.send_message(
-            parse_output_message(content),
-        ),
-    )
+    if not KERNEL_MAGIC:
+        get_messages(
+            lambda content: WebSocketServer.send_message(
+                parse_output_message(content),
+            ),
+        )
 
     await asyncio.Event().wait()
     # Used for the magic kernel

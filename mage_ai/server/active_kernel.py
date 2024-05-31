@@ -10,14 +10,16 @@ from mage_ai.server.logger import Logger
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.spark.utils import get_compute_service
 from mage_ai.services.ssh.aws.emr.utils import cluster_info_from_tunnel
+from mage_ai.settings.server import KERNEL_MAGIC
 
 logger = Logger().new_server_logger(__name__)
 
 
-class ActiveKernel():
+class ActiveKernel:
     def __init__(self):
-        self.kernel = kernel_managers[DEFAULT_KERNEL_NAME]
-        self.kernel_client = self.kernel.client()
+        if not KERNEL_MAGIC:
+            self.kernel = kernel_managers[DEFAULT_KERNEL_NAME]
+            self.kernel_client = self.kernel.client()
 
 
 active_kernel = ActiveKernel()

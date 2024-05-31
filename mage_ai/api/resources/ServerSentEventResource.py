@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.kernels.magic.manager import Manager
+from mage_ai.shared.environments import is_debug
 
 
 class ServerSentEventResource(GenericResource):
@@ -21,6 +24,10 @@ class ServerSentEventResource(GenericResource):
 
     @classmethod
     async def create(cls, payload, user, **kwargs) -> GenericResource:
+        now = datetime.utcnow().timestamp()
+        if is_debug():
+            print('[ServerSentEventResource.create]', now)
+
         message = payload.get('message', '')
         message_request_uuid = payload.get('message_request_uuid')
         uuid = payload.get('uuid')
@@ -32,18 +39,22 @@ class ServerSentEventResource(GenericResource):
 
         from mage_ai.kernels.magic.queues.results import get_results_queue
 
-        manager = Manager(uuid, get_results_queue())
+        manager = Manager.get_instance(get_results_queue(), timestamp=now)
         process = manager.create_process(
-            message=message,
+            uuid,
+            message,
             message_request_uuid=message_request_uuid,
+            timestamp=now,
         )
-        await manager.start_processes([process])
+        manager.start_processes([process], timestamp=now)
 
         async def _on_create_callback(resource):
             Manager.cleanup_processes()
 
         cls.on_create_callback = _on_create_callback
 
+        if is_debug():
+            print(f'[ServerSentEventResource.create] Process {process.message_uuid} started')
         return cls(process, user, **kwargs)
 
     @classmethod

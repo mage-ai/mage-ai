@@ -2,99 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import isawaitable
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from mage_ai.kernels.default.utils import (
     find_ipykernel_launchers_info,
     is_kernel_process_active,
     terminate_process,
 )
-from mage_ai.shared.models import BaseDataClass
+from mage_ai.kernels.models import Kernel as KernelBase
+from mage_ai.kernels.models import KernelProcess as KernelProcessBase
+from mage_ai.server.active_kernel import interrupt_kernel, restart_kernel, start_kernel
 
 
 @dataclass
-class PCPUTimes(BaseDataClass):
-    user: Optional[float] = None
-    system: Optional[float] = None
-    children_user: Optional[float] = None
-    children_system: Optional[float] = None
-    iowait: Optional[float] = None
-
-
-@dataclass
-class PMemoryInfo(BaseDataClass):
-    rss: Optional[int] = None
-    vms: Optional[int] = None
-    shared: Optional[int] = None
-    text: Optional[int] = None
-    lib: Optional[int] = None
-    data: Optional[int] = None
-    dirty: Optional[int] = None
-
-
-@dataclass
-class POpenFile(BaseDataClass):
-    path: Optional[str] = None
-    fd: Optional[int] = None
-    position: Optional[int] = None
-    mode: Optional[str] = None
-    flags: Optional[int] = None
-
-
-@dataclass
-class Addr(BaseDataClass):
-    ip: Optional[str] = None
-    port: Optional[int] = None
-
-
-@dataclass
-class PConn(BaseDataClass):
-    fd: Optional[int] = None
-    family: Optional[str] = None
-    type: Optional[str] = None
-    laddr: Optional[Addr] = None
-    raddr: Optional[Addr] = None
-    status: Optional[str] = None
-
-
-@dataclass
-class KernelProcess(BaseDataClass):
-    active: Optional[bool] = None
-    cmdline: Optional[str] = None
-    connection_file: Optional[str] = None
-    connections: Optional[List[PConn]] = None
-    cpu: Optional[float] = None
-    cpu_times: Optional[PCPUTimes] = None
-    create_time: Optional[float] = None
-    exe: Optional[str] = None
-    memory: Optional[float] = None
-    memory_info: Optional[PMemoryInfo] = None
-    name: Optional[str] = None
-    num_threads: Optional[str] = None
-    open_files: Optional[List[POpenFile]] = None
-    pid: Optional[int] = None
-    ppid: Optional[int] = None
-    status: Optional[str] = None
-    username: Optional[str] = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('memory_info', PMemoryInfo)
-        self.serialize_attribute_classes('connections', PConn)
-        self.serialize_attribute_classes('cpu_times', PCPUTimes)
-        self.serialize_attribute_classes('open_files', POpenFile)
-
-        self.cpu = (
-            sum([
-                float(val) if val is not None else 0
-                for val in [self.cpu_times.user, self.cpu_times.system]
-            ])
-            if self.cpu_times
-            else 0
-        )
-        self.memory = int(self.memory_info.rss) if self.memory_info and self.memory_info.rss else 0
-
+class KernelProcess(KernelProcessBase):
     @classmethod
-    def load_all(cls, check_active_status: bool = False) -> List['KernelProcess']:
+    def load_all(cls, check_active_status: bool = False) -> Sequence['KernelProcess']:
         return [
             cls.load(**d)
             for d in find_ipykernel_launchers_info(check_active_status=check_active_status)
@@ -140,7 +63,7 @@ class KernelProcess(BaseDataClass):
         return self.pid is not None and terminate_process(self.pid)
 
 
-class KernelWrapper:
+class KernelWrapper(KernelBase):
     def __init__(self, kernel):
         self.kernel = kernel
         self.usage = None
@@ -168,7 +91,7 @@ class KernelWrapper:
     def is_ready(self) -> bool:
         return self.usage is not None
 
-    def is_alive(self):
+    def is_alive(self) -> bool:
         return self.kernel.is_alive()
 
     @property
@@ -179,10 +102,14 @@ class KernelWrapper:
     def kernel_name(self) -> str:
         return self.kernel.kernel_name
 
-    def to_dict(self) -> Dict:
-        return {
-            'alive': self.is_alive(),
-            'id': self.kernel_id,
-            'name': self.kernel_name,
-            'usage': self.usage,
-        }
+    def interrupt(self):
+        interrupt_kernel()
+        return True
+
+    def restart(self):
+        restart_kernel()
+        return True
+
+    def start(self):
+        start_kernel()
+        return True
