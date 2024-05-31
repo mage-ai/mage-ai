@@ -2,7 +2,7 @@ import multiprocessing
 from collections import defaultdict
 from typing import Dict, Optional
 
-from faster_fifo import Queue as FasterQueue
+from mage_ai.shared.queues import Queue as FasterQueue
 
 """
 1. Fork: Fast process creation, but only available on Unix-based systems.

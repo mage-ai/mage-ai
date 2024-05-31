@@ -6,14 +6,13 @@ from multiprocessing.queues import Queue
 from threading import Event, Thread
 from typing import Dict, Iterable, Optional
 
-from faster_fifo import Queue as FasterQueue
-
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.queues import Queue as FasterQueue
 
 
 def read_stdout_continuously(

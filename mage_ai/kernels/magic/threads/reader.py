@@ -3,10 +3,9 @@ from queue import Empty
 from threading import Thread
 from typing import Optional, Tuple, cast
 
-from faster_fifo import Queue as FasterQueue
-
 from mage_ai.kernels.magic.models import ExecutionResult
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.queues import Queue as FasterQueue
 
 
 def read_queue_and_forward_results(read_queue: Queue, write_queue: FasterQueue, stop_event: Event):

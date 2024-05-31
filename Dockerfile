@@ -43,6 +43,8 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
+  # faster-fifo is not supported on Windows: https://github.com/alex-petrenko/faster-fifo/issues/17
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/faster-fifo.git@v1.4.6#egg=faster-fifo" && \
   if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ]; then \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"; \
   else \

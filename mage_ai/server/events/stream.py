@@ -5,14 +5,14 @@ from typing import cast
 from uuid import uuid4
 
 import simplejson
-from faster_fifo import Empty
-from faster_fifo import Queue as FasterQueue
 
 from mage_ai.kernels.magic.constants import EventStreamType
 from mage_ai.kernels.magic.models import EventStream
 from mage_ai.kernels.magic.queues.manager import get_execution_result_queue_async
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.queues import Empty
+from mage_ai.shared.queues import Queue as FasterQueue
 
 SLEEP_SECONDS = 0.1
 

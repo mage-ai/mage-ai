@@ -7,13 +7,12 @@ from multiprocessing.managers import SyncManager
 from queue import Empty
 from typing import List, Optional, cast
 
-from faster_fifo import Queue as FasterQueue
-
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
 from mage_ai.kernels.magic.process import Process, ProcessBase
 from mage_ai.kernels.magic.threads.reader import ReaderThread
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.queues import Queue as FasterQueue
 
 DEFAULT_NUM_PROCESSES = 1
 
