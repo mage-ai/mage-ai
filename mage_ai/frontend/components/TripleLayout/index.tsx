@@ -450,7 +450,7 @@ function TripleLayout({
             top={contained ? headerOffset : ASIDE_HEADER_HEIGHT}
             visible={beforeHidden}
           >
-            <FlexContainer alignItems="center" fullHeight fullWidth justifyContent="space-between">
+            <FlexContainer alignItems='center' fullHeight fullWidth justifyContent='space-between'>
               <AsideHeaderInnerStyle noPadding>
                 <Spacing pl={beforeHidden ? 1 : 0} />
                 {!beforeHidden && beforeHeader}
@@ -550,18 +550,18 @@ function TripleLayout({
             <NavigationStyle>
               {!afterHidden && (
                 <>
-                  <NavigationInnerStyle aligned="right">
+                  <NavigationInnerStyle aligned='right'>
                     <VerticalNavigationStyle
-                      aligned="right"
+                      aligned='right'
                       borderless
                       showMore={navigationShowMore}
                     >
-                      <VerticalNavigation aligned="right" navigationItems={afterNavigationItems} />
+                      <VerticalNavigation aligned='right' navigationItems={afterNavigationItems} />
                     </VerticalNavigationStyle>
                   </NavigationInnerStyle>
 
                   <NavigationContainerStyle
-                    aligned="right"
+                    aligned='right'
                     fullWidth
                     heightOffset={afterHeightOffset}
                     // 1 for the border-left
@@ -634,21 +634,21 @@ function TripleLayout({
                 <NavigationStyle>
                   {!beforeHidden && (
                     <>
-                      <NavigationInnerStyle aligned="left">
+                      <NavigationInnerStyle aligned='left'>
                         <VerticalNavigationStyle
-                          aligned="left"
+                          aligned='left'
                           borderless
                           showMore={navigationShowMore}
                         >
                           <VerticalNavigation
-                            aligned="left"
+                            aligned='left'
                             navigationItems={beforeNavigationItems}
                           />
                         </VerticalNavigationStyle>
                       </NavigationInnerStyle>
 
                       <NavigationContainerStyle
-                        aligned="left"
+                        aligned='left'
                         fullWidth
                         heightOffset={beforeHeightOffset}
                         // 1 for the border-left

@@ -84,7 +84,7 @@ function Test({ uuid }: { uuid: string }) {
 
         return (
           <div key={eventUUID}>
-            <FlexContainer alignItems="flex-start" fullWidth justifyContent="space-between">
+            <FlexContainer alignItems='flex-start' fullWidth justifyContent='space-between'>
               <Flex>
                 <Text monospace preWrap>
                   <Text default inline monospace>
@@ -108,9 +108,9 @@ function Test({ uuid }: { uuid: string }) {
 
       <TextArea
         autoGrow
-        label="Message"
+        label='Message'
         monospace
-        name="message"
+        name='message'
         onChange={e => setMessage(e.target.value)}
         rows={12}
       />
