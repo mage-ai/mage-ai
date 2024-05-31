@@ -91,6 +91,8 @@ function Test({
   const eventsDisplay = useMemo(() => events?.filter(event => !!event), [events]);
   const stdoutCount = useMemo(() => eventsDisplay?.filter(event => event?.result?.type === ResultType.STDOUT)?.length || 0, [eventsDisplay]);
 
+  console.log(events);
+
   return (
     <div>
       {executionResultError && <ErrorDisplay error={executionResultError} />}

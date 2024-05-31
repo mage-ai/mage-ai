@@ -1,6 +1,6 @@
 import multiprocessing
 from collections import defaultdict
-from typing import Optional
+from typing import Dict, Optional
 
 from faster_fifo import Queue as FasterQueue
 
@@ -29,3 +29,13 @@ def get_execution_result_queue(uuid: Optional[str] = None) -> FasterQueue:
         execution_result_queue = defaultdict(FasterQueue)
 
     return execution_result_queue[uuid] if uuid else execution_result_queue
+
+
+async def get_execution_result_queue_async() -> Dict[str, FasterQueue]:
+    global execution_result_queue
+
+    if execution_result_queue is None:
+        multiprocessing.set_start_method('spawn', force=True)  # Set the start method globally
+        execution_result_queue = defaultdict(FasterQueue)
+
+    return execution_result_queue

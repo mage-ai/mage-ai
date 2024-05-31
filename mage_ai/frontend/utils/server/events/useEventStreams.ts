@@ -110,6 +110,7 @@ export default function useEventStreams(uuid: string, {
 
     let eventSource = eventSourceRef?.current;
     if (!eventSource) {
+      console.log('Connecting to server...');
       eventSourceRef.current = new EventSource(getEventStreamsUrl(uuid));
       eventSource = eventSourceRef?.current;
 

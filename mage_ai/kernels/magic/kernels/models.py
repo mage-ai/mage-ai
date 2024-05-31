@@ -1,4 +1,6 @@
+import asyncio
 from asyncio import Event as AsyncEvent
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import Event, Pool, Queue
 from multiprocessing.managers import SyncManager
@@ -7,8 +9,9 @@ from typing import List, Optional, cast
 
 from faster_fifo import Queue as FasterQueue
 
+from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
-from mage_ai.kernels.magic.process import PoolProcess, ProcessBase
+from mage_ai.kernels.magic.process import Process, ProcessBase
 from mage_ai.kernels.magic.threads.reader import ReaderThread
 from mage_ai.shared.environments import is_debug
 
@@ -18,15 +21,27 @@ DEFAULT_NUM_PROCESSES = 1
 class Kernel:
     def __init__(self, uuid: str, write_queue: FasterQueue, num_processes: Optional[int] = None):
         self.active = False
+        self.write_queue = write_queue
         self.uuid = uuid
 
-        self.write_queue = write_queue
+        self.context_manager = None
+        self.lock = None
+        self.num_processes = None
+        self.pool = None
+        self.processes = []
+        self.read_queue = None
+        self.reader_thread = None
+        self.shared_dict = None
+        self.shared_list = None
+        self.stop_event = None
+        self.stop_event_pool = None
 
         self.__initialize_kernel(num_processes=num_processes)
 
         self.active = True
 
     def __initialize_kernel(self, num_processes: Optional[int] = None) -> None:
+        self.executor = ThreadPoolExecutor()
         self.num_processes = num_processes or DEFAULT_NUM_PROCESSES
 
         # These need to go before starting the thread.
@@ -34,10 +49,10 @@ class Kernel:
         self.context_manager = SyncManager()
         self.context_manager.start()
 
-        self.read_queue: Queue = cast(Queue, self.context_manager.Queue())
+        self.read_queue = cast(Queue, self.context_manager.Queue())
 
         # Track active processes
-        self.active_processes: List[PoolProcess] = []
+        self.processes: List[Process] = []
 
         self.shared_dict = self.context_manager.dict()
         self.shared_list = self.context_manager.list()
@@ -53,6 +68,23 @@ class Kernel:
             args=(self.read_queue, self.write_queue, self.stop_event), start=True
         )
 
+    @property
+    def details(self) -> KernelDetails:
+        return KernelDetails(
+            kernel_id=self.uuid,
+            processes=getattr(self.pool, '_pool', []) if self.pool is not None else [],
+        )
+
+    def force_terminate(self):
+        if self.pool is not None:
+            try:
+                for process in getattr(self.pool, '_pool', []):
+                    process.terminate()  # Forcefully terminate the process
+                self.pool.terminate()
+                self.pool = None
+            except Exception as e:
+                print(f'[Kernel] Error during force termination: {e}')
+
     def run(
         self,
         message: str,
@@ -64,67 +96,85 @@ class Kernel:
         if is_debug():
             print('[Manager.start_processes]', now - (timestamp or 0))
 
-        process = PoolProcess(self.uuid, message, message_request_uuid=message_request_uuid)
-        process.start(
-            self.pool,
-            self.read_queue,
-            self.stop_event_pool,
-            context=ProcessContext(
-                lock=self.lock,
-                shared_dict=self.shared_dict,
-                shared_list=self.shared_list,
-            ),
-            timestamp=now,
-        )
+        process = Process(self.uuid, message, message_request_uuid=message_request_uuid)
+        if (
+            self.pool is not None
+            and self.read_queue is not None
+            and self.stop_event_pool is not None
+        ):
+            process.start(
+                self.pool,
+                self.read_queue,
+                self.stop_event_pool,
+                context=ProcessContext(
+                    lock=self.lock,
+                    shared_dict=self.shared_dict,
+                    shared_list=self.shared_list,
+                )
+                if self.shared_dict and self.shared_list
+                else None,
+                timestamp=now,
+            )
+            self.processes.append(process)
 
-        # Track the process
-        self.active_processes.append(process)
         return process
 
-    def terminate(self) -> None:
-        self.interrupt()
-        self.reader_thread.join()
-        self.__cleanup_resources()
+    async def terminate_async(self) -> None:
+        await self.interrupt_async()
 
-    def interrupt(self):
-        # Signal any other ongoing form of work to stop
-        self.stop_event.set()
-        self.stop_event_pool.set()
-        # Terminate the pool
-        self.pool.terminate()
-        self.pool.join()
+        if self.reader_thread is not None:
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.reader_thread.join)
+            await self.__cleanup_resources_async()
 
-    def restart(self, num_processes: Optional[int] = None) -> None:
-        # Step 1: Interrupt and clean up existing processes
-        self.interrupt()
+    async def interrupt_async(self):
+        if self.stop_event is not None:
+            self.stop_event.set()
+        if self.stop_event_pool is not None:
+            self.stop_event_pool.set()
+        if self.pool is not None:
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.terminate)
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
 
-        if is_debug():
-            print('[Kernel.restart] Kernel interrupted and resources cleaned up')
-
-        # Step 2: Re-initialize the kernel
+    async def retart_async(self, num_processes: Optional[int] = None) -> None:
+        await self.terminate_async()
         self.__initialize_kernel(num_processes=num_processes)
 
-        self.active = True
-
-        if is_debug():
-            print('[Kernel.restart] Kernel reinitialized and ready')
-
-    def __cleanup_resources(self) -> None:
-        self.shared_dict.clear()
-        self.shared_list.clear()
+    async def __cleanup_resources_async(self) -> None:
+        if self.shared_dict is not None:
+            self.shared_dict.clear()
+        if self.shared_list is not None:
+            self.shared_list.clear()
         self.__clear_lock()
 
-        try:
-            while True:
-                self.read_queue.get_nowait()
-        except Empty:
-            pass
+        # Using loop.run_in_executor to ensure non-blocking
+        await asyncio.get_event_loop().run_in_executor(self.executor, self.__drain_queue)
 
-        self.pool.close()
-        self.pool.join()
+        if self.pool is not None:
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.close)
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
 
         self.active = False
         self.context_manager = None
+        self.executor = None
+        self.num_processes = None
+        self.pool = None
+        self.processes = []
+        self.read_queue = None
+        self.reader_thread = None
+        self.shared_dict = None
+        self.shared_list = None
+        self.stop_event = None
+        self.stop_event_pool = None
+        self.write_queue = None
+
+    def __drain_queue(self):
+        if self.read_queue is not None:
+            try:
+                while True:
+                    self.read_queue.get_nowait()
+            except Empty:
+                pass
+        self.read_queue = None
 
     def __clear_lock(self) -> None:
         if self.lock is not None:
@@ -132,6 +182,6 @@ class Kernel:
             if acquired:
                 try:
                     self.lock.release()
-                except RuntimeError:
-                    pass  # Lock was not held
+                except RuntimeError as err:
+                    print(f'[Kernel.__clear_lock] Error releasing lock: {err}')
         self.lock = None

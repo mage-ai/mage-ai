@@ -52,7 +52,7 @@ async def execute_code_async(
     stop_events: Iterable[AsyncEvent],
     message: str,
     process_details: Dict,
-    context: ProcessContext,
+    context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
 ) -> None:
     process = ProcessDetails.load(**process_details)
@@ -93,6 +93,15 @@ async def execute_code_async(
             if any(stop_event.is_set() for stop_event in stop_events):
                 raise StopAsyncIteration
 
+            queue.put(
+                ExecutionResult.load(
+                    process=process,
+                    status=ExecutionStatus.RUNNING,
+                    type=ResultType.STATUS,
+                    uuid=uuid,
+                )
+            )
+
         stop_event_read.set()  # Signal the reader thread to stop
         reader_thread.join(timeout=0.5)  # Make sure reader thread finishes
 
@@ -108,14 +117,23 @@ async def execute_code_async(
                 # print(output)
                 last_output = output  # Keep track of the last output
 
-        result = ExecutionResult.load(
-            output=last_output if 'last_output' in locals() else None,
-            process=process,
-            status=ExecutionStatus.SUCCESS,
-            type=ResultType.DATA,
-            uuid=uuid,
+        queue.put(
+            ExecutionResult.load(
+                output=last_output if 'last_output' in locals() else None,
+                process=process,
+                status=ExecutionStatus.SUCCESS,
+                type=ResultType.DATA,
+                uuid=uuid,
+            )
         )
-        queue.put(result)
+        queue.put(
+            ExecutionResult.load(
+                process=process,
+                status=ExecutionStatus.READY,
+                type=ResultType.STATUS,
+                uuid=uuid,
+            )
+        )
     except StopAsyncIteration as err:
         queue.put(
             ExecutionResult.load(

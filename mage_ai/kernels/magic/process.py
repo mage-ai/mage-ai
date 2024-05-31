@@ -27,7 +27,7 @@ def execute_message(
     stop_events: Iterable[AsyncEvent],
     message: str,
     process_details: Dict,
-    context: ProcessContext,
+    context: Optional[ProcessContext] = None,
 ) -> None:
     if is_debug():
         print(f'[Process.execute_code:{uuid}] Executing code: {message}')
@@ -38,31 +38,6 @@ def execute_message(
                 uuid,
                 queue,
                 stop_events,
-                message,
-                process_details,
-                context,
-            )
-        )
-    except Exception as err:
-        print(f'[Process.execute_code:{uuid}] Error: {err}')
-
-
-def execute_code(
-    uuid: str,
-    queue: Queue,
-    main_queue: Queue,
-    message: str,
-    process_details: Dict,
-    context: ProcessContext,
-):
-    if is_debug():
-        print(f'[Process.execute_code:{uuid}] Executing code: {message}')
-    try:
-        asyncio.run(
-            execute_code_async(
-                uuid,
-                queue,
-                main_queue,
                 message,
                 process_details,
                 context,
@@ -126,7 +101,7 @@ class ProcessBase:
         pool: PoolProtocol,
         queue: Queue,
         stop_event_pool: AsyncEvent,
-        context: ProcessContext,
+        context: Optional[ProcessContext] = None,
         timestamp: Optional[float] = None,
     ):
         self.stop_event = AsyncEvent()
@@ -153,51 +128,5 @@ class ProcessBase:
             self.stop_event.set()
 
 
-class PoolProcess(ProcessBase):
-    pass
-
-
 class Process(ProcessBase):
-    def __init__(
-        self,
-        *args,
-        queue: Union[Any, Queue],
-        main_queue: Union[Any, Queue],
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.main_queue = main_queue
-        self.queue = queue
-
-    # def start(
-    #     self,
-    #     pool: Pool,
-    #     context: ProcessContext,
-    #     timestamp: Optional[float] = None,
-    # ):
-    #     self.result = pool.apply_async(
-    #         execute_code,
-    #         args=(
-    #             self.uuid,
-    #             self.queue,
-    #             self.main_queue,
-    #             self.message,
-    #             self.to_dict(),
-    #             context,
-    #         ),
-    #     )
-    #     now = datetime.utcnow().timestamp()
-    #     self.timestamp = int(now * 1000)
-
-    #     if is_debug():
-    #         print(f'[Process.start]: {pool}', now - (timestamp or 0))
-
-    #     if is_test():
-    #         # Mimic result production for testing purposes
-    #         pool.apply_async(self.mock_result_production)
-
-    # def mock_result_production(self):
-    #     # Mock result to mimic producing a result as a placeholder
-    #     result = {'message': self.message, 'uuid': self.uuid, 'timestamp': self.timestamp}
-    #     print(f'[Process.mock_result_production] Placing result into process queue: {result}')
-    #     self.queue.put(result)
+    pass

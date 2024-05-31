@@ -5,6 +5,7 @@ class ExecutionStatus(str, Enum):
     CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'
+    READY = 'ready'
     RUNNING = 'running'
     SUCCESS = 'success'
 

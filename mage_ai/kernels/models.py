@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import isawaitable
-from typing import Any, Dict, List, Optional, Tuple
+from multiprocessing import Process
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from mage_ai.shared.models import BaseDataClass
+from mage_ai.kernels.constants import ProcessStatus
+from mage_ai.shared.hash import ignore_keys
+from mage_ai.shared.models import BaseDataClass, Delegator
 
 
 @dataclass
@@ -101,7 +104,7 @@ class KernelBase:
 
 
 @dataclass
-class KernelProcess(BaseDataClass):
+class KernelProcess(BaseDataClass, Delegator):
     active: Optional[bool] = None
     cmdline: Optional[str] = None
     connection_file: Optional[str] = None
@@ -117,7 +120,8 @@ class KernelProcess(BaseDataClass):
     open_files: Optional[List[POpenFile]] = None
     pid: Optional[int] = None
     ppid: Optional[int] = None
-    status: Optional[str] = None
+    process: Optional[Process] = None
+    status: Optional[Union[ProcessStatus, str]] = None
     username: Optional[str] = None
 
     def __post_init__(self):
@@ -125,6 +129,9 @@ class KernelProcess(BaseDataClass):
         self.serialize_attribute_classes('connections', PConn)
         self.serialize_attribute_classes('cpu_times', PCPUTimes)
         self.serialize_attribute_classes('open_files', POpenFile)
+
+        if self.status:
+            self.status = ProcessStatus.from_value(self.status) or self.status
 
         self.cpu = (
             sum([
@@ -135,6 +142,9 @@ class KernelProcess(BaseDataClass):
             else 0
         )
         self.memory = int(self.memory_info.rss) if self.memory_info and self.memory_info.rss else 0
+
+        if self.process is not None:
+            self.target = self.process
 
     @classmethod
     def load_all(cls, check_active_status: bool = False) -> List['KernelProcess']:
@@ -153,6 +163,9 @@ class KernelProcess(BaseDataClass):
     def terminate(self) -> bool:
         return False
 
+    def to_dict(self, *args, **kwargs) -> Dict:
+        return ignore_keys(super().to_dict(*args, **kwargs), ['process', 'target'])
+
 
 class Kernel:
     def __init__(
@@ -166,11 +179,11 @@ class Kernel:
         self.active_kernels = active_kernels
         self.kernel = kernel
         self.inactive_kernels = None
-        self.processes = processes
         self.usage = None
 
         self._kernel_id = kernel_id
         self._kernel_name = kernel_name
+        self._processes = processes
 
     @property
     def kernel_id(self) -> Optional[str]:
@@ -187,6 +200,10 @@ class Kernel:
     @kernel_name.setter
     def kernel_name(self, value: str):
         self._kernel_name = value
+
+    @property
+    def processes(self) -> Optional[List[KernelProcess]]:
+        return self._processes
 
     async def prepare_usage(self):
         pass

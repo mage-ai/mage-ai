@@ -8,7 +8,5 @@ def initialize_globals():
 
     if KERNEL_MAGIC:
         from mage_ai.kernels.magic.queues.manager import get_execution_result_queue
-        from mage_ai.kernels.magic.queues.results import get_results_queue
 
-        print('Initializing global results queue: ', get_results_queue())
         print('Initializing global execution result queue: ', get_execution_result_queue())

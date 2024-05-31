@@ -1,13 +1,9 @@
+import asyncio
 import threading
 from typing import Optional
 
-import psutil
-
 from mage_ai.data.models.generator import DataGenerator
-from mage_ai.kernels.default.models import KernelProcess
-from mage_ai.kernels.default.utils import get_process_info
 from mage_ai.kernels.magic.kernels.models import Kernel
-from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.queues.manager import get_execution_result_queue
 from mage_ai.shared.environments import is_debug
 
@@ -39,55 +35,60 @@ class KernelManager:
 
     @staticmethod
     def get_kernels() -> DataGenerator:
-        kernels = []
-
-        for kernel_id, kernel in KernelManager.kernels.items():
-            processes = []
-            for process in kernel.pool:
-                try:
-                    info = get_process_info(process.pid)
-                    if info:
-                        processes.append(KernelProcess.load(**info))
-                except psutil.NoSuchProcess:
-                    # In case the process ends and no longer exists
-                    continue
-            kernels.append(
-                KernelDetails(
-                    kernel_id=kernel_id,
-                    processes=processes,
-                )
-            )
-
-        return DataGenerator(kernels)
+        return DataGenerator([k.details for k in KernelManager.kernels.values()])
 
     @staticmethod
-    def interrupt_kernel(uuid: str) -> None:
-        KernelManager.__update_kernel_state(uuid, interrupt=True)
+    async def interrupt_kernel_async(uuid: str) -> None:
+        await KernelManager.__update_kernel_state(uuid, interrupt=True)
 
     @staticmethod
-    def terminate_kernel(uuid: str) -> None:
-        KernelManager.__update_kernel_state(uuid, terminate=True)
+    async def terminate_kernel_async(uuid: str) -> None:
+        await KernelManager.__update_kernel_state(uuid, terminate=True)
 
     @staticmethod
-    def restart_kernel(uuid: str, num_processes: Optional[int] = None) -> None:
-        KernelManager.__update_kernel_state(uuid, num_processes=num_processes, restart=True)
+    async def restart_kernel_async(uuid: str, num_processes: Optional[int] = None) -> None:
+        await KernelManager.__update_kernel_state(uuid, num_processes=num_processes, restart=True)
 
     @staticmethod
-    def __update_kernel_state(
+    async def __update_kernel_state(
         uuid: str,
         interrupt: Optional[bool] = None,
         num_processes: Optional[int] = None,
         restart: Optional[bool] = None,
         terminate: Optional[bool] = None,
     ) -> None:
-        if uuid in KernelManager.kernels:
+        if uuid not in KernelManager.kernels:
+            print(f'[KernelManager] Kernel {uuid} not found.')
+            return
+
+        timeout = 10  # Timeout in seconds
+        kernel = KernelManager.kernels[uuid]
+
+        try:
             if interrupt:
-                KernelManager.kernels[uuid].interrupt()
+                await kernel.interrupt_async()
             elif restart:
-                KernelManager.kernels[uuid].restart(num_processes=num_processes)
+                await kernel.restart_async(num_processes=num_processes)
             elif terminate:
-                KernelManager.kernels[uuid].terminate()
-                del KernelManager.kernels[uuid]
+                print(f'[KernelManager] Terminating kernel: {uuid}')
+                try:
+                    await asyncio.wait_for(kernel.terminate_async(), timeout)
+                    print(f'[KernelManager] Kernel {uuid} terminated successfully.')
+                except asyncio.TimeoutError:
+                    print(
+                        f'[KernelManager] Timeout occurred while terminating kernel {uuid}. '
+                        'Forcefully terminating.'
+                    )
+                    kernel.force_terminate()
+        except asyncio.TimeoutError:
+            print(f'[KernelManager] Timeout occurred while terminating kernel {uuid}.')
+        except Exception as e:
+            print(f'[KernelManager] Error while terminating kernel {uuid}: {e}')
+        finally:
+            if terminate:
+                if uuid in KernelManager.kernels:
+                    del KernelManager.kernels[uuid]
+                    print(f'[KernelManager] Kernel {uuid} removed from manager.')
 
     def __init__(self):
         if is_debug():

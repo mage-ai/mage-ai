@@ -22,7 +22,9 @@ class KernelResource(GenericResource):
         kernels = []
 
         if KERNEL_MAGIC:
-            kernels.extend([k for k in KernelManager.get_kernels()])
+            for kernel_details in KernelManager.get_kernels():
+                await kernel_details.hydrate_processes()
+                kernels.append(kernel_details)
         else:
             if Project().is_feature_enabled(FeatureUUID.AUTOMATIC_KERNEL_CLEANUP):
                 # Only do this every minute
@@ -58,7 +60,7 @@ class KernelResource(GenericResource):
                 kernel = KernelManager.get_kernel(pk, existing_only=True)
             except KernelNotFound as err:
                 raise ApiError({**ApiError.RESOURCE_NOT_FOUND, **dict(message=str(err))})
-            return cls(kernel, user, **kwargs)
+            return cls(kernel.details, user, **kwargs)
 
         kernel_fallback = None
         kernels_by_id = {}
@@ -82,18 +84,18 @@ class KernelResource(GenericResource):
         return cls(KernelWrapper(kernel), user, **kwargs)
 
     @safe_db_query
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
         action_type = KernelOperation.from_value(payload.get('action_type'))
 
         if KERNEL_MAGIC:
-            uuid = self.model.uuid
+            uuid = self.model.kernel_id
             if KernelOperation.INTERRUPT == action_type:
-                KernelManager.interrupt_kernel(uuid)
+                await KernelManager.interrupt_kernel_async(uuid)
             elif KernelOperation.RESTART == action_type:
                 num_processes = payload.get('num_processes', None)
-                KernelManager.restart_kernel(uuid, num_processes=num_processes)
+                await KernelManager.restart_kernel_async(uuid, num_processes=num_processes)
             elif KernelOperation.TERMINATE == action_type:
-                KernelManager.terminate_kernel(uuid)
+                await KernelManager.terminate_kernel_async(uuid)
             return self
 
         switch_active_kernel(self.model.kernel_name)

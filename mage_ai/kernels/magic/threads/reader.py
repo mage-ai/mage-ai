@@ -14,28 +14,27 @@ def read_queue_and_forward_results(read_queue: Queue, write_queue: FasterQueue, 
         try:
             result = cast(Optional[ExecutionResult], read_queue.get())
             if result is not None:
+                uuid = result.uuid
+                message_uuid = result.process.message_uuid if result.process else None
+
                 if is_debug():
                     print(
-                        '[MagicKernel.read_queue_and_forward_results] '
-                        f'Result dequeued: {result}',
+                        f'[ReaderThread:{uuid}] Result dequeued: {message_uuid}',
                     )
 
                 write_queue.put(result)
 
                 if is_debug():
                     print(
-                        '[MagicKernel.read_queue_and_forward_results]'
-                        f'Result enqueued: {result}',
+                        f'[ReaderThread:{uuid}] Result enqueued for EventStream: {message_uuid}',
                     )
             elif is_debug():
-                print(
-                    '[MagicKernel.read_queue_and_forward_results] ' 'No result found in queue.',
-                )
+                print('[ReaderThread] No result found in queue.')
         except Empty:
             pass
         except Exception as err:
             if is_debug():
-                print(f'[MagicKernel.read_queue_and_forward_results] ERROR: {err}')
+                print(f'[ReaderThread] ERROR: {err}')
 
 
 class ReaderThread:
