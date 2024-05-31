@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class ExecutionStatus(str, Enum):
+    CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'
     RUNNING = 'running'

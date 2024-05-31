@@ -1,0 +1,56 @@
+from multiprocessing import Event, Queue
+from queue import Empty
+from threading import Thread
+from typing import Optional, Tuple, cast
+
+from faster_fifo import Queue as FasterQueue
+
+from mage_ai.kernels.magic.models import ExecutionResult
+from mage_ai.shared.environments import is_debug
+
+
+def read_queue_and_forward_results(read_queue: Queue, write_queue: FasterQueue, stop_event: Event):
+    while not stop_event.is_set():
+        try:
+            result = cast(Optional[ExecutionResult], read_queue.get())
+            if result is not None:
+                if is_debug():
+                    print(
+                        '[MagicKernel.read_queue_and_forward_results] '
+                        f'Result dequeued: {result}',
+                    )
+
+                write_queue.put(result)
+
+                if is_debug():
+                    print(
+                        '[MagicKernel.read_queue_and_forward_results]'
+                        f'Result enqueued: {result}',
+                    )
+            elif is_debug():
+                print(
+                    '[MagicKernel.read_queue_and_forward_results] ' 'No result found in queue.',
+                )
+        except Empty:
+            pass
+        except Exception as err:
+            if is_debug():
+                print(f'[MagicKernel.read_queue_and_forward_results] ERROR: {err}')
+
+
+class ReaderThread:
+    def __init__(
+        self,
+        args: Tuple[
+            Queue,
+            FasterQueue,
+            Event,
+        ],
+        start: Optional[bool] = None,
+    ):
+        self.thread = Thread(target=read_queue_and_forward_results, args=args, daemon=True)
+        if start:
+            self.thread.start()
+
+    def join(self) -> None:
+        self.thread.join()

@@ -71,7 +71,7 @@ class EntityName(str, Enum):
     SearchResult = 'SearchResult'
     Secret = 'Secret'
     Seed = 'Seed'
-    ServerSentEvent = 'ServerSentEvent'
+    CodeExecution = 'CodeExecution'
     Session = 'Session'
     SparkApplication = 'SparkApplication'
     SparkEnvironment = 'SparkEnvironment'

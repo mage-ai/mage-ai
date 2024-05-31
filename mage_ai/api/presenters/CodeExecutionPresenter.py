@@ -3,7 +3,7 @@ from typing import Dict
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 
-class ServerSentEventPresenter(BasePresenter):
+class CodeExecutionPresenter(BasePresenter):
     default_attributes = [
         'exitcode',
         'is_alive',

@@ -57,6 +57,7 @@ KernelPolicy.allow_read(
 KernelPolicy.allow_write(
     [
         'action_type',
+        'num_processes',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

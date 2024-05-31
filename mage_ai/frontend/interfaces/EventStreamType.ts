@@ -33,7 +33,7 @@ export enum ServerConnectionStatusType {
   RECONNECTING = 'reconnecting',
 }
 
-export interface ServerSentEventResponseType {
+export interface EventStreamResponseType {
   data: string;
 }
 

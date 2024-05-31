@@ -74,7 +74,7 @@ export function getWebSocket(path='') {
   return `${prefix}${host}/websocket/${path}`;
 }
 
-export function getServerSentEventsUrl(uuid?: string): string {
+export function getEventStreamsUrl(uuid?: string): string {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;
@@ -85,7 +85,7 @@ export function getServerSentEventsUrl(uuid?: string): string {
   if (windowDefined && window.location.protocol?.match(/https/)) {
     prefix = 'https://';
   }
-  return `${prefix}${host}/server-sent-events/${uuid || ''}`;
+  return `${prefix}${host}/event-streams/${uuid || ''}`;
 }
 
 export function buildUrl(

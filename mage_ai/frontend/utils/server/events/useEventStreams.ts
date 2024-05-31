@@ -5,15 +5,15 @@ import api from '@api';
 import EventStreamType, {
   ProcessDetailsType,
   ServerConnectionStatusType,
-  ServerSentEventResponseType,
+  EventStreamResponseType,
   EventSourceReadyState,
-} from '@interfaces/ServerSentEventType';
-import { getServerSentEventsUrl } from '@api/utils/url';
+} from '@interfaces/EventStreamType';
+import { getEventStreamsUrl } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 import { isDebug } from '@utils/environment';
 import { getNewUUID } from '@utils/string';
 
-export default function useServerSentEvents(uuid: string, {
+export default function useEventStreams(uuid: string, {
   autoReconnect,
   maxConnectionAttempts,
 }: {
@@ -48,8 +48,8 @@ export default function useServerSentEvents(uuid: string, {
     }) => {
       setEvents(prevData => [...prevData, null]);
 
-      return api.server_sent_events.useCreate()({
-        server_sent_event: {
+      return api.code_executions.useCreate()({
+        code_execution: {
           message: payload?.message,
           message_request_uuid: getNewUUID(),
           timestamp: Number(new Date()),
@@ -62,7 +62,7 @@ export default function useServerSentEvents(uuid: string, {
         response, {
           callback: ((resp: { server_sent_event: ProcessDetailsType }) => {
             if (isDebug()) {
-              console.log('useServerSentEvents.createMessage', resp);
+              console.log('useEventStreams.createMessage', resp);
             }
 
             if (resp?.server_sent_event) {
@@ -110,20 +110,20 @@ export default function useServerSentEvents(uuid: string, {
 
     let eventSource = eventSourceRef?.current;
     if (!eventSource) {
-      eventSourceRef.current = new EventSource(getServerSentEventsUrl(uuid));
+      eventSourceRef.current = new EventSource(getEventStreamsUrl(uuid));
       eventSource = eventSourceRef?.current;
 
       if (eventSource) {
         eventSource.onopen = (event: Event) => {
           if (isDebug()) {
-            console.log('useServerSentEvents.onopen', eventSource, event);
+            console.log('useEventStreams.onopen', eventSource, event);
           }
           setStatus(ServerConnectionStatusType.OPEN);
         };
 
-        eventSource.onmessage = (event: ServerSentEventResponseType) => {
+        eventSource.onmessage = (event: EventStreamResponseType) => {
           if (isDebug()) {
-            console.log('useServerSentEvents.onmessage', event);
+            console.log('useEventStreams.onmessage', event);
           }
 
           const eventData = JSON.parse(event.data);

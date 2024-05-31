@@ -5,7 +5,7 @@ import Spacing from '@oracle/elements/Spacing';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Flex from '@oracle/components/Flex';
 import useErrorViews from '@components/ErrorPopup/useErrorViews';
-import useServerSentEvents from '@utils/server/events/useServerSentEvents';
+import useEventStreams from '@utils/server/events/useEventStreams';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
 import moment from 'moment';
 import TextArea from '@oracle/elements/Inputs/TextArea';
@@ -14,7 +14,7 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import { ErrorDetailsType } from 'interfaces/ErrorsType';
-import EventStreamType, { ResultType } from '@interfaces/ServerSentEventType';
+import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
 import { padString } from '@utils/string';
 
 function ErrorDisplay({ error }: { error: ErrorDetailsType }) {
@@ -81,7 +81,7 @@ function Test({
     loading,
     sendMessage,
     status,
-  } = useServerSentEvents(uuid);
+  } = useEventStreams(uuid);
 
   if (errors?.length) {
     console.log(errors);

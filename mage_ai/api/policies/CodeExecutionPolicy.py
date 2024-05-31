@@ -1,21 +1,20 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.ServerSentEventPresenter import ServerSentEventPresenter
+from mage_ai.api.presenters.CodeExecutionPresenter import CodeExecutionPresenter
 from mage_ai.orchestration.constants import Entity
 
 
-class ServerSentEventPolicy(BasePolicy):
+class CodeExecutionPolicy(BasePolicy):
     @property
     def entity(self):
         # Adjust the entity to reflect the KernelProcess's entity, if applicable
         return Entity.ANY, None
 
 
-ServerSentEventPolicy.allow_actions(
+CodeExecutionPolicy.allow_actions(
     [
         constants.CREATE,
-        constants.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -24,19 +23,18 @@ ServerSentEventPolicy.allow_actions(
 )
 
 
-ServerSentEventPolicy.allow_read(
-    ServerSentEventPresenter.default_attributes,
+CodeExecutionPolicy.allow_read(
+    CodeExecutionPresenter.default_attributes,
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
         constants.CREATE,
-        constants.LIST,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
 
-ServerSentEventPolicy.allow_write(
+CodeExecutionPolicy.allow_write(
     [
         'message',
         'message_request_uuid',
@@ -48,19 +46,6 @@ ServerSentEventPolicy.allow_write(
     ],
     on_action=[
         OauthScope.CLIENT_PRIVATE,
-    ],
-    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
-)
-
-ServerSentEventPolicy.allow_query(
-    [
-        'uuid',
-    ],
-    scopes=[
-        OauthScope.CLIENT_PRIVATE,
-    ],
-    on_action=[
-        constants.LIST,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
