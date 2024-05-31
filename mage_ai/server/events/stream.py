@@ -14,7 +14,7 @@ from mage_ai.kernels.magic.queues.manager import get_execution_result_queue_asyn
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.parsers import encode_complex
 
-SLEEP_SECONDS = 0.05
+SLEEP_SECONDS = 0.1
 
 
 class EventStreamHandler(BaseHandler):
@@ -56,7 +56,7 @@ class EventStreamHandler(BaseHandler):
                 self.write(f'data: {event_stream_json}\n\n')
 
             await self.flush()
-            await asyncio.sleep(1)
+            await asyncio.sleep(SLEEP_SECONDS)
 
     async def __get_queue(self) -> FasterQueue:
         kernel_queue = await get_execution_result_queue_async()
