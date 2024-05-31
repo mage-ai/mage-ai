@@ -4,7 +4,6 @@ from jupyter_client import KernelManager
 from jupyter_client.session import Session
 
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.settings.server import KERNEL_MAGIC
 
 
 class KernelName(str, Enum):
@@ -24,16 +23,12 @@ PIPELINE_TO_KERNEL_NAME = {
 DEFAULT_KERNEL_NAME = KernelName.PYTHON3
 
 
-kernel_managers = (
-    None
-    if KERNEL_MAGIC
-    else dict(
-        python3=KernelManager(
-            session=Session(key=bytes()),
-        ),
-        pysparkkernel=KernelManager(
-            kernel_name='pysparkkernel',
-            session=Session(key=bytes()),
-        ),
-    )
+kernel_managers = dict(
+    python3=KernelManager(
+        session=Session(key=bytes()),
+    ),
+    pysparkkernel=KernelManager(
+        kernel_name='pysparkkernel',
+        session=Session(key=bytes()),
+    ),
 )

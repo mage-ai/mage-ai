@@ -91,7 +91,6 @@ from mage_ai.settings import (
     DISABLE_AUTO_BROWSER_OPEN,
     DISABLE_AUTORELOAD,
     ENABLE_PROMETHEUS,
-    KERNEL_MAGIC,
     OAUTH2_APPLICATION_CLIENT_ID,
     OTEL_EXPORTER_OTLP_ENDPOINT,
     REDIS_URL,
@@ -536,7 +535,7 @@ async def main(
     project_type: ProjectType = ProjectType.STANDALONE,
     status_only: bool = False,
 ):
-    if not status_only and not KERNEL_MAGIC:
+    if not status_only:
         from mage_ai.server.active_kernel import switch_active_kernel
         from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
 
@@ -713,17 +712,11 @@ async def main(
     observer.schedule(event_handler, path=metadata_file)
     observer.start()
 
-    if KERNEL_MAGIC:
-        from mage_ai.kernels.magic.manager import Manager
-
-        if Manager.active:
-            Manager.shutdown()
-    else:
-        get_messages(
-            lambda content: WebSocketServer.send_message(
-                parse_output_message(content),
-            ),
-        )
+    get_messages(
+        lambda content: WebSocketServer.send_message(
+            parse_output_message(content),
+        ),
+    )
 
     await asyncio.Event().wait()
     # Used for the magic kernel

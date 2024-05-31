@@ -120,20 +120,16 @@ class Kernel:
         return process
 
     async def terminate_async(self) -> None:
-        await self.interrupt_async()
+        await self.__stop_async()
 
         if self.reader_thread is not None:
             await asyncio.get_event_loop().run_in_executor(self.executor, self.reader_thread.join)
             await self.__cleanup_resources_async()
 
     async def interrupt_async(self):
-        if self.stop_event is not None:
-            self.stop_event.set()
-        if self.stop_event_pool is not None:
-            self.stop_event_pool.set()
-        if self.pool is not None:
-            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.terminate)
-            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
+        await self.__stop_async()
+        await self.__drain_queues()
+        self.__initialize_kernel(num_processes=self.num_processes)
 
     async def retart_async(self, num_processes: Optional[int] = None) -> None:
         await self.terminate_async()
@@ -144,15 +140,16 @@ class Kernel:
             self.shared_dict.clear()
         if self.shared_list is not None:
             self.shared_list.clear()
+
         self.__clear_lock()
 
-        # Using loop.run_in_executor to ensure non-blocking
-        await asyncio.get_event_loop().run_in_executor(self.executor, self.__drain_queue)
+        await self.__drain_queues()
 
         if self.pool is not None:
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.close)
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
 
+        # Reset everything except uuid and write_queue
         self.active = False
         self.context_manager = None
         self.executor = None
@@ -165,9 +162,8 @@ class Kernel:
         self.shared_list = None
         self.stop_event = None
         self.stop_event_pool = None
-        self.write_queue = None
 
-    def __drain_queue(self):
+    def __drain_read_queue(self):
         if self.read_queue is not None:
             try:
                 while True:
@@ -175,6 +171,20 @@ class Kernel:
             except Empty:
                 pass
         self.read_queue = None
+
+    def __drain_write_queue(self):
+        if self.write_queue is not None:
+            temp_queue = []
+            try:
+                while True:
+                    msg = self.write_queue.get_nowait()
+                    if msg.uuid != self.uuid:
+                        temp_queue.append(msg)
+            except Empty:
+                pass
+            # Push back the messages that are not to be discarded
+            for msg in temp_queue:
+                self.write_queue.put(msg)
 
     def __clear_lock(self) -> None:
         if self.lock is not None:
@@ -185,3 +195,17 @@ class Kernel:
                 except RuntimeError as err:
                     print(f'[Kernel.__clear_lock] Error releasing lock: {err}')
         self.lock = None
+
+    async def __drain_queues(self) -> None:
+        # Using loop.run_in_executor to ensure non-blocking
+        await asyncio.get_event_loop().run_in_executor(self.executor, self.__drain_read_queue)
+        await asyncio.get_event_loop().run_in_executor(self.executor, self.__drain_write_queue)
+
+    async def __stop_async(self) -> None:
+        if self.stop_event is not None:
+            self.stop_event.set()
+        if self.stop_event_pool is not None:
+            self.stop_event_pool.set()
+        if self.pool is not None:
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.terminate)
+            await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)

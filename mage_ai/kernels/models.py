@@ -203,7 +203,7 @@ class Kernel:
 
     @property
     def processes(self) -> Optional[List[KernelProcess]]:
-        return self._processes
+        return []
 
     async def prepare_usage(self):
         pass
