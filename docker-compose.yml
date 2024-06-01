@@ -85,6 +85,7 @@ x-app_settings: &app_settings
     - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
     - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
     - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
+    - ./mage_ai/frontend/mana:/home/src/mage_ai/frontend/mana
     - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
     - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
     - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle

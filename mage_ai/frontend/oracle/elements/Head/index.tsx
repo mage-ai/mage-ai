@@ -12,6 +12,8 @@ const Head = ({
   title,
 }: HeadProps) => (
   <NextHead>
+    <link href="/favicon.ico" rel="icon" />
+
     <title>
       {title ? `${title} | ${defaultTitle}` : defaultTitle}
     </title>

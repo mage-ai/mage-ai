@@ -25,3 +25,7 @@ export const DEBUG = (func?: () => any): boolean => {
 export function isDemo() {
   return typeof window !== 'undefined' && window.location.hostname === 'demo.mage.ai';
 }
+
+export function isPro() {
+  return !!process.env.NEXT_PUBLIC_PRO;
+}
