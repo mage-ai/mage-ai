@@ -55,6 +55,7 @@ from mage_ai.settings.platform import (
 )
 from mage_ai.settings.platform.utils import get_pipeline_from_platform
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.server import KERNEL_MAGIC
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
@@ -66,6 +67,8 @@ MEMORY_USAGE_MAXIMUM = 0.95
 
 lock = DistributedLock()
 logger = Logger().new_server_logger(__name__)
+
+job_manager = None if KERNEL_MAGIC else get_job_manager()
 
 
 class PipelineScheduler:
