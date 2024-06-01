@@ -13,6 +13,7 @@ export interface FontsType {
   };
   size: {
     base: string;
+    sm: string;
   };
   style: {
     base: string;
@@ -39,6 +40,7 @@ export default function build(colors: ColorsType): FontsType {
     },
     size: {
       base: `${UNIT * 4}px`,
+      sm: `${UNIT * 3}px`,
     },
     style: {
       base: 'normal',

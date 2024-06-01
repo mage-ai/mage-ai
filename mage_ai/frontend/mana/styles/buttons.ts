@@ -2,8 +2,8 @@ import { css } from 'styled-components';
 
 const base = css`
   background: ${({ theme }) => theme.backgrounds.button};
-  border-radius: ${({ theme }) => theme.borders.radius}px;
   border: none;
+  border-radius: ${({ theme }) => theme.borders.radius.base}px;
   color: ${({ theme }) => theme.fonts.color};
   font-family: ${({ theme }) => theme.fonts.family.base};
   font-size: ${({ theme }) => theme.fonts.size.base};

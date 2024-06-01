@@ -2,7 +2,10 @@ import { ColorsType } from './colors';
 
 export interface BordersType {
   color: string;
-  radius: number;
+  radius: {
+    base: number;
+    round: number;
+  };
   style: string;
   width: number;
 }
@@ -10,7 +13,10 @@ export interface BordersType {
 export default function build(colors: ColorsType): BordersType {
   return {
     color: colors.gray,
-    radius: 10,
+    radius: {
+      base: 10,
+      round: 40,
+    },
     style: 'solid',
     width: 1,
   };

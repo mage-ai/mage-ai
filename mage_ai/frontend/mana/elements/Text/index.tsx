@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
-import text from '../../styles/text';
+import text from '../../styles/typography';
 
 type TextProps = {
   children: React.ReactNode;

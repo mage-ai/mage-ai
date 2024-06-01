@@ -21,6 +21,7 @@ function unflatten(mapping: { [key: string]: ModeType }): any {
 }
 
 interface CombinerType {
+  colors: ColorsType;
   combine: (
     modeValues: (colors: ColorsType) => ValueMappingType | { [key: string]: ModeType },
     overrideThemeKey?: string,
@@ -28,7 +29,7 @@ interface CombinerType {
 }
 
 class Combiner implements CombinerType {
-  private colors: ColorsType;
+  public colors: ColorsType;
   private mode: ModeEnum;
   private theme: ThemeType;
 
@@ -96,9 +97,9 @@ class Combiner implements CombinerType {
 }
 
 export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType {
-  const combine = new Combiner(themeSettings).combine;
+  const combiner = new Combiner(themeSettings);
 
-  return Object.entries({
+  const elements = Object.entries({
     backgrounds,
     borders,
     buttons,
@@ -106,6 +107,11 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     padding,
   }).reduce((acc, [key, value]) => ({
     ...acc,
-    [key]: combine(value, key),
+    [key]: combiner.combine(value, key),
   }), {} as ThemeType);
+
+  return {
+    ...elements,
+    colors: combiner.colors,
+  };
 }

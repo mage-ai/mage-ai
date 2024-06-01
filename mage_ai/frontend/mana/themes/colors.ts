@@ -29,6 +29,7 @@ export interface ColorsType extends ColorsDerivedType {
   redLo: string;
   white: string;
   whiteFixed: string;
+  whiteHi: string;
   whiteLo: string;
 }
 
@@ -132,6 +133,11 @@ const Colors = {
     [ModeEnum.DARK]: '#FFFFFF',
     [ModeEnum.LIGHT]: '#FFFFFF',
     [ModeEnum.MODE3]: '#FFFFFF',
+  },
+  whiteHi: {
+    [ModeEnum.DARK]: '#FFFFFF1A',
+    [ModeEnum.LIGHT]: '#1B00661A',
+    [ModeEnum.MODE3]: '#FFFFFF1A',
   },
   whiteLo: {
     [ModeEnum.DARK]: '#FFFFFF80',

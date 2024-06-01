@@ -3,6 +3,7 @@ import { LayoutVersionEnum } from '@utils/layouts';
 import { Row, Col, Visible, Hidden } from 'react-grid-system';
 
 import Button from '@mana/elements/Button';
+import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
 
 function Home({ data }: { data: any }) {
@@ -19,11 +20,14 @@ function Home({ data }: { data: any }) {
         <Text inline>.</Text>
       </Text>
 
+      <Tag>
+        {data?.pipelines?.[0]?.uuid}
+      </Tag>
+
       <Text>
         I’ve found several existing blocks that can potentially be reused.
         Take a look and let me know if anything works,
         you can also ask me to simply choose the best one.
-        {data?.pipelines?.[0]?.uuid}
       </Text>
 
       <Button>

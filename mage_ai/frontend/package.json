@@ -57,6 +57,7 @@
     "next": "12.3.4",
     "next-cookies": "^2.0.3",
     "next-remove-imports": "^1.0.12",
+    "raw-loader": "^4.0.2",
     "react": "18.1.0",
     "react-calendar": "^3.7.0",
     "react-copy-to-clipboard": "^5.0.2",
