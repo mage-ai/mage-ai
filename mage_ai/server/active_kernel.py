@@ -14,7 +14,7 @@ from mage_ai.services.ssh.aws.emr.utils import cluster_info_from_tunnel
 logger = Logger().new_server_logger(__name__)
 
 
-class ActiveKernel():
+class ActiveKernel:
     def __init__(self):
         self.kernel = kernel_managers[DEFAULT_KERNEL_NAME]
         self.kernel_client = self.kernel.client()

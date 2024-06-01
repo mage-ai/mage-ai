@@ -68,28 +68,20 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(scheduler2, 'schedule') as mock_schedule2:
             scheduler2.start(should_schedule=True)
             mock_schedule2.assert_called_once()
-            self.assertEqual(
-                pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING
-            )
+            self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
 
     def test_start_with_exception(self):
         # Not create block runs at the beginning
-        pipeline_run = PipelineRun.create(
-            pipeline_uuid='test_pipeline', create_block_runs=False
-        )
+        pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', create_block_runs=False)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(scheduler, 'schedule') as mock_schedule:
-            with patch.object(
-                pipeline_run, 'create_block_runs'
-            ) as mock_create_block_runs:
+            with patch.object(pipeline_run, 'create_block_runs') as mock_create_block_runs:
                 with patch.object(
                     scheduler.notification_sender, 'send_pipeline_run_failure_message'
                 ) as mock_send_message:
                     mock_create_block_runs.side_effect = Exception()
                     scheduler.start()
-                    self.assertEqual(
-                        pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED
-                    )
+                    self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
                     mock_send_message.assert_called_once_with(
                         error='Fail to initialize block runs.',
                         pipeline=scheduler.pipeline,
@@ -110,8 +102,10 @@ class PipelineSchedulerTests(DBTestCase):
             self.assertEqual(b.status, BlockRun.BlockRunStatus.CANCELLED)
 
     @patch('mage_ai.orchestration.pipeline_scheduler_original.run_block')
-    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
-    def test_schedule(self, mock_job_manager, mock_run_pipeline):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule(self, mock_get_job_manager, mock_get_pipeline_run):
+        mock_job_manager = mock_get_job_manager()
+        pipeline_run = mock_get_pipeline_run()
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         mock_job_manager.add_job = MagicMock()
@@ -134,9 +128,7 @@ class PipelineSchedulerTests(DBTestCase):
             scheduler.notification_sender, 'send_pipeline_run_success_message'
         ) as mock_send_message:
             scheduler.schedule()
-            self.assertEqual(
-                pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED
-            )
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
             mock_send_message.assert_called_once_with(
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
@@ -255,9 +247,7 @@ class PipelineSchedulerTests(DBTestCase):
     @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
         def new_schedule(self):
-            print(
-                f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.'
-            )
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
 
         shared_attrs = dict(
             name='trigger',
@@ -302,9 +292,7 @@ class PipelineSchedulerTests(DBTestCase):
         self,
     ):
         def new_schedule(self):
-            print(
-                f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.'
-            )
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
 
         shared_attrs = dict(
             name='trigger',
@@ -424,17 +412,16 @@ class PipelineSchedulerTests(DBTestCase):
             )
 
     @patch('mage_ai.orchestration.pipeline_scheduler_original.run_pipeline')
-    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
-    def test_schedule_streaming(self, mock_job_manager, mock_run_pipeline):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_streaming(self, mock_get_job_manager, mock_run_pipeline):
+        mock_job_manager = mock_get_job_manager()
         pipeline = create_pipeline_with_blocks(
             'test pipeline 2',
             self.repo_path,
         )
         pipeline.type = PipelineType.STREAMING
         pipeline.save()
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_pipeline_2'
-        )
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline_2')
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         mock_has_pipeline_run_job = MagicMock()
@@ -478,9 +465,7 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(scheduler, 'schedule') as mock_schedule:
             scheduler.on_block_complete('block1')
             mock_schedule.assert_called_once()
-            block_run = BlockRun.get(
-                pipeline_run_id=pipeline_run.id, block_uuid='block1'
-            )
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
 
     def test_on_block_complete_with_metrics(self):
@@ -490,9 +475,7 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(scheduler, 'schedule') as mock_schedule:
             scheduler.on_block_complete('block1', metrics=dict(mage=1))
             mock_schedule.assert_called_once()
-            block_run = BlockRun.get(
-                pipeline_run_id=pipeline_run.id, block_uuid='block1'
-            )
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
             self.assertEqual(block_run.metrics, dict(mage=1))
 
@@ -503,9 +486,7 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(scheduler, 'schedule') as mock_schedule:
             scheduler.on_block_complete_without_schedule('block1')
             mock_schedule.assert_not_called()
-            block_run = BlockRun.get(
-                pipeline_run_id=pipeline_run.id, block_uuid='block1'
-            )
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
 
     def test_on_block_complete_without_schedule_with_metrics(self):
@@ -515,9 +496,7 @@ class PipelineSchedulerTests(DBTestCase):
         with patch.object(scheduler, 'schedule') as mock_schedule:
             scheduler.on_block_complete_without_schedule('block1', metrics=dict(mage=1))
             mock_schedule.assert_not_called()
-            block_run = BlockRun.get(
-                pipeline_run_id=pipeline_run.id, block_uuid='block1'
-            )
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
             self.assertEqual(block_run.metrics, dict(mage=1))
 
@@ -664,9 +643,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
@@ -678,17 +655,11 @@ class PipelineSchedulerTests(DBTestCase):
         create_initial_pipeline_run setting being enabled.
         """
         self.assertEqual(1, len(ps1.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.INITIAL, ps1.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps1.pipeline_runs[0].status)
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status)
 
     @freeze_time('2023-05-01 00:20:33')
     def test_schedule_all_pipeline_run_limit_all_triggers_set2(self):
@@ -739,28 +710,20 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
         with patch.object(PipelineScheduler, 'schedule') as _:
             schedule_all()
         self.assertEqual(1, len(ps1.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps1.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps1.pipeline_runs[0].status)
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
         # The pipeline run for ps3 is not running due to the sorting of
         # the runs' execution dates (all 3 have the same execution date).
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
         # No pipeline run is scheduled for ps4 due to the last_enabled_at date
         # occurring after the current execution date.
         self.assertEqual(0, len(ps4.pipeline_runs))
@@ -808,9 +771,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
@@ -818,13 +779,9 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_all()
         self.assertEqual(2, len(ps1.pipeline_runs))
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
 
     @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_skip_runs(self):
@@ -870,9 +827,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
@@ -880,13 +835,9 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_all()
         self.assertEqual(2, len(ps1.pipeline_runs))
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.CANCELLED, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, ps3.pipeline_runs[0].status)
 
     @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_set_negative_quota(self):
@@ -936,9 +887,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
@@ -958,13 +907,9 @@ class PipelineSchedulerTests(DBTestCase):
             ),
         )
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.INITIAL, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps2.pipeline_runs[0].status)
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
 
     @freeze_time('2023-05-03 01:20:33')
     def test_schedule_all_pipeline_run_limit_include_all(self):
@@ -1010,9 +955,7 @@ class PipelineSchedulerTests(DBTestCase):
         )
         with open(pipeline.config_path, 'w') as f:
             yaml.dump(
-                merge_dict(
-                    pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)
-                ),
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
                 f,
             )
 
@@ -1020,17 +963,14 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_all()
         self.assertEqual(2, len(ps1.pipeline_runs))
         self.assertEqual(1, len(ps2.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
         self.assertEqual(1, len(ps3.pipeline_runs))
-        self.assertEqual(
-            PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status
-        )
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status)
 
     @freeze_time('2023-05-01 01:20:33')
-    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
-    def test_pipeline_run_timeout(self, mock_job_manager):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_pipeline_run_timeout(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
         mock_job_manager.add_job = MagicMock()
         pipeline = create_pipeline_with_blocks(
             'test pipeline run timeout pipeline',
@@ -1077,8 +1017,9 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(pipeline_run3.status, PipelineRun.PipelineRunStatus.RUNNING)
 
     @freeze_time('2023-05-01 01:20:33')
-    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
-    def test_pipeline_run_timeout_cancel(self, mock_job_manager):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_pipeline_run_timeout_cancel(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
         mock_job_manager.add_job = MagicMock()
         pipeline = create_pipeline_with_blocks(
             'test pipeline run timeout pipeline',
@@ -1128,8 +1069,9 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(pipeline_run3.status, PipelineRun.PipelineRunStatus.RUNNING)
 
     @freeze_time('2023-05-01 01:20:33')
-    @patch('mage_ai.orchestration.pipeline_scheduler_original.job_manager')
-    def test_block_run_timeout(self, mock_job_manager):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_block_run_timeout(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
         mock_job_manager.add_job = MagicMock()
         pipeline = create_pipeline_with_blocks(
             'test block run timeout pipeline',
@@ -1165,9 +1107,7 @@ class PipelineSchedulerTests(DBTestCase):
             pipeline_uuid=pipeline_uuid,
             pipeline_schedule_id=pipeline_schedule.id,
         )
-        block_run2 = find(
-            lambda br: br.block_uuid == 'block1', pipeline_run2.block_runs
-        )
+        block_run2 = find(lambda br: br.block_uuid == 'block1', pipeline_run2.block_runs)
         block_run2.update(
             status=BlockRun.BlockRunStatus.RUNNING,
             started_at=now_time - timedelta(seconds=599),

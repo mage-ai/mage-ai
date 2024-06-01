@@ -302,9 +302,21 @@ class DelegatorTarget:
 
 
 class Delegator:
-    def __init__(self, target: Any):
-        self.target = target
-        self.delegate = DelegatorTarget(self.target)
+    def __init__(self, target: Optional[Any] = None, *args, **kwargs):
+        self.delegate = None
+        self._target = target
+        if target is not None:
+            self.target = target
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, target):
+        self._target = target
+        if self._target:
+            self.delegate = DelegatorTarget(self._target)
 
 
 class BaseEnum(str, Enum):

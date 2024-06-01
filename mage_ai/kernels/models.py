@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import isawaitable
-from typing import Dict, List, Optional, Tuple
+from multiprocessing import Process
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from mage_ai.kernels.utils import (
-    find_ipykernel_launchers_info,
-    is_kernel_process_active,
-    terminate_process,
-)
-from mage_ai.shared.models import BaseDataClass
+from mage_ai.kernels.constants import ProcessStatus
+from mage_ai.shared.hash import ignore_keys
+from mage_ai.shared.models import BaseDataClass, Delegator
 
 
 @dataclass
@@ -57,90 +55,7 @@ class PConn(BaseDataClass):
     status: Optional[str] = None
 
 
-@dataclass
-class KernelProcess(BaseDataClass):
-    active: Optional[bool] = None
-    cmdline: Optional[str] = None
-    connection_file: Optional[str] = None
-    connections: Optional[List[PConn]] = None
-    cpu: Optional[float] = None
-    cpu_times: Optional[PCPUTimes] = None
-    create_time: Optional[float] = None
-    exe: Optional[str] = None
-    memory: Optional[float] = None
-    memory_info: Optional[PMemoryInfo] = None
-    name: Optional[str] = None
-    num_threads: Optional[str] = None
-    open_files: Optional[List[POpenFile]] = None
-    pid: Optional[int] = None
-    ppid: Optional[int] = None
-    status: Optional[str] = None
-    username: Optional[str] = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('memory_info', PMemoryInfo)
-        self.serialize_attribute_classes('connections', PConn)
-        self.serialize_attribute_classes('cpu_times', PCPUTimes)
-        self.serialize_attribute_classes('open_files', POpenFile)
-
-        self.cpu = (
-            sum([
-                float(val) if val is not None else 0
-                for val in [self.cpu_times.user, self.cpu_times.system]
-            ])
-            if self.cpu_times
-            else 0
-        )
-        self.memory = int(self.memory_info.rss) if self.memory_info and self.memory_info.rss else 0
-
-    @classmethod
-    def load_all(cls, check_active_status: bool = False) -> List['KernelProcess']:
-        return [
-            cls.load(**d)
-            for d in find_ipykernel_launchers_info(check_active_status=check_active_status)
-        ]
-
-    @classmethod
-    def terminate_inactive(
-        cls,
-        process_dicts: Optional[List[Dict]] = None,
-    ) -> Tuple[int, int]:
-        print('Terminating inactive kernels...')
-        memory_usage = []
-
-        if process_dicts:
-            arr = [cls.load(**d) for d in process_dicts]
-        else:
-            arr = cls.load_all(check_active_status=True)
-        if len(arr) >= 2:
-            for kernel_process in arr:
-                if not kernel_process.active:
-                    print(f'Terminating process {kernel_process.pid}...')
-                    if kernel_process.terminate():
-                        memory_usage.append(kernel_process.memory)
-
-        if len(memory_usage) == 0:
-            print('No inactive kernels found.')
-            return 0, 0
-
-        print(
-            f'{sum(memory_usage)} bytes of memory freed '
-            f'from {len(memory_usage)} inactive kernel(s).'
-        )
-        return len(memory_usage), sum(memory_usage)
-
-    def check_active_status(self) -> bool:
-        if not self.pid or not self.connection_file:
-            return False
-
-        self.active = is_kernel_process_active(self.pid, self.connection_file) or False
-        return self.active
-
-    def terminate(self) -> bool:
-        return self.pid is not None and terminate_process(self.pid)
-
-
-class KernelWrapper:
+class KernelBase:
     def __init__(self, kernel):
         self.kernel = kernel
         self.usage = None
@@ -168,8 +83,8 @@ class KernelWrapper:
     def is_ready(self) -> bool:
         return self.usage is not None
 
-    def is_alive(self):
-        return self.kernel.is_alive()
+    def is_alive(self) -> bool:
+        pass
 
     @property
     def kernel_id(self) -> str:
@@ -186,3 +101,133 @@ class KernelWrapper:
             'name': self.kernel_name,
             'usage': self.usage,
         }
+
+
+@dataclass
+class KernelProcess(BaseDataClass, Delegator):
+    active: Optional[bool] = None
+    cmdline: Optional[str] = None
+    connection_file: Optional[str] = None
+    connections: Optional[List[PConn]] = None
+    cpu: Optional[float] = None
+    cpu_times: Optional[PCPUTimes] = None
+    create_time: Optional[float] = None
+    exe: Optional[str] = None
+    memory: Optional[float] = None
+    memory_info: Optional[PMemoryInfo] = None
+    name: Optional[str] = None
+    num_threads: Optional[str] = None
+    open_files: Optional[List[POpenFile]] = None
+    pid: Optional[int] = None
+    ppid: Optional[int] = None
+    process: Optional[Process] = None
+    status: Optional[Union[ProcessStatus, str]] = None
+    username: Optional[str] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('memory_info', PMemoryInfo)
+        self.serialize_attribute_classes('connections', PConn)
+        self.serialize_attribute_classes('cpu_times', PCPUTimes)
+        self.serialize_attribute_classes('open_files', POpenFile)
+
+        if self.status:
+            self.status = ProcessStatus.from_value(self.status) or self.status
+
+        self.cpu = (
+            sum([
+                float(val) if val is not None else 0
+                for val in [self.cpu_times.user, self.cpu_times.system]
+            ])
+            if self.cpu_times
+            else 0
+        )
+        self.memory = int(self.memory_info.rss) if self.memory_info and self.memory_info.rss else 0
+
+        if self.process is not None:
+            self.target = self.process
+
+    @classmethod
+    def load_all(cls, check_active_status: bool = False) -> List['KernelProcess']:
+        return []
+
+    @classmethod
+    def terminate_inactive(
+        cls,
+        process_dicts: Optional[List[Dict]] = None,
+    ) -> Tuple[int, int]:
+        return 0, 0
+
+    def check_active_status(self) -> bool:
+        return False
+
+    def terminate(self) -> bool:
+        return False
+
+    def to_dict(self, *args, **kwargs) -> Dict:
+        return ignore_keys(super().to_dict(*args, **kwargs), ['process', 'target'])
+
+
+class Kernel:
+    def __init__(
+        self,
+        kernel: Any,
+        active_kernels: Optional[List[Any]] = None,
+        kernel_id: Optional[str] = None,
+        kernel_name: Optional[str] = None,
+        processes: Optional[List[KernelProcess]] = None,
+    ):
+        self.active_kernels = active_kernels
+        self.kernel = kernel
+        self.inactive_kernels = None
+        self.usage = None
+
+        self._kernel_id = kernel_id
+        self._kernel_name = kernel_name
+        self._processes = processes
+
+    @property
+    def kernel_id(self) -> Optional[str]:
+        return self._kernel_id
+
+    @kernel_id.setter
+    def kernel_id(self, value: str):
+        self._kernel_id = value
+
+    @property
+    def kernel_name(self) -> Optional[str]:
+        return self._kernel_name
+
+    @kernel_name.setter
+    def kernel_name(self, value: str):
+        self._kernel_name = value
+
+    @property
+    def processes(self) -> Optional[List[KernelProcess]]:
+        return []
+
+    async def prepare_usage(self):
+        pass
+
+    def is_ready(self) -> bool:
+        return True
+
+    def is_alive(self) -> bool:
+        return True
+
+    def interrupt(self) -> bool:
+        return True
+
+    def restart(self) -> bool:
+        return True
+
+    def start(self) -> bool:
+        return True
+
+    def to_dict(self) -> Dict:
+        return dict(
+            alive=self.is_alive(),
+            id=self.kernel_id,
+            name=self.kernel_name,
+            processes=self.processes,
+            usage=self.usage,
+        )

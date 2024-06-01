@@ -70,18 +70,20 @@ class BaseHandler(tornado.web.RequestHandler):
             pk = self.path_kwargs.get('pk')
             resource = self.path_kwargs.get('resource')
 
-            asyncio.run(UsageStatisticLogger().error(
-                event_name=EventNameType.APPLICATION_ERROR,
-                code=status_code,
-                errors='\n'.join(errors or []),
-                message=str(exception),
-                operation=self.request.method,
-                resource=child or resource,
-                resource_id=child_pk if child else pk,
-                resource_parent=resource if child else None,
-                resource_parent_id=pk if child else None,
-                type=None,
-            ))
+            asyncio.run(
+                UsageStatisticLogger().error(
+                    event_name=EventNameType.APPLICATION_ERROR,
+                    code=status_code,
+                    errors='\n'.join(errors or []),
+                    message=str(exception),
+                    operation=self.request.method,
+                    resource=child or resource,
+                    resource_id=child_pk if child else pk,
+                    resource_parent=resource if child else None,
+                    resource_parent_id=pk if child else None,
+                    type=None,
+                )
+            )
 
             self.write(
                 dict(
@@ -127,6 +129,7 @@ class BaseApiHandler(BaseHandler, OAuthMiddleware):
 
     def prepare(self):
         from mage_ai.server.server import latest_user_activity
+
         if not self.is_health_check:
             latest_user_activity.update_latest_activity()
         super().prepare()

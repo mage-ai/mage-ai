@@ -8,6 +8,7 @@ class KernelPresenter(BasePresenter):
         'alive',
         'id',
         'name',
+        'processes',
         'usage',
     ]
 

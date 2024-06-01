@@ -85,9 +85,10 @@ export function dateFormatLong(
 export function datetimeInLocalTimezone(
   datetime: string,
   enableLocalTimezoneConversion?: boolean,
+  format: string = null,
 ): string {
   if (enableLocalTimezoneConversion) {
-    return moment.utc(datetime).local().format();
+    return moment.utc(datetime).local().format(format);
   }
 
   return datetime;

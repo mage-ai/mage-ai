@@ -84,4 +84,4 @@ def load_custom_object(
         elif VariableType.DICTIONARY_COMPLEX == variable_type:
             pass
     except Exception as e:
-        print(f'Error loading custom object: {e}')
+        print(f'Error loading {variable_type} at {variable_path}: {e}')

@@ -198,8 +198,9 @@ except ValueError:
     SCHEDULER_TRIGGER_INTERVAL = 10
 
 # -------------------------
-# System level features
+# Data processing
 # -------------------------
+
 # We need to use os.getenv again or else we can’t mock/patch the value in tests.
 DYNAMIC_BLOCKS_VERSION = int(os.getenv('DYNAMIC_BLOCKS_VERSION') or 1)
 DYNAMIC_BLOCKS_V2 = int(os.getenv('DYNAMIC_BLOCKS_VERSION') or 1) >= 2
@@ -214,6 +215,17 @@ VARIABLE_DATA_OUTPUT_META_CACHE = str(os.getenv('VARIABLE_DATA_OUTPUT_META_CACHE
     'true',
     'True',
 ]
+
+# -------------------------
+# IDE settings
+# -------------------------
+
+KERNEL_MANAGER = os.getenv('KERNEL_MANAGER', 'default')
+KERNEL_MAGIC = os.getenv('KERNEL_MANAGER', 'default') == 'magic'
+
+# -------------------------
+# System level features
+# -------------------------
 
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
