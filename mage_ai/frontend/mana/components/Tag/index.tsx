@@ -6,7 +6,8 @@ const TagStyled = styled.div`
   ${baseSm}
 
   background-color: ${({ theme }) => theme.colors.whiteHi};
-  border-radius: ${({ theme }) => theme.borders.radius.round}px;
+  border-radius: ${({ theme }) => theme.borders.radius.round};
+  display: inline-block;
   padding: 4px 6px;
 `;
 

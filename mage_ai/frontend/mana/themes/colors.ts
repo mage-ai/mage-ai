@@ -1,10 +1,15 @@
-import { ModeEnum, ModeType } from '../themes/modes';
+import { ModeEnum } from '../themes/modes';
+
+export interface BackgroundsType {
+  body: string;
+  button: {
+    base: string;
+    hover: string;
+  };
+}
 
 interface ColorsDerivedType {
-  backgrounds: {
-    body: string;
-    button: string;
-  };
+  backgrounds: BackgroundsType
   text: string;
 }
 
@@ -20,7 +25,6 @@ export interface ColorsType extends ColorsDerivedType {
   grayLo: string;
   green: string;
   greenLo: string;
-  grayMed: string;
   pink: string;
   pinkLo: string;
   purple: string;
@@ -78,11 +82,6 @@ const Colors = {
     [ModeEnum.DARK]: '#34404C33',
     [ModeEnum.LIGHT]: '#BBAFDA1A',
     [ModeEnum.MODE3]: '#2E303633',
-  },
-  grayMed: {
-    [ModeEnum.DARK]: '#34404C80',
-    [ModeEnum.LIGHT]: '#BBAFDA80',
-    [ModeEnum.MODE3]: '#2E303680',
   },
   green: {
     [ModeEnum.DARK]: '#00C868',
@@ -154,9 +153,16 @@ const ColorsDerived = {
       [ModeEnum.MODE3]: 'gray',
     },
     button: {
-      [ModeEnum.DARK]: 'gray',
-      [ModeEnum.LIGHT]: 'gray',
-      [ModeEnum.MODE3]: 'gray',
+      base: {
+        [ModeEnum.DARK]: '#28333D',
+        [ModeEnum.LIGHT]: '#28333D',
+        [ModeEnum.MODE3]: '#28333D',
+      },
+      hover: {
+        [ModeEnum.DARK]: 'grayLo',
+        [ModeEnum.LIGHT]: 'grayLo',
+        [ModeEnum.MODE3]: 'grayLo',
+      },
     },
   },
   text: {

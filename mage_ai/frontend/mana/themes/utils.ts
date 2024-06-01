@@ -32,7 +32,7 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
 }
 
 export function getTheme(themeSettings?: ThemeSettingsType, ctx?: any): ThemeType {
-  return buildTheme(themeSettings || getThemeSettings(ctx));
+  return buildTheme(themeSettings);
 }
 
 export function setThemeSettings(themeSetings: ThemeSettingsType) {

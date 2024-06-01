@@ -12,6 +12,7 @@ const base = css`
 export const baseSm = css`
   ${base}
   font-size: ${({ theme }) => theme.fonts.size.sm};
+  line-height: ${({ theme }) => theme.fonts.lineHeight.base};
 `;
 
 export default base;

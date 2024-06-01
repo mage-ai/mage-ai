@@ -1,0 +1,50 @@
+import { css } from 'styled-components';
+
+export const transition = css`
+  transition: 0.2s all ease-in-out;
+`;
+
+export const gradient = (angle: number, startColor: string, endColor: string) => css`
+    background-image: -webkit-linear-gradient(
+    ${angle},
+    ${startColor} 0%,
+    ${endColor} 100%
+  );
+  background-image: -moz-linear-gradient(
+    ${angle},
+    ${startColor} 0%,
+    ${endColor} 100%
+  );
+  background-image: -o-linear-gradient(
+    ${angle},
+    ${startColor} 0%,
+    ${endColor} 100%
+  );
+  background-image: linear-gradient(
+    ${angle},
+    ${startColor} 0%,
+    ${endColor} 100%
+  );
+`;
+
+export const outlineHover = (defaultColor?: string, outlineColor?: string) => css`
+  &:hover {
+    box-shadow:
+      0 0 0 ${({ theme }) => theme.borders.outline.offset}
+      ${(({ theme }) => defaultColor || theme.colors.backgrounds.button.base)},
+      0 0 0 ${({ theme }) => theme.borders.outline.width}
+      ${(({ theme }) => outlineColor || theme.colors.purple)};
+  }
+
+  &:focus {
+    box-shadow:
+      0 0 0 ${({ theme }) => theme.borders.outline.offset}
+      ${(({ theme }) => defaultColor || theme.colors.backgrounds.button.base)},
+      0 0 0 ${({ theme }) => theme.borders.outline.width}
+      ${(({ theme }) => outlineColor || theme.colors.purple)};
+  }
+
+  &:active {
+    box-shadow: none;
+  }
+`;

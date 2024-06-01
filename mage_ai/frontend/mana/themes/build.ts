@@ -20,6 +20,17 @@ function unflatten(mapping: { [key: string]: ModeType }): any {
   }, {} as any);
 }
 
+function extractValueInMode(mode: ModeEnum, mapping: ModeType | { [key: string]: ModeType | number | string }) {
+  return Object.entries(mapping).reduce((acc, [key, value]) => ({
+    ...acc,
+    [key]: typeof value === 'object'
+      ? Object.keys(value as object).some(key => key === mode)
+        ? value[mode]
+        : extractValueInMode(mode, value)
+      : value,
+  }), {});
+}
+
 interface CombinerType {
   colors: ColorsType;
   combine: (
@@ -63,6 +74,7 @@ class Combiner implements CombinerType {
             : value
           : value,
       }), {}),
+      ...extractValueInMode(this.mode, Colors),
       ...(this.theme?.colors || {}),
     } as ColorsType;
 
@@ -80,14 +92,7 @@ class Combiner implements CombinerType {
       | { [key: string]: ModeType },
     overrideThemeKey?: string,
   ): ValueMappingType {
-    const values = Object.entries(modeValues(this.colors)).reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: typeof value === 'object'
-        ? Object.keys(value as object).some(mode => this.mode === mode)
-          ? value[this.mode]
-          : value
-        : value,
-    }), {});
+    const values = extractValueInMode(this.mode, modeValues(this.colors));
 
     return {
       ...(values || {}),

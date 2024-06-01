@@ -1,14 +1,7 @@
-import { ColorsType } from './colors';
+import { BackgroundsType as ColorsBackgroundType, ColorsType } from './colors';
 
-export interface BackgroundsType {
-  body: string;
-  button: string;
-}
+export type BackgroundsType = ColorsBackgroundType;
 
 export default function build(colors: ColorsType): BackgroundsType {
-  console.log(colors);
-  return {
-    body: colors.backgrounds.body,
-    button: colors.backgrounds.button,
-  };
+  return colors.backgrounds;
 }
