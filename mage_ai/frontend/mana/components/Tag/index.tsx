@@ -2,18 +2,31 @@ import React from 'react';
 import styled from 'styled-components';
 import { baseSm } from '../../styles/typography';
 
-const TagStyled = styled.div`
-  ${baseSm}
+type StyleProps = {
+  inverted?: boolean;
+  passthrough?: boolean;
+  secondary?: boolean;
+};
 
-  background-color: ${({ theme }) => theme.colors.whiteHi};
+const TagStyled = styled.div<StyleProps>`
+  ${baseSm}
+  background-color: ${({ inverted, secondary, theme }) => inverted
+    ? theme.colors.whiteLo
+    : secondary
+      ? theme.backgrounds.button.base.default
+      : theme.colors.whiteHi
+  };
   border-radius: ${({ theme }) => theme.borders.radius.round};
+  color: ${({ inverted, theme }) => inverted ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
+  cursor: inherit;
   display: inline-block;
   padding: 4px 6px;
+  pointer-events: ${({ passthrough }) => passthrough ? 'inherit' : 'auto'};
 `;
 
-function Tag({ children }: { children: React.ReactNode }) {
+function Tag({ children, ...props }: { children: React.ReactNode } & StyleProps) {
   return (
-    <TagStyled>
+    <TagStyled {...props}>
       {children}
     </TagStyled>
   );

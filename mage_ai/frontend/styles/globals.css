@@ -575,6 +575,13 @@ textarea {
 }
 
 @font-face {
+  font-family: 'Fira Code Retina';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Retina.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
   font-family: 'Fira Code Regular Italic';
   src: url('/fonts/Fira_Code/ttf/FiraCode-RegularItalic.ttf') format('truetype');
   font-weight: 400;
@@ -608,6 +615,49 @@ textarea {
   font-weight: 700;
   font-style: italic;
 }
+
+@font-face {
+  font-family: 'Inter Light';
+  src: url('/fonts/Inter/Inter-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Regular';
+  src: url('/fonts/Inter/Inter-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Medium';
+  src: url('/fonts/Inter/Inter-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter SemiBold';
+  src: url('/fonts/Inter/Inter-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Bold';
+  src: url('/fonts/Inter/Inter-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Black';
+  src: url('/fonts/Inter/Inter-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
 
 @font-face {
   font-family: 'codicon';

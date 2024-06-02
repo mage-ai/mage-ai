@@ -4,21 +4,21 @@ type ClientOnlyProps = {
   children: any;
 };
 
-// Checks if rendering is being done on server in order to prevent hydration issues
 export function ClientOnly({
   children,
 }: ClientOnlyProps) {
+  // Checks if rendering is being done on server in order to prevent hydration issues
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  if (!hasMounted) {
-    return <div />;
-  }
-
-  return children;
+  return (
+    <>
+      {hasMounted && children}
+    </>
+  );
 }
 
 export default ClientOnly;

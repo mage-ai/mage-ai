@@ -27,20 +27,28 @@ export const gradient = (angle: number, startColor: string, endColor: string) =>
   );
 `;
 
-export const outlineHover = (defaultColor?: string, outlineColor?: string) => css`
+export const outlineHover = ({
+  borderColor,
+  outlineColor,
+  outlineWidth,
+}: {
+  borderColor?: string;
+  outlineColor?: string;
+  outlineWidth?: number;
+}) => css`
   &:hover {
     box-shadow:
       0 0 0 ${({ theme }) => theme.borders.outline.offset}
-      ${(({ theme }) => defaultColor || theme.colors.backgrounds.button.base)},
-      0 0 0 ${({ theme }) => theme.borders.outline.width}
+      ${(({ theme }) => borderColor || theme.colors.backgrounds.button.base)},
+      0 0 0 ${({ theme }) => !outlineWidth ? theme.borders.outline.width : (String(outlineWidth) + 'px')}
       ${(({ theme }) => outlineColor || theme.colors.purple)};
   }
 
   &:focus {
     box-shadow:
       0 0 0 ${({ theme }) => theme.borders.outline.offset}
-      ${(({ theme }) => defaultColor || theme.colors.backgrounds.button.base)},
-      0 0 0 ${({ theme }) => theme.borders.outline.width}
+      ${(({ theme }) => borderColor || theme.colors.backgrounds.button.base)},
+      0 0 0 ${({ theme }) => !outlineWidth ? theme.borders.outline.width : (String(outlineWidth) + 'px')}
       ${(({ theme }) => outlineColor || theme.colors.purple)};
   }
 

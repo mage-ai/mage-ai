@@ -18,11 +18,4 @@ module.exports = removeImports({
   // (including `useState`, `useEffect`, and others) to help identify side effects.
   // This does not happen in production builds.
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.css$/,
-      use: 'raw-loader',
-    });
-    return config;
-  },
 });

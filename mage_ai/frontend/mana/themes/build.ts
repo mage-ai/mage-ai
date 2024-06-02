@@ -6,6 +6,7 @@ import backgrounds, { BackgroundsType } from './backgrounds';
 import borders, { BordersType } from './borders';
 import buttons, { ButtonsType } from './buttons';
 import fonts, { FontsType } from './fonts';
+import margin, { MarginType } from './margin';
 import padding, { PaddingType } from './padding';
 
 function unflatten(mapping: { [key: string]: ModeType }): any {
@@ -20,7 +21,7 @@ function unflatten(mapping: { [key: string]: ModeType }): any {
   }, {} as any);
 }
 
-function extractValueInMode(mode: ModeEnum, mapping: ModeType | { [key: string]: ModeType | number | string }) {
+function extractValueInMode(mode: ModeEnum, mapping: any) {
   return Object.entries(mapping).reduce((acc, [key, value]) => ({
     ...acc,
     [key]: typeof value === 'object'
@@ -66,14 +67,6 @@ class Combiner implements CombinerType {
 
 
     this.colors = {
-      ...Object.entries(Colors).reduce((acc, [key, value]) => ({
-        ...acc,
-        [key]: typeof value === 'object'
-          ? Object.keys(value as object).some(mode => this.mode === mode)
-            ? value[this.mode]
-            : value
-          : value,
-      }), {}),
       ...extractValueInMode(this.mode, Colors),
       ...(this.theme?.colors || {}),
     } as ColorsType;
@@ -88,6 +81,7 @@ class Combiner implements CombinerType {
       | ButtonsType
       | ColorsType
       | FontsType
+      | MarginType
       | PaddingType
       | { [key: string]: ModeType },
     overrideThemeKey?: string,
@@ -109,6 +103,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     borders,
     buttons,
     fonts,
+    margin,
     padding,
   }).reduce((acc, [key, value]) => ({
     ...acc,

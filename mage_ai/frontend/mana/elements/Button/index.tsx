@@ -1,25 +1,28 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
-import buttons from '../../styles/buttons';
+
 import Tag from '../../components/Tag';
+import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 
 type ButtonStyleProps = {
   anchor?: boolean;
   children: React.ReactNode;
-};
+  small?: boolean;
+} & StyleProps;
 
 type ButtonProps = {
   tag?: string;
 } & ButtonStyleProps & WithLoggingProps;
 
 const CSS = css<ButtonStyleProps>`
-  ${buttons}
-
+  align-items: center;
   column-gap: 6px;
   display: grid;
   grid-auto-columns: min-content;
   grid-auto-flow: column;
+
+  ${({ small }) => small ? buttonsSm : buttons}
 `;
 
 const ButtonStyled = styled.button<ButtonStyleProps>`
@@ -32,20 +35,25 @@ const AStyled = styled.a<ButtonStyleProps>`
 
 function Button({
   anchor,
+  basic,
   children,
-  onClick,
+  primary,
+  secondary,
   tag,
+  ...props
 }: ButtonProps) {
   const HTMLTag = anchor ? AStyled : ButtonStyled;
 
   return (
-    <HTMLTag onClick={onClick}>
-      <div>
-        {children}
-      </div>
-      {tag && <Tag>{tag}</Tag>}
+    <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary}>
+      {children}
+      {tag && <Tag inverted={primary || secondary} passthrough secondary={basic}>{tag}</Tag>}
     </HTMLTag>
   );
 }
 
-export default useWithLogging(Button);
+function ButtonWrapper(props: ButtonProps) {
+  return useWithLogging(Button)(props);
+}
+
+export default ButtonWrapper;
