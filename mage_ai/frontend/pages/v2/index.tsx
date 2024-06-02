@@ -299,6 +299,7 @@ function Home({ data }: { data: any }) {
                 </Col>
 
                 <Col md="content">
+                  // @ts-ignore
                   <Icon />
                 </Col>
               </Row>

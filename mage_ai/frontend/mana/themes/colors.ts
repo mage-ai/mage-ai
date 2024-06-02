@@ -78,6 +78,21 @@ const Colors = {
     [ModeEnum.LIGHT]: '#000000',
     [ModeEnum.MODE3]: '#000000',
   },
+  blackLo: {
+    [ModeEnum.DARK]: '#00000033',
+    [ModeEnum.LIGHT]: '#00000033',
+    [ModeEnum.MODE3]: '#00000033',
+  },
+  blackMd: {
+    [ModeEnum.DARK]: '#000000B3',
+    [ModeEnum.LIGHT]: '#000000B3',
+    [ModeEnum.MODE3]: '#000000B3',
+  },
+  blackHi: {
+    [ModeEnum.DARK]: '#000000D9',
+    [ModeEnum.LIGHT]: '#000000D9',
+    [ModeEnum.MODE3]: '#000000D9',
+  },
   blue: {
     [ModeEnum.DARK]: '#0500FF',
     [ModeEnum.LIGHT]: '#0500FF',
@@ -265,9 +280,21 @@ const ColorsDerived = {
           [ModeEnum.MODE3]: '#28333D',
         },
         hover: convert({
-          [ModeEnum.DARK]: 'grayHi',
-          [ModeEnum.LIGHT]: 'grayHi',
-          [ModeEnum.MODE3]: 'grayHi',
+          [ModeEnum.DARK]: 'grayMd',
+          [ModeEnum.LIGHT]: 'grayMd',
+          [ModeEnum.MODE3]: 'grayMd',
+        }),
+      },
+      basic: {
+        default: {
+          [ModeEnum.DARK]: 'transparent',
+          [ModeEnum.LIGHT]: 'transparent',
+          [ModeEnum.MODE3]: 'transparent',
+        },
+        hover: convert({
+          [ModeEnum.DARK]: 'whiteHi',
+          [ModeEnum.LIGHT]: 'blackHi',
+          [ModeEnum.MODE3]: 'blackHi',
         }),
       },
       primary: {

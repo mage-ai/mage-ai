@@ -30,7 +30,7 @@ const shared = css<StyleProps>`
       : secondary
         ? theme.colors.backgrounds.button.secondary.default
         : basic
-          ? 'transparent'
+          ? theme.colors.backgrounds.button.basic.default
           : theme.colors.backgrounds.button.base.default};
   border-radius: ${({ theme }) => theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
@@ -53,7 +53,7 @@ const shared = css<StyleProps>`
         : secondary
           ? theme.colors.backgrounds.button.secondary.hover
           : basic
-            ? 'transparent'
+            ? theme.colors.backgrounds.button.basic.hover
             : theme.colors.backgrounds.button.base.hover};
     cursor: pointer;
   }
