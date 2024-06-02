@@ -1,9 +1,13 @@
+export enum MarginEnum {
+  BASE = 14,
+}
+
 export interface MarginType {
   base: number;
 }
-
 export default function build(): MarginType {
+
   return {
-    base: 14,
+    base: MarginEnum.BASE,
   };
 }

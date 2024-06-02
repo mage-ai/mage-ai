@@ -3,14 +3,21 @@ import styled from 'styled-components';
 import borders from '../../styles/borders';
 import padding from '../../styles/padding';
 
-const SectionStyled = styled.section`
+type SectionProps = {
+  children: React.ReactNode;
+  stretch?: boolean;
+};
+
+const SectionStyled = styled.section<SectionProps>`
   ${borders}
   ${padding}
+
+  height: ${({ stretch }) => stretch ? '100%' : 'inerhit'};
 `;
 
-function Section({ children }: { children: React.ReactNode }) {
+function Section({ children, ...props }: SectionProps) {
   return (
-    <SectionStyled>
+    <SectionStyled {...props}>
       {children}
     </SectionStyled>
   );

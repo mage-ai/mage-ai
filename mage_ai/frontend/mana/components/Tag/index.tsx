@@ -10,6 +10,7 @@ type StyleProps = {
 
 const TagStyled = styled.div<StyleProps>`
   ${baseSm}
+
   background-color: ${({ inverted, secondary, theme }) => inverted
     ? theme.colors.whiteLo
     : secondary
@@ -20,6 +21,7 @@ const TagStyled = styled.div<StyleProps>`
   color: ${({ inverted, theme }) => inverted ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
   cursor: inherit;
   display: inline-block;
+  font-family: ${({ theme }) => theme.fonts.family.base.semiBold};
   padding: 4px 6px;
   pointer-events: ${({ passthrough }) => passthrough ? 'inherit' : 'auto'};
 `;

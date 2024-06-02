@@ -1,12 +1,13 @@
 import Section from '@mana/elements/Section';
 import { LayoutVersionEnum } from '@utils/layouts';
-import { Row, Col, Visible, Hidden } from 'react-grid-system';
 
 import ClientOnly from '@hocs/ClientOnly';
 import Button from '@mana/elements/Button';
 import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
 import Divider from '@mana/elements/Divider';
+import Grid, { Row, Col } from '@mana/components/Grid';
+import FlexContainer from '@oracle/components/FlexContainer';
 
 function Home({ data }: { data: any }) {
   const text = `
@@ -14,172 +15,202 @@ function Home({ data }: { data: any }) {
     Take a look and let me know if anything works,
     you can also ask me to simply choose the best one.
   `;
+
+  const buttonProps = {
+    logEvent: { page: 'home', uuid: 'testing' },
+    onClick: () => console.log('Clicked!'),
+    tag: data?.pipelines?.[0]?.type,
+  };
+
   return (
-    <>
+    <Grid>
       <Divider />
 
-      <Button
-        basic
-        logEvent={{ page: 'home', uuid: 'testing' }}
-        onClick={() => console.log('Clicked!')}
-        small
-        tag={data?.pipelines?.[0]?.type}
-      >
-        Add
-      </Button>
+      <Row>
+        <Col>
+          <Row>
+            <Col>
+              <Text>
+                Your current screen class is: &nbsp;
+              </Text>
+            </Col>
 
-      <Divider short />
+            <Col>
+              <ClientOnly>
+                <Tag secondary>
+                  Hello
+                </Tag>
+              </ClientOnly>
 
-      <Button
-        logEvent={{ page: 'home', uuid: 'testing' }}
-        onClick={() => console.log('Clicked!')}
-        small
-        tag={data?.pipelines?.[0]?.type}
-      >
-        Add
-      </Button>
+              <Divider short />
+            </Col>
+          </Row>
+        </Col>
+        <Col>
+          <Button
+            {...buttonProps}
+            primary
+          >
+            Add
+          </Button>
+        </Col>
+        <Col>
+          <Button
+            {...buttonProps}
+            secondary
+          >
+            Add
+          </Button>
+        </Col>
+      </Row>
 
-      <Divider short />
+      <Divider />
+
+      <Row>
+        <Col>
+          <Section>
+            <Row align="center" justify="between">
+              <Col md={2}>
+                <Text light >{text}</Text>
+              </Col>
+              <Col md={5}>
+                <Text >{text}</Text>
+              </Col>
+              <Col md={3}>
+                <Text italic >{text}</Text>
+              </Col>
+            </Row>
+            <Row align="stretch" justify="center">
+              <Col md={3}>
+                <Text medium >{text}</Text>
+              </Col>
+              <Col md={2}>
+                <Text  semiBold>{text}</Text>
+              </Col>
+              <Col md={7}>
+                <Row align="center" direction="column" style={{ height: 600 }}>
+                  <Col>
+                    <Section><Text light monospace>{text}</Text></Section>
+                  </Col>
+                  <Col>
+                    <Section><Text monospace>{text}</Text></Section>
+                  </Col>
+                  <Col>
+                    <Section><Text italic monospace>{text}</Text></Section>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+            <Row align="stretch" justify="around">
+              <Col md={4}>
+                <Section stretch><Text bold >{text}</Text></Section>
+              </Col>
+              <Col md={3}>
+                <Section stretch><Text bold italic >{text}</Text></Section>
+              </Col>
+              <Col md={2}>
+                <Section stretch><Text black >{text}</Text></Section>
+              </Col>
+            </Row>
+          </Section>
+        </Col>
+      </Row>
+
+      <Divider />
 
       <Section>
-        <Text>
-          Your current screen class is: &nbsp;
+        <Row nogutter>
+          <Col offset={{ md: 8 }}>
+            <Text medium monospace>{text}</Text>
+          </Col>
+        </Row>
+        <Divider short />
+        <Row align="center">
+          <Col md="content">
+            <Text monospace semiBold>Stretch to fit the content</Text>
+          </Col>
+          <Col>
+            <Button
+            {...buttonProps}
+            primary
+          >
+              Add
+            </Button>
+          </Col>
+        </Row>
 
-          <ClientOnly>
-            <Tag secondary>
-              <Visible xs><strong>xs</strong></Visible>
-              <Visible sm><strong>sm</strong></Visible>
-              <Visible md><strong>md</strong></Visible>
-              <Visible lg><strong>lg</strong></Visible>
-              <Visible xl><strong>xl</strong></Visible>
-              <Visible xxl><strong>xxl</strong></Visible>
-            </Tag>
-          </ClientOnly>
-        </Text>
+        <Divider short />
 
-        <Divider />
-
-        <Text light >{text}</Text>
-        <Divider short />
-        <Text >{text}</Text>
-        <Divider short />
-        <Text italic >{text}</Text>
-        <Divider short />
-        <Text medium >{text}</Text>
-        <Divider short />
-        <Text  semiBold>{text}</Text>
-        <Divider short />
-        <Text bold >{text}</Text>
-        <Divider short />
-        <Text bold italic >{text}</Text>
-        <Divider short />
-        <Text black >{text}</Text>
-
-        <Divider />
-
-        <Text light monospace>{text}</Text>
-        <Divider short />
-        <Text monospace>{text}</Text>
-        <Divider short />
-        <Text italic monospace>{text}</Text>
-        <Divider short />
-        <Text medium monospace>{text}</Text>
-        <Divider short />
-        <Text monospace semiBold>{text}</Text>
-        <Divider short />
-        <Text bold monospace>{text}</Text>
-        <Divider short />
-        <Text bold italic monospace>{text}</Text>
+        <Row align="center">
+          <Col md={2} order={{ md: 3, lg: 1 }}>
+            <Text monospace semiBold>{text}</Text>
+          </Col>
+          <Col md={4} order={{ md: 2, lg: 2 }}>
+            <Text bold monospace>{text}</Text>
+          </Col>
+          <Col md={6} order={{ md: 1, lg: 3 }}>
+            <Text bold italic monospace>{text}</Text>
+          </Col>
+        </Row>
       </Section>
 
-      <Section>
+      <Row align="center">
+        <Col>
+          <Section>
+            <Row align="center">
+              <Col md={6}>
+                <Button {...buttonProps} primary tag="normal">Primary</Button>
+              </Col>
+              <Col md={6}>
+                <Section>
+                  <Row align="center" justify="center" style={{ height: 400 }}>
+                    <Col md={12}>
+                      <FlexContainer justifyContent="center">
+                        <Button {...buttonProps} primary small tag="small">Primary</Button>
+                      </FlexContainer>
+                    </Col>
+                    <Col md={12}>
+                      <FlexContainer justifyContent="center">
+                        <Button {...buttonProps} secondary tag="small">Secondary</Button>
+                      </FlexContainer>
+                    </Col>
+                    <Col md={12}>
+                      <FlexContainer justifyContent="center">
+                        <Button {...buttonProps} tag="small">Standard</Button>
+                      </FlexContainer>
+                    </Col>
+                    <Col md={12}>
+                      <FlexContainer justifyContent="center">
+                        <Button {...buttonProps} basic tag="small">Basic</Button>
+                      </FlexContainer>
+                    </Col>
+                  </Row>
+                </Section>
+              </Col>
+            </Row>
+          </Section>
+        </Col>
 
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          primary
-          tag="normal"
-        >
-          Primary
-        </Button>
+        <Col>
+          <Section>
+            <Row justify="center">
+              <Col md={5}>
+                <Button {...buttonProps} secondary tag="normal">Secondary</Button>
+              </Col>
+              <Col md={5}>
+                <Button {...buttonProps} tag="normal">Standard</Button>
+              </Col>
+            </Row>
 
-        <Divider short />
+            <Divider />
 
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          primary
-          small
-          tag="small"
-        >
-          Primary
-        </Button>
-
-        <Divider />
-
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          secondary
-          tag="normal"
-        >
-          Secondary
-        </Button>
-
-        <Divider short />
-
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          secondary
-          tag="small"
-        >
-          Secondary
-        </Button>
-
-        <Divider />
-
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          tag="normal"
-        >
-          Standard
-        </Button>
-
-        <Divider short />
-
-        <Button
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          tag="small"
-        >
-          Standard
-        </Button>
-
-        <Divider />
-
-        <Button
-          basic
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          tag="normal"
-        >
-          Basic
-        </Button>
-
-        <Divider short />
-
-        <Button
-          basic
-          logEvent={{ page: 'home', uuid: 'testing' }}
-          onClick={() => console.log('Clicked!')}
-          tag="small"
-        >
-          Basic
-        </Button>
-      </Section>
-    </>
+            <Section>
+              <Button {...buttonProps} basic tag="normal">Basic</Button>
+            </Section>
+          </Section>
+        </Col>
+      </Row>
+    </Grid>
   );
 }
 
