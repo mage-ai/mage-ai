@@ -52,9 +52,9 @@ import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
 // Pro
-import ProLayout from '@components/Pro/Layout';
-import ProThemeType from '@mana/themes/interfaces';
-import ProHead from '@mana/elements/Head';
+import V2Layout from '@components/V2/Layout';
+import V2ThemeType from '@mana/themes/interfaces';
+import V2Head from '@mana/elements/Head';
 import { LayoutVersionEnum } from '@utils/layouts';
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
@@ -301,19 +301,19 @@ function MyApp(props: MyAppProps & AppProps) {
     // @ts-ignore
     const el = <Component {...pageProps} />;
 
-    if (LayoutVersionEnum.PRO === version) {
+    if (LayoutVersionEnum.V2 === version) {
       return (
-        <ProLayout>
+        <V2Layout>
           {el}
-        </ProLayout>
+        </V2Layout>
       );
     }
     return el;
   }, [Component, pageProps, version]);
 
   const themeMemo = useMemo(() => {
-    if (LayoutVersionEnum.PRO === version) {
-      return getTheme() as ProThemeType;
+    if (LayoutVersionEnum.V2 === version) {
+      return getTheme() as V2ThemeType;
     }
 
     return Object.assign(
@@ -323,7 +323,7 @@ function MyApp(props: MyAppProps & AppProps) {
   }, [themeProps?.currentTheme, currentTheme, version]);
 
   const head = useMemo(() => {
-    const HeadEl = LayoutVersionEnum.PRO === version ? ProHead : Head;
+    const HeadEl = LayoutVersionEnum.V2 === version ? V2Head : Head;
 
     return (
       <HeadEl

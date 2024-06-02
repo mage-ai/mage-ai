@@ -1,3 +1,3 @@
 export enum LayoutVersionEnum {
-  PRO = 'pro',
+  V2 = 'v2',
 }

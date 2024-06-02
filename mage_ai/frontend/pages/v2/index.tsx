@@ -190,7 +190,7 @@ export async function getServerSideProps() {
   return {
     props: {
       data,
-      version: LayoutVersionEnum.PRO,
+      version: LayoutVersionEnum.V2,
     },
   };
 }
