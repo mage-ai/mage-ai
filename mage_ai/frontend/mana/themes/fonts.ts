@@ -9,6 +9,7 @@ type FontFamilyType = {
   medium: string;
   regular: string;
   regularItalic?: string;
+  retina?: string;
   semiBold: string;
 };
 
@@ -55,14 +56,14 @@ export default function build(colors: ColorsType): FontsType {
         semiBold: 'Inter SemiBold, sans-serif',
       },
       monospace: {
-        black: 'Fira Code Bold,  monospace',
-        bold: 'Fira Code Bold,  monospace',
-        boldItalic: 'Fira Code Bold Italic,  monospace',
-        light: 'Fira Code Light,  monospace',
-        medium: 'Fira Code Medium,  monospace',
-        regular: 'Fira Code Retina, Fira Code Regular,  monospace',
-        regularItalic: 'Fira Code Regular Italic,  monospace',
-        semiBold: 'Fira Code SemiBold,  monospace',
+        black: 'Fira Code Bold, monospace',
+        bold: 'Fira Code Bold, monospace',
+        boldItalic: 'Fira Code Bold Italic, monospace',
+        light: 'Fira Code Light, monospace',
+        medium: 'Fira Code Medium, monospace',
+        regular: 'Fira Code Retina, Fira Code Regular, monospace',
+        regularItalic: 'Fira Code Regular Italic, monospace',
+        semiBold: 'Fira Code SemiBold, monospace',
       },
     },
     lineHeight: {

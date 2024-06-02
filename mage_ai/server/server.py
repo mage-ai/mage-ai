@@ -76,6 +76,7 @@ from mage_ai.server.scheduler_manager import (
     scheduler_manager,
 )
 from mage_ai.server.setup import initialize_globals
+from mage_ai.server.static.files import StaticFileHandler
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.terminal_server import (
     MageTermManager,
@@ -259,6 +260,7 @@ def make_app(
             },
         ),
     ]
+    print('WTFFFFFFFFFFF', os.path.join(template_dir, 'monaco-editor'))
     routes_full = routes_base + [
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
@@ -279,27 +281,27 @@ def make_app(
         (r'/event-streams/(?P<uuid>[\w\-\%2f\.]+)', EventStreamHandler),
         (
             r'/_next/static/(.*)',
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {'path': os.path.join(template_dir, '_next', 'static')},
         ),
         (
             r'/fonts/(.*)',
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {'path': os.path.join(template_dir, 'fonts')},
         ),
         (
             r'/images/(.*)',
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {'path': os.path.join(template_dir, 'images')},
         ),
         (
             r'/monaco-editor/(.*)',
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {'path': os.path.join(template_dir, 'monaco-editor')},
         ),
         (
             r'/(favicon.ico)',
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {'path': template_dir},
         ),
         (r'/websocket/', WebSocketServer),

@@ -1,24 +1,59 @@
-export function base({
-  height,
-  fontFamily = 'Fira Code Retina, Fira Code Light',
-  fontSize = 14,
-  fontWeight,
-  language,
-  letterSpacing,
-  lineHeight,
-  lineNumbers,
-  overflowWidgetsDomNode,
-  padding,
-  readOnly,
-  readOnlyMessage,
-  rulers,
-  suggestFontSize,
-  suggestLineHeight,
-  theme,
-  value,
-  width,
-  wordWrapColumn = 100,
-}) {
+import * as monacoEditor from 'monaco-editor';
+
+import ThemeType from '@mana/themes/interfaces';
+
+type IDEConfigurationProps = {
+  dimension?: {
+    height: number;
+    width: number;
+  };
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: number;
+  language?: string;
+  letterSpacing?: number;
+  lineHeight?: number;
+  lineNumbers?: 'on' | 'off' | 'relative' | 'interval';
+  overflowWidgetsDomNode?: HTMLElement;
+  padding?: { top: number; bottom: number };
+  readOnly?: boolean;
+  readOnlyMessage?: string;
+  rulers?: { color: string; column: number }[];
+  suggestFontSize?: number;
+  suggestLineHeight?: number;
+  theme?: string;
+  value?: string;
+  wordWrapColumn?: number;
+  cursorSurroundingLinesStyle?: 'default' | 'all';
+};
+
+export default function base(
+  themeContext: ThemeType,
+  options: IStandaloneEditorConstructionOptions = {} as IStandaloneEditorConstructionOptions,
+): IStandaloneEditorConstructionOptions {
+  const fontSizeInit = parseInt(themeContext.fonts.size.sm);
+  const lineHeightPercentage = parseInt(themeContext.fonts.lineHeight.md) / 100;
+  const {
+    dimension,
+    fontFamily = themeContext.fonts.family.monospace.retina,
+    fontSize = fontSizeInit,
+    fontWeight = themeContext.fonts.weight.regular,
+    language = 'python',
+    letterSpacing,
+    lineHeight = fontSizeInit * lineHeightPercentage,
+    lineNumbers,
+    overflowWidgetsDomNode,
+    padding,
+    readOnly,
+    readOnlyMessage,
+    rulers,
+    suggestFontSize,
+    suggestLineHeight,
+    theme,
+    value,
+    wordWrapColumn = 100,
+  }: IDEConfigurationProps = options;
+
   return {
     acceptSuggestionOnCommitCharacter: true,
     acceptSuggestionOnEnter: 'smart',
@@ -32,26 +67,20 @@ export function base({
     autoIndent: 'advanced',
     // Enable that the editor will install a ResizeObserver to check if its
     // container dom node size has changed.
-    automaticLayout: false,
-    bracketPairColorization: {
-      enabled: true,
-      independentColorPoolPerBracketType: false,
-    },
+    automaticLayout: true,
     codeActionsOnSaveTimeout: 750, // Timeout for running code actions on save.
-    codeLens: true, // Code lens font family. Defaults to editor font family.
+
     codeLensFontFamily: 'inherit',
     codeLensFontSize: 14, // Code lens font size. Default to 90% of the editor font size
-    colorDecorators: true,
+
     colorDecoratorsActivatedOn: 'hover',
     comments: {
       ignoreEmptyLines: true, // Ignore empty lines when inserting line comments.
       // Insert a space after the line comment token and inside the block comments tokens.
       insertSpace: true,
     },
-    contextmenu: true, // Enable custom contextmenu. Defaults to true.
     copyWithSyntaxHighlighting: true,
     cursorBlinking: 'blink',
-    cursorSmoothCaretAnimation: 'on',
     cursorStyle: 'block',
     cursorSurroundingLines: 0,
     // Controls when cursorSurroundingLines should be enforced
@@ -60,10 +89,7 @@ export function base({
     // Controls whether the definition link opens element in the peek widget.
     definitionLinkOpensInPeek: true,
     detectIndentation: true,
-    dimension: {
-      height,
-      width,
-    },
+    dimension,
     // Disable the use of transform: translate3d(0px, 0px, 0px)
     // for the editor margin and lines layers.
     disableLayerHinting: false,
@@ -83,7 +109,6 @@ export function base({
       seedSearchStringFromSelection: 'always',
     },
     fixedOverflowWidgets: true,
-    folding: true,
     foldingHighlight: true,
     foldingImportsByDefault: true,
     foldingMaximumRegions: 5000,
@@ -114,50 +139,10 @@ export function base({
       // "Go to References" action is triggered with the Alt key:
       alternativeReferenceCommand: 'editor.action.findReferences',
     },
-    guides: {
-      bracketPairs: true,
-      bracketPairsHorizontal: true,
-      highlightActiveIndentation: true,
-      indentation: true,
-    },
-    hover: {
-      above: true,
-      delay: 300,
-      enabled: true,
-      hidingDelay: 500,
-      sticky: true,
-    },
-    inlayHints: {
-      enabled: 'on',
-      fontFamily,
-      fontSize,
-      padding: true,
-    },
-    inlineSuggest: {
-      enabled: true,
-      fontFamily,
-      keepOnBlur: true,
-      // Use prefix to only show ghost text if the text to
-      // replace is a prefix of the suggestion text.
-      // Use subword to only show ghost text if the
-      // replace text is a subword of the suggestion text.
-      // Use subwordSmart to only show ghost text if the replace text is a subword of the suggestion
-      // text, but the subword must start after the cursor position.
-      mode: 'subwordSmart',
-      showToolbar: 'always',
-      suppressSuggestions: false,
-    },
     insertSpaces: true,
     language,
     largeFileOptimizations: true,
     letterSpacing,
-    lightbulb: {
-      // Enable the lightbulb code action.
-      // The three possible values are off, on and onCode and the default is onCode.
-      // off disables the code action menu. on shows the code action menu on code and on empty lines.
-      // onCode shows the code action menu on code only.
-      enabled: 'on',
-    },
     // The width reserved for line decorations (in px).
     // Line decorations are placed between line numbers and the editor content.
     // You can pass in a string in the format floating point followed by "ch". e.g. 1.3ch.
@@ -174,19 +159,6 @@ export function base({
     // instead of only at the beginning.
     matchOnWordStartOnly: false,
     maxTokenizationLineLength: 20000,
-    minimap: {
-      autohide: false,
-      enabled: true,
-      maxColumn: 120,
-      renderCharacters: true,
-      scale: 1,
-      sectionHeaderFontSize: 9,
-      showMarkSectionHeaders: true,
-      showRegionSectionHeaders: true,
-      showSlider: 'mouseover',
-      side: 'right',
-      size: 'proportional',
-    },
     // A lot of configurations
     // model
     mouseStyle: 'text', // Controls the cursor style, accepts either 'text' or 'default'.
@@ -196,11 +168,6 @@ export function base({
     multiCursorMergeOverlapping: true,
     multiCursorModifier: 'alt', // ctrlCmd
     multiCursorPaste: 'spread', // full
-    // Enable semantic occurrences highlight.
-    // 'off' disables occurrence highlighting
-    // 'singleFile' triggers occurrence highlighting in the current document
-    // 'multiFile' triggers occurrence highlighting across valid open documents
-    occurrencesHighlight: 'multiFile',
     // Place overflow widgets inside an external DOM node. Defaults to an internal DOM node.
     overflowWidgetsDomNode,
     overviewRulerBorder: true, // Controls if a border should be drawn around the overview ruler.
@@ -220,19 +187,14 @@ export function base({
       other: 'inline',
       strings: 'inline',
     },
-    quickSuggestionsDelay: 5,
     readOnly,
     readOnlyMessage,
-    renderControlCharacters: true, // Controls whether the editor should render control characters
     renderFinalNewline: true,
     // - **'none'**: No line highlighting.
     // - **'gutter'**: Highlights the gutter where the line numbers are displayed.
     // - **'line'**: Highlights the entire line where the cursor is positioned.
     // - **'all'**: Highlights both the gutter and the entire line.
-    renderLineHighlight: 'all',
-    renderLineHighlightOnlyWhenFocus: false,
     renderValidationDecorations: 'on',
-    renderWhitespace: 'all',
     revealHorizontalRightPadding: 30,
     roundedSelection: false,
     // { color, column }[]
@@ -252,7 +214,7 @@ export function base({
       ignoreHorizontalScrollbarInContentHeight: true,
       scrollByPage: true,
       useShadows: false,
-      vertical: 'auto',
+      vertical: 'auto', // auto, hidden, visible
       verticalHasArrows: false,
       verticalScrollbarSize: 10,
       verticalSliderSize: 5,
@@ -260,10 +222,7 @@ export function base({
     selectOnLineNumbers: true,
     selectionClipboard: true,
     selectionHighlight: true,
-    'semanticHighlighting.enabled': true,
     showDeprecated: true,
-    showFoldingControls: 'always',
-    showUnused: true,
     smartSelect: {
       selectLeadingAndTrailingWhitespace: true,
       selectSubwords: true,
@@ -323,7 +282,6 @@ export function base({
     },
     suggestFontSize,
     suggestLineHeight,
-    suggestOnTriggerCharacters: true,
     // `first: Always select the first suggestion in the list.
     // `recentlyUsed: Select the most recently used suggestion from the list.
     // `recentlyUsedByPrefix: Select the most recently used suggestion that matches the current prefix.
@@ -347,5 +305,82 @@ export function base({
     wordWrapColumn,
     wrappingIndent: 'deepIndent', // "none" | "same" | "indent" | "deepIndent"
     wrappingStrategy: 'advanced', // "simple" | "advanced"
+    // Settings that can make the editor lag
+    bracketPairColorization: {
+      enabled: false,
+      independentColorPoolPerBracketType: false,
+    },
+    codeLens: false, // Code lens font family. Defaults to editor font family.
+    colorDecorators: false, // true
+    contextmenu: false, // Enable custom contextmenu. Defaults to true.
+    cursorSmoothCaretAnimation: 'off', // Makes the typing feel delayed
+    folding: false, // Enable code folding. Defaults to true.
+    guides: {
+      bracketPairs: true,
+      bracketPairsHorizontal: true,
+      highlightActiveIndentation: false, // true
+      indentation: false, // true
+    },
+    hover: {
+      above: true,
+      delay: 300,
+      enabled: false, // true
+      hidingDelay: 500,
+      sticky: true,
+    },
+    inlayHints: {
+      enabled: 'off', // 'off' | 'type' | 'all'
+      fontFamily,
+      fontSize,
+      padding: true,
+    },
+    inlineSuggest: {
+      enabled: false, // true
+      fontFamily,
+      keepOnBlur: true,
+      // Use prefix to only show ghost text if the text to
+      // replace is a prefix of the suggestion text.
+      // Use subword to only show ghost text if the
+      // replace text is a subword of the suggestion text.
+      // Use subwordSmart to only show ghost text if the replace text is a subword of the suggestion
+      // text, but the subword must start after the cursor position.
+      mode: 'subwordSmart',
+      showToolbar: 'always',
+      suppressSuggestions: false,
+    },
+    lightbulb: {
+      // Enable the lightbulb code action.
+      // The three possible values are off, on and onCode and the default is onCode.
+      // off disables the code action menu. on shows the code action menu on code and on empty lines.
+      // onCode shows the code action menu on code only.
+      enabled: 'off', // 'on' | 'off' | 'onCode'
+    },
+    minimap: {
+      autohide: false,
+      enabled: false, // true
+      maxColumn: 120,
+      renderCharacters: true,
+      scale: 1,
+      sectionHeaderFontSize: 9,
+      showMarkSectionHeaders: true,
+      showRegionSectionHeaders: true,
+      showSlider: 'mouseover',
+      side: 'right',
+      size: 'proportional',
+    },
+    // Enable semantic occurrences highlight.
+    // 'off' disables occurrence highlighting
+    // 'singleFile' triggers occurrence highlighting in the current document
+    // 'multiFile' triggers occurrence highlighting across valid open documents
+    occurrencesHighlight: 'off',
+    quickSuggestionsDelay: 100, // 5
+    renderControlCharacters: false, // true, Should render control characters
+    renderWhitespace: 'none', // all
+    showFoldingControls: 'mouseover', // 'always'
+    showUnused: false, // true
+    'semanticHighlighting.enabled': false, // true
+    suggestOnTriggerCharacters: false, // true
+    renderLineHighlight: 'line', // 'none' | 'gutter' | 'line' | 'all'
+    renderLineHighlightOnlyWhenFocus: true, // false
   };
 }
