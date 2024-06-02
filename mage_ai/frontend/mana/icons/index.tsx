@@ -7,7 +7,7 @@ function useWithIcon(arrayOfPathProps: any[], iconProps: {
 } = {}, opts?: {
   withoutBaseIcon?: boolean;
 }) {
-  return ({ ...props }: IconProps) => {
+  return (props: IconProps) => {
     const arr = arrayOfPathProps.map(({
       Style,
       ...pathProps
@@ -33,7 +33,7 @@ function useWithIcon(arrayOfPathProps: any[], iconProps: {
     });
 
     if (opts?.withoutBaseIcon) {
-      return arr;
+      return <>{arr}</>;
     }
 
     return (
