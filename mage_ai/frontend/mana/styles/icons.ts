@@ -14,20 +14,28 @@ export type StyleProps = {
 };
 
 const icons = css<StyleProps>`
-  ${({ fill, inverted, theme, useStroke }) => !useStroke && `
-    fill: ${typeof fill !== 'undefined' && fill !== null
-      ? fill
-      : inverted
-      ? theme.colors.icons.inverted
-        : theme.colors.icons.base};
+  ${({ fill, inverted, theme, useStroke }) =>
+    !useStroke &&
+    `
+    fill: ${
+      typeof fill !== 'undefined' && fill !== null
+        ? fill
+        : inverted
+          ? theme.colors.icons.inverted
+          : theme.colors.icons.base
+    };
   `}
 
-  ${({ inverted, stroke, theme, useStroke }) => useStroke && `
-    stroke: ${typeof stroke !== 'undefined' && stroke !== null
-    ? stroke
-      : inverted
-      ? theme.colors.icons.inverted
-        : theme.colors.icons.base};
+  ${({ inverted, stroke, theme, useStroke }) =>
+    useStroke &&
+    `
+    stroke: ${
+      typeof stroke !== 'undefined' && stroke !== null
+        ? stroke
+        : inverted
+          ? theme.colors.icons.inverted
+          : theme.colors.icons.base
+    };
   `}
 `;
 

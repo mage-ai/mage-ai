@@ -310,7 +310,7 @@ function Home({ data }: { data: any }) {
   );
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   const res = await fetch('https://demo.mage.ai/api/pipelines?_limit=1');
   const data = await res.json();
 

@@ -3,7 +3,7 @@ import icons, { StyleProps } from '../styles/icons';
 
 export type IconProps = {
   children?: any;
-  size?: number
+  size?: number;
 } & StyleProps;
 
 export const SVGStyle = styled.svg<IconProps>``;

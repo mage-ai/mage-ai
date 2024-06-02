@@ -35,16 +35,15 @@ const shared = css<StyleProps>`
           : theme.colors.backgrounds.button.base.default};
   border-radius: ${({ theme }) => theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
-    (primary || secondary) ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
-
+    primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
   line-height: ${({ theme }) => theme.fonts.lineHeight.md};
   font-style: ${({ theme }) => theme.fonts.style.base};
 
   font-family: ${({ primary, secondary, theme }) =>
-    (primary || secondary) ? theme.fonts.family.base.bold : theme.fonts.family.base.semiBold};
+    primary || secondary ? theme.fonts.family.base.bold : theme.fonts.family.base.semiBold};
   font-weight: ${({ primary, secondary, theme }) =>
-    (primary || secondary) ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
+    primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
 
   &:hover {
     background-color: ${({ basic, primary, secondary, theme }) =>
