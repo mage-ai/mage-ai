@@ -272,7 +272,7 @@ function Home({ data }: { data: any }) {
                 </Button>
               </Col>
               <Col md={5}>
-                <Button {...buttonProps} tag="normal">
+                <Button Icon={Expired} {...buttonProps} tag="normal">
                   Standard
                 </Button>
               </Col>
@@ -281,7 +281,7 @@ function Home({ data }: { data: any }) {
             <Divider />
 
             <Section>
-              <Button {...buttonProps} basic tag="normal">
+              <Button Icon={Billing} {...buttonProps} basic tag="normal">
                 Basic
               </Button>
             </Section>

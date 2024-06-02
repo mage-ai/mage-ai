@@ -42,7 +42,7 @@ function Button({ anchor, basic, children, primary, secondary, tag, ...props }: 
   return (
     // @ts-ignore
     <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary}>
-      {Icon && <Icon />}
+      {Icon && <Icon inverted={primary || secondary} />}
       {children}
       {tag && (
         <Tag inverted={primary || secondary} passthrough secondary={basic}>
