@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import App, { AppContext, AppProps } from 'next/app';
 import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
@@ -44,15 +39,12 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
 import { getTheme } from '@mana/themes/utils';
-import {
-  gridTheme as gridThemeDefault,
-  theme as stylesTheme,
-} from '@styles/theme';
+import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/theme';
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
 // Pro
-import V2Layout from '@components/V2/Layout';
+import V2Layout from '@components/v2/Layout';
 import V2ThemeType from '@mana/themes/interfaces';
 import V2Head from '@mana/elements/Head';
 import { LayoutVersionEnum } from '@utils/layouts';
@@ -63,7 +55,7 @@ const Banner = dynamic(() => import('@oracle/components/Banner'), { ssr: false }
 
 type AppInternalProps = {
   defaultTitle?: string;
-  pro?: boolean
+  pro?: boolean;
   themeProps?: {
     currentTheme?: any;
   };
@@ -83,27 +75,14 @@ function MyApp(props: MyAppProps & AppProps) {
   const keyMapping = useRef({});
   const keyHistory = useRef([]);
 
-  const {
-    Component,
-    currentTheme,
-    pageProps,
-    router,
-  } = props;
-  const {
-    defaultTitle,
-    themeProps = {},
-    title,
-    version,
-  } = pageProps;
+  const { Component, currentTheme, pageProps, router } = props;
+  const { defaultTitle, themeProps = {}, title, version } = pageProps;
 
-  const {
-    featureEnabled,
-    featureUUIDs,
-  } = useProject();
-  const commandCenterEnabled = useMemo(() => featureEnabled?.(featureUUIDs?.COMMAND_CENTER), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
+  const { featureEnabled, featureUUIDs } = useProject();
+  const commandCenterEnabled = useMemo(
+    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER),
+    [featureEnabled, featureUUIDs],
+  );
 
   const windowIsDefined = typeof window !== 'undefined';
   const isDemoApp = useMemo(() => isDemo(), []);
@@ -146,12 +125,7 @@ function MyApp(props: MyAppProps & AppProps) {
       router.events.off('routeChangeStart', handleRouteChangeStart);
       router.events.off('routeChangeComplete', handleRouteChangeComplete);
     };
-  }, [
-    keyHistory,
-    keyMapping,
-    router.events,
-    savePageHistory,
-  ]);
+  }, [keyHistory, keyMapping, router.events, savePageHistory]);
 
   useEffect(() => {
     const handleState = () => {
@@ -163,10 +137,7 @@ function MyApp(props: MyAppProps & AppProps) {
         commandCenterRootRef?.current?.render(
           <KeyboardContext.Provider value={keyboardContextValue}>
             <ThemeProvider
-              theme={Object.assign(
-                stylesTheme,
-                themeProps?.currentTheme || currentTheme,
-              )}
+              theme={Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme)}
             >
               <GridThemeProvider gridTheme={gridThemeDefault}>
                 <ModalProvider>
@@ -205,21 +176,24 @@ function MyApp(props: MyAppProps & AppProps) {
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   } = useGlobalKeyboardShortcuts(keyMapping, keyHistory);
-  const keyboardContextValue = useMemo(() => ({
-    disableGlobalKeyboardShortcuts,
-    registerOnKeyDown,
-    registerOnKeyUp,
-    setDisableGlobalKeyboardShortcuts,
-    unregisterOnKeyDown,
-    unregisterOnKeyUp,
-  }), [
-    disableGlobalKeyboardShortcuts,
-    registerOnKeyDown,
-    registerOnKeyUp,
-    setDisableGlobalKeyboardShortcuts,
-    unregisterOnKeyDown,
-    unregisterOnKeyUp,
-  ]);
+  const keyboardContextValue = useMemo(
+    () => ({
+      disableGlobalKeyboardShortcuts,
+      registerOnKeyDown,
+      registerOnKeyUp,
+      setDisableGlobalKeyboardShortcuts,
+      unregisterOnKeyDown,
+      unregisterOnKeyUp,
+    }),
+    [
+      disableGlobalKeyboardShortcuts,
+      registerOnKeyDown,
+      registerOnKeyUp,
+      setDisableGlobalKeyboardShortcuts,
+      unregisterOnKeyDown,
+      unregisterOnKeyUp,
+    ],
+  );
 
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
@@ -231,24 +205,22 @@ function MyApp(props: MyAppProps & AppProps) {
     REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
     REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
   );
-  const noValuePermissions = typeof valPermissions === 'undefined'
-    || valPermissions === null
-    || !REQUIRE_USER_PERMISSIONS();
+  const noValuePermissions =
+    typeof valPermissions === 'undefined' || valPermissions === null || !REQUIRE_USER_PERMISSIONS();
 
   const { status } = useStatus({
     delay: 3000,
     pauseFetch: !noValue && !noValuePermissions,
   });
 
-  const requireUserAuthentication =
-    useMemo(() => status?.require_user_authentication, [status]);
-  const requireUserPermissions =
-    useMemo(() => status?.require_user_permissions, [status]);
+  const requireUserAuthentication = useMemo(() => status?.require_user_authentication, [status]);
+  const requireUserPermissions = useMemo(() => status?.require_user_permissions, [status]);
 
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
-    if (noValue &&
+    if (
+      noValue &&
       typeof requireUserAuthentication !== 'undefined' &&
       requireUserAuthentication !== null
     ) {
@@ -259,7 +231,8 @@ function MyApp(props: MyAppProps & AppProps) {
       );
     }
 
-    if (noValuePermissions &&
+    if (
+      noValuePermissions &&
       typeof requireUserPermissions !== 'undefined' &&
       requireUserPermissions !== null
     ) {
@@ -291,22 +264,17 @@ function MyApp(props: MyAppProps & AppProps) {
     windowIsDefined,
   ]);
 
-  const shouldShowCommandCenter =
-    useMemo(() => (!requireUserAuthentication || AuthToken.isLoggedIn()) && commandCenterEnabled, [
-      commandCenterEnabled,
-      requireUserAuthentication,
-    ]);
+  const shouldShowCommandCenter = useMemo(
+    () => (!requireUserAuthentication || AuthToken.isLoggedIn()) && commandCenterEnabled,
+    [commandCenterEnabled, requireUserAuthentication],
+  );
 
   const component = useMemo(() => {
     // @ts-ignore
     const el = <Component {...pageProps} />;
 
     if (LayoutVersionEnum.V2 === version) {
-      return (
-        <V2Layout>
-          {el}
-        </V2Layout>
-      );
+      return <V2Layout>{el}</V2Layout>;
     }
     return el;
   }, [Component, pageProps, version]);
@@ -316,20 +284,14 @@ function MyApp(props: MyAppProps & AppProps) {
       return getTheme() as V2ThemeType;
     }
 
-    return Object.assign(
-      stylesTheme,
-      themeProps?.currentTheme || currentTheme,
-    );
+    return Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme);
   }, [themeProps?.currentTheme, currentTheme, version]);
 
   const head = useMemo(() => {
     const HeadEl = LayoutVersionEnum.V2 === version ? V2Head : Head;
 
     return (
-      <HeadEl
-        defaultTitle={defaultTitle}
-        title={title}
-      >
+      <HeadEl defaultTitle={defaultTitle} title={title}>
         <meta
           content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
           name="viewport"
@@ -341,9 +303,7 @@ function MyApp(props: MyAppProps & AppProps) {
   return (
     <>
       <KeyboardContext.Provider value={keyboardContextValue}>
-        <ThemeProvider
-          theme={themeMemo}
-        >
+        <ThemeProvider theme={themeMemo}>
           <GridThemeProvider gridTheme={gridThemeDefault}>
             <ModalProvider>
               <SheetProvider>
@@ -377,9 +337,7 @@ function MyApp(props: MyAppProps & AppProps) {
         </ThemeProvider>
       </KeyboardContext.Provider>
 
-      {isDemoApp && (
-        <GoogleAnalytics gaId={DEMO_GA_MEASUREMENT_ID} />
-      )}
+      {isDemoApp && <GoogleAnalytics gaId={DEMO_GA_MEASUREMENT_ID} />}
     </>
   );
 }

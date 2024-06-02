@@ -1,10 +1,4 @@
-import Document, {
-  DocumentContext,
-  Head,
-  Html,
-  Main,
-  NextScript,
-} from 'next/document';
+import Document, { DocumentContext, Head, Html, Main, NextScript } from 'next/document';
 import { BaseCSS } from 'styled-bootstrap-grid';
 import { ServerStyleSheet } from 'styled-components';
 
@@ -17,7 +11,7 @@ export default class MyDocument extends Document {
     try {
       ctx.renderPage = () =>
         originalRenderPage({
-          enhanceApp: (App) => (props) =>
+          enhanceApp: App => props =>
             sheet.collectStyles(
               <>
                 <BaseCSS />

@@ -8,18 +8,12 @@ type HeadProps = {
   title?: string;
 };
 
-const Head = ({
-  children,
-  defaultTitle = 'Mage Pro',
-  title,
-}: HeadProps) => {
+const Head = ({ children, defaultTitle = 'Mage Pro', title }: HeadProps) => {
   const theme = useContext(ThemeContext);
 
   return (
     <NextHead>
-      <title>
-        {title ? `${title} | ${defaultTitle}` : defaultTitle}
-      </title>
+      <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
 
       <link href="/favicon-pro.ico" rel="icon" />
 

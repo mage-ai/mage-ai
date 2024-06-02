@@ -3,11 +3,7 @@ import Col from './Col';
 import Row from './Row';
 
 function Grid({ children }: { children: React.ReactNode }) {
-  return (
-    <Container fluid>
-      {children}
-    </Container>
-  );
+  return <Container fluid>{children}</Container>;
 }
 
 export { Col, Row };

@@ -12,11 +12,15 @@ export const DividerStyled = styled.div<DividerProps>`
   margin-bottom: ${({ theme }) => theme.margin.base}px;
   margin-top: ${({ theme }) => theme.margin.base}px;
 
-  ${({ short }) => short && `
+  ${({ short }) =>
+    short &&
+    `
     width: ${UNIT * 20}px;
   `}
 
-  ${({ short }) => !short && `
+  ${({ short }) =>
+    !short &&
+    `
     width: 100%;
   `}
 `;

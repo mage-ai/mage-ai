@@ -16,20 +16,23 @@ export type WithLoggingProps = {
 };
 
 const useWithLogging = <P extends object>(Component: ComponentType<P>) => {
-  const WrappedComponent: React.FC<P & WithLoggingProps> = (props) => {
+  const WrappedComponent: React.FC<P & WithLoggingProps> = props => {
     const { logEvent, onClick, ...restProps } = props;
 
-    const handleClick = useCallback((event: React.MouseEvent) => {
-      console.log('Logging event', {
-        action: 'click',
-        component: Component.displayName || Component.name || 'Unknown',
-        ...logEvent,
-      });
+    const handleClick = useCallback(
+      (event: React.MouseEvent) => {
+        console.log('Logging event', {
+          action: 'click',
+          component: Component.displayName || Component.name || 'Unknown',
+          ...logEvent,
+        });
 
-      if (onClick) {
-        onClick(event);
-      }
-    }, [logEvent, onClick]);
+        if (onClick) {
+          onClick(event);
+        }
+      },
+      [logEvent, onClick],
+    );
 
     return <Component {...(restProps as P)} onClick={handleClick} />;
   };

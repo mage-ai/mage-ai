@@ -11,10 +11,13 @@ import padding, { PaddingType } from './padding';
 
 function unflatten(mapping: { [key: string]: ModeType }): any {
   return Object.entries(mapping).reduce((acc, [key, modeValues]) => {
-    const values = Object.entries(modeValues).reduce((acc2, [mode, color]) => ({
-      ...acc2,
-      [mode]: Colors[color][mode],
-    }), {});
+    const values = Object.entries(modeValues).reduce(
+      (acc2, [mode, color]) => ({
+        ...acc2,
+        [mode]: Colors[color][mode],
+      }),
+      {},
+    );
     const obj = setNested(acc, key, values);
 
     return mergeDeep(acc, obj);
@@ -22,14 +25,18 @@ function unflatten(mapping: { [key: string]: ModeType }): any {
 }
 
 function extractValueInMode(mode: ModeEnum, mapping: any) {
-  return Object.entries(mapping).reduce((acc, [key, value]) => ({
-    ...acc,
-    [key]: typeof value === 'object'
-      ? Object.keys(value as object).some(key => key === mode)
-        ? value[mode]
-        : extractValueInMode(mode, value)
-      : value,
-  }), {});
+  return Object.entries(mapping).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]:
+        typeof value === 'object'
+          ? Object.keys(value as object).some(key => key === mode)
+            ? value[mode]
+            : extractValueInMode(mode, value)
+          : value,
+    }),
+    {},
+  );
 }
 
 interface CombinerType {
@@ -46,11 +53,7 @@ class Combiner implements CombinerType {
   private theme: ThemeType;
 
   constructor(public themeSettings?: ThemeSettingsType) {
-    const {
-      mode,
-      theme,
-      type,
-    } = themeSettings || {} as ThemeSettingsType;
+    const { mode, theme, type } = themeSettings || ({} as ThemeSettingsType);
 
     this.mode = mode || DEFAULT_MODE;
 
@@ -65,7 +68,6 @@ class Combiner implements CombinerType {
       this.theme = theme;
     }
 
-
     this.colors = {
       ...extractValueInMode(this.mode, Colors),
       ...(this.theme?.colors || {}),
@@ -75,7 +77,10 @@ class Combiner implements CombinerType {
   }
 
   public combine(
-    modeValues: (colors: ColorsType) => ValueMappingType
+    modeValues: (
+      colors: ColorsType,
+    ) =>
+      | ValueMappingType
       | BackgroundsType
       | BordersType
       | ButtonsType
@@ -105,10 +110,13 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     fonts,
     margin,
     padding,
-  }).reduce((acc, [key, value]) => ({
-    ...acc,
-    [key]: combiner.combine(value, key),
-  }), {} as ThemeType);
+  }).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: combiner.combine(value, key),
+    }),
+    {} as ThemeType,
+  );
 
   return {
     ...elements,

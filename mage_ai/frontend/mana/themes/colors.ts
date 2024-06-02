@@ -22,7 +22,11 @@ export interface TypographyColorsType {
 }
 
 interface ColorsDerivedType {
-  backgrounds: BackgroundsType
+  backgrounds: BackgroundsType;
+  icons: {
+    base: string;
+    inverted: string;
+  };
   typography: TypographyColorsType;
 }
 
@@ -237,10 +241,13 @@ const Colors = {
 };
 
 function convert(mapping: ModeType): ModeType {
-  return Object.entries(mapping).reduce((acc, [mode, color]) => ({
-    ...acc,
-    [mode]: Colors[color][mode],
-  }), {} as ModeType);
+  return Object.entries(mapping).reduce(
+    (acc, [mode, color]) => ({
+      ...acc,
+      [mode]: Colors[color][mode],
+    }),
+    {} as ModeType,
+  );
 }
 
 const ColorsDerived = {
@@ -287,8 +294,19 @@ const ColorsDerived = {
           [ModeEnum.MODE3]: 'greenHi',
         }),
       },
-
     },
+  },
+  icons: {
+    base: convert({
+      [ModeEnum.DARK]: 'white',
+      [ModeEnum.LIGHT]: 'black',
+      [ModeEnum.MODE3]: 'gray',
+    }),
+    inverted: convert({
+      [ModeEnum.DARK]: 'black',
+      [ModeEnum.LIGHT]: 'white',
+      [ModeEnum.MODE3]: 'gray',
+    }),
   },
   typography: {
     text: {

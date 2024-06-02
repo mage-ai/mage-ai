@@ -5,26 +5,10 @@ export const transition = css`
 `;
 
 export const gradient = (angle: number, startColor: string, endColor: string) => css`
-    background-image: -webkit-linear-gradient(
-    ${angle},
-    ${startColor} 0%,
-    ${endColor} 100%
-  );
-  background-image: -moz-linear-gradient(
-    ${angle},
-    ${startColor} 0%,
-    ${endColor} 100%
-  );
-  background-image: -o-linear-gradient(
-    ${angle},
-    ${startColor} 0%,
-    ${endColor} 100%
-  );
-  background-image: linear-gradient(
-    ${angle},
-    ${startColor} 0%,
-    ${endColor} 100%
-  );
+  background-image: -webkit-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
+  background-image: -moz-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
+  background-image: -o-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
+  background-image: linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
 `;
 
 export const outlineHover = ({
@@ -39,17 +23,21 @@ export const outlineHover = ({
   &:hover {
     box-shadow:
       0 0 0 ${({ theme }) => theme.borders.outline.offset}
-      ${(({ theme }) => borderColor || theme.colors.backgrounds.button.base)},
-      0 0 0 ${({ theme }) => !outlineWidth ? theme.borders.outline.width : (String(outlineWidth) + 'px')}
-      ${(({ theme }) => outlineColor || theme.colors.purple)};
+        ${({ theme }) => borderColor || theme.colors.backgrounds.button.base},
+      0 0 0
+        ${({ theme }) =>
+          !outlineWidth ? theme.borders.outline.width : String(outlineWidth) + 'px'}
+        ${({ theme }) => outlineColor || theme.colors.purple};
   }
 
   &:focus {
     box-shadow:
       0 0 0 ${({ theme }) => theme.borders.outline.offset}
-      ${(({ theme }) => borderColor || theme.colors.backgrounds.button.base)},
-      0 0 0 ${({ theme }) => !outlineWidth ? theme.borders.outline.width : (String(outlineWidth) + 'px')}
-      ${(({ theme }) => outlineColor || theme.colors.purple)};
+        ${({ theme }) => borderColor || theme.colors.backgrounds.button.base},
+      0 0 0
+        ${({ theme }) =>
+          !outlineWidth ? theme.borders.outline.width : String(outlineWidth) + 'px'}
+        ${({ theme }) => outlineColor || theme.colors.purple};
   }
 
   &:active {

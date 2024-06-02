@@ -24,11 +24,7 @@ const SpanStyled = styled.span<TextProps>`
 function Text({ children, inline, ...props }: TextProps) {
   const HTMLTag = inline ? SpanStyled : TextStyled;
 
-  return (
-    <HTMLTag {...props}>
-      {children}
-    </HTMLTag>
-  );
+  return <HTMLTag {...props}>{children}</HTMLTag>;
 }
 
 export default Text;

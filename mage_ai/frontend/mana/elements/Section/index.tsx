@@ -12,15 +12,11 @@ const SectionStyled = styled.section<SectionProps>`
   ${borders}
   ${padding}
 
-  height: ${({ stretch }) => stretch ? '100%' : 'inerhit'};
+  height: ${({ stretch }) => (stretch ? '100%' : 'inerhit')};
 `;
 
 function Section({ children, ...props }: SectionProps) {
-  return (
-    <SectionStyled {...props}>
-      {children}
-    </SectionStyled>
-  );
+  return <SectionStyled {...props}>{children}</SectionStyled>;
 }
 
 export default Section;

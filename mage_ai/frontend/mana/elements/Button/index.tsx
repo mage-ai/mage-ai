@@ -6,6 +6,7 @@ import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 
 type ButtonStyleProps = {
+  Icon?: ({ ...props }: any) => any;
   anchor?: boolean;
   children: React.ReactNode;
   small?: boolean;
@@ -13,16 +14,17 @@ type ButtonStyleProps = {
 
 type ButtonProps = {
   tag?: string;
-} & ButtonStyleProps & WithLoggingProps;
+} & ButtonStyleProps &
+  WithLoggingProps;
 
 const CSS = css<ButtonStyleProps>`
   align-items: center;
-  column-gap: 6px;
   display: grid;
   grid-auto-columns: min-content;
   grid-auto-flow: column;
 
-  ${({ small }) => small ? buttonsSm : buttons}
+  ${({ small }) => (small ? buttonsSm : buttons)}
+  column-gap: ${({ Icon }) => (Icon ? 8 : 6)}px;
 `;
 
 const ButtonStyled = styled.button<ButtonStyleProps>`
@@ -33,21 +35,20 @@ const AStyled = styled.a<ButtonStyleProps>`
   ${CSS}
 `;
 
-function Button({
-  anchor,
-  basic,
-  children,
-  primary,
-  secondary,
-  tag,
-  ...props
-}: ButtonProps) {
+function Button({ anchor, basic, children, primary, secondary, tag, ...props }: ButtonProps) {
   const HTMLTag = anchor ? AStyled : ButtonStyled;
+  const { Icon } = props;
 
   return (
+    // @ts-ignore
     <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary}>
+      {Icon && <Icon />}
       {children}
-      {tag && <Tag inverted={primary || secondary} passthrough secondary={basic}>{tag}</Tag>}
+      {tag && (
+        <Tag inverted={primary || secondary} passthrough secondary={basic}>
+          {tag}
+        </Tag>
+      )}
     </HTMLTag>
   );
 }

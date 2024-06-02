@@ -24,7 +24,11 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
     themeSettings = JSON.parse(themeSettings);
   }
 
-  if (typeof themeSettings !== 'undefined' && themeSettings !== null && typeof themeSettings !== 'string') {
+  if (
+    typeof themeSettings !== 'undefined' &&
+    themeSettings !== null &&
+    typeof themeSettings !== 'string'
+  ) {
     return themeSettings;
   }
 
