@@ -219,9 +219,12 @@ audio:not([controls]) {
  */
 
 html {
-  font-size: 100%; /* 1 */
-  -webkit-text-size-adjust: 100%; /* 2 */
-  -ms-text-size-adjust: 100%; /* 2 */
+  font-size: 100%;
+  /* 1 */
+  -webkit-text-size-adjust: 100%;
+  /* 2 */
+  -ms-text-size-adjust: 100%;
+  /* 2 */
 }
 
 /**
@@ -247,8 +250,10 @@ a:hover {
  */
 
 img {
-  border: 0; /* 1 */
-  -ms-interpolation-mode: bicubic; /* 2 */
+  border: 0;
+  /* 1 */
+  -ms-interpolation-mode: bicubic;
+  /* 2 */
 }
 
 /**
@@ -284,10 +289,13 @@ fieldset {
  */
 
 legend {
-  border: 0; /* 1 */
+  border: 0;
+  /* 1 */
   padding: 0;
-  white-space: normal; /* 2 */
-  *margin-left: -7px; /* 3 */
+  white-space: normal;
+  /* 2 */
+  *margin-left: -7px;
+  /* 3 */
 }
 
 /**
@@ -301,10 +309,14 @@ button,
 input,
 select,
 textarea {
-  font-size: 100%; /* 1 */
-  margin: 0; /* 2 */
-  vertical-align: baseline; /* 3 */
-  *vertical-align: middle; /* 3 */
+  font-size: 100%;
+  /* 1 */
+  margin: 0;
+  /* 2 */
+  vertical-align: baseline;
+  /* 3 */
+  *vertical-align: middle;
+  /* 3 */
 }
 
 /**
@@ -340,12 +352,16 @@ select {
  */
 
 button,
-html input[type="button"], /* 1 */
+html input[type="button"],
+/* 1 */
 input[type="reset"],
 input[type="submit"] {
-  -webkit-appearance: button; /* 2 */
-  cursor: pointer; /* 3 */
-  *overflow: visible; /* 4 */
+  -webkit-appearance: button;
+  /* 2 */
+  cursor: pointer;
+  /* 3 */
+  *overflow: visible;
+  /* 4 */
 }
 
 /**
@@ -368,10 +384,14 @@ html select[disabled]:hover {
 
 input[type='checkbox'],
 input[type='radio'] {
-  box-sizing: border-box; /* 1 */
-  padding: 0; /* 2 */
-  *height: 13px; /* 3 */
-  *width: 13px; /* 3 */
+  box-sizing: border-box;
+  /* 1 */
+  padding: 0;
+  /* 2 */
+  *height: 13px;
+  /* 3 */
+  *width: 13px;
+  /* 3 */
 }
 
 input[type="radio"] {
@@ -403,9 +423,11 @@ input[type="radio"]:checked {
  */
 
 input[type='search'] {
-  -webkit-appearance: textfield; /* 1 */
+  -webkit-appearance: textfield;
+  /* 1 */
   -moz-box-sizing: content-box;
-  -webkit-box-sizing: content-box; /* 2 */
+  -webkit-box-sizing: content-box;
+  /* 2 */
   box-sizing: content-box;
 }
 
@@ -435,8 +457,10 @@ input::-moz-focus-inner {
  */
 
 textarea {
-  overflow: auto; /* 1 */
-  vertical-align: top; /* 2 */
+  overflow: auto;
+  /* 1 */
+  vertical-align: top;
+  /* 2 */
 }
 
 /**
@@ -551,6 +575,20 @@ textarea {
 }
 
 @font-face {
+  font-family: 'Fira Code Retina';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Retina.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code Regular Italic';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-RegularItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
   font-family: 'Fira Code Medium';
   src: url('/fonts/Fira_Code/ttf/FiraCode-Medium.ttf') format('truetype');
   font-weight: 500;
@@ -572,6 +610,56 @@ textarea {
 }
 
 @font-face {
+  font-family: 'Fira Code Bold Italic';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Inter Light';
+  src: url('/fonts/Inter/Inter-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Regular';
+  src: url('/fonts/Inter/Inter-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Medium';
+  src: url('/fonts/Inter/Inter-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter SemiBold';
+  src: url('/fonts/Inter/Inter-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Bold';
+  src: url('/fonts/Inter/Inter-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Black';
+  src: url('/fonts/Inter/Inter-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+
+@font-face {
   font-family: 'codicon';
   src: url('/monaco-editor/min/vs/base/browser/ui/codicons/codicon/codicon.ttf') format('truetype');
 }
@@ -586,17 +674,21 @@ textarea {
   line-height: 1.125em;
   color: white;
 }
+
 .react-calendar--doubleView {
   width: 700px;
 }
+
 .react-calendar--doubleView .react-calendar__viewContainer {
   display: flex;
   margin: -0.5em;
 }
-.react-calendar--doubleView .react-calendar__viewContainer > * {
+
+.react-calendar--doubleView .react-calendar__viewContainer>* {
   width: 50%;
   margin: 0.5em;
 }
+
 .react-calendar,
 .react-calendar *,
 .react-calendar *:before,
@@ -605,62 +697,78 @@ textarea {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
+
 .react-calendar button {
   margin: 0;
   border: 0;
   outline: none;
 }
+
 .react-calendar button:enabled:hover {
   cursor: pointer;
 }
+
 .react-calendar__navigation {
   display: flex;
   height: 44px;
   margin-bottom: 1em;
 }
+
 .react-calendar__navigation button {
   min-width: 44px;
   background: none;
   border-radius: 8px;
 }
+
 .react-calendar__navigation button:disabled {
   background-color: #f0f0f0;
 }
+
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
   background-color: #4E4E4E;
 }
+
 .react-calendar__navigation__next-button {
   color: white;
 }
+
 .react-calendar__navigation__next2-button {
   color: white;
 }
+
 .react-calendar__navigation__prev-button {
   color: white;
 }
+
 .react-calendar__navigation__prev2-button {
   color: white;
 }
+
 .react-calendar__navigation__label {
   color: white;
 }
+
 .react-calendar__decade-view__years__year {
   color: white;
 }
+
 .react-calendar__year-view__months__month {
   color: white;
 }
+
 .react-calendar__month-view__weekdays {
   text-align: center;
   text-transform: uppercase;
   font-weight: bold;
   font-size: 0.75em;
 }
+
 .react-calendar__month-view__weekdays__weekday {
   padding: 0.5em;
   color: white;
 }
+
 .react-calendar__month-view__weekNumbers .react-calendar__tile {
   display: flex;
   align-items: center;
@@ -668,22 +776,27 @@ textarea {
   font-size: 0.75em;
   font-weight: bold;
 }
+
 .react-calendar__month-view__days__day {
   color: white;
   border-radius: 4px;
 }
+
 .react-calendar__month-view__days__day--weekend {
   color: white;
   border-radius: 4px;
 }
+
 .react-calendar__month-view__days__day--neighboringMonth {
   color: #757575;
 }
+
 .react-calendar__year-view .react-calendar__tile,
 .react-calendar__decade-view .react-calendar__tile,
 .react-calendar__century-view .react-calendar__tile {
   padding: 2em 0.5em;
 }
+
 .react-calendar__tile {
   max-width: 100%;
   padding: 10px 6.6667px;
@@ -692,35 +805,44 @@ textarea {
   line-height: 16px;
   border-radius: 8px;
 }
+
 .react-calendar__tile:disabled {
   background-color: #f0f0f0;
 }
+
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
   background-color: #4E4E4E;
 }
+
 .react-calendar__tile--now {
   background: #232429;
 }
+
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
   background: #232429;
 }
+
 .react-calendar__tile--hasActive {
   background: #006edc;
 }
+
 .react-calendar__tile--hasActive:enabled:hover,
 .react-calendar__tile--hasActive:enabled:focus {
   background: #6cadee;
 }
+
 .react-calendar__tile--active {
   background: #006edc;
   color: white;
 }
+
 .react-calendar__tile--active:enabled:hover,
 .react-calendar__tile--active:enabled:focus {
   background: #1087ff;
 }
+
 .react-calendar--selectRange .react-calendar__tile--hover {
   background-color: #4E4E4E;
 }
