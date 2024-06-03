@@ -9,7 +9,6 @@ const KEY_WORDS = [
   'async',
   'await',
   'break',
-  'class',
   'continue',
   'def',
   'del',
@@ -46,10 +45,16 @@ enum RegexEnum {
   'keyword.class' = '(class)',
   'keyword.from' = '\\b(from)\\b',
   'keyword.import' = '\\b(import)\\b',
-  'literal.none' = '\\b(None)\\b',
   'literal.boolean' = '\\b(True|False)\\b',
+  'literal.none' = '\\b(None)\\b',
   'punctuation.delimiter' = '([:,;])',
   'punctuation.dot' = '(\\.)',
+  'punctuation.comma' = '(,)',
+  'type.class' = '([A-Z][A-Za-z0-9_]+)',
+  'type.class.class_definition' = '([A-Z][A-Za-z0-9_]+)',
+  'type.primitive' = '(?<=[^\w\s]|^)\b[a-z0-9_]*\s*(\(\s*\))?',
+  'type.primitive.class_definition' = '([a-z0-9_]+)',
+  any = '(.)',
   constant = '(\\b[A-Z_0-9]+\\b)',
   namespace = '(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b)',
   type = '(?<=[^\w\s]|^)\b[A-Z][A-Za-z0-9_]*\s*(\(\s*\))?',
@@ -69,6 +74,24 @@ function buildRegexMatchers(keys: string[], opts?: { next?: string }): (RegExp |
 }
 
 const states = {
+  classInheritance1: [
+    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], { next: '@classInheritance1' }),
+    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], { next: '@classInheritance1' }),
+    buildRegexMatchers(['white'], { next: '@classInheritance1' }),
+    buildRegexMatchers(['punctuation.comma'], { next: '@classInheritance1' }),
+    buildRegexMatchers(['type.class.class_definition'], { next: '@resetState' }),
+    buildRegexMatchers(['type.primitive.class_definition'], { next: '@resetState' }),
+  ],
+
+  classInheritance2: [
+    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], { next: '@classInheritance2' }),
+    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], { next: '@classInheritance2' }),
+    buildRegexMatchers(['white'], { next: '@classInheritance2' }),
+    buildRegexMatchers(['punctuation.comma'], { next: '@classInheritance2' }),
+    buildRegexMatchers(['type.primitive.class_definition'], { next: '@resetState' }),
+    buildRegexMatchers(['type.class.class_definition'], { next: '@resetState' }),
+  ],
+
   importNamespaces: [
     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@importNamespaces' }),
     buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], { next: '@resetState' }),
@@ -124,6 +147,7 @@ const states = {
   ],
 };
 
+
 const root = [
   // URL detection within quotes
   [
@@ -156,28 +180,24 @@ const root = [
   [/\b[A-Z_][A-Z_0-9]*\b(?=\s*=)/, 'enum'], // This will override literal.number
 
   buildRegexMatchers(['constant']),
+  buildRegexMatchers(['type.primitive']),
+  [/(bool|dict|float|int|str|list|set|tuple)(?=\\s|$|[.,;:()\]])/, ['type.primitive']],
   buildRegexMatchers(['type']),
   // Test()
   [/\b([A-Z][A-Za-z0-9_]+)(\()/, ['type', 'brackets.round']],
   // ) -> type:
-  [/(\s*)(->)(\s*)(\w+)(\s*)(:)/, ['white', 'operator', 'white', 'type', 'white', 'punctuation.delimiter']],
+  [/(\s*)(->)(\s*)([a-z0-9_]+)(\s*)(:)/, ['white', 'operator', 'white', 'type.primitive', 'white', 'punctuation.delimiter']],
+  [/(\s*)(->)(\s*)([A-Z][A-Za-z0-9_]+)(\s*)(:)/, ['white', 'operator', 'white', 'type', 'white', 'punctuation.delimiter']],
 
   // Class declaration
   [
-    /(class)(\s+)(\w+)(\s*)(:)/,
+    /(class)(\s+)([A-Z][A-Za-z0-9_]+)(:)/,
     [
-      'keyword', 'white', 'type', 'white', 'punctuation.delimiter',
+      'keyword', 'white', 'type.class', 'punctuation.delimiter',
     ],
   ],
-  // Class declaration with inheritance
-  [
-    /(class)(\s+)(\w+)(\s*)(\()(\s*)(\w+)(\s*)(,?)(\s*)(\w+)?(\s*)(\))(\s*)(:)/,
-    [
-      'keyword', 'white', 'type', 'white', 'brackets.round', 'white',
-      'type', 'white', 'punctuation.delimiter', 'white', 'type', 'white',
-      'brackets.round', 'white', 'punctuation.delimiter',
-    ],
-  ],
+  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], { next: '@classInheritance1' }),
+  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], { next: '@classInheritance2' }),
 
   // Detect regex strings by looking for patterns commonly enclosing regex in JavaScript/TypeScript
   [
@@ -189,8 +209,10 @@ const root = [
 
   // Attributes with type hints
   // def __init__(self, id: int = None, df=None, name=None, api_key=None):
-  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)(\w+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'white', 'operator']],
-  // def test(a=1, b: Optional[Any] = None) -> int:
+  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([a-z_0-9]+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type.primitive', 'white', 'operator']],
+  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'white', 'operator']],
+  // def test(a=1, b: Optional[Any] = None):
+  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([a-z_0-9]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type.primitive']],
   [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([A-Z_0-9a-z]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type']],
   // return self.project_type + 1
   [/(\s+)(self|cls)(\.)(\w+)/, ['white', 'variable.self', 'punctuation.delimiter', 'attribute']],
@@ -214,9 +236,15 @@ const root = [
   [/(\bdef\b)(\s+)([A-Z_0-9a-z]+)/, ['keyword', 'white', 'function.name']],
   buildRegexMatchers(['function.name', 'brackets.round']),
 
-
   // Operators and delimiters
   [/[=+\-*/%&|^~<>!]+/, 'operator'],
+
+  // Decorators
+  [
+    /@[a-zA-Z_][a-zA-Z0-9_]*/,
+    'function.decorator',
+  ],
+
 
   // Handle triple-quoted strings on a single line
   [/"""/, { token: 'string.quote.double.triple', bracket: '@open', next: '@multiLineDoubleString' }],

@@ -24,44 +24,55 @@ const theme = {
     // { token: 'title', foreground: 'FF5000' },  // Red-orange
     // { token: 'variant', foreground: 'FF9933' },  // Orange
 
+    // Testing
+    { token: 'any', foreground: 'FFFFFF' },
+
     // Green
+    { token: 'operator', foreground: '2FCB52' },  // Lime green
     { token: 'attribute', foreground: 'CBFE00D9' },  // Lime green
     { token: 'property', foreground: 'CBFE00D9' },  // Lime green
 
-    // Purple
-    { token: 'type', foreground: '885EFF' },  // Purple
+    // Purple types
+    { token: 'type', foreground: '6B50D7' },  // Purple
+    { token: 'type.class', foreground: '6B50D7' },  // Purple
+    { token: 'type.class.class_definition', foreground: '6B50D7' },  // Purple
+    { token: 'type.primitive', foreground: 'B026FF' },  // Purple
+    { token: 'type.primitive.class_definition', foreground: 'B026FF' },  // Purple
 
-    // Blue
+    // Orange: constants
     { token: 'constant', foreground: 'FF9933' },  // Orange
-    { token: 'constructor', foreground: '95ECE2' },  // Magenta
-    { token: 'enum', foreground: '2A60FE' },  // Blue
+    { token: 'enum', foreground: 'FFB84D' },  // Blue
+
+    // Blue: functions
+    { token: 'constructor', foreground: '4877FF' },  // Magenta
+    { token: 'function.decorator', foreground: '5982ff' },  // Cyan/blue
     { token: 'function.name', foreground: '00D0FF' },  // Cyan/blue
-    { token: 'string.link', foreground: '00D0FF', fontStyle: 'underline' },  // Cyan/blue
+    { token: 'string.link', foreground: '9ECBFF', fontStyle: 'underline' },  // Cyan/blue
 
     // Gray
-    { token: 'variable', foreground: 'A1A1A1' },
-    { token: 'variable.self', foreground: 'C7CDDA' },
+    { token: 'variable', foreground: 'C7CDDA' },
+    { token: 'variable.self', foreground: 'B98D95' },
 
-    // Red
+    // Red: keywords
     { token: 'keyword', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.as', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.class', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.from', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.import', foreground: 'FF144D' },  // Crimson
-    { token: 'namespace', foreground: 'B98D95' },  // Stone cool gray C7C0E5
+    { token: 'namespace', foreground: 'D1A2AB' },  // Stone cool gray C7C0E5
 
-    // Pink
+    // Pink: brackets
     { token: 'brackets.square', foreground: 'FF4FF8' },  // Pink
     { token: 'brackets.round', foreground: 'FF00FF' },  // Pink
     { token: 'brackets.curly', foreground: 'CC1493' },  // Magenta
     { token: 'punctuation.delimiter', foreground: 'FFB3DE' },  // Magenta
     { token: 'punctuation.dot', foreground: 'FFB3DE' },  // Magenta
+    { token: 'punctuation.comma', foreground: 'FFB3DE' },  // Magenta
 
-    // Green
-    { token: 'operator', foreground: '39FF14' },  // Lime green
-    { token: 'literal.boolean', foreground: '39FF14' },  // Green
-    { token: 'literal.number', foreground: '77DD77' },  // White
-    { token: 'literal.none', foreground: '3CB371' },  // White
+    // Yellow: literals
+    { token: 'literal.boolean', foreground: 'FFEBA3' },  // Green
+    { token: 'literal.number', foreground: 'FFCC19' },  // White
+    { token: 'literal.none', foreground: 'CBFE00' },  // White
 
     // Brown
     { token: 'comment', foreground: 'B89A75', fontStyle: 'italic' },  // Sandy brown
@@ -82,6 +93,14 @@ const theme = {
     // { token: 'string.special', foreground: 'FF99FF' },  // Pink
   ],
   colors: {
+    'editor.foreground': 'A1A1A1',  // Gray
+    'editor.background': '#000000E6',  // Black with opacity
+    'editor.selectionBackground': '#44475a',  // Charcoal gray
+    'editor.lineHighlightBackground': '#FF4FF84D',  // Lime green with opacity
+    'editorCursor.foreground': '#f8f8f0',  // Eggshell
+    'editorWhitespace.foreground': '#3B3A32',  // Dark gray
+    'editorIndentGuide.activeBackground': '#9D550FB0',  // Reddish brown with opacity
+    'editor.selectionHighlightBorder': '#222218',  // Very dark gray
 // - `'editor.background'`: Background color of the editor.
 // - `'editor.foreground'`: Foreground color of the editor.
 // - `'editorCursor.foreground'`: Color of the cursor.
@@ -116,14 +135,6 @@ const theme = {
 // - `'editorIndentGuide.activeBackground'`: Color of the active indent guide.
 // - `'editor.lineNumbersBackground'`: Background color of line numbers decorations.
 // - `'editor.lineNumbersForeground'`: Foreground color of line numbers decorations.
-    'editor.foreground': '#A1A1A1',  // Gray
-    'editor.background': '#000000E6',  // Black with opacity
-    'editor.selectionBackground': '#44475a',  // Charcoal gray
-    'editor.lineHighlightBackground': '#FF4FF84D',  // Lime green with opacity
-    'editorCursor.foreground': '#f8f8f0',  // Eggshell
-    'editorWhitespace.foreground': '#3B3A32',  // Dark gray
-    'editorIndentGuide.activeBackground': '#9D550FB0',  // Reddish brown with opacity
-    'editor.selectionHighlightBorder': '#222218',  // Very dark gray
     // 'editorBracketMatch.background': '#FF4FF8',  // Pink
     // 'editorBracketMatch.border': '#FF4FF8',  // Pink
     //

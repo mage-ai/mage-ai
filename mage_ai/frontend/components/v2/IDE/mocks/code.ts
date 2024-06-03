@@ -38,6 +38,16 @@ from a import b as c, d as e
 
 from typing import Any, Optional
 
+[bool, dict, float, int, str, list, set, tuple]
+'boolean'
+'dictionary'
+'floater'
+'integer'
+'string'
+'list'
+'set'
+'tuple'
+
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_cluster_type,
@@ -89,6 +99,18 @@ class ExecutionStatus(str, Enum):
     SUCCESS = 'success'
 
 
+class Test(Base):
+    pass
+
+
+class Test(str):
+    pass
+
+
+class Test(Base, str):
+    pass
+
+
 # right now, we are writing the models to local files to reduce dependencies
 class Test:
     def __init__(self, id: int = None, df=None, name=None, api_key=None):
@@ -129,6 +151,8 @@ if True:
   '''
     print('Hello, world!')
 
+def test(a=1, b: Optional[bool] = None) -> int:
+    return 1 + 1
 
 def test(a=1, b: Optional[Any] = None) -> int:
     return 1 + 1
