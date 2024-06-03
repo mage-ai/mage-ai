@@ -193,7 +193,7 @@ const root = [
   [
     /(class)(\s+)([A-Z][A-Za-z0-9_]+)(:)/,
     [
-      'keyword', 'white', 'type.class', 'punctuation.delimiter',
+      'keyword.class', 'white', 'type.class', 'punctuation.delimiter',
     ],
   ],
   buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], { next: '@classInheritance1' }),

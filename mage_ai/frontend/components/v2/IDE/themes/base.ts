@@ -6,137 +6,196 @@ const theme = {
     // Testing
     { token: 'any', foreground: 'FFFFFF' },
 
-    // Green
-    { token: 'operator', foreground: '2FCB52' },
-    { token: 'attribute', foreground: 'CBFE00D9' },
-    { token: 'property', foreground: 'CBFE00D9' },
-
     // Purple types
-    { token: 'type', foreground: '6B50D7' },
-    { token: 'type.class', foreground: '6B50D7' },
-    { token: 'type.class.class_definition', foreground: '6B50D7' },
-    { token: 'type.primitive', foreground: 'B026FF' },
-    { token: 'type.primitive.class_definition', foreground: 'B026FF' },
+    { token: 'type', foreground: '#6B50D7' },
+    { token: 'type.class', foreground: '#6B50D7', fontStyle: 'bold' },
+    { token: 'type.class.class_definition', foreground: '#6B50D7' },
+    { token: 'type.primitive', foreground: '#B026FF' },
+    { token: 'type.primitive.class_definition', foreground: '#B026FF' },
 
-    // Orange: constants
-    { token: 'constant', foreground: 'D5D7DC' },
-    { token: 'enum', foreground: 'B4B8C0' },
+    // Constants: brown
+    { token: 'constant', foreground: '#E3D4C2' },
+    { token: 'string.quote.double.triple', foreground: '#BFA78B', fontStyle: 'italic' },
+    { token: 'string.quote.single.triple', foreground: '#BFA78B', fontStyle: 'italic' },
+    { token: 'comment', foreground: '#AF8859', fontStyle: 'italic' },
+    { token: 'comment.doc', foreground: '#AF8859', fontStyle: 'italic' },
 
-    // Blue: functions
-    { token: 'constructor', foreground: '4877FF' },
-    { token: 'function.decorator', foreground: '5982ff' },
-    { token: 'function.name', foreground: '00D0FF' },
-    { token: 'string.link', foreground: '9ECBFF', fontStyle: 'underline' },
-
-    // Gray
-    { token: 'variable', foreground: 'C7CDDA' },
-    { token: 'variable.self', foreground: 'B98D95' },
+    // Blue: functions, instance variables
+    { token: 'constructor', foreground: '#BDCEFF' },
+    { token: 'attribute', foreground: '#81A1FF' },
+    { token: 'property', foreground: '#81A1FF' },
+    { token: 'function.name', foreground: '#517DFF', fontStyle: 'italic' },
+    { token: 'function.decorator', foreground: '#2A60FE' },
+    { token: 'string.link', foreground: '#0F4CFF', fontStyle: 'underline' },
 
     // Red: keywords
-    { token: 'keyword', foreground: 'FF144D' },
-    { token: 'keyword.as', foreground: 'FF144D' },
-    { token: 'keyword.class', foreground: 'FF144D' },
-    { token: 'keyword.from', foreground: 'FF144D' },
-    { token: 'keyword.import', foreground: 'FF144D' },
-    { token: 'namespace', foreground: 'D1A2AB' },
+    { token: 'keyword.class', foreground: '#C72400', fontStyle: 'italic' },
+    { token: 'namespace', foreground: '#FFD7E0' },
+    { token: 'keyword.as', foreground: '#FFA3B9' },
+    { token: 'keyword.from', foreground: '#FF547D' },
+    { token: 'keyword', foreground: '#FF144D' },
+    { token: 'keyword.import', foreground: '#EB0032' },
+
+    // Variables
+    { token: 'variable.self', foreground: 'B98D95' }, // Peach
+    { token: 'punctuation.dot', foreground: '#C7CDDA' }, // Gray light
+    { token: 'variable', foreground: '#A1A1A1' }, // Gray medium
+    { token: 'enum', foreground: '#70747C' }, // Gray dark
 
     // Pink: brackets
     { token: 'brackets.square', foreground: 'FF99CC' },
     { token: 'brackets.round', foreground: 'FF4FF8' },
     { token: 'brackets.curly', foreground: 'CC1493' },
-    // Teal
-    { token: 'punctuation.dot', foreground: '00B4CC' },
-    // Orange
+
+    // Invalid/Delimiters: orange
     { token: 'punctuation.delimiter', foreground: 'FF9933' },
     { token: 'punctuation.comma', foreground: 'FF6700' },
+    { token: 'string.invalid', foreground: 'F6540B', fontStyle: 'italic underline' },
 
-    // Yellow: literals
-    { token: 'literal.boolean', foreground: 'FFEBA3' },
-    { token: 'literal.number', foreground: 'FFCC19' },
-    { token: 'literal.none', foreground: 'CBFE00' },
-
-    // Brown
-    { token: 'comment', foreground: 'B89A75', fontStyle: 'italic' },
-    { token: 'comment.doc', foreground: 'DEBB92', fontStyle: 'italic' },
-    { token: 'string.quote.double.triple', foreground: '927A58', fontStyle: 'italic' },
-    { token: 'string.quote.single.triple', foreground: '927A58', fontStyle: 'italic' },
+    // Literals/Operator: yellow
+    { token: 'operator', foreground: '#CBFE00' },
+    { token: 'literal.none', foreground: '#FFE662' },
+    { token: 'literal.boolean', foreground: '#FFDA19' },
+    { token: 'literal.number', foreground: '#F6C000' },
 
     // Green
-    { token: 'string', foreground: '99CC00' },
-    { token: 'string.quote.single', foreground: '24B400' },
-    { token: 'string.quote.double', foreground: '24B400' },
-    { token: 'string.escape', foreground: '2FCB52' },
-
-    // White
-    { token: 'string.invalid', foreground: 'F6540B', fontStyle: 'italic underline' },
-    { token: 'string.regex', foreground: 'FFFFFF' },
-    { token: 'string.regex.delimiter', foreground: 'A1A1A1' },
+    { token: 'string.regex.delimiter', foreground: '#C6EEDB' },
+    { token: 'string', foreground: '#99CC00' },
+    { token: 'string.regex', foreground: '#9DDFBF' },
+    { token: 'string.escape', foreground: '#6BBF96' },
+    { token: 'string.quote.double', foreground: '#37A46F' },
+    { token: 'string.quote.single', foreground: '#00954C' },
   ],
   colors: {
-    'editor.foreground': 'A1A1A1',  // Gray
-    'editor.background': '#000000E6',  // Black with opacity
-    'editor.selectionBackground': '#44475a',  // Charcoal gray
-    'editor.lineHighlightBackground': '#FF4FF84D',  // Lime green with opacity
-    'editorCursor.foreground': '#f8f8f0',  // Eggshell
-    'editorWhitespace.foreground': '#3B3A32',  // Dark gray
-    'editorIndentGuide.activeBackground': '#9D550FB0',  // Reddish brown with opacity
-    'editor.selectionHighlightBorder': '#222218',  // Very dark gray
-// - `'editor.background'`: Background color of the editor.
-// - `'editor.foreground'`: Foreground color of the editor.
-// - `'editorCursor.foreground'`: Color of the cursor.
-// - `'editor.lineHighlightBackground'`: Background color for the highlight of line at the cursor position.
-// - `'editorLineNumber.foreground'`: Color of the line numbers.
-// - `'editorLineNumber.activeForeground'`: Color of the active line number.
-// - `'editorRuler.foreground'`: Color of the editor rulers.
-// - `'editor.selectionBackground'`: Background color of selections.
-// - `'editor.selectionHighlightBackground'`: Color for regions highlighted while selecting.
-// - `'editor.findMatchBackground'`: Background color of the current search match.
-// - `'editor.findMatchHighlightBackground'`: Background color of all other search matches.
-// - `'editorGutter.background'`: Background color of the editor gutter.
-// - `'editorGutter.addedBackground'`: Background color of the added line decorations.
-// - `'editorGutter.modifiedBackground'`: Background color of the modified line decorations.
-// - `'editorGutter.deletedBackground'`: Background color of the deleted line decorations.
-// - `'diffEditor.insertedTextBackground'`: Background color for inserted text.
-// - `'diffEditor.removedTextBackground'`: Background color for removed text.
-// - `'editorOverviewRuler.border'`: Color of the overview ruler border.
-// - `'editorOverviewRuler.findMatchForeground'`: Color of the overview ruler matches.
-// - `'editorOverviewRuler.errorForeground'`: Color of the overview ruler error decorations.
-// - `'editorOverviewRuler.warningForeground'`: Color of the overview ruler warning decorations.
-// - `'editorOverviewRuler.infoForeground'`: Color of the overview ruler info decorations.
-// - `'editorError.foreground'`: Color of error squiggles.
-// - `'editorWarning.foreground'`: Color of warning squiggles.
-// - `'editorInfo.foreground'`: Color of info squiggles.
-// - `'editorBracketMatch.background'`: Background color of matching brackets.
-// - `'editorBracketMatch.border'`: Border color of matching brackets.
-// - `'editor.wordHighlightBackground'`: Background color of a symbol during read-access.
-// - `'editor.wordHighlightStrongBackground'`: Background color of a symbol during write-access.
-// - `'editorWhitespace.foreground'`: Color of the whitespace symbols.
-// - `'editorIndentGuide.background'`: Color of the indent guides.
-// - `'editorIndentGuide.activeBackground'`: Color of the active indent guide.
-// - `'editor.lineNumbersBackground'`: Background color of line numbers decorations.
-// - `'editor.lineNumbersForeground'`: Foreground color of line numbers decorations.
-    // 'editorBracketMatch.background': '#FF4FF8',  // Pink
-    // 'editorBracketMatch.border': '#FF4FF8',  // Pink
-    //
-    //     "editorBracketPairGuide.background1": "#CC1177",
-    // 'editorBracketPairGuide.background2': '#5544DD',
-    // 'editorBracketPairGuide.background3': '#CC6622',
-    // 'editorBracketPairGuide.background4': '#779428',
-    // 'editorBracketPairGuide.background5': '#009944',
-    // 'editorBracketPairGuide.background6': '#1155DD',
-    // 'editorBracketPairGuide.activeBackground1': '#EE2288',
-    // 'editorBracketPairGuide.activeBackground2': '#8844FF',
-    // 'editorBracketPairGuide.activeBackground3': '#FF5C0C',
-    // 'editorBracketPairGuide.activeBackground4': '#99CC33',
-    // 'editorBracketPairGuide.activeBackground5': '#00CC88',
-    // 'editorBracketPairGuide.activeBackground6': '#0077FF',
-    // 'editorBracketHighlight.foreground1': '#CC1177',
-    // 'editorBracketHighlight.foreground2': '#5544DD',
-    // 'editorBracketHighlight.foreground3': '#CC6622',
-    // 'editorBracketHighlight.foreground4': '#779428',
-    // 'editorBracketHighlight.foreground5': '#009944',
-    // 'editorBracketHighlight.foreground6': '#1155DD',
-    // 'editorBracketHighlight.unexpectedBracket.foreground': '#DD100C',
+    // Foreground color of the editor.
+    'editor.foreground': 'A1A1A1', // Gray
+    // E6 is 90%
+    // D9 is 85%
+    // B3 is 70%
+    // 99 is 60%
+    // 80 is 50%
+    // 4D is 30%
+    // 33 is 20%
+    // 1A is 10%
+    // 0D is 05%
+    // 08 is 03%
+    // 00 is 00% for blurred
+    // ----------------------------------------------------------------------------------------------
+    // Editor selection colors
+    // ----------------------------------------------------------------------------------------------
+    // Background color of the editor.
+    'editor.background': '#000000E6', // Black transparent
+    // Color of the blinking cursor.
+    'editorCursor.foreground': '#CBFE00D9', // Yellow
+    // Highlight/Selection colorss
+    'editor.selectionBackground': '#1752FF99', // Blue
+    'editor.selectionHighlightBorder': '#FFFFFF', // White
+    // Background color for the highlight of line at the cursor position.
+    'editor.lineHighlightBackground': '#FF144D4D', // Red
+    // Color of the line numbers.
+    'editorLineNumber.foreground': '#AEAEAE', // Gray
+    // Color of the active line number.
+    'editorLineNumber.activeForeground': '#CBFE00', // Yellow
+    // ???
+    'editorRuler.foreground': '#FF9933', // Orange
+    // Whitespace dots
+    'editorWhitespace.foreground': '#9B6CA780',  // Dark gray
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Brackets
+    // ----------------------------------------------------------------------------------------------
+    // Background color of matching brackets.
+    'editorBracketMatch.background': '#C7CDDA', // Gray light
+    // Border color of matching brackets.
+    'editorBracketMatch.border': '#FF144D', // Red
+    'editorBracketPairGuide.background1': '#CBFE004D',
+    'editorBracketPairGuide.background2': '#CBFE004D',
+    'editorBracketPairGuide.background3': '#CBFE004D',
+    'editorBracketPairGuide.background4': '#CBFE004D',
+    'editorBracketPairGuide.background5': '#CBFE004D',
+    'editorBracketPairGuide.background6': '#CBFE004D',
+    'editorBracketPairGuide.activeBackground1': '#CBFE00B3',
+    'editorBracketPairGuide.activeBackground2': '#CBFE00B3',
+    'editorBracketPairGuide.activeBackground3': '#CBFE00B3',
+    'editorBracketPairGuide.activeBackground4': '#CBFE00B3',
+    'editorBracketPairGuide.activeBackground5': '#CBFE00B3',
+    'editorBracketPairGuide.activeBackground6': '#CBFE00B3',
+    'editorBracketHighlight.foreground1': '#CBFE001A',
+    'editorBracketHighlight.foreground2': '#CBFE001A',
+    'editorBracketHighlight.foreground3': '#CBFE001A',
+    'editorBracketHighlight.foreground4': '#CBFE001A',
+    'editorBracketHighlight.foreground5': '#CBFE001A',
+    'editorBracketHighlight.foreground6': '#CBFE001A',
+    'editorBracketHighlight.unexpectedBracket.foreground': '#FFFFFF', // White
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Version control
+    // ----------------------------------------------------------------------------------------------
+    // Color for regions highlighted while selecting.
+    'editor.selectionHighlightBackground': '#6B50D7', // Purple
+    // Background color of the current search match.
+    'editor.findMatchBackground': '#6B50D7', // Purple
+    // Background color of all other search matches.
+    'editor.findMatchHighlightBackground': '#6B50D7', // Purple
+    // Background color of the editor gutter.
+    'editorGutter.background': '#00000033', // Black transparent
+    // Background color of the added line decorations.
+    'editorGutter.addedBackground': '#2FCB52', // Green
+    // Background color of the modified line decorations.
+    'editorGutter.modifiedBackground': '#CBFE00', // Yellow
+    // Background color of the deleted line decorations.
+    'editorGutter.deletedBackground': '#C72400', // Orange
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Ruler
+    // ----------------------------------------------------------------------------------------------
+    // Color of the overview ruler border.
+    'editorOverviewRuler.border': '#FFFFFF',
+    // Color of the overview ruler matches.
+    'editorOverviewRuler.findMatchForeground': '#FFFFFF',
+    // Color of the overview ruler error decorations.
+    'editorOverviewRuler.errorForeground': '#FFFFFF',
+    // Color of the overview ruler warning decorations.
+    'editorOverviewRuler.warningForeground': '#FFFFFF',
+    // Color of the overview ruler info decorations.
+    'editorOverviewRuler.infoForeground': '#FFFFFF',
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Symbols/Info about code
+    // ----------------------------------------------------------------------------------------------
+    // Color of error squiggles.
+    'editorError.foreground': '#FF144D', // Red
+    // Color of warning squiggles.
+    'editorWarning.foreground': '#CBFE00', // Yellow
+    // Color of info squiggles.
+    'editorInfo.foreground': '#2A60FE', // Blue
+    // Background color of a symbol during read-access.
+    // 'editor.wordHighlightBackground': '#',
+    // Background color of a symbol during write-access.
+    // 'editor.wordHighlightStrongBackground': '#',
+    // Color of the whitespace symbols.
+    // 'editorWhitespace.foreground': '#',
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Guides
+    // ----------------------------------------------------------------------------------------------
+    // Color of the indent guides.
+    'editorIndentGuide.background': '#A1A1A14D',
+    // Color of the active indent guide.
+    'editorIndentGuide.activeBackground': '#C7240099',
+    // Background color of line numbers decorations.
+    'editor.lineNumbersBackground': '#FFFFFF',
+    // Foreground color of line numbers decorations.
+    'editor.lineNumbersForeground': '#FFFFFF',
+    // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Diff editor
+    // ----------------------------------------------------------------------------------------------
+    // Background color for inserted text.
+    // 'diffEditor.insertedTextBackground': '#',
+    // Background color for removed text.
+    // 'diffEditor.removedTextBackground': '#',
+    // ----------------------------------------------------------------------------------------------
   },
 };
 export default theme;

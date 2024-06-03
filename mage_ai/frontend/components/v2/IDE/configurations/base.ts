@@ -231,7 +231,7 @@ export default function base(
     snippetSuggestions: 'inline', // top, bottom, inline, none
     stablePeek: false,
     stickyScroll: {
-      defaultModel: 'outlineModel',
+      defaultModel: 'peekModel', // 'peekModel' | 'editorModel'
       enabled: true,
       maxLineCount: 100,
       scrollWithEditor: false,
@@ -305,37 +305,37 @@ export default function base(
     wordWrapColumn,
     wrappingIndent: 'deepIndent', // "none" | "same" | "indent" | "deepIndent"
     wrappingStrategy: 'advanced', // "simple" | "advanced"
-    // Settings that can make the editor lag
+    // !!!!!!!!!!!!!!!!!!!!Settings that can make the editor lag!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     bracketPairColorization: {
       enabled: false,
       independentColorPoolPerBracketType: false,
     },
-    codeLens: false, // Code lens font family. Defaults to editor font family.
+    codeLens: true, // Code lens font family. Defaults to editor font family.
     colorDecorators: true, // true
-    contextmenu: false, // Enable custom contextmenu. Defaults to true.
+    contextmenu: true, // Enable custom contextmenu. Defaults to true.
     cursorSmoothCaretAnimation: 'off', // Makes the typing feel delayed
-    folding: false, // Enable code folding. Defaults to true.
+    folding: true, // Enable code folding. Defaults to true.
     guides: {
-      bracketPairs: false,
-      bracketPairsHorizontal: false,
-      highlightActiveIndentation: false, // true
-      indentation: false, // true
+      bracketPairs: true,
+      bracketPairsHorizontal: true,
+      highlightActiveIndentation: true, // true
+      indentation: true, // true
     },
     hover: {
       above: true,
       delay: 300,
       enabled: false, // true
-      hidingDelay: 500,
+      hidingDelay: 3000,
       sticky: true,
     },
     inlayHints: {
-      enabled: 'off', // 'off' | 'type' | 'all'
+      enabled: 'all', // 'off' | 'type' | 'all'
       fontFamily,
       fontSize,
       padding: true,
     },
     inlineSuggest: {
-      enabled: false, // true
+      enabled: true, // true
       fontFamily,
       keepOnBlur: true,
       // Use prefix to only show ghost text if the text to
@@ -356,8 +356,8 @@ export default function base(
       enabled: 'off', // 'on' | 'off' | 'onCode'
     },
     minimap: {
-      autohide: false,
-      enabled: false, // true
+      autohide: true,
+      enabled: true, // true
       maxColumn: 120,
       renderCharacters: true,
       scale: 1,
@@ -372,15 +372,15 @@ export default function base(
     // 'off' disables occurrence highlighting
     // 'singleFile' triggers occurrence highlighting in the current document
     // 'multiFile' triggers occurrence highlighting across valid open documents
-    occurrencesHighlight: 'off',
+    occurrencesHighlight: 'singleFile',
     quickSuggestionsDelay: 100, // 5
-    renderControlCharacters: false, // true, Should render control characters
-    renderWhitespace: 'none', // all
+    renderControlCharacters: true, // true, Should render control characters
+    renderWhitespace: 'all', // all
     showFoldingControls: 'mouseover', // 'always'
-    showUnused: false, // true
-    'semanticHighlighting.enabled': false, // true
-    suggestOnTriggerCharacters: false, // true
-    renderLineHighlight: 'line', // 'none' | 'gutter' | 'line' | 'all'
-    renderLineHighlightOnlyWhenFocus: true, // false
+    showUnused: true, // true
+    'semanticHighlighting.enabled': true, // true
+    suggestOnTriggerCharacters: true, // true
+    renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
+    renderLineHighlightOnlyWhenFocus: false, // false
   };
 }
