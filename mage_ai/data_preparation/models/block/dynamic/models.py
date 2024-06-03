@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, List
-
-from botocore.tokens import Optional
+from typing import Any, List, Optional
 
 from mage_ai.shared.models import BaseDataClass
 
