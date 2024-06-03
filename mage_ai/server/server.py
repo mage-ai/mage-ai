@@ -92,6 +92,7 @@ from mage_ai.settings import (
     DISABLE_AUTO_BROWSER_OPEN,
     DISABLE_AUTORELOAD,
     ENABLE_PROMETHEUS,
+    MATERIA_ENABLED,
     OAUTH2_APPLICATION_CLIENT_ID,
     OTEL_EXPORTER_OTLP_ENDPOINT,
     REDIS_URL,
@@ -576,6 +577,20 @@ async def main(
             port += 1
     except OSError:
         logger.error(f'Socket error while trying to find an open port. Defaulting to port {port}')
+
+    if MATERIA_ENABLED:
+        from mage_ai.lsp.handler import LSPHandler
+        from mage_ai.lsp.server import get_server
+
+        app.add_handlers(
+            r'.*$',
+            [
+                (r'/lsp', LSPHandler),
+                (r'/lsp/(.*)', LSPHandler),
+            ],
+        )
+
+        print('LSP server', get_server())
 
     app.listen(
         port,

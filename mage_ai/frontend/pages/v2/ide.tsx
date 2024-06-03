@@ -10,13 +10,7 @@ import MateriaIDE from '@components/v2/IDE';
 
 function IDE() {
   return (
-    <Row>
-      <Col>
-        <Section>
-          <MateriaIDE uuid="test" />
-        </Section>
-      </Col>
-    </Row>
+    <MateriaIDE uuid="test" />
   );
 }
 

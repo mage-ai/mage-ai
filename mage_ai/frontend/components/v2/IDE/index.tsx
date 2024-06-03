@@ -143,7 +143,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
   console.log(`[IDE] Rendered: ${renderCount?.current}`);
   return (
     <>
-      <IDEStyled>
+      <IDEStyled className={editorRef?.current ? 'mounted' : ''}>
         <div id={editorContainerID} style={{ height: '100vh' }} />
       </IDEStyled>
     </>

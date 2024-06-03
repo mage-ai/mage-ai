@@ -7,7 +7,12 @@ type StyleProps = {
 };
 
 export const IDEStyled = styled.div<StyleProps>`
-  ${gradient('45deg', '#6B50D7', '#FF144D', 30, 100)}
+  background-color: black;
+
+  .mounted {
+    ${gradient('45deg', '#6B50D7', '#FF144D', 30, 100)}
+  }
+
   font-family: ${({ theme }) => theme.fonts.family.monospace.regular};
 
   .context-view.monaco-menu-container {
