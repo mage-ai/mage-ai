@@ -4,23 +4,17 @@ const theme = {
   inherit: false,
   rules: [
     // { token: 'attribute', foreground: '9B59FF' },  // Purple
-    { token: 'constant', foreground: 'FF9933' },  // Orange
-    { token: 'constructor', foreground: '95ECE2' },  // Magenta
+
+
     // { token: 'embedded', foreground: 'FF6EFF' },  // Light pink
     // { token: 'emphasis', foreground: 'FF99FF' },  // Pink
-    { token: 'enum', foreground: '2A60FE' },  // Blue
-    { token: 'function.name', foreground: '00D0FF' },  // Cyan/blue
     // { token: 'hint', foreground: '0080FF' },  // Azure
-    { token: 'keyword', foreground: 'FF144D' },  // Crimson
     // { token: 'label', foreground: 'FFCC00' },  // Golden yellow
     // { token: 'link_text', foreground: '00FFFF' },  // Cyan
     // { token: 'link_uri', foreground: '00FFFF' },  // Cyan
-    { token: 'namespace', foreground: 'C72400' },  // Spark orange
     // { token: 'predictive', foreground: 'FF9933' },  // Orange
     // { token: 'preproc', foreground: 'CC00FF' },  // Magenta
     // { token: 'primary', foreground: 'FFFFFF' },  // White
-    { token: 'attribute', foreground: 'CBFE00D9' },  // Lime green
-    { token: 'property', foreground: 'CBFE00D9' },  // Lime green
     // { token: 'punctuation', foreground: 'FFCC00' },  // Golden yellow
     // { token: 'delimiter', foreground: 'FFCC00' },  // Golden yellow aka punctuation
     // { token: 'punctuation.list_marker', foreground: 'FFCC00' },  // Golden yellow
@@ -28,16 +22,39 @@ const theme = {
     // { token: 'tag', foreground: '6600FF' },  // Blue
     // { token: 'text.literal', foreground: 'FFFFFF' },  // White
     // { token: 'title', foreground: 'FF5000' },  // Red-orange
-    { token: 'type', foreground: '885EFF' },  // Purple
     // { token: 'variable', foreground: '00FFFF' },  // Cyan
-    { token: 'variable.self', foreground: 'B98D95' },  //
     // { token: 'variant', foreground: 'FF9933' },  // Orange
+    //
+
+    // Green
+    { token: 'attribute', foreground: 'CBFE00D9' },  // Lime green
+    { token: 'property', foreground: 'CBFE00D9' },  // Lime green
+
+    // Purple
+    { token: 'type', foreground: '885EFF' },  // Purple
+
+    // Blue
+    { token: 'constant', foreground: 'FF9933' },  // Orange
+    { token: 'constructor', foreground: '95ECE2' },  // Magenta
+    { token: 'enum', foreground: '2A60FE' },  // Blue
+    { token: 'function.name', foreground: '00D0FF' },  // Cyan/blue
+
+    // Peach
+    { token: 'variable.self', foreground: 'B98D95' },
+
+    // Red
+    { token: 'keyword', foreground: 'FF144D' },  // Crimson
+    { token: 'keyword.as', foreground: 'FF144D' },  // Crimson
+    { token: 'keyword.from', foreground: 'FF144D' },  // Crimson
+    { token: 'keyword.import', foreground: 'FF144D' },  // Crimson
+    { token: 'namespace', foreground: '00D0FF' },  // Stone cool gray C7C0E5
 
     // Pink
     { token: 'brackets.square', foreground: 'FF4FF8' },  // Pink
     { token: 'brackets.round', foreground: 'FF00FF' },  // Pink
     { token: 'brackets.curly', foreground: 'CC1493' },  // Magenta
     { token: 'punctuation.delimiter', foreground: 'FFB3DE' },  // Magenta
+    { token: 'punctuation.dot', foreground: 'FFB3DE' },  // Magenta
 
     // Green
     { token: 'operator', foreground: '39FF14' },  // Lime green
@@ -59,7 +76,8 @@ const theme = {
 
     // White
     { token: 'string.invalid', foreground: 'FFFFFF', fontStyle: 'italic underline' },  // White
-    // { token: 'string.regex', foreground: 'FF9933' },  // Orange
+    { token: 'string.regex', foreground: 'FFFFFF' },  // White
+    { token: 'string.regex.delimiter', foreground: 'A1A1A1' },  // Gray
     // { token: 'string.special', foreground: 'FF99FF' },  // Pink
   ],
   colors: {
