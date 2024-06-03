@@ -3,94 +3,74 @@ const theme = {
   base: 'vs',
   inherit: false,
   rules: [
-    // { token: 'attribute', foreground: '9B59FF' },  // Purple
-
-
-    // { token: 'embedded', foreground: 'FF6EFF' },  // Light pink
-    // { token: 'emphasis', foreground: 'FF99FF' },  // Pink
-    // { token: 'hint', foreground: '0080FF' },  // Azure
-    // { token: 'label', foreground: 'FFCC00' },  // Golden yellow
-    // { token: 'link_text', foreground: '00FFFF' },  // Cyan
-    // { token: 'link_uri', foreground: '00FFFF' },  // Cyan
-    // { token: 'predictive', foreground: 'FF9933' },  // Orange
-    // { token: 'preproc', foreground: 'CC00FF' },  // Magenta
-    // { token: 'primary', foreground: 'FFFFFF' },  // White
-    // { token: 'punctuation', foreground: 'FFCC00' },  // Golden yellow
-    // { token: 'delimiter', foreground: 'FFCC00' },  // Golden yellow aka punctuation
-    // { token: 'punctuation.list_marker', foreground: 'FFCC00' },  // Golden yellow
-    // { token: 'punctuation.special', foreground: 'CC00FF' },  // Magenta
-    // { token: 'tag', foreground: '6600FF' },  // Blue
-    // { token: 'text.literal', foreground: 'FFFFFF' },  // White
-    // { token: 'title', foreground: 'FF5000' },  // Red-orange
-    // { token: 'variant', foreground: 'FF9933' },  // Orange
-
     // Testing
     { token: 'any', foreground: 'FFFFFF' },
 
     // Green
-    { token: 'operator', foreground: '2FCB52' },  // Lime green
-    { token: 'attribute', foreground: 'CBFE00D9' },  // Lime green
-    { token: 'property', foreground: 'CBFE00D9' },  // Lime green
+    { token: 'operator', foreground: '2FCB52' },
+    { token: 'attribute', foreground: 'CBFE00D9' },
+    { token: 'property', foreground: 'CBFE00D9' },
 
     // Purple types
-    { token: 'type', foreground: '6B50D7' },  // Purple
-    { token: 'type.class', foreground: '6B50D7' },  // Purple
-    { token: 'type.class.class_definition', foreground: '6B50D7' },  // Purple
-    { token: 'type.primitive', foreground: 'B026FF' },  // Purple
-    { token: 'type.primitive.class_definition', foreground: 'B026FF' },  // Purple
+    { token: 'type', foreground: '6B50D7' },
+    { token: 'type.class', foreground: '6B50D7' },
+    { token: 'type.class.class_definition', foreground: '6B50D7' },
+    { token: 'type.primitive', foreground: 'B026FF' },
+    { token: 'type.primitive.class_definition', foreground: 'B026FF' },
 
     // Orange: constants
-    { token: 'constant', foreground: 'FF9933' },  // Orange
-    { token: 'enum', foreground: 'FFB84D' },  // Blue
+    { token: 'constant', foreground: 'D5D7DC' },
+    { token: 'enum', foreground: 'B4B8C0' },
 
     // Blue: functions
-    { token: 'constructor', foreground: '4877FF' },  // Magenta
-    { token: 'function.decorator', foreground: '5982ff' },  // Cyan/blue
-    { token: 'function.name', foreground: '00D0FF' },  // Cyan/blue
-    { token: 'string.link', foreground: '9ECBFF', fontStyle: 'underline' },  // Cyan/blue
+    { token: 'constructor', foreground: '4877FF' },
+    { token: 'function.decorator', foreground: '5982ff' },
+    { token: 'function.name', foreground: '00D0FF' },
+    { token: 'string.link', foreground: '9ECBFF', fontStyle: 'underline' },
 
     // Gray
     { token: 'variable', foreground: 'C7CDDA' },
     { token: 'variable.self', foreground: 'B98D95' },
 
     // Red: keywords
-    { token: 'keyword', foreground: 'FF144D' },  // Crimson
-    { token: 'keyword.as', foreground: 'FF144D' },  // Crimson
-    { token: 'keyword.class', foreground: 'FF144D' },  // Crimson
-    { token: 'keyword.from', foreground: 'FF144D' },  // Crimson
-    { token: 'keyword.import', foreground: 'FF144D' },  // Crimson
-    { token: 'namespace', foreground: 'D1A2AB' },  // Stone cool gray C7C0E5
+    { token: 'keyword', foreground: 'FF144D' },
+    { token: 'keyword.as', foreground: 'FF144D' },
+    { token: 'keyword.class', foreground: 'FF144D' },
+    { token: 'keyword.from', foreground: 'FF144D' },
+    { token: 'keyword.import', foreground: 'FF144D' },
+    { token: 'namespace', foreground: 'D1A2AB' },
 
     // Pink: brackets
-    { token: 'brackets.square', foreground: 'FF4FF8' },  // Pink
-    { token: 'brackets.round', foreground: 'FF00FF' },  // Pink
-    { token: 'brackets.curly', foreground: 'CC1493' },  // Magenta
-    { token: 'punctuation.delimiter', foreground: 'FFB3DE' },  // Magenta
-    { token: 'punctuation.dot', foreground: 'FFB3DE' },  // Magenta
-    { token: 'punctuation.comma', foreground: 'FFB3DE' },  // Magenta
+    { token: 'brackets.square', foreground: 'FF99CC' },
+    { token: 'brackets.round', foreground: 'FF4FF8' },
+    { token: 'brackets.curly', foreground: 'CC1493' },
+    // Teal
+    { token: 'punctuation.dot', foreground: '00B4CC' },
+    // Orange
+    { token: 'punctuation.delimiter', foreground: 'FF9933' },
+    { token: 'punctuation.comma', foreground: 'FF6700' },
 
     // Yellow: literals
-    { token: 'literal.boolean', foreground: 'FFEBA3' },  // Green
-    { token: 'literal.number', foreground: 'FFCC19' },  // White
-    { token: 'literal.none', foreground: 'CBFE00' },  // White
+    { token: 'literal.boolean', foreground: 'FFEBA3' },
+    { token: 'literal.number', foreground: 'FFCC19' },
+    { token: 'literal.none', foreground: 'CBFE00' },
 
     // Brown
-    { token: 'comment', foreground: 'B89A75', fontStyle: 'italic' },  // Sandy brown
-    { token: 'comment.doc', foreground: 'DEBB92', fontStyle: 'italic' },  // Light yellow
-    { token: 'string.quote.double.triple', foreground: '927A58', fontStyle: 'italic' },  // Light yellow
-    { token: 'string.quote.single.triple', foreground: '927A58', fontStyle: 'italic' },  // Light yellow
+    { token: 'comment', foreground: 'B89A75', fontStyle: 'italic' },
+    { token: 'comment.doc', foreground: 'DEBB92', fontStyle: 'italic' },
+    { token: 'string.quote.double.triple', foreground: '927A58', fontStyle: 'italic' },
+    { token: 'string.quote.single.triple', foreground: '927A58', fontStyle: 'italic' },
 
     // Green
-    { token: 'string', foreground: '99CC00' },  // Lime green
-    { token: 'string.quote.single', foreground: '24B400' },  // Orange
-    { token: 'string.quote.double', foreground: '24B400' },  // Orange
-    { token: 'string.escape', foreground: '2FCB52' },  // Line green
+    { token: 'string', foreground: '99CC00' },
+    { token: 'string.quote.single', foreground: '24B400' },
+    { token: 'string.quote.double', foreground: '24B400' },
+    { token: 'string.escape', foreground: '2FCB52' },
 
     // White
-    { token: 'string.invalid', foreground: '#FFA1B8', fontStyle: 'italic underline' },  // White
-    { token: 'string.regex', foreground: 'FFFFFF' },  // White
-    { token: 'string.regex.delimiter', foreground: 'A1A1A1' },  // Gray
-    // { token: 'string.special', foreground: 'FF99FF' },  // Pink
+    { token: 'string.invalid', foreground: 'F6540B', fontStyle: 'italic underline' },
+    { token: 'string.regex', foreground: 'FFFFFF' },
+    { token: 'string.regex.delimiter', foreground: 'A1A1A1' },
   ],
   colors: {
     'editor.foreground': 'A1A1A1',  // Gray

@@ -215,14 +215,14 @@ const root = [
   [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([a-z_0-9]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type.primitive']],
   [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([A-Z_0-9a-z]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type']],
   // return self.project_type + 1
-  [/(\s+)(self|cls)(\.)(\w+)/, ['white', 'variable.self', 'punctuation.delimiter', 'attribute']],
-  [/(,)(\s*)(\w+)(\s*)(=)(\s*)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'operator', 'white']],
+  [/(\s+)(self|cls)(\.)(\w+)/, ['white', 'variable.self', 'punctuation.dot', 'attribute']],
+  [/(,)(\s*)(\w+)(\s*)(=)(\s*)/, ['punctuation.dot', 'white', 'attribute', 'white', 'operator', 'white']],
   // [/(\.)(?!\d)[\w]+(:)/, ['punctuation.delimiter', 'attribute', 'punctuation.delimiter']],
   // [/(\.)(?!\d)[\w]+/, ['punctuation.delimiter', 'attribute']],
 
   // Variables
   // test.get_project_type()
-  [/(\s+|^)(?!\d)(\w+)(\.)(\w+)/, ['white', 'variable', 'punctuation.delimiter', 'attribute']],
+  [/(\s+|^)(?!\d)(\w+)(\.)(\w+)/, ['white', 'variable', 'punctuation.dot', 'attribute']],
   // test = Test()
   [/(^\w+)(\s*)(=)(\s*)/, ['variable', 'white', 'operator', 'white']],
 
