@@ -38,9 +38,8 @@ from pyarrow.lib import RecordBatchReader
 from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 
 from deltalake._internal import DeltaDataChecker as _DeltaDataChecker
-from deltalake._internal import DeltaError, TableNotFoundError
 from deltalake._internal import write_new_deltalake as _write_new_deltalake
-from deltalake.exceptions import DeltaProtocolError
+from deltalake.exceptions import DeltaError, DeltaProtocolError, TableNotFoundError
 from deltalake.table import MAX_SUPPORTED_PYARROW_WRITER_VERSION, DeltaTable
 
 try:
