@@ -260,7 +260,7 @@ def make_app(
             },
         ),
     ]
-    print('WTFFFFFFFFFFF', os.path.join(template_dir, 'monaco-editor'))
+
     routes_full = routes_base + [
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
