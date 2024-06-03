@@ -38,7 +38,7 @@ from pyarrow.lib import RecordBatchReader
 from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 
 from deltalake._internal import DeltaDataChecker as _DeltaDataChecker
-from deltalake._internal import DeltaError
+from deltalake._internal import DeltaError, TableNotFoundError
 from deltalake._internal import write_new_deltalake as _write_new_deltalake
 from deltalake.exceptions import DeltaProtocolError
 from deltalake.table import MAX_SUPPORTED_PYARROW_WRITER_VERSION, DeltaTable
@@ -333,6 +333,8 @@ def try_get_deltatable(
 ) -> Optional[DeltaTable]:
     try:
         return DeltaTable(table_uri, storage_options=storage_options)
+    except TableNotFoundError as err:
+        return None
     except DeltaError as err:
         # TODO: There has got to be a better way...
         if "Not a Delta table" in str(err):
