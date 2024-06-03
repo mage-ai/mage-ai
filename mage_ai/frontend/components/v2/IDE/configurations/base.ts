@@ -35,7 +35,7 @@ export default function base(
   const lineHeightPercentage = parseInt(themeContext.fonts.lineHeight.md) / 100;
   const {
     dimension,
-    fontFamily = themeContext.fonts.family.monospace.retina,
+    fontFamily = themeContext.fonts.family.monospace.regular,
     fontSize = fontSizeInit,
     fontWeight = themeContext.fonts.weight.regular,
     language = 'python',

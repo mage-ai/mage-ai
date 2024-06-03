@@ -22,9 +22,7 @@ const theme = {
     // { token: 'tag', foreground: '6600FF' },  // Blue
     // { token: 'text.literal', foreground: 'FFFFFF' },  // White
     // { token: 'title', foreground: 'FF5000' },  // Red-orange
-    // { token: 'variable', foreground: '00FFFF' },  // Cyan
     // { token: 'variant', foreground: 'FF9933' },  // Orange
-    //
 
     // Green
     { token: 'attribute', foreground: 'CBFE00D9' },  // Lime green
@@ -38,16 +36,19 @@ const theme = {
     { token: 'constructor', foreground: '95ECE2' },  // Magenta
     { token: 'enum', foreground: '2A60FE' },  // Blue
     { token: 'function.name', foreground: '00D0FF' },  // Cyan/blue
+    { token: 'string.link', foreground: '00D0FF', fontStyle: 'underline' },  // Cyan/blue
 
-    // Peach
-    { token: 'variable.self', foreground: 'B98D95' },
+    // Gray
+    { token: 'variable', foreground: 'A1A1A1' },
+    { token: 'variable.self', foreground: 'C7CDDA' },
 
     // Red
     { token: 'keyword', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.as', foreground: 'FF144D' },  // Crimson
+    { token: 'keyword.class', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.from', foreground: 'FF144D' },  // Crimson
     { token: 'keyword.import', foreground: 'FF144D' },  // Crimson
-    { token: 'namespace', foreground: '00D0FF' },  // Stone cool gray C7C0E5
+    { token: 'namespace', foreground: 'B98D95' },  // Stone cool gray C7C0E5
 
     // Pink
     { token: 'brackets.square', foreground: 'FF4FF8' },  // Pink
@@ -69,13 +70,13 @@ const theme = {
     { token: 'string.quote.single.triple', foreground: '927A58', fontStyle: 'italic' },  // Light yellow
 
     // Green
-    { token: 'string', foreground: '88B300' },  // Lime green
-    { token: 'string.quote.single', foreground: '5C7A00' },  // Orange
-    { token: 'string.quote.double', foreground: '5C7A00' },  // Orange
-    { token: 'string.escape', foreground: '99CC00' },  // Line green
+    { token: 'string', foreground: '99CC00' },  // Lime green
+    { token: 'string.quote.single', foreground: '24B400' },  // Orange
+    { token: 'string.quote.double', foreground: '24B400' },  // Orange
+    { token: 'string.escape', foreground: '2FCB52' },  // Line green
 
     // White
-    { token: 'string.invalid', foreground: 'FFFFFF', fontStyle: 'italic underline' },  // White
+    { token: 'string.invalid', foreground: '#FFA1B8', fontStyle: 'italic underline' },  // White
     { token: 'string.regex', foreground: 'FFFFFF' },  // White
     { token: 'string.regex.delimiter', foreground: 'A1A1A1' },  // Gray
     // { token: 'string.special', foreground: 'FF99FF' },  // Pink

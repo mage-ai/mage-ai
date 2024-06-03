@@ -3,16 +3,56 @@ const mapping = {
   boolean: 'constant',
 };
 
+const KEY_WORDS = [
+  'and',
+  'assert',
+  'async',
+  'await',
+  'break',
+  'class',
+  'continue',
+  'def',
+  'del',
+  'elif',
+  'else',
+  'except',
+  'finally',
+  'for',
+  'from',
+  'global',
+  'if',
+  'import',
+  'in',
+  'is',
+  'lambda',
+  'nonlocal',
+  'not',
+  'or',
+  'pass',
+  'raise',
+  'return',
+  'try',
+  'while',
+  'with',
+  'yield',
+];
+
 enum RegexEnum {
-  constant = '(\\b[A-Z_0-9]+\\b)',
-  type = '(\\b[A-Z_][A-Z_0-9a-z]+\\b)',
+  'brackets.curly' = '([{}])',
+  'brackets.round' = '([()])',
+  'brackets.square' = '([\\[\\]])',
   'function.name' = '(\\b[_0-9a-z]+\\b)',
   'keyword.as' = '\\b(as)\\b',
+  'keyword.class' = '(class)',
   'keyword.from' = '\\b(from)\\b',
   'keyword.import' = '\\b(import)\\b',
-  'punctuation.dot' = '(\\.)',
+  'literal.none' = '\\b(None)\\b',
+  'literal.boolean' = '\\b(True|False)\\b',
   'punctuation.delimiter' = '([:,;])',
+  'punctuation.dot' = '(\\.)',
+  constant = '(\\b[A-Z_0-9]+\\b)',
   namespace = '(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b)',
+  type = '(?<=[^\w\s]|^)\b[A-Z][A-Za-z0-9_]*\s*(\(\s*\))?',
   white = '(\\s+)',
 }
 
@@ -50,12 +90,154 @@ const states = {
   resetState: [
     { include: 'root' },
   ],
+
+  // Handle double-quoted string escape sequences correctly
+  doubleString: [
+    [/[^"\\]+/, 'string'], // Match the string content until a double quote or backslash
+    [/\\./, 'string.escape'], // Handle escape sequences
+    [/(?<!\\)"/, { token: 'string.quote.double', bracket: '@close', next: '@pop' }], // Match closing double quote
+    [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
+  ],
+
+  // Handle single-quoted string escape sequences correctly
+  singleString: [
+    [/[^'\\]+/, 'string'], // Match the string content until a single quote or backslash
+    [/\\./, 'string.escape'], // Handle escape sequences
+    [/(?<!\\)'/, { token: 'string.quote.single', bracket: '@close', next: '@pop' }], // Match closing single quote
+    [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
+  ],
+
+  // Triple double-quoted string state
+  multiLineDoubleString: [
+    [/[^\\"]+/, 'comment.doc'], // Match the string content until a triple quote or backslash
+    [/\\./, 'string.escape'], // Handle escape sequences
+    [/"""/, { token: 'string.quote.double.triple', bracket: '@close', next: '@pop' }], // Match closing triple double quote
+    [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
+  ],
+
+  // Triple single-quoted string state
+  multiLineSingleString: [
+    [/[^\\']+/, 'comment.doc'], // Match the string content until a triple quote or backslash
+    [/\\./, 'string.escape'], // Handle escape sequences
+    [/'''/, { token: 'string.quote.single.triple', bracket: '@close', next: '@pop' }], // Match closing triple single quote
+    [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
+  ],
 };
 
 const root = [
+  // URL detection within quotes
+  [
+    /"\b((https?|ftp):\/\/[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})?(:\d+)?(\/[^\s"']*)?|www\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})(:\d+)?(\/[^\s"']*)?|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\\d+\/[^\s"']+)\b"/,
+    'string.link',
+  ],
+  [
+    /'\b((https?|ftp):\/\/[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})?(:\d+)?(\/[^\s"']*)?|www\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})(:\d+)?(\/[^\s"']*)?|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\\d+\/[^\s"']+)\b'/,
+    'string.link',
+  ],
+  // Third case: URLs with `:port` and `/path` without `http(s)` or `www`.
+  [/(")\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(")/, ['string.quote.double', 'string.link', 'string.quote.double']],
+  [/(')\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(')/, ['string.quote.single', 'string.link', 'string.quote.single']],
+
+  // Numeric literals
+  [/\b\d+(\.\d+)?\b/, 'literal.number'],
+
   buildRegexMatchers(['keyword.import', 'white'], { next: '@importNamespaces' }),
   buildRegexMatchers(['keyword.from', 'white'], { next: '@fromImport' }),
   buildRegexMatchers(['keyword.import', 'white', 'namespace'], { next: '@resetState' }), // reset state after each match
+
+
+  buildRegexMatchers(['brackets.curly']),
+  buildRegexMatchers(['brackets.round']),
+  buildRegexMatchers(['brackets.square']),
+
+  buildRegexMatchers(['literal.boolean']),
+  buildRegexMatchers(['literal.none']),
+
+  [/\b[A-Z_][A-Z_0-9]*\b(?=\s*=)/, 'enum'], // This will override literal.number
+
+  buildRegexMatchers(['constant']),
+  buildRegexMatchers(['type']),
+  // Test()
+  [/\b([A-Z][A-Za-z0-9_]+)(\()/, ['type', 'brackets.round']],
+  // ) -> type:
+  [/(\s*)(->)(\s*)(\w+)(\s*)(:)/, ['white', 'operator', 'white', 'type', 'white', 'punctuation.delimiter']],
+
+  // Class declaration
+  [
+    /(class)(\s+)(\w+)(\s*)(:)/,
+    [
+      'keyword', 'white', 'type', 'white', 'punctuation.delimiter',
+    ],
+  ],
+  // Class declaration with inheritance
+  [
+    /(class)(\s+)(\w+)(\s*)(\()(\s*)(\w+)(\s*)(,?)(\s*)(\w+)?(\s*)(\))(\s*)(:)/,
+    [
+      'keyword', 'white', 'type', 'white', 'brackets.round', 'white',
+      'type', 'white', 'punctuation.delimiter', 'white', 'type', 'white',
+      'brackets.round', 'white', 'punctuation.delimiter',
+    ],
+  ],
+
+  // Detect regex strings by looking for patterns commonly enclosing regex in JavaScript/TypeScript
+  [
+    /(\/)([^\/\\]*(?:\\.[^\/\\]*)*)(\/[gimsuy]*)/,
+    [
+      'string.regex.delimiter', 'string.regex', 'string.regex.delimiter',
+    ],
+  ],
+
+  // Attributes with type hints
+  // def __init__(self, id: int = None, df=None, name=None, api_key=None):
+  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)(\w+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'white', 'operator']],
+  // def test(a=1, b: Optional[Any] = None) -> int:
+  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([A-Z_0-9a-z]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type']],
+  // return self.project_type + 1
+  [/(\s+)(self|cls)(\.)(\w+)/, ['white', 'variable.self', 'punctuation.delimiter', 'attribute']],
+  [/(,)(\s*)(\w+)(\s*)(=)(\s*)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'operator', 'white']],
+  // [/(\.)(?!\d)[\w]+(:)/, ['punctuation.delimiter', 'attribute', 'punctuation.delimiter']],
+  // [/(\.)(?!\d)[\w]+/, ['punctuation.delimiter', 'attribute']],
+
+  // Variables
+  // test.get_project_type()
+  [/(\s+|^)(?!\d)(\w+)(\.)(\w+)/, ['white', 'variable', 'punctuation.delimiter', 'attribute']],
+  // test = Test()
+  [/(^\w+)(\s*)(=)(\s*)/, ['variable', 'white', 'operator', 'white']],
+
+  // Self and cls in methods
+  [/\b(self|cls)\b/, 'variable.self'],
+
+  buildRegexMatchers(['punctuation.delimiter']),
+
+  // Function and Constructor definitions
+  [/(\bdef\b)(\s+)(__\w+__)/, ['keyword', 'white', 'constructor']],
+  [/(\bdef\b)(\s+)([A-Z_0-9a-z]+)/, ['keyword', 'white', 'function.name']],
+  buildRegexMatchers(['function.name', 'brackets.round']),
+
+
+  // Operators and delimiters
+  [/[=+\-*/%&|^~<>!]+/, 'operator'],
+
+  // Handle triple-quoted strings on a single line
+  [/"""/, { token: 'string.quote.double.triple', bracket: '@open', next: '@multiLineDoubleString' }],
+  [/'''/, { token: 'string.quote.single.triple', bracket: '@open', next: '@multiLineSingleString' }],
+
+  // Handle invalid single-line strings only at the end of the line
+  [/"([^"\\]|\\.)*$/, 'string.invalid'], // Invalid double-quoted string if not closed at end of line
+  [/'([^'\\]|\\.)*$/, 'string.invalid'], // Invalid single-quoted string if not closed at end of the line
+
+  // Start of regular double-quoted and single-quoted strings
+  [/"/, { token: 'string.quote.double', bracket: '@open', next: '@doubleString' }],
+  [/'/, { token: 'string.quote.single', bracket: '@open', next: '@singleString' }],
+
+  // Comments
+  [/#.*/, 'comment'],
+
+  // Keywords
+  [
+      new RegExp(`(^|\\s)(?<!\.)(^False|^None|^True|^as|${KEY_WORDS.join('|')})(?=\\s|$|[.,;:()])`),
+      'keyword',
+  ],
 ];
 
 const provider = {
@@ -66,208 +248,3 @@ const provider = {
 };
 
 export default provider;
-
-
-// import { range } from '@utils/array';
-
-// // From Python to TypeScript
-// const mapping = {
-//   attribute: 'property',
-//   boolean: 'constant',
-// };
-
-// enum RegexEnum {
-//   constant = '(\\b([A-Z_0-9]+)\\b)',
-//   type = '(\\b([A-Z_][A-Z_0-9a-z]+)\\b)',
-//   'function.name' = '(\\b([_0-9a-z]+)\\b)',
-//   'keyword.as' = '(as)',
-//   'keyword.from' = '(from)',
-//   'keyword.import' = '(import)',
-//   'punctuation.dot' = '(\\.)',
-//   'punctuation.delimiter' = '([:,;])',
-//   namespace = '(\\b(?!import\\b)(?!from\\b)\\b(?!as\\b)\\w+\\b)',
-//   white = '(\\s+)',
-// }
-
-// function buildRegexMatchers(keys: string[], opts?: {
-//   next?: string;
-// }): (RegExp | {
-//   next?: string;
-//   token: string;
-// }[])[] {
-//   const count = keys.length;
-
-//   return [
-//     new RegExp(keys.map(key => RegexEnum[key]).join('')),
-//     keys.map((key, idx: number) => ({
-//       next: idx === count - 1 ? opts?.next : undefined,
-//       token: key,
-//     })),
-//   ];
-// }
-
-// const states = {
-
-//   importNamespaces: [
-//     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@importNamespaces' }),
-//     buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], { next: '@pop' }),
-//     buildRegexMatchers(['namespace'], { next: '@pop' }),
-//   ],
-
-//   namespacesNested: [
-//     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@namespacesNested' }),
-//     buildRegexMatchers(['namespace'], { next: '@pop' }),
-//   ],
-
-//   fromImport: [
-//     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@namespacesNested' }),
-//     buildRegexMatchers(['namespace', 'white', 'keyword.import', 'white'], { next: '@importSymbols' }),
-//     buildRegexMatchers(['namespace'], { next: '@pop' }),
-//   ],
-
-//   importSymbols: [
-//     buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], { next: '@pop' }),
-//     buildRegexMatchers(['namespace'], { next: '@pop' }),
-//   ],
-
-//   // importAs: [
-//   //   buildRegexMatchers([
-//   //     'keyword.as',
-//   //     'white',
-//   //     'namespace',
-//   //   ], { next: '@pop' }),
-//   //   // buildRegexMatchers([ 'namespace' ], { next: '@pop' }),
-//   // ],
-
-//   // // Handle double-quoted string escape sequences correctly
-//   // doubleString: [
-//   //   [/[^"\\]+/, 'string'], // Match the string content until a double quote or backslash
-//   //   [/\\./, 'string.escape'], // Handle escape sequences
-//   //   [/(?<!\\)"/, { token: 'string.quote.double', bracket: '@close', next: '@pop' }], // Match closing double quote
-//   //   [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
-//   // ],
-
-//   // // Handle single-quoted string escape sequences correctly
-//   // singleString: [
-//   //   [/[^'\\]+/, 'string'], // Match the string content until a single quote or backslash
-//   //   [/\\./, 'string.escape'], // Handle escape sequences
-//   //   [/(?<!\\)'/, { token: 'string.quote.single', bracket: '@close', next: '@pop' }], // Match closing single quote
-//   //   [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
-//   // ],
-
-//   // // Triple double-quoted string state
-//   // multiLineDoubleString: [
-//   //   [/[^\\"]+/, 'comment.doc'], // Match the string content until a triple quote or backslash
-//   //   [/\\./, 'string.escape'], // Handle escape sequences
-//   //   [/"""/, { token: 'string.quote.double.triple', bracket: '@close', next: '@pop' }], // Match closing triple double quote
-//   //   [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
-//   // ],
-
-//   // // Triple single-quoted string state
-//   // multiLineSingleString: [
-//   //   [/[^\\']+/, 'comment.doc'], // Match the string content until a triple quote or backslash
-//   //   [/\\./, 'string.escape'], // Handle escape sequences
-//   //   [/'''/, { token: 'string.quote.single.triple', bracket: '@close', next: '@pop' }], // Match closing triple single quote
-//   //   [/$/, 'string.invalid'], // Mark as invalid if not properly closed and reaches the end of the line
-//   // ],
-// // };
-
-// // const root = [
-// //   // from a.b.c...
-// //   buildRegexMatchers(['keyword.import', 'white'], { next: '@importNamespaces' }),
-// //   buildRegexMatchers(['keyword.from', 'white'], { next: '@fromImport' }),
-//   // buildRegexMatchers(['keyword.import', 'white', 'namespace'], { next: '@namespacesNested' }),
-
-
-//   // ...fromProviders,
-//   // ...importProviders,
-
-//   // Prioritize import statements to avoid conflicts
-//   // [/(from)(\s+)([\w]+)(\.)([\w]+)(\.)([\w]+)(\s+)(import)(\s*\(?)/, [
-//   //   'keyword', 'white', 'namespace', 'punctuation.delimiter', 'namespace', 'punctuation.delimiter', 'namespace', 'white', 'keyword', 'brackets.round',
-//   // ]],
-
-//   // import a.b.c as d
-//   // [
-//   //   /(import)(\s+)([\w]+)(\.)([\w]+)(\.)([\w]+)(\s*)(as)(\s*)([\w\.]+)?/,
-//   //   ['keyword', 'white', 'namespace', 'punctuation.delimiter', 'namespace', 'punctuation.delimiter', 'namespace', 'white', 'keyword', 'white', 'namespace'],
-//   // ],
-//   // [
-//   //   /\b(import)(\s+)([A-Za-z_][A-Za-z0-9_]*)(\.)([A-Za-z_][A-Za-z0-9_]*)*/,
-//   //   ['keyword', 'white', 'namespace', 'punctuation.delimiter', 'namespace'],
-//   // ],
-//   // [
-//   //   /\b(import)(\s+)([A-Za-z_][A-Za-z0-9_]*)(\.)([A-Za-z_][A-Za-z0-9_]*)(\.)([A-Za-z_][A-Za-z0-9_]*)*/,
-//   //   ['keyword', 'white', 'namespace', 'punctuation.delimiter', 'namespace', 'punctuation.delimiter', 'namespace'],
-//   // ],
-//   // [/(import)(\s+)([\w\.]+)(\s+as\s+)([\w\.]+)?/, ['keyword', 'white', 'namespace', 'white', 'keyword', 'white', 'namespace']],
-//   // [/(import)(\s+[\w\.]+)/, ['keyword', 'white', 'namespace']],
-
-//   // // Uppercase constants at class level
-//   // [/\b[A-Z_][A-Z_0-9]*\b(?=\s*=)/, 'enum'],
-
-//   // // Constants in uppercase
-//   // [/\b(None)\b/, 'literal.none'],
-//   // [/\b([A-Z_][A-Z_0-9]*)\b/, 'constant'],
-//   // [/(?<=[^\w\s]|^)\b[A-Z][A-Za-z0-9_]*\s*(\(\s*\))?/, 'type'],
-
-//   // // Class declaration
-//   // [/(class)(\s+)(\w+)(\s*)(:)/, ['keyword', 'white', 'type', 'white', 'punctuation.delimiter']], // Class declaration
-
-//   // // Class declaration with inheritance
-//   // [/(class)(\s+)(\w+)(\s*)(\()(\s*)(\w+)(\s*)(,?)(\s*)(\w+)?(\s*)(\))(\s*)(:)/,
-//   //   [
-//   //     'keyword', 'white', 'type', 'white', 'brackets.round', 'white',
-//   //     'type', 'white', 'punctuation.delimiter', 'white', 'type', 'white',
-//   //     'brackets.round', 'white', 'punctuation.delimiter',
-//   //   ],
-//   // ],
-
-//   // // Detect regex strings by looking for patterns commonly enclosing regex in JavaScript/TypeScript
-//   // [/(\/)([^\/\\]*(?:\\.[^\/\\]*)*)(\/[gimsuy]*)/, ['string.regex.delimiter', 'string.regex', 'string.regex.delimiter']],
-
-//   // [/[\[\]]/, 'brackets.square'], // Brackets
-//   // [/[()]/, 'brackets.round'], // Parentheses
-//   // [/[{}]/, 'brackets.curly'], // Braces
-
-
-//   // // Attributes with type hints
-//   // [/(\.)(\w+)([:])/, ['punctuation.delimiter', 'attribute', 'punctuation.delimiter']], // Attributes with type hints
-//   // [/(\.)(\w+)/, ['punctuation.delimiter', 'attribute']], // Attributes with type hints
-//   // [/[:,;]/, 'punctuation.delimiter'], // Colons, semicolons, commas, and other delimiters
-
-//   // // Booleans
-//   // [/\b(True|False)\b/, 'literal.boolean'],
-
-//   // // Function and Constructor definitions
-//   // [/(\bdef\b)(\s+)(__\w+__)/, ['keyword', 'white', 'constructor']],  // Keyword def and special method (constructor)
-//   // [/(\bdef\b)(\s+)([a-zA-Z_]\w*)/, ['keyword', 'white', 'function.name']],  // Keyword def and regular function
-
-//   // // Self and cls in methods
-//   // [/\b(self|cls)\b/, 'variable.self'],
-
-//   // // Numeric literals
-//   // [/\d+(\.\d+)?([eE][\-+]?\d+)?/, 'literal.number'],
-
-//   // // Operators and delimiters
-//   // [/[=+\-*/%&|^~<>!]+/, 'operator'],
-
-//   // // Handle triple-quoted strings on a single line
-//   // [/"""/, { token: 'string.quote.double.triple', bracket: '@open', next: '@multiLineDoubleString' }],
-//   // [/'''/, { token: 'string.quote.single.triple', bracket: '@open', next: '@multiLineSingleString' }],
-
-//   // // Handle invalid single-line strings only at the end of the line
-//   // [/"([^"\\]|\\.)*$/, 'string.invalid'], // Invalid double-quoted string if not closed at end of line
-//   // [/'([^'\\]|\\.)*$/, 'string.invalid'], // Invalid single-quoted string if not closed at end of the line
-
-//   // // Start of regular double-quoted and single-quoted strings
-//   // [/"/, { token: 'string.quote.double', bracket: '@open', next: '@doubleString' }],
-//   // [/'/, { token: 'string.quote.single', bracket: '@open', next: '@singleString' }],
-
-//   // // Comments
-//   // [/#.*/, 'comment'],
-
-//   // Keywords
-//   // [/(^|\s)(^False|^None|^True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)(?=\s|$|[.,;:()])/, 'keyword'],
-
-// // ];

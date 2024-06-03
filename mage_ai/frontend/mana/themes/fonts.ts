@@ -9,7 +9,6 @@ type FontFamilyType = {
   medium: string;
   regular: string;
   regularItalic?: string;
-  retina?: string;
   semiBold: string;
 };
 
