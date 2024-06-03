@@ -311,13 +311,13 @@ export default function base(
       independentColorPoolPerBracketType: false,
     },
     codeLens: false, // Code lens font family. Defaults to editor font family.
-    colorDecorators: false, // true
+    colorDecorators: true, // true
     contextmenu: false, // Enable custom contextmenu. Defaults to true.
     cursorSmoothCaretAnimation: 'off', // Makes the typing feel delayed
     folding: false, // Enable code folding. Defaults to true.
     guides: {
-      bracketPairs: true,
-      bracketPairsHorizontal: true,
+      bracketPairs: false,
+      bracketPairsHorizontal: false,
       highlightActiveIndentation: false, // true
       indentation: false, // true
     },
