@@ -84,7 +84,7 @@ const theme = {
     // Editor selection colors
     // ----------------------------------------------------------------------------------------------
     // Background color of the editor.
-    'editor.background': '#000000E6', // Black transparent
+    'editor.background': '#000000B3', // Black transparent
     // Color of the blinking cursor.
     'editorCursor.foreground': '#CBFE00D9', // Yellow
     // Highlight/Selection colorss
