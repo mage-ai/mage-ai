@@ -69,7 +69,7 @@ class WorkspaceResource(GenericResource):
     @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
-        cluster_type = self.verify_project()
+        cluster_type = self.verify_project(user=user)
         if not cluster_type:
             cluster_type = payload.pop('cluster_type')
 
@@ -94,7 +94,7 @@ class WorkspaceResource(GenericResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
-        cluster_type = self.verify_project(pk)
+        cluster_type = self.verify_project(subproject=pk, user=user)
         if not cluster_type:
             query = kwargs.get('query', {})
             cluster_type = query.get('cluster_type')[0]
