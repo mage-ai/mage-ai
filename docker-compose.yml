@@ -78,6 +78,7 @@ x-app_settings: &app_settings
   ports:
     - 3000:3000
   volumes:
+      # Why aren’t we mounting our node_modules directory?
     - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
     - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
     - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js

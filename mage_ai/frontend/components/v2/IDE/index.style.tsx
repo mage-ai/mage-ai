@@ -6,10 +6,15 @@ type StyleProps = {
   hideDuplicateMenuItems?: boolean;
 };
 
+export const ContainerStyled = styled.div`
+  height: 100%;
+  width: 100%;
+`;
+
 export const IDEStyled = styled.div<StyleProps>`
   background-color: black;
 
-  .mounted {
+  &.mounted {
     ${gradient('45deg', '#6B50D7', '#FF144D', 30, 100)}
   }
 
@@ -31,10 +36,4 @@ export const IDEStyled = styled.div<StyleProps>`
       display: none;
     }
   `}
-`;
-
-export const PlaceholderStyle = styled.div`
-  padding-left: 67px;
-  position: absolute;
-  z-index: 1;
 `;

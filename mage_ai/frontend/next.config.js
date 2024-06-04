@@ -1,6 +1,7 @@
 // NOTE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Any changes in this file should be replicated in next_base_path.config.js
 
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
@@ -18,4 +19,12 @@ module.exports = removeImports({
   // (including `useState`, `useEffect`, and others) to help identify side effects.
   // This does not happen in production builds.
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
+  webpack: (config, options) => {
+    config.plugins.push(
+      new MonacoWebpackPlugin({
+        languages: ['sql', 'python', 'typescript'], // specify the languages you need
+      })
+    );
+    return config;
+  },
 });

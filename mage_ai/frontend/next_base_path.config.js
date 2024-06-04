@@ -1,3 +1,4 @@
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
@@ -13,4 +14,12 @@ module.exports = removeImports({
     unoptimized: true,
   },
   reactStrictMode: true,
+  webpack: (config, options) => {
+    config.plugins.push(
+      new MonacoWebpackPlugin({
+        languages: ['sql', 'python', 'typescript'], // specify the languages you need
+      })
+    );
+    return config;
+  },
 });

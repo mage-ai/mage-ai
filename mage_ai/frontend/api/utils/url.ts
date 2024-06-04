@@ -7,12 +7,13 @@ function getHostCore(
   windowDefined: boolean,
   defaultHost: string = DEFAULT_HOST,
   defaultPort: string = DEFAULT_PORT,
+  override?: boolean = false,
 ) {
   let host = defaultHost;
   if (windowDefined) {
     host = window.location.hostname;
   }
-  if (host === defaultHost) {
+  if (host === defaultHost || override) {
     host = `${host}:${defaultPort}`;
   } else if (windowDefined && !!window.location.port) {
     host = `${host}:${window.location.port}`;
@@ -81,6 +82,28 @@ export function getEventStreamsUrl(uuid?: string): string {
     prefix = 'https://';
   }
   return `${prefix}${host}/event-streams/${uuid || ''}`;
+}
+
+export function getLanguageServerUrl(): string {
+  const windowDefined = typeof window !== 'undefined';
+  const host = getHostCore(
+    windowDefined,
+    process.env.NEXT_PUBLIC_LANGUAGE_SERVER_HOST || DEFAULT_HOST,
+    String(process.env.NEXT_PUBLIC_LANGUAGE_SERVER_PORT || 8765),
+    true,
+  );
+
+  let prefix = 'ws://';
+  if (windowDefined && window.location.protocol?.match(/https/)) {
+    prefix = 'wss://';
+  }
+  const url = `${prefix}${host}`;
+  const path = process.env.NEXT_PUBLIC_LANGUAGE_SERVER_PATH;
+  if (path) {
+    return `${url}/${path}`;
+  }
+
+  return url;
 }
 
 export function buildUrl(

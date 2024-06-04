@@ -1,7 +1,4 @@
-const mapping = {
-  attribute: 'property',
-  boolean: 'constant',
-};
+import * as monacoEditor from 'monaco-editor';
 
 const KEY_WORDS = [
   'and',
@@ -268,11 +265,11 @@ const root = [
   ],
 ];
 
-const provider = {
-  tokenizer: {
-    root,
-    ...states,
-  },
-};
-
-export default provider;
+export default function provider(): IMonarchLanguage {
+  return {
+    tokenizer: {
+      root,
+      ...states,
+    },
+  };
+}
