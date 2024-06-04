@@ -19,7 +19,6 @@ from mage_integrations.destinations.constants import (
     KEY_RECORD,
 )
 from mage_integrations.destinations.delta_lake.constants import MODE_APPEND
-from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
 
 # from mage_integrations.destinations.delta_lake.schema import (
 #     delta_arrow_schema_from_pandas,
@@ -121,11 +120,6 @@ class DeltaLake(BaseDestination):
         storage_options = self.build_storage_options()
         table_uri = self.build_table_uri(stream)
         table = try_get_deltatable(table_uri, storage_options)
-
-        if table:
-            raw_dt = table._table
-            table._table = RawDeltaTable(raw_dt)
-
         return table
 
     def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
