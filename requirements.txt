@@ -133,7 +133,6 @@ google-analytics-data==0.14.2
 google-cloud-bigquery-storage==2.16.2
 httpx[http2]
 pendulum==2.1.0
-pygls
 pymongo_schema==0.4.1
 python-magic==0.4.27
 redshift-connector~=2.0.915
