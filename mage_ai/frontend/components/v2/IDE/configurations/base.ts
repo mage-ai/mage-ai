@@ -69,10 +69,8 @@ export default function base(
     // container dom node size has changed.
     automaticLayout: true,
     codeActionsOnSaveTimeout: 750, // Timeout for running code actions on save.
-
     codeLensFontFamily: 'inherit',
     codeLensFontSize: 14, // Code lens font size. Default to 90% of the editor font size
-
     colorDecoratorsActivatedOn: 'hover',
     comments: {
       ignoreEmptyLines: true, // Ignore empty lines when inserting line comments.
@@ -108,7 +106,7 @@ export default function base(
       loop: true,
       seedSearchStringFromSelection: 'always',
     },
-    fixedOverflowWidgets: true,
+    fixedOverflowWidgets: false,
     foldingHighlight: true,
     foldingImportsByDefault: true,
     foldingMaximumRegions: 5000,
@@ -181,12 +179,7 @@ export default function base(
       enable: true,
       showPasteSelector: 'afterPaste',
     },
-    peekWidgetDefaultFocus: 'editor', // tree, false
-    quickSuggestions: {
-      comments: 'inline',
-      other: 'inline',
-      strings: 'inline',
-    },
+    peekWidgetDefaultFocus: false, // tree, false, 'editor'
     readOnly,
     readOnlyMessage,
     renderFinalNewline: true,
@@ -232,7 +225,7 @@ export default function base(
     stablePeek: false,
     stickyScroll: {
       defaultModel: 'peekModel', // 'peekModel' | 'editorModel'
-      enabled: true,
+      enabled: false,
       maxLineCount: 100,
       scrollWithEditor: false,
     },
@@ -334,9 +327,11 @@ export default function base(
       fontSize,
       padding: true,
     },
+    // https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IInlineSuggestOptions.html
     inlineSuggest: {
       enabled: true, // true
       fontFamily,
+      fontSize,
       keepOnBlur: true,
       // Use prefix to only show ghost text if the text to
       // replace is a prefix of the suggestion text.
@@ -344,9 +339,19 @@ export default function base(
       // replace text is a subword of the suggestion text.
       // Use subwordSmart to only show ghost text if the replace text is a subword of the suggestion
       // text, but the subword must start after the cursor position.
-      mode: 'subwordSmart',
-      showToolbar: 'always',
+      mode: 'subword',
+      showToolbar: 'onHover', // "always" | "never" | "onHover"
       suppressSuggestions: false,
+    },
+
+    // https://microsoft.github.io/monaco-editor/typedoc/interfaces/editor.IQuickSuggestionsOptions.html
+    quickSuggestions: {
+      // Controls whether or not quick suggestions should appear while typing within comments.
+      comments: 'inline', // "on" | "inline" | "off"
+      // Controls whether or not quick suggestions should appear while typing outside of comments and strings (i.e., normal code).
+      other: 'on', // "on" | "inline" | "off"
+      // Controls whether or not quick suggestions should appear while typing within strings.
+      strings: 'inline', // "on" | "inline" | "off"
     },
     lightbulb: {
       // Enable the lightbulb code action.
@@ -357,7 +362,7 @@ export default function base(
     },
     minimap: {
       autohide: true,
-      enabled: true, // true
+      enabled: false, // true
       maxColumn: 120,
       renderCharacters: true,
       scale: 1,

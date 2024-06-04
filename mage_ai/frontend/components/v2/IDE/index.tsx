@@ -4,6 +4,7 @@ import { useContext, useEffect, useMemo, useRef } from 'react';
 import { IDEThemeEnum } from './themes/interfaces';
 import baseConfigurations from './configurations/base';
 import initializeThemes from './themes/setup';
+import initializeAutocomplete from './autocomplete';
 import mockCode from './mocks/code';
 import setupPython from './languages/python';
 import { ContainerStyled, IDEStyled } from './index.style';
@@ -82,6 +83,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
         if (monaco.editor.getEditors().length === 0) {
           setupPython(monaco);
           initializeThemes(monaco);
+          initializeAutocomplete(monaco);
 
           editorRef.current = monaco.editor.create(
             containerRef.current,

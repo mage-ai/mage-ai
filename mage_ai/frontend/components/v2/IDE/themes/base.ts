@@ -196,6 +196,27 @@ const theme = {
     // Background color for removed text.
     // 'diffEditor.removedTextBackground': '#',
     // ----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    // Autocomplete
+    // ----------------------------------------------------------------------------------------------
+    'editorSuggestWidget.background': '#FFFFFF', // Background color of the suggest widget
+    'editorSuggestWidget.foreground': '#000000', // Text color of the options in the dropdwon suggest widget
+    'editorSuggestWidget.border': '#CBFE00', // Border color of the suggest widget
+    // Optional: Foreground color of the selected item; selected is when you press arrow down/up
+    'editorSuggestWidget.selectedForeground': '#CBFE00',
+    'editorSuggestWidget.selectedBackground': '#000000', // Background color of the selected item in the suggest widget
+    'editorSuggestWidget.selectedIconForeground': '#CBFE00', // Optional: Foreground color of the selected item icon
+    // Text color of the match highlights in the suggest widget when hovering over the option
+    'editorSuggestWidget.highlightForeground': '#CBFE00',
+
+
+
+    // This sets the color of the inline suggestion text (ghost text or unselected proposal).
+    'editorGhostText.foreground': '#CBFE00',
+    // This sets the color of the highlighted portion of the text
+    // in an inline suggestion that matches the current input.
+    'editor.inlineSuggest.highlightForeground': '#2A60FE',
+
   },
 };
 export default theme;
