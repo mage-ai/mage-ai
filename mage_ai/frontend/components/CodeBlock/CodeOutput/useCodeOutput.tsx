@@ -18,10 +18,7 @@ import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, {
-  DataTypeEnum,
-  DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
+import KernelOutputType, { DataTypeEnum, DATA_TYPE_TEXTLIKE } from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
@@ -164,120 +161,105 @@ export default function useCodeOutput({
   const refDataFrameShape = useRef(null);
   const dataFrameShape = refDataFrameShape.current;
 
-  const {
-    color: blockColor,
-    status,
-    type: blockType,
-    uuid: blockUUID,
-  } = block || {};
+  const { color: blockColor, status, type: blockType, uuid: blockUUID } = block || {};
 
   const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
 
   const token = new AuthToken()?.decodedToken?.token;
-  const [
-    downloadBlockOutputAsCsvFile,
-    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
-  ]: any = useMutation(
-    () => api.block_outputs.pipelines.downloads.detailAsync(
-      pipeline?.uuid,
-      blockUUID,
-      { token },
-      {
-        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
-        responseType: ResponseTypeEnum.BLOB,
-      },
-    ),
-    {
-      onSuccess: (response: any) => onSuccess(
-          response, {
-            callback: (blobResponse) => {
-              openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
-            },
-            onErrorCallback: (response, errors) => setErrors?.({
-              errors,
-              response,
-            }),
+  const [downloadBlockOutputAsCsvFile, { isLoading: isLoadingDownloadBlockOutputAsCsvFile }]: any =
+    useMutation(
+      () =>
+        api.block_outputs.pipelines.downloads.detailAsync(
+          pipeline?.uuid,
+          blockUUID,
+          { token },
+          {
+            onDownloadProgress: p =>
+              setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+            responseType: ResponseTypeEnum.BLOB,
           },
         ),
-    },
+      {
+        onSuccess: (response: any) =>
+          onSuccess(response, {
+            callback: blobResponse => {
+              openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
+            },
+            onErrorCallback: (response, errors) =>
+              setErrors?.({
+                errors,
+                response,
+              }),
+          }),
+      },
+    );
+
+  const combineTextData = useCallback(data => (Array.isArray(data) ? data.join('\n') : data), []);
+
+  const combinedMessages = useMemo(
+    () =>
+      messages?.length >= 1
+        ? messages.reduce((arr, curr) => {
+            const last = arr.at(-1);
+
+            if (
+              DATA_TYPE_TEXTLIKE.includes(last?.type) &&
+              last?.type === curr.type &&
+              !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+            ) {
+              if (Array.isArray(last.data)) {
+                last.data.concat(curr.data);
+              } else if (typeof last.data === 'string') {
+                const currentText = combineTextData(curr.data) || '';
+                last.data = [last.data, currentText].join('\n');
+              }
+            } else if (
+              DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+              !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+            ) {
+              arr.push({
+                ...curr,
+                data: combineTextData(curr.data),
+              });
+            } else {
+              arr.push({ ...curr });
+            }
+
+            return arr;
+          }, [])
+        : messagesAll || [],
+    [combineTextData, messages, messagesAll],
   );
 
-  const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
-  ]);
+  const renderMessagesRaw = useMemo(
+    () => !messages?.length && messagesAll?.length >= 1,
+    [messages, messagesAll],
+  );
 
-  const combinedMessages = useMemo(() => messages?.length >= 1
-      ? messages.reduce((arr, curr) => {
-        const last = arr.at(-1);
+  const createTableData = useCallback(
+    ({ columns, index, rows, shape }, { borderTop, selected: selectedProp }) => {
+      if (shape) {
+        refDataFrameShape.current = shape;
+      }
 
-        if (DATA_TYPE_TEXTLIKE.includes(last?.type)
-          && last?.type === curr.type
-          && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-        ) {
-          if (Array.isArray(last.data)) {
-            last.data.concat(curr.data);
-          } else if (typeof last.data === 'string') {
-            const currentText = combineTextData(curr.data) || '';
-            last.data = [last.data, currentText].join('\n');
-          }
-        } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-          && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-        ) {
-          arr.push({
-            ...curr,
-            data: combineTextData(curr.data),
-          });
-        } else {
-          arr.push({ ...curr });
-        }
+      const columnHeadersContainEmptyString = columns?.some(header => header === '');
 
-        return arr;
-      }, [])
-      : messagesAll || [], [
-    combineTextData,
-    messages,
-    messagesAll,
-  ]);
+      return {
+        borderTop,
+        columnHeadersContainEmptyString,
+        columns,
+        index,
+        mainContainerWidth,
+        rows,
+        selected: selectedProp,
+        // Remove border 2px and padding from each side
+        width: mainContainerWidth - (2 + PADDING_UNITS * UNIT * 2 + 2 + SCROLLBAR_WIDTH),
+      };
+    },
+    [mainContainerWidth],
+  );
 
-  const renderMessagesRaw = useMemo(() => !messages?.length && messagesAll?.length >= 1, [
-    messages,
-    messagesAll,
-  ]);
-
-  const createTableData = useCallback(({
-    columns,
-    index,
-    rows,
-    shape,
-  }, {
-    borderTop,
-    selected: selectedProp,
-  }) => {
-    if (shape) {
-      refDataFrameShape.current = shape;
-    }
-
-    const columnHeadersContainEmptyString = columns?.some(header => header === '');
-
-    return {
-      borderTop,
-      columnHeadersContainEmptyString,
-      columns,
-      index,
-      mainContainerWidth,
-      rows,
-      selected: selectedProp,
-      // Remove border 2px and padding from each side
-      width: mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH),
-    };
-  }, [
-    mainContainerWidth,
-  ]);
-
-  const {
-    tableContentData,
-    testMessages,
-    textContent,
-  } = useMemo(() => {
+  const { tableContentData, testMessages, textContent } = useMemo(() => {
     const arrContent = [];
     const tableContentDataInner = [];
     const testMessagesInner = [];
@@ -316,20 +298,26 @@ export default function useCodeOutput({
       dataArray1 = dataArray1.filter(d => d);
 
       const dataArray = [];
-      dataArray1.forEach((data: string | {
-        columns: string[];
-        rows: any[][];
-        shape: number[];
-      }) => {
-        if (dataType === DataTypeEnum.TEXT_HTML) {
-          dataArray.push(data);
-        } else if (data && typeof data === 'string') {
-          const lines = data.split('\n');
-          dataArray.push(...lines);
-        } else if (typeof dataArray === 'object') {
-          dataArray.push(data);
-        }
-      });
+      dataArray1.forEach(
+        (
+          data:
+            | string
+            | {
+                columns: string[];
+                rows: any[][];
+                shape: number[];
+              },
+        ) => {
+          if (dataType === DataTypeEnum.TEXT_HTML) {
+            dataArray.push(data);
+          } else if (data && typeof data === 'string') {
+            const lines = data.split('\n');
+            dataArray.push(...lines);
+          } else if (typeof dataArray === 'object') {
+            dataArray.push(data);
+          }
+        },
+      );
 
       const dataArrayLength = dataArray.length;
 
@@ -341,7 +329,8 @@ export default function useCodeOutput({
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
-          normalPadding: outputRowNormalPadding, sideBySideEnabled,
+          normalPadding: outputRowNormalPadding,
+          sideBySideEnabled,
         };
 
         const borderTop = idx >= 1;
@@ -384,10 +373,7 @@ export default function useCodeOutput({
           }
 
           if (isJsonString(rawString)) {
-            const {
-              data: dataDisplay,
-              type: typeDisplay,
-            } = JSON.parse(rawString);
+            const { data: dataDisplay, type: typeDisplay } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
               const tableEl = createTableData(dataDisplay, {
@@ -398,30 +384,20 @@ export default function useCodeOutput({
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          const tableEl = createTableData(
-            isJsonString(data) ? JSON.parse(data) : data,
-            {
-              borderTop,
-              selected,
-            },
-          );
+          const tableEl = createTableData(isJsonString(data) ? JSON.parse(data) : data, {
+            borderTop,
+            selected,
+          });
           tableContentDataInner.push(tableEl);
-
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');
 
           displayElement = (
             <OutputRowStyle {...outputRowSharedProps}>
-              {textArr.map((t) => (
+              {textArr.map(t => (
                 <Text key={t} monospace preWrap>
-                  {t?.length >= 1 && (
-                    <Ansi>
-                      {t}
-                    </Ansi>
-                  )}
-                  {!t?.length && (
-                    <>&nbsp;</>
-                  )}
+                  {t?.length >= 1 && <Ansi>{t}</Ansi>}
+                  {!t?.length && <>&nbsp;</>}
                 </Text>
               ))}
             </OutputRowStyle>
@@ -440,20 +416,13 @@ export default function useCodeOutput({
         } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
-              <img
-                alt={`Image ${idx} from code output`}
-                src={`data:image/png;base64, ${data}`}
-              />
+              <img alt={`Image ${idx} from code output`} src={`data:image/png;base64, ${data}`} />
             </div>
           );
         }
 
         if (displayElement) {
-          arr.push(
-            <div key={`code-output-${idx}-${idxInner}`}>
-              {displayElement}
-            </div>,
-          );
+          arr.push(<div key={`code-output-${idx}-${idxInner}`}>{displayElement}</div>);
         }
       });
 
@@ -485,9 +454,8 @@ export default function useCodeOutput({
   };
 
   const columnCount = dataFrameShape?.[1] || 0;
-  const columnsPreviewMessage = columnCount > 30
-    ? ` (30 out of ${columnCount} columns displayed)`
-    : '';
+  const columnsPreviewMessage =
+    columnCount > 30 ? ` (30 out of ${columnCount} columns displayed)` : '';
 
   const extraInfo = (
     <ExtraInfoStyle
@@ -503,16 +471,12 @@ export default function useCodeOutput({
       <FlexContainer justifyContent="space-between">
         <Flex alignItems="center" px={1}>
           {setCollapsed && (
-            <Button
-              {...SHARED_BUTTON_PROPS}
-              onClick={() => setCollapsed(!collapsed)}
-            >
+            <Button {...SHARED_BUTTON_PROPS} onClick={() => setCollapsed(!collapsed)}>
               {collapsed ? (
                 <FlexContainer alignItems="center">
-                  <ChevronDown muted size={UNIT * 2} />&nbsp;
-                  <Text default>
-                    Expand output
-                  </Text>
+                  <ChevronDown muted size={UNIT * 2} />
+                  &nbsp;
+                  <Text default>Expand output</Text>
                 </FlexContainer>
               ) : (
                 <FlexContainer alignItems="center">
@@ -543,28 +507,21 @@ export default function useCodeOutput({
         </Flex>
 
         <ExtraInfoContentStyle>
-          <FlexContainer
-            alignItems="center"
-            fullWidth
-            justifyContent="flex-end"
-          >
+          <FlexContainer alignItems="center" fullWidth justifyContent="flex-end">
             <Tooltip
               {...SHARED_TOOLTIP_PROPS}
-              label={runCount >= 1 && runStartTime
-                ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
-                : (
-                  hasError
+              label={
+                runCount >= 1 && runStartTime
+                  ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
+                  : hasError
                     ? 'Block executed with errors'
                     : 'Block executed successfully'
-                )
               }
             >
               <FlexContainer alignItems="center">
                 {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
                   <>
-                    <Text small>
-                      {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-                    </Text>
+                    <Text small>{(Number(runEndTime) - Number(runStartTime)) / 1000}s</Text>
 
                     <Spacing mr={1} />
                   </>
@@ -572,10 +529,7 @@ export default function useCodeOutput({
 
                 {!hasError && <Check size={UNIT * 2} success />}
                 {hasError && (
-                  <Circle
-                    danger
-                    size={UNIT * 2}
-                  >
+                  <Circle danger size={UNIT * 2}>
                     <Text bold monospace small>
                       !
                     </Text>
@@ -583,13 +537,10 @@ export default function useCodeOutput({
                 )}
               </FlexContainer>
             </Tooltip>
-            {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
+            {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) && (
               <Spacing pl={2}>
                 <FlexContainer alignItems="center">
-                  <Tooltip
-                    {...SHARED_TOOLTIP_PROPS}
-                    label="Expand table"
-                  >
+                  <Tooltip {...SHARED_TOOLTIP_PROPS} label="Expand table">
                     <Button
                       {...SHARED_BUTTON_PROPS}
                       onClick={() => {
@@ -614,9 +565,10 @@ export default function useCodeOutput({
                   <Tooltip
                     {...SHARED_TOOLTIP_PROPS}
                     forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
-                    label={isLoadingDownloadBlockOutputAsCsvFile
-                      ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                      : 'Save output as CSV file'
+                    label={
+                      isLoadingDownloadBlockOutputAsCsvFile
+                        ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                        : 'Save output as CSV file'
                     }
                   >
                     <Button
@@ -633,7 +585,7 @@ export default function useCodeOutput({
                   </Tooltip>
                 </FlexContainer>
               </Spacing>
-            }
+            )}
           </FlexContainer>
         </ExtraInfoContentStyle>
       </FlexContainer>

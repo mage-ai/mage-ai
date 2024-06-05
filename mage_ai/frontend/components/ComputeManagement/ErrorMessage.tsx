@@ -9,7 +9,7 @@ type ErrorMessageProps = {
   large?: boolean;
   small?: boolean;
   warning?: boolean;
-}
+};
 
 function ErrorMessage({
   danger,
@@ -30,6 +30,7 @@ function ErrorMessage({
       errorHTML = errorHTML.replace(
         `{{${key}}}`,
         renderToString(
+          // @ts-ignore
           <Text
             danger={danger}
             inline
@@ -40,23 +41,23 @@ function ErrorMessage({
             {...(value || {})}
           >
             {key}
-          </Text>
+          </Text>,
         ),
-      )
+      );
     });
   }
 
   return (
     <Text
+      large={large}
+      muted={!danger && !warning}
+      small={small}
+      warning={warning}
       danger={danger}
       // @ts-ignore
       dangerouslySetInnerHTML={{
         __html: errorHTML,
       }}
-      muted={!danger && !warning}
-      large={large}
-      small={small}
-      warning={warning}
     />
   );
 
