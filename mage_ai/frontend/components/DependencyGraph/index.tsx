@@ -644,6 +644,7 @@ function DependencyGraph({
       }
     },
     [
+      setSelectedBlock,
       blockEditing,
       onClick,
       onClickNodeProp,
@@ -753,6 +754,7 @@ function DependencyGraph({
       }
     },
     [
+      updateBlockByDragAndDrop,
       activePorts,
       clearTimeoutForNode,
       editingBlock,
@@ -913,7 +915,7 @@ function DependencyGraph({
       });
       setTimeoutForNode(node);
     },
-    [pipeline, setActivePorts, setTimeoutForNode, targetNode],
+    [pipeline, setActivePorts, setTimeoutForNode, targetNode, updateBlockByDragAndDrop],
   );
 
   const determineSelectedStatus = useCallback(
@@ -1096,6 +1098,7 @@ function DependencyGraph({
       );
     },
     [
+      determineSelectedStatus,
       blockEditing,
       blockStatus,
       callbackBlocksByBlockUUID,
@@ -1320,7 +1323,15 @@ function DependencyGraph({
         </ClickOutside>
       </div>
     );
-  }, [activeEdge, blocks, setActiveEdge, updateBlockByDragAndDrop]);
+  }, [
+    addNewBlockAtIndex,
+    blockUUIDMapping,
+    blocksWithDownstreamBlockSet,
+    activeEdge,
+    blocks,
+    setActiveEdge,
+    updateBlockByDragAndDrop,
+  ]);
 
   // @ts-ignore
   const interactionsEnabled: boolean = useMemo(
@@ -1517,6 +1528,9 @@ function DependencyGraph({
       </div>
     );
   }, [
+    addNewBlockAtIndex,
+    blockUUIDMapping,
+    blocksWithDownstreamBlockSet,
     addNewBlockAtIndex,
     blocks,
     contentByBlockUUID,
