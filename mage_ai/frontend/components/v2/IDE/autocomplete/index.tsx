@@ -31,15 +31,7 @@ import { Ref } from 'react';
 let deltaDecorarationsAdded = false;
 let decorationIds = []; // Store existing decoration IDs
 
-export default function autocomplete(
-  monaco: any,
-  editor: any,
-  opts?: {
-    roots?: {
-      [key: string]: Ref<HTMLDivElement>;
-    };
-  },
-) {
+export default function autocomplete(monaco: any) {
   monaco.languages.registerCompletionItemProvider('python', {
     provideCompletionItems: function (model, position) {
       const textUntilPosition = model.getValueInRange({
@@ -157,15 +149,15 @@ export default function autocomplete(
   };
 
   // // Ensure correct event listeners for updates
-  // if (editor) {
-  //   editor.onDidChangeModelContent(() => {
-  //     applyCustomDecorations(editor);
+  // if (monaco.editor) {
+  //   monaco.editor.onDidChangeModelContent(() => {
+  //     applyCustomDecorations(monaco.editor);
   //   });
-  //   editor.onDidChangeCursorPosition(() => {
-  //     applyCustomDecorations(editor);
+  //   monaco.editor.onDidChangeCursorPosition(() => {
+  //     applyCustomDecorations(monaco.editor);
   //   });
-  //   editor.onDidChangeCursorSelection(() => {
-  //     applyCustomDecorations(editor);
+  //   monaco.editor.onDidChangeCursorSelection(() => {
+  //     applyCustomDecorations(monaco.editor);
   //   });
   // } else {
   //   console.error('Monaco editor instance not found');
