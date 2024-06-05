@@ -1,6 +1,3 @@
-
-
-
 import '@codingame/monaco-vscode-python-default-extension';
 import { CloseAction, ErrorAction, MessageTransports } from 'vscode-languageclient';
 import { MonacoEditorLanguageClientWrapper, UserConfig } from 'monaco-editor-wrapper';
@@ -38,7 +35,7 @@ export default async function EditorWrapper() {
 
   return (
     <div>
-      <div id="monaco-editor-root"></div>
+      <div id='monaco-editor-root'></div>
     </div>
   );
 }

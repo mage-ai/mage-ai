@@ -31,10 +31,14 @@ function MateriaIDE({ theme: themeSelected, uuid }: IDEProps) {
   const mountedRef = useRef(false);
 
   const themeContext = useContext(ThemeContext);
-  const configurations = useMemo(() => baseConfigurations(themeContext, {
-    theme: themeSelected,
-    value: mockCode,
-  }), [themeContext, themeSelected]);
+  const configurations = useMemo(
+    () =>
+      baseConfigurations(themeContext, {
+        theme: themeSelected,
+        value: mockCode,
+      }),
+    [themeContext, themeSelected],
+  );
 
   useEffect(() => {
     useEffectCount.current += 1;
@@ -54,8 +58,7 @@ function MateriaIDE({ theme: themeSelected, uuid }: IDEProps) {
               self.MonacoEnvironment = {
                 baseUrl: '${getHost()}/monaco-editor/min/'
               };
-              importScripts('${getHost()}/monaco-editor/min/vs/base/worker/workerMain.js');`,
-            )}`;
+              importScripts('${getHost()}/monaco-editor/min/vs/base/worker/workerMain.js');`)}`;
           },
         };
 

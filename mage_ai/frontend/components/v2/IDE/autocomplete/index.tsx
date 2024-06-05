@@ -32,11 +32,15 @@ import { ITextModel, Position } from 'monaco-editor';
 let deltaDecorarationsAdded = false;
 let decorationIds = []; // Store existing decoration IDs
 
-export default function autocomplete(monaco: any, editor:any, opts?: {
-  roots?: {
-    [key: string]: Ref<HTMLDivElement>;
-  };
-}) {
+export default function autocomplete(
+  monaco: any,
+  editor: any,
+  opts?: {
+    roots?: {
+      [key: string]: Ref<HTMLDivElement>;
+    };
+  },
+) {
   monaco.languages.registerCompletionItemProvider('python', {
     provideCompletionItems: function (model: ITextModel, position: Position) {
       const textUntilPosition = model.getValueInRange({
@@ -104,7 +108,7 @@ export default function autocomplete(monaco: any, editor:any, opts?: {
   });
 
   // Add custom behavior for suggest widget decorations
-  const applyCustomDecorations = (editor) => {
+  const applyCustomDecorations = editor => {
     const model = editor.getModel();
     const position = editor.getPosition();
 

@@ -18,7 +18,7 @@ module.exports = removeImports({
     config.plugins.push(
       new MonacoWebpackPlugin({
         languages: ['sql', 'python', 'typescript'], // specify the languages you need
-      })
+      }),
     );
     return config;
   },

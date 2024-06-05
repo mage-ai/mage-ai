@@ -100,7 +100,7 @@ const theme = {
     // ???
     'editorRuler.foreground': '#FF9933', // Orange
     // Whitespace dots
-    'editorWhitespace.foreground': '#9B6CA780',  // Dark gray
+    'editorWhitespace.foreground': '#9B6CA780', // Dark gray
     // ----------------------------------------------------------------------------------------------
     // ----------------------------------------------------------------------------------------------
     // Brackets
@@ -213,13 +213,11 @@ const theme = {
     // "editorWidget.background": "",
     // "editorWidget.border": "",
 
-
     // This sets the color of the inline suggestion text (ghost text or unselected proposal).
     'editorGhostText.foreground': '#CBFE00',
     // This sets the color of the highlighted portion of the text
     // in an inline suggestion that matches the current input.
     'editor.inlineSuggest.highlightForeground': '#FF144D',
-
   },
 };
 export default theme;

@@ -10,7 +10,7 @@ async function initializeMonacoLanguageClient() {
     if (MonacoLanguageClient) {
       console.log('Resolved MonacoLanguageClient:', MonacoLanguageClient);
     } else {
-      throw new Error('MonacoLanguageClient is missing from \'monaco-languageclient\' module.');
+      throw new Error("MonacoLanguageClient is missing from 'monaco-languageclient' module.");
     }
   } catch (error) {
     console.error('Failed to import monaco-languageclient:', error);
@@ -37,9 +37,7 @@ export default async function createLanguageClient(
 ): Promise<any> {
   await initializeMonacoLanguageClient();
 
-  const {
-    documentSelector,
-  } = clientOptions || {} as ClientOptionsType;
+  const { documentSelector } = clientOptions || ({} as ClientOptionsType);
 
   if (monaco && MonacoLanguageClient && MonacoLanguageClient.MessagingService) {
     MonacoLanguageClient.MessagingService.install(monaco);
@@ -67,10 +65,11 @@ export default async function createLanguageClient(
       },
     },
     connectionProvider: {
-      get: () => Promise.resolve({
-        reader: new MonacoLanguageClient.MessageReader(webSocket),
-        writer: new MonacoLanguageClient.MessageWriter(webSocket),
-      }),
+      get: () =>
+        Promise.resolve({
+          reader: new MonacoLanguageClient.MessageReader(webSocket),
+          writer: new MonacoLanguageClient.MessageWriter(webSocket),
+        }),
     },
     name: uuid,
   });

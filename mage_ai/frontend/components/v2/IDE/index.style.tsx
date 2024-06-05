@@ -24,7 +24,9 @@ export const IDEStyled = styled.div<StyleProps>`
     background-color: red;
   }
 
-  ${({ hideDuplicateMenuItems }) => hideDuplicateMenuItems && `
+  ${({ hideDuplicateMenuItems }) =>
+    hideDuplicateMenuItems &&
+    `
     /*
      * The (n + 10) assumes a specific number of items in the block editor context
      * menu. This includes "Run selected block", "Change All Occurrences", "Cut",
@@ -57,7 +59,7 @@ export const IDEStyled = styled.div<StyleProps>`
     .monaco-modal {
       display: flex;
       position: fixed;
-      z-index: 9999;  /* Ensure the modal is above other content */
+      z-index: 9999; /* Ensure the modal is above other content */
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);

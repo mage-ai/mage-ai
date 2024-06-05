@@ -219,9 +219,13 @@ function MyApp(props: MyAppProps & AppProps) {
   const requireUserAuthentication = useMemo(() => status?.require_user_authentication, [status]);
   const requireUserPermissions = useMemo(() => status?.require_user_permissions, [status]);
 
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false }, {
-    pauseFetch: isV2,
-  });
+  const { data: dataProjects } = api.projects.list(
+    {},
+    { revalidateOnFocus: false },
+    {
+      pauseFetch: isV2,
+    },
+  );
 
   useEffect(() => {
     if (isV2) {
@@ -303,8 +307,8 @@ function MyApp(props: MyAppProps & AppProps) {
     return (
       <HeadEl defaultTitle={defaultTitle} title={title}>
         <meta
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-          name="viewport"
+          content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+          name='viewport'
         />
       </HeadEl>
     );

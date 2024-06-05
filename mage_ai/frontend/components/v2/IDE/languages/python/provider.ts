@@ -49,16 +49,19 @@ enum RegexEnum {
   'punctuation.comma' = '(,)',
   'type.class' = '([A-Z][A-Za-z0-9_]+)',
   'type.class.class_definition' = '([A-Z][A-Za-z0-9_]+)',
-  'type.primitive' = '(?<=[^\w\s]|^)\b[a-z0-9_]*\s*(\(\s*\))?',
+  'type.primitive' = '(?<=[^ws]|^)\b[a-z0-9_]*s*((s*))?',
   'type.primitive.class_definition' = '([a-z0-9_]+)',
   any = '(.)',
   constant = '(\\b[A-Z_0-9]+\\b)',
   namespace = '(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b)',
-  type = '(?<=[^\w\s]|^)\b[A-Z][A-Za-z0-9_]*\s*(\(\s*\))?',
+  type = '(?<=[^ws]|^)\b[A-Z][A-Za-z0-9_]*s*((s*))?',
   white = '(\\s+)',
 }
 
-function buildRegexMatchers(keys: string[], opts?: { next?: string }): (RegExp | { token: string, next?: string }[])[] {
+function buildRegexMatchers(
+  keys: string[],
+  opts?: { next?: string },
+): (RegExp | { token: string; next?: string }[])[] {
   const count = keys.length;
 
   return [
@@ -72,8 +75,12 @@ function buildRegexMatchers(keys: string[], opts?: { next?: string }): (RegExp |
 
 const states = {
   classInheritance1: [
-    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], { next: '@classInheritance1' }),
-    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], { next: '@classInheritance1' }),
+    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], {
+      next: '@classInheritance1',
+    }),
+    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], {
+      next: '@classInheritance1',
+    }),
     buildRegexMatchers(['white'], { next: '@classInheritance1' }),
     buildRegexMatchers(['punctuation.comma'], { next: '@classInheritance1' }),
     buildRegexMatchers(['type.class.class_definition'], { next: '@resetState' }),
@@ -81,8 +88,12 @@ const states = {
   ],
 
   classInheritance2: [
-    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], { next: '@classInheritance2' }),
-    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], { next: '@classInheritance2' }),
+    buildRegexMatchers(['type.class.class_definition', 'punctuation.comma'], {
+      next: '@classInheritance2',
+    }),
+    buildRegexMatchers(['type.primitive.class_definition', 'punctuation.comma'], {
+      next: '@classInheritance2',
+    }),
     buildRegexMatchers(['white'], { next: '@classInheritance2' }),
     buildRegexMatchers(['punctuation.comma'], { next: '@classInheritance2' }),
     buildRegexMatchers(['type.primitive.class_definition'], { next: '@resetState' }),
@@ -91,25 +102,29 @@ const states = {
 
   importNamespaces: [
     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@importNamespaces' }),
-    buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], { next: '@resetState' }),
+    buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], {
+      next: '@resetState',
+    }),
     buildRegexMatchers(['namespace'], { next: '@resetState' }),
   ],
 
   importSymbols: [
-    buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], { next: '@resetState' }),
+    buildRegexMatchers(['namespace', 'white', 'keyword.as', 'white', 'namespace'], {
+      next: '@resetState',
+    }),
     buildRegexMatchers(['namespace'], { next: '@resetState' }),
   ],
 
   fromImport: [
     buildRegexMatchers(['namespace', 'punctuation.dot'], { next: '@importNamespaces' }),
-    buildRegexMatchers(['namespace', 'white', 'keyword.import', 'white'], { next: '@importSymbols' }),
+    buildRegexMatchers(['namespace', 'white', 'keyword.import', 'white'], {
+      next: '@importSymbols',
+    }),
     buildRegexMatchers(['namespace'], { next: '@resetState' }),
   ],
 
   // Reset state after each import statement to handle subsequent imports independently
-  resetState: [
-    { include: 'root' },
-  ],
+  resetState: [{ include: 'root' }],
 
   // Handle double-quoted string escape sequences correctly
   doubleString: [
@@ -144,7 +159,6 @@ const states = {
   ],
 };
 
-
 const root = [
   // URL detection within quotes
   [
@@ -156,8 +170,14 @@ const root = [
     'string.link',
   ],
   // Third case: URLs with `:port` and `/path` without `http(s)` or `www`.
-  [/(")\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(")/, ['string.quote.double', 'string.link', 'string.quote.double']],
-  [/(')\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(')/, ['string.quote.single', 'string.link', 'string.quote.single']],
+  [
+    /(")\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(")/,
+    ['string.quote.double', 'string.link', 'string.quote.double'],
+  ],
+  [
+    /(')\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}:\d+\/[^\s"']+)\b(')/,
+    ['string.quote.single', 'string.link', 'string.quote.single'],
+  ],
 
   // Numeric literals
   [/\b\d+(\.\d+)?\b/, 'literal.number'],
@@ -165,7 +185,6 @@ const root = [
   buildRegexMatchers(['keyword.import', 'white'], { next: '@importNamespaces' }),
   buildRegexMatchers(['keyword.from', 'white'], { next: '@fromImport' }),
   buildRegexMatchers(['keyword.import', 'white', 'namespace'], { next: '@resetState' }), // reset state after each match
-
 
   buildRegexMatchers(['brackets.curly']),
   buildRegexMatchers(['brackets.round']),
@@ -183,37 +202,98 @@ const root = [
   // Test()
   [/\b([A-Z][A-Za-z0-9_]+)(\()/, ['type', 'brackets.round']],
   // ) -> type:
-  [/(\s*)(->)(\s*)([a-z0-9_]+)(\s*)(:)/, ['white', 'operator', 'white', 'type.primitive', 'white', 'punctuation.delimiter']],
-  [/(\s*)(->)(\s*)([A-Z][A-Za-z0-9_]+)(\s*)(:)/, ['white', 'operator', 'white', 'type', 'white', 'punctuation.delimiter']],
+  [
+    /(\s*)(->)(\s*)([a-z0-9_]+)(\s*)(:)/,
+    ['white', 'operator', 'white', 'type.primitive', 'white', 'punctuation.delimiter'],
+  ],
+  [
+    /(\s*)(->)(\s*)([A-Z][A-Za-z0-9_]+)(\s*)(:)/,
+    ['white', 'operator', 'white', 'type', 'white', 'punctuation.delimiter'],
+  ],
 
   // Class declaration
   [
     /(class)(\s+)([A-Z][A-Za-z0-9_]+)(:)/,
-    [
-      'keyword.class', 'white', 'type.class', 'punctuation.delimiter',
-    ],
+    ['keyword.class', 'white', 'type.class', 'punctuation.delimiter'],
   ],
-  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], { next: '@classInheritance1' }),
-  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], { next: '@classInheritance2' }),
+  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], {
+    next: '@classInheritance1',
+  }),
+  buildRegexMatchers(['keyword.class', 'white', 'type.class', 'brackets.round'], {
+    next: '@classInheritance2',
+  }),
 
   // Detect regex strings by looking for patterns commonly enclosing regex in JavaScript/TypeScript
   [
     /(\/)([^\/\\]*(?:\\.[^\/\\]*)*)(\/[gimsuy]*)/,
-    [
-      'string.regex.delimiter', 'string.regex', 'string.regex.delimiter',
-    ],
+    ['string.regex.delimiter', 'string.regex', 'string.regex.delimiter'],
   ],
 
   // Attributes with type hints
   // def __init__(self, id: int = None, df=None, name=None, api_key=None):
-  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([a-z_0-9]+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type.primitive', 'white', 'operator']],
-  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]+)(\s*)(=)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'white', 'operator']],
+  [
+    /(\,*)(\s*)(\w+)(\s*)([:])(\s*)([a-z_0-9]+)(\s*)(=)/,
+    [
+      'punctuation.delimiter',
+      'white',
+      'attribute',
+      'white',
+      'punctuation.delimiter',
+      'white',
+      'type.primitive',
+      'white',
+      'operator',
+    ],
+  ],
+  [
+    /(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]+)(\s*)(=)/,
+    [
+      'punctuation.delimiter',
+      'white',
+      'attribute',
+      'white',
+      'punctuation.delimiter',
+      'white',
+      'type',
+      'white',
+      'operator',
+    ],
+  ],
   // def test(a=1, b: Optional[Any] = None):
-  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([a-z_0-9]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type.primitive']],
-  [/(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([A-Z_0-9a-z]+)/, ['punctuation.delimiter', 'white', 'attribute', 'white', 'punctuation.delimiter', 'white', 'type', 'brackets.square', 'type']],
+  [
+    /(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([a-z_0-9]+)/,
+    [
+      'punctuation.delimiter',
+      'white',
+      'attribute',
+      'white',
+      'punctuation.delimiter',
+      'white',
+      'type',
+      'brackets.square',
+      'type.primitive',
+    ],
+  ],
+  [
+    /(\,*)(\s*)(\w+)(\s*)([:])(\s*)([A-Z][A-Z_0-9a-z]*)(\[)([A-Z_0-9a-z]+)/,
+    [
+      'punctuation.delimiter',
+      'white',
+      'attribute',
+      'white',
+      'punctuation.delimiter',
+      'white',
+      'type',
+      'brackets.square',
+      'type',
+    ],
+  ],
   // return self.project_type + 1
   [/(\s+)(self|cls)(\.)(\w+)/, ['white', 'variable.self', 'punctuation.dot', 'attribute']],
-  [/(,)(\s*)(\w+)(\s*)(=)(\s*)/, ['punctuation.dot', 'white', 'attribute', 'white', 'operator', 'white']],
+  [
+    /(,)(\s*)(\w+)(\s*)(=)(\s*)/,
+    ['punctuation.dot', 'white', 'attribute', 'white', 'operator', 'white'],
+  ],
   // [/(\.)(?!\d)[\w]+(:)/, ['punctuation.delimiter', 'attribute', 'punctuation.delimiter']],
   // [/(\.)(?!\d)[\w]+/, ['punctuation.delimiter', 'attribute']],
 
@@ -237,15 +317,17 @@ const root = [
   [/[=+\-*/%&|^~<>!]+/, 'operator'],
 
   // Decorators
-  [
-    /@[a-zA-Z_][a-zA-Z0-9_]*/,
-    'function.decorator',
-  ],
-
+  [/@[a-zA-Z_][a-zA-Z0-9_]*/, 'function.decorator'],
 
   // Handle triple-quoted strings on a single line
-  [/"""/, { token: 'string.quote.double.triple', bracket: '@open', next: '@multiLineDoubleString' }],
-  [/'''/, { token: 'string.quote.single.triple', bracket: '@open', next: '@multiLineSingleString' }],
+  [
+    /"""/,
+    { token: 'string.quote.double.triple', bracket: '@open', next: '@multiLineDoubleString' },
+  ],
+  [
+    /'''/,
+    { token: 'string.quote.single.triple', bracket: '@open', next: '@multiLineSingleString' },
+  ],
 
   // Handle invalid single-line strings only at the end of the line
   [/"([^"\\]|\\.)*$/, 'string.invalid'], // Invalid double-quoted string if not closed at end of line
@@ -260,8 +342,8 @@ const root = [
 
   // Keywords
   [
-      new RegExp(`(^|\\s)(?<!\.)(^False|^None|^True|^as|${KEY_WORDS.join('|')})(?=\\s|$|[.,;:()])`),
-      'keyword',
+    new RegExp(`(^|\\s)(?<!\.)(^False|^None|^True|^as|${KEY_WORDS.join('|')})(?=\\s|$|[.,;:()])`),
+    'keyword',
   ],
 ];
 

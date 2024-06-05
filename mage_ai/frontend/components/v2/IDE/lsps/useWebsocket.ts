@@ -4,7 +4,7 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import createLanguageClient, { ClientOptionsType } from './client';
 
 type ConnectOptionsType = {
-  monaco?: typeof import('monaco-editor'),
+  monaco?: typeof import('monaco-editor');
   onClose?: (event: CloseEvent) => void;
   onError?: (event: Event) => void;
   onOpen?: (event: Event, webSocket: ReconnectingWebSocket, languageClient: any) => void;
@@ -33,7 +33,7 @@ export default function useWebsocket(
   }
 
   function connect(options?: ConnectOptionsType) {
-    const { monaco, onClose, onError, onOpen } = options || {} as ConnectOptionsType;
+    const { monaco, onClose, onError, onOpen } = options || ({} as ConnectOptionsType);
 
     if (!webSocketRef?.current) {
       webSocketRef.current = new ReconnectingWebSocket(url, undefined, {

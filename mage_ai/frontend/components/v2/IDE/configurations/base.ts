@@ -238,7 +238,7 @@ export default function base(
       matchOnWordStartOnly: false,
       preview: true,
       previewMode: 'subwordSmart',
-      selectionMode: 'always',  // "never" | "whenTriggerCharacter" | "whenQuickSuggestion"
+      selectionMode: 'always', // "never" | "whenTriggerCharacter" | "whenQuickSuggestion"
       shareSuggestSelections: true,
       showClasses: true,
       showColors: true,
