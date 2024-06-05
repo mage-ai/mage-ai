@@ -596,7 +596,7 @@ function CodeOutput(
           return (
             <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
               <HTMLOutputStyle monospace>
-                // @ts-ignore
+                {/* @ts-ignore */}
                 {rows?.map((row, idx) => <InnerHTML html={row} key={`html-row-${idx}`} />)}
               </HTMLOutputStyle>
             </Spacing>
@@ -629,7 +629,7 @@ function CodeOutput(
               return (
                 <div
                   {...columnProps}
-                  className="th"
+                  className='th'
                   key={columnKey}
                   style={{
                     ...columnStyle,
@@ -638,7 +638,7 @@ function CodeOutput(
                   }}
                   title={columnIndex ? 'Row number' : undefined}
                 >
-                  <FlexContainer alignItems="center" fullHeight fullWidth>
+                  <FlexContainer alignItems='center' fullHeight fullWidth>
                     <Text disabled monospace small>
                       {empty ? '' : columnName}
                     </Text>
@@ -1028,7 +1028,7 @@ function CodeOutput(
 
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK && !sparkEnabled) {
       arrContent.unshift([
-        <OutputRowStyle contained key="progress_bar">
+        <OutputRowStyle contained key='progress_bar'>
           <Spacing mt={1}>{progressBar}</Spacing>
         </OutputRowStyle>,
       ]);
@@ -1107,7 +1107,7 @@ function CodeOutput(
               padding={UNIT * 2}
               readOnly
               value={sql}
-              width="100%"
+              width='100%'
             />
           );
         } else {
@@ -1243,18 +1243,18 @@ function CodeOutput(
           >
             <ExtraInfoBorderStyle />
 
-            <FlexContainer justifyContent="space-between">
-              <Flex alignItems="center" px={1}>
+            <FlexContainer justifyContent='space-between'>
+              <Flex alignItems='center' px={1}>
                 {setCollapsed && (
                   <Button {...SHARED_BUTTON_PROPS} onClick={() => setCollapsed(!collapsed)}>
                     {collapsed ? (
-                      <FlexContainer alignItems="center">
+                      <FlexContainer alignItems='center'>
                         <ChevronDown muted size={UNIT * 2} />
                         &nbsp;
                         <Text default>Expand output</Text>
                       </FlexContainer>
                     ) : (
-                      <FlexContainer alignItems="center">
+                      <FlexContainer alignItems='center'>
                         <ChevronUp muted size={UNIT * 2} />
                         {dataFrameShapeDisplay && (
                           <Spacing ml={2}>
@@ -1269,7 +1269,7 @@ function CodeOutput(
                 )}
 
                 {!setCollapsed && (
-                  <FlexContainer alignItems="center">
+                  <FlexContainer alignItems='center'>
                     {dataFrameShapeDisplay && (
                       <Spacing pl={1}>
                         <Text>
@@ -1282,7 +1282,7 @@ function CodeOutput(
               </Flex>
 
               <ExtraInfoContentStyle>
-                <FlexContainer alignItems="center" fullWidth justifyContent="flex-end">
+                <FlexContainer alignItems='center' fullWidth justifyContent='flex-end'>
                   <Tooltip
                     {...SHARED_TOOLTIP_PROPS}
                     label={
@@ -1293,7 +1293,7 @@ function CodeOutput(
                           : 'Block executed successfully'
                     }
                   >
-                    <FlexContainer alignItems="center">
+                    <FlexContainer alignItems='center'>
                       {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
                         <>
                           <Text small>{(Number(runEndTime) - Number(runStartTime)) / 1000}s</Text>
@@ -1314,8 +1314,8 @@ function CodeOutput(
                   </Tooltip>
                   {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) && (
                     <Spacing pl={2}>
-                      <FlexContainer alignItems="center">
-                        <Tooltip {...SHARED_TOOLTIP_PROPS} label="Expand table">
+                      <FlexContainer alignItems='center'>
+                        <Tooltip {...SHARED_TOOLTIP_PROPS} label='Expand table'>
                           <Button
                             {...SHARED_BUTTON_PROPS}
                             onClick={() => {
