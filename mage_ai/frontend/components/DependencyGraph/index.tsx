@@ -2,15 +2,7 @@ import dynamic from 'next/dynamic';
 import { CanvasRef } from 'reaflow';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
-import {
-  createRef,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockNode from './BlockNode';
@@ -25,7 +17,7 @@ import BlockType, {
 import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType  from '@interfaces/KernelOutputType';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
@@ -35,20 +27,11 @@ import Text from '@oracle/elements/Text';
 import ZoomControls, { DEFAULT_ZOOM_LEVEL } from './ZoomControls';
 import api from '@api';
 import useProject from '@utils/models/project/useProject';
-import {
-  EdgeType,
-  NodeType,
-  PortType,
-  SideEnum,
-  ZOOMABLE_CANVAS_SIZE,
-} from './constants';
+import { EdgeType, NodeType, PortType, SideEnum, ZOOMABLE_CANVAS_SIZE } from './constants';
 import { GraphContainerStyle, STROKE_WIDTH, inverseColorsMapping } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import {
-  PADDING_UNITS,
-  UNIT,
-} from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   buildEdge,
@@ -65,10 +48,7 @@ import { find, indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
 import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import {
-  getMessagesWithType,
-  hasErrorOrOutput,
-} from '@components/CodeBlock/utils';
+import { getMessagesWithType, hasErrorOrOutput } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -77,9 +57,7 @@ export const Canvas = dynamic(
   async () => {
     const { Canvas } = await import('reaflow');
 
-    return ({ forwardedRef, ...props }: any) => (
-      <Canvas ref={forwardedRef} {...props} />
-    );
+    return ({ forwardedRef, ...props }: any) => <Canvas ref={forwardedRef} {...props} />;
   },
   {
     ssr: false,
@@ -158,8 +136,8 @@ export type DependencyGraphProps = {
   };
   blockStatus?: {
     [uuid: string]: {
-      status: RunStatus,
-      runtime?: number,
+      status: RunStatus;
+      runtime?: number;
     };
   };
   blocksOverride?: BlockType[];
@@ -189,9 +167,7 @@ export type DependencyGraphProps = {
     [uuid: string]: KernelOutputType[];
   };
   noStatus?: boolean;
-  onClickNode?: (opts: {
-    block?: BlockType;
-  }) => void;
+  onClickNode?: (opts: { block?: BlockType }) => void;
   pannable?: boolean;
   pipeline: PipelineType;
   runBlock?: (payload: {
@@ -202,21 +178,12 @@ export type DependencyGraphProps = {
   }) => void;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
-  setActiveSidekickView?: (
-    newView: ViewKeyEnum,
-    pushHistory?: boolean,
-  ) => void;
-  setErrors?: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setActiveSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  setErrors?: (opts: { errors: any; response: any }) => void;
   setSelectedBlock?: (block: BlockType) => void;
   setZoom?: (zoom: number) => void;
   showDynamicBlocks?: boolean;
-  showUpdateBlockModal?: (
-    block: BlockType,
-    name: string,
-  ) => void;
+  showUpdateBlockModal?: (block: BlockType, name: string) => void;
   treeRef?: { current?: CanvasRef };
   zoomable?: boolean;
 } & SetEditingBlockType;
@@ -288,7 +255,7 @@ function DependencyGraph({
   const [targetNode, setTargetNode] = useState(null);
 
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMouseMove = event => {
       if (isDragging && nodeDragging) {
         setNodeDragging(prev => ({
           ...prev,
@@ -296,7 +263,7 @@ function DependencyGraph({
         }));
       }
     };
-    const handleMouseUp = (event) => {
+    const handleMouseUp = event => {
       if (isDragging && nodeDragging) {
         setIsDragging(false);
         setTimeout(() => setNodeDragging(null), 1);
@@ -314,29 +281,26 @@ function DependencyGraph({
         window.removeEventListener('mouseup', handleMouseUp);
       }
     };
-  }, [
-    isDragging,
-    nodeDragging,
-  ]);
+  }, [isDragging, nodeDragging]);
 
   const [selectedBlockTwice, setSelectedBlockTwice] = useState(null);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
   const showPorts = enablePorts && showPortsState;
-  const {
-    block: blockEditing,
-    values: upstreamBlocksEditing = [],
-  } = editingBlock?.upstreamBlocks || {};
-  const upstreamBlocksEditingCount = useMemo(() => upstreamBlocksEditing.length, [
-    upstreamBlocksEditing,
-  ]);
+  const { block: blockEditing, values: upstreamBlocksEditing = [] } =
+    editingBlock?.upstreamBlocks || {};
+  const upstreamBlocksEditingCount = useMemo(
+    () => upstreamBlocksEditing.length,
+    [upstreamBlocksEditing],
+  );
 
-  const blocksInit = useMemo(() => (blocksOverride || pipeline?.blocks)?.filter(({
-    type,
-  }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type)) || [], [
-    blocksOverride,
-    pipeline?.blocks,
-  ]);
+  const blocksInit = useMemo(
+    () =>
+      (blocksOverride || pipeline?.blocks)?.filter(
+        ({ type }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type),
+      ) || [],
+    [blocksOverride, pipeline?.blocks],
+  );
   // const dynamicUpstreamBlocksData =
   //   indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
 
@@ -383,19 +347,14 @@ function DependencyGraph({
     }
 
     return arr;
-  }, [
-    allBlocksProp,
-    blocksOverride,
-    pipeline,
-  ]);
+  }, [allBlocksProp, blocksOverride, pipeline]);
 
-  const blockUUIDMapping =
-    useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
+  const blockUUIDMapping = useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
 
   const callbackBlocksByBlockUUID = useMemo(() => {
     const mapping = {};
 
-    blocks?.map((block) => {
+    blocks?.map(block => {
       mapping[block.uuid] = block?.callback_blocks?.reduce((acc, uuid) => {
         const b = blockUUIDMapping?.[uuid];
         if (b) {
@@ -407,15 +366,12 @@ function DependencyGraph({
     });
 
     return mapping;
-  }, [
-    blocks,
-    blockUUIDMapping,
-  ]);
+  }, [blocks, blockUUIDMapping]);
 
   const conditionalBlocksByBlockUUID = useMemo(() => {
     const mapping = {};
 
-    blocks?.map((block) => {
+    blocks?.map(block => {
       mapping[block.uuid] = block?.conditional_blocks?.reduce((acc, uuid) => {
         const b = blockUUIDMapping?.[uuid];
         if (b) {
@@ -427,50 +383,39 @@ function DependencyGraph({
     });
 
     return mapping;
-  }, [
-    blocks,
-    blockUUIDMapping,
-  ]);
+  }, [blocks, blockUUIDMapping]);
 
   const extensionBlocksByBlockUUID = useMemo(() => {
     const mapping = {};
 
-    blocks?.map((block) => {
+    blocks?.map(block => {
       const arr = [];
 
-      Object.entries(pipeline?.extensions || {})?.forEach(([
-        extensionUUID,
-        {
-          blocks: blocksForExtension,
-        },
-      ]) => {
-        blocksForExtension?.forEach(({
-          upstream_blocks: upstreamBlocks,
-          uuid: blockUUID,
-        }) => {
-          if (upstreamBlocks?.includes(block?.uuid)) {
-            const b = blockUUIDMapping?.[blockUUID];
-            if (b) {
-              arr.push({
-                ...b,
-                extension_uuid: extensionUUID,
-              });
+      Object.entries(pipeline?.extensions || {})?.forEach(
+        ([extensionUUID, { blocks: blocksForExtension }]) => {
+          blocksForExtension?.forEach(({ upstream_blocks: upstreamBlocks, uuid: blockUUID }) => {
+            if (upstreamBlocks?.includes(block?.uuid)) {
+              const b = blockUUIDMapping?.[blockUUID];
+              if (b) {
+                arr.push({
+                  ...b,
+                  extension_uuid: extensionUUID,
+                });
+              }
             }
-          }
-        });
-      });
+          });
+        },
+      );
 
       mapping[block.uuid] = arr;
     });
 
     return mapping;
-  }, [
-    blocks,
-    blockUUIDMapping,
-    pipeline,
-  ]);
-  const runningBlocksMapping =
-    useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
+  }, [blocks, blockUUIDMapping, pipeline]);
+  const runningBlocksMapping = useMemo(
+    () => indexBy(runningBlocks, ({ uuid }) => uuid),
+    [runningBlocks],
+  );
 
   useEffect(() => {
     setTimeout(() => {
@@ -486,113 +431,108 @@ function DependencyGraph({
   }, [canvasRef]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      encodeURIComponent(blockEditing?.uuid),
-    ),
+    api.blocks.pipelines.useUpdate(pipeline?.uuid, encodeURIComponent(blockEditing?.uuid)),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
           callback: () => {
             setEditingBlock({
               upstreamBlocks: null,
             });
             fetchPipeline?.();
           },
-          onErrorCallback: (response, errors) => setErrors?.({
-            errors,
-            response,
-          }),
-        },
-      ),
+          onErrorCallback: (response, errors) =>
+            setErrors?.({
+              errors,
+              response,
+            }),
+        }),
     },
   );
 
-  const [updateBlockByDragAndDrop] = useMutation(({
-    block: blockToUpdate,
-    downstreamBlocks,
-    upstreamBlocks,
-  }: {
-    block: BlockType;
-    blocks?: BlockType[];
-    downstreamBlocks?: string[];
-    upstreamBlocks?: string[];
-  }) => {
-    const blockPayload = {
-      ...blockToUpdate,
-    };
-
-    if (typeof downstreamBlocks !== 'undefined') {
-      blockPayload.downstream_blocks = downstreamBlocks;
-    }
-
-    if (typeof upstreamBlocks !== 'undefined') {
-      blockPayload.upstream_blocks = upstreamBlocks;
-    }
-
-    return api.blocks.pipelines.useUpdate(
-      encodeURIComponent(pipeline?.uuid),
-      encodeURIComponent(blockToUpdate?.uuid),
-    )({
-      block: blockPayload,
-    });
-  },
-  {
-    onSuccess: (response: any) => onSuccess(
-      response, {
-        callback: () => {
-          fetchPipeline?.();
-        },
-        onErrorCallback: (response, errors) => setErrors?.({
-          errors,
-          response,
-        }),
-      },
-    ),
-  });
-
-  const onClick = useCallback((block: BlockType) => {
-    const {
-      type,
-      uuid,
-    } = block;
-    setSelectedBlock?.(block);
-    setEdgeSelections([]);
-    if (blockRefs?.current) {
-      const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
-      blockRef?.current?.scrollIntoView();
-    }
-  }, [
-    blockRefs,
-    setSelectedBlock,
-  ]);
-
-  const onClickWhenEditingUpstreamBlocks = useCallback((block: BlockType) => {
-    setEdgeSelections([]);
-    // @ts-ignore
-    setEditingBlock((prev) => {
-      const values = prev.upstreamBlocks.values || [];
-      const idx = values.findIndex(({ uuid }) => block.uuid === uuid);
-
-      return {
-        ...prev,
-        upstreamBlocks: {
-          ...prev.upstreamBlocks,
-          values: idx >= 0 ? removeAtIndex(values, idx) : values.concat(block),
-        },
+  const [updateBlockByDragAndDrop] = useMutation(
+    ({
+      block: blockToUpdate,
+      downstreamBlocks,
+      upstreamBlocks,
+    }: {
+      block: BlockType;
+      blocks?: BlockType[];
+      downstreamBlocks?: string[];
+      upstreamBlocks?: string[];
+    }) => {
+      const blockPayload = {
+        ...blockToUpdate,
       };
-    });
-  }, [
-    setEditingBlock,
-  ]);
+
+      if (typeof downstreamBlocks !== 'undefined') {
+        blockPayload.downstream_blocks = downstreamBlocks;
+      }
+
+      if (typeof upstreamBlocks !== 'undefined') {
+        blockPayload.upstream_blocks = upstreamBlocks;
+      }
+
+      return api.blocks.pipelines.useUpdate(
+        encodeURIComponent(pipeline?.uuid),
+        encodeURIComponent(blockToUpdate?.uuid),
+      )({
+        block: blockPayload,
+      });
+    },
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: () => {
+            fetchPipeline?.();
+          },
+          onErrorCallback: (response, errors) =>
+            setErrors?.({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
+
+  const onClick = useCallback(
+    (block: BlockType) => {
+      const { type, uuid } = block;
+      setSelectedBlock?.(block);
+      setEdgeSelections([]);
+      if (blockRefs?.current) {
+        const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
+        blockRef?.current?.scrollIntoView();
+      }
+    },
+    [blockRefs, setSelectedBlock],
+  );
+
+  const onClickWhenEditingUpstreamBlocks = useCallback(
+    (block: BlockType) => {
+      setEdgeSelections([]);
+      // @ts-ignore
+      setEditingBlock(prev => {
+        const values = prev.upstreamBlocks.values || [];
+        const idx = values.findIndex(({ uuid }) => block.uuid === uuid);
+
+        return {
+          ...prev,
+          upstreamBlocks: {
+            ...prev.upstreamBlocks,
+            values: idx >= 0 ? removeAtIndex(values, idx) : values.concat(block),
+          },
+        };
+      });
+    },
+    [setEditingBlock],
+  );
 
   const downstreamBlocksMapping = useMemo(() => {
     const mapping = {};
 
     blocks.forEach((block: BlockType) => {
-      const {
-        upstream_blocks: upstreamBlocks,
-      } = block;
+      const { upstream_blocks: upstreamBlocks } = block;
       upstreamBlocks.forEach((uuidUp: string) => {
         if (!mapping[uuidUp]) {
           mapping[uuidUp] = [];
@@ -604,38 +544,37 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
-  const {
-    edges,
-    nodes,
-    ports,
-    blocksWithDownstreamBlockSet,
-  } = useMemo(() => buildNodesEdgesPorts({
-    activeNodes,
-    blockStatus,
-    blockUUIDMapping,
-    blocks,
-    callbackBlocksByBlockUUID,
-    conditionalBlocksByBlockUUID,
-    downstreamBlocksMapping,
-    enablePorts,
-    extensionBlocksByBlockUUID,
-    nodeHovering,
-    pipeline,
-    selectedBlock: selectedBlockTwice,
-  }), [
-    activeNodes,
-    blockStatus,
-    blockUUIDMapping,
-    blocks,
-    callbackBlocksByBlockUUID,
-    conditionalBlocksByBlockUUID,
-    downstreamBlocksMapping,
-    enablePorts,
-    extensionBlocksByBlockUUID,
-    nodeHovering,
-    pipeline,
-    selectedBlockTwice,
-  ]);
+  const { edges, nodes, ports, blocksWithDownstreamBlockSet } = useMemo(
+    () =>
+      buildNodesEdgesPorts({
+        activeNodes,
+        blockStatus,
+        blockUUIDMapping,
+        blocks,
+        callbackBlocksByBlockUUID,
+        conditionalBlocksByBlockUUID,
+        downstreamBlocksMapping,
+        enablePorts,
+        extensionBlocksByBlockUUID,
+        nodeHovering,
+        pipeline,
+        selectedBlock: selectedBlockTwice,
+      }),
+    [
+      activeNodes,
+      blockStatus,
+      blockUUIDMapping,
+      blocks,
+      callbackBlocksByBlockUUID,
+      conditionalBlocksByBlockUUID,
+      downstreamBlocksMapping,
+      enablePorts,
+      extensionBlocksByBlockUUID,
+      nodeHovering,
+      pipeline,
+      selectedBlockTwice,
+    ],
+  );
 
   const containerHeight = useMemo(() => {
     let v = 0;
@@ -647,221 +586,222 @@ function DependencyGraph({
     }
 
     return Math.max(0, v);
-  }, [
-    height,
-    heightOffset,
-  ]);
+  }, [height, heightOffset]);
 
-  const onClickNode = useCallback((event, node: any) => {
-    pauseEvent(event);
+  const onClickNode = useCallback(
+    (event, node: any) => {
+      pauseEvent(event);
 
-    const {
-      data: {
-        block: blockInit,
-        blocks,
-      },
-    } = node;
+      const {
+        data: { block: blockInit, blocks },
+      } = node;
 
-    let block = blockInit;
+      let block = blockInit;
 
-    if (blocks?.length >= 2 && selectedBlock) {
-      const idx = blocks?.findIndex(({ uuid }) => selectedBlock?.uuid === uuid);
-      if (idx < blocks?.length - 1) {
-        block = blocks?.[idx + 1];
-      } else {
-        block = blocks?.[0];
-      }
-    }
-
-    const disabled = blockEditing?.uuid === block?.uuid;
-    if (!disabled) {
-      if (blockEditing) {
-        onClickWhenEditingUpstreamBlocks(block);
-      } else {
-        onClickNodeProp?.({
-          block,
-        });
-
-        if (selectedBlock
-          && selectedBlock?.uuid === block?.uuid
-          && (
-            ((block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length)
-            || (selectedBlockTwice && selectedBlockTwice?.uuid === selectedBlock?.uuid)
-          )
-        ) {
-          setSelectedBlock?.(null);
-          setSelectedBlockTwice(null);
+      if (blocks?.length >= 2 && selectedBlock) {
+        const idx = blocks?.findIndex(({ uuid }) => selectedBlock?.uuid === uuid);
+        if (idx < blocks?.length - 1) {
+          block = blocks?.[idx + 1];
         } else {
-          if (selectedBlock) {
-            if (selectedBlock?.uuid === block?.uuid) {
-              setSelectedBlockTwice(block);
-            } else {
-              setSelectedBlockTwice(null);
+          block = blocks?.[0];
+        }
+      }
+
+      const disabled = blockEditing?.uuid === block?.uuid;
+      if (!disabled) {
+        if (blockEditing) {
+          onClickWhenEditingUpstreamBlocks(block);
+        } else {
+          onClickNodeProp?.({
+            block,
+          });
+
+          if (
+            selectedBlock &&
+            selectedBlock?.uuid === block?.uuid &&
+            (((block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length) ||
+              (selectedBlockTwice && selectedBlockTwice?.uuid === selectedBlock?.uuid))
+          ) {
+            setSelectedBlock?.(null);
+            setSelectedBlockTwice(null);
+          } else {
+            if (selectedBlock) {
+              if (selectedBlock?.uuid === block?.uuid) {
+                setSelectedBlockTwice(block);
+              } else {
+                setSelectedBlockTwice(null);
+              }
             }
+
+            // This is required because if the block is hidden, it needs to be un-hidden
+            // before scrolling to it or else the scrollIntoView won’t scroll to the top
+            // of the block.
+            setTimeout(() => {
+              onClick(block);
+            }, 1);
           }
-
-          // This is required because if the block is hidden, it needs to be un-hidden
-          // before scrolling to it or else the scrollIntoView won’t scroll to the top
-          // of the block.
-          setTimeout(() => {
-            onClick(block);
-          }, 1);
         }
       }
-    }
-  }, [
-    blockEditing,
-    onClick,
-    onClickNodeProp,
-    onClickWhenEditingUpstreamBlocks,
-    selectedBlock,
-    selectedBlockTwice,
-    setSelectedBlockTwice,
-  ]);
+    },
+    [
+      blockEditing,
+      onClick,
+      onClickNodeProp,
+      onClickWhenEditingUpstreamBlocks,
+      selectedBlock,
+      selectedBlockTwice,
+      setSelectedBlockTwice,
+    ],
+  );
 
-  const clearTimeoutForNode = useCallback((node) => {
-    const nodeID = node?.id;
-    if (nodeID in timeoutActiveRefs.current) {
-      clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
-    }
-  }, [activeNodes]);
-
-  const setTimeoutForNode = useCallback((node) => {
-    const nodeID = node?.id;
-    timeoutActiveRefs.current[nodeID] = setTimeout(() => {
-      setActiveNodes((prev) => {
-        const mapping = { ...prev };
-        delete mapping?.[nodeID];
-
-        return mapping;
-      });
-    }, 1000);
-  }, [setActiveNodes]);
-
-  const onMouseEnterNode = useCallback((event, node, opts) => {
-    pauseEvent(event);
-
-    if (!isDragging && nodeDragging) {
-      const fromBlock: BlockType = node?.data?.block;
-      const toBlock: BlockType = nodeDragging?.node?.data?.block;
-
-      const isConnectingIntegrationSourceAndDestination = (
-        pipeline?.type === PipelineTypeEnum.INTEGRATION
-          && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
-            || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
-              && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
-            )
-      );
-
-      if (!isConnectingIntegrationSourceAndDestination
-        && !fromBlock?.upstream_blocks?.includes(toBlock?.uuid)
-        && fromBlock?.uuid !== toBlock?.uuid
-      ) {
-        // The node that is being dropped on is a group node.
-        if (node?.data?.children?.length >= 1) {
-          const upstreamBlocks = fromBlock?.downstream_blocks?.filter(
-            (uuid: string) => !toBlock?.upstream_blocks?.includes(uuid),
-          );
-
-          updateBlockByDragAndDrop({
-            block: toBlock,
-            upstreamBlocks,
-          });
-        } else if (nodeDragging?.node?.data?.children?.length >= 1) {
-          // The node that is being dragged is a group node.
-
-          const downstreamBlocks = toBlock?.downstream_blocks?.filter(
-            (uuid: string) => !fromBlock?.downstream_blocks?.includes(uuid),
-          );
-
-          updateBlockByDragAndDrop({
-            block: fromBlock,
-            downstreamBlocks,
-          });
-        } else {
-          updateBlockByDragAndDrop({
-            block: toBlock,
-            upstreamBlocks: (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid),
-          });
-        }
+  const clearTimeoutForNode = useCallback(
+    node => {
+      const nodeID = node?.id;
+      if (nodeID in timeoutActiveRefs.current) {
+        clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
       }
-    }
+    },
+    [activeNodes],
+  );
 
-    if (editingBlock?.upstreamBlocks) {
-      return;
-    }
+  const setTimeoutForNode = useCallback(
+    node => {
+      const nodeID = node?.id;
+      timeoutActiveRefs.current[nodeID] = setTimeout(() => {
+        setActiveNodes(prev => {
+          const mapping = { ...prev };
+          delete mapping?.[nodeID];
 
-    clearTimeoutForNode(node);
-    setNodeHovering(node);
-
-    const nodeID = node?.id;
-
-    if (!Object.keys(activePorts || {})?.length || nodeID in activePorts) {
-      setActiveNodes(prev => {
-        Object.values(prev || {}).forEach((nodePrev) => {
-          setTimeoutForNode(nodePrev);
+          return mapping;
         });
+      }, 1000);
+    },
+    [setActiveNodes],
+  );
 
-        return {
-          ...prev,
-          [nodeID]: node,
-        };
-      });
-    } else {
-      setTargetNode(node);
-    }
-  }, [
-    activePorts,
-    clearTimeoutForNode,
-    editingBlock,
-    isDragging,
-    nodeDragging,
-    pipeline,
-    setActiveNodes,
-    setNodeHovering,
-    setTargetNode,
-    setTimeoutForNode,
-  ]);
+  const onMouseEnterNode = useCallback(
+    (event, node, opts) => {
+      pauseEvent(event);
 
-  const onMouseLeaveNode = useCallback((event, node, opts) => {
-    pauseEvent(event);
+      if (!isDragging && nodeDragging) {
+        const fromBlock: BlockType = node?.data?.block;
+        const toBlock: BlockType = nodeDragging?.node?.data?.block;
 
-    setNodeHovering(null);
-    setTimeoutForNode(node);
-  }, [
-    setNodeHovering,
-    setTimeoutForNode,
-  ]);
+        const isConnectingIntegrationSourceAndDestination =
+          pipeline?.type === PipelineTypeEnum.INTEGRATION &&
+          (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER ||
+            (fromBlock?.type === BlockTypeEnum.DATA_LOADER &&
+              toBlock?.type === BlockTypeEnum.DATA_EXPORTER));
 
-  const onMouseDownNode = useCallback((event, node, opts) => {
-    pauseEvent(event);
+        if (
+          !isConnectingIntegrationSourceAndDestination &&
+          !fromBlock?.upstream_blocks?.includes(toBlock?.uuid) &&
+          fromBlock?.uuid !== toBlock?.uuid
+        ) {
+          // The node that is being dropped on is a group node.
+          if (node?.data?.children?.length >= 1) {
+            const upstreamBlocks = fromBlock?.downstream_blocks?.filter(
+              (uuid: string) => !toBlock?.upstream_blocks?.includes(uuid),
+            );
 
-    if (contextMenuData) {
-      return;
-    }
+            updateBlockByDragAndDrop({
+              block: toBlock,
+              upstreamBlocks,
+            });
+          } else if (nodeDragging?.node?.data?.children?.length >= 1) {
+            // The node that is being dragged is a group node.
 
-    const nodeID = node?.id;
-    timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+            const downstreamBlocks = toBlock?.downstream_blocks?.filter(
+              (uuid: string) => !fromBlock?.downstream_blocks?.includes(uuid),
+            );
+
+            updateBlockByDragAndDrop({
+              block: fromBlock,
+              downstreamBlocks,
+            });
+          } else {
+            updateBlockByDragAndDrop({
+              block: toBlock,
+              upstreamBlocks: (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid),
+            });
+          }
+        }
+      }
+
+      if (editingBlock?.upstreamBlocks) {
+        return;
+      }
+
+      clearTimeoutForNode(node);
+      setNodeHovering(node);
+
+      const nodeID = node?.id;
+
+      if (!Object.keys(activePorts || {})?.length || nodeID in activePorts) {
+        setActiveNodes(prev => {
+          Object.values(prev || {}).forEach(nodePrev => {
+            setTimeoutForNode(nodePrev);
+          });
+
+          return {
+            ...prev,
+            [nodeID]: node,
+          };
+        });
+      } else {
+        setTargetNode(node);
+      }
+    },
+    [
+      activePorts,
+      clearTimeoutForNode,
+      editingBlock,
+      isDragging,
+      nodeDragging,
+      pipeline,
+      setActiveNodes,
+      setNodeHovering,
+      setTargetNode,
+      setTimeoutForNode,
+    ],
+  );
+
+  const onMouseLeaveNode = useCallback(
+    (event, node, opts) => {
+      pauseEvent(event);
+
+      setNodeHovering(null);
+      setTimeoutForNode(node);
+    },
+    [setNodeHovering, setTimeoutForNode],
+  );
+
+  const onMouseDownNode = useCallback(
+    (event, node, opts) => {
+      pauseEvent(event);
+
       if (contextMenuData) {
         return;
       }
 
-      setActiveEdge(null);
-      setActiveNodes({});
-      setIsDragging(true);
-      setNodeDragging({
-        data: opts,
-        event,
-        node,
-      });
-    }, 500);
-  }, [
-    contextMenuData,
-    setActiveNodes,
-    setActiveEdge,
-    setIsDragging,
-    setNodeDragging,
-  ]);
+      const nodeID = node?.id;
+      timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+        if (contextMenuData) {
+          return;
+        }
+
+        setActiveEdge(null);
+        setActiveNodes({});
+        setIsDragging(true);
+        setNodeDragging({
+          data: opts,
+          event,
+          node,
+        });
+      }, 500);
+    },
+    [contextMenuData, setActiveNodes, setActiveEdge, setIsDragging, setNodeDragging],
+  );
 
   const onMouseUpNode = useCallback((event, node, opts) => {
     pauseEvent(event);
@@ -872,362 +812,314 @@ function DependencyGraph({
     }
   }, []);
 
-  const onContextMenuNode = useCallback((event, node, opts) => {
-    pauseEvent(event);
+  const onContextMenuNode = useCallback(
+    (event, node, opts) => {
+      pauseEvent(event);
 
-    const nodeID = node?.id;
+      const nodeID = node?.id;
 
-    clearTimeout(timeoutDraggingRefs.current?.[nodeID]);
+      clearTimeout(timeoutDraggingRefs.current?.[nodeID]);
 
-    setContextMenuData({
-      data: opts,
-      event,
-      node,
-    });
-
-    setActiveEdge(null);
-  }, [
-    setActiveEdge,
-    setContextMenuData,
-  ]);
-
-  const onEnterPort = useCallback(({
-    event,
-    node,
-    port,
-  }) => {
-    pauseEvent(event);
-
-    clearTimeoutForNode(node);
-    setNodeHovering(node);
-  }, [
-    clearTimeoutForNode,
-    setNodeHovering,
-  ]);
-
-  const onLeavePort = useCallback(({
-    event,
-    node,
-    port,
-  }) => {
-    pauseEvent(event);
-
-    setNodeHovering(null);
-    setTimeoutForNode(node);
-  }, [
-    setNodeHovering,
-    setTimeoutForNode,
-  ]);
-
-  const onDragStartPort = useCallback(({
-    event,
-    node,
-    port,
-  }) => {
-    setActivePorts(prev => ({
-      ...prev,
-      [node?.id]: {
+      setContextMenuData({
+        data: opts,
         event,
         node,
-        port,
-      },
-      }));
-  }, [
-    setActivePorts,
-  ]);
-
-  const onDragEndPort = useCallback(({
-    event,
-    node,
-    port,
-  }) => {
-    const nodeID = node?.id;
-    const side = port?.side as SideEnum;
-
-    if (targetNode) {
-      const fromBlock: BlockType = node?.properties?.data?.block;
-      const toBlock: BlockType = targetNode?.data?.block;
-
-      const isConnectingIntegrationSourceAndDestination = (
-        pipeline?.type === PipelineTypeEnum.INTEGRATION
-          && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
-            || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
-              && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
-            )
-      );
-
-      if (!isConnectingIntegrationSourceAndDestination
-        && !fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-        && node?.id !== targetNode?.id
-      ) {
-        const payload: {
-          downstreamBlocks?: string[]
-          upstreamBlocks?: string[]
-        } = {};
-
-        // If port is south, then update the toBlock’s upstream
-        if (SideEnum.SOUTH === port?.side as SideEnum) {
-          payload.upstreamBlocks = (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid);
-        } else {
-          // If port is north, then update the toBlock’s downstream
-          payload.downstreamBlocks = (toBlock?.downstream_blocks || []).concat(fromBlock?.uuid);
-        }
-
-        updateBlockByDragAndDrop({
-          block: toBlock,
-          ...payload,
-        });
-      }
-    }
-
-    setActivePorts((prev) => {
-      const mapping = { ...prev };
-      delete mapping?.[nodeID];
-
-      return mapping;
-    });
-    setTimeoutForNode(node);
-  }, [
-    pipeline,
-    setActivePorts,
-    setTimeoutForNode,
-    targetNode,
-  ]);
-
-  const determineSelectedStatus = useCallback((node: {
-    id: string;
-  }, block: BlockType, opts?: {
-    blocksWithSameDownstreamBlocks?: BlockType[];
-  }): {
-    anotherBlockSelected: boolean;
-    selected: boolean;
-  } => {
-    if (nodeDragging) {
-      return {
-        anotherBlockSelected: true,
-        selected: false,
-      };
-    }
-
-    const activePortExists = Object.values(activePorts || {})?.length >= 1;
-    const activePort = activePorts?.[node?.id];
-
-    let selected = false;
-
-    if (blockEditing) {
-      selected = !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block?.uuid);
-    } else if (activePortExists) {
-      selected = !!activePort;
-    } else if (opts?.blocksWithSameDownstreamBlocks?.length >= 2) {
-      selected = opts?.blocksWithSameDownstreamBlocks?.map(
-        ({ uuid }) => uuid,
-      )?.includes(selectedBlock?.uuid);
-    } else {
-      selected = selectedBlock?.uuid === block?.uuid;
-    }
-
-    const anotherBlockSelected = activePortExists
-      ? !activePort
-      : !!selectedBlock;
-
-    return {
-      anotherBlockSelected,
-      selected,
-    };
-  }, [
-    activePorts,
-    blockEditing,
-    nodeDragging,
-    selectedBlock,
-    upstreamBlocksEditing,
-  ]);
-
-  const buildBlockNode = useCallback((node, block, {
-    isDragging,
-    nodeHeight,
-    nodeWidth,
-    opacity,
-  }) => {
-    const {
-      data: {
-        blocks: blocksWithSameDownstreamBlocks,
-        children: downstreamBlocks,
-      },
-    } = node;
-
-    let blockNodeChildrenEl;
-
-    if (downstreamBlocks?.length >= 1) {
-      const blockNodes = [];
-
-      downstreamBlocks?.forEach((downstreamBlock: BlockType) => {
-        const {
-          anotherBlockSelected,
-          selected,
-        } = determineSelectedStatus(node, downstreamBlock);
-
-        const {
-          hasFailed,
-          isInProgress,
-          isQueued,
-          isSuccessful,
-        } = getBlockStatus({
-          block: downstreamBlock,
-          blockStatus,
-          messages,
-          noStatus,
-          runningBlocks,
-          runningBlocksMapping,
-        });
-
-        const callbackBlocks = callbackBlocksByBlockUUID?.[downstreamBlock?.uuid];
-        const conditionalBlocks = conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid];
-        const extensionBlocks = extensionBlocksByBlockUUID?.[downstreamBlock?.uuid];
-
-        blockNodes.push(
-          <BlockNode
-            anotherBlockSelected={anotherBlockSelected}
-            block={downstreamBlock}
-            callbackBlocks={callbackBlocksByBlockUUID?.[downstreamBlock?.uuid]}
-            conditionalBlocks={conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid]}
-            disabled={blockEditing?.uuid === downstreamBlock?.uuid}
-            extensionBlocks={extensionBlocksByBlockUUID?.[downstreamBlock?.uuid]}
-            hasFailed={hasFailed}
-            height={getBlockNodeHeight(downstreamBlock, pipeline, {
-              blockStatus,
-              callbackBlocks,
-              conditionalBlocks,
-              extensionBlocks,
-            })}
-            hideNoStatus
-            hideStatus={disabledProp || noStatus}
-            isDragging={isDragging}
-            isInProgress={isInProgress}
-            isQueued={isQueued}
-            isSuccessful={isSuccessful}
-            key={downstreamBlock?.uuid}
-            opacity={opacity}
-            pipeline={pipeline}
-            selected={selected}
-          />,
-        );
       });
 
-      blockNodeChildrenEl = (
-        <FlexContainer
-          alignItems="center"
-          justifyContent="space-between"
-          style={{
-            height: nodeHeight,
-            width: nodeWidth,
-          }}
+      setActiveEdge(null);
+    },
+    [setActiveEdge, setContextMenuData],
+  );
+
+  const onEnterPort = useCallback(
+    ({ event, node, port }) => {
+      pauseEvent(event);
+
+      clearTimeoutForNode(node);
+      setNodeHovering(node);
+    },
+    [clearTimeoutForNode, setNodeHovering],
+  );
+
+  const onLeavePort = useCallback(
+    ({ event, node, port }) => {
+      pauseEvent(event);
+
+      setNodeHovering(null);
+      setTimeoutForNode(node);
+    },
+    [setNodeHovering, setTimeoutForNode],
+  );
+
+  const onDragStartPort = useCallback(
+    ({ event, node, port }) => {
+      setActivePorts(prev => ({
+        ...prev,
+        [node?.id]: {
+          event,
+          node,
+          port,
+        },
+      }));
+    },
+    [setActivePorts],
+  );
+
+  const onDragEndPort = useCallback(
+    ({ event, node, port }) => {
+      const nodeID = node?.id;
+      const side = port?.side as SideEnum;
+
+      if (targetNode) {
+        const fromBlock: BlockType = node?.properties?.data?.block;
+        const toBlock: BlockType = targetNode?.data?.block;
+
+        const isConnectingIntegrationSourceAndDestination =
+          pipeline?.type === PipelineTypeEnum.INTEGRATION &&
+          (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER ||
+            (fromBlock?.type === BlockTypeEnum.DATA_LOADER &&
+              toBlock?.type === BlockTypeEnum.DATA_EXPORTER));
+
+        if (
+          !isConnectingIntegrationSourceAndDestination &&
+          !fromBlock?.upstream_blocks?.includes(toBlock.uuid) &&
+          node?.id !== targetNode?.id
+        ) {
+          const payload: {
+            downstreamBlocks?: string[];
+            upstreamBlocks?: string[];
+          } = {};
+
+          // If port is south, then update the toBlock’s upstream
+          if (SideEnum.SOUTH === (port?.side as SideEnum)) {
+            payload.upstreamBlocks = (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid);
+          } else {
+            // If port is north, then update the toBlock’s downstream
+            payload.downstreamBlocks = (toBlock?.downstream_blocks || []).concat(fromBlock?.uuid);
+          }
+
+          updateBlockByDragAndDrop({
+            block: toBlock,
+            ...payload,
+          });
+        }
+      }
+
+      setActivePorts(prev => {
+        const mapping = { ...prev };
+        delete mapping?.[nodeID];
+
+        return mapping;
+      });
+      setTimeoutForNode(node);
+    },
+    [pipeline, setActivePorts, setTimeoutForNode, targetNode],
+  );
+
+  const determineSelectedStatus = useCallback(
+    (
+      node: {
+        id: string;
+      },
+      block: BlockType,
+      opts?: {
+        blocksWithSameDownstreamBlocks?: BlockType[];
+      },
+    ): {
+      anotherBlockSelected: boolean;
+      selected: boolean;
+    } => {
+      if (nodeDragging) {
+        return {
+          anotherBlockSelected: true,
+          selected: false,
+        };
+      }
+
+      const activePortExists = Object.values(activePorts || {})?.length >= 1;
+      const activePort = activePorts?.[node?.id];
+
+      let selected = false;
+
+      if (blockEditing) {
+        selected = !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block?.uuid);
+      } else if (activePortExists) {
+        selected = !!activePort;
+      } else if (opts?.blocksWithSameDownstreamBlocks?.length >= 2) {
+        selected = opts?.blocksWithSameDownstreamBlocks
+          ?.map(({ uuid }) => uuid)
+          ?.includes(selectedBlock?.uuid);
+      } else {
+        selected = selectedBlock?.uuid === block?.uuid;
+      }
+
+      const anotherBlockSelected = activePortExists ? !activePort : !!selectedBlock;
+
+      return {
+        anotherBlockSelected,
+        selected,
+      };
+    },
+    [activePorts, blockEditing, nodeDragging, selectedBlock, upstreamBlocksEditing],
+  );
+
+  const buildBlockNode = useCallback(
+    (node, block, { isDragging, nodeHeight, nodeWidth, opacity }) => {
+      const {
+        data: { blocks: blocksWithSameDownstreamBlocks, children: downstreamBlocks },
+      } = node;
+
+      let blockNodeChildrenEl;
+
+      if (downstreamBlocks?.length >= 1) {
+        const blockNodes = [];
+
+        downstreamBlocks?.forEach((downstreamBlock: BlockType) => {
+          const { anotherBlockSelected, selected } = determineSelectedStatus(node, downstreamBlock);
+
+          const { hasFailed, isInProgress, isQueued, isSuccessful } = getBlockStatus({
+            block: downstreamBlock,
+            blockStatus,
+            messages,
+            noStatus,
+            runningBlocks,
+            runningBlocksMapping,
+          });
+
+          const callbackBlocks = callbackBlocksByBlockUUID?.[downstreamBlock?.uuid];
+          const conditionalBlocks = conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid];
+          const extensionBlocks = extensionBlocksByBlockUUID?.[downstreamBlock?.uuid];
+
+          blockNodes.push(
+            <BlockNode
+              anotherBlockSelected={anotherBlockSelected}
+              block={downstreamBlock}
+              callbackBlocks={callbackBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+              conditionalBlocks={conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+              disabled={blockEditing?.uuid === downstreamBlock?.uuid}
+              extensionBlocks={extensionBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+              hasFailed={hasFailed}
+              height={getBlockNodeHeight(downstreamBlock, pipeline, {
+                blockStatus,
+                callbackBlocks,
+                conditionalBlocks,
+                extensionBlocks,
+              })}
+              hideNoStatus
+              hideStatus={disabledProp || noStatus}
+              isDragging={isDragging}
+              isInProgress={isInProgress}
+              isQueued={isQueued}
+              isSuccessful={isSuccessful}
+              key={downstreamBlock?.uuid}
+              opacity={opacity}
+              pipeline={pipeline}
+              selected={selected}
+            />,
+          );
+        });
+
+        blockNodeChildrenEl = (
+          <FlexContainer
+            alignItems='center'
+            justifyContent='space-between'
+            style={{
+              height: nodeHeight,
+              width: nodeWidth,
+            }}
+          >
+            <Spacing pr={PADDING_UNITS} />
+
+            {blockNodes}
+
+            <Spacing pr={PADDING_UNITS} />
+          </FlexContainer>
+        );
+      }
+
+      const { anotherBlockSelected, selected } = determineSelectedStatus(node, block, {
+        blocksWithSameDownstreamBlocks,
+      });
+
+      const { hasFailed, isInProgress, isQueued, isSuccessful } = getBlockStatus({
+        block,
+        blockStatus,
+        messages,
+        noStatus,
+        runningBlocks,
+        runningBlocksMapping,
+      });
+
+      let isInProgressFinal;
+      if (downstreamBlocks?.length >= 1) {
+        isInProgressFinal = downstreamBlocks?.some(
+          downstreamBlock =>
+            downstreamBlock &&
+            getBlockStatus({
+              block,
+              blockStatus,
+              messages,
+              noStatus,
+              runningBlocks,
+              runningBlocksMapping,
+            })?.isInProgress,
+        );
+      } else {
+        isInProgressFinal = isInProgress;
+      }
+
+      return (
+        <BlockNode
+          anotherBlockSelected={anotherBlockSelected}
+          block={block}
+          blocksWithSameDownstreamBlocks={blocksWithSameDownstreamBlocks}
+          callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
+          conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
+          disabled={blockEditing?.uuid === block?.uuid}
+          downstreamBlocks={downstreamBlocks}
+          extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
+          hasFailed={hasFailed}
+          height={nodeHeight}
+          hideNoStatus
+          hideStatus={disabledProp || noStatus}
+          isDragging={isDragging}
+          isInProgress={isInProgressFinal}
+          isQueued={isQueued}
+          isSuccessful={isSuccessful}
+          key={block?.uuid}
+          opacity={opacity}
+          pipeline={pipeline}
+          selected={selected}
         >
-          <Spacing pr={PADDING_UNITS} />
-
-          {blockNodes}
-
-          <Spacing pr={PADDING_UNITS} />
-        </FlexContainer>
+          {blockNodeChildrenEl}
+        </BlockNode>
       );
-    }
-
-    const {
-      anotherBlockSelected,
-      selected,
-    } = determineSelectedStatus(node, block, {
-      blocksWithSameDownstreamBlocks,
-    });
-
-    const {
-      hasFailed,
-      isInProgress,
-      isQueued,
-      isSuccessful,
-    } = getBlockStatus({
-      block,
+    },
+    [
+      blockEditing,
       blockStatus,
+      callbackBlocksByBlockUUID,
+      conditionalBlocksByBlockUUID,
+      disabledProp,
+      extensionBlocksByBlockUUID,
       messages,
       noStatus,
+      pipeline,
       runningBlocks,
       runningBlocksMapping,
-    });
-
-    let isInProgressFinal;
-    if (downstreamBlocks?.length >= 1) {
-      isInProgressFinal = downstreamBlocks?.some(
-        downstreamBlock => downstreamBlock && getBlockStatus({
-          block,
-          blockStatus,
-          messages,
-          noStatus,
-          runningBlocks,
-          runningBlocksMapping,
-        })?.isInProgress,
-      );
-    } else {
-      isInProgressFinal = isInProgress;
-    }
-
-    return (
-      <BlockNode
-        anotherBlockSelected={anotherBlockSelected}
-        block={block}
-        blocksWithSameDownstreamBlocks={blocksWithSameDownstreamBlocks}
-        callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
-        conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
-        disabled={blockEditing?.uuid === block?.uuid}
-        downstreamBlocks={downstreamBlocks}
-        extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
-        hasFailed={hasFailed}
-        height={nodeHeight}
-        hideNoStatus
-        hideStatus={disabledProp || noStatus}
-        isDragging={isDragging}
-        isInProgress={isInProgressFinal}
-        isQueued={isQueued}
-        isSuccessful={isSuccessful}
-        key={block?.uuid}
-        opacity={opacity}
-        pipeline={pipeline}
-        selected={selected}
-      >
-        {blockNodeChildrenEl}
-      </BlockNode>
-    );
-  }, [
-    blockEditing,
-    blockStatus,
-    callbackBlocksByBlockUUID,
-    conditionalBlocksByBlockUUID,
-    disabledProp,
-    extensionBlocksByBlockUUID,
-    messages,
-    noStatus,
-    pipeline,
-    runningBlocks,
-    runningBlocksMapping,
-  ]);
+    ],
+  );
 
   const nodeDraggingMemo = useMemo(() => {
     if (!isDragging || !nodeDragging) {
       return;
     }
 
-    const {
-      event,
-      node,
-      data,
-    } = nodeDragging;
+    const { event, node, data } = nodeDragging;
 
-    const {
-      clientX,
-      clientY,
-    } = event;
+    const { clientX, clientY } = event;
 
-    const {
-      x,
-      y,
-    } = containerRef?.current?.getBoundingClientRect() || {};
+    const { x, y } = containerRef?.current?.getBoundingClientRect() || {};
 
     const block = node?.data?.block;
 
@@ -1235,12 +1127,7 @@ function DependencyGraph({
       return;
     }
 
-    const {
-      hasFailed,
-      isInProgress,
-      isQueued,
-      isSuccessful,
-    } = getBlockStatus({
+    const { hasFailed, isInProgress, isQueued, isSuccessful } = getBlockStatus({
       block,
       blockStatus,
       messages,
@@ -1271,9 +1158,9 @@ function DependencyGraph({
     return (
       <div
         style={{
-          left: (clientX - x) - (nodeWidth / 2),
+          left: clientX - x - nodeWidth / 2,
           position: 'absolute',
-          top: (clientY - y) - (nodeHeight / 2),
+          top: clientY - y - nodeHeight / 2,
         }}
       >
         {blockNode}
@@ -1300,9 +1187,7 @@ function DependencyGraph({
       return;
     }
 
-    const {
-      edge,
-    } = activeEdge;
+    const { edge } = activeEdge;
     const fromBlock = blockUUIDMapping[edge?.from];
     const toBlock = blockUUIDMapping[edge?.to];
 
@@ -1311,10 +1196,7 @@ function DependencyGraph({
     // @ts-ignore
     const clientY = event?.clientY;
 
-    const {
-      x,
-      y,
-    } = containerRef?.current?.getBoundingClientRect() || {};
+    const { x, y } = containerRef?.current?.getBoundingClientRect() || {};
 
     let infos;
     // Upstream is a block, downstream is a group.
@@ -1333,10 +1215,7 @@ function DependencyGraph({
     };
 
     if (infos?.length >= 1) {
-      infos?.forEach(({
-        downstreamBlocks,
-        upstreamBlocks,
-      }) => {
+      infos?.forEach(({ downstreamBlocks, upstreamBlocks }) => {
         const parentID = getParentNodeIDShared(upstreamBlocks?.map(({ uuid }) => uuid));
 
         // Upstream is a block, downstream is a group.
@@ -1346,8 +1225,9 @@ function DependencyGraph({
           removeBlocks = () => {
             updateBlockByDragAndDrop({
               block: fromBlock,
-              downstreamBlocks: (fromBlock?.downstream_blocks || [])
-                .filter(uuid => !(uuid in mapping)),
+              downstreamBlocks: (fromBlock?.downstream_blocks || []).filter(
+                uuid => !(uuid in mapping),
+              ),
             });
           };
         } else if (!fromBlock && toBlock && edge?.from === parentID) {
@@ -1357,8 +1237,7 @@ function DependencyGraph({
           removeBlocks = () => {
             updateBlockByDragAndDrop({
               block: toBlock,
-              upstreamBlocks: (toBlock?.upstream_blocks || [])
-                .filter(uuid => !(uuid in mapping)),
+              upstreamBlocks: (toBlock?.upstream_blocks || []).filter(uuid => !(uuid in mapping)),
             });
           };
         }
@@ -1366,7 +1245,7 @@ function DependencyGraph({
     } else if (!fromBlock && !toBlock) {
       const blocksInGroup = [];
 
-      edge?.to?.split(':')?.forEach((part) => {
+      edge?.to?.split(':')?.forEach(part => {
         if (part?.length >= 1 && part !== 'parent') {
           const block2 = blockUUIDMapping?.[part];
 
@@ -1377,10 +1256,12 @@ function DependencyGraph({
       });
 
       removeBlocks = () => {
-        blocksInGroup?.forEach(block => updateBlockByDragAndDrop({
-          block,
-          downstreamBlocks: [],
-        }));
+        blocksInGroup?.forEach(block =>
+          updateBlockByDragAndDrop({
+            block,
+            downstreamBlocks: [],
+          }),
+        );
       };
     }
 
@@ -1392,11 +1273,7 @@ function DependencyGraph({
           top: clientY - y,
         }}
       >
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => setActiveEdge(null)}
-          open
-        >
+        <ClickOutside disableEscape onClickOutside={() => setActiveEdge(null)} open>
           <Panel noPadding>
             <Spacing px={PADDING_UNITS} py={1}>
               <Link
@@ -1443,51 +1320,33 @@ function DependencyGraph({
         </ClickOutside>
       </div>
     );
-  }, [
-    activeEdge,
-    blocks,
-    setActiveEdge,
-    updateBlockByDragAndDrop,
-  ]);
+  }, [activeEdge, blocks, setActiveEdge, updateBlockByDragAndDrop]);
 
   // @ts-ignore
-  const interactionsEnabled: boolean = useMemo(() => featureEnabled?.(featureUUIDs.INTERACTIONS), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
+  const interactionsEnabled: boolean = useMemo(
+    () => featureEnabled?.(featureUUIDs.INTERACTIONS),
+    [featureEnabled, featureUUIDs],
+  );
 
   const contextMenuMemo = useMemo(() => {
     if (!contextMenuData) {
       return;
     }
 
+    const { event, node, data } = contextMenuData;
     const {
-      event,
-      node,
-      data,
-    } = contextMenuData;
-    const {
-      data: {
-        block,
-        blocks,
-        children,
-      },
+      data: { block, blocks, children },
     } = node;
 
-    const {
-      clientX,
-      clientY,
-    } = event;
+    const { clientX, clientY } = event;
 
-    const {
-      x,
-      y,
-    } = containerRef?.current?.getBoundingClientRect() || {};
+    const { x, y } = containerRef?.current?.getBoundingClientRect() || {};
 
-    const allDependenciesShowing = selectedBlock
-      && selectedBlock?.uuid === block?.uuid
-      && selectedBlockTwice
-      && selectedBlockTwice?.uuid === block?.uuid;
+    const allDependenciesShowing =
+      selectedBlock &&
+      selectedBlock?.uuid === block?.uuid &&
+      selectedBlockTwice &&
+      selectedBlockTwice?.uuid === block?.uuid;
 
     const idx = blocks?.findIndex(({ uuid }) => uuid === block?.uuid);
 
@@ -1511,79 +1370,83 @@ function DependencyGraph({
       });
     }
 
-    menuItems.push(...[
-      {
-        onClick: () => {
-          showUpdateBlockModal(
-            block,
-            block?.name,
-          );
+    menuItems.push(
+      ...[
+        {
+          onClick: () => {
+            showUpdateBlockModal(block, block?.name);
+          },
+          uuid: 'Rename block',
         },
-        uuid: 'Rename block',
-      },
-    ]);
+      ],
+    );
 
     if (!isIntegrationPipeline) {
-      menuItems.push(...[
-        {
-          disabled: ((block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length),
-          onClick: () => {
-            setSelectedBlock?.(allDependenciesShowing ? null : block);
-            setSelectedBlockTwice(allDependenciesShowing ? null : block);
+      menuItems.push(
+        ...[
+          {
+            disabled:
+              (block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length,
+            onClick: () => {
+              setSelectedBlock?.(allDependenciesShowing ? null : block);
+              setSelectedBlockTwice(allDependenciesShowing ? null : block);
+            },
+            uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
           },
-          uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
-        },
-        {
-          onClick: () => {
-            addNewBlockAtIndex?.(
-              {
-                downstream_blocks: block ? [block?.uuid] : null,
-                language: BlockLanguageEnum.YAML === block?.language
-                  ? BlockLanguageEnum.PYTHON
-                  : block?.language,
-                type: BlockTypeEnum.CUSTOM,
-              },
-              Math.max(0, idx - 1),
-            );
+          {
+            onClick: () => {
+              addNewBlockAtIndex?.(
+                {
+                  downstream_blocks: block ? [block?.uuid] : null,
+                  language:
+                    BlockLanguageEnum.YAML === block?.language
+                      ? BlockLanguageEnum.PYTHON
+                      : block?.language,
+                  type: BlockTypeEnum.CUSTOM,
+                },
+                Math.max(0, idx - 1),
+              );
+            },
+            uuid: 'Add upstream block',
           },
-          uuid: 'Add upstream block',
-        },
-        {
-          onClick: () => {
-            addNewBlockAtIndex?.(
-              {
-                language: BlockLanguageEnum.YAML === block?.language
-                  ? BlockLanguageEnum.PYTHON
-                  : block?.language,
-                type: BlockTypeEnum.CUSTOM,
-                upstream_blocks: block ? [block?.uuid] : null,
-              },
-              idx + 1,
-            );
+          {
+            onClick: () => {
+              addNewBlockAtIndex?.(
+                {
+                  language:
+                    BlockLanguageEnum.YAML === block?.language
+                      ? BlockLanguageEnum.PYTHON
+                      : block?.language,
+                  type: BlockTypeEnum.CUSTOM,
+                  upstream_blocks: block ? [block?.uuid] : null,
+                },
+                idx + 1,
+              );
+            },
+            uuid: 'Add downstream block',
           },
-          uuid: 'Add downstream block',
-        },
-        {
-          disabled: !block?.upstream_blocks?.length,
-          onClick: () => {
-            updateBlockByDragAndDrop({
-              block,
-              upstreamBlocks: [],
-            });
+          {
+            disabled: !block?.upstream_blocks?.length,
+            onClick: () => {
+              updateBlockByDragAndDrop({
+                block,
+                upstreamBlocks: [],
+              });
+            },
+            uuid: 'Remove upstream dependencies',
           },
-          uuid: 'Remove upstream dependencies',
-        },
-        {
-          disabled: !block?.downstream_blocks?.length,
-          onClick: () => {
-            updateBlockByDragAndDrop({
-              block,
-              downstreamBlocks: [],
-            });
+          {
+            disabled: !block?.downstream_blocks?.length,
+            onClick: () => {
+              updateBlockByDragAndDrop({
+                block,
+                downstreamBlocks: [],
+              });
+            },
+            uuid: 'Remove downstream dependencies',
           },
-          uuid: 'Remove downstream dependencies',
-        },
-      ]);
+        ],
+      );
     }
 
     if (interactionsEnabled) {
@@ -1596,30 +1459,32 @@ function DependencyGraph({
       });
     }
 
-    menuItems.push(...[
-      {
-        onClick: () => {
-          deleteBlock?.(block);
+    menuItems.push(
+      ...[
+        {
+          onClick: () => {
+            deleteBlock?.(block);
+          },
+          uuid: 'Delete block',
         },
-        uuid: 'Delete block',
-      },
-      {
-        onClick: () => {
-          deleteBlock?.({
-            ...block,
-            force: true,
-          });
+        {
+          onClick: () => {
+            deleteBlock?.({
+              ...block,
+              force: true,
+            });
+          },
+          uuid: 'Delete block (ignore dependencies)',
         },
-        uuid: 'Delete block (ignore dependencies)',
-      },
-      {
-        onClick: () => {
-          onClick?.(block);
-          setActiveSidekickView?.(ViewKeyEnum.FILE_VERSIONS);
+        {
+          onClick: () => {
+            onClick?.(block);
+            setActiveSidekickView?.(ViewKeyEnum.FILE_VERSIONS);
+          },
+          uuid: 'View file versions',
         },
-        uuid: 'View file versions',
-      },
-    ]);
+      ],
+    );
 
     return (
       <div
@@ -1629,17 +1494,9 @@ function DependencyGraph({
           top: clientY - y,
         }}
       >
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => setContextMenuData(null)}
-          open
-        >
+        <ClickOutside disableEscape onClickOutside={() => setContextMenuData(null)} open>
           <Panel noPadding>
-            {menuItems.map(({
-              disabled,
-              onClick,
-              uuid,
-            }) => (
+            {menuItems.map(({ disabled, onClick, uuid }) => (
               <Spacing key={uuid} px={PADDING_UNITS} py={1}>
                 <Link
                   block
@@ -1686,61 +1543,59 @@ function DependencyGraph({
         <Spacing my={3} px={PADDING_UNITS}>
           <Spacing mb={PADDING_UNITS}>
             <Text>
-              Select parent block(s) for <Text
-                color={getColorsForBlockType(
-                  blockEditing.type,
-                  {
+              Select parent block(s) for{' '}
+              <Text
+                color={
+                  getColorsForBlockType(blockEditing.type, {
                     blockColor: blockEditing.color,
                     theme: themeContext,
-                  },
-                ).accent}
+                  }).accent
+                }
                 inline
                 monospace
               >
                 {blockEditing.uuid}
-              </Text>:
+              </Text>
+              :
             </Text>
 
             <Spacing mt={1}>
               {upstreamBlocksEditing.map(({ uuid }: BlockType, idx: number) => (
                 <Text
-                  color={getColorsForBlockType(
-                    blockUUIDMapping[uuid]?.type,
-                    {
+                  color={
+                    getColorsForBlockType(blockUUIDMapping[uuid]?.type, {
                       blockColor: blockUUIDMapping[uuid]?.type,
                       theme: themeContext,
-                    },
-                  ).accent}
+                    }).accent
+                  }
                   inline
                   key={uuid}
                   monospace
                 >
-                  {uuid}{upstreamBlocksEditingCount >= 2 && idx <= upstreamBlocksEditingCount - 2
-                    ? <Text inline>
-                      ,&nbsp;
-                    </Text>
-                    : null
-                  }
+                  {uuid}
+                  {upstreamBlocksEditingCount >= 2 && idx <= upstreamBlocksEditingCount - 2 ? (
+                    <Text inline>,&nbsp;</Text>
+                  ) : null}
                 </Text>
               ))}
             </Spacing>
           </Spacing>
 
-          <FlexContainer
-            alignItems="center"
-          >
+          <FlexContainer alignItems='center'>
             <KeyboardShortcutButton
               compact
               inline
               loading={isLoadingUpdateBlock}
               // @ts-ignore
-              onClick={() => updateBlock({
-                block: {
-                  ...blockEditing,
-                  upstream_blocks: upstreamBlocksEditing.map(({ uuid }) => uuid),
-                },
-              })}
-              uuid="DependencyGraph/save_parents"
+              onClick={() =>
+                updateBlock({
+                  block: {
+                    ...blockEditing,
+                    upstream_blocks: upstreamBlocksEditing.map(({ uuid }) => uuid),
+                  },
+                })
+              }
+              uuid='DependencyGraph/save_parents'
             >
               Save dependencies
             </KeyboardShortcutButton>
@@ -1757,7 +1612,7 @@ function DependencyGraph({
                   upstreamBlocks: null,
                 });
               }}
-              uuid="DependencyGraph/cancel_save_parents"
+              uuid='DependencyGraph/cancel_save_parents'
             >
               Cancel
             </KeyboardShortcutButton>
@@ -1769,30 +1624,29 @@ function DependencyGraph({
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       >
-        <ZoomControls
-          canvasRef={canvasRef}
-          containerRef={containerRef}
-          zoomLevel={zoomLevel}
-        />
+        <ZoomControls canvasRef={canvasRef} containerRef={containerRef} zoomLevel={zoomLevel} />
         {/* @ts-ignore */}
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
           disabled={disabledProp}
-          edge={(edge) => {
+          edge={edge => {
             let block = blockUUIDMapping[edge?.source];
 
             const blocks = [];
             if (!block) {
-              edge?.id?.replace(edge?.source, '')?.split(':')?.forEach((sourcePart) => {
-                if (sourcePart?.length >= 1 && sourcePart !== 'parent') {
-                  const block2 = blockUUIDMapping?.[sourcePart];
+              edge?.id
+                ?.replace(edge?.source, '')
+                ?.split(':')
+                ?.forEach(sourcePart => {
+                  if (sourcePart?.length >= 1 && sourcePart !== 'parent') {
+                    const block2 = blockUUIDMapping?.[sourcePart];
 
-                  if (block2) {
-                    blocks.push(block2);
+                    if (block2) {
+                      blocks.push(block2);
+                    }
                   }
-                }
-              });
+                });
 
               if (blocks?.length) {
                 block = blocks[0];
@@ -1806,11 +1660,11 @@ function DependencyGraph({
             if (blockUUID in (blocksWithDownstreamBlockSet || {})) {
               const infos = blocksWithDownstreamBlockSet?.[blockUUID];
 
-              infos?.map(({
-                downstreamBlocks: downstreamBlocksInit,
-                upstreamBlocks,
-              }) => {
-                const blockUUIDs = sortByKey(upstreamBlocks?.map(({ uuid }) => uuid) || [], uuid => uuid);
+              infos?.map(({ downstreamBlocks: downstreamBlocksInit, upstreamBlocks }) => {
+                const blockUUIDs = sortByKey(
+                  upstreamBlocks?.map(({ uuid }) => uuid) || [],
+                  uuid => uuid,
+                );
 
                 if (getParentNodeIDShared(blockUUIDs) === edge?.target) {
                   downstreamBlocks.push(...downstreamBlocksInit);
@@ -1822,11 +1676,14 @@ function DependencyGraph({
             if (!downstreamBlocks?.length) {
               if (getParentNodeID(blockUUID) === edge?.target) {
                 downstreamBlocks.push(
-                  ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
+                  ...block?.downstream_blocks?.map(uuid => blockUUIDMapping?.[uuid]),
                 );
               } else {
-                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
-                    || getParentNodeID(blockUUID) === edge.target);
+                const downstreamBlockUUID = block?.downstream_blocks?.find(
+                  uuid =>
+                    buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort ||
+                    getParentNodeID(blockUUID) === edge.target,
+                );
                 const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
                 downstreamBlocks.push(downstreamBlock);
               }
@@ -1835,7 +1692,7 @@ function DependencyGraph({
             let isInProgress;
             let isQueued;
 
-            downstreamBlocks?.forEach((downstreamBlock) => {
+            downstreamBlocks?.forEach(downstreamBlock => {
               if (isInProgress || isQueued) {
                 return;
               }
@@ -1860,10 +1717,7 @@ function DependencyGraph({
               }
             });
 
-            const {
-              anotherBlockSelected,
-              selected,
-            } = determineSelectedStatus(
+            const { anotherBlockSelected, selected } = determineSelectedStatus(
               {
                 id: blockUUID,
               },
@@ -1880,19 +1734,15 @@ function DependencyGraph({
 
             const edgeClassNames = [
               'edge',
-              isInProgress
-                ? (isQueued
-                  ? 'activeSlow'
-                  : 'active'
-                )
-                : 'inactive',
+              isInProgress ? (isQueued ? 'activeSlow' : 'active') : 'inactive',
             ];
 
             const blockUUIDs = blocks.map(({ uuid }) => uuid);
             if (selectedBlockTwice) {
-              if (selectedBlockTwice?.uuid === blockUUID
-                || blockUUIDs?.includes(selectedBlockTwice?.uuid)
-                || downstreamBlocks?.map(b => b?.uuid)?.includes(selectedBlockTwice?.uuid)
+              if (
+                selectedBlockTwice?.uuid === blockUUID ||
+                blockUUIDs?.includes(selectedBlockTwice?.uuid) ||
+                downstreamBlocks?.map(b => b?.uuid)?.includes(selectedBlockTwice?.uuid)
               ) {
                 edgeClassNames.push('selected-twice');
               }
@@ -1903,26 +1753,30 @@ function DependencyGraph({
             }
 
             return (
-// @ts-ignore
+              // @ts-ignore
               <Edge
                 {...edge}
                 className={edgeClassNames.join(' ')}
-                onClick={contextMenuEnabled
-                  ? (event, edge) => {
-                    // @ts-ignore
-                    setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
-                      block,
-                      edge,
-                      event,
-                    });
-                    setContextMenuData(null);
-                  }
-                  : null
+                onClick={
+                  contextMenuEnabled
+                    ? (event, edge) => {
+                        // @ts-ignore
+                        setActiveEdge(prev =>
+                          prev?.edge?.id === edge?.id
+                            ? null
+                            : {
+                                block,
+                                edge,
+                                event,
+                              },
+                        );
+                        setContextMenuData(null);
+                      }
+                    : null
                 }
                 style={{
-                  stroke: anotherBlockSelected && !selected
-                    ? colorData?.accentLight
-                    : colorData?.accent,
+                  stroke:
+                    anotherBlockSelected && !selected ? colorData?.accentLight : colorData?.accent,
                   strokeWidth: STROKE_WIDTH,
                 }}
               />
@@ -1954,34 +1808,26 @@ function DependencyGraph({
           maxWidth={ZOOMABLE_CANVAS_SIZE}
           maxZoom={1}
           minZoom={-1}
-          node={(node) => {
+          node={node => {
             const nodeID = node?.id;
-            const {
-              block,
-              blocks: blocksWithSameDownstreamBlocks,
-            } = node?.properties?.data || {};
+            const { block, blocks: blocksWithSameDownstreamBlocks } = node?.properties?.data || {};
             const blockUUID = block?.uuid;
 
-            const color = getColorsForBlockType(
-              block?.type,
-              {
-                blockColor: block?.color,
-                theme: themeContext,
-              },
-            );
+            const color = getColorsForBlockType(block?.type, {
+              blockColor: block?.color,
+              theme: themeContext,
+            });
             const isActive = nodeHovering?.id === node?.id || !!activeNodes?.[blockUUID];
 
-            const {
-              anotherBlockSelected,
-              selected,
-            } = determineSelectedStatus(node, block, {
+            const { anotherBlockSelected, selected } = determineSelectedStatus(node, block, {
               blocksWithSameDownstreamBlocks,
             });
 
             return (
+              // @ts-ignore
               <Node
                 {...node}
-                dragType="port"
+                dragType='port'
                 linkable
                 port={
                   <Port
@@ -2022,7 +1868,8 @@ function DependencyGraph({
                     ry={isActive ? 10 : 0}
                     style={{
                       fill: color?.accentLight,
-                      stroke: anotherBlockSelected && !selected ? color?.accentLight : color?.accent,
+                      stroke:
+                        anotherBlockSelected && !selected ? color?.accentLight : color?.accent,
                       strokeWidth: 1,
                     }}
                   />
@@ -2033,12 +1880,8 @@ function DependencyGraph({
                   strokeWidth: 0,
                 }}
               >
-                {(event) => {
-                  const {
-                    height: nodeHeight,
-                    node,
-                    width: nodeWidth,
-                  } = event;
+                {event => {
+                  const { height: nodeHeight, node, width: nodeWidth } = event;
                   const {
                     data: {
                       block,
@@ -2047,19 +1890,11 @@ function DependencyGraph({
                     },
                   } = node;
 
-                  const {
-                    anotherBlockSelected,
-                    selected,
-                  } = determineSelectedStatus(node, block, {
+                  const { anotherBlockSelected, selected } = determineSelectedStatus(node, block, {
                     blocksWithSameDownstreamBlocks,
                   });
 
-                  const {
-                    hasFailed,
-                    isInProgress,
-                    isQueued,
-                    isSuccessful,
-                  } = getBlockStatus({
+                  const { hasFailed, isInProgress, isQueued, isSuccessful } = getBlockStatus({
                     block,
                     blockStatus,
                     messages,
@@ -2071,14 +1906,16 @@ function DependencyGraph({
                   let isInProgressFinal;
                   if (downstreamBlocks?.length >= 1) {
                     isInProgressFinal = downstreamBlocks?.some(
-                      downstreamBlock => downstreamBlock && getBlockStatus({
-                        block: downstreamBlock,
-                        blockStatus,
-                        messages,
-                        noStatus,
-                        runningBlocks,
-                        runningBlocksMapping,
-                      })?.isInProgress,
+                      downstreamBlock =>
+                        downstreamBlock &&
+                        getBlockStatus({
+                          block: downstreamBlock,
+                          blockStatus,
+                          messages,
+                          noStatus,
+                          runningBlocks,
+                          runningBlocksMapping,
+                        })?.isInProgress,
                     );
                   } else {
                     isInProgressFinal = isInProgress;
@@ -2087,40 +1924,52 @@ function DependencyGraph({
                   return (
                     <foreignObject
                       height={nodeHeight}
-                      onClick={(e) => onClickNode?.(e, node)}
-                      onContextMenu={contextMenuEnabled
-                        ? (e) => onContextMenuNode(e, node, {
+                      onClick={e => onClickNode?.(e, node)}
+                      onContextMenu={
+                        contextMenuEnabled
+                          ? e =>
+                              onContextMenuNode(e, node, {
+                                nodeHeight,
+                                nodeWidth,
+                              })
+                          : null
+                      }
+                      onMouseDown={
+                        dragEnabled
+                          ? e =>
+                              onMouseDownNode(e, node, {
+                                nodeHeight,
+                                nodeWidth,
+                              })
+                          : null
+                      }
+                      onMouseEnter={e =>
+                        onMouseEnterNode(e, node, {
                           nodeHeight,
                           nodeWidth,
                         })
-                        : null
                       }
-                      onMouseDown={dragEnabled
-                        ? (e) => onMouseDownNode(e, node, {
+                      onMouseLeave={e =>
+                        onMouseLeaveNode(e, node, {
                           nodeHeight,
                           nodeWidth,
                         })
-                        : null
                       }
-                      onMouseEnter={(e) => onMouseEnterNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
-                      onMouseLeave={(e) => onMouseLeaveNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
-                      onMouseUp={dragEnabled
-                        ? (e) => onMouseUpNode(e, node, {
-                          nodeHeight,
-                          nodeWidth,
-                        })
-                        : null
+                      onMouseUp={
+                        dragEnabled
+                          ? e =>
+                              onMouseUpNode(e, node, {
+                                nodeHeight,
+                                nodeWidth,
+                              })
+                          : null
                       }
-                      style={{
-                        // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
-                        // pointerEvents: 'none',
-                      }}
+                      style={
+                        {
+                          // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
+                          // pointerEvents: 'none',
+                        }
+                      }
                       width={event.width}
                       x={0}
                       y={0}
@@ -2153,7 +2002,9 @@ function DependencyGraph({
             );
           }}
           nodes={nodes}
-          onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          onNodeLinkCheck={(event, from, to) =>
+            !edges.some(e => e.from === from.id && e.to === to.id)
+          }
           onZoomChange={z => {
             const zFinal = Math.max(z, 0.05);
             setZoom?.(zFinal);
@@ -2162,8 +2013,7 @@ function DependencyGraph({
           pannable={pannable}
           selections={edgeSelections}
           zoomable={zoomable}
-        >
-        </Canvas>
+        ></Canvas>
       </GraphContainerStyle>
 
       {activeEdgeMenu}
