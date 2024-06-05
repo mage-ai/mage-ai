@@ -215,6 +215,7 @@ VARIABLE_DATA_OUTPUT_META_CACHE = str(os.getenv('VARIABLE_DATA_OUTPUT_META_CACHE
     'true',
     'True',
 ]
+MATERIA_ENABLED = str(os.getenv('MATERIA_ENABLED', 0) or 0) in ['1', 'true', 'True']
 
 # -------------------------
 # IDE settings

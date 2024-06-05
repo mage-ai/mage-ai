@@ -10,24 +10,29 @@ export type StyleProps = {
   semiBold?: boolean;
 };
 
+export const monospaceFontFamily = css<StyleProps>`
+  font-family: ${({ black, bold, italic, light, medium, semiBold, theme }) =>
+    light
+      ? theme.fonts.family.monospace.light
+      : medium
+        ? theme.fonts.family.monospace.medium
+        : semiBold
+          ? theme.fonts.family.monospace.semiBold
+          : black || bold
+            ? italic
+              ? theme.fonts.family.monospace.boldItalic
+              : theme.fonts.family.monospace.bold
+            : italic
+              ? theme.fonts.family.monospace.regularItalic
+              : theme.fonts.family.monospace.regular};
+`;
+
 const base = css<StyleProps>`
   color: ${({ theme }) => theme.fonts.color.text.base};
 
-  font-family: ${({ black, bold, italic, light, medium, monospace, semiBold, theme }) =>
+  font-family: ${({ black, bold, light, medium, monospace, semiBold, theme }) =>
     monospace
-      ? light
-        ? theme.fonts.family.monospace.light
-        : medium
-          ? theme.fonts.family.monospace.medium
-          : semiBold
-            ? theme.fonts.family.monospace.semiBold
-            : black || bold
-              ? italic
-                ? theme.fonts.family.monospace.boldItalic
-                : theme.fonts.family.monospace.bold
-              : italic
-                ? theme.fonts.family.monospace.regularItalic
-                : theme.fonts.family.monospace.regular
+      ? monospaceFontFamily
       : light
         ? theme.fonts.family.base.light
         : medium

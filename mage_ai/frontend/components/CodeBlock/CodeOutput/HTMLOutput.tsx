@@ -11,6 +11,7 @@ function HTMLOutput({ value, ...outputRowSharedProps }: HTMLOutputProps) {
   return (
     <OutputRowStyle {...outputRowSharedProps}>
       <HTMLOutputStyle monospace>
+        {/* @ts-ignore */}
         <InnerHTML html={value} />
       </HTMLOutputStyle>
     </OutputRowStyle>

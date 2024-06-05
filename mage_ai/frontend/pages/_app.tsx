@@ -79,9 +79,12 @@ function MyApp(props: MyAppProps & AppProps) {
   const { defaultTitle, themeProps = {}, title, version } = pageProps;
 
   const { featureEnabled, featureUUIDs } = useProject();
+
+  const isV2 = useMemo(() => version === LayoutVersionEnum.V2, [version]);
+
   const commandCenterEnabled = useMemo(
-    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER),
-    [featureEnabled, featureUUIDs],
+    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER) && !isV2,
+    [featureEnabled, featureUUIDs, isV2],
   );
 
   const windowIsDefined = typeof window !== 'undefined';
@@ -216,9 +219,19 @@ function MyApp(props: MyAppProps & AppProps) {
   const requireUserAuthentication = useMemo(() => status?.require_user_authentication, [status]);
   const requireUserPermissions = useMemo(() => status?.require_user_permissions, [status]);
 
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
+  const { data: dataProjects } = api.projects.list(
+    {},
+    { revalidateOnFocus: false },
+    {
+      pauseFetch: isV2,
+    },
+  );
 
   useEffect(() => {
+    if (isV2) {
+      return;
+    }
+
     if (
       noValue &&
       typeof requireUserAuthentication !== 'undefined' &&
@@ -257,6 +270,7 @@ function MyApp(props: MyAppProps & AppProps) {
     }
   }, [
     dataProjects,
+    isV2,
     noValue,
     noValuePermissions,
     requireUserAuthentication,
@@ -273,22 +287,22 @@ function MyApp(props: MyAppProps & AppProps) {
     // @ts-ignore
     const el = <Component {...pageProps} />;
 
-    if (LayoutVersionEnum.V2 === version) {
+    if (isV2) {
       return <V2Layout>{el}</V2Layout>;
     }
     return el;
-  }, [Component, pageProps, version]);
+  }, [Component, pageProps, isV2]);
 
   const themeMemo = useMemo(() => {
-    if (LayoutVersionEnum.V2 === version) {
+    if (isV2) {
       return getTheme() as V2ThemeType;
     }
 
     return Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme);
-  }, [themeProps?.currentTheme, currentTheme, version]);
+  }, [themeProps?.currentTheme, currentTheme, isV2]);
 
   const head = useMemo(() => {
-    const HeadEl = LayoutVersionEnum.V2 === version ? V2Head : Head;
+    const HeadEl = isV2 ? V2Head : Head;
 
     return (
       <HeadEl defaultTitle={defaultTitle} title={title}>
@@ -298,7 +312,7 @@ function MyApp(props: MyAppProps & AppProps) {
         />
       </HeadEl>
     );
-  }, [defaultTitle, title, version]);
+  }, [defaultTitle, title, isV2]);
 
   return (
     <>

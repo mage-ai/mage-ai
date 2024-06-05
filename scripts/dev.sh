@@ -196,6 +196,19 @@ export MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
 export SMTP_EMAIL=$SMTP_EMAIL
 export SMTP_PASSWORD=$SMTP_PASSWORD
 
+# Frontend
+export LANGUAGE_SERVER_HOST=$LANGUAGE_SERVER_HOST
+export LANGUAGE_SERVER_PORT=$LANGUAGE_SERVER_PORT
+
+#!/bin/bash
+
+# This will generate the .env.local file based on environment variables
+cat <<EOT > mage_ai/frontend/.env.local
+NEXT_PUBLIC_DEBUG=${DEBUG}
+NEXT_PUBLIC_LANGUAGE_SERVER_HOST=${LANGUAGE_SERVER_HOST}
+NEXT_PUBLIC_LANGUAGE_SERVER_PORT=${LANGUAGE_SERVER_PORT}
+EOT
+
 if command -v docker-compose &> /dev/null
 then
     # docker-compose exists

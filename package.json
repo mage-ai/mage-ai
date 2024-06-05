@@ -1,5 +1,10 @@
 {
   "dependencies": {
+    "monaco-editor": "^0.49.0",
+    "monaco-editor-core": "^0.49.0",
+    "monaco-editor-webpack-plugin": "^7.1.0",
+    "monaco-editor-wrapper": "^5.1.2",
+    "monaco-languageclient": "^8.4.0",
     "react-dropzone": "^14.2.3",
     "react-grid-system": "^8.2.0"
   }

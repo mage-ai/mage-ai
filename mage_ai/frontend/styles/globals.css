@@ -661,7 +661,7 @@ textarea {
 
 @font-face {
   font-family: 'codicon';
-  src: url('/monaco-editor/min/vs/base/browser/ui/codicons/codicon/codicon.ttf') format('truetype');
+  src: url('/fonts/codicon/codicon.ttf') format('truetype');
 }
 
 

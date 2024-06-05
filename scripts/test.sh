@@ -13,6 +13,7 @@ git diff --name-only master...HEAD | \
   grep -E '\.(js|jsx|ts|tsx)$' | \
   xargs eslint_d --quiet --config mage_ai/frontend/.eslintrc.js --fix --ext .js,.jsx,.ts,.tsx
 
+HOST='' PORT='' PROJECT='' docker compose run --rm test-frontend rm -rf ./dist
 HOST='' PORT='' PROJECT='' docker compose run --rm test-frontend yarn install_and_test 2>/dev/null
 
 git diff --name-only master...HEAD | \
