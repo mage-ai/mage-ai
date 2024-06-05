@@ -205,8 +205,7 @@ export default function useCodeOutput({
   const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
   ]);
 
-  const combinedMessages = useMemo(() => {
-    return messages?.length >= 1
+  const combinedMessages = useMemo(() => messages?.length >= 1
       ? messages.reduce((arr, curr) => {
         const last = arr.at(-1);
 
@@ -233,8 +232,7 @@ export default function useCodeOutput({
 
         return arr;
       }, [])
-      : messagesAll || [];
-  }, [
+      : messagesAll || [], [
     combineTextData,
     messages,
     messagesAll,
@@ -433,6 +431,7 @@ export default function useCodeOutput({
             displayElement = (
               <OutputRowStyle {...outputRowSharedProps}>
                 <HTMLOutputStyle monospace>
+                  {/* @ts-ignore */}
                   <InnerHTML html={data} />
                 </HTMLOutputStyle>
               </OutputRowStyle>
