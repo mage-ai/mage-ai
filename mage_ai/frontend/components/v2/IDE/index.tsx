@@ -9,6 +9,7 @@ import loadExtensionsAndModules from './extensions/loader';
 import mockCode from './mocks/code';
 import setupPython from './languages/python';
 import { ContainerStyled, IDEStyled } from './index.style';
+import { getHost } from '@api/utils/url';
 import { IDEThemeEnum } from './themes/interfaces';
 
 type IDEProps = {
@@ -16,7 +17,7 @@ type IDEProps = {
   uuid: string;
 };
 
-function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps) {
+function MateriaIDE({ theme: themeSelected, uuid }: IDEProps) {
   const editorCount = useRef(0);
   const renderCount = useRef(0);
   const useEffectCount = useRef(0);
@@ -35,7 +36,6 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
     value: mockCode,
   }), [themeContext, themeSelected]);
 
-
   useEffect(() => {
     useEffectCount.current += 1;
     console.log(`[IDE] Use effect: ${useEffectCount?.current}`);
@@ -46,6 +46,18 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
 
         const monaco = await import('monaco-editor');
         monaco.languages.register({ id: 'python' });
+
+        // Configure a proxy for the web worker
+        window.MonacoEnvironment = {
+          getWorkerUrl: function (workerId, label) {
+            return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+              self.MonacoEnvironment = {
+                baseUrl: '${getHost()}/monaco-editor/min/'
+              };
+              importScripts('${getHost()}/monaco-editor/min/vs/base/worker/workerMain.js');`,
+            )}`;
+          },
+        };
 
         if (monaco.editor.getEditors().length === 0) {
           setupPython(monaco);
@@ -90,7 +102,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
         <div ref={containerRef} style={{ height: '100vh' }} />
       </IDEStyled>
 
-      <div id={'monaco-suggest-application-root-${uuid}'} />
+      <div id={`monaco-suggest-application-root-${uuid}`} />
     </ContainerStyled>
   );
 }
