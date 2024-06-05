@@ -33,7 +33,6 @@ export const gradient = (
   );
 `;
 
-
 export const outlineHover = ({
   borderColor,
   outlineColor,

@@ -1,10 +1,9 @@
 import configuration from './configuration';
 import provider from './provider';
-
-export const language: 'python' = 'python';
+import { LanguageEnum } from '../constants';
 
 export default function setup(monaco: typeof import('monaco-editor')) {
-  monaco.languages.setLanguageConfiguration(language, configuration());
+  monaco.languages.setLanguageConfiguration(LanguageEnum.PYTHON, configuration());
   // @ts-ignore
-  monaco.languages.setMonarchTokensProvider(language, provider());
+  monaco.languages.setMonarchTokensProvider(LanguageEnum.PYTHON, provider());
 }

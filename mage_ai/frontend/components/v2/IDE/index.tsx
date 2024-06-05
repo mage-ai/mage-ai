@@ -1,94 +1,94 @@
-import styled from 'styled-components';
+import { ThemeContext } from 'styled-components';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 
-import { gradient } from '@mana/styles/mixins';
+import baseConfigurations from './configurations/base';
+import initializeAutocomplete from './autocomplete';
+import initializeThemes from './themes/setup';
+import mockCode from './mocks/code';
+import setupPython from './languages/python';
+import { ContainerStyled, IDEStyled } from './index.style';
+import { IDEThemeEnum } from './themes/interfaces';
+import { LanguageEnum } from './languages/constants';
+// import { getHost } from '@api/utils/url';
 
-type StyleProps = {
-  hideDuplicateMenuItems?: boolean;
+type IDEProps = {
+  theme?: IDEThemeEnum;
+  uuid: string;
 };
 
-export const ContainerStyled = styled.div`
-  height: 100%;
-  width: 100%;
-`;
+function MateriaIDE({ theme: themeSelected, uuid }: IDEProps) {
+  const editorCount = useRef(0);
+  const renderCount = useRef(0);
+  const useEffectCount = useRef(0);
 
-export const IDEStyled = styled.div<StyleProps>`
-  background-color: black;
+  const containerRef = useRef(null);
+  const editorRef = useRef(null);
+  const initializingRef = useRef(false);
+  const mountedRef = useRef(false);
 
-  &.mounted {
-    ${gradient('45deg', '#6B50D7', '#FF144D', 30, 100)}
-  }
+  const themeContext = useContext(ThemeContext);
+  const configurations = useMemo(
+    () =>
+      baseConfigurations(themeContext, {
+        theme: themeSelected,
+        value: mockCode,
+      }),
+    [themeContext, themeSelected],
+  );
 
-  font-family: ${({ theme }) => theme.fonts.family.monospace.regular};
+  useEffect(() => {
+    useEffectCount.current += 1;
+    console.log(`[IDE] Use effect: ${useEffectCount?.current}`);
 
-  .context-view.monaco-menu-container {
-    background-color: red;
-  }
+    if (!initializingRef?.current && containerRef?.current && !editorRef?.current) {
+      const initializeEditor = async () => {
+        initializingRef.current = true;
 
-  ${({ hideDuplicateMenuItems }) =>
-    hideDuplicateMenuItems &&
-    `
-    /*
-     * The (n + 10) assumes a specific number of items in the block editor context
-     * menu. This includes "Run selected block", "Change All Occurrences", "Cut",
-     * "Copy", "Paste", "Command Palette", and 3 dividers. The 10th item from the
-     * bottom and higher are hidden to avoid duplicate shortcut items in the
-     * context menu.
-     */
-    .monaco-menu li.action-item:nth-last-child(n + 10) {
-      display: none;
+        const monaco = await import('monaco-editor');
+        monaco.languages.register({ id: LanguageEnum.PYTHON });
+
+        // Configure a proxy for the web worker
+        // window.MonacoEnvironment = {
+        //   getWorkerUrl: function (workerId, label) {
+        //     return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        //       self.MonacoEnvironment = {
+        //         baseUrl: '${getHost()}/monaco-editor/min/'
+        //       };
+        //       importScripts('${getHost()}/monaco-editor/min/vs/base/worker/workerMain.js');`)}`;
+        //   },
+        // };
+
+        if (monaco.editor.getEditors().length === 0) {
+          setupPython(monaco);
+          initializeThemes(monaco);
+          editorRef.current = monaco.editor.create(containerRef.current, configurations);
+          initializeAutocomplete(monaco);
+        } else {
+          console.warn('Editor already initialized');
+        }
+
+        editorCount.current += 1;
+        console.log(`[IDE] Editor: ${editorCount?.current}`);
+        mountedRef.current = true;
+      };
+
+      initializeEditor();
     }
-  `}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  .myCustomLineDecoration {
-    background-color: rgba(255, 0, 0, 0.3); /* Visible Red for Testing */
-    border: 2px solid blue; /* Border to make it more visible */
-    display: inline-block;
-    width: 100%;
-    height: 100%;
-  }
+  renderCount.current += 1;
+  console.log(`[IDE] Rendered: ${renderCount?.current}`);
 
-  .debugGlyphMargin {
-    background-color: rgba(0, 255, 0, 0.3); /* Visible Green for Testing */
-    border: 2px solid yellow; /* Border to emphasize */
-    display: inline-block;
-    width: 100%;
-    height: 100%;
-  }
+  return (
+    <ContainerStyled>
+      <IDEStyled className={mountedRef?.current ? 'mounted' : ''}>
+        <div ref={containerRef} style={{ height: '100vh' }} />
+      </IDEStyled>
 
-  #monaco-suggest-application-root {
-    .monaco-modal {
-      display: flex;
-      position: fixed;
-      z-index: 9999; /* Ensure the modal is above other content */
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 400px;
-      background-color: white;
-      border: 1px solid #888;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-      border-radius: 5px;
-      overflow: visible;
-      visibility: visible; /* Ensure it's not hidden */
-      opacity: 1; /* Ensure it's fully opaque */
-    }
+      <div id={`monaco-suggest-application-root-${uuid}`} />
+    </ContainerStyled>
+  );
+}
 
-    .monaco-modal-content {
-      padding: 20px;
-    }
-
-    .monaco-modal-close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    .monaco-modal-close:hover,
-    .monaco-modal-close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
-    }
-  }
-`;
+export default MateriaIDE;
