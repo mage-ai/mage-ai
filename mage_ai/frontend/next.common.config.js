@@ -13,6 +13,8 @@ const commonConfig = {
   images: {
     unoptimized: true,
   },
+  // https://github.com/vercel/next.js/issues/31692#issuecomment-1092669389
+  // outputFileTracing: false,
   // If your application is running in development mode and wrapped with `<React.StrictMode>`,
   // React deliberately double-invokes lifecycle methods
   // (including `useState`, `useEffect`, and others) to help identify side effects.

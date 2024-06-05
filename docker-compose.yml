@@ -69,6 +69,41 @@ x-server_settings: &server_settings
   restart: on-failure:5
   stdin_open: true # used for interactive debugging
   tty: true # used for interactive debugging
+x-app_volumes: &app_volumes
+  volumes:
+    # Don’t mount .next and node_modules or else you’ll have build issues
+    - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
+    - ./mage_ai/frontend/.env.development.local:/home/src/mage_ai/frontend/.env.development.local
+    - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
+    - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
+    - ./mage_ai/frontend/.gitignore:/home/src/mage_ai/frontend/.gitignore
+    - ./mage_ai/frontend/.prettierrc:/home/src/mage_ai/frontend/.prettierrc
+    - ./mage_ai/frontend/.storybook:/home/src/mage_ai/frontend/.storybook
+    - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
+    - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
+    - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
+    - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
+    - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
+    - ./mage_ai/frontend/mana:/home/src/mage_ai/frontend/mana
+    - ./mage_ai/frontend/next_base_path.config.js:/home/src/mage_ai/frontend/next_base_path.config.js
+    - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
+    - ./mage_ai/frontend/next.common.config.js:/home/src/mage_ai/frontend/next.common.config.js
+    - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
+    - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
+    - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
+    - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
+    - ./mage_ai/frontend/playwright-windows.config.ci.ts:/home/src/mage_ai/frontend/playwright-windows.config.ci.ts
+    - ./mage_ai/frontend/playwright.config.ci.ts:/home/src/mage_ai/frontend/playwright.config.ci.ts
+    - ./mage_ai/frontend/playwright.config.ts:/home/src/mage_ai/frontend/playwright.config.ts
+    - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
+    - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
+    - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
+    - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
+    - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
+    - ./mage_ai/frontend/tests:/home/src/mage_ai/frontend/tests
+    - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
+    - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
+    - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
 x-app_settings: &app_settings
   image: mage/data
   build:
@@ -77,36 +112,12 @@ x-app_settings: &app_settings
   command: ./scripts/install_and_run.sh
   ports:
     - 3000:3000
-  volumes:
-      # Why aren’t we mounting our node_modules directory?
-    - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
-    - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
-    - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
-    - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
-    - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
-    - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
-    - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
-    - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
-    - ./mage_ai/frontend/mana:/home/src/mage_ai/frontend/mana
-    - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
-    - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
-    - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
-    - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
-    - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
-    - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
-    - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
-    - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
-    - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
-    - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
-    - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
-    - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
-    - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
   working_dir: /home/src/mage_ai/frontend
 services:
   server:
     <<: *server_settings
   app:
-    <<: *app_settings
+    <<: [*app_settings, *app_volumes]
     depends_on:
       - server
   server_spark:
@@ -124,14 +135,13 @@ services:
     depends_on:
       - server_spark
   test-frontend:
+    <<: [*app_volumes]
     image: mage/frontend
     build:
       context: .
       dockerfile: ./dev.frontend.Dockerfile
     ports:
       - 3000:3000
-    volumes:
-      - ./mage_ai/frontend:/home/src/app
   py:
     <<: *server_settings
     ports: []

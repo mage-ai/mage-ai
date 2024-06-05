@@ -1,4 +1,11 @@
 export default async function loadExtensionsAndModules() {
+  // https://nextjs.org/docs/pages/building-your-application/optimizing/lazy-loading#with-no-ssr
+  // import dynamic from 'next/dynamic'
+  // const DynamicHeader = dynamic(() => import('../components/header'), {
+  //   ssr: false,
+  // })
+  // const Fuse = (await import('fuse.js')).default
+
   // import '@codingame/monaco-vscode-json-default-extension';
   // import '@codingame/monaco-vscode-json-language-features-default-extension'';
   // import '@codingame/monaco-vscode-markdown-basics-default-extension';
