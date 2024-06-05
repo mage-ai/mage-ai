@@ -307,7 +307,7 @@ class BaseSQLDatabase(BaseIO):
         case_sensitive: bool = False,
     ) -> str:
         if not auto_clean_name:
-            return False
+            return column_name
         col_new = clean_name(column_name, case_sensitive=case_sensitive)
         if not allow_reserved_words and col_new.upper() in SQL_RESERVED_WORDS:
             col_new = f'_{col_new}'
