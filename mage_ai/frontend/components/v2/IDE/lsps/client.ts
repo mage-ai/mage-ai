@@ -12,7 +12,7 @@ async function initializeMonacoLanguageClient() {
     if (MonacoLanguageClient) {
       console.log('Resolved MonacoLanguageClient:', MonacoLanguageClient);
     } else {
-      throw new Error('MonacoLanguageClient is missing from \'monaco-languageclient\' module.');
+      throw new Error("MonacoLanguageClient is missing from 'monaco-languageclient' module.");
     }
   } catch (error) {
     console.error('Failed to import monaco-languageclient:', error);

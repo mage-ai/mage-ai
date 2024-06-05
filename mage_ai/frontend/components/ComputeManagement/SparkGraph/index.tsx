@@ -196,7 +196,7 @@ function SparkGraph({
           // @ts-ignore
           <Node
             {...node}
-            dragType="port"
+            dragType='port'
             linkable
             port={
               // @ts-ignore

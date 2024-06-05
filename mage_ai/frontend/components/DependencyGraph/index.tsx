@@ -1774,6 +1774,7 @@ function DependencyGraph({
           containerRef={containerRef}
           zoomLevel={zoomLevel}
         />
+        {/* @ts-ignore */}
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
@@ -1902,6 +1903,7 @@ function DependencyGraph({
             }
 
             return (
+// @ts-ignore
               <Edge
                 {...edge}
                 className={edgeClassNames.join(' ')}

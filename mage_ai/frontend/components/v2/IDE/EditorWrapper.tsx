@@ -35,7 +35,7 @@ export default async function EditorWrapper() {
 
   return (
     <div>
-      <div id="monaco-editor-root"></div>
+      <div id='monaco-editor-root'></div>
     </div>
   );
 }
