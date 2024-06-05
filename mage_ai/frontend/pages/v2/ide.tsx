@@ -11,7 +11,7 @@ import { LayoutVersionEnum } from '@utils/layouts';
 function IDEPage() {
   return (
     <>
-      <MateriaIDE />
+      <MateriaIDE uuid="mager" />
     </>
   );
 }

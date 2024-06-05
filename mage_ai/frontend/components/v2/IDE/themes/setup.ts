@@ -3,10 +3,11 @@ import IDEThemeType, { IDEThemeEnum } from './interfaces';
 
 export default function initializeThemes(
   monaco: typeof import('monaco-editor'),
-  theme?: IDEThemeEnum = IDEThemeEnum.BASE,
+  theme: IDEThemeEnum = IDEThemeEnum.BASE,
 ) {
   Object.entries(themes).forEach(([key, value]) => {
     const themeName = `${NAMESPACE}-${key}`;
+    // @ts-ignore
     monaco.editor.defineTheme(themeName, value as IDEThemeType);
   });
 
