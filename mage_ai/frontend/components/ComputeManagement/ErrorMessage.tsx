@@ -11,17 +11,8 @@ type ErrorMessageProps = {
   warning?: boolean;
 };
 
-function ErrorMessage({
-  danger,
-  error,
-  large,
-  small,
-  warning,
-}: ErrorMessageProps) {
-  const {
-    message: messageInit,
-    variables,
-  } = error;
+function ErrorMessage({ danger, error, large, small, warning }: ErrorMessageProps) {
+  const { message: messageInit, variables } = error;
 
   let errorHTML = messageInit;
 
@@ -60,7 +51,6 @@ function ErrorMessage({
       }}
     />
   );
-
 }
 
 export default ErrorMessage;

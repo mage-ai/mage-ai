@@ -437,6 +437,8 @@ export default function useCodeOutput({
       textContent: arrContent,
     };
   }, [
+    contained,
+    selected,
     combinedMessages,
     createTableData,
     outputRowNormalPadding,
