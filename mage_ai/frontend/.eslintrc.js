@@ -13,7 +13,7 @@ module.exports = {
     '.eslintrc.js',
     'next.common.config.js',
     'next.config.js',
-    'next_base_path.config.js'
+    'next_base_path.config.js',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {

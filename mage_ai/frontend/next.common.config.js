@@ -1,5 +1,6 @@
 // mage-ai/mage_ai/frontend/next.common.config.js
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -29,6 +30,32 @@ const commonConfig = {
         }),
       );
     }
+
+    config.optimization.minimizer = [
+      // Use Terser to minify JavaScript files while ensuring compatibility with modern JavaScript syntax.
+      new TerserPlugin({
+        terserOptions: {
+          ecma: 2020,
+          parse: {
+            ecma: 2020,
+          },
+          compress: {
+            ecma: 2020,
+            warnings: false,
+            comparisons: false,
+            inline: 2,
+          },
+          mangle: {
+            safari10: true,
+          },
+          output: {
+            ecma: 2020,
+            comments: false,
+            ascii_only: true,
+          },
+        },
+      }),
+    ];
 
     return config;
   },
