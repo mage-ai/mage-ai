@@ -193,11 +193,13 @@ function SparkGraph({
         maxZoom={1}
         minZoom={-0.7}
         node={node => (
+          // @ts-ignore
           <Node
             {...node}
             dragType="port"
             linkable
             port={
+              // @ts-ignore
               <Port
                 style={{
                   fill: themeContext?.borders?.light,
