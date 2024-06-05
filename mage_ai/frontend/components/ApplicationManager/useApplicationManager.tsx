@@ -669,9 +669,9 @@ export default function useApplicationManager({
                     display: 'none',
                   }}
                 >
-                  <FlexContainer flexDirection="column" fullHeight fullWidth>
+                  <FlexContainer flexDirection='column' fullHeight fullWidth>
                     <HeaderStyle id={`${uuid}-header`} relative>
-                      <FlexContainer alignItems="center" fullHeight>
+                      <FlexContainer alignItems='center' fullHeight>
                         <Spacing ml={1} />
 
                         {Icon && <Icon size={3 * UNIT} />}
@@ -696,10 +696,10 @@ export default function useApplicationManager({
                             }}
                           >
                             <>
-                              <div className="empty" style={{ display: 'none' }}>
+                              <div className='empty' style={{ display: 'none' }}>
                                 <ExpandWindow size={2 * UNIT} success />
                               </div>
-                              <div className="filled">
+                              <div className='filled'>
                                 <ExpandWindowFilled size={2 * UNIT} success />
                               </div>
                             </>

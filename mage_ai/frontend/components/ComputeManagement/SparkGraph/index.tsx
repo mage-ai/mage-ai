@@ -196,19 +196,18 @@ function SparkGraph({
       height={containerHeight}
       onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
     >
+      {/* @ts-ignore */}
       <Canvas
         arrow={null}
         disabled={disableGraph}
-        edge={(edge) => {
-          return (
-            <Edge
+        edge={(edge) => (
+          <Edge
               {...edge}
               style={{
                 stroke: themeContext?.accent?.purple,
               }}
             />
-          );
-        }}
+          )}
         edges={edges}
         fit
         forwardedRef={canvasRef}
