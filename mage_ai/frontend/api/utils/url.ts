@@ -7,7 +7,7 @@ function getHostCore(
   windowDefined: boolean,
   defaultHost: string = DEFAULT_HOST,
   defaultPort: string = DEFAULT_PORT,
-  override?: boolean = false,
+  override: boolean = false,
 ) {
   let host = defaultHost;
   if (windowDefined) {
