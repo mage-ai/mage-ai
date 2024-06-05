@@ -1,3 +1,6 @@
+import { Ref } from 'react';
+import { ITextModel, Position } from 'monaco-editor';
+
 // https://microsoft.github.io/monaco-editor/typedoc/enums/languages.CompletionItemKind.html
 // Class
 // Color
@@ -26,9 +29,16 @@
 // User
 // Value
 // Variable
-export default function autocomplete(monaco) {
+let deltaDecorarationsAdded = false;
+let decorationIds = []; // Store existing decoration IDs
+
+export default function autocomplete(monaco: any, editor:any, opts?: {
+  roots?: {
+    [key: string]: Ref<HTMLDivElement>;
+  };
+}) {
   monaco.languages.registerCompletionItemProvider('python', {
-    provideCompletionItems: function (model, position) {
+    provideCompletionItems: function (model: ITextModel, position: Position) {
       const textUntilPosition = model.getValueInRange({
         startLineNumber: 1,
         startColumn: 1,
@@ -88,8 +98,73 @@ export default function autocomplete(monaco) {
         },
       ];
 
-      return { suggestions: suggestions };
+      return { suggestions: suggestions, preselect: true };
     },
     triggerCharacters: ['.', '('],
   });
+
+  // Add custom behavior for suggest widget decorations
+  const applyCustomDecorations = (editor) => {
+    const model = editor.getModel();
+    const position = editor.getPosition();
+
+    if (model && position) {
+      const word = model.getWordUntilPosition(position);
+      const range = new monaco.Range(
+        position.lineNumber,
+        word.startColumn,
+        position.lineNumber,
+        word.endColumn,
+      );
+
+      const decorations = [
+        {
+          range,
+          options: {
+            // Ensure inline decoration for word highlight.
+            inlineClassName: 'myCustomLineDecoration',
+          },
+        },
+        {
+          // Highlight the entire line for better visibility.
+          range: new monaco.Range(
+            position.lineNumber,
+            1, // Start from the first column
+            position.lineNumber,
+            model.getLineMaxColumn(position.lineNumber), // End at the last column of the line
+          ),
+          options: {
+            className: 'myCustomLineDecoration',
+            glyphMarginClassName: 'debugGlyphMargin',
+          },
+        },
+      ];
+
+      if (!deltaDecorarationsAdded) {
+        // Applying decorations with a flag
+        try {
+          // Replace existing decorations with new ones
+          decorationIds = editor.deltaDecorations(decorationIds, decorations);
+          deltaDecorarationsAdded = true;
+        } finally {
+          deltaDecorarationsAdded = false;
+        }
+      }
+    }
+  };
+
+  // // Ensure correct event listeners for updates
+  // if (editor) {
+  //   editor.onDidChangeModelContent(() => {
+  //     applyCustomDecorations(editor);
+  //   });
+  //   editor.onDidChangeCursorPosition(() => {
+  //     applyCustomDecorations(editor);
+  //   });
+  //   editor.onDidChangeCursorSelection(() => {
+  //     applyCustomDecorations(editor);
+  //   });
+  // } else {
+  //   console.error('Monaco editor instance not found');
+  // }
 }

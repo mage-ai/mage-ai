@@ -362,7 +362,7 @@ export default function base(
     },
     minimap: {
       autohide: true,
-      enabled: false, // true
+      enabled: true, // true
       maxColumn: 120,
       renderCharacters: true,
       scale: 1,

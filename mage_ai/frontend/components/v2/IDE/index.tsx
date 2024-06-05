@@ -1,52 +1,15 @@
 import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useRef } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { IDEThemeEnum } from './themes/interfaces';
 import baseConfigurations from './configurations/base';
-import initializeThemes from './themes/setup';
 import initializeAutocomplete from './autocomplete';
+import initializeThemes from './themes/setup';
+import loadExtensionsAndModules from './extensions/loader';
 import mockCode from './mocks/code';
 import setupPython from './languages/python';
 import { ContainerStyled, IDEStyled } from './index.style';
-import { getHost } from '@api/utils/url';
-
-const loadExtensionsAndModules = async () => {
-  // import '@codingame/monaco-vscode-json-default-extension';
-  // import '@codingame/monaco-vscode-json-language-features-default-extension'';
-  // import '@codingame/monaco-vscode-markdown-basics-default-extension';
-  // import '@codingame/monaco-vscode-markdown-language-features-default-extension';
-  // import '@codingame/monaco-vscode-markdown-math-default-extension'';
-  // import '@codingame/monaco-vscode-r-default-extension'';
-  // import '@codingame/monaco-vscode-sql-default-extension';
-  // import '@codingame/monaco-vscode-typescript-basics-default-extension'';
-  // import '@codingame/monaco-vscode-yaml-default-extension'';
-  await import('@codingame/monaco-vscode-python-default-extension');
-  const [
-    { CloseAction, ErrorAction, MessageTransports },
-    { MonacoEditorLanguageClientWrapper, UserConfig },
-    { MonacoLanguageClient },
-    { WebSocketMessageReader, WebSocketMessageWriter, toSocket },
-    { useWorkerFactory },
-  ] = await Promise.all([
-    import('vscode-languageclient'),
-    import('monaco-editor-wrapper'),
-    import('monaco-languageclient'),
-    import('vscode-ws-jsonrpc'),
-    import('monaco-editor-wrapper/workerFactory'),
-  ]);
-  return {
-    CloseAction,
-    ErrorAction,
-    MessageTransports,
-    MonacoEditorLanguageClientWrapper,
-    MonacoLanguageClient,
-    UserConfig,
-    WebSocketMessageReader,
-    WebSocketMessageWriter,
-    toSocket,
-    useWorkerFactory,
-  };
-};
+import { IDEThemeEnum } from './themes/interfaces';
 
 type IDEProps = {
   theme?: IDEThemeEnum;
@@ -58,6 +21,9 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
   const renderCount = useRef(0);
   const useEffectCount = useRef(0);
 
+  // References to the root DOM elements where expansions are rendered in.
+  const refRoots = useRef({});
+
   const containerRef = useRef(null);
   const editorRef = useRef(null);
   const initializingRef = useRef(false);
@@ -65,8 +31,9 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
 
   const themeContext = useContext(ThemeContext);
   const configurations = useMemo(() => baseConfigurations(themeContext, {
+    theme: themeSelected,
     value: mockCode,
-  }), [themeContext]);
+  }), [themeContext, themeSelected]);
 
 
   useEffect(() => {
@@ -83,18 +50,26 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
         if (monaco.editor.getEditors().length === 0) {
           setupPython(monaco);
           initializeThemes(monaco);
-          initializeAutocomplete(monaco);
 
-          editorRef.current = monaco.editor.create(
-            containerRef.current,
-            configurations,
-          );
+          editorRef.current = monaco.editor.create(containerRef.current, configurations);
+
+          const uuidRoot = 'suggest';
+          if (!refRoots?.current?.[uuidRoot]) {
+            const domNode = document.getElementById('monaco-suggest-application-root');
+            if (domNode) {
+              const root = createRoot(domNode);
+              refRoots.current[uuidRoot] = root;
+            }
+          }
+
+          initializeAutocomplete(monaco, editorRef.current, {
+            roots: refRoots?.current,
+          });
         } else {
           console.warn('Editor already initialized');
         }
 
-        const modules = await loadExtensionsAndModules();
-        console.log(modules);
+        await loadExtensionsAndModules();
 
         editorCount.current += 1;
         console.log(`[IDE] Editor: ${editorCount?.current}`);
@@ -114,6 +89,8 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
       <IDEStyled className={mountedRef?.current ? 'mounted' : ''}>
         <div ref={containerRef} style={{ height: '100vh' }} />
       </IDEStyled>
+
+      <div id={'monaco-suggest-application-root-${uuid}'} />
     </ContainerStyled>
   );
 }

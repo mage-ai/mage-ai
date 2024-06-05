@@ -67,6 +67,7 @@ const theme = {
     { token: 'string.quote.single', foreground: '#00954C' },
   ],
   colors: {
+    // https://gist.github.com/dcts/5b2af4c8b6918e7d35c4121f11d49fb1
     // Foreground color of the editor.
     'editor.foreground': 'A1A1A1', // Gray
     // E6 is 90%
@@ -206,16 +207,18 @@ const theme = {
     'editorSuggestWidget.selectedForeground': '#CBFE00',
     'editorSuggestWidget.selectedBackground': '#000000', // Background color of the selected item in the suggest widget
     'editorSuggestWidget.selectedIconForeground': '#CBFE00', // Optional: Foreground color of the selected item icon
-    // Text color of the match highlights in the suggest widget when hovering over the option
-    'editorSuggestWidget.highlightForeground': '#CBFE00',
 
+    // Text color of the match highlights in the suggest widget when hovering over the option
+    'editorSuggestWidget.highlightForeground': '#FF144D',
+    // "editorWidget.background": "",
+    // "editorWidget.border": "",
 
 
     // This sets the color of the inline suggestion text (ghost text or unselected proposal).
     'editorGhostText.foreground': '#CBFE00',
     // This sets the color of the highlighted portion of the text
     // in an inline suggestion that matches the current input.
-    'editor.inlineSuggest.highlightForeground': '#2A60FE',
+    'editor.inlineSuggest.highlightForeground': '#FF144D',
 
   },
 };

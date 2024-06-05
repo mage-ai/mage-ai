@@ -36,4 +36,57 @@ export const IDEStyled = styled.div<StyleProps>`
       display: none;
     }
   `}
+
+  .myCustomLineDecoration {
+    background-color: rgba(255, 0, 0, 0.3); /* Visible Red for Testing */
+    border: 2px solid blue; /* Border to make it more visible */
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .debugGlyphMargin {
+    background-color: rgba(0, 255, 0, 0.3); /* Visible Green for Testing */
+    border: 2px solid yellow; /* Border to emphasize */
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #monaco-suggest-application-root {
+    .monaco-modal {
+      display: flex;
+      position: fixed;
+      z-index: 9999;  /* Ensure the modal is above other content */
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      background-color: white;
+      border: 1px solid #888;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      border-radius: 5px;
+      overflow: visible;
+      visibility: visible; /* Ensure it's not hidden */
+      opacity: 1; /* Ensure it's fully opaque */
+    }
+
+    .monaco-modal-content {
+      padding: 20px;
+    }
+
+    .monaco-modal-close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .monaco-modal-close:hover,
+    .monaco-modal-close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  }
 `;
