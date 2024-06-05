@@ -34,7 +34,8 @@ COPY ./mage_ai/frontend/utils /home/src/mage_ai/frontend/utils
 COPY ./mage_ai/frontend/yarn.lock /home/src/mage_ai/frontend/yarn.lock
 WORKDIR /home/src/mage_ai/frontend
 
-RUN yarn install
+RUN yarn install && yarn cache clean
+
 EXPOSE 3000
 
 CMD ["yarn", "start"]
