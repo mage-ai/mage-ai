@@ -5,7 +5,7 @@ export const transition = css`
 `;
 
 export const gradient = (
-  angle: number,
+  angle: string,
   startColor: string,
   endColor: string,
   startPercentage?: number,

@@ -1,5 +1,3 @@
-import * as monacoEditor from 'monaco-editor';
-
 const KEY_WORDS = [
   'and',
   'assert',
@@ -347,7 +345,7 @@ const root = [
   ],
 ];
 
-export default function provider(): IMonarchLanguage {
+export default function provider() {
   return {
     tokenizer: {
       root,

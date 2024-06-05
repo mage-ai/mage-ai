@@ -1,5 +1,5 @@
 import { Ref } from 'react';
-import { ITextModel, Position } from 'monaco-editor';
+import { Position } from 'monaco-editor';
 
 // https://microsoft.github.io/monaco-editor/typedoc/enums/languages.CompletionItemKind.html
 // Class
@@ -42,7 +42,7 @@ export default function autocomplete(
   },
 ) {
   monaco.languages.registerCompletionItemProvider('python', {
-    provideCompletionItems: function (model: ITextModel, position: Position) {
+    provideCompletionItems: function (model, position: Position) {
       const textUntilPosition = model.getValueInRange({
         startLineNumber: 1,
         startColumn: 1,

@@ -1,3 +1,7 @@
+export default function lsps() {
+  return null;
+}
+
 // import { WebSocketMessageReader, WebSocketMessageWriter, toSocket } from 'vscode-ws-jsonrpc';
 // import { CloseAction, ErrorAction, MessageTransports } from 'vscode-languageclient';
 // import { MonacoLanguageClient } from 'monaco-languageclient';

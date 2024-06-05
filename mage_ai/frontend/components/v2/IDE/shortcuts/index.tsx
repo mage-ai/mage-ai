@@ -1,5 +1,14 @@
 // monaco.KeyCode docs
 // https://microsoft.github.io/monaco-editor/api/enums/monaco.KeyCode.html
+function addKeyboardShortcut(editor, shortcuts) {
+  shortcuts.forEach(shortcut => {
+    editor.addAction(shortcut);
+  });
+}
+
+export default function shortcuts(monaco) {
+  addKeyboardShortcut(monaco.editor, []);
+}
 
 export function saveCode(monaco, onSave) {
   return {

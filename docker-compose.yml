@@ -124,7 +124,14 @@ services:
     depends_on:
       - server_spark
   test-frontend:
-    <<: *app_settings
+    image: mage/frontend
+    build:
+      context: .
+      dockerfile: ./dev.frontend.Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./mage_ai/frontend:/home/src/app
   py:
     <<: *server_settings
     ports: []

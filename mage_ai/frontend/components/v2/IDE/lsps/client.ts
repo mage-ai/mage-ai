@@ -1,3 +1,4 @@
+import ReconnectingWebSocket from 'reconnecting-websocket';
 let MonacoLanguageClient: any = null;
 
 async function initializeMonacoLanguageClient() {
@@ -11,7 +12,7 @@ async function initializeMonacoLanguageClient() {
     if (MonacoLanguageClient) {
       console.log('Resolved MonacoLanguageClient:', MonacoLanguageClient);
     } else {
-      throw new Error('MonacoLanguageClient is missing from \'monaco-languageclient\' module.');
+      throw new Error("MonacoLanguageClient is missing from 'monaco-languageclient' module.");
     }
   } catch (error) {
     console.error('Failed to import monaco-languageclient:', error);
@@ -33,7 +34,7 @@ export type ClientOptionsType = {
 export default async function createLanguageClient(
   uuid: string,
   monaco: typeof import('monaco-editor'),
-  webSocket: WebSocket,
+  webSocket: ReconnectingWebSocket,
   clientOptions?: ClientOptionsType,
 ): Promise<any> {
   await initializeMonacoLanguageClient();

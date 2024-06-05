@@ -1,9 +1,9 @@
-import * as monaco from 'monaco-editor';
-
 export enum IDEThemeEnum {
   BASE = 'base',
 }
 
-type IDEThemeType = IStandaloneThemeData;
+type IDEThemeType = {
+  [key: string]: any;
+};
 
 export default IDEThemeType;

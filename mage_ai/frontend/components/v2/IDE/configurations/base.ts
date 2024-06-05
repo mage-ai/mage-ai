@@ -1,5 +1,3 @@
-import * as monacoEditor from 'monaco-editor';
-
 import ThemeType from '@mana/themes/interfaces';
 
 type IDEConfigurationProps = {
@@ -29,8 +27,10 @@ type IDEConfigurationProps = {
 
 export default function base(
   themeContext: ThemeType,
-  options: IStandaloneEditorConstructionOptions = {} as IStandaloneEditorConstructionOptions,
-): IStandaloneEditorConstructionOptions {
+  options?: {
+    [key: string]: any;
+  },
+): any {
   const fontSizeInit = parseInt(themeContext.fonts.size.sm);
   const lineHeightPercentage = parseInt(themeContext.fonts.lineHeight.md) / 100;
   const {
