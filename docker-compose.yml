@@ -70,7 +70,7 @@ x-server_settings: &server_settings
   tty: true # used for interactive debugging
 x-app_settings: &app_settings
   image: node:18-alpine
-  command: ./scripts/install_and_run.sh
+  command: yarn install && yarn cache clean && yarn run dev
   ports:
     - 3000:3000
   volumes:
