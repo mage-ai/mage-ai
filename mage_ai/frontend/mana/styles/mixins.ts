@@ -4,11 +4,33 @@ export const transition = css`
   transition: 0.2s all ease-in-out;
 `;
 
-export const gradient = (angle: number, startColor: string, endColor: string) => css`
-  background-image: -webkit-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
-  background-image: -moz-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
-  background-image: -o-linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
-  background-image: linear-gradient(${angle}, ${startColor} 0%, ${endColor} 100%);
+export const gradient = (
+  angle: string,
+  startColor: string,
+  endColor: string,
+  startPercentage?: number,
+  endPercentage?: number,
+) => css`
+  background-image: -webkit-linear-gradient(
+    ${angle},
+    ${startColor} ${startPercentage || 0}%,
+    ${endColor} ${endPercentage || 100}%
+  );
+  background-image: -moz-linear-gradient(
+    ${angle},
+    ${startColor} ${startPercentage || 0}%,
+    ${endColor} ${endPercentage || 100}%
+  );
+  background-image: -o-linear-gradient(
+    ${angle},
+    ${startColor} ${startPercentage || 0}%,
+    ${endColor} ${endPercentage || 100}%
+  );
+  background-image: linear-gradient(
+    ${angle},
+    ${startColor} ${startPercentage || 0}%,
+    ${endColor} ${endPercentage || 100}%
+  );
 `;
 
 export const outlineHover = ({
