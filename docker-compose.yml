@@ -103,7 +103,6 @@ x-app_volumes: &app_volumes
     - ./mage_ai/frontend/tests:/home/src/mage_ai/frontend/tests
     - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
     - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
-    - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
 x-app_settings: &app_settings
   image: mage/data
   build:

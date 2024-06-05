@@ -31,7 +31,7 @@ COPY ./mage_ai/frontend/styles /home/src/mage_ai/frontend/styles
 COPY ./mage_ai/frontend/tests /home/src/mage_ai/frontend/tests
 COPY ./mage_ai/frontend/tsconfig.json /home/src/mage_ai/frontend/tsconfig.json
 COPY ./mage_ai/frontend/utils /home/src/mage_ai/frontend/utils
-COPY ./mage_ai/frontend/yarn.lock /home/src/mage_ai/frontend/yarn.lock
+
 WORKDIR /home/src/mage_ai/frontend
 
 RUN yarn install && yarn cache clean

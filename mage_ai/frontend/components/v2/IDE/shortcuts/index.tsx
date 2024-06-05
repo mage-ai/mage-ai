@@ -1,17 +1,46 @@
+export enum ContextEnum {
+  UnsavedChanges = 'unsavedChanges',
+}
+
+function addContextUnsavedChanges(monaco) {
+  // Create a context key to track if there are unsaved changes
+  const unsavedChangesContextKey = monaco.editor.createContextKey(
+    ContextEnum.UnsavedChanges,
+    false,
+  );
+
+  function updateUnsavedChanges() {
+    const model = monaco.editor.getModel();
+    const hasUnsavedChanges = model.getAlternativeVersionId() !== model.getVersionId();
+    unsavedChangesContextKey.set(hasUnsavedChanges);
+  }
+
+  monaco.editor.onDidChangeModelContent(updateUnsavedChanges);
+}
+
 function saveCode(monaco, onSave) {
   return {
+    // specifies under which group the action will appear in the context menu.
     contextMenuGroupId: 'navigation',
+    // determines the order of appearance within the group.
     contextMenuOrder: 1.5,
     // An unique identifier of the contributed action.
     id: 'saveCode',
     // A rule to evaluate on top of the precondition in order to dispatch the keybindings.
-    keybindingContext: null,
+    // means that the keybinding (`Ctrl/Cmd + S` in this case)
+    // will always be active when the editor is focused.
+    // keybindingContext: null, // Action is always active when the editor is focused.
+    // Action is only enabled when there are unsaved
+    keyBindingContext: ContextEnum.UnsavedChanges,
     // An optional array of keybindings for the action.
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
     // A label of the action that will be presented to the user.
     label: 'Save',
-    // A precondition for this action.
-    precondition: null,
+    // The `precondition` field in a Monaco Editor action configuration is used to specify conditions
+    // that must be met for the action to be enabled.
+    // This is similar to `keybindingContext`,
+    // but it applies to the action itself rather than just the keybinding.
+    precondition: ContextEnum.UnsavedChanges,
     // Method that will be executed when the action is triggered.
     // @param editor The editor instance is passed in as a convenience
     run: editor => {
@@ -36,9 +65,9 @@ function executeCode(monaco, runBlock) {
 
 function sample(monaco) {
   return {
-    contextMenuGroupId: 'navigation',
-    contextMenuOrder: 1.5,
-    id: 'executeCode',
+    contextMenuGroupId: 'Sample',
+    contextMenuOrder: 0,
+    id: 'sample',
     keybindingContext: null,
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
     label: 'Run selected block',

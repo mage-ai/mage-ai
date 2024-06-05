@@ -931,6 +931,7 @@ export default function useApplicationManager({
     refRoots?.current?.[uuid]?.render(
       <KeyboardContext.Provider value={keyboardContext}>
         <ThemeProvider theme={themeContext}>
+          {/* @ts-ignore */}
           <ModalProvider>
             <ErrorProvider>
               <WithOnMount
