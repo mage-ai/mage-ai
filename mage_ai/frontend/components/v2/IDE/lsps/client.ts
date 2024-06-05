@@ -2,6 +2,7 @@ let MonacoLanguageClient: any = null;
 
 async function initializeMonacoLanguageClient() {
   try {
+    // eslint-disable-next-line @next/next/no-assign-module-variable
     const module = await import('monaco-languageclient');
     console.log('monaco-languageclient module:', module);
 
@@ -10,7 +11,7 @@ async function initializeMonacoLanguageClient() {
     if (MonacoLanguageClient) {
       console.log('Resolved MonacoLanguageClient:', MonacoLanguageClient);
     } else {
-      throw new Error("MonacoLanguageClient is missing from 'monaco-languageclient' module.");
+      throw new Error('MonacoLanguageClient is missing from \'monaco-languageclient\' module.');
     }
   } catch (error) {
     console.error('Failed to import monaco-languageclient:', error);
