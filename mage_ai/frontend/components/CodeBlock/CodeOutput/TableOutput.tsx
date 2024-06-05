@@ -95,6 +95,7 @@ function TableOutput({
           {rows.map((row, idx) => (
             <div key={`html-row-${idx}`}>
               {row.map((cell, cellIdx) => (
+                // @ts-ignore
                 <InnerHTML html={String(cell)} key={`html-cell-${cellIdx}`} />
               ))}
             </div>
