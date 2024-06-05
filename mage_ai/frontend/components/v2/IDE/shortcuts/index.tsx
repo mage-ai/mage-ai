@@ -1,14 +1,4 @@
-function addKeyboardShortcut(editor, shortcuts) {
-  shortcuts.forEach(shortcut => {
-    editor.addAction(shortcut);
-  });
-}
-
-export default function shortcuts(monaco) {
-  addKeyboardShortcut(monaco.editor, []);
-}
-
-export function saveCode(monaco, onSave) {
+function saveCode(monaco, onSave) {
   return {
     contextMenuGroupId: 'navigation',
     contextMenuOrder: 1.5,
@@ -31,7 +21,7 @@ export function saveCode(monaco, onSave) {
   };
 }
 
-export function executeCode(monaco, runBlock) {
+function executeCode(monaco, runBlock) {
   return {
     contextMenuGroupId: 'navigation',
     contextMenuOrder: 1.5,
@@ -42,6 +32,10 @@ export function executeCode(monaco, runBlock) {
     precondition: null,
     run: () => runBlock(),
   };
+}
+
+export default function addKeyboardShortcut(monaco, shortcuts) {
+  shortcuts.forEach(shortcut => monaco.editor.addAction(shortcut));
 }
 
 // monaco.KeyCode docs: https://microsoft.github.io/monaco-editor/api/enums/monaco.KeyCode.html

@@ -3,6 +3,7 @@
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const removeImports = require('next-remove-imports')();
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = removeImports({
   eslint: {
@@ -21,6 +22,7 @@ module.exports = removeImports({
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
   webpack: (config, options) => {
     config.plugins.push(
+      new CleanWebpackPlugin(), // This plugin removes/cleans build folders before building
       new MonacoWebpackPlugin({
         languages: ['sql', 'python', 'typescript'], // specify the languages you need
       }),
