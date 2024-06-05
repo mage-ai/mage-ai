@@ -2,7 +2,6 @@
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const removeImports = require('next-remove-imports')();
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 const commonConfig = {
   eslint: {
@@ -24,10 +23,6 @@ const commonConfig = {
   webpack: (config, options) => {
     if (!options?.isServer) {
       config.plugins.push(
-        // This plugin removes/cleans build folders before building
-        new CleanWebpackPlugin({
-          cleanOnceBeforeBuildPatterns: ['**/*', '!static-files*', '!directoryToExclude/**'],
-        }),
         new MonacoWebpackPlugin({
           languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
         }),

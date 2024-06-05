@@ -190,7 +190,7 @@ function TableOutput({
           return (
             <div
               {...columnProps}
-              className='th'
+              className="th"
               key={columnKey}
               style={{
                 ...columnStyle,
@@ -199,7 +199,7 @@ function TableOutput({
               }}
               title={columnIndex ? 'Row number' : undefined}
             >
-              <FlexContainer alignItems='center' fullHeight fullWidth>
+              <FlexContainer alignItems="center" fullHeight fullWidth>
                 <Text disabled monospace small>
                   {empty ? '' : columnName}
                 </Text>

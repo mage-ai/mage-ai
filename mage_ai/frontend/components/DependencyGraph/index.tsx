@@ -662,7 +662,8 @@ function DependencyGraph({
         clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
       }
     },
-    [activeNodes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   const setTimeoutForNode = useCallback(
@@ -1023,8 +1024,8 @@ function DependencyGraph({
 
         blockNodeChildrenEl = (
           <FlexContainer
-            alignItems='center'
-            justifyContent='space-between'
+            alignItems="center"
+            justifyContent="space-between"
             style={{
               height: nodeHeight,
               width: nodeWidth,
@@ -1528,11 +1529,11 @@ function DependencyGraph({
       </div>
     );
   }, [
+    selectedBlock,
+    selectedBlockTwice,
+    showUpdateBlockModal,
+    updateBlockByDragAndDrop,
     addNewBlockAtIndex,
-    blockUUIDMapping,
-    blocksWithDownstreamBlockSet,
-    addNewBlockAtIndex,
-    blocks,
     contentByBlockUUID,
     contextMenuData,
     deleteBlock,
@@ -1595,13 +1596,14 @@ function DependencyGraph({
             </Spacing>
           </Spacing>
 
-          <FlexContainer alignItems='center'>
+          <FlexContainer alignItems="center">
             <KeyboardShortcutButton
               compact
               inline
               loading={isLoadingUpdateBlock}
               // @ts-ignore
               onClick={() =>
+                // @ts-ignore
                 updateBlock({
                   block: {
                     ...blockEditing,
@@ -1609,7 +1611,7 @@ function DependencyGraph({
                   },
                 })
               }
-              uuid='DependencyGraph/save_parents'
+              uuid="DependencyGraph/save_parents"
             >
               Save dependencies
             </KeyboardShortcutButton>
@@ -1626,7 +1628,7 @@ function DependencyGraph({
                   upstreamBlocks: null,
                 });
               }}
-              uuid='DependencyGraph/cancel_save_parents'
+              uuid="DependencyGraph/cancel_save_parents"
             >
               Cancel
             </KeyboardShortcutButton>
@@ -1841,9 +1843,10 @@ function DependencyGraph({
               // @ts-ignore
               <Node
                 {...node}
-                dragType='port'
+                dragType="port"
                 linkable
                 port={
+                  // @ts-ignore
                   <Port
                     onDrag={() => {
                       setActiveEdge(null);
