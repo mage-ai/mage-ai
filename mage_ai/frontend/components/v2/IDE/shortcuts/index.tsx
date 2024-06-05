@@ -34,8 +34,24 @@ function executeCode(monaco, runBlock) {
   };
 }
 
-export default function addKeyboardShortcut(monaco, shortcuts) {
-  shortcuts.forEach(shortcut => monaco.editor.addAction(shortcut));
+function sample(monaco) {
+  return {
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'executeCode',
+    keybindingContext: null,
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+    label: 'Run selected block',
+    precondition: null,
+    run: () => alert('Sample action executed!'),
+  };
+}
+
+export default function addKeyboardShortcut(monaco, shortcuts?: any[]) {
+  [sample]
+    .map(func => func(monaco))
+    .concat(shortcuts)
+    .forEach((shortcut: any) => monaco.editor.addAction(shortcut));
 }
 
 // monaco.KeyCode docs: https://microsoft.github.io/monaco-editor/api/enums/monaco.KeyCode.html

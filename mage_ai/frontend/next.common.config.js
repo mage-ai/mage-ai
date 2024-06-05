@@ -24,9 +24,12 @@ const commonConfig = {
   webpack: (config, options) => {
     if (!options?.isServer) {
       config.plugins.push(
-        new CleanWebpackPlugin(), // This plugin removes/cleans build folders before building
+        // This plugin removes/cleans build folders before building
+        new CleanWebpackPlugin({
+          cleanOnceBeforeBuildPatterns: ['**/*', '!static-files*', '!directoryToExclude/**'],
+        }),
         new MonacoWebpackPlugin({
-          languages: ['sql', 'python', 'typescript'], // specify the languages you need
+          languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
         }),
       );
     }
