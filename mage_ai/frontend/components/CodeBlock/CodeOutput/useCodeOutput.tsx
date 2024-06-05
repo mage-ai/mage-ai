@@ -470,18 +470,18 @@ export default function useCodeOutput({
     >
       <ExtraInfoBorderStyle />
 
-      <FlexContainer justifyContent='space-between'>
-        <Flex alignItems='center' px={1}>
+      <FlexContainer justifyContent="space-between">
+        <Flex alignItems="center" px={1}>
           {setCollapsed && (
             <Button {...SHARED_BUTTON_PROPS} onClick={() => setCollapsed(!collapsed)}>
               {collapsed ? (
-                <FlexContainer alignItems='center'>
+                <FlexContainer alignItems="center">
                   <ChevronDown muted size={UNIT * 2} />
                   &nbsp;
                   <Text default>Expand output</Text>
                 </FlexContainer>
               ) : (
-                <FlexContainer alignItems='center'>
+                <FlexContainer alignItems="center">
                   <ChevronUp muted size={UNIT * 2} />
                   {dataFrameShape && (
                     <Spacing ml={2}>
@@ -496,7 +496,7 @@ export default function useCodeOutput({
           )}
 
           {!setCollapsed && (
-            <FlexContainer alignItems='center'>
+            <FlexContainer alignItems="center">
               {dataFrameShape && (
                 <Spacing pl={1}>
                   <Text>
@@ -509,7 +509,7 @@ export default function useCodeOutput({
         </Flex>
 
         <ExtraInfoContentStyle>
-          <FlexContainer alignItems='center' fullWidth justifyContent='flex-end'>
+          <FlexContainer alignItems="center" fullWidth justifyContent="flex-end">
             <Tooltip
               {...SHARED_TOOLTIP_PROPS}
               label={
@@ -520,7 +520,7 @@ export default function useCodeOutput({
                     : 'Block executed successfully'
               }
             >
-              <FlexContainer alignItems='center'>
+              <FlexContainer alignItems="center">
                 {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
                   <>
                     <Text small>{(Number(runEndTime) - Number(runStartTime)) / 1000}s</Text>
@@ -541,8 +541,8 @@ export default function useCodeOutput({
             </Tooltip>
             {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) && (
               <Spacing pl={2}>
-                <FlexContainer alignItems='center'>
-                  <Tooltip {...SHARED_TOOLTIP_PROPS} label='Expand table'>
+                <FlexContainer alignItems="center">
+                  <Tooltip {...SHARED_TOOLTIP_PROPS} label="Expand table">
                     <Button
                       {...SHARED_BUTTON_PROPS}
                       onClick={() => {

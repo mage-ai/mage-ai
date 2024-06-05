@@ -5,12 +5,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import GraphNode from './GraphNode';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import {
-  Canvas,
-  Edge,
-  Node,
-  Port,
-} from '@components/DependencyGraph';
+import { Canvas, Edge, Node, Port } from '@components/DependencyGraph';
 import {
   EdgeType,
   NodeType,
@@ -56,15 +51,13 @@ function SparkGraph({
     _format: 'with_jobs_and_stages',
   });
   const sql = useMemo(() => data?.spark_sql, [data]);
-  const jobsMapping =
-    useMemo(() => indexBy(sql?.jobs || [], ({ job_id: jobId }) => jobId), [sql]);
-  const stagesMapping =
-    useMemo(() => indexBy(sql?.stages || [], ({ stage_id: stageId }) => stageId), [sql]);
+  const jobsMapping = useMemo(() => indexBy(sql?.jobs || [], ({ job_id: jobId }) => jobId), [sql]);
+  const stagesMapping = useMemo(
+    () => indexBy(sql?.stages || [], ({ stage_id: stageId }) => stageId),
+    [sql],
+  );
 
-  const {
-    edges,
-    nodes,
-  } = useMemo(() => {
+  const { edges, nodes } = useMemo(() => {
     const nodesInner: NodeType[] = [];
     const edgesInner: EdgeType[] = [];
 
@@ -73,10 +66,7 @@ function SparkGraph({
     const edgesMappingDownstream = groupBy(sqlEdges, ({ to_id: toID }) => toID);
     const portsMapping = {};
 
-    sqlEdges?.forEach(({
-      from_id: fromID,
-      to_id: toID,
-    }) => {
+    sqlEdges?.forEach(({ from_id: fromID, to_id: toID }) => {
       edgesInner.push({
         from: fromID,
         fromPort: `${fromID}-${toID}-from`,
@@ -108,7 +98,7 @@ function SparkGraph({
       });
     });
 
-    sql?.nodes?.forEach((sqlNode) => {
+    sql?.nodes?.forEach(sqlNode => {
       const nodeId = sqlNode?.node_id;
       const ports = [...(portsMapping?.[nodeId] || [])];
 
@@ -127,11 +117,7 @@ function SparkGraph({
       edges: edgesInner,
       nodes: nodesInner,
     };
-  }, [
-    jobsMapping,
-    sql,
-    stagesMapping,
-  ]);
+  }, [sql]);
 
   useEffect(() => {
     if (!disableGraph) {
@@ -141,10 +127,7 @@ function SparkGraph({
         }
       }, 1000);
     }
-  }, [
-    canvasRef,
-    disableGraph,
-  ]);
+  }, [canvasRef, disableGraph]);
 
   const containerHeight = useMemo(() => {
     let v = 0;
@@ -156,12 +139,9 @@ function SparkGraph({
     }
 
     return Math.max(0, v);
-  }, [
-    height,
-    heightOffset,
-  ]);
+  }, [height, heightOffset]);
 
-  const disableWheel = useCallback((event) => {
+  const disableWheel = useCallback(event => {
     event.preventDefault();
   }, []);
 
@@ -171,12 +151,10 @@ function SparkGraph({
     } else {
       canvasRef?.current?.containerRef?.current?.removeEventListener('wheel', disableWheel);
     }
-  }, [
-    disableGraph,
-    disableWheel,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disableGraph, disableWheel]);
 
-  const overrideWheel = useCallback((event) => {
+  const overrideWheel = useCallback(event => {
     event.stopPropagation();
   }, []);
 
@@ -186,10 +164,8 @@ function SparkGraph({
     } else {
       canvasRef?.current?.containerRef?.current?.removeEventListener('wheel', overrideWheel);
     }
-  }, [
-    overrideScroll,
-    overrideWheel,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overrideScroll, overrideWheel]);
 
   return (
     <GraphContainerStyle
@@ -200,14 +176,15 @@ function SparkGraph({
       <Canvas
         arrow={null}
         disabled={disableGraph}
-        edge={(edge) => (
+        edge={edge => (
+          // @ts-ignore
           <Edge
-              {...edge}
-              style={{
-                stroke: themeContext?.accent?.purple,
-              }}
-            />
-          )}
+            {...edge}
+            style={{
+              stroke: themeContext?.accent?.purple,
+            }}
+          />
+        )}
         edges={edges}
         fit
         forwardedRef={canvasRef}
@@ -215,12 +192,12 @@ function SparkGraph({
         maxWidth={ZOOMABLE_CANVAS_SIZE}
         maxZoom={1}
         minZoom={-0.7}
-        node={(node) => (
+        node={node => (
           <Node
             {...node}
             dragType="port"
             linkable
-            port={(
+            port={
               <Port
                 style={{
                   fill: themeContext?.borders?.light,
@@ -228,34 +205,24 @@ function SparkGraph({
                   strokeWidth: '1px',
                 }}
               />
-            )}
+            }
             style={{
               fill: 'transparent',
               stroke: 'transparent',
               strokeWidth: 0,
             }}
           >
-            {(event) => {
+            {event => {
               const {
                 height: nodeHeight,
                 node: {
-                  data: {
-                    sqlNode,
-                  },
+                  data: { sqlNode },
                 },
               } = event;
 
               return (
-                <foreignObject
-                  height={nodeHeight}
-                  width={event.width}
-                  x={0}
-                  y={0}
-                >
-                  <GraphNode
-                    height={nodeHeight}
-                    node={sqlNode}
-                  />
+                <foreignObject height={nodeHeight} width={event.width} x={0} y={0}>
+                  <GraphNode height={nodeHeight} node={sqlNode} />
                 </foreignObject>
               );
             }}
