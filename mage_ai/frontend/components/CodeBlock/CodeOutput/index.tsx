@@ -596,6 +596,7 @@ function CodeOutput(
           return (
             <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
               <HTMLOutputStyle monospace>
+                // @ts-ignore
                 {rows?.map((row, idx) => <InnerHTML html={row} key={`html-row-${idx}`} />)}
               </HTMLOutputStyle>
             </Spacing>
