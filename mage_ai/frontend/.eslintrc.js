@@ -9,7 +9,7 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:storybook/recommended',
   ],
-  ignorePatterns: ['.eslintrc.js', 'next.config.js', 'next_base_path.config.js'],
+  ignorePatterns: ['.eslintrc.js', 'next.config.js', 'next.common.config.js', 'next_base_path.config.js'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {

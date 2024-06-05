@@ -69,10 +69,7 @@ x-server_settings: &server_settings
   stdin_open: true # used for interactive debugging
   tty: true # used for interactive debugging
 x-app_settings: &app_settings
-  image: mage/data
-  build:
-    context: .
-    dockerfile: ./dev.Dockerfile
+  image: node:18-alpine
   command: ./scripts/install_and_run.sh
   ports:
     - 3000:3000
@@ -88,6 +85,7 @@ x-app_settings: &app_settings
     - ./mage_ai/frontend/mana:/home/src/mage_ai/frontend/mana
     - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
     - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
+    - ./mage_ai/frontend/next.common.config.js:/home/src/mage_ai/frontend/next.common.config.js
     - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
     - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
     - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
@@ -105,8 +103,6 @@ services:
     <<: *server_settings
   app:
     <<: *app_settings
-    depends_on:
-      - server
   server_spark:
     <<: *server_settings
     image: mage/data_spark
@@ -121,8 +117,6 @@ services:
       dockerfile: ./dev.spark.Dockerfile
     depends_on:
       - server_spark
-  test-frontend:
-    <<: *app_settings
   py:
     <<: *server_settings
     ports: []
