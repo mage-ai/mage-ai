@@ -27,9 +27,7 @@ module.exports = removeImports({
 
       config.optimization.minimizer = [
         new TerserPlugin({
-          terserOptions: {
-            excludes: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
-          },
+          exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
         }),
       ];
     }
