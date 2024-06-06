@@ -1,5 +1,5 @@
 import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 
 import baseConfigurations from './configurations/base';
 import initializeAutocomplete from './autocomplete';
@@ -18,16 +18,12 @@ type IDEProps = {
 };
 
 function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps) {
-  const editorCount = useRef(0);
   const renderCount = useRef(0);
   const wrapperCount = useRef(0);
 
-  const [monacoReady, setMonacoReady] = useState(false);
-
   const containerRef = useRef(null);
-  const editorRef = useRef(null);
   const initializingRef = useRef(false);
-  const monacoRef = useRef(null);
+
   const mountedRef = useRef(false);
   const wrapperRef = useRef(null);
 
@@ -59,9 +55,10 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
         monaco.languages.register(pythonLanguageExtensionWithURI);
         monaco.languages.setLanguageConfiguration(
           pythonLanguageExtension.id,
+          // @ts-ignore
           pythonConfiguration(),
         );
-        // initializeAutocomplete(monaco);
+        initializeAutocomplete(monaco);
 
         const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
         const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
@@ -77,6 +74,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
                   { type: 'module' },
                 ),
               javascript: () =>
+                // @ts-ignore
                 import('monaco-editor-wrapper/workers/module/ts').then(
                   module => new Worker(module.default, { type: 'module' }),
                 ),
