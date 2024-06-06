@@ -240,9 +240,8 @@ function CodeEditor(
       setMounted(true);
       onMountCallback?.(editor, monaco);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      setDisableGlobalKeyboardShortcuts,
       autoHeight,
       height,
       onContentSizeChangeCallback,
@@ -285,7 +284,7 @@ function CodeEditor(
           editorRef.current.focus();
         }, 1);
       } else {
-        // @ts-ignore
+        // eslint-disable-next-line react/no-find-dom-node
         const textarea = ReactDOM.findDOMNode(editorRef.current._domElement).getElementsByClassName(
           'inputarea',
         );

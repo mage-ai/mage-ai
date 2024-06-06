@@ -257,10 +257,10 @@ function CodeEditor(
 
       setMounted(true);
       onMountCallback?.(editor, monaco);
-    }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps,
     [
-    setDisableGlobalKeyboardShortcuts,
+      setDisableGlobalKeyboardShortcuts,
       autoHeight,
       height,
       onContentSizeChangeCallback,
@@ -307,8 +307,10 @@ function CodeEditor(
           editorRef.current.focus();
         }, 1);
       } else {
-        // @ts-ignore
-        const textarea = ReactDOM.findDOMNode(editorRef.current._domElement).getElementsByClassName('inputarea');
+        // eslint-disable-next-line react/no-find-dom-node
+        const textarea = ReactDOM.findDOMNode(editorRef.current._domElement).getElementsByClassName(
+          'inputarea',
+        );
         textarea?.[0]?.blur();
       }
     }
