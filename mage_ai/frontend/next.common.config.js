@@ -1,3 +1,4 @@
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
@@ -15,4 +16,15 @@ module.exports = removeImports({
   // (including `useState`, `useEffect`, and others) to help identify side effects.
   // This does not happen in production builds.
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
+  webpack: (config, options) => {
+    if (!options?.isServer) {
+      config.plugins.push(
+        new MonacoWebpackPlugin({
+          languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
+        }),
+      );
+    }
+
+    return config;
+  },
 });

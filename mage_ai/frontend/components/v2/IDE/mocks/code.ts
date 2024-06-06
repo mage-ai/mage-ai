@@ -1,4 +1,10 @@
-const code = `import a
+let code = `def test(a=1, b: Optional[bool] = None) -> int:
+    # Test this
+    return 1
+
+`;
+
+code = `import a
 [1, 2, 3]
 (1, 2, 3)
 variable = 'string'
@@ -185,5 +191,4 @@ invalid_single_string = 'I think so
 invalid_triple_double = """This is an unclosed triple-quoted string
 invalid_triple_single = '''This is an unclosed single-quoted string
 `;
-
 export default code;
