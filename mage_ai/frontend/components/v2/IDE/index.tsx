@@ -49,30 +49,41 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
       const initializeWrapper = async () => {
         initializingRef.current = true;
 
-
         const monaco = await import('monaco-editor');
         const configUri = new URL('./languages/python/config.json', import.meta.url).href;
         const pythonLanguageExtensionWithURI = {
           ...pythonLanguageExtension,
-          configuration: monaco.Uri.parse(`${getHost({
-            forceCurrentPort: true,
-          })}${configUri}`),
+          configuration: monaco.Uri.parse(
+            `${getHost({
+              forceCurrentPort: true,
+            })}${configUri}`,
+          ),
         };
         monaco.languages.register(pythonLanguageExtensionWithURI);
-        monaco.languages.setLanguageConfiguration(pythonLanguageExtension.id, pythonConfiguration());
+        monaco.languages.setLanguageConfiguration(
+          pythonLanguageExtension.id,
+          pythonConfiguration(),
+        );
 
         const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
         const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
         await import('@codingame/monaco-vscode-python-default-extension');
 
         const configureMonacoWorkers = () => {
-            useWorkerFactory({
-                ignoreMapping: true,
-                workerLoaders: {
-                    editorWorkerService: () => new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url), { type: 'module' }),
-                    javascript: () => import('monaco-editor-wrapper/workers/module/ts').then(module => new Worker(module.default, { type: 'module' })),
-                },
-            });
+          useWorkerFactory({
+            ignoreMapping: true,
+            workerLoaders: {
+              editorWorkerService: () =>
+                new Worker(
+                  new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+                  { type: 'module' },
+                ),
+              javascript: () =>
+                import('monaco-editor-wrapper/workers/module/ts').then(
+                  module => new Worker(module.default, { type: 'module' }),
+                ),
+            },
+          });
         };
 
         configureMonacoWorkers();
@@ -84,13 +95,13 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
             debugEnabled: true,
           },
           languageClientConfig: {
-              languageId: LanguageEnum.PYTHON,
-              options: {
-                  $type: 'WebSocket',
-                  host: 'localhost',
-                  port: 8765,
-                  secured: false,
-              },
+            languageId: LanguageEnum.PYTHON,
+            options: {
+              $type: 'WebSocket',
+              host: 'localhost',
+              port: 8765,
+              secured: false,
+            },
           },
           wrapperConfig: {
             editorAppConfig: {

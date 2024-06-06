@@ -37,7 +37,11 @@ function getHostCore(
   return `${host}${basePath}`;
 }
 
-export function getProtocol(windowDefined: boolean, host: string, defaultHost: string = DEFAULT_HOST) {
+export function getProtocol(
+  windowDefined: boolean,
+  host: string,
+  defaultHost: string = DEFAULT_HOST,
+) {
   let protocol = 'http://';
   if (host !== defaultHost) {
     protocol = 'https://';
@@ -48,10 +52,7 @@ export function getProtocol(windowDefined: boolean, host: string, defaultHost: s
   return protocol;
 }
 
-export function getHost(opts?: {
-  forceDefaultPort?: boolean;
-  forceCurrentPort?: boolean;
-}) {
+export function getHost(opts?: { forceDefaultPort?: boolean; forceCurrentPort?: boolean }) {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;

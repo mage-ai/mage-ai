@@ -295,7 +295,7 @@ const theme = {
     // ----------------------------------------------------------------------------------------------
     // List/Tree background color for the selected item when the list/tree is active.
     'list.activeSelectionBackground': '#0000004D',
-     // List/Tree foreground color for the selected item when the list/tree is active.
+    // List/Tree foreground color for the selected item when the list/tree is active.
     'list.activeSelectionForeground': '#FFCC19',
     // // List/Tree icon foreground color for the selected item when the list/tree is active. An active list/tree has keyboard focus, an inactive does not.
     'list.activeSelectionIconForeground': '#FFCC19',
@@ -315,7 +315,7 @@ const theme = {
     // 'list.highlightForeground': '#000000',
     // // List/Tree background when hovering over items using the mouse.
     'list.hoverBackground': '#CBFE0033',
-     // List/Tree foreground when hovering over items using the mouse.
+    // List/Tree foreground when hovering over items using the mouse.
     'list.hoverForeground': '#FFFFFF',
     // List/Tree background color for the selected item when the list/tree is inactive.
     'list.inactiveSelectionBackground': '#000000',
