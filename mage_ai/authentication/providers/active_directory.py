@@ -19,6 +19,7 @@ from mage_ai.settings.keys import (
     ACTIVE_DIRECTORY_CLIENT_SECRET,
     ACTIVE_DIRECTORY_DIRECTORY_ID,
     ACTIVE_DIRECTORY_ROLES_MAPPING,
+    AZURE_HOST,
 )
 
 logger = Logger().new_server_logger(__name__)
@@ -32,6 +33,10 @@ class ADProvider(SsoProvider, OauthProvider):
         self.directory_id = get_settings_value(ACTIVE_DIRECTORY_DIRECTORY_ID)
         self.client_id = get_settings_value(ACTIVE_DIRECTORY_CLIENT_ID)
         self.client_secret = get_settings_value(ACTIVE_DIRECTORY_CLIENT_SECRET)
+        self.host = get_settings_value(
+            AZURE_HOST,
+            default='https://login.microsoftonline.com',
+        ).rstrip('/')
         self.__validate()
 
         self.roles_mapping = {}
@@ -82,7 +87,7 @@ class ADProvider(SsoProvider, OauthProvider):
                 query_strings.append(f'{k}={v}')
 
             return dict(
-                url=f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}",  # noqa: E501
+                url=f"{self.host}/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}",  # noqa: E501
                 redirect_query_params=redirect_uri_query,
             )
         else:
@@ -109,7 +114,7 @@ class ADProvider(SsoProvider, OauthProvider):
                 query_strings.append(f'{k}={v}')
 
             return dict(
-                url=f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}",  # noqa: E501
+                url=f"{self.host}/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}",  # noqa: E501
             )
 
     async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
@@ -117,7 +122,7 @@ class ADProvider(SsoProvider, OauthProvider):
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
+                f'{self.host}/organizations/oauth2/v2.0/token',
                 headers={
                     'Accept': 'application/json',
                 },
