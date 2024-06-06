@@ -11,6 +11,7 @@ jobs:
   build_frontend:
     docker:
       - image: 'cimg/base:stable'
+    resource_class: xlarge
     steps:
       - checkout
       - node/install:
@@ -23,7 +24,7 @@ jobs:
   export_frontend:
     docker:
       - image: 'cimg/base:stable'
-    steps: 
+    steps:
       - checkout
       - node/install:
           install-yarn: true

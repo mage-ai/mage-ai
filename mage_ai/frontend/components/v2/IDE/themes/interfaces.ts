@@ -1,5 +1,5 @@
 export enum IDEThemeEnum {
-  BASE = 'base',
+  BASE = 'materia-base',
 }
 
 type IDEThemeType = {

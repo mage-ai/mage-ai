@@ -63,7 +63,7 @@ export default function base(
     autoClosingBrackets: 'always',
     autoClosingComments: 'always',
     autoClosingQuotes: 'always',
-    autoDetectHighContrast: false,
+    // autoDetectHighContrast: false,
     autoIndent: 'advanced',
     // Enable that the editor will install a ResizeObserver to check if its
     // container dom node size has changed.
@@ -155,7 +155,7 @@ export default function base(
     matchBrackets: 'always',
     // Controls whether suggestions allow matches in the middle of the word
     // instead of only at the beginning.
-    matchOnWordStartOnly: false,
+    matchOnWordStartOnly: true,
     maxTokenizationLineLength: 20000,
     // A lot of configurations
     // model
@@ -300,8 +300,8 @@ export default function base(
     wrappingStrategy: 'advanced', // "simple" | "advanced"
     // !!!!!!!!!!!!!!!!!!!!Settings that can make the editor lag!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     bracketPairColorization: {
-      enabled: false,
-      independentColorPoolPerBracketType: false,
+      enabled: true,
+      independentColorPoolPerBracketType: true,
     },
     codeLens: true, // Code lens font family. Defaults to editor font family.
     colorDecorators: true, // true

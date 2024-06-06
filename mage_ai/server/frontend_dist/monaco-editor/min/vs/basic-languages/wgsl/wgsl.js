@@ -1,11 +1,11 @@
-"use strict";/*!-----------------------------------------------------------------------------
+/*!-----------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.44.0(3e047efd345ff102c8c61b5398fb30845aaac166)
+ * Version: 0.49.0(383fdf3fc0e1e1a024068b8d0fd4f3dcbae74d04)
  * Released under the MIT license
  * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt
  *-----------------------------------------------------------------------------*/
 define("vs/basic-languages/wgsl/wgsl", ["require","require"],(require)=>{
-var moduleExports=(()=>{var s=Object.defineProperty;var m=Object.getOwnPropertyDescriptor;var l=Object.getOwnPropertyNames;var u=Object.prototype.hasOwnProperty;var p=(t,e)=>{for(var a in e)s(t,a,{get:e[a],enumerable:!0})},d=(t,e,a,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of l(e))!u.call(t,i)&&i!==a&&s(t,i,{get:()=>e[i],enumerable:!(o=m(e,i))||o.enumerable});return t};var x=t=>d(s({},"__esModule",{value:!0}),t);var F={};p(F,{conf:()=>f,language:()=>L});var f={comments:{lineComment:"//",blockComment:["/*","*/"]},brackets:[["{","}"],["[","]"],["(",")"]],autoClosingPairs:[{open:"[",close:"]"},{open:"{",close:"}"},{open:"(",close:")"}],surroundingPairs:[{open:"{",close:"}"},{open:"[",close:"]"},{open:"(",close:")"}]};function r(t){let e=[],a=t.split(/\t+|\r+|\n+| +/);for(let o=0;o<a.length;++o)a[o].length>0&&e.push(a[o]);return e}var g=r("true false"),_=r(`
+"use strict";var moduleExports=(()=>{var s=Object.defineProperty;var m=Object.getOwnPropertyDescriptor;var l=Object.getOwnPropertyNames;var u=Object.prototype.hasOwnProperty;var p=(t,e)=>{for(var a in e)s(t,a,{get:e[a],enumerable:!0})},d=(t,e,a,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of l(e))!u.call(t,i)&&i!==a&&s(t,i,{get:()=>e[i],enumerable:!(o=m(e,i))||o.enumerable});return t};var x=t=>d(s({},"__esModule",{value:!0}),t);var F={};p(F,{conf:()=>f,language:()=>L});var f={comments:{lineComment:"//",blockComment:["/*","*/"]},brackets:[["{","}"],["[","]"],["(",")"]],autoClosingPairs:[{open:"[",close:"]"},{open:"{",close:"}"},{open:"(",close:")"}],surroundingPairs:[{open:"{",close:"}"},{open:"[",close:"]"},{open:"(",close:")"}]};function r(t){let e=[],a=t.split(/\t+|\r+|\n+| +/);for(let o=0;o<a.length;++o)a[o].length>0&&e.push(a[o]);return e}var g=r("true false"),_=r(`
 			  alias
 			  break
 			  case

@@ -1,3 +1,5 @@
+// https://github.com/microsoft/monaco-editor/blob/main/src/basic-languages/python/python.ts
+//
 const KEY_WORDS = [
   'and',
   'assert',

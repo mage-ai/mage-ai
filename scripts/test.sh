@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-git diff --name-only master...HEAD | \
+git diff --name-only master...HEAD --diff-filter=d | \
   grep -v '^mage_ai/server/frontend_dist/' | \
   grep -v '^mage_ai/server/frontend_dist_base_path_template/' | \
   grep -E '\.(js|jsx|ts|tsx)$' | \
   xargs prettier --config mage_ai/frontend/.prettierrc --write
 
-git diff --name-only master...HEAD | \
+git diff --name-only master...HEAD --diff-filter=d | \
   grep -v '^mage_ai/server/frontend_dist/' | \
   grep -v '^mage_ai/server/frontend_dist_base_path_template/' | \
   grep -E '\.(js|jsx|ts|tsx)$' | \
@@ -15,7 +15,7 @@ git diff --name-only master...HEAD | \
 
 HOST='' PORT='' PROJECT='' docker compose run --rm app  yarn install_and_test 2>/dev/null
 
-git diff --name-only master...HEAD | \
+git diff --name-only master...HEAD --diff-filter=d | \
   grep -v '^mage_ai/server/frontend_dist/' | \
   grep -v '^mage_ai/server/frontend_dist_base_path_template/' | \
   grep -E '\.(py)$' | \

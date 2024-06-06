@@ -7,12 +7,16 @@ function getHostCore(
   windowDefined: boolean,
   defaultHost: string = DEFAULT_HOST,
   defaultPort: string = DEFAULT_PORT,
+  opts?: {
+    forceDefaultPort?: boolean;
+    forceCurrentPort?: boolean;
+  },
 ) {
   let host = defaultHost;
   if (windowDefined) {
     host = window.location.hostname;
   }
-  if (host === defaultHost) {
+  if ((host === defaultHost && !opts?.forceCurrentPort) || opts?.forceDefaultPort) {
     host = `${host}:${defaultPort}`;
   } else if (windowDefined && !!window.location.port) {
     host = `${host}:${window.location.port}`;
@@ -33,7 +37,11 @@ function getHostCore(
   return `${host}${basePath}`;
 }
 
-function getProtocol(windowDefined: boolean, host: string, defaultHost: string = DEFAULT_HOST) {
+export function getProtocol(
+  windowDefined: boolean,
+  host: string,
+  defaultHost: string = DEFAULT_HOST,
+) {
   let protocol = 'http://';
   if (host !== defaultHost) {
     protocol = 'https://';
@@ -44,12 +52,12 @@ function getProtocol(windowDefined: boolean, host: string, defaultHost: string =
   return protocol;
 }
 
-export function getHost() {
+export function getHost(opts?: { forceDefaultPort?: boolean; forceCurrentPort?: boolean }) {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;
 
-  const host = getHostCore(windowDefined, LOCALHOST, PORT);
+  const host = getHostCore(windowDefined, LOCALHOST, PORT, opts);
   const protocol = getProtocol(windowDefined, host, LOCALHOST);
 
   return `${protocol}${host}`;
