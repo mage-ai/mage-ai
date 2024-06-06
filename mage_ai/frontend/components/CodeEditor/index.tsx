@@ -308,10 +308,11 @@ function CodeEditor(
         }, 1);
       } else {
         // eslint-disable-next-line react/no-find-dom-node
-        const textarea = ReactDOM.findDOMNode(editorRef.current._domElement).getElementsByClassName(
-          'inputarea',
-        );
-        textarea?.[0]?.blur();
+        const textarea = ReactDOM.findDOMNode(
+          editorRef.current._domElement,
+          // @ts-ignore
+        )?.getElementsByClassName('inputarea');
+        textarea[0].blur();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
