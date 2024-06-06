@@ -3,17 +3,14 @@ import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import baseConfigurations from './configurations/base';
 import initializeAutocomplete from './autocomplete';
-import themes, { IDEThemeEnum } from './themes';
+import themes from './themes';
+import { IDEThemeEnum } from './themes/interfaces';
 import mockCode from './mocks/code';
 import pythonProvider from './languages/python/provider';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import { ContainerStyled, IDEStyled } from './index.style';
 import { LanguageEnum } from './languages/constants';
-import { ThemeTypeEnum } from '@mana/themes/interfaces';
-// import grammar from './syntaxes/python/grammar';
 import { getHost } from '@api/utils/url';
-// import langiumLanguageConfig from './extensions/langium/langium.configuration.json?raw';
-// import langiumTextmateGrammar from './extensions/langium/langium.tmLanguage.json?raw';
 
 type IDEProps = {
   theme?: IDEThemeEnum;
@@ -38,7 +35,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
   const configurations = useMemo(
     () =>
       baseConfigurations(themeContext, {
-        // theme: themeSelected,
+        theme: themeSelected,
         // value: mockCode,
       }),
     [themeContext, themeSelected],
@@ -64,6 +61,7 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
           pythonLanguageExtension.id,
           pythonConfiguration(),
         );
+        initializeAutocomplete(monaco);
 
         const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
         const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');

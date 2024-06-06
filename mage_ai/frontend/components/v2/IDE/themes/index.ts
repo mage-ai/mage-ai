@@ -1,7 +1,5 @@
 import base from './base';
-import IDEThemeType, { IDEThemeEnum as IDEThemeEnumInit } from './interfaces';
-
-export const IDEThemeEnum = IDEThemeEnumInit;
+import IDEThemeType, { IDEThemeEnum } from './interfaces';
 
 const themes: { [key: string]: IDEThemeType } = {
   [IDEThemeEnum.BASE]: base,

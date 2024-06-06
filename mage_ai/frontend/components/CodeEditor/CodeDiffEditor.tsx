@@ -406,7 +406,6 @@ function CodeEditor({
             vertical: 'hidden',
           },
           useShadowDOM: false,
-          wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
           // Options for DiffEditor
           colorDecorators: true,

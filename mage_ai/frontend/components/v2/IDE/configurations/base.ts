@@ -349,7 +349,7 @@ export default function base(
       // Controls whether or not quick suggestions should appear while typing within comments.
       comments: 'inline', // "on" | "inline" | "off"
       // Controls whether or not quick suggestions should appear while typing outside of comments and strings (i.e., normal code).
-      other: 'on', // "on" | "inline" | "off"
+      other: 'inline', // "on" | "inline" | "off"
       // Controls whether or not quick suggestions should appear while typing within strings.
       strings: 'inline', // "on" | "inline" | "off"
     },
