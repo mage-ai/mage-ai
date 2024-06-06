@@ -56,12 +56,12 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
             })}${configUri}`,
           ),
         };
-        monaco.languages.register(pythonLanguageExtensionWithURI);
-        monaco.languages.setLanguageConfiguration(
-          pythonLanguageExtension.id,
-          pythonConfiguration(),
-        );
-        initializeAutocomplete(monaco);
+        // monaco.languages.register(pythonLanguageExtensionWithURI);
+        // monaco.languages.setLanguageConfiguration(
+        //   pythonLanguageExtension.id,
+        //   pythonConfiguration(),
+        // );
+        // initializeAutocomplete(monaco);
 
         const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
         const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
