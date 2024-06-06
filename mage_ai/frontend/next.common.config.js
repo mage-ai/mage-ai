@@ -1,4 +1,5 @@
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
@@ -23,6 +24,14 @@ module.exports = removeImports({
           languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
         }),
       );
+
+      config.optimization.minimizer = [
+        new TerserPlugin({
+          terserOptions: {
+            exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
+          },
+        }),
+      ];
     }
 
     return config;
