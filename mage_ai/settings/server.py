@@ -108,6 +108,9 @@ except ValueError:
 # for the first time. value should be the name of a Mage role (e.g. Viewer, Editor, Admin)
 OAUTH_DEFAULT_ACCESS = os.getenv('OAUTH_DEFAULT_ACCESS')
 
+DEFAULT_OWNER_EMAIL = os.getenv('DEFAULT_OWNER_EMAIL') or 'admin@admin.com'
+DEFAULT_OWNER_PASSWORD = os.getenv('DEFAULT_OWNER_PASSWORD') or 'admin'
+DEFAULT_OWNER_USERNAME = os.getenv('DEFAULT_OWNER_USERNAME') or 'admin'
 
 # ---------------------
 # General Server Settings

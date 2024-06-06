@@ -89,6 +89,9 @@ from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    DEFAULT_OWNER_EMAIL,
+    DEFAULT_OWNER_PASSWORD,
+    DEFAULT_OWNER_USERNAME,
     DISABLE_AUTO_BROWSER_OPEN,
     DISABLE_AUTORELOAD,
     ENABLE_PROMETHEUS,
@@ -496,17 +499,17 @@ def initialize_user_authentication(project_type: ProjectType) -> Oauth2Applicati
             password_salt = generate_salt()
             user = User.query.filter(
                 or_(
-                    User.email == 'admin@admin.com',
-                    User.username == 'admin',
+                    User.email == DEFAULT_OWNER_EMAIL,
+                    User.username == DEFAULT_OWNER_USERNAME,
                 ),
             ).first()
             if not user:
                 user = User.create(
-                    email='admin@admin.com',
-                    password_hash=create_bcrypt_hash('admin', password_salt),
+                    email=DEFAULT_OWNER_EMAIL,
+                    password_hash=create_bcrypt_hash(DEFAULT_OWNER_PASSWORD, password_salt),
                     password_salt=password_salt,
                     roles_new=[default_owner_role],
-                    username='admin',
+                    username=DEFAULT_OWNER_USERNAME,
                 )
         owner_user = user
     else:

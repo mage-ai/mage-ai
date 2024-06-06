@@ -127,6 +127,20 @@ class ServerTests(AsyncDBTestCase):
         owner_user = User.query.filter(User.email == 'admin@admin.com').one_or_none()
         self.assertIsNotNone(owner_user)
 
+    def test_initialize_user_authentication_standalone_project_with_custom_email(self):
+        with patch('mage_ai.server.server.DEFAULT_OWNER_EMAIL', 'admin@mage.ai'), \
+             patch('mage_ai.server.server.DEFAULT_OWNER_PASSWORD', 'magepassword'), \
+             patch('mage_ai.server.server.DEFAULT_OWNER_USERNAME', 'mageuser'):
+
+            initialize_user_authentication(ProjectType.STANDALONE)
+
+            owner_role = Role.get_role(Role.DefaultRole.OWNER)
+            self.assertTrue(len(owner_role.users) > 0)
+
+            owner_user = User.query.filter(User.email == 'admin@mage.ai').one_or_none()
+            self.assertIsNotNone(owner_user)
+            self.assertEqual(owner_user.username, 'mageuser')
+
     def test_initialize_user_authentication_standalone_project_with_existing_owner(self):
         password_salt = generate_salt()
         Role.create_default_roles()
