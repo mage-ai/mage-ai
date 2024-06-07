@@ -133,7 +133,7 @@ class ExecutorFactory:
                     executor_type = ExecutorType.PYSPARK
                 else:
                     executor_type = block.get_executor_type()
-                    if executor_type == ExecutorType.LOCAL_PYTHON:
+                    if executor_type == ExecutorType.LOCAL_PYTHON or not executor_type:
                         # Use default executor type
                         executor_type = self.get_default_executor_type()
 

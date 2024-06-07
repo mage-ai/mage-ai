@@ -10,6 +10,7 @@ import time
 import traceback
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
+from enum import Enum
 from inspect import Parameter, isfunction, signature
 from logging import Logger
 from pathlib import Path
@@ -2864,7 +2865,11 @@ class Block(
 
     def get_executor_type(self) -> str:
         if self.executor_type:
-            block_executor_type = Template(self.executor_type).render(**get_template_vars())
+            if isinstance(self.executor_type, Enum):
+                executor_type_str = self.executor_type.value
+            else:
+                executor_type_str = self.executor_type
+            block_executor_type = Template(executor_type_str).render(**get_template_vars())
         else:
             block_executor_type = None
         if not block_executor_type or block_executor_type == ExecutorType.LOCAL_PYTHON:
