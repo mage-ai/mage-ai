@@ -358,11 +358,12 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                     existing_trigger.sla != kwargs.get('sla'),
                     existing_trigger.start_time != kwargs.get('start_time'),
                     existing_trigger.status != kwargs.get('status'),
-                    existing_trigger.token != kwargs.get('token'),
+                    existing_trigger.token != kwargs.get('token') and kwargs.get('token'),
+                    existing_trigger.token is None,
                     existing_trigger.variables != kwargs.get('variables'),
                 ]):
-                    if existing_trigger.token is None and kwargs.get('token') is None:
-                        kwargs['token'] = uuid.uuid4().hex
+                    if kwargs.get('token') is None:
+                        kwargs['token'] = existing_trigger.token or uuid.uuid4().hex
                     existing_trigger.update(**kwargs)
             else:
                 if kwargs.get('token') is None:
