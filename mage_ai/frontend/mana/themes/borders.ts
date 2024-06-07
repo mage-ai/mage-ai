@@ -8,8 +8,8 @@ export enum BorderRadius {
 export interface BordersType {
   color: string;
   outline: {
-    offset: string;
-    width: string;
+    offset: number;
+    width: number;
   };
   radius: {
     base: string;
@@ -23,8 +23,8 @@ export default function build(colors: ColorsType): BordersType {
   return {
     color: colors.gray,
     outline: {
-      offset: '1px',
-      width: '3px',
+      offset: 1,
+      width: 2,
     },
     radius: {
       base: BorderRadius.BASE,

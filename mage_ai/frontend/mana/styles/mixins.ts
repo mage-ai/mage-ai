@@ -37,6 +37,7 @@ type OutlineHoverProps = {
   active?: boolean;
   borderColor?: string;
   outlineColor?: string;
+  outlineOffset?: number;
   outlineWidth?: number;
 };
 
@@ -44,29 +45,32 @@ export const outlineHover = ({
   active,
   borderColor,
   outlineColor,
+  outlineOffset,
   outlineWidth,
 }: OutlineHoverProps) => css`
-  &:hover {
-    box-shadow:
-      0 0 0 ${({ theme }) => theme.borders.outline.offset}
-        ${({ theme }) => borderColor || theme.colors.backgrounds.button.base},
-      0 0 0
-        ${({ theme }) =>
-          !outlineWidth ? theme.borders.outline.width : String(outlineWidth) + 'px'}
-        ${({ theme }) => outlineColor || theme.colors.purple};
-  }
+  ${({ theme }) => `
+    &:hover {
+      box-shadow:
+        0 0 0
+          ${theme.borders.outline.offset + (outlineOffset || 0)}px
+          ${borderColor || theme.colors.backgrounds.button.base},
+        0 0 0
+          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
+          ${outlineColor || theme.colors.purple};
+    }
 
-  &:focus {
-    box-shadow:
-      0 0 0 ${({ theme }) => theme.borders.outline.offset}
-        ${({ theme }) => borderColor || theme.colors.backgrounds.button.base},
-      0 0 0
-        ${({ theme }) =>
-          !outlineWidth ? theme.borders.outline.width : String(outlineWidth) + 'px'}
-        ${({ theme }) => outlineColor || theme.colors.purple};
-  }
+    &:focus {
+      box-shadow:
+        0 0 0
+          ${theme.borders.outline.offset + (outlineOffset || 0)}px
+          ${borderColor || theme.colors.backgrounds.button.base},
+        0 0 0
+          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
+          ${outlineColor || theme.colors.purple};
+    }
+  `}
 
-  ${({ active }: { active?: boolean }) => !active && `
+  ${!active && `
     &:active {
       box-shadow: none;
     }
@@ -75,10 +79,11 @@ export const outlineHover = ({
   ${({ theme }) => active && `
     &:active {
       box-shadow:
-        0 0 0 ${theme.borders.outline.offset}
+        0 0 0
+          ${theme.borders.outline.offset + (outlineOffset || 0)}px
           ${borderColor || theme.colors.backgrounds.button.base},
         0 0 0
-          ${!outlineWidth ? theme.borders.outline.width : String(outlineWidth) + 'px'}
+          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
           ${outlineColor || theme.colors.purple};
     }
   `}

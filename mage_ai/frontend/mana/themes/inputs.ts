@@ -19,6 +19,9 @@ export interface InputsType {
   padding: {
     base: string;
   };
+  placeholder: {
+    color: string;
+  };
 }
 
 export default function build(colors: ColorsType): InputsType {

@@ -9,7 +9,7 @@ import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   anchor?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   small?: boolean;
 } & StyleProps;
 

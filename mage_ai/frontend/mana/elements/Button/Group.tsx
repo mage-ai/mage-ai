@@ -1,22 +1,42 @@
 import React from 'react';
 
-import { Row, Col } from '../../components/Container';
+import borders from '../../styles/borders';
+import styled from 'styled-components';
 import { UNIT } from '@mana/themes/spaces';
+import Grid from '@mana/components/Grid';
 
-function Group({ children }: { children: React.ReactNode }) {
+type GroupStyleProps = {
+  itemsContained?: boolean;
+};
+
+const GroupStyled = styled.div<GroupStyleProps>`
+  ${({ itemsContained }) => itemsContained ? borders : ''}
+  ${({ itemsContained, theme }) => itemsContained
+    && `
+      padding: ${theme.buttons.padding.sm};
+    `
+  }
+`;
+
+function Group({
+  children,
+  itemsContained,
+}: { children: React.ReactNode } & GroupStyleProps) {
   return (
-    <Row gutterWidth={UNIT * 2} verticalGutter>
-      {React.Children.map(children, (child, index) => {
-        if (React.isValidElement(child)) {
-          return (
-            <Col key={`${child.props.uuid || 'col'}-${index}`} xs="content">
-              {child}
-            </Col>
-          );
-        }
-        return null;
-      })}
-    </Row>
+    <GroupStyled itemsContained={itemsContained}>
+      <Grid
+        alignItems="center"
+        autoFlow="column"
+        columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
+        justifyContent="start"
+        templateColumns="min-content"
+        templateRows="1fr"
+      >
+        {React.Children.map(children, (child, index: number) => (
+          <div className="button-item" key={`button-item-${index}`}>{child}</div>
+        ))}
+      </Grid>
+    </GroupStyled>
   );
 }
 

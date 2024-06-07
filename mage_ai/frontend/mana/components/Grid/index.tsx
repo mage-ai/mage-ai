@@ -16,7 +16,7 @@ function Grid({
 }: GridProps, ref: React.Ref<HTMLDivElement>) {
   const className = uuid || GRID_CLASSNAME;
   return (
-    <GridStyled {...props} className={className} ref={ref} uuid={className}>
+    <GridStyled {...props} className={className} ref={ref} uuid={uuid}>
       {children}
     </GridStyled>
   );

@@ -372,9 +372,9 @@ const ColorsDerived = {
     input: {
       base: {
         active: convert({
-          [ModeEnum.DARK]: 'blueHi',
-          [ModeEnum.LIGHT]: 'blueHi',
-          [ModeEnum.MODE3]: 'blueHi',
+          [ModeEnum.DARK]: 'blueText',
+          [ModeEnum.LIGHT]: 'blueText',
+          [ModeEnum.MODE3]: 'blueText',
         }),
         default: convert({
           [ModeEnum.DARK]: 'blue',
@@ -382,14 +382,14 @@ const ColorsDerived = {
           [ModeEnum.MODE3]: 'blue',
         }),
         focus: convert({
-          [ModeEnum.DARK]: 'blueHi',
-          [ModeEnum.LIGHT]: 'blueHi',
-          [ModeEnum.MODE3]: 'blueHi',
+          [ModeEnum.DARK]: 'blueText',
+          [ModeEnum.LIGHT]: 'blueText',
+          [ModeEnum.MODE3]: 'blueText',
         }),
         hover: convert({
-          [ModeEnum.DARK]: 'blueHi',
-          [ModeEnum.LIGHT]: 'blueHi',
-          [ModeEnum.MODE3]: 'blueHi',
+          [ModeEnum.DARK]: 'blueText',
+          [ModeEnum.LIGHT]: 'blueText',
+          [ModeEnum.MODE3]: 'blueText',
         }),
       },
     },

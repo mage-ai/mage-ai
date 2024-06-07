@@ -10,7 +10,7 @@ function Cell({
   uuid,
 }: CellProps) {
   const element = document.createElement('div');
-  element.className = `grid-row-${row || 0} grid-col-${column || 0}`;
+  element.className = `grid-cell grid-row-${row || 0}`;
   element.id = uuid;
 
   return element;
