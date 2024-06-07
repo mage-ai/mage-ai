@@ -452,7 +452,7 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
         )
 
         if ConfigKey.SNOWFLAKE_TIMEOUT in config:
-            conn_kwargs['timeout'] = config[ConfigKey.SNOWFLAKE_TIMEOUT]
+            conn_kwargs['network_timeout'] = config[ConfigKey.SNOWFLAKE_TIMEOUT]
 
         if ConfigKey.SNOWFLAKE_ROLE in config:
             conn_kwargs['role'] = config[ConfigKey.SNOWFLAKE_ROLE]
