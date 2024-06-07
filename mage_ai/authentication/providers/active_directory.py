@@ -20,6 +20,7 @@ from mage_ai.settings.keys import (
     ACTIVE_DIRECTORY_DIRECTORY_ID,
     ACTIVE_DIRECTORY_ROLES_MAPPING,
     AZURE_HOST,
+    MICROSOFT_GRAPH_API_HOST,
 )
 
 logger = Logger().new_server_logger(__name__)
@@ -36,6 +37,10 @@ class ADProvider(SsoProvider, OauthProvider):
         self.host = get_settings_value(
             AZURE_HOST,
             default='https://login.microsoftonline.com',
+        ).rstrip('/')
+        self.graph_api_host = get_settings_value(
+            MICROSOFT_GRAPH_API_HOST,
+            default='https://graph.microsoft.com',
         ).rstrip('/')
         self.__validate()
 
@@ -149,7 +154,7 @@ class ADProvider(SsoProvider, OauthProvider):
         mage_roles = []
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                'https://graph.microsoft.com/v1.0/me',
+                f'{self.graph_api_host}/v1.0/me',
                 headers={
                     'Content-Type': 'application\\json',
                     'Authorization': f'Bearer {access_token}',
@@ -161,7 +166,7 @@ class ADProvider(SsoProvider, OauthProvider):
             if self.roles_mapping:
                 try:
                     async with session.get(
-                        f'https://graph.microsoft.com/v1.0/servicePrincipals?$filter=appId eq \'{self.client_id}\'&$select=id',  # noqa: E501
+                        f'{self.graph_api_host}/v1.0/servicePrincipals?$filter=appId eq \'{self.client_id}\'&$select=id',  # noqa: E501
                         headers={
                             'Content-Type': 'application\\json',
                             'Authorization': f'Bearer {access_token}',
@@ -173,7 +178,7 @@ class ADProvider(SsoProvider, OauthProvider):
                     resource_id = service_principals.get('value')[0].get('id')
 
                     async with session.get(
-                        f'https://graph.microsoft.com/v1.0/servicePrincipals/{resource_id}/appRoles',  # noqa: E501
+                        f'{self.graph_api_host}/v1.0/servicePrincipals/{resource_id}/appRoles',  # noqa: E501
                         headers={
                             'Content-Type': 'application\\json',
                             'Authorization': f'Bearer {access_token}',
@@ -188,7 +193,7 @@ class ADProvider(SsoProvider, OauthProvider):
                     }
 
                     async with session.get(
-                        f'https://graph.microsoft.com/v1.0/me/appRoleAssignments?$filter=resourceId eq {resource_id}',  # noqa: E501
+                        f'{self.graph_api_host}/v1.0/me/appRoleAssignments?$filter=resourceId eq {resource_id}',  # noqa: E501
                         headers={
                             'Content-Type': 'application\\json',
                             'Authorization': f'Bearer {access_token}',
