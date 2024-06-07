@@ -1,10 +1,26 @@
-import { Container } from 'react-grid-system'; // https://sealninja.github.io/react-grid-system
-import Col from './Col';
-import Row from './Row';
+import React from 'react';
 
-function Grid({ children }: { children: React.ReactNode }) {
-  return <Container fluid>{children}</Container>;
+import Cell from './Cell';
+import { GridStyled, GridStyledProps } from './index.style';
+
+const GRID_CLASSNAME = 'grid-mana';
+
+type GridProps = {
+  children?: React.ReactNode;
+} & GridStyledProps;
+
+function Grid({
+  children,
+  uuid,
+  ...props
+}: GridProps, ref: React.Ref<HTMLDivElement>) {
+  const className = uuid || GRID_CLASSNAME;
+  return (
+    <GridStyled {...props} className={className} ref={ref} uuid={className}>
+      {children}
+    </GridStyled>
+  );
 }
 
-export { Col, Row };
-export default Grid;
+export { Cell };
+export default React.forwardRef(Grid);

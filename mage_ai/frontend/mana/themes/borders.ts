@@ -1,5 +1,10 @@
 import { ColorsType } from './colors';
 
+export enum BorderRadius {
+  BASE = '10px',
+  ROUND = '40px',
+}
+
 export interface BordersType {
   color: string;
   outline: {
@@ -22,8 +27,8 @@ export default function build(colors: ColorsType): BordersType {
       width: '3px',
     },
     radius: {
-      base: '10px',
-      round: '40px',
+      base: BorderRadius.BASE,
+      round: BorderRadius.ROUND,
     },
     style: 'solid',
     width: '1px',

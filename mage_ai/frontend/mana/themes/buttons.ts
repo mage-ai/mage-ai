@@ -1,3 +1,5 @@
+import { PaddingVerticalEnum } from './interactive';
+
 export interface ButtonsType {
   padding: {
     base: string;
@@ -8,8 +10,8 @@ export interface ButtonsType {
 export default function build(): ButtonsType {
   return {
     padding: {
-      base: '13px 14px',
-      sm: '12px 13px',
+      base: `${PaddingVerticalEnum.BASE} 14px`,
+      sm: `${PaddingVerticalEnum.SM} 13px`,
     },
   };
 }

@@ -5,7 +5,7 @@ type FontFamilyType = {
   black: string;
   bold: string;
   boldItalic?: string;
-  light: string;
+  lightFont: string;
   medium: string;
   regular: string;
   regularItalic?: string;
@@ -23,6 +23,7 @@ export interface FontsType {
     md: string;
     monospace: string;
     sm: string;
+    xs: string;
   };
   size: {
     base: string;
@@ -49,7 +50,7 @@ export default function build(colors: ColorsType): FontsType {
       base: {
         black: 'Inter Black, sans-serif',
         bold: 'Inter Bold, sans-serif',
-        light: 'Inter Light, sans-serif',
+        lightFont: 'Inter Light, sans-serif',
         medium: 'Inter Medium, sans-serif',
         regular: 'Inter Regular, sans-serif',
         semiBold: 'Inter SemiBold, sans-serif',
@@ -58,7 +59,7 @@ export default function build(colors: ColorsType): FontsType {
         black: 'Fira Code Bold, monospace',
         bold: 'Fira Code Bold, monospace',
         boldItalic: 'Fira Code Bold Italic, monospace',
-        light: 'Fira Code Light, monospace',
+        lightFont: 'Fira Code Light, monospace',
         medium: 'Fira Code Medium, monospace',
         regular: 'Fira Code Retina, Fira Code Regular, monospace',
         regularItalic: 'Fira Code Regular Italic, monospace',
@@ -67,9 +68,10 @@ export default function build(colors: ColorsType): FontsType {
     },
     lineHeight: {
       base: 'normal', // 100% - 120%
-      md: '140%',
+      md: '144%',
       monospace: '160%',
       sm: `${UNIT * 5}px`,
+      xs: '125%',
     },
     size: {
       base: '16px',

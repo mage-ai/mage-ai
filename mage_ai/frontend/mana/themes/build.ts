@@ -1,43 +1,14 @@
 import Colors, { ColorsType } from './colors';
 import ThemeType, { ThemeSettingsType, ThemeTypeEnum, ValueMappingType } from './interfaces';
-import { DEFAULT_MODE, ModeEnum, ModeType } from './modes';
-import { mergeDeep, setNested } from '@utils/hash';
 import backgrounds, { BackgroundsType } from './backgrounds';
 import borders, { BordersType } from './borders';
 import buttons, { ButtonsType } from './buttons';
 import fonts, { FontsType } from './fonts';
+import inputs, { InputsType } from './inputs';
 import margin, { MarginType } from './margin';
 import padding, { PaddingType } from './padding';
-
-function unflatten(mapping: { [key: string]: ModeType }): any {
-  return Object.entries(mapping).reduce((acc, [key, modeValues]) => {
-    const values = Object.entries(modeValues).reduce(
-      (acc2, [mode, color]) => ({
-        ...acc2,
-        [mode]: Colors[color][mode],
-      }),
-      {},
-    );
-    const obj = setNested(acc, key, values);
-
-    return mergeDeep(acc, obj);
-  }, {} as any);
-}
-
-function extractValueInMode(mode: ModeEnum, mapping: any) {
-  return Object.entries(mapping).reduce(
-    (acc, [key, value]) => ({
-      ...acc,
-      [key]:
-        typeof value === 'object'
-          ? Object.keys(value as object).some(key => key === mode)
-            ? value[mode]
-            : extractValueInMode(mode, value)
-          : value,
-    }),
-    {},
-  );
-}
+import { DEFAULT_MODE, ModeEnum, ModeType } from './modes';
+import { extractValueInMode } from './helpers';
 
 interface CombinerType {
   colors: ColorsType;
@@ -86,6 +57,7 @@ class Combiner implements CombinerType {
       | ButtonsType
       | ColorsType
       | FontsType
+      | InputsType
       | MarginType
       | PaddingType
       | { [key: string]: ModeType },
@@ -108,6 +80,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     borders,
     buttons,
     fonts,
+    inputs,
     margin,
     padding,
   }).reduce(

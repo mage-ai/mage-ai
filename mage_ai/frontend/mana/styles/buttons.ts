@@ -1,5 +1,5 @@
 import { css } from 'styled-components';
-import borders from './borders';
+import borders, { bordersTransparent } from './borders';
 import text, { StyleProps as TextStyleProps } from './typography';
 import { outlineHover, transition } from './mixins';
 
@@ -23,7 +23,7 @@ const shared = css<StyleProps>`
           : theme.colors.backgrounds.button.base.default,
     })}
 
-  ${({ basic }) => (basic ? borders : 'border: none;')}
+  ${({ basic }) => (basic ? borders : bordersTransparent)}
 
   background-color: ${({ basic, primary, secondary, theme }) =>
     primary
@@ -37,13 +37,13 @@ const shared = css<StyleProps>`
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
-  line-height: ${({ theme }) => theme.fonts.lineHeight.md};
   font-style: ${({ theme }) => theme.fonts.style.base};
 
   font-family: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.family.base.bold : theme.fonts.family.base.semiBold};
   font-weight: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
+  line-height: ${({ theme }) => theme.fonts.lineHeight.base};
 
   &:hover {
     background-color: ${({ basic, primary, secondary, theme }) =>
