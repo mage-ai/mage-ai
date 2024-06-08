@@ -28,6 +28,12 @@ function buildRowColumnStyles(): string[] {
       .grid-row-${idxRow} {
         grid-row: ${idxRow + 1};
       }
+      .grid-row-start-${idxRow} {
+        grid-row-start: ${idxRow + 1};
+      }
+      .grid-row-end-${idxRow} {
+        grid-row-end: ${idxRow + 1};
+      }
     `);
   });
 
@@ -35,6 +41,12 @@ function buildRowColumnStyles(): string[] {
     arr.push(`
       .grid-col-${idxCol} {
         grid-column: ${idxCol + 1};
+      }
+      .grid-col-start-${idxCol} {
+        grid-column-start: ${idxCol + 1};
+      }
+      .grid-col-end-${idxCol} {
+        grid-column-end: ${idxCol + 1};
       }
     `);
   });
@@ -59,8 +71,8 @@ const styles = css<GridStyledProps>`
     templateRows,
   }) => `
     display: grid;
-    grid-template-columns: ${templateColumns || 'auto'};
-    grid-template-rows: ${templateRows || 'auto'};
+    grid-template-columns: ${templateColumns || 'inherit'};
+    grid-template-rows: ${templateRows || 'inherit'};
     height: ${height || 'auto'};
     padding: ${pad ? gutterWidthBase : 0}px;
 
@@ -72,15 +84,14 @@ const styles = css<GridStyledProps>`
     justify-items: ${justifyItems ? justifyItems : 'start'};
     justify-content: ${justifyContent ? justifyContent : 'start'};
 
-    ${false && buildRowColumnStyles().join('\n')}
+    ${buildRowColumnStyles().join('\n')}
 
     grid-auto-columns: ${autoColumns || 'inherit'};
     grid-auto-rows: ${autoRows || 'inherit'};
     grid-auto-flow: ${autoFlow || 'inherit'};
 
     .grid-cell {
-      grid-column: span 1;
-      grid-row: span 1;
+      display: grid;
     }
   `}
 `;

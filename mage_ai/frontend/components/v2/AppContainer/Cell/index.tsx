@@ -1,127 +1,161 @@
 import React from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
-import Grid from '@mana/components/Grid';
 import Divider from '@mana/elements/Divider';
-import { Row, Col } from '@mana/components/Container';
+import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
 import { Close, Cluster, Settings , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
-import { setThemeSettings } from '@mana/themes/utils';
 import { ModeEnum } from '@mana/themes/modes';
+import { Row, Col } from '@mana/components/Container';
+import { createUUID } from '../utils';
 import { range } from '@utils/array';
+import { setThemeSettings } from '@mana/themes/utils';
+
+export type CellLayoutOperationProps = {
+  onAdd?: (
+    uuid: string,
+    opts?: {
+      container?: HTMLElement;
+      grid?: {
+        absolute?: {
+          column: number;
+          row: number;
+        };
+        relative?: {
+          column: number;
+          row: number;
+          uuid: string;
+        };
+      };
+    },
+  ) => void;
+};
 
 type CellProps = {
   column?: number;
-  onAdd?: (row: number, column?: number) => void;
-  onRemove?: () => void;
+  onRemove?: (uuid: string) => void;
   row?: number;
   uuid: string;
-};
+} & CellLayoutOperationProps;
 
 const TXT = `I’ve found several existing blocks that can potentially be reused.
 Take a look and let me know if anything works, you can also ask me to simply choose the best one.`;
 
 function Cell({
-  column,
   onAdd,
   onRemove,
-  row,
   uuid,
 }: CellProps, ref: React.Ref<HTMLDivElement>) {
+  function addApp(rowRelative: number, columnRelative: number) {
+    onAdd(
+      createUUID(),
+      {
+        grid: {
+          relative: {
+            column: columnRelative,
+            row: rowRelative,
+            uuid,
+          },
+        },
+      },
+    );
+  }
+
   return (
-    <Section ref={ref}>
-      <Grid
-        autoFlow="column"
-        justifyContent="end"
-        templateColumns="min-content"
-      >
+    <Grid
+      justifyContent="stretch"
+      justifyItems="stretch"
+      ref={ref}
+    >
+      <Section>
         <Grid
-        autoFlow="column"
-        templateColumns="min-content"
-      >
-          <ButtonGroup itemsContained>
-            <Button
-            Icon={CaretDown}
-            basic
-            grouped
-            onClick={() => onAdd}
-          />
-            <Button
-            Icon={CaretUp}
-            basic
-            grouped
-            onClick={() => onAdd}
-          />
-            <Button
-            Icon={CaretLeft}
-            basic
-            grouped
-            onClick={() => onAdd}
-          />
-            <Button
-            Icon={CaretRight}
-            basic
-            grouped
-            onClick={() => onAdd}
-          />
-          </ButtonGroup>
-          <ButtonGroup itemsContained>
-            <Button
-            Icon={Close}
-            basic
-            grouped
-            onClick={() => onRemove()}
-            small
-          />
-          </ButtonGroup>
+          autoFlow="column"
+          justifyContent="end"
+          templateColumns="min-content"
+        >
+          <Grid autoFlow="column" templateColumns="min-content">
+            <ButtonGroup itemsContained>
+              <Button
+              Icon={CaretDown}
+                basic
+                grouped
+                onClick={() => addApp(1, 0)}
+              />
+              <Button
+              Icon={CaretUp}
+                basic
+                grouped
+                onClick={() => addApp(-1, 0)}
+              />
+              <Button
+              Icon={CaretLeft}
+                basic
+                grouped
+                onClick={() => addApp(0, -1)}
+              />
+              <Button
+              Icon={CaretRight}
+                basic
+                grouped
+                onClick={() => addApp(0, 1)}
+              />
+            </ButtonGroup>
+
+            <ButtonGroup itemsContained>
+              <Button
+              Icon={Close}
+              basic
+              grouped
+              onClick={() => onRemove(uuid)}
+              small
+            />
+            </ButtonGroup>
+          </Grid>
         </Grid>
-      </Grid>
-
-      <Divider />
-
-      <Row direction="column" nogutter>
-        <Col xs="content">
-          <Row>
-            <Col><Text>{range(row + column + 1).reduce((acc) => TXT + ' ' + acc, '')}</Text></Col>
-            <Col xs="content"><Tag>Block</Tag></Col>
-          </Row>
-          <Divider short />
-          <Row>
-            <Col><Text monospace>{range(row + column + 1).reduce((acc) => TXT + ' ' + acc, '')}</Text></Col>
-          </Row>
-        </Col>
 
         <Divider />
 
-        <Col xs="content">
-          <ButtonGroup>
-            <Button
-              Icon={Settings}
-              onClick={() => setThemeSettings(({ mode }) => ({
-                mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-              }))}
-              primary
-              small
-            >
-              Theme
-            </Button>
+        <Row direction="column" nogutter>
+          <Col xs="content">
+            <Row>
+              <Col>
+                <Text>
+                  {range((Number(new Date()) % 2) + 1).reduce((acc) => TXT + ' ' + acc, '')}
+                </Text>
+              </Col>
+              <Col xs="content"><Tag>Block</Tag></Col>
+            </Row>
+            <Divider short />
+            <Row>
+              <Col>
+                <Text monospace>
+                  {range((Number(new Date()) % 2) + 1).reduce((acc) => TXT + ' ' + acc, '')}
+                </Text>
+              </Col>
+            </Row>
+          </Col>
 
-            {onAdd && (
+          <Divider />
+
+          <Col xs="content">
+            <ButtonGroup>
               <Button
-                Icon={Cluster}
-                onClick={() => onAdd()}
-                secondary
+                Icon={Settings}
+                onClick={() => setThemeSettings(({ mode }) => ({
+                  mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
+                }))}
+                primary
                 small
               >
-                Add
+                Theme
               </Button>
-            )}
-          </ButtonGroup>
-        </Col>
-      </Row>
-    </Section>
+            </ButtonGroup>
+          </Col>
+        </Row>
+      </Section>
+    </Grid>
   );
 }
 

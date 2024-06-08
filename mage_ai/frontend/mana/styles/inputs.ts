@@ -52,9 +52,9 @@ const shared = css<StyleProps>`
   }
 
   ${({ theme }) => outlineHover({
+    active: true,
     borderColor: theme.fonts.color.text.inverted,
     outlineColor: theme.inputs.border.color.base.hover,
-    // activeoOutlineColor: true,
   })}
 `;
 

@@ -15,8 +15,8 @@ const SectionStyled = styled.section<SectionProps>`
   height: ${({ stretch }) => (stretch ? '100%' : 'inherit')};
 `;
 
-function Section({ children, ...props }: SectionProps) {
-  return <SectionStyled {...props}>{children}</SectionStyled>;
+function Section({ children, ...props }: SectionProps, ref: React.Ref<HTMLDivElement>) {
+  return <SectionStyled {...props} ref={ref}>{children}</SectionStyled>;
 }
 
 export default React.forwardRef(Section);
