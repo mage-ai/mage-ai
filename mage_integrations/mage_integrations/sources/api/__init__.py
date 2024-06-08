@@ -103,9 +103,7 @@ class Api(Source):
                                  has_header=header).to_pandas()
             return df
         elif url.endswith('output=xlsx'):
-            df = polars.read_excel(BytesIO(response.content),
-                                   read_csv_options={"separator": separator, "has_header": header})\
-                                   .to_pandas()
+            df = pd.read_excel(BytesIO(response.content), header=0 if header else None)
             return df
         else:
             raise Exception('Extension not allowed, please use CSV,TSV or XLSX')
@@ -257,9 +255,7 @@ class Api(Source):
 
         else:
             try:
-                df = polars.read_excel(BytesIO(response.content),
-                                       read_csv_options={'separator': separator,
-                                       'has_header': header}).to_pandas()
+                df = pd.read_excel(BytesIO(response.content), header=0 if header else None)
                 yield df.to_dict(orient='records')
             except Exception:
                 raise Exception(f'Problems reading file {checked_type}. Check if extension is XLSX')
