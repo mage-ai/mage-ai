@@ -9,7 +9,13 @@ import { createUUID } from './utils';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { removeClassNames } from '@utils/elements';
 
-function GridContainer() {
+type GridContainerProps = {
+  onRemoveApp: (uuidApp: string, appConfigs: {
+    [uuid: string]: AppConfig;
+  }) => void;
+};
+
+function GridContainer({ onRemoveApp }: GridContainerProps) {
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -158,6 +164,10 @@ function GridContainer() {
     }
 
     updateLayout();
+
+    if (onRemoveApp) {
+      onRemoveApp?.(uuid, refAppConfigs?.current);
+    }
   }
 
   useEffect(() => {
@@ -170,6 +180,7 @@ function GridContainer() {
   return (
     <Grid
       autoColumns="1fr"
+      autoRows="1fr"
       justifyContent="stretch"
       justifyItems="stretch"
       ref={containerRef}

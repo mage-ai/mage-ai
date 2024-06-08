@@ -2,7 +2,7 @@ type CellProps = {
   column?: number;
   columnSpan?: number;
   row?: number;
-  uuid: string;
+  uuid?: string;
 };
 
 function Cell({

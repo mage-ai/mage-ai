@@ -21,6 +21,20 @@ export type GridStyledProps = {
   uuid?: string;
 };
 
+function buildGridTemplateColumns(): string[] {
+  const arr = [];
+
+  range(12).forEach((_, idxRow: number) => {
+    arr.push(`
+      .grid-template-columns-${idxRow + 1} {
+        grid-template-columns: repeat(${idxRow + 1}, 1fr);
+      }
+    `);
+  });
+
+  return arr;
+}
+
 function buildRowColumnStyles(): string[] {
   const arr = [];
 
@@ -112,6 +126,7 @@ const styles = css<GridStyledProps>`
     row-gap: ${typeof rowGap === 'undefined' ? gutterWidthBase: rowGap}px;
 
 
+    ${buildGridTemplateColumns().join('\n')}
     ${buildRowColumnStyles().join('\n')}
 
     .grid-cell {
