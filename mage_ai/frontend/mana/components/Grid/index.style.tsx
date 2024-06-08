@@ -14,6 +14,7 @@ export type GridStyledProps = {
   justifyContent?: 'center' | 'start' | 'end' | 'stretch';
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
   pad?: boolean;
+  row?: number;
   rowGap?: number;
   templateColumns?: 'min-content' | 'max-content' | 'auto' | string;
   templateRows?: 'min-content' | 'max-content' | 'auto' | string;
@@ -55,40 +56,63 @@ function buildRowColumnStyles(): string[] {
 }
 
 const styles = css<GridStyledProps>`
+  ${({ height }) => typeof height !== 'undefined' && `
+    height: ${height};
+  `}
+
+  ${({ row }) => typeof row !== 'undefined' && `
+    grid-row: ${row};
+  `}
+
+  ${({ autoColumns }) => typeof autoColumns !== 'undefined' && `
+    grid-auto-columns: ${autoColumns};
+  `}
+
+  ${({ autoRows }) => typeof autoRows !== 'undefined' && `
+    grid-auto-rows: ${autoRows};
+  `}
+
+  ${({ autoFlow }) => typeof autoFlow !== 'undefined' && `
+    grid-auto-flow: ${autoFlow};
+  `}
+
+  ${({ templateColumns }) => typeof templateColumns !== 'undefined' && `
+    grid-template-columns: ${templateColumns};
+  `}
+
+  ${({ templateRows }) => typeof templateRows !== 'undefined' && `
+    grid-template-rows: ${templateRows};
+  `}
+
+  ${({ alignItems }) => typeof alignItems !== 'undefined' && `
+    align-items: ${alignItems};
+  `}
+
+  ${({ alignContent }) => typeof alignContent !== 'undefined' && `
+    align-content: ${alignContent};
+  `}
+
+  ${({ justifyItems }) => typeof justifyItems !== 'undefined' && `
+    justify-items: ${justifyItems};
+  `}
+
+  ${({ justifyContent }) => typeof justifyContent !== 'undefined' && `
+    justify-content: ${justifyContent};
+  `}
+
   ${({
-    alignContent,
-    alignItems,
-    autoColumns,
-    autoFlow,
-    autoRows,
     columnGap,
-    height,
-    justifyContent,
-    justifyItems,
     pad,
     rowGap,
-    templateColumns,
-    templateRows,
   }) => `
     display: grid;
-    grid-template-columns: ${templateColumns || 'inherit'};
-    grid-template-rows: ${templateRows || 'inherit'};
-    height: ${height || 'auto'};
     padding: ${pad ? gutterWidthBase : 0}px;
 
     column-gap: ${typeof columnGap === 'undefined' ? gutterWidthBase: columnGap}px;
     row-gap: ${typeof rowGap === 'undefined' ? gutterWidthBase: rowGap}px;
 
-    align-items: ${alignItems ? alignItems : 'start'};
-    align-content: ${alignContent ? alignContent : 'start'};
-    justify-items: ${justifyItems ? justifyItems : 'start'};
-    justify-content: ${justifyContent ? justifyContent : 'start'};
 
     ${buildRowColumnStyles().join('\n')}
-
-    grid-auto-columns: ${autoColumns || 'inherit'};
-    grid-auto-rows: ${autoRows || 'inherit'};
-    grid-auto-flow: ${autoFlow || 'inherit'};
 
     .grid-cell {
       display: grid;
@@ -96,12 +120,12 @@ const styles = css<GridStyledProps>`
   `}
 `;
 
+const stylesUUID = css<GridStyledProps>`
+  &.${({ uuid }) => uuid} {
+    ${styles}
+  }
+`;
+
 export const GridStyled = styled.div<GridStyledProps>`
-  ${({ uuid }) => uuid
-    ? `
-      &.${uuid} {
-        ${styles}
-      }
-    `
-    : styles}
+  ${({ uuid }) => uuid ? stylesUUID : styles}
 `;

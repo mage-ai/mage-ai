@@ -2,14 +2,9 @@ import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import Button from '@mana/elements/Button';
 import CellItem from './Cell';
 import Grid, { Cell } from '@mana/components/Grid';
-import Section from '@mana/elements/Section';
-import TextInput from '@mana/elements/Input/TextInput';
 import { AppConfig } from './interfaces';
-import { ContainerStyled } from './index.style';
-import { Row, Col } from '@mana/components/Container';
 import { createUUID } from './utils';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { removeClassNames } from '@utils/elements';
@@ -173,56 +168,12 @@ function GridContainer() {
   }, []);
 
   return (
-    <ContainerStyled>
-      <Grid
-        height="inherit"
-        justifyContent="stretch"
-        justifyItems="stretch"
-        pad
-      >
-        <div>
-          <Section>
-            <Row align="center" justify="start">
-              <Col xs="content">
-                <Button
-                onClick={() => {
-                  addApp(createUUID());
-                }}
-                secondary
-              >
-                  Add app
-                </Button>
-              </Col>
-              <Col>
-                <Row>
-                  <Col>
-                    <TextInput
-                      monospace
-                      number
-                      placeholder="Row"
-                    />
-                  </Col>
-                  <Col>
-                    <TextInput
-                      monospace
-                      number
-                      placeholder="Column"
-                    />
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Section>
-        </div>
-
-        <Grid
-          autoColumns="1fr"
-          justifyContent="stretch"
-          justifyItems="stretch"
-          ref={containerRef}
-        />
-      </Grid>
-    </ContainerStyled>
+    <Grid
+      autoColumns="1fr"
+      justifyContent="stretch"
+      justifyItems="stretch"
+      ref={containerRef}
+    />
   );
 }
 

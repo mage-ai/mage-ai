@@ -1,8 +1,8 @@
 import Route from '@components/v2/Route';
-import AppContainer from '@components/v2/AppContainer';
+import AppLayout from '@components/v2/AppLayout';
 
 function GridPage() {
-  return <AppContainer />;
+  return <AppLayout />;
 }
 
 export default Route(GridPage);

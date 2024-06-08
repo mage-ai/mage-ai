@@ -6,7 +6,7 @@ import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
-import { Close, Cluster, Settings , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
+import { Close, Settings , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
 import { createUUID } from '../utils';

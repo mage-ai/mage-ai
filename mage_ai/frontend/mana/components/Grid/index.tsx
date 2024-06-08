@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Cell from './Cell';
+import Row from './Row';
 import { GridStyled, GridStyledProps } from './index.style';
 
 const GRID_CLASSNAME = 'grid-mana';
@@ -22,5 +23,5 @@ function Grid({
   );
 }
 
-export { Cell };
+export { Cell, Row };
 export default React.forwardRef(Grid);
