@@ -3,15 +3,17 @@ import { createRef, useContext, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import AppContainer from '@components/v2/AppContainer';
-import Button from '@mana/elements/Button';
+import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid, { Col as GridCol, Row as GridRow } from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import TextInput from '@mana/elements/Input/TextInput';
 import { AppConfig } from '@components/v2/AppContainer/interfaces';
-import { Cluster } from '@mana/icons';
+import { Cluster, Dark } from '@mana/icons';
 import { ContainerStyled } from './index.style';
+import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
 import { removeClassNames } from '@utils/elements';
+import { setThemeSettings } from '@mana/themes/utils';
 
 function GridContainer() {
   const themeContext = useContext(ThemeContext);
@@ -63,7 +65,9 @@ function GridContainer() {
         refRoots.current[uuid].render(
           <ThemeProvider theme={themeContext}>
             <AppContainer
-              onRemoveApp={(uuidApp, appConfigs) => {
+              onRemoveApp={(_uuidApp, appConfigs: {
+                [uuid: string]: AppConfig;
+              }) => {
                 if (!Object.keys(appConfigs || {})?.length) {
                   removePanel(uuid);
                 }
@@ -117,14 +121,25 @@ function GridContainer() {
                 </Row>
               </Col>
               <Col xs="content">
-                <Button
+                <ButtonGroup>
+                  <Button
+                    Icon={Dark}
+                    onClick={() => setThemeSettings(({ mode }) => ({
+                      mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
+                    }))}
+                  >
+                    Theme
+                  </Button>
+
+                  <Button
                     basic
                     onClick={() => {
                       addPanel({ uuid: String(Number(new Date())) });
                     }}
                   >
-                  Add panel
-                </Button>
+                    Add panel
+                  </Button>
+                </ButtonGroup>
               </Col>
             </Row>
           </Section>

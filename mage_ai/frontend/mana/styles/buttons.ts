@@ -15,20 +15,47 @@ const shared = css<StyleProps>`
   ${transition}
   ${text}
 
-  ${({ grouped, primary, secondary, theme }) =>
+  ${({ basic, grouped, primary, secondary, theme }) =>
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: primary
-        ? theme.colors.backgrounds.button.primary.default
+        ? theme.buttons.border.color.primary.hover
         : secondary
-          ? theme.colors.backgrounds.button.secondary.default
-          : theme.colors.backgrounds.button.base.default,
+          ? theme.buttons.border.color.secondary.hover
+          : basic
+            ? theme.buttons.border.color.basic.hover
+            : theme.buttons.border.color.base.hover,
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ basic, grouped }) => grouped
-  ? 'border: none;'
-    : (basic ? borders : bordersTransparent)}
+  ${({ grouped }) => grouped && `
+    border: none;
+  `}
+
+  ${({ basic, grouped }) => !grouped && basic && borders}
+  ${({ basic, grouped, primary, secondary, theme }) => !grouped && basic && `
+    border-color: ${primary
+      ? theme.buttons.border.color.primary.default
+      : secondary
+        ? theme.buttons.border.color.secondary.default
+        : basic
+          ? theme.buttons.border.color.basic.default
+          : theme.buttons.border.color.base.default};
+  `}
+
+  ${({ basic, grouped, primary, secondary, theme }) => !grouped && basic && `
+    &:hover {
+      border-color: ${primary
+        ? theme.buttons.border.color.primary.hover
+        : secondary
+          ? theme.buttons.border.color.secondary.hover
+          : basic
+            ? theme.buttons.border.color.basic.hover
+            : theme.buttons.border.color.base.hover};
+    }
+  `}
+
+  ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
   background-color: ${({ basic, primary, secondary, theme }) =>
     primary

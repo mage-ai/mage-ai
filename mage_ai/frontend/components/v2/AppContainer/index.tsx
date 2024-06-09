@@ -5,9 +5,14 @@ import { createRoot } from 'react-dom/client';
 import CellItem from './Cell';
 import Grid, { Cell } from '@mana/components/Grid';
 import { AppConfig } from './interfaces';
-import { createUUID } from './utils';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { removeClassNames } from '@utils/elements';
+
+import { randomSimpleHashGenerator } from '@utils/string';
+
+export function createUUID() {
+  return `grid-item-${randomSimpleHashGenerator()}`;
+}
 
 type GridContainerProps = {
   onRemoveApp: (uuidApp: string, appConfigs: {

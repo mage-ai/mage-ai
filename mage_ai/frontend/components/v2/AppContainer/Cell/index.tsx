@@ -1,17 +1,15 @@
 import React from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
-import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
-import Tag from '@mana/components/Tag';
-import Text from '@mana/elements/Text';
-import { Close, Settings , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
-import { ModeEnum } from '@mana/themes/modes';
-import { Row, Col } from '@mana/components/Container';
-import { createUUID } from '../utils';
-import { range } from '@utils/array';
-import { setThemeSettings } from '@mana/themes/utils';
+import { Close , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
+import { randomSimpleHashGenerator } from '@utils/string';
+import EditorApp from '@components/v2/Apps/Editor';
+
+export function createUUID() {
+  return `grid-item-${randomSimpleHashGenerator()}`;
+}
 
 export type CellLayoutOperationProps = {
   onAdd?: (
@@ -39,9 +37,6 @@ type CellProps = {
   row?: number;
   uuid: string;
 } & CellLayoutOperationProps;
-
-const TXT = `I’ve found several existing blocks that can potentially be reused.
-Take a look and let me know if anything works, you can also ask me to simply choose the best one.`;
 
 function Cell({
   onAdd,
@@ -115,45 +110,7 @@ function Cell({
           </Grid>
         </Grid>
 
-        <Divider />
-
-        <Row direction="column" nogutter>
-          <Col xs="content">
-            <Row>
-              <Col>
-                <Text>
-                  {range((Number(new Date()) % 2) + 1).reduce((acc) => TXT + ' ' + acc, '')}
-                </Text>
-              </Col>
-              <Col xs="content"><Tag>Block</Tag></Col>
-            </Row>
-            <Divider short />
-            <Row>
-              <Col>
-                <Text monospace>
-                  {range((Number(new Date()) % 2) + 1).reduce((acc) => TXT + ' ' + acc, '')}
-                </Text>
-              </Col>
-            </Row>
-          </Col>
-
-          <Divider />
-
-          <Col xs="content">
-            <ButtonGroup>
-              <Button
-                Icon={Settings}
-                onClick={() => setThemeSettings(({ mode }) => ({
-                  mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-                }))}
-                primary
-                small
-              >
-                Theme
-              </Button>
-            </ButtonGroup>
-          </Col>
-        </Row>
+        <EditorApp />
       </Section>
     </Grid>
   );

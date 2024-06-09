@@ -31,6 +31,12 @@ export interface TypographyColorsType {
 }
 
 export interface BordersType {
+  button: {
+    base: InteractiveElementStateColorsType;
+    basic: InteractiveElementStateColorsType;
+    primary: InteractiveElementStateColorsType;
+    secondary: InteractiveElementStateColorsType;
+  }
   input: {
     base: {
       active: ModeType;
@@ -47,6 +53,11 @@ interface ColorsDerivedType {
   icons: {
     base: string;
     inverted: string;
+  };
+  placeholder: {
+    input: {
+      base: string;
+    };
   };
   typography: TypographyColorsType;
 }
@@ -302,8 +313,8 @@ const ColorsDerived = {
         },
         hover: convert({
           [ModeEnum.DARK]: 'grayMd',
-          [ModeEnum.LIGHT]: 'grayMd',
-          [ModeEnum.MODE3]: 'grayMd',
+          [ModeEnum.LIGHT]: 'whiteHi',
+          [ModeEnum.MODE3]: 'whiteHi',
         }),
       },
       basic: {
@@ -314,8 +325,8 @@ const ColorsDerived = {
         },
         hover: convert({
           [ModeEnum.DARK]: 'whiteHi',
-          [ModeEnum.LIGHT]: 'blackHi',
-          [ModeEnum.MODE3]: 'blackHi',
+          [ModeEnum.LIGHT]: 'whiteHi',
+          [ModeEnum.MODE3]: 'whiteHi',
         }),
       },
       primary: {
@@ -369,6 +380,56 @@ const ColorsDerived = {
     },
   },
   borders: {
+    button: {
+      base: {
+        default: {
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        },
+        hover: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+      basic: {
+        default: {
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        },
+        hover: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+      primary: {
+        default: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+      secondary: {
+        default: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+    },
     input: {
       base: {
         active: convert({
