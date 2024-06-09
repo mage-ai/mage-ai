@@ -52,10 +52,10 @@ function Cell({ onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivElemen
   }
 
   return (
-    <Grid justifyContent='stretch' justifyItems='stretch' ref={ref}>
+    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
       <Section>
-        <Grid autoFlow='column' justifyContent='end' templateColumns='min-content'>
-          <Grid autoFlow='column' templateColumns='min-content'>
+        <Grid autoFlow="column" justifyContent="end" templateColumns="min-content">
+          <Grid autoFlow="column" templateColumns="min-content">
             <ButtonGroup itemsContained>
               <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} />
               <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} />
