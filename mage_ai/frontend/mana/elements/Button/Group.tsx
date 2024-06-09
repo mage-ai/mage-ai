@@ -22,15 +22,15 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
   return (
     <GroupStyled itemsContained={itemsContained}>
       <Grid
-        alignItems="center"
-        autoFlow="column"
+        alignItems='center'
+        autoFlow='column'
         columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
-        justifyContent="start"
-        templateColumns="min-content"
-        templateRows="1fr"
+        justifyContent='start'
+        templateColumns='min-content'
+        templateRows='1fr'
       >
         {React.Children.map(children, (child, index: number) => (
-          <div className="button-item" key={`button-item-${index}`}>
+          <div className='button-item' key={`button-item-${index}`}>
             {child}
           </div>
         ))}

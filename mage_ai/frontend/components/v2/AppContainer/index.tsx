@@ -186,10 +186,10 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
 
   return (
     <Grid
-      autoColumns="1fr"
-      autoRows="1fr"
-      justifyContent="stretch"
-      justifyItems="stretch"
+      autoColumns='1fr'
+      autoRows='1fr'
+      justifyContent='stretch'
+      justifyItems='stretch'
       ref={containerRef}
     />
   );
