@@ -14,10 +14,7 @@ const RowStyled = styled.div<RowStyledProps>`
   `}
 `;
 
-function Row({
-  children,
-  row = 0,
-}: RowProps) {
+function Row({ children, row = 0 }: RowProps) {
   return <RowStyled row={row}>{children}</RowStyled>;
 }
 

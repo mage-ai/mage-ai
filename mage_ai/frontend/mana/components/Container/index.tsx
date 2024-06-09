@@ -6,11 +6,7 @@ import Row from './Row';
 import { Container as ContainerGrid } from 'react-grid-system';
 
 function Container({ children }: { children: React.ReactNode }) {
-  return (
-    <ContainerGrid fluid>
-      {children}
-    </ContainerGrid>
-  );
+  return <ContainerGrid fluid>{children}</ContainerGrid>;
 }
 
 export { Col, Row };

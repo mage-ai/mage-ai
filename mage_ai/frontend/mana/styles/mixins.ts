@@ -70,13 +70,16 @@ export const outlineHover = ({
     }
   `}
 
-  ${!active && `
+  ${!active &&
+  `
     &:active {
       box-shadow: none;
     }
   `}
 
-  ${({ theme }) => active && `
+  ${({ theme }) =>
+    active &&
+    `
     &:active {
       box-shadow:
         0 0 0

@@ -3,7 +3,7 @@ import React from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
-import { Close , CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
+import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { randomSimpleHashGenerator } from '@utils/string';
 import EditorApp from '@components/v2/Apps/Editor';
 
@@ -38,74 +38,33 @@ type CellProps = {
   uuid: string;
 } & CellLayoutOperationProps;
 
-function Cell({
-  onAdd,
-  onRemove,
-  uuid,
-}: CellProps, ref: React.Ref<HTMLDivElement>) {
+function Cell({ onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivElement>) {
   function addApp(rowRelative: number, columnRelative: number) {
-    onAdd(
-      createUUID(),
-      {
-        grid: {
-          relative: {
-            column: columnRelative,
-            row: rowRelative,
-            uuid,
-          },
+    onAdd(createUUID(), {
+      grid: {
+        relative: {
+          column: columnRelative,
+          row: rowRelative,
+          uuid,
         },
       },
-    );
+    });
   }
 
   return (
-    <Grid
-      justifyContent="stretch"
-      justifyItems="stretch"
-      ref={ref}
-    >
+    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
       <Section>
-        <Grid
-          autoFlow="column"
-          justifyContent="end"
-          templateColumns="min-content"
-        >
+        <Grid autoFlow="column" justifyContent="end" templateColumns="min-content">
           <Grid autoFlow="column" templateColumns="min-content">
             <ButtonGroup itemsContained>
-              <Button
-              Icon={CaretDown}
-                basic
-                grouped
-                onClick={() => addApp(1, 0)}
-              />
-              <Button
-              Icon={CaretUp}
-                basic
-                grouped
-                onClick={() => addApp(-1, 0)}
-              />
-              <Button
-              Icon={CaretLeft}
-                basic
-                grouped
-                onClick={() => addApp(0, -1)}
-              />
-              <Button
-              Icon={CaretRight}
-                basic
-                grouped
-                onClick={() => addApp(0, 1)}
-              />
+              <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} />
+              <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} />
+              <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} />
+              <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} />
             </ButtonGroup>
 
             <ButtonGroup itemsContained>
-              <Button
-              Icon={Close}
-              basic
-              grouped
-              onClick={() => onRemove(uuid)}
-              small
-            />
+              <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
             </ButtonGroup>
           </Grid>
         </Grid>

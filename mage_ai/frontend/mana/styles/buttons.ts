@@ -6,7 +6,7 @@ import { outlineHover, transition } from './mixins';
 
 export type StyleProps = {
   basic?: boolean;
-  grouped?: boolean
+  grouped?: boolean;
   primary?: boolean;
   secondary?: boolean;
 } & TextStyleProps;
@@ -28,30 +28,42 @@ const shared = css<StyleProps>`
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ grouped }) => grouped && `
+  ${({ grouped }) =>
+    grouped &&
+    `
     border: none;
   `}
 
   ${({ basic, grouped }) => !grouped && basic && borders}
-  ${({ basic, grouped, primary, secondary, theme }) => !grouped && basic && `
-    border-color: ${primary
-      ? theme.buttons.border.color.primary.default
-      : secondary
-        ? theme.buttons.border.color.secondary.default
-        : basic
-          ? theme.buttons.border.color.basic.default
-          : theme.buttons.border.color.base.default};
+  ${({ basic, grouped, primary, secondary, theme }) =>
+    !grouped &&
+    basic &&
+    `
+    border-color: ${
+      primary
+        ? theme.buttons.border.color.primary.default
+        : secondary
+          ? theme.buttons.border.color.secondary.default
+          : basic
+            ? theme.buttons.border.color.basic.default
+            : theme.buttons.border.color.base.default
+    };
   `}
 
-  ${({ basic, grouped, primary, secondary, theme }) => !grouped && basic && `
+  ${({ basic, grouped, primary, secondary, theme }) =>
+    !grouped &&
+    basic &&
+    `
     &:hover {
-      border-color: ${primary
-        ? theme.buttons.border.color.primary.hover
-        : secondary
-          ? theme.buttons.border.color.secondary.hover
-          : basic
-            ? theme.buttons.border.color.basic.hover
-            : theme.buttons.border.color.base.hover};
+      border-color: ${
+        primary
+          ? theme.buttons.border.color.primary.hover
+          : secondary
+            ? theme.buttons.border.color.secondary.hover
+            : basic
+              ? theme.buttons.border.color.basic.hover
+              : theme.buttons.border.color.base.hover
+      };
     }
   `}
 
@@ -77,7 +89,9 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ theme }) => theme.fonts.lineHeight.base};
 
-  ${({ basic, grouped, primary, secondary, theme }) => !grouped && `
+  ${({ basic, grouped, primary, secondary, theme }) =>
+    !grouped &&
+    `
     &:hover {
       background-color: ${
         primary
@@ -86,7 +100,8 @@ const shared = css<StyleProps>`
             ? theme.colors.backgrounds.button.secondary.hover
             : basic
               ? theme.colors.backgrounds.button.basic.hover
-              : theme.colors.backgrounds.button.base.hover};
+              : theme.colors.backgrounds.button.base.hover
+      };
     }
   `}
 
@@ -98,13 +113,13 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ grouped, theme }) => grouped ? 0 : theme.buttons.padding.base};
+  padding: ${({ grouped, theme }) => (grouped ? 0 : theme.buttons.padding.base)};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ grouped, theme }) => grouped ? 0 : theme.buttons.padding.sm};
+  padding: ${({ grouped, theme }) => (grouped ? 0 : theme.buttons.padding.sm)};
 `;
 
 export default base;

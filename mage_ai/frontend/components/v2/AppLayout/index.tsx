@@ -27,9 +27,8 @@ function GridContainer() {
       const columns = Object.keys(refCells?.current || {})?.length || 1;
       containerRef.current.className = [
         `grid-template-columns-${columns}`,
-        removeClassNames(
-          containerRef?.current?.className,
-          cn => cn.startsWith('grid-template-columns-'),
+        removeClassNames(containerRef?.current?.className, cn =>
+          cn.startsWith('grid-template-columns-'),
         ),
       ].join(' ');
     }
@@ -65,9 +64,12 @@ function GridContainer() {
         refRoots.current[uuid].render(
           <ThemeProvider theme={themeContext}>
             <AppContainer
-              onRemoveApp={(_uuidApp, appConfigs: {
-                [uuid: string]: AppConfig;
-              }) => {
+              onRemoveApp={(
+                _uuidApp,
+                appConfigs: {
+                  [uuid: string]: AppConfig;
+                },
+              ) => {
                 if (!Object.keys(appConfigs || {})?.length) {
                   removePanel(uuid);
                 }
@@ -83,11 +85,7 @@ function GridContainer() {
 
   return (
     <ContainerStyled>
-      <Grid
-        height="inherit"
-        pad
-        templateRows="auto 1fr"
-      >
+      <Grid height="inherit" pad templateRows="auto 1fr">
         <GridRow row={1}>
           <Section>
             <Row align="center" justify="start">
@@ -105,18 +103,10 @@ function GridContainer() {
               <Col>
                 <Row>
                   <Col>
-                    <TextInput
-                      monospace
-                      number
-                      placeholder="Row"
-                    />
+                    <TextInput monospace number placeholder="Row" />
                   </Col>
                   <Col>
-                    <TextInput
-                      monospace
-                      number
-                      placeholder="Column"
-                    />
+                    <TextInput monospace number placeholder="Column" />
                   </Col>
                 </Row>
               </Col>
@@ -124,9 +114,11 @@ function GridContainer() {
                 <ButtonGroup>
                   <Button
                     Icon={Dark}
-                    onClick={() => setThemeSettings(({ mode }) => ({
-                      mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-                    }))}
+                    onClick={() =>
+                      setThemeSettings(({ mode }) => ({
+                        mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
+                      }))
+                    }
                   >
                     Theme
                   </Button>
@@ -145,11 +137,7 @@ function GridContainer() {
           </Section>
         </GridRow>
 
-        <Grid
-          ref={containerRef}
-          row={2}
-          uuid="app-layout"
-        />
+        <Grid ref={containerRef} row={2} uuid="app-layout" />
       </Grid>
     </ContainerStyled>
   );

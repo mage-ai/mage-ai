@@ -12,16 +12,11 @@ type GridProps = {
   children?: React.ReactNode;
 } & GridStyledProps;
 
-function Grid({
-  children,
-  className: classNameProp,
-  uuid,
-  ...props
-}: GridProps, ref: React.Ref<HTMLDivElement>) {
-  const className = [
-    uuid || GRID_CLASSNAME,
-    classNameProp || '',
-  ].join(' ');
+function Grid(
+  { children, className: classNameProp, uuid, ...props }: GridProps,
+  ref: React.Ref<HTMLDivElement>,
+) {
+  const className = [uuid || GRID_CLASSNAME, classNameProp || ''].join(' ');
 
   return (
     <GridStyled {...props} className={className} ref={ref} uuid={uuid}>

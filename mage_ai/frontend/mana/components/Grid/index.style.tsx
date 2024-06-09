@@ -70,60 +70,78 @@ function buildRowColumnStyles(): string[] {
 }
 
 const styles = css<GridStyledProps>`
-  ${({ height }) => typeof height !== 'undefined' && `
+  ${({ height }) =>
+    typeof height !== 'undefined' &&
+    `
     height: ${height};
   `}
 
-  ${({ row }) => typeof row !== 'undefined' && `
+  ${({ row }) =>
+    typeof row !== 'undefined' &&
+    `
     grid-row: ${row};
   `}
 
-  ${({ autoColumns }) => typeof autoColumns !== 'undefined' && `
+  ${({ autoColumns }) =>
+    typeof autoColumns !== 'undefined' &&
+    `
     grid-auto-columns: ${autoColumns};
   `}
 
-  ${({ autoRows }) => typeof autoRows !== 'undefined' && `
+  ${({ autoRows }) =>
+    typeof autoRows !== 'undefined' &&
+    `
     grid-auto-rows: ${autoRows};
   `}
 
-  ${({ autoFlow }) => typeof autoFlow !== 'undefined' && `
+  ${({ autoFlow }) =>
+    typeof autoFlow !== 'undefined' &&
+    `
     grid-auto-flow: ${autoFlow};
   `}
 
-  ${({ templateColumns }) => typeof templateColumns !== 'undefined' && `
+  ${({ templateColumns }) =>
+    typeof templateColumns !== 'undefined' &&
+    `
     grid-template-columns: ${templateColumns};
   `}
 
-  ${({ templateRows }) => typeof templateRows !== 'undefined' && `
+  ${({ templateRows }) =>
+    typeof templateRows !== 'undefined' &&
+    `
     grid-template-rows: ${templateRows};
   `}
 
-  ${({ alignItems }) => typeof alignItems !== 'undefined' && `
+  ${({ alignItems }) =>
+    typeof alignItems !== 'undefined' &&
+    `
     align-items: ${alignItems};
   `}
 
-  ${({ alignContent }) => typeof alignContent !== 'undefined' && `
+  ${({ alignContent }) =>
+    typeof alignContent !== 'undefined' &&
+    `
     align-content: ${alignContent};
   `}
 
-  ${({ justifyItems }) => typeof justifyItems !== 'undefined' && `
+  ${({ justifyItems }) =>
+    typeof justifyItems !== 'undefined' &&
+    `
     justify-items: ${justifyItems};
   `}
 
-  ${({ justifyContent }) => typeof justifyContent !== 'undefined' && `
+  ${({ justifyContent }) =>
+    typeof justifyContent !== 'undefined' &&
+    `
     justify-content: ${justifyContent};
   `}
 
-  ${({
-    columnGap,
-    pad,
-    rowGap,
-  }) => `
+  ${({ columnGap, pad, rowGap }) => `
     display: grid;
     padding: ${pad ? gutterWidthBase : 0}px;
 
-    column-gap: ${typeof columnGap === 'undefined' ? gutterWidthBase: columnGap}px;
-    row-gap: ${typeof rowGap === 'undefined' ? gutterWidthBase: rowGap}px;
+    column-gap: ${typeof columnGap === 'undefined' ? gutterWidthBase : columnGap}px;
+    row-gap: ${typeof rowGap === 'undefined' ? gutterWidthBase : rowGap}px;
 
 
     ${buildGridTemplateColumns().join('\n')}
@@ -142,5 +160,5 @@ const stylesUUID = css<GridStyledProps>`
 `;
 
 export const GridStyled = styled.div<GridStyledProps>`
-  ${({ uuid }) => uuid ? stylesUUID : styles}
+  ${({ uuid }) => (uuid ? stylesUUID : styles)}
 `;

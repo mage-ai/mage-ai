@@ -5,12 +5,7 @@ type CellProps = {
   uuid?: string;
 };
 
-function Cell({
-  column = 0,
-  columnSpan = 0,
-  row = 0,
-  uuid,
-}: CellProps) {
+function Cell({ column = 0, columnSpan = 0, row = 0, uuid }: CellProps) {
   const element = document.createElement('div');
   element.className = [
     'grid-cell',

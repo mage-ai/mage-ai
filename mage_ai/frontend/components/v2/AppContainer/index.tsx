@@ -15,9 +15,12 @@ export function createUUID() {
 }
 
 type GridContainerProps = {
-  onRemoveApp: (uuidApp: string, appConfigs: {
-    [uuid: string]: AppConfig;
-  }) => void;
+  onRemoveApp: (
+    uuidApp: string,
+    appConfigs: {
+      [uuid: string]: AppConfig;
+    },
+  ) => void;
 };
 
 function GridContainer({ onRemoveApp }: GridContainerProps) {
@@ -50,76 +53,80 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
       const column = columnInit < 0 ? 0 : columnInit;
 
       rowsMapping[row] = rowsMapping[row] || [];
-      rowsMapping[row] = insertAtIndex({
+      rowsMapping[row] = insertAtIndex(
+        {
+          column,
+          row,
+          uuid: uuidApp,
+        },
         column,
-        row,
-        uuid: uuidApp,
-      }, column, rowsMapping[row]);
-
+        rowsMapping[row],
+      );
     }
 
     const colsMax = Math.max(
       ...Object.values(rowsMapping || {})?.map((configs: AppConfig[]) => configs?.length || 0),
     );
 
-    sortByKey(
-      Object.entries(rowsMapping), ([r]: [r: number]) => r,
-    )?.forEach(([_rowIdx, configs]: [number, AppConfig[]], idxRow: number) => {
-      const colsInRow = configs?.length || 0;
+    sortByKey(Object.entries(rowsMapping), ([r]: [r: number]) => r)?.forEach(
+      ([_rowIdx, configs]: [number, AppConfig[]], idxRow: number) => {
+        const colsInRow = configs?.length || 0;
 
-      sortByKey(
-        configs, ({ column: columnCur }) => columnCur,
-      )?.forEach((config: AppConfig, idxCol: number) => {
-        const uuidCur = config?.uuid;
-        const column = idxCol;
-        // 3 columns max
-        // 1 columns in current row
-        // item 0: column 0, columnSpan 0 + (3 - 1)/(1-0) + 1 = 3; col-start: 0, col-end: 3
+        sortByKey(configs, ({ column: columnCur }) => columnCur)?.forEach(
+          (config: AppConfig, idxCol: number) => {
+            const uuidCur = config?.uuid;
+            const column = idxCol;
+            // 3 columns max
+            // 1 columns in current row
+            // item 0: column 0, columnSpan 0 + (3 - 1)/(1-0) + 1 = 3; col-start: 0, col-end: 3
 
-        // 3 columns max
-        // 2 columns in current row
-        // item 0: column 0, columnSpan 0 + (3 - 2)/(2-0) + 1 = 1; col-start: 0, col-end: 2
-        // item 1: column 1, columnSpan 1 + (3 - 2)/(2-1) + 1 = 3; col-start: 1, col-end: 2
+            // 3 columns max
+            // 2 columns in current row
+            // item 0: column 0, columnSpan 0 + (3 - 2)/(2-0) + 1 = 1; col-start: 0, col-end: 2
+            // item 1: column 1, columnSpan 1 + (3 - 2)/(2-1) + 1 = 3; col-start: 1, col-end: 2
 
-        // 3 columns max
-        // 3 columns in current row
-        // item 0: column 0, columnSpan 0 + (3 - 3)/(3-0) + 1 = 1; col-start: 0, col-end: 1
-        // item 1: column 1, columnSpan 1 + (3 - 3)/(3-1) + 1 = 2; col-start: 1, col-end: 2
-        // item 2: column 1, columnSpan 2 + (3 - 3)/(3-2) + 1 = 3; col-start: 2, col-end: 3
-        const columnSpan = column + Math.floor((colsMax - colsInRow)/(colsInRow - idxCol)) + 1;
+            // 3 columns max
+            // 3 columns in current row
+            // item 0: column 0, columnSpan 0 + (3 - 3)/(3-0) + 1 = 1; col-start: 0, col-end: 1
+            // item 1: column 1, columnSpan 1 + (3 - 3)/(3-1) + 1 = 2; col-start: 1, col-end: 2
+            // item 2: column 1, columnSpan 2 + (3 - 3)/(3-2) + 1 = 3; col-start: 2, col-end: 3
+            const columnSpan =
+              column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol)) + 1;
 
-        refAppConfigs.current[uuidCur] = {
-          ...config,
-          column,
-          columnSpan,
-          row: idxRow,
-        };
+            refAppConfigs.current[uuidCur] = {
+              ...config,
+              column,
+              columnSpan,
+              row: idxRow,
+            };
 
-        const element = document.getElementById(uuidCur);
-        if (element) {
-          element.className = [
-            'grid-cell',
-            `grid-row-${idxRow}`,
-            `grid-col-start-${column}`,
-            `grid-col-end-${columnSpan}`,
-            removeClassNames(element?.className, cn => cn.startsWith('grid-')),
-          ].join(' ');
-        }
-      });
-    });
+            const element = document.getElementById(uuidCur);
+            if (element) {
+              element.className = [
+                'grid-cell',
+                `grid-row-${idxRow}`,
+                `grid-col-start-${column}`,
+                `grid-col-end-${columnSpan}`,
+                removeClassNames(element?.className, cn => cn.startsWith('grid-')),
+              ].join(' ');
+            }
+          },
+        );
+      },
+    );
   }
 
-  function addApp(uuidApp: string, opts?: {
-    container?: HTMLElement;
-    grid?: {
-      absolute?: AppConfig;
-      relative?: AppConfig;
-    };
-  }) {
-    const {
-      container,
-      grid,
-    } = opts || {};
+  function addApp(
+    uuidApp: string,
+    opts?: {
+      container?: HTMLElement;
+      grid?: {
+        absolute?: AppConfig;
+        relative?: AppConfig;
+      };
+    },
+  ) {
+    const { container, grid } = opts || {};
     updateLayout(uuidApp, grid?.relative);
 
     if (!(uuidApp in refAppConfigs?.current)) {
@@ -142,12 +149,7 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
 
         refRoots.current[uuidApp].render(
           <ThemeProvider theme={themeContext}>
-            <CellItem
-              onAdd={addApp}
-              onRemove={removeApp}
-              ref={ref}
-              uuid={uuidApp}
-            />
+            <CellItem onAdd={addApp} onRemove={removeApp} ref={ref} uuid={uuidApp} />
           </ThemeProvider>,
         );
       }

@@ -16,7 +16,8 @@ export const styles = {
 
 type ColProps = {
   className?: string;
-} & ColGridProps & WithDisplayProps;
+} & ColGridProps &
+  WithDisplayProps;
 
 const ColComponent = forwardRef<any, ColProps>(({ children, ...props }, ref) => (
   <ColGrid {...props} ref={ref}>

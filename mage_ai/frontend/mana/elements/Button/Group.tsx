@@ -10,18 +10,15 @@ type GroupStyleProps = {
 };
 
 const GroupStyled = styled.div<GroupStyleProps>`
-  ${({ itemsContained }) => itemsContained ? borders : ''}
-  ${({ itemsContained, theme }) => itemsContained
-    && `
-      padding: ${theme.buttons.padding.sm};
+  ${({ itemsContained }) => (itemsContained ? borders : '')}
+  ${({ itemsContained, theme }) =>
+    itemsContained &&
     `
-  }
+      padding: ${theme.buttons.padding.sm};
+    `}
 `;
 
-function Group({
-  children,
-  itemsContained,
-}: { children: React.ReactNode } & GroupStyleProps) {
+function Group({ children, itemsContained }: { children: React.ReactNode } & GroupStyleProps) {
   return (
     <GroupStyled itemsContained={itemsContained}>
       <Grid
@@ -33,7 +30,9 @@ function Group({
         templateRows="1fr"
       >
         {React.Children.map(children, (child, index: number) => (
-          <div className="button-item" key={`button-item-${index}`}>{child}</div>
+          <div className="button-item" key={`button-item-${index}`}>
+            {child}
+          </div>
         ))}
       </Grid>
     </GroupStyled>

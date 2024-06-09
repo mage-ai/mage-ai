@@ -16,7 +16,11 @@ const SectionStyled = styled.section<SectionProps>`
 `;
 
 function Section({ children, ...props }: SectionProps, ref: React.Ref<HTMLDivElement>) {
-  return <SectionStyled {...props} ref={ref}>{children}</SectionStyled>;
+  return (
+    <SectionStyled {...props} ref={ref}>
+      {children}
+    </SectionStyled>
+  );
 }
 
 export default React.forwardRef(Section);

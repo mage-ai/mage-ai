@@ -298,7 +298,7 @@ function MyApp(props: MyAppProps & AppProps) {
 
   const themeMemo = useMemo(() => {
     if (isV2) {
-      return themesMapping?.[version] || getTheme() as V2ThemeType;
+      return themesMapping?.[version] || (getTheme() as V2ThemeType);
     }
 
     return Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme);

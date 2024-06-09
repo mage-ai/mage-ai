@@ -36,7 +36,7 @@ export interface BordersType {
     basic: InteractiveElementStateColorsType;
     primary: InteractiveElementStateColorsType;
     secondary: InteractiveElementStateColorsType;
-  }
+  };
   input: {
     base: {
       active: ModeType;

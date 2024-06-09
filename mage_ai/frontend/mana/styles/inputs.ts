@@ -51,11 +51,12 @@ const shared = css<StyleProps>`
     border-color: ${({ theme }) => theme.inputs.border.color.base.active};
   }
 
-  ${({ theme }) => outlineHover({
-    active: true,
-    borderColor: theme.fonts.color.text.inverted,
-    outlineColor: theme.inputs.border.color.base.hover,
-  })}
+  ${({ theme }) =>
+    outlineHover({
+      active: true,
+      borderColor: theme.fonts.color.text.inverted,
+      outlineColor: theme.inputs.border.color.base.hover,
+    })}
 `;
 
 const base = css<StyleProps>`

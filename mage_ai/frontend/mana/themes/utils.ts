@@ -21,7 +21,7 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
   }
 
   if (typeof themeSettings === 'string') {
-    themeSettings =  JSON.parse(decodeURIComponent(themeSettings));
+    themeSettings = JSON.parse(decodeURIComponent(themeSettings));
   }
 
   if (
@@ -35,19 +35,16 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
   return (themeSettings || {}) as ThemeSettingsType;
 }
 
-export function getTheme(opts?: {
-  theme?: ThemeSettingsType;
-  ctx?: any;
-}): ThemeType {
+export function getTheme(opts?: { theme?: ThemeSettingsType; ctx?: any }): ThemeType {
   return buildTheme(opts?.theme || getThemeSettings(opts?.ctx));
 }
 
 export function setThemeSettings(
   themeSettings: ThemeSettingsType | ((prev: ThemeSettingsType) => ThemeSettingsType),
 ) {
-  const theme = JSON.stringify(typeof themeSettings === 'function'
-    ? themeSettings(getThemeSettings())
-    : themeSettings);
+  const theme = JSON.stringify(
+    typeof themeSettings === 'function' ? themeSettings(getThemeSettings()) : themeSettings,
+  );
 
   // @ts-ignore
   Cookies.set(KEY, theme, { ...SHARED_OPTS, expires: 9999 });
