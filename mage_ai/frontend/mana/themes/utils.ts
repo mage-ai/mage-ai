@@ -2,7 +2,7 @@
 import Cookies from 'js-cookie';
 import ServerCookie from 'next-cookies';
 
-import ThemeType, { ThemeSettingsType, ThemeTypeEnum } from './interfaces';
+import ThemeType, { ThemeSettingsType } from './interfaces';
 import buildTheme from './build';
 import { SHARED_OPTS } from '@api/utils/token';
 
@@ -21,7 +21,7 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
   }
 
   if (typeof themeSettings === 'string') {
-    themeSettings = JSON.parse(themeSettings);
+    themeSettings = JSON.parse(decodeURIComponent(themeSettings));
   }
 
   if (
@@ -32,14 +32,20 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
     return themeSettings;
   }
 
-  return {};
+  return (themeSettings || {}) as ThemeSettingsType;
 }
 
-export function getTheme(themeSettings?: ThemeSettingsType, ctx?: any): ThemeType {
-  return buildTheme(themeSettings);
+export function getTheme(opts?: { theme?: ThemeSettingsType; ctx?: any }): ThemeType {
+  return buildTheme(opts?.theme || getThemeSettings(opts?.ctx));
 }
 
-export function setThemeSettings(themeSetings: ThemeSettingsType) {
+export function setThemeSettings(
+  themeSettings: ThemeSettingsType | ((prev: ThemeSettingsType) => ThemeSettingsType),
+) {
+  const theme = JSON.stringify(
+    typeof themeSettings === 'function' ? themeSettings(getThemeSettings()) : themeSettings,
+  );
+
   // @ts-ignore
-  Cookies.set(KEY, themeSetings, { ...SHARED_OPTS, expires: 9999 });
+  Cookies.set(KEY, theme, { ...SHARED_OPTS, expires: 9999 });
 }

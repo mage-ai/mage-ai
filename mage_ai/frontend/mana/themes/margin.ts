@@ -1,5 +1,5 @@
 export enum MarginEnum {
-  BASE = 14,
+  BASE = 12,
 }
 
 export interface MarginType {

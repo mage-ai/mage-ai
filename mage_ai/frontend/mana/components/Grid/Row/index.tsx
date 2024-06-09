@@ -1,15 +1,21 @@
-import React, { forwardRef } from 'react';
-import { Row as RowGrid, RowProps as RowGridProps } from 'react-grid-system';
-import useWithDisplay, { WithDisplayProps } from '../../../hooks/useWithDisplay';
+import React from 'react';
+import styled from 'styled-components';
 
-type RowProps = RowGridProps & WithDisplayProps;
+type RowStyledProps = {
+  row: number;
+};
+type RowProps = {
+  children: React.ReactNode;
+} & RowStyledProps;
 
-const RowComponent = forwardRef<any, RowProps>(({ children, ...props }, ref) => (
-  <RowGrid {...props} ref={ref}>
-    {children}
-  </RowGrid>
-));
+const RowStyled = styled.div<RowStyledProps>`
+  ${({ row }) => `
+    grid-row: ${row};
+  `}
+`;
 
-const RowWithDisplay = useWithDisplay(RowComponent);
+function Row({ children, row = 0 }: RowProps) {
+  return <RowStyled row={row}>{children}</RowStyled>;
+}
 
-export default RowWithDisplay;
+export default Row;

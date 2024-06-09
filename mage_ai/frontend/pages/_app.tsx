@@ -38,16 +38,16 @@ import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
-import { getTheme } from '@mana/themes/utils';
 import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/theme';
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
-// Pro
+// V2
 import V2Layout from '@components/v2/Layout';
-import V2ThemeType from '@mana/themes/interfaces';
+import V2ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
 import V2Head from '@mana/elements/Head';
 import { LayoutVersionEnum } from '@utils/layouts';
+import { getTheme } from '@mana/themes/utils';
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 
@@ -58,6 +58,9 @@ type AppInternalProps = {
   pro?: boolean;
   themeProps?: {
     currentTheme?: any;
+  };
+  themes?: {
+    [key: string]: ThemeSettingsType;
   };
   title?: string;
   version?: LayoutVersionEnum;
@@ -76,7 +79,7 @@ function MyApp(props: MyAppProps & AppProps) {
   const keyHistory = useRef([]);
 
   const { Component, currentTheme, pageProps, router } = props;
-  const { defaultTitle, themeProps = {}, title, version } = pageProps;
+  const { defaultTitle, themeProps = {}, themes: themesMapping, title, version } = pageProps;
 
   const { featureEnabled, featureUUIDs } = useProject();
 
@@ -295,11 +298,11 @@ function MyApp(props: MyAppProps & AppProps) {
 
   const themeMemo = useMemo(() => {
     if (isV2) {
-      return getTheme() as V2ThemeType;
+      return themesMapping?.[version] || (getTheme() as V2ThemeType);
     }
 
     return Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme);
-  }, [themeProps?.currentTheme, currentTheme, isV2]);
+  }, [themeProps?.currentTheme, themesMapping, currentTheme, isV2, version]);
 
   const head = useMemo(() => {
     const HeadEl = isV2 ? V2Head : Head;
@@ -358,10 +361,6 @@ function MyApp(props: MyAppProps & AppProps) {
 
 MyApp.getInitialProps = async (appContext: AppContext) => {
   const appProps = await App.getInitialProps(appContext);
-  if (appProps?.pageProps?.version !== undefined) {
-    appProps.pageProps.version = appContext.ctx.query.version;
-    (appContext.ctx as any).query.version = appProps?.pageProps?.version;
-  }
 
   return {
     ...appProps,

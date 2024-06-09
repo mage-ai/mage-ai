@@ -1,6 +1,7 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 
+import ButtonGroup from './Group';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
@@ -8,7 +9,7 @@ import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   anchor?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   small?: boolean;
 } & StyleProps;
 
@@ -25,6 +26,7 @@ const CSS = css<ButtonStyleProps>`
 
   ${({ small }) => (small ? buttonsSm : buttons)}
   column-gap: ${({ Icon }) => (Icon ? 8 : 6)}px;
+  white-space: nowrap;
 `;
 
 const ButtonStyled = styled.button<ButtonStyleProps>`
@@ -57,4 +59,5 @@ function ButtonWrapper(props: ButtonProps) {
   return useWithLogging(Button)(props);
 }
 
+export { ButtonGroup };
 export default ButtonWrapper;

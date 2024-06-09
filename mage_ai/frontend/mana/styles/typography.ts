@@ -3,6 +3,7 @@ import { css } from 'styled-components';
 export type StyleProps = {
   black?: boolean;
   bold?: boolean;
+  inverted?: boolean;
   italic?: boolean;
   light?: boolean;
   medium?: boolean;
@@ -13,7 +14,7 @@ export type StyleProps = {
 export const monospaceFontFamily = css<StyleProps>`
   font-family: ${({ black, bold, italic, light, medium, semiBold, theme }) =>
     light
-      ? theme.fonts.family.monospace.light
+      ? theme.fonts.family.monospace.lightFont
       : medium
         ? theme.fonts.family.monospace.medium
         : semiBold
@@ -27,23 +28,28 @@ export const monospaceFontFamily = css<StyleProps>`
               : theme.fonts.family.monospace.regular};
 `;
 
-const base = css<StyleProps>`
-  color: ${({ theme }) => theme.fonts.color.text.base};
-
-  font-family: ${({ black, bold, light, medium, monospace, semiBold, theme }) =>
-    monospace
-      ? monospaceFontFamily
-      : light
-        ? theme.fonts.family.base.light
-        : medium
-          ? theme.fonts.family.base.medium
-          : semiBold
-            ? theme.fonts.family.base.semiBold
+const baseFontFamily = css<StyleProps>`
+  font-family: ${({ black, bold, light, medium, semiBold, theme }) =>
+    light
+      ? theme.fonts.family.base.lightFont
+      : medium
+        ? theme.fonts.family.base.medium
+        : semiBold
+          ? theme.fonts.family.base.semiBold
+          : black
+            ? theme.fonts.family.base.black
             : bold
               ? theme.fonts.family.base.bold
-              : black
-                ? theme.fonts.family.base.black
-                : theme.fonts.family.base.regular};
+              : theme.fonts.family.base.regular};
+`;
+
+const base = css<StyleProps>`
+  ${({ monospace }) => monospace && monospaceFontFamily}
+
+  ${({ monospace }) => !monospace && baseFontFamily}
+
+  color: ${({ inverted, theme }) =>
+    inverted ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
   font-size: ${({ theme }) => theme.fonts.size.base};
   font-style: ${({ italic, theme }) =>
@@ -70,8 +76,9 @@ export const baseSm = css<StyleProps>`
 `;
 
 export const baseXs = css<StyleProps>`
-  ${baseSm}
+  ${base}
   font-size: ${({ theme }) => theme.fonts.size.xs};
+  line-height: ${({ theme }) => theme.fonts.lineHeight.xs};
 `;
 
 export default base;

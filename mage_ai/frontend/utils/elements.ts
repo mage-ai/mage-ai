@@ -7,8 +7,15 @@ export function addClassNames(className: string, classNames: string[]): string {
   return (classNames || [])?.concat(arr).join(' ');
 }
 
-export function removeClassNames(className: string, classNames: string[]): string {
-  const arr = (className || '')?.split(' ')?.filter(cn => !classNames?.includes(cn));
+export function removeClassNames(
+  className: string,
+  classNames: string[] | ((className: string) => boolean),
+): string {
+  const arr = (className || '')
+    ?.split(' ')
+    ?.filter(cn =>
+      typeof classNames === 'function' ? !classNames(cn) : !classNames?.includes(cn),
+    );
 
   return (arr || [])?.join(' ');
 }

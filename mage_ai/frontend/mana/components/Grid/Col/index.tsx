@@ -1,15 +1,13 @@
-import React, { forwardRef } from 'react';
-import { Col as ColGrid, ColProps as ColGridProps } from 'react-grid-system';
-import useWithDisplay, { WithDisplayProps } from '../../../hooks/useWithDisplay';
+type ColProps = {
+  uuid?: string;
+};
 
-type ColProps = ColGridProps & WithDisplayProps;
+function Col({ uuid }: ColProps) {
+  const element = document.createElement('div');
+  element.id = uuid;
+  element.style.display = 'grid';
 
-const ColComponent = forwardRef<any, ColProps>(({ children, ...props }, ref) => (
-  <ColGrid {...props} ref={ref}>
-    {children}
-  </ColGrid>
-));
+  return element;
+}
 
-const ColWithDisplay = useWithDisplay(ColComponent);
-
-export default ColWithDisplay;
+export default Col;

@@ -12,7 +12,7 @@ type LoggingType = {
 
 export type WithLoggingProps = {
   onClick: (event: React.MouseEvent) => void;
-  logEvent: LoggingType;
+  logEvent?: LoggingType;
 };
 
 const useWithLogging = <P extends object>(Component: ComponentType<P>) => {
@@ -21,11 +21,13 @@ const useWithLogging = <P extends object>(Component: ComponentType<P>) => {
 
     const handleClick = useCallback(
       (event: React.MouseEvent) => {
-        console.log('Logging event', {
-          action: 'click',
-          component: Component.displayName || Component.name || 'Unknown',
-          ...logEvent,
-        });
+        if (logEvent) {
+          console.log('Logging event', {
+            action: 'click',
+            component: Component.displayName || Component.name || 'Unknown',
+            ...logEvent,
+          });
+        }
 
         if (onClick) {
           onClick(event);

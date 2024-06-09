@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { baseSm } from '../../styles/typography';
+import { baseXs } from '../../styles/typography';
 
 type StyleProps = {
   inverted?: boolean;
@@ -9,7 +9,7 @@ type StyleProps = {
 };
 
 const TagStyled = styled.div<StyleProps>`
-  ${baseSm}
+  ${baseXs}
 
   background-color: ${({ inverted, secondary, theme }) =>
     inverted
