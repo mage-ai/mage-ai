@@ -37,14 +37,14 @@ const AStyled = styled.a<ButtonStyleProps>`
   ${CSS}
 `;
 
-function Button({ anchor, basic, children, primary, secondary, tag, ...props }: ButtonProps) {
+function Button({ anchor, basic, children, primary, secondary, small, tag, ...props }: ButtonProps) {
   const HTMLTag = anchor ? AStyled : ButtonStyled;
   const { Icon } = props;
 
   return (
     // @ts-ignore
-    <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary}>
-      {Icon && <Icon inverted={primary || secondary} />}
+    <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary} small={small}>
+      {Icon && <Icon inverted={primary || secondary} small={small} />}
       {children}
       {tag && (
         <Tag inverted={primary || secondary} passthrough secondary={basic}>

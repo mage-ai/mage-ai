@@ -25,12 +25,13 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
         alignItems="center"
         autoFlow="column"
         columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
+        height="100%"
         justifyContent="start"
         templateColumns="min-content"
         templateRows="1fr"
       >
         {React.Children.map(children, (child, index: number) => (
-          <div className="button-item" key={`button-item-${index}`}>
+          <div className="button-item" key={`button-item-${index}`} style={{ height: 'inherit' }}>
             {child}
           </div>
         ))}

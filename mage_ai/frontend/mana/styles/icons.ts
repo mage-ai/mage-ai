@@ -6,6 +6,8 @@ export type StyleProps = {
   height?: number;
   inverted?: boolean;
   opacity?: number;
+  size?: number;
+  small?: boolean;
   stroke?: string;
   style?: any;
   useStroke?: boolean;
@@ -21,8 +23,8 @@ const icons = css<StyleProps>`
       typeof fill !== 'undefined' && fill !== null
         ? fill
         : inverted
-          ? theme.colors.icons.inverted
-          : theme.colors.icons.base
+          ? theme.icons.color.inverted
+          : theme.icons.color.base
     };
   `}
 
@@ -33,10 +35,24 @@ const icons = css<StyleProps>`
       typeof stroke !== 'undefined' && stroke !== null
         ? stroke
         : inverted
-          ? theme.colors.icons.inverted
-          : theme.colors.icons.base
+          ? theme.icons.color.inverted
+          : theme.icons.color.base
     };
   `}
 `;
 
+const svg = css<StyleProps>`
+  ${({ height, size, small, theme, width }) => `
+    height: ${(typeof height === 'undefined' && typeof size === 'undefined')
+      ? theme.icons.size[small ? 'sm' : 'base']
+      : typeof height === 'undefined' ? size : height
+    }px;
+    width: ${(typeof width === 'undefined' && typeof size === 'undefined')
+      ? theme.icons.size[small ? 'sm' : 'base']
+      : typeof width === 'undefined' ? size : width
+    }px;
+  `}
+`;
+
+export { svg };
 export default icons;

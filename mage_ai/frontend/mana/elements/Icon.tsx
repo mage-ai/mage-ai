@@ -1,12 +1,14 @@
 import styled from 'styled-components';
-import icons, { StyleProps } from '../styles/icons';
+import icons, { StyleProps, svg } from '../styles/icons';
 
 export type IconProps = {
   children?: any;
   size?: number;
 } & StyleProps;
 
-export const SVGStyle = styled.svg<IconProps>``;
+export const SVGStyle = styled.svg<IconProps>`
+  ${svg}
+`;
 
 export const CircleStyle = styled.circle<StyleProps>`
   ${icons}
@@ -30,21 +32,12 @@ export const EllipseStyle = styled.ellipse<StyleProps>`
 
 const Icon = ({
   children,
-  className,
-  fill,
-  opacity,
-  size = 20,
-  style,
   viewBox = '0 0 24 24',
+  ...props
 }: IconProps) => (
   <SVGStyle
-    className={className}
-    fill={fill}
-    height={size}
-    opacity={opacity}
-    style={style}
+    {...props}
     viewBox={viewBox}
-    width={size}
   >
     {children}
   </SVGStyle>

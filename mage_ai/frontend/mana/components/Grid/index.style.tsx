@@ -11,7 +11,7 @@ export type GridStyledProps = {
   autoRows?: string;
   columnGap?: number;
   height?: 'auto' | 'inherit' | string;
-  justifyContent?: 'center' | 'start' | 'end' | 'stretch';
+  justifyContent?: 'center' | 'start' | 'end' | 'stretch' | 'space-between' | 'space-around' | 'space-evenly';
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
   pad?: boolean;
   row?: number;

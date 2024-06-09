@@ -1,13 +1,15 @@
 import { ThemeContext, ThemeProvider } from 'styled-components';
-import { createRef, useContext, useRef } from 'react';
+import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { randomSimpleHashGenerator } from '@utils/string';
 import AppContainer from '@components/v2/AppContainer';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid, { Col as GridCol, Row as GridRow } from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import TextInput from '@mana/elements/Input/TextInput';
-import { AppConfig } from '@components/v2/AppContainer/interfaces';
+import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { Cluster, Dark } from '@mana/icons';
 import { ContainerStyled } from './index.style';
 import { ModeEnum } from '@mana/themes/modes';
@@ -49,9 +51,9 @@ function GridContainer() {
     updateLayout();
   }
 
-  function addPanel(config: AppConfig) {
-    const { uuid } = config;
-    containerRef?.current.appendChild(GridCol(config));
+  function addPanel(app: AppConfigType) {
+    const { uuid } = app;
+    containerRef?.current.appendChild(GridCol(app));
 
     setTimeout(() => {
       const parentNode = document.getElementById(uuid);
@@ -67,7 +69,7 @@ function GridContainer() {
               onRemoveApp={(
                 _uuidApp,
                 appConfigs: {
-                  [uuid: string]: AppConfig;
+                  [uuid: string]: AppConfigType;
                 },
               ) => {
                 if (!Object.keys(appConfigs || {})?.length) {
@@ -82,6 +84,19 @@ function GridContainer() {
       }
     }, 0);
   }
+
+  useEffect(() => {
+    if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
+      setTimeout(() => {
+        addPanel({
+          subtype: AppSubtypeEnum.SYSTEM,
+          type: AppTypeEnum.BROWSER,
+          uuid: randomSimpleHashGenerator(),
+        });
+      }, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ContainerStyled>

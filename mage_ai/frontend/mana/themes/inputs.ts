@@ -18,6 +18,7 @@ export interface InputsType {
   };
   padding: {
     base: string;
+    sm: string;
   };
   placeholder: {
     color: string;
@@ -41,6 +42,7 @@ export default function build(colors: ColorsType): InputsType {
     },
     padding: {
       base: `${PaddingVerticalEnum.BASE} 16px`,
+      sm: `${PaddingVerticalEnum.SM} 16px`,
     },
     placeholder: {
       color: colors.placeholder.input.base,
