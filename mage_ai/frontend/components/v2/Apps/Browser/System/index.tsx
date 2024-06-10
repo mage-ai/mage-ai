@@ -6,8 +6,9 @@ import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Item from './Item/index';
 import filePaths from './mock';
 import { AppConfigType } from '../../interfaces';
+import { GroupByStrategyEnum } from './enums';
 import { ItemDetailType } from './interfaces';
-import Worker from 'worker-loader!@public/workers/worker.ts';
+import Worker from 'worker-loader!@public/workers/worker';
 
 type SystemBrowserProps = {
   app: AppConfigType;
@@ -50,7 +51,10 @@ function SystemBrowser({ app }: SystemBrowserProps) {
         }
       };
 
-      worker.postMessage(filePathsRef?.current);
+      worker.postMessage({
+        filePaths: filePathsRef.current,
+        groupByStrategy: GroupByStrategyEnum.DIRECTORY,
+      });
 
       return () => worker.terminate();
     };

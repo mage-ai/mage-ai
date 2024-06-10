@@ -47,6 +47,9 @@ function groupFilesByDirectory(paths: string[]) {
 }
 
 ctx.addEventListener('message', event => {
-  const { data } = event;
-  ctx.postMessage(groupFilesByDirectory(data));
+  const {
+    data: { filePaths, groupByStrategy },
+  } = event;
+  const groupBy = 'directory' === groupByStrategy ? groupFilesByDirectory : () => ({});
+  ctx.postMessage(groupBy(filePaths));
 });
