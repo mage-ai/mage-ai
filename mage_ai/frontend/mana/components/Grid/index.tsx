@@ -21,15 +21,9 @@ function Grid(
   const className = [uuid || GRID_CLASSNAME, classNameProp || ''].join(' ');
 
   return (
-    <div
-      className={className}
-      ref={ref}
-      style={{
-
-      }}
-    >
+    <GridStyled {...props} className={className} ref={ref} uuid={uuid}>
       {children}
-    </div>
+    </GridStyled>
   );
 }
 
