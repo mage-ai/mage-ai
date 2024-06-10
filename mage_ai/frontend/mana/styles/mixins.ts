@@ -4,6 +4,10 @@ export const transition = css`
   transition: 0.2s all ease-in-out;
 `;
 
+export const transitionFast = css`
+  transition: 0.15s all linear;
+`;
+
 export const gradient = (
   angle: string,
   startColor: string,

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { UNIT } from '../../themes/spaces';
 
 type DividerProps = {
+  compact?: boolean;
   short?: boolean;
   vertical?: boolean;
 };
@@ -24,10 +25,10 @@ export const DividerStyled = styled.div<DividerProps>`
     width: 100%;
   `}
 
-  ${({ theme, vertical }) => !vertical && `
+  ${({ compact, theme, vertical }) => !vertical && `
     height: 1px;
-    margin-bottom: ${theme.margin.base}px;
-    margin-top: ${theme.margin.base}px;
+    margin-bottom: ${theme.margin[compact ? 'sm' : 'base']}px;
+    margin-top: ${theme.margin[compact ? 'sm' : 'base']}px;
   `}
 
   ${({ vertical }) =>

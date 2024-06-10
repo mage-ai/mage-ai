@@ -11,8 +11,7 @@ export type DisableGlobalKeyboardShortcuts = {
   }) => void;
 };
 
-type KeyboardContextType = {
-  disableGlobalKeyboardShortcuts?: boolean;
+export type KeyboardRegisterType = {
   registerOnKeyDown: (
     uuid: string,
     onKeyDown: (
@@ -38,9 +37,13 @@ type KeyboardContextType = {
     ) => void,
     dependencies: any[],
   ) => void;
+};
+
+type KeyboardContextType = {
+  disableGlobalKeyboardShortcuts?: boolean;
   unregisterOnKeyDown: (uuid: string) => void;
   unregisterOnKeyUp: (uuid: string) => void;
-} & DisableGlobalKeyboardShortcuts;
+} & KeyboardRegisterType & DisableGlobalKeyboardShortcuts;
 
 const KeyboardContext = React.createContext<KeyboardContextType>({
   disableGlobalKeyboardShortcuts: false,

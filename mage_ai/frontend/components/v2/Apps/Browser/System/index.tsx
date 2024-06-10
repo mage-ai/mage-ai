@@ -1,21 +1,21 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 
-import { UNIT } from '@mana/themes/spaces';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Text from '@mana/elements/Text';
+import Menu from '@mana/components/Menu';
 import Item from './Item/index';
-import filePaths from './mock';
-import { HEADER_Z_INDEX } from '@components/constants';
+import icons from '@mana/icons';
+import mocks from './mocks';
 import { AppConfigType } from '../../interfaces';
 import { GroupByStrategyEnum } from './enums';
+import { KEY_CODE_A, KEY_CODE_ENTER, KEY_SYMBOL_ESCAPE, KEY_CODE_META, KEY_CODE_CONTROL } from '@utils/hooks/keyboardShortcuts/constants';
 import { ItemDetailType } from './interfaces';
+import { selectKeys } from '@utils/hash';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
 
-const MENU_WIDTH: number = UNIT * 20;
-const MENU_ITEM_HEIGHT = 36;
+const { Settings } = icons;
 
 type SystemBrowserProps = {
   app: AppConfigType;
@@ -25,14 +25,15 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
-  const filePathsRef = useRef<string[]>(filePaths);
+  const filePathsRef = useRef<string[]>(mocks.projectFilePaths);
   const itemsRootRef = useRef(null);
   const contextMenuRootRef = useRef(null);
 
-  const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${app?.uuid}`, [app]);
-  const rootID = useMemo(() => `system-browser-items-root-${app?.uuid}`, [app]);
+  const appUUID = useMemo(() => app?.uuid, [app]);
+  const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
+  const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
 
-  function renderContextMenu(item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) {
+  const renderContextMenu = useCallback((item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef?.current
       || !containerRef?.current?.contains(event.target as Node)
     ) {
@@ -41,30 +42,6 @@ function SystemBrowser({ app }: SystemBrowserProps) {
 
     event.preventDefault();
 
-    const {
-      x: xContainer,
-      width,
-    } = containerRef?.current?.getBoundingClientRect() || {};
-    const {
-      pageX: x,
-      pageY: y,
-    } = event;
-    let xFinal = x + UNIT;
-    if (x + MENU_WIDTH >= xContainer + width) {
-      xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
-    }
-    if (xFinal < 0) {
-      xFinal = 0;
-    }
-
-    const items = [];
-
-    let yFinal = y + (UNIT / 2);
-    const menuHeight = MENU_ITEM_HEIGHT * items.length;
-    if (y + menuHeight >= window.innerHeight) {
-      yFinal = y - menuHeight;
-    }
-
     if (!contextMenuRootRef?.current) {
       const node = document.getElementById(contextMenuRootID);
       contextMenuRootRef.current = createRoot(node as HTMLElement);
@@ -72,33 +49,72 @@ function SystemBrowser({ app }: SystemBrowserProps) {
 
     if (contextMenuRootRef?.current) {
       console.log('Context Menu', item);
+      const items = [
+        { uuid: 'New file', Icon: Settings },
+        { uuid: 'New folder' },
+        { divider: true },
+        { uuid: 'Open file', Icon: Settings, keyboardShortcuts: [[KEY_CODE_META, KEY_CODE_ENTER]] },
+        { uuid: 'Duplicate', description: () => 'Carbon copy file' },
+        { uuid: 'Move' },
+        { divider: true },
+        { uuid: 'Rename' },
+        { uuid: 'Delete', keyboardShortcuts: [[KEY_CODE_META, KEY_CODE_A], [KEY_CODE_CONTROL, KEY_SYMBOL_ESCAPE]] },
+        { divider: true },
+        {
+          uuid: 'Transfer',
+          items: [
+            { uuid: 'Upload files' },
+            { uuid: 'Download file' },
+          ],
+        },
+        {
+          uuid: 'Copy',
+          items: [
+            { uuid: 'Copy path' },
+            { uuid: 'Copy relative path' },
+          ],
+        },
+        { divider: true },
+        {
+          uuid: 'View',
+          items: [
+            { uuid: 'Expand subdirectories' },
+            { uuid: 'Collapse subdirectories' },
+          ],
+        },
+        { divider: true },
+        {
+          uuid: 'Projects',
+          items: [
+            { uuid: 'New Mage project' },
+            { uuid: 'New dbt project' },
+          ],
+        },
+      ];
 
       contextMenuRootRef.current.render(
         <React.StrictMode>
           <DeferredRenderer idleTimeout={1}>
             <ThemeProvider theme={themeContext}>
-              <div
-                style={{
-                  left: xFinal,
-                  position: 'fixed',
-                  top: yFinal,
-                  zIndex: HEADER_Z_INDEX + 100,
-                }}
-              >
-                <Text>Context Menu</Text>
-              </div>
+              <Menu
+                boundingContainer={selectKeys(
+                  containerRef?.current?.getBoundingClientRect() || {}, ['width', 'x', 'y'],
+                )}
+                coordinates={{ x: event.pageX, y: event.pageY }}
+                items={items}
+                small
+                uuid={appUUID}
+              />
             </ThemeProvider>
           </DeferredRenderer>
         </React.StrictMode>,
       );
     }
-  }
+  }, [appUUID, contextMenuRootID, themeContext]);
 
   function removeContextMenu() {
     if (contextMenuRootRef?.current) {
       contextMenuRootRef.current.unmount();
-      const node = document.getElementById(contextMenuRootID);
-      node.remove();
       contextMenuRootRef.current = null;
     }
   }

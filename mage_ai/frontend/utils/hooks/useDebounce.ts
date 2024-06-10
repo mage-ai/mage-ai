@@ -1,7 +1,7 @@
 import { useRef, useCallback } from 'react';
 
 // A Hook that returns a debouncer function
-function useDynamicDebounce() {
+function useDynamicDebounce(): [(fn: (...args: any[]) => void, delay: number, ...args: any[]) => void, () => void] {
   // Using a ref to store the latest timeout ID
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 

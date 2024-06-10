@@ -9,6 +9,7 @@ export type StyleProps = {
   light?: boolean;
   medium?: boolean;
   monospace?: boolean;
+  muted?: boolean;
   semiBold?: boolean;
 };
 
@@ -49,12 +50,14 @@ const base = css<StyleProps>`
 
   ${({ monospace }) => !monospace && baseFontFamily}
 
-  color: ${({ blue, inverted, theme }) =>
+  color: ${({ blue, inverted, muted, theme }) =>
     inverted
       ? theme.fonts.color.text.inverted
       : blue
         ? theme.fonts.color.text.blue
-        : theme.fonts.color.text.base};
+        : muted
+          ? theme.fonts.color.text.muted
+          : theme.fonts.color.text.base};
 
   font-size: ${({ theme }) => theme.fonts.size.base};
   font-style: ${({ italic, theme }) =>

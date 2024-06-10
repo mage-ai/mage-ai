@@ -21,6 +21,11 @@ export interface BackgroundsType {
       hover: ModeType;
     };
   };
+  menu: {
+    base: {
+      default: ModeType;
+    };
+  };
 }
 
 export interface TypographyColorsType {
@@ -28,6 +33,7 @@ export interface TypographyColorsType {
     base: string;
     blue: string;
     inverted: string;
+    muted: string;
   };
 }
 
@@ -52,6 +58,15 @@ export interface BordersType {
   };
 }
 
+export interface OutlineType {
+  button: {
+    base: InteractiveElementStateColorsType;
+    basic: InteractiveElementStateColorsType;
+    primary: InteractiveElementStateColorsType;
+    secondary: InteractiveElementStateColorsType;
+  };
+}
+
 interface ColorsDerivedType {
   backgrounds: BackgroundsType;
   borders: BordersType;
@@ -59,6 +74,7 @@ interface ColorsDerivedType {
     base: string;
     inverted: string;
   };
+  outline: OutlineType;
   placeholder: {
     input: {
       base: string;
@@ -417,6 +433,22 @@ const ColorsDerived = {
         },
       },
     },
+    menu: {
+      base: {
+        default: convert({
+          [ModeEnum.DARK]: 'grayMd',
+          [ModeEnum.LIGHT]: 'grayMd',
+          [ModeEnum.MODE3]: 'grayMd',
+        }),
+      },
+      contained: {
+        default: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+    },
   },
   borders: {
     base: {
@@ -530,6 +562,58 @@ const ColorsDerived = {
       [ModeEnum.MODE3]: 'gray',
     }),
   },
+  outline: {
+    button: {
+      base: {
+        default: {
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        },
+        hover: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+      basic: {
+        default: {
+          [ModeEnum.DARK]: 'whiteLo',
+          [ModeEnum.LIGHT]: 'blackLo',
+          [ModeEnum.MODE3]: 'blackLo',
+        },
+        hover: convert({
+          [ModeEnum.DARK]: 'whiteLo',
+          [ModeEnum.LIGHT]: 'blackLo',
+          [ModeEnum.MODE3]: 'blackLo',
+        }),
+      },
+      primary: {
+        default: convert({
+          [ModeEnum.DARK]: 'purple',
+          [ModeEnum.LIGHT]: 'purple',
+          [ModeEnum.MODE3]: 'purple',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'purple',
+          [ModeEnum.LIGHT]: 'purple',
+          [ModeEnum.MODE3]: 'purple',
+        }),
+      },
+      secondary: {
+        default: convert({
+          [ModeEnum.DARK]: 'green',
+          [ModeEnum.LIGHT]: 'green',
+          [ModeEnum.MODE3]: 'green',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'green',
+          [ModeEnum.LIGHT]: 'green',
+          [ModeEnum.MODE3]: 'green',
+        }),
+      },
+    },
+  },
   placeholder: {
     input: {
       base: convert({
@@ -574,6 +658,11 @@ const ColorsDerived = {
         [ModeEnum.DARK]: 'black',
         [ModeEnum.LIGHT]: 'white',
         [ModeEnum.MODE3]: 'white',
+      }),
+      muted: convert({
+        [ModeEnum.DARK]: 'whiteLo',
+        [ModeEnum.LIGHT]: 'blackLo',
+        [ModeEnum.MODE3]: 'blackLo',
       }),
     },
   },
