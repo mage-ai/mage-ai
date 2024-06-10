@@ -186,14 +186,14 @@ function Loading({ loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingP
   if (LoadingStyleEnum.BLOCKS === loadingStyle) {
     return (
       <LoadingStyleBlocks {...props}>
-        <div className='loader' />
+        <div className="loader" />
       </LoadingStyleBlocks>
     );
   }
 
   return (
     <RepeatingBarStyle {...props}>
-      <div className='loader' />
+      <div className="loader" />
     </RepeatingBarStyle>
   );
 }

@@ -114,11 +114,11 @@ function GridContainer() {
       }}
     >
       <ContainerStyled>
-        <Grid height='inherit' pad templateRows='auto 1fr' width='100%'>
-          <GridRow row={1} width='inherit'>
+        <Grid height="inherit" pad templateRows="auto 1fr" width="100%">
+          <GridRow row={1} width="inherit">
             <Section>
-              <Row align='center' justify='start'>
-                <Col xs='content'>
+              <Row align="center" justify="start">
+                <Col xs="content">
                   <Button
                     Icon={Cluster}
                     onClick={() => {
@@ -132,14 +132,14 @@ function GridContainer() {
                 <Col>
                   <Row>
                     <Col>
-                      <TextInput monospace number placeholder='Row' />
+                      <TextInput monospace number placeholder="Row" />
                     </Col>
                     <Col>
-                      <TextInput monospace number placeholder='Column' />
+                      <TextInput monospace number placeholder="Column" />
                     </Col>
                   </Row>
                 </Col>
-                <Col xs='content'>
+                <Col xs="content">
                   <ButtonGroup>
                     <Button
                       Icon={Dark}
@@ -172,8 +172,8 @@ function GridContainer() {
             </Section>
           </GridRow>
 
-          <GridRow row={2} width='inherit'>
-            <Grid ref={containerRef} templateRows='1fr' width='inherit' />
+          <GridRow row={2} width="inherit">
+            <Grid ref={containerRef} templateRows="1fr" width="inherit" />
           </GridRow>
         </Grid>
       </ContainerStyled>
