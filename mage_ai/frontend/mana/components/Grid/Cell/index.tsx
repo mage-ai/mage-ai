@@ -26,6 +26,7 @@ function Cell({ layout, uuid }: CellProps) {
     `grid-col-end-${columnSpan}`,
   ].join(' ');
   element.id = uuid;
+  element.style.overflow = 'hidden';
 
   return element;
 }

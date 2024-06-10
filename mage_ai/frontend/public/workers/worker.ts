@@ -2,16 +2,27 @@ import * as osPath from 'path';
 
 const ctx: Worker = self as any;
 
-function groupFilesByDirectory(paths: string[]) {
+function groupFilesByDirectory(items: {
+  extension?: string;
+  items?: any;
+  modified_timestamp?: number;
+  name: string;
+  parent?: any;
+  path?: string
+  relative_path?: string;
+  size: number;
+  type: string;
+}[]) {
   const root: any = {} as any;
 
-  paths.forEach(path => {
-    const parts = path.split(osPath.sep).filter(Boolean);
+  items?.forEach((item) => {
+    const parts = item?.path.split(osPath.sep).filter(Boolean);
     let currentDir: any | any = root;
     let parentDir: any | any | undefined = undefined;
 
     parts.forEach((part, index) => {
       const sharedProps = {
+        ...item,
         name: part,
       };
 
@@ -19,7 +30,6 @@ function groupFilesByDirectory(paths: string[]) {
         currentDir[part] = {
           ...sharedProps,
           parent: parentDir as any, // Pointing to the parent directory
-          size: 123, // Mock size
           type: 'file',
         };
       } else {
@@ -32,11 +42,25 @@ function groupFilesByDirectory(paths: string[]) {
           } as any;
         }
 
-        const { name, parent, type } = currentDir[part];
+        const {
+          extension: extensionParent,
+          modified_timestamp: modified_timestampParent,
+          name: nameParent,
+          parent: parentParent,
+          path: pathParent,
+          relative_path: relative_pathParent,
+          size: sizeParent,
+          type: typeParent,
+        } = currentDir[part];
         parentDir = {
-          name,
-          parent,
-          type,
+          extension: extensionParent,
+          modified_timestamp: modified_timestampParent,
+          name: nameParent,
+          parent: parentParent,
+          path: pathParent,
+          relative_path: relative_pathParent,
+          size: sizeParent,
+          type: typeParent,
         };
         currentDir = (currentDir[part] as any).items;
       }

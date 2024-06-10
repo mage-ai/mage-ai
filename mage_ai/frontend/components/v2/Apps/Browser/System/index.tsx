@@ -2,11 +2,18 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'reac
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 
+import api from '@api';
+import Loading from '@mana/components/Loading';
+import Scrollbar from '@mana/elements/Scrollbar';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
+import { onSuccess } from '@api/utils/response';
+import {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
+  COMMON_EXCLUDE_PATTERNS,
+} from '@interfaces/FileType';
 import Menu from '@mana/components/Menu';
 import Item from './Item/index';
 import icons from '@mana/icons';
-import mocks from './mocks';
 import { AppConfigType } from '../../interfaces';
 import { GroupByStrategyEnum } from './enums';
 import {
@@ -20,6 +27,8 @@ import { ItemDetailType } from './interfaces';
 import { selectKeys } from '@utils/hash';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
+import { useMutation } from 'react-query';
+import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
 const { Settings } = icons;
 
@@ -31,13 +40,78 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
-  const filePathsRef = useRef<string[]>(mocks.projectFilePaths);
+  const filePathsRef = useRef<string[]>(null);
   const itemsRootRef = useRef(null);
   const contextMenuRootRef = useRef(null);
 
   const appUUID = useMemo(() => app?.uuid, [app]);
   const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
   const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
+
+  const [fetchItems, { isLoading }] = useMutation(
+    (query?: {
+      _limit?: number;
+      _offset?: number;
+      directory?: string;
+      exclude_pattern?: string | RegExp;
+      include_pattern?: string | RegExp;
+    }) => api.browser_items.listAsync(query),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ browser_items: items }) => {
+            const createWorker = async () => {
+              const worker = new Worker();
+
+              worker.onmessage = (event: MessageEvent) => {
+                if (!itemsRootRef?.current) {
+                  const node = document.getElementById(rootID);
+                  itemsRootRef.current = createRoot(node as HTMLElement);
+                }
+
+                if (itemsRootRef?.current) {
+                  itemsRootRef.current.render(
+                    <React.StrictMode>
+                      <DeferredRenderer idleTimeout={1}>
+                        <ThemeProvider theme={themeContext}>
+                          {Object.values(event?.data || {}).map((item: ItemDetailType, idx: number) => (
+                            <Item
+                              app={app}
+                              item={item as ItemDetailType}
+                              key={`${item.name}-${idx}`}
+                              onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
+                                renderContextMenu(item, event)
+                              }
+                              themeContext={themeContext}
+                            />
+                          ))}
+                        </ThemeProvider>
+                      </DeferredRenderer>
+                    </React.StrictMode>,
+                  );
+                }
+              };
+
+              worker.postMessage({
+                filePaths: filePathsRef.current,
+                groupByStrategy: GroupByStrategyEnum.DIRECTORY,
+              });
+
+              return () => worker.terminate();
+            };
+
+            filePathsRef.current = items;
+
+            createWorker();
+          },
+          onErrorCallback: (response, errors) =>
+            console.log({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
 
   const renderContextMenu = useCallback(
     (item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
@@ -141,58 +215,18 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const createWorker = async () => {
-      const worker = new Worker();
-
-      worker.onmessage = (event: MessageEvent) => {
-        if (!itemsRootRef?.current) {
-          const node = document.getElementById(rootID);
-          itemsRootRef.current = createRoot(node as HTMLElement);
-        }
-
-        if (itemsRootRef?.current) {
-          itemsRootRef.current.render(
-            <React.StrictMode>
-              <DeferredRenderer idleTimeout={1}>
-                <ThemeProvider theme={themeContext}>
-                  {Object.values(event?.data || {}).map((item: ItemDetailType, idx: number) => (
-                    <Item
-                      app={app}
-                      item={item as ItemDetailType}
-                      key={`${item.name}-${idx}`}
-                      onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                        renderContextMenu(item, event)
-                      }
-                      themeContext={themeContext}
-                    />
-                  ))}
-                </ThemeProvider>
-              </DeferredRenderer>
-            </React.StrictMode>,
-          );
-        }
-      };
-
-      worker.postMessage({
-        filePaths: filePathsRef.current,
-        groupByStrategy: GroupByStrategyEnum.DIRECTORY,
-      });
-
-      return () => worker.terminate();
-    };
-
-    if (!itemsRootRef?.current) {
-      createWorker();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootID]);
-
   return (
-    <div ref={containerRef}>
-      <div id={rootID} />
-      <div id={contextMenuRootID} />
-    </div>
+    <WithOnMount onMount={() => fetchItems({
+      exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+      include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+    })}>
+      <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
+        {isLoading && <Loading />}
+        <div style={{ height: 67, width: '100%' }} />
+        <div id={rootID} />
+        <div id={contextMenuRootID} />
+      </Scrollbar>
+    </WithOnMount>
   );
 }
 

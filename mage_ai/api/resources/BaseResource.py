@@ -120,7 +120,7 @@ class BaseResource(Resource, ResultSetMixIn):
         cls.parent_resource()[column_name] = resource_class
 
     @classmethod
-    def build_result_set(cls, arr, user, **kwargs):
+    def build_result_set(cls, arr, user, **kwargs) -> ResultSet:
         return ResultSet(
             [
                 mod if issubclass(mod.__class__, BaseResource) else cls(mod, user, **kwargs)

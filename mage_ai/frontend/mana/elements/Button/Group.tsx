@@ -27,6 +27,7 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
         columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
         height="100%"
         justifyContent="start"
+        style={{ overflow: 'visible' }}
         templateColumns="min-content"
         templateRows="1fr"
       >

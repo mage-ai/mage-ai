@@ -35,6 +35,7 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const BROWSER_ITEMS = 'browser_items';
 export const CACHE_ITEMS: 'cache_items' = 'cache_items';
 export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
@@ -123,6 +124,7 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [BACKFILLS, PIPELINES],
   [BACKFILLS],
   [BLOCKS, PIPELINES, ANALYSES],
+  [BROWSER_ITEMS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINE_RUNS],
   [BLOCKS],
@@ -448,6 +450,15 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
 
       return await handle(response);
     };
+
+    apis[resource].listAsync = async (query?: any, swrOptionsRuntime?: any) => {
+      const response = useListAsync(resource, query, {
+        ...swrOptions,
+        ...swrOptionsRuntime,
+      });
+
+      return await handle(response);
+    },
 
     apis[resource].list = (query: any = {}, swrOptionsRuntime?: any, opts?: any) =>
       useList(

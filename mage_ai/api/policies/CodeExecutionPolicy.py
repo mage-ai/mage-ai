@@ -45,7 +45,7 @@ CodeExecutionPolicy.allow_write(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OauthScope.CLIENT_PRIVATE,
+        constants.LIST,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )

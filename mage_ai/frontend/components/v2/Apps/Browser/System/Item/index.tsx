@@ -24,7 +24,7 @@ import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
-const { DiamondShared, FileIcon, FolderV2Filled } = icons;
+const { DiamondShared, FileIcon, Circle, CaretDown, CaretRight } = icons;
 
 type ItemProps = {
   app: AppConfigType;
@@ -35,6 +35,10 @@ type ItemProps = {
 
 function iconRootID(uuid: string) {
   return `icon-root-${uuid}`;
+}
+
+function iconActionRootID(uuid: string) {
+  return `icon-action-root-${uuid}`;
 }
 
 function itemsRootID(uuid: string) {
@@ -72,6 +76,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
   const iconRootRef = useRef(null);
+  const iconActionRootRef = useRef(null);
   const itemsRootRef = useRef(null);
   const folderStatesRef = useRef(get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {}));
   const expandedRef = useRef(
@@ -98,11 +103,8 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     if (isFolder) {
       if (isFirstParentFolderForBlock) {
         return <Icon color={blockIconColor} small />;
-      } else {
-        const IconUse = expandedRef?.current ? FolderV2Filled : Icon;
-        if (IconUse) {
-          return <IconUse colorName={iconColorName} small />;
-        }
+      } else if (Icon) {
+        return <Icon colorName={iconColorName} small />;
       }
     } else if (isBlockFileWithSquareIcon) {
       if (pipelineCount) {
@@ -135,6 +137,17 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     isFirstParentFolderForBlock,
   ]);
 
+  const buildIconAction = useCallback(() => {
+    const IconUse = isFolder
+      ? expandedRef?.current ? CaretDown : CaretRight
+      : Circle;
+
+    return <IconUse colorName={isFolder ? iconColorName : 'whiteLo'} size={isFolder ? undefined : 8} xsmall={isFolder} />;
+  }, [
+    iconColorName,
+    isFolder,
+  ]);
+
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
       const node = document.getElementById(iconRootID(uuid));
@@ -144,7 +157,16 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     if (iconRootRef?.current) {
       iconRootRef.current.render(<ThemeProvider theme={themeContext}>{buildIcon()}</ThemeProvider>);
     }
-  }, [themeContext, uuid, buildIcon]);
+
+    if (!iconActionRootRef?.current) {
+      const node = document.getElementById(iconActionRootID(uuid));
+      iconActionRootRef.current = createRoot(node as HTMLElement);
+    }
+
+    if (iconActionRootRef?.current) {
+      iconActionRootRef.current.render(<ThemeProvider theme={themeContext}>{buildIconAction()}</ThemeProvider>);
+    }
+  }, [themeContext, uuid, buildIcon, buildIconAction]);
 
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
@@ -228,10 +250,11 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns="auto 1fr">
+          <Grid compact templateColumns="auto auto 1fr">
+            <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
-              <Text blue={isFolder} monospace small>
+              <Text blue={isFolder} monospace muted={!isFolder} small>
                 {String(name)}
               </Text>
             )}

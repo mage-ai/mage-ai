@@ -1,65 +1,29 @@
-import React from 'react';
+import React, { Suspense, lazy, useContext } from 'react';
+import { ThemeContext, ThemeProvider } from 'styled-components';
 
-import Button from '@mana/elements/Button';
-import Divider from '@mana/elements/Divider';
-import Tag from '@mana/components/Tag';
-import Text from '@mana/elements/Text';
-import { ModeEnum } from '@mana/themes/modes';
-import { Row, Col } from '@mana/components/Container';
-import icons from '@mana/icons';
-import { range } from '@utils/array';
-import { setThemeSettings } from '@mana/themes/utils';
+import Loading from '@mana/components/Loading';
+import { AppConfigType } from '@components/v2/Apps/interfaces';
 
-const { Settings } = icons;
+type EditorProps = {
+  app: AppConfigType;
+};
 
-import { randomSimpleHashGenerator } from '@utils/string';
+function EditorApp({ app }: EditorProps) {
+  const themeContext = useContext(ThemeContext);
+  const MateriaIDE = lazy(() => import('@components/v2/IDE'));
 
-export function createUUID() {
-  return `grid-item-${randomSimpleHashGenerator()}`;
-}
-
-const TXT = `I’ve found several existing blocks that can potentially be reused.
-Take a look and let me know if anything works, you can also ask me to simply choose the best one.`;
-
-function EditorApp() {
   return (
-    <div>
-      <Row direction="column" nogutter>
-        <Col xs="content">
-          <Row>
-            <Col>
-              <Text>{TXT}</Text>
-            </Col>
-            <Col xs="content">
-              <Tag>Block</Tag>
-            </Col>
-          </Row>
-
-          <Divider short />
-
-          <Row>
-            <Col>
-              <Text monospace>{TXT}</Text>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-
-      <Divider />
-
-      <Button
-        Icon={Settings}
-        onClick={() =>
-          setThemeSettings(({ mode }) => ({
-            mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-          }))
-        }
-        primary
-        small
-      >
-        Theme
-      </Button>
-    </div>
+    <Suspense
+      fallback={
+        <ThemeProvider theme={themeContext}>
+          <div style={{ display: 'flex' }}>
+            <Loading position="absolute" />
+          </div>
+        </ThemeProvider>
+      }
+    >
+      <MateriaIDE uuid={app?.uuid} />
+    </Suspense>
   );
 }
 

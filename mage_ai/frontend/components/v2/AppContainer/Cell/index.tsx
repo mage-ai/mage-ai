@@ -3,7 +3,6 @@ import React from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import EditorApp from '@components/v2/Apps/Editor';
 import Grid from '@mana/components/Grid';
-import Section from '@mana/elements/Section';
 import icons from '@mana/icons';
 import { randomSimpleHashGenerator } from '@utils/string';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
@@ -62,36 +61,56 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { main, toolbars } = useBrowser({ app });
 
   return (
-    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
-      <Section>
+    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref} section>
+      <Grid
+        autoFlow="column"
+        justifyContent="stretch"
+        justifyItems="stretch"
+        style={{
+          position: 'relative',
+        }}
+        templateColumns="1fr"
+        templateRows="1fr"
+      >
         <Grid
           autoFlow="column"
-          justifyContent="stretch"
-          justifyItems="stretch"
+          justifyContent="space-between"
+          style={{
+            backdropFilter: 'saturate(100%) blur(3px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            borderTopLeftRadius: 10,
+            borderTopRightRadius: 10,
+            paddingBottom: 12,
+            paddingLeft: 12,
+            paddingRight: 6,
+            paddingTop: 12,
+            position: 'absolute',
+            top: -1,
+            width: 'calc(100% - 6px)',
+            zIndex: 1,
+          }}
           templateColumns="1fr"
-          templateRows="min-content 1fr"
+          templateRows="auto"
         >
-          <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr">
-            {toolbars?.top}
+          {toolbars?.top}
 
-            <Grid autoFlow="column" justifyContent="end" templateColumns="1fr">
-              <Grid autoFlow="column" templateRows="min-content">
-                <ButtonGroup itemsContained>
-                  <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
-                  <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
-                  <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} small />
-                  <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} small />
-                  <Divider vertical />
-                  <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
-                </ButtonGroup>
-              </Grid>
+          <Grid autoFlow="column" justifyContent="end" templateColumns="1fr">
+            <Grid autoFlow="column" overflow="visible" templateRows="min-content">
+              <ButtonGroup itemsContained>
+                <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
+                <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
+                <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} small />
+                <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} small />
+                <Divider vertical />
+                <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
+              </ButtonGroup>
             </Grid>
           </Grid>
-
-          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && <EditorApp />}
-          {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
         </Grid>
-      </Section>
+
+        {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && <EditorApp app={app} />}
+        {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
+      </Grid>
     </Grid>
   );
 }

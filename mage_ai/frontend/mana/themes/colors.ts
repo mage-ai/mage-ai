@@ -26,6 +26,16 @@ export interface BackgroundsType {
       default: ModeType;
     };
   };
+  scrollbar: {
+    thumb: {
+      default: ModeType;
+      hover: ModeType;
+    };
+    track: {
+      default: ModeType;
+      hover: ModeType;
+    };
+  };
 }
 
 export interface TypographyColorsType {
@@ -162,9 +172,9 @@ const Colors = {
     [ModeEnum.MODE3]: '#00000033',
   },
   blackMd: {
-    [ModeEnum.DARK]: '#000000B3',
-    [ModeEnum.LIGHT]: '#000000B3',
-    [ModeEnum.MODE3]: '#000000B3',
+    [ModeEnum.DARK]: '#00000099', // 60%
+    [ModeEnum.LIGHT]: '#00000099',
+    [ModeEnum.MODE3]: '#00000099',
   },
   blackHi: {
     [ModeEnum.DARK]: '#000000D9',
@@ -427,9 +437,9 @@ const Colors = {
     [ModeEnum.MODE3]: '#FFFFFF80',
   },
   whiteMd: {
-    [ModeEnum.DARK]: '#FFFFFFB3',
-    [ModeEnum.LIGHT]: '#1B0066D9',
-    [ModeEnum.MODE3]: '#FFFFFFB3',
+    [ModeEnum.DARK]: '#FFFFFF99', // 60%
+    [ModeEnum.LIGHT]: '#1B006699',
+    [ModeEnum.MODE3]: '#FFFFFF99', // 60%
   },
   whiteHi: {
     [ModeEnum.DARK]: '#FFFFFF1A',
@@ -542,6 +552,32 @@ const ColorsDerived = {
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
           [ModeEnum.MODE3]: 'gray',
+        }),
+      },
+    },
+    scrollbar: {
+      thumb: {
+        default: convert({
+          [ModeEnum.DARK]: 'gray',
+          [ModeEnum.LIGHT]: 'gray',
+          [ModeEnum.MODE3]: 'gray',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'whiteLo',
+          [ModeEnum.LIGHT]: 'whiteLo',
+          [ModeEnum.MODE3]: 'whiteLo',
+        }),
+      },
+      track: {
+        default: convert({
+          [ModeEnum.DARK]: 'grayLo',
+          [ModeEnum.LIGHT]: 'grayLo',
+          [ModeEnum.MODE3]: 'grayLo',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: 'grayMd',
+          [ModeEnum.LIGHT]: 'grayMd',
+          [ModeEnum.MODE3]: 'grayMd',
         }),
       },
     },
@@ -756,7 +792,7 @@ const ColorsDerived = {
         [ModeEnum.MODE3]: 'white',
       }),
       muted: convert({
-        [ModeEnum.DARK]: 'whiteLo',
+        [ModeEnum.DARK]: 'whiteMd',
         [ModeEnum.LIGHT]: 'blackMd',
         [ModeEnum.MODE3]: 'blackMd',
       }),

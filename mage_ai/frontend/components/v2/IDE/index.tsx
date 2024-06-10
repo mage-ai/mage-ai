@@ -31,8 +31,10 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
   const configurations = useMemo(
     () =>
       baseConfigurations(themeContext, {
+        padding: {
+          top: 67,
+        },
         theme: themeSelected,
-        // value: mockCode,
       }),
     [themeContext, themeSelected],
   );

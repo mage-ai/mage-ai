@@ -1,12 +1,16 @@
 import styled, { css } from 'styled-components';
 
+import borders from '../../styles/borders';
 import { range } from '@utils/array';
 
 export type SharedStyledProps = {
   compact?: boolean;
   height?: 'auto' | 'inherit' | string;
+  overflowVisible?: boolean;
   pad?: boolean;
   row?: number;
+  section?: boolean;
+  style?: React.CSSProperties;
   width?: 'auto' | 'inherit' | string;
 };
 
@@ -28,6 +32,7 @@ export type GridStyledProps = {
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
   pad?: boolean;
   rowGap?: number;
+  section?: boolean;
   templateColumns?: 'min-content' | 'max-content' | 'auto' | string;
   templateRows?: 'min-content' | 'max-content' | 'auto' | string;
   uuid?: string;
@@ -37,8 +42,21 @@ export const shared = css<SharedStyledProps>`
   display: grid;
   min-height: 0;
   min-width: 0;
-  padding: ${({ compact, pad, theme }) =>
-    pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
+
+  ${({ overflowVisible }) =>
+      overflowVisible &&
+      `
+      overflow: visible;
+    `}
+    ${({ overflowVisible }) =>
+        !overflowVisible &&
+        `
+        overflow: hidden;
+      `}
+  ${({ section }) => section && borders}
+  ${({ compact, pad, section, theme }) => !section && `
+    padding: ${pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
+  `}
 
   ${buildGridTemplateColumns().join('\n')}
   ${buildRowColumnStyles().join('\n')}
@@ -143,10 +161,8 @@ const styles = css<GridStyledProps>`
     grid-template-columns: ${templateColumns};
   `}
 
-  ${({ templateRows }) =>
-    typeof templateRows !== 'undefined' &&
-    `
-    grid-template-rows: ${templateRows};
+  ${({ templateRows }) => `
+    grid-template-rows: ${typeof templateRows !== 'undefined' ? templateRows : 'inherit'};
   `}
 
   ${({ alignItems }) =>

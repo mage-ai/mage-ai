@@ -99,23 +99,32 @@ function GridContainer() {
     <WithOnMount
       onMount={() => {
         if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
-          setTimeout(() => {
-            if (!Object.keys(refCells?.current || {})?.length) {
-              addPanel('test-panel', [
+          if (!Object.keys(refCells?.current || {})?.length) {
+            setTimeout(() => {
+              addPanel('test-panel-1', [
                 {
                   subtype: AppSubtypeEnum.SYSTEM,
                   type: AppTypeEnum.BROWSER,
-                  uuid: 'test-app',
+                  uuid: 'test-system-browser-app',
                 },
               ]);
-            }
-          }, 1);
+              setTimeout(() => {
+                addPanel('test-panel-2', [
+                  {
+                    subtype: AppSubtypeEnum.IDE,
+                    type: AppTypeEnum.EDITOR,
+                    uuid: 'test-editor-ide-app',
+                  },
+                ]);
+              }, 1000);
+            }, 1);
+          }
         }
       }}
     >
       <ContainerStyled>
-        <Grid height="inherit" pad templateRows="auto 1fr" width="100%">
-          <GridRow row={1} width="inherit">
+        <Grid height="inherit" pad style={{ overflow: 'visible' }} templateRows="auto 1fr" width="100%">
+          <GridRow row={1} style={{ overflow: 'visible' }} width="inherit">
             <Section>
               <Row align="center" justify="start">
                 <Col xs="content">

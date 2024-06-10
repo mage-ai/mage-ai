@@ -288,7 +288,7 @@ export default function base(
     unfoldOnClickAfterEndOfLine: false,
     unicodeHighlight: true,
     unusualLineTerminators: 'prompt',
-    useShadowDOM: true,
+    useShadowDOM: false,
     useTabStops: true,
     value,
     wordBasedSuggestions: 'currentDocument', // matchingDocuments, allDocuments
@@ -362,7 +362,7 @@ export default function base(
     },
     minimap: {
       autohide: true,
-      enabled: true, // true
+      enabled: false, // true
       maxColumn: 120,
       renderCharacters: true,
       scale: 1,
