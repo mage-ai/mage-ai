@@ -95,6 +95,10 @@ export interface ColorsType extends ColorsDerivedType {
   blueMd: string;
   blueMuted: string;
   blueHi: string;
+  dbt: string;
+  dbtLo: string;
+  dbtMd: string;
+  dbtHi: string;
   blueText: string;
   glow: string;
   glow2: string;
@@ -118,6 +122,18 @@ export interface ColorsType extends ColorsDerivedType {
   redLo: string;
   redMd: string;
   redHi: string;
+  sky: string;
+  skyLo: string;
+  skyMd: string;
+  skyHi: string;
+  rose: string;
+  roseLo: string;
+  roseMd: string;
+  roseHi: string;
+  teal: string;
+  tealLo: string;
+  tealMd: string;
+  tealHi: string;
   yellow: string;
   yellowLo: string;
   yellowMd: string;
@@ -184,6 +200,46 @@ const Colors = {
     [ModeEnum.DARK]: '#1F6BFF',
     [ModeEnum.LIGHT]: '#1F6BFF',
     [ModeEnum.MODE3]: '#9EC8FF',
+  },
+  teal: {
+    [ModeEnum.DARK]: '#00B4CC',
+    [ModeEnum.LIGHT]: '#00B4CC',
+    [ModeEnum.MODE3]: '#00B4CC',
+  },
+  tealHi: {
+    [ModeEnum.DARK]: 'rgba(0, 180, 204, 0.5)',
+    [ModeEnum.LIGHT]: 'rgba(0, 180, 204, 0.5)',
+    [ModeEnum.MODE3]: 'rgba(0, 180, 204, 0.5)',
+  },
+  tealLo: {
+    [ModeEnum.DARK]: '#00B4CC33',
+    [ModeEnum.LIGHT]: '#00B4CC33',
+    [ModeEnum.MODE3]: '#00B4CC33',
+  },
+  tealMd: {
+    [ModeEnum.DARK]: '#00B4CCB3',
+    [ModeEnum.LIGHT]: '#00B4CCB3',
+    [ModeEnum.MODE3]: '#00B4CCB3',
+  },
+  dbt: {
+    [ModeEnum.DARK]: '#FC6949',
+    [ModeEnum.LIGHT]: '#FC6949',
+    [ModeEnum.MODE3]: '#FC6949',
+  },
+  dbtHi: {
+    [ModeEnum.DARK]: '#FC6949D9',
+    [ModeEnum.LIGHT]: '#FC6949D9',
+    [ModeEnum.MODE3]: '#FC6949D9',
+  },
+  dbtLo: {
+    [ModeEnum.DARK]: 'rgba(252, 105, 73, 0.3)',
+    [ModeEnum.LIGHT]: 'rgba(252, 105, 73, 0.3)',
+    [ModeEnum.MODE3]: 'rgba(252, 105, 73, 0.3)',
+  },
+  dbtMd: {
+    [ModeEnum.DARK]: 'rgba(252, 105, 73, 0.5)',
+    [ModeEnum.LIGHT]: 'rgba(252, 105, 73, 0.5)',
+    [ModeEnum.MODE3]: 'rgba(252, 105, 73, 0.5)',
   },
   glow: {
     [ModeEnum.DARK]: '#0500FF66',
@@ -294,6 +350,46 @@ const Colors = {
     [ModeEnum.DARK]: '#FF3B3BB3',
     [ModeEnum.LIGHT]: '#FF3B3BB3',
     [ModeEnum.MODE3]: '#FF3B3BB3',
+  },
+  rose: {
+    [ModeEnum.DARK]: '#D1A2AB',
+    [ModeEnum.LIGHT]: '#D1A2AB',
+    [ModeEnum.MODE3]: '#D1A2AB',
+  },
+  roseHi: {
+    [ModeEnum.DARK]: '#D1A2ABD9',
+    [ModeEnum.LIGHT]: '#D1A2ABD9',
+    [ModeEnum.MODE3]: '#D1A2ABD9',
+  },
+  roseLo: {
+    [ModeEnum.DARK]: '#D1A2AB33',
+    [ModeEnum.LIGHT]: '#D1A2AB33',
+    [ModeEnum.MODE3]: '#D1A2AB33',
+  },
+  roseMd: {
+    [ModeEnum.DARK]: '#D1A2ABB3',
+    [ModeEnum.LIGHT]: '#D1A2ABB3',
+    [ModeEnum.MODE3]: '#D1A2ABB3',
+  },
+  sky: {
+    [ModeEnum.DARK]: '#9ECBFF',
+    [ModeEnum.LIGHT]: '#9ECBFF',
+    [ModeEnum.MODE3]: '#9ECBFF',
+  },
+  skyHi: {
+    [ModeEnum.DARK]: 'rgba(106, 161, 224, 0.5)',
+    [ModeEnum.LIGHT]: 'rgba(106, 161, 224, 0.5)',
+    [ModeEnum.MODE3]: 'rgba(106, 161, 224, 0.5)',
+  },
+  skyLo: {
+    [ModeEnum.DARK]: '#6AA1E0',
+    [ModeEnum.LIGHT]: '#6AA1E0',
+    [ModeEnum.MODE3]: '#6AA1E0',
+  },
+  skyMd: {
+    [ModeEnum.DARK]: '#9ECBFFB3',
+    [ModeEnum.LIGHT]: '#9ECBFFB3',
+    [ModeEnum.MODE3]: '#9ECBFFB3',
   },
   yellow: {
     [ModeEnum.DARK]: '#FFCC19',
@@ -661,8 +757,8 @@ const ColorsDerived = {
       }),
       muted: convert({
         [ModeEnum.DARK]: 'whiteLo',
-        [ModeEnum.LIGHT]: 'blackLo',
-        [ModeEnum.MODE3]: 'blackLo',
+        [ModeEnum.LIGHT]: 'blackMd',
+        [ModeEnum.MODE3]: 'blackMd',
       }),
     },
   },

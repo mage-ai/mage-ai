@@ -53,7 +53,6 @@ function SystemBrowser({ app }: SystemBrowserProps) {
       }
 
       if (contextMenuRootRef?.current) {
-        console.log('Context Menu', item);
         const items = [
           { uuid: 'New file', Icon: Settings },
           { uuid: 'New folder' },

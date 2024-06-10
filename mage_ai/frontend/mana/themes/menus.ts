@@ -23,7 +23,7 @@ export default function build(colors: ColorsType): MenuType {
     blur: {
       // saturate: higher, more color from items behind
       // blur: 1-3px
-      base: 'saturate(100%) blur(1px)',
+      base: 'saturate(100%) blur(3px)',
     },
     border: {
       radius: {

@@ -1,11 +1,15 @@
 import * as osPath from 'path';
 
+import icons from '@mana/icons';
+import useFileIconBase from '@components/FileBrowser/Folder/useFileIcon';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
+import { BLOCK_TYPE_ICON_MAPPING, FILE_EXTENSION_ICON_MAPPING, FILE_EXTENSION_COLOR_MAPPING, Icons } from './constants';
 import { ItemDetailType, ItemType } from './interfaces';
 import { ItemTypeEnum } from './enums';
-import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
-import useFileIconBase from '@components/FileBrowser/Folder/useFileIcon';
-import { BLOCK_TYPE_ICON_MAPPING, FILE_EXTENSION_ICON_MAPPING, FILE_EXTENSION_COLOR_MAPPING, Icons } from './constants';
+import { getBlockColor } from '@mana/themes/blocks';
 import { selectKeys } from '@utils/hash';
+
+const { FileIcon } = icons;
 
 export function groupFilesByDirectory(paths: string[]): ItemType {
   const root: ItemType = {} as ItemType;
@@ -50,9 +54,12 @@ export function useFileIcon(args) {
   return useFileIconBase({
     ...args,
     BlockIcons: BLOCK_TYPE_ICON_MAPPING,
+    DefaultIcon: FileIcon,
     ExtensionIcons: FILE_EXTENSION_ICON_MAPPING,
     IconColors: FILE_EXTENSION_COLOR_MAPPING,
     Icons,
+    defaultColor: 'gray',
+    getBlockColor,
   });
 }
 
@@ -70,5 +77,5 @@ export function getFileExtension(filename: string): FileExtensionEnum {
 }
 
 export function getIconColorName(name: string): string {
-  return FILE_EXTENSION_COLOR_MAPPING[getFileExtension(name)];
+  return FILE_EXTENSION_COLOR_MAPPING[getFileExtension(name)] || 'gray';
 }

@@ -29,6 +29,7 @@ type UseFileIconProps = {
   BlockIcons?: {
     [uuid: string]: any;
   };
+  DefaultIcon?: any;
   Icons?: {
     [uuid: string]: any;
   };
@@ -40,9 +41,11 @@ type UseFileIconProps = {
   };
   allowEmptyFolders?: boolean;
   children?: any;
+  defaultColor?: string;
   disabled?: boolean;
   file?: FileType;
   filePath?: string;
+  getBlockColor?: (blockType: BlockTypeEnum, options: { theme: any }) => string;
   isFolder?: boolean;
   isInPipelinesFolder?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
@@ -56,14 +59,17 @@ type UseFileIconProps = {
 
 export default function useFileIcon({
   BlockIcons = BLOCK_TYPE_ICON_MAPPING,
+  DefaultIcon,
   ExtensionIcons = FILE_EXTENSION_ICON_MAPPING,
   IconColors = FILE_EXTENSION_COLOR_MAPPING,
   Icons,
   allowEmptyFolders,
   children,
+  defaultColor,
   disabled: disabledProp,
   file,
   filePath,
+  getBlockColor,
   isFolder: isFolderProp,
   isInPipelinesFolder,
   isFileDisabled,
@@ -122,8 +128,12 @@ export default function useFileIcon({
   );
 
   const color = useMemo(
-    () => (folderNameForBlock ? getColorsForBlockType(blockType, { theme }).accent : null),
-    [blockType, folderNameForBlock, theme],
+    () => (folderNameForBlock
+      ? getBlockColor
+        ? getBlockColor?.(blockType, { theme })?.accent
+        : getColorsForBlockType(blockType, { theme }).accent
+      : null),
+    [blockType, getBlockColor, folderNameForBlock, theme],
   );
 
   const isPipelineFolder = name === FOLDER_NAME_PIPELINES;
@@ -149,7 +159,7 @@ export default function useFileIcon({
 
   const { Icon, iconColor } = useMemo(() => {
     let iconColorInner;
-    let IconInner = FileFill;
+    let IconInner = DefaultIcon || FileFill;
 
     const { extension } = file || { extension: null };
 
@@ -175,7 +185,7 @@ export default function useFileIcon({
       const fx = extension || getFileExtension(name);
       if (fx && fx in ExtensionIcons) {
         IconInner = ExtensionIcons[fx];
-        iconColorInner = IconColors[fx];
+        iconColorInner = IconColors[fx] || defaultColor;
       }
     }
 
@@ -184,6 +194,8 @@ export default function useFileIcon({
       iconColor: iconColorInner,
     };
   }, [
+    DefaultIcon,
+    BlockIcons,
     Charts,
     Ellipsis,
     ExtensionIcons,
@@ -195,6 +207,7 @@ export default function useFileIcon({
     PipelineV3,
     isPipelineFolder,
     allowEmptyFolders,
+    defaultColor,
     blockType,
     file,
     isFirstParentFolderForBlock,

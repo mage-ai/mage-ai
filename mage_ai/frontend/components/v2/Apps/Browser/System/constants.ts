@@ -66,8 +66,8 @@ export const FILE_EXTENSION_COLOR_MAPPING = {
   [FileExtensionEnum.SH]: 'greenHi', // Lime green
   [FileExtensionEnum.SQL]: 'blueLo', // Dark cyan
   [FileExtensionEnum.TXT]: 'blueMd', // Light grayish blue
-  [FileExtensionEnum.YAML]: 'greenMd', // Pale teal
-  [FileExtensionEnum.YML]: 'greenMd', // Pale teal
+  [FileExtensionEnum.YAML]: 'green', // Pale teal
+  [FileExtensionEnum.YML]: 'green', // Pale teal
 };
 
 export const Icons = {

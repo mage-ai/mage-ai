@@ -24,7 +24,7 @@ import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
-const { FolderV2Filled } = icons;
+const { DiamondShared, FileIcon, FolderV2Filled } = icons;
 
 type ItemProps = {
   app: AppConfigType;
@@ -46,7 +46,23 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const { items, name } = item as ItemType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
-  const { BlockIcon, Icon } = useFileIcon({ isFolder, name });
+  // TODO (dangerous): update this with a real dynamic value.
+  const pipelineCount = 0;
+  const {
+    BlockIcon,
+    Icon,
+    folderNameForBlock,
+    iconColor,
+    isBlockFile,
+    color: blockIconColor,
+    isFirstParentFolderForBlock,
+  } = useFileIcon({ isFolder, name, theme: themeContext, uuid: name });
+
+  const isBlockFileWithSquareIcon = useMemo(
+    () => !!folderNameForBlock && !isFolder && !!isBlockFile,
+    [folderNameForBlock, isBlockFile, isFolder],
+  );
+
   const iconColorName = useMemo(
     () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
     [isFolder, name],
@@ -79,15 +95,34 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const linesMemo = useMemo(() => buildLines(), [buildLines]);
 
   const buildIcon = useCallback(() => {
-    const props = { colorName: iconColorName, small: true };
-    const IconUse = isFolder && expandedRef?.current
-      ? FolderV2Filled
-      : BlockIcon || Icon;
-    console.log(name, BlockIcon);
-    if (IconUse) {
-      return <IconUse {...props} />;
+    if (isFolder) {
+      if (isFirstParentFolderForBlock)  {
+        return <Icon color={blockIconColor} small />;
+      } else {
+        const IconUse = expandedRef?.current ? FolderV2Filled : Icon;
+        if (IconUse) {
+          return <IconUse colorName={iconColorName} small />;
+        }
+      }
+    } else if (isBlockFileWithSquareIcon) {
+      if (pipelineCount) {
+        return <DiamondShared fill={blockIconColor} small />;
+      } else if (BlockIcon) {
+        return (
+          <BlockIcon
+            borderOnly={!pipelineCount}
+            color={blockIconColor}
+            size={folderNameForBlock && !isFolder ? 8 : 12}
+            square
+          />
+        );
+      }
     }
-  }, [Icon, iconColorName, isFolder]);
+
+    const IconUse = Icon || FileIcon;
+
+    return <IconUse colorName={iconColorName || iconColor} small />;
+  }, [BlockIcon, Icon, iconColorName, blockIconColor, isFolder, isBlockFile, isBlockFileWithSquareIcon, pipelineCount, iconColor, folderNameForBlock, isFirstParentFolderForBlock]);
 
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
