@@ -1,5 +1,5 @@
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
-import { ThemeType } from './interfaces';
+import ThemeType from './interfaces';
 
 export function getBlockColor(
   blockType: BlockTypeEnum,
