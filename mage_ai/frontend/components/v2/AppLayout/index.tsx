@@ -1,5 +1,5 @@
 import { ThemeContext, ThemeProvider } from 'styled-components';
-import { createRef, useContext, useEffect, useRef } from 'react';
+import { createRef, useContext, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
@@ -16,6 +16,7 @@ import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
 import { removeClassNames } from '@utils/elements';
 import { setThemeSettings } from '@mana/themes/utils';
+import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
 const { Cluster, Dark } = icons;
 
@@ -87,78 +88,79 @@ function GridContainer() {
     }, 0);
   }
 
-  useEffect(() => {
-    if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
-      setTimeout(() => {
-        if (!Object.keys(refCells?.current || {})?.length) {
-          addPanel({
-            subtype: AppSubtypeEnum.SYSTEM,
-            type: AppTypeEnum.BROWSER,
-            uuid: randomSimpleHashGenerator(),
-          });
-        }
-      }, 1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
-    <ContainerStyled>
-      <Grid height="inherit" pad templateRows="auto 1fr">
-        <GridRow row={1}>
-          <Section>
-            <Row align="center" justify="start">
-              <Col xs="content">
-                <Button
-                  Icon={Cluster}
-                  onClick={() => {
-                    console.log('Run pipeline');
-                  }}
-                  primary
-                >
-                  Run pipeline
-                </Button>
-              </Col>
-              <Col>
-                <Row>
-                  <Col>
-                    <TextInput monospace number placeholder="Row" />
-                  </Col>
-                  <Col>
-                    <TextInput monospace number placeholder="Column" />
-                  </Col>
-                </Row>
-              </Col>
-              <Col xs="content">
-                <ButtonGroup>
+    <WithOnMount
+      onMount={() => {
+        if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
+          setTimeout(() => {
+            if (!Object.keys(refCells?.current || {})?.length) {
+              addPanel({
+                subtype: AppSubtypeEnum.SYSTEM,
+                type: AppTypeEnum.BROWSER,
+                uuid: randomSimpleHashGenerator(),
+              });
+            }
+          }, 1);
+        }
+      }}
+    >
+      <ContainerStyled>
+        <Grid height='inherit' pad templateRows='auto 1fr'>
+          <GridRow row={1}>
+            <Section>
+              <Row align='center' justify='start'>
+                <Col xs='content'>
                   <Button
-                    Icon={Dark}
-                    onClick={() =>
-                      setThemeSettings(({ mode }) => ({
-                        mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-                      }))
-                    }
-                  >
-                    Theme
-                  </Button>
-
-                  <Button
-                    basic
+                    Icon={Cluster}
                     onClick={() => {
-                      addPanel({ uuid: String(Number(new Date())) });
+                      console.log('Run pipeline');
                     }}
+                    primary
                   >
-                    Add panel
+                    Run pipeline
                   </Button>
-                </ButtonGroup>
-              </Col>
-            </Row>
-          </Section>
-        </GridRow>
+                </Col>
+                <Col>
+                  <Row>
+                    <Col>
+                      <TextInput monospace number placeholder='Row' />
+                    </Col>
+                    <Col>
+                      <TextInput monospace number placeholder='Column' />
+                    </Col>
+                  </Row>
+                </Col>
+                <Col xs='content'>
+                  <ButtonGroup>
+                    <Button
+                      Icon={Dark}
+                      onClick={() =>
+                        setThemeSettings(({ mode }) => ({
+                          mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
+                        }))
+                      }
+                    >
+                      Theme
+                    </Button>
 
-        <Grid ref={containerRef} row={2} uuid="app-layout" />
-      </Grid>
-    </ContainerStyled>
+                    <Button
+                      basic
+                      onClick={() => {
+                        addPanel({ uuid: String(Number(new Date())) });
+                      }}
+                    >
+                      Add panel
+                    </Button>
+                  </ButtonGroup>
+                </Col>
+              </Row>
+            </Section>
+          </GridRow>
+
+          <Grid ref={containerRef} row={2} uuid='app-layout' />
+        </Grid>
+      </ContainerStyled>
+    </WithOnMount>
   );
 }
 

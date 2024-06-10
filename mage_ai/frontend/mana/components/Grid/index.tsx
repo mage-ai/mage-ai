@@ -10,7 +10,7 @@ const GRID_CLASSNAME = 'grid-mana';
 type GridProps = {
   className?: string;
   children?: React.ReactNode;
-  onClick?: (event: Event) => void;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 } & GridStyledProps;
 
 function Grid(
