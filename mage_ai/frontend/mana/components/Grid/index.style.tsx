@@ -37,7 +37,8 @@ export const shared = css<SharedStyledProps>`
   display: grid;
   min-height: 0;
   min-width: 0;
-  padding: ${({ compact, pad, theme }) => pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
+  padding: ${({ compact, pad, theme }) =>
+    pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
 
   ${buildGridTemplateColumns().join('\n')}
   ${buildRowColumnStyles().join('\n')}

@@ -11,11 +11,7 @@ type KeyboardTextProps = {
   xsmall?: boolean;
 };
 
-function KeyboardText({
-  inline,
-  text,
-  ...props
-}: KeyboardTextProps) {
+function KeyboardText({ inline, text, ...props }: KeyboardTextProps) {
   const ElStyled = inline ? DivStyled : KbdStyled;
 
   return (

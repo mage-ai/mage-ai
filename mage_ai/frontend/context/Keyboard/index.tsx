@@ -1,14 +1,17 @@
 import React, { useContext } from 'react';
 
 export type DisableGlobalKeyboardShortcuts = {
-  setDisableGlobalKeyboardShortcuts?: (disableGlobalKeyboardShortcuts: boolean, opts?: {
-    keyMapping?: {
-      [keyCode: number | string]: boolean;
-    };
-    uuidMapping?: {
-      [keyCode: number | string]: boolean;
-    };
-  }) => void;
+  setDisableGlobalKeyboardShortcuts?: (
+    disableGlobalKeyboardShortcuts: boolean,
+    opts?: {
+      keyMapping?: {
+        [keyCode: number | string]: boolean;
+      };
+      uuidMapping?: {
+        [keyCode: number | string]: boolean;
+      };
+    },
+  ) => void;
 };
 
 export type KeyboardRegisterType = {
@@ -43,13 +46,14 @@ type KeyboardContextType = {
   disableGlobalKeyboardShortcuts?: boolean;
   unregisterOnKeyDown: (uuid: string) => void;
   unregisterOnKeyUp: (uuid: string) => void;
-} & KeyboardRegisterType & DisableGlobalKeyboardShortcuts;
+} & KeyboardRegisterType &
+  DisableGlobalKeyboardShortcuts;
 
 const KeyboardContext = React.createContext<KeyboardContextType>({
   disableGlobalKeyboardShortcuts: false,
   registerOnKeyDown: null,
   registerOnKeyUp: null,
-  setDisableGlobalKeyboardShortcuts: () => {},
+  setDisableGlobalKeyboardShortcuts: () => null,
   unregisterOnKeyDown: null,
   unregisterOnKeyUp: null,
 });

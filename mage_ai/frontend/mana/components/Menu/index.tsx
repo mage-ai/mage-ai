@@ -40,16 +40,7 @@ type ItemProps = {
 };
 
 function MenuItem({ item, small }: ItemProps) {
-  const {
-    Icon,
-    description,
-    divider,
-    items,
-    keyboardShortcuts,
-    label,
-    onClick,
-    uuid,
-  } = item;
+  const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   if (divider) {
@@ -63,57 +54,56 @@ function MenuItem({ item, small }: ItemProps) {
       onClick={onClick}
     >
       <Grid rowGap={4}>
-        <Grid alignItems="center" autoFlow="column" justifyContent="space-between" templateRows="1fr">
+        <Grid
+          alignItems='center'
+          autoFlow='column'
+          justifyContent='space-between'
+          templateRows='1fr'
+        >
           <Text small={small}>{label?.() || uuid}</Text>
 
           {keyboardShortcuts && (
-            <KeyboardTextGroup monospace small={!small} textGroup={keyboardShortcuts} xsmall={small} />
+            <KeyboardTextGroup
+              monospace
+              small={!small}
+              textGroup={keyboardShortcuts}
+              xsmall={small}
+            />
           )}
 
           {itemsCount >= 1 && <CaretRight size={12} />}
         </Grid>
 
         {description && (
-          <Text muted small={!small} xsmall={small}>{description?.()}</Text>
+          <Text muted small={!small} xsmall={small}>
+            {description?.()}
+          </Text>
         )}
       </Grid>
     </Button>
   );
 }
 
-function Menu({
-  boundingContainer,
-  contained,
-  coordinates,
-  items,
-  small,
-  uuid,
-}: MenuProps) {
+function Menu({ boundingContainer, contained, coordinates, items, small, uuid }: MenuProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const itemExpandedRef = useRef(null);
 
   const [debouncer, cancel] = useDebounce();
 
-  const {
-    x: left,
-    y: top,
-  } = useMemo(() => {
+  const { x: left, y: top } = useMemo(() => {
     const { x, y } = coordinates || { x: 0, y: 0 };
-    const {
-      width: widthContainer,
-      x: xContainer,
-    } = boundingContainer || { width: 0, x: 0, y: 0 };
+    const { width: widthContainer, x: xContainer } = boundingContainer || { width: 0, x: 0, y: 0 };
 
     let xFinal = x + UNIT;
     if (x + MENU_MIN_WIDTH >= xContainer + widthContainer) {
-      xFinal = (xContainer + widthContainer) - (MENU_MIN_WIDTH + UNIT);
+      xFinal = xContainer + widthContainer - (MENU_MIN_WIDTH + UNIT);
     }
     if (xFinal < 0) {
       xFinal = 0;
     }
 
-    let yFinal = y + (UNIT / 2);
+    let yFinal = y + UNIT / 2;
     const menuHeight = MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
       yFinal = y - menuHeight;
@@ -128,47 +118,50 @@ function Menu({
   const itemsRootRef = useRef(null);
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
 
-  const renderItems = useCallback((item: MenuItemType, event: React.MouseEvent<HTMLDivElement>) => {
-    if (!item?.items?.length || itemExpandedRef?.current?.uuid === item?.uuid) {
-      return;
-    }
+  const renderItems = useCallback(
+    (item: MenuItemType, event: React.MouseEvent<HTMLDivElement>) => {
+      if (!item?.items?.length || itemExpandedRef?.current?.uuid === item?.uuid) {
+        return;
+      }
 
-    event.stopPropagation();
-    event.preventDefault();
+      event.stopPropagation();
+      event.preventDefault();
 
-    if (!itemsRootRef?.current) {
-      const node = document.getElementById(rootID);
-      itemsRootRef.current = createRoot(node as HTMLElement);
-    }
+      if (!itemsRootRef?.current) {
+        const node = document.getElementById(rootID);
+        itemsRootRef.current = createRoot(node as HTMLElement);
+      }
 
-    const element = event?.target as HTMLElement;
-    const rect = element?.getBoundingClientRect() || {} as DOMRect;
-    const rectContainer = containerRef?.current?.getBoundingClientRect() || {} as DOMRect;
+      const element = event?.target as HTMLElement;
+      const rect = element?.getBoundingClientRect() || ({} as DOMRect);
+      const rectContainer = containerRef?.current?.getBoundingClientRect() || ({} as DOMRect);
 
-    // Calculate the mouse position relative to the element
-    const paddingHorizontal = rect?.left - rectContainer?.left;
-    const x = (rectContainer?.left + rectContainer?.width) - (rect?.left + paddingHorizontal);
-    const y = (rect?.top - rectContainer?.top) - (2 * (rect?.height - element?.clientHeight));
+      // Calculate the mouse position relative to the element
+      const paddingHorizontal = rect?.left - rectContainer?.left;
+      const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal);
+      const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
 
-    itemsRootRef.current.render(
-      <React.StrictMode>
-        <DeferredRenderer idleTimeout={1}>
-          <ThemeProvider theme={themeContext}>
-            <Menu
-              boundingContainer={boundingContainer}
-              contained
-              coordinates={{ x, y }}
-              items={item?.items}
-              small
-              uuid={`${uuid}-${item.uuid}`}
-            />
-          </ThemeProvider>
-        </DeferredRenderer>
-      </React.StrictMode>,
-    );
+      itemsRootRef.current.render(
+        <React.StrictMode>
+          <DeferredRenderer idleTimeout={1}>
+            <ThemeProvider theme={themeContext}>
+              <Menu
+                boundingContainer={boundingContainer}
+                contained
+                coordinates={{ x, y }}
+                items={item?.items}
+                small
+                uuid={`${uuid}-${item.uuid}`}
+              />
+            </ThemeProvider>
+          </DeferredRenderer>
+        </React.StrictMode>,
+      );
 
-    itemExpandedRef.current = item;
-  }, [boundingContainer, rootID, themeContext, uuid]);
+      itemExpandedRef.current = item;
+    },
+    [boundingContainer, rootID, themeContext, uuid],
+  );
 
   return (
     <MenuStyled
@@ -180,11 +173,11 @@ function Menu({
     >
       {items?.length >= 1 && (
         <>
-          <Row direction="column" nogutter>
+          <Row direction='column' nogutter>
             {items?.map((item: MenuItemType, idx: number) => (
               <div
                 key={`menu-item-${item.uuid}-${idx}`}
-                onMouseEnter={(event) => {
+                onMouseEnter={event => {
                   cancel();
                   debouncer(() => renderItems(item, event), 100);
                 }}
@@ -193,10 +186,7 @@ function Menu({
                 }}
                 style={{ display: 'grid', width: '100%' }}
               >
-                <MenuItem
-                  item={item}
-                  small={small}
-                />
+                <MenuItem item={item} small={small} />
               </div>
             ))}
           </Row>

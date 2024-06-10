@@ -14,7 +14,9 @@ type MenuStyledProps = {
 };
 
 export const MenuStyled = styled.div<MenuStyledProps>`
-  ${({ left, top, zIndex }) => (typeof left !== 'undefined' || typeof top !== 'undefined') && `
+  ${({ left, top, zIndex }) =>
+    (typeof left !== 'undefined' || typeof top !== 'undefined') &&
+    `
     left: ${left}px;
     top: ${top}px;
     z-index: ${zIndex || 1};
@@ -28,5 +30,5 @@ export const MenuStyled = styled.div<MenuStyledProps>`
   `}
 
   min-width: ${MENU_MIN_WIDTH}px;
-  position: ${({ contained }) => contained ? 'absolute' : 'fixed'};
+  position: ${({ contained }) => (contained ? 'absolute' : 'fixed')};
 `;

@@ -10,7 +10,7 @@ export interface MenuType {
   border: {
     radius: {
       base: string;
-    }
+    };
   };
   padding: {
     base: string;

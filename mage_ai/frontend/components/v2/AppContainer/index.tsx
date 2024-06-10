@@ -122,7 +122,6 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
         );
       },
     );
-
   }
 
   function addApp(app: AppConfigType, opts?: AddAppFunctionOptionsType) {
@@ -133,7 +132,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
     if (!(uuidApp in refAppConfigs?.current)) {
       updateAppConfig({
         ...(grid?.absolute || {}),
-        layout: (grid?.absolute?.layout || {  column: 0, row: 0 }),
+        layout: grid?.absolute?.layout || { column: 0, row: 0 },
         uuid: uuidApp,
       });
     }
@@ -155,7 +154,6 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
           </ThemeProvider>,
         );
       }
-
     }, 0);
   }
 
@@ -190,11 +188,14 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
             }, index * 100);
           });
         } else {
-          addApp({
-            subtype: AppSubtypeEnum.IDE,
-            type: AppTypeEnum.EDITOR,
-            uuid: randomSimpleHashGenerator(),
-          }, containerRef?.current);
+          addApp(
+            {
+              subtype: AppSubtypeEnum.IDE,
+              type: AppTypeEnum.EDITOR,
+              uuid: randomSimpleHashGenerator(),
+            },
+            containerRef?.current,
+          );
         }
       }
     }
@@ -203,10 +204,10 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
 
   return (
     <Grid
-      autoColumns="1fr"
-      autoRows="1fr"
-      justifyContent="stretch"
-      justifyItems="stretch"
+      autoColumns='1fr'
+      autoRows='1fr'
+      justifyContent='stretch'
+      justifyItems='stretch'
       ref={containerRef}
     />
   );

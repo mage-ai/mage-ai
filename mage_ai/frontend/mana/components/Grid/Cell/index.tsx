@@ -8,7 +8,11 @@ type CellProps = {
 };
 
 function Cell({ layout, uuid }: CellProps) {
-  const { column = 0, columnSpan = 0, row = 0 } = layout || {
+  const {
+    column = 0,
+    columnSpan = 0,
+    row = 0,
+  } = layout || {
     column: 0,
     columnSpan: 0,
     row: 0,

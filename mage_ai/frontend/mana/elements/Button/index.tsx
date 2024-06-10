@@ -6,7 +6,6 @@ import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 
-
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   IconAfter?: ({ ...props }: any) => any;

@@ -13,7 +13,7 @@ export type StyleProps = {
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
-  ${({ asLink }) => asLink ? transitionFast : transition}
+  ${({ asLink }) => (asLink ? transitionFast : transition)}
   ${text}
 
   ${({ asLink, basic, grouped, primary, secondary, theme }) =>
@@ -23,7 +23,7 @@ const shared = css<StyleProps>`
         ? theme.buttons.outline.color.primary.hover
         : secondary
           ? theme.buttons.outline.color.secondary.hover
-          : (asLink || basic)
+          : asLink || basic
             ? theme.buttons.outline.color.basic.hover
             : theme.buttons.outline.color.base.hover,
       outlineOffset: grouped ? UNIT : null,
@@ -61,7 +61,7 @@ const shared = css<StyleProps>`
           ? theme.buttons.border.color.primary.hover
           : secondary
             ? theme.buttons.border.color.secondary.hover
-            : (asLink || basic)
+            : asLink || basic
               ? theme.buttons.border.color.basic.hover
               : theme.buttons.border.color.base.hover
       };
@@ -70,15 +70,16 @@ const shared = css<StyleProps>`
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ asLink, basic, primary, secondary, theme }) => asLink
-    ? 'transparent'
-  : primary
-      ? theme.colors.backgrounds.button.primary.default
-      : secondary
-        ? theme.colors.backgrounds.button.secondary.default
-        : basic
-          ? theme.colors.backgrounds.button.basic.default
-          : theme.colors.backgrounds.button.base.default};
+  background-color: ${({ asLink, basic, primary, secondary, theme }) =>
+    asLink
+      ? 'transparent'
+      : primary
+        ? theme.colors.backgrounds.button.primary.default
+        : secondary
+          ? theme.colors.backgrounds.button.secondary.default
+          : basic
+            ? theme.colors.backgrounds.button.basic.default
+            : theme.colors.backgrounds.button.base.default};
   border-radius: ${({ asLink, theme }) => theme.borders.radius[asLink ? 'sm' : 'base']};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
@@ -115,11 +116,8 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ asLink, grouped, theme }) => grouped
-    ? 0
-    : asLink
-      ? theme.buttons.padding.xs
-      : theme.buttons.padding.base};
+  padding: ${({ asLink, grouped, theme }) =>
+    grouped ? 0 : asLink ? theme.buttons.padding.xs : theme.buttons.padding.base};
 `;
 
 export const sm = css<StyleProps>`

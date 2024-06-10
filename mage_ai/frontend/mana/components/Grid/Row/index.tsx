@@ -13,11 +13,12 @@ const RowStyled = styled.div<RowStyledProps>`
   ${shared}
 `;
 
-function Row({
-  children,
-  ...props
-}: RowProps, ref: React.Ref<HTMLDivElement>) {
-  return <RowStyled {...props} ref={ref} width="inherit">{children}</RowStyled>;
+function Row({ children, ...props }: RowProps, ref: React.Ref<HTMLDivElement>) {
+  return (
+    <RowStyled {...props} ref={ref} width='inherit'>
+      {children}
+    </RowStyled>
+  );
 }
 
 export default forwardRef(Row);

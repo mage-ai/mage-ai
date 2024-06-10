@@ -25,7 +25,9 @@ export const DividerStyled = styled.div<DividerProps>`
     width: 100%;
   `}
 
-  ${({ compact, theme, vertical }) => !vertical && `
+  ${({ compact, theme, vertical }) =>
+    !vertical &&
+    `
     height: 1px;
     margin-bottom: ${theme.margin[compact ? 'sm' : 'base']}px;
     margin-top: ${theme.margin[compact ? 'sm' : 'base']}px;

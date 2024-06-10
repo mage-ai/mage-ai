@@ -24,15 +24,13 @@ Take a look and let me know if anything works, you can also ask me to simply cho
 function EditorApp() {
   return (
     <div>
-      <Row direction="column" nogutter>
-        <Col xs="content">
+      <Row direction='column' nogutter>
+        <Col xs='content'>
           <Row>
             <Col>
-              <Text>
-                {TXT}
-              </Text>
+              <Text>{TXT}</Text>
             </Col>
-            <Col xs="content">
+            <Col xs='content'>
               <Tag>Block</Tag>
             </Col>
           </Row>
@@ -41,9 +39,7 @@ function EditorApp() {
 
           <Row>
             <Col>
-              <Text monospace>
-                {TXT}
-              </Text>
+              <Text monospace>{TXT}</Text>
             </Col>
           </Row>
         </Col>

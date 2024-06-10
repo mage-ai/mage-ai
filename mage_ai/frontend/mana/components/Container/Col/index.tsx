@@ -25,6 +25,5 @@ const ColComponent = forwardRef<any, ColProps>(({ children, ...props }, ref) => 
   </ColGrid>
 ));
 
-
 const ColWithDisplay = useWithDisplay(ColComponent);
 export default ColWithDisplay;

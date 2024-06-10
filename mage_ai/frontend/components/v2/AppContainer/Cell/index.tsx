@@ -62,20 +62,20 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { main, toolbars } = useBrowser({ app });
 
   return (
-    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
+    <Grid justifyContent='stretch' justifyItems='stretch' ref={ref}>
       <Section>
         <Grid
-          autoFlow="column"
-          justifyContent="stretch"
-          justifyItems="stretch"
-          templateColumns="1fr"
-          templateRows="min-content 1fr"
+          autoFlow='column'
+          justifyContent='stretch'
+          justifyItems='stretch'
+          templateColumns='1fr'
+          templateRows='min-content 1fr'
         >
-          <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr">
+          <Grid autoFlow='column' justifyContent='space-between' templateColumns='1fr'>
             {toolbars?.top}
 
-            <Grid autoFlow="column" justifyContent="end" templateColumns="1fr">
-              <Grid autoFlow="column" templateRows="min-content">
+            <Grid autoFlow='column' justifyContent='end' templateColumns='1fr'>
+              <Grid autoFlow='column' templateRows='min-content'>
                 <ButtonGroup itemsContained>
                   <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
                   <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
@@ -88,9 +88,7 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
             </Grid>
           </Grid>
 
-          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && (
-            <EditorApp />
-          )}
+          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && <EditorApp />}
           {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
         </Grid>
       </Section>

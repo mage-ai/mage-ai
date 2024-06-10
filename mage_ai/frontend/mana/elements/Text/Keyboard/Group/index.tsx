@@ -10,10 +10,7 @@ type KeyboardTextGroupProps = {
   xsmall?: boolean;
 };
 
-function KeyboardTextGroup({
-  textGroup,
-  ...props
-}: KeyboardTextGroupProps) {
+function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
   const els = [];
   const previousKeys = [];
 
@@ -25,7 +22,11 @@ function KeyboardTextGroup({
 
       if (idx2 >= 1) {
         combo.push(
-          <Text {...props} key={`key-text-plus-${previousKeys.join('-')}-${keyText}-${idx1}-${idx2}`} muted>
+          <Text
+            {...props}
+            key={`key-text-plus-${previousKeys.join('-')}-${keyText}-${idx1}-${idx2}`}
+            muted
+          >
             +
           </Text>,
         );
@@ -53,11 +54,7 @@ function KeyboardTextGroup({
   });
 
   return (
-    <Grid
-      alignItems="center"
-      autoFlow="column"
-      columnGap={4}
-    >
+    <Grid alignItems='center' autoFlow='column' columnGap={4}>
       {els}
     </Grid>
   );
