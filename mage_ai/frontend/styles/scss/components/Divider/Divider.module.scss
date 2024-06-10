@@ -1,0 +1,30 @@
+@import '../abstracts/colors';
+@import '../abstracts/variables';
+
+.divider {
+  background-color: $borders-color-base-default;
+
+  &.short {
+    width: $unit * 20 + px;
+  }
+
+  &.full {
+    width: 100%;
+  }
+
+  &:not(.vertical) {
+    height: 1px;
+    margin-bottom: map-get($margin, base) + px;
+    margin-top: map-get($margin, base) + px;
+
+    &.compact {
+      margin-bottom: map-get($margin, sm) + px;
+      margin-top: map-get($margin, sm) + px;
+    }
+  }
+
+  &.vertical {
+    height: 100%;
+    width: 1px;
+  }
+}

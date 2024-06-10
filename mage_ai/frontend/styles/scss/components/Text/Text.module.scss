@@ -1,0 +1,16 @@
+@import '../../base/typography';
+
+@mixin text {
+  @include base;
+  margin: 0;
+}
+
+@mixin text-small {
+  @include base-sm;
+  margin: 0;
+}
+
+@mixin text-xsmall {
+  @include base-xs;
+  margin: 0;
+}

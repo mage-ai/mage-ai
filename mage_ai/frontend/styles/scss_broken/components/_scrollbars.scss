@@ -1,0 +1,43 @@
+@import "../abstracts/variables";
+@import "../abstracts/mixins";
+
+@mixin scrollbars($props) {
+  @if map-has-key($props, 'hidden') and map-get($props, 'hidden') {
+    // for Internet Explorer, Edge
+    -ms-overflow-style: none;
+    // for Firefox
+    scrollbar-width: none;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    height: $scrollbar-track-width;
+    width: $scrollbar-track-width;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @include transition();
+    background: $scrollbar-thumb-background;
+    border-radius: $scrollbar-thumb-border-radius;
+
+    &:hover {
+      background: $scrollbar-thumb-hover-background;
+    }
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: $scrollbar-track-background;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: $scrollbar-track-background;
+    border-radius: $scrollbar-track-border-radius;
+
+    &:hover {
+      background: $scrollbar-track-hover-background;
+    }
+  }
+}

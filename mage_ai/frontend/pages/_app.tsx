@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
+import '@styles/scss/main.scss';
 
 import AuthToken from '@api/utils/AuthToken';
 import CommandCenter from '@components/CommandCenter';

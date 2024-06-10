@@ -1,0 +1,38 @@
+@import '../abstracts/colors';
+
+$inputs: (
+  background: (
+    base: (
+      active: $inputs-background-base-active,
+      default: $inputs-background-base-default,
+      focus: $inputs-background-base-focus,
+      hover: $inputs-background-base-hover
+    )
+  ),
+  border: (
+    color: (
+      base: (
+        active: $inputs-border-color-base-active,
+        default: $inputs-border-color-base-default,
+        focus: $inputs-border-color-base-focus,
+        hover: $inputs-border-color-base-hover
+      )
+    ),
+    radius: (
+      base: $inputs-border-radius-base
+    ),
+    style: (
+      base: $inputs-border-style-base
+    ),
+    width: (
+      base: $inputs-border-width-base
+    )
+  ),
+  padding: (
+    base: $inputs-padding-base,
+    sm: $inputs-padding-sm
+  ),
+  placeholder: (
+    color: $inputs-placeholder-color
+  )
+);

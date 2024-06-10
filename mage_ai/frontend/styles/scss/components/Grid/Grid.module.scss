@@ -1,0 +1,8 @@
+// Grid.module.scss
+@import '../../abstracts/colors';
+@import '../../base/borders';
+@import '../../base/grid';
+
+.grid {
+  @include grid;
+}

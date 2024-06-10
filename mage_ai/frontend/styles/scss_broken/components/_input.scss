@@ -1,0 +1,50 @@
+@import '../abstracts/variables'; // Ensure variable imports are correct for your project structure
+@import '../abstracts/mixins';
+@import '../base/typography';
+@import '../abstracts/borders';
+
+.input {
+  @include transition;
+  @include text;
+  @include borders;
+
+  border-color: $input-border-base-default;
+  background: $input-base-default-background;
+  border-radius: $input-border-radius-base;
+  border-style: $input-border-style-base;
+  border-width: $input-border-width-base;
+  font-weight: $font-weight-medium;
+  line-height: $font-line-height-base;
+  padding: $input-padding-base; // Default padding, adjust for 'small' class
+  width: 100%;
+
+  &::placeholder {
+    color: $input-placeholder-color;
+  }
+
+  &.basic {
+    border-color: transparent;
+  }
+
+  &.small {
+    padding: $input-padding-sm;
+  }
+
+  &:focus {
+    background: $input-base-focus-background;
+    border-color: $input-border-base-focus;
+  }
+
+  &:hover {
+    background: $input-base-hover-background;
+    border-color: $input-border-base-hover;
+  }
+
+  &:active {
+    background: $input-base-active-background;
+    border-color: $input-border-base-active;
+  }
+
+  // Assuming this mixin is defined with the correct logic in '_mixins.scss'
+  @include outline-hover($active: true, $borderColor: $font-color-text-inverted, $outlineColor: $input-border-base-hover);
+}

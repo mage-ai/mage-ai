@@ -2,8 +2,8 @@ import React from 'react';
 
 import borders from '../../styles/borders';
 import styled from 'styled-components';
-import { UNIT } from '@mana/themes/spaces';
-import Grid from '@mana/components/Grid';
+import { UNIT } from '../../spaces';
+import Grid from '../../Grid';
 
 type GroupStyleProps = {
   itemsContained?: boolean;

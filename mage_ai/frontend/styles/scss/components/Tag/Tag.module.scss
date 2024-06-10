@@ -1,0 +1,16 @@
+@import '../../abstracts/colors';
+@import '../../base/typography';
+
+@mixin tag($inverted: false, $secondary: false) {
+  @include base-xs;
+
+  background-color: if($inverted, $colors-whiteLo,
+                    if($secondary, $backgrounds-button-base-default, $colors-whiteHi));
+  border-radius: $borders-radius-round;
+  color: if($inverted, $fonts-color-text-inverted, $fonts-color-text-base);
+  cursor: inherit;
+  display: inline-block;
+  font-family: $fonts-family-base-semiBold;
+  padding: 4px $padding-vertical-xs;
+  pointer-events: if($passthrough, inherit, auto);
+}

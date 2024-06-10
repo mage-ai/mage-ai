@@ -108,15 +108,15 @@ function GridContainer() {
                   uuid: 'test-system-browser-app',
                 },
               ]);
-              setTimeout(() => {
-                addPanel('test-panel-2', [
-                  {
-                    subtype: AppSubtypeEnum.IDE,
-                    type: AppTypeEnum.EDITOR,
-                    uuid: 'test-editor-ide-app',
-                  },
-                ]);
-              }, 1000);
+              // setTimeout(() => {
+              //   addPanel('test-panel-2', [
+              //     {
+              //       subtype: AppSubtypeEnum.IDE,
+              //       type: AppTypeEnum.EDITOR,
+              //       uuid: 'test-editor-ide-app',
+              //     },
+              //   ]);
+              // }, 1000);
             }, 1);
           }
         }

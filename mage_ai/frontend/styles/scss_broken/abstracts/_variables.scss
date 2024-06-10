@@ -1,0 +1,169 @@
+@import './colors';
+
+$body-background: $color-black;
+
+$button-base-background: $color-gray;
+$button-base-hover-background: $color-gray-md;
+$button-basic-background: transparent;
+$button-basic-hover-background: $color-white-hi;
+$button-primary-background: $color-purple;
+$button-primary-hover-background: $color-purple-hi;
+$button-secondary-background: $color-green;
+$button-secondary-hover-background: $color-green-hi;
+
+$input-base-active-background: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  rgba(42, 76, 255, 0.08) 0%,
+  rgba(42, 76, 255, 0.00) 100%
+), rgba(42, 76, 255, 0.10);
+$input-base-default-background: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  rgba(42, 76, 255, 0.08) 0%,
+  rgba(42, 76, 255, 0.00) 100%
+), rgba(42, 76, 255, 0.10);
+$input-base-focus-background: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  rgba(42, 76, 255, 0.08) 0%,
+  rgba(42, 76, 255, 0.00) 100%
+), rgba(42, 76, 255, 0.10);
+$input-base-hover-background: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  rgba(42, 76, 255, 0.08) 0%,
+  rgba(42, 76, 255, 0.00) 100%
+), rgba(42, 76, 255, 0.10);
+
+$menu-base-background: $color-gray-md;
+$menu-contained-background: $color-gray;
+
+$scrollbar-thumb-background: $color-gray;
+$scrollbar-thumb-hover-background: $color-white-md;
+$scrollbar-track-background: $color-gray-lo;
+$scrollbar-track-hover-background: $color-gray-md;
+
+$border-color-base: $color-gray;
+$border-color-base-hover: $color-gray-hi;
+$border-color-button-base: gray;
+$border-color-button-base-hover: $color-gray;
+$border-color-button-basic: gray;
+$border-color-button-basic-hover: $color-gray;
+$border-color-button-primary: $color-gray;
+$border-color-button-primary-hover: $color-gray;
+$border-color-button-secondary: $color-gray;
+$border-color-button-secondary-hover: $color-gray;
+
+$input-border-base-active: $color-blue-text;
+$input-border-base-default: $color-blue;
+$input-border-base-focus: $color-blue-text;
+$input-border-base-hover: $color-blue-text;
+
+$muted-border-color: $color-gray-lo;
+$muted-border-color-hover: $color-gray-lo;
+
+$border-outline-offset: 1px;
+$border-outline-width: 2px;
+$border-radius-base: 10px;
+$border-radius-round: 40px;
+$border-radius-sm: 6px;
+$border-style: solid;
+$border-width: 1px;
+
+$button-border-color-base: gray;
+$button-border-color-base-hover: $color-gray;
+$button-border-color-basic: gray;
+$button-border-color-basic-hover: $color-gray;
+$button-border-color-primary: $color-gray;
+$button-border-color-primary-hover: $color-gray;
+$button-border-color-secondary: $color-gray;
+$button-border-color-secondary-hover: $color-gray;
+
+$button-column-gap-base: 8px;
+$button-column-gap-sm: 6px;
+
+$button-outline-color-base: gray;
+$button-outline-color-base-hover: $color-gray;
+$button-outline-color-basic: $color-white-lo;
+$button-outline-color-basic-hover: $color-white-md;
+$button-outline-color-primary: $color-purple;
+$button-outline-color-primary-hover: $color-purple;
+$button-outline-color-secondary: $color-green;
+$button-outline-color-secondary-hover: $color-green;
+
+$button-padding-base: 13px 14px;
+$button-padding-sm: 12px 13px;
+$button-padding-xs: 6px 8px;
+
+$font-color-button: $color-white;
+$font-color-text-base: $color-white;
+$font-color-text-blue: $color-blue-text;
+$font-color-text-inverted: $color-black;
+$font-color-text-muted: $color-white-md;
+
+$font-family-base-black: "Inter Black", sans-serif;
+$font-family-base-bold: "Inter Bold", sans-serif;
+$font-family-base-lightFont: "Inter Light", sans-serif;
+$font-family-base-medium: "Inter Medium", sans-serif;
+$font-family-base-regular: "Inter Regular", sans-serif;
+$font-family-base-semiBold: "Inter SemiBold", sans-serif;
+
+$font-family-monospace-black: "Fira Code Bold", monospace;
+$font-family-monospace-bold: "Fira Code Bold", monospace;
+$font-family-monospace-boldItalic: "Fira Code Bold Italic", monospace;
+$font-family-monospace-lightFont: "Fira Code Light", monospace;
+$font-family-monospace-medium: "Fira Code Medium", monospace;
+$font-family-monospace-regular: "Fira Code Retina", "Fira Code Regular", monospace;
+$font-family-monospace-regularItalic: "Fira Code Regular Italic", monospace;
+$font-family-monospace-semiBold: "Fira Code SemiBold", monospace;
+
+$font-lineHeight-base: normal;
+$font-lineHeight-md: 144%;
+$font-lineHeight-monospace: 160%;
+$font-lineHeight-sm: 20px;
+$font-lineHeight-xs: 125%;
+
+$font-size-base: 16px;
+$font-size-sm: 14px;
+$font-size-xs: 12px;
+
+$font-style-base: normal;
+$font-style-italic: italic;
+
+$font-weight-bold: 700;
+$font-weight-light: 300;
+$font-weight-medium: 500;
+$font-weight-regular: 400;
+$font-weight-semiBold: 600;
+
+$grid-gutter-width-base: 12px;
+$grid-gutter-width-sm: 8px;
+$grid-gutter-width-xs: 4px;
+
+$icon-color-base: $color-white;
+$icon-color-inverted: $color-black;
+
+$icon-size-base: 20px;
+$icon-size-sm: 17px;
+$icon-size-xs: 12px;
+
+$input-padding-base: 13px 16px;
+$input-padding-sm: 8px 16px;
+
+$input-placeholder-color: $color-white-md;
+
+$margin-base: 12px;
+$margin-sm: 8px;
+$margin-xs: 4px;
+
+$menu-blur-base: saturate(100%) blur(3px);
+
+$menu-border-radius-base: 6px;
+$menu-padding-base: 8px 8px;
+
+$padding-base: 12px;
+$padding-sm: 8px;
+$padding-xs: 4px;
+
+$scrollbar-thumb-border-radius: 40px;
+$scrollbar-track-border-radius: 10px;
+
+$scrollbar-thumb-width: 4px;
+$scrollbar-track-width: 6px;

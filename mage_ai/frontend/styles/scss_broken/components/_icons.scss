@@ -1,0 +1,53 @@
+@import "../abstracts/variables";
+@import "../abstracts/mixins";
+
+@mixin icon-style($props) {
+  fill: if(map-has-key($props, 'useStroke') and not map-get($props, 'useStroke'),
+           map-get($props, 'fillColor'), null);
+
+  stroke: if(map-has-key($props, 'useStroke') and map-get($props, 'useStroke'),
+             map-get($props, 'strokeColor'), null);
+
+  height: if(not (map-has-key($props, 'height') and map-get($props, 'height')) and not (map-has-key($props, 'size') and map-get($props, 'size')),
+            $icon-size-base,
+            if(map-has-key($props, 'height') and map-get($props, 'height'),
+              map-get($props, 'height'), map-get($props, 'size')));
+
+  width: if(not (map-has-key($props, 'width') and map-get($props, 'width')) and not (map-has-key($props, 'size') and map-get($props, 'size')),
+           $icon-size-base,
+           if(map-has-key($props, 'width') and map-get($props, 'width'),
+             map-get($props, 'width'), map-get($props, 'size')));
+}
+
+.icon-fill {
+  $props: (
+    useStroke: false,
+    fillColor: $color-blue,
+    size: 16px
+  );
+
+  @include icon-style($props);
+}
+
+.icon-stroke {
+  $props: (
+    useStroke: true,
+    strokeColor: $color-red,
+    height: 24px,
+    width: 24px
+  );
+
+  @include icon-style($props);
+}
+
+@mixin svg($props) {
+  height: if(not (map-has-key($props, 'height') and map-get($props, 'height')) and not (map-has-key($props, 'size') and map-get($props, 'size')),
+           #{$icon-size[if(map-has-key($props, 'small') and map-get($props, 'small'), "sm",
+           if(map-has-key($props, 'xsmall') and map-get($props, 'xsmall'), "xs", "base"))]}px,
+           if(not (map-has-key($props, 'height') and map-get($props, 'height')), map-get($props, 'size'), map-get($props, 'height')))px;
+
+  width: if(not (map-has-key($props, 'width') and map-get($props, 'width')) and not (map-has-key($props, 'size') and map-get($props, 'size')),
+          #{$icon-size[if(map-has-key($props, 'small') and map-get($props, 'small'), "sm",
+          if(map-has-key($props, 'xsmall') and map-get($props, 'xsmall'), "xs", "base"))]}px,
+          if(not (map-has-key($props, 'width') and map-get($props, 'width')), map-get($props, 'size'), map-get($props, 'width')))px;
+}

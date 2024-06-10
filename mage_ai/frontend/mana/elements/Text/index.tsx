@@ -1,32 +1,27 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
-import text, { StyleProps, baseSm, baseXs } from '../../styles/typography';
 
 type TextProps = {
   children: React.ReactNode;
   inline?: boolean;
   small?: boolean;
   xsmall?: boolean;
-} & StyleProps;
+};
 
-const CSS = css<TextProps>`
-  ${({ small, xsmall }) => (small ? baseSm : xsmall ? baseXs : text)}
+function Text({ children, inline, small, xsmall, ...props }: TextProps) {
+  const classNames = [
+    small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
+    props.className,
+  ].join(' ');
 
-  margin: 0;
-`;
-
-const TextStyled = styled.p<TextProps>`
-  ${CSS}
-`;
-
-const SpanStyled = styled.span<TextProps>`
-  ${CSS}
-`;
-
-function Text({ children, inline, ...props }: TextProps) {
-  const HTMLTag = inline ? SpanStyled : TextStyled;
-
-  return <HTMLTag {...props}>{children}</HTMLTag>;
+  return inline ? (
+    <span {...props} className={classNames}>
+      {children}
+    </span>
+  ) : (
+    <p {...props} className={classNames}>
+      {children}
+    </p>
+  );
 }
 
 export default Text;

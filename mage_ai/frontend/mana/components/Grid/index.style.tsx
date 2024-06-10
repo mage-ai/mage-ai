@@ -1,7 +1,21 @@
 import styled, { css } from 'styled-components';
 
 import borders from '../../styles/borders';
-import { range } from '@utils/array';
+
+export function isNumeric(str) {
+  if (typeof str === 'undefined' || str === null) {
+    return false;
+  }
+
+  return !isNaN(str);
+}
+
+export function range(numberOfItems) {
+  if (isNumeric(numberOfItems) && numberOfItems >= 1) {
+    return Array(numberOfItems).fill(0);
+  }
+  return [];
+}
 
 export type SharedStyledProps = {
   compact?: boolean;

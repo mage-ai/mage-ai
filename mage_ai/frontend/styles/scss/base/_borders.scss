@@ -1,0 +1,16 @@
+// styles/borders -> base/borders
+@mixin shared {
+  border-radius: $borders-radius-base;
+  border-style: $borders-style;
+  border-width: $borders-width;
+}
+
+@mixin base($muted: false) {
+  @include shared;
+  border-color: if($muted, $borders-color-muted-default, $borders-color-base-default);
+}
+
+@mixin borders-transparent {
+  @include shared;
+  border-color: transparent;
+}

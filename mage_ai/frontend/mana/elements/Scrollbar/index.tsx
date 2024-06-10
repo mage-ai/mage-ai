@@ -1,19 +1,15 @@
 import { forwardRef } from 'react';
-import styled from 'styled-components';
 
-import scrollbars, { ScrollbarsStyledProps } from '../../styles/scrollbars';
-
-type ScrollbarProps = { children: React.ReactNode } & ScrollbarsStyledProps;
-
-const ScrollbarStyled = styled.div`
-  ${scrollbars}
-`;
+type ScrollbarProps = {
+  children: React.ReactNode;
+  hidden?: boolean;
+};
 
 function Scrollbar({ children, hidden, ...props }: ScrollbarProps, ref: React.Ref<HTMLDivElement>) {
   return (
-    <ScrollbarStyled {...props} hidden={hidden} ref={ref}>
+    <div {...props} className={styles.scrollbar} hidden={hidden} ref={ref}>
       {children}
-    </ScrollbarStyled>
+    </div>
   );
 }
 

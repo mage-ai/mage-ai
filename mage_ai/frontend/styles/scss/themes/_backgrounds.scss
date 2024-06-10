@@ -1,0 +1,54 @@
+@use "sass:map";
+@import "../abstracts/colors"
+
+$backgrounds: (
+  body: $backgrounds-body,
+  button: (
+    base: (
+      default: $backgrounds-button-base-default,
+      hover: $backgrounds-button-base-hover
+    ),
+    basic: (
+      default: $backgrounds-button-basic-default,
+      hover: $backgrounds-button-basic-hover
+    ),
+    primary: (
+      default: $backgrounds-button-primary-default,
+      hover: $backgrounds-button-primary-hover
+    ),
+    secondary: (
+      default: $backgrounds-button-secondary-default,
+      hover: $backgrounds-button-secondary-hover
+    )
+  ),
+  input: (
+    base: (
+      active: $backgrounds-input-base-active,
+      default: $backgrounds-input-base-default,
+      focus: $backgrounds-input-base-focus,
+      hover: $backgrounds-input-base-hover
+    )
+  ),
+  menu: (
+    base: (
+      default: $backgrounds-menu-base-default
+    ),
+    contained: (
+      default: $backgrounds-menu-contained-default
+    )
+  ),
+  scrollbar: (
+    thumb: (
+      default: $backgrounds-scrollbar-thumb-default,
+      hover: $backgrounds-scrollbar-thumb-hover
+    ),
+    track: (
+      default: $backgrounds-scrollbar-track-default,
+      hover: $backgrounds-scrollbar-track-hover
+    )
+  )
+);
+
+@function background($keys...) {
+  @return map.get($backgrounds, $keys...);
+}

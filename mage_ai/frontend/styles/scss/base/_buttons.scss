@@ -1,0 +1,89 @@
+// styles/buttons -> base/buttons
+@import '../abstracts/colors';
+@import '../abstracts/mixins';
+@import '../base/borders';
+@import '../base/typography';
+
+@mixin shared {
+  @include transition-fast;
+  @include base;
+
+  @include outline-hover(
+    $border-color: map-get($fonts, color, text-inverted),
+    $outline-color: if($primary, map-get($buttons, outline, color, primary, hover),
+                    if($secondary, map-get($buttons, outline, color, secondary, hover),
+                    if($asLink or $basic, map-get($buttons, outline, color, basic, hover),
+                                          map-get($buttons, outline, color, base, hover)))),
+    $outline-offset: if($grouped, $unit, null)
+  );
+
+  @if $grouped {
+    border: none;
+  }
+
+  @if not $grouped and $basic {
+    @include base;
+    border-color: if($primary, map-get($buttons, border, color, primary, default),
+                  if($secondary, map-get($buttons, border, color, secondary, default),
+                  if($basic, map-get($buttons, border, color, basic, default),
+                             map-get($buttons, border, color, base, default))));
+  }
+
+  @if not $grouped and ($asLink or $basic) {
+    &:hover {
+      border-color: if($primary, map-get($buttons, border, color, primary, hover),
+                    if($secondary, map-get($buttons, border, color, secondary, hover),
+                    if($asLink or $basic, map-get($buttons, border, color, basic, hover),
+                                          map-get($buttons, border, color, base, hover))));
+    }
+  }
+
+  @if not $grouped and not $basic {
+    @include borders-transparent;
+  }
+
+  background-color: if($asLink, transparent,
+                    if($primary, map-get($backgrounds, button, primary, default),
+                    if($secondary, map-get($backgrounds, button, secondary, default),
+                    if($basic, map-get($backgrounds, button, basic, default),
+                               map-get($backgrounds, button, base, default)))));
+
+  border-radius: if($asLink, map-get($borders, radius, sm), map-get($borders, radius, base));
+
+  color: if($primary or $secondary, map-get($fonts, color, text-inverted),
+                                    map-get($fonts, color, text-base));
+
+  font-style: map-get($fonts, style, base);
+  font-family: if($primary or $secondary, map-get($fonts, family, base, bold),
+                                          map-get($fonts, family, base, semiBold));
+  font-weight: if($primary or $secondary, map-get($fonts, weight, bold),
+                                          map-get($fonts, weight, semiBold));
+  line-height: map-get($fonts, lineHeight, base);
+
+  @if not $grouped {
+    &:hover {
+      background-color: if($primary, map-get($backgrounds, button, primary, hover),
+                        if($secondary, map-get($backgrounds, button, secondary, hover),
+                        if($basic, map-get($backgrounds, button, basic, hover),
+                                   map-get($backgrounds, button, base, hover))));
+    }
+  }
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+@mixin base {
+  @include shared;
+  font-size: map-get($fonts, size, base);
+  padding: if($grouped, 0,
+           if($asLink, map-get($buttons, padding, xs),
+                       map-get($buttons, padding, base)));
+}
+
+@mixin sm {
+  @include shared;
+  font-size: map-get($fonts, size, sm);
+  padding: if($grouped, 0, map-get($buttons, padding, sm));
+}

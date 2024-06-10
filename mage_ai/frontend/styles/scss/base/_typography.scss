@@ -1,0 +1,105 @@
+// styles/typography.ts -> base/typography.scss
+@import '../abstracts/colors';
+@import '../themes/fonts';
+
+@mixin monospace-font-family {
+  font-family: map-get($fonts, family, monospace, regular);
+
+  @if $light {
+    font-family: map-get($fonts, family, monospace, lightFont);
+  }
+  @if $medium {
+    font-family: map-get($fonts, family, monospace, medium);
+  }
+  @if $semiBold {
+    font-family: map-get($fonts, family, monospace, semiBold);
+  }
+  @if $black or $bold {
+    font-family: map-get($fonts, family, monospace, bold);
+
+    @if $italic {
+      font-family: map-get($fonts, family, monospace, boldItalic);
+    }
+  }
+  @if $italic and not ($black or $bold) {
+    font-family: map-get($fonts, family, monospace, regularItalic);
+  }
+}
+
+@mixin base-font-family {
+  font-family: map-get($fonts, family, base, regular);
+
+  @if $light {
+    font-family: map-get($fonts, family, base, lightFont);
+  }
+  @if $medium {
+    font-family: map-get($fonts, family, base, medium);
+  }
+  @if $semiBold {
+    font-family: map-get($fonts, family, base, semiBold);
+  }
+  @if $black {
+    font-family: map-get($fonts, family, base, black);
+  }
+  @if $bold {
+    font-family: map-get($fonts, family, base, bold);
+  }
+}
+
+@mixin base {
+  @if $monospace {
+    @include monospace-font-family;
+  } @else {
+    @include base-font-family;
+  }
+
+  color: map-get($fonts, color, text-base);
+
+  @if $inverted {
+    color: map-get($fonts, color, text-inverted);
+  }
+  @if $blue {
+    color: map-get($fonts, color, text-blue);
+  }
+  @if $muted {
+    color: map-get($fonts, color, text-muted);
+  }
+
+  font-size: map-get($fonts, size, base);
+  font-style: map-get($fonts, style, base);
+  font-weight: map-get($fonts, weight, regular);
+
+  @if $italic {
+    font-style: map-get($fonts, style, italic);
+  }
+  @if $light {
+    font-weight: map-get($fonts, weight, light);
+  }
+  @if $medium {
+    font-weight: map-get($fonts, weight, medium);
+  }
+  @if $semiBold {
+    font-weight: map-get($fonts, weight, semiBold);
+  }
+  @if $bold {
+    font-weight: map-get($fonts, weight, bold);
+  }
+
+  line-height: map-get($fonts, lineHeight, md);
+
+  @if $monospace {
+    line-height: map-get($fonts, lineHeight, monospace);
+  }
+}
+
+@mixin base-sm {
+  @include base;
+  font-size: map-get($fonts, size, sm);
+  line-height: map-get($fonts, lineHeight, base);
+}
+
+@mixin base-xs {
+  @include base;
+  font-size: map-get($fonts, size, xs);
+  line-height: map-get($fonts, lineHeight, xs);
+}

@@ -1,23 +1,32 @@
 import React from 'react';
-import styled from 'styled-components';
-
-import inputs, { StyleProps } from '../../../styles/inputs';
 
 type InputStyleProps = {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-} & StyleProps;
+  basic?: boolean;
+  small?: boolean;
+  width?: string | number;
+};
 
 type InputProps = {
   number?: boolean;
   placeholder?: string;
 } & InputStyleProps;
 
-const InputStyled = styled.input<InputStyleProps>`
-  ${inputs}
-`;
-
-function TextInput({ number, onChange, ...props }: InputProps, ref) {
-  return <InputStyled {...props} onChange={onChange} ref={ref} type={number ? 'number' : 'text'} />;
+function TextInput({ number, onChange, basic, small, width, ...props }: InputProps, ref) {
+  return (
+    <input
+      {...props}
+      className={`
+        ${styles.input}
+        ${basic ? styles.basic : ''}
+        ${small ? styles.small : ''}
+      `}
+      onChange={onChange}
+      ref={ref}
+      style={{ width }}
+      type={number ? 'number' : 'text'}
+    />
+  );
 }
 
 export default React.forwardRef(TextInput);

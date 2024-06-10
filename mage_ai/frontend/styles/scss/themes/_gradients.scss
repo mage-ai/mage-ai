@@ -1,0 +1,7 @@
+@import '../abstracts/colors';
+
+$blue: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  $colors-blueLo 0%,
+  rgba($colors-blue, 0.00) 100%
+), rgba($colors-blue, 0.10);
