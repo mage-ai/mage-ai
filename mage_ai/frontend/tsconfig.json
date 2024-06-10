@@ -56,10 +56,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
-    "types": [
-      "webpack-env"
-    ]
+    "incremental": true
   },
   "include": [
     "next-env.d.ts",
