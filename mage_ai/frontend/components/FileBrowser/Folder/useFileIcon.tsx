@@ -128,11 +128,12 @@ export default function useFileIcon({
   );
 
   const color = useMemo(
-    () => (folderNameForBlock
-      ? getBlockColor
-        ? getBlockColor?.(blockType, { theme })?.accent
-        : getColorsForBlockType(blockType, { theme }).accent
-      : null),
+    () =>
+      folderNameForBlock
+        ? getBlockColor
+          ? getBlockColor?.(blockType, { theme })?.accent
+          : getColorsForBlockType(blockType, { theme }).accent
+        : null,
     [blockType, getBlockColor, folderNameForBlock, theme],
   );
 

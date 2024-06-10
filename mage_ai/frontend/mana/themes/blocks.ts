@@ -4,9 +4,9 @@ import { ThemeType } from './interfaces';
 export function getBlockColor(
   blockType: BlockTypeEnum,
   props?: {
-    blockColor?: BlockColorEnum,
-    isSelected?: boolean,
-    theme?: ThemeType,
+    blockColor?: BlockColorEnum;
+    isSelected?: boolean;
+    theme?: ThemeType;
   },
 ): {
   accent?: string;
@@ -21,7 +21,6 @@ export function getBlockColor(
   let accentDark;
 
   if (isSelected) {
-
   } else if (BlockTypeEnum.TRANSFORMER === blockType || blockColor === BlockColorEnum.PURPLE) {
     accent = colors?.purple;
     accentLight = colors?.purpleHi;
@@ -34,8 +33,7 @@ export function getBlockColor(
   } else if (BlockTypeEnum.MARKDOWN === blockType) {
     accent = colors?.sky;
     accentLight = colors?.skyHi;
-  } else if (BlockTypeEnum.SENSOR === blockType
-    || blockColor === BlockColorEnum.PINK) {
+  } else if (BlockTypeEnum.SENSOR === blockType || blockColor === BlockColorEnum.PINK) {
     accent = colors?.pink;
     accentLight = colors?.pinkLight;
   } else if (BlockTypeEnum.DBT === blockType) {
@@ -51,15 +49,17 @@ export function getBlockColor(
   } else if (BlockTypeEnum.CONDITIONAL === blockType) {
     accent = colors?.typography?.text?.muted;
     accentLight = colors?.contentDefaultTransparent;
-  } else if (BlockTypeEnum.SCRATCHPAD === blockType
-    || blockColor === BlockColorEnum.GREY
-    || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
+  } else if (
+    BlockTypeEnum.SCRATCHPAD === blockType ||
+    blockColor === BlockColorEnum.GREY ||
+    (BlockTypeEnum.CUSTOM === blockType && !blockColor)
+  ) {
     accent = colors?.typography?.text?.muted;
     accentLight = colors?.typography?.text?.muted;
-  } else if ([
-    BlockTypeEnum.CHART,
-    BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-  ].includes(blockType) && !blockColor) {
+  } else if (
+    [BlockTypeEnum.CHART, BlockTypeEnum.GLOBAL_DATA_PRODUCT].includes(blockType) &&
+    !blockColor
+  ) {
     accent = colors?.typography?.text?.base;
     accentLight = colors?.typography?.text?.muted;
   }

@@ -452,7 +452,7 @@ function Folder({
     <>
       {!onlyShowChildren && (
         <div
-          className="row"
+          className='row'
           onClick={e => {
             e.preventDefault();
 
@@ -567,16 +567,16 @@ function Folder({
             paddingRight: UNIT / 4,
           }}
         >
-          <Flex alignItems="center" flex={1}>
+          <Flex alignItems='center' flex={1}>
             {lineEls}
 
             <ChevronStyle>
               {children && (
                 <div className={expanded ? 'expanded' : 'collapsed'} ref={refChevron}>
-                  <div className="down">
+                  <div className='down'>
                     <ChevronDown muted size={ICON_SIZE} />
                   </div>
-                  <div className="right">
+                  <div className='right'>
                     <ChevronRight muted size={ICON_SIZE} />
                   </div>
                 </div>

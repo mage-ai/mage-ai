@@ -96,7 +96,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
 
   const buildIcon = useCallback(() => {
     if (isFolder) {
-      if (isFirstParentFolderForBlock)  {
+      if (isFirstParentFolderForBlock) {
         return <Icon color={blockIconColor} small />;
       } else {
         const IconUse = expandedRef?.current ? FolderV2Filled : Icon;
@@ -122,7 +122,20 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     const IconUse = Icon || FileIcon;
 
     return <IconUse colorName={iconColorName || iconColor} small />;
-  }, [BlockIcon, Icon, iconColorName, blockIconColor, isFolder, isBlockFile, isBlockFileWithSquareIcon, pipelineCount, iconColor, folderNameForBlock, isFirstParentFolderForBlock]);
+  }, [
+    isBlockFile,
+    BlockIcon,
+    Icon,
+    iconColorName,
+    blockIconColor,
+    isFolder,
+    isBlockFile,
+    isBlockFileWithSquareIcon,
+    pipelineCount,
+    iconColor,
+    folderNameForBlock,
+    isFirstParentFolderForBlock,
+  ]);
 
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
@@ -156,7 +169,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
-                      <Loading position="absolute" />
+                      <Loading position='absolute' />
                     </div>
                   </ThemeProvider>
                 }
@@ -211,13 +224,13 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
           renderUpdates();
         }}
         onContextMenu={onContextMenu}
-        templateColumns="auto 1fr"
+        templateColumns='auto 1fr'
         uuid={childClassName(uuid)}
       >
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns="auto 1fr">
+          <Grid compact templateColumns='auto 1fr'>
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
               <Text blue={isFolder} monospace small>

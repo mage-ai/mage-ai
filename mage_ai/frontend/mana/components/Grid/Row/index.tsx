@@ -15,7 +15,7 @@ const RowStyled = styled.div<RowStyledProps>`
 
 function Row({ children, ...props }: RowProps, ref: React.Ref<HTMLDivElement>) {
   return (
-    <RowStyled {...props} ref={ref} width="inherit">
+    <RowStyled {...props} ref={ref} width='inherit'>
       {children}
     </RowStyled>
   );
