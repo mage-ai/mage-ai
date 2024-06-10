@@ -80,12 +80,10 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
 
   const buildIcon = useCallback(() => {
     const props = { colorName: iconColorName, small: true };
-    const IconUse = BlockIcon
-      ? BlockIcon
-      : isFolder && expandedRef?.current
-        ? FolderV2Filled
-        : Icon;
-    console.log(BlockIcon);
+    const IconUse = isFolder && expandedRef?.current
+      ? FolderV2Filled
+      : BlockIcon || Icon;
+    console.log(name, BlockIcon);
     if (IconUse) {
       return <IconUse {...props} />;
     }

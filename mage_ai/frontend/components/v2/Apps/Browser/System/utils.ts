@@ -4,7 +4,7 @@ import { ItemDetailType, ItemType } from './interfaces';
 import { ItemTypeEnum } from './enums';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
 import useFileIconBase from '@components/FileBrowser/Folder/useFileIcon';
-import { FILE_EXTENSION_ICON_MAPPING, FILE_EXTENSION_COLOR_MAPPING, Icons } from './constants';
+import { BLOCK_TYPE_ICON_MAPPING, FILE_EXTENSION_ICON_MAPPING, FILE_EXTENSION_COLOR_MAPPING, Icons } from './constants';
 import { selectKeys } from '@utils/hash';
 
 export function groupFilesByDirectory(paths: string[]): ItemType {
@@ -49,6 +49,7 @@ export function groupFilesByDirectory(paths: string[]): ItemType {
 export function useFileIcon(args) {
   return useFileIconBase({
     ...args,
+    BlockIcons: BLOCK_TYPE_ICON_MAPPING,
     ExtensionIcons: FILE_EXTENSION_ICON_MAPPING,
     IconColors: FILE_EXTENSION_COLOR_MAPPING,
     Icons,

@@ -26,6 +26,9 @@ import {
 import { singularize } from '@utils/string';
 
 type UseFileIconProps = {
+  BlockIcons?: {
+    [uuid: string]: any;
+  };
   Icons?: {
     [uuid: string]: any;
   };
@@ -52,6 +55,7 @@ type UseFileIconProps = {
 };
 
 export default function useFileIcon({
+  BlockIcons = BLOCK_TYPE_ICON_MAPPING,
   ExtensionIcons = FILE_EXTENSION_ICON_MAPPING,
   IconColors = FILE_EXTENSION_COLOR_MAPPING,
   Icons,
@@ -157,7 +161,7 @@ export default function useFileIcon({
       IconInner = Charts;
     } else if (isFolder && !extension) {
       if (isFirstParentFolderForBlock) {
-        IconInner = BLOCK_TYPE_ICON_MAPPING?.[blockType] || FolderIcon;
+        IconInner = BlockIcons?.[blockType] || FolderIcon;
       } else {
         IconInner = FolderIcon;
       }

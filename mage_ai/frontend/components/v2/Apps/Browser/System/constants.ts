@@ -1,24 +1,47 @@
 import icons from '@mana/icons';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 
 const {
   Alphabet,
+  BlockGeneric,
+  Callback,
   Charts,
+  CircleWithArrowUp,
   Code,
+  Conditional,
+  CubeWithArrowDown,
+  DBT,
   Database,
   Ellipsis,
-  FileIcon,
   FileFill,
+  FileIcon,
   FolderIcon,
+  FrameBoxSelection,
   Insights,
   Lightning,
   List,
   Logs,
   Pipeline,
   PipelineV3,
+  Sensor,
   Table,
   Terminal,
 } = icons;
+
+export const BLOCK_TYPE_ICON_MAPPING = {
+  [BlockTypeEnum.CALLBACK]: Callback,
+  [BlockTypeEnum.CHART]: Charts,
+  [BlockTypeEnum.CONDITIONAL]: Conditional,
+  [BlockTypeEnum.CUSTOM]: BlockGeneric,
+  [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
+  [BlockTypeEnum.DATA_LOADER]: CubeWithArrowDown,
+  [BlockTypeEnum.DBT]: DBT,
+  [BlockTypeEnum.EXTENSION]: Lightning,
+  [BlockTypeEnum.MARKDOWN]: FileIcon,
+  [BlockTypeEnum.SENSOR]: Sensor,
+  [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
+};
 
 export const FILE_EXTENSION_ICON_MAPPING = {
   [FileExtensionEnum.CSV]: Table,
