@@ -63,31 +63,39 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { main, toolbars } = useBrowser({ app });
 
   return (
-    <Grid justifyContent='stretch' justifyItems='stretch' ref={ref}>
+    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
       <Section>
-        <Grid autoFlow='column' justifyContent='space-between' templateColumns='1fr min-content'>
-          {toolbars?.top}
+        <Grid
+          autoFlow="column"
+          justifyContent="stretch"
+          justifyItems="stretch"
+          templateColumns="1fr"
+          templateRows="min-content 1fr"
+        >
+          <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr min-content">
+            {toolbars?.top}
 
-          <Grid autoFlow='column' justifyContent='end' templateColumns='min-content'>
-            <Grid autoFlow='column' templateRows='min-content'>
-              <ButtonGroup itemsContained>
-                <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
-                <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
-                <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} small />
-                <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} small />
-                <Divider vertical />
-                <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
-              </ButtonGroup>
+            <Grid autoFlow="column" justifyContent="end" templateColumns="min-content">
+              <Grid autoFlow="column" templateRows="min-content">
+                <ButtonGroup itemsContained>
+                  <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
+                  <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
+                  <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} small />
+                  <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} small />
+                  <Divider vertical />
+                  <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
+                </ButtonGroup>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
 
-        {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && (
-          <Suspense fallback={<div>Loading...</div>}>
-            <LazyEditorApp />
-          </Suspense>
-        )}
-        {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
+          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyEditorApp />
+            </Suspense>
+          )}
+          {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
+        </Grid>
       </Section>
     </Grid>
   );

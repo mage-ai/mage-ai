@@ -6,9 +6,11 @@ import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
 import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
-import { Settings } from '@mana/icons';
+import icons from '@mana/icons';
 import { range } from '@utils/array';
 import { setThemeSettings } from '@mana/themes/utils';
+
+const { Settings } = icons;
 
 import { randomSimpleHashGenerator } from '@utils/string';
 

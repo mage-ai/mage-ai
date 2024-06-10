@@ -420,11 +420,11 @@ const ColorsDerived = {
   },
   borders: {
     base: {
-      default: {
+      default: convert({
         [ModeEnum.DARK]: 'gray',
         [ModeEnum.LIGHT]: 'gray',
         [ModeEnum.MODE3]: 'gray',
-      },
+      }),
       hover: convert({
         [ModeEnum.DARK]: 'grayHi',
         [ModeEnum.LIGHT]: 'grayHi',
@@ -504,6 +504,18 @@ const ColorsDerived = {
           [ModeEnum.MODE3]: 'blueText',
         }),
       },
+    },
+    muted: {
+      default: {
+        [ModeEnum.DARK]: 'grayLo',
+        [ModeEnum.LIGHT]: 'grayLo',
+        [ModeEnum.MODE3]: 'grayLo',
+      },
+      hover: convert({
+        [ModeEnum.DARK]: 'grayLo',
+        [ModeEnum.LIGHT]: 'grayLo',
+        [ModeEnum.MODE3]: 'grayLo',
+      }),
     },
   },
   icons: {

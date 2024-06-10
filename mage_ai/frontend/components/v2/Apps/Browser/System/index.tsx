@@ -10,6 +10,7 @@ import { GroupByStrategyEnum } from './enums';
 import { ItemDetailType } from './interfaces';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
+import Section from '@mana/elements/Section';
 
 type SystemBrowserProps = {
   app: AppConfigType;
@@ -64,7 +65,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootID]);
 
-  return <div id={rootID} />;
+  return <Section id={rootID} muted />;
 }
 
 export default SystemBrowser;
