@@ -63,13 +63,13 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { main, toolbars } = useBrowser({ app });
 
   return (
-    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
+    <Grid justifyContent='stretch' justifyItems='stretch' ref={ref}>
       <Section>
-        <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr min-content">
+        <Grid autoFlow='column' justifyContent='space-between' templateColumns='1fr min-content'>
           {toolbars?.top}
 
-          <Grid autoFlow="column" justifyContent="end" templateColumns="min-content">
-            <Grid autoFlow="column" templateRows="min-content">
+          <Grid autoFlow='column' justifyContent='end' templateColumns='min-content'>
+            <Grid autoFlow='column' templateRows='min-content'>
               <ButtonGroup itemsContained>
                 <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
                 <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />

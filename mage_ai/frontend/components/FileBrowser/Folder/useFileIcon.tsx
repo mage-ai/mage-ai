@@ -180,7 +180,16 @@ export default function useFileIcon({
       iconColor: iconColorInner,
     };
   }, [
-    Charts, Ellipsis, ExtensionIcons, FileFill, FolderIcon, IconColors, Logs, Pipeline, PipelineV3, isPipelineFolder,
+    Charts,
+    Ellipsis,
+    ExtensionIcons,
+    FileFill,
+    FolderIcon,
+    IconColors,
+    Logs,
+    Pipeline,
+    PipelineV3,
+    isPipelineFolder,
     allowEmptyFolders,
     blockType,
     file,
@@ -188,7 +197,6 @@ export default function useFileIcon({
     isFolder,
     isInPipelinesFolder,
     isNotFolder,
-    level,
     name,
   ]);
 
