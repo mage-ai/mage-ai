@@ -11,7 +11,14 @@ export type GridStyledProps = {
   columnGap?: number;
   compact?: boolean;
   height?: 'auto' | 'inherit' | string;
-  justifyContent?: 'center' | 'start' | 'end' | 'stretch' | 'space-between' | 'space-around' | 'space-evenly';
+  justifyContent?:
+    | 'center'
+    | 'start'
+    | 'end'
+    | 'stretch'
+    | 'space-between'
+    | 'space-around'
+    | 'space-evenly';
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
   pad?: boolean;
   row?: number;
@@ -138,9 +145,7 @@ const styles = css<GridStyledProps>`
 
   ${({ columnGap, compact, pad, rowGap, theme }) => `
     display: grid;
-    padding: ${pad
-      ? theme.grid.gutter.width[compact ? 'sm' : 'base']
-      : 0}px;
+    padding: ${pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
 
     column-gap: ${typeof columnGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : columnGap}px;
     row-gap: ${typeof rowGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : rowGap}px;

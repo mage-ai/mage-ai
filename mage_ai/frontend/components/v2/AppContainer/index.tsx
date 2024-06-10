@@ -28,7 +28,7 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
   const refRoots = useRef({});
 
   function updateLayout(app?: AppConfigType, configRelative?: AppConfigType) {
-    const { uuid: uuidApp } = app || {} as AppConfigType;
+    const { uuid: uuidApp } = app || ({} as AppConfigType);
     const rowsMapping = {};
 
     Object.values(refAppConfigs?.current || {}).forEach((config: AppConfigType) => {
@@ -169,11 +169,14 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
   useEffect(() => {
     if (containerRef?.current && !Object.keys(refAppConfigs?.current || {})?.length) {
       setTimeout(() => {
-        addApp({
-          subtype: AppSubtypeEnum.SYSTEM,
-          type: AppTypeEnum.BROWSER,
-          uuid: randomSimpleHashGenerator(),
-        }, containerRef?.current);
+        addApp(
+          {
+            subtype: AppSubtypeEnum.SYSTEM,
+            type: AppTypeEnum.BROWSER,
+            uuid: randomSimpleHashGenerator(),
+          },
+          containerRef?.current,
+        );
       }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

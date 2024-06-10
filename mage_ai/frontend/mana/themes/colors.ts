@@ -77,7 +77,7 @@ export interface ColorsType extends ColorsDerivedType {
   blue: string;
   blueLo: string;
   blueMd: string;
-  blueMuted: string
+  blueMuted: string;
   blueHi: string;
   blueText: string;
   glow: string;

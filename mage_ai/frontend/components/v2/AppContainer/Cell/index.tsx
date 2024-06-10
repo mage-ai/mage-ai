@@ -22,10 +22,7 @@ export type AddAppFunctionOptionsType = {
   };
 };
 
-export type AddAppFunctionType = (
-  app: AppConfigType,
-  opts?: AddAppFunctionOptionsType,
-) => void;
+export type AddAppFunctionType = (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
 
 export type CellLayoutOperationProps = {
   onAdd?: AddAppFunctionType;
@@ -43,43 +40,36 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { subtype, type } = app;
 
   function addApp(rowRelative: number, columnRelative: number) {
-    onAdd({
-      subtype: AppSubtypeEnum.IDE,
-      type: AppTypeEnum.EDITOR,
-      uuid: randomSimpleHashGenerator(),
-    }, {
-      grid: {
-        relative: {
-          layout: {
-            column: columnRelative,
-            row: rowRelative,
+    onAdd(
+      {
+        subtype: AppSubtypeEnum.IDE,
+        type: AppTypeEnum.EDITOR,
+        uuid: randomSimpleHashGenerator(),
+      },
+      {
+        grid: {
+          relative: {
+            layout: {
+              column: columnRelative,
+              row: rowRelative,
+            },
+            uuid,
           },
-          uuid,
         },
       },
-    });
+    );
   }
 
-  const {
-    main,
-    toolbars,
-  } = useBrowser({ app });
+  const { main, toolbars } = useBrowser({ app });
 
   return (
     <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
       <Section>
-        <Grid
-          autoFlow="column"
-          justifyContent="space-between"
-          templateColumns="1fr min-content"
-        >
+        <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr min-content">
           {toolbars?.top}
 
           <Grid autoFlow="column" justifyContent="end" templateColumns="min-content">
-            <Grid
-              autoFlow="column"
-              templateRows="min-content"
-            >
+            <Grid autoFlow="column" templateRows="min-content">
               <ButtonGroup itemsContained>
                 <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
                 <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />

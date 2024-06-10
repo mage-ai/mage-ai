@@ -43,10 +43,7 @@ export const FILES_QUERY_INCLUDE_HIDDEN_FILES = {
   [FileQueryEnum.EXCLUDE_DIR_PATTERN]: FILE_PATTERN_NO_MATCHES,
 };
 
-export const CODE_BLOCK_FILE_EXTENSIONS = [
-  FileExtensionEnum.PY,
-  FileExtensionEnum.SQL,
-];
+export const CODE_BLOCK_FILE_EXTENSIONS = [FileExtensionEnum.PY, FileExtensionEnum.SQL];
 
 export const PIPELINE_BLOCK_EXTENSIONS = [
   FileExtensionEnum.MD,
@@ -81,34 +78,33 @@ export const FILE_EXTENSION_PRIORITY = {
   [FileExtensionEnum.SH]: 8,
 };
 
-export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
-  new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
+export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX = new RegExp(
+  SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'),
+);
 
-export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX = new RegExp([
-  FileExtensionEnum.CSV,
-  FileExtensionEnum.JINJA,
-  FileExtensionEnum.JSON,
-  FileExtensionEnum.MD,
-  FileExtensionEnum.PY,
-  FileExtensionEnum.R,
-  FileExtensionEnum.SH,
-  FileExtensionEnum.SQL,
-  FileExtensionEnum.TXT,
-  FileExtensionEnum.YAML,
-  FileExtensionEnum.YML,
-].map(ext => `\.${ext}$`).join('|'));
+export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX = new RegExp(
+  [
+    FileExtensionEnum.CSV,
+    FileExtensionEnum.JINJA,
+    FileExtensionEnum.JSON,
+    FileExtensionEnum.MD,
+    FileExtensionEnum.PY,
+    FileExtensionEnum.R,
+    FileExtensionEnum.SH,
+    FileExtensionEnum.SQL,
+    FileExtensionEnum.TXT,
+    FileExtensionEnum.YAML,
+    FileExtensionEnum.YML,
+  ]
+    .map(ext => `\.${ext}$`)
+    .join('|'),
+);
 
-export const COMMON_EXCLUDE_PATTERNS = new RegExp([
-  '__init__\.py',
-  'metadata\.yaml',
-  'interactions\.yaml',
-  '\.DS_Store',
-].join('|'));
+export const COMMON_EXCLUDE_PATTERNS = new RegExp(
+  ['__init__.py', 'metadata.yaml', 'interactions.yaml', '.DS_Store'].join('|'),
+);
 
-export const COMMON_EXCLUDE_DIR_PATTERNS = new RegExp([
-  'compiled',
-  '__pycache__',
-].join('|'));
+export const COMMON_EXCLUDE_DIR_PATTERNS = new RegExp(['compiled', '__pycache__'].join('|'));
 
 export default interface FileType {
   children?: FileType[];
@@ -118,7 +114,7 @@ export default interface FileType {
   isNotFolder?: boolean;
   language?: BlockLanguageEnum;
   modified_timestamp?: number;
-  pipeline_count?: number
+  pipeline_count?: number;
   name?: string;
   parent?: FileType;
   path?: string;
@@ -148,7 +144,6 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE = {
   [BlockLanguageEnum.YAML]: FileExtensionEnum.YAML,
   text: FileExtensionEnum.TXT,
 };
-
 
 export type OriginalContentMappingType = {
   [relativeFilePath: string]: {

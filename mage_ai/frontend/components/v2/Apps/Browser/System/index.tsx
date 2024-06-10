@@ -59,9 +59,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootID]);
 
-  return (
-    <div id={rootID} />
-  );
+  return <div id={rootID} />;
 }
 
 export default SystemBrowser;

@@ -18,11 +18,7 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
   display: flex;
   align-items: center;
 
-  ${({
-    color,
-    theme,
-    width,
-  }) => `
+  ${({ color, theme, width }) => `
     .loader {
       display: inline-flex;
       gap: 5px;
@@ -30,11 +26,8 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
     .loader:before,
     .loader:after {
       content: "";
-      width: ${typeof width === 'string'
-        ? width
-        : typeof width === 'number'
-          ? `${width}px`
-          : '16px'
+      width: ${
+        typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '16px'
       };
       aspect-ratio: 1;
       box-shadow: 0 0 0 1px inset ${color || theme.fonts.text.base};
@@ -55,69 +48,119 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
 `;
 
 const InfiniteBlocksStyle = styled.div`
-/* HTML: <div class="loader"></div> */
-.loader {
-  width: 120px;
-  height: 20px;
-  background:
-   linear-gradient(#000 0 0) left/20px 20px no-repeat
-   #ddd;
-  animation: l1 1s infinite linear;
-}
-@keyframes l1 {
-    50% {background-position: right }
-}
+  /* HTML: <div class="loader"></div> */
+  .loader {
+    width: 120px;
+    height: 20px;
+    background: linear-gradient(#000 0 0) left/20px 20px no-repeat #ddd;
+    animation: l1 1s infinite linear;
+  }
+  @keyframes l1 {
+    50% {
+      background-position: right;
+    }
+  }
 
-
-/* HTML: <div class="loader"></div> */
-.loader {
-  width: 120px;
-  height: 20px;
-  background:
-    linear-gradient(#000 50%,#0000 0),
-    linear-gradient(#0000 50%,#000 0),
-    linear-gradient(#000 50%,#0000 0),
-    linear-gradient(#0000 50%,#000 0),
-    linear-gradient(#000 50%,#0000 0),
-    linear-gradient(#0000 50%,#000 0)
-    #ddd;
-  background-size: calc(100%/6 + 1px) 200%;
-  background-repeat: no-repeat;
-  animation: l12 2s infinite;
-}
-@keyframes l12 {
-  0%     {background-position: calc(0*100%/5) 100%,calc(1*100%/5)   0%,calc(2*100%/5) 100%,calc(3*100%/5)   0%,calc(4*100%/5) 100%,calc(5*100%/5)   0%}
-  16.67% {background-position: calc(0*100%/5)   0%,calc(1*100%/5)   0%,calc(2*100%/5) 100%,calc(3*100%/5)   0%,calc(4*100%/5) 100%,calc(5*100%/5)   0%}
-  33.33% {background-position: calc(0*100%/5)   0%,calc(1*100%/5) 100%,calc(2*100%/5) 100%,calc(3*100%/5)   0%,calc(4*100%/5) 100%,calc(5*100%/5)   0%}
-  50%    {background-position: calc(0*100%/5)   0%,calc(1*100%/5) 100%,calc(2*100%/5)   0%,calc(3*100%/5)   0%,calc(4*100%/5) 100%,calc(5*100%/5)   0%}
-  66.67% {background-position: calc(0*100%/5)   0%,calc(1*100%/5) 100%,calc(2*100%/5)   0%,calc(3*100%/5) 100%,calc(4*100%/5) 100%,calc(5*100%/5)   0%}
-  83.33% {background-position: calc(0*100%/5)   0%,calc(1*100%/5) 100%,calc(2*100%/5)   0%,calc(3*100%/5) 100%,calc(4*100%/5)   0%,calc(5*100%/5)   0%}
-  100%   {background-position: calc(0*100%/5)   0%,calc(1*100%/5) 100%,calc(2*100%/5)   0%,calc(3*100%/5) 100%,calc(4*100%/5)   0%,calc(5*100%/5) 100%}
-}
+  /* HTML: <div class="loader"></div> */
+  .loader {
+    width: 120px;
+    height: 20px;
+    background:
+      linear-gradient(#000 50%, #0000 0),
+      linear-gradient(#0000 50%, #000 0),
+      linear-gradient(#000 50%, #0000 0),
+      linear-gradient(#0000 50%, #000 0),
+      linear-gradient(#000 50%, #0000 0),
+      linear-gradient(#0000 50%, #000 0) #ddd;
+    background-size: calc(100% / 6 + 1px) 200%;
+    background-repeat: no-repeat;
+    animation: l12 2s infinite;
+  }
+  @keyframes l12 {
+    0% {
+      background-position:
+        calc(0 * 100% / 5) 100%,
+        calc(1 * 100% / 5) 0%,
+        calc(2 * 100% / 5) 100%,
+        calc(3 * 100% / 5) 0%,
+        calc(4 * 100% / 5) 100%,
+        calc(5 * 100% / 5) 0%;
+    }
+    16.67% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 0%,
+        calc(2 * 100% / 5) 100%,
+        calc(3 * 100% / 5) 0%,
+        calc(4 * 100% / 5) 100%,
+        calc(5 * 100% / 5) 0%;
+    }
+    33.33% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 100%,
+        calc(2 * 100% / 5) 100%,
+        calc(3 * 100% / 5) 0%,
+        calc(4 * 100% / 5) 100%,
+        calc(5 * 100% / 5) 0%;
+    }
+    50% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 100%,
+        calc(2 * 100% / 5) 0%,
+        calc(3 * 100% / 5) 0%,
+        calc(4 * 100% / 5) 100%,
+        calc(5 * 100% / 5) 0%;
+    }
+    66.67% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 100%,
+        calc(2 * 100% / 5) 0%,
+        calc(3 * 100% / 5) 100%,
+        calc(4 * 100% / 5) 100%,
+        calc(5 * 100% / 5) 0%;
+    }
+    83.33% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 100%,
+        calc(2 * 100% / 5) 0%,
+        calc(3 * 100% / 5) 100%,
+        calc(4 * 100% / 5) 0%,
+        calc(5 * 100% / 5) 0%;
+    }
+    100% {
+      background-position:
+        calc(0 * 100% / 5) 0%,
+        calc(1 * 100% / 5) 100%,
+        calc(2 * 100% / 5) 0%,
+        calc(3 * 100% / 5) 100%,
+        calc(4 * 100% / 5) 0%,
+        calc(5 * 100% / 5) 100%;
+    }
+  }
 `;
 
 const ScrollingBarsStyle = styled.div`
-/* HTML: <div class="loader"></div> */
-.loader {
-  width: 90px;
-  height: 14px;
-  background: repeating-linear-gradient(90deg,#000 0 calc(25% - 5px),#0000 0 25%) left/calc(4*100%/3) 100%;
-  animation: l1 0.5s infinite linear;
-}
-@keyframes l1 {
-    100% {background-position: right}
-}
+  /* HTML: <div class="loader"></div> */
+  .loader {
+    width: 90px;
+    height: 14px;
+    background: repeating-linear-gradient(90deg, #000 0 calc(25% - 5px), #0000 0 25%)
+      left/calc(4 * 100%/3) 100%;
+    animation: l1 0.5s infinite linear;
+  }
+  @keyframes l1 {
+    100% {
+      background-position: right;
+    }
+  }
 `;
 
 const RepeatingBarStyle = styled.div<LoadingProps>`
-${({
-  color,
-  colorLight,
-  height,
-  position,
-  theme,
-  width,
-}) => `
+  ${({ color, colorLight, height, position, theme, width }) => `
   position: relative;
   width: ${width || '100%'};
 
@@ -139,10 +182,7 @@ ${({
 `}
 `;
 
-function Loading({
-  loadingStyle = LoadingStyleEnum.DEFAULT,
-  ...props
-}: LoadingProps) {
+function Loading({ loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps) {
   if (LoadingStyleEnum.BLOCKS === loadingStyle) {
     return (
       <LoadingStyleBlocks {...props}>

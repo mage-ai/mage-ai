@@ -39,13 +39,30 @@ const AStyled = styled.a<ButtonStyleProps>`
   display: inline-flex;
 `;
 
-function Button({ anchor, asLink, basic, children, primary, secondary, small, tag, ...props }: ButtonProps) {
+function Button({
+  anchor,
+  asLink,
+  basic,
+  children,
+  primary,
+  secondary,
+  small,
+  tag,
+  ...props
+}: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
   const { Icon } = props;
 
   return (
     // @ts-ignore
-    <HTMLTag {...props} asLink={asLink} basic={basic} primary={primary} secondary={secondary} small={small}>
+    <HTMLTag
+      {...props}
+      asLink={asLink}
+      basic={basic}
+      primary={primary}
+      secondary={secondary}
+      small={small}
+    >
       {Icon && <Icon inverted={primary || secondary} small={small} />}
       {children}
       {tag && (

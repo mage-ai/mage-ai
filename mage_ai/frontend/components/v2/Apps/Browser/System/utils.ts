@@ -2,22 +2,15 @@ import * as osPath from 'path';
 
 import { ItemDetailType, ItemType } from './interfaces';
 import { ItemTypeEnum } from './enums';
-import {
-  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
-  FileExtensionEnum,
-} from '@interfaces/FileType';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
 import useFileIconBase from '@components/FileBrowser/Folder/useFileIcon';
-import {
-  FILE_EXTENSION_ICON_MAPPING,
-  FILE_EXTENSION_COLOR_MAPPING,
-  Icons,
-} from './constants';
+import { FILE_EXTENSION_ICON_MAPPING, FILE_EXTENSION_COLOR_MAPPING, Icons } from './constants';
 import { selectKeys } from '@utils/hash';
 
 export function groupFilesByDirectory(paths: string[]): ItemType {
   const root: ItemType = {} as ItemType;
 
-  paths.forEach((path) => {
+  paths.forEach(path => {
     const parts = path.split(osPath.sep).filter(Boolean);
     let currentDir: ItemType | ItemDetailType = root;
     let parentDir: ItemType | ItemDetailType | undefined = undefined;
@@ -72,9 +65,7 @@ export function getFullPath(item: ItemDetailType): string {
 
 export function getFileExtension(filename: string): FileExtensionEnum {
   const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
-  return match?.length >= 1
-    ? match[0].replace('.', '') as FileExtensionEnum
-    : null;
+  return match?.length >= 1 ? (match[0].replace('.', '') as FileExtensionEnum) : null;
 }
 
 export function getIconColorName(name: string): string {

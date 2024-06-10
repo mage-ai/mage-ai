@@ -42,10 +42,13 @@ function useWithIcon(
 const mapping = Object.entries({
   ...oracleIcons,
   ...manaIcons,
-}).reduce((acc, [key, value]) => ({
-  ...acc,
-  [key]: useWithIcon(...value),
-}), {});
+}).reduce(
+  (acc, [key, value]) => ({
+    ...acc,
+    [key]: useWithIcon(...value),
+  }),
+  {},
+);
 
 export default mapping as {
   [key: string]: any;

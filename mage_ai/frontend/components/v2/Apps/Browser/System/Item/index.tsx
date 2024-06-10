@@ -11,7 +11,14 @@ import { ItemDetailType, ItemType } from '../interfaces';
 import { useFileIcon, getIconColorName, getFullPath } from '../utils';
 import { removeClassNames } from '@utils/elements';
 import { cleanName } from '@utils/string';
-import { ColumnGapStyled, FolderStyled, LineStyled, NameStyled, childClassName, itemsClassName } from './index.style';
+import {
+  ColumnGapStyled,
+  FolderStyled,
+  LineStyled,
+  NameStyled,
+  childClassName,
+  itemsClassName,
+} from './index.style';
 import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
 
@@ -43,20 +50,26 @@ function Item({ app, item, themeContext }: ItemProps) {
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   const { Icon } = useFileIcon({ isFolder, name });
-  const iconColorName = useMemo(() => isFolder ? 'blueMuted' : getIconColorName(String(name)), [isFolder, name]);
+  const iconColorName = useMemo(
+    () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
+    [isFolder, name],
+  );
   const absolutePath = useMemo(() => getFullPath(item as ItemDetailType), [item]);
   const level = useMemo(() => absolutePath.split('/').length - 1, [absolutePath]);
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
-  const buildLines = useCallback((levelIncrement?: number) => (
-    <div style={{ display: 'flex' }}>
-      {range((levelIncrement || 0) + level).map((_i, idx: number) => (
-        <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
-          <LineStyled />
-        </ColumnGapStyled>
-      ))}
-    </div>
-  ), [level, uuid]);
+  const buildLines = useCallback(
+    (levelIncrement?: number) => (
+      <div style={{ display: 'flex' }}>
+        {range((levelIncrement || 0) + level).map((_i, idx: number) => (
+          <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
+            <LineStyled />
+          </ColumnGapStyled>
+        ))}
+      </div>
+    ),
+    [level, uuid],
+  );
   const linesMemo = useMemo(() => buildLines(), [buildLines]);
 
   const buildIcon = useCallback(() => {
@@ -65,11 +78,7 @@ function Item({ app, item, themeContext }: ItemProps) {
     if (IconUse) {
       return <IconUse {...props} />;
     }
-  }, [
-    Icon,
-    iconColorName,
-    isFolder,
-  ]);
+  }, [Icon, iconColorName, isFolder]);
 
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
@@ -78,17 +87,9 @@ function Item({ app, item, themeContext }: ItemProps) {
     }
 
     if (iconRootRef?.current) {
-      iconRootRef.current.render(
-        <ThemeProvider theme={themeContext}>
-          {buildIcon()}
-        </ThemeProvider>,
-      );
+      iconRootRef.current.render(<ThemeProvider theme={themeContext}>{buildIcon()}</ThemeProvider>);
     }
-  }, [
-    themeContext,
-    uuid,
-    buildIcon,
-  ]);
+  }, [themeContext, uuid, buildIcon]);
 
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
@@ -97,27 +98,24 @@ function Item({ app, item, themeContext }: ItemProps) {
     }
 
     if (itemsRootRef?.current) {
-      const values = sortByKey(
-        Object.values(items || {}),
-        (item: ItemDetailType) => {
-          const order = typeof item?.items !== 'undefined' && item?.items !== null ? 0 : 1;
-          return `${order}-${item?.name}`;
-        },
-      );
+      const values = sortByKey(Object.values(items || {}), (item: ItemDetailType) => {
+        const order = typeof item?.items !== 'undefined' && item?.items !== null ? 0 : 1;
+        return `${order}-${item?.name}`;
+      });
 
       itemsRootRef.current.render(
         <React.StrictMode>
           <ThemeProvider theme={themeContext}>
             <Grid ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
               <DeferredRenderer
-                fallback={(
+                fallback={
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
                       <Loading position="absolute" />
                     </div>
                   </ThemeProvider>
-                )}
+                }
                 idleTimeout={1}
               >
                 {values?.map((item: ItemDetailType) => (
@@ -130,19 +128,13 @@ function Item({ app, item, themeContext }: ItemProps) {
       );
       renderedRef.current = true;
     }
-  }, [
-    app,
-    themeContext,
-    uuid,
-    items,
-    buildLines,
-  ]);
+  }, [app, themeContext, uuid, items, buildLines]);
 
   return (
     <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
-        onClick={(event) => {
+        onClick={event => {
           event.preventDefault();
           event.stopPropagation();
 
@@ -165,14 +157,13 @@ function Item({ app, item, themeContext }: ItemProps) {
         {linesMemo}
 
         <NameStyled>
-          <Grid
-            compact
-            templateColumns="auto 1fr"
-          >
-            <div id={iconRootID(uuid)}>
-              {buildIcon()}
-            </div>
-            {name && <Text blue={isFolder} monospace small>{String(name)}</Text>}
+          <Grid compact templateColumns="auto 1fr">
+            <div id={iconRootID(uuid)}>{buildIcon()}</div>
+            {name && (
+              <Text blue={isFolder} monospace small>
+                {String(name)}
+              </Text>
+            )}
           </Grid>
         </NameStyled>
       </Grid>

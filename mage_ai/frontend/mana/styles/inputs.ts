@@ -15,7 +15,9 @@ const shared = css<StyleProps>`
   ${text}
   ${borders}
 
-  ${({ basic, theme }) => !basic && `
+  ${({ basic, theme }) =>
+    !basic &&
+    `
     border-color: ${theme.inputs.border.color.base.default};
   `}
 
@@ -26,9 +28,8 @@ const shared = css<StyleProps>`
   font-weight: ${({ theme }) => theme.fonts.weight.medium};
   line-height: ${({ theme }) => theme.fonts.lineHeight.base};
   padding: ${({ small, theme }) => theme.inputs.padding[small ? 'sm' : 'base']};
-  width: ${({ width }) => typeof width === 'undefined'
-  ? 'inherit'
-  : typeof width === 'number' ? `${width}px` : width};
+  width: ${({ width }) =>
+    typeof width === 'undefined' ? 'inherit' : typeof width === 'number' ? `${width}px` : width};
 
   ::-webkit-input-placeholder {
     color: ${({ theme }) => theme.inputs.placeholder.color};
@@ -48,32 +49,27 @@ const shared = css<StyleProps>`
 
   &:focus {
     background: ${({ theme }) => theme.inputs.background.base.focus};
-    border-color: ${({ basic, theme }) => basic
-      ? theme.borders.color
-      : theme.inputs.border.color.base.focus};
+    border-color: ${({ basic, theme }) =>
+      basic ? theme.borders.color : theme.inputs.border.color.base.focus};
   }
 
   &:hover {
     background: ${({ theme }) => theme.inputs.background.base.hover};
-    border-color: ${({ basic, theme }) => basic
-      ? theme.borders.color
-      : theme.inputs.border.color.base.hover};
+    border-color: ${({ basic, theme }) =>
+      basic ? theme.borders.color : theme.inputs.border.color.base.hover};
   }
 
   &:active {
     background: ${({ theme }) => theme.inputs.background.base.active};
-    border-color: ${({ basic, theme }) => basic
-      ? theme.borders.color
-      : theme.inputs.border.color.base.active};
+    border-color: ${({ basic, theme }) =>
+      basic ? theme.borders.color : theme.inputs.border.color.base.active};
   }
 
   ${({ basic, theme }) =>
     outlineHover({
       active: true,
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: basic
-        ? theme.borders.color
-        : theme.inputs.border.color.base.hover,
+      outlineColor: basic ? theme.borders.color : theme.inputs.border.color.base.hover,
     })}
 `;
 

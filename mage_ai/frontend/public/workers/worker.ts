@@ -5,7 +5,7 @@ const ctx: Worker = self as any;
 function groupFilesByDirectory(paths: string[]) {
   const root: any = {} as any;
 
-  paths.forEach((path) => {
+  paths.forEach(path => {
     const parts = path.split(osPath.sep).filter(Boolean);
     let currentDir: any | any = root;
     let parentDir: any | any | undefined = undefined;
@@ -32,11 +32,7 @@ function groupFilesByDirectory(paths: string[]) {
           } as any;
         }
 
-        const {
-          name,
-          parent,
-          type,
-        } = currentDir[part];
+        const { name, parent, type } = currentDir[part];
         parentDir = {
           name,
           parent,
@@ -50,7 +46,7 @@ function groupFilesByDirectory(paths: string[]) {
   return root;
 }
 
-ctx.addEventListener('message', (event) => {
+ctx.addEventListener('message', event => {
   const { data } = event;
   ctx.postMessage(groupFilesByDirectory(data));
 });

@@ -30,15 +30,8 @@ export const EllipseStyle = styled.ellipse<StyleProps>`
   ${icons}
 `;
 
-const Icon = ({
-  children,
-  viewBox = '0 0 24 24',
-  ...props
-}: IconProps) => (
-  <SVGStyle
-    {...props}
-    viewBox={viewBox}
-  >
+const Icon = ({ children, viewBox = '0 0 24 24', ...props }: IconProps) => (
+  <SVGStyle {...props} viewBox={viewBox}>
     {children}
   </SVGStyle>
 );

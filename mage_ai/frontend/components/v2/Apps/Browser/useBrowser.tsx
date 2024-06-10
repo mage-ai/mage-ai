@@ -18,27 +18,25 @@ type BrowserType = {
 };
 
 export default function useBrowser({ app }: BrowserProps): BrowserType {
-  const toolbarTop = useMemo(() => (
-    <Grid
-      templateColumns="auto 1fr"
-      templateRows="min-content"
-    >
-      <Button
-        onClick={() => {
-          console.log('browse');
-        }}
-        small
-      >
-        Browse
-      </Button>
+  const toolbarTop = useMemo(
+    () => (
+      <Grid templateColumns="auto 1fr" templateRows="min-content">
+        <Button
+          onClick={() => {
+            console.log('browse');
+          }}
+          small
+        >
+          Browse
+        </Button>
 
-      <TextInput basic monospace placeholder="/" small />
-    </Grid>
-  ), []);
+        <TextInput basic monospace placeholder="/" small />
+      </Grid>
+    ),
+    [],
+  );
 
-  const main = useMemo(() => (
-    <SystemBrowser app={app} />
-  ), [app]);
+  const main = useMemo(() => <SystemBrowser app={app} />, [app]);
 
   return {
     main,

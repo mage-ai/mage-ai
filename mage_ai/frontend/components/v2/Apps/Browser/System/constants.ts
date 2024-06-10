@@ -35,16 +35,16 @@ export const FILE_EXTENSION_ICON_MAPPING = {
 };
 
 export const FILE_EXTENSION_COLOR_MAPPING = {
-  [FileExtensionEnum.CSV]: 'blueHi',    // Light grayish blue
-  [FileExtensionEnum.JSON]: 'purple',   // Medium purple
-  [FileExtensionEnum.MD]: 'purpleHi',     // Medium lavender
-  [FileExtensionEnum.PY]: 'yellowMd',     // Light yellow
-  [FileExtensionEnum.R]: 'redHi',      // Bright red
-  [FileExtensionEnum.SH]: 'greenHi',     // Lime green
-  [FileExtensionEnum.SQL]: 'blueLo',    // Dark cyan
-  [FileExtensionEnum.TXT]: 'blueMd',    // Light grayish blue
-  [FileExtensionEnum.YAML]: 'greenMd',   // Pale teal
-  [FileExtensionEnum.YML]: 'greenMd',    // Pale teal
+  [FileExtensionEnum.CSV]: 'blueHi', // Light grayish blue
+  [FileExtensionEnum.JSON]: 'purple', // Medium purple
+  [FileExtensionEnum.MD]: 'purpleHi', // Medium lavender
+  [FileExtensionEnum.PY]: 'yellowMd', // Light yellow
+  [FileExtensionEnum.R]: 'redHi', // Bright red
+  [FileExtensionEnum.SH]: 'greenHi', // Lime green
+  [FileExtensionEnum.SQL]: 'blueLo', // Dark cyan
+  [FileExtensionEnum.TXT]: 'blueMd', // Light grayish blue
+  [FileExtensionEnum.YAML]: 'greenMd', // Pale teal
+  [FileExtensionEnum.YML]: 'greenMd', // Pale teal
 };
 
 export const Icons = {

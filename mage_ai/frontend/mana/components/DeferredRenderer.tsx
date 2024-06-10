@@ -1,8 +1,16 @@
-import React, { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, useTransition } from 'react';
+import React, {
+  Suspense,
+  lazy,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from 'react';
 
 import useWithOnMount, { WithOnMount } from '../hooks/useWithOnMount';
 
-  function DeferredRenderer({
+function DeferredRenderer({
   children,
   fallback,
   idleTimeout = 0,
@@ -21,34 +29,34 @@ import useWithOnMount, { WithOnMount } from '../hooks/useWithOnMount';
   const [rendering, startTransition] = useTransition();
 
   const renderDeffered = useDeferredValue(render);
-  const numberOfChildren =
-    useMemo(() => numberOfChildrenProp || React.Children.count(children), [children, numberOfChildrenProp]);
+  const numberOfChildren = useMemo(
+    () => numberOfChildrenProp || React.Children.count(children),
+    [children, numberOfChildrenProp],
+  );
 
   useEffect(() => {
     if (render) {
       setRender(false);
     }
 
-    const id = requestIdleCallback(() => {
-      startTransition(() => {
-        setRender(true);
-      });
-    }, { timeout: idleTimeout });
+    const id = requestIdleCallback(
+      () => {
+        startTransition(() => {
+          setRender(true);
+        });
+      },
+      { timeout: idleTimeout },
+    );
 
     return () => cancelIdleCallback(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isDeferring = useMemo(() => !renderDeffered || rendering, [renderDeffered, rendering]);
-  const fallbackMemo =
-    useMemo(() => (!mounted || Object.values(mountedChildren || {})?.length < numberOfChildren) && fallback,
-      [
-        fallback,
-        mounted,
-        mountedChildren,
-        numberOfChildren,
-      ],
-    );
+  const fallbackMemo = useMemo(
+    () => (!mounted || Object.values(mountedChildren || {})?.length < numberOfChildren) && fallback,
+    [fallback, mounted, mountedChildren, numberOfChildren],
+  );
 
   const childrenMemo = useWithOnMount({
     children: (

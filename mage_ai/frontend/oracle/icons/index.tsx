@@ -2,20 +2,19 @@ import BaseIcon, { BaseIconProps, PathStyle } from './BaseIcon';
 import { ignoreKeys } from '@utils/hash';
 import * as icons from './constants';
 
-export function build(arrayOfPathProps, iconProps: {
-  fill?: string;
-  useStroke?: boolean;
-  viewBox?: string;
-} = {}, opts?: {
-  withoutBaseIcon?: boolean;
-}) {
-  return ({
-    ...props
-  }: BaseIconProps) => {
-    const arr = arrayOfPathProps.map(({
-      Style,
-      ...pathProps
-    }, idx) => {
+export function build(
+  arrayOfPathProps,
+  iconProps: {
+    fill?: string;
+    useStroke?: boolean;
+    viewBox?: string;
+  } = {},
+  opts?: {
+    withoutBaseIcon?: boolean;
+  },
+) {
+  return ({ ...props }: BaseIconProps) => {
+    const arr = arrayOfPathProps.map(({ Style, ...pathProps }, idx) => {
       let itemProps = {
         ...props,
         ...pathProps,
@@ -42,17 +41,9 @@ export function build(arrayOfPathProps, iconProps: {
       }
 
       return Style ? (
-        <Style
-          useStroke={iconProps?.useStroke}
-          {...itemProps}
-          key={idx}
-        />
+        <Style useStroke={iconProps?.useStroke} {...itemProps} key={idx} />
       ) : (
-        <PathStyle
-          useStroke={iconProps?.useStroke}
-          {...itemProps}
-          key={idx}
-        />
+        <PathStyle useStroke={iconProps?.useStroke} {...itemProps} key={idx} />
       );
     });
 
@@ -61,10 +52,7 @@ export function build(arrayOfPathProps, iconProps: {
     }
 
     return (
-      <BaseIcon
-        {...props}
-        {...iconProps}
-      >
+      <BaseIcon {...props} {...iconProps}>
         {arr}
       </BaseIcon>
     );
@@ -73,10 +61,13 @@ export function build(arrayOfPathProps, iconProps: {
 
 const mapping: {
   [key: string]: any;
-} = Object.entries(icons).reduce((acc, [key, value]) => ({
-  ...acc,
-  [key]: build(...value),
-}), {});
+} = Object.entries(icons).reduce(
+  (acc, [key, value]) => ({
+    ...acc,
+    [key]: build(...value),
+  }),
+  {},
+);
 
 export const Action = mapping.Action;
 export const Add = mapping.Add;

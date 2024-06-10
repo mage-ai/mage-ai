@@ -49,11 +49,12 @@ const base = css<StyleProps>`
 
   ${({ monospace }) => !monospace && baseFontFamily}
 
-  color: ${({ blue, inverted, theme }) => inverted
-    ? theme.fonts.color.text.inverted
-    : blue
-      ? theme.fonts.color.text.blue
-      : theme.fonts.color.text.base};
+  color: ${({ blue, inverted, theme }) =>
+    inverted
+      ? theme.fonts.color.text.inverted
+      : blue
+        ? theme.fonts.color.text.blue
+        : theme.fonts.color.text.base};
 
   font-size: ${({ theme }) => theme.fonts.size.base};
   font-style: ${({ italic, theme }) =>
