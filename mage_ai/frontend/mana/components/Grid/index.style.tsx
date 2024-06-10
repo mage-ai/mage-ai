@@ -44,17 +44,19 @@ export const shared = css<SharedStyledProps>`
   min-width: 0;
 
   ${({ overflowVisible }) =>
-      overflowVisible &&
-      `
+    overflowVisible &&
+    `
       overflow: visible;
     `}
-    ${({ overflowVisible }) =>
-        !overflowVisible &&
-        `
+  ${({ overflowVisible }) =>
+    !overflowVisible &&
+    `
         overflow: hidden;
       `}
   ${({ section }) => section && borders}
-  ${({ compact, pad, section, theme }) => !section && `
+  ${({ compact, pad, section, theme }) =>
+    !section &&
+    `
     padding: ${pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
   `}
 

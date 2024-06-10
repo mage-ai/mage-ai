@@ -5,8 +5,8 @@ export interface ScrollbarsType {
   background: BackgroundsType['scrollbar'];
   border: {
     radius: {
-      thumb: string,
-      track: string,
+      thumb: string;
+      track: string;
     };
   };
   width: {

@@ -138,15 +138,16 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   ]);
 
   const buildIconAction = useCallback(() => {
-    const IconUse = isFolder
-      ? expandedRef?.current ? CaretDown : CaretRight
-      : Circle;
+    const IconUse = isFolder ? (expandedRef?.current ? CaretDown : CaretRight) : Circle;
 
-    return <IconUse colorName={isFolder ? iconColorName : 'whiteLo'} size={isFolder ? undefined : 8} xsmall={isFolder} />;
-  }, [
-    iconColorName,
-    isFolder,
-  ]);
+    return (
+      <IconUse
+        colorName={isFolder ? iconColorName : 'whiteLo'}
+        size={isFolder ? undefined : 8}
+        xsmall={isFolder}
+      />
+    );
+  }, [iconColorName, isFolder]);
 
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
@@ -164,7 +165,9 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     }
 
     if (iconActionRootRef?.current) {
-      iconActionRootRef.current.render(<ThemeProvider theme={themeContext}>{buildIconAction()}</ThemeProvider>);
+      iconActionRootRef.current.render(
+        <ThemeProvider theme={themeContext}>{buildIconAction()}</ThemeProvider>,
+      );
     }
   }, [themeContext, uuid, buildIcon, buildIconAction]);
 

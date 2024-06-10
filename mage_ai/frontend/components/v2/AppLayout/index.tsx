@@ -123,7 +123,13 @@ function GridContainer() {
       }}
     >
       <ContainerStyled>
-        <Grid height="inherit" pad style={{ overflow: 'visible' }} templateRows="auto 1fr" width="100%">
+        <Grid
+          height="inherit"
+          pad
+          style={{ overflow: 'visible' }}
+          templateRows="auto 1fr"
+          width="100%"
+        >
           <GridRow row={1} style={{ overflow: 'visible' }} width="inherit">
             <Section>
               <Row align="center" justify="start">

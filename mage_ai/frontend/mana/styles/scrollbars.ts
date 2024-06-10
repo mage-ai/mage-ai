@@ -8,7 +8,9 @@ export type ScrollbarsStyledProps = {
 };
 
 const base = css<ScrollbarsStyledProps>`
-  ${({ hidden }) => hidden && `
+  ${({ hidden }) =>
+    hidden &&
+    `
     // for Internet Explorer, Edge
     -ms-overflow-style: none;
     // for Firefox
@@ -19,7 +21,11 @@ const base = css<ScrollbarsStyledProps>`
     }
   `}
 
-  ${({ theme: { scrollbars: { background, border, width } } }) => `
+  ${({
+    theme: {
+      scrollbars: { background, border, width },
+    },
+  }) => `
     ::-webkit-scrollbar {
       height: ${width.track}px;
       width: ${width.track}px;

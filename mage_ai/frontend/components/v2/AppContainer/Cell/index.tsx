@@ -95,7 +95,7 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
           {toolbars?.top}
 
           <Grid autoFlow="column" justifyContent="end" templateColumns="1fr">
-            <Grid autoFlow="column" overflow="visible" templateRows="min-content">
+            <Grid autoFlow="column" templateRows="min-content">
               <ButtonGroup itemsContained>
                 <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
                 <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />

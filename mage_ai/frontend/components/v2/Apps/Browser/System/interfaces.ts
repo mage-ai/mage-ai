@@ -6,7 +6,7 @@ export interface ItemDetailType {
   modified_timestamp?: number;
   name: string;
   parent?: ItemDetailType;
-  path?: string
+  path?: string;
   relative_path?: string;
   size: number;
   type: ItemTypeEnum;

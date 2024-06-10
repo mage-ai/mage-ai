@@ -2,20 +2,22 @@ import * as osPath from 'path';
 
 const ctx: Worker = self as any;
 
-function groupFilesByDirectory(items: {
-  extension?: string;
-  items?: any;
-  modified_timestamp?: number;
-  name: string;
-  parent?: any;
-  path?: string
-  relative_path?: string;
-  size: number;
-  type: string;
-}[]) {
+function groupFilesByDirectory(
+  items: {
+    extension?: string;
+    items?: any;
+    modified_timestamp?: number;
+    name: string;
+    parent?: any;
+    path?: string;
+    relative_path?: string;
+    size: number;
+    type: string;
+  }[],
+) {
   const root: any = {} as any;
 
-  items?.forEach((item) => {
+  items?.forEach(item => {
     const parts = item?.path.split(osPath.sep).filter(Boolean);
     let currentDir: any | any = root;
     let parentDir: any | any | undefined = undefined;

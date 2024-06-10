@@ -37,9 +37,7 @@ export const IDEStyled = styled.div<StyleProps>`
     .monaco-menu li.action-item:nth-last-child(n + 10) {
       display: none;
     }
-  `}
-
-  // .myCustomLineDecoration {
+  `}// .myCustomLineDecoration {
   //   background-color: rgba(255, 0, 0, 0.3); /* Visible Red for Testing */
   //   border: 2px solid blue; /* Border to make it more visible */
   //   display: inline-block;

@@ -451,25 +451,24 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       return await handle(response);
     };
 
-    apis[resource].listAsync = async (query?: any, swrOptionsRuntime?: any) => {
+    (apis[resource].listAsync = async (query?: any, swrOptionsRuntime?: any) => {
       const response = useListAsync(resource, query, {
         ...swrOptions,
         ...swrOptionsRuntime,
       });
 
       return await handle(response);
-    },
-
-    apis[resource].list = (query: any = {}, swrOptionsRuntime?: any, opts?: any) =>
-      useList(
-        resource,
-        query,
-        {
-          ...swrOptions,
-          ...swrOptionsRuntime,
-        },
-        opts,
-      );
+    }),
+      (apis[resource].list = (query: any = {}, swrOptionsRuntime?: any, opts?: any) =>
+        useList(
+          resource,
+          query,
+          {
+            ...swrOptions,
+            ...swrOptionsRuntime,
+          },
+          opts,
+        ));
   }
 });
 

@@ -56,14 +56,14 @@ const svg = css<StyleProps>`
   ${({ height, size, small, theme, width, xsmall }) => `
     height: ${
       typeof height === 'undefined' && typeof size === 'undefined'
-        ? theme.icons.size[small ? 'sm' : (xsmall ? 'xs' : 'base')]
+        ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
         : typeof height === 'undefined'
           ? size
           : height
     }px;
     width: ${
       typeof width === 'undefined' && typeof size === 'undefined'
-        ? theme.icons.size[small ? 'sm' : (xsmall ? 'xs' : 'base')]
+        ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
         : typeof width === 'undefined'
           ? size
           : width

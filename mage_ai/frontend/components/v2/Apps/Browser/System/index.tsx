@@ -7,10 +7,7 @@ import Loading from '@mana/components/Loading';
 import Scrollbar from '@mana/elements/Scrollbar';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
 import { onSuccess } from '@api/utils/response';
-import {
-  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
-  COMMON_EXCLUDE_PATTERNS,
-} from '@interfaces/FileType';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import Menu from '@mana/components/Menu';
 import Item from './Item/index';
 import icons from '@mana/icons';
@@ -74,17 +71,19 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                     <React.StrictMode>
                       <DeferredRenderer idleTimeout={1}>
                         <ThemeProvider theme={themeContext}>
-                          {Object.values(event?.data || {}).map((item: ItemDetailType, idx: number) => (
-                            <Item
-                              app={app}
-                              item={item as ItemDetailType}
-                              key={`${item.name}-${idx}`}
-                              onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                                renderContextMenu(item, event)
-                              }
-                              themeContext={themeContext}
-                            />
-                          ))}
+                          {Object.values(event?.data || {}).map(
+                            (item: ItemDetailType, idx: number) => (
+                              <Item
+                                app={app}
+                                item={item as ItemDetailType}
+                                key={`${item.name}-${idx}`}
+                                onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
+                                  renderContextMenu(item, event)
+                                }
+                                themeContext={themeContext}
+                              />
+                            ),
+                          )}
                         </ThemeProvider>
                       </DeferredRenderer>
                     </React.StrictMode>,
@@ -216,10 +215,14 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   }, []);
 
   return (
-    <WithOnMount onMount={() => fetchItems({
-      exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-      include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-    })}>
+    <WithOnMount
+      onMount={() =>
+        fetchItems({
+          exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+          include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        })
+      }
+    >
       <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
         {isLoading && <Loading />}
         <div style={{ height: 67, width: '100%' }} />
