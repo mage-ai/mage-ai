@@ -262,3 +262,5 @@ export const CloseWindow = mapping.CloseWindow;
 export const CloseWindowFilled = mapping.CloseWindowFilled;
 export const Planet = mapping.Planet;
 export const UFO = mapping.UFO;
+
+export default mapping;
