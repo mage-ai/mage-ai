@@ -64,8 +64,8 @@ export const FILE_EXTENSION_COLOR_MAPPING = {
   [FileExtensionEnum.PY]: 'yellowMd', // Light yellow
   [FileExtensionEnum.R]: 'redHi', // Bright red
   [FileExtensionEnum.SH]: 'greenHi', // Lime green
-  [FileExtensionEnum.SQL]: 'blueLo', // Dark cyan
-  [FileExtensionEnum.TXT]: 'blueMd', // Light grayish blue
+  [FileExtensionEnum.SQL]: 'blueHi', // Dark cyan
+  [FileExtensionEnum.TXT]: 'skyHi', // Light grayish blue
   [FileExtensionEnum.YAML]: 'green', // Pale teal
   [FileExtensionEnum.YML]: 'green', // Pale teal
 };

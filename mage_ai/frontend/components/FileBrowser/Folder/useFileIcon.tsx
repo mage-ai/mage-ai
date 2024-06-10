@@ -45,7 +45,10 @@ type UseFileIconProps = {
   disabled?: boolean;
   file?: FileType;
   filePath?: string;
-  getBlockColor?: (blockType: BlockTypeEnum, options: { theme: any }) => string;
+  getBlockColor?: (
+    blockType: BlockTypeEnum,
+    options: { theme: any },
+  ) => { accent: string; accentDark?: string; accentLight?: string };
   isFolder?: boolean;
   isInPipelinesFolder?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;

@@ -28,7 +28,7 @@ export function getBlockColor(
     accent = colors?.yellow;
     accentLight = colors?.yellowHi;
   } else if (BlockTypeEnum.DATA_LOADER === blockType || blockColor === BlockColorEnum.BLUE) {
-    accent = colors?.blue;
+    accent = colors?.blueText;
     accentLight = colors?.blueHi;
   } else if (BlockTypeEnum.MARKDOWN === blockType) {
     accent = colors?.sky;
