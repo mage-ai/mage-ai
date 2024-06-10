@@ -112,7 +112,7 @@ const ChevronStyle = styled.div`
   }
 `;
 
-function DeferredRender({ children, idleTimeout }) {
+function DeferredRender({ children, idleTimeout }: { children: any; idleTimeout: number }) {
   const [render, setRender] = useState(false);
 
   useEffect(() => {
@@ -120,6 +120,7 @@ function DeferredRender({ children, idleTimeout }) {
     const id = requestIdleCallback(() => setRender(true), { timeout: idleTimeout });
 
     return () => cancelIdleCallback(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idleTimeout]);
 
   if (!render) return null;
@@ -273,6 +274,7 @@ function Folder({
           uuidContainer={uuidContainer}
         />
       )),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       allowEmptyFolders,
       allowSelectingFolders,
@@ -438,6 +440,7 @@ function Folder({
         }
       }
     }, 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isFolder && onlyShowFolders) {
