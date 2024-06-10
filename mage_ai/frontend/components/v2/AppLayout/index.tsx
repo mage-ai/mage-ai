@@ -69,6 +69,13 @@ function GridContainer() {
         refRoots.current[uuid].render(
           <ThemeProvider theme={themeContext}>
             <AppContainer
+              apps={[
+                {
+                  subtype: AppSubtypeEnum.SYSTEM,
+                  type: AppTypeEnum.BROWSER,
+                  uuid: 'test',
+                },
+              ]}
               onRemoveApp={(
                 _uuidApp,
                 appConfigs: {
@@ -97,7 +104,7 @@ function GridContainer() {
               addPanel({
                 subtype: AppSubtypeEnum.SYSTEM,
                 type: AppTypeEnum.BROWSER,
-                uuid: randomSimpleHashGenerator(),
+                uuid: 'test',
               });
             }
           }, 1);
@@ -105,11 +112,11 @@ function GridContainer() {
       }}
     >
       <ContainerStyled>
-        <Grid height='inherit' pad templateRows='auto 1fr'>
+        <Grid height="inherit" pad templateRows="auto 1fr">
           <GridRow row={1}>
             <Section>
-              <Row align='center' justify='start'>
-                <Col xs='content'>
+              <Row align="center" justify="start">
+                <Col xs="content">
                   <Button
                     Icon={Cluster}
                     onClick={() => {
@@ -123,14 +130,14 @@ function GridContainer() {
                 <Col>
                   <Row>
                     <Col>
-                      <TextInput monospace number placeholder='Row' />
+                      <TextInput monospace number placeholder="Row" />
                     </Col>
                     <Col>
-                      <TextInput monospace number placeholder='Column' />
+                      <TextInput monospace number placeholder="Column" />
                     </Col>
                   </Row>
                 </Col>
-                <Col xs='content'>
+                <Col xs="content">
                   <ButtonGroup>
                     <Button
                       Icon={Dark}
@@ -157,7 +164,7 @@ function GridContainer() {
             </Section>
           </GridRow>
 
-          <Grid ref={containerRef} row={2} uuid='app-layout' />
+          <Grid ref={containerRef} row={2} uuid="app-layout" />
         </Grid>
       </ContainerStyled>
     </WithOnMount>

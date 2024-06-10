@@ -1,6 +1,4 @@
 import React, {
-  Suspense,
-  lazy,
   useDeferredValue,
   useEffect,
   useMemo,

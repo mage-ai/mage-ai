@@ -11,6 +11,7 @@ import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { randomSimpleHashGenerator } from '@utils/string';
 
 type GridContainerProps = {
+  apps?: AppConfigType[];
   onRemoveApp: (
     uuidApp: string,
     appConfigs: {
@@ -19,7 +20,7 @@ type GridContainerProps = {
   ) => void;
 };
 
-function GridContainer({ onRemoveApp }: GridContainerProps) {
+function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -167,27 +168,22 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
   }
 
   useEffect(() => {
-    if (containerRef?.current && !Object.keys(refAppConfigs?.current || {})?.length) {
-      setTimeout(() => {
-        addApp(
-          {
-            subtype: AppSubtypeEnum.SYSTEM,
-            type: AppTypeEnum.BROWSER,
-            uuid: randomSimpleHashGenerator(),
-          },
-          containerRef?.current,
-        );
-      }, 0);
+    if (containerRef?.current && defaultApps?.length >= 1) {
+      defaultApps?.forEach((app: AppConfigType, index: number) => {
+        setTimeout(() => {
+          addApp(app, containerRef?.current);
+        }, index * 100);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <Grid
-      autoColumns='1fr'
-      autoRows='1fr'
-      justifyContent='stretch'
-      justifyItems='stretch'
+      autoColumns="1fr"
+      autoRows="1fr"
+      justifyContent="stretch"
+      justifyItems="stretch"
       ref={containerRef}
     />
   );

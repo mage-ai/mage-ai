@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import Button from '@mana/elements/Button';
 import TextInput from '@mana/elements/Input/TextInput';
@@ -20,7 +20,7 @@ type BrowserType = {
 export default function useBrowser({ app }: BrowserProps): BrowserType {
   const toolbarTop = useMemo(
     () => (
-      <Grid templateColumns='auto 1fr' templateRows='min-content'>
+      <Grid templateColumns="auto 1fr" templateRows="min-content">
         <Button
           onClick={() => {
             console.log('browse');
@@ -30,7 +30,7 @@ export default function useBrowser({ app }: BrowserProps): BrowserType {
           Browse
         </Button>
 
-        <TextInput basic monospace placeholder='/' small />
+        <TextInput basic monospace placeholder="/" small />
       </Grid>
     ),
     [],
