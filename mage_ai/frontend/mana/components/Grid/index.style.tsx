@@ -2,6 +2,14 @@ import styled, { css } from 'styled-components';
 
 import { range } from '@utils/array';
 
+export type SharedStyledProps = {
+  compact?: boolean;
+  height?: 'auto' | 'inherit' | string;
+  pad?: boolean;
+  row?: number;
+  width?: 'auto' | 'inherit' | string;
+};
+
 export type GridStyledProps = {
   alignContent?: 'center' | 'start' | 'end' | 'stretch';
   alignItems?: 'center' | 'start' | 'end' | 'stretch';
@@ -9,8 +17,6 @@ export type GridStyledProps = {
   autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
   autoRows?: string;
   columnGap?: number;
-  compact?: boolean;
-  height?: 'auto' | 'inherit' | string;
   justifyContent?:
     | 'center'
     | 'start'
@@ -21,13 +27,45 @@ export type GridStyledProps = {
     | 'space-evenly';
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
   pad?: boolean;
-  row?: number;
   rowGap?: number;
   templateColumns?: 'min-content' | 'max-content' | 'auto' | string;
   templateRows?: 'min-content' | 'max-content' | 'auto' | string;
   uuid?: string;
-  width?: 'auto' | 'inherit' | string;
-};
+} & SharedStyledProps;
+
+export const shared = css<SharedStyledProps>`
+  display: grid;
+  min-height: 0;
+  min-width: 0;
+  padding: ${({ compact, pad, theme }) => pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
+
+  ${buildGridTemplateColumns().join('\n')}
+  ${buildRowColumnStyles().join('\n')}
+
+  .grid-cell {
+    display: grid;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  ${({ height }) =>
+    typeof height !== 'undefined' &&
+    `
+    height: ${height};
+  `}
+
+  ${({ width }) =>
+    typeof width !== 'undefined' &&
+    `
+    width: ${width};
+  `}
+
+  ${({ row }) =>
+    typeof row !== 'undefined' &&
+    `
+    grid-row: ${row};
+  `}
+`;
 
 function buildGridTemplateColumns(): string[] {
   const arr = [];
@@ -78,23 +116,7 @@ function buildRowColumnStyles(): string[] {
 }
 
 const styles = css<GridStyledProps>`
-  ${({ height }) =>
-    typeof height !== 'undefined' &&
-    `
-    height: ${height};
-  `}
-
-  ${({ width }) =>
-    typeof width !== 'undefined' &&
-    `
-    width: ${width};
-  `}
-
-  ${({ row }) =>
-    typeof row !== 'undefined' &&
-    `
-    grid-row: ${row};
-  `}
+  ${shared}
 
   ${({ autoColumns }) =>
     typeof autoColumns !== 'undefined' &&
@@ -150,24 +172,9 @@ const styles = css<GridStyledProps>`
     justify-content: ${justifyContent};
   `}
 
-  ${({ columnGap, compact, pad, rowGap, theme }) => `
-    display: grid;
-    min-height: 0;
-    min-width: 0;
-    padding: ${pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
-
+  ${({ columnGap, compact, rowGap, theme }) => `
     column-gap: ${typeof columnGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : columnGap}px;
     row-gap: ${typeof rowGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : rowGap}px;
-
-
-    ${buildGridTemplateColumns().join('\n')}
-    ${buildRowColumnStyles().join('\n')}
-
-    .grid-cell {
-      display: grid;
-      min-height: 0;
-      min-width: 0;
-    }
   `}
 `;
 

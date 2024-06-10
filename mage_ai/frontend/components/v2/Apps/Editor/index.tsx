@@ -28,22 +28,28 @@ function EditorApp() {
         <Col xs="content">
           <Row>
             <Col>
-              <Text>{range((Number(new Date()) % 2) + 1).reduce(acc => TXT + ' ' + acc, '')}</Text>
+              <Text>
+                {TXT}
+              </Text>
             </Col>
             <Col xs="content">
               <Tag>Block</Tag>
             </Col>
           </Row>
+
           <Divider short />
+
           <Row>
             <Col>
               <Text monospace>
-                {range((Number(new Date()) % 2) + 1).reduce(acc => TXT + ' ' + acc, '')}
+                {TXT}
               </Text>
             </Col>
           </Row>
         </Col>
       </Row>
+
+      <Divider />
 
       <Button
         Icon={Settings}

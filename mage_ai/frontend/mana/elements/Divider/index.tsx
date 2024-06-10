@@ -24,12 +24,10 @@ export const DividerStyled = styled.div<DividerProps>`
     width: 100%;
   `}
 
-  ${({ vertical }) =>
-    !vertical &&
-    `
+  ${({ theme, vertical }) => !vertical && `
     height: 1px;
-    margin-bottom: ${({ theme }) => theme.margin.base}px;
-    margin-top: ${({ theme }) => theme.margin.base}px;
+    margin-bottom: ${theme.margin.base}px;
+    margin-top: ${theme.margin.base}px;
   `}
 
   ${({ vertical }) =>

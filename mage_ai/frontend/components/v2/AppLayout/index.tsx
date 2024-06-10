@@ -114,8 +114,8 @@ function GridContainer() {
       }}
     >
       <ContainerStyled>
-        <Grid height="inherit" templateRows="auto 1fr" width="inherit">
-          <GridRow row={1}>
+        <Grid height="inherit" pad templateRows="auto 1fr" width="100%">
+          <GridRow row={1} width="inherit">
             <Section>
               <Row align="center" justify="start">
                 <Col xs="content">
@@ -172,7 +172,7 @@ function GridContainer() {
             </Section>
           </GridRow>
 
-          <GridRow row={2}>
+          <GridRow row={2} width="inherit">
             <Grid
               ref={containerRef}
               templateRows="1fr"
