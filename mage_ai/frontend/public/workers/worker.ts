@@ -2,7 +2,7 @@ import * as osPath from 'path';
 
 const ctx: Worker = self as any;
 
-export async function groupFilesByDirectory(paths: string[]) {
+function groupFilesByDirectory(paths: string[]) {
   const root: any = {} as any;
 
   paths.forEach((path) => {
@@ -52,6 +52,5 @@ export async function groupFilesByDirectory(paths: string[]) {
 
 ctx.addEventListener('message', (event) => {
   const { data } = event;
-  const result = groupFilesByDirectory(data);
-  ctx.postMessage({ data: result });
+  ctx.postMessage(groupFilesByDirectory(data));
 });

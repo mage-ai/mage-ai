@@ -39,7 +39,7 @@
         "utils/*"
       ]
     },
-    "target": "ESNext",
+    "target": "es6",
     "lib": [
       "dom",
       "dom.iterable",
@@ -51,7 +51,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "ESNext",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,

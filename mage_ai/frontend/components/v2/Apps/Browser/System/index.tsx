@@ -17,7 +17,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   const themeContext = useContext(ThemeContext);
   const rootID = useMemo(() => `system-browser-items-root-${app?.uuid}`, [app]);
 
-  const filePathsRef = useRef<string[]>(filePaths?.slice(0, 40));
+  const filePathsRef = useRef<string[]>(filePaths);
   const itemsRootRef = useRef(null);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
         }
       };
 
-      worker.postMessage({ data: filePathsRef?.current });
+      worker.postMessage(filePathsRef?.current);
 
       return () => worker.terminate();
     };
