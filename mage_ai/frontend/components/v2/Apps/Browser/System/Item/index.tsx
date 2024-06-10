@@ -46,7 +46,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const { items, name } = item as ItemType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
-  const { Icon } = useFileIcon({ isFolder, name });
+  const { BlockIcon, Icon } = useFileIcon({ isFolder, name });
   const iconColorName = useMemo(
     () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
     [isFolder, name],
@@ -80,7 +80,12 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
 
   const buildIcon = useCallback(() => {
     const props = { colorName: iconColorName, small: true };
-    const IconUse = isFolder && expandedRef?.current ? FolderV2Filled : Icon;
+    const IconUse = BlockIcon
+      ? BlockIcon
+      : isFolder && expandedRef?.current
+        ? FolderV2Filled
+        : Icon;
+    console.log(BlockIcon);
     if (IconUse) {
       return <IconUse {...props} />;
     }
@@ -118,7 +123,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
-                      <Loading position='absolute' />
+                      <Loading position="absolute" />
                     </div>
                   </ThemeProvider>
                 }
@@ -173,13 +178,13 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
           renderUpdates();
         }}
         onContextMenu={onContextMenu}
-        templateColumns='auto 1fr'
+        templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
       >
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns='auto 1fr'>
+          <Grid compact templateColumns="auto 1fr">
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
               <Text blue={isFolder} monospace small>
