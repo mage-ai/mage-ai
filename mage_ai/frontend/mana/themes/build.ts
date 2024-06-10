@@ -8,6 +8,7 @@ import grid, { GridType } from './grid';
 import icons, { IconsType } from './icons';
 import inputs, { InputsType } from './inputs';
 import margin, { MarginType } from './margin';
+import menus, { MenuType } from './menus';
 import padding, { PaddingType } from './padding';
 import { DEFAULT_MODE, ModeEnum, ModeType } from './modes';
 import { extractValueInMode } from './helpers';
@@ -63,6 +64,7 @@ class Combiner implements CombinerType {
       | IconsType
       | InputsType
       | MarginType
+      | MenuType
       | PaddingType
       | { [key: string]: ModeType },
     overrideThemeKey?: string,
@@ -88,6 +90,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     icons,
     inputs,
     margin,
+    menus,
     padding,
   }).reduce(
     (acc, [key, value]) => ({

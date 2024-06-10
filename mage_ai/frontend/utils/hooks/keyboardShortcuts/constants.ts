@@ -1,9 +1,6 @@
 export const KEY_CODE_ALT = 18;
 export const KEY_CODE_ALT_STRING = 'altKey';
-export const KEY_CODE_ALTS = [
-  KEY_CODE_ALT,
-  KEY_CODE_ALT_STRING,
-];
+export const KEY_CODE_ALTS = [KEY_CODE_ALT, KEY_CODE_ALT_STRING];
 export const KEY_CODE_ARROW_DOWN = 40;
 export const KEY_CODE_ARROW_LEFT = 37;
 export const KEY_CODE_ARROW_RIGHT = 39;
@@ -13,9 +10,7 @@ export const KEY_CODE_BRACKET_LEFT = 219;
 export const KEY_CODE_BRACKET_RIGHT = 221;
 export const KEY_CODE_BACKSPACE = 'Backspace';
 export const KEY_CODE_CONTROL = 'ctrlKey';
-export const KEY_CODE_CONTROLS = [
-  17,
-];
+export const KEY_CODE_CONTROLS = [17];
 export const KEY_CODE_DELETE = 8;
 export const KEY_CODE_ENTER = 13;
 export const KEY_CODE_ESCAPE = 27;
@@ -49,11 +44,7 @@ export const KEY_CODE_META_RIGHT = 93;
 export const KEY_CODE_PERIOD = 190;
 export const KEY_CODE_FORWARD_SLASH = 191;
 export const KEY_CODE_META_FIREFOX = 224;
-export const KEY_CODE_METAS = [
-  KEY_CODE_META_LEFT,
-  KEY_CODE_META_RIGHT,
-  KEY_CODE_META_FIREFOX,
-];
+export const KEY_CODE_METAS = [KEY_CODE_META_LEFT, KEY_CODE_META_RIGHT, KEY_CODE_META_FIREFOX];
 export const KEY_CODE_NUMBER_0 = 48;
 export const KEY_CODE_NUMBER_1 = 49;
 export const KEY_CODE_NUMBER_2 = 50;
@@ -126,14 +117,14 @@ export const KEY_SYMBOL_W = 'W';
 export const KEY_SYMBOL_X = 'X';
 export const KEY_SYMBOL_Y = 'Y';
 export const KEY_SYMBOL_Z = 'Z';
-export const KEY_SYMBOL_ALT = '⌥ option';
+export const KEY_SYMBOL_ALT = '⌥option';
 export const KEY_SYMBOL_BRACKET_LEFT = '[';
 export const KEY_SYMBOL_BRACKET_RIGHT = ']';
-export const KEY_SYMBOL_CONTROL = '^ ctrl';
+export const KEY_SYMBOL_CONTROL = '^ctrl';
 export const KEY_SYMBOL_DELETE = 'del';
-export const KEY_SYMBOL_ENTER = '⌅ enter';
-export const KEY_SYMBOL_RETURN = '↵ return';
-export const KEY_SYMBOL_ESCAPE = '⎋ esc';
+export const KEY_SYMBOL_ENTER = '↵enter';
+export const KEY_SYMBOL_RETURN = '↵return';
+export const KEY_SYMBOL_ESCAPE = '⎋esc';
 export const KEY_SYMBOL_FORWARD_SLASH = '/';
 export const KEY_SYMBOL_META = '⌘';
 export const KEY_SYMBOL_SHIFT = '⇧';

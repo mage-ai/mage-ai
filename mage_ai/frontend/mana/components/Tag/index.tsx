@@ -1,5 +1,7 @@
 import React from 'react';
+
 import styled from 'styled-components';
+import { PaddingVerticalEnum } from '@mana/themes/interactive';
 import { baseXs } from '../../styles/typography';
 
 type StyleProps = {
@@ -23,7 +25,7 @@ const TagStyled = styled.div<StyleProps>`
   cursor: inherit;
   display: inline-block;
   font-family: ${({ theme }) => theme.fonts.family.base.semiBold};
-  padding: 4px 6px;
+  padding: 4px ${PaddingVerticalEnum.XS};
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
 `;
 

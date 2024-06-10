@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import EditorApp from '@components/v2/Apps/Editor';
 import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import icons from '@mana/icons';
@@ -9,8 +10,6 @@ import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import useBrowser from '@components/v2/Apps/Browser/useBrowser';
 import Divider from '@mana/elements/Divider';
-
-const LazyEditorApp = lazy(() => import('@components/v2/Apps/Editor'));
 
 const { Close, CaretRight, CaretLeft, CaretUp, CaretDown } = icons;
 
@@ -63,20 +62,20 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
   const { main, toolbars } = useBrowser({ app });
 
   return (
-    <Grid justifyContent='stretch' justifyItems='stretch' ref={ref}>
+    <Grid justifyContent="stretch" justifyItems="stretch" ref={ref}>
       <Section>
         <Grid
-          autoFlow='column'
-          justifyContent='stretch'
-          justifyItems='stretch'
-          templateColumns='1fr'
-          templateRows='min-content 1fr'
+          autoFlow="column"
+          justifyContent="stretch"
+          justifyItems="stretch"
+          templateColumns="1fr"
+          templateRows="min-content 1fr"
         >
-          <Grid autoFlow='column' justifyContent='space-between' templateColumns='1fr min-content'>
+          <Grid autoFlow="column" justifyContent="space-between" templateColumns="1fr">
             {toolbars?.top}
 
-            <Grid autoFlow='column' justifyContent='end' templateColumns='min-content'>
-              <Grid autoFlow='column' templateRows='min-content'>
+            <Grid autoFlow="column" justifyContent="end" templateColumns="1fr">
+              <Grid autoFlow="column" templateRows="min-content">
                 <ButtonGroup itemsContained>
                   <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
                   <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
@@ -89,11 +88,7 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
             </Grid>
           </Grid>
 
-          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && (
-            <Suspense fallback={<div>Loading...</div>}>
-              <LazyEditorApp />
-            </Suspense>
-          )}
+          {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && <EditorApp />}
           {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
         </Grid>
       </Section>

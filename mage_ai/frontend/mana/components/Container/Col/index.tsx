@@ -26,5 +26,4 @@ const ColComponent = forwardRef<any, ColProps>(({ children, ...props }, ref) => 
 ));
 
 const ColWithDisplay = useWithDisplay(ColComponent);
-
 export default ColWithDisplay;

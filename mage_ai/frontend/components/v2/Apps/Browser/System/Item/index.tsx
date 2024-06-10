@@ -24,11 +24,12 @@ import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
-const { FolderV2Filled } = icons;
+const { DiamondShared, FileIcon, FolderV2Filled } = icons;
 
 type ItemProps = {
   app: AppConfigType;
   item: ItemType | ItemDetailType;
+  onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
   themeContext: any;
 };
 
@@ -40,12 +41,28 @@ function itemsRootID(uuid: string) {
   return `items-root-${uuid}`;
 }
 
-function Item({ app, item, themeContext }: ItemProps) {
+function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   console.log('render', item?.name);
   const { items, name } = item as ItemType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
-  const { Icon } = useFileIcon({ isFolder, name });
+  // TODO (dangerous): update this with a real dynamic value.
+  const pipelineCount = 0;
+  const {
+    BlockIcon,
+    Icon,
+    folderNameForBlock,
+    iconColor,
+    isBlockFile,
+    color: blockIconColor,
+    isFirstParentFolderForBlock,
+  } = useFileIcon({ isFolder, name, theme: themeContext, uuid: name });
+
+  const isBlockFileWithSquareIcon = useMemo(
+    () => !!folderNameForBlock && !isFolder && !!isBlockFile,
+    [folderNameForBlock, isBlockFile, isFolder],
+  );
+
   const iconColorName = useMemo(
     () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
     [isFolder, name],
@@ -78,12 +95,45 @@ function Item({ app, item, themeContext }: ItemProps) {
   const linesMemo = useMemo(() => buildLines(), [buildLines]);
 
   const buildIcon = useCallback(() => {
-    const props = { colorName: iconColorName, small: true };
-    const IconUse = isFolder && expandedRef?.current ? FolderV2Filled : Icon;
-    if (IconUse) {
-      return <IconUse {...props} />;
+    if (isFolder) {
+      if (isFirstParentFolderForBlock) {
+        return <Icon color={blockIconColor} small />;
+      } else {
+        const IconUse = expandedRef?.current ? FolderV2Filled : Icon;
+        if (IconUse) {
+          return <IconUse colorName={iconColorName} small />;
+        }
+      }
+    } else if (isBlockFileWithSquareIcon) {
+      if (pipelineCount) {
+        return <DiamondShared fill={blockIconColor} small />;
+      } else if (BlockIcon) {
+        return (
+          <BlockIcon
+            borderOnly={!pipelineCount}
+            color={blockIconColor}
+            size={folderNameForBlock && !isFolder ? 8 : 12}
+            square
+          />
+        );
+      }
     }
-  }, [Icon, iconColorName, isFolder]);
+
+    const IconUse = Icon || FileIcon;
+
+    return <IconUse colorName={iconColorName || iconColor} small />;
+  }, [
+    BlockIcon,
+    Icon,
+    iconColorName,
+    blockIconColor,
+    isFolder,
+    isBlockFileWithSquareIcon,
+    pipelineCount,
+    iconColor,
+    folderNameForBlock,
+    isFirstParentFolderForBlock,
+  ]);
 
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
@@ -117,14 +167,20 @@ function Item({ app, item, themeContext }: ItemProps) {
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
-                      <Loading position='absolute' />
+                      <Loading position="absolute" />
                     </div>
                   </ThemeProvider>
                 }
                 idleTimeout={1}
               >
                 {values?.map((item: ItemDetailType) => (
-                  <Item app={app} item={item} key={item.name} themeContext={themeContext} />
+                  <Item
+                    app={app}
+                    item={item}
+                    key={item.name}
+                    onContextMenu={onContextMenu}
+                    themeContext={themeContext}
+                  />
                 ))}
               </DeferredRenderer>
             </Grid>
@@ -133,7 +189,7 @@ function Item({ app, item, themeContext }: ItemProps) {
       );
       renderedRef.current = true;
     }
-  }, [app, themeContext, uuid, items, buildLines]);
+  }, [app, themeContext, uuid, items, buildLines, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
@@ -157,7 +213,7 @@ function Item({ app, item, themeContext }: ItemProps) {
     <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
-        onClick={event => {
+        onClick={(event: React.MouseEvent<HTMLDivElement>) => {
           event.preventDefault();
           event.stopPropagation();
 
@@ -165,13 +221,14 @@ function Item({ app, item, themeContext }: ItemProps) {
 
           renderUpdates();
         }}
-        templateColumns='auto 1fr'
+        onContextMenu={onContextMenu}
+        templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
       >
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns='auto 1fr'>
+          <Grid compact templateColumns="auto 1fr">
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
               <Text blue={isFolder} monospace small>

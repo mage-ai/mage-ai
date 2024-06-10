@@ -29,7 +29,7 @@ const shared = css<StyleProps>`
   line-height: ${({ theme }) => theme.fonts.lineHeight.base};
   padding: ${({ small, theme }) => theme.inputs.padding[small ? 'sm' : 'base']};
   width: ${({ width }) =>
-    typeof width === 'undefined' ? 'inherit' : typeof width === 'number' ? `${width}px` : width};
+    typeof width === 'undefined' ? '100%' : typeof width === 'number' ? `${width}px` : width};
 
   ::-webkit-input-placeholder {
     color: ${({ theme }) => theme.inputs.placeholder.color};
