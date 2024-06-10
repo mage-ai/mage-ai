@@ -2,6 +2,8 @@ import { css } from 'styled-components';
 
 export type StyleProps = {
   className?: string;
+  color?: string;
+  colorName?: string;
   fill?: string;
   height?: number;
   inverted?: boolean;
@@ -16,27 +18,29 @@ export type StyleProps = {
 };
 
 const icons = css<StyleProps>`
-  ${({ fill, inverted, theme, useStroke }) =>
-    !useStroke &&
-    `
-    fill: ${
-      typeof fill !== 'undefined' && fill !== null
-        ? fill
-        : inverted
-          ? theme.icons.color.inverted
-          : theme.icons.color.base
+  ${({ color, colorName, fill, inverted, theme, useStroke }) => !useStroke && `
+    fill: ${typeof color !== 'undefined'
+      ? color
+      : typeof colorName !== 'undefined'
+        ? theme.colors[colorName]
+        : typeof fill !== 'undefined' && fill !== null
+          ? fill
+          : inverted
+            ? theme.icons.color.inverted
+            : theme.icons.color.base
     };
   `}
 
-  ${({ inverted, stroke, theme, useStroke }) =>
-    useStroke &&
-    `
-    stroke: ${
-      typeof stroke !== 'undefined' && stroke !== null
-        ? stroke
-        : inverted
-          ? theme.icons.color.inverted
-          : theme.icons.color.base
+  ${({ color, colorName, inverted, stroke, theme, useStroke }) => useStroke && `
+    stroke: ${typeof color !== 'undefined'
+      ? color
+      : typeof colorName !== 'undefined'
+        ? theme.colors[colorName]
+        : typeof stroke !== 'undefined' && stroke !== null
+          ? stroke
+          : inverted
+            ? theme.icons.color.inverted
+            : theme.icons.color.base
     };
   `}
 `;

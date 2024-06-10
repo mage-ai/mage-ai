@@ -1,6 +1,6 @@
 import * as osPath from 'path';
 
-import FileType from '@interfaces/FileType';
+import FileType, { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
 import StatusType from '@interfaces/StatusType';
 
 export function convertFilePathToRelativeRoot(filePath: string, status: StatusType): string {
@@ -84,4 +84,11 @@ export function getFullPath(
 
 export function removeFileExtension(filename: string): string {
   return filename.replace(/\.[^/.]+$/, '');
+}
+
+export function getFileExtension(filename: string): FileExtensionEnum {
+  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
+  return match?.length >= 1
+    ? match[0].replace('.', '') as FileExtensionEnum
+    : null;
 }

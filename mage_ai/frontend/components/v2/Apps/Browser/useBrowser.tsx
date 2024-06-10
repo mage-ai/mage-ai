@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
+
 import Button from '@mana/elements/Button';
 import TextInput from '@mana/elements/Input/TextInput';
 import Grid from '@mana/components/Grid';

@@ -1,6 +1,5 @@
 import styled, { css } from 'styled-components';
 
-import { gutterWidth as gutterWidthBase } from '@mana/themes/grid';
 import { range } from '@utils/array';
 
 export type GridStyledProps = {
@@ -10,6 +9,7 @@ export type GridStyledProps = {
   autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
   autoRows?: string;
   columnGap?: number;
+  compact?: boolean;
   height?: 'auto' | 'inherit' | string;
   justifyContent?: 'center' | 'start' | 'end' | 'stretch' | 'space-between' | 'space-around' | 'space-evenly';
   justifyItems?: 'center' | 'start' | 'end' | 'stretch';
@@ -136,12 +136,14 @@ const styles = css<GridStyledProps>`
     justify-content: ${justifyContent};
   `}
 
-  ${({ columnGap, pad, rowGap }) => `
+  ${({ columnGap, compact, pad, rowGap, theme }) => `
     display: grid;
-    padding: ${pad ? gutterWidthBase : 0}px;
+    padding: ${pad
+      ? theme.grid.gutter.width[compact ? 'sm' : 'base']
+      : 0}px;
 
-    column-gap: ${typeof columnGap === 'undefined' ? gutterWidthBase : columnGap}px;
-    row-gap: ${typeof rowGap === 'undefined' ? gutterWidthBase : rowGap}px;
+    column-gap: ${typeof columnGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : columnGap}px;
+    row-gap: ${typeof rowGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : rowGap}px;
 
 
     ${buildGridTemplateColumns().join('\n')}

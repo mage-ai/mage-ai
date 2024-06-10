@@ -1,8 +1,17 @@
+import React, { Suspense, lazy } from 'react';
+
 import Route from '@components/v2/Route';
-import AppLayout from '@components/v2/AppLayout';
+
+const LazyAppLayout = lazy(() => import('@components/v2/AppLayout'));
 
 function GridPage() {
-  return <AppLayout />;
+  return (
+    <React.StrictMode>
+      <Suspense fallback={<div>Loading...</div>}>
+        <LazyAppLayout />
+      </Suspense>
+    </React.StrictMode>
+  );
 }
 
 export default Route(GridPage);

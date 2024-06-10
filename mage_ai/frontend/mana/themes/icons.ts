@@ -1,5 +1,10 @@
 import { ColorsType } from './colors';
 
+export enum IconSizeEnum {
+  BASE = 20,
+  SM = 17,
+}
+
 export interface IconsType {
   color: {
     base: string;
@@ -15,8 +20,8 @@ export default function build(colors: ColorsType): IconsType {
   return {
     color: colors.icons,
     size: {
-      base: 20,
-      sm: 17,
+      base: IconSizeEnum.BASE,
+      sm: IconSizeEnum.SM,
     },
   };
 }

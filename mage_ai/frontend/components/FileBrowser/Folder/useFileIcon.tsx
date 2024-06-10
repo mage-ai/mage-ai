@@ -10,19 +10,7 @@ import FileType, {
 } from '@interfaces/FileType';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
-import {
-  Charts,
-  Ellipsis,
-  FileFill,
-  FolderV2Filled as FolderIcon,
-  Logs,
-  NavGraph,
-  ParentEmpty,
-  Pipeline,
-  PipelineV3,
-  RoundedSquare,
-  Table,
-} from '@oracle/icons';
+import OracleIcons from '@oracle/icons';
 import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from '@components/FileBrowser/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
@@ -35,11 +23,21 @@ import {
 import { singularize } from '@utils/string';
 
 type UseFileIconProps = {
+  Icons?: {
+    [uuid: string]: any;
+  };
+  IconColors?: {
+    [uuid: string]: string;
+  };
+  ExtensionIcons?: {
+    [uuid: string]: any;
+  };
   allowEmptyFolders?: boolean;
   children?: any;
   disabled?: boolean;
   file?: FileType;
   filePath?: string;
+  isFolder?: boolean;
   isInPipelinesFolder?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   isNotFolder?: boolean;
@@ -51,11 +49,15 @@ type UseFileIconProps = {
 };
 
 export default function useFileIcon({
+  ExtensionIcons = FILE_EXTENSION_ICON_MAPPING,
+  IconColors = FILE_EXTENSION_COLOR_MAPPING,
+  Icons,
   allowEmptyFolders,
   children,
   disabled: disabledProp,
   file,
   filePath,
+  isFolder: isFolderProp,
   isInPipelinesFolder,
   isFileDisabled,
   isNotFolder,
@@ -65,6 +67,16 @@ export default function useFileIcon({
   useRootFolder,
   uuid,
 }: UseFileIconProps) {
+  const {
+    Charts,
+    Ellipsis,
+    FileFill,
+    FolderV2Filled: FolderIcon,
+    Logs,
+    Pipeline,
+    PipelineV3,
+  } = Icons || OracleIcons;
+
   const filePathToUse: string = useMemo(() => filePath
     ? filePath
     : (useRootFolder
@@ -77,7 +89,7 @@ export default function useFileIcon({
     useRootFolder,
   ]);
 
-  const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
+  const isFolder = useMemo(() => isFolderProp || !!children && !isNotFolder, [children, isFolderProp, isNotFolder]);
 
   const folderNameForBlock = useMemo(() => uuid?.split?.('/')?.find?.(
     (key) => {
@@ -141,7 +153,7 @@ export default function useFileIcon({
     if (!isFolder && isNotFolder) {
       IconInner = Ellipsis;
     } else if (isPipelineFolder) {
-      IconInner = PipelineV3
+      IconInner = PipelineV3;
     } else if (name === FOLDER_NAME_CHARTS) {
       IconInner = Charts;
     } else if (isFolder && !extension) {
@@ -158,9 +170,9 @@ export default function useFileIcon({
       IconInner = Logs;
     } else if (!isFolder || extension) {
       const fx = extension || getFileExtension(name);
-      if (fx && fx in FILE_EXTENSION_ICON_MAPPING) {
-        IconInner = FILE_EXTENSION_ICON_MAPPING[fx];
-        iconColorInner = FILE_EXTENSION_COLOR_MAPPING[fx];
+      if (fx && fx in ExtensionIcons) {
+        IconInner = ExtensionIcons[fx];
+        iconColorInner = IconColors[fx];
       }
     }
 

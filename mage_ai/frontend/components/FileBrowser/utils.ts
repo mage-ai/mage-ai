@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { getFileExtension } from '@utils/files';
 
 import BlockType, {
   ALL_BLOCK_TYPES,
@@ -54,13 +55,6 @@ export function getFullPathWithoutRootFolder(
   const fullPath = getFullPath(file, currentPathInit, removeFilename);
 
   return removeRootFromFilePath(fullPath);
-}
-
-export function getFileExtension(filename: string): FileExtensionEnum {
-  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
-  return match?.length >= 1
-    ? match[0].replace('.', '') as FileExtensionEnum
-    : null;
 }
 
 export function validBlockFileExtension(filename: string): string {
@@ -283,7 +277,7 @@ export function groupByCommonDirectories(arr) {
     groupsWith2Directories[key2] = groupsWith2Directories[key2] || [];
 
     if (!parts1?.length) {
-      group1Roots.push(filePath)
+      group1Roots.push(filePath);
     } else {
       groupsWith1Directory[key1].push(filePath);
     }
@@ -292,7 +286,7 @@ export function groupByCommonDirectories(arr) {
       group2Roots.push(filePath);
     } else {
       groupsWith2Directories[key2].push(filePath);
-    };
+    }
   });
 
   return {
@@ -325,6 +319,10 @@ export function buildFileTreeByExtension(files: FileType[]): FileType[] {
         ...file,
         parent,
       })),
-    })
+    });
   }, []);
 }
+
+export {
+  getFileExtension,
+};

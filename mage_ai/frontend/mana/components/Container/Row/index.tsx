@@ -4,7 +4,7 @@ import { Row as RowGrid, RowProps as RowGridProps } from 'react-grid-system';
 import useWithDisplay, { WithDisplayProps } from '../../../hooks/useWithDisplay';
 import { GRID_ROW_COL_CLASS } from '../Col';
 import { RowStyled } from './index.style';
-import { gutterWidth as gutterWidthBase } from '@mana/themes/grid';
+import { GridGutterWidthEnum } from '@mana/themes/grid';
 
 type RowProps = {
   useClassNameGutter?: boolean;
@@ -14,7 +14,7 @@ type RowProps = {
 
 const RowComponent = forwardRef<any, RowProps>(
   ({ children, nogutter, useClassNameGutter, verticalGutter, ...props }, ref) => {
-    const paddingHorizontal = (props?.gutterWidth || gutterWidthBase) / 2;
+    const paddingHorizontal = (props?.gutterWidth || GridGutterWidthEnum.BASE) / 2;
     const paddingVertical = !!verticalGutter
       ? typeof verticalGutter === 'boolean'
         ? paddingHorizontal

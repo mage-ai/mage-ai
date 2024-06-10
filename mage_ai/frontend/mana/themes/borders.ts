@@ -1,4 +1,5 @@
 import { ColorsType } from './colors';
+import { ModeType } from './modes';
 
 export enum BorderRadius {
   BASE = '10px',
@@ -6,7 +7,12 @@ export enum BorderRadius {
 }
 
 export interface BordersType {
-  color: string;
+  color: {
+    base: {
+      default: ModeType;
+      hover: ModeType;
+    };
+  };
   outline: {
     offset: number;
     width: number;
@@ -21,7 +27,7 @@ export interface BordersType {
 
 export default function build(colors: ColorsType): BordersType {
   return {
-    color: colors.gray,
+    color: colors.borders,
     outline: {
       offset: 1,
       width: 2,

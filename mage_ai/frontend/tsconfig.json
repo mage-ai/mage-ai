@@ -26,6 +26,9 @@
       "@oracle/*": [
         "oracle/*"
       ],
+      "@public/*": [
+        "public/*"
+      ],
       "@storage/*": [
         "storage/*"
       ],
@@ -36,7 +39,7 @@
         "utils/*"
       ]
     },
-    "target": "es6",
+    "target": "ESNext",
     "lib": [
       "dom",
       "dom.iterable",
@@ -48,17 +51,21 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "types": [
+      "webpack-env"
+    ]
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "workers/*.ts"
   ],
   "exclude": [
     "node_modules"

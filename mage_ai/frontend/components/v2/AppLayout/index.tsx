@@ -9,13 +9,15 @@ import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid, { Col as GridCol, Row as GridRow } from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
 import TextInput from '@mana/elements/Input/TextInput';
+import icons from '@mana/icons';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
-import { Cluster, Dark } from '@mana/icons';
 import { ContainerStyled } from './index.style';
 import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
 import { removeClassNames } from '@utils/elements';
 import { setThemeSettings } from '@mana/themes/utils';
+
+const { Cluster, Dark } = icons;
 
 function GridContainer() {
   const themeContext = useContext(ThemeContext);
@@ -88,12 +90,14 @@ function GridContainer() {
   useEffect(() => {
     if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
       setTimeout(() => {
-        addPanel({
-          subtype: AppSubtypeEnum.SYSTEM,
-          type: AppTypeEnum.BROWSER,
-          uuid: randomSimpleHashGenerator(),
-        });
-      }, 0);
+        if (!Object.keys(refCells?.current || {})?.length) {
+          addPanel({
+            subtype: AppSubtypeEnum.SYSTEM,
+            type: AppTypeEnum.BROWSER,
+            uuid: randomSimpleHashGenerator(),
+          });
+        }
+      }, 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

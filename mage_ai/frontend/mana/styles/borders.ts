@@ -8,7 +8,7 @@ const shared = css`
 
 const base = css`
   ${shared}
-  border-color: ${({ theme }) => theme.borders.color};
+  border-color: ${({ theme }) => theme.borders.color.base.default};
 `;
 
 export const bordersTransparent = css`

@@ -16,8 +16,8 @@ const InputStyled = styled.input<InputStyleProps>`
   ${inputs}
 `;
 
-function TextInput({ number, onChange, ...props }: InputProps) {
-  return <InputStyled {...props} onChange={onChange} type={number ? 'number' : 'text'} />;
+function TextInput({ number, onChange, ...props }: InputProps, ref) {
+  return <InputStyled {...props} onChange={onChange} ref={ref} type={number ? 'number' : 'text'} />;
 }
 
 export default React.forwardRef(TextInput);

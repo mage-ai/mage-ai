@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid from '@mana/components/Grid';
 import Section from '@mana/elements/Section';
-import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
+import icons from '@mana/icons';
 import { randomSimpleHashGenerator } from '@utils/string';
-import EditorApp from '@components/v2/Apps/Editor';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import useBrowser from '@components/v2/Apps/Browser/useBrowser';
 import Divider from '@mana/elements/Divider';
+
+const LazyEditorApp = lazy(() => import('@components/v2/Apps/Editor'));
+
+const { Close, CaretRight, CaretLeft, CaretUp, CaretDown } = icons;
 
 export type AddAppFunctionOptionsType = {
   container?: HTMLElement;
@@ -90,7 +93,9 @@ function Cell({ app, onAdd, onRemove, uuid }: CellProps, ref: React.Ref<HTMLDivE
         </Grid>
 
         {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && (
-          <EditorApp />
+          <Suspense fallback={<div>Loading...</div>}>
+            <LazyEditorApp />
+          </Suspense>
         )}
         {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main}
       </Section>
