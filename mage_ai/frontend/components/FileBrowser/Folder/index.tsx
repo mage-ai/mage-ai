@@ -336,7 +336,7 @@ function Folder({
             </DeferredRender>
           ) : // @ts-ignore
           isFolder ? (
-            buildChildrenFiles(childrenEmpty)
+            buildChildrenFiles(childrenEmpty as any[])
           ) : (
             <div />
           ),
