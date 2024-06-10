@@ -1,5 +1,6 @@
-import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import ThemeType from './interfaces';
+import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import { ColorsType } from './colors';
 
 export function getBlockColor(
   blockType: BlockTypeEnum,
@@ -14,7 +15,7 @@ export function getBlockColor(
   accentLight?: string;
 } {
   const { blockColor, isSelected, theme } = props || {};
-  const colors = theme?.colors || {};
+  const colors = theme?.colors || ({} as ColorsType);
 
   let accent = colors?.typography?.text?.base;
   let accentLight = colors?.typography?.text?.muted;
@@ -35,7 +36,7 @@ export function getBlockColor(
     accentLight = colors?.skyHi;
   } else if (BlockTypeEnum.SENSOR === blockType || blockColor === BlockColorEnum.PINK) {
     accent = colors?.pink;
-    accentLight = colors?.pinkLight;
+    accentLight = colors?.pinkHi;
   } else if (BlockTypeEnum.DBT === blockType) {
     accent = colors?.dbt;
     accentLight = colors?.dbtHi;
@@ -47,8 +48,8 @@ export function getBlockColor(
     accent = colors?.rose;
     accentLight = colors?.roseHi;
   } else if (BlockTypeEnum.CONDITIONAL === blockType) {
-    accent = colors?.typography?.text?.muted;
-    accentLight = colors?.contentDefaultTransparent;
+    accent = colors?.typography?.text?.base;
+    accentLight = colors?.typography?.text?.muted;
   } else if (
     BlockTypeEnum.SCRATCHPAD === blockType ||
     blockColor === BlockColorEnum.GREY ||
