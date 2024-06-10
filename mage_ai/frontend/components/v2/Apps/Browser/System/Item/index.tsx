@@ -123,13 +123,11 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
 
     return <IconUse colorName={iconColorName || iconColor} small />;
   }, [
-    isBlockFile,
     BlockIcon,
     Icon,
     iconColorName,
     blockIconColor,
     isFolder,
-    isBlockFile,
     isBlockFileWithSquareIcon,
     pipelineCount,
     iconColor,
