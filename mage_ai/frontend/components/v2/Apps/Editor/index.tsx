@@ -6,9 +6,11 @@ import Tag from '@mana/components/Tag';
 import Text from '@mana/elements/Text';
 import { ModeEnum } from '@mana/themes/modes';
 import { Row, Col } from '@mana/components/Container';
-import { Settings } from '@mana/icons';
+import icons from '@mana/icons';
 import { range } from '@utils/array';
 import { setThemeSettings } from '@mana/themes/utils';
+
+const { Settings } = icons;
 
 import { randomSimpleHashGenerator } from '@utils/string';
 
@@ -22,13 +24,13 @@ Take a look and let me know if anything works, you can also ask me to simply cho
 function EditorApp() {
   return (
     <>
-      <Row direction="column" nogutter>
-        <Col xs="content">
+      <Row direction='column' nogutter>
+        <Col xs='content'>
           <Row>
             <Col>
               <Text>{range((Number(new Date()) % 2) + 1).reduce(acc => TXT + ' ' + acc, '')}</Text>
             </Col>
-            <Col xs="content">
+            <Col xs='content'>
               <Tag>Block</Tag>
             </Col>
           </Row>

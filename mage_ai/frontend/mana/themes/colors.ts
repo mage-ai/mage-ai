@@ -1,4 +1,4 @@
-import { ModeEnum, ModeType } from '../themes/modes';
+import { ModeEnum, ModeType } from './modes';
 import { blue as blueGradient } from './gradients';
 
 interface InteractiveElementStateColorsType {
@@ -26,11 +26,16 @@ export interface BackgroundsType {
 export interface TypographyColorsType {
   text: {
     base: string;
+    blue: string;
     inverted: string;
   };
 }
 
 export interface BordersType {
+  base: {
+    default: ModeType;
+    hover: ModeType;
+  };
   button: {
     base: InteractiveElementStateColorsType;
     basic: InteractiveElementStateColorsType;
@@ -59,6 +64,10 @@ interface ColorsDerivedType {
       base: string;
     };
   };
+  statuses: {
+    success: ModeType;
+    successHi: ModeType;
+  };
   typography: TypographyColorsType;
 }
 
@@ -68,6 +77,7 @@ export interface ColorsType extends ColorsDerivedType {
   blue: string;
   blueLo: string;
   blueMd: string;
+  blueMuted: string;
   blueHi: string;
   blueText: string;
   glow: string;
@@ -92,6 +102,10 @@ export interface ColorsType extends ColorsDerivedType {
   redLo: string;
   redMd: string;
   redHi: string;
+  yellow: string;
+  yellowLo: string;
+  yellowMd: string;
+  yellowHi: string;
   white: string;
   whiteFixed: string;
   whiteLo: string;
@@ -130,6 +144,11 @@ const Colors = {
     [ModeEnum.LIGHT]: '#0500FF',
     [ModeEnum.MODE3]: '#4776FF',
   },
+  blueHi: {
+    [ModeEnum.DARK]: '#0500FFD9',
+    [ModeEnum.LIGHT]: '#0500FFD9',
+    [ModeEnum.MODE3]: '#4776FFD9',
+  },
   blueLo: {
     [ModeEnum.DARK]: '#0500FF33',
     [ModeEnum.LIGHT]: '#0500FF33',
@@ -140,10 +159,10 @@ const Colors = {
     [ModeEnum.LIGHT]: '#0500FFB3',
     [ModeEnum.MODE3]: '#4776FFB3',
   },
-  blueHi: {
-    [ModeEnum.DARK]: '#0500FFD9',
-    [ModeEnum.LIGHT]: '#0500FFD9',
-    [ModeEnum.MODE3]: '#4776FFD9',
+  blueMuted: {
+    [ModeEnum.DARK]: '#5AA6FF',
+    [ModeEnum.LIGHT]: '#5AA6FF',
+    [ModeEnum.MODE3]: '#5AA6FF',
   },
   blueText: {
     [ModeEnum.DARK]: '#1F6BFF',
@@ -245,6 +264,11 @@ const Colors = {
     [ModeEnum.LIGHT]: '#FF3B3B',
     [ModeEnum.MODE3]: '#FF3B3B',
   },
+  redHi: {
+    [ModeEnum.DARK]: '#FF3B3BD9',
+    [ModeEnum.LIGHT]: '#FF3B3BD9',
+    [ModeEnum.MODE3]: '#FF3B3BD9',
+  },
   redLo: {
     [ModeEnum.DARK]: '#FF3B3B33',
     [ModeEnum.LIGHT]: '#FF3B3B33',
@@ -255,10 +279,25 @@ const Colors = {
     [ModeEnum.LIGHT]: '#FF3B3BB3',
     [ModeEnum.MODE3]: '#FF3B3BB3',
   },
-  redHi: {
-    [ModeEnum.DARK]: '#FF3B3BD9',
-    [ModeEnum.LIGHT]: '#FF3B3BD9',
-    [ModeEnum.MODE3]: '#FF3B3BD9',
+  yellow: {
+    [ModeEnum.DARK]: '#FFCC19',
+    [ModeEnum.LIGHT]: '#FFCC19',
+    [ModeEnum.MODE3]: '#FFCC19',
+  },
+  yellowHi: {
+    [ModeEnum.DARK]: '#FFCC19D9',
+    [ModeEnum.LIGHT]: '#E6B000D9',
+    [ModeEnum.MODE3]: '#E6B000D9',
+  },
+  yellowLo: {
+    [ModeEnum.DARK]: '#FFCC1933',
+    [ModeEnum.LIGHT]: '#E6B00033',
+    [ModeEnum.MODE3]: '#E6B00033',
+  },
+  yellowMd: {
+    [ModeEnum.DARK]: '#FFCC19',
+    [ModeEnum.LIGHT]: '#E6B000',
+    [ModeEnum.MODE3]: '#E6B000',
   },
   white: {
     [ModeEnum.DARK]: '#FFFFFF',
@@ -380,6 +419,18 @@ const ColorsDerived = {
     },
   },
   borders: {
+    base: {
+      default: convert({
+        [ModeEnum.DARK]: 'gray',
+        [ModeEnum.LIGHT]: 'gray',
+        [ModeEnum.MODE3]: 'gray',
+      }),
+      hover: convert({
+        [ModeEnum.DARK]: 'grayHi',
+        [ModeEnum.LIGHT]: 'grayHi',
+        [ModeEnum.MODE3]: 'grayHi',
+      }),
+    },
     button: {
       base: {
         default: {
@@ -454,6 +505,18 @@ const ColorsDerived = {
         }),
       },
     },
+    muted: {
+      default: {
+        [ModeEnum.DARK]: 'grayLo',
+        [ModeEnum.LIGHT]: 'grayLo',
+        [ModeEnum.MODE3]: 'grayLo',
+      },
+      hover: convert({
+        [ModeEnum.DARK]: 'grayLo',
+        [ModeEnum.LIGHT]: 'grayLo',
+        [ModeEnum.MODE3]: 'grayLo',
+      }),
+    },
   },
   icons: {
     base: convert({
@@ -476,6 +539,18 @@ const ColorsDerived = {
       }),
     },
   },
+  statuses: {
+    success: {
+      [ModeEnum.DARK]: '#8ADE00',
+      [ModeEnum.LIGHT]: '#8ADE00',
+      [ModeEnum.MODE3]: '#8ADE00',
+    },
+    successHi: {
+      [ModeEnum.DARK]: 'rgba(138, 222, 0, 0.3)',
+      [ModeEnum.LIGHT]: 'rgba(138, 222, 0, 0.3)',
+      [ModeEnum.MODE3]: 'rgba(138, 222, 0, 0.3)',
+    },
+  },
   typography: {
     button: {
       base: convert({
@@ -489,6 +564,11 @@ const ColorsDerived = {
         [ModeEnum.DARK]: 'white',
         [ModeEnum.LIGHT]: 'black',
         [ModeEnum.MODE3]: 'black',
+      }),
+      blue: convert({
+        [ModeEnum.DARK]: 'blueText',
+        [ModeEnum.LIGHT]: 'blueText',
+        [ModeEnum.MODE3]: 'blueText',
       }),
       inverted: convert({
         [ModeEnum.DARK]: 'black',

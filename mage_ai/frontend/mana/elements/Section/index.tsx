@@ -4,7 +4,9 @@ import borders from '../../styles/borders';
 import padding from '../../styles/padding';
 
 type SectionProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  id?: string;
+  muted?: boolean;
   stretch?: boolean;
 };
 

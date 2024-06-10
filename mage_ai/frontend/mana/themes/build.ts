@@ -4,6 +4,8 @@ import backgrounds, { BackgroundsType } from './backgrounds';
 import borders, { BordersType } from './borders';
 import buttons, { ButtonsType } from './buttons';
 import fonts, { FontsType } from './fonts';
+import grid, { GridType } from './grid';
+import icons, { IconsType } from './icons';
 import inputs, { InputsType } from './inputs';
 import margin, { MarginType } from './margin';
 import padding, { PaddingType } from './padding';
@@ -57,6 +59,8 @@ class Combiner implements CombinerType {
       | ButtonsType
       | ColorsType
       | FontsType
+      | GridType
+      | IconsType
       | InputsType
       | MarginType
       | PaddingType
@@ -80,6 +84,8 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     borders,
     buttons,
     fonts,
+    grid,
+    icons,
     inputs,
     margin,
     padding,

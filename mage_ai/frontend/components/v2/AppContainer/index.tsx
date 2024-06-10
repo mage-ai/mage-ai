@@ -2,28 +2,25 @@ import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import CellItem from './Cell';
+import CellItem, { AddAppFunctionOptionsType } from './Cell';
 import Grid, { Cell } from '@mana/components/Grid';
-import { AppConfig } from './interfaces';
+import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { removeClassNames } from '@utils/elements';
-
+import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { randomSimpleHashGenerator } from '@utils/string';
 
-export function createUUID() {
-  return `grid-item-${randomSimpleHashGenerator()}`;
-}
-
 type GridContainerProps = {
+  apps?: AppConfigType[];
   onRemoveApp: (
     uuidApp: string,
     appConfigs: {
-      [uuid: string]: AppConfig;
+      [uuid: string]: AppConfigType;
     },
   ) => void;
 };
 
-function GridContainer({ onRemoveApp }: GridContainerProps) {
+function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -31,11 +28,12 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
   const refCells = useRef({});
   const refRoots = useRef({});
 
-  function updateLayout(uuidApp?: string, configRelative?: AppConfig) {
+  function updateLayout(app?: AppConfigType, configRelative?: AppConfigType) {
+    const { uuid: uuidApp } = app || ({} as AppConfigType);
     const rowsMapping = {};
 
-    Object.values(refAppConfigs?.current || {}).forEach((config: AppConfig) => {
-      const row = config?.row;
+    Object.values(refAppConfigs?.current || {}).forEach((config: AppConfigType) => {
+      const row = config?.layout?.row;
       if (!(row in rowsMapping)) {
         rowsMapping[row] = [];
       }
@@ -45,11 +43,11 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
     if (configRelative) {
       const uuid = configRelative?.uuid;
       const config = refAppConfigs?.current?.[uuid];
-      const index = rowsMapping?.[config?.row]?.findIndex((c: AppConfig) => c.uuid === uuid);
+      const index = rowsMapping?.[config?.row]?.findIndex((c: AppConfigType) => c.uuid === uuid);
 
       // Add the new app to the rows mapping relative to the parent app that added it.
-      const row = config?.row + (configRelative?.row || 0);
-      const columnInit = index + (configRelative?.column || 0);
+      const row = config?.row + (configRelative?.layout?.row || 0);
+      const columnInit = index + (configRelative?.layout?.column || 0);
       const column = columnInit < 0 ? 0 : columnInit;
 
       rowsMapping[row] = rowsMapping[row] || [];
@@ -65,15 +63,15 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
     }
 
     const colsMax = Math.max(
-      ...Object.values(rowsMapping || {})?.map((configs: AppConfig[]) => configs?.length || 0),
+      ...Object.values(rowsMapping || {})?.map((configs: AppConfigType[]) => configs?.length || 0),
     );
 
     sortByKey(Object.entries(rowsMapping), ([r]: [r: number]) => r)?.forEach(
-      ([_rowIdx, configs]: [number, AppConfig[]], idxRow: number) => {
+      ([_rowIdx, configs]: [number, AppConfigType[]], idxRow: number) => {
         const colsInRow = configs?.length || 0;
 
         sortByKey(configs, ({ column: columnCur }) => columnCur)?.forEach(
-          (config: AppConfig, idxCol: number) => {
+          (config: AppConfigType, idxCol: number) => {
             const uuidCur = config?.uuid;
             const column = idxCol;
             // 3 columns max
@@ -116,18 +114,10 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
     );
   }
 
-  function addApp(
-    uuidApp: string,
-    opts?: {
-      container?: HTMLElement;
-      grid?: {
-        absolute?: AppConfig;
-        relative?: AppConfig;
-      };
-    },
-  ) {
+  function addApp(app: AppConfigType, opts?: AddAppFunctionOptionsType) {
+    const { uuid: uuidApp } = app;
     const { container, grid } = opts || {};
-    updateLayout(uuidApp, grid?.relative);
+    updateLayout(app, grid?.relative);
 
     if (!(uuidApp in refAppConfigs?.current)) {
       refAppConfigs.current[uuidApp] = {
@@ -149,7 +139,7 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
 
         refRoots.current[uuidApp].render(
           <ThemeProvider theme={themeContext}>
-            <CellItem onAdd={addApp} onRemove={removeApp} ref={ref} uuid={uuidApp} />
+            <CellItem app={app} onAdd={addApp} onRemove={removeApp} ref={ref} uuid={uuidApp} />
           </ThemeProvider>,
         );
       }
@@ -178,18 +168,22 @@ function GridContainer({ onRemoveApp }: GridContainerProps) {
   }
 
   useEffect(() => {
-    if (containerRef?.current && !Object.keys(refAppConfigs?.current || {})?.length) {
-      addApp(createUUID(), containerRef?.current);
+    if (containerRef?.current && defaultApps?.length >= 1) {
+      defaultApps?.forEach((app: AppConfigType, index: number) => {
+        setTimeout(() => {
+          addApp(app, containerRef?.current);
+        }, index * 100);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <Grid
-      autoColumns="1fr"
-      autoRows="1fr"
-      justifyContent="stretch"
-      justifyItems="stretch"
+      autoColumns='1fr'
+      autoRows='1fr'
+      justifyContent='stretch'
+      justifyItems='stretch'
       ref={containerRef}
     />
   );

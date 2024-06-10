@@ -5,6 +5,7 @@ import text, { StyleProps as TextStyleProps } from './typography';
 import { outlineHover, transition } from './mixins';
 
 export type StyleProps = {
+  asLink?: boolean;
   basic?: boolean;
   grouped?: boolean;
   primary?: boolean;
@@ -113,7 +114,7 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ grouped, theme }) => (grouped ? 0 : theme.buttons.padding.base)};
+  padding: ${({ asLink, grouped, theme }) => (asLink || grouped ? 0 : theme.buttons.padding.base)};
 `;
 
 export const sm = css<StyleProps>`

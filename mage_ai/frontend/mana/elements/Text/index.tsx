@@ -1,14 +1,16 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
-import text, { StyleProps } from '../../styles/typography';
+import text, { StyleProps, baseSm, baseXs } from '../../styles/typography';
 
 type TextProps = {
   children: React.ReactNode;
   inline?: boolean;
+  small?: boolean;
+  xsmall?: boolean;
 } & StyleProps;
 
 const CSS = css<TextProps>`
-  ${text}
+  ${({ small, xsmall }) => (small ? baseSm : xsmall ? baseXs : text)}
 
   margin: 0;
 `;

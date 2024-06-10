@@ -18,7 +18,7 @@ export default function build(colors: ColorsType): ButtonsType {
     },
     padding: {
       base: `${PaddingVerticalEnum.BASE} 14px`,
-      sm: `${PaddingVerticalEnum.SM} 13px`,
+      sm: `${PaddingVerticalEnum.MD} 13px`,
     },
   };
 }

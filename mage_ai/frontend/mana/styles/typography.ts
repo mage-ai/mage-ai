@@ -2,6 +2,7 @@ import { css } from 'styled-components';
 
 export type StyleProps = {
   black?: boolean;
+  blue?: boolean;
   bold?: boolean;
   inverted?: boolean;
   italic?: boolean;
@@ -48,8 +49,12 @@ const base = css<StyleProps>`
 
   ${({ monospace }) => !monospace && baseFontFamily}
 
-  color: ${({ inverted, theme }) =>
-    inverted ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
+  color: ${({ blue, inverted, theme }) =>
+    inverted
+      ? theme.fonts.color.text.inverted
+      : blue
+        ? theme.fonts.color.text.blue
+        : theme.fonts.color.text.base};
 
   font-size: ${({ theme }) => theme.fonts.size.base};
   font-style: ${({ italic, theme }) =>

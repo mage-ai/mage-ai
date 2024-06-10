@@ -30,6 +30,15 @@ module.exports = removeImports({
           exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
         }),
       ];
+
+      config.module.rules.push({
+        loader: 'worker-loader',
+        options: {
+          name: 'static/[hash].worker.js',
+          publicPath: '/_next/',
+        },
+        test: /\.worker\.ts$/,
+      });
     }
 
     return config;

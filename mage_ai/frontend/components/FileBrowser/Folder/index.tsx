@@ -16,14 +16,8 @@ import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { ChevronDown, ChevronRight, DiamondShared } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
-import {
-  CUSTOM_EVENT_NAME_FOLDER_EXPAND,
-} from '@utils/events/constants';
-import {
-  FOLDER_LINE_CLASSNAME,
-  ICON_SIZE,
-  INDENT_WIDTH,
-} from '../index.style';
+import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
+import { FOLDER_LINE_CLASSNAME, ICON_SIZE, INDENT_WIDTH } from '../index.style';
 import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
@@ -72,17 +66,15 @@ type FolderProps = {
   file: FileType;
   level: number;
   reloadCount?: number;
-  setCoordinates?: (coordinates: {
-    x: number;
-    y: number;
-  }) => void;
+  setCoordinates?: (coordinates: { x: number; y: number }) => void;
   setDraggingFile?: (file: FileType) => void;
   setSelectedFile?: (file: FileType) => void;
   theme?: ThemeType;
   timeout?: any;
   uuidCombined?: string[];
   uuidContainer?: string;
-} & FolderSharedProps & ContextAreaProps;
+} & FolderSharedProps &
+  ContextAreaProps;
 
 const ChildrenStyle = styled.div`
   .expanded_children {
@@ -120,7 +112,7 @@ const ChevronStyle = styled.div`
   }
 `;
 
-function DeferredRender({ children, idleTimeout }) {
+function DeferredRender({ children, idleTimeout }: { children: any; idleTimeout: number }) {
   const [render, setRender] = useState(false);
 
   useEffect(() => {
@@ -128,6 +120,7 @@ function DeferredRender({ children, idleTimeout }) {
     const id = requestIdleCallback(() => setRender(true), { timeout: idleTimeout });
 
     return () => cancelIdleCallback(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idleTimeout]);
 
   if (!render) return null;
@@ -135,10 +128,7 @@ function DeferredRender({ children, idleTimeout }) {
   return children;
 }
 
-function buildFolderUUIDParts({
-  name,
-  path,
-}: FileType, uuidCombined: string[] = []): string[] {
+function buildFolderUUIDParts({ name, path }: FileType, uuidCombined: string[] = []): string[] {
   if (path) {
     return [...(uuidCombined || []), path];
   }
@@ -191,30 +181,22 @@ function Folder({
     path,
     pipeline_count: pipelineCount,
   } = file;
-  const children = useMemo(() =>
-    (childrenProp
-      ? sortByKey(childrenProp, ({
-          children: arr,
-        }) => arr ? 0 : 1)
-      : childrenProp
-    ),
+  const children = useMemo(
+    () =>
+      childrenProp ? sortByKey(childrenProp, ({ children: arr }) => (arr ? 0 : 1)) : childrenProp,
     [childrenProp],
   );
 
-  const uuidCombinedUse =
-    useMemo(() => buildFolderUUIDParts(file, uuidCombined), [
-      file,
-      uuidCombined,
-    ]);
+  const uuidCombinedUse = useMemo(
+    () => buildFolderUUIDParts(file, uuidCombined),
+    [file, uuidCombined],
+  );
   const uuid = useMemo(() => buildFolderUUID(uuidCombinedUse), [uuidCombinedUse]);
 
   const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
   const refChildren = useRef(null);
   const refChevron = useRef(null);
-  const refExpandState = useRef(uuid in folderStates
-    ? folderStates[uuid]
-    : level === 0
-  );
+  const refExpandState = useRef(uuid in folderStates ? folderStates[uuid] : level === 0);
   const refExpandCount = useRef(0);
   const expanded = refExpandState?.current;
 
@@ -249,132 +231,129 @@ function Folder({
     useRootFolder,
     uuid,
   });
-  const isBlockFileWithSquareIcon = useMemo(() =>
-    !!folderNameForBlock && !isFolder && !!isBlockFile,
+  const isBlockFileWithSquareIcon = useMemo(
+    () => !!folderNameForBlock && !isFolder && !!isBlockFile,
     [folderNameForBlock, isBlockFile, isFolder],
   );
 
-  const buildChildrenFiles = useCallback((
-    arr: FileType[],
-  ) => arr?.map((f: FileType) => (
-    <Folder
-      allowEmptyFolders={allowEmptyFolders}
-      allowSelectingFolders={allowSelectingFolders}
-      containerRef={containerRef}
-      cursorRef={cursorRef}
-      disableContextMenu={disableContextMenu}
-      file={{
-        ...f,
-        parent: file,
-      }}
-      isFileDisabled={isFileDisabled}
-      isNotFolder={f?.isNotFolder}
-      isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
-      key={`${buildFolderUUID(buildFolderUUIDParts(f, uuidCombinedUse))}-${reloadCount}`}
-      level={onlyShowChildren ? level : level + 1}
-      onClickFile={onClickFile}
-      onClickFolder={onClickFolder}
-      onSelectBlockFile={onSelectBlockFile}
-      onlyShowFolders={onlyShowFolders}
-      openFile={openFile}
-      openSidekickView={openSidekickView}
-      reloadCount={reloadCount}
-      renderAfterContent={renderAfterContent}
-      selectFile={selectFile}
-      setContextItem={setContextItem}
-      setCoordinates={setCoordinates}
-      setDraggingFile={setDraggingFile}
-      setSelectedFile={setSelectedFile}
-      theme={theme}
-      timeout={timeout}
-      useRootFolder={useRootFolder}
-      uuidCombined={uuidCombinedUse}
-      uuidContainer={uuidContainer}
-    />
-  )), [
-    allowEmptyFolders,
-    allowSelectingFolders,
-    children,
-    // containerRef,
-    disableContextMenu,
-    file,
-    isFileDisabled,
-    isInPipelinesFolder,
-    isPipelineFolder,
-    level,
-    onClickFile,
-    onClickFolder,
-    onSelectBlockFile,
-    onlyShowFolders,
-    onlyShowChildren,
-    openFile,
-    openSidekickView,
-    reloadCount,
-    renderAfterContent,
-    selectFile,
-    setContextItem,
-    setCoordinates,
-    setDraggingFile,
-    setSelectedFile,
-    // theme,
-    // timeout,
-    useRootFolder,
-    uuid,
-    uuidCombinedUse,
-    uuidContainer,
-  ]);
+  const buildChildrenFiles = useCallback(
+    (arr: FileType[]) =>
+      arr?.map((f: FileType) => (
+        <Folder
+          allowEmptyFolders={allowEmptyFolders}
+          allowSelectingFolders={allowSelectingFolders}
+          containerRef={containerRef}
+          cursorRef={cursorRef}
+          disableContextMenu={disableContextMenu}
+          file={{
+            ...f,
+            parent: file,
+          }}
+          isFileDisabled={isFileDisabled}
+          isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
+          isNotFolder={f?.isNotFolder}
+          key={`${buildFolderUUID(buildFolderUUIDParts(f, uuidCombinedUse))}-${reloadCount}`}
+          level={onlyShowChildren ? level : level + 1}
+          onClickFile={onClickFile}
+          onClickFolder={onClickFolder}
+          onSelectBlockFile={onSelectBlockFile}
+          onlyShowFolders={onlyShowFolders}
+          openFile={openFile}
+          openSidekickView={openSidekickView}
+          reloadCount={reloadCount}
+          renderAfterContent={renderAfterContent}
+          selectFile={selectFile}
+          setContextItem={setContextItem}
+          setCoordinates={setCoordinates}
+          setDraggingFile={setDraggingFile}
+          setSelectedFile={setSelectedFile}
+          theme={theme}
+          timeout={timeout}
+          useRootFolder={useRootFolder}
+          uuidCombined={uuidCombinedUse}
+          uuidContainer={uuidContainer}
+        />
+      )),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      allowEmptyFolders,
+      allowSelectingFolders,
+      children,
+      // containerRef,
+      disableContextMenu,
+      file,
+      isFileDisabled,
+      isInPipelinesFolder,
+      isPipelineFolder,
+      level,
+      onClickFile,
+      onClickFolder,
+      onSelectBlockFile,
+      onlyShowFolders,
+      onlyShowChildren,
+      openFile,
+      openSidekickView,
+      reloadCount,
+      renderAfterContent,
+      selectFile,
+      setContextItem,
+      setCoordinates,
+      setDraggingFile,
+      setSelectedFile,
+      // theme,
+      // timeout,
+      useRootFolder,
+      uuid,
+      uuidCombinedUse,
+      uuidContainer,
+    ],
+  );
 
-  const toggleExpandsion = useCallback((
-    expand: boolean = null,
-    idleTimeout: number = null,
-  ) => {
-    if (typeof expand === 'undefined' || expand === null) {
-      refExpandState.current = !refExpandState.current;
-    } else {
-      refExpandState.current = expand;
-    }
-
-    if (refChildren?.current) {
-      refChildren.current.className = refExpandState?.current ? 'expanded_children' : 'collapsed_children';
-      refChevron.current.className = refExpandState?.current ? 'expanded' : 'collapsed';
-
-    }
-    if (refExpandCount?.current === 0) {
-      if (!refRoot?.current) {
-        const domNode = document.getElementById(refChildren?.current?.id);
-        refRoot.current = createRoot(domNode);
+  const toggleExpandsion = useCallback(
+    (expand: boolean = null, idleTimeout: number = null) => {
+      if (typeof expand === 'undefined' || expand === null) {
+        refExpandState.current = !refExpandState.current;
+      } else {
+        refExpandState.current = expand;
       }
 
-      refRoot?.current?.render(
-        children?.length >= 1
-          ? (
+      if (refChildren?.current) {
+        refChildren.current.className = refExpandState?.current
+          ? 'expanded_children'
+          : 'collapsed_children';
+        refChevron.current.className = refExpandState?.current ? 'expanded' : 'collapsed';
+      }
+      if (refExpandCount?.current === 0) {
+        if (!refRoot?.current) {
+          const domNode = document.getElementById(refChildren?.current?.id);
+          refRoot.current = createRoot(domNode);
+        }
+
+        refRoot?.current?.render(
+          children?.length >= 1 ? (
             <DeferredRender idleTimeout={idleTimeout ? idleTimeout : 1}>
               {buildChildrenFiles(children)}
             </DeferredRender>
-          )
-          // @ts-ignore
-          : (isFolder ? buildChildrenFiles(childrenEmpty) : <div />),
-      );
-    }
+          ) : // @ts-ignore
+          isFolder ? (
+            buildChildrenFiles(childrenEmpty as any[])
+          ) : (
+            <div />
+          ),
+        );
+      }
 
-    getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
-      [uuid]: refExpandState.current,
-    });
-    refExpandCount.current += 1;
-  }, [
-    children,
-    isFolder,
-    uuid,
-  ]);
+      getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+        [uuid]: refExpandState.current,
+      });
+      refExpandCount.current += 1;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [children, isFolder, uuid],
+  );
 
   useEffect(() => {
-    const handleExpand = ({
-      detail: {
-        expand,
-        file,
-        folder,
-      },
-    }) => {
+    const handleExpand = ({ detail: { expand, file, folder } }) => {
       if (isFolder && folder && uuid?.startsWith(folder?.uuid)) {
         getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
           [uuid]: expand,
@@ -394,20 +373,20 @@ function Folder({
         window.removeEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
       }
     };
-  }, [
-    isFolder,
-    level,
-    toggleExpandsion,
-    uuid,
-  ]);
+  }, [isFolder, level, toggleExpandsion, uuid]);
 
-  const childrenEmpty = useMemo(() => [{
-    disabled: true,
-    name: 'Empty',
-    parent: file,
-    isNotFolder: true,
-    uuid: uuidCombinedUse,
-  }], [file, uuidCombinedUse]);
+  const childrenEmpty = useMemo(
+    () => [
+      {
+        disabled: true,
+        name: 'Empty',
+        parent: file,
+        isNotFolder: true,
+        uuid: uuidCombinedUse,
+      },
+    ],
+    [file, uuidCombinedUse],
+  );
 
   const lineEls = useMemo(() => {
     const arr = [];
@@ -422,19 +401,15 @@ function Folder({
           style={{
             borderLeft: `1px solid ${theme?.content?.disabled}`,
             height: 22,
-            marginLeft: (width / 2) - 2,
-            paddingLeft: (width / 2) + 2,
+            marginLeft: width / 2 - 2,
+            paddingLeft: width / 2 + 2,
           }}
         />,
       );
     });
 
     return arr;
-  }, [
-    level,
-    theme,
-    uuid,
-  ]);
+  }, [level, theme, uuid]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -448,24 +423,25 @@ function Folder({
           }
 
           refRoot?.current?.render(
-            children?.length >= 1
-              ? (
-                <DeferredRender idleTimeout={100 * level}>
-                  {buildChildrenFiles(children)}
-                </DeferredRender>
+            children?.length >= 1 ? (
+              <DeferredRender idleTimeout={100 * level}>
+                {buildChildrenFiles(children)}
+              </DeferredRender>
+            ) : !children?.length ? (
+              isFolder ? (
+                // @ts-ignore
+                buildChildrenFiles(childrenEmpty)
+              ) : (
+                <div />
               )
-              : !children?.length
-                ? isFolder
-                  // @ts-ignore
-                  ? buildChildrenFiles(childrenEmpty)
-                  : <div />
-                : null,
+            ) : null,
           );
-        } catch(err) {
+        } catch (err) {
           console.log(err);
         }
       }
     }, 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isFolder && onlyShowFolders) {
@@ -476,8 +452,8 @@ function Folder({
     <>
       {!onlyShowChildren && (
         <div
-          className="row"
-          onClick={(e) => {
+          className='row'
+          onClick={e => {
             e.preventDefault();
 
             if (disabled) {
@@ -489,11 +465,7 @@ function Folder({
               openSidekickView?.(ViewKeyEnum.CHARTS);
               const block = getBlockFromFile(file);
               if (block) {
-                onSelectBlockFile?.(
-                  block.uuid,
-                  block.type,
-                  getFullPathWithoutRootFolder(file),
-                );
+                onSelectBlockFile?.(block.uuid, block.type, getFullPathWithoutRootFolder(file));
               }
             }
 
@@ -524,16 +496,12 @@ function Folder({
               } else {
                 const block = getBlockFromFile(file);
                 if (block) {
-                  onSelectBlockFile?.(
-                    block.uuid,
-                    block.type,
-                    getFullPathWithoutRootFolder(file),
-                  );
+                  onSelectBlockFile?.(block.uuid, block.type, getFullPathWithoutRootFolder(file));
                 }
               }
             }
           }}
-          onContextMenu={(e) => {
+          onContextMenu={e => {
             if (!disableContextMenu) {
               clearTimeout(timeout.current);
 
@@ -554,15 +522,16 @@ function Folder({
               });
             }
           }}
-          onMouseDown={(e) => {
+          onMouseDown={e => {
             const block = file ? getBlockFromFile(file, null, true) : null;
 
-            if (!containerRef?.current?.contains(e.target)
-              || !block
-              || children?.length >= 1
-              || disableContextMenu
-              || disabled
-              || isInPipelinesFolder
+            if (
+              !containerRef?.current?.contains(e.target) ||
+              !block ||
+              children?.length >= 1 ||
+              disableContextMenu ||
+              disabled ||
+              isInPipelinesFolder
             ) {
               return;
             }
@@ -579,14 +548,7 @@ function Folder({
               setSelectedFile?.(null);
             }, 300);
           }}
-          style={{
-            alignItems: 'center',
-            cursor: 'default',
-            display: 'flex',
-            minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
-            paddingRight: (UNIT / 4),
-          }}
-          onMouseEnter={(e) => {
+          onMouseEnter={e => {
             if (cursorRef) {
               cursorRef.current = {
                 event: e,
@@ -596,15 +558,27 @@ function Folder({
               };
             }
           }}
+          style={{
+            alignItems: 'center',
+            cursor: 'default',
+            display: 'flex',
+            minWidth:
+              level * INDENT_WIDTH + file.name.length * WIDTH_OF_SINGLE_CHARACTER + UNIT * 2,
+            paddingRight: UNIT / 4,
+          }}
         >
-          <Flex alignItems="center" flex={1}>
+          <Flex alignItems='center' flex={1}>
             {lineEls}
 
             <ChevronStyle>
               {children && (
                 <div className={expanded ? 'expanded' : 'collapsed'} ref={refChevron}>
-                  <div className="down"><ChevronDown muted size={ICON_SIZE} /></div>
-                  <div className="right"><ChevronRight muted size={ICON_SIZE} /></div>
+                  <div className='down'>
+                    <ChevronDown muted size={ICON_SIZE} />
+                  </div>
+                  <div className='right'>
+                    <ChevronRight muted size={ICON_SIZE} />
+                  </div>
                 </div>
               )}
               {!children && <div style={{ width: ICON_SIZE }} />}
@@ -614,48 +588,37 @@ function Folder({
               style={{
                 marginLeft: UNIT / 2,
                 marginRight: UNIT / 2,
-                paddingRight: (isBlockFileWithSquareIcon && !(pipelineCount > 1)) ? UNIT / 2 : 0,
+                paddingRight: isBlockFileWithSquareIcon && !(pipelineCount > 1) ? UNIT / 2 : 0,
               }}
-              title={pipelineCount > 1
-                ? 'Used by multiple pipelines'
-                : (pipelineCount === 1
-                  ? 'Used by one pipeline'
-                  : null
-                )
+              title={
+                pipelineCount > 1
+                  ? 'Used by multiple pipelines'
+                  : pipelineCount === 1
+                    ? 'Used by one pipeline'
+                    : null
               }
             >
-              {isBlockFileWithSquareIcon
-                ? (pipelineCount > 1
-                  ?
-                    <DiamondShared fill={dark.accent.cyan} size={ICON_SIZE} />
-                  :
-                    <BlockIcon
-                      borderOnly={!pipelineCount}
-                      color={color}
-                      size={(folderNameForBlock && !isFolder)
-                        ? ICON_SIZE * 0.7
-                        : ICON_SIZE
-                      }
-                      square
-                    />
-                )
-                : (
-                  <Icon
-                    disabled={disabled}
-                    fill={iconColor || (isFirstParentFolderForBlock ? color : null)}
-                    size={ICON_SIZE}
+              {isBlockFileWithSquareIcon ? (
+                pipelineCount > 1 ? (
+                  <DiamondShared fill={dark.accent.cyan} size={ICON_SIZE} />
+                ) : (
+                  <BlockIcon
+                    borderOnly={!pipelineCount}
+                    color={color}
+                    size={folderNameForBlock && !isFolder ? ICON_SIZE * 0.7 : ICON_SIZE}
+                    square
                   />
                 )
-              }
+              ) : (
+                <Icon
+                  disabled={disabled}
+                  fill={iconColor || (isFirstParentFolderForBlock ? color : null)}
+                  size={ICON_SIZE}
+                />
+              )}
             </div>
 
-            <Text
-              cyan={pipelineCount > 1}
-              default={!disabled}
-              disabled={disabled}
-              monospace
-              small
-            >
+            <Text cyan={pipelineCount > 1} default={!disabled} disabled={disabled} monospace small>
               {name}
             </Text>
           </Flex>

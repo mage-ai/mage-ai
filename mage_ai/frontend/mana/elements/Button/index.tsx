@@ -19,32 +19,51 @@ type ButtonProps = {
   WithLoggingProps;
 
 const CSS = css<ButtonStyleProps>`
-  align-items: center;
-  display: grid;
-  grid-auto-columns: min-content;
-  grid-auto-flow: column;
-
   ${({ small }) => (small ? buttonsSm : buttons)}
-  column-gap: ${({ Icon }) => (Icon ? 8 : 6)}px;
-  white-space: nowrap;
 `;
 
 const ButtonStyled = styled.button<ButtonStyleProps>`
   ${CSS}
+
+  align-items: center;
+  display: grid;
+  grid-auto-columns: min-content;
+  grid-auto-flow: column;
+  column-gap: ${({ Icon }) => (Icon ? 8 : 6)}px;
+  white-space: nowrap;
 `;
 
 const AStyled = styled.a<ButtonStyleProps>`
   ${CSS}
+
+  display: inline-flex;
 `;
 
-function Button({ anchor, basic, children, primary, secondary, tag, ...props }: ButtonProps) {
-  const HTMLTag = anchor ? AStyled : ButtonStyled;
+function Button({
+  anchor,
+  asLink,
+  basic,
+  children,
+  primary,
+  secondary,
+  small,
+  tag,
+  ...props
+}: ButtonProps) {
+  const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
   const { Icon } = props;
 
   return (
     // @ts-ignore
-    <HTMLTag {...props} basic={basic} primary={primary} secondary={secondary}>
-      {Icon && <Icon inverted={primary || secondary} />}
+    <HTMLTag
+      {...props}
+      asLink={asLink}
+      basic={basic}
+      primary={primary}
+      secondary={secondary}
+      small={small}
+    >
+      {Icon && <Icon inverted={primary || secondary} small={small} />}
       {children}
       {tag && (
         <Tag inverted={primary || secondary} passthrough secondary={basic}>

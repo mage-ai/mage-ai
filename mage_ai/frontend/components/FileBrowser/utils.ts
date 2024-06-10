@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { getFileExtension } from '@utils/files';
 
 import BlockType, {
   ALL_BLOCK_TYPES,
@@ -56,13 +57,6 @@ export function getFullPathWithoutRootFolder(
   return removeRootFromFilePath(fullPath);
 }
 
-export function getFileExtension(filename: string): FileExtensionEnum {
-  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
-  return match?.length >= 1
-    ? match[0].replace('.', '') as FileExtensionEnum
-    : null;
-}
-
 export function validBlockFileExtension(filename: string): string {
   const extensions = [
     `\\.${FileExtensionEnum.MD}`,
@@ -82,14 +76,14 @@ export function validBlockFileExtension(filename: string): string {
 export function validBlockFromFilename(filename: string, blockType: BlockTypeEnum): boolean {
   const fileExtension = validBlockFileExtension(filename);
 
-  return ![
-    '__init__.py',
-  ].includes(filename) && (
-    BlockTypeEnum.DBT !== blockType || ![
-      FileExtensionEnum.YAML,
-      FileExtensionEnum.YML,
-      // @ts-ignore
-    ].includes(fileExtension)
+  return (
+    !['__init__.py'].includes(filename) &&
+    (BlockTypeEnum.DBT !== blockType ||
+      ![
+        FileExtensionEnum.YAML,
+        FileExtensionEnum.YML,
+        // @ts-ignore
+      ].includes(fileExtension))
   );
 }
 
@@ -164,9 +158,10 @@ export function getNonPythonBlockFromFile(
     };
   } else if (fileName.match(sqlRegex) && SQL_BLOCK_TYPES.includes(blockType)) {
     const formattedFilename = fileName.replace(/[.]/g, '_');
-    const blockUUID = blockType === BlockTypeEnum.DBT
-      ? parts.slice(2, -1).join('_').concat(`_${formattedFilename}`)
-      : fileName.replace(sqlRegex, '');
+    const blockUUID =
+      blockType === BlockTypeEnum.DBT
+        ? parts.slice(2, -1).join('_').concat(`_${formattedFilename}`)
+        : fileName.replace(sqlRegex, '');
 
     return {
       type: blockType,
@@ -180,9 +175,7 @@ export function getNonPythonBlockFromFile(
   }
 }
 
-export function getBlockUUIDFromFile(
-  file: FileType,
-) {
+export function getBlockUUIDFromFile(file: FileType) {
   const filename = file.name;
   const nameParts = filename.split('.');
   const fileExtension = nameParts[nameParts.length - 1] as FileExtensionEnum;
@@ -193,15 +186,10 @@ export function getBlockUUIDFromFile(
   return nameParts.join('');
 }
 
-export function rearrangePipelinesFolderToTop(
-  files: FileType[],
-) {
+export function rearrangePipelinesFolderToTop(files: FileType[]) {
   const pipelinesFolder = files.find(f => f.name === FOLDER_NAME_PIPELINES);
   const pipelinesFolderIdx = files.findIndex(f => f.name === FOLDER_NAME_PIPELINES);
-  const rearrangedFiles = prependArray(
-    pipelinesFolder,
-    removeAtIndex(files, pipelinesFolderIdx),
-  );
+  const rearrangedFiles = prependArray(pipelinesFolder, removeAtIndex(files, pipelinesFolderIdx));
 
   return rearrangedFiles;
 }
@@ -211,7 +199,9 @@ export function replacePipelinesFolderWithConfig(
   currentPipelineName: string,
 ) {
   const pipelinesFolder = files?.find(f => f.name === FOLDER_NAME_PIPELINES);
-  const currentPipelineFolder = pipelinesFolder?.children?.find(f => f.name === currentPipelineName);
+  const currentPipelineFolder = pipelinesFolder?.children?.find(
+    f => f.name === currentPipelineName,
+  );
   const metadataFile = currentPipelineFolder?.children?.find(f => f.name === METADATA_FILENAME);
   const configFolder = {
     children: [metadataFile],
@@ -228,9 +218,7 @@ export function replacePipelinesFolderWithConfig(
     }
   });
 
-  return [configFolder]
-    .concat(filesWithChildren)
-    .concat(filesWithoutChildren);
+  return [configFolder].concat(filesWithChildren).concat(filesWithoutChildren);
 }
 
 export function getBlockFromFilePath(filePath: string, blocks: BlockType[]) {
@@ -252,9 +240,7 @@ export function getRelativePathFromBlock(block: BlockType) {
   // Block name, language, and type are required.
   const { language, name, type } = block || {};
   if (name && language && type) {
-    const blockDirectory = type === BlockTypeEnum.CUSTOM
-      ? type
-      : `${type}s`;
+    const blockDirectory = type === BlockTypeEnum.CUSTOM ? type : `${type}s`;
     const fileExtension = FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language];
     const uuid = cleanName(name);
 
@@ -269,7 +255,7 @@ export function groupByCommonDirectories(arr) {
   const groupsWith2Directories = {};
   const group2Roots = [];
 
-  arr?.forEach((filePath) => {
+  arr?.forEach(filePath => {
     const parts = filePath?.split(osPath.sep)?.slice(1);
     const count = parts?.length || 0;
 
@@ -283,7 +269,7 @@ export function groupByCommonDirectories(arr) {
     groupsWith2Directories[key2] = groupsWith2Directories[key2] || [];
 
     if (!parts1?.length) {
-      group1Roots.push(filePath)
+      group1Roots.push(filePath);
     } else {
       groupsWith1Directory[key1].push(filePath);
     }
@@ -292,7 +278,7 @@ export function groupByCommonDirectories(arr) {
       group2Roots.push(filePath);
     } else {
       groupsWith2Directories[key2].push(filePath);
-    };
+    }
   });
 
   return {
@@ -311,8 +297,7 @@ export function buildFileTreeByExtension(files: FileType[]): FileType[] {
   return sortByKey(
     Object.entries(groupByFileExtension(files || []) || {}),
     ([fx]) => FILE_EXTENSION_PRIORITY[fx],
-  )
-  .reduce((acc, [fx, files]) => {
+  ).reduce((acc, [fx, files]) => {
     const parent = {
       extension: fx,
       language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fx],
@@ -325,6 +310,8 @@ export function buildFileTreeByExtension(files: FileType[]): FileType[] {
         ...file,
         parent,
       })),
-    })
+    });
   }, []);
 }
+
+export { getFileExtension };

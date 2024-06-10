@@ -26,6 +26,9 @@
       "@oracle/*": [
         "oracle/*"
       ],
+      "@public/*": [
+        "public/*"
+      ],
       "@storage/*": [
         "storage/*"
       ],
@@ -58,7 +61,8 @@
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "workers/*.ts"
   ],
   "exclude": [
     "node_modules"

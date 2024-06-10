@@ -1,6 +1,9 @@
 import * as osPath from 'path';
 
-import FileType from '@interfaces/FileType';
+import FileType, {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
+  FileExtensionEnum,
+} from '@interfaces/FileType';
 import StatusType from '@interfaces/StatusType';
 
 export function convertFilePathToRelativeRoot(filePath: string, status: StatusType): string {
@@ -20,13 +23,11 @@ export function convertFilePathToRelativeRoot(filePath: string, status: StatusTy
   //   "scheduler_status": "running"
   // }
 
-  const {
-    repo_path_root: repoPathRoot,
-    repo_path_relative_root: repoPathRelativeRoot,
-  } = status || {
-    repo_path_root: null,
-    repo_path_relative_root: null,
-  };
+  const { repo_path_root: repoPathRoot, repo_path_relative_root: repoPathRelativeRoot } =
+    status || {
+      repo_path_root: null,
+      repo_path_relative_root: null,
+    };
 
   let fp = filePath;
 
@@ -44,19 +45,14 @@ export function convertFilePathToRelativeRoot(filePath: string, status: StatusTy
 }
 
 export function addRepoPath(filePath: string, status: StatusType): string {
-  const {
-    repo_path_root: repoPathRoot,
-    repo_path_relative_root: repoPathRelativeRoot,
-  } = status || {
-    repo_path_root: null,
-    repo_path_relative_root: null,
-  };
+  const { repo_path_root: repoPathRoot, repo_path_relative_root: repoPathRelativeRoot } =
+    status || {
+      repo_path_root: null,
+      repo_path_relative_root: null,
+    };
 
   if (filePath?.startsWith(repoPathRelativeRoot)) {
-    return [
-      repoPathRoot,
-      filePath?.split(osPath.sep)?.slice(1)?.join(osPath.sep),
-    ].join(osPath.sep);
+    return [repoPathRoot, filePath?.split(osPath.sep)?.slice(1)?.join(osPath.sep)].join(osPath.sep);
   }
 
   return filePath;
@@ -84,4 +80,9 @@ export function getFullPath(
 
 export function removeFileExtension(filename: string): string {
   return filename.replace(/\.[^/.]+$/, '');
+}
+
+export function getFileExtension(filename: string): FileExtensionEnum {
+  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
+  return match?.length >= 1 ? (match[0].replace('.', '') as FileExtensionEnum) : null;
 }
