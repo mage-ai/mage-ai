@@ -38,7 +38,8 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                   {Object.values(event?.data || {}).map((item: ItemDetailType, idx: number) => (
                     <Item
                       app={app}
-                      item={item as ItemDetailType} key={`${item.name}-${idx}`}
+                      item={item as ItemDetailType}
+                      key={`${item.name}-${idx}`}
                       themeContext={themeContext}
                     />
                   ))}

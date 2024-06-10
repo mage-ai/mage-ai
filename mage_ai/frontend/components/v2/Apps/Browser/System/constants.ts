@@ -7,7 +7,7 @@ const {
   Code,
   Database,
   Ellipsis,
-  File: FileIcon,
+  FileIcon,
   FileFill,
   FolderIcon,
   Insights,
@@ -22,6 +22,7 @@ const {
 
 export const FILE_EXTENSION_ICON_MAPPING = {
   [FileExtensionEnum.CSV]: Table,
+  [FileExtensionEnum.JINJA]: FileIcon,
   [FileExtensionEnum.JSON]: Code,
   [FileExtensionEnum.MD]: FileIcon,
   [FileExtensionEnum.PY]: Lightning,

@@ -64,6 +64,10 @@ interface ColorsDerivedType {
       base: string;
     };
   };
+  statuses: {
+    success: ModeType;
+    successHi: ModeType;
+  };
   typography: TypographyColorsType;
 }
 
@@ -521,6 +525,18 @@ const ColorsDerived = {
         [ModeEnum.LIGHT]: 'blackLo',
         [ModeEnum.MODE3]: 'blackLo',
       }),
+    },
+  },
+  statuses: {
+    success: {
+      [ModeEnum.DARK]: '#8ADE00',
+      [ModeEnum.LIGHT]: '#8ADE00',
+      [ModeEnum.MODE3]: '#8ADE00',
+    },
+    successHi: {
+      [ModeEnum.DARK]: 'rgba(138, 222, 0, 0.3)',
+      [ModeEnum.LIGHT]: 'rgba(138, 222, 0, 0.3)',
+      [ModeEnum.MODE3]: 'rgba(138, 222, 0, 0.3)',
     },
   },
   typography: {

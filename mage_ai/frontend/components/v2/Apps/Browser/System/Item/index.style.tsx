@@ -18,11 +18,17 @@ export const FolderStyled = styled.div<FolderStyledProps>`
       &:hover {
         background-color: ${theme.colors.backgrounds.button.base.hover};
         cursor: pointer;
+
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+        -webkit-user-select: none; /* Safari */
+        user-select: none; /* Standard property */
       }
     }
 
     .${itemsClassName(uuid)} {
       &.collapsed {
+        height: 0;
         visibility: hidden;
       }
 

@@ -1,16 +1,18 @@
-import React, { createRef, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 
+import Loading from '@mana/components/Loading';
 import { AppConfigType } from '../../../interfaces';
 import Grid from '@mana/components/Grid';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Text from '@mana/elements/Text';
 import { ItemDetailType, ItemType } from '../interfaces';
 import { useFileIcon, getIconColorName, getFullPath } from '../utils';
+import { removeClassNames } from '@utils/elements';
 import { cleanName } from '@utils/string';
 import { ColumnGapStyled, FolderStyled, LineStyled, NameStyled, childClassName, itemsClassName } from './index.style';
-import { range } from '@utils/array';
+import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
 
 const { FolderV2Filled } = icons;
@@ -30,28 +32,46 @@ function itemsRootID(uuid: string) {
 }
 
 function Item({ app, item, themeContext }: ItemProps) {
-  console.log('render');
+  console.log('render', item?.name);
   const { items, name } = item as ItemType;
-  const isFolder = typeof items !== 'undefined' && items !== null;
 
   const iconRootRef = useRef(null);
   const itemsRootRef = useRef(null);
   const expandedRef = useRef(false);
   const renderedRef = useRef(false);
+  const itemsRef = useRef(null);
 
+  const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   const { Icon } = useFileIcon({ isFolder, name });
-  const iconColorName = isFolder ? 'blueMuted' : getIconColorName(String(name));
-  const absolutePath = getFullPath(item as ItemDetailType);
-  const level = absolutePath.split('/').length - 1;
-  const uuid = `${app?.uuid}-${cleanName(absolutePath)}`;
+  const iconColorName = useMemo(() => isFolder ? 'blueMuted' : getIconColorName(String(name)), [isFolder, name]);
+  const absolutePath = useMemo(() => getFullPath(item as ItemDetailType), [item]);
+  const level = useMemo(() => absolutePath.split('/').length - 1, [absolutePath]);
+  const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
-  function buildIcon() {
+  const buildLines = useCallback((levelIncrement?: number) => (
+    <div style={{ display: 'flex' }}>
+      {range((levelIncrement || 0) + level).map((_i, idx: number) => (
+        <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
+          <LineStyled />
+        </ColumnGapStyled>
+      ))}
+    </div>
+  ), [level, uuid]);
+  const linesMemo = useMemo(() => buildLines(), [buildLines]);
+
+  const buildIcon = useCallback(() => {
     const props = { colorName: iconColorName, small: true };
     const IconUse = isFolder && expandedRef?.current ? FolderV2Filled : Icon;
-    return <IconUse {...props} />;
-  }
+    if (IconUse) {
+      return <IconUse {...props} />;
+    }
+  }, [
+    Icon,
+    iconColorName,
+    isFolder,
+  ]);
 
-  function renderIcon() {
+  const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
       const node = document.getElementById(iconRootID(uuid));
       iconRootRef.current = createRoot(node as HTMLElement);
@@ -64,58 +84,85 @@ function Item({ app, item, themeContext }: ItemProps) {
         </ThemeProvider>,
       );
     }
-  }
+  }, [
+    themeContext,
+    uuid,
+    buildIcon,
+  ]);
 
-  function renderItems() {
+  const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(itemsRootID(uuid));
       itemsRootRef.current = createRoot(node as HTMLElement);
     }
 
     if (itemsRootRef?.current) {
+      const values = sortByKey(
+        Object.values(items || {}),
+        (item: ItemDetailType) => {
+          const order = typeof item?.items !== 'undefined' && item?.items !== null ? 0 : 1;
+          return `${order}-${item?.name}`;
+        },
+      );
+
       itemsRootRef.current.render(
         <React.StrictMode>
-          <DeferredRenderer idleTimeout={1}>
-            <ThemeProvider theme={themeContext}>
-              <Grid rowGap={0} uuid={itemsClassName(uuid)}>
-                {Object.values(items).map((item: ItemDetailType) => (
+          <ThemeProvider theme={themeContext}>
+            <Grid ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
+              <DeferredRenderer
+                fallback={(
+                  <ThemeProvider theme={themeContext}>
+                    <div style={{ display: 'flex' }}>
+                      {buildLines(1)}
+                      <Loading position="absolute" />
+                    </div>
+                  </ThemeProvider>
+                )}
+                idleTimeout={1}
+              >
+                {values?.map((item: ItemDetailType) => (
                   <Item app={app} item={item} key={item.name} themeContext={themeContext} />
-              ))}
-              </Grid>
-            </ThemeProvider>
-          </DeferredRenderer>
+                ))}
+              </DeferredRenderer>
+            </Grid>
+          </ThemeProvider>
         </React.StrictMode>,
       );
       renderedRef.current = true;
     }
-  }
+  }, [
+    app,
+    themeContext,
+    uuid,
+    items,
+    buildLines,
+  ]);
 
   return (
     <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
-        onClick={() => {
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
 
           expandedRef.current = !expandedRef.current;
           renderIcon();
-          if (expandedRef?.current) {
-            if (renderedRef?.current) {
-              // show/hide
-            } else if (items) {
-              renderItems();
-            }
+
+          if (renderedRef?.current) {
+            const element = itemsRef?.current;
+            element.className = [
+              removeClassNames(element?.className, ['collapsed', 'expanded']),
+              expandedRef.current ? 'expanded' : 'collapsed',
+            ].join(' ');
+          } else if (items && expandedRef.current) {
+            renderItems();
           }
         }}
         templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
       >
-        <div style={{ display: 'flex' }}>
-          {range(level).map((_i, idx: number) => (
-            <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
-              <LineStyled />
-            </ColumnGapStyled>
-          ))}
-        </div>
+        {linesMemo}
 
         <NameStyled>
           <Grid

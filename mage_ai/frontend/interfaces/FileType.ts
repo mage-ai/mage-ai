@@ -6,6 +6,7 @@ export enum BlockFolderNameEnum {
 
 export enum FileExtensionEnum {
   CSV = 'csv',
+  JINJA = 'jinja',
   JSON = 'json',
   MD = 'md',
   PY = 'py',
@@ -85,6 +86,7 @@ export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
 
 export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX = new RegExp([
   FileExtensionEnum.CSV,
+  FileExtensionEnum.JINJA,
   FileExtensionEnum.JSON,
   FileExtensionEnum.MD,
   FileExtensionEnum.PY,
