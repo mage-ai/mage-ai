@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 
@@ -8,6 +8,7 @@ import Grid from '@mana/components/Grid';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Text from '@mana/elements/Text';
 import { ItemDetailType, ItemType } from '../interfaces';
+import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { useFileIcon, getIconColorName, getFullPath } from '../utils';
 import { removeClassNames } from '@utils/elements';
 import { cleanName } from '@utils/string';
@@ -21,6 +22,7 @@ import {
 } from './index.style';
 import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
+import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
 const { FolderV2Filled } = icons;
 
@@ -42,12 +44,6 @@ function Item({ app, item, themeContext }: ItemProps) {
   console.log('render', item?.name);
   const { items, name } = item as ItemType;
 
-  const iconRootRef = useRef(null);
-  const itemsRootRef = useRef(null);
-  const expandedRef = useRef(false);
-  const renderedRef = useRef(false);
-  const itemsRef = useRef(null);
-
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   const { Icon } = useFileIcon({ isFolder, name });
   const iconColorName = useMemo(
@@ -57,6 +53,15 @@ function Item({ app, item, themeContext }: ItemProps) {
   const absolutePath = useMemo(() => getFullPath(item as ItemDetailType), [item]);
   const level = useMemo(() => absolutePath.split('/').length - 1, [absolutePath]);
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
+
+  const iconRootRef = useRef(null);
+  const itemsRootRef = useRef(null);
+  const folderStatesRef = useRef(get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {}));
+  const expandedRef = useRef(
+    uuid in folderStatesRef?.current ? folderStatesRef?.current?.[uuid] : level === 0,
+  );
+  const renderedRef = useRef(false);
+  const itemsRef = useRef(null);
 
   const buildLines = useCallback(
     (levelIncrement?: number) => (
@@ -130,6 +135,24 @@ function Item({ app, item, themeContext }: ItemProps) {
     }
   }, [app, themeContext, uuid, items, buildLines]);
 
+  const renderUpdates = useCallback(() => {
+    getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+      [uuid]: expandedRef?.current,
+    });
+
+    renderIcon();
+
+    if (renderedRef?.current) {
+      const element = itemsRef?.current;
+      element.className = [
+        removeClassNames(element?.className, ['collapsed', 'expanded']),
+        expandedRef.current ? 'expanded' : 'collapsed',
+      ].join(' ');
+    } else if (items && expandedRef.current) {
+      renderItems();
+    }
+  }, [items, renderIcon, renderItems, uuid]);
+
   return (
     <FolderStyled uuid={uuid}>
       <Grid
@@ -139,17 +162,8 @@ function Item({ app, item, themeContext }: ItemProps) {
           event.stopPropagation();
 
           expandedRef.current = !expandedRef.current;
-          renderIcon();
 
-          if (renderedRef?.current) {
-            const element = itemsRef?.current;
-            element.className = [
-              removeClassNames(element?.className, ['collapsed', 'expanded']),
-              expandedRef.current ? 'expanded' : 'collapsed',
-            ].join(' ');
-          } else if (items && expandedRef.current) {
-            renderItems();
-          }
+          renderUpdates();
         }}
         templateColumns='auto 1fr'
         uuid={childClassName(uuid)}
@@ -168,7 +182,15 @@ function Item({ app, item, themeContext }: ItemProps) {
         </NameStyled>
       </Grid>
 
-      <div id={itemsRootID(uuid)} />
+      <WithOnMount
+        onMount={() => {
+          if (expandedRef?.current) {
+            renderUpdates();
+          }
+        }}
+      >
+        <div id={itemsRootID(uuid)} />
+      </WithOnMount>
     </FolderStyled>
   );
 }

@@ -213,7 +213,7 @@ function Folder({
   const refChevron = useRef(null);
   const refExpandState = useRef(uuid in folderStates
     ? folderStates[uuid]
-    : level === 0
+    : level === 0,
   );
   const refExpandCount = useRef(0);
   const expanded = refExpandState?.current;
@@ -268,8 +268,8 @@ function Folder({
         parent: file,
       }}
       isFileDisabled={isFileDisabled}
-      isNotFolder={f?.isNotFolder}
       isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
+      isNotFolder={f?.isNotFolder}
       key={`${buildFolderUUID(buildFolderUUIDParts(f, uuidCombinedUse))}-${reloadCount}`}
       level={onlyShowChildren ? level : level + 1}
       onClickFile={onClickFile}
@@ -579,13 +579,6 @@ function Folder({
               setSelectedFile?.(null);
             }, 300);
           }}
-          style={{
-            alignItems: 'center',
-            cursor: 'default',
-            display: 'flex',
-            minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
-            paddingRight: (UNIT / 4),
-          }}
           onMouseEnter={(e) => {
             if (cursorRef) {
               cursorRef.current = {
@@ -595,6 +588,13 @@ function Folder({
                 uuid,
               };
             }
+          }}
+          style={{
+            alignItems: 'center',
+            cursor: 'default',
+            display: 'flex',
+            minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
+            paddingRight: (UNIT / 4),
           }}
         >
           <Flex alignItems="center" flex={1}>

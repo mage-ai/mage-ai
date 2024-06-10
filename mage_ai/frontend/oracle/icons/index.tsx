@@ -64,6 +64,7 @@ const mapping: {
 } = Object.entries(icons).reduce(
   (acc, [key, value]) => ({
     ...acc,
+    // @ts-ignore
     [key]: build(...value),
   }),
   {},
