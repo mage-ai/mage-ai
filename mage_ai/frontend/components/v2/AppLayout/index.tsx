@@ -54,45 +54,45 @@ function GridContainer() {
     updateLayout();
   }
 
-  function addPanel(app: AppConfigType) {
-    const { uuid } = app;
-    containerRef?.current.appendChild(GridCol(app));
+  function addPanel(uuid: string, apps?: AppConfigType[]) {
+    const container = document.getElementById(uuid);
+    if (container) {
+      container.remove();
+    }
 
-    setTimeout(() => {
-      const parentNode = document.getElementById(uuid);
+    containerRef?.current.appendChild(GridCol({ uuid }));
 
-      if (parentNode && !refRoots.current[uuid]) {
-        refRoots.current[uuid] = createRoot(parentNode as HTMLElement);
-        const ref = createRef() as React.Ref<HTMLDivElement>;
-        refCells.current[uuid] = ref;
+    apps?.forEach((app: AppConfigType, idx: number) => {
+      setTimeout(() => {
+        const parentNode = document.getElementById(uuid);
 
-        refRoots.current[uuid].render(
-          <ThemeProvider theme={themeContext}>
-            <AppContainer
-              apps={[
-                {
-                  subtype: AppSubtypeEnum.SYSTEM,
-                  type: AppTypeEnum.BROWSER,
-                  uuid: 'test',
-                },
-              ]}
-              onRemoveApp={(
-                _uuidApp,
-                appConfigs: {
-                  [uuid: string]: AppConfigType;
-                },
-              ) => {
-                if (!Object.keys(appConfigs || {})?.length) {
-                  removePanel(uuid);
-                }
-              }}
-            />
-          </ThemeProvider>,
-        );
+        if (parentNode && !refRoots.current[uuid]) {
+          refRoots.current[uuid] = createRoot(parentNode as HTMLElement);
+          const ref = createRef() as React.Ref<HTMLDivElement>;
+          refCells.current[uuid] = ref;
 
-        updateLayout();
-      }
-    }, 0);
+          refRoots.current[uuid].render(
+            <ThemeProvider theme={themeContext}>
+              <AppContainer
+                apps={[app]}
+                onRemoveApp={(
+                  _uuidApp,
+                  appConfigs: {
+                    [uuid: string]: AppConfigType;
+                  },
+                ) => {
+                  if (!Object.keys(appConfigs || {})?.length) {
+                    removePanel(uuid);
+                  }
+                }}
+              />
+            </ThemeProvider>,
+          );
+
+          updateLayout();
+        }
+      }, idx * 100);
+    });
   }
 
   return (
@@ -101,22 +101,24 @@ function GridContainer() {
         if (containerRef?.current && !Object.keys(refCells?.current || {})?.length) {
           setTimeout(() => {
             if (!Object.keys(refCells?.current || {})?.length) {
-              addPanel({
-                subtype: AppSubtypeEnum.SYSTEM,
-                type: AppTypeEnum.BROWSER,
-                uuid: 'test',
-              });
+              addPanel('test-panel', [
+                {
+                  subtype: AppSubtypeEnum.SYSTEM,
+                  type: AppTypeEnum.BROWSER,
+                  uuid: 'test-app',
+                },
+              ]);
             }
           }, 1);
         }
       }}
     >
       <ContainerStyled>
-        <Grid height='inherit' pad templateRows='auto 1fr'>
+        <Grid height="inherit" templateRows="auto 1fr" width="inherit">
           <GridRow row={1}>
             <Section>
-              <Row align='center' justify='start'>
-                <Col xs='content'>
+              <Row align="center" justify="start">
+                <Col xs="content">
                   <Button
                     Icon={Cluster}
                     onClick={() => {
@@ -130,14 +132,14 @@ function GridContainer() {
                 <Col>
                   <Row>
                     <Col>
-                      <TextInput monospace number placeholder='Row' />
+                      <TextInput monospace number placeholder="Row" />
                     </Col>
                     <Col>
-                      <TextInput monospace number placeholder='Column' />
+                      <TextInput monospace number placeholder="Column" />
                     </Col>
                   </Row>
                 </Col>
-                <Col xs='content'>
+                <Col xs="content">
                   <ButtonGroup>
                     <Button
                       Icon={Dark}
@@ -153,7 +155,13 @@ function GridContainer() {
                     <Button
                       basic
                       onClick={() => {
-                        addPanel({ uuid: String(Number(new Date())) });
+                        addPanel(String(Number(new Date())), [
+                          {
+                            subtype: AppSubtypeEnum.IDE,
+                            type: AppTypeEnum.EDITOR,
+                            uuid: randomSimpleHashGenerator(),
+                          },
+                        ]);
                       }}
                     >
                       Add panel
@@ -164,7 +172,13 @@ function GridContainer() {
             </Section>
           </GridRow>
 
-          <Grid ref={containerRef} row={2} uuid='app-layout' />
+          <GridRow row={2}>
+            <Grid
+              ref={containerRef}
+              templateRows="1fr"
+              width="inherit"
+            />
+          </GridRow>
         </Grid>
       </ContainerStyled>
     </WithOnMount>

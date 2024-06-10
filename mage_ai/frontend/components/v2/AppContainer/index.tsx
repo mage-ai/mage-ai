@@ -28,6 +28,10 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
   const refCells = useRef({});
   const refRoots = useRef({});
 
+  function updateAppConfig(app: AppConfigType) {
+    refAppConfigs.current[app?.uuid] = app;
+  }
+
   function updateLayout(app?: AppConfigType, configRelative?: AppConfigType) {
     const { uuid: uuidApp } = app || ({} as AppConfigType);
     const rowsMapping = {};
@@ -43,11 +47,13 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
     if (configRelative) {
       const uuid = configRelative?.uuid;
       const config = refAppConfigs?.current?.[uuid];
-      const index = rowsMapping?.[config?.row]?.findIndex((c: AppConfigType) => c.uuid === uuid);
+      const layout = config?.layout;
+      const layoutRelative = configRelative?.layout;
+      const index = rowsMapping?.[layout?.row]?.findIndex((c: AppConfigType) => c.uuid === uuid);
 
       // Add the new app to the rows mapping relative to the parent app that added it.
-      const row = config?.row + (configRelative?.layout?.row || 0);
-      const columnInit = index + (configRelative?.layout?.column || 0);
+      const row = layout?.row + (layoutRelative?.row || 0);
+      const columnInit = index + (layoutRelative?.column || 0);
       const column = columnInit < 0 ? 0 : columnInit;
 
       rowsMapping[row] = rowsMapping[row] || [];
@@ -70,7 +76,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
       ([_rowIdx, configs]: [number, AppConfigType[]], idxRow: number) => {
         const colsInRow = configs?.length || 0;
 
-        sortByKey(configs, ({ column: columnCur }) => columnCur)?.forEach(
+        sortByKey(configs, ({ layout }) => layout?.column)?.forEach(
           (config: AppConfigType, idxCol: number) => {
             const uuidCur = config?.uuid;
             const column = idxCol;
@@ -91,12 +97,16 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
             const columnSpan =
               column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol)) + 1;
 
-            refAppConfigs.current[uuidCur] = {
+            updateAppConfig({
               ...config,
-              column,
-              columnSpan,
-              row: idxRow,
-            };
+              layout: {
+                ...(config?.layout || {}),
+                column,
+                columnSpan,
+                row: idxRow,
+              },
+              uuid: uuidCur,
+            });
 
             const element = document.getElementById(uuidCur);
             if (element) {
@@ -112,6 +122,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
         );
       },
     );
+
   }
 
   function addApp(app: AppConfigType, opts?: AddAppFunctionOptionsType) {
@@ -120,10 +131,11 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
     updateLayout(app, grid?.relative);
 
     if (!(uuidApp in refAppConfigs?.current)) {
-      refAppConfigs.current[uuidApp] = {
-        ...(grid?.absolute || { column: 0, row: 0 }),
+      updateAppConfig({
+        ...(grid?.absolute || {}),
+        layout: (grid?.absolute?.layout || {  column: 0, row: 0 }),
         uuid: uuidApp,
-      };
+      });
     }
     const config = refAppConfigs?.current?.[uuidApp];
 
@@ -143,6 +155,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
           </ThemeProvider>,
         );
       }
+
     }, 0);
   }
 
@@ -168,22 +181,32 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
   }
 
   useEffect(() => {
-    if (containerRef?.current && defaultApps?.length >= 1) {
-      defaultApps?.forEach((app: AppConfigType, index: number) => {
-        setTimeout(() => {
-          addApp(app, containerRef?.current);
-        }, index * 100);
-      });
+    if (containerRef?.current) {
+      if (!Object.keys(refAppConfigs?.current || {})?.length) {
+        if (defaultApps?.length >= 1) {
+          defaultApps?.forEach((app: AppConfigType, index: number) => {
+            setTimeout(() => {
+              addApp(app, containerRef?.current);
+            }, index * 100);
+          });
+        } else {
+          addApp({
+            subtype: AppSubtypeEnum.IDE,
+            type: AppTypeEnum.EDITOR,
+            uuid: randomSimpleHashGenerator(),
+          }, containerRef?.current);
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <Grid
-      autoColumns='1fr'
-      autoRows='1fr'
-      justifyContent='stretch'
-      justifyItems='stretch'
+      autoColumns="1fr"
+      autoRows="1fr"
+      justifyContent="stretch"
+      justifyItems="stretch"
       ref={containerRef}
     />
   );

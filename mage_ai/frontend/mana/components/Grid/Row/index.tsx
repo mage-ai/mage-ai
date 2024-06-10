@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import styled from 'styled-components';
 
 type RowStyledProps = {
@@ -12,10 +12,13 @@ const RowStyled = styled.div<RowStyledProps>`
   ${({ row }) => `
     grid-row: ${row};
   `}
+
+  display: grid;
+  width: inherit;
 `;
 
-function Row({ children, row = 0 }: RowProps) {
-  return <RowStyled row={row}>{children}</RowStyled>;
+function Row({ children, row = 0 }: RowProps, ref: React.Ref<HTMLDivElement>) {
+  return <RowStyled ref={ref} row={row}>{children}</RowStyled>;
 }
 
-export default Row;
+export default forwardRef(Row);

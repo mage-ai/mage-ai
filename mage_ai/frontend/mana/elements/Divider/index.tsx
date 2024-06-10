@@ -8,7 +8,7 @@ type DividerProps = {
 };
 
 export const DividerStyled = styled.div<DividerProps>`
-  background-color: ${({ theme }) => theme.borders.color};
+  background-color: ${({ theme }) => theme.borders.color.base.default};
 
   ${({ short, vertical }) =>
     short &&

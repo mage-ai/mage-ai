@@ -29,6 +29,7 @@ const { FolderV2Filled } = icons;
 type ItemProps = {
   app: AppConfigType;
   item: ItemType | ItemDetailType;
+  onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
   themeContext: any;
 };
 
@@ -40,7 +41,7 @@ function itemsRootID(uuid: string) {
   return `items-root-${uuid}`;
 }
 
-function Item({ app, item, themeContext }: ItemProps) {
+function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   console.log('render', item?.name);
   const { items, name } = item as ItemType;
 
@@ -117,14 +118,20 @@ function Item({ app, item, themeContext }: ItemProps) {
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
-                      <Loading position='absolute' />
+                      <Loading position="absolute" />
                     </div>
                   </ThemeProvider>
                 }
                 idleTimeout={1}
               >
                 {values?.map((item: ItemDetailType) => (
-                  <Item app={app} item={item} key={item.name} themeContext={themeContext} />
+                  <Item
+                    app={app}
+                    item={item}
+                    key={item.name}
+                    onContextMenu={onContextMenu}
+                    themeContext={themeContext}
+                  />
                 ))}
               </DeferredRenderer>
             </Grid>
@@ -133,7 +140,7 @@ function Item({ app, item, themeContext }: ItemProps) {
       );
       renderedRef.current = true;
     }
-  }, [app, themeContext, uuid, items, buildLines]);
+  }, [app, themeContext, uuid, items, buildLines, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
@@ -157,7 +164,7 @@ function Item({ app, item, themeContext }: ItemProps) {
     <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
-        onClick={event => {
+        onClick={(event: React.MouseEvent<HTMLDivElement>) => {
           event.preventDefault();
           event.stopPropagation();
 
@@ -165,13 +172,14 @@ function Item({ app, item, themeContext }: ItemProps) {
 
           renderUpdates();
         }}
-        templateColumns='auto 1fr'
+        onContextMenu={onContextMenu}
+        templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
       >
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns='auto 1fr'>
+          <Grid compact templateColumns="auto 1fr">
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
               <Text blue={isFolder} monospace small>

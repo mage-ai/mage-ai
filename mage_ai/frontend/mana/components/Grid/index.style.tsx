@@ -26,6 +26,7 @@ export type GridStyledProps = {
   templateColumns?: 'min-content' | 'max-content' | 'auto' | string;
   templateRows?: 'min-content' | 'max-content' | 'auto' | string;
   uuid?: string;
+  width?: 'auto' | 'inherit' | string;
 };
 
 function buildGridTemplateColumns(): string[] {
@@ -34,7 +35,7 @@ function buildGridTemplateColumns(): string[] {
   range(12).forEach((_, idxRow: number) => {
     arr.push(`
       .grid-template-columns-${idxRow + 1} {
-        grid-template-columns: repeat(${idxRow + 1}, 1fr);
+        grid-template-columns: repeat(${idxRow + 1}, minmax(0px, 1fr));
       }
     `);
   });
@@ -81,6 +82,12 @@ const styles = css<GridStyledProps>`
     typeof height !== 'undefined' &&
     `
     height: ${height};
+  `}
+
+  ${({ width }) =>
+    typeof width !== 'undefined' &&
+    `
+    width: ${width};
   `}
 
   ${({ row }) =>
@@ -145,6 +152,8 @@ const styles = css<GridStyledProps>`
 
   ${({ columnGap, compact, pad, rowGap, theme }) => `
     display: grid;
+    min-height: 0;
+    min-width: 0;
     padding: ${pad ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : 0}px;
 
     column-gap: ${typeof columnGap === 'undefined' ? theme.grid.gutter.width[compact ? 'sm' : 'base'] : columnGap}px;
@@ -156,6 +165,8 @@ const styles = css<GridStyledProps>`
 
     .grid-cell {
       display: grid;
+      min-height: 0;
+      min-width: 0;
     }
   `}
 `;

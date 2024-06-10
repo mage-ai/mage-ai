@@ -10,7 +10,6 @@ import { GroupByStrategyEnum } from './enums';
 import { ItemDetailType } from './interfaces';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
-import Section from '@mana/elements/Section';
 
 type SystemBrowserProps = {
   app: AppConfigType;
@@ -18,10 +17,13 @@ type SystemBrowserProps = {
 
 function SystemBrowser({ app }: SystemBrowserProps) {
   const themeContext = useContext(ThemeContext);
-  const rootID = useMemo(() => `system-browser-items-root-${app?.uuid}`, [app]);
+  const containerRef = useRef(null);
 
   const filePathsRef = useRef<string[]>(filePaths);
   const itemsRootRef = useRef(null);
+
+  const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${app?.uuid}`, [app]);
+  const rootID = useMemo(() => `system-browser-items-root-${app?.uuid}`, [app]);
 
   useEffect(() => {
     const createWorker = async () => {
@@ -43,6 +45,20 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                       app={app}
                       item={item as ItemDetailType}
                       key={`${item.name}-${idx}`}
+                      onContextMenu={(event: React.MouseEvent<HTMLDivElement>) => {
+                        if (!containerRef?.current
+                          || !containerRef?.current?.contains(event.target as Node)
+                        ) {
+                          return;
+                        }
+
+                        event.preventDefault();
+
+                        console.log({
+                          x: event.pageX,
+                          y: event.pageY,
+                        });
+                      }}
                       themeContext={themeContext}
                     />
                   ))}
@@ -65,7 +81,12 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootID]);
 
-  return <div id={rootID} />;
+  return (
+    <div ref={containerRef}>
+      <div id={rootID} />
+      <div id={contextMenuRootID} />
+    </div>
+  );
 }
 
 export default SystemBrowser;

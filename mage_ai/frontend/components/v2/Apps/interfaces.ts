@@ -2,6 +2,7 @@ import { AppTypeEnum, AppSubtypeEnum } from './constants';
 
 export interface AppLayoutType {
   column?: number;
+  columnSpan?: number;
   row?: number;
 }
 

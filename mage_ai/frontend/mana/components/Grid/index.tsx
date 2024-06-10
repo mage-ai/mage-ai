@@ -11,6 +11,7 @@ type GridProps = {
   className?: string;
   children?: React.ReactNode;
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
 } & GridStyledProps;
 
 function Grid(

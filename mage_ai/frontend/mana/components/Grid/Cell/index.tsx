@@ -1,11 +1,19 @@
 type CellProps = {
-  column?: number;
-  columnSpan?: number;
-  row?: number;
+  layout?: {
+    column?: number;
+    columnSpan?: number;
+    row?: number;
+  };
   uuid?: string;
 };
 
-function Cell({ column = 0, columnSpan = 0, row = 0, uuid }: CellProps) {
+function Cell({ layout, uuid }: CellProps) {
+  const { column = 0, columnSpan = 0, row = 0 } = layout || {
+    column: 0,
+    columnSpan: 0,
+    row: 0,
+  };
+
   const element = document.createElement('div');
   element.className = [
     'grid-cell',
