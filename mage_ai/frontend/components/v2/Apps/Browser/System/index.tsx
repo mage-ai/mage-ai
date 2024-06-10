@@ -8,7 +8,8 @@ import filePaths from './mock';
 import { AppConfigType } from '../../interfaces';
 import { GroupByStrategyEnum } from './enums';
 import { ItemDetailType } from './interfaces';
-import Worker from 'worker-loader!@public/workers/worker';
+// @ts-ignore
+import Worker from 'worker-loader!@public/workers/worker.ts';
 
 type SystemBrowserProps = {
   app: AppConfigType;
