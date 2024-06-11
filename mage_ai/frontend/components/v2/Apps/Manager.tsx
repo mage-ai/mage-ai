@@ -17,7 +17,7 @@ import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { Cluster, Dark } from '@mana/icons';
 import '@styles/scss/pages/Apps/Manager.module.scss';
 
-function Manager () {
+function Manager() {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const refCells = useRef({});
@@ -79,18 +79,18 @@ function Manager () {
           refRoots.current[uuid].render(
             <ThemeProvider theme={themeContext}>
               <Container
-              apps={[app]}
-              onRemoveApp={(
-                _,
-                appConfigs: {
-                  [uuid: string]: AppConfigType;
-                },
-              ) => {
-                if (!Object.keys(appConfigs || {})?.length) {
-                  removePanel(uuid);
-                }
-              }}
-            />
+                apps={[app]}
+                onRemoveApp={(
+                  _,
+                  appConfigs: {
+                    [uuid: string]: AppConfigType;
+                  },
+                ) => {
+                  if (!Object.keys(appConfigs || {})?.length) {
+                    removePanel(uuid);
+                  }
+                }}
+              />
             </ThemeProvider>,
           );
 

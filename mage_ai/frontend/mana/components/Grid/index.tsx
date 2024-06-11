@@ -17,35 +17,22 @@ type GridProps = {
 };
 
 function Grid(
-  {
-    children,
-    className: classNameProp,
-    uuid,
-    ...props
-  }: GridProps,
+  { children, className: classNameProp, uuid, ...props }: GridProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  const arr = [
-    styles['grid'],
-    uuid ? styles['grid-mana'] : '',
-    classNameProp || '',
-  ];
+  const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
 
   Object.entries(props || {}).forEach(([key, value]) => {
     if (typeof value !== 'undefined') {
-      const k = [
-        hyphenateCamelCase(key),
-        ...String(value)?.replace('%', '')?.split(' '),
-      ].join('-');
+      const k = [hyphenateCamelCase(key), ...String(value)?.replace('%', '')?.split(' ')].join('-');
       const className = styles[k];
       arr.push(className);
     }
   });
 
-  const classNames = arr.filter(value => typeof value !== 'undefined'
-    && value !== null
-    && String(value)?.length >= 1,
-  ).join(' ');
+  const classNames = arr
+    .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
+    .join(' ');
 
   return (
     <div {...props} className={classNames} ref={ref}>

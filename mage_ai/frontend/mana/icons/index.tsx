@@ -3428,7 +3428,6 @@ export const UFO = useWithIcon(
   },
 );
 
-
 export const Locked = useWithIcon(
   [
     {
