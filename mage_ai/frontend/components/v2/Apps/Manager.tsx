@@ -30,10 +30,8 @@ function Manager() {
       const columns = Object.keys(refCells?.current || {})?.length || 1;
       const regex = /(template-columns-\d+)/;
 
-      updateClassnames(
-        containerRef?.current,
-        [`template-columns-${columns}`],
-        cn => regex.test(cn),
+      updateClassnames(containerRef?.current, [`template-columns-${columns}`], cn =>
+        regex.test(cn),
       );
     }
   }

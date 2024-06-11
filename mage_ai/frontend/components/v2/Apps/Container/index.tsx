@@ -20,13 +20,10 @@ type AppContainerProps = {
   uuid: string;
 };
 
-function AppContainer({
-  app,
-  appLoader,
-  onAdd,
-  onRemove,
-  uuid,
-}: AppContainerProps, ref: React.Ref<HTMLDivElement>) {
+function AppContainer(
+  { app, appLoader, onAdd, onRemove, uuid }: AppContainerProps,
+  ref: React.Ref<HTMLDivElement>,
+) {
   const { subtype, type } = app;
 
   function addApp(rowRelative: number, columnRelative: number) {
@@ -50,11 +47,7 @@ function AppContainer({
     );
   }
 
-  const {
-    main,
-    toolbars,
-  } = appLoader?.(app);
-
+  const { main, toolbars } = appLoader?.(app);
 
   return (
     <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
@@ -70,11 +63,7 @@ function AppContainer({
         templateRows="1fr"
       >
         <Header>
-          <Grid
-            autoFlow="column"
-            columnGap={12}
-            templateColumns="auto 1fr"
-          >
+          <Grid autoFlow="column" columnGap={12} templateColumns="auto 1fr">
             {toolbars?.top}
           </Grid>
 

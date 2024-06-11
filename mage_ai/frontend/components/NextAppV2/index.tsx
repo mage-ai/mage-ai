@@ -26,7 +26,7 @@ function NextAppV2({
     themeSettings: themeSettingsProp,
     title,
     version,
- } = pageProps || {} as any;
+  } = pageProps || ({} as any);
 
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
   const theme = themeSettings?.theme || getTheme({ theme: themeSettings });

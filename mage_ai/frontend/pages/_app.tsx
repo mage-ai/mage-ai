@@ -6,13 +6,13 @@ import { ModeEnum } from '@mana/themes/modes';
 import '@styles/globals.css';
 import '@styles/scss/globals/dark.scss';
 import '@styles/scss/globals/light.scss';
-import'react-toastify/dist/ReactToastify.min.css';
+import 'react-toastify/dist/ReactToastify.min.css';
 
-function MainApp({ version, ...props }: { mode: ModeEnum, version?: string } & AppProps) {
+function MainApp({ version, ...props }: { mode: ModeEnum; version?: string } & AppProps) {
   if (version === 'v2') {
     const AppV2 = dynamic(() => import('@components/NextAppV2'));
 
-    return <AppV2  {...props} />;
+    return <AppV2 {...props} />;
   }
 
   // @ts-ignore

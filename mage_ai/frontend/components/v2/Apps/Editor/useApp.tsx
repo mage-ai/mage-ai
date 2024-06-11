@@ -8,19 +8,22 @@ export default function useApp(app: AppConfigType): AppLoaderResultType {
   const themeContext = useContext(ThemeContext);
   const MateriaIDE = lazy(() => import('@components/v2/IDE'));
 
-  const main = useMemo(() => (
-    <Suspense
-      fallback={
-        <ThemeProvider theme={themeContext}>
-          <div style={{ display: 'flex' }}>
-            <Loading position="absolute" />
-          </div>
-        </ThemeProvider>
-      }
-    >
-      <MateriaIDE uuid={app?.uuid} />
-    </Suspense>
-  ), [MateriaIDE, app, themeContext]);
+  const main = useMemo(
+    () => (
+      <Suspense
+        fallback={
+          <ThemeProvider theme={themeContext}>
+            <div style={{ display: 'flex' }}>
+              <Loading position="absolute" />
+            </div>
+          </ThemeProvider>
+        }
+      >
+        <MateriaIDE uuid={app?.uuid} />
+      </Suspense>
+    ),
+    [MateriaIDE, app, themeContext],
+  );
 
   return {
     main,

@@ -2,7 +2,6 @@ import dynamic from 'next/dynamic';
 
 import { AppSubtypeEnum, AppTypeEnum } from '../constants';
 
-
 export default async function appLoader(appType: AppTypeEnum, appSubtype: AppSubtypeEnum) {
   const mapping = {
     [AppTypeEnum.BROWSER]: {

@@ -5,23 +5,17 @@ import styles from '@styles/scss/components/Grid/Grid.module.scss';
 
 const regex = /(row-\d+|column-(start|end)-\d+)/;
 
-export function updateClassnames(element: HTMLElement, classNames: string[], compare: (text: string) => boolean) {
-  const arr = [
-    ...classNames,
-    removeClassNames(element?.className, compare),
-  ];
-  element.className = arr?.map(key => key ? (styles[key] || key) : '')?.join(' ');
+export function updateClassnames(
+  element: HTMLElement,
+  classNames: string[],
+  compare: (text: string) => boolean,
+) {
+  const arr = [...classNames, removeClassNames(element?.className, compare)];
+  element.className = arr?.map(key => (key ? styles[key] || key : ''))?.join(' ');
 }
 
-export function upsertRootElement({
-  layout,
-  uuid,
-}: AppConfigType) {
-  const {
-    column,
-    columnSpan,
-    row,
-  } = layout || {} as AppLayoutType;
+export function upsertRootElement({ layout, uuid }: AppConfigType) {
+  const { column, columnSpan, row } = layout || ({} as AppLayoutType);
 
   let element = document.getElementById(uuid);
 
@@ -42,11 +36,7 @@ export function upsertRootElement({
     typeof columnSpan !== 'undefined' ? `column-end-${columnSpan + 2}` : '',
   ];
 
-  updateClassnames(
-    element,
-    arr,
-    cn => regex.test(cn),
-  );
+  updateClassnames(element, arr, cn => regex.test(cn));
 
   return element;
 }

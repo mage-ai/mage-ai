@@ -7,20 +7,23 @@ import { AppConfigType, AppLoaderResultType } from '../interfaces';
 
 export default function useBrowser(app: AppConfigType): AppLoaderResultType {
   const main = useMemo(() => <SystemBrowser app={app} />, [app]);
-  const toolbarTop = useMemo(() => (
-    <>
-      <Button
-        onClick={() => {
-          console.log('browse');
-        }}
-        small
-      >
-        Browse
-      </Button>
+  const toolbarTop = useMemo(
+    () => (
+      <>
+        <Button
+          onClick={() => {
+            console.log('browse');
+          }}
+          small
+        >
+          Browse
+        </Button>
 
-      <TextInput basic monospace placeholder="/" small />
-    </>
-  ), []);
+        <TextInput basic monospace placeholder="/" small />
+      </>
+    ),
+    [],
+  );
 
   return {
     main,
