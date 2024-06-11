@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import traceback
@@ -54,7 +55,7 @@ def cache_file_read(cache):
                 cache_entry = cache[file_path]
                 cached_updated_at = cache_entry.get('updated_at')
                 if cached_updated_at >= file_updated_at:
-                    return cache_entry['content']
+                    return copy.deepcopy(cache_entry['content'])
 
             try:
                 content = func(file_path, *args, **kwargs)
@@ -62,7 +63,7 @@ def cache_file_read(cache):
                     'content': content,
                     'updated_at': file_updated_at,
                 }
-                return content
+                return copy.deepcopy(content)
             except Exception:
                 traceback.print_exc()
                 return None
@@ -85,7 +86,7 @@ def async_cache_file_read(cache):
                 cache_entry = cache[file_path]
                 cached_updated_at = cache_entry.get('updated_at')
                 if cached_updated_at >= file_updated_at:
-                    return cache_entry['content']
+                    return copy.deepcopy(cache_entry['content'])
 
             try:
                 content = await func(file_path, *args, **kwargs)
@@ -93,7 +94,7 @@ def async_cache_file_read(cache):
                     'content': content,
                     'updated_at': file_updated_at,
                 }
-                return content
+                return copy.deepcopy(content)
             except Exception:
                 traceback.print_exc()
                 return None
