@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+const LEFT_PEEK = 4;
+
 export const Header = styled.header`
   ${({ theme }) => `
     backdrop-filter: saturate(100%) blur(3px);
@@ -14,10 +16,10 @@ export const Header = styled.header`
     justify-content: space-between;
     padding-bottom: ${theme.padding.base}px;
     padding-left: ${theme.padding.base}px;
-    padding-right: ${theme.padding.base / 2}px;
+    padding-right: ${theme.padding.base - LEFT_PEEK}px;
     padding-top: ${theme.padding.base}px;
     position: absolute;
-    width: calc(100% - ${theme.padding.base / 2}px);
+    width: calc(100% - ${theme.padding.base - LEFT_PEEK}px);
     z-index: 1;
   `}
 `;
