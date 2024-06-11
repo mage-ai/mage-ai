@@ -2,11 +2,13 @@ import os
 import subprocess
 import uuid
 
+import aiohttp
 import yaml
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.file import FileCache
+from mage_ai.cache.ttl import async_ttl_cache
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import (
@@ -15,6 +17,7 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
 )
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import (
     activate_project,
     project_platform_activated,
@@ -24,6 +27,22 @@ from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+
+
+@async_ttl_cache(maxsize=1, ttl=600)
+async def get_latest_version() -> str:
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                'https://pypi.org/pypi/mage-ai/json',
+                timeout=3,
+            ) as response:
+                response_json = await response.json()
+                latest_version = response_json.get('info', {}).get('version', None)
+    except Exception:
+        latest_version = VERSION
+
+    return latest_version
 
 
 async def build_project(
@@ -45,7 +64,7 @@ async def build_project(
         features=project.features,
         features_defined=project.features_defined,
         features_override=project.features_override,
-        latest_version=await project.latest_version(),
+        latest_version=await get_latest_version(),
         name=project.name,
         platform_settings=project.platform_settings(),
         project_uuid=project.project_uuid,

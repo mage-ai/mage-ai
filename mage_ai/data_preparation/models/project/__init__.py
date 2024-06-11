@@ -1,8 +1,6 @@
 import os
 from typing import Dict, List, Optional
 
-import aiohttp
-
 from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_config
@@ -228,17 +226,3 @@ class Project:
             print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')
 
         return feature_enabled
-
-    async def latest_version(self) -> str:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    'https://pypi.org/pypi/mage-ai/json',
-                    timeout=3,
-                ) as response:
-                    response_json = await response.json()
-                    latest_version = response_json.get('info', {}).get('version', None)
-        except Exception:
-            latest_version = VERSION
-
-        return latest_version
