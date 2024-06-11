@@ -137,6 +137,9 @@ $values: (
     &.template-columns-#{$value1}fr-auto {
       grid-template-columns: #{$value1}fr auto;
     }
+    &.template-columns-auto-auto-#{$value1}fr {
+      grid-template-columns: auto auto #{$value1}fr;
+    }
 
     @each $value2 in $numbers {
       &.template-rows-#{$value1}fr-#{$value2}fr {

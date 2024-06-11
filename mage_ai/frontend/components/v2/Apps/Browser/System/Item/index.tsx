@@ -186,13 +186,13 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
       itemsRootRef.current.render(
         <React.StrictMode>
           <ThemeProvider theme={themeContext}>
-            <Grid ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
+            <Grid alignItems="center" ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
               <DeferredRenderer
                 fallback={
                   <ThemeProvider theme={themeContext}>
                     <div style={{ display: 'flex' }}>
                       {buildLines(1)}
-                      <Loading position='absolute' />
+                      <Loading position="absolute" />
                     </div>
                   </ThemeProvider>
                 }
@@ -247,13 +247,13 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
           renderUpdates();
         }}
         onContextMenu={onContextMenu}
-        templateColumns='auto 1fr'
+        templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
       >
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns='auto auto 1fr'>
+          <Grid alignItems="center" columnGap={8} templateColumns="auto auto 1fr">
             <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (

@@ -5,23 +5,25 @@
 @mixin monospace-font-family {
   font-family: map-get($fonts, family, monospace, regular);
 
-  @if $light {
+  &.monospace.light {
     font-family: map-get($fonts, family, monospace, lightFont);
   }
-  @if $medium {
+  &.monospace.medium {
     font-family: map-get($fonts, family, monospace, medium);
   }
-  @if $semiBold {
+  &.monospace.semiBold {
     font-family: map-get($fonts, family, monospace, semiBold);
   }
-  @if $black or $bold {
+  &.monospace.black,
+  &.monospace.bold {
     font-family: map-get($fonts, family, monospace, bold);
 
-    @if $italic {
-      font-family: map-get($fonts, family, monospace, boldItalic);
+    &.italic {
+      font-family: map-get($fonts, family, monospace, boldItalic) !important;
     }
   }
-  @if $italic and not ($black or $bold) {
+
+  &.monospace.italic {
     font-family: map-get($fonts, family, monospace, regularItalic);
   }
 }
@@ -29,39 +31,36 @@
 @mixin base-font-family {
   font-family: map-get($fonts, family, base, regular);
 
-  @if $light {
+  &.light {
     font-family: map-get($fonts, family, base, lightFont);
   }
-  @if $medium {
+  &.medium {
     font-family: map-get($fonts, family, base, medium);
   }
-  @if $semiBold {
+  &.semiBold {
     font-family: map-get($fonts, family, base, semiBold);
   }
-  @if $black {
+  &.black {
     font-family: map-get($fonts, family, base, black);
   }
-  @if $bold {
+  &.bold {
     font-family: map-get($fonts, family, base, bold);
   }
 }
 
 @mixin base {
-  @if $monospace {
-    @include monospace-font-family;
-  } @else {
-    @include base-font-family;
-  }
+  @include monospace-font-family;
+  @include base-font-family;
 
   color: map-get($fonts, color, text-base);
 
-  @if $inverted {
+  &.inverted {
     color: map-get($fonts, color, text-inverted);
   }
-  @if $blue {
+  &.blue {
     color: map-get($fonts, color, text-blue);
   }
-  @if $muted {
+  &.muted {
     color: map-get($fonts, color, text-muted);
   }
 
@@ -69,25 +68,25 @@
   font-style: map-get($fonts, style, base);
   font-weight: map-get($fonts, weight, regular);
 
-  @if $italic {
+  &.italic {
     font-style: map-get($fonts, style, italic);
   }
-  @if $light {
+  &.light {
     font-weight: map-get($fonts, weight, light);
   }
-  @if $medium {
+  &.medium {
     font-weight: map-get($fonts, weight, medium);
   }
-  @if $semiBold {
+  &.semiBold {
     font-weight: map-get($fonts, weight, semiBold);
   }
-  @if $bold {
+  &.bold {
     font-weight: map-get($fonts, weight, bold);
   }
 
   line-height: map-get($fonts, lineHeight, md);
 
-  @if $monospace {
+  &.monospace {
     line-height: map-get($fonts, lineHeight, monospace);
   }
 }

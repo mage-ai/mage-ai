@@ -1,10 +1,7 @@
 import React from 'react';
 
 import styles from '@styles/scss/components/Grid/Grid.module.scss';
-
-function hyphenateCamelCase(camelCase: string): string {
-  return camelCase.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-}
+import { hyphenateCamelCase } from '@utils/string';
 
 type GridProps = {
   children?: React.ReactNode;
@@ -20,13 +17,26 @@ function Grid(
   { children, className: classNameProp, uuid, ...props }: GridProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
+  const arr = [
+    styles['grid'],
+    uuid ? styles['grid-mana'] : '',
+    classNameProp || '',
+  ];
 
   Object.entries(props || {}).forEach(([key, value]) => {
     if (typeof value !== 'undefined') {
-      const k = [hyphenateCamelCase(key), ...String(value)?.replace('%', '')?.split(' ')].join('-');
+      const k = [
+        hyphenateCamelCase(key),
+        ...String(value)?.replace('%', '')?.split(' '),
+      ].filter(s => s?.length >= 1)?.join('-');
       const className = styles[k];
       arr.push(className);
+    }
+  });
+
+  [classNameProp, uuid].forEach((key) => {
+    if (key?.length >= 1 && !arr?.includes(key)) {
+      arr.push(key);
     }
   });
 

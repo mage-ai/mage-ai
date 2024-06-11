@@ -200,6 +200,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   useEffect(() => {
     const handleDocumentClick = (event: Event) => {
       const node = document.getElementById(contextMenuRootID);
+      console.log(contextMenuRootID, node);
       if (node && !node?.contains(event.target as Node)) {
         removeContextMenu();
       }

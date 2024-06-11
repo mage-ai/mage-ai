@@ -1,19 +1,53 @@
 import React from 'react';
 import styles from '@styles/scss/components/Text/Text.module.scss';
 
+import { hyphenateCamelCase } from '@utils/string';
+
 type TextProps = {
   children: React.ReactNode;
   className?: string;
   inline?: boolean;
   small?: boolean;
   xsmall?: boolean;
+  // Below alter the class names
+  black?: boolean;
+  blue?: boolean;
+  bold?: boolean;
+  inverted?: boolean;
+  italic?: boolean;
+  light?: boolean;
+  medium?: boolean;
+  monospace?: boolean;
+  muted?: boolean;
+  semiBold?: boolean;
 };
 
-function Text({ children, inline, small, xsmall, ...props }: TextProps) {
-  const classNames = [
-    small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
-    props?.className || '',
-  ].join(' ');
+function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
+  const arr = [
+    small
+      ? styles['text-small']
+      : xsmall
+        ? styles['text-xsmall']
+        : styles.text,
+    classNameProp || '',
+  ];
+
+  Object.entries(props || {}).forEach(([key, value]) => {
+    if (typeof value !== 'undefined') {
+      if (value !== false) {
+        const k = [
+          hyphenateCamelCase(key),
+          ...String(typeof value === 'boolean' ? '' : value)?.replace('%', '')?.split(' '),
+          ].filter(s => s?.length >= 1)?.join('-');
+        const className = styles[k];
+        arr.push(className);
+      }
+    }
+  });
+
+  const classNames = arr
+    .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
+    .join(' ');
 
   return inline ? (
     <span {...props} className={classNames}>

@@ -14,3 +14,15 @@
   @include base-xs;
   margin: 0;
 }
+
+.text {
+  @include text;
+}
+
+.text-small {
+  @include text-small;
+}
+
+.text-xsmall {
+  @include text-xsmall;
+}
