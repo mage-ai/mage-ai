@@ -55,9 +55,11 @@ class ProjectPlatformAccessible:
                             BlockType.DBT == self.type and \
                             BlockLanguage.YAML != self.language:
 
+                        projet_path = file_source.get('project_path')
+
                         # /home/src/default_repo/default_platform/
                         # tons_of_dbt_projects/diff_name
-                        project_path = get_selected_directory_from_file_path(
+                        project_path = projet_path or get_selected_directory_from_file_path(
                             file_path=path,
                             selector=lambda fn: (
                                 str(fn).endswith('dbt_project.yml') or
