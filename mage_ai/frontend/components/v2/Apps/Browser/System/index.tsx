@@ -45,6 +45,13 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
   const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
 
+  function removeContextMenu() {
+    if (contextMenuRootRef?.current) {
+      contextMenuRootRef.current.unmount();
+      contextMenuRootRef.current = null;
+    }
+  }
+
   const [fetchItems, { isLoading }] = useMutation(
     (query?: {
       _limit?: number;
@@ -189,13 +196,6 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     },
     [appUUID, contextMenuRootID, themeContext],
   );
-
-  function removeContextMenu() {
-    if (contextMenuRootRef?.current) {
-      contextMenuRootRef.current.unmount();
-      contextMenuRootRef.current = null;
-    }
-  }
 
   useEffect(() => {
     const handleDocumentClick = (event: Event) => {

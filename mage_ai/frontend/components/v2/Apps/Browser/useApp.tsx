@@ -19,7 +19,7 @@ export default function useBrowser(app: AppConfigType): AppLoaderResultType {
           Browse
         </Button>
 
-        <TextInput basic monospace placeholder='/' small />
+        <TextInput basic monospace placeholder="/" small />
       </>
     ),
     [],

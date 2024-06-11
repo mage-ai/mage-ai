@@ -24,7 +24,7 @@ function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
         combo.push(
           <Text
             {...props}
-            key={`key-text-plus-${previousKeys.join('-')}-${keyText}-${idx1}-${idx2}`}
+            key={`key-text-plus-${previousKeys?.length}-${keyText}-${idx1}-${idx2}`}
             muted
           >
             +
@@ -36,7 +36,7 @@ function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
         <KeyboardText
           {...props}
           inline
-          key={`key-text-${previousKeys.join('-')}-${keyText}-${idx1}-${idx2}`}
+          key={`key-text-${previousKeys?.length}-${keyText}-${idx1}-${idx2}`}
           text={keyText}
         />,
       );
@@ -44,7 +44,7 @@ function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
 
     if (idx1 >= 1) {
       els.push(
-        <Text muted small={props.small} xsmall={props.xsmall}>
+        <Text key={`then-${idx1}`} muted small={props.small} xsmall={props.xsmall}>
           then
         </Text>,
       );
