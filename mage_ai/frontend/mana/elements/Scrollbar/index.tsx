@@ -4,6 +4,7 @@ import styles from '@styles/scss/components/Scrollbar/Scrollbar.module.scss';
 type ScrollbarProps = {
   children: React.ReactNode;
   hidden?: boolean;
+  style?: React.CSSProperties;
 };
 
 function Scrollbar({ children, hidden, ...props }: ScrollbarProps, ref: React.Ref<HTMLDivElement>) {

@@ -91,15 +91,7 @@ export default function useFileIcon({
   useRootFolder,
   uuid,
 }: UseFileIconProps) {
-  const {
-    Charts,
-    Ellipsis,
-    FileFill,
-    FolderIcon,
-    Logs,
-    Pipeline,
-    PipelineV3,
-  } = Icons || {
+  const { Charts, Ellipsis, FileFill, FolderIcon, Logs, Pipeline, PipelineV3 } = Icons || {
     Charts: ChartsOracle,
     Ellipsis: EllipsisOracle,
     FileFill: FileFillOracle,

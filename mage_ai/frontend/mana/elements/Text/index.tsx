@@ -24,11 +24,7 @@ type TextProps = {
 
 function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
   const arr = [
-    small
-      ? styles['text-small']
-      : xsmall
-        ? styles['text-xsmall']
-        : styles.text,
+    small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
     classNameProp || '',
   ];
 
@@ -37,8 +33,12 @@ function Text({ children, className: classNameProp, inline, small, xsmall, ...pr
       if (value !== false) {
         const k = [
           hyphenateCamelCase(key),
-          ...String(typeof value === 'boolean' ? '' : value)?.replace('%', '')?.split(' '),
-          ].filter(s => s?.length >= 1)?.join('-');
+          ...String(typeof value === 'boolean' ? '' : value)
+            ?.replace('%', '')
+            ?.split(' '),
+        ]
+          .filter(s => s?.length >= 1)
+          ?.join('-');
         const className = styles[k];
         arr.push(className);
       }
