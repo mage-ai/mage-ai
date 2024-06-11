@@ -74,7 +74,7 @@ export const Icons = {
   Charts,
   Ellipsis,
   FileFill,
-  FolderV2Filled: FolderIcon,
+  FolderIcon,
   Logs,
   Pipeline,
   PipelineV3,

@@ -1,6 +1,6 @@
 import * as osPath from 'path';
 
-import icons from '@mana/icons';
+import { FileIcon } from '@mana/icons';
 import useFileIconBase from '@components/FileBrowser/Folder/useFileIcon';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
 import {
@@ -13,8 +13,6 @@ import { ItemDetailType, ItemType } from './interfaces';
 import { ItemTypeEnum } from './enums';
 import { getBlockColor } from '@mana/themes/blocks';
 import { selectKeys } from '@utils/hash';
-
-const { FileIcon } = icons;
 
 export function groupFilesByDirectory(paths: string[]): ItemType {
   const root: ItemType = {} as ItemType;
