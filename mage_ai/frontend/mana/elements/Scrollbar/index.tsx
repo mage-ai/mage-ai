@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import styles from '@styles/scss/components/Scrollbar/Scrollbar.module.scss';
 
 type ScrollbarProps = {
   children: React.ReactNode;

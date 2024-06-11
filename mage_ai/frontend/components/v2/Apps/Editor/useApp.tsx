@@ -1,18 +1,14 @@
-import React, { Suspense, lazy, useContext } from 'react';
+import React, { Suspense, lazy, useContext, useMemo } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 
 import Loading from '@mana/components/Loading';
-import { AppConfigType } from '@components/v2/Apps/interfaces';
+import { AppConfigType, AppLoaderResultType } from '../interfaces';
 
-type EditorProps = {
-  app: AppConfigType;
-};
-
-function EditorApp({ app }: EditorProps) {
+export default function useApp(app: AppConfigType): AppLoaderResultType {
   const themeContext = useContext(ThemeContext);
   const MateriaIDE = lazy(() => import('@components/v2/IDE'));
 
-  return (
+  const main = useMemo(() => (
     <Suspense
       fallback={
         <ThemeProvider theme={themeContext}>
@@ -24,7 +20,9 @@ function EditorApp({ app }: EditorProps) {
     >
       <MateriaIDE uuid={app?.uuid} />
     </Suspense>
-  );
-}
+  ), [MateriaIDE, app, themeContext]);
 
-export default EditorApp;
+  return {
+    main,
+  };
+}

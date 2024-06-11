@@ -105,6 +105,13 @@ $values: (
     &.row-#{$value1} {
       grid-row: $value1;
     }
+
+    &.template-columns-#{$value1} {
+      grid-template-columns: repeat(#{$value1}, 1fr);
+    }
+    &.template-rows-#{$value1} {
+      grid-template-rows: repeat(#{$value1}, 1fr);
+    }
   }
 }
 
@@ -222,6 +229,14 @@ $values: (
   @include layout;
   @include template;
   @include template-more;
+
+  &.overflow-hidden {
+    overflow: hidden;
+  }
+
+  &.overflow-visible {
+    overflow: visible;
+  }
 
   &.height-100 {
     height: 100%;

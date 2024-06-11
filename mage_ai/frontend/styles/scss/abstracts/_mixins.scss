@@ -2,7 +2,7 @@
 @import '../abstracts/colors';
 
 @mixin transition {
-  transition: 0.2s all $ease-in-out;
+  transition: 0.2s all ease-in-out;
 }
 
 @mixin transition-fast {

@@ -9,6 +9,7 @@ import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { randomSimpleHashGenerator } from '@utils/string';
 import { upsertRootElement } from './utils';
+import appLoader from './utils/loader';
 
 type AppLayoutProps = {
   apps?: AppConfigType[];
@@ -116,7 +117,7 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
   }
 
   function addApp(app: AppConfigType, opts?: AddAppFunctionOptionsType) {
-    const { uuid: uuidApp } = app;
+    const { subtype, type, uuid: uuidApp } = app;
     const { container, grid } = opts || {};
     updateLayout(app, grid?.relative);
 
@@ -139,19 +140,27 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
         const ref = createRef() as React.Ref<HTMLDivElement>;
         refCells.current[uuidApp] = ref;
 
-        const AppContainer = dynamic(() => import('./Container'));
+        const loadApp = async () => {
+          const appLoaderResult = await appLoader(type, subtype);
+          if (appLoaderResult) {
+            const AppContainer = dynamic(() => import('./Container'));
 
-        refRoots.current[uuidApp].render(
-          <ThemeProvider theme={themeContext}>
-            <AppContainer
-              app={app}
-              onAdd={addApp}
-              onRemove={removeApp}
-              ref={ref}
-              uuid={uuidApp}
-            />
-          </ThemeProvider>,
-        );
+            refRoots.current[uuidApp].render(
+              <ThemeProvider theme={themeContext}>
+                <AppContainer
+                  app={app}
+                  appLoader={appLoaderResult?.default}
+                  onAdd={addApp}
+                  onRemove={removeApp}
+                  ref={ref}
+                  uuid={uuidApp}
+                />
+              </ThemeProvider>,
+            );
+          }
+        };
+
+        loadApp();
       }
     }, 0);
   }

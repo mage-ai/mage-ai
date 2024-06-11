@@ -5,16 +5,16 @@ import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
 import { AddAppFunctionOptionsType, AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
-import TextInput from '@mana/elements/Input/TextInput';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
 import { randomSimpleHashGenerator } from '@utils/string';
 
-// import useBrowser from '@components/v2/Apps/Browser/useBrowser';
-// import EditorApp from '@components/v2/Apps/Editor';
-
 type AppContainerProps = {
   app: AppConfigType;
+  appLoader?: (app: AppConfigType) => {
+    main: React.ComponentType<any>;
+    toolbars: Record<string, React.ComponentType<any>>;
+  };
   onAdd?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
   onRemove?: (uuid: string) => void;
   uuid: string;
@@ -22,6 +22,7 @@ type AppContainerProps = {
 
 function AppContainer({
   app,
+  appLoader,
   onAdd,
   onRemove,
   uuid,
@@ -49,14 +50,19 @@ function AppContainer({
     );
   }
 
-  // const { main, toolbars } = useBrowser({ app });
+  const {
+    main,
+    toolbars,
+  } = appLoader?.(app);
+
 
   return (
-    <Grid borders justifyContent="stretch" justifyItems="stretch" ref={ref}>
+    <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
       <Grid
         autoFlow="column"
         justifyContent="stretch"
         justifyItems="stretch"
+        overflow="hidden"
         style={{
           position: 'relative',
         }}
@@ -69,16 +75,7 @@ function AppContainer({
             columnGap={12}
             templateColumns="auto 1fr"
           >
-            <Button
-              onClick={() => {
-                console.log('browse');
-              }}
-              small
-            >
-              Browse
-            </Button>
-
-            <TextInput basic monospace placeholder="/" small />
+            {toolbars?.top}
           </Grid>
 
           <ButtonGroup itemsContained>
@@ -91,8 +88,7 @@ function AppContainer({
           </ButtonGroup>
         </Header>
 
-        {/* {type === AppTypeEnum.EDITOR && subtype === AppSubtypeEnum.IDE && <EditorApp app={app} />}
-        {type === AppTypeEnum.BROWSER && subtype === AppSubtypeEnum.SYSTEM && main} */}
+        {main}
       </Grid>
     </Grid>
   );

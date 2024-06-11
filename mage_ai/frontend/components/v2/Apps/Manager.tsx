@@ -15,7 +15,8 @@ import { AppConfigType } from './interfaces';
 import { setThemeSettings } from '@mana/themes/utils';
 import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { Cluster, Dark } from '@mana/icons';
-import { upsertRootElement } from './utils';
+import { updateClassnames, upsertRootElement } from './utils';
+
 import styles from '@styles/scss/pages/Apps/Manager.module.scss';
 
 function Manager() {
@@ -27,12 +28,13 @@ function Manager() {
   function updateLayout() {
     if (containerRef?.current) {
       const columns = Object.keys(refCells?.current || {})?.length || 1;
-      containerRef.current.className = [
-        `grid-template-columns-${columns}`,
-        removeClassNames(containerRef?.current?.className, cn =>
-          cn.startsWith('grid-template-columns-'),
-        ),
-      ].join(' ');
+      const regex = /(template-columns-\d+)/;
+
+      updateClassnames(
+        containerRef?.current,
+        [`template-columns-${columns}`],
+        cn => regex.test(cn),
+      );
     }
   }
 
@@ -184,9 +186,14 @@ function Manager() {
             </ButtonGroup>
           </Grid>
 
-          <Grid row={2} width="inherit">
-            <Grid ref={containerRef} />
-          </Grid>
+          <Grid
+            autoFlow="column"
+            columnGap={12}
+            ref={containerRef}
+            row={2}
+            templateRows="1fr"
+            width="inherit"
+          />
         </Grid>
       </div>
     </WithOnMount>
