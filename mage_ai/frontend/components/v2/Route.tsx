@@ -2,22 +2,30 @@ import React, { Component } from 'react';
 import { NextPageContext } from 'next';
 
 import { LayoutVersionEnum } from '@utils/layouts';
-import { getTheme } from '@mana/themes/utils';
+import { ModeEnum } from '@mana/themes/modes';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
+import { getThemeSettings } from '@mana/themes/utils';
 
-export type RouteProps = {
-  theme: ThemeSettingsType;
+type RouteProps = {
+  mode: ModeEnum;
+  themes: {
+    [version: string]: ThemeSettingsType;
+  };
   version: LayoutVersionEnum;
 };
 
 export default function Route(WrappedComponent: any) {
   return class extends Component<RouteProps> {
     static async getInitialProps(ctx?: NextPageContext) {
+      const version = LayoutVersionEnum.V2;
+      const themeSettings = getThemeSettings(ctx);
+
       return {
-        themes: {
-          [LayoutVersionEnum.V2]: getTheme({ ctx }),
+        mode: themeSettings?.mode,
+        themeSettings: {
+          [version]: themeSettings,
         },
-        version: LayoutVersionEnum.V2,
+        version,
       };
     }
 

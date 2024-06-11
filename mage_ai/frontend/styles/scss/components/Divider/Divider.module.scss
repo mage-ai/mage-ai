@@ -1,11 +1,12 @@
-@import '../abstracts/colors';
-@import '../abstracts/variables';
+@use '../../abstracts/colors' as colors;
+
+$spacing: 12px;
 
 .divider {
-  background-color: $borders-color-base-default;
+  background-color: colors.$borders-color-base-default;
 
   &.short {
-    width: $unit * 20 + px;
+    width: 80px;
   }
 
   &.full {
@@ -14,12 +15,12 @@
 
   &:not(.vertical) {
     height: 1px;
-    margin-bottom: map-get($margin, base) + px;
-    margin-top: map-get($margin, base) + px;
+    margin-bottom: $spacing;
+    margin-top: $spacing;
 
     &.compact {
-      margin-bottom: map-get($margin, sm) + px;
-      margin-top: map-get($margin, sm) + px;
+      margin-bottom: $spacing;
+      margin-top: $spacing;
     }
   }
 

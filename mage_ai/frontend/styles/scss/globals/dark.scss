@@ -1,3 +1,5 @@
+/* https://www.zaratan.fr/next-refactor-theme-scss */
+
 html,
 body,
 div,
@@ -115,8 +117,31 @@ a {
   text-decoration: none;
 }
 
+:root {
+  --background-color: #000000;
+  --border-color: #34404C;
+  --text-color: #FFFFFF;
+}
+
+body[data-theme="dark"] {
+  --background-color: #000000;
+  --border-color: #34404C;
+  --text-color: #FFFFFF;
+}
+
+body[data-theme="light"] {
+  --background-color: #FFFFFF;
+  --border-color: #BBAFDA;
+  --text-color: #000000;
+}
+
 body {
-  background-color: #000000;
+  background-color: var(--background-color);
+  color: var(--text-color)
+}
+
+
+body {
   line-height: 1;
 
   -webkit-font-smoothing: antialiased;

@@ -7,6 +7,7 @@ interface InteractiveElementStateColorsType {
 }
 
 export interface BackgroundsType {
+  blur: ModeType;
   body: string;
   button: {
     base: InteractiveElementStateColorsType;
@@ -460,6 +461,11 @@ function convert(mapping: ModeType): ModeType {
 
 const ColorsDerived = {
   backgrounds: {
+    blur: {
+      [ModeEnum.DARK]: 'rgba(0, 0, 0, 0.7)',
+      [ModeEnum.LIGHT]: 'rgba(255, 255, 255, 0.7)',
+      [ModeEnum.MODE3]: 'rgba(255, 255, 255, 0.7)',
+    },
     body: convert({
       [ModeEnum.DARK]: 'black',
       [ModeEnum.LIGHT]: 'white',

@@ -1,16 +1,16 @@
+import dynamic from 'next/dynamic';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import CellItem, { AddAppFunctionOptionsType } from './Cell';
-import Grid, { Cell } from '@mana/components/Grid';
-import { AppConfigType } from '@components/v2/Apps/interfaces';
-import { insertAtIndex, sortByKey } from '@utils/array';
-import { removeClassNames } from '@utils/elements';
+import Grid from '@mana/components/Grid';
+import { AddAppFunctionOptionsType, AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { insertAtIndex, sortByKey } from '@utils/array';
 import { randomSimpleHashGenerator } from '@utils/string';
+import { upsertRootElement } from './utils';
 
-type GridContainerProps = {
+type AppLayoutProps = {
   apps?: AppConfigType[];
   onRemoveApp: (
     uuidApp: string,
@@ -20,7 +20,7 @@ type GridContainerProps = {
   ) => void;
 };
 
-function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
+function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -97,7 +97,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
             const columnSpan =
               column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol)) + 1;
 
-            updateAppConfig({
+            const configNew = {
               ...config,
               layout: {
                 ...(config?.layout || {}),
@@ -106,18 +106,9 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
                 row: idxRow,
               },
               uuid: uuidCur,
-            });
-
-            const element = document.getElementById(uuidCur);
-            if (element) {
-              element.className = [
-                'grid-cell',
-                `grid-row-${idxRow}`,
-                `grid-col-start-${column}`,
-                `grid-col-end-${columnSpan}`,
-                removeClassNames(element?.className, cn => cn.startsWith('grid-')),
-              ].join(' ');
-            }
+            };
+            updateAppConfig(configNew);
+            upsertRootElement(configNew);
           },
         );
       },
@@ -138,7 +129,7 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
     }
     const config = refAppConfigs?.current?.[uuidApp];
 
-    (container || containerRef?.current).appendChild(Cell(config));
+    (container || containerRef?.current).appendChild(upsertRootElement(config));
 
     setTimeout(() => {
       const parentNode = document.getElementById(uuidApp);
@@ -148,9 +139,17 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
         const ref = createRef() as React.Ref<HTMLDivElement>;
         refCells.current[uuidApp] = ref;
 
+        const AppContainer = dynamic(() => import('./Container'));
+
         refRoots.current[uuidApp].render(
           <ThemeProvider theme={themeContext}>
-            <CellItem app={app} onAdd={addApp} onRemove={removeApp} ref={ref} uuid={uuidApp} />
+            <AppContainer
+              app={app}
+              onAdd={addApp}
+              onRemove={removeApp}
+              ref={ref}
+              uuid={uuidApp}
+            />
           </ThemeProvider>,
         );
       }
@@ -188,14 +187,14 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
             }, index * 100);
           });
         } else {
-          addApp(
-            {
-              subtype: AppSubtypeEnum.IDE,
-              type: AppTypeEnum.EDITOR,
-              uuid: randomSimpleHashGenerator(),
-            },
-            containerRef?.current,
-          );
+          // addApp(
+          //   {
+          //     subtype: AppSubtypeEnum.IDE,
+          //     type: AppTypeEnum.EDITOR,
+          //     uuid: randomSimpleHashGenerator(),
+          //   },
+          //   containerRef?.current,
+          // );
         }
       }
     }
@@ -213,4 +212,4 @@ function GridContainer({ apps: defaultApps, onRemoveApp }: GridContainerProps) {
   );
 }
 
-export default GridContainer;
+export default AppLayout;

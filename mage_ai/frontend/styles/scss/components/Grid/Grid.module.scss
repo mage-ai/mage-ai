@@ -1,4 +1,7 @@
-$numbers: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12;
+@use '../../base/borders' as borders;
+
+$numbers: 1, 2, 3, 4;
+$numbers-more: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20;
 
 @mixin display(
 $values: (
@@ -71,8 +74,8 @@ $values: (
   }
 }
 
-@mixin template() {
-  @each $value1 in $numbers {
+@mixin template-more() {
+  @each $value1 in $numbers-more {
     &.padding-#{$value1} {
       padding: #{$value1}px;
     }
@@ -102,6 +105,11 @@ $values: (
     &.row-#{$value1} {
       grid-row: $value1;
     }
+  }
+}
+
+@mixin template() {
+  @each $value1 in $numbers {
 
     &.template-rows-#{$value1}fr {
       grid-template-rows: #{$value1}fr;
@@ -213,6 +221,7 @@ $values: (
   @include display;
   @include layout;
   @include template;
+  @include template-more;
 
   &.height-100 {
     height: 100%;
@@ -220,6 +229,15 @@ $values: (
 
   &.width-100 {
     width: 100%;
+  }
+
+  &.borders-true {
+    @include borders.base;
+    border-color: var(--border-color);
+  }
+
+  &.borders-false {
+    border: none;
   }
 }
 

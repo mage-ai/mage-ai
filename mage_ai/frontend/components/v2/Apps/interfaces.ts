@@ -1,5 +1,13 @@
 import { AppTypeEnum, AppSubtypeEnum } from './constants';
 
+export type AddAppFunctionOptionsType = {
+  container?: HTMLElement;
+  grid?: {
+    absolute?: AppConfigType;
+    relative?: AppConfigType;
+  };
+};
+
 export interface AppLayoutType {
   column?: number;
   columnSpan?: number;

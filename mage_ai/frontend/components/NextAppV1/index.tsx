@@ -52,7 +52,6 @@ const Banner = dynamic(() => import('@oracle/components/Banner'), { ssr: false }
 
 type AppInternalProps = {
   defaultTitle?: string;
-  pro?: boolean;
   themeProps?: {
     currentTheme?: any;
   };

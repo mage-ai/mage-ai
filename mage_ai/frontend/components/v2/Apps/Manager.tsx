@@ -15,7 +15,8 @@ import { AppConfigType } from './interfaces';
 import { setThemeSettings } from '@mana/themes/utils';
 import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { Cluster, Dark } from '@mana/icons';
-import '@styles/scss/pages/Apps/Manager.module.scss';
+import { upsertRootElement } from './utils';
+import styles from '@styles/scss/pages/Apps/Manager.module.scss';
 
 function Manager() {
   const themeContext = useContext(ThemeContext);
@@ -56,12 +57,7 @@ function Manager() {
       container.remove();
     }
 
-    const element = document.createElement('div');
-    element.id = uuid;
-    element.style.display = 'grid';
-    element.style.gridTemplateRows = 'inherit';
-    element.style.overflow = 'hidden';
-    containerRef?.current.appendChild(element);
+    containerRef?.current.appendChild(upsertRootElement({ uuid }));
 
     apps?.forEach((app: AppConfigType, idx: number) => {
       setTimeout(() => {
@@ -72,13 +68,13 @@ function Manager() {
           const ref = createRef() as React.Ref<HTMLDivElement>;
           refCells.current[uuid] = ref;
 
-          const Container = dynamic(() => import('@components/v2/Apps/Container'), {
+          const AppLayout = dynamic(() => import('@components/v2/Apps/Layout'), {
             ssr: false,
           });
 
           refRoots.current[uuid].render(
             <ThemeProvider theme={themeContext}>
-              <Container
+              <AppLayout
                 apps={[app]}
                 onRemoveApp={(
                   _,
@@ -113,25 +109,26 @@ function Manager() {
                   uuid: 'test-system-browser-app',
                 },
               ]);
-              setTimeout(() => {
-                addPanel('test-panel-2', [
-                  {
-                    subtype: AppSubtypeEnum.IDE,
-                    type: AppTypeEnum.EDITOR,
-                    uuid: 'test-editor-ide-app',
-                  },
-                ]);
-              }, 1000);
+              // setTimeout(() => {
+              //   addPanel('test-panel-2', [
+              //     {
+              //       subtype: AppSubtypeEnum.IDE,
+              //       type: AppTypeEnum.EDITOR,
+              //       uuid: 'test-editor-ide-app',
+              //     },
+              //   ]);
+              // }, 1000);
             }, 1);
           }
         }
       }}
     >
-      <div className="container">
+      <div className={styles.container}>
         <Grid
           height="inherit"
           overflow="visible"
           padding={12}
+          rowGap={12}
           templateColumns="auto-fill"
           templateRows="auto 1fr"
           width="100%"

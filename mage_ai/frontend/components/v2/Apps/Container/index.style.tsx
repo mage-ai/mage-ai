@@ -1,0 +1,23 @@
+import styled from 'styled-components';
+
+export const Header = styled.header`
+  ${({ theme }) => `
+    backdrop-filter: saturate(100%) blur(3px);
+    background-color: ${theme.colors.backgrounds.blur};
+    border-top-left-radius: ${theme.borders.radius.base};
+    border-top-right-radius: ${theme.borders.radius.base};
+    display: grid;
+    grid-auto-flow: column;
+    grid-column-gap: ${theme.padding.base}px;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    justify-content: space-between;
+    padding-bottom: ${theme.padding.base}px;
+    padding-left: ${theme.padding.base}px;
+    padding-right: ${theme.padding.base / 2}px;
+    padding-top: ${theme.padding.base}px;
+    position: absolute;
+    width: calc(100% - ${theme.padding.base / 2}px);
+    z-index: 1;
+  `}
+`;

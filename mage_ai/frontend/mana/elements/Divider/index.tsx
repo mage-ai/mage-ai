@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from '@styles/scss/components/Divider/Divider.module.scss';
 
 type DividerProps = {
   compact?: boolean;
