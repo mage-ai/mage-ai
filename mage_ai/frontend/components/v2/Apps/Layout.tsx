@@ -205,9 +205,11 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
     <Grid
       autoColumns="1fr"
       autoRows="1fr"
+      columnGap={12}
       justifyContent="stretch"
       justifyItems="stretch"
       ref={containerRef}
+      rowGap={12}
     />
   );
 }

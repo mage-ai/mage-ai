@@ -1,16 +1,18 @@
 import { AppConfigType, AppLayoutType } from './interfaces';
 import { removeClassNames } from '@utils/elements';
 
-const regex = /grid-(row-\d+|col-(start|end)-\d+)/;
+import styles from '@styles/scss/components/Grid/Grid.module.scss';
+
+const regex = /^(row-\d+|column-(start|end)-\d+)$/;
 
 export function upsertRootElement({
   layout,
   uuid,
 }: AppConfigType) {
   const {
-    column = 0,
-    columnSpan = 0,
-    row = 0,
+    column,
+    columnSpan,
+    row,
   } = layout || {
     column: 0,
     columnSpan: 0,
@@ -28,16 +30,19 @@ export function upsertRootElement({
   element.style.gridTemplateRows = 'inherit';
   element.style.overflow = 'hidden';
 
-  element.className = [
+  const arr = [
+    'grid',
     'grid-cell',
-    `grid-row-${row}`,
-    `grid-col-start-${column}`,
-    `grid-col-end-${columnSpan}`,
+    `row-${row + 1}`,
+    `column-start-${column + 1}`,
+    `column-end-${columnSpan + 1}`,
     removeClassNames(
       element?.className,
       cn => regex.test(cn),
     ),
-  ].join(' ');
+  ];
+
+  element.className = arr?.map(key => styles[key])?.join(' ');
 
   return element;
 }
