@@ -1,4 +1,4 @@
-import { AppConfigType, AppLayoutType } from './interfaces';
+import { AppConfigType, AppLayoutType } from '../interfaces';
 import { removeClassNames } from '@utils/elements';
 
 import styles from '@styles/scss/components/Grid/Grid.module.scss';
