@@ -1,8 +1,245 @@
-// Grid.module.scss
-@import '../../abstracts/colors';
-@import '../../base/borders';
-@import '../../base/grid';
+$numbers: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12;
+
+@mixin display(
+$values: (
+  grid,
+  inline-grid,
+)) {
+  @each $value in $values {
+    &.display-#{$value} {
+      display: $value;
+    }
+  }
+}
+
+@mixin auto-flow(
+$values: (
+  row, column, dense, row dense, column dense
+)) {
+  @each $value in $values {
+    &.auto-flow-#{$value} {
+      grid-auto-flow: $value;
+    }
+  }
+}
+
+@mixin layout(
+$values: (
+  inherit, auto, none, initial, unset
+)) {
+  @each $value in $values {
+    &.height-#{$value} {
+      height: $value;
+    }
+
+    &.width-#{$value} {
+      width: $value;
+    }
+  }
+}
+
+@mixin content-items(
+$values: (
+  auto,
+  center,
+  end,
+  space-around,
+  space-between,
+  space-evenly,
+  start,
+  stretch,
+)) {
+  @each $value in $values {
+    &.align-items-#{$value} {
+      align-items: $value;
+    }
+    &.justify-items-#{$value} {
+      justify-items: $value;
+    }
+    &.align-content-#{$value} {
+      align-content: $value;
+    }
+    &.justify-content-#{$value} {
+      justify-content: $value;
+    }
+    &.align-self-#{$value} {
+      align-self: $value;
+    }
+    &.justify-self-#{$value} {
+      justify-self: $value;
+    }
+  }
+}
+
+@mixin template() {
+  @each $value1 in $numbers {
+    &.padding-#{$value1} {
+      padding: #{$value1}px;
+    }
+
+    &.column-gap-#{$value1} {
+      grid-column-gap: #{$value1}px;
+    }
+    &.column-start-#{$value1} {
+      grid-column-start: $value1;
+    }
+    &.column-end-#{$value1} {
+      grid-column-end: $value1;
+    }
+    &.column-#{$value1} {
+      grid-column: $value1;
+    }
+
+    &.row-gap-#{$value1} {
+      grid-row-gap: #{$value1}px;
+    }
+    &.row-start-#{$value1} {
+      grid-row-start: $value1;
+    }
+    &.row-end-#{$value1} {
+      grid-row-end: $value1;
+    }
+    &.row-#{$value1} {
+      grid-row: $value1;
+    }
+
+    &.template-rows-#{$value1}fr {
+      grid-template-rows: #{$value1}fr;
+    }
+    &.template-rows-auto-#{$value1}fr {
+      grid-template-rows: auto #{$value1}fr;
+    }
+    &.template-rows-#{$value1}fr-auto {
+      grid-template-rows: #{$value1}fr auto;
+    }
+
+    &.template-columns-#{$value1}fr {
+      grid-template-columns: #{$value1}fr;
+    }
+    &.template-columns-auto-#{$value1}fr {
+      grid-template-columns: auto #{$value1}fr;
+    }
+    &.template-columns-#{$value1}fr-auto {
+      grid-template-columns: #{$value1}fr auto;
+    }
+
+    @each $value2 in $numbers {
+      &.template-rows-#{$value1}fr-#{$value2}fr {
+        grid-template-rows: #{$value1}fr #{$value2}fr;
+      }
+      &.template-rows-auto-#{$value1}fr-#{$value2}fr {
+        grid-template-rows: auto #{$value1}fr #{$value2}fr;
+      }
+      &.template-rows-#{$value1}fr-#{$value2}fr-auto {
+        grid-template-rows: #{$value1}fr #{$value2}fr auto;
+      }
+      &.template-rows-auto-#{$value1}fr-#{$value2}fr-auto {
+        grid-template-rows: auto #{$value1}fr #{$value2}fr auto;
+      }
+
+      &.template-columns-#{$value1}fr-#{$value2}fr {
+        grid-template-columns: #{$value1}fr #{$value2}fr;
+      }
+      &.template-columns-auto-#{$value1}fr-#{$value2}fr {
+        grid-template-columns: auto #{$value1}fr #{$value2}fr;
+      }
+      &.template-columns-#{$value1}fr-#{$value2}fr-auto {
+        grid-template-columns: #{$value1}fr #{$value2}fr auto;
+      }
+      &.template-columns-auto-#{$value1}fr-#{$value2}fr-auto {
+        grid-template-columns: auto #{$value1}fr #{$value2}fr auto;
+      }
+
+      @each $value3 in $numbers {
+        &.template-rows-#{$value1}fr-#{$value2}fr-#{$value3}fr {
+          grid-template-rows: #{$value1}fr #{$value2}fr #{$value3}fr;
+        }
+        &.template-rows-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr {
+          grid-template-rows: auto #{$value1}fr #{$value2}fr #{$value3}fr;
+        }
+        &.template-rows-#{$value1}fr-#{$value2}fr-#{$value3}fr-auto {
+          grid-template-rows: #{$value1}fr #{$value2}fr #{$value3}fr auto;
+        }
+        &.template-rows-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr-auto {
+          grid-template-rows: auto #{$value1}fr #{$value2}fr #{$value3}fr auto;
+        }
+
+        &.template-columns-#{$value1}fr-#{$value2}fr-#{$value3}fr {
+          grid-template-columns: #{$value1}fr #{$value2}fr #{$value3}fr;
+        }
+        &.template-columns-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr {
+          grid-template-columns: auto #{$value1}fr #{$value2}fr #{$value3}fr;
+        }
+        &.template-columns-#{$value1}fr-#{$value2}fr-#{$value3}fr-auto {
+          grid-template-columns: #{$value1}fr #{$value2}fr #{$value3}fr auto;
+        }
+        &.template-columns-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr-auto {
+          grid-template-columns: auto #{$value1}fr #{$value2}fr #{$value3}fr auto;
+        }
+
+        @each $value4 in $numbers {
+          &.template-rows-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr {
+            grid-template-rows: #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr;
+          }
+          &.template-rows-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr {
+            grid-template-rows: auto #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr;
+          }
+          &.template-rows-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr-auto {
+            grid-template-rows: #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr auto;
+          }
+
+          &.template-columns-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr {
+            grid-template-columns: #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr;
+          }
+          &.template-columns-auto-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr {
+            grid-template-columns: auto #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr;
+          }
+          &.template-columns-#{$value1}fr-#{$value2}fr-#{$value3}fr-#{$value4}fr-auto {
+            grid-template-columns: #{$value1}fr #{$value2}fr #{$value3}fr #{$value4}fr auto;
+          }
+        }
+      }
+    }
+  }
+}
 
 .grid {
-  @include grid;
+  display: grid;
+  min-height: 0;
+  min-width: 0;
+
+  @include auto-flow;
+  @include content-items;
+  @include display;
+  @include layout;
+  @include template;
+
+  &.height-100 {
+    height: 100%;
+  }
+
+  &.width-100 {
+    width: 100%;
+  }
 }
+
+/* ### Track Sizes
+
+- `<track-size>` can be specified as:
+    - `<length>`: e.g., `100px`
+    - `<percentage>`: e.g., `50%`
+    - `auto`
+    - `fr` (fractional unit)
+    - `min-content`
+    - `max-content`
+    - `minmax(min, max)`
+    - `fit-content(<length>)`
+
+### Additional Functions for Grid Layout
+
+- `repeat()`: Allows repetition of track sizes
+    - e.g., `repeat(3, 1fr)`
+- `minmax(min, max)`: Sets a flexible length
+    - e.g., `minmax(100px, 1fr)`
+- `fit-content(<length>)`: Fit only as much as needed
+    - e.g., `fit-content(200px)` */

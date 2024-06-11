@@ -2,8 +2,8 @@ import React from 'react';
 
 import borders from '../../styles/borders';
 import styled from 'styled-components';
-import { UNIT } from '../../spaces';
-import Grid from '../../Grid';
+import { UNIT } from '../../themes/spaces';
+import Grid from '../../components/Grid';
 
 type GroupStyleProps = {
   itemsContained?: boolean;
@@ -27,7 +27,6 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
         columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
         height="100%"
         justifyContent="start"
-        style={{ overflow: 'visible' }}
         templateColumns="min-content"
         templateRows="1fr"
       >

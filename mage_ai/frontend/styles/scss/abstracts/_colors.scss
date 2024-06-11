@@ -1,4 +1,17 @@
 // themes/colors.ts -> abstracts/colors.scss
+// E6 is 90%
+// D9 is 85%
+// B3 is 70%
+// 99 is 60%
+// 80 is 50%
+// 66 is 40%
+// 4D is 30%
+// 33 is 20%
+// 1A is 10%
+// 0D is 05%
+// 08 is 03%
+// 00 is 00%
+
 $backgrounds-body: #000000;
 $backgrounds-button-base-default: #28333D;
 $backgrounds-button-base-hover: #34404CB3;
@@ -36,11 +49,11 @@ $borders-color-muted-default: grayLo;
 $borders-color-muted-hover: #34404C33;
 $borders-outline-offset: 1;
 $borders-outline-width: 2;
-$borders-radius-base: 10px;
+
 $borders-radius-round: 40px;
 $borders-radius-sm: 6px;
-$borders-style: solid;
-$borders-width: 1px;
+
+
 $buttons-border-color-base-default: gray;
 $buttons-border-color-base-hover: #34404C;
 $buttons-border-color-basic-default: gray;

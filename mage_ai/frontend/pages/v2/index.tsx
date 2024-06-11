@@ -1,18 +1,12 @@
 import Route from '@components/v2/Route';
+import dynamic from 'next/dynamic';
 
 function Home() {
-  return <div />;
-}
+  const AppsManager = dynamic(() => import('@components/v2/Apps/Manager'), {
+    ssr: false,
+  });
 
-export async function getInitialProps() {
-  const res = await fetch('https://demo.mage.ai/api/pipelines?_limit=1');
-  const data = await res.json();
-
-  return {
-    props: {
-      data,
-    },
-  };
+  return <AppsManager />;
 }
 
 export default Route(Home);

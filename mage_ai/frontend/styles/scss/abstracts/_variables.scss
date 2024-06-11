@@ -1,5 +1,10 @@
 @import '../abstracts/colors';
 
+// borders.ts
+$borders-radius-base: 10px;
+$borders-style: solid;
+$borders-width: 1px;
+
 // interactive.ts
 $padding-vertical-base: $buttons-padding-base;
 $padding-vertical-sm: $buttons-padding-sm;

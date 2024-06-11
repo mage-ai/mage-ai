@@ -67,7 +67,7 @@ export default function build(colors: ColorsType): FontsType {
       },
     },
     lineHeight: {
-      base: 'normal', // 100% - 120%
+      base: '125%', // 100% - 120%
       md: '144%',
       monospace: '160%',
       sm: `${UNIT * 5}px`,
