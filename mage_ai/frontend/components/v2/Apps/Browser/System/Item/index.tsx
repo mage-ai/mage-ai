@@ -48,7 +48,7 @@ function itemsRootID(uuid: string) {
 }
 
 function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
-  const { items, name } = item as ItemType;
+  const { items, path, name } = item as ItemDetailType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   // TODO (dangerous): update this with a real dynamic value.
@@ -61,7 +61,13 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
     iconColor,
     isBlockFile,
     isFirstParentFolderForBlock,
-  } = useFileIcon({ isFolder, name, theme: themeContext, uuid: name });
+  } = useFileIcon({
+    filePathToUse: path,
+    isFolder,
+    name,
+    theme: themeContext,
+    uuid: name,
+  });
 
   const isBlockFileWithSquareIcon = useMemo(
     () => !!folderNameForBlock && !isFolder && !!isBlockFile,
@@ -118,10 +124,8 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       } else if (BlockIcon) {
         return (
           <BlockIcon
-            borderOnly={!pipelineCount}
             color={blockIconColor}
             size={folderNameForBlock && !isFolder ? 8 : 12}
-            square
           />
         );
       }

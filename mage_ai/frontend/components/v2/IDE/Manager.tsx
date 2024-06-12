@@ -11,8 +11,10 @@ import { getTheme } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
 import { mergeDeep } from '@utils/hash';
 
+type onComplete = (wrapper?: any, languageServerClient?: any, languageClient?: any, files?: FileType[]) => void;
+
 type InitializeWrapperProps = {
-  onComplete?: (wrapper?: any) => void;
+  onComplete?: onComplete;
   options?: {
     configurations?: any;
     theme?: IDEThemeEnum;
@@ -20,11 +22,11 @@ type InitializeWrapperProps = {
 };
 
 type InitializeLanguageServerProps = {
-  onComplete?: (lanuageServerClient?: any) => void;
+  onComplete?: onComplete;
 };
 
 type InitializeWorkspaceProps = {
-  onComplete?: (files?: FileType[]) => void;
+  onComplete?: onComplete;
   options?: {
     fetch?: (callback: (files: FileType[]) => void) => void;
   };
@@ -45,9 +47,9 @@ class Manager {
   private languageServerClientWrapper: any = null;
   private monaco: any = null;
   private onCompletions: {
-    languageServer?: (languageServerClient?: any) => void;
-    workspace?: (files?: FileType[]) => void;
-    wrapper?: (wrapper?: any) => void;
+    languageServer?: onComplete;
+    workspace?: onComplete;
+    wrapper?: onComplete;
   } = {};
   private completions: {
     languageServer?: boolean[];

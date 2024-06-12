@@ -35,6 +35,7 @@ type UseFileIconProps = {
   allowEmptyFolders?: boolean;
   children?: any;
   defaultColor?: string;
+  filePathToUse?: string;
   disabled?: boolean;
   file?: FileType;
   filePath?: string;
@@ -59,17 +60,12 @@ export default function useFileIcon({
   isInPipelinesFolder,
   isFileDisabled,
   isNotFolder,
+  filePathToUse,
   name,
   theme,
   useRootFolder,
   uuid,
 }: UseFileIconProps) {
-  const filePathToUse: string = useMemo(
-    () =>
-      filePath ? filePath : useRootFolder ? getFullPath(file) : getFullPathWithoutRootFolder(file),
-    [file, filePath, useRootFolder],
-  );
-
   const isFolder = useMemo(
     () => isFolderProp || (!!children && !isNotFolder),
     [children, isFolderProp, isNotFolder],

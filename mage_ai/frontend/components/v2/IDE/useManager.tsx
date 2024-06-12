@@ -13,7 +13,7 @@ function useManager(uuid: string, opts?: InitializeProps): {
     workspace: boolean;
     wrapper: boolean;
   };
-  manager: any;
+  initializeManager: () => any;
 } {
   const initiatedRef = useRef(false);
   const managerRef = useRef<any | null>(null);

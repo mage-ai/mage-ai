@@ -11,7 +11,7 @@ module.exports = withBundleAnalyzer(removeImports({
   },
   experimental: {
     esmExternals: true,
-    forceSwcTransforms: true,
+    // forceSwcTransforms: true,
   },
   images: {
     unoptimized: true,
@@ -63,24 +63,20 @@ module.exports = withBundleAnalyzer(removeImports({
         }),
       );
 
-      config.optimization = {
-        ...config.optimization,
-        minimize: true,
-        minimizer: [new TerserPlugin({
-          exclude: /node_modules/,
+      config.optimization.minimizer = [
+        new TerserPlugin({
           exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
-        })],
-      };
+        }),
+      ];
 
-      // Configure Worker Loader
       config.module.rules.push({
-        test: /\.worker\.js$/,
+        test: /worker\.js$/,
         use: {
           loader: 'worker-loader',
           options: {
             filename: 'static/[fullhash].worker.js',
             publicPath: '/_next/',
-          }
+          },
         },
       });
     }
