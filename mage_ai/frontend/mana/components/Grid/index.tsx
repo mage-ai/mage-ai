@@ -9,15 +9,13 @@ type GridProps = {
   className?: string;
   uuid?: string;
 } & ElementType & {
-  [key: string]: string | number | undefined | null;
-};
+    [key: string]: string | number | undefined | null;
+  };
 
-function Grid({
-  children,
-  className: classNameProp,
-  uuid,
-  ...props
-}: GridProps, ref: React.Ref<HTMLDivElement>) {
+function Grid(
+  { children, className: classNameProp, uuid, ...props }: GridProps,
+  ref: React.Ref<HTMLDivElement>,
+) {
   const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
 
   Object.entries(props || {}).forEach(([key, value]) => {
@@ -41,11 +39,7 @@ function Grid({
     .join(' ');
 
   return (
-    <div
-      {...extractProps(props)}
-      className={classNames}
-      ref={ref}
-  >
+    <div {...extractProps(props)} className={classNames} ref={ref}>
       {children}
     </div>
   );

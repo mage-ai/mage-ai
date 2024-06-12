@@ -118,8 +118,10 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
       onSuccess: (response: any) =>
         onSuccess(response, {
           callback: ({ browser_items: items }) => {
-            filePathsRef.current = items;
-            renderItems(filePathsRef.current);
+            if (items?.length >= 1) {
+              filePathsRef.current = items;
+              renderItems((items || []) as ItemDetailType[]);
+            }
           },
           onErrorCallback: (response, errors) =>
             console.error({

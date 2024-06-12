@@ -56,10 +56,10 @@ function MenuItem({ item, small }: ItemProps) {
     >
       <Grid rowGap={4}>
         <Grid
-          alignItems="center"
-          autoFlow="column"
-          justifyContent="space-between"
-          templateRows="1fr"
+          alignItems='center'
+          autoFlow='column'
+          justifyContent='space-between'
+          templateRows='1fr'
         >
           <Text small={small}>{label?.() || uuid}</Text>
 
@@ -179,7 +179,7 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
     >
       {items?.length >= 1 && (
         <>
-          <Row direction="column" nogutter>
+          <Row direction='column' nogutter>
             {items?.map((item: MenuItemType, idx: number) => (
               <div
                 key={`menu-item-${item.uuid}-${idx}`}
