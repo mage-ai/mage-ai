@@ -131,6 +131,8 @@ services:
       - PORT=8765
     ports:
       - 8765:8765
+    networks:
+      - app-network
   magic-database:
     image: pgvector/pgvector:0.6.0-pg16
     environment:
