@@ -6,6 +6,7 @@ from functools import reduce
 
 import aiofiles
 
+from mage_ai.cache.mem_lru import MemorySizeLRUCache, async_cache_file_read
 from mage_ai.shared.utils import files_in_path
 
 root_path = '/'.join(str(pathlib.Path(__file__).parent.resolve()).split('/')[:-2])
@@ -76,49 +77,57 @@ def extract_all_imports(file_content, ignore_nesting=False):
     return [s.strip() for s in re.findall(regex, file_content)]
 
 
+autocomplete_file_cache = MemorySizeLRUCache(maxsize=100_000)
+
+
+@async_cache_file_read(autocomplete_file_cache)
+async def extract_classes_from_file(file_path: str, cwd: str = None, mode: str = 'r'):
+    cwd = cwd or os.getcwd()
+    async with aiofiles.open(file_path, mode='r') as f:
+        file_content = await f.read()
+
+    file_name = file_path.replace(f'{cwd}/', '').replace(f'{root_path}/', '')
+    files = []
+    parts = file_name.split('/')
+    module_name = '.'.join(parts).replace('.py', '')
+
+    if '__init__.py' == parts[-1]:
+        path_sub = '/'.join(parts[: len(parts) - 1])
+        files += [fn for fn in reduce(add_file, [path_sub], []) if fn != file_name]
+        module_name = module_name.replace('.__init__', '')
+
+    methods_for_class = {}
+    all_classes = extract_all_classes(file_content)
+    for class_name in all_classes:
+        try:
+            klass = getattr(
+                importlib.import_module(module_name),
+                class_name,
+            )
+            methods_for_class[class_name] = list(
+                filter(
+                    lambda x: not re.match('^_', x),
+                    dir(klass),
+                )
+            )
+        except ImportError as err:
+            print(err)
+    return dict(
+        classes=all_classes,
+        constants=extract_all_constants(file_content),
+        files=files,
+        functions=extract_all_functions(file_content),
+        imports=extract_all_imports(file_content),
+        methods_for_class=methods_for_class,
+    )
+
+
 async def build_file_content_mapping(paths, files):
     file_content_mapping = {}
     file_names = reduce(add_file, paths, files)
 
     cwd = os.getcwd()
     for file_name in file_names:
-        async with aiofiles.open(file_name, mode='r') as f:
-            file_content = await f.read()
-
-        file_name = file_name.replace(f'{cwd}/', '').replace(f'{root_path}/', '')
-        files = []
-        parts = file_name.split('/')
-        module_name = '.'.join(parts).replace('.py', '')
-
-        if '__init__.py' == parts[-1]:
-            path_sub = '/'.join(parts[: len(parts) - 1])
-            files += [fn for fn in reduce(add_file, [path_sub], []) if fn != file_name]
-            module_name = module_name.replace('.__init__', '')
-
-        methods_for_class = {}
-        all_classes = extract_all_classes(file_content)
-        for class_name in all_classes:
-            try:
-                klass = getattr(
-                    importlib.import_module(module_name),
-                    class_name,
-                )
-                methods_for_class[class_name] = list(
-                    filter(
-                        lambda x: not re.match('^_', x),
-                        dir(klass),
-                    )
-                )
-            except ImportError as err:
-                print(err)
-
-        file_content_mapping[file_name] = dict(
-            classes=all_classes,
-            constants=extract_all_constants(file_content),
-            files=files,
-            functions=extract_all_functions(file_content),
-            imports=extract_all_imports(file_content),
-            methods_for_class=methods_for_class,
-        )
+        file_content_mapping[file_name] = await extract_classes_from_file(file_name, cwd=cwd)
 
     return file_content_mapping
