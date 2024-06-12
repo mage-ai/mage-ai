@@ -55,21 +55,37 @@ class ProjectPlatformAccessible:
                             BlockType.DBT == self.type and \
                             BlockLanguage.YAML != self.language:
 
-                        # /home/src/default_repo/default_platform/
-                        # tons_of_dbt_projects/diff_name
-                        project_path = get_selected_directory_from_file_path(
-                            file_path=path,
-                            selector=lambda fn: (
-                                str(fn).endswith('dbt_project.yml') or
-                                str(fn).endswith('dbt_project.yaml')
-                            ),
-                        )
-                        # tons_of_dbt_projects/diff_name
+                        project_path = file_source.get('project_path')
+
                         if project_path:
-                            file_source['project_path'] = add_absolute_path(
+                            project_path = add_absolute_path(
                                 project_path,
                                 add_base_repo_path=False
                             )
+
+                        # If the project_path is None after calling add_absolute_path,
+                        # that means the project_path doesn't exist and we need to scan
+                        # the directories to find the project path.
+                        if not project_path:
+                            # /home/src/default_repo/default_platform/
+                            # tons_of_dbt_projects/diff_name
+                            project_path = get_selected_directory_from_file_path(
+                                file_path=path,
+                                selector=lambda fn: (
+                                    str(fn).endswith('dbt_project.yml') or
+                                    str(fn).endswith('dbt_project.yaml')
+                                ),
+                            )
+                            if project_path:
+                                project_path = add_absolute_path(
+                                    project_path,
+                                    add_base_repo_path=False
+                                )
+
+                        # tons_of_dbt_projects/diff_name
+                        if project_path:
+                            file_source['project_path'] = project_path
+
         elif config.get('file_path'):
             file_path = config.get('file_path')
             config['file_path'] = str(add_absolute_path(
