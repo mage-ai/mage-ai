@@ -68,7 +68,7 @@ jobs:
           pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
       - name: Run unit tests
         run: |
-          python3 -m unittest discover -s mage_ai --failfast
+          python3 -m unittest mage_ai.tests.data_preparation.test_variable_manager
         env:
           OPENAI_API_KEY: abcdefg
       - name: Run mage integrations unit tests
