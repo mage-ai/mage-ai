@@ -122,7 +122,7 @@ class VariableManagerTest(DBTestCase):
             self.faker.unique.name(),
             repo_path=self.repo_path,
         )
-        pipeline.variables = self.faker.unique.name()
+        pipeline.variables = {'name': self.faker.unique.name()}
         pipeline.save()
         self.assertEqual(
             get_global_variables(None, pipeline=pipeline), pipeline.variables
