@@ -28,31 +28,35 @@ type IDEProps = {
 function MateriaIDE({
   configurations: configurationsOverride,
   file,
-  theme: themeSelected = IDEThemeEnum.BASE,
+  theme: themeSelected,
   uuid,
 }: IDEProps) {
-  const wrapperCount = useRef(0);
-
   const containerRef = useRef(null);
-  const initializingRef = useRef(false);
 
-  const languageClientRef = useRef(null);
   const editorRef = useRef(null);
   const mountedRef = useRef(false);
   const wrapperRef = useRef(null);
 
+  const codeResources = useMemo(() => ({
+    main: {
+      // enforceLanguageId: file?.language || LanguageEnum.PYTHON,
+      text: file?.content || file?.path,
+      uri: `file://${file?.path}`,
+    },
+  }), [file]);
+
   const { filesInitialized, isInitialized, isLanguageServerStarted, loadingFiles, wrapper } =
     useManager({
-      codeResources: {
-        main: {
-          enforceLanguageId: file?.language || LanguageEnum.PYTHON,
-          text: file?.content || file?.path,
-          uri: `file://${file?.path}`,
-        },
+      // codeResources: {
+      //   main: codeResources,
+      // },
+      configurations: {
+        ...configurationsOverride,
+        theme: themeSelected,
       },
     });
 
-  async function addNewModel(codeResources): Promise<void> {
+  async function addNewModel(codeResources: any): Promise<void> {
     const editorApp = wrapperRef?.current?.getMonacoEditorApp();
     const editor = editorRef?.current;
 
@@ -80,23 +84,18 @@ function MateriaIDE({
   }
 
   useEffect(() => {
-    if (!initializingRef?.current && containerRef?.current && !wrapperRef?.current && wrapper) {
+    if (isInitialized && containerRef?.current && !wrapperRef?.current) {
       const initializeWrapper = async () => {
-        initializingRef.current = true;
-
-        if (wrapper) {
+        if (isInitialized) {
           try {
             wrapperRef.current = wrapper;
             await wrapper.start(containerRef.current);
 
             editorRef.current = wrapperRef.current.getEditor();
-            languageClientRef.current =
-              wrapperRef.current.languageClientWrapper.getLanguageClient();
+            await wrapper.getMonacoEditorApp().updateCodeResources(codeResources);
+
           } catch (error) {
             console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
-          } finally {
-            initializingRef.current = false;
-            wrapperCount.current += 1;
           }
         }
       };
@@ -105,7 +104,7 @@ function MateriaIDE({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wrapper]);
+  }, [isInitialized, wrapper]);
 
   return (
     <ContainerStyled>

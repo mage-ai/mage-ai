@@ -54,7 +54,7 @@ function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
   });
 
   return (
-    <Grid alignItems='center' autoFlow='column' columnGap={4}>
+    <Grid alignItems="center" autoFlow="column" columnGap={4}>
       {els}
     </Grid>
   );

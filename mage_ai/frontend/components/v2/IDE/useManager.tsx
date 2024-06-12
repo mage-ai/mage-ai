@@ -7,7 +7,6 @@ import baseConfigurations from './configurations/base';
 import {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   COMMON_EXCLUDE_PATTERNS,
-  FILE_EXTENSION_TO_LANGUAGE_MAPPING,
 } from '@interfaces/FileType';
 import { IDEThemeEnum } from './themes/interfaces';
 import { onSuccess } from '@api/utils/response';
@@ -28,7 +27,7 @@ function useManager(opts?: { codeResources?: any; configurations?: any; theme?: 
   } = opts || {
     codeResources: null,
     configurations: null,
-    theme: IDEThemeEnum.BASE,
+    theme: undefined,
   };
 
   const themeContext = useContext(ThemeContext);
