@@ -9,6 +9,7 @@ type TextProps = {
   inline?: boolean;
   small?: boolean;
   xsmall?: boolean;
+  style?: React.CSSProperties;
   // Below alter the class names
   black?: boolean;
   blue?: boolean;
@@ -22,7 +23,7 @@ type TextProps = {
   semiBold?: boolean;
 };
 
-function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
+function Text({ children, className: classNameProp, inline, small, style, xsmall, ...props }: TextProps) {
   const arr = [
     small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
     classNameProp || '',
@@ -50,11 +51,11 @@ function Text({ children, className: classNameProp, inline, small, xsmall, ...pr
     .join(' ');
 
   return inline ? (
-    <span {...props} className={classNames}>
+    <span className={classNames} style={style}>
       {children}
     </span>
   ) : (
-    <p {...props} className={classNames}>
+    <p className={classNames} style={style}>
       {children}
     </p>
   );

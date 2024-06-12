@@ -8,6 +8,7 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
   const themeContext = useContext(ThemeContext);
   const MateriaIDE = lazy(() => import('@components/v2/IDE'));
 
+  console.log(app);
   const main = useMemo(
     () => (
       <Suspense

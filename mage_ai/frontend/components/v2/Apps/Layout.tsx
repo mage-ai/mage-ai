@@ -129,7 +129,7 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
     }
     const config = refAppConfigs?.current?.[uuidApp];
 
-    (container || containerRef?.current).appendChild(upsertRootElement(config));
+    (container || containerRef?.current)?.appendChild(upsertRootElement(config));
 
     setTimeout(() => {
       const parentNode = document.getElementById(uuidApp);

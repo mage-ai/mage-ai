@@ -26,6 +26,7 @@ import { selectKeys } from '@utils/hash';
 import Worker from 'worker-loader!@public/workers/worker.ts';
 import { useMutation } from 'react-query';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
+import { groupFilesByDirectory } from './utils/grouping';
 
 function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
   const themeContext = useContext(ThemeContext);
@@ -46,76 +47,66 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
     }
   }
 
-  const createWorker = async () => {
-    const worker = new Worker();
+  function renderItems(items: ItemDetailType[]) {
+    if (!itemsRootRef?.current) {
+      const node = document.getElementById(rootID);
+      itemsRootRef.current = createRoot(node as HTMLElement);
+    }
 
-    worker.onmessage = (event: MessageEvent) => {
-      if (!itemsRootRef?.current) {
-        const node = document.getElementById(rootID);
-        itemsRootRef.current = createRoot(node as HTMLElement);
-      }
-
-      if (itemsRootRef?.current) {
-        itemsRootRef.current.render(
-          <React.StrictMode>
-            <DeferredRenderer idleTimeout={1}>
-              <ThemeProvider theme={themeContext}>
-                {Object.values(event?.data || {}).map(
-                  (item: ItemDetailType, idx: number) => (
-                    <Item
-                      app={app}
-                      item={item as ItemDetailType}
-                      key={`${item.name}-${idx}`}
-                      onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
-                        console.log('onClick', itemClicked);
-                        removeContextMenu();
-                        if (ItemTypeEnum.FILE === itemClicked?.type) {
-                          addApp(
-                            {
-                              options: {
-                                file: {
-                                  content: itemClicked?.content,
-                                  uri: itemClicked?.path,
-                                },
-                              },
-                              subtype: AppSubtypeEnum.IDE,
-                              type: AppTypeEnum.EDITOR,
-                              uuid: itemClicked?.name,
-                            },
-                            {
-                              grid: {
-                                relative: {
-                                  layout: {
-                                    column: 1,
-                                  },
-                                  uuid: app?.uuid,
-                                },
+    if (itemsRootRef?.current) {
+      const groups = groupFilesByDirectory(items as ItemDetailType[]);
+      itemsRootRef.current.render(
+        <React.StrictMode>
+          <DeferredRenderer idleTimeout={1}>
+            <ThemeProvider theme={themeContext}>
+              {Object.values(groups || {}).map(
+                (item: ItemDetailType, idx: number) => (
+                  <Item
+                    app={app}
+                    item={item as ItemDetailType}
+                    key={`${item.name}-${idx}`}
+                    onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                      console.log('onClick', itemClicked);
+                      removeContextMenu();
+                      if (ItemTypeEnum.FILE === itemClicked?.type) {
+                        addApp(
+                          {
+                            options: {
+                              file: {
+                                content: itemClicked?.content,
+                                uri: itemClicked?.path,
                               },
                             },
-                          );
-                        }
-                      }}
-                      onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                        renderContextMenu(item, event)
+                            subtype: AppSubtypeEnum.IDE,
+                            type: AppTypeEnum.EDITOR,
+                            uuid: itemClicked?.name,
+                          },
+                          {
+                            grid: {
+                              relative: {
+                                layout: {
+                                  column: 1,
+                                },
+                                uuid: app?.uuid,
+                              },
+                            },
+                          },
+                        );
                       }
-                      themeContext={themeContext}
-                    />
-                  ),
-                )}
-              </ThemeProvider>
-            </DeferredRenderer>
-          </React.StrictMode>,
-        );
-      }
-    };
-
-    worker.postMessage({
-      filePaths: filePathsRef.current,
-      groupByStrategy: GroupByStrategyEnum.DIRECTORY,
-    });
-
-    return () => worker.terminate();
-  };
+                    }}
+                    onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
+                      renderContextMenu(item, event)
+                    }
+                    themeContext={themeContext}
+                  />
+                ),
+              )}
+            </ThemeProvider>
+          </DeferredRenderer>
+        </React.StrictMode>,
+      );
+    }
+  }
 
   const [fetchItems, { isLoading }] = useMutation(
     (query?: {
@@ -130,10 +121,10 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
         onSuccess(response, {
           callback: ({ browser_items: items }) => {
             filePathsRef.current = items;
-            createWorker();
+            renderItems(filePathsRef.current);
           },
           onErrorCallback: (response, errors) =>
-            console.log({
+            console.error({
               errors,
               response,
             }),
@@ -231,7 +222,6 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
 
     const handleDocumentClick = (event: Event) => {
       const node = document.getElementById(contextMenuRootID);
-      console.log(contextMenuRootID, node);
       if (node && !node?.contains(event.target as Node)) {
         removeContextMenu();
       }

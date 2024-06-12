@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
@@ -46,8 +47,8 @@ function itemsRootID(uuid: string) {
 }
 
 function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
-  console.log('render', item?.name);
   const { items, name } = item as ItemType;
+  console.log(item);
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   // TODO (dangerous): update this with a real dynamic value.
@@ -71,8 +72,8 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
     () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
     [isFolder, name],
   );
-  const absolutePath = useMemo(() => getFullPath(item as ItemDetailType), [item]);
-  const level = useMemo(() => absolutePath.split('/').length - 1, [absolutePath]);
+  const absolutePath = useMemo(() => String(item?.path) || osPath.sep, [item]);
+  const level = useMemo(() => absolutePath?.split(osPath.sep)?.filter(p => p?.length >= 1 && p !== osPath.sep)?.length - 1, [absolutePath]);
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
   const iconRootRef = useRef(null);
@@ -179,7 +180,6 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(itemsRootID(uuid));
-      console.log('WTFFFFFFFFFFFFFFFFFFFF', node);
       if (node) {
         itemsRootRef.current = createRoot(node as HTMLElement);
       }
@@ -226,7 +226,6 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, [app, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
-    console.log('RRRRRRRRRRRRRRRRRRRRRRR');
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
       [uuid]: expandedRef?.current,
     });
@@ -245,7 +244,6 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, [items, renderIcon, renderItems, uuid]);
 
   function removeItems() {
-    console.log('???????????????????????????????');
     if (itemsRootRef?.current) {
       itemsRootRef?.current?.unmount();
       itemsRootRef.current = null;

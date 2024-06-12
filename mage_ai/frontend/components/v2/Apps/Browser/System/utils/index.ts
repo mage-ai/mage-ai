@@ -8,50 +8,11 @@ import {
   FILE_EXTENSION_ICON_MAPPING,
   FILE_EXTENSION_COLOR_MAPPING,
   Icons,
-} from './constants';
-import { ItemDetailType, ItemType } from './interfaces';
-import { ItemTypeEnum } from './enums';
+} from '../constants';
+import { ItemDetailType, ItemType } from '../interfaces';
+import { ItemTypeEnum } from '../enums';
 import { getBlockColor } from '@mana/themes/blocks';
 import { selectKeys } from '@utils/hash';
-
-export function groupFilesByDirectory(paths: string[]): ItemType {
-  const root: ItemType = {} as ItemType;
-
-  paths.forEach(path => {
-    const parts = path.split(osPath.sep).filter(Boolean);
-    let currentDir: ItemType | ItemDetailType = root;
-    let parentDir: ItemType | ItemDetailType | undefined = undefined;
-
-    parts.forEach((part, index) => {
-      const sharedProps = {
-        name: part,
-      };
-
-      if (index === parts.length - 1) {
-        currentDir[part] = {
-          ...sharedProps,
-          parent: parentDir as ItemDetailType, // Pointing to the parent directory
-          size: 123, // Mock size
-          type: ItemTypeEnum.FILE,
-        };
-      } else {
-        if (!currentDir[part]) {
-          currentDir[part] = {
-            ...sharedProps,
-            items: {},
-            parent: parentDir as ItemDetailType, // Pointing to the parent directory
-            type: ItemTypeEnum.FOLDER,
-          } as ItemDetailType;
-        }
-
-        parentDir = selectKeys(currentDir[part], ['name', 'parent', 'type']);
-        currentDir = (currentDir[part] as ItemDetailType).items;
-      }
-    });
-  });
-
-  return root;
-}
 
 export function useFileIcon(args) {
   return useFileIconBase({

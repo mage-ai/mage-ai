@@ -8,13 +8,14 @@ type GridProps = {
   className?: string;
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  style?: React.CSSProperties;
   uuid?: string;
 } & {
   [key: string]: any;
 };
 
 function Grid(
-  { children, className: classNameProp, uuid, ...props }: GridProps,
+  { children, className: classNameProp, style, uuid, ...props }: GridProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
@@ -40,7 +41,7 @@ function Grid(
     .join(' ');
 
   return (
-    <div {...props} className={classNames} ref={ref}>
+    <div  className={classNames} ref={ref} style={style}>
       {children}
     </div>
   );
