@@ -154,7 +154,9 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
       const node = document.getElementById(iconRootID(uuid));
-      iconRootRef.current = createRoot(node as HTMLElement);
+      if (node) {
+        iconRootRef.current = createRoot(node as HTMLElement);
+      }
     }
 
     if (iconRootRef?.current) {
@@ -163,7 +165,9 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
 
     if (!iconActionRootRef?.current) {
       const node = document.getElementById(iconActionRootID(uuid));
-      iconActionRootRef.current = createRoot(node as HTMLElement);
+      if (node) {
+        iconActionRootRef.current = createRoot(node as HTMLElement);
+      }
     }
 
     if (iconActionRootRef?.current) {
@@ -176,6 +180,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(itemsRootID(uuid));
+      console.log('WTFFFFFFFFFFFFFFFFFFFF', node);
       if (node) {
         itemsRootRef.current = createRoot(node as HTMLElement);
       }
@@ -222,6 +227,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, [app, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
+    console.log('RRRRRRRRRRRRRRRRRRRRRRR');
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
       [uuid]: expandedRef?.current,
     });
@@ -240,18 +246,25 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, [items, renderIcon, renderItems, uuid]);
 
   function removeItems() {
+    console.log('???????????????????????????????');
     if (itemsRootRef?.current) {
       itemsRootRef?.current?.unmount();
       itemsRootRef.current = null;
     }
   }
 
-  useEffect(() =>
-     () => {
-      removeItems();
+  useEffect(() => {
+    if (!itemsRootRef?.current) {
+      if (expandedRef?.current) {
+        renderUpdates();
+      }
     }
+
+    return () => {
+      removeItems();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  , []);
+  }, []);
 
   return (
     <FolderStyled uuid={uuid}>
@@ -287,15 +300,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
         </NameStyled>
       </Grid>
 
-      <WithOnMount
-        onMount={() => {
-          if (expandedRef?.current) {
-            renderUpdates();
-          }
-        }}
-      >
-        <div id={itemsRootID(uuid)} />
-      </WithOnMount>
+      <div id={itemsRootID(uuid)} />
     </FolderStyled>
   );
 }
