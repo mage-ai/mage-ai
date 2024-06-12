@@ -5,7 +5,7 @@ import { ElementType, extractProps } from '../../shared/types';
 import { hyphenateCamelCase } from '@utils/string';
 
 type GridProps = {
-  children?: React.ReactNode;
+  children?: React.ReactNode | Element | Element[] | React.ReactNode[];
   className?: string;
   uuid?: string;
 } & ElementType & {
@@ -40,7 +40,7 @@ function Grid(
 
   return (
     <div {...extractProps(props)} className={classNames} ref={ref}>
-      {children}
+      {children && children as React.ReactNode}
     </div>
   );
 }
