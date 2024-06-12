@@ -26,7 +26,7 @@ module.exports = withBundleAnalyzer(removeImports({
       // Apply IgnorePlugin with specific patterns
       const ignorePatterns = [];
 
-      if (process.env.IGNORE_NODE_MODULES) {
+      if (parseInt(process.env.IGNORE_NODE_MODULES || 0) === 2) {
         console.log('Ignoring node modules...')
         ignorePatterns.push(...[
           /elkjs\/lib\/elk\.bundled\.js/,
@@ -35,7 +35,7 @@ module.exports = withBundleAnalyzer(removeImports({
         ]);
       }
 
-      if (process.env.IGNORE_V1) {
+      if (parseInt(process.env.IGNORE_V1 || 0) === 2) {
         console.log('Ignoring pages and components not in V2...')
         ignorePatterns.push(...[
           // Pages not in v2

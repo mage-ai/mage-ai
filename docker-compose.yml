@@ -69,10 +69,10 @@ x-server_settings: &server_settings
   tty: true # used for interactive debugging
 x-app_settings: &app_settings
   image: node:18-alpine
-  command: sh -c "IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES} IGNORE_V1=${IGNORE_V1} yarn install && yarn dev"
+  command: sh -c "IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES} IGNORE_V1=${IGNORE_V1}  yarn install && yarn dev"
   environment:
-    - IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES}
-    - IGNORE_V1=${IGNORE_V1}
+    - IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES:-2}
+    - IGNORE_V1=${IGNORE_V1:-2}
   ports:
     - 3000:3000
   volumes:
