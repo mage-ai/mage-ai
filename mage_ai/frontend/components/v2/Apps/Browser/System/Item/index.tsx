@@ -48,7 +48,6 @@ function itemsRootID(uuid: string) {
 
 function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const { items, name } = item as ItemType;
-  console.log(item);
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   // TODO (dangerous): update this with a real dynamic value.
@@ -73,7 +72,11 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
     [isFolder, name],
   );
   const absolutePath = useMemo(() => String(item?.path) || osPath.sep, [item]);
-  const level = useMemo(() => absolutePath?.split(osPath.sep)?.filter(p => p?.length >= 1 && p !== osPath.sep)?.length - 1, [absolutePath]);
+  const level = useMemo(
+    () =>
+      absolutePath?.split(osPath.sep)?.filter(p => p?.length >= 1 && p !== osPath.sep)?.length - 1,
+    [absolutePath],
+  );
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
   const iconRootRef = useRef(null);

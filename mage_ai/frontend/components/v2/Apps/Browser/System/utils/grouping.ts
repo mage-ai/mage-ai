@@ -4,12 +4,15 @@ import { ItemDetailType, ItemType } from '../interfaces';
 export function groupFilesByDirectory(items: ItemDetailType[]) {
   const root: ItemDetailType = {} as ItemDetailType;
 
-  const mapping = items.reduce((acc, item) => ({
-    ...acc,
-    [item.path]: item,
-  }), {});
+  const mapping = items.reduce(
+    (acc, item) => ({
+      ...acc,
+      [item.path]: item,
+    }),
+    {},
+  );
 
-  items?.forEach((item) => {
+  items?.forEach(item => {
     let currentDir: ItemDetailType | ItemType = root;
 
     const basePath = item?.path;
@@ -50,7 +53,7 @@ export function groupFilesByDirectory(items: ItemDetailType[]) {
           } as ItemDetailType;
         }
 
-        currentDir = ((currentDir[part] as unknown) as ItemDetailType)?.items;
+        currentDir = (currentDir[part] as unknown as ItemDetailType)?.items;
       }
     });
   });

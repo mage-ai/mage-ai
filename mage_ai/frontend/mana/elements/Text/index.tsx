@@ -23,7 +23,15 @@ type TextProps = {
   semiBold?: boolean;
 };
 
-function Text({ children, className: classNameProp, inline, small, style, xsmall, ...props }: TextProps) {
+function Text({
+  children,
+  className: classNameProp,
+  inline,
+  small,
+  style,
+  xsmall,
+  ...props
+}: TextProps) {
   const arr = [
     small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
     classNameProp || '',

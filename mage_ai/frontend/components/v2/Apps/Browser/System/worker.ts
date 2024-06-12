@@ -1,12 +1,10 @@
 export const createWorker = async () => {
   // const worker = new Worker();
-
   // worker.onmessage = (event: MessageEvent) => {
   //   if (!itemsRootRef?.current) {
   //     const node = document.getElementById(rootID);
   //     itemsRootRef.current = createRoot(node as HTMLElement);
   //   }
-
   //   if (itemsRootRef?.current) {
   //     itemsRootRef.current.render(
   //       <React.StrictMode>
@@ -60,11 +58,9 @@ export const createWorker = async () => {
   //     );
   //   }
   // };
-
   // worker.postMessage({
   //   filePaths: filePathsRef.current,
   //   groupByStrategy: GroupByStrategyEnum.DIRECTORY,
   // });
-
   // return () => worker.terminate();
 };

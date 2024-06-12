@@ -59,48 +59,46 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
         <React.StrictMode>
           <DeferredRenderer idleTimeout={1}>
             <ThemeProvider theme={themeContext}>
-              {Object.values(groups || {}).map(
-                (item: ItemDetailType, idx: number) => (
-                  <Item
-                    app={app}
-                    item={item as ItemDetailType}
-                    key={`${item.name}-${idx}`}
-                    onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
-                      console.log('onClick', itemClicked);
-                      removeContextMenu();
-                      if (ItemTypeEnum.FILE === itemClicked?.type) {
-                        addApp(
-                          {
-                            options: {
-                              file: {
-                                content: itemClicked?.content,
-                                uri: itemClicked?.path,
-                              },
-                            },
-                            subtype: AppSubtypeEnum.IDE,
-                            type: AppTypeEnum.EDITOR,
-                            uuid: itemClicked?.name,
-                          },
-                          {
-                            grid: {
-                              relative: {
-                                layout: {
-                                  column: 1,
-                                },
-                                uuid: app?.uuid,
-                              },
+              {Object.values(groups || {}).map((item: ItemDetailType, idx: number) => (
+                <Item
+                  app={app}
+                  item={item as ItemDetailType}
+                  key={`${item.name}-${idx}`}
+                  onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                    console.log('onClick', itemClicked);
+                    removeContextMenu();
+                    if (ItemTypeEnum.FILE === itemClicked?.type) {
+                      addApp(
+                        {
+                          options: {
+                            file: {
+                              content: itemClicked?.content,
+                              uri: itemClicked?.path,
                             },
                           },
-                        );
-                      }
-                    }}
-                    onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                      renderContextMenu(item, event)
+                          subtype: AppSubtypeEnum.IDE,
+                          type: AppTypeEnum.EDITOR,
+                          uuid: itemClicked?.name,
+                        },
+                        {
+                          grid: {
+                            relative: {
+                              layout: {
+                                column: 1,
+                              },
+                              uuid: app?.uuid,
+                            },
+                          },
+                        },
+                      );
                     }
-                    themeContext={themeContext}
-                  />
-                ),
-              )}
+                  }}
+                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
+                    renderContextMenu(item, event)
+                  }
+                  themeContext={themeContext}
+                />
+              ))}
             </ThemeProvider>
           </DeferredRenderer>
         </React.StrictMode>,
