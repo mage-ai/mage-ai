@@ -10,7 +10,8 @@ import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Text from '@mana/elements/Text';
 import { ItemDetailType, ItemType } from '../interfaces';
 import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
-import { useFileIcon, getIconColorName, getFullPath } from '../utils';
+import { getIconColorName, getFullPath } from '../utils';
+import useFileIcon from '../utils/useFileIcon';
 import { removeClassNames } from '@utils/elements';
 import { cleanName } from '@utils/string';
 import {
@@ -55,10 +56,10 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const {
     BlockIcon,
     Icon,
+    color: blockIconColor,
     folderNameForBlock,
     iconColor,
     isBlockFile,
-    color: blockIconColor,
     isFirstParentFolderForBlock,
   } = useFileIcon({ isFolder, name, theme: themeContext, uuid: name });
 

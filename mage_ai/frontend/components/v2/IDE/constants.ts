@@ -1,7 +1,4 @@
-import { LanguageEnum } from './languages/constants';
-
 export const languageClientConfig = {
-  languageId: LanguageEnum.PYTHON,
   options: {
     $type: 'WebSocket',
     host: 'localhost',

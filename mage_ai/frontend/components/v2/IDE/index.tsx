@@ -32,71 +32,56 @@ function MateriaIDE({
   uuid,
 }: IDEProps) {
   const containerRef = useRef(null);
-
-  const editorRef = useRef(null);
   const mountedRef = useRef(false);
-  const wrapperRef = useRef(null);
+  const managerRef = useRef(null);
 
-  const codeResources = useMemo(() => ({
-    main: {
-      // enforceLanguageId: file?.language || LanguageEnum.PYTHON,
-      text: file?.content || file?.path,
-      uri: `file://${file?.path}`,
-    },
-  }), [file]);
-
-  const { filesInitialized, isInitialized, isLanguageServerStarted, loadingFiles, wrapper } =
-    useManager({
-      // codeResources: {
-      //   main: codeResources,
-      // },
-      configurations: {
-        ...configurationsOverride,
-        theme: themeSelected,
+  const {
+    completions,
+    initializeManager,
+  } =
+    useManager(uuid, {
+      file,
+      wrapper: {
+        options: {
+          configurations: {
+            ...configurationsOverride,
+            theme: themeSelected,
+          },
+        },
       },
     });
 
-  async function addNewModel(codeResources: any): Promise<void> {
-    const editorApp = wrapperRef?.current?.getMonacoEditorApp();
-    const editor = editorRef?.current;
-
-    if (!editor) {
-      return Promise.reject(
-        new Error('You cannot add a new model as neither editor nor diff editor is available.'),
-      );
-    }
-
-    // Step 1: Create a new model reference
-    const newModelRef = await editorApp.buildModelRef(codeResources);
-    if (!newModelRef) {
-      return Promise.reject(new Error('Failed to create new model reference.'));
-    }
-
-    // Step 2: Update editor models with the new model
-    const modelRefs = { modelRef: newModelRef, modelRefOriginal: undefined };
-    await editorApp.updateEditorModels(modelRefs);
-
-    console.log(editorApp.getTextModels());
-    console.log(editorApp.getModelRefs());
-
-    const textModel = editorApp.getTextModels()?.text;
-    textModel?.setValue(`print("Hello, World!") ${Number(new Date())} ${textModel.uri}`);
-  }
-
   useEffect(() => {
-    if (isInitialized && containerRef?.current && !wrapperRef?.current) {
+    if (containerRef?.current && !managerRef?.current) {
       const initializeWrapper = async () => {
-        if (isInitialized) {
-          try {
-            wrapperRef.current = wrapper;
-            await wrapper.start(containerRef.current);
+        try {
+          const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
+          await import('@codingame/monaco-vscode-python-default-extension');
 
-            editorRef.current = wrapperRef.current.getEditor();
-            await wrapper.getMonacoEditorApp().updateCodeResources(codeResources);
+          const configureMonacoWorkers = () => {
+            useWorkerFactory({
+              ignoreMapping: true,
+              workerLoaders: {
+                editorWorkerService: () =>
+                  new Worker(
+                    new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+                    { type: 'module' },
+                  ),
+                javascript: () =>
+                  // @ts-ignore
+                  import('monaco-editor-wrapper/workers/module/ts').then(
+                    module => new Worker(module.default, { type: 'module' }),
+                  ),
+              },
+            });
+          };
 
-          } catch (error) {
-            console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
-          }
+          configureMonacoWorkers();
+
+          managerRef.current = await initializeManager();
+          await managerRef.current.getWrapper().start(containerRef.current);
+        } catch (error) {
+          console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
         }
       };
 
@@ -104,11 +89,11 @@ function MateriaIDE({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized, wrapper]);
+  }, []);
 
   return (
     <ContainerStyled>
-      {!(isInitialized && isLanguageServerStarted && filesInitialized) && <Loading />}
+      {!(completions?.wrapper && completions?.languageServer && completions?.workspace) && <Loading />}
 
       <IDEStyled className={mountedRef?.current ? 'mounted' : ''}>
         <div ref={containerRef} style={{ height: '100vh' }} />

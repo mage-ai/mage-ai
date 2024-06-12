@@ -57,7 +57,6 @@ x-server_settings: &server_settings
     - SMTP_EMAIL=$SMTP_EMAIL
     - SMTP_PASSWORD=$SMTP_PASSWORD
     - VARIABLE_DATA_OUTPUT_META_CACHE=$VARIABLE_DATA_OUTPUT_META_CACHE
-
     - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
   ports:
     - 6789:6789
@@ -70,14 +69,18 @@ x-server_settings: &server_settings
   tty: true # used for interactive debugging
 x-app_settings: &app_settings
   image: node:18-alpine
-  command: sh -c "yarn dev"
+  command: sh -c "IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES} IGNORE_V1=${IGNORE_V1} yarn install && yarn dev"
+  environment:
+    - IGNORE_NODE_MODULES=${IGNORE_NODE_MODULES}
+    - IGNORE_V1=${IGNORE_V1}
   ports:
     - 3000:3000
   volumes:
     - .:/home/src
     # This will prevent mounting host node_modules directory to the container.
     # Don’t mount host node_modules directory to the container or else issues will arise.
-    - node_modules_volume:/home/src/mage_ai/frontend/node_modules
+    # - next_volume:/home/src/mage_ai/frontend/.next
+    # - node_modules_volume:/home/src/mage_ai/frontend/node_modules
   working_dir: /home/src/mage_ai/frontend
 services:
   server:
@@ -130,6 +133,8 @@ services:
 networks:
   app-network:
     driver: bridge
-volumes:
-  node_modules_volume:
-    driver: local
+# volumes:
+#   next_volume:
+#     driver: local
+#   node_modules_volume:
+#     driver: local

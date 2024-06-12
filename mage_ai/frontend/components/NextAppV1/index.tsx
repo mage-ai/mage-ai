@@ -57,6 +57,7 @@ type MyAppProps = {
 };
 
 function MyApp(props: MyAppProps & AppProps) {
+  console.log('render');
   const commandCenterRootRef = useRef(null);
   const refLoadingBar = useRef(null);
   const keyMapping = useRef({});

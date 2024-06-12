@@ -1,44 +1,32 @@
-import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import api from '@api';
-import baseConfigurations from './configurations/base';
-import {
-  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
-  COMMON_EXCLUDE_PATTERNS,
-} from '@interfaces/FileType';
-import { IDEThemeEnum } from './themes/interfaces';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
+import { InitializeProps } from './Manager';
 import { onSuccess } from '@api/utils/response';
 import { FileType } from './interfaces';
-import { LanguageEnum } from './languages/constants';
 
-function useManager(opts?: { codeResources?: any; configurations?: any; theme?: IDEThemeEnum }): {
-  filesInitialized: boolean;
-  isInitialized: boolean;
-  isLanguageServerStarted: boolean;
-  loadingFiles: boolean;
-  wrapper: any;
-} {
-  const {
-    codeResources,
-    configurations: configurationsOverride,
-    theme,
-  } = opts || {
-    codeResources: null,
-    configurations: null,
-    theme: undefined,
+function useManager(uuid: string, opts?: InitializeProps): {
+  completions: {
+    languageServer: boolean;
+    workspace: boolean;
+    wrapper: boolean;
   };
+  manager: any;
+} {
+  const initiatedRef = useRef(false);
+  const managerRef = useRef<any | null>(null);
 
-  const themeContext = useContext(ThemeContext);
-  const instanceRef = useRef<any | null>(null);
-  const timeoutRef = useRef<any | null>(null);
-  const wrapperRef = useRef<any | null>(null);
-
-  const [files, setFiles] = useState<FileType[]>(null);
-  const [filesInitialized, setFilesInitialized] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLanguageServerStarted, setIsLanguageServerStarted] = useState(false);
+  const [completions, setCompletions] = useState<{
+    languageServer: boolean;
+    workspace: boolean;
+    wrapper: boolean;
+  }>({
+    languageServer: false,
+    workspace: false,
+    wrapper: false,
+  });
 
   const [fetchItems, { isLoading: loadingFiles }] = useMutation(
     (query?: {
@@ -47,129 +35,77 @@ function useManager(opts?: { codeResources?: any; configurations?: any; theme?: 
       directory?: string;
       exclude_pattern?: string | RegExp;
       include_pattern?: string | RegExp;
-    }) => api.browser_items.listAsync(query),
-    {
-      onSuccess: (response: any) =>
-        onSuccess(response, {
-          callback: ({ browser_items: items }) => {
-            setFiles(items);
+    }) => api.browser_items.listAsync({
+      exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+      include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+      ...query,
+    }),
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetch = useCallback((callback) => fetchItems().then(({ data: { browser_items: items } }: { data: { browser_items: FileType[] } }) => callback(items)), []);
+
+  const initializeManager = async () => {
+    if (!managerRef?.current) {
+      let manager = null;
+
+      const mod = await import('./Manager');
+      const Manager = mod.Manager;
+      manager = Manager.getInstance(uuid);
+
+      // const startWorkers = Manager.getWorkerFactoryInitializer();
+      // await startWorkers();
+
+      await manager.initialize({
+        file: opts?.file,
+        languageServer: {
+          onComplete: (_a, _b, languageClient: any) => {
+            console.log('Language server started:', languageClient);
+            setCompletions(prev => ({ ...prev, languageServer: true }));
           },
-          onErrorCallback: (response: any, errors: any) =>
-            console.error({
-              errors,
-              response,
-            }),
-        }),
-    },
+        },
+        workspace: {
+          onComplete: (_a, _b, _c, files: FileType[]) => {
+            console.log(`Files loaded: ${files?.length}`);
+            setCompletions(prev => ({ ...prev, workspace: true }));
+          },
+          options: {
+            fetch,
+          },
+        },
+        wrapper: {
+          ...opts?.wrapper?.options,
+          onComplete: (wrapper: any) => {
+            console.log('Wrapper initialized:', wrapper);
+            setCompletions(prev => ({ ...prev, wrapper: true }));
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  );
-
-  const configurations = useMemo(
-    () =>
-      baseConfigurations(themeContext, {
-        ...configurationsOverride,
-        theme,
-      }),
-    [configurationsOverride, theme, themeContext],
-  );
-
-  useEffect(() => {
-    const initializeWrapper = async () => {
-      if (!wrapperRef?.current) {
-        const mod = await import('./Manager');
-        const Manager = mod.Manager;
-        instanceRef.current = Manager.getInstance();
-        wrapperRef.current = await instanceRef.current.getWrapper({
-          codeResources,
-          configurations,
-        });
-
-        const check = () => {
-          const done = wrapperRef?.current?.isInitDone();
-          console.log('Wrapper initialized:', done);
-          if (done) {
-            setIsInitialized(done);
-            clearTimeout(timeoutRef.current);
-          } else {
-            timeoutRef.current = setTimeout(() => check(), 1000);
-          }
-        };
-        check();
-      }
-    };
-
-    initializeWrapper();
-
-    return () => {
-      instanceRef.current = null;
-      clearTimeout(timeoutRef.current);
-    };
-  }, [codeResources, configurations]);
-
-  useEffect(() => {
-    if (isInitialized && !isLanguageServerStarted) {
-      const check = () => {
-        const done = wrapperRef?.current?.languageClientWrapper?.isStarted();
-        console.log('Language server started:', done);
-        if (done) {
-          setIsLanguageServerStarted(done);
-          clearTimeout(timeoutRef.current);
-        } else {
-          timeoutRef.current = setTimeout(() => check(), 1000);
-        }
-      };
-      check();
-    }
-
-    return () => {
-      clearTimeout(timeoutRef.current);
-    };
-  }, [isInitialized, isLanguageServerStarted]);
-
-  useEffect(() => {
-    if (files === null) {
-      fetchItems({
-        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+            if (opts?.wrapper?.onComplete) {
+              opts?.wrapper?.onComplete?.();
+            }
+          },
+        },
       });
+
+      initiatedRef.current = true;
+      managerRef.current = manager;
+
+      return manager;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files]);
+  };
 
   useEffect(() => {
-    if (isLanguageServerStarted && !filesInitialized && files !== null) {
-      const languageClient = wrapperRef?.current?.languageClientWrapper?.getLanguageClient();
+    const manager = managerRef.current;
 
-      let filesCount = 0;
-      if (languageClient) {
-        files.forEach(({ content, language, modified_timestamp: version, path }) => {
-          if (LanguageEnum.PYTHON === language) {
-            const textDocument = {
-              languageId: language,
-              text: content || '',
-              uri: `file://${path}`,
-              version,
-            };
-
-            languageClient.sendNotification('textDocument/didOpen', { textDocument });
-            filesCount += 1;
-          }
-        });
-
-        console.log(`Files initialized: ${filesCount}`);
-      }
-
-      setFilesInitialized(true);
-    }
-  }, [files, filesInitialized, isLanguageServerStarted]);
+    return () => {
+      manager?.cleanup();
+      managerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
-    filesInitialized,
-    isInitialized,
-    isLanguageServerStarted,
-    loadingFiles,
-    wrapper: wrapperRef?.current,
+    completions,
+    initializeManager,
   };
 }
 

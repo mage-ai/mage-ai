@@ -1,4 +1,5 @@
 import { Ref } from 'react';
+import { LanguageEnum } from '../languages/constants';
 
 // https://microsoft.github.io/monaco-editor/typedoc/enums/languages.CompletionItemKind.html
 // Class
@@ -31,8 +32,8 @@ import { Ref } from 'react';
 let deltaDecorarationsAdded = false;
 let decorationIds = []; // Store existing decoration IDs
 
-export default function autocomplete(monaco: any) {
-  monaco.languages.registerCompletionItemProvider('python', {
+export default function autocomplete(monaco: any, language: LanguageEnum = LanguageEnum.PYTHON) {
+  monaco.languages.registerCompletionItemProvider(language, {
     provideCompletionItems: function (model, position) {
       const textUntilPosition = model.getValueInRange({
         startLineNumber: 1,

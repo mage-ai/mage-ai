@@ -1,237 +1,299 @@
-import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useRef } from 'react';
-
 import baseConfigurations from './configurations/base';
 import initializeAutocomplete from './autocomplete';
-import themes from './themes';
-import { IDEThemeEnum } from './themes/interfaces';
-import pythonProvider from './languages/python/provider';
-import { FileType } from './interfaces';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
-import { ContainerStyled, IDEStyled } from './index.style';
+import pythonProvider from './languages/python/provider';
+import themes from './themes';
+import { CodeResources, FileType } from './interfaces';
+import { IDEThemeEnum } from './themes/interfaces';
 import { LanguageEnum } from './languages/constants';
 import { getHost } from '@api/utils/url';
+import { getTheme } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
+import { mergeDeep } from '@utils/hash';
+
+type InitializeWrapperProps = {
+  onComplete?: (wrapper?: any) => void;
+  options?: {
+    configurations?: any;
+    theme?: IDEThemeEnum;
+  };
+};
+
+type InitializeLanguageServerProps = {
+  onComplete?: (lanuageServerClient?: any) => void;
+};
+
+type InitializeWorkspaceProps = {
+  onComplete?: (files?: FileType[]) => void;
+  options?: {
+    fetch?: (callback: (files: FileType[]) => void) => void;
+  };
+};
+
+export type InitializeProps = {
+  file?: FileType;
+  languageServer?: InitializeLanguageServerProps;
+  workspace?: InitializeWorkspaceProps;
+  wrapper?: InitializeWrapperProps;
+};
 
 class Manager {
-  private static instance: Manager;
+  private static instances: Record<string, Manager>;
+  private files: FileType[] = null;
+  private language: LanguageEnum = null;
+  private languageClient: any = null;
+  private languageServerClientWrapper: any = null;
   private monaco: any = null;
+  private onCompletions: {
+    languageServer?: (languageServerClient?: any) => void;
+    workspace?: (files?: FileType[]) => void;
+    wrapper?: (wrapper?: any) => void;
+  } = {};
+  private completions: {
+    languageServer?: boolean[];
+    workspace?: boolean[];
+    wrapper?: boolean[];
+  } = {
+    languageServer: [],
+    workspace: [],
+    wrapper: [],
+  };
+  private timeout: any = null;
+  private uuid: string = null;
   private wrapper: any | null = null;
 
-  private constructor() {
-    // Private constructor to prevent direct class initialization
+  public constructor(uuid: string) {
+    this.uuid = uuid;
   }
 
-  public static getInstance(): Manager {
-    if (!Manager.instance) {
-      Manager.instance = new Manager();
+  public static getInstance(uuid: string): Manager {
+    if (!Manager.instances) {
+      Manager.instances = {};
     }
-    return Manager.instance;
+
+    if (!(uuid in Manager.instances)) {
+      Manager.instances[uuid] = new Manager(uuid);
+    }
+
+    return Manager.instances[uuid];
   }
 
-  getMonaco() {
+  public getWrapper() {
+    return this.wrapper;
+  }
+
+  public async initialize({
+    file,
+    languageServer,
+    workspace,
+    wrapper,
+  }: InitializeProps) {
+    this.language = file?.language;
+
+    this.onCompletions.wrapper = () => wrapper?.onComplete?.();
+    this.onCompletions.languageServer = () => languageServer?.onComplete?.();
+    this.onCompletions.workspace = () => workspace?.onComplete?.();
+
+    await this.loadMonaco();
+    await this.setupPythonLanguage();
+    await this.setupAutocomplete();
+
+    await this.loadServices();
+
+    await this.initializeWrapper(
+      file,
+      wrapper,
+      async (languageServerClientWrapper: any) => await this.startLanguageServer(
+        languageServerClientWrapper,
+        languageServer,
+        async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
+      ),
+    );
+    await this.isCompleted();
+  }
+
+  public getMonaco() {
     return this.monaco;
   }
 
-  public async getWrapper(opts?: { codeResources: any; configurations: any }) {
-    if (!this.wrapper) {
-      const { codeResources, configurations } = opts || {};
+  private async isCompleted() {
+    const watch = () => {
+      clearTimeout(this.timeout);
 
-      this.monaco = await import('monaco-editor');
-      const configUri = new URL('./languages/python/config.json', import.meta.url).href;
+      Object.entries(this.onCompletions || {}).forEach(([key, onComplete]) => {
+        const [completed, completionRan] = this.completions[key] || [false, false];
 
-      const pythonLanguageExtensionWithURI = {
-        ...pythonLanguageExtension,
-        configuration: this.monaco.Uri.parse(
-          `${getHost({
-            forceCurrentPort: true,
-          })}${configUri}`,
-        ),
-      };
-      this.monaco.languages.register(pythonLanguageExtensionWithURI);
-      this.monaco.languages.setLanguageConfiguration(
-        pythonLanguageExtension.id,
-        // @ts-ignore
-        pythonConfiguration(),
-      );
-      initializeAutocomplete(this.monaco);
+        console.log(key, this.completions, this.languageServerClientWrapper, this.languageClient, this.files);
 
-      const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
-      const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
-      await import('@codingame/monaco-vscode-python-default-extension');
+        if (completed && !completionRan && onComplete) {
+          onComplete?.(
+            this.wrapper,
+            this.languageServerClientWrapper,
+            this.languageClient,
+            this.files,
+          );
+        }
+        this.completions[key] = [completed, true];
 
-      const configureMonacoWorkers = () => {
-        useWorkerFactory({
-          ignoreMapping: true,
-          workerLoaders: {
-            editorWorkerService: () =>
-              new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url), {
-                type: 'module',
-              }),
-            javascript: () =>
-              // @ts-ignore
-              import('monaco-editor-wrapper/workers/module/ts').then(
-                module => new Worker(module.default, { type: 'module' }),
-              ),
-          },
-        });
-      };
+        console.log(key, this.completions, this.languageServerClientWrapper, this.languageClient, this.files);
+      });
 
-      configureMonacoWorkers();
-
-      const userConfig = {
-        languageClientConfig,
-        loggerConfig,
-        wrapperConfig: {
-          editorAppConfig: {
-            $type: 'classic' as const,
-            codeResources: codeResources
-              ? {
-                  main: {
-                    ...codeResources?.main,
-                    uri:
-                      typeof codeResources?.main?.uri === 'string'
-                        ? this.monaco.Uri.parse(codeResources?.main?.uri)
-                        : codeResources?.main?.uri,
-                  },
-                }
-              : undefined,
-            domReadOnly: true,
-            editorOptions: configurations,
-            languageDef: {
-              languageExtensionConfig: pythonLanguageExtensionWithURI,
-              monarchLanguage: pythonProvider(),
-              theme: {
-                data: themes[IDEThemeEnum.BASE],
-                name: IDEThemeEnum.BASE,
-              },
-            },
-            useDiffEditor: false,
-          },
-        },
-      };
-
-      // webSocket.onopen = () => {
-      //     languageClient.start();
-      //     // Notify LSP server about opened files
-      //     monaco.editor.getModels().forEach(model => {
-      //         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-      //             model.uri.toString(),
-      //             model.getLanguageId(),
-      //             1,
-      //             model.getValue()
-      //         ));
-      //     });
-
-      //     webSocket.onclose = () => languageClient.stop();
-      // };
-
-      // Monitor editor for changes and notify the LSP server
-      // editor.onDidChangeModelContent(event => {
-      //     const model = editor.getModel();
-      //     languageClient.sendNotification('textDocument/didChange', {
-      //         textDocument: {
-      //             uri: model.uri.toString(),
-      //             version: model.getVersionId()
-      //         },
-      //         contentChanges: [{ text: model.getValue() }]
-      //     });
-      // });
-
-      // editor.onDidChangeModel(event => {
-      //     const model = event.newModel;
-      //     if (model) {
-      //         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-      //             model.uri.toString(),
-      //             model.getLanguageId(),
-      //             1,
-      //             model.getValue()
-      //         ));
-      //     }
-      // });
-
-      // monaco.editor.onDidCreateModel(model => {
-      //     languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-      //         model.uri.toString(),
-      //         model.getLanguageId(),
-      //         1,
-      //         model.getValue()
-      //     ));
-      // });
-
-      // monaco.editor.onWillDisposeModel(model => {
-      //     languageClient.sendNotification('textDocument/didClose', {
-      //         textDocument: { uri: model.uri.toString() }
-      //     });
-      // });
-
-      try {
-        this.wrapper = new MonacoEditorLanguageClientWrapper();
-        await this.wrapper.init(userConfig);
-      } catch (error) {
-        console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
-      } finally {
+      if (Object.values(this.completions || {})?.every(arr => arr?.every(v => v))) {
+        this.timeout = null;
+      } else {
+        this.timeout = setTimeout(watch, 1000);
       }
+    };
+
+    this.timeout = setTimeout(watch, 1000);
+  }
+
+  private async initializeWrapper(file: FileType, opts: InitializeWrapperProps, callback: (languageServerClientWrapper) => void) {
+    const { options } = opts || {};
+
+    const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
+
+    try {
+      const wrapper = new MonacoEditorLanguageClientWrapper();
+      const configurations = baseConfigurations(getTheme(), {
+        ...options?.configurations,
+        theme: options?.theme,
+      });
+      const configs = await this.buildUserConfig(file, configurations);
+      await wrapper.init(configs as any);
+      this.wrapper = wrapper;
+      callback(wrapper?.getLanguageClientWrapper());
+      this.completions.wrapper = [true, false];
+    } catch (error) {
+      console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
     }
 
     return this.wrapper;
+  }
+  private async startLanguageServer(languageServerClientWrapper: any, opts: InitializeLanguageServerProps, callback: (languageClient: any) => void) {
+    this.languageServerClientWrapper = languageServerClientWrapper;
+    this.languageClient = languageServerClientWrapper.getLanguageClient();
+    callback(this.languageClient);
+    this.completions.languageServer = [true, false];
+  }
+
+  private async initializeWorkspace(languageClient: any, opts?: InitializeWorkspaceProps) {
+    const { options } = opts || {};
+    const { fetch } = options || {};
+
+    if (fetch) {
+      fetch((files: FileType[]) => {
+        files.forEach((file: FileType) => {
+          const { content, language, modified_timestamp: version, path } = file;
+
+          if (this.language === language) {
+            languageClient?.sendNotification('textDocument/didOpen', {
+              textDocument: {
+                languageId: language,
+                text: content || '',
+                uri: `file://${path}`,
+                version,
+              },
+            });
+          }
+        });
+
+        console.log('FETCHHHHHHHHHHHHHHHHHHHHHHHHED', this.languageClient, this.files);
+        this.files = files;
+      });
+    }
+
+    this.completions.workspace = [true, false];
+  }
+
+
+  private isLanguageServerEnabled(): boolean {
+    return [
+      LanguageEnum.PYTHON,
+    ].includes(this.language);
+  }
+
+  private async loadMonaco() {
+    if (!this.monaco) {
+      this.monaco = await import('monaco-editor');
+    }
+
+    return this.monaco;
+  }
+
+  private async loadServices() {
+    await import('@codingame/monaco-vscode-python-default-extension');
+  }
+
+  private async getLanguageDef() {
+    return {
+      languageExtensionConfig: await this.getPythonLanguageExtensionWithURI(),
+      monarchLanguage: pythonProvider(),
+      theme: {
+        data: themes[IDEThemeEnum.BASE],
+        name: IDEThemeEnum.BASE,
+      },
+    };
+  }
+
+  private async getPythonLanguageExtensionWithURI() {
+    const configUri = new URL('./languages/python/config.json', import.meta.url).href;
+    return {
+      ...pythonLanguageExtension,
+      configuration: (await this.loadMonaco()).Uri.parse(
+        `${getHost({
+          forceCurrentPort: true,
+        })}${configUri}`,
+      ),
+    };
+  }
+
+  private async setupAutocomplete() {
+    initializeAutocomplete(await this.loadMonaco(), LanguageEnum.PYTHON);
+  }
+
+  private async setupPythonLanguage() {
+    if (!this.isLanguageServerEnabled()) {
+      return;
+    }
+
+    (await this.loadMonaco()).languages.register(await this.getPythonLanguageExtensionWithURI());
+    (await this.loadMonaco()).languages.setLanguageConfiguration(
+      pythonLanguageExtension.id,
+      // @ts-ignore
+      pythonConfiguration(),
+    );
+  }
+
+  private async buildUserConfig(file: FileType, configurations: any) {
+    return {
+      id: this.uuid,
+      languageClientConfig: {
+        ...languageClientConfig,
+        languageId: this.language,
+        // name: `mage-lsp-${this.language}`,
+      },
+      loggerConfig,
+      wrapperConfig: {
+        editorAppConfig: {
+          $type: 'classic' as const,
+          codeResources: {
+            main: {
+              enforceLanguageId: file?.language,
+              text: file?.content || '',
+              uri: (await this.loadMonaco()).Uri.parse(`file://${file?.path}`),
+            },
+          },
+          domReadOnly: true,
+          editorOptions: configurations,
+          languageDef: await this.getLanguageDef(),
+          useDiffEditor: false,
+        },
+      },
+    };
   }
 }
 
 export { Manager };
 
 export default Manager;
-
-// webSocket.onopen = () => {
-//     languageClient.start();
-//     // Notify LSP server about opened files
-//     monaco.editor.getModels().forEach(model => {
-//         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-//             model.uri.toString(),
-//             model.getLanguageId(),
-//             1,
-//             model.getValue()
-//         ));
-//     });
-
-//     webSocket.onclose = () => languageClient.stop();
-// };
-
-// Monitor editor for changes and notify the LSP server
-// editor.onDidChangeModelContent(event => {
-//     const model = editor.getModel();
-//     languageClient.sendNotification('textDocument/didChange', {
-//         textDocument: {
-//             uri: model.uri.toString(),
-//             version: model.getVersionId()
-//         },
-//         contentChanges: [{ text: model.getValue() }]
-//     });
-// });
-
-// editor.onDidChangeModel(event => {
-//     const model = event.newModel;
-//     if (model) {
-//         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-//             model.uri.toString(),
-//             model.getLanguageId(),
-//             1,
-//             model.getValue()
-//         ));
-//     }
-// });
-
-// monaco.editor.onDidCreateModel(model => {
-//     languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
-//         model.uri.toString(),
-//         model.getLanguageId(),
-//         1,
-//         model.getValue()
-//     ));
-// });
-
-// monaco.editor.onWillDisposeModel(model => {
-//     languageClient.sendNotification('textDocument/didClose', {
-//         textDocument: { uri: model.uri.toString() }
-//     });
-// });

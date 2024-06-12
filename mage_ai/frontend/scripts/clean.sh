@@ -17,5 +17,14 @@ else
   echo "node_modules directory does not exist.";
 fi &&
 
+mkdir -p .next
+echo "Ensured .next directory is present."
+
+if [ -d .next ]; then
+  rm -rf .next && echo ".next directory has been removed.";
+else
+  echo ".next directory does not exist.";
+fi &&
+
 yarn cache clean
 yarn install

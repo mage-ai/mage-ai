@@ -69,13 +69,3 @@ export const FILE_EXTENSION_COLOR_MAPPING = {
   [FileExtensionEnum.YAML]: 'green', // Pale teal
   [FileExtensionEnum.YML]: 'green', // Pale teal
 };
-
-export const Icons = {
-  Charts,
-  Ellipsis,
-  FileFill,
-  FolderIcon,
-  Logs,
-  Pipeline,
-  PipelineV3,
-};

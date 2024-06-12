@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "analyze": "ANALYZE=true yarn build",
     "build": "next build",
+    "bundle": "npx webpack --config webpack.config.bundle.js",
     "export": "next build && next export",
     "export_prod": "next build && next export -o ../server/frontend_dist",
     "export_prod_base_path": "next build && next export -o ../server/frontend_dist_base_path_template",
@@ -99,13 +101,14 @@
     "styled-components": "^5.3.5",
     "styled-system": "^5.1.5",
     "swr": "^1.3.0",
-    "terser": "^5.31.0",
+    "terser": "^5.31.1",
     "trim-newlines": "^4.0.2",
     "worker-loader": "^3.0.8",
     "yaml": "^2.1.3",
     "yarn": "^1.22.21"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.4",
     "@playwright/test": "1.40.1",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
@@ -119,13 +122,16 @@
     "@types/styled-system": "^5.1.15",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/parser": "^6.6.0",
+    "css-loader": "^7.1.2",
     "eslint": "8.15.0",
     "eslint-config-next": "^14.2.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-storybook": "^0.6.13",
     "eslint-plugin-unused-imports": "^3.2.0",
+    "style-loader": "^4.0.0",
     "tsconfig-paths-webpack-plugin": "^3.5.2",
     "typescript": "4.6.4",
+    "webpack-cli": "^5.1.4",
     "yarn-audit-fix": "^9.3.7"
   }
 }
