@@ -28,7 +28,6 @@ function MateriaIDE({
   theme: themeSelected = IDEThemeEnum.BASE,
   uuid,
 }: IDEProps) {
-  const renderCount = useRef(0);
   const wrapperCount = useRef(0);
 
   const containerRef = useRef(null);
@@ -96,10 +95,6 @@ function MateriaIDE({
         configureMonacoWorkers();
 
         const userConfig = {
-          loggerConfig: {
-            enabled: true,
-            debugEnabled: true,
-          },
           languageClientConfig: {
             languageId: LanguageEnum.PYTHON,
             options: {
@@ -108,6 +103,10 @@ function MateriaIDE({
               port: 8765,
               secured: false,
             },
+          },
+          loggerConfig: {
+            debugEnabled: true,
+            enabled: true,
           },
           wrapperConfig: {
             editorAppConfig: {
@@ -138,11 +137,10 @@ function MateriaIDE({
           wrapperRef.current = new MonacoEditorLanguageClientWrapper();
           await wrapperRef.current.initAndStart(userConfig, containerRef.current);
         } catch (error) {
-          console.error('Error initializing Monaco editor:', error);
+          console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
         } finally {
           initializingRef.current = false;
           wrapperCount.current += 1;
-          console.log(`[IDE] Wrapper: ${wrapperCount?.current}`);
         }
       };
 
@@ -151,9 +149,6 @@ function MateriaIDE({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  renderCount.current += 1;
-  console.log(`[IDE] Rendered: ${renderCount?.current}`);
 
   return (
     <ContainerStyled>

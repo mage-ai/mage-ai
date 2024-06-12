@@ -9,8 +9,8 @@ type GridProps = {
   className?: string;
   uuid?: string;
 } & ElementType & {
-  [key: string]: any;
-};
+    [key: string]: any;
+  };
 
 function Grid(
   { children, className: classNameProp, uuid, ...props }: GridProps,
