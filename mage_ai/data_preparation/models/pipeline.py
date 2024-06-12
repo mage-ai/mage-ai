@@ -2339,7 +2339,7 @@ class Pipeline:
         content = yaml.dump(pipeline_dict, allow_unicode=True)
 
         safe_write(self.config_path, content)
-
+        print(f'Finish writing to {self.config_path}')
         File.create(
             PIPELINE_CONFIG_FILE,
             f'{PIPELINES_FOLDER}/{self.uuid}',

@@ -55,9 +55,12 @@ def cache_file_read(cache):
                 cache_entry = cache[file_path]
                 cached_updated_at = cache_entry.get('updated_at')
                 if cached_updated_at >= file_updated_at:
-                    print(f'cache hit {file_path}')
+                    print(f'cache hit {file_path} {cached_updated_at} {file_updated_at}')
                     return copy.deepcopy(cache_entry['content'])
-            print(f'cache miss {file_path}')
+                else:
+                    print(f'cache miss {file_path} {cached_updated_at} {file_updated_at}')
+
+            print(f'cache new item {file_path}')
             try:
                 content = func(file_path, *args, **kwargs)
                 cache[file_path] = {
@@ -87,10 +90,12 @@ def async_cache_file_read(cache):
                 cache_entry = cache[file_path]
                 cached_updated_at = cache_entry.get('updated_at')
                 if cached_updated_at >= file_updated_at:
-                    print(f'async cache hit {file_path}')
+                    print(f'async cache hit {file_path} {cached_updated_at} {file_updated_at}')
                     return copy.deepcopy(cache_entry['content'])
+                else:
+                    print(f'async cache miss {file_path} {cached_updated_at} {file_updated_at}')
 
-            print(f'async cache miss {file_path}')
+            print(f'async cache new item {file_path}')
             try:
                 content = await func(file_path, *args, **kwargs)
                 cache[file_path] = {
