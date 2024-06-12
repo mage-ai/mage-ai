@@ -6,7 +6,7 @@ import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 
 export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppLoaderResultType {
   const themeContext = useContext(ThemeContext);
-  const MateriaIDE = lazy(() => import('@components/v2/IDE'));
+  const EditorApp = lazy(() => import('./index'));
 
   const main = useMemo(
     () => (
@@ -19,14 +19,10 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
           </ThemeProvider>
         }
       >
-        <MateriaIDE
-          configurations={app?.options?.configurations}
-          file={app?.options?.file}
-          uuid={app?.uuid}
-        />
+        <EditorApp addApp={addApp} app={app} removeApp={removeApp} />
       </Suspense>
     ),
-    [MateriaIDE, app, themeContext],
+    [EditorApp, app, addApp, removeApp, themeContext],
   );
 
   return {

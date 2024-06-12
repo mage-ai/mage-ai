@@ -15,11 +15,25 @@ class BrowserItemPolicy(BasePolicy):
 BrowserItemPolicy.allow_actions(
     [
         constants.LIST,
+        constants.DETAIL,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+
+BrowserItemPolicy.allow_actions(
+    [
+        constants.CREATE,
+        constants.DELETE,
+        constants.UPDATE,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )
 
 
@@ -29,9 +43,30 @@ BrowserItemPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
+        constants.CREATE,
+        constants.DELETE,
+        constants.UPDATE,
         constants.LIST,
+        constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+BrowserItemPolicy.allow_write(
+    [
+        'content',
+        'name',
+        'path',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.CREATE,
+        constants.DELETE,
+        constants.UPDATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )
 
 BrowserItemPolicy.allow_query(
@@ -45,6 +80,7 @@ BrowserItemPolicy.allow_query(
     ],
     on_action=[
         constants.LIST,
+        constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )

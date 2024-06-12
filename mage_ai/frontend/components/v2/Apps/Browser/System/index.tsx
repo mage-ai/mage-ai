@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
+import { useMutation } from 'react-query';
 
 import api from '@api';
 import Loading from '@mana/components/Loading';
@@ -24,7 +25,6 @@ import { ItemDetailType, ItemType } from './interfaces';
 import { selectKeys } from '@utils/hash';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
-import { useMutation } from 'react-query';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 import { groupFilesByDirectory } from './utils/grouping';
 

@@ -1,6 +1,6 @@
 import importlib
 import inspect
-from typing import Coroutine, Union
+from typing import Any, Coroutine, Optional, Union
 
 import inflection
 
@@ -223,7 +223,7 @@ class BaseResource(Resource, ResultSetMixIn):
         return inflection.underscore(cls.__name__.replace('Resource', '')).lower()
 
     @classmethod
-    async def get_model(cls, pk, **kwargs):
+    async def get_model(cls, pk, **kwargs) -> Optional[Any]:
         if cls.model_class:
             return cls.model_class.query.get(pk)
 

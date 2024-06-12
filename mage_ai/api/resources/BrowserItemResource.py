@@ -1,14 +1,15 @@
-import os
+from __future__ import annotations
+
 import re
 import urllib.parse
-from pathlib import Path
 from typing import Dict
 
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.result_set import ResultSet
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_absolute_paths_from_all_files
-from mage_ai.shared.path_fixer import remove_base_repo_directory_name
+from mage_ai.system.browser.models import Item
 
 
 class BrowserItemResource(GenericResource):
@@ -34,16 +35,9 @@ class BrowserItemResource(GenericResource):
         elif exclude_pattern is None:
             exclude_pattern = r'^\.|\/\.'
 
-        def __parse_values(tup) -> Dict:
-            absolute_path, size, modified_timestamp = tup
-            return dict(
-                extension=Path(absolute_path).suffix.lstrip('.'),
-                modified_timestamp=modified_timestamp,
-                name=os.path.basename(absolute_path),
-                path=absolute_path,
-                relative_path=remove_base_repo_directory_name(absolute_path),
-                size=size,
-            )
+        def __parse_values(tup) -> Item:
+            absolute_path, _size, _modified_timestamp = tup
+            return Item.load(path=absolute_path)
 
         return cls.build_result_set(
             get_absolute_paths_from_all_files(
@@ -57,3 +51,31 @@ class BrowserItemResource(GenericResource):
             user,
             **kwargs,
         )
+
+    @classmethod
+    def get_model(cls, pk, **kwargs) -> Item:
+        return Item.load(path=urllib.parse.unquote(pk))
+
+    @classmethod
+    async def member(cls, pk, user, **kwargs) -> BrowserItemResource:
+        item = cls.get_model(pk)
+        if not await item.exists():
+            raise ApiError(**{
+                **ApiError.RESOURCE_NOT_FOUND,
+                **dict(message=f'Item at path {pk} not found.'),
+            })
+
+        await item.get_content()
+        return cls(item, user, **kwargs)
+
+    @classmethod
+    async def create(cls, payload: Dict, user, **kwargs) -> BrowserItemResource:
+        model = Item.load(**payload)
+        await model.create()
+        return cls(model, user, **kwargs)
+
+    async def delete(self, **kwargs):
+        await self.model.delete()
+
+    async def update(self, payload, **kwargs):
+        await self.model.synchronize(Item.load(**payload))

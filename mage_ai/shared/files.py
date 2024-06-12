@@ -4,7 +4,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import aiofiles
 
@@ -204,3 +204,70 @@ def makedirs_sync(path: str):
 async def makedirs_async(path: str):
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, os.makedirs, path, exist_ok=True)
+
+
+async def write_async(
+    path: str, data: Optional[str] = None, overwrite: Optional[bool] = None
+) -> bool:
+    if not overwrite and await exists_async(path):
+        raise Exception(f'File already exists at {path}, cannot overwrite unless forced.')
+
+    try:
+        await makedirs_async(os.path.dirname(path))
+        async with aiofiles.open(path, 'w') as file:
+            await file.write('' if data is None else data)
+        return True
+    except Exception as err:
+        if is_debug():
+            print(f'[ERROR] files.write_async: {err}')
+    return False
+
+
+async def delete_async(path: str, ignore_exists: Optional[bool] = None) -> bool:
+    if not ignore_exists and not await exists_async(path):
+        raise Exception(f'File does not exist at {path}, cannot delete non-existent file.')
+
+    try:
+        await asyncio.to_thread(os.remove, path)
+        return True
+    except Exception as err:
+        if is_debug():
+            print(f'[ERROR] files.delete_async: {err}')
+    return False
+
+
+async def exists_async(path: str) -> bool:
+    try:
+        return await asyncio.to_thread(os.path.exists, path)
+    except Exception:
+        return False
+
+
+async def move_async(old_path: str, new_path: str, overwrite: Optional[bool] = None) -> bool:
+    if not overwrite and await exists_async(new_path):
+        raise Exception(
+            f'File already exists at {new_path}, cannot move {old_path} to {new_path}.'
+        )
+
+    try:
+        await asyncio.to_thread(shutil.move, old_path, new_path)
+        return True
+    except Exception as err:
+        if is_debug():
+            print(f'[ERROR] files.move_async: {err}')
+    return False
+
+
+async def rename_async(old_path: str, new_path: str, overwrite: Optional[bool] = None) -> bool:
+    if not overwrite and await exists_async(new_path):
+        raise Exception(
+            f'File already exists at {new_path}, cannot rename {old_path} to {new_path}.'
+        )
+
+    try:
+        await asyncio.to_thread(os.rename, old_path, new_path)
+        return True
+    except Exception as err:
+        if is_debug():
+            print(f'[ERROR] files.move_async: {err}')
+    return False
