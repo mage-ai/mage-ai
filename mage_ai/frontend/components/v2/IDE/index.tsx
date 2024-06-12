@@ -11,6 +11,7 @@ import pythonConfiguration, { pythonLanguageExtension } from './languages/python
 import { ContainerStyled, IDEStyled } from './index.style';
 import { LanguageEnum } from './languages/constants';
 import { getHost } from '@api/utils/url';
+import { languageClientConfig, loggerConfig } from './constants';
 
 // import mockCode from './mocks/code';
 // const codeUri = '/home/src/setup.py';
@@ -33,6 +34,7 @@ function MateriaIDE({
   const containerRef = useRef(null);
   const initializingRef = useRef(false);
 
+  const languageClientRef = useRef(null);
   const mountedRef = useRef(false);
   const wrapperRef = useRef(null);
 
@@ -95,27 +97,16 @@ function MateriaIDE({
         configureMonacoWorkers();
 
         const userConfig = {
-          languageClientConfig: {
-            languageId: LanguageEnum.PYTHON,
-            options: {
-              $type: 'WebSocket',
-              host: 'localhost',
-              port: 8765,
-              secured: false,
-            },
-          },
-          loggerConfig: {
-            debugEnabled: true,
-            enabled: true,
-          },
+          languageClientConfig,
+          loggerConfig,
           wrapperConfig: {
             editorAppConfig: {
               $type: 'classic' as const,
               codeResources: {
                 main: {
                   enforceLanguageId: file?.language || LanguageEnum.PYTHON,
-                  text: file?.content,
-                  uri: file?.uri,
+                  text: file?.content || file?.path,
+                  uri: monaco.Uri.parse(`file://${file?.path}`),
                 },
               },
               domReadOnly: true,
@@ -133,9 +124,64 @@ function MateriaIDE({
           },
         };
 
+        // webSocket.onopen = () => {
+        //     languageClient.start();
+        //     // Notify LSP server about opened files
+        //     monaco.editor.getModels().forEach(model => {
+        //         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
+        //             model.uri.toString(),
+        //             model.getLanguageId(),
+        //             1,
+        //             model.getValue()
+        //         ));
+        //     });
+
+        //     webSocket.onclose = () => languageClient.stop();
+        // };
+
+        // Monitor editor for changes and notify the LSP server
+        // editor.onDidChangeModelContent(event => {
+        //     const model = editor.getModel();
+        //     languageClient.sendNotification('textDocument/didChange', {
+        //         textDocument: {
+        //             uri: model.uri.toString(),
+        //             version: model.getVersionId()
+        //         },
+        //         contentChanges: [{ text: model.getValue() }]
+        //     });
+        // });
+
+        // editor.onDidChangeModel(event => {
+        //     const model = event.newModel;
+        //     if (model) {
+        //         languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
+        //             model.uri.toString(),
+        //             model.getLanguageId(),
+        //             1,
+        //             model.getValue()
+        //         ));
+        //     }
+        // });
+
+        // monaco.editor.onDidCreateModel(model => {
+        //     languageClient.sendNotification('textDocument/didOpen', languageclient.TextDocumentItem.create(
+        //         model.uri.toString(),
+        //         model.getLanguageId(),
+        //         1,
+        //         model.getValue()
+        //     ));
+        // });
+
+        // monaco.editor.onWillDisposeModel(model => {
+        //     languageClient.sendNotification('textDocument/didClose', {
+        //         textDocument: { uri: model.uri.toString() }
+        //     });
+        // });
+
         try {
           wrapperRef.current = new MonacoEditorLanguageClientWrapper();
           await wrapperRef.current.initAndStart(userConfig, containerRef.current);
+          languageClientRef.current = wrapperRef.current.languageClientWrapper.getLanguageClient();
         } catch (error) {
           console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
         } finally {

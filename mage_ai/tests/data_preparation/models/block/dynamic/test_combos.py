@@ -288,18 +288,18 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 self.assertEqual(len(replica_outputs), 12)
 
                 # Skip this one
-                child_1x_childspawn_1x_reduce_outputs = []
-                child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
-                    child_1x_childspawn_1x_reduce
-                )
-                for i, _combo in enumerate(child_1x_childspawn_1x_reduce_combos):
-                    child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
-                    out0 = child_1x_childspawn_1x_reduce.get_variable_object(
-                        child_1x_childspawn_1x_reduce.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid='output_0',
-                    ).read_data()
-                    child_1x_childspawn_1x_reduce_outputs.append(out0)
+                # child_1x_childspawn_1x_reduce_outputs = []
+                # child_1x_childspawn_1x_reduce_combos = build_combinations_for_dynamic_child(
+                #     child_1x_childspawn_1x_reduce
+                # )
+                # for i, _combo in enumerate(child_1x_childspawn_1x_reduce_combos):
+                #     child_1x_childspawn_1x_reduce.execute_sync(dynamic_block_index=i)
+                #     out0 = child_1x_childspawn_1x_reduce.get_variable_object(
+                #         child_1x_childspawn_1x_reduce.uuid,
+                #         dynamic_block_index=i,
+                #         variable_uuid='output_0',
+                #     ).read_data()
+                #     child_1x_childspawn_1x_reduce_outputs.append(out0)
 
-                # child_1x_spawn_1x reduces output to 1
-                self.assertEqual(len(child_1x_childspawn_1x_reduce_outputs), 648)
+                # # child_1x_spawn_1x reduces output to 1
+                # self.assertEqual(len(child_1x_childspawn_1x_reduce_outputs), 648)

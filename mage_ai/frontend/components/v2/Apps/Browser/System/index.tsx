@@ -65,16 +65,12 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
                   item={item as ItemDetailType}
                   key={`${item.name}-${idx}`}
                   onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
-                    console.log('onClick', itemClicked);
                     removeContextMenu();
                     if (ItemTypeEnum.FILE === itemClicked?.type) {
                       addApp(
                         {
                           options: {
-                            file: {
-                              content: itemClicked?.content,
-                              uri: itemClicked?.path,
-                            },
+                            file: itemClicked,
                           },
                           subtype: AppSubtypeEnum.IDE,
                           type: AppTypeEnum.EDITOR,
