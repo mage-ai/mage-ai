@@ -2,9 +2,9 @@ import React, { Suspense, lazy, useContext, useMemo } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 
 import Loading from '@mana/components/Loading';
-import { AppConfigType, AppLoaderResultType } from '../interfaces';
+import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 
-export default function useApp(app: AppConfigType): AppLoaderResultType {
+export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppLoaderResultType {
   const themeContext = useContext(ThemeContext);
   const MateriaIDE = lazy(() => import('@components/v2/IDE'));
 

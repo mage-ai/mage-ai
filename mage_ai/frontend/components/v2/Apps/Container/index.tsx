@@ -3,51 +3,52 @@ import React from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
-import { AddAppFunctionOptionsType, AppConfigType } from '@components/v2/Apps/interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { AddAppFunctionOptionsType, AppConfigType, AppLoaderProps } from '../interfaces';
+import { AppSubtypeEnum, AppTypeEnum } from '../constants';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
 import { randomSimpleHashGenerator } from '@utils/string';
+import { mergeDeep } from '@utils/hash';
 
 type AppContainerProps = {
   app: AppConfigType;
-  appLoader?: (app: AppConfigType) => {
+  appLoader?: (args: AppLoaderProps) => {
     main: React.ComponentType<any>;
     toolbars: Record<string, React.ComponentType<any>>;
   };
-  onAdd?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
-  onRemove?: (uuid: string) => void;
+  addApp?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
+  removeApp?: (uuid: string) => void;
   uuid: string;
 };
 
 function AppContainer(
-  { app, appLoader, onAdd, onRemove, uuid }: AppContainerProps,
+  { app, appLoader, addApp, removeApp, uuid }: AppContainerProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  const { subtype, type } = app;
+  function startApp(appNew: AppConfigType, opts?: AddAppFunctionOptionsType) {
+    addApp(appNew, opts);
+  }
 
-  function addApp(rowRelative: number, columnRelative: number) {
-    onAdd(
-      {
-        subtype,
-        type,
-        uuid: randomSimpleHashGenerator(),
-      },
-      {
+  const {
+    main,
+    toolbars,
+  } = appLoader?.({
+    addApp: (appNew, opts) => {
+      addApp(appNew, mergeDeep(opts, {
         grid: {
           relative: {
             layout: {
-              column: columnRelative,
-              row: rowRelative,
+              column: 1,
+              row: 0,
             },
             uuid,
           },
         },
-      },
-    );
-  }
-
-  const { main, toolbars } = appLoader?.(app);
+      }));
+    },
+    app,
+    removeApp,
+  });
 
   return (
     <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
@@ -68,12 +69,84 @@ function AppContainer(
           </Grid>
 
           <ButtonGroup itemsContained>
-            <Button Icon={CaretDown} basic grouped onClick={() => addApp(1, 0)} small />
-            <Button Icon={CaretUp} basic grouped onClick={() => addApp(-1, 0)} small />
-            <Button Icon={CaretLeft} basic grouped onClick={() => addApp(0, -1)} small />
-            <Button Icon={CaretRight} basic grouped onClick={() => addApp(0, 1)} small />
+            <Button
+              Icon={CaretDown}
+              basic
+              grouped
+              onClick={() =>
+                startApp(null, {
+                  grid: {
+                    relative: {
+                      layout: {
+                        column: 0,
+                        row: 1,
+                      },
+                      uuid,
+                    },
+                  },
+                })
+              }
+              small
+            />
+            <Button
+              Icon={CaretUp}
+              basic
+              grouped
+              onClick={() =>
+                startApp(null, {
+                  grid: {
+                    relative: {
+                      layout: {
+                        column: 0,
+                        row: -1,
+                      },
+                      uuid,
+                    },
+                  },
+                })
+              }
+              small
+            />
+            <Button
+              Icon={CaretLeft}
+              basic
+              grouped
+              onClick={() =>
+                startApp(null, {
+                  grid: {
+                    relative: {
+                      layout: {
+                        column: 1,
+                        row: 0,
+                      },
+                      uuid,
+                    },
+                  },
+                })
+              }
+              small
+            />
+            <Button
+              Icon={CaretRight}
+              basic
+              grouped
+              onClick={() =>
+                startApp(null, {
+                  grid: {
+                    relative: {
+                      layout: {
+                        column: 1,
+                        row: 0,
+                      },
+                      uuid,
+                    },
+                  },
+                })
+              }
+              small
+            />
             <Divider vertical />
-            <Button Icon={Close} basic grouped onClick={() => onRemove(uuid)} small />
+            <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
           </ButtonGroup>
         </Header>
 

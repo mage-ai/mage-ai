@@ -96,7 +96,7 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
             // item 1: column 1, columnSpan 1 + (3 - 3)/(3-1) + 1 = 2; col-start: 1, col-end: 2
             // item 2: column 1, columnSpan 2 + (3 - 3)/(3-2) + 1 = 3; col-start: 2, col-end: 3
             const columnSpan =
-              column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol)) + 1;
+              column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol));
 
             const configNew = {
               ...config,
@@ -148,11 +148,11 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
             refRoots.current[uuidApp].render(
               <ThemeProvider theme={themeContext}>
                 <AppContainer
+                  addApp={addApp}
                   app={app}
                   appLoader={appLoaderResult?.default}
-                  onAdd={addApp}
-                  onRemove={removeApp}
                   ref={ref}
+                  removeApp={removeApp}
                   uuid={uuidApp}
                 />
               </ThemeProvider>,

@@ -10,9 +10,9 @@ import { onSuccess } from '@api/utils/response';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import Menu from '@mana/components/Menu';
 import Item from './Item/index';
-import icons from '@mana/icons';
-import { AppConfigType } from '../../interfaces';
-import { GroupByStrategyEnum } from './enums';
+import { Settings } from '@mana/icons';
+import { AppLoaderProps, AppConfigType } from '../../interfaces';
+import { GroupByStrategyEnum, ItemTypeEnum } from './enums';
 import {
   KEY_CODE_A,
   KEY_CODE_ENTER,
@@ -26,14 +26,9 @@ import { selectKeys } from '@utils/hash';
 import Worker from 'worker-loader!@public/workers/worker.ts';
 import { useMutation } from 'react-query';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
+import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 
-const { Settings } = icons;
-
-type SystemBrowserProps = {
-  app: AppConfigType;
-};
-
-function SystemBrowser({ app }: SystemBrowserProps) {
+function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
@@ -84,6 +79,29 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                                 app={app}
                                 item={item as ItemDetailType}
                                 key={`${item.name}-${idx}`}
+                                onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                                  console.log('onClick', itemClicked);
+                                  removeContextMenu();
+                                  if (ItemTypeEnum.FILE === itemClicked?.type) {
+                                    addApp({
+                                      options: {
+                                        itemClicked,
+                                      },
+                                      subtype: AppSubtypeEnum.IDE,
+                                      type: AppTypeEnum.EDITOR,
+                                      uuid: itemClicked?.name,
+                                    }, {
+                                      grid: {
+                                        relative: {
+                                          layout: {
+                                            column: 1,
+                                          },
+                                          uuid: app?.uuid,
+                                        },
+                                      },
+                                    });
+                                  }
+                                }}
                                 onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
                                   renderContextMenu(item, event)
                                 }
@@ -183,7 +201,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                     containerRef?.current?.getBoundingClientRect() || {},
                     ['width', 'x', 'y'],
                   )}
-                  coordinates={{ x: event.pageX, y: event.pageY }}
+                  event={event}
                   items={items}
                   small
                   uuid={appUUID}
@@ -198,6 +216,13 @@ function SystemBrowser({ app }: SystemBrowserProps) {
   );
 
   useEffect(() => {
+    if (!itemsRootRef?.current) {
+      fetchItems({
+        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+      });
+    }
+
     const handleDocumentClick = (event: Event) => {
       const node = document.getElementById(contextMenuRootID);
       console.log(contextMenuRootID, node);
@@ -210,27 +235,23 @@ function SystemBrowser({ app }: SystemBrowserProps) {
 
     return () => {
       document?.removeEventListener('click', handleDocumentClick);
+      removeContextMenu();
+      if (itemsRootRef?.current) {
+        itemsRootRef.current.unmount();
+        itemsRootRef.current = null;
+      }
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <WithOnMount
-      onMount={() =>
-        fetchItems({
-          exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-          include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-        })
-      }
-    >
-      <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
-        {isLoading && <Loading />}
-        <div style={{ height: 67, width: '100%' }} />
-        <div id={rootID} />
-        <div id={contextMenuRootID} />
-      </Scrollbar>
-    </WithOnMount>
+    <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
+      {isLoading && <Loading />}
+      <div style={{ height: 67, width: '100%' }} />
+      <div id={rootID} />
+      <div id={contextMenuRootID} />
+    </Scrollbar>
   );
 }
 

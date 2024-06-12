@@ -1,5 +1,11 @@
 import { AppTypeEnum, AppSubtypeEnum } from './constants';
 
+export type AppLoaderProps = {
+  app: AppConfigType;
+  addApp?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
+  removeApp?: (uuid: string) => void;
+};
+
 export type AppLoaderResultType = {
   main: JSX.Element | any;
   toolbars?: {
@@ -26,6 +32,9 @@ export interface AppLayoutType {
 
 export interface AppConfigType {
   layout?: AppLayoutType;
+  options?: {
+    [key: string]: any;
+  };
   subtype?: AppSubtypeEnum;
   type?: AppTypeEnum;
   uuid?: string;

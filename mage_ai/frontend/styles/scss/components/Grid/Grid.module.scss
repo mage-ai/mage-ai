@@ -112,6 +112,13 @@ $values: (
     &.template-rows-#{$value1} {
       grid-template-rows: repeat(#{$value1}, 1fr);
     }
+
+    &.auto-columns-#{$value1}fr {
+      grid-auto-columns: #{$value1}fr;
+    }
+    &.auto-rows-#{$value1}fr {
+      grid-auto-rows: #{$value1}fr;
+    }
   }
 }
 

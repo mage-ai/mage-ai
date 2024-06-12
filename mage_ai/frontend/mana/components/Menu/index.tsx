@@ -29,6 +29,7 @@ type MenuProps = {
     x: number;
     y: number;
   };
+    event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   small?: boolean;
   uuid: string;
@@ -84,7 +85,7 @@ function MenuItem({ item, small }: ItemProps) {
   );
 }
 
-function Menu({ boundingContainer, contained, coordinates, items, small, uuid }: MenuProps) {
+function Menu({ boundingContainer, contained, coordinates, event, items, small, uuid }: MenuProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const itemExpandedRef = useRef(null);
@@ -92,7 +93,9 @@ function Menu({ boundingContainer, contained, coordinates, items, small, uuid }:
   const [debouncer, cancel] = useDebounce();
 
   const { x: left, y: top } = useMemo(() => {
-    const { x, y } = coordinates || { x: 0, y: 0 };
+    const x = typeof coordinates !== 'undefined' ? coordinates?.x : event?.pageX;
+    const y = typeof coordinates !== 'undefined' ? coordinates?.y : event?.pageY;
+
     const { width: widthContainer, x: xContainer } = boundingContainer || { width: 0, x: 0, y: 0 };
 
     let xFinal = x + UNIT;
@@ -103,17 +106,19 @@ function Menu({ boundingContainer, contained, coordinates, items, small, uuid }:
       xFinal = 0;
     }
 
+    const element = event?.target as HTMLElement;
+    const rect = element?.getBoundingClientRect() || ({} as DOMRect);
     let yFinal = y + UNIT / 2;
     const menuHeight = MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
-      yFinal = y - menuHeight;
+      yFinal = (y - menuHeight - (rect?.height || 0));
     }
 
     return {
       x: xFinal,
       y: yFinal,
     };
-  }, [boundingContainer, coordinates, items]);
+  }, [boundingContainer, coordinates, event, items]);
 
   const itemsRootRef = useRef(null);
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
@@ -149,6 +154,7 @@ function Menu({ boundingContainer, contained, coordinates, items, small, uuid }:
                 boundingContainer={boundingContainer}
                 contained
                 coordinates={{ x, y }}
+                event={event}
                 items={item?.items}
                 small
                 uuid={`${uuid}-${item.uuid}`}

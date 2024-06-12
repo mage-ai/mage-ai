@@ -24,7 +24,7 @@ function groupFilesByDirectory(
 
     parts.forEach((part, index) => {
       const sharedProps = {
-        ...item,
+        // ...item,
         name: part,
       };
 

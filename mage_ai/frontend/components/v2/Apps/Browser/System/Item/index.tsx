@@ -29,6 +29,7 @@ const { DiamondShared, FileIcon, Circle, CaretDown, CaretRight } = icons;
 type ItemProps = {
   app: AppConfigType;
   item: ItemType | ItemDetailType;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>, item: ItemDetailType) => void;
   onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
   themeContext: any;
 };
@@ -45,7 +46,7 @@ function itemsRootID(uuid: string) {
   return `items-root-${uuid}`;
 }
 
-function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
+function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   console.log('render', item?.name);
   const { items, name } = item as ItemType;
 
@@ -203,6 +204,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
                     app={app}
                     item={item}
                     key={item.name}
+                    onClick={onClick}
                     onContextMenu={onContextMenu}
                     themeContext={themeContext}
                   />
@@ -214,7 +216,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
       );
       renderedRef.current = true;
     }
-  }, [app, themeContext, uuid, items, buildLines, onContextMenu]);
+  }, [app, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
@@ -239,6 +241,10 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
       <Grid
         columnGap={0}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+          if (onClick) {
+            onClick?.(event, item);
+          }
+
           event.preventDefault();
           event.stopPropagation();
 
