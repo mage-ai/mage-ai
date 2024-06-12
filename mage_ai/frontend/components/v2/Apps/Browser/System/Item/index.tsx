@@ -22,7 +22,6 @@ import {
 } from './index.style';
 import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
 const { DiamondShared, FileIcon, Circle, CaretDown, CaretRight } = icons;
 
@@ -260,14 +259,6 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
         renderUpdates();
       }
     }
-
-    const rendered = renderedRef?.current;
-    return () => {
-      console.log('MMMMMMMMMMMMMMMMMMMMM', rendered);
-      if (rendered) {
-        removeItems();
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

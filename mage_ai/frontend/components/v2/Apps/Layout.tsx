@@ -206,6 +206,14 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
         }
       }
     }
+
+    const roots = refRoots?.current;
+
+    return () => {
+      Object.keys(roots || {})?.forEach((uuid: string) => {
+        removeApp(uuid);
+      });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
