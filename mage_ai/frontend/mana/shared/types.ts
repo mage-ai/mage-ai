@@ -150,7 +150,7 @@ export type ElementType = {
 
 export function extractProps(props: { [key: string]: any }) {
   return Object.keys(props).reduce((acc, key) => {
-    if (key in props as ElementType) {
+    if (key in ({} as ElementType)) {
       acc[key] = props[key];
     }
     return acc;
