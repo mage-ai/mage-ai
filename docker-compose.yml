@@ -70,33 +70,14 @@ x-server_settings: &server_settings
   tty: true # used for interactive debugging
 x-app_settings: &app_settings
   image: node:18-alpine
-  command: sh -c "yarn install && yarn cache clean && npx next dev"
+  command: sh -c "yarn dev"
   ports:
     - 3000:3000
   volumes:
-    - ./mage_ai/frontend/.env.local:/home/src/mage_ai/frontend/.env.local
-    - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
-    - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
-    - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
-    - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
-    - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
-    - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
-    - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
-    - ./mage_ai/frontend/mana:/home/src/mage_ai/frontend/mana
-    - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
-    - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
-    - ./mage_ai/frontend/next.common.config.js:/home/src/mage_ai/frontend/next.common.config.js
-    - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
-    - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
-    - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
-    - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
-    - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
-    - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
-    - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
-    - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
-    - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
-    - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
-    - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
+    - .:/home/src
+    # This will prevent mounting host node_modules directory to the container.
+    # Don’t mount host node_modules directory to the container or else issues will arise.
+    - node_modules_volume:/home/src/mage_ai/frontend/node_modules
   working_dir: /home/src/mage_ai/frontend
 services:
   server:
@@ -127,7 +108,6 @@ services:
     volumes:
       - .:/home/src
     environment:
-      - LSP_ROOT_DIRECTORY=${LSP_ROOT_DIRECTORY}
       - PORT=8765
     ports:
       - 8765:8765
@@ -150,3 +130,6 @@ services:
 networks:
   app-network:
     driver: bridge
+volumes:
+  node_modules_volume:
+    driver: local

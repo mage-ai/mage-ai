@@ -9,8 +9,8 @@ type GridProps = {
   className?: string;
   uuid?: string;
 } & ElementType & {
-    [key: string]: string | number | undefined | null;
-  };
+  [key: string]: any;
+};
 
 function Grid(
   { children, className: classNameProp, uuid, ...props }: GridProps,
@@ -40,7 +40,7 @@ function Grid(
 
   return (
     <div {...extractProps(props)} className={classNames} ref={ref}>
-      {children && children as React.ReactNode}
+      {children && (children as React.ReactNode)}
     </div>
   );
 }
