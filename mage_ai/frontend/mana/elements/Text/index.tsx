@@ -23,14 +23,7 @@ type TextProps = {
   semiBold?: boolean;
 } & ElementType;
 
-function Text({
-  children,
-  className: classNameProp,
-  inline,
-  small,
-  xsmall,
-  ...props
-}: TextProps) {
+function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
   const arr = [
     small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
     classNameProp || '',
@@ -57,9 +50,15 @@ function Text({
     .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
     .join(' ');
 
-  return inline
-    ? <span {...extractProps(props)} className={classNames}>{children}</span>
-    : <p {...extractProps(props)} className={classNames}>{children}</p>;
+  return inline ? (
+    <span {...extractProps(props)} className={classNames}>
+      {children}
+    </span>
+  ) : (
+    <p {...extractProps(props)} className={classNames}>
+      {children}
+    </p>
+  );
 }
 
 export default Text;

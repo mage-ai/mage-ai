@@ -148,7 +148,7 @@ export type ElementType = {
   style?: React.CSSProperties;
 };
 
-export function extractProps(props: { [key: string]: any }}) {
+export function extractProps(props: { [key: string]: any }) {
   return Object.keys(props).reduce((acc, key) => {
     if (key in props as ElementType) {
       acc[key] = props[key];
