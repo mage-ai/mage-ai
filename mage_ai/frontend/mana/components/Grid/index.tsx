@@ -1,23 +1,23 @@
 import React from 'react';
 
 import styles from '@styles/scss/components/Grid/Grid.module.scss';
+import { ElementType, extractProps } from '../../shared/types';
 import { hyphenateCamelCase } from '@utils/string';
 
 type GridProps = {
   children?: React.ReactNode;
   className?: string;
-  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  style?: React.CSSProperties;
   uuid?: string;
-} & {
-  [key: string]: any;
+} & ElementType & {
+  [key: string]: string | number | undefined | null;
 };
 
-function Grid(
-  { children, className: classNameProp, style, uuid, ...props }: GridProps,
-  ref: React.Ref<HTMLDivElement>,
-) {
+function Grid({
+  children,
+  className: classNameProp,
+  uuid,
+  ...props
+}: GridProps, ref: React.Ref<HTMLDivElement>) {
   const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
 
   Object.entries(props || {}).forEach(([key, value]) => {
@@ -41,7 +41,11 @@ function Grid(
     .join(' ');
 
   return (
-    <div  className={classNames} ref={ref} style={style}>
+    <div
+      {...extractProps(props)}
+      className={classNames}
+      ref={ref}
+  >
       {children}
     </div>
   );

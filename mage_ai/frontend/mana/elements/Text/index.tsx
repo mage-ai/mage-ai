@@ -1,6 +1,7 @@
 import React from 'react';
-import styles from '@styles/scss/components/Text/Text.module.scss';
 
+import styles from '@styles/scss/components/Text/Text.module.scss';
+import { ElementType, extractProps } from '../../shared/types';
 import { hyphenateCamelCase } from '@utils/string';
 
 type TextProps = {
@@ -9,7 +10,6 @@ type TextProps = {
   inline?: boolean;
   small?: boolean;
   xsmall?: boolean;
-  style?: React.CSSProperties;
   // Below alter the class names
   black?: boolean;
   blue?: boolean;
@@ -21,14 +21,13 @@ type TextProps = {
   monospace?: boolean;
   muted?: boolean;
   semiBold?: boolean;
-};
+} & ElementType;
 
 function Text({
   children,
   className: classNameProp,
   inline,
   small,
-  style,
   xsmall,
   ...props
 }: TextProps) {
@@ -58,15 +57,9 @@ function Text({
     .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
     .join(' ');
 
-  return inline ? (
-    <span className={classNames} style={style}>
-      {children}
-    </span>
-  ) : (
-    <p className={classNames} style={style}>
-      {children}
-    </p>
-  );
+  return inline
+    ? <span {...extractProps(props)} className={classNames}>{children}</span>
+    : <p {...extractProps(props)} className={classNames}>{children}</p>;
 }
 
 export default Text;
