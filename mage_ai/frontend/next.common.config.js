@@ -1,4 +1,5 @@
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
@@ -7,7 +8,6 @@ module.exports = removeImports({
   },
   experimental: {
     esmExternals: true,
-    forceSwcTransforms: true,
   },
   images: {
     unoptimized: true,
@@ -17,20 +17,19 @@ module.exports = removeImports({
   // (including `useState`, `useEffect`, and others) to help identify side effects.
   // This does not happen in production builds.
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
+  webpack: (config, options) => {
+    if (!options?.isServer) {
       config.plugins.push(
         new MonacoWebpackPlugin({
-          languages: [
-            'json',
-            'python',
-            'r',
-            'sql',
-            // 'typescript',
-            'yaml',
-          ],
+          languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
         }),
       );
+
+      config.optimization.minimizer = [
+        new TerserPlugin({
+          exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
+        }),
+      ];
 
       config.module.rules.push({
         loader: 'worker-loader',
@@ -43,13 +42,5 @@ module.exports = removeImports({
     }
 
     return config;
-  },
-  async headers() {
-    return [
-      {
-        source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-    ];
   },
 });
