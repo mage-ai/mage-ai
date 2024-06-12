@@ -34,17 +34,9 @@ import {
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
-import { getCurrentTheme } from '@oracle/styles/themes/utils';
 import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/theme';
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
-
-// V2
-import V2Layout from '@components/v2/Layout';
-import V2ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
-import V2Head from '@mana/elements/Head';
-import { LayoutVersionEnum } from '@utils/layouts';
-import { getTheme } from '@mana/themes/utils';
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 
@@ -55,11 +47,7 @@ type AppInternalProps = {
   themeProps?: {
     currentTheme?: any;
   };
-  themes?: {
-    [key: string]: ThemeSettingsType;
-  };
   title?: string;
-  version?: LayoutVersionEnum;
 };
 
 type MyAppProps = {
@@ -75,15 +63,13 @@ function MyApp(props: MyAppProps & AppProps) {
   const keyHistory = useRef([]);
 
   const { Component, currentTheme, pageProps, router } = props;
-  const { defaultTitle, themeProps = {}, themes: themesMapping, title, version } = pageProps;
+  const { defaultTitle, themeProps = {}, title } = pageProps;
 
   const { featureEnabled, featureUUIDs } = useProject();
 
-  const isV2 = useMemo(() => version === LayoutVersionEnum.V2, [version]);
-
   const commandCenterEnabled = useMemo(
-    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER) && !isV2,
-    [featureEnabled, featureUUIDs, isV2],
+    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER),
+    [featureEnabled, featureUUIDs],
   );
 
   const windowIsDefined = typeof window !== 'undefined';
@@ -129,6 +115,11 @@ function MyApp(props: MyAppProps & AppProps) {
     };
   }, [keyHistory, keyMapping, router.events, savePageHistory]);
 
+  const themeMemo = useMemo(
+    () => Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme),
+    [currentTheme, themeProps],
+  );
+
   useEffect(() => {
     const handleState = () => {
       if (!commandCenterRootRef?.current) {
@@ -138,9 +129,7 @@ function MyApp(props: MyAppProps & AppProps) {
       if (commandCenterRootRef?.current) {
         commandCenterRootRef?.current?.render(
           <KeyboardContext.Provider value={keyboardContextValue}>
-            <ThemeProvider
-              theme={Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme)}
-            >
+            <ThemeProvider theme={themeMemo}>
               <GridThemeProvider gridTheme={gridThemeDefault}>
                 <ModalProvider>
                   <SheetProvider>
@@ -218,19 +207,9 @@ function MyApp(props: MyAppProps & AppProps) {
   const requireUserAuthentication = useMemo(() => status?.require_user_authentication, [status]);
   const requireUserPermissions = useMemo(() => status?.require_user_permissions, [status]);
 
-  const { data: dataProjects } = api.projects.list(
-    {},
-    { revalidateOnFocus: false },
-    {
-      pauseFetch: isV2,
-    },
-  );
+  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
-    if (isV2) {
-      return;
-    }
-
     if (
       noValue &&
       typeof requireUserAuthentication !== 'undefined' &&
@@ -269,7 +248,6 @@ function MyApp(props: MyAppProps & AppProps) {
     }
   }, [
     dataProjects,
-    isV2,
     noValue,
     noValuePermissions,
     requireUserAuthentication,
@@ -282,37 +260,6 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  const component = useMemo(() => {
-    // @ts-ignore
-    const el = <Component {...pageProps} />;
-
-    if (isV2) {
-      return <V2Layout>{el}</V2Layout>;
-    }
-    return el;
-  }, [Component, pageProps, isV2]);
-
-  const themeMemo = useMemo(() => {
-    if (isV2) {
-      return themesMapping?.[version] || (getTheme() as V2ThemeType);
-    }
-
-    return Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme);
-  }, [themeProps?.currentTheme, themesMapping, currentTheme, isV2, version]);
-
-  const head = useMemo(() => {
-    const HeadEl = isV2 ? V2Head : Head;
-
-    return (
-      <HeadEl defaultTitle={defaultTitle} title={title}>
-        <meta
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-          name="viewport"
-        />
-      </HeadEl>
-    );
-  }, [defaultTitle, title, isV2]);
-
   return (
     <>
       <KeyboardContext.Provider value={keyboardContextValue}>
@@ -321,11 +268,16 @@ function MyApp(props: MyAppProps & AppProps) {
             <ModalProvider>
               <SheetProvider>
                 <ErrorProvider>
-                  {head}
+                  <Head defaultTitle={defaultTitle} title={title}>
+                    <meta
+                      content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+                      name='viewport'
+                    />
+                  </Head>
 
                   <LoadingBar color={RED} ref={refLoadingBar} />
 
-                  {component}
+                  <Component {...pageProps} />
 
                   {isDemoApp && (
                     <Banner
@@ -354,9 +306,5 @@ function MyApp(props: MyAppProps & AppProps) {
     </>
   );
 }
-
-MyApp.getInitialProps = async (appContext: AppContext) => ({
-  currentTheme: getCurrentTheme(appContext.ctx),
-});
 
 export default MyApp;

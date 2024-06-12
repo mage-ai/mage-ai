@@ -4,17 +4,17 @@ import { useMutation } from 'react-query';
 
 import api from '@api';
 import baseConfigurations from './configurations/base';
-import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
+  COMMON_EXCLUDE_PATTERNS,
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING,
+} from '@interfaces/FileType';
 import { IDEThemeEnum } from './themes/interfaces';
 import { onSuccess } from '@api/utils/response';
 import { FileType } from './interfaces';
 import { LanguageEnum } from './languages/constants';
 
-function useManager(opts?: {
-  codeResources?: any;
-  configurations?: any;
-  theme?: IDEThemeEnum;
-}): {
+function useManager(opts?: { codeResources?: any; configurations?: any; theme?: IDEThemeEnum }): {
   filesInitialized: boolean;
   isInitialized: boolean;
   isLanguageServerStarted: boolean;
@@ -126,10 +126,7 @@ function useManager(opts?: {
     return () => {
       clearTimeout(timeoutRef.current);
     };
-  }, [
-    isInitialized,
-    isLanguageServerStarted,
-  ]);
+  }, [isInitialized, isLanguageServerStarted]);
 
   useEffect(() => {
     if (files === null) {
@@ -147,12 +144,7 @@ function useManager(opts?: {
 
       let filesCount = 0;
       if (languageClient) {
-        files.forEach(({
-          content,
-          language,
-          modified_timestamp: version,
-          path,
-        }) => {
+        files.forEach(({ content, language, modified_timestamp: version, path }) => {
           if (LanguageEnum.PYTHON === language) {
             const textDocument = {
               languageId: language,

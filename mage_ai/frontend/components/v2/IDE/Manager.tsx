@@ -65,10 +65,9 @@ class Manager {
           ignoreMapping: true,
           workerLoaders: {
             editorWorkerService: () =>
-              new Worker(
-                new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
-                { type: 'module' },
-              ),
+              new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url), {
+                type: 'module',
+              }),
             javascript: () =>
               // @ts-ignore
               import('monaco-editor-wrapper/workers/module/ts').then(
@@ -88,13 +87,14 @@ class Manager {
             $type: 'classic' as const,
             codeResources: codeResources
               ? {
-                main: {
-                  ...codeResources?.main,
-                  uri: typeof codeResources?.main?.uri === 'string'
-                    ? this.monaco.Uri.parse(codeResources?.main?.uri)
-                    : codeResources?.main?.uri,
-                },
-              }
+                  main: {
+                    ...codeResources?.main,
+                    uri:
+                      typeof codeResources?.main?.uri === 'string'
+                        ? this.monaco.Uri.parse(codeResources?.main?.uri)
+                        : codeResources?.main?.uri,
+                  },
+                }
               : undefined,
             domReadOnly: true,
             editorOptions: configurations,
@@ -178,9 +178,7 @@ class Manager {
   }
 }
 
-export {
-  Manager,
-};
+export { Manager };
 
 export default Manager;
 

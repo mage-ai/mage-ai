@@ -10,7 +10,7 @@ export const LOCAL_STORAGE_KEY_THEME: 'current_theme' = 'current_theme';
 const LOCAL_STORAGE_KEY_THEME_DARK: number = 0;
 const LOCAL_STORAGE_KEY_THEME_LIGHT: number = 1;
 
-export function getCurrentTheme(ctx, invertedTheme = 1) {
+export function getCurrentTheme(ctx: any, invertedTheme = 1) {
   let currentTheme;
 
   if (ctx) {
@@ -33,6 +33,8 @@ export function getCurrentTheme(ctx, invertedTheme = 1) {
   } else {
     return light;
   }
+
+  return dark;
 }
 
 export function getCurrentInvertedTheme(ctx) {

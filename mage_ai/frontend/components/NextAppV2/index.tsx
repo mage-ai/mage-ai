@@ -43,8 +43,8 @@ function NextAppV2({
     <>
       <Head defaultTitle={defaultTitle} title={title}>
         <meta
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-          name="viewport"
+          content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+          name='viewport'
         />
       </Head>
       <ThemeProvider theme={theme as ThemeType}>

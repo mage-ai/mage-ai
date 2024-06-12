@@ -1,15 +1,14 @@
 import App, { AppContext, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 
-import { ModeEnum } from '@mana/themes/modes';
-
 import '@styles/globals.css';
 import '@styles/scss/globals/dark.scss';
 import '@styles/scss/globals/light.scss';
 import 'react-toastify/dist/ReactToastify.min.css';
+import { getCurrentTheme } from '@oracle/styles/themes/utils';
 
-function MainApp({ version, ...props }: { mode: ModeEnum; version?: string } & AppProps) {
-  if (version === 'v2') {
+function MainApp(props: AppProps & { version?: string }) {
+  if (props?.version === 'v2') {
     const AppV2 = dynamic(() => import('@components/NextAppV2'));
     // @ts-ignore
     return <AppV2 {...props} />;
@@ -26,6 +25,7 @@ MainApp.getInitialProps = async (appContext: AppContext) => {
 
   return {
     ...appProps,
+    currentTheme: getCurrentTheme(appContext.ctx),
     version: appProps?.pageProps?.version,
   };
 };

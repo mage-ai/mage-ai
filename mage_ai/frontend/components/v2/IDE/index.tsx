@@ -41,34 +41,31 @@ function MateriaIDE({
   const mountedRef = useRef(false);
   const wrapperRef = useRef(null);
 
-  const {
-    filesInitialized,
-    isInitialized,
-    isLanguageServerStarted,
-    loadingFiles,
-    wrapper,
-  } = useManager({
-    codeResources: {
-      main: {
-        enforceLanguageId: file?.language || LanguageEnum.PYTHON,
-        text: file?.content || file?.path,
-        uri: `file://${file?.path}`,
+  const { filesInitialized, isInitialized, isLanguageServerStarted, loadingFiles, wrapper } =
+    useManager({
+      codeResources: {
+        main: {
+          enforceLanguageId: file?.language || LanguageEnum.PYTHON,
+          text: file?.content || file?.path,
+          uri: `file://${file?.path}`,
+        },
       },
-    },
-  });
+    });
 
   async function addNewModel(codeResources): Promise<void> {
     const editorApp = wrapperRef?.current?.getMonacoEditorApp();
     const editor = editorRef?.current;
 
     if (!editor) {
-        return Promise.reject(new Error('You cannot add a new model as neither editor nor diff editor is available.'));
+      return Promise.reject(
+        new Error('You cannot add a new model as neither editor nor diff editor is available.'),
+      );
     }
 
     // Step 1: Create a new model reference
     const newModelRef = await editorApp.buildModelRef(codeResources);
     if (!newModelRef) {
-        return Promise.reject(new Error('Failed to create new model reference.'));
+      return Promise.reject(new Error('Failed to create new model reference.'));
     }
 
     // Step 2: Update editor models with the new model
@@ -93,7 +90,8 @@ function MateriaIDE({
             await wrapper.start(containerRef.current);
 
             editorRef.current = wrapperRef.current.getEditor();
-            languageClientRef.current = wrapperRef.current.languageClientWrapper.getLanguageClient();
+            languageClientRef.current =
+              wrapperRef.current.languageClientWrapper.getLanguageClient();
           } catch (error) {
             console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
           } finally {

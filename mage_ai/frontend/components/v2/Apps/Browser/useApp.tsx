@@ -22,7 +22,7 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
           Browse
         </Button>
 
-        <TextInput basic monospace placeholder="/" small />
+        <TextInput basic monospace placeholder='/' small />
       </>
     ),
     [],
