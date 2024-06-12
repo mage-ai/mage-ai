@@ -250,18 +250,23 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
     if (itemsRootRef?.current) {
       itemsRootRef?.current?.unmount();
       itemsRootRef.current = null;
+      renderedRef.current = false;
     }
   }
 
   useEffect(() => {
-    if (!itemsRootRef?.current) {
+    if (!renderedRef?.current) {
       if (expandedRef?.current) {
         renderUpdates();
       }
     }
 
+    const rendered = renderedRef?.current;
     return () => {
-      removeItems();
+      console.log('MMMMMMMMMMMMMMMMMMMMM', rendered);
+      if (rendered) {
+        removeItems();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
