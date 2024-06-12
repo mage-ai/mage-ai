@@ -29,7 +29,7 @@ type MenuProps = {
     x: number;
     y: number;
   };
-    event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
+  event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   small?: boolean;
   uuid: string;
@@ -111,7 +111,7 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
     let yFinal = y + UNIT / 2;
     const menuHeight = MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
-      yFinal = (y - menuHeight - (rect?.height || 0));
+      yFinal = y - menuHeight - (rect?.height || 0);
     }
 
     return {

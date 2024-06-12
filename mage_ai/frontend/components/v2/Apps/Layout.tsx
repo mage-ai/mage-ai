@@ -95,8 +95,7 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
             // item 0: column 0, columnSpan 0 + (3 - 3)/(3-0) + 1 = 1; col-start: 0, col-end: 1
             // item 1: column 1, columnSpan 1 + (3 - 3)/(3-1) + 1 = 2; col-start: 1, col-end: 2
             // item 2: column 1, columnSpan 2 + (3 - 3)/(3-2) + 1 = 3; col-start: 2, col-end: 3
-            const columnSpan =
-              column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol));
+            const columnSpan = column + Math.floor((colsMax - colsInRow) / (colsInRow - idxCol));
 
             const configNew = {
               ...config,

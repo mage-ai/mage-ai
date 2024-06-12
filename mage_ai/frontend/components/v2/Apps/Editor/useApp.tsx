@@ -19,7 +19,11 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
           </ThemeProvider>
         }
       >
-        <MateriaIDE uuid={app?.uuid} />
+        <MateriaIDE
+          configurations={app?.options?.configurations}
+          file={app?.options?.file}
+          uuid={app?.uuid}
+        />
       </Suspense>
     ),
     [MateriaIDE, app, themeContext],

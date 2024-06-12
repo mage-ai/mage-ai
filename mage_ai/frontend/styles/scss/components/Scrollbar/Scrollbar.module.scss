@@ -2,4 +2,8 @@
 
 .scrollbar {
   @include base;
+
+  &.pad-left {
+    padding-left: #{$margin-base}px;
+  }
 }

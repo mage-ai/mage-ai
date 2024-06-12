@@ -5,19 +5,29 @@ import baseConfigurations from './configurations/base';
 import initializeAutocomplete from './autocomplete';
 import themes from './themes';
 import { IDEThemeEnum } from './themes/interfaces';
-import mockCode from './mocks/code';
 import pythonProvider from './languages/python/provider';
+import { FileType } from './interfaces';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import { ContainerStyled, IDEStyled } from './index.style';
 import { LanguageEnum } from './languages/constants';
 import { getHost } from '@api/utils/url';
 
+// import mockCode from './mocks/code';
+// const codeUri = '/home/src/setup.py';
+
 type IDEProps = {
+  configurations?: any;
+  file?: FileType;
   theme?: IDEThemeEnum;
   uuid: string;
 };
 
-function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps) {
+function MateriaIDE({
+  configurations: configurationsOverride,
+  file,
+  theme: themeSelected = IDEThemeEnum.BASE,
+  uuid,
+}: IDEProps) {
   const renderCount = useRef(0);
   const wrapperCount = useRef(0);
 
@@ -31,12 +41,11 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
   const configurations = useMemo(
     () =>
       baseConfigurations(themeContext, {
-        padding: {
-          top: 67,
-        },
+        // padding: { top: 67 },
+        ...configurationsOverride,
         theme: themeSelected,
       }),
-    [themeContext, themeSelected],
+    [configurationsOverride, themeContext, themeSelected],
   );
 
   useEffect(() => {
@@ -86,7 +95,6 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
 
         configureMonacoWorkers();
 
-        const codeUri = '/home/src/setup.py';
         const userConfig = {
           loggerConfig: {
             enabled: true,
@@ -106,9 +114,9 @@ function MateriaIDE({ theme: themeSelected = IDEThemeEnum.BASE, uuid }: IDEProps
               $type: 'classic' as const,
               codeResources: {
                 main: {
-                  enforceLanguageId: LanguageEnum.PYTHON,
-                  text: mockCode,
-                  uri: codeUri,
+                  enforceLanguageId: file?.language || LanguageEnum.PYTHON,
+                  text: file?.content,
+                  uri: file?.uri,
                 },
               },
               domReadOnly: true,

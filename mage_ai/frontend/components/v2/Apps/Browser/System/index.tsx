@@ -25,7 +25,6 @@ import { selectKeys } from '@utils/hash';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
 import { useMutation } from 'react-query';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 
 function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
@@ -83,23 +82,29 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
                                   console.log('onClick', itemClicked);
                                   removeContextMenu();
                                   if (ItemTypeEnum.FILE === itemClicked?.type) {
-                                    addApp({
-                                      options: {
-                                        itemClicked,
-                                      },
-                                      subtype: AppSubtypeEnum.IDE,
-                                      type: AppTypeEnum.EDITOR,
-                                      uuid: itemClicked?.name,
-                                    }, {
-                                      grid: {
-                                        relative: {
-                                          layout: {
-                                            column: 1,
+                                    addApp(
+                                      {
+                                        options: {
+                                          file: {
+                                            content: itemClicked?.content,
+                                            uri: itemClicked?.path,
                                           },
-                                          uuid: app?.uuid,
+                                        },
+                                        subtype: AppSubtypeEnum.IDE,
+                                        type: AppTypeEnum.EDITOR,
+                                        uuid: itemClicked?.name,
+                                      },
+                                      {
+                                        grid: {
+                                          relative: {
+                                            layout: {
+                                              column: 1,
+                                            },
+                                            uuid: app?.uuid,
+                                          },
                                         },
                                       },
-                                    });
+                                    );
                                   }
                                 }}
                                 onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
@@ -147,7 +152,9 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
 
       if (!contextMenuRootRef?.current) {
         const node = document.getElementById(contextMenuRootID);
-        contextMenuRootRef.current = createRoot(node as HTMLElement);
+        if (node) {
+          contextMenuRootRef.current = createRoot(node as HTMLElement);
+        }
       }
 
       if (contextMenuRootRef?.current) {
@@ -248,7 +255,6 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
   return (
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
       {isLoading && <Loading />}
-      <div style={{ height: 67, width: '100%' }} />
       <div id={rootID} />
       <div id={contextMenuRootID} />
     </Scrollbar>

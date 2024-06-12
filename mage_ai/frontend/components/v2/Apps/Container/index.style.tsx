@@ -2,8 +2,12 @@ import styled from 'styled-components';
 
 const LEFT_PEEK = 4;
 
-export const Header = styled.header`
-  ${({ theme }) => `
+export const Header = styled.header<{
+  overlay?: boolean;
+}>`
+  ${({ overlay, theme }) =>
+    overlay &&
+    `
     backdrop-filter: saturate(100%) blur(3px);
     background-color: ${theme.colors.backgrounds.blur};
     border-top-left-radius: ${theme.borders.radius.base};
@@ -21,5 +25,11 @@ export const Header = styled.header`
     position: absolute;
     width: calc(100% - ${theme.padding.base - LEFT_PEEK}px);
     z-index: 1;
+  `}
+
+  ${({ overlay, theme }) =>
+    !overlay &&
+    `
+    padding: ${theme.padding.base}px;
   `}
 `;

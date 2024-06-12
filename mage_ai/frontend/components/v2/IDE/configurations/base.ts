@@ -386,6 +386,6 @@ export default function base(
     'semanticHighlighting.enabled': true, // true
     suggestOnTriggerCharacters: true, // true
     renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
-    renderLineHighlightOnlyWhenFocus: false, // false
+    renderLineHighlightOnlyWhenFocus: true, // false
   };
 }

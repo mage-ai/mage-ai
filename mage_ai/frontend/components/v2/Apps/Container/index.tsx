@@ -29,22 +29,22 @@ function AppContainer(
     addApp(appNew, opts);
   }
 
-  const {
-    main,
-    toolbars,
-  } = appLoader?.({
+  const { main, toolbars } = appLoader?.({
     addApp: (appNew, opts) => {
-      addApp(appNew, mergeDeep(opts, {
-        grid: {
-          relative: {
-            layout: {
-              column: 1,
-              row: 0,
+      addApp(
+        appNew,
+        mergeDeep(opts, {
+          grid: {
+            relative: {
+              layout: {
+                column: 1,
+                row: 0,
+              },
+              uuid,
             },
-            uuid,
           },
-        },
-      }));
+        }),
+      );
     },
     app,
     removeApp,
@@ -61,93 +61,95 @@ function AppContainer(
           position: 'relative',
         }}
         templateColumns="1fr"
-        templateRows="1fr"
+        templateRows="auto 1fr"
       >
         <Header>
-          <Grid autoFlow="column" columnGap={12} templateColumns="auto 1fr">
-            {toolbars?.top}
-          </Grid>
+          <Grid columnGap={12} templateColumns="1fr auto" templateRows="1fr">
+            <Grid autoFlow="column" columnGap={12} templateColumns="auto 1fr">
+              {toolbars?.top}
+            </Grid>
 
-          <ButtonGroup itemsContained>
-            <Button
-              Icon={CaretDown}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 0,
-                        row: 1,
+            <ButtonGroup itemsContained>
+              <Button
+                Icon={CaretDown}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 0,
+                          row: 1,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretUp}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 0,
-                        row: -1,
+                  })
+                }
+                small
+              />
+              <Button
+                Icon={CaretUp}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 0,
+                          row: -1,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretLeft}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 1,
-                        row: 0,
+                  })
+                }
+                small
+              />
+              <Button
+                Icon={CaretLeft}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 1,
+                          row: 0,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretRight}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 1,
-                        row: 0,
+                  })
+                }
+                small
+              />
+              <Button
+                Icon={CaretRight}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 1,
+                          row: 0,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Divider vertical />
-            <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
-          </ButtonGroup>
+                  })
+                }
+                small
+              />
+              <Divider vertical />
+              <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
+            </ButtonGroup>
+          </Grid>
         </Header>
 
         {main}

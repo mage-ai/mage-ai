@@ -89,6 +89,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const buildLines = useCallback(
     (levelIncrement?: number) => (
       <div style={{ display: 'flex' }}>
+        <ColumnGapStyled />
         {range((levelIncrement || 0) + level).map((_i, idx: number) => (
           <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
             <LineStyled />
@@ -175,7 +176,9 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(itemsRootID(uuid));
-      itemsRootRef.current = createRoot(node as HTMLElement);
+      if (node) {
+        itemsRootRef.current = createRoot(node as HTMLElement);
+      }
     }
 
     if (itemsRootRef?.current) {
@@ -236,21 +239,34 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
     }
   }, [items, renderIcon, renderItems, uuid]);
 
+  function removeItems() {
+    if (itemsRootRef?.current) {
+      itemsRootRef?.current?.unmount();
+      itemsRootRef.current = null;
+    }
+  }
+
+  useEffect(() =>
+     () => {
+      removeItems();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  , []);
+
   return (
     <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
-          if (onClick) {
-            onClick?.(event, item);
-          }
-
           event.preventDefault();
           event.stopPropagation();
 
           expandedRef.current = !expandedRef.current;
-
           renderUpdates();
+
+          if (onClick) {
+            onClick?.(event, item as ItemDetailType);
+          }
         }}
         onContextMenu={onContextMenu}
         templateColumns="auto 1fr"
