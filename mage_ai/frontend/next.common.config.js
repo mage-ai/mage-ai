@@ -31,31 +31,33 @@ module.exports = removeImports({
         }),
       );
 
-      config.module.rules.push(...[
-        {
-          loader: 'worker-loader',
-          options: {
-            name: 'static/[hash].worker.js',
-            publicPath: '/_next/',
-          },
-          test: /\.worker\.ts$/,
-        },
-        {
-          include: [
-            path.resolve(__dirname, 'node_modules/monaco-editor'),
-            path.resolve(__dirname, 'node_modules/react-dom'),
-            path.resolve(__dirname, 'node_modules/elkjs'),
-          ],
-          test: /\.(js|mjs|jsx|ts|tsx)$/,
-          use: {
-            loader: 'babel-loader',
+      config.module.rules.push(
+        ...[
+          {
+            loader: 'worker-loader',
             options: {
-              presets: [['next/babel']],
-              compact: true,
+              name: 'static/[hash].worker.js',
+              publicPath: '/_next/',
+            },
+            test: /\.worker\.ts$/,
+          },
+          {
+            include: [
+              path.resolve(__dirname, 'node_modules/monaco-editor'),
+              path.resolve(__dirname, 'node_modules/react-dom'),
+              path.resolve(__dirname, 'node_modules/elkjs'),
+            ],
+            test: /\.(js|mjs|jsx|ts|tsx)$/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: [['next/babel']],
+                compact: true,
+              },
             },
           },
-        },
-      ]);
+        ],
+      );
     }
 
     const filesToMinify = [
@@ -66,7 +68,9 @@ module.exports = removeImports({
       'monaco-editor/esm/vs/editor/editor.main.js',
     ];
 
-    const includeRegex = new RegExp(filesToMinify.map(file => file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
+    const includeRegex = new RegExp(
+      filesToMinify.map(file => file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+    );
 
     config.optimization.minimizer = [
       new TerserPlugin({
@@ -85,23 +89,23 @@ module.exports = removeImports({
     const alias = {
       'monaco-editor/esm/vs/editor/editor.main.js': path.resolve(
         __dirname,
-        'node_modules/monaco-editor/esm/vs/editor/editor.main.js'
+        'node_modules/monaco-editor/esm/vs/editor/editor.main.js',
       ),
       'monaco-editor-wrapper/dist/index.js': path.resolve(
         __dirname,
-        'node_modules/monaco-editor-wrapper/dist/index.js'
+        'node_modules/monaco-editor-wrapper/dist/index.js',
       ),
       'monaco-editor-wrapper/dist/workerFactory.js': path.resolve(
         __dirname,
-        'node_modules/monaco-editor-wrapper/dist/workerFactory.js'
+        'node_modules/monaco-editor-wrapper/dist/workerFactory.js',
       ),
       '@codingame/monaco-vscode-python-default-extension/index.js': path.resolve(
         __dirname,
-        'node_modules/@codingame/monaco-vscode-python-default-extension/index.js'
+        'node_modules/@codingame/monaco-vscode-python-default-extension/index.js',
       ),
       '@codingame/monaco-vscode-monarch-service-override/index.js': path.resolve(
         __dirname,
-        'node_modules/@codingame/monaco-vscode-monarch-service-override/index.js'
+        'node_modules/@codingame/monaco-vscode-monarch-service-override/index.js',
       ),
     };
 
