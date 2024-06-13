@@ -234,7 +234,7 @@ def replace_base_path(base_path: str) -> str:
 
 
 def make_app(
-    template_dir: Optional[str] = None,
+    template_dir: str = None,
     update_routes: bool = False,
     status_only: bool = False,
 ):

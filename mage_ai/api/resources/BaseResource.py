@@ -1,6 +1,6 @@
 import importlib
 import inspect
-from typing import Any, Coroutine, Optional, Union
+from typing import Coroutine, Union
 
 import inflection
 
@@ -120,7 +120,7 @@ class BaseResource(Resource, ResultSetMixIn):
         cls.parent_resource()[column_name] = resource_class
 
     @classmethod
-    def build_result_set(cls, arr, user, **kwargs) -> ResultSet:
+    def build_result_set(cls, arr, user, **kwargs):
         return ResultSet(
             [
                 mod if issubclass(mod.__class__, BaseResource) else cls(mod, user, **kwargs)
@@ -223,7 +223,7 @@ class BaseResource(Resource, ResultSetMixIn):
         return inflection.underscore(cls.__name__.replace('Resource', '')).lower()
 
     @classmethod
-    async def get_model(cls, pk, **kwargs) -> Optional[Any]:
+    async def get_model(cls, pk, **kwargs):
         if cls.model_class:
             return cls.model_class.query.get(pk)
 
