@@ -26,6 +26,7 @@ module.exports = removeImports({
         }),
       ];
 
+      // This is responsible for the Monaco editor web worker.
       config.module.rules.push({
         loader: 'worker-loader',
         options: {

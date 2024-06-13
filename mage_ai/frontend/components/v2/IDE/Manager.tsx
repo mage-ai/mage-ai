@@ -87,7 +87,7 @@ class Manager {
   }
 
   public async start(element: HTMLElement) {
-    await this.wrapper.getWrapper().start(element);
+    await this.wrapper.start(element);
   }
 
   public async initialize({
