@@ -47,14 +47,39 @@ function useManager(uuid: string, opts?: InitializeProps): {
 
   const initializeManager = async () => {
     if (!managerRef?.current) {
+      await import('monaco-editor');
+
       let manager = null;
 
       const mod = await import('./Manager');
       const Manager = mod.Manager;
       manager = Manager.getInstance(uuid);
 
-      // const startWorkers = Manager.getWorkerFactoryInitializer();
-      // await startWorkers();
+      await manager.setupPythonLanguage();
+      await manager.setupAutocomplete();
+
+      await this.loadServices();
+      const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
+
+      const configureMonacoWorkers = async () => {
+        useWorkerFactory({
+          ignoreMapping: true,
+          workerLoaders: {
+            editorWorkerService: () =>
+              new Worker(
+                new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+                { type: 'module' },
+              ),
+            javascript: () =>
+              // @ts-ignore
+              import('monaco-editor-wrapper/workers/module/ts').then(
+                module => new Worker(module.default, { type: 'module' }),
+              ),
+          },
+        });
+      };
+
+      await configureMonacoWorkers();
 
       await manager.initialize({
         file: opts?.file,

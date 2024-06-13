@@ -10,7 +10,8 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
     () => <SystemBrowser addApp={addApp} app={app} removeApp={removeApp} />,
     [addApp, app, removeApp],
   );
-  const toolbarTop = useMemo(
+
+  const top = useMemo(
     () => (
       <>
         <Button
@@ -31,7 +32,7 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
   return {
     main,
     toolbars: {
-      top: toolbarTop,
+      top,
     },
   };
 }

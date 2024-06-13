@@ -96,12 +96,6 @@ class Manager {
     this.onCompletions.languageServer = () => languageServer?.onComplete?.();
     this.onCompletions.workspace = () => workspace?.onComplete?.();
 
-    await this.loadMonaco();
-    await this.setupPythonLanguage();
-    await this.setupAutocomplete();
-
-    await this.loadServices();
-
     await this.initializeWrapper(
       file,
       wrapper,
@@ -200,7 +194,6 @@ class Manager {
           }
         });
 
-        console.log('FETCHHHHHHHHHHHHHHHHHHHHHHHHED', this.languageClient, this.files);
         this.files = files;
       });
     }
@@ -215,15 +208,12 @@ class Manager {
     ].includes(this.language);
   }
 
-  private async loadMonaco() {
-    if (!this.monaco) {
-      this.monaco = await import('monaco-editor');
-    }
-
+  public async loadMonaco() {
+    this.monaco = await import('monaco-editor');
     return this.monaco;
   }
 
-  private async loadServices() {
+  public async loadServices() {
     await import('@codingame/monaco-vscode-python-default-extension');
   }
 
@@ -250,11 +240,11 @@ class Manager {
     };
   }
 
-  private async setupAutocomplete() {
+  public async setupAutocomplete() {
     initializeAutocomplete(await this.loadMonaco(), LanguageEnum.PYTHON);
   }
 
-  private async setupPythonLanguage() {
+  public async setupPythonLanguage() {
     if (!this.isLanguageServerEnabled()) {
       return;
     }

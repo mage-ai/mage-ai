@@ -19,12 +19,6 @@ module.exports = removeImports({
   reactStrictMode: String(process.env.NEXT_PUBLIC_REACT_STRICT_MODE) !== '0',
   webpack: (config, options) => {
     if (!options?.isServer) {
-      config.plugins.push(
-        new MonacoWebpackPlugin({
-          languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
-        }),
-      );
-
       config.optimization.minimizer = [
         new TerserPlugin({
           exclude: /node_modules\/next\/dist\/compiled\/terser\/bundle\.min\.js/,
@@ -39,19 +33,28 @@ module.exports = removeImports({
         },
         test: /\.worker\.ts$/,
       });
+    }
 
-      if (options?.dev) {
-        if (parseInt(process.env.ONLY_V || 0) === 2) {
-          console.log('Ignoring pages and components not in V2...')
-          config.plugins.push(...[
-            new options.webpack.IgnorePlugin({
-              resourceRegExp: /^\.\/pages\/(?!v2)/,
-            }),
-            new options.webpack.IgnorePlugin({
-              resourceRegExp: /^\.\/components\/(?!v2)/,
-            }),
-          ]);
-        }
+    config.plugins.push(
+      new MonacoWebpackPlugin({
+        // https://github.com/nicoabie/monaco-editor-webpack-plugin/blob
+        // /97fa344ed9dfb3cb529cd44348cccc2a6e0fb7a4/README.md#options
+        features: ['!accessibilityHelp'],
+        languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
+      }),
+    );
+
+    if (options?.dev) {
+      if (parseInt(process.env.ONLY_V || 0) === 2) {
+        console.log('Ignoring pages and components not in V2...')
+        config.plugins.push(...[
+          new options.webpack.IgnorePlugin({
+            resourceRegExp: /^\.\/pages\/(?!v2)/,
+          }),
+          new options.webpack.IgnorePlugin({
+            resourceRegExp: /^\.\/components\/(?!v2)/,
+          }),
+        ]);
       }
     }
 

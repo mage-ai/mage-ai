@@ -55,29 +55,6 @@ function MateriaIDE({
     if (containerRef?.current && !managerRef?.current) {
       const initializeWrapper = async () => {
         try {
-          const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
-          await import('@codingame/monaco-vscode-python-default-extension');
-
-          const configureMonacoWorkers = () => {
-            useWorkerFactory({
-              ignoreMapping: true,
-              workerLoaders: {
-                editorWorkerService: () =>
-                  new Worker(
-                    new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
-                    { type: 'module' },
-                  ),
-                javascript: () =>
-                  // @ts-ignore
-                  import('monaco-editor-wrapper/workers/module/ts').then(
-                    module => new Worker(module.default, { type: 'module' }),
-                  ),
-              },
-            });
-          };
-
-          configureMonacoWorkers();
-
           managerRef.current = await initializeManager();
           await managerRef.current.getWrapper().start(containerRef.current);
         } catch (error) {
