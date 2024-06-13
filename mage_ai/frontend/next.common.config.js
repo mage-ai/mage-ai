@@ -35,16 +35,18 @@ module.exports = removeImports({
         },
         test: /\.worker\.ts$/,
       });
-    }
 
-    config.plugins.push(
-      new MonacoWebpackPlugin({
-        // https://github.com/nicoabie/monaco-editor-webpack-plugin/blob
-        // /97fa344ed9dfb3cb529cd44348cccc2a6e0fb7a4/README.md#options
-        // features: ['!accessibilityHelp'],
-        languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
-      }),
-    );
+      // If you move this out of !isServer, you’ll get:
+      // Conflict: Multiple assets emit different content to the same filename ../main.js.nft.json
+      config.plugins.push(
+        new MonacoWebpackPlugin({
+          // https://github.com/nicoabie/monaco-editor-webpack-plugin/blob
+          // /97fa344ed9dfb3cb529cd44348cccc2a6e0fb7a4/README.md#options
+          // features: ['!accessibilityHelp'],
+          languages: ['json', 'python', 'r', 'sql', 'typescript', 'yaml'],
+        }),
+      );
+    }
 
     if (options?.dev) {
       if (parseInt(process.env.ONLY_V || 0) === 2) {
