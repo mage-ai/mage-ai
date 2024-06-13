@@ -32,45 +32,36 @@ function MateriaIDE({
   uuid,
 }: IDEProps) {
   const containerRef = useRef(null);
-  const mountedRef = useRef(false);
   const managerRef = useRef(null);
+  const mountedRef = useRef(false);
 
-  const {
-    completions,
-    initializeManager,
-  } =
-    useManager(uuid, {
-      file,
-      wrapper: {
-        options: {
-          configurations: {
-            ...configurationsOverride,
-            theme: themeSelected,
-          },
+  const manager = useManager(uuid, {
+    file,
+    wrapper: {
+      options: {
+        configurations: {
+          ...configurationsOverride,
+          theme: themeSelected,
         },
       },
-    });
+    },
+  });
 
   useEffect(() => {
-    if (containerRef?.current && !managerRef?.current) {
+    if (containerRef?.current && !managerRef.current && manager) {
       const initializeWrapper = async () => {
-        try {
-          managerRef.current = await initializeManager();
-          await managerRef.current.getWrapper().start(containerRef.current);
-        } catch (error) {
-          console.error('[ERROR] IDE: error while initializing Monaco editor:', error);
-        }
+        managerRef.current = manager;
+        await managerRef.current.start(containerRef.current);
       };
 
       initializeWrapper();
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [manager]);
 
   return (
     <ContainerStyled>
-      {!(completions?.wrapper && completions?.languageServer && completions?.workspace) && <Loading />}
+      {!manager && <Loading />}
 
       <IDEStyled className={mountedRef?.current ? 'mounted' : ''}>
         <div ref={containerRef} style={{ height: '100vh' }} />

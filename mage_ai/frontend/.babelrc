@@ -9,12 +9,5 @@
         "preprocess": false
       }
     ]
-  ],
-  "exclude": [
-    "node_modules/monaco-editor/**/*",
-    "node_modules/react-dom/**/*",
-    "node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js",
-    "node_modules/react-dom/cjs/react-dom.development.js",
-    "node_modules/elkjs/lib/elk.bundled.js"
   ]
 }

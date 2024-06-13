@@ -3,13 +3,13 @@ import initializeAutocomplete from './autocomplete';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import pythonProvider from './languages/python/provider';
 import themes from './themes';
-import { CodeResources, FileType } from './interfaces';
+import { FileType } from './interfaces';
 import { IDEThemeEnum } from './themes/interfaces';
 import { LanguageEnum } from './languages/constants';
 import { getHost } from '@api/utils/url';
 import { getTheme } from '@mana/themes/utils';
+import { isDebug } from '@utils/environment';
 import { languageClientConfig, loggerConfig } from './constants';
-import { mergeDeep } from '@utils/hash';
 
 type onComplete = (wrapper?: any, languageServerClient?: any, languageClient?: any, files?: FileType[]) => void;
 
@@ -28,7 +28,7 @@ type InitializeLanguageServerProps = {
 type InitializeWorkspaceProps = {
   onComplete?: onComplete;
   options?: {
-    fetch?: (callback: (files: FileType[]) => void) => void;
+    fetch?: (callback: (files: FileType[]) => void, query?: Record<string, any>) => void;
   };
 };
 
@@ -41,6 +41,8 @@ export type InitializeProps = {
 
 class Manager {
   private static instances: Record<string, Manager>;
+  private static languageServersStarted: Record<string, boolean> = {};
+  private static registeredFiles: Record<string, FileType> = {};
   private files: FileType[] = null;
   private language: LanguageEnum = null;
   private languageClient: any = null;
@@ -84,6 +86,10 @@ class Manager {
     return this.wrapper;
   }
 
+  public async start(element: HTMLElement) {
+    await this.wrapper.getWrapper().start(element);
+  }
+
   public async initialize({
     file,
     languageServer,
@@ -91,6 +97,34 @@ class Manager {
     wrapper,
   }: InitializeProps) {
     this.language = file?.language;
+
+
+    await this.loadMonaco();
+    await import('monaco-editor-wrapper');
+    const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
+    await import('@codingame/monaco-vscode-python-default-extension');
+
+    const configureMonacoWorkers = async () => {
+      useWorkerFactory({
+        ignoreMapping: true,
+        workerLoaders: {
+          editorWorkerService: () =>
+            new Worker(
+              new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+              { type: 'module' },
+            ),
+          javascript: () =>
+            // @ts-ignore
+            import('monaco-editor-wrapper/workers/module/ts').then(
+              module => new Worker(module.default, { type: 'module' }),
+            ),
+        },
+      });
+    };
+
+    await configureMonacoWorkers();
+    await this.setupPythonLanguage();
+    await this.setupAutocomplete();
 
     this.onCompletions.wrapper = () => wrapper?.onComplete?.();
     this.onCompletions.languageServer = () => languageServer?.onComplete?.();
@@ -119,8 +153,6 @@ class Manager {
       Object.entries(this.onCompletions || {}).forEach(([key, onComplete]) => {
         const [completed, completionRan] = this.completions[key] || [false, false];
 
-        console.log(key, this.completions, this.languageServerClientWrapper, this.languageClient, this.files);
-
         if (completed && !completionRan && onComplete) {
           onComplete?.(
             this.wrapper,
@@ -130,10 +162,7 @@ class Manager {
           );
         }
         this.completions[key] = [completed, true];
-
-        console.log(key, this.completions, this.languageServerClientWrapper, this.languageClient, this.files);
       });
-
       if (Object.values(this.completions || {})?.every(arr => arr?.every(v => v))) {
         this.timeout = null;
       } else {
@@ -166,9 +195,15 @@ class Manager {
 
     return this.wrapper;
   }
-  private async startLanguageServer(languageServerClientWrapper: any, opts: InitializeLanguageServerProps, callback: (languageClient: any) => void) {
+  private async startLanguageServer(
+    languageServerClientWrapper: any,
+    opts: InitializeLanguageServerProps,
+    callback: (languageClient: any) => void,
+  ) {
     this.languageServerClientWrapper = languageServerClientWrapper;
-    this.languageClient = languageServerClientWrapper.getLanguageClient();
+    if (!this.languageClient) {
+      this.languageClient = languageServerClientWrapper.getLanguageClient();
+    }
     callback(this.languageClient);
     this.completions.languageServer = [true, false];
   }
@@ -177,30 +212,80 @@ class Manager {
     const { options } = opts || {};
     const { fetch } = options || {};
 
-    if (fetch) {
-      fetch((files: FileType[]) => {
-        files.forEach((file: FileType) => {
-          const { content, language, modified_timestamp: version, path } = file;
+    const managerLanguage = this.language;
 
-          if (this.language === language) {
-            languageClient?.sendNotification('textDocument/didOpen', {
-              textDocument: {
-                languageId: language,
-                text: content || '',
-                uri: `file://${path}`,
-                version,
-              },
-            });
-          }
-        });
-
-        this.files = files;
-      });
+    if (languageClient && !(managerLanguage in Manager.languageServersStarted)) {
+      Manager.languageServersStarted[managerLanguage] = languageClient;
     }
 
+    // TODO (dangerous): use server stream events
+    // if (fetch) {
+    //   function registerItem(file: FileType) {
+    //     const { content, language, modified_timestamp: version, path } = file;
+
+    //     if (managerLanguage === language && !(path in Manager.registeredFiles)) {
+    //       languageClient?.sendNotification('textDocument/didOpen', {
+    //         textDocument: {
+    //           languageId: language,
+    //           text: content || '',
+    //           uri: `file://${path}`,
+    //           version,
+    //         },
+    //       });
+    //       Manager.registeredFiles[path] = file;
+    //     }
+    //   }
+
+    //   fetch((files: FileType[]) => {
+    //     files.forEach(registerItem);
+    //     this.files = files;
+    //   });
+
+    //   if (isDebug()) {
+    //     fetch((files: FileType[]) => {
+    //       files.forEach(registerItem);
+    //       console.log(`[DEBUG] Registered ${files?.length} from /home/src`);
+    //     }, {
+    //       paths: [
+    //         '/home/src/mage_ai/ai',
+    //         '/home/src/mage_ai/api',
+    //         '/home/src/mage_ai/authentication',
+    //         '/home/src/mage_ai/autocomplete',
+    //         '/home/src/mage_ai/cache',
+    //         '/home/src/mage_ai/cli',
+    //         '/home/src/mage_ai/cluster_manager',
+    //         '/home/src/mage_ai/command_center',
+    //         '/home/src/mage_ai/data',
+    //         '/home/src/mage_ai/data_cleaner',
+    //         '/home/src/mage_ai/data_integrations',
+    //         '/home/src/mage_ai/data_preparation',
+    //         '/home/src/mage_ai/docs',
+    //         '/home/src/mage_ai/errors',
+    //         '/home/src/mage_ai/extensions',
+    //         '/home/src/mage_ai/io',
+    //         '/home/src/mage_ai/kernels',
+    //         '/home/src/mage_ai/orchestration',
+    //         '/home/src/mage_ai/presenters',
+    //         '/home/src/mage_ai/sample_datasets',
+    //         '/home/src/mage_ai/server',
+    //         '/home/src/mage_ai/services',
+    //         '/home/src/mage_ai/settings',
+    //         '/home/src/mage_ai/shared',
+    //         '/home/src/mage_ai/streaming',
+    //         '/home/src/mage_ai/system',
+    //         '/home/src/mage_ai/tests',
+    //         '/home/src/mage_ai/usage_statistics',
+    //         '/home/src/mage_ai/utils',
+    //         '/home/src/mage_ai/version_control',
+    //         ].join(','),
+    //     });
+    //   }
+    // }
+    //
+
+    this.files = [];
     this.completions.workspace = [true, false];
   }
-
 
   private isLanguageServerEnabled(): boolean {
     return [
@@ -258,13 +343,21 @@ class Manager {
   }
 
   private async buildUserConfig(file: FileType, configurations: any) {
+    let languageServerConfig = {
+      ...languageClientConfig,
+      languageId: this.language,
+      name: `mage-lsp-${this.language}`,
+    };
+
+    if (this.language in Manager.languageServersStarted) {
+      languageServerConfig = null;
+      this.languageClient = Manager.languageServersStarted?.[this.language];
+      console.log(`Language server for language ${this.language} already started, skipping...`);
+    }
+
     return {
       id: this.uuid,
-      languageClientConfig: {
-        ...languageClientConfig,
-        languageId: this.language,
-        // name: `mage-lsp-${this.language}`,
-      },
+      languageClientConfig: languageServerConfig,
       loggerConfig,
       wrapperConfig: {
         editorAppConfig: {

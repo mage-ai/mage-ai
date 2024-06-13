@@ -80,7 +80,19 @@ BrowserItemPolicy.allow_query(
     ],
     on_action=[
         constants.LIST,
-        constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+BrowserItemPolicy.allow_query(
+    [
+        'paths',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )

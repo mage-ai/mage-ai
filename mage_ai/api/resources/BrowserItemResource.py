@@ -15,6 +15,12 @@ from mage_ai.system.browser.models import Item
 class BrowserItemResource(GenericResource):
     @classmethod
     async def collection(cls, query, meta, user, **kwargs) -> ResultSet:
+        paths = query.get('paths', [None])
+        if paths:
+            paths = paths[0]
+            if paths:
+                paths = [path.strip() for path in paths.split(',')]
+
         directory = query.get('directory', [None])
         if directory:
             directory = directory[0]
@@ -39,15 +45,20 @@ class BrowserItemResource(GenericResource):
             absolute_path, _size, _modified_timestamp = tup
             return Item.load(path=absolute_path)
 
-        return cls.build_result_set(
-            get_absolute_paths_from_all_files(
-                starting_full_path_directory=directory,
+        items = []
+
+        for dir_path in [directory] + (paths or []):
+            items += get_absolute_paths_from_all_files(
+                starting_full_path_directory=dir_path,
                 comparator=lambda path: (
                     not exclude_pattern or not re.search(exclude_pattern, path or '')
                 )
                 and (not include_pattern or re.search(include_pattern, path or '')),
                 parse_values=__parse_values,
-            ),
+            )
+
+        return cls.build_result_set(
+            items,
             user,
             **kwargs,
         )
