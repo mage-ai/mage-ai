@@ -8,6 +8,7 @@ type StyleProps = {
 
 export const ContainerStyled = styled.div`
   height: 100%;
+  overflow: hidden;
   width: 100%;
 `;
 

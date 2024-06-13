@@ -5,6 +5,15 @@ const LEFT_PEEK = 4;
 export const Header = styled.header<{
   overlay?: boolean;
 }>`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr;
+  justify-content: space-between;
+
+  ${({ theme }) => `
+    grid-column-gap: ${theme.padding.base}px;
+  `}
+
   ${({ overlay, theme }) =>
     overlay &&
     `
@@ -12,12 +21,7 @@ export const Header = styled.header<{
     background-color: ${theme.colors.backgrounds.blur};
     border-top-left-radius: ${theme.borders.radius.base};
     border-top-right-radius: ${theme.borders.radius.base};
-    display: grid;
     grid-auto-flow: column;
-    grid-column-gap: ${theme.padding.base}px;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto;
-    justify-content: space-between;
     padding-bottom: ${theme.padding.base}px;
     padding-left: ${theme.padding.base}px;
     padding-right: ${theme.padding.base - LEFT_PEEK}px;

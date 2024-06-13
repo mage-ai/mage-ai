@@ -11,7 +11,12 @@ import { getTheme } from '@mana/themes/utils';
 import { isDebug } from '@utils/environment';
 import { languageClientConfig, loggerConfig } from './constants';
 
-type onComplete = (wrapper?: any, languageServerClient?: any, languageClient?: any, files?: FileType[]) => void;
+type onComplete = (
+  wrapper?: any,
+  languageServerClient?: any,
+  languageClient?: any,
+  files?: FileType[],
+) => void;
 
 type InitializeWrapperProps = {
   onComplete?: onComplete;
@@ -90,14 +95,8 @@ class Manager {
     await this.wrapper.start(element);
   }
 
-  public async initialize({
-    file,
-    languageServer,
-    workspace,
-    wrapper,
-  }: InitializeProps) {
+  public async initialize({ file, languageServer, workspace, wrapper }: InitializeProps) {
     this.language = file?.language;
-
 
     await this.loadMonaco();
     await import('monaco-editor-wrapper');
@@ -109,10 +108,9 @@ class Manager {
         ignoreMapping: true,
         workerLoaders: {
           editorWorkerService: () =>
-            new Worker(
-              new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
-              { type: 'module' },
-            ),
+            new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url), {
+              type: 'module',
+            }),
           javascript: () =>
             // @ts-ignore
             import('monaco-editor-wrapper/workers/module/ts').then(
@@ -133,11 +131,12 @@ class Manager {
     await this.initializeWrapper(
       file,
       wrapper,
-      async (languageServerClientWrapper: any) => await this.startLanguageServer(
-        languageServerClientWrapper,
-        languageServer,
-        async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
-      ),
+      async (languageServerClientWrapper: any) =>
+        await this.startLanguageServer(
+          languageServerClientWrapper,
+          languageServer,
+          async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
+        ),
     );
     await this.isCompleted();
   }
@@ -173,7 +172,11 @@ class Manager {
     this.timeout = setTimeout(watch, 1000);
   }
 
-  private async initializeWrapper(file: FileType, opts: InitializeWrapperProps, callback: (languageServerClientWrapper) => void) {
+  private async initializeWrapper(
+    file: FileType,
+    opts: InitializeWrapperProps,
+    callback: (languageServerClientWrapper) => void,
+  ) {
     const { options } = opts || {};
 
     const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
@@ -288,9 +291,7 @@ class Manager {
   }
 
   private isLanguageServerEnabled(): boolean {
-    return [
-      LanguageEnum.PYTHON,
-    ].includes(this.language);
+    return [LanguageEnum.PYTHON].includes(this.language);
   }
 
   public async loadMonaco() {

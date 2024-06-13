@@ -122,12 +122,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       if (pipelineCount) {
         return <DiamondShared fill={blockIconColor} small />;
       } else if (BlockIcon) {
-        return (
-          <BlockIcon
-            color={blockIconColor}
-            size={folderNameForBlock && !isFolder ? 8 : 12}
-          />
-        );
+        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 12} />;
       }
     }
 

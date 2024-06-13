@@ -11,36 +11,36 @@ export default function useItems() {
       directory?: string;
       exclude_pattern?: string | RegExp;
       include_pattern?: string | RegExp;
-    }) => api.browser_items.listAsync({
-      exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-      include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      ...query,
-    }),
+    }) =>
+      api.browser_items.listAsync({
+        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        ...query,
+      }),
   );
 
-  const [detail, { isLoading: detailLoading }] = useMutation(
-    (path: string) => api.browser_items.detailAsync(encodeURIComponent(path))(),
+  const [detail, { isLoading: detailLoading }] = useMutation((path: string) =>
+    api.browser_items.detailAsync(encodeURIComponent(path))(),
   );
 
   const [create, { isLoading: createLoading }] = useMutation(
-    (payload: {
-      content: string;
-      path: string;
-    }) => api.browser_items.useCreate()({ browser_item: payload }),
+    (payload: { content: string; path: string }) =>
+      api.browser_items.useCreate()({ browser_item: payload }),
   );
 
   const [update, { isLoading: updateLoading }] = useMutation(
     (opts: {
-      path: string,
+      path: string;
       payload: {
         content: string;
         path: string;
-      },
-    }) => api.browser_items.useUpdate(encodeURIComponent(opts?.path))({ browser_item: opts?.payload }),
+      };
+    }) =>
+      api.browser_items.useUpdate(encodeURIComponent(opts?.path))({ browser_item: opts?.payload }),
   );
 
-  const [deleteItem, { isLoading: deleteLoading }] = useMutation(
-    (path: string) => api.browser_items.useDelete(encodeURIComponent(path)),
+  const [deleteItem, { isLoading: deleteLoading }] = useMutation((path: string) =>
+    api.browser_items.useDelete(encodeURIComponent(path)),
   );
 
   return {

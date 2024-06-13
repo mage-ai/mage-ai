@@ -5,13 +5,17 @@ import {
   validBlockFromFilename,
 } from '@utils/files';
 
-import { Circle, FileIcon, Charts,
-Ellipsis,
-FileFill,
-FolderIcon,
-Logs,
-Pipeline,
-PipelineV3 } from '@mana/icons';
+import {
+  Circle,
+  FileIcon,
+  Charts,
+  Ellipsis,
+  FileFill,
+  FolderIcon,
+  Logs,
+  Pipeline,
+  PipelineV3,
+} from '@mana/icons';
 import {
   BLOCK_TYPE_ICON_MAPPING,
   FILE_EXTENSION_ICON_MAPPING,
@@ -19,16 +23,10 @@ import {
 } from '../constants';
 
 import { getBlockColor } from '@mana/themes/blocks';
-import FileType, {
-  FOLDER_NAME_CHARTS,
-  FOLDER_NAME_PIPELINES,
-} from '@interfaces/FileType';
+import FileType, { FOLDER_NAME_CHARTS, FOLDER_NAME_PIPELINES } from '@interfaces/FileType';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 
-import {
-  getFileExtension,
-  getFullPath,
-} from '../utils';
+import { getFileExtension, getFullPath } from '../utils';
 import { singularize } from '@utils/string';
 
 type UseFileIconProps = {
@@ -98,10 +96,7 @@ export default function useFileIcon({
   );
 
   const color = useMemo(
-    () =>
-      folderNameForBlock
-        ? getBlockColor?.(blockType, { theme })?.accent
-        : null,
+    () => (folderNameForBlock ? getBlockColor?.(blockType, { theme })?.accent : null),
     [blockType, folderNameForBlock, theme],
   );
 

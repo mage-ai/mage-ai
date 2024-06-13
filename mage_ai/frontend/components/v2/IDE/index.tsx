@@ -56,7 +56,6 @@ function MateriaIDE({
 
       initializeWrapper();
     }
-
   }, [manager]);
 
   return (

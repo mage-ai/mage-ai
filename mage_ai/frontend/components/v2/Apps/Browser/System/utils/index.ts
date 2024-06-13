@@ -1,9 +1,7 @@
 import * as osPath from 'path';
 
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, FileExtensionEnum } from '@interfaces/FileType';
-import {
-  FILE_EXTENSION_COLOR_MAPPING,
-} from '../constants';
+import { FILE_EXTENSION_COLOR_MAPPING } from '../constants';
 import { ItemDetailType } from '../interfaces';
 
 export function getFullPath(item: ItemDetailType): string {

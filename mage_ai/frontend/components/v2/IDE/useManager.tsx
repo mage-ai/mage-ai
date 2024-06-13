@@ -29,21 +29,23 @@ function useManager(uuid: string, opts?: InitializeProps): any {
       exclude_pattern?: string | RegExp;
       include_pattern?: string | RegExp;
       paths?: string;
-    }) => api.browser_items.listAsync({
-      exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-      include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      ...query,
-    }),
+    }) =>
+      api.browser_items.listAsync({
+        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        ...query,
+      }),
   );
 
-  const fetch = useCallback((
-    callback: (items: FileType[]) => void,
-    query?: Record<string, any>,
-  ) => fetchItems(query)
-    .then(({
-      data: { browser_items: items } }: { data: { browser_items: FileType[] }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }) => callback(items)), []);
+  const fetch = useCallback(
+    (callback: (items: FileType[]) => void, query?: Record<string, any>) =>
+      fetchItems(query).then(
+        ({ data: { browser_items: items } }: { data: { browser_items: FileType[] } }) =>
+          callback(items),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     if (!initiatedRef?.current) {

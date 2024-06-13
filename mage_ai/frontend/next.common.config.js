@@ -49,20 +49,22 @@ module.exports = removeImports({
     if (options?.dev) {
       if (parseInt(process.env.ONLY_V || 0) === 2) {
         console.log('Ignoring pages and components not in V2...');
-        config.plugins.push(...[
-          new options.webpack.IgnorePlugin({
-            // Ignore any file in `frontend/pages` directory not in `v2` subdirectory
-            resourceRegExp: /^\.\/frontend\/pages\/(?!v2\/)/,
-            // Apply this only for specific context, ensuring context is frontend
-            contextRegExp: /frontend\/pages/
-          }),
-          new options.webpack.IgnorePlugin({
-            // Ignore any file in `frontend/components` directory not in v2 subdirectory or not `accessibleDiffViewer.js`
-            resourceRegExp: /^\.\/frontend\/components\/(?!v2\/|accessibleDiffViewer\.js)/,
-            // Apply this only for specific context, ensuring context is frontend
-            contextRegExp: /frontend\/components/
-          }),
-        ]);
+        config.plugins.push(
+          ...[
+            new options.webpack.IgnorePlugin({
+              // Ignore any file in `frontend/pages` directory not in `v2` subdirectory
+              resourceRegExp: /^\.\/frontend\/pages\/(?!v2\/)/,
+              // Apply this only for specific context, ensuring context is frontend
+              contextRegExp: /frontend\/pages/,
+            }),
+            new options.webpack.IgnorePlugin({
+              // Ignore any file in `frontend/components` directory not in v2 subdirectory or not `accessibleDiffViewer.js`
+              resourceRegExp: /^\.\/frontend\/components\/(?!v2\/|accessibleDiffViewer\.js)/,
+              // Apply this only for specific context, ensuring context is frontend
+              contextRegExp: /frontend\/components/,
+            }),
+          ],
+        );
       }
     }
 
