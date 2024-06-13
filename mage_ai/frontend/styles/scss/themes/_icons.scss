@@ -1,0 +1,19 @@
+@import '../abstracts/colors';
+
+$icons-color-base: #FFFFFF;
+$icons-color-inverted: #000000;
+$icons-size-base: 20;
+$icons-size-sm: 17;
+$icons-size-xs: 12;
+
+$icons: (
+  color: (
+    base: $icons-color-base,
+    inverted: $icons-color-inverted
+  ),
+  size: (
+    base: $icons-size-base,
+    sm: $icons-size-sm,
+    xs: $icons-size-xs
+  )
+);

@@ -120,3 +120,35 @@ services:
   py:
     <<: *server_settings
     ports: []
+  lsp:
+    build:
+      context: .
+      dockerfile: ./lsp.Dockerfile
+    volumes:
+      - .:/home/src
+    environment:
+      - PORT=8765
+    ports:
+      - 8765:8765
+    networks:
+      - app-network
+  magic-database:
+    image: pgvector/pgvector:0.6.0-pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: magic
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/.postgres/data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d # Mount init script
+    restart: always
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
+# volumes:
+#   node_modules_volume:
+#     driver: local

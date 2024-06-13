@@ -4,6 +4,7 @@ import FileType, {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FileExtensionEnum,
 } from '@interfaces/FileType';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import StatusType from '@interfaces/StatusType';
 
 export function convertFilePathToRelativeRoot(filePath: string, status: StatusType): string {
@@ -85,4 +86,48 @@ export function removeFileExtension(filename: string): string {
 export function getFileExtension(filename: string): FileExtensionEnum {
   const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
   return match?.length >= 1 ? (match[0].replace('.', '') as FileExtensionEnum) : null;
+}
+
+export function validBlockFileExtension(filename: string): string {
+  const extensions = [
+    `\\.${FileExtensionEnum.MD}`,
+    `\\.${FileExtensionEnum.PY}`,
+    `\\.${FileExtensionEnum.R}`,
+    `\\.${FileExtensionEnum.SQL}`,
+    `\\.${FileExtensionEnum.YAML}`,
+    `\\.${FileExtensionEnum.YML}`,
+  ].join('|');
+  const extensionRegex = new RegExp(`${extensions}$`);
+
+  const match = filename.match(extensionRegex);
+
+  return match?.length >= 1 ? match[0].replace('.', '') : null;
+}
+
+export function validBlockFromFilename(filename: string, blockType: BlockTypeEnum): boolean {
+  const fileExtension = validBlockFileExtension(filename);
+
+  return (
+    !['__init__.py'].includes(filename) &&
+    (BlockTypeEnum.DBT !== blockType ||
+      ![
+        FileExtensionEnum.YAML,
+        FileExtensionEnum.YML,
+        // @ts-ignore
+      ].includes(fileExtension))
+  );
+}
+
+export function getFullPathWithoutRootFolder(
+  file: FileType,
+  currentPathInit: string = null,
+  removeFilename: boolean = false,
+): string {
+  const fullPath = getFullPath(file, currentPathInit, removeFilename);
+
+  return removeRootFromFilePath(fullPath);
+}
+
+export function removeRootFromFilePath(filePath: string): string {
+  return filePath?.split(osPath.sep).slice(1).join(osPath.sep);
 }

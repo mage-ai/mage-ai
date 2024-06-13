@@ -459,3 +459,7 @@ export function padString(inputString: string, length: number, padChar: string):
   const padding = padChar.repeat(length - inputString.length);
   return padding + inputString;
 }
+
+export function hyphenateCamelCase(camelCase: string): string {
+  return camelCase.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}

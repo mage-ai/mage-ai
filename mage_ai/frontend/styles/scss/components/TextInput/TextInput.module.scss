@@ -1,0 +1,14 @@
+// components/TextInput/TextInput.module.scss
+@import '../../base/inputs';
+
+.input {
+  @include base;
+}
+
+.basic {
+  @include basic;
+}
+
+.small {
+  @include small;
+}

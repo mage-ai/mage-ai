@@ -1,0 +1,21 @@
+@import '../abstracts/colors';
+
+$borders: (
+  color: (
+    base: (
+      default: $borders-color-base-default,
+      hover: $borders-color-base-hover
+    )
+  ),
+  outline: (
+    offset: $borders-outline-offset,
+    width: $borders-outline-width
+  ),
+  radius: (
+    base: $borders-radius-base,
+    round: $borders-radius-round,
+    sm: $borders-radius-sm
+  ),
+  style: $borders-style,
+  width: $borders-width
+);

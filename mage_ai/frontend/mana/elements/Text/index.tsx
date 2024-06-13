@@ -1,32 +1,64 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
-import text, { StyleProps, baseSm, baseXs } from '../../styles/typography';
+
+import styles from '@styles/scss/components/Text/Text.module.scss';
+import { ElementType, extractProps } from '../../shared/types';
+import { hyphenateCamelCase } from '@utils/string';
 
 type TextProps = {
   children: React.ReactNode;
+  className?: string;
   inline?: boolean;
   small?: boolean;
   xsmall?: boolean;
-} & StyleProps;
+  // Below alter the class names
+  black?: boolean;
+  blue?: boolean;
+  bold?: boolean;
+  inverted?: boolean;
+  italic?: boolean;
+  light?: boolean;
+  medium?: boolean;
+  monospace?: boolean;
+  muted?: boolean;
+  semiBold?: boolean;
+} & ElementType;
 
-const CSS = css<TextProps>`
-  ${({ small, xsmall }) => (small ? baseSm : xsmall ? baseXs : text)}
+function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
+  const arr = [
+    small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
+    classNameProp || '',
+  ];
 
-  margin: 0;
-`;
+  Object.entries(props || {}).forEach(([key, value]) => {
+    if (typeof value !== 'undefined') {
+      if (value !== false) {
+        const k = [
+          hyphenateCamelCase(key),
+          ...String(typeof value === 'boolean' ? '' : value)
+            ?.replace('%', '')
+            ?.split(' '),
+        ]
+          .filter(s => s?.length >= 1)
+          ?.join('-');
+        const className = styles[k];
+        arr.push(className);
+      }
+    }
+  });
 
-const TextStyled = styled.p<TextProps>`
-  ${CSS}
-`;
+  const classNames = arr
+    .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
+    .join(' ');
 
-const SpanStyled = styled.span<TextProps>`
-  ${CSS}
-`;
-
-function Text({ children, inline, ...props }: TextProps) {
-  const HTMLTag = inline ? SpanStyled : TextStyled;
-
-  return <HTMLTag {...props}>{children}</HTMLTag>;
+  return inline ? (
+    <span {...extractProps(props)} className={classNames}>
+      {children}
+    </span>
+  ) : (
+    <p {...extractProps(props)} className={classNames}>
+      {children}
+    </p>
+  );
 }
 
 export default Text;

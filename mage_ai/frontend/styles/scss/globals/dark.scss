@@ -1,0 +1,5 @@
+@use '../modes/dark' as mode;
+
+body[data-theme="dark"] {
+  @include mode.dark-mode();
+}

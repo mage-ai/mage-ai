@@ -1,14 +1,19 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
+import { useMutation } from 'react-query';
 
+import api from '@api';
+import Loading from '@mana/components/Loading';
+import Scrollbar from '@mana/elements/Scrollbar';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
+import { onSuccess } from '@api/utils/response';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import Menu from '@mana/components/Menu';
 import Item from './Item/index';
-import icons from '@mana/icons';
-import mocks from './mocks';
-import { AppConfigType } from '../../interfaces';
-import { GroupByStrategyEnum } from './enums';
+import { Settings } from '@mana/icons';
+import { AppLoaderProps, AppConfigType } from '../../interfaces';
+import { GroupByStrategyEnum, ItemTypeEnum } from './enums';
 import {
   KEY_CODE_A,
   KEY_CODE_ENTER,
@@ -16,28 +21,112 @@ import {
   KEY_CODE_META,
   KEY_CODE_CONTROL,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ItemDetailType } from './interfaces';
+import { ItemDetailType, ItemType } from './interfaces';
 import { selectKeys } from '@utils/hash';
 // @ts-ignore
 import Worker from 'worker-loader!@public/workers/worker.ts';
+import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
+import { groupFilesByDirectory } from './utils/grouping';
 
-const { Settings } = icons;
-
-type SystemBrowserProps = {
-  app: AppConfigType;
-};
-
-function SystemBrowser({ app }: SystemBrowserProps) {
+function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
-  const filePathsRef = useRef<string[]>(mocks.projectFilePaths);
+  const filePathsRef = useRef<string[]>(null);
   const itemsRootRef = useRef(null);
   const contextMenuRootRef = useRef(null);
 
   const appUUID = useMemo(() => app?.uuid, [app]);
   const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
   const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
+
+  function removeContextMenu() {
+    if (contextMenuRootRef?.current) {
+      contextMenuRootRef.current.unmount();
+      contextMenuRootRef.current = null;
+    }
+  }
+
+  function renderItems(items: ItemDetailType[]) {
+    if (!itemsRootRef?.current) {
+      const node = document.getElementById(rootID);
+      itemsRootRef.current = createRoot(node as HTMLElement);
+    }
+
+    if (itemsRootRef?.current) {
+      const groups = groupFilesByDirectory(items as ItemDetailType[]);
+      itemsRootRef.current.render(
+        <React.StrictMode>
+          <DeferredRenderer idleTimeout={1}>
+            <ThemeProvider theme={themeContext}>
+              {Object.values(groups || {}).map((item: ItemDetailType, idx: number) => (
+                <Item
+                  app={app}
+                  item={item as ItemDetailType}
+                  key={`${item.name}-${idx}`}
+                  onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                    removeContextMenu();
+                    if (ItemTypeEnum.FILE === itemClicked?.type) {
+                      addApp(
+                        {
+                          options: {
+                            file: itemClicked,
+                          },
+                          subtype: AppSubtypeEnum.IDE,
+                          type: AppTypeEnum.EDITOR,
+                          uuid: itemClicked?.name,
+                        },
+                        {
+                          grid: {
+                            relative: {
+                              layout: {
+                                column: 1,
+                              },
+                              uuid: app?.uuid,
+                            },
+                          },
+                        },
+                      );
+                    }
+                  }}
+                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
+                    renderContextMenu(item, event)
+                  }
+                  themeContext={themeContext}
+                />
+              ))}
+            </ThemeProvider>
+          </DeferredRenderer>
+        </React.StrictMode>,
+      );
+    }
+  }
+
+  const [fetchItems, { isLoading }] = useMutation(
+    (query?: {
+      _limit?: number;
+      _offset?: number;
+      directory?: string;
+      exclude_pattern?: string | RegExp;
+      include_pattern?: string | RegExp;
+    }) => api.browser_items.listAsync(query),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ browser_items: items }) => {
+            if (items?.length >= 1) {
+              filePathsRef.current = items;
+              renderItems((items || []) as ItemDetailType[]);
+            }
+          },
+          onErrorCallback: (response, errors) =>
+            console.error({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
 
   const renderContextMenu = useCallback(
     (item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
@@ -49,7 +138,9 @@ function SystemBrowser({ app }: SystemBrowserProps) {
 
       if (!contextMenuRootRef?.current) {
         const node = document.getElementById(contextMenuRootID);
-        contextMenuRootRef.current = createRoot(node as HTMLElement);
+        if (node) {
+          contextMenuRootRef.current = createRoot(node as HTMLElement);
+        }
       }
 
       if (contextMenuRootRef?.current) {
@@ -103,7 +194,7 @@ function SystemBrowser({ app }: SystemBrowserProps) {
                     containerRef?.current?.getBoundingClientRect() || {},
                     ['width', 'x', 'y'],
                   )}
-                  coordinates={{ x: event.pageX, y: event.pageY }}
+                  event={event}
                   items={items}
                   small
                   uuid={appUUID}
@@ -117,14 +208,14 @@ function SystemBrowser({ app }: SystemBrowserProps) {
     [appUUID, contextMenuRootID, themeContext],
   );
 
-  function removeContextMenu() {
-    if (contextMenuRootRef?.current) {
-      contextMenuRootRef.current.unmount();
-      contextMenuRootRef.current = null;
-    }
-  }
-
   useEffect(() => {
+    if (!itemsRootRef?.current) {
+      fetchItems({
+        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+      });
+    }
+
     const handleDocumentClick = (event: Event) => {
       const node = document.getElementById(contextMenuRootID);
       if (node && !node?.contains(event.target as Node)) {
@@ -134,65 +225,26 @@ function SystemBrowser({ app }: SystemBrowserProps) {
 
     document?.addEventListener('click', handleDocumentClick);
 
+    const itemsRoot = itemsRootRef?.current;
     return () => {
       document?.removeEventListener('click', handleDocumentClick);
+      removeContextMenu();
+
+      if (itemsRoot) {
+        itemsRootRef.current.unmount();
+        itemsRootRef.current = null;
+      }
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const createWorker = async () => {
-      const worker = new Worker();
-
-      worker.onmessage = (event: MessageEvent) => {
-        if (!itemsRootRef?.current) {
-          const node = document.getElementById(rootID);
-          itemsRootRef.current = createRoot(node as HTMLElement);
-        }
-
-        if (itemsRootRef?.current) {
-          itemsRootRef.current.render(
-            <React.StrictMode>
-              <DeferredRenderer idleTimeout={1}>
-                <ThemeProvider theme={themeContext}>
-                  {Object.values(event?.data || {}).map((item: ItemDetailType, idx: number) => (
-                    <Item
-                      app={app}
-                      item={item as ItemDetailType}
-                      key={`${item.name}-${idx}`}
-                      onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                        renderContextMenu(item, event)
-                      }
-                      themeContext={themeContext}
-                    />
-                  ))}
-                </ThemeProvider>
-              </DeferredRenderer>
-            </React.StrictMode>,
-          );
-        }
-      };
-
-      worker.postMessage({
-        filePaths: filePathsRef.current,
-        groupByStrategy: GroupByStrategyEnum.DIRECTORY,
-      });
-
-      return () => worker.terminate();
-    };
-
-    if (!itemsRootRef?.current) {
-      createWorker();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootID]);
-
   return (
-    <div ref={containerRef}>
+    <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
+      {isLoading && <Loading />}
       <div id={rootID} />
       <div id={contextMenuRootID} />
-    </div>
+    </Scrollbar>
   );
 }
 

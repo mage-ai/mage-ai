@@ -1,9 +1,8 @@
 import React from 'react';
 
+import Grid from '../../components/Grid';
 import borders from '../../styles/borders';
 import styled from 'styled-components';
-import { UNIT } from '@mana/themes/spaces';
-import Grid from '@mana/components/Grid';
 
 type GroupStyleProps = {
   itemsContained?: boolean;
@@ -24,7 +23,7 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
       <Grid
         alignItems="center"
         autoFlow="column"
-        columnGap={itemsContained ? UNIT * 4 : UNIT * 2}
+        columnGap={itemsContained ? 12 : 8}
         height="100%"
         justifyContent="start"
         templateColumns="min-content"

@@ -10,7 +10,15 @@ import FileType, {
 } from '@interfaces/FileType';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
-import OracleIcons from '@oracle/icons';
+import {
+  Charts as ChartsOracle,
+  Ellipsis as EllipsisOracle,
+  FileFill as FileFillOracle,
+  FolderV2Filled as FolderIconOracle,
+  Logs as LogsOracle,
+  Pipeline as PipelineOracle,
+  PipelineV3 as PipelineV3Oracle,
+} from '@oracle/icons';
 import {
   FILE_EXTENSION_COLOR_MAPPING,
   FILE_EXTENSION_ICON_MAPPING,
@@ -83,15 +91,15 @@ export default function useFileIcon({
   useRootFolder,
   uuid,
 }: UseFileIconProps) {
-  const {
-    Charts,
-    Ellipsis,
-    FileFill,
-    FolderV2Filled: FolderIcon,
-    Logs,
-    Pipeline,
-    PipelineV3,
-  } = Icons || OracleIcons;
+  const { Charts, Ellipsis, FileFill, FolderIcon, Logs, Pipeline, PipelineV3 } = Icons || {
+    Charts: ChartsOracle,
+    Ellipsis: EllipsisOracle,
+    FileFill: FileFillOracle,
+    FolderIcon: FolderIconOracle,
+    Logs: LogsOracle,
+    Pipeline: PipelineOracle,
+    PipelineV3: PipelineV3Oracle,
+  };
 
   const filePathToUse: string = useMemo(
     () =>

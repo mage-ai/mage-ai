@@ -1,0 +1,43 @@
+// styles/scrollbars.ts -> base/scrollbars.scss
+@import '../abstracts/mixins';
+
+@mixin base($hidden: false) {
+  @if $hidden {
+    // for Internet Explorer, Edge
+    -ms-overflow-style: none;
+    // for Firefox
+    scrollbar-width: none;
+    // for Chrome, Safari, and Opera
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &::-webkit-scrollbar {
+    height: $scrollbars-width-track + px;
+    width: $scrollbars-width-track + px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @include transition;
+    background: $scrollbars-background-thumb-default;
+    border-radius: $scrollbars-border-radius-thumb;
+
+    &:hover {
+      background: $scrollbars-background-thumb-hover;
+    }
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: $scrollbars-background-track-default;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $scrollbars-background-track-default;
+    border-radius: $scrollbars-border-radius-track;
+
+    &:hover {
+      background: $scrollbars-background-track-hover;
+    }
+  }
+}

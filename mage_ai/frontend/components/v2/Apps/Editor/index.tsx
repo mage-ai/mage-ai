@@ -1,65 +1,60 @@
-import React from 'react';
+import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
 
-import Button from '@mana/elements/Button';
-import Divider from '@mana/elements/Divider';
-import Tag from '@mana/components/Tag';
-import Text from '@mana/elements/Text';
-import { ModeEnum } from '@mana/themes/modes';
-import { Row, Col } from '@mana/components/Container';
-import icons from '@mana/icons';
-import { range } from '@utils/array';
-import { setThemeSettings } from '@mana/themes/utils';
+import api from '@api';
+import { AppLoaderProps } from '../interfaces';
+import { onSuccess } from '@api/utils/response';
+import Loading from '@mana/components/Loading';
 
-const { Settings } = icons;
+const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
+  ssr: false,
+});
 
-import { randomSimpleHashGenerator } from '@utils/string';
+function EditorApp({ app, addApp, removeApp }: AppLoaderProps) {
+  const [item, setItem] = useState<any>(null);
 
-export function createUUID() {
-  return `grid-item-${randomSimpleHashGenerator()}`;
-}
+  const [fetchItem, { isLoading }] = useMutation(
+    (path: string) => api.browser_items.detailAsync(encodeURIComponent(path)),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ browser_item: item }) => {
+            setItem(item);
+          },
+          onErrorCallback: (response: any, errors: any) =>
+            console.error({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
 
-const TXT = `I’ve found several existing blocks that can potentially be reused.
-Take a look and let me know if anything works, you can also ask me to simply choose the best one.`;
+  useEffect(() => {
+    const path = app?.options?.file?.path;
+    if (!item && !isLoading && path) {
+      fetchItem(path);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app, item, isLoading]);
 
-function EditorApp() {
   return (
-    <div>
-      <Row direction="column" nogutter>
-        <Col xs="content">
-          <Row>
-            <Col>
-              <Text>{TXT}</Text>
-            </Col>
-            <Col xs="content">
-              <Tag>Block</Tag>
-            </Col>
-          </Row>
+    <>
+      {isLoading && <Loading />}
 
-          <Divider short />
-
-          <Row>
-            <Col>
-              <Text monospace>{TXT}</Text>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-
-      <Divider />
-
-      <Button
-        Icon={Settings}
-        onClick={() =>
-          setThemeSettings(({ mode }) => ({
-            mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
-          }))
-        }
-        primary
-        small
-      >
-        Theme
-      </Button>
-    </div>
+      {item && (
+        <MaterialIDE
+          // TODO (dangerous): when opening a new file, add app.
+          // Deleting a file, remove app.
+          // addApp={addApp}
+          // removeApp={removeApp}
+          configurations={app?.options?.configurations}
+          file={item}
+          uuid={app?.uuid}
+        />
+      )}
+    </>
   );
 }
 

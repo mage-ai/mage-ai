@@ -1,0 +1,52 @@
+// styles/mixins.ts -> abstracts/mixins.scss
+@import '../abstracts/colors';
+
+@mixin transition {
+  transition: 0.2s all ease-in-out;
+}
+
+@mixin transition-fast {
+  transition: 0.15s all linear;
+}
+
+@mixin gradient($angle, $start-color, $end-color, $start-percentage: 0%, $end-percentage: 100%) {
+  background-image: -webkit-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: -moz-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: -o-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+}
+
+@mixin outline-hover($active: false, $border-color: null, $outline-color: null, $outline-offset: null, $outline-width: null) {
+  &:hover {
+    box-shadow:
+      0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
+        if($border-color, $border-color, $backgrounds-button-base-default),
+      0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
+        $borders-outline-width + if($outline-width, $outline-width, 0))
+        if($outline-color, $outline-color, $colors-purple);
+  }
+
+  &:focus {
+    box-shadow:
+      0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
+        if($border-color, $border-color, $backgrounds-button-base-default),
+      0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
+        $borders-outline-width + if($outline-width, $outline-width, 0))
+        if($outline-color, $outline-color, $colors-purple);
+  }
+
+  @if not $active {
+    &:active {
+      box-shadow: none;
+    }
+  } @else {
+    &:active {
+      box-shadow:
+        0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
+          if($border-color, $border-color, $backgrounds-button-base-default),
+        0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
+          $borders-outline-width + if($outline-width, $outline-width, 0))
+          if($outline-color, $outline-color, $colors-purple);
+    }
+  }
+}

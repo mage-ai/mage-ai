@@ -16,9 +16,7 @@ type ButtonStyleProps = {
 
 type ButtonProps = {
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  tag?: string;
-} & ButtonStyleProps &
-  WithLoggingProps;
+} & ButtonStyleProps & WithLoggingProps;
 
 const cssRow = css<ButtonStyleProps>`
   align-items: center;
@@ -77,6 +75,7 @@ function Button({
           IconAfter ? 'auto' : '',
         ].join(' '),
       }}
+      tag={tag}
     >
       {Icon && <Icon inverted={primary || secondary} small={small} />}
 

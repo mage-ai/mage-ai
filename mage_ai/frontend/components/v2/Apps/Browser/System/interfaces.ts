@@ -1,10 +1,9 @@
+import { FileType } from '../../../IDE/interfaces';
 import { ItemTypeEnum } from './enums';
 
-export interface ItemDetailType {
+export interface ItemDetailType extends FileType {
   items?: ItemType;
-  name: string;
   parent?: ItemDetailType;
-  size: number;
   type: ItemTypeEnum;
 }
 

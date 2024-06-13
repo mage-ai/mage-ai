@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
@@ -9,7 +10,8 @@ import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Text from '@mana/elements/Text';
 import { ItemDetailType, ItemType } from '../interfaces';
 import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
-import { useFileIcon, getIconColorName, getFullPath } from '../utils';
+import { getIconColorName, getFullPath } from '../utils';
+import useFileIcon from '../utils/useFileIcon';
 import { removeClassNames } from '@utils/elements';
 import { cleanName } from '@utils/string';
 import {
@@ -22,13 +24,13 @@ import {
 } from './index.style';
 import { range, sortByKey } from '@utils/array';
 import icons from '@mana/icons';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
-const { DiamondShared, FileIcon, FolderV2Filled } = icons;
+const { DiamondShared, FileIcon, Circle, CaretDown, CaretRight } = icons;
 
 type ItemProps = {
   app: AppConfigType;
   item: ItemType | ItemDetailType;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>, item: ItemDetailType) => void;
   onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
   themeContext: any;
 };
@@ -37,13 +39,16 @@ function iconRootID(uuid: string) {
   return `icon-root-${uuid}`;
 }
 
+function iconActionRootID(uuid: string) {
+  return `icon-action-root-${uuid}`;
+}
+
 function itemsRootID(uuid: string) {
   return `items-root-${uuid}`;
 }
 
-function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
-  console.log('render', item?.name);
-  const { items, name } = item as ItemType;
+function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
+  const { items, path, name } = item as ItemDetailType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
   // TODO (dangerous): update this with a real dynamic value.
@@ -51,12 +56,18 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const {
     BlockIcon,
     Icon,
+    color: blockIconColor,
     folderNameForBlock,
     iconColor,
     isBlockFile,
-    color: blockIconColor,
     isFirstParentFolderForBlock,
-  } = useFileIcon({ isFolder, name, theme: themeContext, uuid: name });
+  } = useFileIcon({
+    filePathToUse: path,
+    isFolder,
+    name,
+    theme: themeContext,
+    uuid: name,
+  });
 
   const isBlockFileWithSquareIcon = useMemo(
     () => !!folderNameForBlock && !isFolder && !!isBlockFile,
@@ -67,11 +78,16 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     () => (isFolder ? 'blueMuted' : getIconColorName(String(name))),
     [isFolder, name],
   );
-  const absolutePath = useMemo(() => getFullPath(item as ItemDetailType), [item]);
-  const level = useMemo(() => absolutePath.split('/').length - 1, [absolutePath]);
+  const absolutePath = useMemo(() => String(item?.path) || osPath.sep, [item]);
+  const level = useMemo(
+    () =>
+      absolutePath?.split(osPath.sep)?.filter(p => p?.length >= 1 && p !== osPath.sep)?.length - 1,
+    [absolutePath],
+  );
   const uuid = useMemo(() => `${app?.uuid}-${cleanName(absolutePath)}`, [absolutePath, app?.uuid]);
 
   const iconRootRef = useRef(null);
+  const iconActionRootRef = useRef(null);
   const itemsRootRef = useRef(null);
   const folderStatesRef = useRef(get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {}));
   const expandedRef = useRef(
@@ -83,6 +99,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
   const buildLines = useCallback(
     (levelIncrement?: number) => (
       <div style={{ display: 'flex' }}>
+        <ColumnGapStyled />
         {range((levelIncrement || 0) + level).map((_i, idx: number) => (
           <ColumnGapStyled key={`spacer-${uuid}-${idx}`}>
             <LineStyled />
@@ -98,24 +115,14 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     if (isFolder) {
       if (isFirstParentFolderForBlock) {
         return <Icon color={blockIconColor} small />;
-      } else {
-        const IconUse = expandedRef?.current ? FolderV2Filled : Icon;
-        if (IconUse) {
-          return <IconUse colorName={iconColorName} small />;
-        }
+      } else if (Icon) {
+        return <Icon colorName={iconColorName} small />;
       }
     } else if (isBlockFileWithSquareIcon) {
       if (pipelineCount) {
         return <DiamondShared fill={blockIconColor} small />;
       } else if (BlockIcon) {
-        return (
-          <BlockIcon
-            borderOnly={!pipelineCount}
-            color={blockIconColor}
-            size={folderNameForBlock && !isFolder ? 8 : 12}
-            square
-          />
-        );
+        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 12} />;
       }
     }
 
@@ -135,21 +142,50 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     isFirstParentFolderForBlock,
   ]);
 
+  const buildIconAction = useCallback(() => {
+    const IconUse = isFolder ? (expandedRef?.current ? CaretDown : CaretRight) : Circle;
+
+    return (
+      <IconUse
+        colorName={isFolder ? iconColorName : 'whiteLo'}
+        size={isFolder ? undefined : 8}
+        xsmall={isFolder}
+      />
+    );
+  }, [iconColorName, isFolder]);
+
   const renderIcon = useCallback(() => {
     if (!iconRootRef?.current) {
       const node = document.getElementById(iconRootID(uuid));
-      iconRootRef.current = createRoot(node as HTMLElement);
+      if (node) {
+        iconRootRef.current = createRoot(node as HTMLElement);
+      }
     }
 
     if (iconRootRef?.current) {
       iconRootRef.current.render(<ThemeProvider theme={themeContext}>{buildIcon()}</ThemeProvider>);
     }
-  }, [themeContext, uuid, buildIcon]);
+
+    if (!iconActionRootRef?.current) {
+      const node = document.getElementById(iconActionRootID(uuid));
+      if (node) {
+        iconActionRootRef.current = createRoot(node as HTMLElement);
+      }
+    }
+
+    if (iconActionRootRef?.current) {
+      iconActionRootRef.current.render(
+        <ThemeProvider theme={themeContext}>{buildIconAction()}</ThemeProvider>,
+      );
+    }
+  }, [themeContext, uuid, buildIcon, buildIconAction]);
 
   const renderItems = useCallback(() => {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(itemsRootID(uuid));
-      itemsRootRef.current = createRoot(node as HTMLElement);
+      if (node) {
+        itemsRootRef.current = createRoot(node as HTMLElement);
+      }
     }
 
     if (itemsRootRef?.current) {
@@ -161,7 +197,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
       itemsRootRef.current.render(
         <React.StrictMode>
           <ThemeProvider theme={themeContext}>
-            <Grid ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
+            <Grid alignItems="center" ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
               <DeferredRenderer
                 fallback={
                   <ThemeProvider theme={themeContext}>
@@ -178,6 +214,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
                     app={app}
                     item={item}
                     key={item.name}
+                    onClick={onClick}
                     onContextMenu={onContextMenu}
                     themeContext={themeContext}
                   />
@@ -189,7 +226,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
       );
       renderedRef.current = true;
     }
-  }, [app, themeContext, uuid, items, buildLines, onContextMenu]);
+  }, [app, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
@@ -209,18 +246,40 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
     }
   }, [items, renderIcon, renderItems, uuid]);
 
+  function removeItems() {
+    if (itemsRootRef?.current) {
+      itemsRootRef?.current?.unmount();
+      itemsRootRef.current = null;
+      renderedRef.current = false;
+    }
+  }
+
+  useEffect(() => {
+    if (!renderedRef?.current) {
+      if (expandedRef?.current) {
+        renderUpdates();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <FolderStyled uuid={uuid}>
+    <FolderStyled
+      onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        expandedRef.current = !expandedRef.current;
+        renderUpdates();
+
+        if (onClick) {
+          onClick?.(event, item as ItemDetailType);
+        }
+      }}
+      uuid={uuid}
+    >
       <Grid
         columnGap={0}
-        onClick={(event: React.MouseEvent<HTMLDivElement>) => {
-          event.preventDefault();
-          event.stopPropagation();
-
-          expandedRef.current = !expandedRef.current;
-
-          renderUpdates();
-        }}
         onContextMenu={onContextMenu}
         templateColumns="auto 1fr"
         uuid={childClassName(uuid)}
@@ -228,10 +287,11 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
         {linesMemo}
 
         <NameStyled>
-          <Grid compact templateColumns="auto 1fr">
+          <Grid alignItems="center" columnGap={8} templateColumns="auto auto 1fr">
+            <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
-              <Text blue={isFolder} monospace small>
+              <Text blue={isFolder} monospace muted={!isFolder} small>
                 {String(name)}
               </Text>
             )}
@@ -239,15 +299,7 @@ function Item({ app, item, onContextMenu, themeContext }: ItemProps) {
         </NameStyled>
       </Grid>
 
-      <WithOnMount
-        onMount={() => {
-          if (expandedRef?.current) {
-            renderUpdates();
-          }
-        }}
-      >
-        <div id={itemsRootID(uuid)} />
-      </WithOnMount>
+      <div id={itemsRootID(uuid)} />
     </FolderStyled>
   );
 }

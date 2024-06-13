@@ -1,0 +1,31 @@
+@use '../../abstracts/colors' as colors;
+
+$spacing: 12px;
+
+.divider {
+  background-color: colors.$borders-color-base-default;
+
+  &.short {
+    width: 80px;
+  }
+
+  &.full {
+    width: 100%;
+  }
+
+  &:not(.vertical) {
+    height: 1px;
+    margin-bottom: $spacing;
+    margin-top: $spacing;
+
+    &.compact {
+      margin-bottom: $spacing;
+      margin-top: $spacing;
+    }
+  }
+
+  &.vertical {
+    height: 100%;
+    width: 1px;
+  }
+}

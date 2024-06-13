@@ -1,0 +1,49 @@
+@import '../abstracts/colors';
+
+// borders.ts
+$borders-radius-base: 10px;
+$borders-style: solid;
+$borders-width: 1px;
+
+// interactive.ts
+$padding-vertical-base: $buttons-padding-base;
+$padding-vertical-sm: $buttons-padding-sm;
+$padding-vertical-xs: $buttons-padding-xs;
+
+$padding-vertical: (
+  base: $padding-vertical-base,
+  sm: $padding-vertical-sm,
+  xs: $padding-vertical-xs
+);
+
+
+// padding.ts
+$padding-base: $padding-base;
+$padding-sm: $padding-sm;
+$padding-xs: $padding-xs;
+
+$padding: (
+  base: $padding-base,
+  sm: $padding-sm,
+  xs: $padding-xs
+);
+
+// sizes.ts
+$size-sm: sm;
+$size-md: md;
+$size-lg: lg;
+$size-xl: xl;
+$size-xxl: xxl;
+$size-xxxl: xxxl;
+
+$size: (
+  sm: $size-sm,
+  md: $size-md,
+  lg: $size-lg,
+  xl: $size-xl,
+  xxl: $size-xxl,
+  xxxl: $size-xxxl
+);
+
+// spaces.ts
+$unit: $margin-xs;

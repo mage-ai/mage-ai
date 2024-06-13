@@ -1,0 +1,15 @@
+@mixin shared {
+  border-radius: var(--borders-radius-base);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+}
+
+@mixin base($muted: false) {
+  @include shared;
+  border-color: if($muted, var(--borders-color-muted-default), var(--borders-color-base-default));
+}
+
+@mixin borders-transparent {
+  @include shared;
+  border-color: transparent;
+}

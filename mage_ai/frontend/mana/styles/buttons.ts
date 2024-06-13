@@ -10,6 +10,7 @@ export type StyleProps = {
   grouped?: boolean;
   primary?: boolean;
   secondary?: boolean;
+  tag?: React.ReactNode | string | number;
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
@@ -122,8 +123,19 @@ const base = css<StyleProps>`
 
 export const sm = css<StyleProps>`
   ${shared}
+
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ grouped, theme }) => (grouped ? 0 : theme.buttons.padding.sm)};
+  padding: ${({ grouped, theme, tag }) => typeof tag !== 'undefined'
+    ? theme.buttons.padding.sm
+    : grouped
+      ? 0
+      : theme.buttons.padding.sm};
+
+  ${({ tag }) => typeof tag !== 'undefined' && `
+    height: 43.5px;
+    padding-bottom: 0;
+    padding-top: 0;
+  `}
 `;
 
 export default base;

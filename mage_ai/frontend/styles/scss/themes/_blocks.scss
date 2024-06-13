@@ -1,0 +1,54 @@
+@use "sass:map";
+@import "../abstracts/colors"
+
+@function getBlockColor($blockType, $blockColor: null, $isSelected: false, $theme: null) {
+  $colors: map.get($theme, "colors");
+
+  $accent: map.get($colors, "fonts", "color", "text", "base");
+  $accentLight: map.get($colors, "fonts", "color", "text", "muted");
+  $accentDark: null;
+
+  @if $isSelected {
+    // No styles defined for isSelected
+  } @else if $blockType == "TRANSFORMER" or $blockColor == "PURPLE" {
+    $accent: map.get($colors, "purple");
+    $accentLight: map.get($colors, "purpleHi");
+  } @else if $blockType == "DATA_EXPORTER" or $blockColor == "YELLOW" {
+    $accent: map.get($colors, "yellow");
+    $accentLight: map.get($colors, "yellowHi");
+  } @else if $blockType == "DATA_LOADER" or $blockColor == "BLUE" {
+    $accent: map.get($colors, "blueText");
+    $accentLight: map.get($colors, "blueHi");
+  } @else if $blockType == "MARKDOWN" {
+    $accent: map.get($colors, "sky");
+    $accentLight: map.get($colors, "skyHi");
+  } @else if $blockType == "SENSOR" or $blockColor == "PINK" {
+    $accent: map.get($colors, "pink");
+    $accentLight: map.get($colors, "pinkHi");
+  } @else if $blockType == "DBT" {
+    $accent: map.get($colors, "dbt");
+    $accentLight: map.get($colors, "dbtHi");
+    $accentDark: map.get($colors, "dbtLo");
+  } @else if $blockType == "EXTENSION" or $blockColor == "TEAL" {
+    $accent: map.get($colors, "teal");
+    $accentLight: map.get($colors, "tealHi");
+  } @else if $blockType == "CALLBACK" {
+    $accent: map.get($colors, "rose");
+    $accentLight: map.get($colors, "roseHi");
+  } @else if $blockType == "CONDITIONAL" {
+    $accent: map.get($colors, "fonts", "color", "text", "base");
+    $accentLight: map.get($colors, "fonts", "color", "text", "muted");
+  } @else if $blockType == "SCRATCHPAD" or $blockColor == "GREY" or ($blockType == "CUSTOM" and not $blockColor) {
+    $accent: map.get($colors, "fonts", "color", "text", "muted");
+    $accentLight: map.get($colors, "fonts", "color", "text", "muted");
+  } @else if index("CHART" "GLOBAL_DATA_PRODUCT", $blockType) and not $blockColor {
+    $accent: map.get($colors, "fonts", "color", "text", "base");
+    $accentLight: map.get($colors, "fonts", "color", "text", "muted");
+  }
+
+  @return (
+    accent: $accent,
+    accentLight: $accentLight,
+    accentDark: $accentDark
+  );
+}

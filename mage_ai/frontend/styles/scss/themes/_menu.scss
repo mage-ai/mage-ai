@@ -1,0 +1,18 @@
+@import '../abstracts/colors';
+$menus: (
+  background: (
+    base-default: $menus-background-base-default,
+    contained-default: $menus-background-contained-default
+  ),
+  blur: (
+    base: $menus-blur-base
+  ),
+  border: (
+    radius: (
+      base: $menus-border-radius-base
+    )
+  ),
+  padding: (
+    base: $menus-padding-base
+  )
+);

@@ -187,3 +187,88 @@ If there were added new libraries you should manually handle new dependencies. I
 
 1. `docker-compose build` from project root will fully rebuild an image with new dependencies - it can take lots of time
 2. `pip install x` from inside the container will only install the required dependency - it should be much faster
+
+## Monaco Editor features
+
+If you want to exclude a feature from the WebPack build,
+you can do so by modifying the WebPack configuration:
+
+```js
+config.plugins.push(
+  new MonacoWebpackPlugin({
+    features: ['!anchorSelect'],
+  }),
+);
+```
+
+### Features
+
+Get list of features:
+
+```tsx
+import metadata from 'monaco-editor/esm/metadata';
+console.log(metadata.features);
+```
+
+```
+anchorSelect
+bracketMatching
+browser
+caretOperations
+clipboard
+codeAction
+codeEditor
+codelens
+colorPicker
+comment
+contextmenu
+cursorUndo
+diffEditor
+diffEditorBreadcrumbs
+dnd
+documentSymbols
+dropOrPasteInto
+find
+folding
+fontZoom
+format
+gotoError
+gotoLine
+gotoSymbol
+hover
+iPadShowKeyboard
+inPlaceReplace
+indentation
+inlayHints
+inlineCompletions
+inlineEdit
+inlineProgress
+inspectTokens
+lineSelection
+linesOperations
+linkedEditing
+links
+longLinesHelper
+multicursor
+parameterHints
+quickCommand
+quickHelp
+quickOutline
+readOnlyMessage
+referenceSearch
+rename
+sectionHeaders
+semanticTokens
+smartSelect
+snippet
+stickyScroll
+suggest
+toggleHighContrast
+toggleTabFocusMode
+tokenization
+unicodeHighlighter
+unusualLineTerminators
+wordHighlighter
+wordOperations
+wordPartOperations
+```

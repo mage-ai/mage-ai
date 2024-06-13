@@ -10,6 +10,7 @@ import inputs, { InputsType } from './inputs';
 import margin, { MarginType } from './margin';
 import menus, { MenuType } from './menus';
 import padding, { PaddingType } from './padding';
+import scrollbars, { ScrollbarsType } from './scrollbars';
 import { DEFAULT_MODE, ModeEnum, ModeType } from './modes';
 import { extractValueInMode } from './helpers';
 
@@ -66,6 +67,7 @@ class Combiner implements CombinerType {
       | MarginType
       | MenuType
       | PaddingType
+      | ScrollbarsType
       | { [key: string]: ModeType },
     overrideThemeKey?: string,
   ): ValueMappingType {
@@ -92,6 +94,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     margin,
     menus,
     padding,
+    scrollbars,
   }).reduce(
     (acc, [key, value]) => ({
       ...acc,

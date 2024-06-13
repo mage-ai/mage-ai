@@ -29,7 +29,7 @@ const TagStyled = styled.div<StyleProps>`
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
 `;
 
-function Tag({ children, ...props }: { children: React.ReactNode } & StyleProps) {
+function Tag({ children, ...props }: { children: React.ReactNode | string | number } & StyleProps) {
   return <TagStyled {...props}>{children}</TagStyled>;
 }
 

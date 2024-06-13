@@ -1,0 +1,20 @@
+@import '../abstracts/colors';
+
+$grid: (
+  gutter: (
+    width: (
+      base: $grid-gutter-width-base,
+      sm: $grid-gutter-width-sm,
+      xs: $grid-gutter-width-xs
+    )
+  )
+);
+
+$grid-system-configuration: (
+  breakpoints: (576, 768, 992, 1200, 1600, 1920),
+  container-widths: (540, 740, 960, 1140, 1540, 1810),
+  default-screen-class: xxl,
+  grid-columns: 12,
+  gutter-width: $grid-gutter-width-base,
+  max-screen-class: xxl
+);

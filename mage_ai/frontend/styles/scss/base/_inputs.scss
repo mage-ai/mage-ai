@@ -1,0 +1,48 @@
+// styles/inputs.ts -> base/inputs.scss
+@import './typography';
+@import './borders';
+@import '../abstracts/mixins';
+
+@mixin shared {
+  @include transition;
+  @include base;
+  @include base;
+
+  @if not $basic {
+    border-color: $inputs-border-color-base-default;
+  }
+
+  background: $inputs-background-base-default;
+  border-radius: $inputs-border-radius-base;
+  border-style: $inputs-border-style-base;
+  border-width: $inputs-border-width-base;
+  font-weight: map-get($fonts, weight, medium);
+  line-height: map-get($fonts, lineHeight, base);
+  padding: if($small, $inputs-padding-sm, $inputs-padding-base);
+  width: if($width, if(type-of($width) == number, $width + px, $width), 100%);
+
+  &::placeholder {
+    color: $inputs-placeholder-color;
+  }
+
+  &:focus {
+    background: $inputs-background-base-focus;
+    border-color: if($basic, $borders-color-base-default, $inputs-border-color-base-focus);
+  }
+
+  &:hover {
+    background: $inputs-background-base-hover;
+    border-color: if($basic, $borders-color-base-hover, $inputs-border-color-base-hover);
+  }
+
+  &:active {
+    background: $inputs-background-base-active;
+    border-color: if($basic, $borders-color-base-default, $inputs-border-color-base-active);
+  }
+
+  @include outline-hover($active: true, $border-color: map-get($fonts, color, text-inverted), $outline-color: if($basic, $borders-color-base-hover, $inputs-border-color-base-hover));
+}
+
+@mixin base {
+  @include shared;
+}

@@ -1,0 +1,9 @@
+@import '../../base/scrollbars';
+
+.scrollbar {
+  @include base;
+
+  &.pad-left {
+    padding-left: #{$margin-base}px;
+  }
+}

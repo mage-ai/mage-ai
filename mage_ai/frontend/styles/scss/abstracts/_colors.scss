@@ -1,0 +1,219 @@
+// themes/colors.ts -> abstracts/colors.scss
+// E6 is 90%
+// D9 is 85%
+// B3 is 70%
+// 99 is 60%
+// 80 is 50%
+// 66 is 40%
+// 4D is 30%
+// 33 is 20%
+// 1A is 10%
+// 0D is 05%
+// 08 is 03%
+// 00 is 00%
+
+$backgrounds-body: #000000;
+$backgrounds-button-base-default: #28333D;
+$backgrounds-button-base-hover: #34404CB3;
+$backgrounds-button-basic-default: transparent;
+$backgrounds-button-basic-hover: #FFFFFF1A;
+$backgrounds-button-primary-default: #956FFF;
+$backgrounds-button-primary-hover: #956FFFD9;
+$backgrounds-button-secondary-default: #00C868;
+$backgrounds-button-secondary-hover: #00C868D9;
+$backgrounds-input-base-active: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$backgrounds-input-base-default: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$backgrounds-input-base-focus: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$backgrounds-input-base-hover: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$backgrounds-menu-base-default: #34404CB3;
+$backgrounds-menu-contained-default: #34404C;
+$backgrounds-scrollbar-thumb-default: #34404C;
+$backgrounds-scrollbar-thumb-hover: #FFFFFF80;
+$backgrounds-scrollbar-track-default: #34404C33;
+$backgrounds-scrollbar-track-hover: #34404CB3;
+$borders-color-base-default: #34404C;
+$borders-color-base-hover: #34404CD9;
+$borders-color-button-base-default: gray;
+$borders-color-button-base-hover: #34404C;
+$borders-color-button-basic-default: gray;
+$borders-color-button-basic-hover: #34404C;
+$borders-color-button-primary-default: #34404C;
+$borders-color-button-primary-hover: #34404C;
+$borders-color-button-secondary-default: #34404C;
+$borders-color-button-secondary-hover: #34404C;
+$borders-color-input-base-active: #1F6BFF;
+$borders-color-input-base-default: #0500FF;
+$borders-color-input-base-focus: #1F6BFF;
+$borders-color-input-base-hover: #1F6BFF;
+$borders-color-muted-default: grayLo;
+$borders-color-muted-hover: #34404C33;
+$borders-outline-offset: 1;
+$borders-outline-width: 2;
+
+$borders-radius-round: 40px;
+$borders-radius-sm: 6px;
+
+
+$buttons-border-color-base-default: gray;
+$buttons-border-color-base-hover: #34404C;
+$buttons-border-color-basic-default: gray;
+$buttons-border-color-basic-hover: #34404C;
+$buttons-border-color-primary-default: #34404C;
+$buttons-border-color-primary-hover: #34404C;
+$buttons-border-color-secondary-default: #34404C;
+$buttons-border-color-secondary-hover: #34404C;
+$buttons-grid-column-gap-base: 8;
+$buttons-grid-column-gap-sm: 6;
+$buttons-outline-color-base-default: gray;
+$buttons-outline-color-base-hover: #34404C;
+$buttons-outline-color-basic-default: whiteLo;
+$buttons-outline-color-basic-hover: #FFFFFF80;
+$buttons-outline-color-primary-default: #956FFF;
+$buttons-outline-color-primary-hover: #956FFF;
+$buttons-outline-color-secondary-default: #00C868;
+$buttons-outline-color-secondary-hover: #00C868;
+$buttons-padding-base: 13px 14px;
+$buttons-padding-sm: 12px 13px;
+$buttons-padding-xs: 6px 8px;
+$fonts-color-button-base: #FFFFFF;
+$fonts-color-text-base: #FFFFFF;
+$fonts-color-text-blue: #1F6BFF;
+$fonts-color-text-inverted: #000000;
+$fonts-color-text-muted: #FFFFFF99;
+$fonts-family-base-black: Inter Black, sans-serif;
+$fonts-family-base-bold: Inter Bold, sans-serif;
+$fonts-family-base-lightFont: Inter Light, sans-serif;
+$fonts-family-base-medium: Inter Medium, sans-serif;
+$fonts-family-base-regular: Inter Regular, sans-serif;
+$fonts-family-base-semiBold: Inter SemiBold, sans-serif;
+$fonts-family-monospace-black: Fira Code Bold, monospace;
+$fonts-family-monospace-bold: Fira Code Bold, monospace;
+$fonts-family-monospace-boldItalic: Fira Code Bold Italic, monospace;
+$fonts-family-monospace-lightFont: Fira Code Light, monospace;
+$fonts-family-monospace-medium: Fira Code Medium, monospace;
+$fonts-family-monospace-regular: Fira Code Retina, Fira Code Regular, monospace;
+$fonts-family-monospace-regularItalic: Fira Code Regular Italic, monospace;
+$fonts-family-monospace-semiBold: Fira Code SemiBold, monospace;
+$fonts-lineHeight-base: normal;
+$fonts-lineHeight-md: 144%;
+$fonts-lineHeight-monospace: 160%;
+$fonts-lineHeight-sm: 20px;
+$fonts-lineHeight-xs: 125%;
+$fonts-size-base: 16px;
+$fonts-size-sm: 14px;
+$fonts-size-xs: 12px;
+$fonts-style-base: normal;
+$fonts-style-italic: italic;
+$fonts-weight-bold: 700;
+$fonts-weight-light: 300;
+$fonts-weight-medium: 500;
+$fonts-weight-regular: 400;
+$fonts-weight-semiBold: 600;
+$grid-gutter-width-base: 12;
+$grid-gutter-width-sm: 8;
+$grid-gutter-width-xs: 4;
+$icons-color-base: #FFFFFF;
+$icons-color-inverted: #000000;
+$icons-size-base: 20;
+$icons-size-sm: 17;
+$icons-size-xs: 12;
+$inputs-background-base-active: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$inputs-background-base-default: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$inputs-background-base-focus: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$inputs-background-base-hover: radial-gradient( 155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100% ), rgba(42, 76, 255, 0.10);
+$inputs-border-color-base-active: #1F6BFF;
+$inputs-border-color-base-default: #0500FF;
+$inputs-border-color-base-focus: #1F6BFF;
+$inputs-border-color-base-hover: #1F6BFF;
+$inputs-border-radius-base: 10px;
+$inputs-border-style-base: solid;
+$inputs-border-width-base: 1px;
+$inputs-padding-base: 13px 16px;
+$inputs-padding-sm: 8px 16px;
+$inputs-placeholder-color: #FFFFFF80;
+$margin-base: 12;
+$margin-sm: 8;
+$margin-xs: 4;
+$menus-background-base-default: #34404CB3;
+$menus-background-contained-default: #34404C;
+$menus-blur-base: saturate(100%) blur(3px);
+$menus-border-radius-base: 6px;
+$menus-padding-base: 8px 8px;
+$padding-base: 12;
+$padding-sm: 8;
+$padding-xs: 4;
+$scrollbars-background-thumb-default: #34404C;
+$scrollbars-background-thumb-hover: #FFFFFF80;
+$scrollbars-background-track-default: #34404C33;
+$scrollbars-background-track-hover: #34404CB3;
+$scrollbars-border-radius-thumb: 40px;
+$scrollbars-border-radius-track: 10px;
+$scrollbars-width-thumb: 4;
+$scrollbars-width-track: 6;
+$colors-black: #000000;
+$colors-blackFixed: #000000;
+$colors-blackLo: #00000033;
+$colors-blackMd: #00000099;
+$colors-blackHi: #000000D9;
+$colors-blue: #0500FF;
+$colors-blueHi: #0500FFD9;
+$colors-blueLo: #0500FF33;
+$colors-blueMd: #0500FFB3;
+$colors-blueMuted: #5AA6FF;
+$colors-blueText: #1F6BFF;
+$colors-teal: #00B4CC;
+$colors-tealHi: rgba(0, 180, 204, 0.5);
+$colors-tealLo: #00B4CC33;
+$colors-tealMd: #00B4CCB3;
+$colors-dbt: #FC6949;
+$colors-dbtHi: #FC6949D9;
+$colors-dbtLo: rgba(252, 105, 73, 0.3);
+$colors-dbtMd: rgba(252, 105, 73, 0.5);
+$colors-glow: #0500FF66;
+$colors-glow2: #0500FF;
+$colors-gray: #34404C;
+$colors-grayLo: #34404C33;
+$colors-grayMd: #34404CB3;
+$colors-grayHi: #34404CD9;
+$colors-green: #00C868;
+$colors-greenLo: #00C86833;
+$colors-greenMd: #00C868B3;
+$colors-greenHi: #00C868D9;
+$colors-pink: #DD55FF;
+$colors-pinkLo: #DD55FF33;
+$colors-pinkMd: #DD55FFB3;
+$colors-pinkHi: #DD55FFD9;
+$colors-purple: #956FFF;
+$colors-purpleLo: #956FFF33;
+$colors-purpleMd: #956FFFB3;
+$colors-purpleHi: #956FFFD9;
+$colors-red: #FF3B3B;
+$colors-redHi: #FF3B3BD9;
+$colors-redLo: #FF3B3B33;
+$colors-redMd: #FF3B3BB3;
+$colors-rose: #D1A2AB;
+$colors-roseHi: #D1A2ABD9;
+$colors-roseLo: #D1A2AB33;
+$colors-roseMd: #D1A2ABB3;
+$colors-sky: #9ECBFF;
+$colors-skyHi: rgba(106, 161, 224, 0.5);
+$colors-skyLo: #6AA1E0;
+$colors-skyMd: #9ECBFFB3;
+$colors-yellow: #FFCC19;
+$colors-yellowHi: #FFCC19D9;
+$colors-yellowLo: #FFCC1933;
+$colors-yellowMd: #FFCC19;
+$colors-white: #FFFFFF;
+$colors-whiteFixed: #FFFFFF;
+$colors-whiteLo: #FFFFFF80;
+$colors-whiteMd: #FFFFFF99;
+$colors-whiteHi: #FFFFFF1A;
+$colors-statuses-success: #8ADE00;
+$colors-statuses-successHi: rgba(138, 222, 0, 0.3);
+
+// themes/gradients.ts
+$blue: radial-gradient(
+  155.7% 118.3% at 22.25% 145.77%,
+  $colors-blueLo 0%,
+  rgba($colors-blue, 0.00) 100%
+), rgba($colors-blue, 0.10);

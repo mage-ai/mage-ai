@@ -1,0 +1,7 @@
+// components/Grid/Row/index.tsx -> components/Grid/Row.module.scss
+@import '../../base/grid';
+
+.row {
+  @include shared;
+  width: inherit;
+}

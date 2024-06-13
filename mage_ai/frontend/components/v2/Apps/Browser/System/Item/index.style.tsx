@@ -28,6 +28,7 @@ export const FolderStyled = styled.div<FolderStyledProps>`
 
     .${itemsClassName(uuid)} {
       &.collapsed {
+        display: none;
         height: 0;
         visibility: hidden;
       }

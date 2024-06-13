@@ -1,0 +1,57 @@
+@import '../abstracts/colors';
+
+$buttons: (
+  border: (
+    color: (
+      base: (
+        default: $buttons-border-color-base-default,
+        hover: $buttons-border-color-base-hover
+      ),
+      basic: (
+        default: $buttons-border-color-basic-default,
+        hover: $buttons-border-color-basic-hover
+      ),
+      primary: (
+        default: $buttons-border-color-primary-default,
+        hover: $buttons-border-color-primary-hover
+      ),
+      secondary: (
+        default: $buttons-border-color-secondary-default,
+        hover: $buttons-border-color-secondary-hover
+      )
+    )
+  ),
+  grid: (
+    column: (
+      gap: (
+        base: $buttons-grid-column-gap-base,
+        sm: $buttons-grid-column-gap-sm
+      )
+    )
+  ),
+  outline: (
+    color: (
+      base: (
+        default: $buttons-outline-color-base-default,
+        hover: $buttons-outline-color-base-hover
+      ),
+      basic: (
+        default: $buttons-outline-color-basic-default,
+        hover: $buttons-outline-color-basic-hover
+      ),
+      primary: (
+        default: $buttons-outline-color-primary-default,
+        hover: $buttons-outline-color-primary-hover
+      ),
+      secondary: (
+        default: $buttons-outline-color-secondary-default,
+        hover: $buttons-outline-color-secondary-hover
+      )
+    )
+  ),
+  padding: (
+    base: $buttons-padding-base,
+    sm: $buttons-padding-sm,
+    xs: $buttons-padding-xs
+  )
+);

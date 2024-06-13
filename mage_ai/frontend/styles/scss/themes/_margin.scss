@@ -1,0 +1,10 @@
+@import '../abstracts/colors';
+$margin-base: 12;
+$margin-sm: 8;
+$margin-xs: 4;
+
+$margin: (
+  base: $margin-base,
+  sm: $margin-sm,
+  xs: $margin-xs
+);
