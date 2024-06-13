@@ -4,6 +4,7 @@ import Text from '../../../Text';
 import { KeyboardTextType, KeyboardTextGroupType } from '../types';
 
 type KeyboardTextGroupProps = {
+  inverted?: boolean;
   monospace?: boolean;
   small?: boolean;
   textGroup: KeyboardTextGroupType;

@@ -23,7 +23,7 @@ function Group({ children, itemsContained }: { children: React.ReactNode } & Gro
       <Grid
         alignItems="center"
         autoFlow="column"
-        columnGap={12}
+        columnGap={itemsContained ? 12 : 8}
         height="100%"
         justifyContent="start"
         templateColumns="min-content"

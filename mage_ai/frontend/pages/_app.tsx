@@ -2,6 +2,7 @@ import App, { AppContext, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 
 import '@styles/globals.css';
+import '@styles/scss/globals/main.scss';
 import '@styles/scss/globals/dark.scss';
 import '@styles/scss/globals/light.scss';
 import 'react-toastify/dist/ReactToastify.min.css';

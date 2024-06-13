@@ -1,16 +1,12 @@
-// styles/borders -> base/borders
-@use '../abstracts/colors';
-@use '../abstracts/variables';
-
 @mixin shared {
-  border-radius: variables.$borders-radius-base;
-  border-style: variables.$borders-style;
-  border-width: variables.$borders-width;
+  border-radius: var(--borders-radius-base);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
 }
 
 @mixin base($muted: false) {
   @include shared;
-  border-color: if($muted, colors.$borders-color-muted-default, colors.$borders-color-base-default);
+  border-color: if($muted, var(--borders-color-muted-default), var(--borders-color-base-default));
 }
 
 @mixin borders-transparent {

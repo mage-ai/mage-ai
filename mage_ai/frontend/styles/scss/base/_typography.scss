@@ -52,16 +52,16 @@
   @include monospace-font-family;
   @include base-font-family;
 
-  color: map-get($fonts, color, text-base);
+  color: map-get($fonts, color, var(--fonts-color-text-base));
 
   &.inverted {
-    color: map-get($fonts, color, text-inverted);
+    color: map-get($fonts, color, var(--fonts-color-text-inverted));
   }
   &.blue {
-    color: map-get($fonts, color, text-blue);
+    color: map-get($fonts, color, var(--fonts-color-text-blue));
   }
   &.muted {
-    color: map-get($fonts, color, text-muted);
+    color: map-get($fonts, color, var(--fonts-color-text-blue));
   }
 
   font-size: map-get($fonts, size, base);

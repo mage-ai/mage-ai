@@ -1,0 +1,501 @@
+{
+  "backgrounds": {
+    "blur": "rgba(255, 255, 255, 0.7)",
+    "body": "#FFFFFF",
+    "button": {
+      "base": {
+        "default": "#EBECF4",
+        "hover": "#1B00661A"
+      },
+      "basic": {
+        "default": "transparent",
+        "hover": "#1B00661A"
+      },
+      "primary": {
+        "default": "#956FFF",
+        "hover": "#956FFFD9"
+      },
+      "secondary": {
+        "default": "#00C868",
+        "hover": "#00C868D9"
+      }
+    },
+    "input": {
+      "base": {
+        "active": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "default": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "focus": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "hover": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)"
+      }
+    },
+    "menu": {
+      "base": {
+        "default": "#BBAFDAB3"
+      },
+      "contained": {
+        "default": "#BBAFDA"
+      }
+    },
+    "scrollbar": {
+      "thumb": {
+        "default": "#BBAFDA",
+        "hover": "#1B006699"
+      },
+      "track": {
+        "default": "#BBAFDA1A",
+        "hover": "#BBAFDAB3"
+      }
+    }
+  },
+  "borders": {
+    "color": {
+      "base": {
+        "default": "#BBAFDA",
+        "hover": "#BBAFDAD9"
+      },
+      "button": {
+        "base": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "basic": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "primary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        },
+        "secondary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        }
+      },
+      "input": {
+        "base": {
+          "active": "#1F6BFF",
+          "default": "#0500FF",
+          "focus": "#1F6BFF",
+          "hover": "#1F6BFF"
+        }
+      },
+      "muted": {
+        "default": "grayLo",
+        "hover": "#BBAFDA1A"
+      }
+    },
+    "outline": {
+      "offset": 1,
+      "width": 2
+    },
+    "radius": {
+      "base": "10px",
+      "round": "40px",
+      "sm": "6px"
+    },
+    "style": "solid",
+    "width": "1px"
+  },
+  "buttons": {
+    "border": {
+      "color": {
+        "base": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "basic": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "primary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        },
+        "secondary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        }
+      }
+    },
+    "grid": {
+      "column": {
+        "gap": {
+          "base": 8,
+          "sm": 6
+        }
+      }
+    },
+    "outline": {
+      "color": {
+        "base": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "basic": {
+          "default": "blackLo",
+          "hover": "#00000033"
+        },
+        "primary": {
+          "default": "#956FFF",
+          "hover": "#956FFF"
+        },
+        "secondary": {
+          "default": "#00C868",
+          "hover": "#00C868"
+        }
+      }
+    },
+    "padding": {
+      "base": "13px 14px",
+      "sm": "12px 13px",
+      "xs": "6px 8px"
+    }
+  },
+  "fonts": {
+    "color": {
+      "button": {
+        "base": "#130048"
+      },
+      "text": {
+        "base": "#000000",
+        "blue": "#1F6BFF",
+        "inverted": "#FFFFFF",
+        "muted": "#00000099"
+      }
+    },
+    "family": {
+      "base": {
+        "black": "Inter Black, sans-serif",
+        "bold": "Inter Bold, sans-serif",
+        "lightFont": "Inter Light, sans-serif",
+        "medium": "Inter Medium, sans-serif",
+        "regular": "Inter Regular, sans-serif",
+        "semiBold": "Inter SemiBold, sans-serif"
+      },
+      "monospace": {
+        "black": "Fira Code Bold, monospace",
+        "bold": "Fira Code Bold, monospace",
+        "boldItalic": "Fira Code Bold Italic, monospace",
+        "lightFont": "Fira Code Light, monospace",
+        "medium": "Fira Code Medium, monospace",
+        "regular": "Fira Code Retina, Fira Code Regular, monospace",
+        "regularItalic": "Fira Code Regular Italic, monospace",
+        "semiBold": "Fira Code SemiBold, monospace"
+      }
+    },
+    "lineHeight": {
+      "base": "125%",
+      "md": "144%",
+      "monospace": "160%",
+      "sm": "20px",
+      "xs": "125%"
+    },
+    "size": {
+      "base": "16px",
+      "sm": "14px",
+      "xs": "12px"
+    },
+    "style": {
+      "base": "normal",
+      "italic": "italic"
+    },
+    "weight": 300
+  },
+  "grid": {
+    "gutter": {
+      "width": {
+        "base": 12,
+        "sm": 8,
+        "xs": 4
+      }
+    }
+  },
+  "icons": {
+    "color": {
+      "base": "#000000",
+      "inverted": "#FFFFFF"
+    },
+    "size": {
+      "base": 20,
+      "sm": 17,
+      "xs": 12
+    }
+  },
+  "inputs": {
+    "background": {
+      "base": {
+        "active": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "default": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "focus": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+        "hover": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)"
+      }
+    },
+    "border": {
+      "color": {
+        "base": {
+          "active": "#1F6BFF",
+          "default": "#0500FF",
+          "focus": "#1F6BFF",
+          "hover": "#1F6BFF"
+        }
+      },
+      "radius": {
+        "base": "10px"
+      },
+      "style": {
+        "base": "solid"
+      },
+      "width": {
+        "base": "1px"
+      }
+    },
+    "padding": {
+      "base": "13px 16px",
+      "sm": "8px 16px"
+    },
+    "placeholder": {
+      "color": "#00000033"
+    }
+  },
+  "margin": {
+    "base": 12,
+    "sm": 8,
+    "xs": 4
+  },
+  "menus": {
+    "background": {
+      "base": {
+        "default": "#BBAFDAB3"
+      },
+      "contained": {
+        "default": "#BBAFDA"
+      }
+    },
+    "blur": {
+      "base": "saturate(100%) blur(3px)"
+    },
+    "border": {
+      "radius": {
+        "base": "6px"
+      }
+    },
+    "padding": {
+      "base": "8px 8px"
+    }
+  },
+  "padding": {
+    "base": 12,
+    "sm": 8,
+    "xs": 4
+  },
+  "scrollbars": {
+    "background": {
+      "thumb": {
+        "default": "#BBAFDA",
+        "hover": "#1B006699"
+      },
+      "track": {
+        "default": "#BBAFDA1A",
+        "hover": "#BBAFDAB3"
+      }
+    },
+    "border": {
+      "radius": {
+        "thumb": "40px",
+        "track": "10px"
+      }
+    },
+    "width": {
+      "thumb": 4,
+      "track": 6
+    }
+  },
+  "colors": {
+    "black": "#000000",
+    "blackFixed": "#000000",
+    "blackLo": "#00000033",
+    "blackMd": "#00000099",
+    "blackHi": "#000000D9",
+    "blue": "#0500FF",
+    "blueHi": "#0500FFD9",
+    "blueLo": "#0500FF33",
+    "blueMd": "#0500FFB3",
+    "blueMuted": "#5AA6FF",
+    "blueText": "#1F6BFF",
+    "teal": "#00B4CC",
+    "tealHi": "rgba(0, 180, 204, 0.5)",
+    "tealLo": "#00B4CC33",
+    "tealMd": "#00B4CCB3",
+    "dbt": "#FC6949",
+    "dbtHi": "#FC6949D9",
+    "dbtLo": "rgba(252, 105, 73, 0.3)",
+    "dbtMd": "rgba(252, 105, 73, 0.5)",
+    "glow": "#0500FF4D",
+    "glow2": "#FFFFFF",
+    "gray": "#BBAFDA",
+    "grayLo": "#BBAFDA1A",
+    "grayMd": "#BBAFDAB3",
+    "grayHi": "#BBAFDAD9",
+    "green": "#00C868",
+    "greenLo": "#00C86833",
+    "greenMd": "#00C868B3",
+    "greenHi": "#00C868D9",
+    "pink": "#DD55FF",
+    "pinkLo": "#DD55FF33",
+    "pinkMd": "#DD55FFB3",
+    "pinkHi": "#DD55FFD9",
+    "purple": "#956FFF",
+    "purpleLo": "#956FFF33",
+    "purpleMd": "#956FFFB3",
+    "purpleHi": "#956FFFD9",
+    "red": "#FF3B3B",
+    "redHi": "#FF3B3BD9",
+    "redLo": "#FF3B3B33",
+    "redMd": "#FF3B3BB3",
+    "rose": "#D1A2AB",
+    "roseHi": "#D1A2ABD9",
+    "roseLo": "#D1A2AB33",
+    "roseMd": "#D1A2ABB3",
+    "sky": "#9ECBFF",
+    "skyHi": "rgba(106, 161, 224, 0.5)",
+    "skyLo": "#6AA1E0",
+    "skyMd": "#9ECBFFB3",
+    "yellow": "#FFCC19",
+    "yellowHi": "#E6B000D9",
+    "yellowLo": "#E6B00033",
+    "yellowMd": "#E6B000",
+    "white": "#FFFFFF",
+    "whiteFixed": "#FFFFFF",
+    "whiteLo": "#1B006699",
+    "whiteMd": "#1B006699",
+    "whiteHi": "#1B00661A",
+    "backgrounds": {
+      "blur": "rgba(255, 255, 255, 0.7)",
+      "body": "#FFFFFF",
+      "button": {
+        "base": {
+          "default": "#EBECF4",
+          "hover": "#1B00661A"
+        },
+        "basic": {
+          "default": "transparent",
+          "hover": "#1B00661A"
+        },
+        "primary": {
+          "default": "#956FFF",
+          "hover": "#956FFFD9"
+        },
+        "secondary": {
+          "default": "#00C868",
+          "hover": "#00C868D9"
+        }
+      },
+      "input": {
+        "base": {
+          "active": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+          "default": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+          "focus": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)",
+          "hover": "radial-gradient(\n  155.7% 118.3% at 22.25% 145.77%,\n  rgba(42, 76, 255, 0.08) 0%,\n  rgba(42, 76, 255, 0.00) 100%\n), rgba(42, 76, 255, 0.10)"
+        }
+      },
+      "menu": {
+        "base": {
+          "default": "#BBAFDAB3"
+        },
+        "contained": {
+          "default": "#BBAFDA"
+        }
+      },
+      "scrollbar": {
+        "thumb": {
+          "default": "#BBAFDA",
+          "hover": "#1B006699"
+        },
+        "track": {
+          "default": "#BBAFDA1A",
+          "hover": "#BBAFDAB3"
+        }
+      }
+    },
+    "borders": {
+      "base": {
+        "default": "#BBAFDA",
+        "hover": "#BBAFDAD9"
+      },
+      "button": {
+        "base": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "basic": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "primary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        },
+        "secondary": {
+          "default": "#BBAFDA",
+          "hover": "#BBAFDA"
+        }
+      },
+      "input": {
+        "base": {
+          "active": "#1F6BFF",
+          "default": "#0500FF",
+          "focus": "#1F6BFF",
+          "hover": "#1F6BFF"
+        }
+      },
+      "muted": {
+        "default": "grayLo",
+        "hover": "#BBAFDA1A"
+      }
+    },
+    "icons": {
+      "base": "#000000",
+      "inverted": "#FFFFFF"
+    },
+    "outline": {
+      "button": {
+        "base": {
+          "default": "gray",
+          "hover": "#BBAFDA"
+        },
+        "basic": {
+          "default": "blackLo",
+          "hover": "#00000033"
+        },
+        "primary": {
+          "default": "#956FFF",
+          "hover": "#956FFF"
+        },
+        "secondary": {
+          "default": "#00C868",
+          "hover": "#00C868"
+        }
+      }
+    },
+    "placeholder": {
+      "input": {
+        "base": "#00000033"
+      }
+    },
+    "statuses": {
+      "success": "#8ADE00",
+      "successHi": "rgba(138, 222, 0, 0.3)"
+    },
+    "typography": {
+      "button": {
+        "base": "#130048"
+      },
+      "text": {
+        "base": "#000000",
+        "blue": "#1F6BFF",
+        "inverted": "#FFFFFF",
+        "muted": "#00000099"
+      }
+    }
+  }
+}
