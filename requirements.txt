@@ -1,3 +1,4 @@
+cachetools
 Faker==4.14.0
 GitPython==3.1.41
 Jinja2==3.1.3

@@ -15,6 +15,7 @@ from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.cache.block import BlockCache
+from mage_ai.cache.mem_lru import read_yaml_file, read_yaml_file_async
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.tabular.models import BatchSettings
@@ -504,9 +505,7 @@ class Pipeline:
         if not os.path.exists(metadata_path):
             return None
 
-        with open(metadata_path) as fp:
-            config = load_yaml(fp) or {}
-        return config
+        return read_yaml_file(metadata_path)
 
     @classmethod
     def _get_config_path(
@@ -562,9 +561,7 @@ class Pipeline:
             if not os.path.exists(config_path):
                 raise Exception(f'Pipeline {uuid} does not exist.')
 
-            config = None
-            async with aiofiles.open(config_path, mode='r') as f:
-                config = load_yaml(await f.read()) or {}
+            config = await read_yaml_file_async(config_path)
         except Exception as e:
             if raise_exception:
                 raise e
@@ -580,6 +577,7 @@ class Pipeline:
         self,
         uuid,
         repo_path: str = None,
+        repo_config: RepoConfig = None,
         all_projects: bool = False,
         context_data: Dict = None,
         use_repo_path: bool = False,
@@ -605,8 +603,8 @@ class Pipeline:
 
         if not config_path or not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
-        async with aiofiles.open(config_path, mode='r', encoding='utf-8') as f:
-            config = load_yaml(await f.read()) or {}
+
+        config = await read_yaml_file_async(config_path, mode='r', encoding='utf-8')
 
         if PipelineType.INTEGRATION == config.get('type'):
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -633,10 +631,17 @@ class Pipeline:
                 catalog=catalog,
                 config=config,
                 repo_path=repo_path,
+                repo_config=repo_config,
                 use_repo_path=use_repo_path,
             )
         else:
-            pipeline = self(uuid, repo_path=repo_path, config=config, use_repo_path=use_repo_path)
+            pipeline = self(
+                uuid,
+                repo_path=repo_path,
+                config=config,
+                repo_config=repo_config,
+                use_repo_path=use_repo_path,
+            )
         return pipeline
 
     @classmethod
@@ -823,9 +828,7 @@ class Pipeline:
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist in repo_path {self.repo_path}.')
-        with open(self.config_path, encoding='utf-8') as fp:
-            config = load_yaml(fp) or {}
-        return config
+        return read_yaml_file(self.config_path, encoding='utf-8')
 
     def get_catalog_from_json(self):
         if not os.path.exists(self.catalog_config_path):
@@ -1611,78 +1614,78 @@ class Pipeline:
             raise InvalidPipelineZipError
 
         files_to_be_written = []
-        with open(config_zip_path, 'r') as pipeline_config:
-            config = load_yaml(pipeline_config)
 
-            # check if pipeline exists with same uuid and generate new one if necessary
+        config = read_yaml_file(config_zip_path)
+
+        # check if pipeline exists with same uuid and generate new one if necessary
+        if not overwrite:
+            uuid = config['uuid']
+            index = 0
+            while self.exists(uuid):
+                index += 1
+                uuid = f'{config["uuid"]}_{index}'
+            config['uuid'] = uuid
+            config['name'] = uuid
+
+        pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
+        config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
+        files_to_be_written.append((config_zip_path, config_destination_path))
+
+        # retain block upstream and downstream references
+        block_hierarchy = {
+            block['uuid']: {key: [] for key in ['upstream_blocks', 'downstream_blocks']}
+            for block in config['blocks']
+        }
+
+        for b_index, block in enumerate(config['blocks']):
+            name = block['name']
+            uuid = block['uuid']
+            block_type = block['type']
+            language = block.get('language', 'python')
+            configuration = block.get('configuration', {})
+
+            block_inst = Block(name=name, uuid=uuid, block_type=block_type, language=language)
+
+            # check if block exists with same uuid and generate new one if necessary
             if not overwrite:
-                uuid = config['uuid']
                 index = 0
-                while self.exists(uuid):
+                while block_inst.exists():
                     index += 1
-                    uuid = f'{config["uuid"]}_{index}'
-                config['uuid'] = uuid
-                config['name'] = uuid
+                    block_inst.uuid = f'{block["uuid"]}_{index}'
 
-            pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
-            config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
-            files_to_be_written.append((config_zip_path, config_destination_path))
+            # save block
+            block_destination_path = block_inst.file_path
+            _, file_extension = os.path.splitext(block_destination_path)
+            block_directory = os.path.basename(os.path.dirname(block_destination_path))
+            block_zip_path = self.__find_pipeline_file(
+                tmp_dir, f'{uuid}{file_extension}', block_directory
+            )
 
-            # retain block upstream and downstream references
-            block_hierarchy = {
-                block['uuid']: {key: [] for key in ['upstream_blocks', 'downstream_blocks']}
-                for block in config['blocks']
-            }
+            if block_zip_path is None or not os.path.exists(block_zip_path):
+                raise InvalidPipelineZipError(f'Block {uuid} missing from zip file.')
 
-            for b_index, block in enumerate(config['blocks']):
-                name = block['name']
-                uuid = block['uuid']
-                block_type = block['type']
-                language = block.get('language', 'python')
-                configuration = block.get('configuration', {})
+            files_to_be_written.append((block_zip_path, block_destination_path))
 
-                block_inst = Block(name=name, uuid=uuid, block_type=block_type, language=language)
+            # save new block parameters
+            file_path = (configuration.get('file_source') or {}).get('path')
+            if file_path:
+                file_path = remove_base_repo_path(block_destination_path)
+                block['configuration']['file_source']['path'] = file_path
+            block['uuid'] = block_inst.uuid
+            block['name'] = block_inst.uuid
+            config['blocks'][b_index] = block
 
-                # check if block exists with same uuid and generate new one if necessary
-                if not overwrite:
-                    index = 0
-                    while block_inst.exists():
-                        index += 1
-                        block_inst.uuid = f'{block["uuid"]}_{index}'
+            # modify upstream and downstream referencesd
+            for upstr_name in block['upstream_blocks']:
+                block_hierarchy[upstr_name]['downstream_blocks'].append(block['uuid'])
+            for downstr_name in block['downstream_blocks']:
+                block_hierarchy[downstr_name]['upstream_blocks'].append(block['uuid'])
 
-                # save block
-                block_destination_path = block_inst.file_path
-                _, file_extension = os.path.splitext(block_destination_path)
-                block_directory = os.path.basename(os.path.dirname(block_destination_path))
-                block_zip_path = self.__find_pipeline_file(
-                    tmp_dir, f'{uuid}{file_extension}', block_directory
-                )
-
-                if block_zip_path is None or not os.path.exists(block_zip_path):
-                    raise InvalidPipelineZipError(f'Block {uuid} missing from zip file.')
-
-                files_to_be_written.append((block_zip_path, block_destination_path))
-
-                # save new block parameters
-                file_path = (configuration.get('file_source') or {}).get('path')
-                if file_path:
-                    file_path = remove_base_repo_path(block_destination_path)
-                    block['configuration']['file_source']['path'] = file_path
-                block['uuid'] = block_inst.uuid
-                block['name'] = block_inst.uuid
-                config['blocks'][b_index] = block
-
-                # modify upstream and downstream referencesd
-                for upstr_name in block['upstream_blocks']:
-                    block_hierarchy[upstr_name]['downstream_blocks'].append(block['uuid'])
-                for downstr_name in block['downstream_blocks']:
-                    block_hierarchy[downstr_name]['upstream_blocks'].append(block['uuid'])
-
-            # save upstream and downstream references
-            hierarchy_list = list(block_hierarchy.values())
-            for b_index, block in enumerate(config['blocks']):
-                block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
-                block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
+        # save upstream and downstream references
+        hierarchy_list = list(block_hierarchy.values())
+        for b_index, block in enumerate(config['blocks']):
+            block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
+            block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
 
         # dump new config information back in temp folder
         with open(config_zip_path, 'w', encoding='utf-8') as pipeline_config:

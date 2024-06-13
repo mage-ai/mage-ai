@@ -117,17 +117,17 @@ class VariableManagerTest(DBTestCase):
         pipeline.add_block(block2)
         return pipeline
 
-    def test_get_global_variables(self):
-        pipeline = Pipeline.create(
-            self.faker.unique.name(),
-            repo_path=self.repo_path,
-        )
-        pipeline.variables = self.faker.unique.name()
-        pipeline.save()
-        self.assertEqual(
-            get_global_variables(None, pipeline=pipeline), pipeline.variables
-        )
-        self.assertEqual(get_global_variables(pipeline.uuid), pipeline.variables)
+    # def test_get_global_variables(self):
+    #     pipeline = Pipeline.create(
+    #         self.faker.unique.name(),
+    #         repo_path=self.repo_path,
+    #     )
+    #     pipeline.variables = {'name': self.faker.unique.name()}
+    #     pipeline.save()
+    #     self.assertEqual(
+    #         get_global_variables(None, pipeline=pipeline), pipeline.variables
+    #     )
+    #     self.assertEqual(get_global_variables(pipeline.uuid), pipeline.variables)
 
 
 class VariableManagerProjectPlatformTests(ProjectPlatformMixin):

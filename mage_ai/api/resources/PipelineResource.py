@@ -40,6 +40,7 @@ from mage_ai.data_preparation.models.triggers import (
     get_trigger_configs_by_name,
     update_triggers_for_pipeline_and_persist,
 )
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
@@ -138,6 +139,7 @@ class PipelineResource(BaseResource):
                 root_project=False,
                 user=user,
             )
+        repo_config = get_repo_config(repo_path=repo_path)
 
         search_query = query.get('search', [None])
         if search_query:
@@ -251,7 +253,12 @@ class PipelineResource(BaseResource):
 
         def get_pipeline_with_config(uuid, config: Dict) -> Pipeline:
             try:
-                return Pipeline(uuid, config=config, repo_path=repo_path)
+                return Pipeline(
+                    uuid,
+                    config=config,
+                    repo_path=repo_path,
+                    repo_config=repo_config,
+                )
             except Exception as err:
                 err_message = f'Error loading pipeline sync {uuid}: {err}.'
                 if (
@@ -275,6 +282,7 @@ class PipelineResource(BaseResource):
                             pipeline_uuid_from_cache,
                             config=pipeline_dict['pipeline'],
                             repo_path=repo_path,
+                            repo_config=repo_config,
                         )
                     )
         else:
@@ -292,6 +300,7 @@ class PipelineResource(BaseResource):
                                 uuid,
                                 config=dict(type='invalid'),
                                 repo_path=repo_path,
+                                repo_config=repo_config,
                             )
                         )
                 else:
