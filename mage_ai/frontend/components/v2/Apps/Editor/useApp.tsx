@@ -11,6 +11,14 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
   ssr: false,
 });
 
+async function updateLocalContent(item: FileType) {
+  await import('../../IDE/Manager').then((mod) => {
+    mod.Manager.setValue(item);
+
+    updateFileCache({ client: item, server: item });
+  });
+}
+
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const { app } = props;
   const { api, loading } = useItems();
@@ -31,16 +39,23 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const phaseRef = useRef(0);
 
   function setMain(item: FileType) {
-    updateFileCache({
-      ...(clientRef.current ? {} : { client: item }),
-      server: item,
-    });
-    setStale(isStale(item.path));
-    contentRef.current = item.content;
-
-    if (!clientRef.current) {
+    if (clientRef.current) {
+      updateFileCache({ server: item });
+    } else {
       setMainState(item);
+      updateLocalContent(item);
     }
+
+    contentRef.current = item.content;
+    phaseRef.current += 1;
+    setStale(isStale(item.path));
+  }
+
+  function updateServerContent(item: FileType) {
+    api.update(item.path, {
+      content: contentRef?.current || item.content,
+      path: item.path,
+    }).then(setMain);
   }
 
   const [original, setOriginal] = useState<FileType>(server?.file);
@@ -54,7 +69,6 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
         .then(({ data: { browser_item: item } }) => {
           setMain(item);
           setOriginal(item);
-          phaseRef.current = 1;
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,24 +88,8 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     });
   }
 
-  async function updateLocalContent(item: FileType) {
-    await import('../../IDE/Manager').then((mod) => {
-      mod.Manager.setValue(item);
-
-      updateFileCache({ client: item, server: item });
-      setMain(item);
-    });
-  }
-
-  function updateServerContent(item: FileType) {
-    api.update(item.path, {
-      content: contentRef?.current || item.content,
-      path: item.path,
-    }).then(updateLocalContent);
-  }
-
   const mainApp = useMemo(
-    () => main && (
+    () => (clientRef?.current || main?.content || phaseRef.current >= 1) && (
       <MaterialIDE
         configurations={app?.options?.configurations}
         eventListeners={{
@@ -106,6 +104,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
         uuid={app?.uuid}
       />
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [app, main],
   );
 

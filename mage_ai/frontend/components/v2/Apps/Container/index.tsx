@@ -4,66 +4,66 @@ import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
 import Padding from '@mana/elements/Padding';
-import { AddAppFunctionOptionsType, AppConfigType, AppLoaderProps, PanelType } from '../interfaces';
+import { AddAppOperationType, AddAppFunctionOptionsType, AppConfigType, AppLoaderProps, OperationTypeEnum, OperationsType, PanelType } from '../interfaces';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
 import { mergeDeep } from '@utils/hash';
 
 type AppContainerProps = {
-  addBottom?: () => void;
-  addLeft?: () => void;
-  addPanel: (panel: PanelType) => void;
-  addRight?: () => void;
-  addTop?: () => void;
   app: AppConfigType;
   appLoader?: (args: AppLoaderProps) => {
     main: React.ComponentType<any>;
     toolbars: Record<string, React.ComponentType<any>>;
   };
-  addApp?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
-  removeApp?: (uuid: string) => void;
+  operations?: OperationsType;
   uuid: string;
 };
 
 function AppContainer(
   {
-    addApp,
-    addBottom,
-    addLeft,
-    addPanel,
-    addRight,
-    addTop,
     app,
     appLoader,
-    removeApp,
+    operations,
     uuid,
   }: AppContainerProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  function startApp(appNew: AppConfigType, opts?: AddAppFunctionOptionsType) {
-    addApp(appNew, opts);
-  }
+  const addApp = operations?.[OperationTypeEnum.ADD_APP]?.effect as AddAppOperationType;
+  const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
+
+  const {
+    bottom: bottomOperations,
+    left: leftOperations,
+    right: rightOperations,
+    top: topOperations,
+  } = app?.toolbars?.top || {
+    add: undefined,
+    remove: undefined,
+  };
 
   const { main, toolbars } = appLoader?.({
-    addApp: (appNew, opts) => {
-      addApp(
-        appNew,
-        mergeDeep(opts, {
-          grid: {
-            relative: {
-              layout: {
-                column: 1,
-                row: 0,
-              },
-              uuid,
-            },
-          },
-        }),
-      );
-    },
-    addPanel,
     app,
-    removeApp,
+    operations: {
+      ...operations,
+      [OperationTypeEnum.ADD_APP]: {
+        ...(operations?.[OperationTypeEnum.ADD_APP] || {}),
+        effect: (appNew: AppConfigType, opts?: AddAppFunctionOptionsType) => {
+          const options = mergeDeep(opts, {
+            grid: {
+              relative: {
+                layout: {
+                  column: 1,
+                  row: 0,
+                },
+                uuid,
+              },
+            },
+          });
+
+          addApp?.(appNew, options);
+        },
+      },
+    },
   });
 
   return (
@@ -79,101 +79,117 @@ function AppContainer(
         templateColumns="1fr"
         templateRows="auto 1fr"
       >
-        <Header>
-          <Grid autoFlow="column" columnGap={12} templateColumns="1fr">
-            {toolbars?.top}
-          </Grid>
+        <Header
+          style={{
+            gridTemplateColumns: toolbars && app?.toolbars?.top && removeApp
+              ? '1fr auto'
+              : toolbars
+                ? '1fr'
+                : app?.toolbars?.top && removeApp
+                  ? 'auto'
+                  : undefined,
+          }}
+        >
+          {toolbars?.top && (
+            <Grid autoFlow="column" columnGap={12} templateColumns="1fr">
+              {toolbars?.top}
+            </Grid>
+          )}
 
-          <Padding bottom="small" right="small" top="small">
-            <ButtonGroup basic itemsContained>
-              {addBottom && (
-              <Button
-                Icon={CaretDown}
-                basic
-                grouped
-                onClick={() =>
-                  startApp(null, {
-                    grid: {
-                      relative: {
-                        layout: {
-                          column: 0,
-                          row: 1,
+          {app?.toolbars?.top && (
+            <Padding bottom="small" right="small" top="small">
+              <ButtonGroup basic itemsContained>
+                {bottomOperations?.[OperationTypeEnum.ADD_APP] && (
+                  <Button
+                    Icon={CaretDown}
+                    basic
+                    grouped
+                    onClick={() =>
+                      bottomOperations?.[OperationTypeEnum.ADD_APP]?.effect(null, {
+                        grid: {
+                          relative: {
+                            layout: {
+                              column: 0,
+                              row: 1,
+                            },
+                            uuid,
+                          },
                         },
-                        uuid,
-                      },
-                    },
-                  })
-                }
-                small
-              />
-            )}
-              {addTop && (
-              <Button
-                Icon={CaretUp}
-                basic
-                grouped
-                onClick={() =>
-                  startApp(null, {
-                    grid: {
-                      relative: {
-                        layout: {
-                          column: 0,
-                          row: -1,
+                      })
+                    }
+                    small
+                  />
+                )}
+                {topOperations?.[OperationTypeEnum.ADD_APP] && (
+                  <Button
+                    Icon={CaretUp}
+                    basic
+                    grouped
+                    onClick={() =>
+                      topOperations?.[OperationTypeEnum.ADD_APP]?.effect(null, {
+                        grid: {
+                          relative: {
+                            layout: {
+                              column: 0,
+                              row: -1,
+                            },
+                            uuid,
+                          },
                         },
-                        uuid,
-                      },
-                    },
-                  })
-                }
-                small
-              />
-            )}
-              {addLeft && (
-              <Button
-                Icon={CaretLeft}
-                basic
-                grouped
-                onClick={() =>
-                  startApp(null, {
-                    grid: {
-                      relative: {
-                        layout: {
-                          column: 1,
-                          row: 0,
+                      })
+                    }
+                    small
+                  />
+                )}
+                {leftOperations?.[OperationTypeEnum.ADD_APP] && (
+                  <Button
+                    Icon={CaretLeft}
+                    basic
+                    grouped
+                    onClick={() =>
+                      leftOperations?.[OperationTypeEnum.ADD_APP]?.effect(null, {
+                        grid: {
+                          relative: {
+                            layout: {
+                              column: 1,
+                              row: 0,
+                            },
+                            uuid,
+                          },
                         },
-                        uuid,
-                      },
-                    },
-                  })
-                }
-                small
-              />
-            )}
-              {addRight && (
-              <Button
-                Icon={CaretRight}
-                basic
-                grouped
-                onClick={() =>
-                  startApp(null, {
-                    grid: {
-                      relative: {
-                        layout: {
-                          column: 1,
-                          row: 0,
+                      })
+                    }
+                    small
+                  />
+                )}
+                {rightOperations?.[OperationTypeEnum.ADD_APP] && (
+                  <Button
+                    Icon={CaretRight}
+                    basic
+                    grouped
+                    onClick={() =>
+                      rightOperations?.[OperationTypeEnum.ADD_APP]?.effect(null, {
+                        grid: {
+                          relative: {
+                            layout: {
+                              column: 1,
+                              row: 0,
+                            },
+                            uuid,
+                          },
                         },
-                        uuid,
-                      },
-                    },
-                  })
-                }
-                small
-              />
-            )}
-              {(addLeft || addRight || addTop || addBottom) && <Divider vertical />}
-              <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
-            </ButtonGroup>
-          </Padding>
+                      })
+                    }
+                    small
+                  />
+                )}
+
+                {app?.toolbars?.top && removeApp && <Divider vertical />}
+
+                {removeApp && <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />}
+              </ButtonGroup>
+            </Padding>
+          )}
         </Header>
 
         {main}

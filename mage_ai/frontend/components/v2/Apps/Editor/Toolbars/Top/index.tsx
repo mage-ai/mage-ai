@@ -27,7 +27,6 @@ function ToolbarTop(props: AppLoaderProps & {
     updateServerContent,
   } = props;
   const { main, original } = resource;
-  console.log('main', main);
 
   return (
     <Grid

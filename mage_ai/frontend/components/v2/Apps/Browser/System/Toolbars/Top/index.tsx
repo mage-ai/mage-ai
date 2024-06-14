@@ -8,7 +8,7 @@ import { AppLoaderProps } from '../../../../interfaces';
 
 function ToolbarTop(_props: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   return (
-    <Padding bottom="small" left="small" top="small">
+    <Padding bottom="small" top="small">
       <Grid columnGap={12} templateColumns="auto 1fr" templateRows="1fr">
         <Button
           onClick={() => {

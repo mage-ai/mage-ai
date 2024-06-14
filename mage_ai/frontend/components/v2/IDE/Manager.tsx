@@ -161,12 +161,12 @@ class Manager {
     });
 
     const unusedCount = Object.keys(instancesUnused).length;
-    console.log(
-      `Unused instances (${unusedCount}):`,
-      Object.keys(instancesUnused || {}),
-    );
-
     if (unusedCount >= 1) {
+      console.log(
+        `Unused instances (${unusedCount}):`,
+        Object.keys(instancesUnused || {}),
+      );
+
       const uuidUnused = Object.keys(instancesUnused)[0];
       console.log(`Reusing unused instance ${uuidUnused}...`);
 
@@ -193,17 +193,20 @@ class Manager {
     if (obj) {
       const { resource, uuid } = obj;
       if (uuid in (Manager.instances || {})) {
-        Manager.instances[uuid].getEditor().setValue(content);
-        Manager.resources[path] = {
-          ...obj,
-          resource: {
-            ...resource,
-            main: {
-              ...(resource?.main || {}),
-              content,
-            } as FileType,
-          },
-        };
+        const editor = Manager.instances[uuid]?.getEditor();
+        if (editor) {
+          editor?.setValue(content);
+          Manager.resources[path] = {
+            ...obj,
+            resource: {
+              ...resource,
+              main: {
+                ...(resource?.main || {}),
+                content,
+              } as FileType,
+            },
+          };
+        }
       }
     }
   }
@@ -242,7 +245,9 @@ class Manager {
       if (shutdown) {
         console.log(`Shutting down manager ${this.uuid}...`);
         await this.wrapper.dispose();
-        delete Manager.instances[this.uuid];
+        if (Manager.instances && this.uuid in Manager.instances) {
+          delete Manager.instances[this.uuid];
+        }
       } else {
         console.log(`Disposing editor ${this.uuid}...`);
         await this.wrapper.getMonacoEditorApp().disposeApp();

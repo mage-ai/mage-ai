@@ -4,23 +4,19 @@ import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import Grid from '@mana/components/Grid';
-import { AddAppFunctionOptionsType, AppConfigType, PanelType } from './interfaces';
+import { AddAppFunctionOptionsType, AppConfigType, OperationTypeEnum, OperationsType } from './interfaces';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { upsertRootElement } from './utils';
 import appLoader from './utils/loader';
 
 type AppLayoutProps = {
-  addPanel: (panel: PanelType) => void;
   apps?: AppConfigType[];
-  onRemoveApp: (
-    uuidApp: string,
-    appConfigs: {
-      [uuid: string]: AppConfigType;
-    },
-  ) => void;
+  operations?: OperationsType;
 };
 
-function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps) {
+function AppLayout({ apps: defaultApps, operations }: AppLayoutProps) {
+  const addPanel = operations?.[OperationTypeEnum.REMOVE_PANEL]?.effect;
+  const onRemoveApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -147,12 +143,20 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
             refRoots.current[uuidApp].render(
               <ThemeProvider theme={themeContext}>
                 <AppContainer
-                  addApp={addApp}
-                  addPanel={addPanel}
                   app={app}
                   appLoader={appLoaderResult?.default}
+                  operations={{
+                    [OperationTypeEnum.ADD_APP]: {
+                      effect: addApp,
+                    },
+                    [OperationTypeEnum.ADD_PANEL]: {
+                      effect: addPanel,
+                    },
+                    [OperationTypeEnum.REMOVE_APP]: {
+                      effect: removeApp,
+                    },
+                  }}
                   ref={ref}
-                  removeApp={removeApp}
                   uuid={uuidApp}
                 />
               </ThemeProvider>,

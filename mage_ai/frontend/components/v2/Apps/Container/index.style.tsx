@@ -4,14 +4,16 @@ const LEFT_PEEK = 4;
 
 export const Header = styled.header<{
   overlay?: boolean;
+  styles?: React.CSSProperties;
 }>`
   display: grid;
-  grid-template-columns: 1fr auto;
   grid-template-rows: 1fr;
   justify-content: space-between;
 
   ${({ theme }) => `
     grid-column-gap: ${theme.padding.base}px;
+    padding-left: ${theme.padding.sm}px;
+    padding-right: ${theme.padding.sm}px;
   `}
 
   ${({ overlay, theme }) =>

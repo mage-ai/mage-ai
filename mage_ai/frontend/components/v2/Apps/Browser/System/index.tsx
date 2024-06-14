@@ -9,13 +9,13 @@ import Menu from '@mana/components/Menu';
 import Scrollbar from '@mana/elements/Scrollbar';
 import useItems from '../../hooks/items/useItems';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import { AppLoaderProps } from '../../interfaces';
+import { AppConfigType, AppLoaderProps, AddPanelOperationType, OperationTypeEnum } from '../../interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 import { ItemDetailType } from './interfaces';
 import { ItemTypeEnum } from './enums';
 import { Settings } from '@mana/icons';
 import { groupFilesByDirectory } from './utils/grouping';
-import { selectKeys } from '@utils/hash';
+import { mergeDeep, selectKeys } from '@utils/hash';
 import {
   KEY_CODE_A,
   KEY_CODE_ENTER,
@@ -26,7 +26,7 @@ import {
 // @ts-ignore
 // import Worker from 'worker-loader!@public/workers/worker.ts';
 
-function SystemBrowser({ addPanel, app }: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
+function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
@@ -37,6 +37,9 @@ function SystemBrowser({ addPanel, app }: AppLoaderProps, ref: React.Ref<HTMLDiv
   const appUUID = useMemo(() => app?.uuid, [app]);
   const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
   const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
+
+  const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
+  const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
 
   function removeContextMenu() {
     if (contextMenuRootRef?.current) {
@@ -75,17 +78,21 @@ function SystemBrowser({ addPanel, app }: AppLoaderProps, ref: React.Ref<HTMLDiv
                     if (ItemTypeEnum.FILE === itemClicked?.type) {
                       import('../../../IDE/Manager').then((mod: any) => {
                         const Manager = mod.Manager;
+
                         if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
                           addPanel({
                             apps: [
-                              {
+                              (appProps?: AppConfigType) => mergeDeep({
                                 options: {
                                   file: itemClicked,
                                 },
                                 subtype: AppSubtypeEnum.IDE,
+                                toolbars: {
+                                  [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                                },
                                 type: AppTypeEnum.EDITOR,
                                 uuid: itemClicked?.name,
-                              },
+                              }, appProps),
                             ],
                             uuid: `panel-${itemClicked?.name}`,
                           });
