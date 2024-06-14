@@ -2,11 +2,11 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import api from '@api';
+import { ResourceType } from './interfaces';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import { InitializeProps } from './Manager';
 import { FileType } from './interfaces';
 
-function useManager(uuid: string, opts?: InitializeProps): any {
+function useManager(uuid: string, resource: ResourceType, opts?: any): any {
   const initiatedRef = useRef(false);
   const managerRef = useRef(null);
 
@@ -57,8 +57,8 @@ function useManager(uuid: string, opts?: InitializeProps): any {
         const instance = Manager.getInstance(uuid);
         managerRef.current = instance;
 
-        await instance.initialize({
-          file: opts?.file,
+        await instance.initialize(resource, {
+          ...opts,
           languageServer: {
             onComplete: () => {
               setCompletions(prev => ({ ...prev, languageServer: true }));

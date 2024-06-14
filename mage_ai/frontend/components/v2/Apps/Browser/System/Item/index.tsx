@@ -262,22 +262,20 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, []);
 
   return (
-    <FolderStyled
-      onClick={(event: React.MouseEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        expandedRef.current = !expandedRef.current;
-        renderUpdates();
-
-        if (onClick) {
-          onClick?.(event, item as ItemDetailType);
-        }
-      }}
-      uuid={uuid}
-    >
+    <FolderStyled uuid={uuid}>
       <Grid
         columnGap={0}
+        onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          expandedRef.current = !expandedRef.current;
+          renderUpdates();
+
+          if (onClick) {
+            onClick?.(event, item as ItemDetailType);
+          }
+        }}
         onContextMenu={onContextMenu}
         templateColumns="auto 1fr"
         uuid={childClassName(uuid)}

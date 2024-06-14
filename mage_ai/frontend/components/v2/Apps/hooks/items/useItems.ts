@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import api from '@api';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import { ApiHookType } from '../interfaces';
+import { updateFileCache } from '@components/v2/IDE/cache';
 
 export default function useItems(): ApiHookType {
   const [listMutation, { isLoading: listLoading }] = useMutation(
@@ -51,8 +52,18 @@ export default function useItems(): ApiHookType {
   const detail = useCallback((path: any) => detailMutation(path), []);
   // eslint-disable-next-line
   const create = useCallback((payload: any) => createMutation(payload), []);
-  // eslint-disable-next-line
-  const update = useCallback((args: { uuid: string; payload: any }) => updateMutation(args), []);
+  const update = useCallback((uuid: string, payload: any) => updateMutation({
+    payload,
+    uuid,
+  }).then(({ data: { browser_item: item } }) => {
+    updateFileCache({
+      client: item,
+      server: item,
+    });
+
+    return new Promise(resolve => resolve(item));
+    // eslint-disable-next-line
+  }), []);
   // eslint-disable-next-line
   const deleteRequest = useCallback((path: any) => deleteMutation(path), []);
 

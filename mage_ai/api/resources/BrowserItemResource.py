@@ -89,4 +89,7 @@ class BrowserItemResource(GenericResource):
         await self.model.delete()
 
     async def update(self, payload, **kwargs):
+        if 'path' not in payload:
+            payload['path'] = self.model.path
+
         await self.model.synchronize(Item.load(**payload))

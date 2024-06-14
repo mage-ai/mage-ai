@@ -4,7 +4,7 @@ export interface ApiHookType {
     delete: (uuid: any) => Promise<Record<string, any>>;
     detail: (uuid: any) => Promise<Record<string, any>>;
     list: (query: any) => Promise<Record<string, any>>;
-    update: (args: { uuid: string; payload: any }) => Promise<Record<string, any>>;
+    update: (uuid: string, payload: any) => Promise<Record<string, any>>;
   };
   loading: {
     create: boolean;

@@ -205,7 +205,15 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
       }
     }
 
+    const disposeManager = async () => {
+      await import('../IDE/Manager').then((mod) => {
+        mod.Manager.dispose();
+      });
+    };
+
     return () => {
+      // disposeManager();
+
       // No need to manually remove all here since component is unmounting.
       refRoots.current = {};
     };

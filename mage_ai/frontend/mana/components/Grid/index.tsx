@@ -7,13 +7,15 @@ import { hyphenateCamelCase } from '@utils/string';
 type GridProps = {
   children?: React.ReactNode | Element | Element[] | React.ReactNode[];
   className?: string;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
   uuid?: string;
 } & ElementType & {
     [key: string]: any;
   };
 
 function Grid(
-  { children, className: classNameProp, uuid, ...props }: GridProps,
+  { children, className: classNameProp, onClick, onContextMenu, uuid, ...props }: GridProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   const arr = [styles['grid'], uuid ? styles['grid-mana'] : '', classNameProp || ''];
@@ -39,7 +41,7 @@ function Grid(
     .join(' ');
 
   return (
-    <div {...extractProps(props)} className={classNames} ref={ref}>
+    <div {...extractProps(props)} className={classNames} onClick={onClick} onContextMenu={onContextMenu} ref={ref}>
       {children && (children as React.ReactNode)}
     </div>
   );

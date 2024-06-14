@@ -303,7 +303,7 @@ export default function base(
       enabled: true,
       independentColorPoolPerBracketType: true,
     },
-    codeLens: true, // Code lens font family. Defaults to editor font family.
+    codeLens: false, // Code lens font family. Defaults to editor font family.
     colorDecorators: true, // true
     contextmenu: true, // Enable custom contextmenu. Defaults to true.
     cursorSmoothCaretAnimation: 'off', // Makes the typing feel delayed
@@ -317,7 +317,7 @@ export default function base(
     hover: {
       above: true,
       delay: 300,
-      enabled: false, // true
+      enabled: true, // true
       hidingDelay: 3000,
       sticky: true,
     },
@@ -358,7 +358,7 @@ export default function base(
       // The three possible values are off, on and onCode and the default is onCode.
       // off disables the code action menu. on shows the code action menu on code and on empty lines.
       // onCode shows the code action menu on code only.
-      enabled: 'off', // 'on' | 'off' | 'onCode'
+      enabled: 'onCode', // 'on' | 'off' | 'onCode'
     },
     minimap: {
       autohide: true,
@@ -377,7 +377,7 @@ export default function base(
     // 'off' disables occurrence highlighting
     // 'singleFile' triggers occurrence highlighting in the current document
     // 'multiFile' triggers occurrence highlighting across valid open documents
-    occurrencesHighlight: 'singleFile',
+    occurrencesHighlight: 'multiFile',
     quickSuggestionsDelay: 100, // 5
     renderControlCharacters: true, // true, Should render control characters
     renderWhitespace: 'all', // all

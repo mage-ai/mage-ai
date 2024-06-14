@@ -4,7 +4,7 @@ import Button from '@mana/elements/Button';
 import TextInput from '@mana/elements/Input/TextInput';
 import { AppLoaderProps } from '../../../../interfaces';
 
-function ToolbarTop(props: AppLoaderProps) {
+function ToolbarTop(props: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   return (
     <>
       <Button
@@ -21,4 +21,4 @@ function ToolbarTop(props: AppLoaderProps) {
   );
 }
 
-export default ToolbarTop;
+export default React.forwardRef(ToolbarTop);

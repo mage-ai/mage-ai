@@ -1,50 +1,49 @@
 // styles/typography.ts -> base/typography.scss
-@import '../abstracts/colors';
-@import '../themes/fonts';
+@use '../themes/fonts' as fontsVariables;
 
 @mixin monospace-font-family {
-  font-family: map-get($fonts, family, monospace, regular);
+  font-family: map-get(fontsVariables.$fonts, family, monospace, regular);
 
   &.monospace.light {
-    font-family: map-get($fonts, family, monospace, lightFont);
+    font-family: map-get(fontsVariables.$fonts, family, monospace, lightFont);
   }
   &.monospace.medium {
-    font-family: map-get($fonts, family, monospace, medium);
+    font-family: map-get(fontsVariables.$fonts, family, monospace, medium);
   }
   &.monospace.semiBold {
-    font-family: map-get($fonts, family, monospace, semiBold);
+    font-family: map-get(fontsVariables.$fonts, family, monospace, semiBold);
   }
   &.monospace.black,
   &.monospace.bold {
-    font-family: map-get($fonts, family, monospace, bold);
+    font-family: map-get(fontsVariables.$fonts, family, monospace, bold);
 
     &.italic {
-      font-family: map-get($fonts, family, monospace, boldItalic) !important;
+      font-family: map-get(fontsVariables.$fonts, family, monospace, boldItalic) !important;
     }
   }
 
   &.monospace.italic {
-    font-family: map-get($fonts, family, monospace, regularItalic);
+    font-family: map-get(fontsVariables.$fonts, family, monospace, regularItalic);
   }
 }
 
 @mixin base-font-family {
-  font-family: map-get($fonts, family, base, regular);
+  font-family: map-get(fontsVariables.$fonts, family, base, regular);
 
   &.light {
-    font-family: map-get($fonts, family, base, lightFont);
+    font-family: map-get(fontsVariables.$fonts, family, base, lightFont);
   }
   &.medium {
-    font-family: map-get($fonts, family, base, medium);
+    font-family: map-get(fontsVariables.$fonts, family, base, medium);
   }
   &.semiBold {
-    font-family: map-get($fonts, family, base, semiBold);
+    font-family: map-get(fontsVariables.$fonts, family, base, semiBold);
   }
   &.black {
-    font-family: map-get($fonts, family, base, black);
+    font-family: map-get(fontsVariables.$fonts, family, base, black);
   }
   &.bold {
-    font-family: map-get($fonts, family, base, bold);
+    font-family: map-get(fontsVariables.$fonts, family, base, bold);
   }
 }
 
@@ -52,53 +51,57 @@
   @include monospace-font-family;
   @include base-font-family;
 
-  color: map-get($fonts, color, var(--fonts-color-text-base));
+  color: var(--fonts-color-text-base);
+  margin: 0;
 
   &.inverted {
-    color: map-get($fonts, color, var(--fonts-color-text-inverted));
+    color: var(--fonts-color-text-inverted);
   }
   &.blue {
-    color: map-get($fonts, color, var(--fonts-color-text-blue));
+    color: var(--fonts-color-text-blue);
   }
   &.muted {
-    color: map-get($fonts, color, var(--fonts-color-text-blue));
+    color: var(--fonts-color-text-muted);
+  }
+  &.warning {
+    color: var(--fonts-color-text-warning);
   }
 
-  font-size: map-get($fonts, size, base);
-  font-style: map-get($fonts, style, base);
-  font-weight: map-get($fonts, weight, regular);
+  font-size: map-get(fontsVariables.$fonts, size, base);
+  font-style: map-get(fontsVariables.$fonts, style, base);
+  font-weight: map-get(fontsVariables.$fonts, weight, regular);
 
   &.italic {
-    font-style: map-get($fonts, style, italic);
+    font-style: map-get(fontsVariables.$fonts, style, italic);
   }
   &.light {
-    font-weight: map-get($fonts, weight, light);
+    font-weight: map-get(fontsVariables.$fonts, weight, light);
   }
   &.medium {
-    font-weight: map-get($fonts, weight, medium);
+    font-weight: map-get(fontsVariables.$fonts, weight, medium);
   }
   &.semiBold {
-    font-weight: map-get($fonts, weight, semiBold);
+    font-weight: map-get(fontsVariables.$fonts, weight, semiBold);
   }
   &.bold {
-    font-weight: map-get($fonts, weight, bold);
+    font-weight: map-get(fontsVariables.$fonts, weight, bold);
   }
 
-  line-height: map-get($fonts, lineHeight, md);
+  line-height: map-get(fontsVariables.$fonts, lineHeight, md);
 
   &.monospace {
-    line-height: map-get($fonts, lineHeight, monospace);
+    line-height: map-get(fontsVariables.$fonts, lineHeight, monospace);
   }
 }
 
 @mixin base-sm {
   @include base;
-  font-size: map-get($fonts, size, sm);
-  line-height: map-get($fonts, lineHeight, base);
+  font-size: map-get(fontsVariables.$fonts, size, sm);
+  line-height: map-get(fontsVariables.$fonts, lineHeight, base);
 }
 
 @mixin base-xs {
   @include base;
-  font-size: map-get($fonts, size, xs);
-  line-height: map-get($fonts, lineHeight, xs);
+  font-size: map-get(fontsVariables.$fonts, size, xs);
+  line-height: map-get(fontsVariables.$fonts, lineHeight, xs);
 }

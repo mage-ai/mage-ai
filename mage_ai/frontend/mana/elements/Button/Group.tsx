@@ -43,7 +43,7 @@ function Group({
         templateRows="1fr"
       >
         {React.Children.map(children, (child, index: number) => (
-          <div className="button-item" key={`button-item-${index}`} style={{ height: 'inherit' }}>
+          <div className="button-item" key={`button-item-${index}`} style={{ height: 'auto' }}>
             {child}
           </div>
         ))}

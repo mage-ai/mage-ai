@@ -1,19 +1,21 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
-import { useMutation } from 'react-query';
 
-import api from '@api';
-import Loading from '@mana/components/Loading';
-import Scrollbar from '@mana/elements/Scrollbar';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
-import { onSuccess } from '@api/utils/response';
-import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import Menu from '@mana/components/Menu';
 import Item from './Item/index';
+import Loading from '@mana/components/Loading';
+import Menu from '@mana/components/Menu';
+import Scrollbar from '@mana/elements/Scrollbar';
+import useItems from '../../hooks/items/useItems';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
+import { AppLoaderProps } from '../../interfaces';
+import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
+import { ItemDetailType } from './interfaces';
+import { ItemTypeEnum } from './enums';
 import { Settings } from '@mana/icons';
-import { AppLoaderProps, AppConfigType } from '../../interfaces';
-import { GroupByStrategyEnum, ItemTypeEnum } from './enums';
+import { groupFilesByDirectory } from './utils/grouping';
+import { selectKeys } from '@utils/hash';
 import {
   KEY_CODE_A,
   KEY_CODE_ENTER,
@@ -21,15 +23,10 @@ import {
   KEY_CODE_META,
   KEY_CODE_CONTROL,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ItemDetailType, ItemType } from './interfaces';
-import { selectKeys } from '@utils/hash';
 // @ts-ignore
-import Worker from 'worker-loader!@public/workers/worker.ts';
-import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
-import { groupFilesByDirectory } from './utils/grouping';
-import useItems from '../../hooks/items/useItems';
+// import Worker from 'worker-loader!@public/workers/worker.ts';
 
-function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
+function SystemBrowser({ addPanel, app }: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
@@ -66,46 +63,35 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
                   item={item as ItemDetailType}
                   key={`${item.name}-${idx}`}
                   onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     removeContextMenu();
+
                     if (ItemTypeEnum.FILE === itemClicked?.type) {
-                      addPanel({
-                        apps: [
-                          {
-                            options: {
-                              file: itemClicked,
-                            },
-                            subtype: AppSubtypeEnum.IDE,
-                            type: AppTypeEnum.EDITOR,
-                            uuid: itemClicked?.name,
-                          },
-                        ],
-                        uuid: `panel-${itemClicked?.name}-`,
+                      import('../../../IDE/Manager').then((mod: any) => {
+                        const Manager = mod.Manager;
+                        if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
+                          addPanel({
+                            apps: [
+                              {
+                                options: {
+                                  file: itemClicked,
+                                },
+                                subtype: AppSubtypeEnum.IDE,
+                                type: AppTypeEnum.EDITOR,
+                                uuid: itemClicked?.name,
+                              },
+                            ],
+                            uuid: `panel-${itemClicked?.name}`,
+                          });
+                        }
                       });
-                      // addApp(
-                      //   {
-                      //     options: {
-                      //       file: itemClicked,
-                      //     },
-                      //     subtype: AppSubtypeEnum.IDE,
-                      //     type: AppTypeEnum.EDITOR,
-                      //     uuid: itemClicked?.name,
-                      //   },
-                      //   {
-                      //     grid: {
-                      //       relative: {
-                      //         layout: {
-                      //           column: 1,
-                      //         },
-                      //         uuid: app?.uuid,
-                      //       },
-                      //     },
-                      //   },
-                      // );
                     }
                   }}
-                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                    renderContextMenu(item, event)
-                  }
+                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) => {
+                    renderContextMenu(item, event);
+                  }}
                   themeContext={themeContext}
                 />
               ))}
@@ -203,7 +189,7 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
       api.list({
         exclude_pattern: COMMON_EXCLUDE_PATTERNS,
         include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      }).then(({ browser_items: items }) => {
+      }).then(({ data: { browser_items: items } }) => {
         if (items?.length >= 1) {
           filePathsRef.current = items;
           renderItems((items || []) as ItemDetailType[]);
@@ -243,4 +229,4 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
   );
 }
 
-export default SystemBrowser;
+export default React.forwardRef(SystemBrowser);
