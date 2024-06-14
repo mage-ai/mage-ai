@@ -7,15 +7,11 @@ import { createRoot } from 'react-dom/client';
 import TextInput from '@mana/elements/Input/TextInput';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid from '@mana/components/Grid';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import { removeClassNames } from '@utils/elements';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { ModeEnum } from '@mana/themes/modes';
 import { AppConfigType, PanelType } from './interfaces';
 import { setThemeSettings } from '@mana/themes/utils';
-import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { DefaultPanel } from './catalog';
-import { Cluster, Dark, Menu, PanelCollapseLeft } from '@mana/icons';
+import { Dark, Menu, PanelCollapseLeft } from '@mana/icons';
 import { updateClassnames, upsertRootElement } from './utils';
 import styles from '@styles/scss/pages/Apps/Manager.module.scss';
 
