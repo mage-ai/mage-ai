@@ -9,18 +9,7 @@ import { Save, Trash, Add, PlayButtonFilled } from '@mana/icons';
 import useItems from '../../../hooks/items/useItems';
 
 function ToolbarTop(props: AppLoaderProps) {
-  const {
-    create,
-    createLoading,
-    deleteItem,
-    deleteLoading,
-    detail,
-    detailLoading,
-    list,
-    listLoading,
-    update,
-    updateLoading,
-  } = useItems();
+  const { api, loading } = useItems();
 
   return (
     <ButtonGroup>

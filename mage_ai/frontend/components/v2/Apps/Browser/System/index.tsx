@@ -27,6 +27,7 @@ import { selectKeys } from '@utils/hash';
 import Worker from 'worker-loader!@public/workers/worker.ts';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 import { groupFilesByDirectory } from './utils/grouping';
+import useItems from '../../hooks/items/useItems';
 
 function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
   const themeContext = useContext(ThemeContext);
@@ -115,31 +116,7 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
     }
   }
 
-  const [fetchItems, { isLoading }] = useMutation(
-    (query?: {
-      _limit?: number;
-      _offset?: number;
-      directory?: string;
-      exclude_pattern?: string | RegExp;
-      include_pattern?: string | RegExp;
-    }) => api.browser_items.listAsync(query),
-    {
-      onSuccess: (response: any) =>
-        onSuccess(response, {
-          callback: ({ browser_items: items }) => {
-            if (items?.length >= 1) {
-              filePathsRef.current = items;
-              renderItems((items || []) as ItemDetailType[]);
-            }
-          },
-          onErrorCallback: (response, errors) =>
-            console.error({
-              errors,
-              response,
-            }),
-        }),
-    },
-  );
+  const { api, loading } = useItems();
 
   const renderContextMenu = useCallback(
     (item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
@@ -223,9 +200,14 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
 
   useEffect(() => {
     if (!itemsRootRef?.current) {
-      fetchItems({
+      api.list({
         exclude_pattern: COMMON_EXCLUDE_PATTERNS,
         include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+      }).then(({ browser_items: items }) => {
+        if (items?.length >= 1) {
+          filePathsRef.current = items;
+          renderItems((items || []) as ItemDetailType[]);
+        }
       });
     }
 
@@ -254,7 +236,7 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
 
   return (
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
-      {isLoading && <Loading />}
+      {loading.list && <Loading />}
       <div id={rootID} />
       <div id={contextMenuRootID} />
     </Scrollbar>
