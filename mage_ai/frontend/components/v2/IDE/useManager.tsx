@@ -54,10 +54,9 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
 
         const mod = await import('./Manager');
         const Manager = mod.Manager;
-        const instance = Manager.getInstance(uuid);
-        managerRef.current = instance;
+        managerRef.current = Manager.getInstance(uuid);
 
-        const setupProps = {
+        await managerRef.current.initialize(resource, {
           ...opts,
           languageServer: {
             onComplete: () => {
@@ -82,18 +81,7 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
               }
             },
           },
-        };
-
-        if (instance.isInitialized()) {
-          await instance.initializeResource(resource, setupProps);
-          setCompletions({
-            languageServer: true,
-            workspace: true,
-            wrapper: true,
-          });
-        } else {
-          await instance.initialize(resource, setupProps);
-        }
+        });
       };
 
       initializeManager();
