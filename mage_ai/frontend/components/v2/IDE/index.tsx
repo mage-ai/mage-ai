@@ -80,9 +80,9 @@ function MateriaIDE({
 
   return (
     <ContainerStyled ref={mainRef}>
-      <Loading className='ide-loading' />
+      <Loading className="ide-loading" />
 
-      <IDEStyled className='ide-container'>
+      <IDEStyled className="ide-container">
         <div ref={containerRef} style={{ height: '100vh' }} />
       </IDEStyled>
 

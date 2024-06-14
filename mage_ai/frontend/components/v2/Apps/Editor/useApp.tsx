@@ -20,7 +20,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
         fallback={
           <ThemeProvider theme={themeContext}>
             <div style={{ display: 'flex' }}>
-              <Loading position='absolute' />
+              <Loading position="absolute" />
             </div>
           </ThemeProvider>
         }

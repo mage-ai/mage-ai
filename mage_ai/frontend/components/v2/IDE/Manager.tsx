@@ -1,17 +1,17 @@
+import IDEThemeType, { IDEThemeEnum, ModeEnumToThemeEnum } from './themes/interfaces';
+import ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
 import baseConfigurations from './configurations/base';
+import buildThemes from './themes';
 import initializeAutocomplete from './autocomplete';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import pythonProvider from './languages/python/provider';
-import buildThemes from './themes';
 import { FileType } from './interfaces';
-import IDEThemeType, { IDEThemeEnum, ModeEnumToThemeEnum } from './themes/interfaces';
 import { LanguageEnum } from './languages/constants';
+import { ModeEnum } from '@mana/themes/modes';
 import { getHost } from '@api/utils/url';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { isDebug } from '@utils/environment';
 import { languageClientConfig, loggerConfig } from './constants';
-import ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
-import { ModeEnum } from '@mana/themes/modes';
 
 type onComplete = (
   wrapper?: any,

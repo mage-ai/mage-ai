@@ -1,6 +1,5 @@
 import { FileType } from '../../../IDE/interfaces';
 import { get, set } from '@storage/localStorage';
-import { isJsonString } from '@utils/string';
 
 const BASE_KEY = 'materia-ide';
 
@@ -10,7 +9,7 @@ interface CachedFileType {
   updatedAt?: number;
 }
 
-export interface CacheType {
+export interface FileCacheType {
   client: CachedFileType;
   server: CachedFileType;
 }
@@ -19,8 +18,8 @@ function cacheKey(uuid: string): string {
   return `${BASE_KEY}-${uuid}`;
 }
 
-export function getItem(uuid: string): FileType | null {
-  return get(cacheKey(uuid));
+export function getFileCache(path: string): FileCacheType | null {
+  return get(cacheKey(path));
 }
 
 export function updateFile(clientFile: FileType, serverFile?: FileType) {

@@ -228,7 +228,7 @@ function Loading(
   { className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  const element = <div className='loader' />;
+  const element = <div className="loader" />;
   let LoadingStyle = RepeatingBarStyle;
 
   if (LoadingStyleEnum.BLOCKS === loadingStyle) {

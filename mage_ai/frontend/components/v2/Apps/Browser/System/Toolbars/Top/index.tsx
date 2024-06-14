@@ -16,7 +16,7 @@ function ToolbarTop(props: AppLoaderProps) {
         Browse
       </Button>
 
-      <TextInput basic monospace placeholder='/' small />
+      <TextInput basic monospace placeholder="/" small />
     </>
   );
 }
