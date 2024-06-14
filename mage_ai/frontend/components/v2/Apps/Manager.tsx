@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { createRef, useContext, useRef, useState } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import dynamic from 'next/dynamic';
@@ -20,7 +20,8 @@ import { updateClassnames, upsertRootElement } from './utils';
 import styles from '@styles/scss/pages/Apps/Manager.module.scss';
 
 function Manager() {
-  const addingPanel = useRef(false);
+  const phaseRef = useRef(0);
+
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const refCells = useRef({});
@@ -117,6 +118,30 @@ function Manager() {
     } else {
       addPanel(panel);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (phaseRef.current === 0) {
+      const loadServices = async () => {
+        await import('../IDE/Manager').then((mod) => {
+          mod.Manager.loadServices();
+          phaseRef.current = 1;
+        });
+      };
+
+      loadServices();
+    }
+
+    const disposeManager = async () => {
+      await import('../IDE/Manager').then((mod) => {
+        mod.Manager.dispose();
+      });
+    };
+
+    return () => {
+      disposeManager();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

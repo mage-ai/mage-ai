@@ -5,9 +5,7 @@ import { createRoot } from 'react-dom/client';
 
 import Grid from '@mana/components/Grid';
 import { AddAppFunctionOptionsType, AppConfigType, PanelType } from './interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { insertAtIndex, sortByKey } from '@utils/array';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { upsertRootElement } from './utils';
 import appLoader from './utils/loader';
 
@@ -26,6 +24,7 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
+
   const refAppConfigs = useRef({});
   const refCells = useRef({});
   const refRoots = useRef({});
@@ -205,15 +204,7 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
       }
     }
 
-    const disposeManager = async () => {
-      await import('../IDE/Manager').then((mod) => {
-        mod.Manager.dispose();
-      });
-    };
-
     return () => {
-      // disposeManager();
-
       // No need to manually remove all here since component is unmounting.
       refRoots.current = {};
     };

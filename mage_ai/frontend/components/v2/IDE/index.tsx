@@ -45,15 +45,15 @@ function MateriaIDE({
     if (editorContainerRef?.current && !managerRef.current && manager) {
       const initializeWrapper = async () => {
         managerRef.current = manager;
-        await managerRef.current.start(editorContainerRef.current);
+        await manager.start(editorContainerRef.current);
 
         if (manager.isUsingDiffEditor()) {
-          diffEditorRef.current = managerRef.current.getDiffEditor();
+          diffEditorRef.current = manager.getDiffEditor();
           if (diffEditorRef?.current) {
             addListenersForDiff(diffEditorRef?.current, eventListeners);
           }
         } else {
-          editorRef.current = managerRef.current.getEditor();
+          editorRef.current = manager.getEditor();
           if (editorRef?.current) {
             addListeners(editorRef?.current, eventListeners);
           }

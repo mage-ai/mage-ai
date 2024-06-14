@@ -303,7 +303,7 @@ export default function base(
       enabled: true,
       independentColorPoolPerBracketType: true,
     },
-    codeLens: false, // Code lens font family. Defaults to editor font family.
+    codeLens: true, // Code lens font family. Defaults to editor font family.
     colorDecorators: true, // true
     contextmenu: true, // Enable custom contextmenu. Defaults to true.
     cursorSmoothCaretAnimation: 'off', // Makes the typing feel delayed
@@ -358,7 +358,7 @@ export default function base(
       // The three possible values are off, on and onCode and the default is onCode.
       // off disables the code action menu. on shows the code action menu on code and on empty lines.
       // onCode shows the code action menu on code only.
-      enabled: 'onCode', // 'on' | 'off' | 'onCode'
+      enabled: 'off', // 'on' | 'off' | 'onCode'
     },
     minimap: {
       autohide: true,

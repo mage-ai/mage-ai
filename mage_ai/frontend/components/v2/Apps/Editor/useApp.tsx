@@ -48,7 +48,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     const model = editor.getModel();
     const content = model.getValue();
     const path = model.uri.path;
-    console.log(content);
+
     updateFileCache({
       client: {
         content,

@@ -57,7 +57,7 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
         const instance = Manager.getInstance(uuid);
         managerRef.current = instance;
 
-        await instance.initialize(resource, {
+        const setupProps = {
           ...opts,
           languageServer: {
             onComplete: () => {
@@ -82,17 +82,24 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
               }
             },
           },
-        });
+        };
+
+        if (instance.isInitialized()) {
+          await instance.initializeResource(resource, setupProps);
+          setCompletions({
+            languageServer: true,
+            workspace: true,
+            wrapper: true,
+          });
+        } else {
+          await instance.initialize(resource, setupProps);
+        }
       };
 
       initializeManager();
     }
 
-    const instance = managerRef.current;
     return () => {
-      if (instance) {
-        instance?.cleanup();
-      }
       managerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
