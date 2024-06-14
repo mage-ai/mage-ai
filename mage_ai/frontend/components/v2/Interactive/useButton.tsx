@@ -4,7 +4,6 @@ import Button, { ButtonProps } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Button/Interactive/useButton.module.scss';
 import { randomSimpleHashGenerator } from '@utils/string';
 
-
 export default function useButton({
   button1Props,
   button2Props,
@@ -13,10 +12,10 @@ export default function useButton({
   value,
 }: {
   button1Props?: {
-    Icon?: ButtonProps['Icon'],
+    Icon?: ButtonProps['Icon'];
   };
   button2Props?: {
-    Icon?: ButtonProps['Icon'],
+    Icon?: ButtonProps['Icon'];
   };
   onClick?: (value: boolean) => void;
   uuid?: string;

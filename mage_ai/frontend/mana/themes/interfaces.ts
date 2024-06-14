@@ -29,17 +29,17 @@ export interface ThemeSettingsType {
 }
 
 export default interface ThemeType {
-  backgrounds: BackgroundsType,
-  borders: BordersType,
-  buttons: ButtonsType,
-  colors: ColorsType,
-  fonts: FontsType,
-  grid: GridType,
-  icons: IconsType,
-  ide: IDEType,
-  inputs: InputsType,
-  margin: MarginType,
-  menus: MenuType,
-  padding: PaddingType,
-  scrollbars: ScrollbarsType,
+  backgrounds: BackgroundsType;
+  borders: BordersType;
+  buttons: ButtonsType;
+  colors: ColorsType;
+  fonts: FontsType;
+  grid: GridType;
+  icons: IconsType;
+  ide: IDEType;
+  inputs: InputsType;
+  margin: MarginType;
+  menus: MenuType;
+  padding: PaddingType;
+  scrollbars: ScrollbarsType;
 }

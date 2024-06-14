@@ -18,7 +18,8 @@ type ButtonProps = {
   className?: string;
   id?: string;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
-} & ButtonStyleProps & WithLoggingProps;
+} & ButtonStyleProps &
+  WithLoggingProps;
 
 const cssRow = css<ButtonStyleProps>`
   align-items: center;

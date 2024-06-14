@@ -1,9 +1,4 @@
-import {
-  AppSubtypeEnum,
-  AppTypeEnum,
-  AppUUIDEnum,
-  PanelUUIDEnum,
-} from './constants';
+import { AppSubtypeEnum, AppTypeEnum, AppUUIDEnum, PanelUUIDEnum } from './constants';
 import { AppConfigType, PanelType } from './interfaces';
 
 export const FileBrowserApp: AppConfigType = {
@@ -17,10 +12,6 @@ export const DefaultPanel: PanelType = {
   uuid: PanelUUIDEnum.DEFAULT,
 };
 
-export const Apps = [
-  FileBrowserApp,
-];
+export const Apps = [FileBrowserApp];
 
-export const Panels = [
-  DefaultPanel,
-];
+export const Panels = [DefaultPanel];

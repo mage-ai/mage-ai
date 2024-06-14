@@ -25,29 +25,29 @@ function ToolbarTop(props: AppLoaderProps) {
   return (
     <ButtonGroup>
       <Button
-          Icon={Add}
-          basic
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        />
+        Icon={Add}
+        basic
+        onClick={() => {
+          console.log('browse');
+        }}
+        small
+      />
       <Button
-          Icon={Save}
-          basic
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        />
+        Icon={Save}
+        basic
+        onClick={() => {
+          console.log('browse');
+        }}
+        small
+      />
       <Button
-          Icon={Trash}
-          basic
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        />
+        Icon={Trash}
+        basic
+        onClick={() => {
+          console.log('browse');
+        }}
+        small
+      />
       <Button
         Icon={PlayButtonFilled}
         basic

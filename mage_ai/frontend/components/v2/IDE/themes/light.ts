@@ -5,10 +5,14 @@ function build(theme: ThemeType): IDEThemeType {
   return {
     base: 'vs',
     inherit: false,
-    rules: Object.entries(theme.ide.rules).reduce((acc, [key, value]) => acc.concat({
-      ...value,
-      token: key,
-    }), []),
+    rules: Object.entries(theme.ide.rules).reduce(
+      (acc, [key, value]) =>
+        acc.concat({
+          ...value,
+          token: key,
+        }),
+      [],
+    ),
     colors: {
       'editor.foreground': '#000000', // Black
       'editor.background': theme.ide.background.color.base,

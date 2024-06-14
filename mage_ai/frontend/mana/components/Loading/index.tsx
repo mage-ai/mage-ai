@@ -25,8 +25,9 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
 
   ${({ color, theme, vertical, width }) => `
 
-    ${vertical
-      ? `
+    ${
+      vertical
+        ? `
       .loader {
         display: inline-flex;
         gap: 2px;
@@ -56,7 +57,7 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
         100%   {transform: scaleY(var(--s,1)) translateY(0) rotate(90deg)}
       }
     `
-      : `
+        : `
       .loader {
         display: inline-flex;
         gap: 2px;
@@ -83,7 +84,8 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
         50%,
         100%   {transform:scaleX(var(--s,1)) translate(0) rotate(90deg)}
       }
-    `}
+    `
+    }
   `}
 `;
 
@@ -222,7 +224,9 @@ const RepeatingBarStyle = styled.div<LoadingProps>`
 `}
 `;
 
-function Loading({ className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps, ref: React.Ref<HTMLDivElement>,
+function Loading(
+  { className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps,
+  ref: React.Ref<HTMLDivElement>,
 ) {
   const element = <div className="loader" />;
   let LoadingStyle = RepeatingBarStyle;

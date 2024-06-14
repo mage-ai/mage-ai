@@ -7,10 +7,14 @@ function build(theme: ThemeType): IDEThemeType {
   return {
     base: 'vs',
     inherit: false,
-    rules: Object.entries(theme.ide.rules).reduce((acc, [key, value]) => acc.concat({
-      ...value,
-      token: key,
-    }), []),
+    rules: Object.entries(theme.ide.rules).reduce(
+      (acc, [key, value]) =>
+        acc.concat({
+          ...value,
+          token: key,
+        }),
+      [],
+    ),
     colors: {
       // https://gist.github.com/dcts/5b2af4c8b6918e7d35c4121f11d49fb1
       // Foreground color of the editor.

@@ -113,7 +113,9 @@ const shared = css<StyleProps>`
   `}
 
   ${({ loading }) => loading && 'pointer-events: none;'}
-  ${({ loading }) => !loading && `
+  ${({ loading }) =>
+    !loading &&
+    `
     &:hover {
       cursor: pointer;
     }
@@ -123,30 +125,42 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ asLink, basic, grouped, theme }) => grouped
-    ? basic ? 0 : theme.buttons.padding.xxs
-    : asLink
-      ? theme.buttons.padding.xs
-      : theme.buttons.padding.base};
+  padding: ${({ asLink, basic, grouped, theme }) =>
+    grouped
+      ? basic
+        ? 0
+        : theme.buttons.padding.xxs
+      : asLink
+        ? theme.buttons.padding.xs
+        : theme.buttons.padding.base};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ basic, grouped, theme, tag }) => typeof tag !== 'undefined'
-    ? theme.buttons.padding.sm
-    : grouped
-      ? basic ? 0 : theme.buttons.padding.xxs
-      : theme.buttons.padding.sm};
+  padding: ${({ basic, grouped, theme, tag }) =>
+    typeof tag !== 'undefined'
+      ? theme.buttons.padding.sm
+      : grouped
+        ? basic
+          ? 0
+          : theme.buttons.padding.xxs
+        : theme.buttons.padding.sm};
 
-  ${({ grouped, tag, theme }) => typeof tag !== 'undefined' && !grouped && `
-    height: ${theme.buttons.font.lineHeight.sm + (2 * theme.padding.base) + 2}px;
+  ${({ grouped, tag, theme }) =>
+    typeof tag !== 'undefined' &&
+    !grouped &&
+    `
+    height: ${theme.buttons.font.lineHeight.sm + 2 * theme.padding.base + 2}px;
     padding-bottom: 0;
     padding-top: 0;
   `}
 
-  ${({ basic, grouped, theme }) => grouped && !basic && `
+  ${({ basic, grouped, theme }) =>
+    grouped &&
+    !basic &&
+    `
     border-radius: ${theme.borders.radius.sm};
   `}
 `;

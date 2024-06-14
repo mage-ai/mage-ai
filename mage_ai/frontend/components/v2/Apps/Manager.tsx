@@ -58,7 +58,7 @@ function Manager() {
   }
 
   function addPanel(panel: PanelType) {
-    const { apps, uuid  } = panel;
+    const { apps, uuid } = panel;
 
     const container = document.getElementById(uuid);
 

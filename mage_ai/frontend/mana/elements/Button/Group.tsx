@@ -11,22 +11,28 @@ type GroupStyleProps = {
 
 const GroupStyled = styled.div<GroupStyleProps>`
   ${({ itemsContained }) => (itemsContained ? borders : '')}
-  ${({ itemsContained, theme }) => itemsContained && `
+  ${({ itemsContained, theme }) =>
+    itemsContained &&
+    `
     padding: ${theme.buttons.padding.sm};
   `}
 
-  ${({ basic, itemsContained, theme }) => itemsContained && !basic && `
+  ${({ basic, itemsContained, theme }) =>
+    itemsContained &&
+    !basic &&
+    `
     padding-bottom: ${theme.buttons.padding.xxs};
     padding-top: ${theme.buttons.padding.xxs};
   `}
 `;
 
-function Group({ basic, children, itemsContained }: { children: React.ReactNode } & GroupStyleProps) {
+function Group({
+  basic,
+  children,
+  itemsContained,
+}: { children: React.ReactNode } & GroupStyleProps) {
   return (
-    <GroupStyled
-      basic={basic}
-      itemsContained={itemsContained}
-    >
+    <GroupStyled basic={basic} itemsContained={itemsContained}>
       <Grid
         alignItems="center"
         autoFlow="column"

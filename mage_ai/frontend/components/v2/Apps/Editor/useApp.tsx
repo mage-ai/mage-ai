@@ -31,10 +31,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     [EditorApp, themeContext, props],
   );
 
-  const top = useMemo(
-    () => <ToolbarsTop {...props} /> ,
-    [props],
-  );
+  const top = useMemo(() => <ToolbarsTop {...props} />, [props]);
 
   return {
     main,
