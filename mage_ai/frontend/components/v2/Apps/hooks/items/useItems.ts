@@ -1,10 +1,12 @@
+import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 
 import api from '@api';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
+import { ApiHookType } from '../interfaces';
 
-export default function useItems() {
-  const [list, { isLoading: listLoading }] = useMutation(
+export default function useItems(): ApiHookType {
+  const [listMutation, { isLoading: listLoading }] = useMutation(
     (query?: {
       _limit?: number;
       _offset?: number;
@@ -19,40 +21,64 @@ export default function useItems() {
       }),
   );
 
-  const [detail, { isLoading: detailLoading }] = useMutation((path: string) =>
-    api.browser_items.detailAsync(encodeURIComponent(path))(),
+  const [detailMutation, { isLoading: detailLoading }] = useMutation((path: string) =>
+    api.browser_items.detailAsync(encodeURIComponent(path)),
   );
 
-  const [create, { isLoading: createLoading }] = useMutation(
+  const [createMutation, { isLoading: createLoading }] = useMutation(
     (payload: { content: string; path: string }) =>
       api.browser_items.useCreate()({ browser_item: payload }),
   );
 
-  const [update, { isLoading: updateLoading }] = useMutation(
+  const [updateMutation, { isLoading: updateLoading }] = useMutation(
     (opts: {
-      path: string;
+      uuid: string;
       payload: {
         content: string;
         path: string;
       };
     }) =>
-      api.browser_items.useUpdate(encodeURIComponent(opts?.path))({ browser_item: opts?.payload }),
+      api.browser_items.useUpdate(encodeURIComponent(opts?.uuid))({ browser_item: opts?.payload }),
   );
 
-  const [deleteItem, { isLoading: deleteLoading }] = useMutation((path: string) =>
+  const [deleteMutation, { isLoading: deleteLoading }] = useMutation((path: string) =>
     api.browser_items.useDelete(encodeURIComponent(path)),
   );
 
-  return {
-    create,
+  // eslint-disable-next-line
+  const list = useCallback((query: any) => listMutation(query), []);
+  // eslint-disable-next-line
+  const detail = useCallback((path: any) => detailMutation(path), []);
+  // eslint-disable-next-line
+  const create = useCallback((payload: any) => createMutation(payload), []);
+  // eslint-disable-next-line
+  const update = useCallback((args: { uuid: string; payload: any }) => updateMutation(args), []);
+  // eslint-disable-next-line
+  const deleteRequest = useCallback((path: any) => deleteMutation(path), []);
+
+  const loading = useMemo(() => ({
+    create: createLoading,
+    delete: deleteLoading,
+    detail: detailLoading,
+    list: listLoading,
+    update: updateLoading,
+  }), [
     createLoading,
-    deleteItem,
     deleteLoading,
-    detail,
     detailLoading,
-    list,
     listLoading,
-    update,
     updateLoading,
+  ]);
+
+  return {
+    api: {
+      create,
+      delete: deleteRequest,
+      detail,
+      list,
+      update,
+    },
+
+    loading,
   };
 }

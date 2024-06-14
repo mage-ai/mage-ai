@@ -1,4 +1,4 @@
-import { ModeEnum } from './mode';
+import { ModeEnum } from './modes';
 import { BackgroundsType } from './backgrounds';
 import { BordersType } from './borders';
 import { ButtonsType } from './buttons';

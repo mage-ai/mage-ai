@@ -11,11 +11,11 @@ const themes: { [key: string]: IDEThemeType } = {
 export default function buildThemes(theme: ThemeType): Record<IDEThemeEnum, IDEThemeType> {
   return Object.entries(themes).reduce(
     (acc, [key, build]: [string, (theme: ThemeType) => IDEThemeType]) => {
-      const themeEnumKey = key as keyof typeof IDEThemeEnum; // This ensures that key is one of the enum keys
-      if (IDEThemeEnum[themeEnumKey] !== undefined) {
-        acc[IDEThemeEnum[themeEnumKey]] = build(theme) as IDEThemeType;
-      }
-      return acc;
+      const themeEnumKey = key as keyof typeof IDEThemeEnum;
+      return {
+        ...acc,
+        [themeEnumKey]: build(theme) as IDEThemeType,
+      };
     },
     {} as Record<IDEThemeEnum, IDEThemeType>,
   );
