@@ -34,16 +34,16 @@ function Group({
   return (
     <GroupStyled basic={basic} itemsContained={itemsContained}>
       <Grid
-        alignItems="center"
-        autoFlow="column"
+        alignItems='center'
+        autoFlow='column'
         columnGap={itemsContained ? 12 : 8}
-        height="100%"
-        justifyContent="start"
-        templateColumns="min-content"
-        templateRows="1fr"
+        height='100%'
+        justifyContent='start'
+        templateColumns='min-content'
+        templateRows='1fr'
       >
         {React.Children.map(children, (child, index: number) => (
-          <div className="button-item" key={`button-item-${index}`} style={{ height: 'inherit' }}>
+          <div className='button-item' key={`button-item-${index}`} style={{ height: 'inherit' }}>
             {child}
           </div>
         ))}

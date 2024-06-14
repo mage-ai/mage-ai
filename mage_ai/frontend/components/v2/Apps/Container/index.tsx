@@ -53,20 +53,20 @@ function AppContainer(
   });
 
   return (
-    <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
+    <Grid borders justifyContent='stretch' justifyItems='stretch' overflow='hidden' ref={ref}>
       <Grid
-        autoFlow="column"
-        justifyContent="stretch"
-        justifyItems="stretch"
-        overflow="hidden"
+        autoFlow='column'
+        justifyContent='stretch'
+        justifyItems='stretch'
+        overflow='hidden'
         style={{
           position: 'relative',
         }}
-        templateColumns="1fr"
-        templateRows="auto 1fr"
+        templateColumns='1fr'
+        templateRows='auto 1fr'
       >
         <Header>
-          <Grid autoFlow="column" columnGap={12} templateColumns="auto 1fr">
+          <Grid autoFlow='column' columnGap={12} templateColumns='auto 1fr'>
             {toolbars?.top}
           </Grid>
 

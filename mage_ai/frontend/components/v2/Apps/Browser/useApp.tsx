@@ -6,7 +6,7 @@ import SystemBrowser from './System';
 import TextInput from '@mana/elements/Input/TextInput';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 
-const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
+const ToolbarsTop = dynamic(() => import('./System/Toolbars/Top'));
 
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const main = useMemo(() => <SystemBrowser {...props} />, [props]);
