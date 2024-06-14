@@ -1,46 +1,42 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useRef } from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
-import { AppLoaderProps, AppLoaderResultType } from '../../../interfaces';
-import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../../../IDE/cache';
+import { AppLoaderProps } from '../../../interfaces';
 import { KEY_SYMBOL_META, KEY_SYMBOL_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
-import { Save, Trash, Add, PlayButtonFilled } from '@mana/icons';
-import useItems from '../../../hooks/items/useItems';
+import { Save, PlayButtonFilled } from '@mana/icons';
+import TextInput from '@mana/elements/Input/TextInput';
 import { FileType, ResourceType } from '@components/v2/IDE/interfaces';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 
-function ToolbarTop(props: AppLoaderProps) {
-  const { app } = props;
-  const { api, loading } = useItems();
+function ToolbarTop(props: AppLoaderProps & {
+  loading: boolean;
+  resource: ResourceType;
+  stale: boolean;
+  updateLocalContent: (file: FileType) => void;
+  updateServerContent: (file: FileType) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [itemInit, setItem] = useState<FileType>(app?.options?.file);
-  const stale = useMemo(() => isStale(itemInit?.path), [itemInit]);
-  const { client, server } = useMemo(() => getFileCache(itemInit?.path) || {} as FileCacheType, [itemInit]);
-  const item = useMemo(() => ({
-    ...(itemInit || {}),
-    ...(client?.file || {}),
-  }), [client, itemInit]);
-
-  const resetContent = useCallback(async (file: FileType) => {
-    await import('../../../../IDE/Manager').then((mod) => {
-      mod.Manager.setValue(file);
-
-      updateFileCache({
-        client: file,
-        server: file,
-      });
-      setItem(file);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const {
+    loading,
+    resource,
+    stale,
+    updateLocalContent,
+    updateServerContent,
+  } = props;
+  const { main, original } = resource;
+  console.log('main', main);
 
   return (
     <Grid
-      alignItems="center"
-      columnGap={12}
-      templateColumns={stale ? 'auto 1fr' : '1fr'}
+      alignItems="stretch"
+      columnGap={8}
+      paddingBottom={8}
+      paddingLeft={8}
+      paddingTop={8}
+      templateColumns={stale ? 'auto auto 1fr' : 'auto 1fr'}
       templateRows="auto"
     >
       {!stale && (
@@ -48,17 +44,12 @@ function ToolbarTop(props: AppLoaderProps) {
           <Button
             Icon={Save}
             basic
-            loading={loading?.update}
+            loading={loading}
             onClick={() => {
-              api.update(item?.path, { content: item?.content }).then(setItem);
-            }}
-            small
-          />
-          <Button
-            Icon={Trash}
-            basic
-            onClick={() => {
-              console.log('browse');
+              updateServerContent({
+                ...main,
+                path: inputRef?.current?.value || main?.path,
+              });
             }}
             small
           />
@@ -92,10 +83,8 @@ function ToolbarTop(props: AppLoaderProps) {
           <ButtonGroup>
             <Button
               asLink
-              loading={loading?.update}
-              onClick={() => {
-                api.update(item?.path, { content: item?.content }).then(setItem);
-              }}
+              loading={loading}
+              onClick={() => updateServerContent(main)}
               small
             >
               Save local
@@ -105,7 +94,7 @@ function ToolbarTop(props: AppLoaderProps) {
               basic
               onClick={(event) => {
                 event.preventDefault();
-                server?.file && resetContent(server?.file);
+                updateLocalContent(original);
               }}
               small
             >
@@ -114,6 +103,14 @@ function ToolbarTop(props: AppLoaderProps) {
           </ButtonGroup>
         </>
       )}
+
+      <TextInput
+        defaultValue={main?.path || ''}
+        monospace
+        muted
+        ref={inputRef}
+        small
+      />
     </Grid>
   );
 }

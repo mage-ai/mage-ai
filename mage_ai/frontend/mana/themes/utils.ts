@@ -4,6 +4,7 @@ import ServerCookie from 'next-cookies';
 
 import ThemeType, { ThemeSettingsType } from './interfaces';
 import buildTheme from './build';
+import { ModeEnum } from './modes';
 import { SHARED_OPTS } from '@api/utils/token';
 
 const KEY: 'theme_settings' = 'theme_settings';
@@ -43,6 +44,7 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
   const settings = getThemeSettingsCache(ctx);
   return {
     ...settings,
+    mode: settings.mode || ModeEnum.DARK,
     theme: getTheme({
       ctx,
       theme: settings,

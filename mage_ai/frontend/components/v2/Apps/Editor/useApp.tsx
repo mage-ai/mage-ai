@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
@@ -12,32 +12,48 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
 });
 
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
+  const { app } = props;
+  const { api, loading } = useItems();
+
+  const file = useMemo(() => app?.options?.file, [app]);
+  const {
+    client,
+    server,
+  } = useMemo(() => getFileCache(file?.path) || {} as FileCacheType, [file]);
+
+  const [main, setMainState] = useState<FileType>({
+    ...file,
+    ...(client?.file || {}),
+  });
+
+  const contentRef = useRef(main?.content || '');
+  const clientRef = useRef(client?.file);
   const phaseRef = useRef(0);
 
-  const { app } = props;
-  const file = useMemo(() => app?.options?.file, [app]);
-  const { client, server } = useMemo(() => getFileCache(file?.path) || {} as FileCacheType, [file]);
+  function setMain(item: FileType) {
+    updateFileCache({
+      ...(clientRef.current ? {} : { client: item }),
+      server: item,
+    });
+    setStale(isStale(item.path));
+    contentRef.current = item.content;
 
-  const [main, setMain] = useState<FileType>(client?.file);
-  const [, setOriginal] = useState<FileType>(server?.file);
+    if (!clientRef.current) {
+      setMainState(item);
+    }
+  }
 
-  const { api, loading } = useItems();
+  const [original, setOriginal] = useState<FileType>(server?.file);
+  const [stale, setStale] = useState(isStale(file?.path));
 
   useEffect(() => {
     const path = file?.path;
-    if (phaseRef.current === 0 && path && (!client || isStale(path))) {
+    if (phaseRef.current === 0 && path) {
       api
         .detail(encodeURIComponent(path))
         .then(({ data: { browser_item: item } }) => {
+          setMain(item);
           setOriginal(item);
-          setMain((prev) => {
-            updateFileCache({
-              ...(prev ? {} : { client: item }),
-              server: item,
-            });
-
-            return prev ? prev : item;
-          });
           phaseRef.current = 1;
         });
     }
@@ -49,12 +65,29 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     const content = model.getValue();
     const path = model.uri.path;
 
+    contentRef.current = content;
     updateFileCache({
       client: {
-        content,
+        content: contentRef.current,
         path,
       },
     });
+  }
+
+  async function updateLocalContent(item: FileType) {
+    await import('../../IDE/Manager').then((mod) => {
+      mod.Manager.setValue(item);
+
+      updateFileCache({ client: item, server: item });
+      setMain(item);
+    });
+  }
+
+  function updateServerContent(item: FileType) {
+    api.update(item.path, {
+      content: contentRef?.current || item.content,
+      path: item.path,
+    }).then(updateLocalContent);
   }
 
   const mainApp = useMemo(
@@ -77,8 +110,19 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   );
 
   const top = useMemo(() => (
-    <ToolbarsTop {...props} />
-  ), [props]);
+    <ToolbarsTop
+      {...props}
+      loading={loading?.update}
+      resource={{
+        main,
+        original,
+      }}
+      stale={stale}
+      updateLocalContent={updateLocalContent}
+      updateServerContent={updateServerContent}
+    />
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [loading, main, original, props, stale]);
 
   return {
     main: mainApp,

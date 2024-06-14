@@ -1,6 +1,26 @@
 // styles/typography.ts -> base/typography.scss
 @use '../themes/fonts' as fontsVariables;
 
+@mixin base-font-family {
+  font-family: map-get(fontsVariables.$fonts, family, base, regular);
+
+  &.light {
+    font-family: map-get(fontsVariables.$fonts, family, base, lightFont);
+  }
+  &.medium {
+    font-family: map-get(fontsVariables.$fonts, family, base, medium);
+  }
+  &.semiBold {
+    font-family: map-get(fontsVariables.$fonts, family, base, semiBold);
+  }
+  &.black {
+    font-family: map-get(fontsVariables.$fonts, family, base, black);
+  }
+  &.bold {
+    font-family: map-get(fontsVariables.$fonts, family, base, bold);
+  }
+}
+
 @mixin monospace-font-family {
   font-family: map-get(fontsVariables.$fonts, family, monospace, regular);
 
@@ -27,29 +47,9 @@
   }
 }
 
-@mixin base-font-family {
-  font-family: map-get(fontsVariables.$fonts, family, base, regular);
-
-  &.light {
-    font-family: map-get(fontsVariables.$fonts, family, base, lightFont);
-  }
-  &.medium {
-    font-family: map-get(fontsVariables.$fonts, family, base, medium);
-  }
-  &.semiBold {
-    font-family: map-get(fontsVariables.$fonts, family, base, semiBold);
-  }
-  &.black {
-    font-family: map-get(fontsVariables.$fonts, family, base, black);
-  }
-  &.bold {
-    font-family: map-get(fontsVariables.$fonts, family, base, bold);
-  }
-}
-
 @mixin base {
-  @include monospace-font-family;
   @include base-font-family;
+  @include monospace-font-family;
 
   color: var(--fonts-color-text-base);
   margin: 0;

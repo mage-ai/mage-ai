@@ -39,7 +39,42 @@ export default class MyDocument extends Document {
   render() {
     return (
       <Html lang="en">
-        <Head />
+        <Head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+// Polyfill for requestIdleCallback and cancelIdleCallback only if not supported and for Safari
+(function() {
+    function isSafari() {
+        var ua = navigator.userAgent;
+        return /Safari/.test(ua) && !/Chrome/.test(ua);
+    }
+
+    // Check if requestIdleCallback is not available or if the browser is Safari
+    if (!('requestIdleCallback' in window) || isSafari()) {
+        window.requestIdleCallback = function (callback, options) {
+            const timeout = options && options.timeout ? options.timeout : 50;
+            const start = Date.now();
+
+            return setTimeout(() => {
+                callback({
+                    didTimeout: false,
+                    timeRemaining: function () {
+                        return Math.max(0, timeout - (Date.now() - start));
+                    }
+                });
+            }, 1);
+        };
+
+        window.cancelIdleCallback = function (id) {
+            clearTimeout(id);
+        };
+    }
+})();
+              `,
+            }}
+          />
+        </Head>
         <body>
           <Main />
           <NextScript />

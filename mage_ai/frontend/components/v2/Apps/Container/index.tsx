@@ -3,15 +3,18 @@ import React from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
+import Padding from '@mana/elements/Padding';
 import { AddAppFunctionOptionsType, AppConfigType, AppLoaderProps, PanelType } from '../interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from '../constants';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { mergeDeep } from '@utils/hash';
 
 type AppContainerProps = {
+  addBottom?: () => void;
+  addLeft?: () => void;
   addPanel: (panel: PanelType) => void;
+  addRight?: () => void;
+  addTop?: () => void;
   app: AppConfigType;
   appLoader?: (args: AppLoaderProps) => {
     main: React.ComponentType<any>;
@@ -23,7 +26,18 @@ type AppContainerProps = {
 };
 
 function AppContainer(
-  { addPanel, app, appLoader, addApp, removeApp, uuid }: AppContainerProps,
+  {
+    addApp,
+    addBottom,
+    addLeft,
+    addPanel,
+    addRight,
+    addTop,
+    app,
+    appLoader,
+    removeApp,
+    uuid,
+  }: AppContainerProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   function startApp(appNew: AppConfigType, opts?: AddAppFunctionOptionsType) {
@@ -66,90 +80,100 @@ function AppContainer(
         templateRows="auto 1fr"
       >
         <Header>
-          <Grid autoFlow="column" columnGap={12} templateColumns="auto 1fr">
+          <Grid autoFlow="column" columnGap={12} templateColumns="1fr">
             {toolbars?.top}
           </Grid>
 
-          <ButtonGroup basic itemsContained>
-            <Button
-              Icon={CaretDown}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 0,
-                        row: 1,
+          <Padding bottom="small" right="small" top="small">
+            <ButtonGroup basic itemsContained>
+              {addBottom && (
+              <Button
+                Icon={CaretDown}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 0,
+                          row: 1,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretUp}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 0,
-                        row: -1,
+                  })
+                }
+                small
+              />
+            )}
+              {addTop && (
+              <Button
+                Icon={CaretUp}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 0,
+                          row: -1,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretLeft}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 1,
-                        row: 0,
+                  })
+                }
+                small
+              />
+            )}
+              {addLeft && (
+              <Button
+                Icon={CaretLeft}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 1,
+                          row: 0,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Button
-              Icon={CaretRight}
-              basic
-              grouped
-              onClick={() =>
-                startApp(null, {
-                  grid: {
-                    relative: {
-                      layout: {
-                        column: 1,
-                        row: 0,
+                  })
+                }
+                small
+              />
+            )}
+              {addRight && (
+              <Button
+                Icon={CaretRight}
+                basic
+                grouped
+                onClick={() =>
+                  startApp(null, {
+                    grid: {
+                      relative: {
+                        layout: {
+                          column: 1,
+                          row: 0,
+                        },
+                        uuid,
                       },
-                      uuid,
                     },
-                  },
-                })
-              }
-              small
-            />
-            <Divider vertical />
-            <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
-          </ButtonGroup>
+                  })
+                }
+                small
+              />
+            )}
+              {(addLeft || addRight || addTop || addBottom) && <Divider vertical />}
+              <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
+            </ButtonGroup>
+          </Padding>
         </Header>
 
         {main}

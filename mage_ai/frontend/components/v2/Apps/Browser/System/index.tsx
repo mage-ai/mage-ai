@@ -48,7 +48,11 @@ function SystemBrowser({ addPanel, app }: AppLoaderProps, ref: React.Ref<HTMLDiv
   function renderItems(items: ItemDetailType[]) {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(rootID);
-      itemsRootRef.current = createRoot(node as HTMLElement);
+      try {
+        itemsRootRef.current = createRoot(node as HTMLElement);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     if (itemsRootRef?.current) {

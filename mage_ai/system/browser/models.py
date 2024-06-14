@@ -9,14 +9,8 @@ from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
 )
-from mage_ai.shared.files import (
-    delete_async,
-    exists_async,
-    move_async,
-    read_async,
-    rename_async,
-    write_async,
-)
+from mage_ai.data_preparation.models.file import File
+from mage_ai.shared.files import delete_async, exists_async, read_async
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
@@ -34,10 +28,12 @@ class Item(BaseDataClass):
 
     def __post_init__(self):
         if self.path is not None:
-            self.modified_timestamp = round(os.path.getmtime(self.path))
             self.name = os.path.basename(self.path)
             self.relative_path = remove_base_repo_directory_name(self.path)
-            self.size = os.path.getsize(self.path)
+
+            if os.path.exists(self.path):
+                self.modified_timestamp = round(os.path.getmtime(self.path))
+                self.size = os.path.getsize(self.path)
 
             self.extension = Path(self.path).suffix.lstrip('.')
             if self.language is None:
@@ -58,30 +54,45 @@ class Item(BaseDataClass):
         return await exists_async(self.path)
 
     async def create(self, overwrite: Optional[bool] = None) -> bool:
-        return await write_async(self.path, self.content, overwrite=overwrite)
+        return (
+            True
+            if await File.create_async(
+                os.path.basename(self.path),
+                os.path.dirname(self.path),
+                content=self.content,
+                overwrite=overwrite,
+            )
+            else False
+        )
 
     async def update(self) -> bool:
         return await self.create(overwrite=True)
 
     async def rename(self, new_path: str, overwrite: Optional[bool] = None) -> bool:
-        return await rename_async(self.path, new_path, overwrite=overwrite)
+        return await File.rename_async(self.path, new_path, overwrite=overwrite)
 
     async def move(self, new_path: str, overwrite: Optional[bool] = None) -> bool:
-        return await move_async(self.path, new_path, overwrite=overwrite)
+        return await self.rename(new_path, overwrite=overwrite)
 
     async def delete(self, ignore_exists: Optional[bool] = None) -> bool:
         return await delete_async(self.path, ignore_exists=ignore_exists)
 
     async def synchronize(self, item: Item) -> bool:
         if os.path.dirname(self.path) != os.path.dirname(item.path):
-            await self.move(item.path)
+            if not await self.move(item.path):
+                return False
             self.path = item.path
         elif self.name != item.name and item.name is not None:
-            await self.rename(item.name)
+            if not await self.rename(item.name):
+                return False
             self.name = item.name
+
+        print('WTFFFFFFFFFFFFFFFFFFF00000000', self.content)
+        print('WTFFFFFFFFFFFFFFFFFFF11111111', item.content)
 
         if self.content != item.content:
             self.content = item.content
-            await self.update()
+            if not await self.update():
+                return False
 
         return True

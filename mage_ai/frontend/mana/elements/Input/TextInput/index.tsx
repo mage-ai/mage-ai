@@ -10,14 +10,15 @@ type InputStyleProps = {
 type InputProps = {
   number?: boolean;
   placeholder?: string;
+  defaultValue?: string;
 } & InputStyleProps;
 
 const InputStyled = styled.input<InputStyleProps>`
   ${inputs}
 `;
 
-function TextInput({ number, onChange, ...props }: InputProps, ref) {
-  return <InputStyled {...props} onChange={onChange} ref={ref} type={number ? 'number' : 'text'} />;
+function TextInput({ number, onChange, defaultValue, ...props }: InputProps, ref) {
+  return <InputStyled {...props} defaultValue={defaultValue} onChange={onChange} ref={ref} type={number ? 'number' : 'text'} />;
 }
 
 export default React.forwardRef(TextInput);

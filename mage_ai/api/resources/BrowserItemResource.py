@@ -71,7 +71,7 @@ class BrowserItemResource(GenericResource):
     async def member(cls, pk, user, **kwargs) -> BrowserItemResource:
         item = cls.get_model(pk)
         if not await item.exists():
-            raise ApiError(**{
+            raise ApiError({
                 **ApiError.RESOURCE_NOT_FOUND,
                 **dict(message=f'Item at path {pk} not found.'),
             })
@@ -92,4 +92,10 @@ class BrowserItemResource(GenericResource):
         if 'path' not in payload:
             payload['path'] = self.model.path
 
-        await self.model.synchronize(Item.load(**payload))
+        if await self.model.synchronize(Item.load(**payload)):
+            self.model = Item.load(**self.model.to_dict())
+        else:
+            raise ApiError({
+                **ApiError.RESOURCE_INVALID,
+                **dict(message='Update failed'),
+            })
