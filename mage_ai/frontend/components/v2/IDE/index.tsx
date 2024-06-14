@@ -14,6 +14,7 @@ import { LanguageEnum } from './languages/constants';
 import { getHost } from '@api/utils/url';
 import { languageClientConfig, loggerConfig } from './constants';
 import useManager from './useManager';
+import addListeners from './events/addListeners';
 
 // import mockCode from './mocks/code';
 // const codeUri = '/home/src/setup.py';
@@ -32,8 +33,9 @@ function MateriaIDE({
   uuid,
 }: IDEProps) {
   const containerRef = useRef(null);
+  const editorRef = useRef(null);
   const managerRef = useRef(null);
-  const mountedRef = useRef(false);
+  const mainRef = useRef(null);
 
   const manager = useManager(uuid, {
     file,
@@ -52,17 +54,35 @@ function MateriaIDE({
       const initializeWrapper = async () => {
         managerRef.current = manager;
         await managerRef.current.start(containerRef.current);
+        editorRef.current = managerRef.current.getEditor();
+        addListeners(editorRef.current);
       };
 
       initializeWrapper();
     }
+
+    const element = mainRef.current;
+    if (manager && element && !element.classList.contains('mounted')) {
+      if (element) {
+        element.classList.add('mounted');
+      }
+    }
+
+    const instance = managerRef?.current;
+    return () => {
+      if (instance) {
+        instance.dispose();
+      }
+      editorRef.current = null;
+      managerRef.current = null;
+    };
   }, [manager]);
 
   return (
-    <ContainerStyled>
-      {!manager && <Loading />}
+    <ContainerStyled ref={mainRef}>
+      <Loading className="ide-loading" />
 
-      <IDEStyled className={mountedRef?.current ? 'mounted' : ''}>
+      <IDEStyled className="ide-container">
         <div ref={containerRef} style={{ height: '100vh' }} />
       </IDEStyled>
 

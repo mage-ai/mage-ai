@@ -28,7 +28,7 @@ import Worker from 'worker-loader!@public/workers/worker.ts';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 import { groupFilesByDirectory } from './utils/grouping';
 
-function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
+function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
@@ -67,26 +67,39 @@ function SystemBrowser({ addApp, app, removeApp }: AppLoaderProps) {
                   onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
                     removeContextMenu();
                     if (ItemTypeEnum.FILE === itemClicked?.type) {
-                      addApp(
-                        {
-                          options: {
-                            file: itemClicked,
-                          },
-                          subtype: AppSubtypeEnum.IDE,
-                          type: AppTypeEnum.EDITOR,
-                          uuid: itemClicked?.name,
-                        },
-                        {
-                          grid: {
-                            relative: {
-                              layout: {
-                                column: 1,
-                              },
-                              uuid: app?.uuid,
+                      addPanel({
+                        apps: [
+                          {
+                            options: {
+                              file: itemClicked,
                             },
+                            subtype: AppSubtypeEnum.IDE,
+                            type: AppTypeEnum.EDITOR,
+                            uuid: itemClicked?.name,
                           },
-                        },
-                      );
+                        ],
+                        uuid: `panel-${itemClicked?.name}-`,
+                      });
+                      // addApp(
+                      //   {
+                      //     options: {
+                      //       file: itemClicked,
+                      //     },
+                      //     subtype: AppSubtypeEnum.IDE,
+                      //     type: AppTypeEnum.EDITOR,
+                      //     uuid: itemClicked?.name,
+                      //   },
+                      //   {
+                      //     grid: {
+                      //       relative: {
+                      //         layout: {
+                      //           column: 1,
+                      //         },
+                      //         uuid: app?.uuid,
+                      //       },
+                      //     },
+                      //   },
+                      // );
                     }
                   }}
                   onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>

@@ -6,18 +6,26 @@ type StyleProps = {
   hideDuplicateMenuItems?: boolean;
 };
 
-export const ContainerStyled = styled.div`
+export const ContainerStyled = styled.div<{
+  ref: React.RefObject<HTMLDivElement>;
+}>`
   height: 100%;
   overflow: hidden;
   width: 100%;
+
+  &.mounted {
+    .ide-container {
+      ${gradient('45deg', '#6B50D71A', '#FF141A4D', 30, 100)}
+    }
+
+    .ide-loading {
+      display: none;
+    }
+  }
 `;
 
 export const IDEStyled = styled.div<StyleProps>`
-  background-color: black;
-
-  &.mounted {
-    ${gradient('45deg', '#6B50D7', '#FF144D', 30, 100)}
-  }
+  background-color: ${({ theme }) => theme.ide.background.color.base};
 
   font-family: ${({ theme }) => theme.fonts.family.monospace.regular};
 

@@ -14,6 +14,9 @@ export interface BackgroundsType {
     primary: InteractiveElementStateColorsType;
     secondary: InteractiveElementStateColorsType;
   };
+  ide: {
+    base: ModeType;
+  };
   input: {
     base: {
       active: ModeType;
@@ -521,6 +524,13 @@ const ColorsDerived = {
         }),
       },
     },
+    ide: {
+      base: {
+        [ModeEnum.DARK]: '#00000099',
+        [ModeEnum.LIGHT]: '#FFFFF099',
+        [ModeEnum.MODE3]: '#FFFFF099',
+      },
+    },
     input: {
       base: {
         active: {
@@ -565,8 +575,8 @@ const ColorsDerived = {
       thumb: {
         default: convert({
           [ModeEnum.DARK]: 'gray',
-          [ModeEnum.LIGHT]: 'gray',
-          [ModeEnum.MODE3]: 'gray',
+          [ModeEnum.LIGHT]: 'whiteMd',
+          [ModeEnum.MODE3]: 'whiteMd',
         }),
         hover: convert({
           [ModeEnum.DARK]: 'whiteLo',
@@ -577,13 +587,13 @@ const ColorsDerived = {
       track: {
         default: convert({
           [ModeEnum.DARK]: 'grayLo',
-          [ModeEnum.LIGHT]: 'grayLo',
-          [ModeEnum.MODE3]: 'grayLo',
+          [ModeEnum.LIGHT]: 'blueLo',
+          [ModeEnum.MODE3]: 'blueLo',
         }),
         hover: convert({
           [ModeEnum.DARK]: 'grayMd',
-          [ModeEnum.LIGHT]: 'grayMd',
-          [ModeEnum.MODE3]: 'grayMd',
+          [ModeEnum.LIGHT]: 'blueMd',
+          [ModeEnum.MODE3]: 'blueMd',
         }),
       },
     },
@@ -603,11 +613,11 @@ const ColorsDerived = {
     },
     button: {
       base: {
-        default: {
+        default: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
           [ModeEnum.MODE3]: 'gray',
-        },
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
@@ -615,11 +625,11 @@ const ColorsDerived = {
         }),
       },
       basic: {
-        default: {
+        default: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
           [ModeEnum.MODE3]: 'gray',
-        },
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
@@ -676,11 +686,11 @@ const ColorsDerived = {
       },
     },
     muted: {
-      default: {
+      default: convert({
         [ModeEnum.DARK]: 'grayLo',
         [ModeEnum.LIGHT]: 'grayLo',
         [ModeEnum.MODE3]: 'grayLo',
-      },
+      }),
       hover: convert({
         [ModeEnum.DARK]: 'grayLo',
         [ModeEnum.LIGHT]: 'grayLo',
@@ -703,11 +713,11 @@ const ColorsDerived = {
   outline: {
     button: {
       base: {
-        default: {
+        default: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
           [ModeEnum.MODE3]: 'gray',
-        },
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'gray',
           [ModeEnum.LIGHT]: 'gray',
@@ -715,11 +725,11 @@ const ColorsDerived = {
         }),
       },
       basic: {
-        default: {
+        default: convert({
           [ModeEnum.DARK]: 'whiteLo',
           [ModeEnum.LIGHT]: 'blackLo',
           [ModeEnum.MODE3]: 'blackLo',
-        },
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'whiteLo',
           [ModeEnum.LIGHT]: 'blackLo',

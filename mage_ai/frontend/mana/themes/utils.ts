@@ -8,7 +8,7 @@ import { SHARED_OPTS } from '@api/utils/token';
 
 const KEY: 'theme_settings' = 'theme_settings';
 
-export function getThemeSettings(ctx?: any): ThemeSettingsType {
+function getThemeSettingsCache(ctx?: any): ThemeSettingsType {
   let themeSettings: ThemeSettingsType | string | undefined | null = null;
 
   if (ctx) {
@@ -36,7 +36,18 @@ export function getThemeSettings(ctx?: any): ThemeSettingsType {
 }
 
 export function getTheme(opts?: { theme?: ThemeSettingsType; ctx?: any }): ThemeType {
-  return buildTheme(opts?.theme || getThemeSettings(opts?.ctx));
+  return buildTheme(opts?.theme || getThemeSettingsCache(opts?.ctx));
+}
+
+export function getThemeSettings(ctx?: any): ThemeSettingsType {
+  const settings = getThemeSettingsCache(ctx);
+  return {
+    ...settings,
+    theme: getTheme({
+      ctx,
+      theme: settings,
+    }),
+  };
 }
 
 export function setThemeSettings(

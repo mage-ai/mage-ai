@@ -1,16 +1,21 @@
+import React from 'react';
 import styled from 'styled-components';
 
 export enum LoadingStyleEnum {
-  DEFAULT = 'default',
   BLOCKS = 'blocks',
+  DEFAULT = 'default',
+  INFINITE_BLOCKS = 'infinite_blocks',
+  SCROLLING_BARS = 'scrolling_bars',
 }
 
 type LoadingProps = {
+  className?: string;
   color?: string;
   colorLight?: string;
   height?: number;
   loadingStyle?: LoadingStyleEnum;
   position?: 'absolute' | 'fixed' | 'relative' | 'static' | 'sticky';
+  vertical?: boolean;
   width?: string | number;
 };
 
@@ -18,32 +23,67 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
   display: flex;
   align-items: center;
 
-  ${({ color, theme, width }) => `
-    .loader {
-      display: inline-flex;
-      gap: 5px;
-    }
-    .loader:before,
-    .loader:after {
-      content: "";
-      width: ${
-        typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '16px'
-      };
-      aspect-ratio: 1;
-      box-shadow: 0 0 0 1px inset ${color || theme.fonts.text.base};
-      animation: l4 1.5s infinite;
-    }
-    .loader:after {
-      --s: -1;
-      animation-delay: 0.75s
-    }
-    @keyframes l4 {
-      0%     {transform:scaleX(var(--s,1)) translate(0) rotate(0)}
-      16.67% {transform:scaleX(var(--s,1)) translate(-50%) rotate(0)}
-      33.33% {transform:scaleX(var(--s,1)) translate(-50%) rotate(90deg)}
-      50%,
-      100%   {transform:scaleX(var(--s,1)) translate(0) rotate(90deg)}
-    }
+  ${({ color, theme, vertical, width }) => `
+
+    ${vertical
+      ? `
+      .loader {
+        display: inline-flex;
+        gap: 2px;
+      }
+
+      .loader:before,
+      .loader:after {
+        content: "";
+        width: ${
+          typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
+        };
+        aspect-ratio: 1;
+        box-shadow: 0 0 0 1.5px inset ${color || theme.colors.typography.text.base};
+        animation: l4 1.5s infinite;
+      }
+
+      .loader:after {
+        --s: -1;
+        animation-delay: 0.75s
+      }
+
+      @keyframes l4 {
+        0%     {transform: scaleY(var(--s,1)) translateY(0) rotate(0)}
+        16.67% {transform: scaleY(var(--s,1)) translateY(-50%) rotate(0)}
+        33.33% {transform: scaleY(var(--s,1)) translateY(-50%) rotate(90deg)}
+        50%,
+        100%   {transform: scaleY(var(--s,1)) translateY(0) rotate(90deg)}
+      }
+    `
+      : `
+      .loader {
+        display: inline-flex;
+        gap: 2px;
+      }
+      .loader:before,
+      .loader:after {
+        content: "";
+        width: ${
+          typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
+        };
+        aspect-ratio: 1;
+        box-shadow: 0 0 0 1.5px inset ${color || theme.colors.typography.text.base};
+        animation: l4 1.5s infinite;
+      }
+      .loader:after {
+        --s: -1;
+        animation-delay: 0.75s
+      }
+
+      @keyframes l4 {
+        0%     {transform:scaleX(var(--s,1)) translate(0) rotate(0)}
+        16.67% {transform:scaleX(var(--s,1)) translate(-50%) rotate(0)}
+        33.33% {transform:scaleX(var(--s,1)) translate(-50%) rotate(90deg)}
+        50%,
+        100%   {transform:scaleX(var(--s,1)) translate(0) rotate(90deg)}
+      }
+    `}
   `}
 `;
 
@@ -182,20 +222,24 @@ const RepeatingBarStyle = styled.div<LoadingProps>`
 `}
 `;
 
-function Loading({ loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps) {
+function Loading({ className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps, ref: React.Ref<HTMLDivElement>,
+) {
+  const element = <div className="loader" />;
+  let LoadingStyle = RepeatingBarStyle;
+
   if (LoadingStyleEnum.BLOCKS === loadingStyle) {
-    return (
-      <LoadingStyleBlocks {...props}>
-        <div className="loader" />
-      </LoadingStyleBlocks>
-    );
+    LoadingStyle = LoadingStyleBlocks;
+  } else if (LoadingStyleEnum.SCROLLING_BARS === loadingStyle) {
+    LoadingStyle = ScrollingBarsStyle;
+  } else if (LoadingStyleEnum.INFINITE_BLOCKS === loadingStyle) {
+    LoadingStyle = InfiniteBlocksStyle;
   }
 
   return (
-    <RepeatingBarStyle {...props}>
-      <div className="loader" />
-    </RepeatingBarStyle>
+    <LoadingStyle {...props} className={className} ref={ref}>
+      {element}
+    </LoadingStyle>
   );
 }
 
-export default Loading;
+export default React.forwardRef(Loading);

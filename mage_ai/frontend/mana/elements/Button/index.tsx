@@ -2,6 +2,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 
 import ButtonGroup from './Group';
+import Loading, { LoadingStyleEnum } from '../../components/Loading';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
@@ -11,10 +12,11 @@ type ButtonStyleProps = {
   IconAfter?: ({ ...props }: any) => any;
   anchor?: boolean;
   children?: React.ReactNode;
-  small?: boolean;
 } & StyleProps;
 
 type ButtonProps = {
+  className?: string;
+  id?: string;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
 } & ButtonStyleProps & WithLoggingProps;
 
@@ -49,6 +51,7 @@ function Button({
   asLink,
   basic,
   children,
+  loading,
   primary,
   secondary,
   small,
@@ -57,6 +60,13 @@ function Button({
 }: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
   const { Icon, IconAfter } = props;
+  const loadingRight = loading && Icon && !(tag || IconAfter);
+  const loadingLeft = !loadingRight && loading && (!Icon || (!tag && !IconAfter));
+  const loadingEl = (
+    <div style={{ marginLeft: loadingRight ? 4 : 0, marginRight: loadingLeft ? 4 : 0 }}>
+      <Loading loadingStyle={LoadingStyleEnum.BLOCKS} vertical />
+    </div>
+  );
 
   return (
     // @ts-ignore
@@ -64,6 +74,7 @@ function Button({
       {...props}
       asLink={asLink}
       basic={basic}
+      loading={loading}
       primary={primary}
       secondary={secondary}
       small={small}
@@ -77,17 +88,20 @@ function Button({
       }}
       tag={tag}
     >
-      {Icon && <Icon inverted={primary || secondary} small={small} />}
+      {Icon && !loadingLeft && <Icon inverted={primary || secondary} small={small} />}
+      {loadingLeft && loadingEl}
 
       {children}
 
-      {tag && (
+      {tag && !loadingRight && (
         <Tag inverted={primary || secondary} passthrough secondary={basic}>
           {tag}
         </Tag>
       )}
 
-      {IconAfter && <IconAfter inverted={primary || secondary} small={small} />}
+      {IconAfter && !loadingRight && <IconAfter inverted={primary || secondary} small={small} />}
+
+      {loadingRight && loadingEl}
     </HTMLTag>
   );
 }

@@ -5,10 +5,10 @@ import SystemBrowser from './System';
 import TextInput from '@mana/elements/Input/TextInput';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 
-export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppLoaderResultType {
+export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const main = useMemo(
-    () => <SystemBrowser addApp={addApp} app={app} removeApp={removeApp} />,
-    [addApp, app, removeApp],
+    () => <SystemBrowser {...props} />,
+    [props],
   );
 
   const top = useMemo(
@@ -26,7 +26,7 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
         <TextInput basic monospace placeholder="/" small />
       </>
     ),
-    [],
+    [props],
   );
 
   return {

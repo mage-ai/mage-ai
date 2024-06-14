@@ -4,14 +4,15 @@ import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import Grid from '@mana/components/Grid';
-import { AddAppFunctionOptionsType, AppConfigType } from '@components/v2/Apps/interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { AddAppFunctionOptionsType, AppConfigType, PanelType } from './interfaces';
+import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { insertAtIndex, sortByKey } from '@utils/array';
 import { randomSimpleHashGenerator } from '@utils/string';
 import { upsertRootElement } from './utils';
 import appLoader from './utils/loader';
 
 type AppLayoutProps = {
+  addPanel: (panel: PanelType) => void;
   apps?: AppConfigType[];
   onRemoveApp: (
     uuidApp: string,
@@ -21,7 +22,7 @@ type AppLayoutProps = {
   ) => void;
 };
 
-function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
+function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps) {
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
@@ -148,6 +149,7 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
               <ThemeProvider theme={themeContext}>
                 <AppContainer
                   addApp={addApp}
+                  addPanel={addPanel}
                   app={app}
                   appLoader={appLoaderResult?.default}
                   ref={ref}
@@ -167,13 +169,18 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
   function removeApp(uuid: string) {
     if (refRoots?.current?.[uuid]) {
       refRoots.current[uuid].unmount();
-      const parentNode = document.getElementById(uuid);
-      parentNode.remove();
       delete refRoots.current[uuid];
     }
+
+    const parentNode = document.getElementById(uuid);
+    if (parentNode) {
+      parentNode?.remove();
+    }
+
     if (refCells?.current?.[uuid]) {
       delete refCells.current[uuid];
     }
+
     if (refAppConfigs?.current?.[uuid]) {
       delete refAppConfigs.current[uuid];
     }
@@ -194,25 +201,13 @@ function AppLayout({ apps: defaultApps, onRemoveApp }: AppLayoutProps) {
               addApp(app, containerRef?.current);
             }, index * 100);
           });
-        } else {
-          // addApp(
-          //   {
-          //     subtype: AppSubtypeEnum.IDE,
-          //     type: AppTypeEnum.EDITOR,
-          //     uuid: randomSimpleHashGenerator(),
-          //   },
-          //   containerRef?.current,
-          // );
         }
       }
     }
 
-    const roots = refRoots?.current;
-
     return () => {
-      Object.keys(roots || {})?.forEach((uuid: string) => {
-        removeApp(uuid);
-      });
+      // No need to manually remove all here since component is unmounting.
+      refRoots.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
