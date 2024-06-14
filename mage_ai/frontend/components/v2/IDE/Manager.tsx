@@ -1,13 +1,15 @@
+import IDEThemeType, { IDEThemeEnum, ModeEnumToThemeEnum } from './themes/interfaces';
+import ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
 import baseConfigurations from './configurations/base';
+import buildThemes from './themes';
 import initializeAutocomplete from './autocomplete';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import pythonProvider from './languages/python/provider';
-import themes from './themes';
 import { FileType } from './interfaces';
-import { IDEThemeEnum } from './themes/interfaces';
 import { LanguageEnum } from './languages/constants';
+import { ModeEnum } from '@mana/themes/modes';
 import { getHost } from '@api/utils/url';
-import { getTheme } from '@mana/themes/utils';
+import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { isDebug } from '@utils/environment';
 import { languageClientConfig, loggerConfig } from './constants';
 
@@ -47,7 +49,7 @@ export type InitializeProps = {
 class Manager {
   private static instances: Record<string, Manager>;
   private static languageServersStarted: Record<string, boolean> = {};
-  private static registeredFiles: Record<string, FileType> = {};
+  // private static registeredFiles: Record<string, FileType> = {};
   private files: FileType[] = null;
   private language: LanguageEnum = null;
   private languageClient: any = null;
@@ -75,6 +77,7 @@ class Manager {
     this.uuid = uuid;
   }
 
+  // https://github.com/TypeFox/monaco-languageclient/blob/main/packages/wrapper/src/wrapper.ts
   public static getInstance(uuid: string): Manager {
     if (!Manager.instances) {
       Manager.instances = {};
@@ -87,12 +90,37 @@ class Manager {
     return Manager.instances[uuid];
   }
 
+  public getEditor() {
+    return this.wrapper?.getEditor();
+  }
+
+  public async dispose(shutdown?: boolean) {
+    if (this.wrapper) {
+      console.log(`Disposing editor ${this.uuid}...`);
+      if (shutdown) {
+        await this.wrapper.dispose();
+        delete Manager.instances[this.uuid];
+      } else {
+        await this.wrapper.getMonacoEditorApp().disposeApp();
+      }
+    }
+  }
+
   public getWrapper() {
     return this.wrapper;
   }
 
+  private getThemes(mode?: ModeEnum): Record<IDEThemeEnum, IDEThemeType> {
+    const themes = buildThemes(getThemeSettings()?.theme);
+    return mode ? themes[ModeEnumToThemeEnum[mode]] : themes;
+  }
+
   public async start(element: HTMLElement) {
     await this.wrapper.start(element);
+    const editor = this.getMonaco()?.editor;
+    Object.entries(this.getThemes()).forEach(([key, value]) => {
+      editor.defineTheme(key, value);
+    });
   }
 
   public async initialize({ file, languageServer, workspace, wrapper }: InitializeProps) {
@@ -304,12 +332,14 @@ class Manager {
   }
 
   private async getLanguageDef() {
+    const { mode } = getThemeSettings();
+
     return {
       languageExtensionConfig: await this.getPythonLanguageExtensionWithURI(),
       monarchLanguage: pythonProvider(),
       theme: {
-        data: themes[IDEThemeEnum.BASE],
-        name: IDEThemeEnum.BASE,
+        data: this.getThemes(mode),
+        name: ModeEnumToThemeEnum[mode],
       },
     };
   }

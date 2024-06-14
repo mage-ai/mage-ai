@@ -1,11 +1,17 @@
+import { ModeEnum } from './modes';
 import { BackgroundsType } from './backgrounds';
 import { BordersType } from './borders';
 import { ButtonsType } from './buttons';
 import { ColorsType } from './colors';
 import { FontsType } from './fonts';
+import { GridType } from './grid';
+import { IconsType } from './icons';
+import { IDEType } from './ide';
+import { InputsType } from './inputs';
 import { MarginType } from './margin';
-import { ModeEnum } from './modes';
+import { MenuType } from './menus';
 import { PaddingType } from './padding';
+import { ScrollbarsType } from './scrollbars';
 
 export enum ThemeTypeEnum {
   CUSTOM = 'custom',
@@ -28,6 +34,12 @@ export default interface ThemeType {
   buttons: ButtonsType;
   colors: ColorsType;
   fonts: FontsType;
+  grid: GridType;
+  icons: IconsType;
+  ide: IDEType;
+  inputs: InputsType;
   margin: MarginType;
+  menus: MenuType;
   padding: PaddingType;
+  scrollbars: ScrollbarsType;
 }

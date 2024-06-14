@@ -1,13 +1,9 @@
 .container {
-  height: 100vh;
-  overflow: hidden;
-  width: 100vw;
-
-  &.expanded {
+  .visible {
     visibility: visible;
   }
 
-  &.collapsed {
+  .hidden {
     display: none;
     height: 0;
     visibility: hidden;

@@ -1,6 +1,7 @@
 import { AppTypeEnum, AppSubtypeEnum } from './constants';
 
 export type AppLoaderProps = {
+  addPanel?: (panel: PanelType) => void;
   app: AppConfigType;
   addApp?: (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
   removeApp?: (uuid: string) => void;
@@ -38,4 +39,8 @@ export interface AppConfigType {
   subtype?: AppSubtypeEnum;
   type?: AppTypeEnum;
   uuid?: string;
+}
+
+export interface PanelType extends AppConfigType {
+  apps?: AppConfigType[];
 }

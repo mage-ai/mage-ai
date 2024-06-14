@@ -3,7 +3,7 @@ import React from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
-import { AddAppFunctionOptionsType, AppConfigType, AppLoaderProps } from '../interfaces';
+import { AddAppFunctionOptionsType, AppConfigType, AppLoaderProps, PanelType } from '../interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '../constants';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
@@ -11,6 +11,7 @@ import { randomSimpleHashGenerator } from '@utils/string';
 import { mergeDeep } from '@utils/hash';
 
 type AppContainerProps = {
+  addPanel: (panel: PanelType) => void;
   app: AppConfigType;
   appLoader?: (args: AppLoaderProps) => {
     main: React.ComponentType<any>;
@@ -22,7 +23,7 @@ type AppContainerProps = {
 };
 
 function AppContainer(
-  { app, appLoader, addApp, removeApp, uuid }: AppContainerProps,
+  { addPanel, app, appLoader, addApp, removeApp, uuid }: AppContainerProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   function startApp(appNew: AppConfigType, opts?: AddAppFunctionOptionsType) {
@@ -46,6 +47,7 @@ function AppContainer(
         }),
       );
     },
+    addPanel,
     app,
     removeApp,
   });
@@ -68,7 +70,7 @@ function AppContainer(
             {toolbars?.top}
           </Grid>
 
-          <ButtonGroup itemsContained>
+          <ButtonGroup basic itemsContained>
             <Button
               Icon={CaretDown}
               basic

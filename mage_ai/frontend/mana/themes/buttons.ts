@@ -5,6 +5,13 @@ export interface ButtonsType {
   border: {
     color: BordersType['button'];
   };
+
+  font: {
+    lineHeight: {
+      base: number;
+      sm: number;
+    };
+  };
   grid: {
     column: {
       gap: {
@@ -20,6 +27,7 @@ export interface ButtonsType {
     base: string;
     sm: string;
     xs: string;
+    xxs: string;
   };
 }
 
@@ -27,6 +35,12 @@ export default function build(colors: ColorsType): ButtonsType {
   return {
     border: {
       color: colors.borders.button,
+    },
+    font: {
+      lineHeight: {
+        base: 19,
+        sm: 17,
+      },
     },
     grid: {
       column: {
@@ -43,6 +57,7 @@ export default function build(colors: ColorsType): ButtonsType {
       base: `${PaddingVerticalEnum.BASE} 14px`,
       sm: `${PaddingVerticalEnum.MD} 13px`,
       xs: `${PaddingVerticalEnum.XS} ${PaddingVerticalEnum.SM}`,
+      xxs: PaddingVerticalEnum.XS,
     },
   };
 }

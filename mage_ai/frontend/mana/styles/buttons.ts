@@ -8,14 +8,17 @@ export type StyleProps = {
   asLink?: boolean;
   basic?: boolean;
   grouped?: boolean;
+  loading?: boolean;
   primary?: boolean;
   secondary?: boolean;
+  small?: boolean;
   tag?: React.ReactNode | string | number;
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
   ${({ asLink }) => (asLink ? transitionFast : transition)}
   ${text}
+
 
   ${({ asLink, basic, grouped, primary, secondary, theme }) =>
     outlineHover({
@@ -91,7 +94,7 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.family.base.bold : theme.fonts.family.base.semiBold};
   font-weight: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
-  line-height: ${({ theme }) => theme.fonts.lineHeight.base};
+  line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
   ${({ basic, grouped, primary, secondary, theme }) =>
     !grouped &&
@@ -109,32 +112,56 @@ const shared = css<StyleProps>`
     }
   `}
 
-  &:hover {
-    cursor: pointer;
-  }
+  ${({ loading }) => loading && 'pointer-events: none;'}
+  ${({ loading }) =>
+    !loading &&
+    `
+    &:hover {
+      cursor: pointer;
+    }
+  `}
 `;
 
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ asLink, grouped, theme }) =>
-    grouped ? 0 : asLink ? theme.buttons.padding.xs : theme.buttons.padding.base};
+  padding: ${({ asLink, basic, grouped, theme }) =>
+    grouped
+      ? basic
+        ? 0
+        : theme.buttons.padding.xxs
+      : asLink
+        ? theme.buttons.padding.xs
+        : theme.buttons.padding.base};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ grouped, theme, tag }) => typeof tag !== 'undefined'
-    ? theme.buttons.padding.sm
-    : grouped
-      ? 0
-      : theme.buttons.padding.sm};
+  padding: ${({ basic, grouped, theme, tag }) =>
+    typeof tag !== 'undefined'
+      ? theme.buttons.padding.sm
+      : grouped
+        ? basic
+          ? 0
+          : theme.buttons.padding.xxs
+        : theme.buttons.padding.sm};
 
-  ${({ tag }) => typeof tag !== 'undefined' && `
-    height: 43.5px;
+  ${({ grouped, tag, theme }) =>
+    typeof tag !== 'undefined' &&
+    !grouped &&
+    `
+    height: ${theme.buttons.font.lineHeight.sm + 2 * theme.padding.base + 2}px;
     padding-bottom: 0;
     padding-top: 0;
+  `}
+
+  ${({ basic, grouped, theme }) =>
+    grouped &&
+    !basic &&
+    `
+    border-radius: ${theme.borders.radius.sm};
   `}
 `;
 

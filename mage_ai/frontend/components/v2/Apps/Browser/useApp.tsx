@@ -1,33 +1,17 @@
 import React, { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 
 import Button from '@mana/elements/Button';
 import SystemBrowser from './System';
 import TextInput from '@mana/elements/Input/TextInput';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 
-export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppLoaderResultType {
-  const main = useMemo(
-    () => <SystemBrowser addApp={addApp} app={app} removeApp={removeApp} />,
-    [addApp, app, removeApp],
-  );
+const ToolbarsTop = dynamic(() => import('./System/Toolbars/Top'));
 
-  const top = useMemo(
-    () => (
-      <>
-        <Button
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        >
-          Browse
-        </Button>
+export default function useApp(props: AppLoaderProps): AppLoaderResultType {
+  const main = useMemo(() => <SystemBrowser {...props} />, [props]);
 
-        <TextInput basic monospace placeholder="/" small />
-      </>
-    ),
-    [],
-  );
+  const top = useMemo(() => <ToolbarsTop {...props} />, [props]);
 
   return {
     main,

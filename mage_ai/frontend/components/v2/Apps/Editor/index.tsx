@@ -1,54 +1,33 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 
-import api from '@api';
 import { AppLoaderProps } from '../interfaces';
-import { onSuccess } from '@api/utils/response';
 import Loading from '@mana/components/Loading';
+import useItems from '../hooks/items/useItems';
 
 const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
   ssr: false,
 });
 
-function EditorApp({ app, addApp, removeApp }: AppLoaderProps) {
+function EditorApp({ app }: AppLoaderProps) {
   const [item, setItem] = useState<any>(null);
 
-  const [fetchItem, { isLoading }] = useMutation(
-    (path: string) => api.browser_items.detailAsync(encodeURIComponent(path)),
-    {
-      onSuccess: (response: any) =>
-        onSuccess(response, {
-          callback: ({ browser_item: item }) => {
-            setItem(item);
-          },
-          onErrorCallback: (response: any, errors: any) =>
-            console.error({
-              errors,
-              response,
-            }),
-        }),
-    },
-  );
+  const { api, loading } = useItems();
 
   useEffect(() => {
     const path = app?.options?.file?.path;
-    if (!item && !isLoading && path) {
-      fetchItem(path);
+    if (!item && !loading.detail && path) {
+      api.detail(encodeURIComponent(path)).then(({ data: { browser_item: item } }) => setItem(item));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [app, item, isLoading]);
+  }, [app, item, loading]);
 
   return (
     <>
-      {isLoading && <Loading />}
+      {loading.detail && <Loading />}
 
       {item && (
         <MaterialIDE
-          // TODO (dangerous): when opening a new file, add app.
-          // Deleting a file, remove app.
-          // addApp={addApp}
-          // removeApp={removeApp}
           configurations={app?.options?.configurations}
           file={item}
           uuid={app?.uuid}

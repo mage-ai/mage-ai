@@ -5,6 +5,7 @@ import borders from '../../styles/borders';
 import styled from 'styled-components';
 
 type GroupStyleProps = {
+  basic?: boolean;
   itemsContained?: boolean;
 };
 
@@ -13,13 +14,25 @@ const GroupStyled = styled.div<GroupStyleProps>`
   ${({ itemsContained, theme }) =>
     itemsContained &&
     `
-      padding: ${theme.buttons.padding.sm};
-    `}
+    padding: ${theme.buttons.padding.sm};
+  `}
+
+  ${({ basic, itemsContained, theme }) =>
+    itemsContained &&
+    !basic &&
+    `
+    padding-bottom: ${theme.buttons.padding.xxs};
+    padding-top: ${theme.buttons.padding.xxs};
+  `}
 `;
 
-function Group({ children, itemsContained }: { children: React.ReactNode } & GroupStyleProps) {
+function Group({
+  basic,
+  children,
+  itemsContained,
+}: { children: React.ReactNode } & GroupStyleProps) {
   return (
-    <GroupStyled itemsContained={itemsContained}>
+    <GroupStyled basic={basic} itemsContained={itemsContained}>
       <Grid
         alignItems="center"
         autoFlow="column"

@@ -195,34 +195,32 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       });
 
       itemsRootRef.current.render(
-        <React.StrictMode>
-          <ThemeProvider theme={themeContext}>
-            <Grid alignItems="center" ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
-              <DeferredRenderer
-                fallback={
-                  <ThemeProvider theme={themeContext}>
-                    <div style={{ display: 'flex' }}>
-                      {buildLines(1)}
-                      <Loading position="absolute" />
-                    </div>
-                  </ThemeProvider>
-                }
-                idleTimeout={1}
-              >
-                {values?.map((item: ItemDetailType) => (
-                  <Item
-                    app={app}
-                    item={item}
-                    key={item.name}
-                    onClick={onClick}
-                    onContextMenu={onContextMenu}
-                    themeContext={themeContext}
-                  />
-                ))}
-              </DeferredRenderer>
-            </Grid>
-          </ThemeProvider>
-        </React.StrictMode>,
+        <ThemeProvider theme={themeContext}>
+          <Grid alignItems="center" ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
+            <DeferredRenderer
+              fallback={
+                <ThemeProvider theme={themeContext}>
+                  <div style={{ display: 'flex' }}>
+                    {buildLines(1)}
+                    <Loading position="absolute" />
+                  </div>
+                </ThemeProvider>
+              }
+              idleTimeout={1}
+            >
+              {values?.map((item: ItemDetailType) => (
+                <Item
+                  app={app}
+                  item={item}
+                  key={item.name}
+                  onClick={onClick}
+                  onContextMenu={onContextMenu}
+                  themeContext={themeContext}
+                />
+              ))}
+            </DeferredRenderer>
+          </Grid>
+        </ThemeProvider>,
       );
       renderedRef.current = true;
     }

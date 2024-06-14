@@ -1,29 +1,19 @@
 import { forwardRef } from 'react';
-import styles from '@styles/scss/components/Scrollbar/Scrollbar.module.scss';
+import styled from 'styled-components';
 
-type ScrollbarProps = {
-  children: React.ReactNode;
-  className?: string;
-  hidden?: boolean;
-  padLeft?: boolean;
-  style?: React.CSSProperties;
-};
+import scrollbars, { ScrollbarsStyledProps } from '../../styles/scrollbars';
 
-function Scrollbar(
-  { children, hidden, padLeft, ...props }: ScrollbarProps,
-  ref: React.Ref<HTMLDivElement>,
-) {
+type ScrollbarProps = { children: React.ReactNode } & ScrollbarsStyledProps;
+
+const ScrollbarStyled = styled.div`
+  ${scrollbars}
+`;
+
+function Scrollbar({ children, hidden, ...props }: ScrollbarProps, ref: React.Ref<HTMLDivElement>) {
   return (
-    <div
-      {...props}
-      className={[styles.scrollbar, padLeft ? styles['pad-left'] : '', props.className || '']
-        .filter(t => t?.length >= 1)
-        .join(' ')}
-      hidden={hidden}
-      ref={ref}
-    >
+    <ScrollbarStyled {...props} hidden={hidden} ref={ref}>
       {children}
-    </div>
+    </ScrollbarStyled>
   );
 }
 

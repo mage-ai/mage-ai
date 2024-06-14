@@ -6,6 +6,7 @@ import buttons, { ButtonsType } from './buttons';
 import fonts, { FontsType } from './fonts';
 import grid, { GridType } from './grid';
 import icons, { IconsType } from './icons';
+import ide, { IDEType } from './ide';
 import inputs, { InputsType } from './inputs';
 import margin, { MarginType } from './margin';
 import menus, { MenuType } from './menus';
@@ -63,6 +64,7 @@ class Combiner implements CombinerType {
       | FontsType
       | GridType
       | IconsType
+      | IDEType
       | InputsType
       | MarginType
       | MenuType
@@ -90,6 +92,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     fonts,
     grid,
     icons,
+    ide,
     inputs,
     margin,
     menus,

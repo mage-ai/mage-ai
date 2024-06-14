@@ -1,14 +1,12 @@
 import React, { Suspense, lazy, useContext, useMemo } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
-
-import Button, { ButtonGroup } from '@mana/elements/Button';
+import dynamic from 'next/dynamic';
 import Loading from '@mana/components/Loading';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
-import { Save, Trash, Add, PlayButtonFilled } from '@mana/icons';
-import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
-import { KEY_SYMBOL_META, KEY_SYMBOL_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 
-export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppLoaderResultType {
+const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
+
+export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const themeContext = useContext(ThemeContext);
   const EditorApp = lazy(() => import('./index'));
 
@@ -23,67 +21,13 @@ export default function useApp({ app, addApp, removeApp }: AppLoaderProps): AppL
           </ThemeProvider>
         }
       >
-        <EditorApp addApp={addApp} app={app} removeApp={removeApp} />
+        <EditorApp {...props} />
       </Suspense>
     ),
-    [EditorApp, app, addApp, removeApp, themeContext],
+    [EditorApp, themeContext, props],
   );
 
-  const top = useMemo(
-    () => (
-      <ButtonGroup>
-        <Button
-          Icon={Add}
-          onClick={() => {
-            console.log('browse');
-          }}
-          primary
-          small
-        >
-          New file
-        </Button>
-        <Button
-          Icon={Save}
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        >
-          Save
-        </Button>
-        <Button
-          Icon={Trash}
-          basic
-          onClick={() => {
-            console.log('browse');
-          }}
-          small
-        >
-          Delete
-        </Button>
-        <Button
-          Icon={PlayButtonFilled}
-          basic
-          onClick={() => {
-            console.log('browse');
-          }}
-          secondary
-          small
-          tag={
-            <KeyboardTextGroup
-              inverted
-              monospace
-              textGroup={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
-              xsmall
-            />
-          }
-        >
-          Run
-        </Button>
-      </ButtonGroup>
-    ),
-    [],
-  );
+  const top = useMemo(() => <ToolbarsTop {...props} />, [props]);
 
   return {
     main,
