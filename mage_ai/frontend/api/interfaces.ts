@@ -1,4 +1,3 @@
-import { ApiResourceType } from './index';
 import { AxiosError } from 'axios';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
 
@@ -46,7 +45,7 @@ export type AxiosErrorType = {
 type ResourceType = Record<string, any>;
 
 export type ResponseType = {
-  data?: Record<typeof ApiResourceType, ResourceType>;
+  data?: Record<string, ResourceType>;
 };
 
 export type ErrorResponseType = {
