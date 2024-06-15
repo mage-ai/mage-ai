@@ -66,8 +66,6 @@ function AppContainer(
     },
   });
 
-  console.log(app, toolbars, removeApp);
-
   return (
     <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
       <Grid

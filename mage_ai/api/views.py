@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from functools import reduce
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import simplejson
 
@@ -31,8 +31,16 @@ async def execute_operation(
     )
     start_time = datetime.utcnow()
 
+    meta = __meta(request)
+    http_error_codes = (meta or {}).get('_http_error_codes', False)
+
     if request.error:
-        return __render_error(handler, request.error, **tags)
+        return __render_error(
+            handler,
+            request.error,
+            http_error_codes=http_error_codes,
+            **tags,
+        )
 
     action, options = __determine_action(request, child=child, child_pk=child_pk, pk=pk)
     try:
@@ -40,7 +48,7 @@ async def execute_operation(
             action=action,
             files=request.files,
             headers=request.headers,
-            meta=__meta(request),
+            meta=meta,
             oauth_client=request.oauth_client,
             oauth_token=request.oauth_token,
             options=options,
@@ -65,7 +73,7 @@ async def execute_operation(
 
     error_response = response.get('error', None)
     if error_response:
-        return __render_error(handler, error_response, **tags)
+        return __render_error(handler, error_response, http_error_codes=http_error_codes, **tags)
 
     info(
         'Action: {} {} {} {} {}'.format(
@@ -196,11 +204,15 @@ def __query(request) -> Dict:
     return reduce(_build, request.query_arguments.keys() - meta_keys, {})
 
 
-def __render_error(handler, error: Dict, **kwargs):
+def __render_error(handler, error: Dict, http_error_codes: Optional[bool] = None, **kwargs):
     __log_error(handler.request, error, **kwargs)
 
-    error_code = error.get('code', 500)
-    handler.set_status(error_code)
+    error_code = 200
+
+    if error is not None and http_error_codes:
+        error_code = error.get('code', 500)
+        handler.set_status(error_code) if error_code else None
+
     handler.write(
         dict(
             error=error,

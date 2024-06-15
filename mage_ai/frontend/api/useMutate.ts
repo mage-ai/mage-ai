@@ -18,6 +18,7 @@ export default function useMutate(endpoint: string | string[], opts?: {
   const arr = typeof endpoint === 'string' ? endpoint.split('.') : endpoint;
   const resourceNamePlural = arr[arr.length - 1];
   const resourceName: string = singularize(resourceNamePlural) as string;
+  const isChildResource: boolean = arr?.length >= 2;
 
   function resourceKey(operation?: OperationTypeEnum): string {
     return operation && OperationTypeEnum.LIST === operation
@@ -38,7 +39,7 @@ export default function useMutate(endpoint: string | string[], opts?: {
     return {
       ...(handlers || {}),
       onError: (error: any, variables: any, context?: any) => {
-        alert(`${error}`);
+        alert(`${JSON.stringify(error)}`);
 
         onError && onError?.(error, variables, context);
       },
@@ -54,36 +55,46 @@ export default function useMutate(endpoint: string | string[], opts?: {
     };
   }
 
+  function addMetaQuery(query: any): any {
+    return {
+      ...(query || {}),
+      _http_error_codes: true,
+    };
+  }
+
   const fnCreate = useMutation({
     ...augmentHandlers(OperationTypeEnum.CREATE, resourceHandlers?.create || {}),
     mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.create(
       ...(Array.isArray(args?.id) ? args?.id : [args?.id]),
-      args?.query || {},
+      addMetaQuery(args?.query || {}),
     )(preprocessPayload(args?.payload || {})),
   });
   const fnDelete = useMutation({
     ...augmentHandlers(OperationTypeEnum.DELETE, resourceHandlers?.delete || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.useDelete(...(Array.isArray(args) ? args : [args])),
+    mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.useDelete(
+      ...(Array.isArray(args?.id) ? args?.id : [args?.id]),
+      addMetaQuery(args?.query || {}),
+    ),
   });
   const fnDetail = useMutation({
     ...augmentHandlers(OperationTypeEnum.DETAIL, resourceHandlers?.detail || {}),
     mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.detailAsync(
       ...(Array.isArray(args?.id) ? args?.id : [args?.id]),
-      args?.query || {},
+      addMetaQuery(args?.query || {}),
     ),
   });
   const fnList = useMutation({
     ...augmentHandlers(OperationTypeEnum.LIST, resourceHandlers?.list || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.listAsync(
-      ...(Array.isArray(args?.id) ? args?.id : [args?.id]),
-      args?.query || {},
-    ),
+    mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.listAsync(...[
+      ...(isChildResource ? (Array.isArray(args?.id) ? args?.id : [args?.id]) : []),
+      addMetaQuery(args?.query || {}),
+    ]),
   });
   const fnUpdate = useMutation({
     ...augmentHandlers(OperationTypeEnum.UPDATE, resourceHandlers?.update || {}),
     mutationFn: (args?: MutateFunctionArgsType) => apiEndpoint.useUpdate(
       ...(Array.isArray(args?.id) ? args?.id : [args?.id]),
-      args?.query || {},
+      addMetaQuery(args?.query || {}),
     )(preprocessPayload(args?.payload || {})),
   });
 
