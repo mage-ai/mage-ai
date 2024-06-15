@@ -69,9 +69,14 @@ export interface ResourceHandlersType {
   update?: HandlersType;
 }
 
-type MutateFunctionType = (args?:any |  any[],  handlers?: HandlersType) => Promise<ResourceType | ResourceType[]>;
+export type MutateFunctionArgsType = {
+  id?: string | string[];
+  payload?: Record<string, any>;
+  query?: Record<string, any>;
+};
+export type MutateFunctionType = (args: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
 
-export interface MutatationType {
+export type MutatationType = {
   data: any;
   error: any;
   isError: boolean;
@@ -82,10 +87,10 @@ export interface MutatationType {
   failureCount: number;
   failureReason: any;
   mutate: MutateFunctionType;
-  mutateAsync: (args: any) => any;
+  mutateAsync: MutateFunctionType;
   reset: any;
   status: any;
-}
+};
 
 export interface MutateType {
   create: MutatationType;

@@ -7,7 +7,7 @@ import Item from './Item/index';
 import Loading from '@mana/components/Loading';
 import Menu from '@mana/components/Menu';
 import Scrollbar from '@mana/elements/Scrollbar';
-import useItems from '../../hooks/items/useItems';
+import useMutate from '@api/useMutate';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import { AppConfigType, AppLoaderProps, AddPanelOperationType, OperationTypeEnum } from '../../interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
@@ -114,13 +114,15 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     }
   }
 
-  const mutants = useItems({
-    list: {
-      onSuccess: (items: FileType[]) => {
-        if (items?.length >= 1) {
-          filePathsRef.current = items;
-          renderItems((items || []) as ItemDetailType[]);
-        }
+  const mutants = useMutate('browser_items', {
+    handlers: {
+      list: {
+        onSuccess: (items: FileType[]) => {
+          if (items?.length >= 1) {
+            filePathsRef.current = items;
+            renderItems((items || []) as ItemDetailType[]);
+          }
+        },
       },
     },
   });
@@ -208,8 +210,10 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   useEffect(() => {
     if (!itemsRootRef?.current) {
       mutants.list.mutate({
-        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        query: {
+          exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+          include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        },
       });
     }
 

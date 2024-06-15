@@ -82,7 +82,7 @@ class Item(BaseDataClass):
         if self.content != new_content:
             self.content = new_content
             if not await self.update():
-                return False
+                raise Exception(f'Failed to update content for file at {self.path}')
 
         if os.path.dirname(self.path) != os.path.dirname(item.path):
             new_path = item.path
@@ -90,13 +90,13 @@ class Item(BaseDataClass):
             if await self.move(new_path):
                 self.path = new_path
             else:
-                return False
+                raise Exception(f'Failed to move file from {self.path} to {new_path}')
         elif item.name is not None and self.name != item.name:
             new_name = item.name
             print('NAMEEEEEEEEEEEEEEEEE', self.name, new_name)
             if await self.rename(new_name):
                 self.name = new_name
             else:
-                return False
+                raise Exception(f'Failed to rename file from {self.name} to {new_name}')
 
         return True

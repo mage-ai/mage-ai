@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
-import useItems from '../hooks/items/useItems';
+import useMutate from '@api/useMutate';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
 import { FileType } from '../../IDE/interfaces';
 
@@ -14,12 +14,13 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
 async function updateLocalContent(item: FileType) {
   await import('../../IDE/Manager').then((mod) => {
     mod.Manager.setValue(item);
-
+    console.log('cache');
     updateFileCache({ client: item, server: item });
   });
 }
 
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
+  console.log('render');
   const { app } = props;
 
   const file = useMemo(() => app?.options?.file, [app]);
@@ -56,16 +57,18 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     phaseRef.current += 1;
   }
 
-  const mutants = useItems({
-    detail: {
-      onSuccess: (item: FileType) => {
-        setMain(item);
-        setOriginal(item);
+  const mutants = useMutate('browser_items', {
+    handlers: {
+      detail: {
+        onSuccess: (item: FileType) => {
+          setMain(item);
+          setOriginal(item);
+        },
       },
-    },
-    update: {
-      onSuccess: (item: FileType) => {
-        setMain(item);
+      update: {
+        onSuccess: (item: FileType) => {
+          setMain(item);
+        },
       },
     },
   });
@@ -74,17 +77,21 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     content?: string;
     path?: string;
   }) {
-    mutants.update.mutate([item.path, {
-      content: contentRef?.current,
-      path: item.path,
-      ...payload,
-    }]);
+    mutants.update.mutate({
+      id: encodeURIComponent(item.path),
+      payload: {
+        content: payload?.content || contentRef?.current,
+        path: payload?.path || item.path,
+      },
+    });
   }
 
   useEffect(() => {
     const path = file?.path;
     if (phaseRef.current === 0 && path) {
-      mutants.detail.mutate(encodeURIComponent(path));
+      mutants.detail.mutate({
+        id: encodeURIComponent(path),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, file]);
