@@ -1,4 +1,5 @@
 import axios, { ResponseType } from 'axios';
+import { AxiosErrorType } from '../interfaces';
 
 import AuthToken from '@api/utils/AuthToken';
 import { OAUTH2_APPLICATION_CLIENT_ID, ResponseTypeEnum } from '@api/constants';
@@ -110,7 +111,11 @@ export function buildFetch(urlArg: string, opts: FetcherOptionsType = {}) {
 
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 
-  return fetch(finalUrl, data);
+  try {
+    return fetch(finalUrl, data);
+  } catch (error) {
+    return Promise.reject(error);
+  }
 }
 
 export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
@@ -122,27 +127,35 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
 
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 
-  return axios.request({
-    data: data.body,
-    headers,
-    method,
-    onDownloadProgress: opts?.onDownloadProgress
-      ? e =>
-          opts.onDownloadProgress(e, {
-            body: opts?.body,
-            query: opts?.query,
-          })
-      : null,
-    onUploadProgress: opts?.onUploadProgress
-      ? e =>
-          opts.onUploadProgress(e, {
-            body: opts?.body,
-            query: opts?.query,
-          })
-      : null,
-    responseType,
-    signal,
-    url: finalUrl,
+  return new Promise((resolve, reject) => {
+    axios.request({
+      data: data.body,
+      headers,
+      method,
+      onDownloadProgress: opts?.onDownloadProgress
+        ? e =>
+            opts.onDownloadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+        : null,
+      onUploadProgress: opts?.onUploadProgress
+        ? e =>
+            opts.onUploadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+        : null,
+      responseType,
+      signal,
+      url: finalUrl,
+    }).then(response => {
+      resolve(response);
+    }).catch(error => {
+      reject({
+        ...(error?.response || error),
+      });
+    });
   });
 }
 

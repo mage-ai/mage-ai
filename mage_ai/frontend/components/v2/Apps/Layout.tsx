@@ -2,6 +2,8 @@ import dynamic from 'next/dynamic';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 
 import Grid from '@mana/components/Grid';
 import { AddAppFunctionOptionsType, AppConfigType, OperationTypeEnum, OperationsType } from './interfaces';
@@ -15,6 +17,7 @@ type AppLayoutProps = {
 };
 
 function AppLayout({ apps: defaultApps, operations }: AppLayoutProps) {
+  const queryClient = new QueryClient();
   const addPanel = operations?.[OperationTypeEnum.REMOVE_PANEL]?.effect;
   const onRemoveApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
   const themeContext = useContext(ThemeContext);
@@ -142,23 +145,25 @@ function AppLayout({ apps: defaultApps, operations }: AppLayoutProps) {
 
             refRoots.current[uuidApp].render(
               <ThemeProvider theme={themeContext}>
-                <AppContainer
-                  app={app}
-                  appLoader={appLoaderResult?.default}
-                  operations={{
-                    [OperationTypeEnum.ADD_APP]: {
-                      effect: addApp,
-                    },
-                    [OperationTypeEnum.ADD_PANEL]: {
-                      effect: addPanel,
-                    },
-                    [OperationTypeEnum.REMOVE_APP]: {
-                      effect: removeApp,
-                    },
-                  }}
-                  ref={ref}
-                  uuid={uuidApp}
-                />
+                <QueryClientProvider client={queryClient}>
+                  <AppContainer
+                    app={app}
+                    appLoader={appLoaderResult?.default}
+                    operations={{
+                      [OperationTypeEnum.ADD_APP]: {
+                        effect: addApp,
+                      },
+                      [OperationTypeEnum.ADD_PANEL]: {
+                        effect: addPanel,
+                      },
+                      [OperationTypeEnum.REMOVE_APP]: {
+                        effect: removeApp,
+                      },
+                    }}
+                    ref={ref}
+                    uuid={uuidApp}
+                  />
+                </QueryClientProvider>
               </ThemeProvider>,
             );
           }

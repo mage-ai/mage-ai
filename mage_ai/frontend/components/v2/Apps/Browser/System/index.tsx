@@ -200,11 +200,13 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
       api.list({
         exclude_pattern: COMMON_EXCLUDE_PATTERNS,
         include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      }).then(({ data: { browser_items: items } }) => {
-        if (items?.length >= 1) {
-          filePathsRef.current = items;
-          renderItems((items || []) as ItemDetailType[]);
-        }
+      }, {
+        onSuccess: ({ data: { browser_items: items } }) => {
+          if (items?.length >= 1) {
+            filePathsRef.current = items;
+            renderItems((items || []) as ItemDetailType[]);
+          }
+        },
       });
     }
 

@@ -15,7 +15,10 @@ function ToolbarTop(props: AppLoaderProps & {
   resource: ResourceType;
   stale: boolean;
   updateLocalContent: (file: FileType) => void;
-  updateServerContent: (file: FileType) => void;
+  updateServerContent: (file: FileType, payload: {
+    content?: string;
+    path?: string;
+  }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -45,8 +48,7 @@ function ToolbarTop(props: AppLoaderProps & {
             basic
             loading={loading}
             onClick={() => {
-              updateServerContent({
-                ...main,
+              updateServerContent(main, {
                 path: inputRef?.current?.value || main?.path,
               });
             }}
@@ -83,7 +85,7 @@ function ToolbarTop(props: AppLoaderProps & {
             <Button
               asLink
               loading={loading}
-              onClick={() => updateServerContent(main)}
+              onClick={() => updateServerContent(main, main)}
               small
             >
               Save local

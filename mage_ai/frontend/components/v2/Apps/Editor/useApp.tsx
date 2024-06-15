@@ -5,6 +5,7 @@ import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 import useItems from '../hooks/items/useItems';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
 import { FileType } from '../../IDE/interfaces';
+import { handleResponse } from '@api/callbacks';
 
 const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
 const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
@@ -46,16 +47,25 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
       updateLocalContent(item);
     }
 
-    contentRef.current = item.content;
+    if (item) {
+      contentRef.current = item.content;
+      setStale(isStale(item.path));
+    }
+
     phaseRef.current += 1;
-    setStale(isStale(item.path));
   }
 
-  function updateServerContent(item: FileType) {
+  function updateServerContent(item: FileType, payload: {
+    content?: string;
+    path?: string;
+  }) {
     api.update(item.path, {
-      content: contentRef?.current || item.content,
+      content: contentRef?.current,
       path: item.path,
-    }).then(setMain);
+      ...payload,
+    }, handleResponse({
+      onSuccess: setMain,
+    }));
   }
 
   const [original, setOriginal] = useState<FileType>(server?.file);
@@ -64,12 +74,13 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   useEffect(() => {
     const path = file?.path;
     if (phaseRef.current === 0 && path) {
-      api
-        .detail(encodeURIComponent(path))
-        .then(({ data: { browser_item: item } }) => {
+      api.detail(encodeURIComponent(path), handleResponse({
+        onSuccess: (item: FileType) => {
           setMain(item);
           setOriginal(item);
-        });
+        },
+        parse: 'browser_item',
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, file]);
