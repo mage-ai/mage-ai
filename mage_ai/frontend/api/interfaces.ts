@@ -53,8 +53,8 @@ export type ErrorResponseType = {
   error?: ErrorDetailsType;
 };
 
-export type OnSuccessHandlerType = (response: ResponseType, variables: any, context?: any) => Promise<unknown> | unknown;
-export type OnErrorHandlerType = (err: any, variables: any, context?: any) => Promise<unknown> | unknown;
+export type OnSuccessHandlerType = (response: any | ResponseType, variables?: any, context?: any) => Promise<unknown> | unknown;
+export type OnErrorHandlerType = (err: any, variables?: any, context?: any) => Promise<unknown> | unknown;
 
 export interface HandlersType {
   onError?: OnErrorHandlerType;

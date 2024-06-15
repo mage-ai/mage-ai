@@ -21,7 +21,6 @@ async function updateLocalContent(item: FileType) {
 
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const { app } = props;
-  const { api, loading } = useItems();
 
   const file = useMemo(() => app?.options?.file, [app]);
   const {
@@ -33,6 +32,9 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     ...file,
     ...(client?.file || {}),
   });
+
+  const [original, setOriginal] = useState<FileType>(server?.file);
+  const [stale, setStale] = useState(isStale(file?.path));
 
   const contentRef = useRef(main?.content || '');
   const clientRef = useRef(client?.file);
@@ -54,32 +56,35 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     phaseRef.current += 1;
   }
 
+  const mutants = useItems({
+    detail: {
+      onSuccess: (item: FileType) => {
+        setMain(item);
+        setOriginal(item);
+      },
+    },
+    update: {
+      onSuccess: (item: FileType) => {
+        setMain(item);
+      },
+    },
+  });
+
   function updateServerContent(item: FileType, payload: {
     content?: string;
     path?: string;
   }) {
-    api.update(item.path, {
+    mutants.update.mutate([item.path, {
       content: contentRef?.current,
       path: item.path,
       ...payload,
-    }, handleResponse({
-      onSuccess: setMain,
-    }));
+    }]);
   }
-
-  const [original, setOriginal] = useState<FileType>(server?.file);
-  const [stale, setStale] = useState(isStale(file?.path));
 
   useEffect(() => {
     const path = file?.path;
     if (phaseRef.current === 0 && path) {
-      api.detail(encodeURIComponent(path), handleResponse({
-        onSuccess: (item: FileType) => {
-          setMain(item);
-          setOriginal(item);
-        },
-        parse: 'browser_item',
-      }));
+      mutants.detail.mutate(encodeURIComponent(path));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, file]);
@@ -121,7 +126,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const top = useMemo(() => (
     <ToolbarsTop
       {...props}
-      loading={loading?.update}
+      loading={mutants.update.isLoading}
       resource={{
         main,
         original,
@@ -131,7 +136,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
       updateServerContent={updateServerContent}
     />
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [loading, main, original, props, stale]);
+  ), [mutants.update.isLoading, main, original, props, stale]);
 
   return {
     main: mainApp,

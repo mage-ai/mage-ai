@@ -117,7 +117,6 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   const mutants = useItems({
     list: {
       onSuccess: (items: FileType[]) => {
-        console.log(items);
         if (items?.length >= 1) {
           filePathsRef.current = items;
           renderItems((items || []) as ItemDetailType[]);
