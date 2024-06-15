@@ -119,6 +119,7 @@ export default function useMutate(
   const mutationList = useMemo(() => fnList, [fnList]);
   const mutationUpdate = useMemo(() => fnUpdate, [fnUpdate]);
 
+  // @ts-ignore
   return {
     create: mutationCreate,
     delete: mutationDelete,

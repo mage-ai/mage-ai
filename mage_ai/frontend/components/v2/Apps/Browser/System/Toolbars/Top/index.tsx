@@ -8,8 +8,8 @@ import { AppLoaderProps } from '../../../../interfaces';
 
 function ToolbarTop(_props: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   return (
-    <Padding bottom='small' top='small'>
-      <Grid columnGap={12} templateColumns='auto 1fr' templateRows='1fr'>
+    <Padding bottom="small" top="small">
+      <Grid columnGap={12} templateColumns="auto 1fr" templateRows="1fr">
         <Button
           onClick={() => {
             console.log('browse');
@@ -19,7 +19,7 @@ function ToolbarTop(_props: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
           Browse
         </Button>
 
-        <TextInput basic monospace placeholder='/' small />
+        <TextInput basic monospace placeholder="/" small />
       </Grid>
     </Padding>
   );

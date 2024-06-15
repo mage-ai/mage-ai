@@ -226,11 +226,11 @@ function AppLayout({ apps: defaultApps, operations }: AppLayoutProps) {
 
   return (
     <Grid
-      autoColumns='1fr'
-      autoRows='1fr'
+      autoColumns="1fr"
+      autoRows="1fr"
       columnGap={12}
-      justifyContent='stretch'
-      justifyItems='stretch'
+      justifyContent="stretch"
+      justifyItems="stretch"
       ref={containerRef}
       rowGap={12}
     />
