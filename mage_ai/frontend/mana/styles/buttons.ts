@@ -128,12 +128,12 @@ const base = css<StyleProps>`
   font-size: ${({ theme }) => theme.fonts.size.base};
   padding: ${({ asLink, basic, grouped, theme }) =>
     asLink
-    ? '2px 4px'
-    : grouped
-      ? basic
-        ? 0
-        : theme.buttons.padding.xxs
-      : theme.buttons.padding.base};
+      ? '2px 4px'
+      : grouped
+        ? basic
+          ? 0
+          : theme.buttons.padding.xxs
+        : theme.buttons.padding.base};
 `;
 
 export const sm = css<StyleProps>`
@@ -144,12 +144,12 @@ export const sm = css<StyleProps>`
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : asLink
-      ? '2px 4px'
-      : grouped
-        ? basic
-          ? 0
-          : theme.buttons.padding.xxs
-        : theme.buttons.padding.sm};
+        ? '2px 4px'
+        : grouped
+          ? basic
+            ? 0
+            : theme.buttons.padding.xxs
+          : theme.buttons.padding.sm};
 
   ${({ grouped, tag, theme }) =>
     typeof tag !== 'undefined' &&

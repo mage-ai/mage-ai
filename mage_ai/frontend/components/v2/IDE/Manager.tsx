@@ -48,10 +48,13 @@ export type InitializeProps = {
 class Manager {
   private static instances: Record<string, Manager>;
   private static languageServers: Record<string, any>;
-  private static resources: Record<string, {
-    resource: ResourceType;
-    uuid: string;
-  }> = {};
+  private static resources: Record<
+    string,
+    {
+      resource: ResourceType;
+      uuid: string;
+    }
+  > = {};
   private static servicesLoaded: boolean = false;
   private static registeredFiles: Record<string, FileType> = {};
 
@@ -162,10 +165,7 @@ class Manager {
 
     const unusedCount = Object.keys(instancesUnused).length;
     if (unusedCount >= 1) {
-      console.log(
-        `Unused instances (${unusedCount}):`,
-        Object.keys(instancesUnused || {}),
-      );
+      console.log(`Unused instances (${unusedCount}):`, Object.keys(instancesUnused || {}));
 
       const uuidUnused = Object.keys(instancesUnused)[0];
       console.log(`Reusing unused instance ${uuidUnused}...`);
@@ -213,7 +213,7 @@ class Manager {
 
   public static dispose() {
     if (Manager.instances) {
-      Object.values(Manager?.instances || {}).forEach((instance) => {
+      Object.values(Manager?.instances || {}).forEach(instance => {
         instance.dispose(true);
       });
       Manager.instances = null;
@@ -526,15 +526,18 @@ class Manager {
   }
 
   private buildCodeResources(resource: ResourceType) {
-    return Object.entries(resource).reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: {
-        // enforceLanguageId: value?.language,
-        fileExt: value?.extension,
-        text: value?.content || '',
-        uri: this.monaco.Uri.parse(`file://${value?.path}`),
-      },
-    }), {});
+    return Object.entries(resource).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: {
+          // enforceLanguageId: value?.language,
+          fileExt: value?.extension,
+          text: value?.content || '',
+          uri: this.monaco.Uri.parse(`file://${value?.path}`),
+        },
+      }),
+      {},
+    );
   }
 
   private async buildUserConfig(configurations: any, diffConfigurations?: any) {
@@ -546,10 +549,10 @@ class Manager {
       languageClientConfig: this.isLanguageServerInitialized()
         ? null
         : {
-          ...languageClientConfig,
-          languageId: this.language,
-          name: `mage-lsp-${this.language}`,
-        },
+            ...languageClientConfig,
+            languageId: this.language,
+            name: `mage-lsp-${this.language}`,
+          },
       loggerConfig,
       wrapperConfig: {
         editorAppConfig: {

@@ -4,7 +4,15 @@ import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
 import Padding from '@mana/elements/Padding';
-import { AddAppOperationType, AddAppFunctionOptionsType, AppConfigType, AppLoaderProps, OperationTypeEnum, OperationsType, PanelType } from '../interfaces';
+import {
+  AddAppOperationType,
+  AddAppFunctionOptionsType,
+  AppConfigType,
+  AppLoaderProps,
+  OperationTypeEnum,
+  OperationsType,
+  PanelType,
+} from '../interfaces';
 import { Close, CaretRight, CaretLeft, CaretUp, CaretDown } from '@mana/icons';
 import { Header } from './index.style';
 import { mergeDeep } from '@utils/hash';
@@ -20,12 +28,7 @@ type AppContainerProps = {
 };
 
 function AppContainer(
-  {
-    app,
-    appLoader,
-    operations,
-    uuid,
-  }: AppContainerProps,
+  { app, appLoader, operations, uuid }: AppContainerProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   const addApp = operations?.[OperationTypeEnum.ADD_APP]?.effect as AddAppOperationType;
@@ -81,13 +84,14 @@ function AppContainer(
       >
         <Header
           style={{
-            gridTemplateColumns: toolbars && (app?.toolbars?.top || removeApp)
-              ? '1fr auto'
-              : toolbars
-                ? '1fr'
-                : app?.toolbars?.top && removeApp
-                  ? 'auto'
-                  : undefined,
+            gridTemplateColumns:
+              toolbars && (app?.toolbars?.top || removeApp)
+                ? '1fr auto'
+                : toolbars
+                  ? '1fr'
+                  : app?.toolbars?.top && removeApp
+                    ? 'auto'
+                    : undefined,
           }}
         >
           {toolbars?.top && (
@@ -186,7 +190,9 @@ function AppContainer(
 
                 {app?.toolbars?.top && removeApp && <Divider vertical />}
 
-                {removeApp && <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />}
+                {removeApp && (
+                  <Button Icon={Close} basic grouped onClick={() => removeApp(uuid)} small />
+                )}
               </ButtonGroup>
             </Padding>
           )}

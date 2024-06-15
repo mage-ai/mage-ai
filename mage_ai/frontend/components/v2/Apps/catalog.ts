@@ -3,40 +3,43 @@ import { AppSubtypeEnum, AppTypeEnum, AppUUIDEnum, PanelUUIDEnum } from './const
 import { AppConfigType, PanelType } from './interfaces';
 
 export function EditorIDEApp(appProps?: AppConfigType): AppConfigType {
-  return mergeDeep({
-    subtype: AppSubtypeEnum.IDE,
-    type: AppTypeEnum.EDITOR,
-    uuid: appProps?.uuid
-      || '/home/src/default_repo/mlops/mlops/memory_upgrade_v2/transformers/artistic_portal.py',
-  }, appProps);
+  return mergeDeep(
+    {
+      subtype: AppSubtypeEnum.IDE,
+      type: AppTypeEnum.EDITOR,
+      uuid:
+        appProps?.uuid ||
+        '/home/src/default_repo/mlops/mlops/memory_upgrade_v2/transformers/artistic_portal.py',
+    },
+    appProps,
+  );
 }
 
 export function FileBrowserApp(appProps?: AppConfigType): AppConfigType {
-  return mergeDeep({
-    ...appProps,
-    subtype: AppSubtypeEnum.SYSTEM,
-    type: AppTypeEnum.BROWSER,
-    uuid: AppUUIDEnum.FILE_BROWSER,
-  }, appProps);
+  return mergeDeep(
+    {
+      ...appProps,
+      subtype: AppSubtypeEnum.SYSTEM,
+      type: AppTypeEnum.BROWSER,
+      uuid: AppUUIDEnum.FILE_BROWSER,
+    },
+    appProps,
+  );
 }
 
 export function DefaultPanel(appProps?: AppConfigType): PanelType {
-  return mergeDeep({
-    apps: [
-      FileBrowserApp,
-      EditorIDEApp,
-    ],
-    layout: {
-      column: -1,
+  return mergeDeep(
+    {
+      apps: [FileBrowserApp, EditorIDEApp],
+      layout: {
+        column: -1,
+      },
+      uuid: PanelUUIDEnum.DEFAULT,
     },
-    uuid: PanelUUIDEnum.DEFAULT,
-  }, appProps);
+    appProps,
+  );
 }
 
-export const Apps = [
-  FileBrowserApp,
-];
+export const Apps = [FileBrowserApp];
 
-export const Panels = [
-  DefaultPanel,
-];
+export const Panels = [DefaultPanel];

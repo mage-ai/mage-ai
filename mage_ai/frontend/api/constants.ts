@@ -15,11 +15,7 @@ export enum MetaQueryEnum {
   ORDER_BY = '_order_by[]',
 }
 
-export const META_QUERY_KEYS = [
-  MetaQueryEnum.LIMIT,
-  MetaQueryEnum.OFFSET,
-  MetaQueryEnum.ORDER_BY,
-];
+export const META_QUERY_KEYS = [MetaQueryEnum.LIMIT, MetaQueryEnum.OFFSET, MetaQueryEnum.ORDER_BY];
 
 export enum ResponseTypeEnum {
   BLOB = 'blob',

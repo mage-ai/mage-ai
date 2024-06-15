@@ -10,25 +10,24 @@ import { FileType, ResourceType } from '@components/v2/IDE/interfaces';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 
-function ToolbarTop(props: AppLoaderProps & {
-  loading: boolean;
-  resource: ResourceType;
-  stale: boolean;
-  updateLocalContent: (file: FileType) => void;
-  updateServerContent: (file: FileType, payload: {
-    content?: string;
-    path?: string;
-  }) => void;
-}) {
+function ToolbarTop(
+  props: AppLoaderProps & {
+    loading: boolean;
+    resource: ResourceType;
+    stale: boolean;
+    updateLocalContent: (file: FileType) => void;
+    updateServerContent: (
+      file: FileType,
+      payload: {
+        content?: string;
+        path?: string;
+      },
+    ) => void;
+  },
+) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    loading,
-    resource,
-    stale,
-    updateLocalContent,
-    updateServerContent,
-  } = props;
+  const { loading, resource, stale, updateLocalContent, updateServerContent } = props;
   const { main, original } = resource;
 
   return (
@@ -76,23 +75,18 @@ function ToolbarTop(props: AppLoaderProps & {
       {stale && (
         <>
           <Text warning xsmall>
-            Server content is different from local content.
-            Save the current content or reset it with the server content.
+            Server content is different from local content. Save the current content or reset it
+            with the server content.
           </Text>
 
           <ButtonGroup>
-            <Button
-              asLink
-              loading={loading}
-              onClick={() => updateServerContent(main, main)}
-              small
-            >
+            <Button asLink loading={loading} onClick={() => updateServerContent(main, main)} small>
               Save local
             </Button>
             <Button
               asLink
               basic
-              onClick={(event) => {
+              onClick={event => {
                 event.preventDefault();
                 updateLocalContent(original);
               }}
@@ -104,13 +98,7 @@ function ToolbarTop(props: AppLoaderProps & {
         </>
       )}
 
-      <TextInput
-        defaultValue={main?.path || ''}
-        monospace
-        muted
-        ref={inputRef}
-        small
-      />
+      <TextInput defaultValue={main?.path || ''} monospace muted ref={inputRef} small />
     </Grid>
   );
 }

@@ -42,11 +42,15 @@ function Group({
         templateColumns="min-content"
         templateRows="1fr"
       >
-        {React.Children.map(children, (child, index: number) => child && (
-          <div className="button-item" key={`button-item-${index}`} style={{ height: 'auto' }}>
-            {child}
-          </div>
-        ))}
+        {React.Children.map(
+          children,
+          (child, index: number) =>
+            child && (
+              <div className="button-item" key={`button-item-${index}`} style={{ height: 'auto' }}>
+                {child}
+              </div>
+            ),
+        )}
       </Grid>
     </GroupStyled>
   );

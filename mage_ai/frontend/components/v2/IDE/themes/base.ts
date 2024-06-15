@@ -175,9 +175,9 @@ function build(theme: ThemeType): IDEThemeType {
       'diffEditor.unchangedRegionShadow': '#FFFFFF',
       // The background color of unchanged code in the diff editor.
       'diffEditor.unchangedCodeBackground': '#FFFFFF',
-        // order: The border color for text that got moved in the diff editor.
+      // order: The border color for text that got moved in the diff editor.
       'diffEditor.move': '#FFFFFF',
-        // order: The active border color for text that got moved in the diff editor.
+      // order: The active border color for text that got moved in the diff editor.
       'diffEditor.moveActive': '#FFFFFF',
       // The background color of the diff editor's header
       'multiDiffEditor.headerBackground': '#FFFFFF',

@@ -53,8 +53,16 @@ export type ErrorResponseType = {
   error?: ErrorDetailsType;
 };
 
-export type OnSuccessHandlerType = (response: any | ResponseType, variables?: any, context?: any) => Promise<unknown> | unknown;
-export type OnErrorHandlerType = (err: any, variables?: any, context?: any) => Promise<unknown> | unknown;
+export type OnSuccessHandlerType = (
+  response: any | ResponseType,
+  variables?: any,
+  context?: any,
+) => Promise<unknown> | unknown;
+export type OnErrorHandlerType = (
+  err: any,
+  variables?: any,
+  context?: any,
+) => Promise<unknown> | unknown;
 
 export interface HandlersType {
   onError?: OnErrorHandlerType;
@@ -74,7 +82,9 @@ export type MutateFunctionArgsType = {
   payload?: Record<string, any>;
   query?: Record<string, any>;
 };
-export type MutateFunctionType = (args: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
+export type MutateFunctionType = (
+  args: MutateFunctionArgsType,
+) => Promise<ResourceType | ResourceType[]>;
 
 export type MutatationType = {
   data: any;

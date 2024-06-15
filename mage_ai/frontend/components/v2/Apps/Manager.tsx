@@ -95,10 +95,8 @@ function Manager() {
                 apps={[app]}
                 operations={{
                   [OperationTypeEnum.REMOVE_APP]: {
-                    effect: (
-                      _,
-                      appConfigs: Record<string, AppConfigType>,
-                    ) => !Object.keys(appConfigs || {})?.length && removePanel(panel),
+                    effect: (_, appConfigs: Record<string, AppConfigType>) =>
+                      !Object.keys(appConfigs || {})?.length && removePanel(panel),
                   } as OperationType,
                 }}
               />
@@ -120,15 +118,18 @@ function Manager() {
       },
     });
 
-    panel.apps = panel.apps.map(builder => (appProps: AppConfigType) => builder({
-      ...appProps,
-      operations: {
-        ...(appProps.operations || {}),
-        [OperationTypeEnum.ADD_PANEL]: {
-          effect: addPanel,
-        },
-      },
-    }));
+    panel.apps = panel.apps.map(
+      builder => (appProps: AppConfigType) =>
+        builder({
+          ...appProps,
+          operations: {
+            ...(appProps.operations || {}),
+            [OperationTypeEnum.ADD_PANEL]: {
+              effect: addPanel,
+            },
+          },
+        }),
+    );
 
     if (refRoots?.current?.[panel.uuid]) {
       removePanel(panel);
@@ -142,7 +143,7 @@ function Manager() {
   useEffect(() => {
     if (phaseRef.current === 0) {
       const loadServices = async () => {
-        await import('../IDE/Manager').then((mod) => {
+        await import('../IDE/Manager').then(mod => {
           mod.Manager.loadServices();
           phaseRef.current = 1;
         });
@@ -152,7 +153,7 @@ function Manager() {
     }
 
     const disposeManager = async () => {
-      await import('../IDE/Manager').then((mod) => {
+      await import('../IDE/Manager').then(mod => {
         mod.Manager.dispose();
       });
     };

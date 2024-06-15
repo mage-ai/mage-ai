@@ -9,9 +9,15 @@ export enum OperationTypeEnum {
 
 export type AddAppOperationType = (app: AppConfigType, opts?: AddAppFunctionOptionsType) => void;
 export type AddPanelOperationType = (app: PanelType) => void;
-export type RemoveAppOperationType = (uuid: string, appConfigs?: Record<string, AppConfigType>) => void;
+export type RemoveAppOperationType = (
+  uuid: string,
+  appConfigs?: Record<string, AppConfigType>,
+) => void;
 
-export type OperationEffectType = AddAppOperationType | AddPanelOperationType | RemoveAppOperationType;
+export type OperationEffectType =
+  | AddAppOperationType
+  | AddPanelOperationType
+  | RemoveAppOperationType;
 
 type OperationType = {
   label?: () => string;

@@ -9,7 +9,12 @@ import Menu from '@mana/components/Menu';
 import Scrollbar from '@mana/elements/Scrollbar';
 import useMutate from '@api/useMutate';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import { AppConfigType, AppLoaderProps, AddPanelOperationType, OperationTypeEnum } from '../../interfaces';
+import {
+  AppConfigType,
+  AppLoaderProps,
+  AddPanelOperationType,
+  OperationTypeEnum,
+} from '../../interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
 import { ItemDetailType } from './interfaces';
 import { ItemTypeEnum } from './enums';
@@ -83,17 +88,21 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
                         if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
                           addPanel({
                             apps: [
-                              (appProps?: AppConfigType) => mergeDeep({
-                                operations: {
-                                  [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
-                                },
-                                options: {
-                                  file: itemClicked,
-                                },
-                                subtype: AppSubtypeEnum.IDE,
-                                type: AppTypeEnum.EDITOR,
-                                uuid: itemClicked?.name,
-                              }, appProps),
+                              (appProps?: AppConfigType) =>
+                                mergeDeep(
+                                  {
+                                    operations: {
+                                      [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                                    },
+                                    options: {
+                                      file: itemClicked,
+                                    },
+                                    subtype: AppSubtypeEnum.IDE,
+                                    type: AppTypeEnum.EDITOR,
+                                    uuid: itemClicked?.name,
+                                  },
+                                  appProps,
+                                ),
                             ],
                             uuid: `panel-${itemClicked?.name}`,
                           });

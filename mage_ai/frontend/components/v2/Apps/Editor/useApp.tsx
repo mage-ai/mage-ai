@@ -15,10 +15,10 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const { app } = props;
 
   const file = useMemo(() => app?.options?.file, [app]);
-  const {
-    client,
-    server,
-  } = useMemo(() => getFileCache(file?.path) || {} as FileCacheType, [file]);
+  const { client, server } = useMemo(
+    () => getFileCache(file?.path) || ({} as FileCacheType),
+    [file],
+  );
 
   const [main, setMainState] = useState<FileType>({
     ...file,
@@ -33,7 +33,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const phaseRef = useRef(0);
 
   async function updateLocalContent(item: FileType) {
-    await import('../../IDE/Manager').then((mod) => {
+    await import('../../IDE/Manager').then(mod => {
       mod.Manager.setValue(item);
       updateFileCache({ client: item, server: item });
       // Trigger state update so the toolbar statuses re-render.
@@ -83,10 +83,13 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     },
   });
 
-  function updateServerContent(item: FileType, payload: {
-    content?: string;
-    path?: string;
-  }) {
+  function updateServerContent(
+    item: FileType,
+    payload: {
+      content?: string;
+      path?: string;
+    },
+  ) {
     mutants.update.mutate({
       id: encodeURIComponent(item.path),
       payload: {
@@ -121,39 +124,43 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   }
 
   const mainApp = useMemo(
-    () => (clientRef?.current || main?.content || phaseRef.current >= 1) && (
-      <MaterialIDE
-        configurations={app?.options?.configurations}
-        eventListeners={{
-          onDidChangeModelContent,
-        }}
-        persistManagerOnUnmount
-        resource={{
-          main,
-          // Diff editor doesn’t show diff colors yet, don’t use it for now.
-          // original,
-        }}
-        uuid={app?.uuid}
-      />
-    ),
+    () =>
+      (clientRef?.current || main?.content || phaseRef.current >= 1) && (
+        <MaterialIDE
+          configurations={app?.options?.configurations}
+          eventListeners={{
+            onDidChangeModelContent,
+          }}
+          persistManagerOnUnmount
+          resource={{
+            main,
+            // Diff editor doesn’t show diff colors yet, don’t use it for now.
+            // original,
+          }}
+          uuid={app?.uuid}
+        />
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [app, main],
   );
 
-  const top = useMemo(() => (
-    <ToolbarsTop
-      {...props}
-      loading={mutants.update.isLoading}
-      resource={{
-        main,
-        original,
-      }}
-      stale={stale}
-      updateLocalContent={updateLocalContent}
-      updateServerContent={updateServerContent}
-    />
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [mutants.update.isLoading, main, original, props, stale]);
+  const top = useMemo(
+    () => (
+      <ToolbarsTop
+        {...props}
+        loading={mutants.update.isLoading}
+        resource={{
+          main,
+          original,
+        }}
+        stale={stale}
+        updateLocalContent={updateLocalContent}
+        updateServerContent={updateServerContent}
+      />
+    ),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mutants.update.isLoading, main, original, props, stale],
+  );
 
   return {
     main: mainApp,

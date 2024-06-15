@@ -13,11 +13,7 @@ type PaddingProps = {
 };
 
 function Padding({ children, ...props }: PaddingProps, ref: React.Ref<HTMLDivElement>) {
-  return (
-    <div className={styleClassNames(styles, [styles.padding], props)}>
-      {children}
-    </div>
-  );
+  return <div className={styleClassNames(styles, [styles.padding], props)}>{children}</div>;
 }
 
 export default React.forwardRef(Padding);

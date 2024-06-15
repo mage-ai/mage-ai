@@ -1,11 +1,19 @@
 import { hyphenateCamelCase } from '@utils/string';
 
-export function styleClassNames(styles: Record<string, boolean | number | string>, classNames: string[], { className, uuid, ...props }: {
-  [key: string]: boolean | number | string;
-} = {
-  className: '',
-  uuid: '',
-}): string {
+export function styleClassNames(
+  styles: Record<string, boolean | number | string>,
+  classNames: string[],
+  {
+    className,
+    uuid,
+    ...props
+  }: {
+    [key: string]: boolean | number | string;
+  } = {
+    className: '',
+    uuid: '',
+  },
+): string {
   const arr: string[] = classNames || [];
 
   Object.entries(props || {}).forEach(([key, value]) => {

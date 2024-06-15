@@ -74,7 +74,7 @@ function Button({
     // @ts-ignore
     <HTMLTag
       {...props}
-      {...asLink ? { href: '#' } : {}}
+      {...(asLink ? { href: '#' } : {})}
       asLink={asLink}
       basic={basic}
       loading={loading ? true : undefined}

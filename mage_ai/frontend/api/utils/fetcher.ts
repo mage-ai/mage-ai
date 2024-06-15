@@ -128,34 +128,37 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 
   return new Promise((resolve, reject) => {
-    axios.request({
-      data: data.body,
-      headers,
-      method,
-      onDownloadProgress: opts?.onDownloadProgress
-        ? e =>
-            opts.onDownloadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
-        : null,
-      onUploadProgress: opts?.onUploadProgress
-        ? e =>
-            opts.onUploadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
-        : null,
-      responseType,
-      signal,
-      url: finalUrl,
-    }).then(response => {
-      resolve(response);
-    }).catch(error => {
-      reject({
-        ...(error?.response || error),
+    axios
+      .request({
+        data: data.body,
+        headers,
+        method,
+        onDownloadProgress: opts?.onDownloadProgress
+          ? e =>
+              opts.onDownloadProgress(e, {
+                body: opts?.body,
+                query: opts?.query,
+              })
+          : null,
+        onUploadProgress: opts?.onUploadProgress
+          ? e =>
+              opts.onUploadProgress(e, {
+                body: opts?.body,
+                query: opts?.query,
+              })
+          : null,
+        responseType,
+        signal,
+        url: finalUrl,
+      })
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        reject({
+          ...(error?.response || error),
+        });
       });
-    });
   });
 }
 

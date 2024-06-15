@@ -19,7 +19,7 @@ function cacheKey(uuid: string): string {
 }
 
 export function isStale(path: string): boolean {
-  const { client, server } = get(cacheKey(path)) || {} as FileCacheType;
+  const { client, server } = get(cacheKey(path)) || ({} as FileCacheType);
   return client?.file?.content !== server?.file?.content;
 }
 
@@ -35,10 +35,12 @@ export function updateFileCache({
   client: fileClient,
   server: fileServer,
 }: {
-  client?: FileType | {
-    content: string;
-    path: string;
-  };
+  client?:
+    | FileType
+    | {
+        content: string;
+        path: string;
+      };
   server?: FileType;
 }) {
   const key = cacheKey(fileClient?.path || fileServer?.path);
