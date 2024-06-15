@@ -158,7 +158,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
         updateServerContent={updateServerContent}
       />
     ),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [mutants.update.isLoading, main, original, props, stale],
   );
 
