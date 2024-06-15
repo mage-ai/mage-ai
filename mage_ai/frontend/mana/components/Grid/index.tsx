@@ -22,6 +22,7 @@ function Grid(
   const classNames = styleClassNames(
     styles,
     [styles['grid'], uuid ? styles['grid-mana'] : '', className || ''],
+    // @ts-ignore
     {
       className,
       uuid,
