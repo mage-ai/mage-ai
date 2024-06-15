@@ -11,16 +11,7 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
   ssr: false,
 });
 
-async function updateLocalContent(item: FileType) {
-  await import('../../IDE/Manager').then((mod) => {
-    mod.Manager.setValue(item);
-    console.log('cache');
-    updateFileCache({ client: item, server: item });
-  });
-}
-
 export default function useApp(props: AppLoaderProps): AppLoaderResultType {
-  console.log('render');
   const { app } = props;
 
   const file = useMemo(() => app?.options?.file, [app]);
@@ -41,33 +32,52 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   const clientRef = useRef(client?.file);
   const phaseRef = useRef(0);
 
-  function setMain(item: FileType) {
-    if (clientRef.current) {
-      updateFileCache({ server: item });
-    } else {
+  async function updateLocalContent(item: FileType) {
+    await import('../../IDE/Manager').then((mod) => {
+      mod.Manager.setValue(item);
+      updateFileCache({ client: item, server: item });
+      // Trigger state update so the toolbar statuses re-render.
       setMainState(item);
-      updateLocalContent(item);
-    }
-
-    if (item) {
-      contentRef.current = item.content;
       setStale(isStale(item.path));
-    }
-
-    phaseRef.current += 1;
+    });
   }
 
   const mutants = useMutate('browser_items', {
     handlers: {
       detail: {
         onSuccess: (item: FileType) => {
-          setMain(item);
           setOriginal(item);
+
+          let staleUpdated = false;
+          if (clientRef.current) {
+            // If cache exists client side, don’t update it; only update the server cache.
+            updateFileCache({ server: item });
+          } else {
+            // If cache doesn’t exist client side, set it. This is done typically when the file
+            // is opened for the very first time.
+            updateLocalContent(item);
+            staleUpdated = true;
+          }
+
+          setMainState(item);
+
+          if (item) {
+            contentRef.current = item.content;
+            !staleUpdated && setStale(isStale(item.path));
+          }
+          phaseRef.current += 1;
         },
       },
       update: {
         onSuccess: (item: FileType) => {
-          setMain(item);
+          updateFileCache({ server: item });
+          setMainState(item);
+
+          if (item) {
+            contentRef.current = item.content;
+            setStale(isStale(item.path));
+          }
+          phaseRef.current += 1;
         },
       },
     },

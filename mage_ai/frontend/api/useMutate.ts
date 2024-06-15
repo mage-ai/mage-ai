@@ -38,8 +38,7 @@ export default function useMutate(endpoint: string | string[], opts?: {
     return {
       ...(handlers || {}),
       onError: (error: any, variables: any, context?: any) => {
-        console.log('[ERROR]', error);
-
+        alert(`${error}`);
 
         onError && onError?.(error, variables, context);
       },

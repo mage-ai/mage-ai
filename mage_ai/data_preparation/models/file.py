@@ -147,7 +147,8 @@ class File:
                 new_dir_path,
                 new_filename,
             )
-            result = await write_async(new_file_path_versions_dir) and result
+            raise Exception(old_file_path_versions_dir, new_file_path_versions_dir)
+            await write_async(new_file_path_versions_dir)
 
         return result
 
