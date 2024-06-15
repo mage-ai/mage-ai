@@ -1,3 +1,4 @@
+import { ApiResourceType } from './index';
 import { AxiosError } from 'axios';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
 
@@ -41,3 +42,55 @@ export type AxiosErrorType = {
     data: { error: ErrorDetailsType } | Record<string, any>;
   };
 } & AxiosError;
+
+type ResourceType = Record<string, any>;
+
+export type ResponseType = {
+  data?: Record<typeof ApiResourceType, ResourceType>;
+};
+
+export type ErrorResponseType = {
+  error?: ErrorDetailsType;
+};
+
+export type OnSuccessHandlerType = (response: ResponseType, variables: any, context?: any) => Promise<unknown> | unknown;
+export type OnErrorHandlerType = (err: any, variables: any, context?: any) => Promise<unknown> | unknown;
+
+export interface HandlersType {
+  onError?: OnErrorHandlerType;
+  onSuccess?: OnSuccessHandlerType;
+}
+
+export interface ResourceHandlersType {
+  create?: HandlersType;
+  delete?: HandlersType;
+  detail?: HandlersType;
+  list?: HandlersType;
+  update?: HandlersType;
+}
+
+type MutateFunctionType = (args?:any |  any[],  handlers?: HandlersType) => Promise<ResourceType | ResourceType[]>;
+
+export interface MutatationType {
+  data: any;
+  error: any;
+  isError: boolean;
+  isIdle: boolean;
+  isLoading: boolean;
+  isPaused: boolean;
+  isSuccess: boolean;
+  failureCount: number;
+  failureReason: any;
+  mutate: MutateFunctionType;
+  mutateAsync: (args: any) => any;
+  reset: any;
+  status: any;
+}
+
+export interface MutateType {
+  create: MutatationType;
+  delete: MutatationType;
+  detail: MutatationType;
+  list: MutatationType;
+  update: MutatationType;
+}

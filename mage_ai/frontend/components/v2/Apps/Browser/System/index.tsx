@@ -23,6 +23,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_CONTROL,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { FileType } from '@components/v2/IDE/interfaces';
 // @ts-ignore
 // import Worker from 'worker-loader!@public/workers/worker.ts';
 
@@ -30,7 +31,7 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
-  const filePathsRef = useRef<string[]>(null);
+  const filePathsRef = useRef<FileType[]>(null);
   const itemsRootRef = useRef(null);
   const contextMenuRootRef = useRef(null);
 
@@ -113,7 +114,17 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     }
   }
 
-  const { api, loading } = useItems();
+  const mutants = useItems({
+    list: {
+      onSuccess: (items: FileType[]) => {
+        console.log(items);
+        if (items?.length >= 1) {
+          filePathsRef.current = items;
+          renderItems((items || []) as ItemDetailType[]);
+        }
+      },
+    },
+  });
 
   const renderContextMenu = useCallback(
     (item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
@@ -197,16 +208,9 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
 
   useEffect(() => {
     if (!itemsRootRef?.current) {
-      api.list({
+      mutants.list.mutate({
         exclude_pattern: COMMON_EXCLUDE_PATTERNS,
         include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      }, {
-        onSuccess: ({ data: { browser_items: items } }) => {
-          if (items?.length >= 1) {
-            filePathsRef.current = items;
-            renderItems((items || []) as ItemDetailType[]);
-          }
-        },
       });
     }
 
@@ -235,7 +239,7 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
 
   return (
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
-      {loading.list && <Loading />}
+      {mutants.list.isLoading && <Loading />}
       <div id={rootID} />
       <div id={contextMenuRootID} />
     </Scrollbar>

@@ -1,30 +1,25 @@
-import { useMutate } from '@tanstack/react-query';
-
+import useMutate from '@api/useMutate';
 import { FileType } from '@components/v2/IDE/interfaces';
-import { HandlersType } from '@api/callbacks';
+import { ResourceHandlersType } from '@api/interfaces';
 import { updateFileCache } from '@components/v2/IDE/cache';
+import { mergeDeep } from '@utils/hash';
 
-export default function useItems() {
-  const {
-    api,
-    loading,
-  } = useMutate('browser_items');
-
-  return {
-    api: {
-      ...api,
-      update: (args: [], handlers: HandlersType) => api.update(...args, {
-        ...handlers,
-        onSuccess: (resource: FileType) => {
+export default function useItems(resourceHandlers?: ResourceHandlersType) {
+  const mutants = useMutate('browser_items', {
+    handlers: mergeDeep(resourceHandlers, {
+      update: {
+        onSuccess: (resource: FileType, ...successArgs: any[]) => {
           updateFileCache({
             client: resource,
             server: resource,
           });
 
-          return handlers?.onSuccess?.(resource);
+          resourceHandlers?.update?.onSuccess
+            && resourceHandlers?.update?.onSuccess?.(resource, ...(successArgs as [any]));
         },
-      }),
-    },
-    loading,
-  };
+      },
+    }),
+  });
+
+  return mutants;
 }

@@ -5,7 +5,6 @@ import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 import useItems from '../hooks/items/useItems';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
 import { FileType } from '../../IDE/interfaces';
-import { handleResponse } from '@api/callbacks';
 
 const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
 const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
