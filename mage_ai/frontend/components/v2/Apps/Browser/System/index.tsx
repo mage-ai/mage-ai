@@ -84,13 +84,13 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
                           addPanel({
                             apps: [
                               (appProps?: AppConfigType) => mergeDeep({
+                                operations: {
+                                  [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                                },
                                 options: {
                                   file: itemClicked,
                                 },
                                 subtype: AppSubtypeEnum.IDE,
-                                toolbars: {
-                                  [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
-                                },
                                 type: AppTypeEnum.EDITOR,
                                 uuid: itemClicked?.name,
                               }, appProps),

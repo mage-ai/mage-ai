@@ -66,6 +66,8 @@ function AppContainer(
     },
   });
 
+  console.log(app, toolbars, removeApp);
+
   return (
     <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
       <Grid
@@ -81,7 +83,7 @@ function AppContainer(
       >
         <Header
           style={{
-            gridTemplateColumns: toolbars && app?.toolbars?.top && removeApp
+            gridTemplateColumns: toolbars && (app?.toolbars?.top || removeApp)
               ? '1fr auto'
               : toolbars
                 ? '1fr'
@@ -96,8 +98,8 @@ function AppContainer(
             </Grid>
           )}
 
-          {app?.toolbars?.top && (
-            <Padding bottom="small" right="small" top="small">
+          {(app?.toolbars?.top || removeApp) && (
+            <Padding bottom="small" top="small">
               <ButtonGroup basic itemsContained>
                 {bottomOperations?.[OperationTypeEnum.ADD_APP] && (
                   <Button

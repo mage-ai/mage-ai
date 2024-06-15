@@ -36,7 +36,6 @@ function ToolbarTop(props: AppLoaderProps & {
       alignItems="stretch"
       columnGap={8}
       paddingBottom={8}
-      paddingLeft={8}
       paddingTop={8}
       templateColumns={stale ? 'auto auto 1fr' : 'auto 1fr'}
       templateRows="auto"
