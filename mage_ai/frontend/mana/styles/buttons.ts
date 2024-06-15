@@ -33,14 +33,15 @@ const shared = css<StyleProps>`
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ grouped }) =>
-    grouped &&
+  ${({ asLink, grouped }) =>
+    (asLink || grouped) &&
     `
     border: none;
   `}
 
-  ${({ basic, grouped }) => !grouped && basic && borders}
-  ${({ basic, grouped, primary, secondary, theme }) =>
+  ${({ asLink, basic, grouped }) => !asLink && !grouped && basic && borders}
+  ${({ asLink, basic, grouped, primary, secondary, theme }) =>
+    !asLink &&
     !grouped &&
     basic &&
     `
@@ -126,12 +127,12 @@ const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
   padding: ${({ asLink, basic, grouped, theme }) =>
-    grouped
-      ? basic
-        ? 0
-        : theme.buttons.padding.xxs
-      : asLink
-        ? theme.buttons.padding.xs
+    asLink
+      ? '2px 4px'
+      : grouped
+        ? basic
+          ? 0
+          : theme.buttons.padding.xxs
         : theme.buttons.padding.base};
 `;
 
@@ -139,14 +140,16 @@ export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ basic, grouped, theme, tag }) =>
+  padding: ${({ asLink, basic, grouped, theme, tag }) =>
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
-      : grouped
-        ? basic
-          ? 0
-          : theme.buttons.padding.xxs
-        : theme.buttons.padding.sm};
+      : asLink
+        ? '2px 4px'
+        : grouped
+          ? basic
+            ? 0
+            : theme.buttons.padding.xxs
+          : theme.buttons.padding.sm};
 
   ${({ grouped, tag, theme }) =>
     typeof tag !== 'undefined' &&

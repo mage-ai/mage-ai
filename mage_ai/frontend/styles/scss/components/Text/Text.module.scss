@@ -1,28 +1,13 @@
-@import '../../base/typography';
-
-@mixin text {
-  @include base;
-  margin: 0;
-}
-
-@mixin text-small {
-  @include base-sm;
-  margin: 0;
-}
-
-@mixin text-xsmall {
-  @include base-xs;
-  margin: 0;
-}
+@use '../../base/typography' as text;
 
 .text {
-  @include text;
+  @include text.base;
 }
 
-.text-small {
-  @include text-small;
+.small {
+  @include text.base-sm;
 }
 
-.text-xsmall {
-  @include text-xsmall;
+.xsmall {
+  @include text.base-xs;
 }

@@ -7,7 +7,7 @@ $fonts: (
     text-base: $fonts-color-text-base,
     text-blue: $fonts-color-text-blue,
     text-inverted: $fonts-color-text-inverted,
-    text-muted: $fonts-color-text-muted
+    text-muted: $fonts-color-text-muted,
   ),
   family: (
     base: (
@@ -16,7 +16,7 @@ $fonts: (
       lightFont: $fonts-family-base-lightFont,
       medium: $fonts-family-base-medium,
       regular: $fonts-family-base-regular,
-      semiBold: $fonts-family-base-semiBold
+      semiBold: $fonts-family-base-semiBold,
     ),
     monospace: (
       black: $fonts-family-monospace-black,
@@ -26,7 +26,7 @@ $fonts: (
       medium: $fonts-family-monospace-medium,
       regular: $fonts-family-monospace-regular,
       regularItalic: $fonts-family-monospace-regularItalic,
-      semiBold: $fonts-family-monospace-semiBold
+      semiBold: $fonts-family-monospace-semiBold,
     )
   ),
   lineHeight: (
@@ -34,22 +34,22 @@ $fonts: (
     md: $fonts-lineHeight-md,
     monospace: $fonts-lineHeight-monospace,
     sm: $fonts-lineHeight-sm,
-    xs: $fonts-lineHeight-xs
+    xs: $fonts-lineHeight-xs,
   ),
   size: (
     base: $fonts-size-base,
     sm: $fonts-size-sm,
-    xs: $fonts-size-xs
+    xs: $fonts-size-xs,
   ),
   style: (
     base: $fonts-style-base,
-    italic: $fonts-style-italic
+    italic: $fonts-style-italic,
   ),
   weight: (
     bold: $fonts-weight-bold,
     light: $fonts-weight-light,
     medium: $fonts-weight-medium,
     regular: $fonts-weight-regular,
-    semiBold: $fonts-weight-semiBold
-  )
+    semiBold: $fonts-weight-semiBold,
+  ),
 );

@@ -12,12 +12,12 @@ class ApiError(Exception):
     )
 
     RESOURCE_ERROR = dict(
-        code=ErrorCode.CODE_500.value,
+        code=ErrorCode.CODE_400.value,
         message='API resource error.',
         type='api_resource_error',
     )
     RESOURCE_INVALID = dict(
-        code=ErrorCode.CODE_402.value,
+        code=ErrorCode.CODE_400.value,
         message='Record is invalid.',
         type='record_invalid',
     )
@@ -28,7 +28,7 @@ class ApiError(Exception):
     )
 
     INVALID_API_KEY = dict(
-        code=ErrorCode.CODE_403.value,
+        code=ErrorCode.CODE_401.value,
         message='Invalid API key.',
         type='invalid_api_key',
     )

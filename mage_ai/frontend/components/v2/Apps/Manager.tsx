@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { createRef, useContext, useRef, useState } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import dynamic from 'next/dynamic';
@@ -7,20 +7,17 @@ import { createRoot } from 'react-dom/client';
 import TextInput from '@mana/elements/Input/TextInput';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Grid from '@mana/components/Grid';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import { removeClassNames } from '@utils/elements';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { ModeEnum } from '@mana/themes/modes';
-import { AppConfigType, PanelType } from './interfaces';
+import { AppConfigType, OperationTypeEnum, PanelType } from './interfaces';
 import { setThemeSettings } from '@mana/themes/utils';
-import { AppSubtypeEnum, AppTypeEnum } from './constants';
 import { DefaultPanel } from './catalog';
-import { Cluster, Dark, Menu, PanelCollapseLeft } from '@mana/icons';
+import { Dark, Menu, PanelCollapseLeft } from '@mana/icons';
 import { updateClassnames, upsertRootElement } from './utils';
 import styles from '@styles/scss/pages/Apps/Manager.module.scss';
 
 function Manager() {
-  const addingPanel = useRef(false);
+  const phaseRef = useRef(0);
+
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const refCells = useRef({});
@@ -58,7 +55,7 @@ function Manager() {
   }
 
   function addPanel(panel: PanelType) {
-    const { apps, uuid } = panel;
+    const { apps: builders, layout, uuid } = panel;
 
     const container = document.getElementById(uuid);
 
@@ -67,9 +64,15 @@ function Manager() {
     }
     const element = upsertRootElement({ uuid });
 
-    containerRef?.current.appendChild(element);
+    if (layout?.column <= -1) {
+      containerRef?.current.prepend(element);
+    } else {
+      containerRef?.current.appendChild(element);
+    }
 
-    apps?.forEach((app: AppConfigType, idx: number) => {
+    builders?.forEach((builder: (props?: any) => AppConfigType, idx: number) => {
+      const app = builder({});
+
       if (uuid === app.uuid) {
         throw new Error('Panel UUID cannot match any app UUID');
       }
@@ -89,17 +92,12 @@ function Manager() {
           refRoots.current[uuid].render(
             <ThemeProvider theme={themeContext}>
               <AppLayout
-                addPanel={addPanel}
                 apps={[app]}
-                onRemoveApp={(
-                  _,
-                  appConfigs: {
-                    [uuid: string]: AppConfigType;
+                operations={{
+                  [OperationTypeEnum.REMOVE_APP]: {
+                    effect: (_, appConfigs: Record<string, AppConfigType>) =>
+                      !Object.keys(appConfigs || {})?.length && removePanel(panel),
                   },
-                ) => {
-                  if (!Object.keys(appConfigs || {})?.length) {
-                    removePanel(panel);
-                  }
                 }}
               />
             </ThemeProvider>,
@@ -111,46 +109,91 @@ function Manager() {
     });
   }
 
-  const togglePanel = useCallback((panel: PanelType) => {
+  function toggleFileBrowser() {
+    const panel = DefaultPanel({
+      operations: {
+        [OperationTypeEnum.ADD_PANEL]: {
+          effect: addPanel,
+        },
+      },
+    });
+
+    panel.apps = panel.apps.map(
+      builder => (appProps: AppConfigType) =>
+        builder({
+          ...appProps,
+          operations: {
+            ...(appProps.operations || {}),
+            [OperationTypeEnum.ADD_PANEL]: {
+              effect: addPanel,
+            },
+          },
+        }),
+    );
+
     if (refRoots?.current?.[panel.uuid]) {
       removePanel(panel);
     } else {
       addPanel(panel);
     }
+
+    setFileBrowserVisible(prev => !prev);
+  }
+
+  useEffect(() => {
+    if (phaseRef.current === 0) {
+      const loadServices = async () => {
+        await import('../IDE/Manager').then(mod => {
+          mod.Manager.loadServices();
+          phaseRef.current = 1;
+        });
+      };
+
+      loadServices();
+    }
+
+    const disposeManager = async () => {
+      await import('../IDE/Manager').then(mod => {
+        mod.Manager.dispose();
+      });
+    };
+
+    return () => {
+      disposeManager();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className={styles.container}>
       <Grid
-        height="inherit"
-        overflow="visible"
+        height='inherit'
+        overflow='visible'
         padding={12}
         rowGap={12}
-        templateColumns="auto-fill"
-        templateRows="auto 1fr"
-        width="100%"
+        templateColumns='auto-fill'
+        templateRows='auto 1fr'
+        width='100%'
       >
         <Grid
           columnGap={12}
-          overflow="visible"
+          overflow='visible'
           row={1}
-          templateColumns="auto 1fr 1fr auto"
-          templateRows="1fr"
-          width="inherit"
+          templateColumns='auto 1fr 1fr auto'
+          templateRows='1fr'
+          width='inherit'
         >
           <Button
             Icon={fileBrowserVisible ? PanelCollapseLeft : Menu}
             basic={fileBrowserVisible}
             onClick={() => {
-              togglePanel(DefaultPanel);
-              setFileBrowserVisible(prev => !prev);
+              toggleFileBrowser();
             }}
           />
 
-          <TextInput monospace number placeholder="Row" />
+          <TextInput monospace number placeholder='Row' />
 
-          <TextInput monospace number placeholder="Column" />
+          <TextInput monospace number placeholder='Column' />
 
           <ButtonGroup>
             <Button
@@ -167,12 +210,12 @@ function Manager() {
         </Grid>
 
         <Grid
-          autoFlow="column"
+          autoFlow='column'
           columnGap={12}
           ref={containerRef}
           row={2}
-          templateRows="1fr"
-          width="inherit"
+          templateRows='1fr'
+          width='inherit'
         />
       </Grid>
     </div>

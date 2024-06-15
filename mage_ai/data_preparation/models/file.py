@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional
 
 import aiofiles
 
@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.files import exists_async, rename_async, write_async
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 from mage_ai.shared.utils import get_absolute_path
 
@@ -96,19 +97,19 @@ class File:
 
     @classmethod
     async def create_async(
-        self,
+        cls,
         filename,
         dir_path,
-        content: str = None,
-        repo_path: str = None,
+        content: Optional[str] = None,
+        repo_path: Optional[str] = None,
         create_directories_if_not_exist: bool = True,
         file_version_only: bool = False,
-        overwrite: bool = True,
+        overwrite: Optional[bool] = True,
     ):
         repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
-        await self.write_async(
+        await cls.write_async(
             repo_path,
             dir_path,
             filename,
@@ -119,6 +120,37 @@ class File:
         )
 
         return file
+
+    @classmethod
+    async def rename_async(
+        cls, old_path: str, new_path: str, overwrite: Optional[bool] = None
+    ) -> bool:
+        result = await rename_async(old_path, new_path, overwrite=overwrite)
+
+        old_filename = os.path.basename(old_path)
+        old_dir_path = os.path.dirname(old_path)
+        old_repo_path = get_repo_path(file_path=os.path.join(old_dir_path, old_filename))
+
+        new_filename = os.path.basename(new_path)
+        new_dir_path = os.path.dirname(new_path)
+        new_repo_path = get_repo_path(file_path=os.path.join(new_dir_path, new_filename))
+
+        old_file_path_versions_dir = cls.file_path_versions_dir(
+            old_repo_path,
+            old_dir_path,
+            old_filename,
+        )
+
+        if await exists_async(old_file_path_versions_dir):
+            new_file_path_versions_dir = cls.file_path_versions_dir(
+                new_repo_path,
+                new_dir_path,
+                new_filename,
+            )
+            raise Exception(old_file_path_versions_dir, new_file_path_versions_dir)
+            await write_async(new_file_path_versions_dir)
+
+        return result
 
     @classmethod
     def from_path(self, file_path, repo_path: str = None):
@@ -190,7 +222,7 @@ class File:
         repo_path: str,
         dir_path: str,
         filename: str,
-    ) -> Tuple[str, str]:
+    ) -> str:
         return os.path.join(
             repo_path,
             FILE_VERSIONS_DIR,

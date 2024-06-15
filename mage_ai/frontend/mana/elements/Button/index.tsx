@@ -17,6 +17,7 @@ type ButtonStyleProps = {
 type ButtonProps = {
   className?: string;
   id?: string;
+  loading?: boolean;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
 } & ButtonStyleProps &
   WithLoggingProps;
@@ -44,7 +45,7 @@ const ButtonStyled = styled.button<ButtonStyleProps>`
 const AStyled = styled.a<ButtonStyleProps>`
   ${CSS}
 
-  display: inline-grid;
+  display: inline;
 `;
 
 function Button({
@@ -73,9 +74,10 @@ function Button({
     // @ts-ignore
     <HTMLTag
       {...props}
+      {...(asLink ? { href: '#' } : {})}
       asLink={asLink}
       basic={basic}
-      loading={loading}
+      loading={loading ? true : undefined}
       primary={primary}
       secondary={secondary}
       small={small}

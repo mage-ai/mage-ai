@@ -79,6 +79,18 @@ $values: (
     &.padding-#{$value1} {
       padding: #{$value1}px;
     }
+    &.padding-left-#{$value1} {
+      padding-left: #{$value1}px;
+    }
+    &.padding-right-#{$value1} {
+      padding-right: #{$value1}px;
+    }
+    &.padding-top-#{$value1} {
+      padding-top: #{$value1}px;
+    }
+    &.padding-bottom-#{$value1} {
+      padding-bottom: #{$value1}px;
+    }
 
     &.column-gap-#{$value1} {
       grid-column-gap: #{$value1}px;

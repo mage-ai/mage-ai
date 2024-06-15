@@ -11,6 +11,8 @@ export type StyleProps = {
   monospace?: boolean;
   muted?: boolean;
   semiBold?: boolean;
+  small?: boolean;
+  xsmall?: boolean;
 };
 
 export const monospaceFontFamily = css<StyleProps>`
@@ -59,7 +61,9 @@ const base = css<StyleProps>`
           ? theme.fonts.color.text.muted
           : theme.fonts.color.text.base};
 
-  font-size: ${({ theme }) => theme.fonts.size.base};
+  font-size: ${({ small, theme, xsmall }) =>
+    small ? theme.fonts.size.sm : xsmall ? theme.fonts.size.xs : theme.fonts.size.base};
+
   font-style: ${({ italic, theme }) =>
     italic ? theme.fonts.style.italic : theme.fonts.style.base};
   font-weight: ${({ light, medium, semiBold, bold, theme }) =>
@@ -73,20 +77,22 @@ const base = css<StyleProps>`
             ? theme.fonts.weight.bold
             : theme.fonts.weight.regular};
 
-  line-height: ${({ monospace, theme }) =>
-    monospace ? theme.fonts.lineHeight.monospace : theme.fonts.lineHeight.md};
+  line-height: ${({ monospace, small, theme, xsmall }) =>
+    small
+      ? theme.fonts.lineHeight.base
+      : xsmall
+        ? theme.fonts.lineHeight.xs
+        : monospace
+          ? theme.fonts.lineHeight.monospace
+          : theme.fonts.lineHeight.md};
 `;
 
 export const baseSm = css<StyleProps>`
   ${base}
-  font-size: ${({ theme }) => theme.fonts.size.sm};
-  line-height: ${({ theme }) => theme.fonts.lineHeight.base};
 `;
 
 export const baseXs = css<StyleProps>`
   ${base}
-  font-size: ${({ theme }) => theme.fonts.size.xs};
-  line-height: ${({ theme }) => theme.fonts.lineHeight.xs};
 `;
 
 export default base;

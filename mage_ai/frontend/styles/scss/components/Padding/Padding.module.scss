@@ -1,0 +1,52 @@
+$directions: top, right, bottom, left;
+
+@mixin base() {
+  @each $direction in $directions {
+    &.#{$direction}-base {
+      padding-#{$direction}: var(--padding-base);
+    }
+  }
+}
+
+@mixin small() {
+  @each $direction in $directions {
+    &.#{$direction}-small {
+      padding-#{$direction}: var(--padding-sm);
+    }
+  }
+}
+
+@mixin xsmall() {
+  @each $direction in $directions {
+    &.#{$direction}-xsmall {
+      padding-#{$direction}: var(--padding-xs);
+    }
+  }
+}
+
+.padding {
+  @include base();
+  @include small();
+  @include xsmall();
+
+  &.base-true {
+    padding-bottom: var(--padding-base);
+    padding-left: var(--padding-base);
+    padding-right: var(--padding-base);
+    padding-top: var(--padding-base);
+  }
+
+  &.small-true {
+    padding-bottom: var(--padding-sm);
+    padding-left: var(--padding-sm);
+    padding-right: var(--padding-sm);
+    padding-top: var(--padding-sm);
+  }
+
+  &.xsmall-true {
+    padding-bottom: var(--padding-xs);
+    padding-left: var(--padding-xs);
+    padding-right: var(--padding-xs);
+    padding-top: var(--padding-xs);
+  }
+}

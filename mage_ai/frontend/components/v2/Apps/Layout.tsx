@@ -2,30 +2,32 @@ import dynamic from 'next/dynamic';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRef, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import Grid from '@mana/components/Grid';
-import { AddAppFunctionOptionsType, AppConfigType, PanelType } from './interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from './constants';
+import {
+  AddAppFunctionOptionsType,
+  AppConfigType,
+  OperationTypeEnum,
+  OperationsType,
+} from './interfaces';
 import { insertAtIndex, sortByKey } from '@utils/array';
-import { randomSimpleHashGenerator } from '@utils/string';
 import { upsertRootElement } from './utils';
 import appLoader from './utils/loader';
 
 type AppLayoutProps = {
-  addPanel: (panel: PanelType) => void;
   apps?: AppConfigType[];
-  onRemoveApp: (
-    uuidApp: string,
-    appConfigs: {
-      [uuid: string]: AppConfigType;
-    },
-  ) => void;
+  operations?: OperationsType;
 };
 
-function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps) {
+function AppLayout({ apps: defaultApps, operations }: AppLayoutProps) {
+  const queryClient = new QueryClient();
+  const addPanel = operations?.[OperationTypeEnum.REMOVE_PANEL]?.effect;
+  const onRemoveApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
   const themeContext = useContext(ThemeContext);
 
   const containerRef = useRef(null);
+
   const refAppConfigs = useRef({});
   const refCells = useRef({});
   const refRoots = useRef({});
@@ -147,15 +149,25 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
 
             refRoots.current[uuidApp].render(
               <ThemeProvider theme={themeContext}>
-                <AppContainer
-                  addApp={addApp}
-                  addPanel={addPanel}
-                  app={app}
-                  appLoader={appLoaderResult?.default}
-                  ref={ref}
-                  removeApp={removeApp}
-                  uuid={uuidApp}
-                />
+                <QueryClientProvider client={queryClient}>
+                  <AppContainer
+                    app={app}
+                    appLoader={appLoaderResult?.default}
+                    operations={{
+                      [OperationTypeEnum.ADD_APP]: {
+                        effect: addApp,
+                      },
+                      [OperationTypeEnum.ADD_PANEL]: {
+                        effect: addPanel,
+                      },
+                      [OperationTypeEnum.REMOVE_APP]: {
+                        effect: removeApp,
+                      },
+                    }}
+                    ref={ref}
+                    uuid={uuidApp}
+                  />
+                </QueryClientProvider>
               </ThemeProvider>,
             );
           }
@@ -214,11 +226,11 @@ function AppLayout({ addPanel, apps: defaultApps, onRemoveApp }: AppLayoutProps)
 
   return (
     <Grid
-      autoColumns="1fr"
-      autoRows="1fr"
+      autoColumns='1fr'
+      autoRows='1fr'
       columnGap={12}
-      justifyContent="stretch"
-      justifyItems="stretch"
+      justifyContent='stretch'
+      justifyItems='stretch'
       ref={containerRef}
       rowGap={12}
     />

@@ -1,19 +1,26 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
-import { useMutation } from 'react-query';
 
-import api from '@api';
-import Loading from '@mana/components/Loading';
-import Scrollbar from '@mana/elements/Scrollbar';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
-import { onSuccess } from '@api/utils/response';
-import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import Menu from '@mana/components/Menu';
 import Item from './Item/index';
+import Loading from '@mana/components/Loading';
+import Menu from '@mana/components/Menu';
+import Scrollbar from '@mana/elements/Scrollbar';
+import useMutate from '@api/useMutate';
+import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
+import {
+  AppConfigType,
+  AppLoaderProps,
+  AddPanelOperationType,
+  OperationTypeEnum,
+} from '../../interfaces';
+import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
+import { ItemDetailType } from './interfaces';
+import { ItemTypeEnum } from './enums';
 import { Settings } from '@mana/icons';
-import { AppLoaderProps, AppConfigType } from '../../interfaces';
-import { GroupByStrategyEnum, ItemTypeEnum } from './enums';
+import { groupFilesByDirectory } from './utils/grouping';
+import { mergeDeep, selectKeys } from '@utils/hash';
 import {
   KEY_CODE_A,
   KEY_CODE_ENTER,
@@ -21,25 +28,24 @@ import {
   KEY_CODE_META,
   KEY_CODE_CONTROL,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ItemDetailType, ItemType } from './interfaces';
-import { selectKeys } from '@utils/hash';
+import { FileType } from '@components/v2/IDE/interfaces';
 // @ts-ignore
-import Worker from 'worker-loader!@public/workers/worker.ts';
-import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
-import { groupFilesByDirectory } from './utils/grouping';
-import useItems from '../../hooks/items/useItems';
+// import Worker from 'worker-loader!@public/workers/worker.ts';
 
-function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
+function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
 
-  const filePathsRef = useRef<string[]>(null);
+  const filePathsRef = useRef<FileType[]>(null);
   const itemsRootRef = useRef(null);
   const contextMenuRootRef = useRef(null);
 
   const appUUID = useMemo(() => app?.uuid, [app]);
   const contextMenuRootID = useMemo(() => `system-browser-context-menu-root-${appUUID}`, [appUUID]);
   const rootID = useMemo(() => `system-browser-items-root-${appUUID}`, [appUUID]);
+
+  const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
+  const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
 
   function removeContextMenu() {
     if (contextMenuRootRef?.current) {
@@ -51,7 +57,11 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
   function renderItems(items: ItemDetailType[]) {
     if (!itemsRootRef?.current) {
       const node = document.getElementById(rootID);
-      itemsRootRef.current = createRoot(node as HTMLElement);
+      try {
+        itemsRootRef.current = createRoot(node as HTMLElement);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     if (itemsRootRef?.current) {
@@ -66,46 +76,43 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
                   item={item as ItemDetailType}
                   key={`${item.name}-${idx}`}
                   onClick={(event: React.MouseEvent<HTMLDivElement>, itemClicked) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     removeContextMenu();
+
                     if (ItemTypeEnum.FILE === itemClicked?.type) {
-                      addPanel({
-                        apps: [
-                          {
-                            options: {
-                              file: itemClicked,
-                            },
-                            subtype: AppSubtypeEnum.IDE,
-                            type: AppTypeEnum.EDITOR,
-                            uuid: itemClicked?.name,
-                          },
-                        ],
-                        uuid: `panel-${itemClicked?.name}-`,
+                      import('../../../IDE/Manager').then((mod: any) => {
+                        const Manager = mod.Manager;
+
+                        if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
+                          addPanel({
+                            apps: [
+                              (appProps?: AppConfigType) =>
+                                mergeDeep(
+                                  {
+                                    operations: {
+                                      [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                                    },
+                                    options: {
+                                      file: itemClicked,
+                                    },
+                                    subtype: AppSubtypeEnum.IDE,
+                                    type: AppTypeEnum.EDITOR,
+                                    uuid: itemClicked?.name,
+                                  },
+                                  appProps,
+                                ),
+                            ],
+                            uuid: `panel-${itemClicked?.name}`,
+                          });
+                        }
                       });
-                      // addApp(
-                      //   {
-                      //     options: {
-                      //       file: itemClicked,
-                      //     },
-                      //     subtype: AppSubtypeEnum.IDE,
-                      //     type: AppTypeEnum.EDITOR,
-                      //     uuid: itemClicked?.name,
-                      //   },
-                      //   {
-                      //     grid: {
-                      //       relative: {
-                      //         layout: {
-                      //           column: 1,
-                      //         },
-                      //         uuid: app?.uuid,
-                      //       },
-                      //     },
-                      //   },
-                      // );
                     }
                   }}
-                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) =>
-                    renderContextMenu(item, event)
-                  }
+                  onContextMenu={(event: React.MouseEvent<HTMLDivElement>) => {
+                    renderContextMenu(item, event);
+                  }}
                   themeContext={themeContext}
                 />
               ))}
@@ -116,7 +123,18 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
     }
   }
 
-  const { api, loading } = useItems();
+  const mutants = useMutate('browser_items', {
+    handlers: {
+      list: {
+        onSuccess: (items: FileType[]) => {
+          if (items?.length >= 1) {
+            filePathsRef.current = items;
+            renderItems((items || []) as ItemDetailType[]);
+          }
+        },
+      },
+    },
+  });
 
   const renderContextMenu = useCallback(
     (item: ItemDetailType, event: React.MouseEvent<HTMLDivElement>) => {
@@ -200,14 +218,11 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
 
   useEffect(() => {
     if (!itemsRootRef?.current) {
-      api.list({
-        exclude_pattern: COMMON_EXCLUDE_PATTERNS,
-        include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
-      }).then(({ browser_items: items }) => {
-        if (items?.length >= 1) {
-          filePathsRef.current = items;
-          renderItems((items || []) as ItemDetailType[]);
-        }
+      mutants.list.mutate({
+        query: {
+          exclude_pattern: COMMON_EXCLUDE_PATTERNS,
+          include_pattern: encodeURIComponent(String(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)),
+        },
       });
     }
 
@@ -236,11 +251,11 @@ function SystemBrowser({ addPanel, addApp, app, removeApp }: AppLoaderProps) {
 
   return (
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
-      {loading.list && <Loading />}
+      {mutants.list.isLoading && <Loading />}
       <div id={rootID} />
       <div id={contextMenuRootID} />
     </Scrollbar>
   );
 }
 
-export default SystemBrowser;
+export default React.forwardRef(SystemBrowser);

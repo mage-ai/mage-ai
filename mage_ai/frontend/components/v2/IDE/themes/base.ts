@@ -5,8 +5,8 @@ import ThemeType from '@mana/themes/interfaces';
 // delimiter -> punctuation
 function build(theme: ThemeType): IDEThemeType {
   return {
-    base: 'vs',
-    inherit: false,
+    base: 'vs-dark',
+    inherit: true,
     rules: Object.entries(theme.ide.rules).reduce(
       (acc, [key, value]) =>
         acc.concat({
@@ -16,6 +16,7 @@ function build(theme: ThemeType): IDEThemeType {
       [],
     ),
     colors: {
+      // https://code.visualstudio.com/api/references/theme-color
       // https://gist.github.com/dcts/5b2af4c8b6918e7d35c4121f11d49fb1
       // Foreground color of the editor.
       'editor.foreground': 'A1A1A1', // Gray
@@ -142,10 +143,48 @@ function build(theme: ThemeType): IDEThemeType {
       // ----------------------------------------------------------------------------------------------
       // Diff editor
       // ----------------------------------------------------------------------------------------------
-      // Background color for inserted text.
-      // 'diffEditor.insertedTextBackground': '#',
-      // Background color for removed text.
-      // 'diffEditor.removedTextBackground': '#',
+      // Background color for text that got inserted. The color must not be opaque so as not to hide underlying decorations.
+      'diffEditor.insertedTextBackground': '#FFFFFF',
+      // Outline color for the text that got inserted.
+      'diffEditor.insertedTextBorder': '#FFFFFF',
+      // Background color for text that got removed. The color must not be opaque so as not to hide underlying decorations.
+      'diffEditor.removedTextBackground': '#FFFFFF',
+      // Outline color for text that got removed.
+      'diffEditor.removedTextBorder': '#FFFFFF',
+      // Border color between the two text editors.
+      'diffEditor.border': '#FFFFFF',
+      // Color of the diff editor's diagonal fill. The diagonal fill is used in side-by-side diff views.
+      'diffEditor.diagonalFill': '#FFFFFF',
+      // Background color for lines that got inserted. The color must not be opaque so as not to hide underlying decorations.
+      'diffEditor.insertedLineBackground': '#FFFFFF',
+      // Background color for lines that got removed. The color must not be opaque so as not to hide underlying decorations.
+      'diffEditor.removedLineBackground': '#FFFFFF',
+      // Background color for the margin where lines got inserted.
+      'diffEditorGutter.insertedLineBackground': '#FFFFFF',
+      // Background color for the margin where lines got removed.
+      'diffEditorGutter.removedLineBackground': '#FFFFFF',
+      // Diff overview ruler foreground for inserted content.
+      'diffEditorOverview.insertedForeground': '#FFFFFF',
+      // Diff overview ruler foreground for removed content.
+      'diffEditorOverview.removedForeground': '#FFFFFF',
+      // The color of unchanged blocks in diff editor.
+      'diffEditor.unchangedRegionBackground': '#FFFFFF',
+      // The foreground color of unchanged blocks in the diff editor.
+      'diffEditor.unchangedRegionForeground': '#FFFFFF',
+      // The color of the shadow around unchanged region widgets.
+      'diffEditor.unchangedRegionShadow': '#FFFFFF',
+      // The background color of unchanged code in the diff editor.
+      'diffEditor.unchangedCodeBackground': '#FFFFFF',
+      // order: The border color for text that got moved in the diff editor.
+      'diffEditor.move': '#FFFFFF',
+      // order: The active border color for text that got moved in the diff editor.
+      'diffEditor.moveActive': '#FFFFFF',
+      // The background color of the diff editor's header
+      'multiDiffEditor.headerBackground': '#FFFFFF',
+      // The background color of the multi file diff editor
+      'multiDiffEditor.background': '#FFFFFF',
+      // The border color of the multi file diff editor
+      'multiDiffEditor.border': '#FFFFFF',
       // ----------------------------------------------------------------------------------------------
       // ----------------------------------------------------------------------------------------------
       // Autocomplete

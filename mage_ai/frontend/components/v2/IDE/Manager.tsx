@@ -1,16 +1,15 @@
 import IDEThemeType, { IDEThemeEnum, ModeEnumToThemeEnum } from './themes/interfaces';
-import ThemeType, { ThemeSettingsType } from '@mana/themes/interfaces';
 import baseConfigurations from './configurations/base';
+import baseDiffConfigurations from './configurations/diff';
 import buildThemes from './themes';
 import initializeAutocomplete from './autocomplete';
 import pythonConfiguration, { pythonLanguageExtension } from './languages/python/configuration';
 import pythonProvider from './languages/python/provider';
-import { FileType } from './interfaces';
+import { FileType, ResourceType } from './interfaces';
 import { LanguageEnum } from './languages/constants';
 import { ModeEnum } from '@mana/themes/modes';
 import { getHost } from '@api/utils/url';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
-import { isDebug } from '@utils/environment';
 import { languageClientConfig, loggerConfig } from './constants';
 
 type onComplete = (
@@ -40,16 +39,25 @@ type InitializeWorkspaceProps = {
 };
 
 export type InitializeProps = {
-  file?: FileType;
   languageServer?: InitializeLanguageServerProps;
+  resource: ResourceType;
   workspace?: InitializeWorkspaceProps;
   wrapper?: InitializeWrapperProps;
 };
 
 class Manager {
   private static instances: Record<string, Manager>;
-  private static languageServersStarted: Record<string, boolean> = {};
-  // private static registeredFiles: Record<string, FileType> = {};
+  private static languageServers: Record<string, any>;
+  private static resources: Record<
+    string,
+    {
+      resource: ResourceType;
+      uuid: string;
+    }
+  > = {};
+  private static servicesLoaded: boolean = false;
+  private static registeredFiles: Record<string, FileType> = {};
+
   private files: FileType[] = null;
   private language: LanguageEnum = null;
   private languageClient: any = null;
@@ -60,6 +68,11 @@ class Manager {
     workspace?: onComplete;
     wrapper?: onComplete;
   } = {};
+  private requiresNewModel: boolean = false;
+  private resource: ResourceType = {
+    main: null,
+    original: null,
+  };
   private completions: {
     languageServer?: boolean[];
     workspace?: boolean[];
@@ -77,56 +90,14 @@ class Manager {
     this.uuid = uuid;
   }
 
-  // https://github.com/TypeFox/monaco-languageclient/blob/main/packages/wrapper/src/wrapper.ts
-  public static getInstance(uuid: string): Manager {
-    if (!Manager.instances) {
-      Manager.instances = {};
+  public static async loadServices() {
+    if (Manager.servicesLoaded) {
+      return;
     }
 
-    if (!(uuid in Manager.instances)) {
-      Manager.instances[uuid] = new Manager(uuid);
-    }
+    console.log('Loading services...');
 
-    return Manager.instances[uuid];
-  }
-
-  public getEditor() {
-    return this.wrapper?.getEditor();
-  }
-
-  public async dispose(shutdown?: boolean) {
-    if (this.wrapper) {
-      console.log(`Disposing editor ${this.uuid}...`);
-      if (shutdown) {
-        await this.wrapper.dispose();
-        delete Manager.instances[this.uuid];
-      } else {
-        await this.wrapper.getMonacoEditorApp().disposeApp();
-      }
-    }
-  }
-
-  public getWrapper() {
-    return this.wrapper;
-  }
-
-  private getThemes(mode?: ModeEnum): Record<IDEThemeEnum, IDEThemeType> {
-    const themes = buildThemes(getThemeSettings()?.theme);
-    return mode ? themes[ModeEnumToThemeEnum[mode]] : themes;
-  }
-
-  public async start(element: HTMLElement) {
-    await this.wrapper.start(element);
-    const editor = this.getMonaco()?.editor;
-    Object.entries(this.getThemes()).forEach(([key, value]) => {
-      editor.defineTheme(key, value);
-    });
-  }
-
-  public async initialize({ file, languageServer, workspace, wrapper }: InitializeProps) {
-    this.language = file?.language;
-
-    await this.loadMonaco();
+    const monaco = await import('monaco-editor');
     await import('monaco-editor-wrapper');
     const { useWorkerFactory } = await import('monaco-editor-wrapper/workerFactory');
     await import('@codingame/monaco-vscode-python-default-extension');
@@ -146,31 +117,225 @@ class Manager {
             ),
         },
       });
+
+      Manager.servicesLoaded = true;
+      console.log('Services loaded.');
     };
 
     await configureMonacoWorkers();
-    await this.setupPythonLanguage();
-    await this.setupAutocomplete();
+
+    monaco.languages.setLanguageConfiguration(
+      pythonLanguageExtension.id,
+      // @ts-ignore
+      pythonConfiguration(),
+    );
+
+    initializeAutocomplete(monaco, LanguageEnum.PYTHON);
+  }
+
+  // https://github.com/TypeFox/monaco-languageclient/blob/main/packages/wrapper/src/wrapper.ts
+  public static getInstance(uuid: string): Manager {
+    console.log(Manager.instances);
+
+    if (!Manager.instances) {
+      Manager.instances = {};
+    }
+
+    const instancesUnused = {};
+
+    console.log(
+      `Instances (${Object.keys(Manager.instances || {}).length}):`,
+      Object.keys(Manager.instances || {}),
+    );
+
+    Object.entries(Manager.instances).forEach(([key, manager]) => {
+      const resource = manager?.resource;
+      const path = resource?.main?.path || resource?.original?.path;
+      const used = Manager.isResourceOpen(path);
+
+      // console.log(`  Instance: ${key}`);
+      // console.log(`    - Initialized: ${manager?.isInitialized()}`);
+      // console.log(`    - In use:      ${used}`);
+      // console.log(`    - Resource:    ${path}`);
+
+      if (!used) {
+        instancesUnused[key] = manager;
+      }
+    });
+
+    const unusedCount = Object.keys(instancesUnused).length;
+    if (unusedCount >= 1) {
+      console.log(`Unused instances (${unusedCount}):`, Object.keys(instancesUnused || {}));
+
+      const uuidUnused = Object.keys(instancesUnused)[0];
+      console.log(`Reusing unused instance ${uuidUnused}...`);
+
+      const instances = {};
+      Object.entries(Manager.instances).forEach(([key, value]) => {
+        instances[key === uuidUnused ? uuid : key] = value;
+      });
+      Manager.instances = instances;
+    } else if (!(uuid in Manager.instances)) {
+      console.log(`Constructing new instance ${uuid}...`);
+      Manager.instances[uuid] = new Manager(uuid);
+    }
+
+    return Manager.instances[uuid];
+  }
+
+  public static isResourceOpen(path: string): boolean {
+    return path in (Manager.resources || {});
+  }
+
+  public static setValue(file: FileType) {
+    const { content, path } = file;
+    const obj = Manager.resources[path];
+    if (obj) {
+      const { resource, uuid } = obj;
+      if (uuid in (Manager.instances || {})) {
+        const editor = Manager.instances[uuid]?.getEditor();
+        if (editor) {
+          editor?.setValue(content);
+          Manager.resources[path] = {
+            ...obj,
+            resource: {
+              ...resource,
+              main: {
+                ...(resource?.main || {}),
+                content,
+              } as FileType,
+            },
+          };
+        }
+      }
+    }
+  }
+
+  public static dispose() {
+    if (Manager.instances) {
+      Object.values(Manager?.instances || {}).forEach(instance => {
+        instance.dispose(true);
+      });
+      Manager.instances = null;
+      Manager.languageServers = null;
+      Manager.resources = {};
+    }
+  }
+
+  public getMonaco() {
+    return this.monaco;
+  }
+
+  public getEditor() {
+    return this.wrapper?.getEditor() || this.wrapper.getDiffEditor();
+  }
+
+  public getDiffEditor() {
+    return this.wrapper.getDiffEditor();
+  }
+
+  public isUsingDiffEditor(): boolean {
+    return this.wrapper.getMonacoEditorApp().config.useDiffEditor;
+  }
+
+  public async dispose(shutdown?: boolean) {
+    this.closeResource();
+
+    if (this.wrapper) {
+      if (shutdown) {
+        console.log(`Shutting down manager ${this.uuid}...`);
+        await this.wrapper.dispose();
+        if (Manager.instances && this.uuid in Manager.instances) {
+          delete Manager.instances[this.uuid];
+        }
+      } else {
+        console.log(`Disposing editor ${this.uuid}...`);
+        await this.wrapper.getMonacoEditorApp().disposeApp();
+      }
+    }
+  }
+
+  public closeResource() {
+    const path = this.resource?.main?.path || this.resource?.original?.path;
+    console.log(`Closing resource: ${path}`);
+    const resources = Object.keys(Manager.resources).length;
+    delete Manager.resources[path];
+    const open = Object.keys(Manager.resources).length;
+    console.log(`Resources open: ${open} (${open - resources} changed)`);
+  }
+
+  public getWrapper() {
+    return this.wrapper;
+  }
+
+  public isInitialized(): boolean {
+    return this.getWrapper()?.isInitDone();
+  }
+
+  public isStarted(): boolean {
+    return this.getWrapper()?.isStarted();
+  }
+
+  private getThemes(mode?: ModeEnum): Record<IDEThemeEnum, IDEThemeType> {
+    const themes = buildThemes(getThemeSettings()?.theme);
+    return mode ? themes[ModeEnumToThemeEnum[mode]] : themes;
+  }
+
+  public async start(element: HTMLElement) {
+    await this.wrapper.start(element);
+    const monacoEditor = this.monaco.editor;
+    Object.entries(this.getThemes()).forEach(([key, value]) => {
+      monacoEditor.defineTheme(key, value);
+    });
+
+    if (this.requiresNewModel) {
+      console.log(`Creating new model for resource: ${this.resource.main.path}`);
+      await this.wrapper.updateCodeResources(this.buildCodeResources(this.resource));
+    }
+  }
+
+  public async initialize(resource: ResourceType, opts?: InitializeProps) {
+    const { languageServer, workspace, wrapper } = opts || {};
+
+    if (this.isInitialized()) {
+      this.requiresNewModel = this.resource
+        ? this.resource?.main?.path !== resource?.main?.path
+        : false;
+      this.updateResource(resource);
+
+      [wrapper, languageServer, workspace].map(configs => configs?.onComplete?.());
+
+      return;
+    }
+
+    this.updateResource(resource);
+    this.monaco = await import('monaco-editor');
+    await Manager.loadServices();
 
     this.onCompletions.wrapper = () => wrapper?.onComplete?.();
     this.onCompletions.languageServer = () => languageServer?.onComplete?.();
     this.onCompletions.workspace = () => workspace?.onComplete?.();
 
     await this.initializeWrapper(
-      file,
       wrapper,
       async (languageServerClientWrapper: any) =>
         await this.startLanguageServer(
           languageServerClientWrapper,
-          languageServer,
           async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
         ),
     );
     await this.isCompleted();
   }
 
-  public getMonaco() {
-    return this.monaco;
+  private updateResource(resource: ResourceType) {
+    const { main, original } = resource;
+
+    this.language = main?.language;
+    this.resource = resource;
+    Manager.resources[main?.path || original?.path] = {
+      resource,
+      uuid: this.uuid,
+    };
   }
 
   private async isCompleted() {
@@ -201,9 +366,8 @@ class Manager {
   }
 
   private async initializeWrapper(
-    file: FileType,
     opts: InitializeWrapperProps,
-    callback: (languageServerClientWrapper) => void,
+    callback: (languageServerClientWrapper: any) => void,
   ) {
     const { options } = opts || {};
 
@@ -215,7 +379,12 @@ class Manager {
         ...options?.configurations,
         theme: options?.theme,
       });
-      const configs = await this.buildUserConfig(file, configurations);
+      const diffConfigurations = baseDiffConfigurations(getTheme(), {
+        ...options?.configurations,
+        theme: options?.theme,
+      });
+
+      const configs = await this.buildUserConfig(configurations, diffConfigurations);
       await wrapper.init(configs as any);
       this.wrapper = wrapper;
       callback(wrapper?.getLanguageClientWrapper());
@@ -228,28 +397,36 @@ class Manager {
   }
   private async startLanguageServer(
     languageServerClientWrapper: any,
-    opts: InitializeLanguageServerProps,
     callback: (languageClient: any) => void,
   ) {
     this.languageServerClientWrapper = languageServerClientWrapper;
-    if (!this.languageClient) {
-      this.languageClient = languageServerClientWrapper.getLanguageClient();
+
+    if (this.isLanguageServerEnabled()) {
+      if (this.isLanguageServerInitialized()) {
+        this.languageClient = Manager.languageServers?.[this.language];
+        console.log(`LSP: ${this.language} already started, skipping...`);
+      } else {
+        await languageServerClientWrapper.start().then(() => {
+          this.languageClient = languageServerClientWrapper.getLanguageClient();
+          Manager.languageServers[this.language] = this.languageClient;
+          console.log(`LSP: ${this.language} starting...`);
+        });
+      }
     }
-    callback(this.languageClient);
+
+    const lsps = Object.keys(Manager.languageServers);
+    console.log(`LSPs (${lsps?.length || 0}): ${lsps?.join(', ')}`);
+
     this.completions.languageServer = [true, false];
+    callback(this.languageClient);
   }
 
   private async initializeWorkspace(languageClient: any, opts?: InitializeWorkspaceProps) {
-    const { options } = opts || {};
-    const { fetch } = options || {};
-
-    const managerLanguage = this.language;
-
-    if (languageClient && !(managerLanguage in Manager.languageServersStarted)) {
-      Manager.languageServersStarted[managerLanguage] = languageClient;
-    }
+    // const { options } = opts || {};
+    // const { fetch } = options || {};
 
     // TODO (dangerous): use server stream events
+    // const managerLanguage = this.language;
     // if (fetch) {
     //   function registerItem(file: FileType) {
     //     const { content, language, modified_timestamp: version, path } = file;
@@ -318,24 +495,19 @@ class Manager {
     this.completions.workspace = [true, false];
   }
 
-  private isLanguageServerEnabled(): boolean {
-    return [LanguageEnum.PYTHON].includes(this.language);
-  }
-
-  public async loadMonaco() {
-    this.monaco = await import('monaco-editor');
-    return this.monaco;
-  }
-
-  public async loadServices() {
-    await import('@codingame/monaco-vscode-python-default-extension');
-  }
-
   private async getLanguageDef() {
     const { mode } = getThemeSettings();
+    const configUri = new URL('./languages/python/config.json', import.meta.url).href;
 
     return {
-      languageExtensionConfig: await this.getPythonLanguageExtensionWithURI(),
+      languageExtensionConfig: {
+        ...pythonLanguageExtension,
+        configuration: this.monaco.Uri.parse(
+          `${getHost({
+            forceCurrentPort: true,
+          })}${configUri}`,
+        ),
+      },
       monarchLanguage: pythonProvider(),
       theme: {
         data: this.getThemes(mode),
@@ -344,66 +516,53 @@ class Manager {
     };
   }
 
-  private async getPythonLanguageExtensionWithURI() {
-    const configUri = new URL('./languages/python/config.json', import.meta.url).href;
-    return {
-      ...pythonLanguageExtension,
-      configuration: (await this.loadMonaco()).Uri.parse(
-        `${getHost({
-          forceCurrentPort: true,
-        })}${configUri}`,
-      ),
-    };
+  private isLanguageServerEnabled(): boolean {
+    return [LanguageEnum.PYTHON].includes(this.language);
   }
 
-  public async setupAutocomplete() {
-    initializeAutocomplete(await this.loadMonaco(), LanguageEnum.PYTHON);
+  private isLanguageServerInitialized(): boolean {
+    Manager.languageServers = Manager.languageServers || {};
+    return this.language in Manager.languageServers;
   }
 
-  public async setupPythonLanguage() {
-    if (!this.isLanguageServerEnabled()) {
-      return;
-    }
-
-    (await this.loadMonaco()).languages.register(await this.getPythonLanguageExtensionWithURI());
-    (await this.loadMonaco()).languages.setLanguageConfiguration(
-      pythonLanguageExtension.id,
-      // @ts-ignore
-      pythonConfiguration(),
+  private buildCodeResources(resource: ResourceType) {
+    return Object.entries(resource).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: {
+          // enforceLanguageId: value?.language,
+          fileExt: value?.extension,
+          text: value?.content || '',
+          uri: this.monaco.Uri.parse(`file://${value?.path}`),
+        },
+      }),
+      {},
     );
   }
 
-  private async buildUserConfig(file: FileType, configurations: any) {
-    let languageServerConfig = {
-      ...languageClientConfig,
-      languageId: this.language,
-      name: `mage-lsp-${this.language}`,
-    };
-
-    if (this.language in Manager.languageServersStarted) {
-      languageServerConfig = null;
-      this.languageClient = Manager.languageServersStarted?.[this.language];
-      console.log(`Language server for language ${this.language} already started, skipping...`);
-    }
+  private async buildUserConfig(configurations: any, diffConfigurations?: any) {
+    const { main, original } = this.resource;
+    const useDiffEditor = main && original && main?.content !== original?.content;
 
     return {
       id: this.uuid,
-      languageClientConfig: languageServerConfig,
+      languageClientConfig: this.isLanguageServerInitialized()
+        ? null
+        : {
+            ...languageClientConfig,
+            languageId: this.language,
+            name: `mage-lsp-${this.language}`,
+          },
       loggerConfig,
       wrapperConfig: {
         editorAppConfig: {
           $type: 'classic' as const,
-          codeResources: {
-            main: {
-              enforceLanguageId: file?.language,
-              text: file?.content || '',
-              uri: (await this.loadMonaco()).Uri.parse(`file://${file?.path}`),
-            },
-          },
+          codeResources: this.buildCodeResources(this.resource),
+          diffEditorOptions: useDiffEditor ? diffConfigurations : undefined,
           domReadOnly: true,
           editorOptions: configurations,
           languageDef: await this.getLanguageDef(),
-          useDiffEditor: false,
+          useDiffEditor,
         },
       },
     };

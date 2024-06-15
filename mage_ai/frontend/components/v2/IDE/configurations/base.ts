@@ -317,7 +317,7 @@ export default function base(
     hover: {
       above: true,
       delay: 300,
-      enabled: false, // true
+      enabled: true, // true
       hidingDelay: 3000,
       sticky: true,
     },
@@ -377,7 +377,7 @@ export default function base(
     // 'off' disables occurrence highlighting
     // 'singleFile' triggers occurrence highlighting in the current document
     // 'multiFile' triggers occurrence highlighting across valid open documents
-    occurrencesHighlight: 'singleFile',
+    occurrencesHighlight: 'multiFile',
     quickSuggestionsDelay: 100, // 5
     renderControlCharacters: true, // true, Should render control characters
     renderWhitespace: 'all', // all

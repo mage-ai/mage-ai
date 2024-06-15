@@ -2,11 +2,11 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import api from '@api';
+import { ResourceType } from './interfaces';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
-import { InitializeProps } from './Manager';
 import { FileType } from './interfaces';
 
-function useManager(uuid: string, opts?: InitializeProps): any {
+function useManager(uuid: string, resource: ResourceType, opts?: any): any {
   const initiatedRef = useRef(false);
   const managerRef = useRef(null);
 
@@ -54,11 +54,10 @@ function useManager(uuid: string, opts?: InitializeProps): any {
 
         const mod = await import('./Manager');
         const Manager = mod.Manager;
-        const instance = Manager.getInstance(uuid);
-        managerRef.current = instance;
+        managerRef.current = Manager.getInstance(uuid);
 
-        await instance.initialize({
-          file: opts?.file,
+        await managerRef.current.initialize(resource, {
+          ...opts,
           languageServer: {
             onComplete: () => {
               setCompletions(prev => ({ ...prev, languageServer: true }));
@@ -88,11 +87,7 @@ function useManager(uuid: string, opts?: InitializeProps): any {
       initializeManager();
     }
 
-    const instance = managerRef.current;
     return () => {
-      if (instance) {
-        instance?.cleanup();
-      }
       managerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

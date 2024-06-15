@@ -21,13 +21,11 @@ type TextProps = {
   monospace?: boolean;
   muted?: boolean;
   semiBold?: boolean;
+  warning?: boolean;
 } & ElementType;
 
 function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
-  const arr = [
-    small ? styles['text-small'] : xsmall ? styles['text-xsmall'] : styles.text,
-    classNameProp || '',
-  ];
+  const arr = [small ? styles.small : xsmall ? styles.xsmall : styles.text, classNameProp || ''];
 
   Object.entries(props || {}).forEach(([key, value]) => {
     if (typeof value !== 'undefined') {

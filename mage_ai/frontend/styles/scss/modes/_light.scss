@@ -70,6 +70,7 @@
   --fonts-color-text-blue: #{colors.$fonts-color-text-blue};
   --fonts-color-text-inverted: #{colors.$fonts-color-text-inverted};
   --fonts-color-text-muted: #{colors.$fonts-color-text-muted};
+  --fonts-color-text-warning: #{colors.$fonts-color-text-warning};
   --fonts-family-base-black: #{colors.$fonts-family-base-black};
   --fonts-family-base-bold: #{colors.$fonts-family-base-bold};
   --fonts-family-base-lightfont: #{colors.$fonts-family-base-lightfont};
@@ -251,12 +252,12 @@
   --borders-radius-base: #{colors.$borders-radius-base};
   --borders-style: #{colors.$borders-style};
   --borders-width: #{colors.$borders-width};
-  --padding-vertical-base: #{colors.$padding-vertical-base};
-  --padding-vertical-sm: #{colors.$padding-vertical-sm};
-  --padding-vertical-xs: #{colors.$padding-vertical-xs};
-  --padding-base: #{colors.$padding-base};
-  --padding-sm: #{colors.$padding-sm};
-  --padding-xs: #{colors.$padding-xs};
+  --padding-vertical-base: #{colors.$padding-vertical-base}px;
+  --padding-vertical-sm: #{colors.$padding-vertical-sm}px;
+  --padding-vertical-xs: #{colors.$padding-vertical-xs}px;
+  --padding-base: #{colors.$padding-base}px;
+  --padding-sm: #{colors.$padding-sm}px;
+  --padding-xs: #{colors.$padding-xs}px;
   --size-sm: #{colors.$size-sm};
   --size-md: #{colors.$size-md};
   --size-lg: #{colors.$size-lg};
