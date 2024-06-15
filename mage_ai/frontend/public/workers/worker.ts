@@ -16,3 +16,5 @@ ctx.addEventListener('message', event => {
 
   ctx.postMessage(importedServices);
 });
+
+export {};
