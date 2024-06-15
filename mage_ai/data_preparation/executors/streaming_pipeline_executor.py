@@ -172,13 +172,19 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # Initialize destination blocks
         sinks_by_uuid = dict()
         for sink_block in self.sink_blocks:
-            sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
-                self.__interpolate_vars(sink_block.content, global_vars=global_vars),
-                buffer_path=os.path.join(
-                    self.pipeline.pipeline_variables_dir,
-                    'buffer',
-                ),
-            )
+            if sink_block.language == BlockLanguage.PYTHON:
+                sinks_by_uuid[sink_block.uuid] = SinkFactory.get_python_sink(
+                    sink_block.content,
+                    global_vars=global_vars,
+                )
+            else:
+                sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
+                    self.__interpolate_vars(sink_block.content, global_vars=global_vars),
+                    buffer_path=os.path.join(
+                        self.pipeline.pipeline_variables_dir,
+                        'buffer',
+                    ),
+                )
 
         def __deepcopy(data):
             if data is None:

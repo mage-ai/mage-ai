@@ -1,5 +1,6 @@
 from typing import Dict
 
+from mage_ai.data_preparation.decorators import collect_decorated_objs
 from mage_ai.streaming.constants import GENERIC_IO_SINK_TYPES, SinkType
 
 
@@ -78,3 +79,27 @@ class SinkFactory:
         raise Exception(
             f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )
+
+    @classmethod
+    def get_python_sink(self, content: str, **kwargs):
+        """
+        Find the class that's decorated with streaming_sink from the source code.
+
+        Args:
+            content (str): The python code that contains the streaming sink implementation.
+            **kwargs: {'global_vars': {...}}
+
+        Returns:
+            The initialized class object.
+
+        Raises:
+            Exception: Description
+        """
+        decorated_sinks = []
+
+        exec(content, {'streaming_sink': collect_decorated_objs(decorated_sinks)})
+
+        if not decorated_sinks:
+            raise Exception('Not find the class that has streaming_sink decorator.')
+
+        return decorated_sinks[0](**kwargs)
