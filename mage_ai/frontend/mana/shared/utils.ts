@@ -8,7 +8,7 @@ export function styleClassNames(
     uuid,
     ...props
   }: {
-    [key: string]: boolean | number | string;
+    [key: string]: boolean | number | string | any;
   } = {
     className: '',
     uuid: '',
