@@ -92,10 +92,13 @@ class BrowserItemResource(GenericResource):
         if 'path' not in payload:
             payload['path'] = self.model.path
 
-        if await self.model.synchronize(Item.load(**payload)):
-            self.model = Item.load(**self.model.to_dict())
-        else:
+        try:
+            if await self.model.synchronize(Item.load(**payload)):
+                self.model = Item.load(**self.model.to_dict())
+            else:
+                raise Exception('Update failed for some reason.')
+        except Exception as err:
             raise ApiError({
                 **ApiError.RESOURCE_INVALID,
-                **dict(message='Update failed'),
+                **dict(message=str(err)),
             })

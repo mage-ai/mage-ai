@@ -78,21 +78,25 @@ class Item(BaseDataClass):
         return await delete_async(self.path, ignore_exists=ignore_exists)
 
     async def synchronize(self, item: Item) -> bool:
-        if os.path.dirname(self.path) != os.path.dirname(item.path):
-            if not await self.move(item.path):
-                return False
-            self.path = item.path
-        elif self.name != item.name and item.name is not None:
-            if not await self.rename(item.name):
-                return False
-            self.name = item.name
-
-        print('WTFFFFFFFFFFFFFFFFFFF00000000', self.content)
-        print('WTFFFFFFFFFFFFFFFFFFF11111111', item.content)
-
-        if self.content != item.content:
-            self.content = item.content
+        new_content = item.content
+        if self.content != new_content:
+            self.content = new_content
             if not await self.update():
+                return False
+
+        if os.path.dirname(self.path) != os.path.dirname(item.path):
+            new_path = item.path
+            print('PATHHHHHHHHHHHHHH', self.path, new_path)
+            if await self.move(new_path):
+                self.path = new_path
+            else:
+                return False
+        elif item.name is not None and self.name != item.name:
+            new_name = item.name
+            print('NAMEEEEEEEEEEEEEEEEE', self.name, new_name)
+            if await self.rename(new_name):
+                self.name = new_name
+            else:
                 return False
 
         return True

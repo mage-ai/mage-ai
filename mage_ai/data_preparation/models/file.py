@@ -125,9 +125,6 @@ class File:
     async def rename_async(
         cls, old_path: str, new_path: str, overwrite: Optional[bool] = None
     ) -> bool:
-        ensure_file_is_in_project(old_path)
-        ensure_file_is_in_project(new_path)
-
         result = await rename_async(old_path, new_path, overwrite=overwrite)
 
         old_filename = os.path.basename(old_path)

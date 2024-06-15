@@ -261,11 +261,12 @@ async def move_async(old_path: str, new_path: str, overwrite: Optional[bool] = N
 async def rename_async(old_path: str, new_path: str, overwrite: Optional[bool] = None) -> bool:
     if not overwrite and await exists_async(new_path):
         raise Exception(
-            f'File already exists at {new_path}, cannot rename {old_path} to {new_path}.'
+            f'[ERROR] File already exists at {new_path}, cannot rename {old_path} to {new_path}.'
         )
 
     try:
         await asyncio.to_thread(os.rename, old_path, new_path)
+        raise Exception(old_path, new_path)
         return True
     except Exception as err:
         if is_debug():

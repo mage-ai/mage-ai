@@ -198,10 +198,13 @@ def __query(request) -> Dict:
 
 def __render_error(handler, error: Dict, **kwargs):
     __log_error(handler.request, error, **kwargs)
+
+    error_code = error.get('code', 500)
+    handler.set_status(error_code)
     handler.write(
         dict(
             error=error,
-            status=200,
+            status=error_code,
         )
     )
 
