@@ -38,6 +38,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 }: PipelineBuilderProps) => {
   console.log('PipelineBuilder render');
 
+  const phaseRef = useRef<number>(0);
   const connectionsRef = useRef<Record<string, ConnectionType>>(null);
 
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
@@ -56,32 +57,41 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   useEffect(() => {
-    if (!items) {
-      const itemsMock = {
-        a: {
+    if (phaseRef.current === 0) {
+      const itemsMock = [
+        {
           height: 50,
-          id: 'a',
           left: 80,
-          title: randomNameGenerator(),
           top: 20,
-          type: ItemTypeEnum.BLOCK,
           width: 100,
         },
-        b: {
+        {
           height: 50,
-          id: 'b',
           left: 200,
-          title: randomNameGenerator(),
           top: 180,
-          type: ItemTypeEnum.BLOCK,
           width: 100,
         },
-      };
-      setItems(itemsMock);
+      ];
 
-      const connection = createConnection(itemsMock.a, itemsMock.b);
-      setConnections({ [connectionUUID(connection)]: connection });
+      const mapping = itemsMock.reduce((acc: Record<string, DragItem>, item) => {
+        const id = randomSimpleHashGenerator();
+        acc[id] = {
+          ...item,
+          id,
+          title: `${id} ${randomNameGenerator()}`,
+          type: ItemTypeEnum.BLOCK,
+        };
+
+        return acc;
+      }, {});
+
+      const connection = createConnection(...Object.values(mapping).slice(0, 2) as [DragItem, DragItem]);
+      connectionsRef.current = { [connectionUUID(connection)]: connection };
+
+      setItems(mapping);
     }
+
+    phaseRef.current += 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

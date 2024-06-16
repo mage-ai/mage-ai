@@ -15,11 +15,11 @@ const style: CSSProperties = {
 
 const handleStyle: CSSProperties = {
   backgroundColor: 'green',
-  width: '1rem',
-  height: '1rem',
-  display: 'inline-block',
-  marginRight: '0.75rem',
   cursor: 'move',
+  display: 'inline-block',
+  height: '1rem',
+  marginRight: '0.75rem',
+  width: '1rem',
 };
 
 // export const BoxWithHandle: FC = () => {

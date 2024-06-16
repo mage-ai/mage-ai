@@ -1,11 +1,13 @@
+export enum PortSubtypeEnum {
+  INPUT = 'input',
+  OUTPUT = 'output',
+}
+
 export enum ItemTypeEnum {
   BLOCK = 'block',
   BOX = 'box',
   CARD = 'card',
-
-  FOOD = 'food',
-  GLASS = 'glass',
-  PAPER = 'paper',
+  PORT = 'port',
 }
 
 export enum ColorEnum {

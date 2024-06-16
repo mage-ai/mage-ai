@@ -13,13 +13,12 @@ const styles: CSSProperties = {
 };
 
 export interface BoxProps {
+  backgroundColor?: string
   preview?: boolean
   title: string
-  yellow?: boolean
 }
 
-const BlockNode: FC<BoxProps> = memo(function Box({ title, yellow, preview }) {
-  const backgroundColor = yellow ? 'yellow' : 'white';
+const BlockNode: FC<BoxProps> = memo(function Box({ backgroundColor, preview, title }: BoxProps) {
   return (
     <Grid
       alignItems="center"
