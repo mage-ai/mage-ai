@@ -1,13 +1,13 @@
 import update from 'immutability-helper';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useDrop } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 
 import { CanvasStyled } from './index.style';
 import { Canvas } from '../../Canvas';
-import { DragItem, NodeItemType, OffsetType, PortType, RectType } from '../../Canvas/interfaces';
-import { ItemTypeEnum } from '../../Canvas/types';
+import { DragItem, NodeItemType, OffsetType, PortType, RectType, LayoutConfigType } from '../../Canvas/interfaces';
+import { ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
@@ -18,8 +18,12 @@ import { ConnectionType } from './Connections/interfaces';
 import { createConnection, connectionUUID, updateConnections, updatePaths } from './Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
 import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
+import BlockType from '@interfaces/BlockType';
+import { initializeBlocksAndConnections } from './utils/blocks';
+import { useZoomPan } from '@mana/hooks/useZoomPan';
 
 type PipelineBuilderProps = {
+  blocks?: BlockType[];
   snapToGridOnDrag?: boolean;
 };
 
@@ -38,9 +42,16 @@ type PipelineBuilderProps = {
 // https://react-dnd.github.io/react-dnd/docs/api/drag-layer-monitor
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
+  blocks,
   snapToGridOnDrag = true,
 }: PipelineBuilderProps) => {
   console.log('PipelineBuilder render');
+
+  const layoutConfig = useMemo(() => ({
+    direction: LayoutConfigDirectionEnum.VERTICAL,
+    origin: LayoutConfigDirectionOriginEnum.TOP,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   const phaseRef = useRef<number>(0);
   const connectionsRef = useRef<Record<string, ConnectionType>>(null);
@@ -71,43 +82,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   useEffect(() => {
-    if (phaseRef.current === 0) {
-      const itemsMock = [
-        {
-          height: 50,
-          left: 80,
-          top: 20,
-          width: 100,
-        },
-        {
-          height: 50,
-          left: 200,
-          top: 180,
-          width: 100,
-        },
-      ];
+    if (phaseRef.current === 0 && blocks?.length >= 1) {
+      const {
+        connectionsMapping,
+        itemsMapping,
+      } = initializeBlocksAndConnections(blocks, {
+        blockHeight: 200,
+        blockWidth: 300,
+        layout: layoutConfig,
+        maxHeight: typeof window !== 'undefined' ? window.innerHeight : null,
+      });
 
-      const mapping = itemsMock.reduce((acc: Record<string, DragItem>, rect: RectType) => {
-        const id = randomSimpleHashGenerator();
-        acc[id] = {
-          id,
-          rect,
-          title: `${id} ${randomNameGenerator()}`,
-          type: ItemTypeEnum.BLOCK,
-        };
-
-        return acc;
-      }, {});
-
-      // const connection = createConnection(...Object.values(mapping).slice(0, 2) as [DragItem, DragItem]);
-      // connectionsRef.current = { [connectionUUID(connection)]: connection };
-
-      setItems(mapping);
+      connectionsRef.current = connectionsMapping;
+      setItems(itemsMapping);
     }
 
     phaseRef.current += 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [blocks]);
 
   function onDrag(item: NodeItemType) {
     if (ItemTypeEnum.BLOCK === item.type) {
@@ -254,7 +246,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   );
 
   return (
-    <CanvasStyled
+    <div
       onDoubleClick={(event: React.MouseEvent) => updateItem({
         id: randomSimpleHashGenerator(),
         rect: {
@@ -285,12 +277,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         <DraggableBlock
           item={items[key] as DragItem}
           key={key}
+          layout={layoutConfig}
           onDragCancel={onDragCancel}
           onDragStart={onDragStart}
           onDrop={onDropNode}
         />
       ))}
-    </CanvasStyled>
+    </div>
   );
 };
 
@@ -298,11 +291,20 @@ export default function PipelineBuilderCanvas({
   snapToGridOnDrop = false,
   ...props
 }: PipelineBuilderProps & { snapToGridOnDrop?: boolean }) {
+  // Reference to the outer container
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Apply zoom and pan functionality to the outer container
+  useZoomPan(canvasRef);
+
   return (
-    <Canvas>
-      {/* <Layout /> */}
-      <PipelineBuilder {...props} />
-      <DragLayer snapToGrid={snapToGridOnDrop} />
-    </Canvas>
+    <div ref={canvasRef} style={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'visible' }}>
+      <CanvasStyled>
+        <Canvas>
+          <PipelineBuilder {...props} />
+          <DragLayer snapToGrid={snapToGridOnDrop} />
+        </Canvas>
+      </CanvasStyled>
+    </div>
   );
 }

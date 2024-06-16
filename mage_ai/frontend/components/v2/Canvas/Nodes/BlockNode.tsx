@@ -5,11 +5,11 @@ import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 
 const styles: CSSProperties = {
-  border: '1px dashed gray',
+  // border: '1px dashed gray',
   cursor: 'move',
-  height: 100,
+  // height: 50,
   padding: 0,
-  width: 200,
+  // width: 200,
 };
 
 export interface BoxProps {

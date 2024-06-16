@@ -87,10 +87,8 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       style={{
-        border: '1px dashed gray',
-        marginBottom: '.5rem',
-        padding: '0.5rem 1rem',
-        width: '20rem',
+        border: '1px dotted black',
+        padding: 12,
       }}
     >
       <div
@@ -99,9 +97,8 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
           backgroundColor: isOver && canDrop ? 'red' : 'green',
           cursor: 'move',
           display: 'inline-block',
-          height: '1rem',
-          marginRight: '0.75rem',
-          width: '1rem',
+          height: 24,
+          width: 24,
         }}
       />
     </div>

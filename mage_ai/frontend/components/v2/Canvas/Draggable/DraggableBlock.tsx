@@ -8,8 +8,8 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 
 import BlockNode from '../Nodes/BlockNode';
 import Grid from '@mana/components/Grid';
-import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
-import { PortSubtypeEnum, ItemTypeEnum } from '../types';
+import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
+import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum } from '../types';
 import { getNodeUUID } from './utils';
 import { DraggablePort } from './DraggablePort';
 
@@ -25,23 +25,28 @@ function getStyles({ rect }: DragItem, {
 }): CSSProperties {
   const { left, top } = rect || {} as RectType;
   const transform = `translate3d(${left}px, ${top}px, 0)`;
+  const backgroundColor = 'rgba(0, 0, 0, 0.1)';
+
   return {
     WebkitTransform: transform,
     backgroundColor: canDrop
-      ? isOverCurrent ? 'blue' : undefined
-      : undefined,
+      ? isOverCurrent ? 'blue' : backgroundColor
+      : backgroundColor,
+    border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
-    height: isDragging ? 0 : '',
+    height: isDragging ? 0 : 200,
     opacity: isDragging ? 0 : 1,
     position: 'absolute',
     transform,
+    width: 300,
   };
 }
 
 export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
+  layout?: LayoutConfigType;
   onDragCancel: (node: NodeItemType) => void;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
@@ -50,6 +55,7 @@ export type DraggableBlockProps = {
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
   canDrag,
   item,
+  layout,
   onDragCancel,
   onDragStart,
   onDrop,
@@ -58,7 +64,15 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   const portsRef = useRef({});
   const itemRef = useRef(null);
 
-  const [ports, setPorts] = useState<PortType[]>(null);
+  const ports: PortType[] = useMemo(() => Object.entries({
+    [PortSubtypeEnum.INPUT]: item?.inputs || [],
+    [PortSubtypeEnum.OUTPUT]: item?.outputs || [],
+  }).reduce((acc, [subtype, uuids]) => acc.concat(uuids.map((uuid: string, idx: number) => update({
+    id: uuid,
+    index: idx,
+    subtype,
+    type: ItemTypeEnum.PORT,
+  }, { parent: { $set: item } }))), []), [item]);
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
@@ -66,13 +80,6 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   useEffect(() => {
     if (phaseRef.current === 0) {
       preview(getEmptyImage(), { captureDraggingState: true });
-      setPorts([
-        { id: `${item.id}-i1`, index: 0, subtype: PortSubtypeEnum.INPUT },
-        { id: `${item.id}-i2`, index: 1, subtype: PortSubtypeEnum.INPUT },
-        { id: `${item.id}-o1`, index: 0, subtype: PortSubtypeEnum.OUTPUT },
-        { id: `${item.id}-o2`, index: 1, subtype: PortSubtypeEnum.OUTPUT },
-        ].map((port) => update({ ...port, type: ItemTypeEnum.PORT }, { parent: { $set: item } }) as PortType),
-      );
     }
 
     phaseRef.current += 1;
@@ -104,7 +111,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
       const isDragging = monitor.isDragging();
 
       return {
-        backgroundColor: isDragging ? 'red' : 'white',
+        backgroundColor: isDragging ? 'red' : undefined,
         isDragging,
         opacity: isDragging ? 0.4 : 1,
       };
@@ -192,6 +199,26 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     connectDrag(itemRef);
   }
 
+  const isVertical = useMemo(() => LayoutConfigDirectionEnum.VERTICAL === layout?.direction, [layout]);
+  const gridProps = useMemo(() => ({
+    alignItems: 'center',
+    autoColumns: isVertical ? 'auto' : null,
+    autoRows: isVertical ? null : 'auto',
+    columnGap: isVertical ? 12 : null,
+    height: 'inherit',
+    rowGap: isVertical ? null : 12,
+    templateColumns: isVertical ? 'auto' : 'auto 1fr auto',
+    templateRows: isVertical ? 'auto 1fr auto' : 'auto',
+  }), [isVertical]);
+  const gridPortProps = useMemo(() => ({
+    columnGap: isVertical ? 12 : null,
+    rowGap: isVertical ? null : 12,
+    style: {
+      gridTemplateColumns: isVertical ? 'repeat(auto-fit, minmax(0px, min-content))' : 'auto',
+      gridTemplateRows: isVertical ? 'auto' : 'repeat(auto-fit, minmax(0px, min-content))',
+    },
+  }), [isVertical]);
+
   return (
     <div
       onMouseDown={event => handleMouseDown(event, item)}
@@ -212,15 +239,20 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         />
       )}
 
-      <Grid
-        autoRows="auto"
-        templateColumns="auto 1fr auto"
-      >
-        <div>{renderPorts(PortSubtypeEnum.INPUT)}</div>
+      <Grid {...gridProps}>
+        <Grid
+          {...gridPortProps}
+        >
+          {renderPorts(PortSubtypeEnum.INPUT)}
+        </Grid>
 
         <BlockNode backgroundColor={backgroundColor} preview={isDraggingBlock} title={item?.title} />
 
-        <div>{renderPorts(PortSubtypeEnum.OUTPUT)}</div>
+        <Grid
+          {...gridPortProps}
+        >
+          {renderPorts(PortSubtypeEnum.OUTPUT)}
+        </Grid>
       </Grid>
     </div>
   );

@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/Main.module.scss';
+import { PIPELINE } from './mock';
 
 export default function PipelineBuilder() {
   const PipelineBuilderCanvas = dynamic(() => import('../PipelineBuilderCanvas'), {
@@ -26,7 +27,9 @@ export default function PipelineBuilder() {
         >
           <div />
 
-          <PipelineBuilderCanvas />
+          <PipelineBuilderCanvas
+            blocks={PIPELINE.blocks}
+          />
         </Grid>
 
         <div />
