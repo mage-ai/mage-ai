@@ -7,10 +7,3 @@ export interface ConnectionType {
   toItem?: any; // Reference to the destination node
   toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle';   // Position where the connection ends
 }
-
-export interface RectType {
-  height: number;
-  left: number;
-  top: number;
-  width: number;
-}

@@ -7,13 +7,13 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 
 import BlockNode from '../Nodes/BlockNode';
 import Grid from '@mana/components/Grid';
-import { DragItem, NodeItemType, PortType } from '../interfaces';
+import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import { getNodeUUID } from './utils';
 import { DraggablePort } from './DraggablePort';
 
 // This is the style used for the preview when dragging
-function getStyles({ left, top }: DragItem, {
+function getStyles({ rect }: DragItem, {
   canDrop,
   isDragging,
   isOverCurrent,
@@ -22,6 +22,7 @@ function getStyles({ left, top }: DragItem, {
   isDragging: boolean;
   isOverCurrent: boolean;
 }): CSSProperties {
+  const { left, top } = rect || {} as RectType;
   const transform = `translate3d(${left}px, ${top}px, 0)`;
   return {
     WebkitTransform: transform,
@@ -40,24 +41,19 @@ function getStyles({ left, top }: DragItem, {
 export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
-  // itemsRef: { current: Record<string, DragItem> };
+  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
 };
 
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
   canDrag,
   item,
-  // itemsRef,
+  onDragStart,
 }: DraggableBlockProps) {
   const phaseRef = useRef(0);
   const portsRef = useRef({});
   const itemRef = useRef(null);
 
-  const [ports, setPorts] = useState<PortType[]>([
-    { id: `${item.id}-i1`, index: 0, subtype: PortSubtypeEnum.INPUT },
-    { id: `${item.id}-i2`, index: 1, subtype: PortSubtypeEnum.INPUT },
-    { id: `${item.id}-o1`, index: 0, subtype: PortSubtypeEnum.OUTPUT },
-    { id: `${item.id}-o2`, index: 1, subtype: PortSubtypeEnum.OUTPUT },
-    ].map((port) => ({ ...port, parent: item, type: ItemTypeEnum.PORT }) as PortType));
+  const [ports, setPorts] = useState<PortType[]>(null);
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
@@ -65,6 +61,13 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   useEffect(() => {
     if (phaseRef.current === 0) {
       preview(getEmptyImage(), { captureDraggingState: true });
+      setPorts([
+        { id: `${item.id}-i1`, index: 0, subtype: PortSubtypeEnum.INPUT },
+        { id: `${item.id}-i2`, index: 1, subtype: PortSubtypeEnum.INPUT },
+        { id: `${item.id}-o1`, index: 0, subtype: PortSubtypeEnum.OUTPUT },
+        { id: `${item.id}-o2`, index: 1, subtype: PortSubtypeEnum.OUTPUT },
+        ].map((port) => ({ ...port, parent: item, type: ItemTypeEnum.PORT }) as PortType),
+      );
     }
 
     phaseRef.current += 1;
@@ -83,7 +86,14 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     backgroundColor,
     isDragging,
   }, connectDrag, preview] = useDrag(() => ({
-    canDrag: () => canDrag ? canDrag(item) : true,
+    canDrag: () => {
+      if (!canDrag || canDrag(item)) {
+        onDragStart(item);
+        return true;
+      }
+
+      return false;
+    },
     collect: (monitor: DragSourceMonitor) => {
       const isDragging = monitor.isDragging();
 
@@ -100,7 +110,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     },
     item: itemToDrag,
     type: itemToDrag.type,
-  }), [itemToDrag]);
+  }), [itemToDrag, onDragStart]);
 
   const [{ canDrop, isOverCurrent }, connectDrop] = useDrop(
     () => ({
@@ -143,7 +153,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   const renderPorts = useCallback((key: PortSubtypeEnum) => (
     <>
-      {ports?.reduce((acc: PortType[], port: PortType) => {
+      {ports?.reduce((acc: any[], port: PortType) => {
         if (port?.subtype !== key) {
           return acc;
         }
@@ -152,7 +162,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
         portsRef.current[uuid] = itemRef;
 
-        return (
+        return acc.concat(
           <DraggablePort
             handleMouseDown={event => handleMouseDown(event, port)}
             handleMouseUp={handleMouseUp}
@@ -160,11 +170,12 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
             item={port}
             itemRef={itemRef}
             key={uuid}
-          />
+            onDragStart={onDragStart}
+          />,
         );
       }, [])}
     </>
-  ), [handleMouseDown, handleOnDrop, handleMouseUp, ports]);
+  ), [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, ports]);
 
   const isDraggingBlock = useMemo(() => draggingNode?.type === item?.type, [draggingNode, item]);
   connectDrop(itemRef);

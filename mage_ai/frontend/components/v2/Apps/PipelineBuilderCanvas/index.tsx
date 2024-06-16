@@ -2,18 +2,22 @@ import update from 'immutability-helper';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useDrop } from 'react-dnd';
+import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 
 import { CanvasStyled } from './index.style';
 import { Canvas } from '../../Canvas';
-import { DragItem } from '../../Canvas/interfaces';
+import { DragItem, NodeItemType, OffsetType, RectType } from '../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
-import ConnectionLines from './Connections/ConnectionLines';
+import { ConnectionLine } from './Connections/ConnectionLine';
+import { ConnectionLines } from './Connections/ConnectionLines';
 import { ConnectionType } from './Connections/interfaces';
-import { getConnections, getPathD, createConnection, connectionUUID, updatePaths } from './Connections/utils';
+import { createConnection, connectionUUID, updatePaths } from './Connections/utils';
+import { rectFromOrigin } from './utils/positioning';
+import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 
 type PipelineBuilderProps = {
   snapToGridOnDrag?: boolean;
@@ -40,8 +44,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   const phaseRef = useRef<number>(0);
   const connectionsRef = useRef<Record<string, ConnectionType>>(null);
+  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>(null);
 
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
+  const [connectionsDragging, setConnectionsDraggingState] = useState<Record<string, ConnectionType>>(null);
+
+  const itemDraggingRef = useRef<NodeItemType | null>(null);
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
 
   function setConnections(connections: Record<string, ConnectionType>) {
@@ -51,6 +59,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     };
     setConnectionsState(connectionsRef.current);
   }
+
+  function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
+    connectionsDraggingRef.current = connectionsDragging;
+    setConnectionsDraggingState(connectionsDragging);
+  }
+
   function setItems(items: Record<string, DragItem>) {
     setItemsState(prev => ({ ...prev, ...items }));
     setConnections(connectionsRef.current);
@@ -73,11 +87,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       ];
 
-      const mapping = itemsMock.reduce((acc: Record<string, DragItem>, item) => {
+      const mapping = itemsMock.reduce((acc: Record<string, DragItem>, rect: RectType) => {
         const id = randomSimpleHashGenerator();
         acc[id] = {
-          ...item,
           id,
+          rect,
           title: `${id} ${randomNameGenerator()}`,
           type: ItemTypeEnum.BLOCK,
         };
@@ -95,8 +109,48 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onDrag(item: DragItem) {
-    updatePaths(item, connectionsRef);
+  function onDrag(item: NodeItemType) {
+    if (ItemTypeEnum.BLOCK === item.type) {
+      updatePaths(item, connectionsRef);
+    } else if (ItemTypeEnum.PORT === item.type) {
+      updatePaths(item, connectionsDraggingRef);
+    }
+  }
+
+  function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
+    if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
+      const { x, y } = monitor.getInitialClientOffset();
+      const item = {
+        ...node,
+        rect: {
+          height: node.rect.height,
+          left: x,
+          top: y,
+          width: node.rect.width,
+        },
+      };
+      itemDraggingRef.current = item;
+      const connection = createConnection(item, {
+        ...item,
+        id: randomSimpleHashGenerator(),
+      });
+      setConnectionsDragging({ [connectionUUID(connection)]: connection });
+
+      console.log('onDragStart', item);
+    }
+  }
+
+  function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
+    let rectOrigin = node?.rect;
+
+    if (ItemTypeEnum.PORT === node.type
+      && itemDraggingRef.current
+      && getNodeUUID(node) === getNodeUUID(itemDraggingRef?.current)
+    ) {
+      rectOrigin = itemDraggingRef?.current?.rect;
+    }
+
+    onDrag({ ...node, rect: rectFromOrigin(rectOrigin, monitor) });
   }
 
   function updateItem(item: DragItem) {
@@ -104,45 +158,51 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     onDrag(item);
   }
 
+  function onDrop(node: NodeItemType, monitor: DropTargetMonitor) {
+    itemDraggingRef.current = null;
+    setConnectionsDragging(null);
+
+    if (ItemTypeEnum.PORT === node.type) {
+      return;
+    }
+
+    const delta = monitor.getDifferenceFromInitialOffset() as {
+      x: number
+      y: number
+    };
+
+    let left = Math.round(node?.rect?.left + delta.x);
+    let top = Math.round(node?.rect?.top + delta.y);
+    if (snapToGridOnDrag) {
+      [left, top] = snapToGrid({
+        x: left,
+        y: top,
+      }, { height: 100, width: 100 });
+    }
+
+    const item = {
+      ...node,
+      rect: {
+        ...node.rect,
+        left,
+        top,
+      },
+    };
+
+    console.log('onDrop', item);
+    updateItem(item);
+  }
+
   const [, drop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: ItemTypeEnum.BLOCK,
-      drop(item: DragItem, monitor) {
-        const delta = monitor.getDifferenceFromInitialOffset() as {
-          x: number
-          y: number
-        };
-
-        let left = Math.round(item.left + delta.x);
-        let top = Math.round(item.top + delta.y);
-        if (snapToGridOnDrag) {
-          [left, top] = snapToGrid({
-            x: left,
-            y: top,
-          }, { height: 100, width: 100 });
-        }
-
-        updateItem({ ...item, left, top });
+      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
+      drop: (item: DragItem, monitor: DropTargetMonitor) => {
+        onDrop(item, monitor);
 
         return undefined;
       },
-      hover: (item, monitor) => {
-        const offset = monitor.getClientOffset();
-        const initialClientOffset = monitor.getInitialClientOffset();
-
-        const newOffset = monitor.getClientOffset();
-        if (offset && newOffset) {
-          const dx = newOffset.x - initialClientOffset.x;
-          const dy = newOffset.y - initialClientOffset.y;
-
-          onDrag({
-            ...item,
-            left: Math.round(item.left + dx),
-            top: Math.round(item.top + dy),
-          });
-        }
-      },
+      hover: onDragging,
     }),
     [snapToGridOnDrag],
   );
@@ -151,24 +211,35 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     <CanvasStyled
       onDoubleClick={(event: React.MouseEvent) => updateItem({
         id: randomSimpleHashGenerator(),
-        left: event.clientX,
+        rect: {
+          left: event.clientX,
+          top: event.clientY,
+        },
         title: randomNameGenerator(),
-        top: event.clientY,
         type: ItemTypeEnum.BLOCK,
       })}
       ref={drop}
     >
-      {connections && items && (
-        <ConnectionLines
-          connections={connections}
-          items={items}
-        />
-      )}
+      <ConnectionLines>
+        {connections && Object.values(connections || {}).map((connection: ConnectionType) => (
+          <ConnectionLine
+            connection={connection}
+            key={connectionUUID(connection)}
+          />
+        ))}
+        {connectionsDragging && Object.values(connectionsDragging || {}).map((connection: ConnectionType) => (
+          <ConnectionLine
+            connection={connection}
+            key={connectionUUID(connection)}
+          />
+        ))}
+      </ConnectionLines>
 
       {items && Object.keys(items || items).map((key) => (
         <DraggableBlock
           item={items[key] as DragItem}
           key={key}
+          onDragStart={onDragStart}
         />
       ))}
     </CanvasStyled>

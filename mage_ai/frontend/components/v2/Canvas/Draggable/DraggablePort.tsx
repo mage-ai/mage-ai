@@ -1,6 +1,6 @@
 import React, { FC, memo, useEffect, useMemo } from 'react';
 
-import { DragItem, NodeItemType, PortType } from '../interfaces';
+import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
@@ -12,6 +12,7 @@ type DraggablePortProps = {
   handleOnDrop: (source: NodeItemType, target: NodeItemType) => void;
   handleMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleMouseUp: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
 };
 
 export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort({
@@ -20,6 +21,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   handleOnDrop,
   handleMouseDown,
   handleMouseUp,
+  onDragStart,
 }: DraggablePortProps) {
   const uuid = getNodeUUID(item);
 
@@ -27,7 +29,14 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
     backgroundColor,
     isDragging,
   }, connectDrag, preview] = useDrag(() => ({
-    canDrag: () => true,
+    canDrag: (monitor: DragSourceMonitor) => {
+      onDragStart({
+        ...item,
+        rect: itemRef?.current?.getBoundingClientRect() as RectType,
+      }, monitor);
+
+      return true;
+    },
     collect: (monitor: DragSourceMonitor) => {
       const isDragging = monitor.isDragging();
 
@@ -44,7 +53,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
     },
     item,
     type: item.type,
-  }), [item]);
+  }), [item, onDragStart]);
 
   const [{ canDrop, isOver }, connectDrop] = useDrop(
     () => ({
@@ -57,7 +66,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
         handleOnDrop(dragTarget, item);
       },
-      // hover: (item: NodeItemType, monitor: DropTargetMonitor) => true,
+      // hover: onDragging,
     }),
     [handleOnDrop, item],
   );

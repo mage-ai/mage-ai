@@ -1,7 +1,11 @@
-import { DragItem } from '../../../Canvas/interfaces';
-import { ConnectionType, RectType } from './interfaces';
+import { NodeItemType, RectType } from '../../../Canvas/interfaces';
+import { ConnectionType } from './interfaces';
 
-export function createConnection(fromItem: DragItem, toItem: DragItem, options?: Partial<ConnectionType>): ConnectionType {
+export function createConnection(
+  fromItem: NodeItemType,
+  toItem: NodeItemType,
+  options?: Partial<ConnectionType>,
+): ConnectionType {
   // Default the positions to 'right' and 'left' if not specified
   const defaultOptions: Omit<ConnectionType, 'from' | 'to'> = {
     curveControl: 0.5,
@@ -40,7 +44,7 @@ function getAnchorPosition({ left, height, top, width }: RectType, position?: st
   }
 }
 
-export function calculatePosition(connection: ConnectionType, fromRect: RectType, toRect: RectType) {
+function calculatePosition(connection: ConnectionType, fromRect: RectType, toRect: RectType) {
   const fromPosition = getAnchorPosition(fromRect, connection.fromPosition);
   const toPosition = getAnchorPosition(toRect, connection.toPosition);
   const { x: startX, y: startY } = fromPosition;
@@ -81,7 +85,7 @@ export function getPathD(connection: ConnectionType, fromRect: RectType, toRect:
   return `M${startX},${startY} C${x1},${y1} ${x2},${y2} ${endX},${endY}`;
 }
 
-export function getConnections(uuid: number | string, connections: Record<string, ConnectionType>): ConnectionType[] {
+function getConnections(uuid: number | string, connections: Record<string, ConnectionType>): ConnectionType[] {
   return Object.values(connections || {}).reduce((acc, connection) => {
     if (connection.from === uuid || connection.to === uuid) {
       return acc.concat(connection);
@@ -92,7 +96,7 @@ export function getConnections(uuid: number | string, connections: Record<string
 }
 
 export function updatePaths(
-  item: DragItem,
+  item: NodeItemType,
   connectionsRef: {
     current: Record<string, ConnectionType>;
   },
@@ -103,13 +107,18 @@ export function updatePaths(
     const connUUID = connectionUUID(connection);
     const pathElement = document.getElementById(connUUID);
 
+
     if (connection.from === itemID) {
       connection.fromItem = item;
     } else if (connection.to === itemID) {
       connection.toItem = item;
     }
 
-    const pathD = getPathD(connection, connection.fromItem as RectType, connection.toItem as RectType);
+    const pathD = getPathD(
+      connection,
+      connection?.fromItem?.rect as RectType,
+      connection?.toItem?.rect as RectType,
+    );
     pathElement.setAttribute('d', pathD);
 
     connectionsRef.current[connUUID] = connection;

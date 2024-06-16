@@ -18,7 +18,7 @@ export interface BoxDragPreviewState {
 }
 
 export const BoxDragPreview: FC<BoxDragPreviewProps> = memo(
-  function BoxDragPreview({ title }) {
+  function BoxDragPreview({ title }: { title: string }) {
     const [tickTock, setTickTock] = useState(false);
 
     useEffect(
@@ -31,7 +31,7 @@ export const BoxDragPreview: FC<BoxDragPreviewProps> = memo(
 
     return (
       <div style={styles}>
-        <BlockNode preview title={title} yellow={tickTock} />
+        <BlockNode backgroundColor={tickTock ? 'yellow' : undefined} preview title={`${title} BlockDragPreview`} />
       </div>
     );
   },
