@@ -1,14 +1,10 @@
-import dynamic from 'next/dynamic';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-const Layout = dynamic(() => import('./Layout'));
 
-function Canvas(props, ref: Ref.HTMLCanvasElement) {
+export function Canvas({ children }: { children?: React.ReactNode }) {
   return (
     <DndProvider backend={HTML5Backend}>
-      <Layout />
+      {children}
     </DndProvider>
   );
 }
-
-export default Canvas;

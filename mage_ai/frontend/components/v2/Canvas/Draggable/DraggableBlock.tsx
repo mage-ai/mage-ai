@@ -5,58 +5,50 @@ import { useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 
 import BlockNode from '../Nodes/BlockNode';
+import { DragItem } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 
-function getStyles(
-  left: number,
-  top: number,
-  isDragging: boolean,
-): CSSProperties {
+function getStyles({ left, top }: DragItem, isDragging: boolean): CSSProperties {
   const transform = `translate3d(${left}px, ${top}px, 0)`;
   return {
-    position: 'absolute',
-    transform,
     WebkitTransform: transform,
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
-    opacity: isDragging ? 0 : 1,
     height: isDragging ? 0 : '',
+    opacity: isDragging ? 0 : 1,
+    position: 'absolute',
+    transform,
   };
 }
 
-export interface DraggableBlockProps {
-  id: string
-  title: string
-  left: number
-  top: number
-}
+export type DraggableBlockProps = DragItem;
 
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock(
-  props,
+  item: DraggableBlockProps,
 ) {
-  const { id, title, left, top } = props;
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
-      type: ItemTypeEnum.BLOCK,
-      item: { id, left, top, title },
       collect: (monitor: DragSourceMonitor) => ({
         isDragging: monitor.isDragging(),
       }),
+      item,
+      type: ItemTypeEnum.BLOCK,
     }),
-    [id, left, top, title],
+    [item],
   );
 
   useEffect(() => {
     preview(getEmptyImage(), { captureDraggingState: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div
       ref={drag}
       role="DraggableBlock"
-      style={getStyles(left, top, isDragging)}
+      style={getStyles(item, isDragging)}
     >
-      <BlockNode title={title} />
+      <BlockNode title={item?.title} />
     </div>
   );
 });

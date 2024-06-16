@@ -1,47 +1,38 @@
 import React from 'react';
-
-import styles from '@styles/scss/components/Grid/Grid.module.scss';
-import { ElementType, extractProps } from '../../shared/types';
-import { styleClassNames } from '../../shared/utils';
+import { Styled } from './index.style';
+import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
-  children?: React.ReactNode | Element | Element[] | React.ReactNode[];
-  className?: string;
-  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  style?: React.CSSProperties;
+  alignContent?: string;
+  alignItems?: string;
+  area?: string;
+  autoColumns?: string;
+  autoFlow?: string;
+  autoRows?: string;
+  column?: string;
+  columnEnd?: string;
+  columnGap?: string;
+  columnStart?: string;
+  height?: string;
+  justifyContent?: string;
+  justifyItems?: string;
+  placeContent?: string;
+  placeItems?: string;
+  row?: string;
+  rowEnd?: string;
+  rowGap?: string;
+  rowStart?: string;
+  templateAreas?: string;
+  templateColumns?: string;
+  templateRows?: string;
   uuid?: string;
-} & ElementType & {
-    [key: string]: any;
-  };
+  width?: string;
+} & WithStylesProp;
 
-function Grid(
-  { children, className, onClick, onContextMenu, style, uuid, ...props }: GridProps,
-  ref: React.Ref<HTMLDivElement>,
-) {
-  const classNames = styleClassNames(
-    styles,
-    [styles['grid'], uuid ? styles['grid-mana'] : '', className || ''],
-    // @ts-ignore
-    {
-      className,
-      uuid,
-      ...props,
-    },
-  );
+const Grid: React.FC<GridProps> = React.memo((props: GridProps) => (
+  <Styled {...props}>
+    {props.children}
+  </Styled>
+));
 
-  return (
-    <div
-      {...extractProps(props)}
-      className={classNames}
-      onClick={onClick}
-      onContextMenu={onContextMenu}
-      ref={ref}
-      style={style}
-    >
-      {children && (children as React.ReactNode)}
-    </div>
-  );
-}
-
-export default React.forwardRef(Grid);
+export default Grid;

@@ -1,0 +1,15 @@
+.container {
+  height: 100vh;
+  overflow: hidden;
+  width: 100vw;
+
+  &.expanded {
+    visibility: visible;
+  }
+
+  &.collapsed {
+    display: none;
+    height: 0;
+    visibility: hidden;
+  }
+}

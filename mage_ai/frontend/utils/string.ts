@@ -307,7 +307,7 @@ export function roundNumber(number, floatingPoints = 2) {
   return Math.round((number || 0) * denom) / denom;
 }
 
-export function randomNameGenerator() {
+export function randomNameGenerator(): string {
   return `${randomSample(adjectives)} ${randomSample(nouns)}`;
 }
 

@@ -5,7 +5,7 @@ import { BoxContainer } from './Containers/BoxContainer';
 import ListContainerWrapper from './Containers/List/ListContainerWrapper';
 import { FilesContainer } from './Containers/Files/FilesContainer';
 import { BoxContainerTyped } from './Containers/BoxContainerTyped';
-import DragLayer from './Layers/DragLayer';
+import { DragLayer } from './Layers/DragLayer';
 import { BoxWithHandle } from './Draggable/Box/BoxWithHandle';
 import { BoxWithImage } from './Draggable/Box/BoxWithImage';
 

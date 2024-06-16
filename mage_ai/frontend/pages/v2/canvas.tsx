@@ -2,11 +2,11 @@ import Route from '@components/v2/Route';
 import dynamic from 'next/dynamic';
 
 function CanvasPage() {
-  const Canvas = dynamic(() => import('@components/v2/Canvas'), {
+  const PipelineBuilder = dynamic(() => import('@components/v2/Apps/PipelineBuilder'), {
     ssr: false,
   });
 
-  return <Canvas />;
+  return <PipelineBuilder />;
 }
 
 export default Route(CanvasPage);
