@@ -21,21 +21,86 @@ function getStyles({ left, top }: DragItem, isDragging: boolean): CSSProperties 
   };
 }
 
-export type DraggableBlockProps = DragItem;
+export type DraggableBlockProps = {
+  canDrag?: (item: DragItem) => boolean;
+  item: DragItem;
+  itemsRef: {
+    current: Record<string, DragItem>;
+  };
+};
 
-export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock(
-  item: DraggableBlockProps,
-) {
-  const [{ isDragging }, drag, preview] = useDrag(
-    () => ({
-      collect: (monitor: DragSourceMonitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-      item,
-      type: ItemTypeEnum.BLOCK,
+export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
+  canDrag,
+  item,
+  itemsRef,
+}: DraggableBlockProps) {
+  // function isCurrentItem(monitor: DragSourceMonitor): boolean {
+  //   return item.id === (monitor.getItem() as DragItem).id;
+  // }
+
+  // https://react-dnd.github.io/react-dnd/docs/api/use-drag
+  const [{ isDragging }, drag, preview] = useDrag(() => ({
+    canDrag: () => {
+      itemsRef.current = {
+        ...(itemsRef.current || {}),
+        [item.id]: {
+          ...item,
+          isDragging: true,
+        },
+      };
+
+      return canDrag ? canDrag(item) : true;
+    },
+    collect: (monitor: DragSourceMonitor) => ({
+      isDragging: monitor.isDragging(),
     }),
-    [item],
-  );
+    end: (item: DragItem, monitor) => {
+      // const delta = monitor.getDifferenceFromInitialOffset() as {
+      //   x: number;
+      //   y: number;
+      // };
+
+      // const left = Math.round(item.left + delta.x);
+      // const top = Math.round(item.top + delta.y);
+
+      // item.moveBox({ ...item, left, top });
+      //
+      console.log('end', item, monitor);
+
+      itemsRef.current = {
+        ...(itemsRef.current || {}),
+        [item.id]: {
+          ...item,
+          isDragging: false,
+        },
+      };
+    },
+    // isDragging: (monitor: DragSourceMonitor) => {
+    //   if (!isCurrentItem(monitor)) {
+    //     return false;
+    //   }
+
+    //   const offset = monitor.getClientOffset();
+    //   const initialClientOffset = monitor.getInitialClientOffset();
+
+    //   const newOffset = monitor.getClientOffset();
+    //   if (offset && newOffset) {
+    //     const dx = newOffset.x - initialClientOffset.x;
+    //     const dy = newOffset.y - initialClientOffset.y;
+    //     if (onDrag) {
+    //       onDrag({
+    //         ...item,
+    //         left: Math.round(item.left + dx),
+    //         top: Math.round(item.top + dy),
+    //       });
+    //     }
+    //   }
+
+    //   return true;
+    // },
+    item,
+    type: ItemTypeEnum.BLOCK,
+  }), [item]);
 
   useEffect(() => {
     preview(getEmptyImage(), { captureDraggingState: true });

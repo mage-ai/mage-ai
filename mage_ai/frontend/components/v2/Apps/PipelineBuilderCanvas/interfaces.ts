@@ -7,8 +7,3 @@ export interface NodeType {
   title: string;
   top: number;
 }
-
-export interface ConnectionType {
-  from: NodeType;
-  to: NodeType;
-}

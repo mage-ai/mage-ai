@@ -297,6 +297,7 @@ export type ElementType = {
   onWaitingCapture?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onWheel?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onWheelCapture?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  role?: string;
   style?: React.CSSProperties;
 };
 

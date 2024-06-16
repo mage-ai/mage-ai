@@ -1,7 +1,10 @@
 export interface DragItem {
+  height?: number;
   id: number | string;
+  isDragging?: boolean;
   left: number;
-  top: number;
   title?: string;
+  top: number;
   type: string;
+  width?: number;
 }

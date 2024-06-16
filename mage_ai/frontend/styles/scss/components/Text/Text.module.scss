@@ -11,3 +11,15 @@
 .xsmall {
   @include text.base-xs;
 }
+
+.monospace {
+  @include text.monospace;
+
+  &.small {
+    @include text.monospace-sm;
+  }
+
+  &.xsmall {
+    @include text.monospace-sm;
+  }
+}

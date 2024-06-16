@@ -1,105 +1,173 @@
 import update from 'immutability-helper';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { useDrop } from 'react-dnd';
 
-import Layout from '../../Canvas/Layout';
 import { CanvasStyled } from './index.style';
 import { Canvas } from '../../Canvas';
-import { snapToGrid as doSnapToGrid } from '../../Canvas/utils/snapToGrid';
 import { DragItem } from '../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
+import ConnectionLines from './Connections/ConnectionLines';
+import { ConnectionType } from './Connections/interfaces';
+import { getConnections, getPathD, createConnection, connectionUUID, updatePaths } from './Connections/utils';
 
 type PipelineBuilderProps = {
   snapToGridOnDrag?: boolean;
 };
 
-function PipelineBuilder({
-  snapToGridOnDrag = false,
-}: PipelineBuilderProps) {
-  const [boxes, setBoxes] = useState<Record<string, DragItem>>({
-    a: { top: 20, left: 80, title: 'Drag me around' },
-    b: { top: 180, left: 20, title: 'Drag me too' },
-  });
+// Drag preview image
+// https://react-dnd.github.io/react-dnd/docs/api/drag-preview-image
 
-  const moveBox = useCallback(
-    (box: DragItem) => {
-      setBoxes(
-        update(boxes, {
-          [box.id]: {
-            $merge: box,
-          },
-        }),
-      );
-    },
-    [boxes],
-  );
-  const addBox = useCallback(
-    (box: DragItem) => {
-      setBoxes(
-        update(boxes, {
-          [box.id]: {
-            $set: box,
-          },
-        }),
-      );
-    },
-    [boxes],
-  );
+// Drag layer
+// https://react-dnd.github.io/react-dnd/docs/api/use-drag-layer
 
-  const [opts, drop] = useDrop(
+// Drop manager
+// https://react-dnd.github.io/react-dnd/docs/api/use-drag-drop-manager
+
+// Monitors
+// https://react-dnd.github.io/react-dnd/docs/api/drag-source-monitor
+// https://react-dnd.github.io/react-dnd/docs/api/drop-target-monitor
+// https://react-dnd.github.io/react-dnd/docs/api/drag-layer-monitor
+
+const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
+  snapToGridOnDrag = true,
+}: PipelineBuilderProps) => {
+  console.log('PipelineBuilder render');
+
+  const connectionsRef = useRef<Record<string, ConnectionType>>(null);
+  const itemsRef = useRef<Record<string, DragItem>>(null);
+
+  function setConnections(connections: Record<string, ConnectionType>) {
+    connectionsRef.current = {
+      ...connectionsRef.current,
+      ...connections,
+    };
+  }
+  function setItems(items: Record<string, DragItem>) {
+    itemsRef.current = {
+      ...itemsRef.current,
+      ...items,
+    };
+  }
+
+  useEffect(() => {
+    if (!itemsRef.current) {
+      const itemsMock = {
+        a: {
+          height: 50,
+          id: 'a',
+          left: 80,
+          title: randomNameGenerator(),
+          top: 20,
+          type: ItemTypeEnum.BLOCK,
+          width: 100,
+        },
+        b: {
+          height: 50,
+          id: 'b',
+          left: 200,
+          title: randomNameGenerator(),
+          top: 180,
+          type: ItemTypeEnum.BLOCK,
+          width: 100,
+        },
+      };
+
+      const connection = createConnection(itemsMock.a, itemsMock.b);
+      setConnections({ [connectionUUID(connection)]: connection });
+      setItems(itemsMock);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onDrag(item: DragItem) {
+    updatePaths(item, connectionsRef);
+  }
+
+  function updateItem(item: DragItem) {
+    setItems({ [item.id]: item });
+  }
+
+  const [, drop] = useDrop(
     () => ({
+      // https://react-dnd.github.io/react-dnd/docs/api/use-drop
       accept: ItemTypeEnum.BLOCK,
       drop(item: DragItem, monitor) {
-        console.log('MOVE');
         const delta = monitor.getDifferenceFromInitialOffset() as {
           x: number
           y: number
         };
 
-        const left = Math.round(item.left + delta.x);
-        const top = Math.round(item.top + delta.y);
-        // snapToGridOnDrag ? [left, top] = doSnapToGrid(left, top) : null;
+        let left = Math.round(item.left + delta.x);
+        let top = Math.round(item.top + delta.y);
+        if (snapToGridOnDrag) {
+          [left, top] = snapToGrid({
+            x: left,
+            y: top,
+          }, { height: 100, width: 100 });
+        }
 
-        moveBox({ ...item, left, top });
+        updateItem({ ...item, left, top });
 
         return undefined;
       },
-    }),
-    [moveBox],
-  );
+      hover: (item, monitor) => {
+        const offset = monitor.getClientOffset();
+        const initialClientOffset = monitor.getInitialClientOffset();
 
-  console.log(opts);
+        const newOffset = monitor.getClientOffset();
+        if (offset && newOffset) {
+          const dx = newOffset.x - initialClientOffset.x;
+          const dy = newOffset.y - initialClientOffset.y;
+
+          onDrag({
+            ...item,
+            left: Math.round(item.left + dx),
+            top: Math.round(item.top + dy),
+          });
+        }
+      },
+    }),
+    [snapToGridOnDrag],
+  );
 
   return (
-    <>
-      <CanvasStyled
-        onDoubleClick={(event: React.MouseEvent) => addBox({
-          id: randomSimpleHashGenerator(),
-          left: event.clientX,
-          title: randomNameGenerator(),
-          top: event.clientY,
-        })}
-        ref={drop}
-      >
-        {Object.keys(boxes).map((key) => (
-          <DraggableBlock
-            id={key}
-            key={key}
-            {...(boxes[key] as DragItem)}
-          />
-        ))}
-      </CanvasStyled>
-    </>
+    <CanvasStyled
+      onDoubleClick={(event: React.MouseEvent) => updateItem({
+        id: randomSimpleHashGenerator(),
+        left: event.clientX,
+        title: randomNameGenerator(),
+        top: event.clientY,
+        type: ItemTypeEnum.BLOCK,
+      })}
+      ref={drop}
+    >
+      {connectionsRef?.current && (
+        <ConnectionLines
+          connections={connectionsRef?.current}
+          items={itemsRef?.current}
+        />
+      )}
+
+      {Object.values(itemsRef?.current || {}).map((item: DragItem) => (
+        <DraggableBlock
+          item={item}
+          itemsRef={itemsRef}
+          key={item.id}
+        />
+      ))}
+    </CanvasStyled>
   );
-}
+};
+
 export default function PipelineBuilderCanvas({
   snapToGridOnDrop = false,
   ...props
 }: PipelineBuilderProps & { snapToGridOnDrop?: boolean }) {
-
   return (
     <Canvas>
       {/* <Layout /> */}
