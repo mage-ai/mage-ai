@@ -24,15 +24,13 @@ function getStyles({ left, top }: DragItem, isDragging: boolean): CSSProperties 
 export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
-  itemsRef: {
-    current: Record<string, DragItem>;
-  };
+  // itemsRef: { current: Record<string, DragItem> };
 };
 
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
   canDrag,
   item,
-  itemsRef,
+  // itemsRef,
 }: DraggableBlockProps) {
   // function isCurrentItem(monitor: DragSourceMonitor): boolean {
   //   return item.id === (monitor.getItem() as DragItem).id;
@@ -40,17 +38,17 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   // https://react-dnd.github.io/react-dnd/docs/api/use-drag
   const [{ isDragging }, drag, preview] = useDrag(() => ({
-    canDrag: () => {
-      itemsRef.current = {
-        ...(itemsRef.current || {}),
-        [item.id]: {
-          ...item,
-          isDragging: true,
-        },
-      };
+    canDrag: () =>
+      // itemsRef.current = {
+      //   ...(itemsRef.current || {}),
+      //   [item.id]: {
+      //     ...item,
+      //     isDragging: true,
+      //   },
+      // };
 
-      return canDrag ? canDrag(item) : true;
-    },
+       canDrag ? canDrag(item) : true
+    ,
     collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -65,15 +63,14 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
       // item.moveBox({ ...item, left, top });
       //
-      console.log('end', item, monitor);
 
-      itemsRef.current = {
-        ...(itemsRef.current || {}),
-        [item.id]: {
-          ...item,
-          isDragging: false,
-        },
-      };
+      // itemsRef.current = {
+      //   ...(itemsRef.current || {}),
+      //   [item.id]: {
+      //     ...item,
+      //     isDragging: false,
+      //   },
+      // };
     },
     // isDragging: (monitor: DragSourceMonitor) => {
     //   if (!isCurrentItem(monitor)) {

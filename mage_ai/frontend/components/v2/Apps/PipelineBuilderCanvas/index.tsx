@@ -39,23 +39,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   console.log('PipelineBuilder render');
 
   const connectionsRef = useRef<Record<string, ConnectionType>>(null);
-  const itemsRef = useRef<Record<string, DragItem>>(null);
+
+  const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
+  const [items, setItemsState] = useState<Record<string, DragItem>>(null);
 
   function setConnections(connections: Record<string, ConnectionType>) {
     connectionsRef.current = {
       ...connectionsRef.current,
       ...connections,
     };
+    setConnectionsState(connectionsRef.current);
   }
   function setItems(items: Record<string, DragItem>) {
-    itemsRef.current = {
-      ...itemsRef.current,
-      ...items,
-    };
+    setItemsState(prev => ({ ...prev, ...items }));
+    setConnections(connectionsRef.current);
   }
 
   useEffect(() => {
-    if (!itemsRef.current) {
+    if (!items) {
       const itemsMock = {
         a: {
           height: 50,
@@ -76,10 +77,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           width: 100,
         },
       };
+      setItems(itemsMock);
 
       const connection = createConnection(itemsMock.a, itemsMock.b);
       setConnections({ [connectionUUID(connection)]: connection });
-      setItems(itemsMock);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -90,6 +91,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function updateItem(item: DragItem) {
     setItems({ [item.id]: item });
+    onDrag(item);
   }
 
   const [, drop] = useDrop(
@@ -146,18 +148,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       })}
       ref={drop}
     >
-      {connectionsRef?.current && (
+      {connections && items && (
         <ConnectionLines
-          connections={connectionsRef?.current}
-          items={itemsRef?.current}
+          connections={connections}
+          items={items}
         />
       )}
 
-      {Object.values(itemsRef?.current || {}).map((item: DragItem) => (
+      {items && Object.keys(items || items).map((key) => (
         <DraggableBlock
-          item={item}
-          itemsRef={itemsRef}
-          key={item.id}
+          item={items[key] as DragItem}
+          key={key}
         />
       ))}
     </CanvasStyled>
