@@ -15,7 +15,7 @@ import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from './Connections/ConnectionLine';
 import { ConnectionLines } from './Connections/ConnectionLines';
 import { ConnectionType } from './Connections/interfaces';
-import { createConnection, connectionUUID, updatePaths } from './Connections/utils';
+import { createConnection, connectionUUID, updateConnections, updatePaths } from './Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
 import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 
@@ -99,8 +99,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         return acc;
       }, {});
 
-      const connection = createConnection(...Object.values(mapping).slice(0, 2) as [DragItem, DragItem]);
-      connectionsRef.current = { [connectionUUID(connection)]: connection };
+      // const connection = createConnection(...Object.values(mapping).slice(0, 2) as [DragItem, DragItem]);
+      // connectionsRef.current = { [connectionUUID(connection)]: connection };
 
       setItems(mapping);
     }
@@ -120,20 +120,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       const { x, y } = monitor.getInitialClientOffset();
-      const item = {
-        ...node,
+      const item = update(node, {
         rect: {
-          height: node.rect.height,
-          left: x,
-          top: y,
-          width: node.rect.width,
+          $set: {
+            height: node.rect.height,
+            left: x,
+            top: y,
+            width: node.rect.width,
+          },
         },
-      };
-      itemDraggingRef.current = item;
-      const connection = createConnection(item, {
-        ...item,
-        id: randomSimpleHashGenerator(),
       });
+
+      itemDraggingRef.current = item;
+      const connection = createConnection(item, update(item, {
+        id: { $set: randomSimpleHashGenerator() },
+      }));
       setConnectionsDragging({ [connectionUUID(connection)]: connection });
 
       console.log('onDragStart', item);
@@ -150,7 +151,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       rectOrigin = itemDraggingRef?.current?.rect;
     }
 
-    onDrag({ ...node, rect: rectFromOrigin(rectOrigin, monitor) });
+    onDrag(update(node, { rect: { $set: rectFromOrigin(rectOrigin, monitor) } }));
   }
 
   function updateItem(item: DragItem) {
@@ -177,29 +178,46 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       [left, top] = snapToGrid({
         x: left,
         y: top,
-      }, { height: 100, width: 100 });
+      }, {
+        height: 100,
+        width: 100,
+      });
     }
 
-    const item = {
-      ...node,
+    const item = update(node, {
       rect: {
-        ...node.rect,
-        left,
-        top,
+        $merge: {
+          left,
+          top,
+        },
       },
-    };
+    });
 
     console.log('onDrop', item);
     updateItem(item);
   }
 
-  function onDropNode(dragTarget: NodeItemType, dropTarget: NodeItemType) {
+  const onDropNode = useCallback((dragTarget: NodeItemType, dropTarget: NodeItemType) => {
     if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
-      const connection = createConnection(itemDraggingRef.current, dropTarget);
+      const node = itemDraggingRef.current;
+      const connection = createConnection(
+        update(node, {
+          parent: { $set: items?.[(node as PortType)?.parent?.id] },
+        }),
+        update(dropTarget, {
+          parent: { $set: items?.[(dropTarget as PortType)?.parent?.id] },
+        }),
+      );
       setConnections({ [connectionUUID(connection)]: connection });
       console.log('onDropNode', connection);
     }
 
+    resetAfterDrop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
+  function onDragCancel(node: NodeItemType) {
+    console.log('onDragCancel', node);
     resetAfterDrop();
   }
 
@@ -256,6 +274,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         <DraggableBlock
           item={items[key] as DragItem}
           key={key}
+          onDragCancel={onDragCancel}
           onDragStart={onDragStart}
           onDrop={onDropNode}
         />

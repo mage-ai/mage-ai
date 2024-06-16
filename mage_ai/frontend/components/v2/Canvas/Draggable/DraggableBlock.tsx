@@ -1,3 +1,4 @@
+import update from 'immutability-helper';
 import { CSSProperties, FC, ReactEventHandler, useCallback } from 'react';
 import { createRef, useState, useRef } from 'react';
 import { memo, useEffect, useMemo } from 'react';
@@ -41,6 +42,7 @@ function getStyles({ rect }: DragItem, {
 export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
+  onDragCancel: (node: NodeItemType) => void;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
 };
@@ -48,6 +50,7 @@ export type DraggableBlockProps = {
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
   canDrag,
   item,
+  onDragCancel,
   onDragStart,
   onDrop,
 }: DraggableBlockProps) {
@@ -68,7 +71,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         { id: `${item.id}-i2`, index: 1, subtype: PortSubtypeEnum.INPUT },
         { id: `${item.id}-o1`, index: 0, subtype: PortSubtypeEnum.OUTPUT },
         { id: `${item.id}-o2`, index: 1, subtype: PortSubtypeEnum.OUTPUT },
-        ].map((port) => ({ ...port, parent: item, type: ItemTypeEnum.PORT }) as PortType),
+        ].map((port) => update({ ...port, type: ItemTypeEnum.PORT }, { parent: { $set: item } }) as PortType),
       );
     }
 
@@ -149,10 +152,12 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleMouseUp: ReactEventHandler = useCallback(() => {
+  const handleMouseUp = useCallback((event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
+    event.stopPropagation();
     setDraggingNode(null);
+    onDragCancel(node);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onDragCancel]);
 
   const renderPorts = useCallback((key: PortSubtypeEnum) => (
     <>
@@ -168,7 +173,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         return acc.concat(
           <DraggablePort
             handleMouseDown={event => handleMouseDown(event, port)}
-            handleMouseUp={handleMouseUp}
+            handleMouseUp={event => handleMouseUp(event, port)}
             handleOnDrop={handleOnDrop}
             item={port}
             itemRef={itemRef}
@@ -190,7 +195,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   return (
     <div
       onMouseDown={event => handleMouseDown(event, item)}
-      onMouseUp={handleMouseUp}
+      onMouseUp={event => handleMouseUp(event, item)}
       // @ts-ignore
       ref={itemRef}
       style={getStyles(item, {

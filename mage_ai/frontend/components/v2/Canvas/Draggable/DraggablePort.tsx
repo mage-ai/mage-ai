@@ -1,3 +1,4 @@
+import update from 'immutability-helper';
 import React, { FC, memo, useEffect, useMemo } from 'react';
 
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
@@ -30,10 +31,11 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
     isDragging,
   }, connectDrag, preview] = useDrag(() => ({
     canDrag: (monitor: DragSourceMonitor) => {
-      onDragStart({
-        ...item,
-        rect: itemRef?.current?.getBoundingClientRect() as RectType,
-      }, monitor);
+      onDragStart(update(item, {
+        rect: {
+          $set: itemRef?.current?.getBoundingClientRect() as RectType,
+        },
+      }), monitor);
 
       return true;
     },
@@ -65,10 +67,11 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       }),
       drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
         const { left, height, top, width } = itemRef?.current?.getBoundingClientRect() as RectType;
-        handleOnDrop(dragTarget, {
-          ...item,
-          rect: { left, height, top, width },
-        });
+        handleOnDrop(dragTarget, update(item, {
+          rect: {
+            $set: { height, left, top, width },
+          },
+        }));
       },
     }),
     [handleOnDrop, item],
@@ -80,6 +83,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   return (
     <div
       key={uuid}
+      onDragEnd={handleMouseUp}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       style={{
