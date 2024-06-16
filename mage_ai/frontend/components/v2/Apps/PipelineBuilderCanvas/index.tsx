@@ -174,6 +174,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     let left = Math.round(node?.rect?.left + delta.x);
     let top = Math.round(node?.rect?.top + delta.y);
+
+    const screenX = window.innerWidth;
+    const screenY = window.innerHeight;
+    const itemWidth = node?.rect?.width;
+    const itemHeight = node?.rect?.height;
+
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    if (left + itemWidth > screenX) left = screenX - itemWidth;
+    if (top + itemHeight > screenY) top = screenY - itemHeight;
+
     if (snapToGridOnDrag) {
       [left, top] = snapToGrid({
         x: left,
