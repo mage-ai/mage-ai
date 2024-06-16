@@ -42,12 +42,14 @@ export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
+  onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
 };
 
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
   canDrag,
   item,
   onDragStart,
+  onDrop,
 }: DraggableBlockProps) {
   const phaseRef = useRef(0);
   const portsRef = useRef({});
@@ -78,17 +80,18 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   const handleOnDrop = useCallback((dragTarget: NodeItemType, dropTarget: NodeItemType) => {
     console.log('Dragged ', dragTarget);
     console.log('Dropped on ', dropTarget);
+    onDrop(dragTarget, dropTarget);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onDrop]);
 
   // https://react-dnd.github.io/react-dnd/docs/api/use-drag
   const [{
     backgroundColor,
     isDragging,
   }, connectDrag, preview] = useDrag(() => ({
-    canDrag: () => {
+    canDrag: (monitor: DragSourceMonitor) => {
       if (!canDrag || canDrag(item)) {
-        onDragStart(item);
+        onDragStart(item, monitor);
         return true;
       }
 

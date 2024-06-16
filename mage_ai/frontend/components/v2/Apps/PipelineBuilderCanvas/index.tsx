@@ -6,7 +6,7 @@ import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 
 import { CanvasStyled } from './index.style';
 import { Canvas } from '../../Canvas';
-import { DragItem, NodeItemType, OffsetType, RectType } from '../../Canvas/interfaces';
+import { DragItem, NodeItemType, OffsetType, PortType, RectType } from '../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -158,13 +158,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     onDrag(item);
   }
 
-  function onDrop(node: NodeItemType, monitor: DropTargetMonitor) {
+  function resetAfterDrop() {
     itemDraggingRef.current = null;
     setConnectionsDragging(null);
+  }
 
-    if (ItemTypeEnum.PORT === node.type) {
-      return;
-    }
+  function onDrop(node: NodeItemType, monitor: DropTargetMonitor) {
+    resetAfterDrop();
 
     const delta = monitor.getDifferenceFromInitialOffset() as {
       x: number
@@ -193,10 +193,27 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     updateItem(item);
   }
 
+  function onDropNode(dragTarget: NodeItemType, dropTarget: NodeItemType) {
+    if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
+      const connection = createConnection(itemDraggingRef.current, dropTarget);
+      setConnections({ [connectionUUID(connection)]: connection });
+      console.log('onDropNode', connection);
+    }
+
+    resetAfterDrop();
+  }
+
   const [, drop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
       accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
+      canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
+        if (!monitor.isOver({ shallow: true })) {
+          return false;
+        }
+
+        return ItemTypeEnum.BLOCK === node.type;
+      },
       drop: (item: DragItem, monitor: DropTargetMonitor) => {
         onDrop(item, monitor);
 
@@ -240,6 +257,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           item={items[key] as DragItem}
           key={key}
           onDragStart={onDragStart}
+          onDrop={onDropNode}
         />
       ))}
     </CanvasStyled>

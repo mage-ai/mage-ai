@@ -64,9 +64,12 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
         isOver: monitor.isOver(),
       }),
       drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
-        handleOnDrop(dragTarget, item);
+        const { left, height, top, width } = itemRef?.current?.getBoundingClientRect() as RectType;
+        handleOnDrop(dragTarget, {
+          ...item,
+          rect: { left, height, top, width },
+        });
       },
-      // hover: onDragging,
     }),
     [handleOnDrop, item],
   );
