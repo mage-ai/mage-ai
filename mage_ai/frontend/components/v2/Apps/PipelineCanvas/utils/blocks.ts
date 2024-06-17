@@ -30,7 +30,7 @@ export function initializeBlocksAndConnections(
     layout,
     maxHeight,
     maxWidth,
-    verticalSpacing = 50,
+    verticalSpacing = 200,
   } = opts || {};
 
   const {
@@ -75,30 +75,32 @@ export function initializeBlocksAndConnections(
 
   function getNextAvailablePosition(
     level: number,
+    index: number,
     parentPosition?: { left: number; top: number },
   ): { left: number; top: number } {
-    const top = level * (blockHeight + verticalSpacing) + 20;
+    const offsetFactor = index % 2 === 0 ? 0.1 : -0.1;
+    const top = level * (blockHeight + (verticalSpacing * offsetFactor)) + 20;
     let left = 20;
     if (parentPosition) {
-      left = parentPosition.left + blockWidth + horizontalSpacing;
+      left = parentPosition.left + blockWidth + (horizontalSpacing * offsetFactor);
     } else {
       const lastLeft = columns[level][columns[level].length - 1];
-      left = lastLeft + blockWidth + horizontalSpacing;
+      left = lastLeft + blockWidth + (horizontalSpacing * offsetFactor);
     }
     return { left, top };
   }
 
-  blocks.forEach(block => {
+  blocks.forEach((block, idx: number) => {
     const level = levels[block.uuid];
     const top = level * (blockHeight + verticalSpacing) + 20;
     let left: number;
 
     if (block.upstream_blocks.length > 0) {
       const parentPosition = positions[block.upstream_blocks[0]];
-      const position = getNextAvailablePosition(level, parentPosition);
+      const position = getNextAvailablePosition(level, idx, parentPosition);
       left = position.left;
     } else {
-      const position = getNextAvailablePosition(level);
+      const position = getNextAvailablePosition(level, idx);
       left = position.left;
     }
 

@@ -39,7 +39,8 @@ export function BlockNodeWrapper({
       return colors?.base ? colors : { base: 'gray' };
     }
 
-    return getBlockColor(type as BlockTypeEnum, { getColorName: true })?.names;
+    const c = getBlockColor(type as BlockTypeEnum, { getColorName: true });
+    return c && c?.names ? c?.names : { base: 'gray' };
   }, [pipeline, type]);
 
 
@@ -81,9 +82,11 @@ export function BlockNodeWrapper({
   return (
     <NodeWrapper {...wrapperProps}>
       <BlockNode
+        block={block}
         borderConfig={{
           borders,
         }}
+        connections={connections}
         titleConfig={{
           asides: {
             after: {

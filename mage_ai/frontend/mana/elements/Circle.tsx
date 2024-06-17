@@ -2,8 +2,9 @@ import styles from '@styles/scss/elements/Circle.module.scss';
 import { withStyles } from '../hocs/withStyles';
 
 const Circle = withStyles<{
-  size?: number;
   backgroundColor?: string;
+  borderColor?: string;
+  size?: number;
 }>(styles, {
   HTMLTag: 'div',
   classNames: ['circle'],

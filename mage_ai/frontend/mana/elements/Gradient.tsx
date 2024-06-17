@@ -13,12 +13,12 @@ type Direction = 'to bottom left'
 
 
 type InnerProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   backgroundColor?: string;
 };
 
 type OutterProps = {
-  gradientBackground: string;
+  gradientBackground?: string;
 };
 
 const GradientContainerOutter = withStyles<OutterProps>(styles, {

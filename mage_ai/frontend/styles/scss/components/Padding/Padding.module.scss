@@ -1,4 +1,4 @@
-@use '../../base/paddings'
+@use '../../base/paddings';
 
 .padding {
   @include paddings.all();
