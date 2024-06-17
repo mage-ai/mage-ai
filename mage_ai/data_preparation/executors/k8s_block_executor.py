@@ -9,6 +9,7 @@ from mage_ai.orchestration.db.models.schedules import BlockRun
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
+from mage_ai.settings.server import MAGE_CLUSTER_UUID
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -43,7 +44,7 @@ class K8sBlockExecutor(BlockExecutor):
             namespace = DEFAULT_NAMESPACE
 
         job_manager = K8sJobManager(
-            job_name=f'mage-{job_name_prefix}-block-{block_run_id}',
+            job_name=f'{MAGE_CLUSTER_UUID}-{job_name_prefix}-block-{block_run_id}',
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
             namespace=namespace,
