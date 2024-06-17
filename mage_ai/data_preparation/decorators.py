@@ -109,6 +109,10 @@ def streaming_source(cls):
     return cls
 
 
+def streaming_sink(cls):
+    return cls
+
+
 def collect_decorated_objs(decorated_objs):
     """
     Method to collect the decorated objects (function or class)
