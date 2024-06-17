@@ -1,13 +1,11 @@
 import dynamic from 'next/dynamic';
 
 import Grid from '@mana/components/Grid';
-import styles from '@styles/scss/pages/PipelineBuilder/Main.module.scss';
-import { PIPELINE } from './mock';
-import BlockType from '@interfaces/BlockType';
-import PipelineType from '@interfaces/PipelineType';
+import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
+import mocks from './mocks';
 
 export default function PipelineBuilder() {
-  const PipelineBuilderCanvas = dynamic(() => import('../PipelineBuilderCanvas'), {
+  const PipelineCanvas = dynamic(() => import('../Apps/PipelineCanvas'), {
     ssr: false,
   });
 
@@ -20,7 +18,13 @@ export default function PipelineBuilder() {
           <div />
 
           {/* @ts-ignore */}
-          <PipelineBuilderCanvas blocks={(PIPELINE as PipelineType).blocks as BlockType[]} />
+          <PipelineCanvas
+            pipelines={[
+              mocks.PIPELINE_DYNAMIC,
+              // mocks.PIPELINE_DEPLOY,
+              // mocks.PIPELINE_TRAINING,
+            ]}
+          />
         </Grid>
 
         <div />

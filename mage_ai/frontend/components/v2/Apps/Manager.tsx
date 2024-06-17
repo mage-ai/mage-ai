@@ -13,7 +13,7 @@ import { setThemeSettings } from '@mana/themes/utils';
 import { DefaultPanel } from './catalog';
 import { Dark, Menu, PanelCollapseLeft } from '@mana/icons';
 import { updateClassnames, upsertRootElement } from './utils';
-import styles from '@styles/scss/pages/Apps/Manager.module.scss';
+import styles from '@styles/scss/apps/Manager/Manager.module.scss';
 
 function Manager() {
   const phaseRef = useRef(0);

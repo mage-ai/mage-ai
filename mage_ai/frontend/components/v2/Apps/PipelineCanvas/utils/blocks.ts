@@ -107,9 +107,10 @@ export function initializeBlocksAndConnections(
     columns[level].push(left);
   });
 
-  blocks.forEach(block => {
+  blocks.forEach((block: BlockType) => {
     const position = positions[block.uuid];
     itemsMapping[block.uuid] = {
+      block,
       id: block.uuid,
       rect: {
         height: blockHeight,

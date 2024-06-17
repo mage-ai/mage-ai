@@ -3,6 +3,7 @@ import { PortSubtypeEnum } from '../types';
 export type AsideType = {
   Icon?: string;
   color?: string;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 export type AsidesType = {
@@ -10,11 +11,14 @@ export type AsidesType = {
   before?: AsideType;
 };
 
-export type ConnectionsType = {
+export type ConnectionType = {
+  toItem?: any;
+  fromItem?: any;
   type: PortSubtypeEnum;
 };
 
 export type BadgeType = {
+  Icon?: string;
   color?: string;
   label?: string;
 };
@@ -34,4 +38,17 @@ type BorderType = {
 
 export type BorderConfigType = {
   borders?: BorderType[];
+};
+
+export type ConfigurationOptionType = {
+  asides?: AsidesType;
+  connecton?: ConnectionType;
+  interaction?: InteractionConfigType;
+  label?: string;
+  value?: string;
+};
+
+export type InteractionConfigType = {
+  select?: any;
+  textInput?: any;
 };

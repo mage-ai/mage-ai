@@ -1,5 +1,4 @@
-// styles/mixins.ts -> abstracts/mixins.scss
-@import '../abstracts/colors';
+@use './variables';
 
 @mixin transition {
   transition: 0.2s all ease-in-out;
@@ -20,19 +19,19 @@
   &:hover {
     box-shadow:
       0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
-        if($border-color, $border-color, $backgrounds-button-base-default),
+        if($border-color, $border-color, var(--backgrounds-button-base-default)),
       0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
         $borders-outline-width + if($outline-width, $outline-width, 0))
-        if($outline-color, $outline-color, $colors-purple);
+        if($outline-color, $outline-color, var(--colors-purple));
   }
 
   &:focus {
     box-shadow:
       0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
-        if($border-color, $border-color, $backgrounds-button-base-default),
+        if($border-color, $border-color, var(--backgrounds-button-base-default)),
       0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
         $borders-outline-width + if($outline-width, $outline-width, 0))
-        if($outline-color, $outline-color, $colors-purple);
+        if($outline-color, $outline-color, var(--colors-purple));
   }
 
   @if not $active {
@@ -43,10 +42,10 @@
     &:active {
       box-shadow:
         0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0))
-          if($border-color, $border-color, $backgrounds-button-base-default),
+          if($border-color, $border-color, var(--backgrounds-button-base-default)),
         0 0 0 ($borders-outline-offset + if($outline-offset, $outline-offset, 0) +
           $borders-outline-width + if($outline-width, $outline-width, 0))
-          if($outline-color, $outline-color, $colors-purple);
+          if($outline-color, $outline-color, var(--colors-purple));
     }
   }
 }

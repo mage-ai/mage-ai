@@ -21,7 +21,7 @@ import {
   LayoutConfigDirectionOriginEnum,
   ElementRoleEnum,
 } from '../../Canvas/types';
-import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
+import { BlockNodeWrapper } from '../../Canvas/Nodes/BlockNodeWrapper';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
@@ -34,13 +34,14 @@ import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
+import PipelineType from '@interfaces/PipelineType';
 
 type PipelineBuilderProps = {
-  blocks?: BlockType[];
+  pipelines?: PipelineType[];
   canvasRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
   onDragStart: () => void;
-  snapToGridOnDrag?: boolean;
+  snapToGridOnDrop?: boolean;
 };
 
 // Drag preview image
@@ -58,11 +59,11 @@ type PipelineBuilderProps = {
 // https://react-dnd.github.io/react-dnd/docs/api/drag-layer-monitor
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
-  blocks,
+  pipelines,
   canvasRef,
   onDragEnd: onDragEndProp,
   onDragStart: onDragStartProp,
-  snapToGridOnDrag = true,
+  snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
   console.log('PipelineBuilder render');
 
@@ -107,7 +108,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   useEffect(() => {
-    if (phaseRef.current === 0 && blocks?.length >= 1) {
+    if (phaseRef.current === 0 && pipelines?.length >= 1) {
+      const blocks = pipelines.reduce((acc, pipeline) => acc.concat(pipeline.blocks.map(block => ({
+        ...block,
+        pipeline: update(pipeline, { blocks: { $set: pipeline.blocks.map(b => ({ uuid: b.uuid })) } }),
+      }))), []);
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         blocks,
         {
@@ -135,7 +140,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blocks, layoutConfig]);
+  }, [pipelines, layoutConfig]);
 
   function onDrag(item: NodeItemType) {
     if (ItemTypeEnum.BLOCK === item.type) {
@@ -183,7 +188,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
-    console.log('onDragging', node?.type);
+    // console.log('onDragging', node?.type);
 
     let rectOrigin = node?.rect;
 
@@ -231,8 +236,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // if (left + itemWidth > screenX) left = screenX - itemWidth;
     // if (top + itemHeight > screenY) top = screenY - itemHeight;
 
-    if (snapToGridOnDrag) {
-      [left, top] = snapToGrid(
+    if (snapToGridOnDrop) {
+      const [snappedX, snappedY] = snapToGrid(
         {
           x: left,
           y: top,
@@ -242,6 +247,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           width: 100,
         },
       );
+      left = snappedX;
+      top = snappedY;
     }
 
     const item = update(node, {
@@ -383,7 +390,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       {phaseRef.current >= 1 &&
         items &&
         Object.keys(items || items).map(key => (
-          <DraggableBlock
+          <BlockNodeWrapper
             item={items[key] as DragItem}
             key={key}
             layout={layoutConfig}
@@ -399,11 +406,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 };
 
 export default function PipelineBuilderCanvas({
-  snapToGridOnDrop = false,
+  snapToGridOnDrag = true,
   ...props
 }: PipelineBuilderProps & {
-  blocks?: BlockType[];
-  snapToGridOnDrop?: boolean;
+  pipelines?: PipelineType[];
+  snapToGridOnDrag?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
@@ -482,7 +489,7 @@ export default function PipelineBuilderCanvas({
     >
       <CanvasStyled>
         <DndProvider backend={HTML5Backend}>
-          <DragLayer snapToGrid={snapToGridOnDrop} />
+          <DragLayer snapToGrid={snapToGridOnDrag} />
           <PipelineBuilder
             {...props}
             canvasRef={canvasRef}

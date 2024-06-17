@@ -23,7 +23,7 @@
 
 # # Define input and output file paths and namespace
 # mode = 'light'
-# scss_file = f'_colors-{mode}.scss'
+# scss_file = f'colors/_{mode}.scss'
 # css_file = f'_{mode}.scss'
 # namespace = 'colors'  # Adjust the namespace according to your SCSS
 

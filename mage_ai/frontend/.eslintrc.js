@@ -16,7 +16,6 @@ module.exports = {
     'next.common.config.js',
     'next.config.js',
     'next_base_path.config.js',
-    'v2/Canvas/**/*',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {

@@ -1,12 +1,11 @@
-import update from 'immutability-helper';
-import { CSSProperties, FC, ReactEventHandler, useCallback } from 'react';
-import { createRef, useState, useRef } from 'react';
-import { memo, useEffect, useMemo } from 'react';
+import React from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
+import { CSSProperties, FC, useCallback } from 'react';
+import { createRef, useState, useRef } from 'react';
 import { getEmptyImage } from 'react-dnd-html5-backend';
+import { memo, useEffect, useMemo } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 
-import BlockNode from './BlockNode';
 import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
 import {
@@ -15,8 +14,8 @@ import {
   LayoutConfigDirectionEnum,
   ElementRoleEnum,
 } from '../types';
-import { getNodeUUID } from './utils';
-import { DraggablePort } from './DraggablePort';
+import { getNodeUUID } from '../Draggable/utils';
+import { DraggablePort } from '../Draggable/DraggablePort';
 
 // This is the style used for the preview when dragging
 function getStyles(
@@ -49,7 +48,7 @@ function getStyles(
   };
 }
 
-export type DraggableBlockProps = {
+export type NodeWrapperProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
   layout?: LayoutConfigType;
@@ -66,7 +65,7 @@ export type DraggableBlockProps = {
   onPortMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
 };
 
-export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
+export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   canDrag,
   item,
   layout,
@@ -75,7 +74,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   onMouseDown,
   onMouseUp,
   onPortMount,
-}: DraggableBlockProps) {
+}: NodeWrapperProps) {
   const phaseRef = useRef(0);
   const portsRef = useRef({});
   const itemRef = useRef(null);
@@ -92,23 +91,18 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     if (phaseRef.current === 0) {
       preview(getEmptyImage(), { captureDraggingState: true });
     }
-
     phaseRef.current += 1;
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOnDrop = useCallback(
     (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      // console.log('Dragged ', dragTarget);
-      // console.log('Dropped on ', dropTarget);
       onDrop(dragTarget, dropTarget);
     },
     [onDrop],
   );
 
-  // https://react-dnd.github.io/react-dnd/docs/api/use-drag
-  const [{ backgroundColor, isDragging }, connectDrag, preview] = useDrag(
+  const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
       canDrag: (monitor: DragSourceMonitor) => {
         if (!canDrag || canDrag(item)) {
@@ -162,7 +156,6 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
       drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
         handleOnDrop(dragTarget, item);
       },
-      // hover: (item: NodeItemType, monitor: DropTargetMonitor) => true,
     }),
     [handleOnDrop, item],
   );
@@ -172,11 +165,6 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
       event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
       node: NodeItemType,
     ) => {
-      console.log('DraggableBlock.handleMouseDown', event);
-      // VERY IMPORTANT that stopPropagation is called before preventDefault,
-      // otherwise the event will bubble up to the parent
-      // event.stopPropagation();
-      // event.preventDefault();
       onMouseDown(event, node);
       setDraggingNode(node);
     },
@@ -185,11 +173,6 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   const handleMouseUp = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
-      // console.log('DraggableBlock.handleMouseUp', event);
-      // VERY IMPORTANT that stopPropagation is called before preventDefault,
-      // otherwise the event will bubble up to the parent
-      // event.stopPropagation();
-      // event.preventDefault();
       onMouseUp(event, node);
       setDraggingNode(null);
     },
@@ -275,24 +258,9 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         isDragging: isDragging && draggingNode?.type === item?.type,
         isOverCurrent,
       })}
-      // @ts-ignore
     >
-      {false && (
-        <DragPreviewImage
-          connect={preview}
-          key={String(Number(new Date()))}
-          src="https://www.mage.ai/favicon.ico"
-        />
-      )}
-
       <Grid {...gridProps}>
         <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid>
-
-        <BlockNode
-          backgroundColor={backgroundColor}
-          preview={isDraggingBlock}
-          title={item?.title}
-        />
 
         <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid>
       </Grid>

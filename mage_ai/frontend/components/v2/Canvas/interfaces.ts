@@ -1,3 +1,5 @@
+import BlockType from '@interfaces/BlockType';
+
 import {
   ItemTypeEnum,
   PortSubtypeEnum,
@@ -23,6 +25,7 @@ interface BaseItem {
 }
 
 export interface DragItem extends BaseItem {
+  block?: BlockType;
   inputs?: PortType[];
   isDragging?: boolean;
   outputs?: PortType[];

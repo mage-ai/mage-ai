@@ -1,9 +1,7 @@
-@use '../../abstracts/colors' as colors;
-
 $spacing: 12px;
 
 .divider {
-  background-color: colors.$borders-color-base-default;
+  background-color: var(--borders-color-base-default);
 
   &.short {
     width: 80px;

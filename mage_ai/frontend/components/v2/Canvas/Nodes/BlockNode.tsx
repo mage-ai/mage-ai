@@ -1,35 +1,25 @@
-import type { CSSProperties, FC } from 'react';
-import { memo } from 'react';
-
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
 import Grid from '@mana/components/Grid';
-import Text from '@mana/elements/Text';
 
-const styles: CSSProperties = {
-  // border: '1px dashed gray',
-  cursor: 'move',
-  // height: 50,
-  padding: 0,
-  // width: 200,
+type BlockNodeProps = {
+  borderConfig?: BorderConfigType;
+  collapsed?: boolean;
+  configurationOptions?: ConfigurationOptionType[];
+  titleConfig?: TitleConfigType;
 };
 
-export interface BoxProps {
-  backgroundColor?: string;
-  preview?: boolean;
-  title: string;
-}
-
-const BlockNode: FC<BoxProps> = memo(function Box({ backgroundColor, preview, title }: BoxProps) {
+export function BlockNode({
+  borderConfig,
+}: BlockNodeProps) {
   return (
-    <Grid
-      alignItems='center'
-      role={preview ? 'BoxPreview' : 'Box'}
-      style={{ ...styles, backgroundColor }}
+    <div
+      className={[
+        styles.blockNode,
+      ].join(' ')}
     >
-      <Text monospace small>
-        {title}
-      </Text>
-    </Grid>
+      <Grid>
+      </Grid>
+    </div>
   );
-});
-
-export default BlockNode;
+}

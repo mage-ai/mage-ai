@@ -2,9 +2,9 @@ import App, { AppContext, AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 
 import '@styles/globals.css';
-import '@styles/scss/globals/main.scss';
-import '@styles/scss/globals/dark.scss';
-import '@styles/scss/globals/light.scss';
+import '@styles/scss/main.scss';
+import '@styles/scss/themes/dark.scss';
+import '@styles/scss/themes/light.scss';
 import 'react-toastify/dist/ReactToastify.min.css';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
 
