@@ -8,6 +8,7 @@ import { getBlockColor } from '@mana/themes/blocks';
 import Aside from './Blocks/Aside';
 import GradientContainer from '@mana/elements/Gradient';
 import Connection from './Blocks/Connection';
+import PanelRows from '@mana/elements/PanelRows';
 import BlockType from '@interfaces/BlockType';
 
 type BlockNodeProps = {
@@ -94,12 +95,16 @@ export function BlockNode({
               {after && <Aside {...after} />}
             </Grid>
 
-            {connections?.map((connection, idx: number) =>
-              <Connection
-                block={block}
-                connection={connection}
-                key={`${connection?.fromItem?.uuid}-${connection?.toItem?.uuid}`}
-              />,
+            {connections?.length >= 1 && (
+              <PanelRows>
+                {connections?.map((connection, idx: number) =>
+                  <Connection
+                    block={block}
+                    connection={connection}
+                    key={`${connection?.fromItem?.uuid}-${connection?.toItem?.uuid}-${idx}`}
+                  />,
+                )}
+              </PanelRows>
             )}
           </>
         )}

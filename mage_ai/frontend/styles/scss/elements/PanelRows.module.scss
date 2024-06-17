@@ -1,0 +1,17 @@
+@use '../base/borders';
+@use '../base/gradients';
+
+.panel {
+  @include borders.base();
+
+  border-radius: 4px;
+}
+
+.row {
+  border-top: 1px solid var(--borders-color-base-default);
+  padding: var(--padding-base);
+
+  &.first-true {
+    border-top-color: transparent;
+  }
+}

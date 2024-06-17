@@ -40,9 +40,7 @@ export default function Connection({ block, connection, emphasized }: Connection
   return (
     <Grid
       alignItems="center"
-      borders
       columnGap={8}
-      padding={16}
       templateColumns={[
         fromItem ? '1fr' : 'auto',
         toItem ? '1fr' : 'auto',
