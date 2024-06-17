@@ -44,7 +44,7 @@ const Grid: React.FC<
       ref: React.Ref<any>,
     ) => (
       <Styled ref={ref} {...props}>
-        {/* eslint-dis
+        {/* eslint-disable-next-line react/prop-types */}
         {props?.children}
       </Styled>
     ),
