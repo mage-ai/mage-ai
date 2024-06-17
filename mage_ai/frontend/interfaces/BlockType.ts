@@ -417,6 +417,7 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
+  pipeline?: any;
   pipelines?: BlockPipelineType[];
   priority?: number;
   replicated_block?: string;

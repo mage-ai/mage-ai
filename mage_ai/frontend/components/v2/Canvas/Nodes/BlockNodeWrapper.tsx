@@ -1,28 +1,47 @@
 import { BlockNode } from './BlockNode';
 import { BlockTypeEnum } from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Check, Pipeline, PlayButtonFilled } from '@mana/icons';
+import { Check, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
 import { useMemo } from 'react';
 import { DragItem } from '../interfaces';
 
-export function BlockNodeWrapper({ items, ...wrapperProps }: NodeWrapperProps & {
+export function BlockNodeWrapper({
+  items,
+  pipelinesMapping,
+  ...wrapperProps
+}: NodeWrapperProps & {
   items: Record<string, DragItem>;
+  pipelinesMapping: Record<string, PipelineType>;
 }) {
   const block = wrapperProps?.item?.block;
 
   const {
     name,
+    pipeline,
     type,
     uuid,
   } = block;
 
-  console.log(block);
+  const names = useMemo(() => {
+    if (BlockTypeEnum.PIPELINE === type) {
+      const typeCounts = pipeline?.blocks?.reduce((acc: Record<string, number>, { type }) => {
+        acc[type] = (acc[type] || 0) + 1;
 
-  const {
-    names,
-  } = getBlockColor(type as BlockTypeEnum, { getColorName: true });
+        return acc;
+      }, {});
+
+      const modeType = (Object.keys(typeCounts || {}).reduce((a, b) => typeCounts![a] > typeCounts![b] ? a : b) as BlockTypeEnum);
+      console.log(modeType);
+      const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
+      return colors?.base ? colors : { base: 'gray' };
+    }
+
+    return getBlockColor(type as BlockTypeEnum, { getColorName: true })?.names;
+  }, [pipeline, type]);
+
 
   const connections = useMemo(() => {
     const arr = [];
@@ -72,11 +91,13 @@ export function BlockNodeWrapper({ items, ...wrapperProps }: NodeWrapperProps & 
               baseColorName: randomSample(['blue', 'green', 'red']),
             },
           },
-          badge: {
-            Icon: Pipeline,
-            baseColorName: names?.base,
-            label: name || uuid,
-          },
+          badge: BlockTypeEnum.PIPELINE === type
+            ? {
+              Icon: PipeIconVertical,
+              baseColorName: names?.base,
+              label: name || uuid,
+            }
+            : undefined,
           inputConnection: connections?.find(({ toItem }) => toItem?.uuid === block?.uuid),
           label: name || uuid,
           outputConnection: connections?.find(({ fromItem }) => fromItem?.uuid === block?.uuid),

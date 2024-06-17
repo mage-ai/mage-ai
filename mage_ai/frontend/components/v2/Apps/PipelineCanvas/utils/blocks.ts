@@ -26,11 +26,11 @@ export function initializeBlocksAndConnections(
   const {
     blockHeight = 200,
     blockWidth = 300,
-    horizontalSpacing = 200,
+    horizontalSpacing = 50,
     layout,
     maxHeight,
     maxWidth,
-    verticalSpacing = 100,
+    verticalSpacing = 50,
   } = opts || {};
 
   const {

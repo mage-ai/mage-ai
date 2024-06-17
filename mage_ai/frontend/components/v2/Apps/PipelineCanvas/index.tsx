@@ -91,6 +91,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
+  const [pipelinesMapping, setPipelinesMapping] = useState<Record<string, PipelineType>>(null);
 
   function setConnections(connections: Record<string, ConnectionType>) {
     connectionsRef.current = {
@@ -116,8 +117,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
       const blocks = extractNestedBlocks(pipeline, pipelinesMapping);
 
-      console.log(blocks);
-
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         blocks,
         {
@@ -131,6 +130,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       connectionsRef.current = connectionsMapping;
       portsRef.current = portsMapping;
       setItems(itemsMapping);
+      setPipelinesMapping(pipelinesMapping);
     }
 
     phaseRef.current += 1;
@@ -405,6 +405,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onPortMount={onPortMount}
+            pipelinesMapping={pipelinesMapping}
           />
         ))}
     </>

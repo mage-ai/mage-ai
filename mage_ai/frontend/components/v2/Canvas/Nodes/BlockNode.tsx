@@ -62,11 +62,14 @@ export function BlockNode({
             />
           )}
         </Grid>
-        <Grid alignItems="center" columnGap={12} templateColumns="auto 1fr" templateRows="1fr">
-          {before && <Aside {...before} />}
 
-          <Text semibold small>{titleConfig?.label}</Text>
-        </Grid>
+        {!badge && (
+          <Grid alignItems="center" columnGap={12} templateColumns="auto 1fr" templateRows="1fr">
+            {before && <Aside {...before} />}
+
+            <Text semibold small>{titleConfig?.label}</Text>
+          </Grid>
+        )}
       </Grid>
     </div>
   );

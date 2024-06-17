@@ -16,6 +16,6 @@
 
   background-color: var(--background-color);
   border-radius: inherit;
-  border: var(--borders-outline-width) solid transparent;
+  border: none;
   overflow: hidden; // To clip children with border-radius
 }
