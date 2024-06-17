@@ -1,6 +1,7 @@
 import PipelineType, { PipelineTypeEnum } from '../PipelineType';
 import { BlockTypeEnum, DynamicModeEnum, InputDataTypeEnum } from '../BlockType';
 import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
+import { InteractionInputTypeEnum, InteractionVariableTypeEnum } from '../InteractionType';
 
 export default interface PipelineExecutionFrameworkType extends PipelineType {
   author?: string;
@@ -70,6 +71,58 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
       downstream_blocks: [
         GroupUUIDEnum.EMBED,
       ],
+      configuration: {
+        templates: {
+          subword_tokenizer: {
+            name: 'Subword tokenizer',
+            description: 'Tokenize text into subwords',
+            variables: {
+              hallucination: {
+                input: {
+                  description: '...',
+                  label: '...',
+                  options: [
+                    {
+                      label: 'Default hallucination',
+                      value: 'none',
+                    },
+                  ],
+                  type: InteractionInputTypeEnum.DROPDOWN_MENU,
+                },
+                variable: {
+                  description: '...',
+                  name: '...',
+                  required: true,
+                  types: [InteractionVariableTypeEnum.STRING],
+                },
+              },
+            },
+          },
+          word_tokenizer: {
+            'name': 'Word Tokenizer',
+            'description': 'Tokenize text into words',
+            variables: {
+              spacing: {
+                'input': {
+                  'description': 'Enter the text you want to tokenize into words.',
+                  'label': 'Text Input',
+                  'style': {
+                    multiline: true,
+                  },
+                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                },
+                'variable': {
+                  'description': 'The variable to store the tokenized words.',
+                  'name': 'tokenized_words',
+                  'required': true,
+                  'types': [InteractionVariableTypeEnum.STRING],
+                  'uuid': '',
+                },
+              },
+            },
+          },
+        },
+      },
     },
     {
       uuid: GroupUUIDEnum.EMBED,
@@ -82,6 +135,55 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
         GroupUUIDEnum.VECTOR_DATABASE,
         GroupUUIDEnum.KNOWLEDGE_GRAPH,
       ],
+      configuration: {
+        templates: {
+          bert_embedding: {
+            'name': 'BERT Embedding',
+            'description': 'Generate BERT embeddings for the provided text.',
+            variables: {
+              bert_embeddings_uuid: {
+                'input': {
+                  'description': 'Input text for BERT embeddings.',
+                  'label': 'Text Input',
+                  'style': {
+                    'multiline': true,
+                  },
+                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                },
+                'variable': {
+                  'description': 'The variable to store BERT embeddings.',
+                  'name': 'bert_embeddings',
+                  'required': true,
+                  'types': [InteractionVariableTypeEnum.DATE],
+                },
+              },
+            },
+          },
+          word2vec_embedding: {
+            'name': 'Word2Vec Embedding',
+            'description': 'Generate Word2Vec embeddings for the provided text.',
+            variables: {
+              word2vec_embeddings_uuid: {
+                'input': {
+                  'description': 'Input text for Word2Vec embeddings.',
+                  'label': 'Text Input',
+                  'style': {
+                    'multiline': true,
+                  },
+                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                },
+                'variable': {
+                  'description': 'The variable to store Word2Vec embeddings.',
+                  'name': 'word2vec_embeddings',
+                  'required': true,
+                  'types': [InteractionVariableTypeEnum.DATE],
+                },
+
+              },
+            },
+          },
+        },
+      },
     },
     {
       uuid: GroupUUIDEnum.KNOWLEDGE_GRAPH,

@@ -8,6 +8,7 @@ import { DataTypeEnum, MsgTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 import { GroupUUIDEnum } from './PipelineExecutionFramework/types';
+import { InteractionVariableType, InteractionInputType } from './InteractionType';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -281,6 +282,15 @@ interface VariableSettingsType {
   input_data_types?: InputDataTypeEnum[];
 }
 
+interface TemplateType {
+  description?: string;
+  name?: string;
+  variables?: Record<string, {
+    input: InteractionInputType,
+    variable: InteractionVariableType,
+  }>;
+}
+
 export interface ConfigurationType extends BaseConfigurationType {
   dynamic?: {
     batch_settings?: BatchSettingsType;
@@ -289,6 +299,7 @@ export interface ConfigurationType extends BaseConfigurationType {
     reduce_output?: boolean | string[];
     reduce_output_upstream?: string[];
   };
+  templates?: Record<string, TemplateType>;
   variables?: {
     downstream?: Record<string, VariableSettingsType>;
     read?: VariableSettingsType;

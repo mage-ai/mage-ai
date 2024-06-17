@@ -1,5 +1,5 @@
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { BlockTypeEnum, DynamicModeEnum, InputDataTypeEnum } from '@interfaces/BlockType';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { cleanName } from '@utils/string';
 
@@ -13,21 +13,39 @@ export const TransformPipeline = {
       name: 'Clean column names',
       groups: [GroupUUIDEnum.CLEANING],
       downstream_blocks: ['add_3rd_party_data'],
+      upstream_blocks: [],
     },
     {
       name: 'Add 3rd party data',
       groups: [GroupUUIDEnum.ENRICH],
       downstream_blocks: ['sliding_window_chunker'],
+      upstream_blocks: ['clean_column_names'],
     },
     {
       name: 'Sliding window chunker',
       groups: [GroupUUIDEnum.CHUNKING],
       downstream_blocks: ['subword_tokenizer'],
+      upstream_blocks: ['add_3rd_party_data'],
     },
     {
       name: 'Subword tokenizer',
       groups: [GroupUUIDEnum.TOKENIZATION],
       downstream_blocks: ['instructor_embeddings'],
+      upstream_blocks: ['sliding_window_chunker'],
+      configuration: {
+        templates: {
+          subword_tokenizer: {
+            variables: {
+              hallucination: 10,
+            },
+          },
+          word_tokenizer: {
+            variables: {
+              spacing: 'none',
+            }
+          }
+        },
+      },
     },
     {
       name: 'Instructor embeddings',
@@ -36,6 +54,21 @@ export const TransformPipeline = {
         'store_relationships_in_neo4j',
         'store_embeddings_pgvector',
       ],
+      upstream_blocks: ['subword_tokenizer'],
+      configuration: {
+        templates: {
+          bert_embedding: {
+            variables: {
+              bert_embeddings_uuid: 'abc',
+            },
+          },
+          word2vec_embedding: {
+            variables: {
+              word2vec_embeddings_uuid: 'def',
+            },
+          },
+        },
+      },
     },
   ].map(block => ({
     ...block,
@@ -53,10 +86,12 @@ export const ExportPipeline = {
     {
       name: 'Store relationships in Neo4J',
       groups: [GroupUUIDEnum.KNOWLEDGE_GRAPH],
+      upstream_blocks: ['instructor_embeddings'],
     },
     {
       name: 'Store embeddings PGVector',
       groups: [GroupUUIDEnum.VECTOR_DATABASE],
+      upstream_blocks: ['instructor_embeddings'],
     },
   ].map(block => ({
     ...block,
@@ -75,10 +110,12 @@ export const IndexPipeline = {
       name: 'Create Contextual Dictionary',
       groups: [GroupUUIDEnum.INDEX],
       downstream_blocks: ['create_document_hierarchy'],
+      upstream_blocks: [],
     },
     {
       name: 'Create Document Hierarchy',
       groups: [GroupUUIDEnum.INDEX],
+      upstream_blocks: ['create_contextual_dictionary'],
     },
   ].map(block => ({
     ...block,
@@ -98,26 +135,31 @@ export const DataPreparationPipeline = {
       type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.INGEST],
       downstream_blocks: ['serialize_and_map_documents'],
+      upstream_blocks: [],
     },
     {
       name: 'Serialize and map documents',
       type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.MAP],
       downstream_blocks: [TransformPipeline.uuid],
+      upstream_blocks: ['ingest_titanic_data'],
     },
     {
       name: TransformPipeline.name,
       type: BlockTypeEnum.PIPELINE,
       downstream_blocks: [ExportPipeline.uuid],
+      upstream_blocks: ['serialize_and_map_documents'],
     },
     {
       name: ExportPipeline.name,
       type: BlockTypeEnum.PIPELINE,
       downstream_blocks: [IndexPipeline.uuid],
+      upstream_blocks: [TransformPipeline.uuid],
     },
     {
       name: IndexPipeline.name,
       type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [ExportPipeline.uuid],
     },
   ].map(block => ({
     ...block,
@@ -134,10 +176,12 @@ export const DataValidationPipeline = {
       name: 'Wait for enough resources',
       type: BlockTypeEnum.SENSOR,
       downstream_blocks: ['run_unit_tests'],
+      upstream_blocks: [],
     },
     {
       name: 'Run unit tests',
       type: BlockTypeEnum.CUSTOM,
+      upstream_blocks: ['wait_for_enough_resources'],
     },
   ].map(block => ({
     ...block,
@@ -155,15 +199,18 @@ export const QueryProcessingPipeline = {
       name: 'Intent Detection',
       groups: [GroupUUIDEnum.INTENT_DETECTION],
       downstream_blocks: ['query_decomposition'],
+      upstream_blocks: [],
     },
     {
       name: 'Query Decomposition',
       groups: [GroupUUIDEnum.QUERY_DECOMPOSITION],
       downstream_blocks: ['query_augmentation'],
+      upstream_blocks: ['intent_detection'],
     },
     {
       name: 'Query Augmentation',
       groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
+      upstream_blocks: ['query_decomposition'],
     },
   ].map(block => ({
     ...block,
@@ -182,15 +229,18 @@ export const RetrievalPipeline = {
       name: 'Iterative Retrieval',
       groups: [GroupUUIDEnum.RETRIEVAL],
       downstream_blocks: ['multi_hop_reasoning'],
+      upstream_blocks: [],
     },
     {
       name: 'Multi-hop Reasoning',
       groups: [GroupUUIDEnum.RETRIEVAL],
       downstream_blocks: ['ranking'],
+      upstream_blocks: ['iterative_retrieval'],
     },
     {
       name: 'Ranking',
       groups: [GroupUUIDEnum.RETRIEVAL],
+      upstream_blocks: ['multi_hop_reasoning'],
     },
   ].map(block => ({
     ...block,
@@ -209,20 +259,24 @@ export const ResponseGenerationPipeline = {
       name: 'Contextualization',
       groups: [GroupUUIDEnum.CONTEXTUALIZATION],
       downstream_blocks: ['response_synthesis'],
+      upstream_blocks: [],
     },
     {
       name: 'Response Synthesis',
       groups: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
       downstream_blocks: ['answer_enrichment'],
+      upstream_blocks: ['contextualization'],
     },
     {
       name: 'Answer Enrichment',
       groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
       downstream_blocks: ['response_formatting'],
+      upstream_blocks: ['response_synthesis'],
     },
     {
       name: 'Response Formatting',
       groups: [GroupUUIDEnum.RESPONSE_FORMATTING],
+      upstream_blocks: ['answer_enrichment'],
     },
   ].map(block => ({
     ...block,
@@ -240,13 +294,16 @@ export const InferencePipeline = {
     {
       uuid: QueryProcessingPipeline.uuid,
       downstream_blocks: [RetrievalPipeline.uuid],
+      upstream_blocks: [],
     },
     {
       uuid: RetrievalPipeline.uuid,
       downstream_blocks: [ResponseGenerationPipeline.uuid],
+      upstream_blocks: [QueryProcessingPipeline.uuid],
     },
     {
       uuid: ResponseGenerationPipeline.uuid,
+      upstream_blocks: [RetrievalPipeline.uuid],
     },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
 }
@@ -263,12 +320,19 @@ export const PipelineFrameworkInstance = {
         DataValidationPipeline.uuid,
         InferencePipeline.uuid,
       ],
+      upstream_blocks: [],
     },
     {
       uuid: DataValidationPipeline.uuid,
+      upstream_blocks: [DataPreparationPipeline.uuid],
     },
     {
       uuid: InferencePipeline.uuid,
+      upstream_blocks: [DataPreparationPipeline.uuid],
     },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
+}
+
+export default {
+  PipelineFrameworkInstance,
 }
