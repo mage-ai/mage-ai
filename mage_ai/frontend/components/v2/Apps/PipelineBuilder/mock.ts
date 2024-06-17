@@ -1,3 +1,4 @@
+// @ts-nocheck
 import PipelineType from '@interfaces/PipelineType';
 
 export const PIPELINE: PipelineType = {
