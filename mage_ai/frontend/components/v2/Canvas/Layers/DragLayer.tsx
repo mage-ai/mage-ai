@@ -32,7 +32,7 @@ function getItemStyles(
   if (isSnapToGrid) {
     x -= initialOffset.x;
     y -= initialOffset.y;
-    [x, y] = snapToGrid(x, y);
+    [x, y] = snapToGrid({ x, y });
     x += initialOffset.x;
     y += initialOffset.y;
   }
