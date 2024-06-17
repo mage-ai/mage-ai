@@ -50,7 +50,7 @@ application.
 
 </Warning>
 
-When creating the OAuth app for GHE, BitBucket, or GitLab, you will need to set the authorized
+When creating the OAuth app for GHE, BitBucket, GitLab, you will need to set the authorized
 callback URL to `http(s)://<your-mage-url>/oauth`.
 
 <AccordionGroup>
@@ -156,6 +156,35 @@ You will need to set the following environment variables in your Mage environmen
 <Step title="Authenticate Mage with GitLab">
 
 You should now be able to authenticate with GitLab and follow the rest of the steps in this document.
+
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Authenticate with Azure DevOps">
+
+<Steps>
+
+<Step title="Enable Active Directory integration">
+
+First, you will need to enable the [Active Directory](https://docs.mage.ai/production/authentication/microsoft) integration in order for Mage to authenticate your user.
+
+</Step>
+
+<Step title="Update environment variables">
+
+Once the Active Directory integration is enabled, you simply need to add your DevOps organization as an environment variable.
+
+```bash
+export AZURE_DEVOPS_ORGANIZATION=<organization_name>`
+```
+</Step>
+
+<Step title="Authenticate Mage with Azure DevOps">
+
+You should now be able to authenticate with Azure DevOps and follow the rest of the steps in this document.
 
 </Step>
 
