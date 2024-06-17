@@ -14,3 +14,5 @@ class CanvasManager {
 
   // Add your methods and properties here
 }
+
+export default CanvasManager;
