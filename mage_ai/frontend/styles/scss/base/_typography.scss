@@ -47,10 +47,7 @@
   }
 }
 
-@mixin base {
-  @include base-font-family;
-  @include monospace-font-family;
-
+@mixin base-styles {
   color: var(--fonts-color-text-base);
   margin: 0;
 
@@ -86,12 +83,11 @@
   &.bold {
     font-weight: map-get(fontsVariables.$fonts, weight, bold);
   }
-
+}
+@mixin base {
+  @include base-styles;
+  @include base-font-family;
   line-height: map-get(fontsVariables.$fonts, lineHeight, md);
-
-  &.monospace {
-    line-height: map-get(fontsVariables.$fonts, lineHeight, monospace);
-  }
 }
 
 @mixin base-sm {
@@ -102,6 +98,24 @@
 
 @mixin base-xs {
   @include base;
+  font-size: map-get(fontsVariables.$fonts, size, xs);
+  line-height: map-get(fontsVariables.$fonts, lineHeight, xs);
+}
+
+@mixin monospace {
+  @include base-styles;
+  @include monospace-font-family;
+  line-height: map-get(fontsVariables.$fonts, lineHeight, monospace);
+}
+
+@mixin monospace-sm {
+  @include monospace;
+  font-size: map-get(fontsVariables.$fonts, size, sm);
+  line-height: map-get(fontsVariables.$fonts, lineHeight, base);
+}
+
+@mixin monospace-xs {
+  @include monospace;
   font-size: map-get(fontsVariables.$fonts, size, xs);
   line-height: map-get(fontsVariables.$fonts, lineHeight, xs);
 }

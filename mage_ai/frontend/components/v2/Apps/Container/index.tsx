@@ -70,17 +70,17 @@ function AppContainer(
   });
 
   return (
-    <Grid borders justifyContent='stretch' justifyItems='stretch' overflow='hidden' ref={ref}>
+    <Grid borders justifyContent="stretch" justifyItems="stretch" overflow="hidden" ref={ref}>
       <Grid
-        autoFlow='column'
-        justifyContent='stretch'
-        justifyItems='stretch'
-        overflow='hidden'
+        autoFlow="column"
+        justifyContent="stretch"
+        justifyItems="stretch"
+        overflow="hidden"
         style={{
           position: 'relative',
         }}
-        templateColumns='1fr'
-        templateRows='auto 1fr'
+        templateColumns="1fr"
+        templateRows="auto 1fr"
       >
         <Header
           style={{
@@ -95,13 +95,14 @@ function AppContainer(
           }}
         >
           {toolbars?.top && (
-            <Grid autoFlow='column' columnGap={12} templateColumns='1fr'>
+            <Grid autoFlow="column" columnGap={12} templateColumns="1fr">
+              {/* @ts-ignore */}
               {toolbars?.top}
             </Grid>
           )}
 
           {(app?.toolbars?.top || removeApp) && (
-            <Padding bottom='small' top='small'>
+            <Padding bottom="small" top="small">
               <ButtonGroup basic itemsContained>
                 {bottomOperations?.[OperationTypeEnum.ADD_APP] && (
                   <Button

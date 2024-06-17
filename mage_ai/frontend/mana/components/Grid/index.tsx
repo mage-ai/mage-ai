@@ -1,46 +1,47 @@
 import React from 'react';
-
-import styles from '@styles/scss/components/Grid/Grid.module.scss';
-import { ElementType, extractProps } from '../../shared/types';
-import { styleClassNames } from '../../shared/utils';
+import { Styled } from './index.style';
+import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
-  children?: React.ReactNode | Element | Element[] | React.ReactNode[];
-  className?: string;
-  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onContextMenu?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  style?: React.CSSProperties;
+  borders?: boolean;
+  children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
+  alignContent?: string;
+  alignItems?: string;
+  area?: string;
+  autoColumns?: string;
+  autoFlow?: string;
+  autoRows?: string;
+  column?: number;
+  columnEnd?: number;
+  columnGap?: number;
+  columnStart?: number;
+  height?: number | string;
+  justifyContent?: string;
+  justifyItems?: string;
+  placeContent?: string;
+  overflow?: string;
+  padding?: number | string;
+  paddingTop?: number | string;
+  paddingBottom?: number | string;
+  paddingLeft?: number | string;
+  paddingRight?: number | string;
+  placeItems?: string;
+  row?: number;
+  rowEnd?: number;
+  rowGap?: number;
+  rowStart?: number;
+  templateAreas?: string;
+  templateColumns?: string;
+  templateRows?: string;
   uuid?: string;
-} & ElementType & {
-    [key: string]: any;
-  };
+  width?: number | string;
+} & WithStylesProp;
 
-function Grid(
-  { children, className, onClick, onContextMenu, style, uuid, ...props }: GridProps,
-  ref: React.Ref<HTMLDivElement>,
-) {
-  const classNames = styleClassNames(
-    styles,
-    [styles['grid'], uuid ? styles['grid-mana'] : '', className || ''],
-    // @ts-ignore
-    {
-      className,
-      uuid,
-      ...props,
-    },
-  );
-
+function Grid({ children, ...props }: GridProps, ref: React.Ref<any>) {
   return (
-    <div
-      {...extractProps(props)}
-      className={classNames}
-      onClick={onClick}
-      onContextMenu={onContextMenu}
-      ref={ref}
-      style={style}
-    >
+    <Styled ref={ref} {...props}>
       {children && (children as React.ReactNode)}
-    </div>
+    </Styled>
   );
 }
 

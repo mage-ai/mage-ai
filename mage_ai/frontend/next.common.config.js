@@ -70,6 +70,13 @@ module.exports = removeImports({
       }
     }
 
+    // Ignore files named mock.ts or mocks.ts
+    config.plugins.push(
+      new options.webpack.IgnorePlugin({
+        resourceRegExp: /mock(s)?\.ts$/,
+      })
+    );
+
     return config;
   },
 });

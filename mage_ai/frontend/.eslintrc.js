@@ -11,9 +11,12 @@ module.exports = {
   ],
   ignorePatterns: [
     '.eslintrc.js',
-    'next.config.js',
+    'mock.ts',
+    'mocks.ts',
     'next.common.config.js',
+    'next.config.js',
     'next_base_path.config.js',
+    'v2/Canvas/**/*',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
