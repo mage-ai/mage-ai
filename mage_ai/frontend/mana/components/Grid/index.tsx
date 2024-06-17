@@ -37,7 +37,6 @@ type GridProps = {
   width?: number | string;
 } & WithStylesProp;
 
-
 function Grid({ children, ...props }: GridProps, ref: React.Ref<any>) {
   return (
     <Styled ref={ref} {...props}>
