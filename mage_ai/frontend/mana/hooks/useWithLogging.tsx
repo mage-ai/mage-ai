@@ -21,7 +21,7 @@ const useWithLogging = <P extends object>(Component: ComponentType<P>) => {
 
     const handleClick = useCallback(
       (event: React.MouseEvent) => {
-        if (logEvent) {
+        if (logEvent || true) {
           console.log('Logging event', {
             action: 'click',
             component: Component.displayName || Component.name || 'Unknown',

@@ -3,7 +3,7 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Check, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
+import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
 import { useMemo } from 'react';
 import { DragItem } from '../interfaces';
@@ -86,6 +86,10 @@ export function BlockNodeWrapper({
         }}
         titleConfig={{
           asides: {
+            after: {
+              Icon: Code,
+              onClick: () => alert('Coding...'),
+            },
             before: {
               Icon: randomSample([Check, PlayButtonFilled]),
               baseColorName: randomSample(['blue', 'green', 'red']),

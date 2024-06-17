@@ -1,5 +1,14 @@
 import { indexBy } from '@utils/array';
 
+export enum ElementRoleEnum {
+  BUTTON = 'button',
+  DRAGGABLE = 'draggable',
+  DROPPABLE = 'droppable',
+  PANNABLE = 'pannable',
+  SCROLLABLE = 'scrollable',
+  ZOOMABLE = 'zoomable',
+}
+
 const KEYS = indexBy(
   [
     'onAbort',
@@ -237,6 +246,7 @@ export type ElementType = {
   onMouseDown?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onMouseLeave?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseOver?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onMouseUp?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onPaste?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onPasteCapture?: (event: React.MouseEvent<HTMLDivElement>) => void;

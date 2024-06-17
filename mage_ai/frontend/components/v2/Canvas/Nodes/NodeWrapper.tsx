@@ -12,8 +12,8 @@ import {
   PortSubtypeEnum,
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
-  ElementRoleEnum,
 } from '../types';
+import { ElementRoleEnum } from '@mana/shared/types';
 import { getNodeUUID } from '../Draggable/utils';
 import { DraggablePort } from '../Draggable/DraggablePort';
 

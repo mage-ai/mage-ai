@@ -19,8 +19,8 @@ import {
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
-  ElementRoleEnum,
 } from '../../Canvas/types';
+import { ElementRoleEnum } from '@mana/shared/types';
 import { BlockNodeWrapper } from '../../Canvas/Nodes/BlockNodeWrapper';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
@@ -439,9 +439,6 @@ export default function PipelineBuilderCanvas({
 
       if (hasRole) {
         setZoomPanDisabled(true);
-        console.log('Handle role');
-      } else {
-        console.log('Handle ZoomPan');
       }
     };
     const handleMouseUp = (e: MouseEvent) => {
@@ -452,9 +449,6 @@ export default function PipelineBuilderCanvas({
 
       if (hasRole) {
         setZoomPanDisabled(false);
-        console.log('Handle role');
-      } else {
-        console.log('Handle ZoomPan');
       }
     };
 
@@ -463,16 +457,12 @@ export default function PipelineBuilderCanvas({
     if (canvasElement) {
       canvasElement.addEventListener('mousedown', handleMouseDown);
       canvasElement.addEventListener('mouseup', handleMouseUp);
-      // canvasElement.addEventListener('ondragend', handleMouseUp);
-      // canvasElement.addEventListener('ondragstart', handleMouseDown);
     }
 
     return () => {
       if (canvasElement) {
         canvasElement.removeEventListener('mousedown', handleMouseDown);
         canvasElement.removeEventListener('mouseup', handleMouseUp);
-        // canvasElement.removeEventListener('ondragend', handleMouseUp);
-        // canvasElement.removeEventListener('ondragstart', handleMouseDown);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

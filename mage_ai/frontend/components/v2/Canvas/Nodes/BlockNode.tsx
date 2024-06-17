@@ -21,7 +21,7 @@ export function BlockNode({
 }: BlockNodeProps) {
   const { borders } = borderConfig || {};
   const { asides, badge, inputConnection, outputConnection } = titleConfig || {};
-  const { before } = asides || {};
+  const { after, before } = asides || {};
 
   const classNames = [
     styles.blockNode,
@@ -64,10 +64,21 @@ export function BlockNode({
         </Grid>
 
         {!badge && (
-          <Grid alignItems="center" columnGap={12} templateColumns="auto 1fr" templateRows="1fr">
+          <Grid
+            alignItems="center"
+            columnGap={12}
+            templateColumns={[
+              before ? 'auto' : '1fr',
+              (before || after) ? '1fr' : '',
+              before && after ? 'auto' : '',
+            ].join(' ')}
+            templateRows="1fr"
+          >
             {before && <Aside {...before} />}
 
             <Text semibold small>{titleConfig?.label}</Text>
+
+            {after && <Aside {...after} />}
           </Grid>
         )}
       </Grid>

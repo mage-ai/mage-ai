@@ -4,8 +4,9 @@ import React, { FC, memo, useEffect, useMemo, useRef } from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
-import { PortSubtypeEnum, ItemTypeEnum, ElementRoleEnum } from '../types';
+import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import { getNodeUUID } from './utils';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
   item: PortType;

@@ -28,7 +28,7 @@ export const useZoomPan = (
     if (!element) return;
 
     const updateTransform = () => {
-      console.log('ZoomPan transforming...');
+      // console.log('ZoomPan transforming...');
       element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
     };
 
