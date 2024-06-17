@@ -43,8 +43,10 @@ const Grid: React.FC<
       } & GridProps,
       ref: React.Ref<any>,
     ) => (
-      // @ts-ignore
-      <Styled ref={ref} {...props}>{props?.children}</Styled>
+      <Styled ref={ref} {...props}>
+        {/* @ts-ignore */}
+        {props?.children}
+      </Styled>
     ),
   ),
 );
