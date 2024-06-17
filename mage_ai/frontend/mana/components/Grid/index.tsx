@@ -20,6 +20,11 @@ type GridProps = {
   justifyItems?: string;
   placeContent?: string;
   overflow?: string;
+  padding?: number | string;
+  paddingTop?: number | string;
+  paddingBottom?: number | string;
+  paddingLeft?: number | string;
+  paddingRight?: number | string;
   placeItems?: string;
   row?: number;
   rowEnd?: number;
