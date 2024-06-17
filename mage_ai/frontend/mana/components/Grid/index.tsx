@@ -3,6 +3,8 @@ import { Styled } from './index.style';
 import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
+  children?: React.ReactNode | Element | Element[] | React.ReactNode[];
+  borders?: boolean;
   alignContent?: string;
   alignItems?: string;
   area?: string;
@@ -29,8 +31,16 @@ type GridProps = {
   width?: number | string;
 } & WithStylesProp;
 
-const Grid: React.FC<GridProps> = React.memo((props: GridProps) => (
-  <Styled {...props}>{props.children}</Styled>
-));
+const Grid: React.FC<
+  GridProps & {
+    ref?: React.Ref<any>;
+  }
+> = React.memo(
+  React.forwardRef(({ children, ...props }: GridProps, ref: React.Ref<any>) => (
+    <Styled ref={ref} {...props}>
+      {children}
+    </Styled>
+  )),
+);
 
 export default Grid;

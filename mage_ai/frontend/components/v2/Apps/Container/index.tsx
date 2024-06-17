@@ -70,7 +70,13 @@ function AppContainer(
   });
 
   return (
-    <Grid borders justifyContent='stretch' justifyItems='stretch' overflow='hidden' ref={ref}>
+    <Grid
+      borders
+      justifyContent='stretch'
+      justifyItems='stretch'
+      overflow='hidden'
+      ref={ref}
+    >
       <Grid
         autoFlow='column'
         justifyContent='stretch'

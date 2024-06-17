@@ -18,7 +18,7 @@ import {
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
-ElementRoleEnum,
+  ElementRoleEnum,
 } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -400,7 +400,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 export default function PipelineBuilderCanvas({
   snapToGridOnDrop = false,
   ...props
-}: PipelineBuilderProps & { snapToGridOnDrop?: boolean }) {
+}: PipelineBuilderProps & {
+  blocks?: BlockType[];
+  snapToGridOnDrop?: boolean;
+}) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
 
@@ -414,9 +417,9 @@ export default function PipelineBuilderCanvas({
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       const targetElement = e.target as HTMLElement;
-      const hasRole = [
-        ElementRoleEnum.DRAGGABLE,
-      ].some(role => targetElement.closest(`[role="${role}"]`));
+      const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
+        targetElement.closest(`[role="${role}"]`),
+      );
 
       if (hasRole) {
         setZoomPanDisabled(true);
@@ -427,10 +430,9 @@ export default function PipelineBuilderCanvas({
     };
     const handleMouseUp = (e: MouseEvent) => {
       const targetElement = e.target as HTMLElement;
-      const hasRole = [
-        ElementRoleEnum.DRAGGABLE,
-        ElementRoleEnum.DROPPABLE,
-      ].some(role => targetElement.closest(`[role="${role}"]`));
+      const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
+        targetElement.closest(`[role="${role}"]`),
+      );
 
       if (hasRole) {
         setZoomPanDisabled(false);

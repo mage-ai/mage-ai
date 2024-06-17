@@ -107,7 +107,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       onDragEnd={handleMouseUp}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onTouchStart={(event) => event.stopPropagation()}
+      onTouchStart={event => event.stopPropagation()}
       style={{
         border: '1px dotted black',
         padding: 12,

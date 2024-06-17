@@ -1,7 +1,8 @@
 import { useRef, useEffect } from 'react';
 
 // A helper function to check if an element has a specific role in a space-separated list of roles
-const hasRole = (element: HTMLElement | null, role: string): boolean => element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
+const hasRole = (element: HTMLElement | null, role: string): boolean =>
+  element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
 
 export const useZoomPan = (
   elementRef: React.RefObject<HTMLElement>,
@@ -13,13 +14,7 @@ export const useZoomPan = (
     roles?: string[];
   },
 ) => {
-  const {
-    disabled = false,
-    zoomSensitivity = 0.5,
-    minScale = 0.01,
-    maxScale = 4,
-    roles,
-  } = opts;
+  const { disabled = false, zoomSensitivity = 0.5, minScale = 0.01, maxScale = 4, roles } = opts;
 
   const scale = useRef(1);
   const originX = useRef(0);

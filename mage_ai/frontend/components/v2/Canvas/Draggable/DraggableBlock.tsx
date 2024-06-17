@@ -9,7 +9,12 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import BlockNode from '../Nodes/BlockNode';
 import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
-import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum, ElementRoleEnum } from '../types';
+import {
+  PortSubtypeEnum,
+  ItemTypeEnum,
+  LayoutConfigDirectionEnum,
+  ElementRoleEnum,
+} from '../types';
 import { getNodeUUID } from './utils';
 import { DraggablePort } from './DraggablePort';
 
@@ -50,8 +55,14 @@ export type DraggableBlockProps = {
   layout?: LayoutConfigType;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-  onMouseDown: (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, obj: NodeItemType) => void;
-  onMouseUp: (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, obj: NodeItemType) => void;
+  onMouseDown: (
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    obj: NodeItemType,
+  ) => void;
+  onMouseUp: (
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    obj: NodeItemType,
+  ) => void;
   onPortMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
 };
 
@@ -157,7 +168,10 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   );
 
   const handleMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, node: NodeItemType) => {
+    (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      node: NodeItemType,
+    ) => {
       console.log('DraggableBlock.handleMouseDown', event);
       // VERY IMPORTANT that stopPropagation is called before preventDefault,
       // otherwise the event will bubble up to the parent
@@ -267,7 +281,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         <DragPreviewImage
           connect={preview}
           key={String(Number(new Date()))}
-          src="https://www.mage.ai/favicon.ico"
+          src='https://www.mage.ai/favicon.ico'
         />
       )}
 
