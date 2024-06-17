@@ -1,15 +1,12 @@
-import { AsidesType, ConnectionsType, BadgeType } from './types';
+import { AsidesType, ConnectionsType, BadgeType, BorderConfigType, TitleConfigType } from './types';
 
 type BlockNodeProps = {
-  titleConfig: {
-    asides?: AsidesType;
-    badge?: BadgeType;
-    connections?: ConnectionType[];
-    label?: string;
-  };
+  children: React.ReactNode;
+  titleConfig: TitleConfigType;
+  borderConfig: BorderConfigType;
 };
 
-function BlockNode() {
+function BlockNode(props: BlockNodeProps) {
   return <div />;
 }
 
