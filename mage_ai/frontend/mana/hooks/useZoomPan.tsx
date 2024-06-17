@@ -1,50 +1,43 @@
 import { useRef, useEffect } from 'react';
 
+// A helper function to check if an element has a specific role in a space-separated list of roles
+const hasRole = (element: HTMLElement | null, role: string): boolean => element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
+
 export const useZoomPan = (
   elementRef: React.RefObject<HTMLElement>,
-  isDraggingRef: {
-    current: boolean;
+  opts?: {
+    disabled?: boolean;
+    zoomSensitivity?: number;
+    minScale?: number;
+    maxScale?: number;
+    roles?: string[];
   },
-  zoomSensitivity = 0.5,
-  minScale = 0.01,
-  maxScale = 4,
 ) => {
+  const {
+    disabled = false,
+    zoomSensitivity = 0.5,
+    minScale = 0.01,
+    maxScale = 4,
+    roles,
+  } = opts;
+
   const scale = useRef(1);
   const originX = useRef(0);
   const originY = useRef(0);
   const startX = useRef(0);
   const startY = useRef(0);
   const isPanning = useRef(false);
-  const styleSheet = useRef<HTMLStyleElement | null>(null);
 
   useEffect(() => {
     const element = elementRef.current;
-    const head = document.head;
-
     if (!element) return;
 
     const updateTransform = () => {
       element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
-      const gridSize = 100 * scale.current; // Correct grid sizing based on scale
-
-      if (!styleSheet.current) {
-        styleSheet.current = document.createElement('style');
-        head.appendChild(styleSheet.current);
-      }
-
-      if (!styleSheet.current.parentElement) {
-        head.appendChild(styleSheet.current);
-      }
-
-      styleSheet.current.innerHTML = `
-        .canvas::before, .canvas::after {
-          background-size: ${gridSize}px ${gridSize}px !important;
-        }
-      `;
     };
 
     const handleWheel = (e: WheelEvent) => {
-      if (isDraggingRef?.current) return; // Ignore wheel event if dragging
+      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
       e.preventDefault();
       const delta = (-e.deltaY / 500) * zoomSensitivity;
       const oldScale = scale.current;
@@ -62,20 +55,16 @@ export const useZoomPan = (
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      if (isDraggingRef?.current) return; // Ignore mouse down event if dragging
+      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
+      if (e.button !== 0) return;
       e.preventDefault();
       startX.current = e.clientX - originX.current;
       startY.current = e.clientY - originY.current;
       isPanning.current = true;
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      if (isDraggingRef?.current) return; // Ignore mouse up event if dragging
-      isPanning.current = false;
-    };
-
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDraggingRef?.current) return; // Ignore mouse move event if dragging
+      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
       if (!isPanning.current) return;
 
       originX.current = e.clientX - startX.current;
@@ -84,54 +73,48 @@ export const useZoomPan = (
       updateTransform();
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (isDraggingRef?.current) return; // Ignore touch start event if dragging
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        startX.current = touch.clientX - originX.current;
-        startY.current = touch.clientY - originY.current;
-        isPanning.current = true;
-      }
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isDraggingRef?.current) return; // Ignore touch end event if dragging
+    const handleMouseUp = () => {
       isPanning.current = false;
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (isDraggingRef?.current) return; // Ignore touch move event if dragging
-      if (!isPanning.current || e.touches.length !== 1) return;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      startX.current = touch.clientX - originX.current;
+      startY.current = touch.clientY - originY.current;
+      isPanning.current = true;
+    };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
+      if (!isPanning.current || e.touches.length !== 1) return;
       const touch = e.touches[0];
       originX.current = touch.clientX - startX.current;
       originY.current = touch.clientY - startY.current;
-
       updateTransform();
     };
 
-    if (!isDraggingRef?.current) { // Add event listeners only if not dragging
-      element.addEventListener('wheel', handleWheel);
-      element.addEventListener('mousedown', handleMouseDown);
-      window.addEventListener('mouseup', handleMouseUp);
-      element.addEventListener('mousemove', handleMouseMove);
-      element.addEventListener('touchstart', handleTouchStart);
-      element.addEventListener('touchend', handleTouchEnd);
-      element.addEventListener('touchmove', handleTouchMove);
-    }
+    const handleTouchEnd = () => {
+      isPanning.current = false;
+    };
+
+    element.addEventListener('wheel', handleWheel);
+    element.addEventListener('mousedown', handleMouseDown);
+    element.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    element.addEventListener('touchstart', handleTouchStart);
+    element.addEventListener('touchmove', handleTouchMove);
+    element.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
       element.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
       element.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
       element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchmove', handleTouchMove);
-      if (styleSheet.current && styleSheet.current.parentNode === head) {
-        head.removeChild(styleSheet.current);
-      }
+      element.removeEventListener('touchend', handleTouchEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomSensitivity, minScale, maxScale]);
+  }, [elementRef, disabled, zoomSensitivity, minScale, maxScale, roles]);
 };

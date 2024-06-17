@@ -9,7 +9,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import BlockNode from '../Nodes/BlockNode';
 import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
-import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum } from '../types';
+import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum, ElementRoleEnum } from '../types';
 import { getNodeUUID } from './utils';
 import { DraggablePort } from './DraggablePort';
 
@@ -48,9 +48,10 @@ export type DraggableBlockProps = {
   canDrag?: (item: DragItem) => boolean;
   item: DragItem;
   layout?: LayoutConfigType;
-  onDragCancel: (node: NodeItemType) => void;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  onMouseDown: (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, obj: NodeItemType) => void;
+  onMouseUp: (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, obj: NodeItemType) => void;
   onPortMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
 };
 
@@ -58,9 +59,10 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   canDrag,
   item,
   layout,
-  onDragCancel,
   onDragStart,
   onDrop,
+  onMouseDown,
+  onMouseUp,
   onPortMount,
 }: DraggableBlockProps) {
   const phaseRef = useRef(0);
@@ -68,7 +70,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   const itemRef = useRef(null);
 
   const ports: PortType[] = useMemo(
-    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType),
+    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType[]),
     [item],
   );
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
@@ -87,10 +89,9 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   const handleOnDrop = useCallback(
     (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      console.log('Dragged ', dragTarget);
-      console.log('Dropped on ', dropTarget);
+      // console.log('Dragged ', dragTarget);
+      // console.log('Dropped on ', dropTarget);
       onDrop(dragTarget, dropTarget);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [onDrop],
   );
@@ -155,22 +156,29 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   );
 
   const handleMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) => {
-      event.stopPropagation();
-      setDraggingNode(obj);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, node: NodeItemType) => {
+      // console.log('DraggableBlock.handleMouseDown', event);
+      // VERY IMPORTANT that stopPropagation is called before preventDefault,
+      // otherwise the event will bubble up to the parent
+      // event.stopPropagation();
+      // event.preventDefault();
+      onMouseDown(event, node);
+      setDraggingNode(node);
     },
-    [],
+    [onMouseDown],
   );
 
   const handleMouseUp = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
-      event.stopPropagation();
+      // console.log('DraggableBlock.handleMouseUp', event);
+      // VERY IMPORTANT that stopPropagation is called before preventDefault,
+      // otherwise the event will bubble up to the parent
+      // event.stopPropagation();
+      // event.preventDefault();
+      onMouseUp(event, node);
       setDraggingNode(null);
-      onDragCancel(node);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [onDragCancel],
+    [onMouseUp],
   );
 
   const renderPorts = useCallback(
@@ -241,23 +249,28 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   return (
     <div
+      onClick={event => handleMouseDown(event, item)}
+      onDragEnd={event => handleMouseUp(event, item)}
+      onDragStart={event => handleMouseDown(event, item)}
       onMouseDown={event => handleMouseDown(event, item)}
+
       onMouseUp={event => handleMouseUp(event, item)}
-      onTouchStart={(event) => event.stopPropagation()}
-      onTouchEnd={(event) => event.stopPropagation()}
-      // @ts-ignore
-      ref={itemRef}
+      onTouchEnd={event => handleMouseUp(event, item)}
+      onTouchStart={event => handleMouseDown(event, item)}
+      role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, {
         canDrop,
         isDragging: isDragging && draggingNode?.type === item?.type,
         isOverCurrent,
       })}
+      // @ts-ignore
+      ref={itemRef}
     >
       {false && (
         <DragPreviewImage
           connect={preview}
           key={String(Number(new Date()))}
-          src='https://www.mage.ai/favicon.ico'
+          src="https://www.mage.ai/favicon.ico"
         />
       )}
 

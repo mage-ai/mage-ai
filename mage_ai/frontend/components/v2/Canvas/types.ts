@@ -1,3 +1,11 @@
+export enum ElementRoleEnum {
+  DRAGGABLE = 'draggable',
+  DROPPABLE = 'droppable',
+  PANNABLE = 'pannable',
+  SCROLLABLE = 'scrollable',
+  ZOOMABLE = 'zoomable',
+}
+
 export enum LayoutConfigDirectionEnum {
   HORIZONTAL = 'horizontal',
   VERTICAL = 'vertical',

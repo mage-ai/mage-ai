@@ -18,6 +18,7 @@ import {
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
+ElementRoleEnum,
 } from '../../Canvas/types';
 import { DraggableBlock } from '../../Canvas/Draggable/DraggableBlock';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -36,8 +37,8 @@ import { useZoomPan } from '@mana/hooks/useZoomPan';
 type PipelineBuilderProps = {
   blocks?: BlockType[];
   snapToGridOnDrag?: boolean;
-  onChildDragEnd: () => void;
-  onChildDragStart: () => void;
+  onDragEnd: () => void;
+  onDragStart: () => void;
 };
 
 // Drag preview image
@@ -57,8 +58,8 @@ type PipelineBuilderProps = {
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   blocks,
   snapToGridOnDrag = true,
-  onChildDragEnd,
-  onChildDragStart,
+  onDragEnd: onDragEndProp,
+  onDragStart: onDragStartProp,
 }: PipelineBuilderProps) => {
   console.log('PipelineBuilder render');
 
@@ -141,9 +142,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
   }
 
-  function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
-    onChildDragStart();
+  function onMouseDown(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
+    onDragStartProp();
+  }
 
+  function onMouseUp(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
+    event.preventDefault();
+    resetAfterDrop();
+    onDragEndProp();
+  }
+
+  function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       const { x, y } = monitor.getInitialClientOffset();
       const item = update(node, {
@@ -195,7 +204,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDrop(node: NodeItemType, monitor: DropTargetMonitor) {
-    onChildDragEnd?.();
     resetAfterDrop();
 
     const delta = monitor.getDifferenceFromInitialOffset() as {
@@ -244,8 +252,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   const onDropNode = useCallback(
     (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      onChildDragEnd?.();
-
       if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
         const node = itemDraggingRef.current;
         const connection = createConnection(
@@ -263,13 +269,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       resetAfterDrop();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, onChildDragEnd],
+    [items],
   );
-
-  function onDragCancel(node: NodeItemType) {
-    console.log('onDragCancel', node);
-    resetAfterDrop();
-  }
 
   function onPortMount(item: PortType, itemRef: React.RefObject<HTMLDivElement>) {
     if (itemRef.current) {
@@ -328,8 +329,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       );
 
       if (ready) {
-        console.log(portsRef.current);
-        console.log(connectionsRef.current);
+        // console.log(portsRef.current);
+        // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
           updatePaths(item, connectionsRef);
         });
@@ -391,9 +392,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             item={items[key] as DragItem}
             key={key}
             layout={layoutConfig}
-            onDragCancel={onDragCancel}
             onDragStart={onDragStart}
             onDrop={onDropNode}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
             onPortMount={onPortMount}
           />
         ))}
@@ -406,13 +408,57 @@ export default function PipelineBuilderCanvas({
   ...props
 }: PipelineBuilderProps & { snapToGridOnDrop?: boolean }) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
+  const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
 
-  function setIsDragging(value: boolean) {
-    isDraggingRef.current = value;
-  }
+  useZoomPan(canvasRef, {
+    disabled: isZoomPanDisabled,
+    roles: [ElementRoleEnum.DRAGGABLE],
+  });
 
-  useZoomPan(canvasRef, isDraggingRef);
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      const targetElement = e.target as HTMLElement;
+      const hasRole = [
+        ElementRoleEnum.DRAGGABLE,
+      ].some(role => targetElement.closest(`[role="${role}"]`));
+
+      if (hasRole) {
+        setZoomPanDisabled(true);
+        console.log('Handle role');
+      } else {
+        console.log('Handle ZoomPan');
+      }
+    };
+    const handleMouseUp = (e: MouseEvent) => {
+      const targetElement = e.target as HTMLElement;
+      const hasRole = [
+        ElementRoleEnum.DRAGGABLE,
+        ElementRoleEnum.DROPPABLE,
+      ].some(role => targetElement.closest(`[role="${role}"]`));
+
+      if (hasRole) {
+        setZoomPanDisabled(false);
+        console.log('Handle role');
+      } else {
+        console.log('Handle ZoomPan');
+      }
+    };
+
+    const canvasElement = canvasRef.current;
+
+    if (canvasElement) {
+      canvasElement.addEventListener('mousedown', handleMouseDown);
+      canvasElement.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      if (canvasElement) {
+        canvasElement.removeEventListener('mousedown', handleMouseDown);
+        canvasElement.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
@@ -423,10 +469,9 @@ export default function PipelineBuilderCanvas({
         <Canvas>
           <PipelineBuilder
             {...props}
-            onChildDragEnd={() => setIsDragging(false)}
-            onChildDragStart={() => setIsDragging(true)}
+            onDragEnd={() => setZoomPanDisabled(false)}
+            onDragStart={() => setZoomPanDisabled(true)}
           />
-          <DragLayer snapToGrid={snapToGridOnDrop} />
         </Canvas>
       </CanvasStyled>
     </div>

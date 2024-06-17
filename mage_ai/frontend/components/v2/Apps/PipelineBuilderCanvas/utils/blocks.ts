@@ -177,9 +177,9 @@ export function initializeBlocksAndConnections(
     });
   });
 
-  console.log('items', Object.values(itemsMapping || {})?.length);
-  console.log('ports', Object.values(portsMapping || {})?.length);
-  console.log('connections', Object.values(connectionsMapping || {})?.length);
+  // console.log('items', Object.values(itemsMapping || {})?.length);
+  // console.log('ports', Object.values(portsMapping || {})?.length);
+  // console.log('connections', Object.values(connectionsMapping || {})?.length);
   // console.log(connectionsMapping);
 
   return {

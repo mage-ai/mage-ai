@@ -4,7 +4,7 @@ import React, { FC, memo, useEffect, useMemo, useRef } from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
-import { PortSubtypeEnum, ItemTypeEnum } from '../types';
+import { PortSubtypeEnum, ItemTypeEnum, ElementRoleEnum } from '../types';
 import { getNodeUUID } from './utils';
 
 type DraggablePortProps = {
@@ -107,6 +107,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       onDragEnd={handleMouseUp}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
+      onTouchStart={(event) => event.stopPropagation()}
       style={{
         border: '1px dotted black',
         padding: 12,
@@ -114,6 +115,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
     >
       <div
         ref={itemRef}
+        role={[ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].join(' ')}
         style={{
           backgroundColor: isOver && canDrop ? 'red' : 'green',
           cursor: 'move',
