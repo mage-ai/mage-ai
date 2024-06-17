@@ -36,9 +36,10 @@ import { useZoomPan } from '@mana/hooks/useZoomPan';
 
 type PipelineBuilderProps = {
   blocks?: BlockType[];
-  snapToGridOnDrag?: boolean;
+  canvasRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
   onDragStart: () => void;
+  snapToGridOnDrag?: boolean;
 };
 
 // Drag preview image
@@ -57,9 +58,10 @@ type PipelineBuilderProps = {
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   blocks,
-  snapToGridOnDrag = true,
+  canvasRef,
   onDragEnd: onDragEndProp,
   onDragStart: onDragStartProp,
+  snapToGridOnDrag = true,
 }: PipelineBuilderProps) => {
   console.log('PipelineBuilder render');
 
@@ -147,12 +149,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onMouseUp(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
-    event.preventDefault();
-    resetAfterDrop();
+    // event.preventDefault();
     onDragEndProp();
+    resetAfterDrop();
   }
 
   function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
+    console.log('onDragStart', node?.type);
+
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       const { x, y } = monitor.getInitialClientOffset();
       const item = update(node, {
@@ -174,12 +178,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         }),
       );
       setConnectionsDragging({ [connectionUUID(connection)]: connection });
-
-      console.log('onDragStart', item);
     }
   }
 
   function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
+    console.log('onDragging', node?.type);
+
     let rectOrigin = node?.rect;
 
     if (
@@ -214,15 +218,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     let left = Math.round(node?.rect?.left + delta.x);
     let top = Math.round(node?.rect?.top + delta.y);
 
-    const screenX = window.innerWidth;
-    const screenY = window.innerHeight;
-    const itemWidth = node?.rect?.width;
-    const itemHeight = node?.rect?.height;
+    // Prevents the item from being dragged outside the screen but the screen is larger
+    // because of the zooming and panning.
+    // const screenX = window.innerWidth;
+    // const screenY = window.innerHeight;
+    // const itemWidth = node?.rect?.width;
+    // const itemHeight = node?.rect?.height;
 
-    if (left < 0) left = 0;
-    if (top < 0) top = 0;
-    if (left + itemWidth > screenX) left = screenX - itemWidth;
-    if (top + itemHeight > screenY) top = screenY - itemHeight;
+    // if (left < 0) left = 0;
+    // if (top < 0) top = 0;
+    // if (left + itemWidth > screenX) left = screenX - itemWidth;
+    // if (top + itemHeight > screenY) top = screenY - itemHeight;
 
     if (snapToGridOnDrag) {
       [left, top] = snapToGrid(
@@ -338,7 +344,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
   }
 
-  const [, drop] = useDrop(
+  const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
       accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
@@ -356,24 +362,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
       hover: onDragging,
     }),
-    [snapToGridOnDrag],
+    [],
   );
+  connectDrop(canvasRef);
 
   return (
-    <div
-      onDoubleClick={(event: React.MouseEvent) =>
-        updateItem({
-          id: randomSimpleHashGenerator(),
-          rect: {
-            left: event.clientX,
-            top: event.clientY,
-          },
-          title: randomNameGenerator(),
-          type: ItemTypeEnum.BLOCK,
-        })
-      }
-      ref={drop}
-    >
+    <>
       <ConnectionLines>
         {connections &&
           Object.values(connections || {}).map((connection: ConnectionType) => (
@@ -399,7 +393,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             onPortMount={onPortMount}
           />
         ))}
-    </div>
+    </>
   );
 };
 
@@ -409,6 +403,8 @@ export default function PipelineBuilderCanvas({
 }: PipelineBuilderProps & { snapToGridOnDrop?: boolean }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
+
+  console.log('ZoomPan disabled:', isZoomPanDisabled);
 
   useZoomPan(canvasRef, {
     disabled: isZoomPanDisabled,
@@ -449,12 +445,16 @@ export default function PipelineBuilderCanvas({
     if (canvasElement) {
       canvasElement.addEventListener('mousedown', handleMouseDown);
       canvasElement.addEventListener('mouseup', handleMouseUp);
+      // canvasElement.addEventListener('ondragend', handleMouseUp);
+      // canvasElement.addEventListener('ondragstart', handleMouseDown);
     }
 
     return () => {
       if (canvasElement) {
         canvasElement.removeEventListener('mousedown', handleMouseDown);
         canvasElement.removeEventListener('mouseup', handleMouseUp);
+        // canvasElement.removeEventListener('ondragend', handleMouseUp);
+        // canvasElement.removeEventListener('ondragstart', handleMouseDown);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -462,13 +462,27 @@ export default function PipelineBuilderCanvas({
 
   return (
     <div
+      onDoubleClick={(event: React.MouseEvent) => {
+        console.log('Add block...');
+        // updateItem({
+        //   id: randomSimpleHashGenerator(),
+        //   rect: {
+        //     left: event.clientX,
+        //     top: event.clientY,
+        //   },
+        //   title: randomNameGenerator(),
+        //   type: ItemTypeEnum.BLOCK,
+        // })
+      }}
       ref={canvasRef}
       style={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'visible' }}
     >
       <CanvasStyled>
         <Canvas>
+          <DragLayer snapToGrid={snapToGridOnDrop} />
           <PipelineBuilder
             {...props}
+            canvasRef={canvasRef}
             onDragEnd={() => setZoomPanDisabled(false)}
             onDragStart={() => setZoomPanDisabled(true)}
           />

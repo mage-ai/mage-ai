@@ -125,7 +125,9 @@ export function updatePaths(
   const { onlyUpdateTypes } = opts || {};
   const { id, type } = node;
 
-  getConnections(node, connectionsRef.current)?.forEach((connection: ConnectionType) => {
+  const conns = getConnections(node, connectionsRef.current);
+  // console.log(id, conns)
+  conns?.forEach((connection: ConnectionType) => {
     const connUUID = connectionUUID(connection);
 
     const { fromItem, toItem } = connection;

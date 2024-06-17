@@ -119,6 +119,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
       // end: (item: DragItem, monitor) => null,
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
+        // console.log('isDragging?', node.id === itemToDrag.id);
         return node.id === itemToDrag.id;
       },
       item: itemToDrag,
@@ -157,7 +158,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, node: NodeItemType) => {
-      // console.log('DraggableBlock.handleMouseDown', event);
+      console.log('DraggableBlock.handleMouseDown', event);
       // VERY IMPORTANT that stopPropagation is called before preventDefault,
       // otherwise the event will bubble up to the parent
       // event.stopPropagation();
@@ -249,14 +250,11 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
   return (
     <div
-      onClick={event => handleMouseDown(event, item)}
       onDragEnd={event => handleMouseUp(event, item)}
       onDragStart={event => handleMouseDown(event, item)}
       onMouseDown={event => handleMouseDown(event, item)}
-
       onMouseUp={event => handleMouseUp(event, item)}
-      onTouchEnd={event => handleMouseUp(event, item)}
-      onTouchStart={event => handleMouseDown(event, item)}
+      ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, {
         canDrop,
@@ -264,7 +262,6 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         isOverCurrent,
       })}
       // @ts-ignore
-      ref={itemRef}
     >
       {false && (
         <DragPreviewImage

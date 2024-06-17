@@ -135,11 +135,13 @@ export function initializeBlocksAndConnections(
         const port: PortType = {
           id: buildPortID(block?.uuid, uuid),
           index: idx,
+          // Parent is the wrong word; it’s suppose to mean the associated item.
           // If the port is an input, then the parent is the upstream block.
-          parent: PortSubtypeEnum.INPUT === subtype ? itemsMapping[uuid] : item,
+          parent: item,
           subtype,
           type: ItemTypeEnum.PORT,
         };
+        // console.log(subtype, port);
         portsMapping[getNodeUUID(port)] = port;
 
         if (PortSubtypeEnum.INPUT === port?.subtype) {
