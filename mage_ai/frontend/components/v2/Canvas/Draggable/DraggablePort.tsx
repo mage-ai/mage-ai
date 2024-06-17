@@ -1,10 +1,10 @@
 import update from 'immutability-helper';
-import React, { FC, memo, useEffect, useMemo } from 'react';
+import React, { FC, memo, useEffect, useMemo, useRef } from 'react';
 
-import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
-import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
+import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import { getNodeUUID } from './utils';
 
 type DraggablePortProps = {
@@ -14,6 +14,7 @@ type DraggablePortProps = {
   handleMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleMouseUp: (event: React.MouseEvent<HTMLDivElement>) => void;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
+  onMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
 };
 
 export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort({
@@ -23,8 +24,10 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   handleMouseDown,
   handleMouseUp,
   onDragStart,
+  onMount,
 }: DraggablePortProps) {
   const uuid = getNodeUUID(item);
+  const phaseRef = useRef(0);
 
   const [{
     backgroundColor,
@@ -77,8 +80,22 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
     [handleOnDrop, item],
   );
 
-  connectDrag(itemRef);
-  connectDrop(itemRef);
+  useEffect(() => {
+    if (itemRef.current) {
+      if (phaseRef.current === 0) {
+        connectDrag(itemRef);
+        connectDrop(itemRef);
+
+        if (onMount) {
+          onMount?.(item, itemRef);
+        }
+
+      }
+      phaseRef.current += 1;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item, onMount]);
+
 
   return (
     <div

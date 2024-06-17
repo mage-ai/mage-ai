@@ -43,7 +43,19 @@ export const useZoomPan = (
         const handleWheel = (e: WheelEvent) => {
             e.preventDefault();
             const delta = -e.deltaY / 500 * zoomSensitivity;
+            const oldScale = scale.current;
             scale.current = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+
+            // New scale ratio
+            const scaleRatio = scale.current / oldScale;
+
+            // Adjust origin to compensate for scaling at cursor
+            const rect = element.getBoundingClientRect();
+            const cursorX = e.clientX - rect.left;
+            const cursorY = e.clientY - rect.top;
+
+            originX.current -= (cursorX - originX.current) * (scaleRatio - 1);
+            originY.current -= (cursorY - originY.current) * (scaleRatio - 1);
 
             updateTransform();
         };

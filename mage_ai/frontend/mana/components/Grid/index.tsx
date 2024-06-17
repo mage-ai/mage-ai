@@ -13,7 +13,7 @@ type GridProps = {
   columnEnd?: number;
   columnGap?: number;
   columnStart?: number;
-  height?: number;
+  height?: number | string;
   justifyContent?: string;
   justifyItems?: string;
   placeContent?: string;
@@ -26,7 +26,7 @@ type GridProps = {
   templateColumns?: string;
   templateRows?: string;
   uuid?: string;
-  width?: string;
+  width?: number | string;
 } & WithStylesProp;
 
 const Grid: React.FC<GridProps> = React.memo((props: GridProps) => (

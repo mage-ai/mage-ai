@@ -1,6 +1,8 @@
+import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
-import { DragItem, LayoutConfigType } from '../../../Canvas/interfaces';
-import { ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../../Canvas/types';
+import { DragItem, PortType, LayoutConfigType } from '../../../Canvas/interfaces';
+import { buildPortID, getNodeUUID } from '../../../Canvas/Draggable/utils';
+import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../../Canvas/types';
 import { createConnection, connectionUUID } from '../Connections/utils';
 import { ConnectionType } from '../Connections/interfaces';
 
@@ -33,6 +35,7 @@ export function initializeBlocksAndConnections(
 
   const itemsMapping: Record<string, DragItem> = {};
   const connectionsMapping: Record<string, ConnectionType> = {};
+  const portsMapping: Record<string, PortType> = {};
 
   const positions: Record<string, { left: number, top: number }> = {};
   const levels: Record<string, number> = {};
@@ -100,8 +103,6 @@ export function initializeBlocksAndConnections(
     const position = positions[block.uuid];
     itemsMapping[block.uuid] = {
       id: block.uuid,
-      inputs: block.upstream_blocks,
-      outputs: block.downstream_blocks,
       rect: {
         height: blockHeight,
         left: position.left,
@@ -113,17 +114,65 @@ export function initializeBlocksAndConnections(
     };
   });
 
+  blocks?.forEach((block) => {
+    const item: DragItem = itemsMapping[block?.uuid];
+    const inputs: PortType[] = [];
+    const outputs: PortType[] = [];
+
+    Object.entries({
+      [PortSubtypeEnum.INPUT]: block.upstream_blocks,
+      [PortSubtypeEnum.OUTPUT]: block.downstream_blocks,
+    }).forEach(([subtype, uuids]: [PortSubtypeEnum, string[]]) => {
+      uuids?.forEach((uuid: string, idx: number) => {
+        const port: PortType = {
+          id: buildPortID(block?.uuid, uuid),
+          index: idx,
+          // If the port is an input, then the parent is the upstream block.
+          parent: PortSubtypeEnum.INPUT === subtype ? itemsMapping[uuid] : item,
+          subtype,
+          type: ItemTypeEnum.PORT,
+        };
+        portsMapping[getNodeUUID(port)] = port;
+
+        if (PortSubtypeEnum.INPUT === port?.subtype) {
+          inputs.push(port);
+        } else if (PortSubtypeEnum.OUTPUT === port?.subtype) {
+          outputs.push(port);
+        }
+      });
+    });
+
+    itemsMapping[block.uuid] = update(item, {
+      inputs: { $set: inputs },
+      outputs: { $set: outputs },
+    });
+  });
+
   blocks.forEach((block) => {
-    block.downstream_blocks.forEach((downstreamId: string) => {
-      const connection = createConnection(itemsMapping[block.uuid], itemsMapping[downstreamId]);
-      if (connection) {
-        connectionsMapping[connectionUUID(connection)] = connection;
+    const fromItem = itemsMapping[block.uuid];
+    // Downstream blocks
+    block?.downstream_blocks?.forEach((uuidDn: string) => {
+      const toItem = itemsMapping[uuidDn] as DragItem;
+      const fromPort = (fromItem?.outputs as PortType[])?.find(port => port.id === buildPortID(block?.uuid, uuidDn));
+      const toPort = (toItem?.inputs as PortType[])?.find(port => port.id === buildPortID(uuidDn, block.uuid));
+
+      if (fromPort && toPort) {
+        const connection = createConnection(fromPort, toPort);
+        if (connection) {
+          connectionsMapping[connectionUUID(connection)] = connection;
+        }
       }
     });
   });
 
+  console.log('items', Object.values(itemsMapping || {})?.length);
+  console.log('ports', Object.values(portsMapping || {})?.length);
+  console.log('connections', Object.values(connectionsMapping || {})?.length);
+  // console.log(connectionsMapping);
+
   return {
     connectionsMapping,
     itemsMapping,
+    portsMapping,
   };
 }

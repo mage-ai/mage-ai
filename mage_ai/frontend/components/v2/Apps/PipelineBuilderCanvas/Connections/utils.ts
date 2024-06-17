@@ -1,5 +1,6 @@
 import update from 'immutability-helper';
-import { NodeItemType, RectType } from '../../../Canvas/interfaces';
+import { NodeItemType, PortType, RectType } from '../../../Canvas/interfaces';
+import { ItemTypeEnum } from '../../../Canvas/types';
 import { ConnectionType } from './interfaces';
 
 export function createConnection(
@@ -86,7 +87,7 @@ export function getPathD(connection: ConnectionType, fromRect: RectType, toRect:
   return `M${startX},${startY} C${x1},${y1} ${x2},${y2} ${endX},${endY}`;
 }
 
-function getConnections(node: NodeItemType, connections: Record<string, ConnectionType>): ConnectionType[] {
+export function getConnections(node: NodeItemType, connections: Record<string, ConnectionType>): ConnectionType[] {
   return Object.values(connections || {}).reduce((acc, connection) => {
     const { id, type } = node;
     const {
@@ -112,50 +113,70 @@ export function updatePaths(
   connectionsRef: {
     current: Record<string, ConnectionType>;
   },
+  opts?: {
+    onlyUpdateTypes?: {
+      connection?: {
+        uuid: string;
+      };
+      fromItem: {
+        type: ItemTypeEnum;
+      };
+      toItem: {
+        type: ItemTypeEnum;
+      };
+    };
+  },
 ) {
-  const { id, rect, type } = node;
+  const { onlyUpdateTypes } = opts || {};
+  const { id, type } = node;
 
   getConnections(node, connectionsRef.current)?.forEach((connection: ConnectionType) => {
     const connUUID = connectionUUID(connection);
-    const pathElement = document.getElementById(connUUID);
 
-    const {
-      fromItem,
-      toItem,
-    } = connection;
-
-    const fromRect = null as RectType;
-    const toRect = null as RectType;
-
+    const { fromItem, toItem } = connection;
     const isFrom = fromItem.type === type && fromItem.id === id;
-    const isFromParent = fromItem?.parent?.type === type && fromItem?.parent?.id === id;
     const isTo = toItem.type === type && toItem.id === id;
+    const isFromParent = fromItem?.parent?.type === type && fromItem?.parent?.id === id;
     const isToParent = toItem?.parent?.type === type && toItem?.parent?.id === id;
+
+    const shouldUpdate = !onlyUpdateTypes
+      ? true
+      : (!onlyUpdateTypes?.fromItem || onlyUpdateTypes?.fromItem?.type === fromItem?.type)
+      && (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type)
+      && (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connUUID);
+
+    // console.log('shouldUpdate', shouldUpdate);
+
+    if (!shouldUpdate) {
+      return;
+    }
 
     let connectionUpdate = null;
 
     if (isFrom || isFromParent) {
       if (isFromParent) {
-        const leftD = connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
-        const topD = connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
+        if (connection?.fromItem?.rect) {
+          const leftD = connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
+          const topD = connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
 
-        connectionUpdate = update(connection, {
-          fromItem: {
-            parent: {
+          connectionUpdate = update(connection, {
+            fromItem: {
+              parent: {
+                rect: {
+                  $merge: node.rect,
+                },
+              },
               rect: {
-                $merge: node.rect,
+                left: {
+                  $set: node.rect.left + leftD,
+                },
+                top: {
+                  $set: node.rect.top + topD,
+                },
               },
             },
-            rect: {
-              left: {
-                $set: node.rect.left + leftD,
-              },
-              top: {
-                $set: node.rect.top + topD,
-              },
-            },
-          },
-        });
+          });
+        }
       } else {
         connectionUpdate = update(connection, {
           fromItem: {
@@ -166,26 +187,28 @@ export function updatePaths(
 
     } else if (isTo || isToParent) {
       if (isToParent) {
-        const leftD = connection.toItem.rect.left - connection.toItem.parent.rect.left;
-        const topD = connection.toItem.rect.top - connection.toItem.parent.rect.top;
+        if (connection?.toItem?.rect) {
+          const leftD = connection.toItem.rect.left - connection.toItem.parent.rect.left;
+          const topD = connection.toItem.rect.top - connection.toItem.parent.rect.top;
 
-        connectionUpdate = update(connection, {
-          toItem: {
-            parent: {
+          connectionUpdate = update(connection, {
+            toItem: {
+              parent: {
+                rect: {
+                  $merge: node.rect,
+                },
+              },
               rect: {
-                $merge: node.rect,
+                left: {
+                  $set: node.rect.left + leftD,
+                },
+                top: {
+                  $set: node.rect.top + topD,
+                },
               },
             },
-            rect: {
-              left: {
-                $set: node.rect.left + leftD,
-              },
-              top: {
-                $set: node.rect.top + topD,
-              },
-            },
-          },
-        });
+          });
+        }
       } else {
         connectionUpdate = update(connection, {
           toItem: {
@@ -195,49 +218,28 @@ export function updatePaths(
       }
     }
 
-    const pathD = getPathD(connectionUpdate, connectionUpdate.fromItem.rect, connectionUpdate.toItem.rect);
-    pathElement.setAttribute('d', pathD);
+    // console.log(
+    //   'Will it update?',
+    //   connectionUpdate,
+    //   isFrom || isFromParent,
+    //   isTo || isToParent,
+    //   connection?.fromItem?.rect,
+    //   connection?.toItem?.rect,
+    // );
 
-    connectionsRef.current[connUUID] = connectionUpdate;
-  });
-}
+    if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
+      const pathElement = document.getElementById(connUUID);
 
-export function updateConnections(item: DragItem, connectionsRef: {
-  current: Record<string, ConnectionType>;
-}) {
-  const { id, rect, type } = item;
+      if (pathElement) {
+        const pathD = getPathD(
+          connectionUpdate,
+          connectionUpdate.fromItem.rect,
+          connectionUpdate.toItem.rect,
+        );
 
-  getConnections(item, connectionsRef.current)?.forEach((connection: ConnectionType) => {
-    const connUUID = connectionUUID(connection);
-
-    const {
-      fromItem,
-      toItem,
-    } = connection;
-
-    const isFromParent = fromItem?.parent?.type === type && fromItem?.parent?.id === id;
-    const isToParent = toItem?.parent?.type === type && toItem?.parent?.id === id;
-
-    let connectionUpdate = null;
-
-    if (isFromParent) {
-      connectionUpdate = update(connection, {
-        fromItem: {
-          parent: {
-            $set: item,
-          },
-        },
-      });
-    } else if (isToParent) {
-      connectionUpdate = update(connection, {
-        toItem: {
-          parent: {
-            $set: item,
-          },
-        },
-      });
+        pathElement.setAttribute('d', pathD);
+        connectionsRef.current[connUUID] = connectionUpdate;
+      }
     }
-
-    connectionsRef.current[connUUID] = connectionUpdate;
   });
 }

@@ -1,4 +1,6 @@
-export const PIPELINE = {
+import PipelineType from '@interfaces/PipelineType';
+
+export const PIPELINE: PipelineType = {
   'pipeline': {
     'cache_block_output_in_memory': false,
     'concurrency_config': {
@@ -514,4 +516,4 @@ export const PIPELINE = {
     'updated_at': '2024-05-28T15:39:02.396763+00:00',
   },
   'metadata': null,
-}.pipeline;
+}.pipeline as PipelineType;

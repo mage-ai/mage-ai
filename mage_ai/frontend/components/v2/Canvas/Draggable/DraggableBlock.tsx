@@ -50,6 +50,7 @@ export type DraggableBlockProps = {
   onDragCancel: (node: NodeItemType) => void;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  onPortMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
 };
 
 export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBlock({
@@ -59,20 +60,13 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   onDragCancel,
   onDragStart,
   onDrop,
+  onPortMount,
 }: DraggableBlockProps) {
   const phaseRef = useRef(0);
   const portsRef = useRef({});
   const itemRef = useRef(null);
 
-  const ports: PortType[] = useMemo(() => Object.entries({
-    [PortSubtypeEnum.INPUT]: item?.inputs || [],
-    [PortSubtypeEnum.OUTPUT]: item?.outputs || [],
-  }).reduce((acc, [subtype, uuids]) => acc.concat(uuids.map((uuid: string, idx: number) => update({
-    id: uuid,
-    index: idx,
-    subtype,
-    type: ItemTypeEnum.PORT,
-  }, { parent: { $set: item } }))), []), [item]);
+  const ports: PortType[] = useMemo(() => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType), [item]);
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
@@ -186,11 +180,12 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
             itemRef={itemRef}
             key={uuid}
             onDragStart={onDragStart}
+            onMount={onPortMount}
           />,
         );
       }, [])}
     </>
-  ), [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, ports]);
+  ), [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, onPortMount, ports]);
 
   const isDraggingBlock = useMemo(() => draggingNode?.type === item?.type, [draggingNode, item]);
   connectDrop(itemRef);

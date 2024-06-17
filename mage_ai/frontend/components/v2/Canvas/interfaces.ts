@@ -18,9 +18,9 @@ interface BaseItem {
 }
 
 export interface DragItem extends BaseItem {
-  inputs?: string[];
+  inputs?: PortType[];
   isDragging?: boolean;
-  outputs?: string[];
+  outputs?: PortType[];
   rect?: RectType
   title?: string;
 }

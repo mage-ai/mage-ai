@@ -11,14 +11,18 @@ type ConnectionLineProps = {
 export const ConnectionLine = memo(({ connection }: ConnectionLineProps) => {
   const fromRect = connection?.fromItem?.rect;
   const toRect = connection?.toItem?.rect;
-
-  if (!fromRect || !toRect) return null;
-
   const connUUID = `${connectionUUID(connection)}`;
+
+  // Create placeholder that will be updated when the ports are mounted.
+  let dValue = '';
+
+  if (fromRect & toRect) {
+    dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
+  }
 
   return (
     <path
-      d={getPathD(connection, fromRect as RectType, toRect as RectType)}
+      d={dValue}
       fill="transparent"
       id={connUUID}
       key={connectionUUID(connection)}
