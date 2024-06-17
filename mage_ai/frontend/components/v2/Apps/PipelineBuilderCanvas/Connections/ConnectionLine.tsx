@@ -23,11 +23,11 @@ export const ConnectionLine = memo(({ connection }: ConnectionLineProps) => {
   return (
     <path
       d={dValue}
-      fill="transparent"
+      fill='transparent'
       id={connUUID}
       key={connectionUUID(connection)}
-      stroke="black"
-      strokeWidth="2"
+      stroke='black'
+      strokeWidth='2'
     />
   );
 });
