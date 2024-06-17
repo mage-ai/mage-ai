@@ -11,8 +11,10 @@ import { CatalogType } from './IntegrationSourceType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { KernelNameEnum } from './KernelType';
 import { PipelineMetadataType } from './MetadataType';
+import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './PipelineExecutionFramework/types';
 
 export enum PipelineTypeEnum {
+  EXECUTION_FRAMEWORK = 'execution_framework',
   INTEGRATION = 'integration',
   PYTHON = 'python',
   PYSPARK = 'pyspark',
@@ -142,7 +144,9 @@ export default interface PipelineType {
   };
   description?: string;
   executor_type?: ExecutorTypeEnum;
+  execution_framework?: PipelineExecutionFrameworkUUIDEnum;
   extensions?: PipelineExtensionsType;
+  groups?: GroupUUIDEnum[];
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;

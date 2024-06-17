@@ -1,5 +1,5 @@
-$borders-outline-offset: 1;
-$borders-outline-width: 2;
+$borders-outline-offset: 1px;
+$borders-outline-width: 2px;
 $borders-radius-base: 10px;
 $borders-radius-round: 40px;
 $borders-radius-sm: 6px;
@@ -51,81 +51,25 @@ $inputs-border-style-base: solid;
 $inputs-border-width-base: 1px;
 $inputs-padding-base: 13px 16px;
 $inputs-padding-sm: 8px 16px;
-$margin-base: 12;
-$margin-sm: 8;
-$margin-xs: 4;
+$margin-base: 12px;
+$margin-sm: 8px;
+$margin-xs: 4px;
 $menus-border-radius-base: 6px;
 $menus-padding-base: 8px 8px;
-$padding-base: 12;
-$padding-sm: 8;
+$padding-base: 12px;
+$padding-sm: 8px;
 $padding-vertical-base: $buttons-padding-base;
 $padding-vertical-sm: $buttons-padding-sm;
 $padding-vertical-xs: $buttons-padding-xs;
-$padding-vertical: (base: $padding-vertical-base, sm: $padding-vertical-sm, xs: $padding-vertical-xs);
-$padding-xs: 4;
-$padding: (base: $padding-base, sm: $padding-sm, xs: $padding-xs);
+$padding-xs: 4px;
 $scrollbars-border-radius-thumb: 40px;
 $scrollbars-border-radius-track: 10px;
-$scrollbars-width-thumb: 4;
-$scrollbars-width-track: 6;
+$scrollbars-width-thumb: 4px;
+$scrollbars-width-track: 6px;
 $size-lg: lg;
 $size-md: md;
 $size-sm: sm;
 $size-xl: xl;
 $size-xxl: xxl;
 $size-xxxl: xxxl;
-$size: (sm: $size-sm, md: $size-md, lg: $size-lg, xl: $size-xl, xxl: $size-xxl, xxxl: $size-xxxl);
 $unit: $margin-xs;
-
-$fonts: (
-  color: (
-    button-base: var(--fonts-color-button-base),
-    text-base: var(--fonts-color-text-base),
-    text-blue: var(--fonts-color-text-blue),
-    text-inverted: var(--fonts-color-text-inverted),
-    text-muted: var(--fonts-color-text-muted),
-  ),
-  family: (
-    base: (
-      black: var(--fonts-family-base-black),
-      bold: var(--fonts-family-base-bold),
-      lightfont: var(--fonts-family-base-lightfont),
-      medium: var(--fonts-family-base-medium),
-      regular: var(--fonts-family-base-regular),
-      semibold: var(--fonts-family-base-semibold),
-    ),
-    monospace: (
-      black: var(--fonts-family-monospace-black),
-      bold: var(--fonts-family-monospace-bold),
-      bolditalic: var(--fonts-family-monospace-bolditalic),
-      lightfont: var(--fonts-family-monospace-lightfont),
-      medium: var(--fonts-family-monospace-medium),
-      regular: var(--fonts-family-monospace-regular),
-      regularitalic: var(--fonts-family-monospace-regularitalic),
-      semibold: var(--fonts-family-monospace-semibold),
-    )
-  ),
-  lineheight: (
-    base: var(--fonts-lineheight-base),
-    md: var(--fonts-lineheight-md),
-    monospace: var(--fonts-lineheight-monospace),
-    sm: var(--fonts-lineheight-sm),
-    xs: var(--fonts-lineheight-xs),
-  ),
-  size: (
-    base: var(--fonts-size-base),
-    sm: var(--fonts-size-sm),
-    xs: var(--fonts-size-xs),
-  ),
-  style: (
-    base: var(--fonts-style-base),
-    italic: var(--fonts-style-italic),
-  ),
-  weight: (
-    bold: var(--fonts-weight-bold),
-    light: var(--fonts-weight-light),
-    medium: var(--fonts-weight-medium),
-    regular: var(--fonts-weight-regular),
-    semibold: var(--fonts-weight-semibold),
-  ),
-);

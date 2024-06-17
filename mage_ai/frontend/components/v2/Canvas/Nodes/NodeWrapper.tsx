@@ -32,24 +32,22 @@ function getStyles(
 ): CSSProperties {
   const { left, top } = rect || ({} as RectType);
   const transform = `translate3d(${left}px, ${top}px, 0)`;
-  const backgroundColor = 'rgba(0, 0, 0, 0.1)';
 
   return {
     WebkitTransform: transform,
-    backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
-    border: '1px dashed gray',
+    // backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
+    // border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
-    height: isDragging ? 0 : 200,
-    opacity: isDragging ? 0 : 1,
     position: 'absolute',
     transform,
-    width: 300,
+    ...(isDragging ? { height: 0, opacity: 0 } : {}),
   };
 }
 
 export type NodeWrapperProps = {
   canDrag?: (item: DragItem) => boolean;
+  children?: React.ReactNode;
   item: DragItem;
   layout?: LayoutConfigType;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
@@ -66,6 +64,7 @@ export type NodeWrapperProps = {
 };
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
+  children,
   canDrag,
   item,
   layout,
@@ -261,7 +260,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
     >
       <Grid {...gridProps}>
         <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid>
-
+        {children}
         <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid>
       </Grid>
     </div>

@@ -3,15 +3,59 @@ import { ElementType, extractProps } from '@mana/shared/types';
 import { styleClassNames } from '@mana/shared/utils';
 
 type HOCProps = {
-  HTMLTag?: 'div' | 'svg';
+  HTMLTag?: keyof JSX.IntrinsicElements;
+  PropTypes?: React.WeakValidationMap<any>;
   classNames?: string[];
+};
+
+export type GridType = {
+  alignContent?: string;
+  alignItems?: string;
+  area?: string;
+  autoColumns?: string;
+  autoFlow?: string;
+  autoRows?: string;
+  backgroundColor?: string;
+  borders?: boolean;
+  bordersTransparent?: boolean;
+  column?: number;
+  columnEnd?: number;
+  columnGap?: number;
+  columnStart?: number;
+  height?: number | string;
+  justifyContent?: string;
+  justifyItems?: string;
+  overflow?: string;
+  padding?: number | string;
+  paddingBottom?: number | string;
+  paddingLeft?: number | string;
+  paddingRight?: number | string;
+  paddingTop?: number | string;
+  placeContent?: string;
+  placeItems?: string;
+  row?: number;
+  rowEnd?: number;
+  rowGap?: number;
+  rowStart?: number;
+  templateAreas?: string;
+  templateColumns?: string;
+  templateColumnsAutoFitMaxContent?: boolean;
+  templateColumnsAutoFitMinContent?: boolean;
+  templateColumnsMaxContent?: boolean;
+  templateColumnsMinContent?: boolean;
+  templateRows?: string;
+  templateRowsAutoFitMaxContent?: boolean;
+  templateRowsAutoFitMinContent?: boolean;
+  templateRowsMaxContent?: boolean;
+  templateRowsMinContent?: boolean;
+  width?: number | string;
 };
 
 export type WithStylesProp = {
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   className?: string;
   uuid?: string;
-} & ElementType;
+} & ElementType & React.CSSProperties & GridType;
 
 // Utility function to merge multiple refs
 function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<T> {
@@ -26,20 +70,19 @@ function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<
   };
 }
 
-export function withStyles(styles: any, propsHOC?: HOCProps) {
-  const { HTMLTag = 'div', classNames: baseClassNames } = propsHOC || ({} as HOCProps);
+export function withStyles<P extends object = WithStylesProp>(
+  styles: any,
+  propsHOC?: HOCProps,
+) {
+  const { HTMLTag = 'div', PropTypes, classNames: baseClassNames } = propsHOC || ({} as HOCProps);
 
-  return React.forwardRef<any, WithStylesProp>(function StyledComponent(
+  return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
     {
       children,
       className,
       uuid,
       ...props
-    }: {
-      children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
-      className?: string;
-      uuid?: string;
-    },
+    }: P & WithStylesProp,
     ref: any,
   ) {
     const divRef = useRef<HTMLDivElement>(null);
@@ -49,8 +92,7 @@ export function withStyles(styles: any, propsHOC?: HOCProps) {
 
     const classNames = styleClassNames(
       styles,
-      [...baseClassNames?.map(cn => styles[cn] || ''), uuid ? styles[uuid] : '', className || ''],
-      // @ts-ignore
+      [...(baseClassNames?.map(cn => styles[cn] || '') || []), uuid ? styles[uuid] : '', className || ''],
       { className, uuid, ...props },
     );
 
@@ -58,7 +100,6 @@ export function withStyles(styles: any, propsHOC?: HOCProps) {
       <HTMLTag
         {...extractProps(props)}
         className={classNames}
-        // @ts-ignore
         ref={mergeRefs(divRef, ref)}
       >
         {children && (children as React.ReactNode)}

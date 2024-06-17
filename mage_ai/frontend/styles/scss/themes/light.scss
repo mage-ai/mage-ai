@@ -1,5 +1,7 @@
 @use '../modes/light' as mode;
+@use './base';
 
 body[data-theme="light"] {
-  @include mode.light-mode();
+  @include mode.mode();
+  @include base.base();
 }

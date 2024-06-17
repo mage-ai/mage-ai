@@ -1,6 +1,5 @@
 @use '../abstracts/colors/light' as colors;
-
-@mixin light-mode() {
+@mixin mode() {
   --colors-black: #{colors.$colors-black};
   --colors-blackfixed: #{colors.$colors-blackfixed};
   --colors-blacklo: #{colors.$colors-blacklo};

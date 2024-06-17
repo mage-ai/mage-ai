@@ -391,7 +391,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         items &&
         Object.keys(items || items).map(key => (
           <BlockNodeWrapper
-            item={items[key] as DragItem}
+            item={items[key]}
+            items={items}
             key={key}
             layout={layoutConfig}
             onDragStart={onDragStart}

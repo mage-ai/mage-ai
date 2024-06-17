@@ -1,0 +1,21 @@
+@use '../base/backgrounds';
+@use '../base/gradients';
+
+.gradient-outter {
+  @include gradients.gradient-colors();
+
+  border-radius: var(--borders-radius-base);
+  overflow: hidden; // To clip children with border-radius
+  padding: var(--borders-outline-width); // Space for the border
+  position: relative;
+}
+
+
+.gradient-inner {
+  @include backgrounds.background-colors();
+
+  background-color: var(--background-color);
+  border-radius: inherit;
+  border: var(--borders-outline-width) solid transparent;
+  overflow: hidden; // To clip children with border-radius
+}

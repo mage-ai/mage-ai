@@ -1,8 +1,10 @@
-import { PortSubtypeEnum } from '../types';
+import { IconType } from '@mana/icons/types';
+import { BadgeType } from '@mana/elements/Badge';
+import BlockType from '@interfaces/BlockType';
 
 export type AsideType = {
-  Icon?: string;
-  color?: string;
+  Icon?: IconType;
+  baseColorName?: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
@@ -12,28 +14,22 @@ export type AsidesType = {
 };
 
 export type ConnectionType = {
-  toItem?: any;
-  fromItem?: any;
-  type: PortSubtypeEnum;
-};
-
-export type BadgeType = {
-  Icon?: string;
-  color?: string;
-  label?: string;
+  from?: string;
+  fromItem?: BlockType;
+  to?: string;
+  toItem?: BlockType;
 };
 
 export type TitleConfigType = {
   asides?: AsidesType;
   badge?: BadgeType;
-  connections?: ConnectionType[];
+  inputConnection?: ConnectionType;
   label?: string;
+  outputConnection?: ConnectionType;
 };
 
 type BorderType = {
-  color?: string;
-  end?: number;
-  start?: number;
+  baseColorName?: string;
 };
 
 export type BorderConfigType = {

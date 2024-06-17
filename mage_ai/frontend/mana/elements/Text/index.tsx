@@ -20,7 +20,7 @@ type TextProps = {
   medium?: boolean;
   monospace?: boolean;
   muted?: boolean;
-  semiBold?: boolean;
+  semibold?: boolean;
   warning?: boolean;
 } & ElementType;
 
