@@ -12,43 +12,36 @@ type NodeProps = {
   onEndConnect: (e: React.MouseEvent, id: number) => void;
 };
 
-export const Node: React.FC<NodeProps> = React.memo(({
-  id,
-  left,
-  top,
-  children,
-  onStartConnect,
-  onEndConnect,
-}: NodeProps) => {
-  const [{ isDragging }, drag] = useDrag({
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    item: { id, left, top },
-    type: 'NODE',
-  });
+export const Node: React.FC<NodeProps> = React.memo(
+  ({ id, left, top, children, onStartConnect, onEndConnect }: NodeProps) => {
+    const [{ isDragging }, drag] = useDrag({
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      item: { id, left, top },
+      type: 'NODE',
+    });
 
-  const nodeStyle: React.CSSProperties = {
-    left,
-    opacity: isDragging ? 0.5 : 1,
-    top,
-  };
+    const nodeStyle: React.CSSProperties = {
+      left,
+      opacity: isDragging ? 0.5 : 1,
+      top,
+    };
 
-  return (
-    <div
-      onMouseDown={(event: React.MouseEvent) => onStartConnect(event, id)}
-      onMouseUp={(event: React.MouseEvent) => onEndConnect(event, id)}
-      ref={drag}
-    >
-      <NodeStyled style={nodeStyle}>
-        <svg height="50" width="100">
-          <foreignObject height="50" width="100">
-            <div>
-              {children}
-            </div>
-          </foreignObject>
-        </svg>
-      </NodeStyled>
-    </div>
-  );
-});
+    return (
+      <div
+        onMouseDown={(event: React.MouseEvent) => onStartConnect(event, id)}
+        onMouseUp={(event: React.MouseEvent) => onEndConnect(event, id)}
+        ref={drag}
+      >
+        <NodeStyled style={nodeStyle}>
+          <svg height="50" width="100">
+            <foreignObject height="50" width="100">
+              <div>{children}</div>
+            </foreignObject>
+          </svg>
+        </NodeStyled>
+      </div>
+    );
+  },
+);

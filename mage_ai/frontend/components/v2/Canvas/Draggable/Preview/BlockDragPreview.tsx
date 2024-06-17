@@ -10,29 +10,35 @@ const styles: CSSProperties = {
 };
 
 export interface BoxDragPreviewProps {
-  title: string
+  title: string;
 }
 
 export interface BoxDragPreviewState {
-  tickTock: any
+  tickTock: any;
 }
 
-export const BoxDragPreview: FC<BoxDragPreviewProps> = memo(
-  function BoxDragPreview({ title }: { title: string }) {
-    const [tickTock, setTickTock] = useState(false);
+export const BoxDragPreview: FC<BoxDragPreviewProps> = memo(function BoxDragPreview({
+  title,
+}: {
+  title: string;
+}) {
+  const [tickTock, setTickTock] = useState(false);
 
-    useEffect(
-      function subscribeToIntervalTick() {
-        const interval = setInterval(() => setTickTock(!tickTock), 500);
-        return () => clearInterval(interval);
-      },
-      [tickTock],
-    );
+  useEffect(
+    function subscribeToIntervalTick() {
+      const interval = setInterval(() => setTickTock(!tickTock), 500);
+      return () => clearInterval(interval);
+    },
+    [tickTock],
+  );
 
-    return (
-      <div style={styles}>
-        <BlockNode backgroundColor={tickTock ? 'yellow' : undefined} preview title={`${title} BlockDragPreview`} />
-      </div>
-    );
-  },
-);
+  return (
+    <div style={styles}>
+      <BlockNode
+        backgroundColor={tickTock ? 'yellow' : undefined}
+        preview
+        title={`${title} BlockDragPreview`}
+      />
+    </div>
+  );
+});

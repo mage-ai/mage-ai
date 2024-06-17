@@ -1,10 +1,7 @@
 import type { DropTargetMonitor } from 'react-dnd';
 import { OffsetType, RectType } from '../../../Canvas/interfaces';
 
-export function rectFromOrigin(
-  rectOrigin: RectType,
-  monitor: DropTargetMonitor,
-): RectType {
+export function rectFromOrigin(rectOrigin: RectType, monitor: DropTargetMonitor): RectType {
   const offset = monitor.getClientOffset();
   const initialClientOffset = monitor.getInitialClientOffset();
 

@@ -12,10 +12,10 @@ const style: CSSProperties = {
 };
 
 export interface TargetFileBoxProps {
-  onDrop: (item: { files: any[] }) => void
+  onDrop: (item: { files: any[] }) => void;
 }
 
-export const TargetFileBox: FC<TargetFileBoxProps> = (props) => {
+export const TargetFileBox: FC<TargetFileBoxProps> = props => {
   const { onDrop } = props;
   const [{ canDrop, isOver }, drop] = useDrop(
     () => ({

@@ -15,14 +15,11 @@ const style: CSSProperties = {
 };
 
 export interface TargetBoxProps {
-  onDrop: (item: any) => void
-  lastDroppedColor?: string
+  onDrop: (item: any) => void;
+  lastDroppedColor?: string;
 }
 
-const TargetBox: FC<TargetBoxProps> = memo(function TargetBox({
-  onDrop,
-  lastDroppedColor,
-}) {
+const TargetBox: FC<TargetBoxProps> = memo(function TargetBox({ onDrop, lastDroppedColor }) {
   const [{ isOver, draggingColor, canDrop }, drop] = useDrop(
     () => ({
       accept: [ColorEnum.YELLOW, ColorEnum.BLUE],
@@ -56,7 +53,7 @@ const TargetBox: FC<TargetBoxProps> = memo(function TargetBox({
     <div
       data-color={lastDroppedColor || 'none'}
       ref={drop}
-      role="TargetBox"
+      role='TargetBox'
       style={{ ...style, backgroundColor, opacity }}
     >
       <p>Drop here.</p>
@@ -67,23 +64,14 @@ const TargetBox: FC<TargetBoxProps> = memo(function TargetBox({
 });
 
 export interface StatefulTargetBoxState {
-  lastDroppedColor: string | null
+  lastDroppedColor: string | null;
 }
 
-const StatefulTargetBox: FC = (props) => {
+const StatefulTargetBox: FC = props => {
   const [lastDroppedColor, setLastDroppedColor] = useState<string | null>(null);
-  const handleDrop = useCallback(
-    (color: string) => setLastDroppedColor(color),
-    [],
-  );
+  const handleDrop = useCallback((color: string) => setLastDroppedColor(color), []);
 
-  return (
-    <TargetBox
-      {...props}
-      lastDroppedColor={lastDroppedColor as string}
-      onDrop={handleDrop}
-    />
-  );
+  return <TargetBox {...props} lastDroppedColor={lastDroppedColor as string} onDrop={handleDrop} />;
 };
 
 export default StatefulTargetBox;

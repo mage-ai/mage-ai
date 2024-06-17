@@ -13,7 +13,6 @@ import BoxNode from '../Nodes/BoxNode';
 import TargetBox from '../Targets/TargetBox';
 import NestedTargetBox from '../Targets/NestedTargetBox';
 
-
 const styles: CSSProperties = {
   width: 300,
   height: 300,
@@ -22,11 +21,11 @@ const styles: CSSProperties = {
 };
 
 export interface BoxContainerProps {
-  snapToGrid: boolean
+  snapToGrid: boolean;
 }
 
 interface BoxMap {
-  [key: string]: { top: number; left: number; title: string }
+  [key: string]: { top: number; left: number; title: string };
 }
 
 export const BoxContainer: FC<BoxContainerProps> = ({ snapToGrid }) => {
@@ -52,7 +51,7 @@ export const BoxContainer: FC<BoxContainerProps> = ({ snapToGrid }) => {
     [boxes],
   );
 
-  const [{ isOver, canDrop } , drop] = useDrop(
+  const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: ItemTypeEnum.BLOCK,
       drop(item: DragItem, monitor) {
@@ -61,8 +60,8 @@ export const BoxContainer: FC<BoxContainerProps> = ({ snapToGrid }) => {
         //   return;
         // }
         const delta = monitor.getDifferenceFromInitialOffset() as {
-          x: number
-          y: number
+          x: number;
+          y: number;
         };
 
         let left = Math.round(item.left + delta.x);
@@ -86,25 +85,23 @@ export const BoxContainer: FC<BoxContainerProps> = ({ snapToGrid }) => {
     [moveBox],
   );
 
-
   // console.log('canDrop',  canDrop, canDropDelayed);
   //   useEffect(() => {
   //     setTimeout(() => setCanDropDelayed(canDrop), 0); // or setTimeout(, 0) without polyfill
   //   }, [canDrop]);
 
-
   return (
     <>
       <div ref={drop} style={styles}>
-        {Object.keys(boxes).map((key) => (
+        {Object.keys(boxes).map(key => (
           <DraggableBlock
-          // activeItemRef={activeItemRef}
-          id={key}
-          key={key}
-          // showCopyIcon
-          {...(boxes[key] as { top: number; left: number; title: string })}
-        />
-      ))}
+            // activeItemRef={activeItemRef}
+            id={key}
+            key={key}
+            // showCopyIcon
+            {...(boxes[key] as { top: number; left: number; title: string })}
+          />
+        ))}
       </div>
 
       <div style={{ overflow: 'hidden', clear: 'both', margin: '-.5rem' }}>

@@ -12,15 +12,12 @@ const style: CSSProperties = {
 };
 
 export interface SourceBoxProps {
-  color: string
-  onToggleForbidDrag?: () => void
-  children?: ReactNode
+  color: string;
+  onToggleForbidDrag?: () => void;
+  children?: ReactNode;
 }
 
-const GroupNode: FC<SourceBoxProps> = memo(function SourceBox({
-  color,
-  children,
-}) {
+const GroupNode: FC<SourceBoxProps> = memo(function SourceBox({ color, children }) {
   const [forbidDrag, setForbidDrag] = useState(false);
   const [{ isDragging }, drag] = useDrag(
     () => ({
@@ -59,12 +56,8 @@ const GroupNode: FC<SourceBoxProps> = memo(function SourceBox({
   );
 
   return (
-    <div data-color={color} ref={drag} role="SourceBox" style={containerStyle}>
-      <input
-        checked={forbidDrag}
-        onChange={onToggleForbidDrag}
-        type="checkbox"
-      />
+    <div data-color={color} ref={drag} role='SourceBox' style={containerStyle}>
+      <input checked={forbidDrag} onChange={onToggleForbidDrag} type='checkbox' />
       <small>Forbid drag</small>
       {children}
     </div>

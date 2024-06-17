@@ -3,7 +3,7 @@ export interface ConnectionType {
   from: string; // ID of the source node
   fromItem?: any; // Reference to the source node
   fromPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection starts
-  to: string;   // ID of the destination node
+  to: string; // ID of the destination node
   toItem?: any; // Reference to the destination node
-  toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle';   // Position where the connection ends
+  toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends
 }

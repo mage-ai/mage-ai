@@ -14,55 +14,52 @@ type NodeProps = {
   top: number;
 };
 
-const Node: React.FC<NodeProps> = React.memo(({
-  children,
-  className,
-  id,
-  left,
-  onEndConnect,
-  onStartConnect,
-  style,
-  top,
-}: NodeProps) => {
-  const [{ isDragging, opacity }, dragRef] = useDrag({
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    item: { id, left, top },
-    type: NodeTypeEnum.BLOCK,
-  });
+const Node: React.FC<NodeProps> = React.memo(
+  ({ children, className, id, left, onEndConnect, onStartConnect, style, top }: NodeProps) => {
+    const [{ isDragging, opacity }, dragRef] = useDrag({
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      item: { id, left, top },
+      type: NodeTypeEnum.BLOCK,
+    });
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => onStartConnect(e, id), [onStartConnect, id]);
-  const handleMouseUp = useCallback((e: React.MouseEvent) => onEndConnect(e, id), [onEndConnect, id]);
+    const handleMouseDown = useCallback(
+      (e: React.MouseEvent) => onStartConnect(e, id),
+      [onStartConnect, id],
+    );
+    const handleMouseUp = useCallback(
+      (e: React.MouseEvent) => onEndConnect(e, id),
+      [onEndConnect, id],
+    );
 
-  // Dynamic styles for the node
-  // const nodeStyle: CSSProperties = {
-  //   cursor: 'move',
-  //   left,
-  //   opacity: isDragging ? 0.5 : 1, // Reduce opacity when dragging
-  //   position: 'absolute',
-  //   top,
-  // };
+    // Dynamic styles for the node
+    // const nodeStyle: CSSProperties = {
+    //   cursor: 'move',
+    //   left,
+    //   opacity: isDragging ? 0.5 : 1, // Reduce opacity when dragging
+    //   position: 'absolute',
+    //   top,
+    // };
 
-  return (
-    <div
-      className="node"
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      ref={dragRef}
-      style={{
-        opacity,
-      }}
-    >
-      <svg height="50" width="100">
-        <foreignObject height="50" width="100">
-          <div xmlns="http://www.w3.org/1999/xhtml">
-            {children}
-          </div>
-        </foreignObject>
-      </svg>
-    </div>
-  );
-});
+    return (
+      <div
+        className='node'
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        ref={dragRef}
+        style={{
+          opacity,
+        }}
+      >
+        <svg height='50' width='100'>
+          <foreignObject height='50' width='100'>
+            <div xmlns='http://www.w3.org/1999/xhtml'>{children}</div>
+          </foreignObject>
+        </svg>
+      </div>
+    );
+  },
+);
 
 export default Node;

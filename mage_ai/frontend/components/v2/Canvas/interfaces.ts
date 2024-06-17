@@ -1,4 +1,9 @@
-import { ItemTypeEnum, PortSubtypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from './types';
+import {
+  ItemTypeEnum,
+  PortSubtypeEnum,
+  LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
+} from './types';
 
 export interface OffsetType {
   x: number;
@@ -21,7 +26,7 @@ export interface DragItem extends BaseItem {
   inputs?: PortType[];
   isDragging?: boolean;
   outputs?: PortType[];
-  rect?: RectType
+  rect?: RectType;
   title?: string;
 }
 

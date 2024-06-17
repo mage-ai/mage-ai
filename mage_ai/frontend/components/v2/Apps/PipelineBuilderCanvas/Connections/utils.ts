@@ -73,33 +73,28 @@ function calculatePosition(connection: ConnectionType, fromRect: RectType, toRec
 }
 
 export function getPathD(connection: ConnectionType, fromRect: RectType, toRect: RectType): string {
-  const {
-    endX,
-    endY,
-    startX,
-    startY,
-    x1,
-    x2,
-    y1,
-    y2,
-  } = calculatePosition(connection, fromRect, toRect);
+  const { endX, endY, startX, startY, x1, x2, y1, y2 } = calculatePosition(
+    connection,
+    fromRect,
+    toRect,
+  );
 
   return `M${startX},${startY} C${x1},${y1} ${x2},${y2} ${endX},${endY}`;
 }
 
-export function getConnections(node: NodeItemType, connections: Record<string, ConnectionType>): ConnectionType[] {
+export function getConnections(
+  node: NodeItemType,
+  connections: Record<string, ConnectionType>,
+): ConnectionType[] {
   return Object.values(connections || {}).reduce((acc, connection) => {
     const { id, type } = node;
-    const {
-      fromItem,
-      toItem,
-    } = connection;
+    const { fromItem, toItem } = connection;
 
     if (
-      (fromItem.type === type && fromItem.id === id)
-      || (toItem.type === type && toItem.id === id)
-      || (fromItem?.parent?.type === type && fromItem?.parent?.id === id)
-      || (toItem?.parent?.type === type && toItem?.parent?.id === id)
+      (fromItem.type === type && fromItem.id === id) ||
+      (toItem.type === type && toItem.id === id) ||
+      (fromItem?.parent?.type === type && fromItem?.parent?.id === id) ||
+      (toItem?.parent?.type === type && toItem?.parent?.id === id)
     ) {
       return acc.concat(connection);
     }
@@ -141,9 +136,9 @@ export function updatePaths(
 
     const shouldUpdate = !onlyUpdateTypes
       ? true
-      : (!onlyUpdateTypes?.fromItem || onlyUpdateTypes?.fromItem?.type === fromItem?.type)
-      && (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type)
-      && (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connUUID);
+      : (!onlyUpdateTypes?.fromItem || onlyUpdateTypes?.fromItem?.type === fromItem?.type) &&
+        (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type) &&
+        (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connUUID);
 
     // console.log('shouldUpdate', shouldUpdate);
 
@@ -184,7 +179,6 @@ export function updatePaths(
           },
         });
       }
-
     } else if (isTo || isToParent) {
       if (isToParent) {
         if (connection?.toItem?.rect) {

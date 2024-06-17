@@ -13,15 +13,15 @@ const styles: CSSProperties = {
 };
 
 export interface BoxProps {
-  backgroundColor?: string
-  preview?: boolean
-  title: string
+  backgroundColor?: string;
+  preview?: boolean;
+  title: string;
 }
 
 const BlockNode: FC<BoxProps> = memo(function Box({ backgroundColor, preview, title }: BoxProps) {
   return (
     <Grid
-      alignItems="center"
+      alignItems='center'
       role={preview ? 'BoxPreview' : 'Box'}
       style={{ ...styles, backgroundColor }}
     >

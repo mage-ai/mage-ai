@@ -16,9 +16,9 @@ const style: CSSProperties = {
 };
 
 export interface TargetBoxTypedProps {
-  lastDroppedItem?: any
-  accepts: string[]
-  onDrop: (arg: any) => void
+  lastDroppedItem?: any;
+  accepts: string[];
+  onDrop: (arg: any) => void;
 }
 
 export const TargetBoxTyped: FC<TargetBoxTypedProps> = memo(function TargetBoxTyped({
@@ -29,7 +29,7 @@ export const TargetBoxTyped: FC<TargetBoxTypedProps> = memo(function TargetBoxTy
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept,
-      collect: (monitor) => ({
+      collect: monitor => ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
       }),
@@ -48,13 +48,9 @@ export const TargetBoxTyped: FC<TargetBoxTypedProps> = memo(function TargetBoxTy
 
   return (
     <div ref={drop} style={{ ...style, backgroundColor }}>
-      {isActive
-        ? 'Release to drop'
-        : `This dustbin accepts: ${accept.join(', ')}`}
+      {isActive ? 'Release to drop' : `This dustbin accepts: ${accept.join(', ')}`}
 
-      {lastDroppedItem && (
-        <p>Last dropped: {JSON.stringify(lastDroppedItem)}</p>
-      )}
+      {lastDroppedItem && <p>Last dropped: {JSON.stringify(lastDroppedItem)}</p>}
     </div>
   );
 });

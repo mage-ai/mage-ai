@@ -15,8 +15,8 @@ const BoxNode: FC = ({ showCopyIcon }) => {
   const [, drag] = useDrag(() => ({
     type: ItemTypeEnum.BOX,
     options: {
-            dropEffect: showCopyIcon ? 'copy' : 'move',
-          },
+      dropEffect: showCopyIcon ? 'copy' : 'move',
+    },
   }));
   return (
     <div ref={drag} style={style}>

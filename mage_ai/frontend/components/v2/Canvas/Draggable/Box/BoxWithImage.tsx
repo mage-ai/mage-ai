@@ -5,7 +5,6 @@ import { DragPreviewImage, useDrag } from 'react-dnd';
 import { boxImage } from './images/boxImage';
 import { ItemTypeEnum } from '../../types';
 
-
 const style: CSSProperties = {
   border: '1px dashed gray',
   padding: '0.5rem 1rem',
@@ -18,7 +17,7 @@ export const BoxWithImage: FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [{ opacity, backgroundColor }, drag, preview] = useDrag(() => ({
     type: ItemTypeEnum.BOX,
-    collect: (monitor) => ({
+    collect: monitor => ({
       opacity: monitor.isDragging() ? 0.4 : 1,
       backgroundColor: monitor.isDragging() ? 'red' : 'white',
     }),

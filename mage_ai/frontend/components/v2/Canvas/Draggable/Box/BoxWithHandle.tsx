@@ -39,16 +39,13 @@ const handleStyle: CSSProperties = {
 //   );
 // };
 
-
-
-
 export const BoxWithHandle: FC = () => {
   const initRef = useRef(null);
   const dragCountRef = useRef(0);
   const [key, setKey] = useState(null);
   const [{ opacity, backgroundColor }, drag, preview] = useDrag(() => ({
     type: ItemTypeEnum.BOX,
-    collect: (monitor) => ({
+    collect: monitor => ({
       opacity: monitor.isDragging() ? 0.4 : 1,
       backgroundColor: monitor.isDragging() ? 'red' : 'white',
     }),
@@ -81,13 +78,14 @@ export const BoxWithHandle: FC = () => {
         Drag me to see an image
       </div> */}
 
-
-      <div key={dragCountRef.current === 0 ? key : `handle-container-${new Date().getTime()}`} ref={preview} style={{ ...style, opacity }}>
-        <div ref={drag} style={handleStyle}/>
-        Drag me by the handle
-        Key: {`handle-container-${new Date().getTime()}`}
+      <div
+        key={dragCountRef.current === 0 ? key : `handle-container-${new Date().getTime()}`}
+        ref={preview}
+        style={{ ...style, opacity }}
+      >
+        <div ref={drag} style={handleStyle} />
+        Drag me by the handle Key: {`handle-container-${new Date().getTime()}`}
       </div>
-
     </>
   );
 };

@@ -7,17 +7,11 @@ export function buildPortID(fromUUID: string, toUUID: string) {
 
 export function getNodeUUID(node: NodeItemType): string {
   const { id, type } = node;
-  const arr = [
-    type,
-    id,
-  ];
+  const arr = [type, id];
 
   if (ItemTypeEnum.PORT === node.type) {
     const { index, subtype } = node as PortType;
-    arr.push(...[
-      subtype,
-      index,
-    ]);
+    arr.push(...[subtype, index]);
   }
 
   return arr?.filter(t => t)?.join('-');

@@ -9,19 +9,19 @@ import { TargetBoxTyped } from '../Targets/TargetBoxTyped';
 import { ItemTypeEnum } from '../types';
 
 export interface SourceBox {
-  name: string
-  type: string
+  name: string;
+  type: string;
 }
 
 export interface TargetBoxTyped {
-  accepts: string[]
-  lastDroppedItem: any
+  accepts: string[];
+  lastDroppedItem: any;
 }
 
 export interface ContainerState {
-  boxes: SourceBox[]
-  targetBoxes: TargetBoxTyped[]
-  droppedBoxNames: string[]
+  boxes: SourceBox[];
+  targetBoxes: TargetBoxTyped[];
+  droppedBoxNames: string[];
 }
 
 export const BoxContainerTyped: FC = memo(function BoxContainerTyped() {
@@ -86,19 +86,14 @@ export const BoxContainerTyped: FC = memo(function BoxContainerTyped() {
             accepts={accepts}
             key={index}
             lastDroppedItem={lastDroppedItem}
-            onDrop={(item) => handleDrop(index, item)}
+            onDrop={item => handleDrop(index, item)}
           />
         ))}
       </div>
 
       <div style={{ overflow: 'hidden', clear: 'both' }}>
         {boxes.map(({ name, type }, index) => (
-          <BoxNodeTyped
-            isDropped={isDropped(name)}
-            key={index}
-            name={name}
-            type={type}
-          />
+          <BoxNodeTyped isDropped={isDropped(name)} key={index} name={name} type={type} />
         ))}
       </div>
     </div>

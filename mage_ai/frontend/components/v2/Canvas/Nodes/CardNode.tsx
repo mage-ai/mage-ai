@@ -13,9 +13,9 @@ const style: CSSProperties = {
 };
 
 export interface CardProps {
-  id: any
-  text: string
-  moveCard: (draggedId: string, id: string) => void
+  id: any;
+  text: string;
+  moveCard: (draggedId: string, id: string) => void;
 }
 
 const CardNode: FC<CardProps> = memo(function Card({ id, text, moveCard }) {
@@ -23,7 +23,7 @@ const CardNode: FC<CardProps> = memo(function Card({ id, text, moveCard }) {
   const [{ isDragging, handlerId }, connectDrag] = useDrag({
     type: ItemTypeEnum.CARD,
     item: { id },
-    collect: (monitor) => {
+    collect: monitor => {
       const result = {
         handlerId: monitor.getHandlerId(),
         isDragging: monitor.isDragging(),

@@ -37,22 +37,22 @@ function Layout(props, ref: Ref.HTMLCanvasElement) {
       <DragLayer snapToGrid={snapToGridWhileDragging} />
 
       <p>
-        <label htmlFor="snapToGridWhileDragging">
+        <label htmlFor='snapToGridWhileDragging'>
           <input
             checked={snapToGridWhileDragging}
-            id="snapToGridWhileDragging"
+            id='snapToGridWhileDragging'
             onChange={handleSnapToGridWhileDraggingChange}
-            type="checkbox"
+            type='checkbox'
           />
           <small>Snap to grid while dragging</small>
         </label>
         <br />
-        <label htmlFor="snapToGridAfterDrop">
+        <label htmlFor='snapToGridAfterDrop'>
           <input
             checked={snapToGridAfterDrop}
-            id="snapToGridAfterDrop"
+            id='snapToGridAfterDrop'
             onChange={handleSnapToGridAfterDropChange}
-            type="checkbox"
+            type='checkbox'
           />
           <small>Snap to grid after drop</small>
         </label>

@@ -12,9 +12,9 @@ const style: CSSProperties = {
 };
 
 export interface BoxNodeTypedProps {
-  name: string
-  type: string
-  isDropped: boolean
+  name: string;
+  type: string;
+  isDropped: boolean;
 }
 
 export const BoxNodeTyped: FC<BoxNodeTypedProps> = ({ name, type, isDropped }) => {
@@ -25,7 +25,7 @@ export const BoxNodeTyped: FC<BoxNodeTypedProps> = ({ name, type, isDropped }) =
       const item = monitor.getItem();
       return name === item.name;
     },
-    collect: (monitor) => ({
+    collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
   });

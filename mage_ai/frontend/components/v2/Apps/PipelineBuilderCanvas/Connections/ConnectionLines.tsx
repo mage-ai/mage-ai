@@ -4,7 +4,9 @@ type ConnectionLinesProps = {
   children: React.ReactNode;
 };
 
-export const ConnectionLines: React.FC<ConnectionLinesProps> = ({ children }: ConnectionLinesProps) => (
+export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
+  children,
+}: ConnectionLinesProps) => (
   <svg
     style={{
       height: '100%',

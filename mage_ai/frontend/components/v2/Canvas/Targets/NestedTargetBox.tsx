@@ -21,13 +21,13 @@ function getStyle(backgroundColor: string): CSSProperties {
 }
 
 export interface DustbinProps {
-  greedy?: boolean
-  children?: ReactNode
+  greedy?: boolean;
+  children?: ReactNode;
 }
 
 export interface DustbinState {
-  hasDropped: boolean
-  hasDroppedOnChild: boolean
+  hasDropped: boolean;
+  hasDroppedOnChild: boolean;
 }
 
 const NestedTargetBox: FC<DustbinProps> = ({ greedy, children }) => {
@@ -45,7 +45,7 @@ const NestedTargetBox: FC<DustbinProps> = ({ greedy, children }) => {
         setHasDropped(true);
         setHasDroppedOnChild(didDrop);
       },
-      collect: (monitor) => ({
+      collect: monitor => ({
         isOver: monitor.isOver(),
         isOverCurrent: monitor.isOver({ shallow: true }),
       }),

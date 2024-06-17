@@ -2,7 +2,12 @@ import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
 import { DragItem, PortType, LayoutConfigType } from '../../../Canvas/interfaces';
 import { buildPortID, getNodeUUID } from '../../../Canvas/Draggable/utils';
-import { PortSubtypeEnum, ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../../Canvas/types';
+import {
+  PortSubtypeEnum,
+  ItemTypeEnum,
+  LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
+} from '../../../Canvas/types';
 import { createConnection, connectionUUID } from '../Connections/utils';
 import { ConnectionType } from '../Connections/interfaces';
 
@@ -31,13 +36,13 @@ export function initializeBlocksAndConnections(
   const {
     direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
     origin: layoutOrigin = LayoutConfigDirectionOriginEnum.LEFT,
-  } = layout || {} as LayoutConfigType;
+  } = layout || ({} as LayoutConfigType);
 
   const itemsMapping: Record<string, DragItem> = {};
   const connectionsMapping: Record<string, ConnectionType> = {};
   const portsMapping: Record<string, PortType> = {};
 
-  const positions: Record<string, { left: number, top: number }> = {};
+  const positions: Record<string, { left: number; top: number }> = {};
   const levels: Record<string, number> = {};
   const occupiedPositions: Set<string> = new Set();
 
@@ -68,7 +73,10 @@ export function initializeBlocksAndConnections(
     columns[i] = [20];
   }
 
-  function getNextAvailablePosition(level: number, parentPosition?: { left: number, top: number }): { left: number, top: number } {
+  function getNextAvailablePosition(
+    level: number,
+    parentPosition?: { left: number; top: number },
+  ): { left: number; top: number } {
     const top = level * (blockHeight + verticalSpacing) + 20;
     let left = 20;
     if (parentPosition) {
@@ -99,7 +107,7 @@ export function initializeBlocksAndConnections(
     columns[level].push(left);
   });
 
-  blocks.forEach((block) => {
+  blocks.forEach(block => {
     const position = positions[block.uuid];
     itemsMapping[block.uuid] = {
       id: block.uuid,
@@ -114,7 +122,7 @@ export function initializeBlocksAndConnections(
     };
   });
 
-  blocks?.forEach((block) => {
+  blocks?.forEach(block => {
     const item: DragItem = itemsMapping[block?.uuid];
     const inputs: PortType[] = [];
     const outputs: PortType[] = [];
@@ -148,13 +156,17 @@ export function initializeBlocksAndConnections(
     });
   });
 
-  blocks.forEach((block) => {
+  blocks.forEach(block => {
     const fromItem = itemsMapping[block.uuid];
     // Downstream blocks
     block?.downstream_blocks?.forEach((uuidDn: string) => {
       const toItem = itemsMapping[uuidDn] as DragItem;
-      const fromPort = (fromItem?.outputs as PortType[])?.find(port => port.id === buildPortID(block?.uuid, uuidDn));
-      const toPort = (toItem?.inputs as PortType[])?.find(port => port.id === buildPortID(uuidDn, block.uuid));
+      const fromPort = (fromItem?.outputs as PortType[])?.find(
+        port => port.id === buildPortID(block?.uuid, uuidDn),
+      );
+      const toPort = (toItem?.inputs as PortType[])?.find(
+        port => port.id === buildPortID(uuidDn, block.uuid),
+      );
 
       if (fromPort && toPort) {
         const connection = createConnection(fromPort, toPort);

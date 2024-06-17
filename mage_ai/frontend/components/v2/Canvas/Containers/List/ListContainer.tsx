@@ -9,13 +9,13 @@ const style: CSSProperties = {
 };
 
 interface CardItem {
-  id: number
-  text: string
+  id: number;
+  text: string;
 }
 
 export interface CardState {
-  cardsById: Record<string, CardItem>
-  cardsByIndex: CardItem[]
+  cardsById: Record<string, CardItem>;
+  cardsByIndex: CardItem[];
 }
 
 function buildCardData() {
@@ -37,10 +37,7 @@ function buildCardData() {
 /* eslint-disable-next-line @typescript-eslint/no-empty-interface */
 export interface ContainerProps {}
 
-class ListContainer extends Component<
-  ContainerProps,
-  Record<string, unknown>
-> {
+class ListContainer extends Component<ContainerProps, Record<string, unknown>> {
   private requestedFrame: number | undefined;
   private cardState: CardState = buildCardData();
 
@@ -61,13 +58,8 @@ class ListContainer extends Component<
     return (
       <>
         <div style={style}>
-          {cardsByIndex.map((card) => (
-            <CardNode
-              id={card.id}
-              key={card.id}
-              moveCard={this.moveCard}
-              text={card.text}
-            />
+          {cardsByIndex.map(card => (
+            <CardNode id={card.id} key={card.id} moveCard={this.moveCard} text={card.text} />
           ))}
         </div>
       </>

@@ -45,18 +45,17 @@ function getItemStyles(
 }
 
 export interface CustomDragLayerProps {
-  snapToGrid: boolean
+  snapToGrid: boolean;
 }
 
-export const DragLayer: FC<CustomDragLayerProps> = (props) => {
-  const { itemType, isDragging, item, initialOffset, currentOffset } =
-    useDragLayer((monitor) => ({
-      currentOffset: monitor.getSourceClientOffset(),
-      initialOffset: monitor.getInitialSourceClientOffset(),
-      isDragging: monitor.isDragging(),
-      item: monitor.getItem(),
-      itemType: monitor.getItemType(),
-    }));
+export const DragLayer: FC<CustomDragLayerProps> = props => {
+  const { itemType, isDragging, item, initialOffset, currentOffset } = useDragLayer(monitor => ({
+    currentOffset: monitor.getSourceClientOffset(),
+    initialOffset: monitor.getInitialSourceClientOffset(),
+    isDragging: monitor.isDragging(),
+    item: monitor.getItem(),
+    itemType: monitor.getItemType(),
+  }));
 
   function renderItem() {
     switch (itemType) {
@@ -72,9 +71,7 @@ export const DragLayer: FC<CustomDragLayerProps> = (props) => {
   }
   return (
     <div style={layerStyles}>
-      <div
-        style={getItemStyles(initialOffset, currentOffset, props.snapToGrid)}
-      >
+      <div style={getItemStyles(initialOffset, currentOffset, props.snapToGrid)}>
         {renderItem()}
       </div>
     </div>

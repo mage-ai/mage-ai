@@ -30,9 +30,7 @@ type GridProps = {
 } & WithStylesProp;
 
 const Grid: React.FC<GridProps> = React.memo((props: GridProps) => (
-  <Styled {...props}>
-    {props.children}
-  </Styled>
+  <Styled {...props}>{props.children}</Styled>
 ));
 
 export default Grid;

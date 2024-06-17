@@ -14,24 +14,25 @@ import { getNodeUUID } from './utils';
 import { DraggablePort } from './DraggablePort';
 
 // This is the style used for the preview when dragging
-function getStyles({ rect }: DragItem, {
-  canDrop,
-  isDragging,
-  isOverCurrent,
-}: {
-  canDrop: boolean;
-  isDragging: boolean;
-  isOverCurrent: boolean;
-}): CSSProperties {
-  const { left, top } = rect || {} as RectType;
+function getStyles(
+  { rect }: DragItem,
+  {
+    canDrop,
+    isDragging,
+    isOverCurrent,
+  }: {
+    canDrop: boolean;
+    isDragging: boolean;
+    isOverCurrent: boolean;
+  },
+): CSSProperties {
+  const { left, top } = rect || ({} as RectType);
   const transform = `translate3d(${left}px, ${top}px, 0)`;
   const backgroundColor = 'rgba(0, 0, 0, 0.1)';
 
   return {
     WebkitTransform: transform,
-    backgroundColor: canDrop
-      ? isOverCurrent ? 'blue' : backgroundColor
-      : backgroundColor,
+    backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
     border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
@@ -66,7 +67,10 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   const portsRef = useRef({});
   const itemRef = useRef(null);
 
-  const ports: PortType[] = useMemo(() => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType), [item]);
+  const ports: PortType[] = useMemo(
+    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType),
+    [item],
+  );
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
@@ -81,43 +85,46 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleOnDrop = useCallback((dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-    console.log('Dragged ', dragTarget);
-    console.log('Dropped on ', dropTarget);
-    onDrop(dragTarget, dropTarget);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onDrop]);
+  const handleOnDrop = useCallback(
+    (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
+      console.log('Dragged ', dragTarget);
+      console.log('Dropped on ', dropTarget);
+      onDrop(dragTarget, dropTarget);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [onDrop],
+  );
 
   // https://react-dnd.github.io/react-dnd/docs/api/use-drag
-  const [{
-    backgroundColor,
-    isDragging,
-  }, connectDrag, preview] = useDrag(() => ({
-    canDrag: (monitor: DragSourceMonitor) => {
-      if (!canDrag || canDrag(item)) {
-        onDragStart(item, monitor);
-        return true;
-      }
+  const [{ backgroundColor, isDragging }, connectDrag, preview] = useDrag(
+    () => ({
+      canDrag: (monitor: DragSourceMonitor) => {
+        if (!canDrag || canDrag(item)) {
+          onDragStart(item, monitor);
+          return true;
+        }
 
-      return false;
-    },
-    collect: (monitor: DragSourceMonitor) => {
-      const isDragging = monitor.isDragging();
+        return false;
+      },
+      collect: (monitor: DragSourceMonitor) => {
+        const isDragging = monitor.isDragging();
 
-      return {
-        backgroundColor: isDragging ? 'red' : undefined,
-        isDragging,
-        opacity: isDragging ? 0.4 : 1,
-      };
-    },
-    // end: (item: DragItem, monitor) => null,
-    isDragging: (monitor: DragSourceMonitor) => {
-      const node = monitor.getItem() as NodeItemType;
-      return node.id === itemToDrag.id;
-    },
-    item: itemToDrag,
-    type: itemToDrag.type,
-  }), [itemToDrag, onDragStart]);
+        return {
+          backgroundColor: isDragging ? 'red' : undefined,
+          isDragging,
+          opacity: isDragging ? 0.4 : 1,
+        };
+      },
+      // end: (item: DragItem, monitor) => null,
+      isDragging: (monitor: DragSourceMonitor) => {
+        const node = monitor.getItem() as NodeItemType;
+        return node.id === itemToDrag.id;
+      },
+      item: itemToDrag,
+      type: itemToDrag.type,
+    }),
+    [itemToDrag, onDragStart],
+  );
 
   const [{ canDrop, isOverCurrent }, connectDrop] = useDrop(
     () => ({
@@ -135,7 +142,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
 
         return false;
       },
-      collect: (monitor) => ({
+      collect: monitor => ({
         canDrop: monitor.canDrop(),
         isOverCurrent: monitor.isOver({ shallow: true }),
       }),
@@ -147,45 +154,54 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     [handleOnDrop, item],
   );
 
-  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) => {
-    event.stopPropagation();
-    setDraggingNode(obj);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) => {
+      event.stopPropagation();
+      setDraggingNode(obj);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [],
+  );
 
-  const handleMouseUp = useCallback((event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
-    event.stopPropagation();
-    setDraggingNode(null);
-    onDragCancel(node);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onDragCancel]);
+  const handleMouseUp = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
+      event.stopPropagation();
+      setDraggingNode(null);
+      onDragCancel(node);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [onDragCancel],
+  );
 
-  const renderPorts = useCallback((key: PortSubtypeEnum) => (
-    <>
-      {ports?.reduce((acc: any[], port: PortType) => {
-        if (port?.subtype !== key) {
-          return acc;
-        }
+  const renderPorts = useCallback(
+    (key: PortSubtypeEnum) => (
+      <>
+        {ports?.reduce((acc: any[], port: PortType) => {
+          if (port?.subtype !== key) {
+            return acc;
+          }
 
-        const uuid = getNodeUUID(port);
-        const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
-        portsRef.current[uuid] = itemRef;
+          const uuid = getNodeUUID(port);
+          const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
+          portsRef.current[uuid] = itemRef;
 
-        return acc.concat(
-          <DraggablePort
-            handleMouseDown={event => handleMouseDown(event, port)}
-            handleMouseUp={event => handleMouseUp(event, port)}
-            handleOnDrop={handleOnDrop}
-            item={port}
-            itemRef={itemRef}
-            key={uuid}
-            onDragStart={onDragStart}
-            onMount={onPortMount}
-          />,
-        );
-      }, [])}
-    </>
-  ), [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, onPortMount, ports]);
+          return acc.concat(
+            <DraggablePort
+              handleMouseDown={event => handleMouseDown(event, port)}
+              handleMouseUp={event => handleMouseUp(event, port)}
+              handleOnDrop={handleOnDrop}
+              item={port}
+              itemRef={itemRef}
+              key={uuid}
+              onDragStart={onDragStart}
+              onMount={onPortMount}
+            />,
+          );
+        }, [])}
+      </>
+    ),
+    [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, onPortMount, ports],
+  );
 
   const isDraggingBlock = useMemo(() => draggingNode?.type === item?.type, [draggingNode, item]);
   connectDrop(itemRef);
@@ -194,30 +210,41 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
     connectDrag(itemRef);
   }
 
-  const isVertical = useMemo(() => LayoutConfigDirectionEnum.VERTICAL === layout?.direction, [layout]);
-  const gridProps = useMemo(() => ({
-    alignItems: 'center',
-    autoColumns: isVertical ? 'auto' : null,
-    autoRows: isVertical ? null : 'auto',
-    columnGap: isVertical ? 12 : null,
-    height: 'inherit',
-    rowGap: isVertical ? null : 12,
-    templateColumns: isVertical ? 'auto' : 'auto 1fr auto',
-    templateRows: isVertical ? 'auto 1fr auto' : 'auto',
-  }), [isVertical]);
-  const gridPortProps = useMemo(() => ({
-    columnGap: isVertical ? 12 : null,
-    rowGap: isVertical ? null : 12,
-    style: {
-      gridTemplateColumns: isVertical ? 'repeat(auto-fit, minmax(0px, min-content))' : 'auto',
-      gridTemplateRows: isVertical ? 'auto' : 'repeat(auto-fit, minmax(0px, min-content))',
-    },
-  }), [isVertical]);
+  const isVertical = useMemo(
+    () => LayoutConfigDirectionEnum.VERTICAL === layout?.direction,
+    [layout],
+  );
+  const gridProps = useMemo(
+    () => ({
+      alignItems: 'center',
+      autoColumns: isVertical ? 'auto' : null,
+      autoRows: isVertical ? null : 'auto',
+      columnGap: isVertical ? 12 : null,
+      height: 'inherit',
+      rowGap: isVertical ? null : 12,
+      templateColumns: isVertical ? 'auto' : 'auto 1fr auto',
+      templateRows: isVertical ? 'auto 1fr auto' : 'auto',
+    }),
+    [isVertical],
+  );
+  const gridPortProps = useMemo(
+    () => ({
+      columnGap: isVertical ? 12 : null,
+      rowGap: isVertical ? null : 12,
+      style: {
+        gridTemplateColumns: isVertical ? 'repeat(auto-fit, minmax(0px, min-content))' : 'auto',
+        gridTemplateRows: isVertical ? 'auto' : 'repeat(auto-fit, minmax(0px, min-content))',
+      },
+    }),
+    [isVertical],
+  );
 
   return (
     <div
       onMouseDown={event => handleMouseDown(event, item)}
       onMouseUp={event => handleMouseUp(event, item)}
+      onTouchStart={(event) => event.stopPropagation()}
+      onTouchEnd={(event) => event.stopPropagation()}
       // @ts-ignore
       ref={itemRef}
       style={getStyles(item, {
@@ -230,24 +257,20 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
         <DragPreviewImage
           connect={preview}
           key={String(Number(new Date()))}
-          src="https://www.mage.ai/favicon.ico"
+          src='https://www.mage.ai/favicon.ico'
         />
       )}
 
       <Grid {...gridProps}>
-        <Grid
-          {...gridPortProps}
-        >
-          {renderPorts(PortSubtypeEnum.INPUT)}
-        </Grid>
+        <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid>
 
-        <BlockNode backgroundColor={backgroundColor} preview={isDraggingBlock} title={item?.title} />
+        <BlockNode
+          backgroundColor={backgroundColor}
+          preview={isDraggingBlock}
+          title={item?.title}
+        />
 
-        <Grid
-          {...gridPortProps}
-        >
-          {renderPorts(PortSubtypeEnum.OUTPUT)}
-        </Grid>
+        <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid>
       </Grid>
     </div>
   );

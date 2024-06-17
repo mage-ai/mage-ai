@@ -16,7 +16,7 @@ export type WithStylesProp = {
 // Utility function to merge multiple refs
 function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<T> {
   return (value: T | null) => {
-    refs.forEach((ref) => {
+    refs.forEach(ref => {
       if (typeof ref === 'function') {
         ref(value);
       } else if (ref != null) {
@@ -27,21 +27,21 @@ function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<
 }
 
 export function withStyles(styles: any, propsHOC?: HOCProps) {
-  const {
-    HTMLTag = 'div',
-    classNames: baseClassNames,
-  } = propsHOC || {} as HOCProps;
+  const { HTMLTag = 'div', classNames: baseClassNames } = propsHOC || ({} as HOCProps);
 
-  return React.forwardRef<any, WithStylesProp>(function StyledComponent({
-    children,
-    className,
-    uuid,
-    ...props
-  }: {
-    children?: React.ReactNode | Element | Element[] | React.ReactNode[];
-    className?: string;
-    uuid?: string;
-  }, ref: any) {
+  return React.forwardRef<any, WithStylesProp>(function StyledComponent(
+    {
+      children,
+      className,
+      uuid,
+      ...props
+    }: {
+      children?: React.ReactNode | Element | Element[] | React.ReactNode[];
+      className?: string;
+      uuid?: string;
+    },
+    ref: any,
+  ) {
     const divRef = useRef<HTMLDivElement>(null);
 
     // Expose the divRef to the parent component through the ref
@@ -49,11 +49,7 @@ export function withStyles(styles: any, propsHOC?: HOCProps) {
 
     const classNames = styleClassNames(
       styles,
-      [
-        ...baseClassNames?.map(cn => styles[cn] || ''),
-        uuid ? styles[uuid] : '',
-        className || '',
-      ],
+      [...baseClassNames?.map(cn => styles[cn] || ''), uuid ? styles[uuid] : '', className || ''],
       // @ts-ignore
       { className, uuid, ...props },
     );
