@@ -8,7 +8,7 @@ type HOCProps = {
 };
 
 export type WithStylesProp = {
-  children?: React.ReactNode | Element | Element[] | React.ReactNode[];
+  children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   className?: string;
   uuid?: string;
 } & ElementType;
@@ -36,7 +36,7 @@ export function withStyles(styles: any, propsHOC?: HOCProps) {
       uuid,
       ...props
     }: {
-      children?: React.ReactNode | Element | Element[] | React.ReactNode[];
+      children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
       className?: string;
       uuid?: string;
     },

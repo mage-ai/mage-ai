@@ -35,8 +35,8 @@ export const Node: React.FC<NodeProps> = React.memo(
         ref={drag}
       >
         <NodeStyled style={nodeStyle}>
-          <svg height='50' width='100'>
-            <foreignObject height='50' width='100'>
+          <svg height="50" width="100">
+            <foreignObject height="50" width="100">
               <div>{children}</div>
             </foreignObject>
           </svg>

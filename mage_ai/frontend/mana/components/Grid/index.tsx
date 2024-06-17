@@ -4,6 +4,7 @@ import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
   borders?: boolean;
+  children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   alignContent?: string;
   alignItems?: string;
   area?: string;
@@ -31,24 +32,13 @@ type GridProps = {
   width?: number | string;
 } & WithStylesProp;
 
-const Grid: React.FC<
-  GridProps & {
-    ref?: React.Ref<any>;
-  }
-> = React.memo(
-  React.forwardRef(
-    (
-      props: {
-        children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any[] | any;
-      } & GridProps,
-      ref: React.Ref<any>,
-    ) => (
-      <Styled ref={ref} {...props}>
-        {/* eslint-disable-next-line react/prop-types */}
-        {props?.children}
-      </Styled>
-    ),
-  ),
-);
 
-export default Grid;
+function Grid({ children, ...props }: GridProps, ref: React.Ref<any>) {
+  return (
+    <Styled ref={ref} {...props}>
+      {children && (children as React.ReactNode)}
+    </Styled>
+  );
+}
+
+export default React.forwardRef(Grid);
