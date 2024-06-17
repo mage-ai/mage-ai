@@ -3,9 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useDrop } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import { CanvasStyled } from './index.style';
-import { Canvas } from '../../Canvas';
 import {
   DragItem,
   NodeItemType,
@@ -480,7 +481,7 @@ export default function PipelineBuilderCanvas({
       style={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'visible' }}
     >
       <CanvasStyled>
-        <Canvas>
+        <DndProvider backend={HTML5Backend}>
           <DragLayer snapToGrid={snapToGridOnDrop} />
           <PipelineBuilder
             {...props}
@@ -488,7 +489,7 @@ export default function PipelineBuilderCanvas({
             onDragEnd={() => setZoomPanDisabled(false)}
             onDragStart={() => setZoomPanDisabled(true)}
           />
-        </Canvas>
+        </DndProvider>
       </CanvasStyled>
     </div>
   );
