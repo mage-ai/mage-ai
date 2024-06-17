@@ -58,7 +58,7 @@ export const PIPELINE: PipelineType = {
         callback_blocks: [],
         conditional_blocks: [],
         content:
-          "@data_loader\ndef load_data1(*args, **kwargs):\n    arr = [i + 10 for i in range(0, 2)]\n    return [\n        arr,\n        [dict(block_uuid=f'child_{i}') for i in arr],\n    ]",
+          '@data_loader\ndef load_data1(*args, **kwargs):\n    arr = [i + 10 for i in range(0, 2)]\n    return [\n        arr,\n        [dict(block_uuid=f\'child_{i}\') for i in arr],\n    ]',
         outputs: [],
         metadata: {},
         tags: [],
@@ -110,7 +110,7 @@ export const PIPELINE: PipelineType = {
         callback_blocks: [],
         conditional_blocks: [],
         content:
-          "@data_loader\ndef load_data2(*args, **kwargs):\n    arr = [i + 20 for i in range(0, 2)]\n    return [\n        arr,\n        [dict(block_uuid=f'child_{i}') for i in arr],\n    ]",
+          '@data_loader\ndef load_data2(*args, **kwargs):\n    arr = [i + 20 for i in range(0, 2)]\n    return [\n        arr,\n        [dict(block_uuid=f\'child_{i}\') for i in arr],\n    ]',
         outputs: [],
         metadata: {},
         tags: [],
@@ -203,7 +203,7 @@ export const PIPELINE: PipelineType = {
         callback_blocks: [],
         conditional_blocks: [],
         content:
-          "@data_exporter\ndef transform_2_1(arr, number, **kwargs):\n    arr = [arr, kwargs.get('upstream_data', 0), number]\n    return [\n        arr,\n    ]",
+          '@data_exporter\ndef transform_2_1(arr, number, **kwargs):\n    arr = [arr, kwargs.get(\'upstream_data\', 0), number]\n    return [\n        arr,\n    ]',
         outputs: [],
         metadata: {},
         tags: ['dynamic'],
