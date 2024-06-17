@@ -32,8 +32,8 @@ type BlockNodeProps = {
   };
 };
 
-function BlockNode({}: BlockNodeProps) {
-  return <div >;
+function BlockNode() {
+  return <div />;
 }
 
 export default BlockNode;
