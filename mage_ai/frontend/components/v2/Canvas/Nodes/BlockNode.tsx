@@ -31,7 +31,6 @@ export function BlockNode({
         ?  styles[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]
         : '',
   ];
-  console.log(styles);
 
   const main = (
     <div className={classNames.join(' ')}>

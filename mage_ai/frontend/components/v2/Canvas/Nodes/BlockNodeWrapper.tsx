@@ -18,6 +18,8 @@ export function BlockNodeWrapper({ items, ...wrapperProps }: NodeWrapperProps & 
     uuid,
   } = block;
 
+  console.log(block);
+
   const {
     names,
   } = getBlockColor(type as BlockTypeEnum, { getColorName: true });
@@ -56,8 +58,6 @@ export function BlockNodeWrapper({ items, ...wrapperProps }: NodeWrapperProps & 
 
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
   }, [connections, names]);
-
-  console.log(borders);
 
   return (
     <NodeWrapper {...wrapperProps}>

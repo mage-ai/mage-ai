@@ -293,16 +293,19 @@ export const InferencePipeline = {
   blocks: [
     {
       uuid: QueryProcessingPipeline.uuid,
+      name: QueryProcessingPipeline.name,
       downstream_blocks: [RetrievalPipeline.uuid],
       upstream_blocks: [],
     },
     {
       uuid: RetrievalPipeline.uuid,
+      name: RetrievalPipeline.name,
       downstream_blocks: [ResponseGenerationPipeline.uuid],
       upstream_blocks: [QueryProcessingPipeline.uuid],
     },
     {
       uuid: ResponseGenerationPipeline.uuid,
+      name: ResponseGenerationPipeline.name,
       upstream_blocks: [RetrievalPipeline.uuid],
     },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
@@ -316,6 +319,7 @@ export const PipelineFrameworkInstance = {
   blocks: [
     {
       uuid: DataPreparationPipeline.uuid,
+      name: DataPreparationPipeline.name,
       downstream_blocks: [
         DataValidationPipeline.uuid,
         InferencePipeline.uuid,
@@ -324,15 +328,25 @@ export const PipelineFrameworkInstance = {
     },
     {
       uuid: DataValidationPipeline.uuid,
+      name: DataValidationPipeline.name,
       upstream_blocks: [DataPreparationPipeline.uuid],
     },
     {
       uuid: InferencePipeline.uuid,
+      name: InferencePipeline.name,
       upstream_blocks: [DataPreparationPipeline.uuid],
     },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
 }
 
-export default {
-  PipelineFrameworkInstance,
-}
+export default [
+  DataPreparationPipeline,
+  DataValidationPipeline,
+  ExportPipeline,
+  IndexPipeline,
+  InferencePipeline,
+  QueryProcessingPipeline,
+  ResponseGenerationPipeline,
+  RetrievalPipeline,
+  TransformPipeline,
+];

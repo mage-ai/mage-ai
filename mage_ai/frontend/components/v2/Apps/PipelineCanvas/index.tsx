@@ -33,10 +33,13 @@ import { rectFromOrigin } from './utils/positioning';
 import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
+import { extractNestedBlocks } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
+import { indexBy } from '@utils/array';
 
 type PipelineBuilderProps = {
+  pipeline: PipelineType;
   pipelines?: PipelineType[];
   canvasRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
@@ -59,6 +62,7 @@ type PipelineBuilderProps = {
 // https://react-dnd.github.io/react-dnd/docs/api/drag-layer-monitor
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
+  pipeline,
   pipelines,
   canvasRef,
   onDragEnd: onDragEndProp,
@@ -109,10 +113,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
-      const blocks = pipelines.reduce((acc, pipeline) => acc.concat(pipeline.blocks.map(block => ({
-        ...block,
-        pipeline: update(pipeline, { blocks: { $set: pipeline.blocks.map(b => ({ uuid: b.uuid })) } }),
-      }))), []);
+      const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
+      const blocks = extractNestedBlocks(pipeline, pipelinesMapping);
+
+      console.log(blocks);
+
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         blocks,
         {
@@ -410,6 +415,7 @@ export default function PipelineBuilderCanvas({
   snapToGridOnDrag = true,
   ...props
 }: PipelineBuilderProps & {
+  pipeline: PipelineType;
   pipelines?: PipelineType[];
   snapToGridOnDrag?: boolean;
 }) {
