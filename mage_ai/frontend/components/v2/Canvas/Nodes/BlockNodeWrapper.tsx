@@ -1,3 +1,5 @@
+import update from 'immutability-helper';
+import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { BlockNode } from './BlockNode';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
@@ -5,42 +7,77 @@ import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
 import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
-import { createRef, useCallback, useMemo, useRef } from 'react';
-import { DragItem, PortType } from '../interfaces';
+import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { buildPortID, getNodeUUID } from '../Draggable/utils';
 import { DraggablePort } from '../Draggable/DraggablePort';
-import { GroupUUIDEnum, PortSubtypeEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { getTransformedBoundingClientRect } from '../utils/rect';
+import { connectionUUID } from '../Connections/utils';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import ReactDOM from 'react-dom';
+import { DragItem, ConnectionType, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
 
 export function BlockNodeWrapper({
   item,
   items,
   frameworkGroups,
-  onPortMount,
+  onMountPort,
+  onDragStart,
+  onDrop,
+  onMouseDown,
+  onMouseUp,
   ...wrapperProps
 }: NodeWrapperProps & {
   items: Record<string, DragItem>;
-  frameworkGroups: Record<GroupUUIDEnum, PipelineType>;
+  onMountPort: (port: PortType, ref: HTMLDivElement) => void;
+  frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
+  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
+  onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  onMouseDown: (
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    obj: NodeItemType,
+  ) => void;
+  onMouseUp: (
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    obj: NodeItemType,
+  ) => void;
 }) {
+  const phaseRef = useRef(0);
   const portsRef = useRef({});
-  function renderPort(port: PortType, child: React.ReactNode) {
-    const uuid = getNodeUUID(port);
-    const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
-    portsRef.current[uuid] = itemRef;
+  const connectionPortsRef = useRef({});
+  const itemRef = useRef(null);
+  const [reload, setReload] = useState<Record<string, number>>({});
 
-    return (
-      <DraggablePort
-        // handleMouseDown={event => handleMouseDown(event, port)}
-        // handleMouseUp={event => handleMouseUp(event, port)}
-        // handleOnDrop={handleOnDrop}
-        item={port}
-        itemRef={itemRef}
-        key={uuid}
-        // onDragStart={onDragStart}
-        onMount={onPortMount}
-      >
-        {child}
-      </DraggablePort>
-    );
+  const portElementRefs = useRef<Record<string, any>>({});
+
+  // function renderPort(port: PortType, child: React.ReactNode) {
+  //   const uuid = getNodeUUID(port);
+  //   const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
+  //   portsRef.current[uuid] = itemRef;
+
+  //   return (
+  //     <DraggablePort
+  //       // handleMouseDown={event => handleMouseDown(event, port)}
+  //       // handleMouseUp={event => handleMouseUp(event, port)}
+  //       // handleOnDrop={handleOnDrop}
+  //       // onDragStart={onDragStart}
+  //       item={port}
+  //       itemRef={itemRef}
+  //       key={uuid}
+  //       onMount={onPortMount}
+  //     >
+  //       {child}
+  //     </DraggablePort>
+  //   );
+  // }
+
+  function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
+    if (!(port?.id in portElementRefs.current)) {
+      portElementRefs.current[port?.id] = {
+        port,
+        portRef,
+      };
+      onMountPort(port, portRef?.current);
+    }
   }
 
   const block = item?.block;
@@ -73,56 +110,19 @@ export function BlockNodeWrapper({
     return c && c?.names ? c?.names : { base: 'gray' };
   }, [pipeline, type]);
 
-  const connections = useMemo(() => {
-    const arr = [];
-
-    block?.downstream_blocks?.forEach((uuidB: string) => {
-      const toItem = items?.[uuidB]?.block;
-      const port = item?.outputs?.find(({ id }) => id === buildPortID(block?.uuid, uuidB));
-
-      arr.push({
-        fromItem: block,
-        toItem,
-        toPort: {
-          port,
-          render: (element: React.ReactNode) => renderPort(port, element),
-        },
-      });
-    });
-
-    block?.upstream_blocks?.forEach((uuidB: string) => {
-      const fromItem = items?.[uuidB]?.block;
-      const port = item?.inputs?.find(({ id }) => id === buildPortID(block?.uuid, uuidB));
-      arr.push({
-        fromItem,
-        fromPort: {
-          port,
-          render: (element: React.ReactNode) => renderPort(port, element),
-        },
-        toItem: block,
-      });
-    });
-
-    return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block, item, items]);
+  const ports = useMemo(() => (item?.inputs || []).concat(item?.outputs || []), [item]);
 
   const borders = useMemo(() => {
-    const arr = [names?.base];
-
-    connections?.forEach(({ fromItem, toItem }) => {
-      const colors1 = getBlockColor(fromItem?.type as BlockTypeEnum, { getColorName: true });
-      const colors2 = getBlockColor(toItem?.type as BlockTypeEnum, { getColorName: true });
-      [colors1, colors2]?.forEach((colors) => {
-        const val = colors?.names?.base;
-        if (!arr.includes(val)) {
-          arr.push(val);
-        }
-      });
+    const arr = [names?.base || ''];
+    ports?.forEach(({ target }) => {
+      const cn = getBlockColor(target?.block?.type as BlockTypeEnum, { getColorName: true })?.names?.base;
+      if (!arr.includes(cn)) {
+        arr.push(cn);
+      }
     });
 
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
-  }, [connections, names]);
+  }, [names, ports]);
 
   const node = useMemo(() => (
     <BlockNode
@@ -131,8 +131,10 @@ export function BlockNodeWrapper({
       borderConfig={{
         borders: borders?.slice(0, 1),
       }}
-      connections={connections}
+      // connections={connections}
       groups={groups}
+      item={item}
+      onMount={onMount}
       titleConfig={{
         asides: {
           after: {
@@ -152,19 +154,25 @@ export function BlockNodeWrapper({
             label: name || uuid,
           }
           : undefined,
-        inputConnection: connections?.find(({ toItem }) => toItem?.uuid === block?.uuid),
         label: name || uuid,
-        outputConnection: connections?.find(({ fromItem }) => fromItem?.uuid === block?.uuid),
       }}
     />
-  ), [block, borders, connections, groups, names, name, type, uuid]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [block, borders, groups, names, name, reload, type, uuid]);
 
   return (
     <NodeWrapper
       {...wrapperProps}
       item={item}
+      itemRef={itemRef}
+      onDragStart={onDragStart}
+      onDrop={onDrop}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
     >
       {node}
+
+      {/* {portsMemo} */}
     </NodeWrapper>
   );
 }

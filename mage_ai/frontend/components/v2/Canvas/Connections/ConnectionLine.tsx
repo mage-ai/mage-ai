@@ -2,8 +2,7 @@ import React, { memo } from 'react';
 
 import Path from '@mana/elements/Path';
 import PathGradient from '@mana/elements/PathGradient';
-import { RectType } from '../../../Canvas/interfaces';
-import { ConnectionType } from './interfaces';
+import { ConnectionType, RectType } from '../interfaces';
 import { connectionUUID, getPathD } from './utils';
 
 type ConnectionLineProps = {

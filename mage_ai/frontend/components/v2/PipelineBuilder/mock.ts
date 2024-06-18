@@ -27,53 +27,53 @@ export const TransformPipeline = {
       downstream_blocks: ['subword_tokenizer'],
       upstream_blocks: ['add_3rd_party_data'],
     },
-    {
-      name: 'Subword tokenizer',
-      groups: [GroupUUIDEnum.TOKENIZATION],
-      downstream_blocks: ['instructor_embeddings'],
-      upstream_blocks: ['sliding_window_chunker'],
-      configuration: {
-        templates: {
-          subword_tokenizer: {
-            variables: {
-              hallucination: 10,
-              fire: 'water',
-              spell: true,
-            },
-          },
-          word_tokenizer: {
-            variables: {
-              spacing: 'none',
-              max_length: 100,
-              add_special_tokens: true,
-            },
-          },
-        },
-      },
-    },
-    {
-      name: 'Instructor embeddings',
-      groups: [GroupUUIDEnum.EMBED],
-      downstream_blocks: [
-        'store_relationships_in_neo4j',
-        'store_embeddings_pgvector',
-      ],
-      upstream_blocks: ['subword_tokenizer'],
-      configuration: {
-        templates: {
-          bert_embedding: {
-            variables: {
-              bert_embeddings_uuid: 'abc',
-            },
-          },
-          word2vec_embedding: {
-            variables: {
-              word2vec_embeddings_uuid: 'def',
-            },
-          },
-        },
-      },
-    },
+    // {
+    //   name: 'Subword tokenizer',
+    //   groups: [GroupUUIDEnum.TOKENIZATION],
+    //   downstream_blocks: ['instructor_embeddings'],
+    //   upstream_blocks: ['sliding_window_chunker'],
+    //   configuration: {
+    //     templates: {
+    //       subword_tokenizer: {
+    //         variables: {
+    //           hallucination: 10,
+    //           fire: 'water',
+    //           spell: true,
+    //         },
+    //       },
+    //       word_tokenizer: {
+    //         variables: {
+    //           spacing: 'none',
+    //           max_length: 100,
+    //           add_special_tokens: true,
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
+    // {
+    //   name: 'Instructor embeddings',
+    //   groups: [GroupUUIDEnum.EMBED],
+    //   downstream_blocks: [
+    //     'store_relationships_in_neo4j',
+    //     'store_embeddings_pgvector',
+    //   ],
+    //   upstream_blocks: ['subword_tokenizer'],
+    //   configuration: {
+    //     templates: {
+    //       bert_embedding: {
+    //         variables: {
+    //           bert_embeddings_uuid: 'abc',
+    //         },
+    //       },
+    //       word2vec_embedding: {
+    //         variables: {
+    //           word2vec_embeddings_uuid: 'def',
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
   ].map(block => ({
     ...block,
     type: BlockTypeEnum.TRANSFORMER,

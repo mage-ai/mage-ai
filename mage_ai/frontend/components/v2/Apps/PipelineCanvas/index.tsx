@@ -25,10 +25,11 @@ import { BlockNodeWrapper } from '../../Canvas/Nodes/BlockNodeWrapper';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
-import { ConnectionLine } from './Connections/ConnectionLine';
-import { ConnectionLines } from './Connections/ConnectionLines';
-import { ConnectionType } from './Connections/interfaces';
-import { createConnection, connectionUUID, getConnections, updatePaths } from './Connections/utils';
+import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
+import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
+import { ConnectionType } from '../../Canvas/Connections/interfaces';
+import { createConnection, connectionUUID, getConnections, updatePaths } from '../../Canvas/Connections/utils';
+import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType from '@interfaces/BlockType';
@@ -152,10 +153,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       portsRef.current = portsMapping;
 
       setItems(itemsMapping);
-      setPipelinesMapping(pipelinesMapping);
     }
 
     phaseRef.current += 1;
+    console.log('Canvas render', phaseRef.current);
 
     return () => {
       phaseRef.current = 0;
@@ -217,6 +218,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // console.log('onDragging', node?.type);
 
     let rectOrigin = node?.rect;
+    console.log(rectOrigin, connectionsRef.current);
 
     if (
       ItemTypeEnum.PORT === node.type &&
@@ -312,7 +314,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     [items],
   );
 
-  function onPortMount(item: PortType, itemRef: React.RefObject<HTMLDivElement>) {
+  function onMountPort(item: PortType, itemRef: React.RefObject<HTMLDivElement>) {
     if (itemRef.current) {
       const rect = itemRef.current.getBoundingClientRect();
       const port = update(item, {
@@ -323,6 +325,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             top: rect.top,
             width: rect.width,
           },
+        },
+        rectTransformedDiff: {
+          $set: getTransformedBoundingClientRect(itemRef?.current),
         },
       });
 
@@ -345,13 +350,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             return true;
           }
 
-          const connReady = [fromItem, toItem].every((item: PortType) => {
+          const connReady = [fromItem, toItem].every((item: PortType, idx: number) => {
             const uuid = getNodeUUID(item);
             const port = portsRef?.current?.[uuid];
-            return (
-              port &&
-              ['left', 'height', 'top', 'width'].every((key: string) => port?.rect?.[key] ?? false)
-            );
+            console.log(idx === 0 ? 'fromItem' : 'toItem', uuid, port?.rect);
+            return port && ['left', 'top'].every((key: string) => port?.rect?.[key] ?? false);
           });
 
           if (connReady) {
@@ -362,40 +365,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             connectionsRef.current = update(connectionsRef.current, {
               [connectionUUID(connectionUpdated)]: { $set: connectionUpdated },
             });
+          } else {
+            console.log('NOT READY', connection);
           }
 
           return connReady;
         },
       );
 
+      console.log('Ready to update paths...', ready);
+
       if (ready) {
-        console.log('Ready to update paths...');
         // console.log(portsRef.current);
         // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
-          const { names } = getBlockColor(item?.block?.type, { getColorName: true });
           // console.log(item?.block?.type, names?.base, styles);
           // console.log(styles);
-          updatePaths(item, connectionsRef, {
-            // pathProps: {
-            //   className: [
-            //     styles.path,
-            //     styles[`stroke-${names?.base}`],
-            //   ].join(' '),
-            // },
-            // stop0Props: {
-            //   classNames: [
-            //     stylesPathGradient.stop,
-            //     stylesPathGradient[`stop-color-${names?.base}`],
-            //   ],
-            // },
-            // stop1Props: {
-            //   classNames: [
-            //     stylesPathGradient.stop,
-            //     stylesPathGradient[`stop-color-${names?.base}`],
-            //   ],
-            // },
-          });
+          updatePaths(item, connectionsRef);
         });
       }
     }
@@ -423,6 +409,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   );
   connectDrop(canvasRef);
 
+  const nodesMemo = useMemo(() => phaseRef.current >= 1 && items &&
+    Object.keys(items || items).map(key => (
+      <BlockNodeWrapper
+        frameworkGroups={frameworkGroups?.current}
+        item={items[key]}
+        key={key}
+        onDragStart={onDragStart}
+        onDrop={onDropNode}
+        onMountPort={onMountPort}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+      />
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    )), [items]);
+
   return (
     <>
       <ConnectionLines>
@@ -446,23 +447,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           ))}
       </ConnectionLines>
 
-      {phaseRef.current >= 1 &&
-        items &&
-        Object.keys(items || items).map(key => (
-          <BlockNodeWrapper
-            frameworkGroups={frameworkGroups?.current}
-            item={items[key]}
-            items={items}
-            key={key}
-            layout={layoutConfig}
-            onDragStart={onDragStart}
-            onDrop={onDropNode}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
-            onPortMount={onPortMount}
-            pipelinesMapping={pipelinesMapping}
-          />
-        ))}
+      {nodesMemo}
     </>
   );
 };

@@ -1,7 +1,7 @@
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
-import { PortType } from '../interfaces';
+import { ConnectionType, PortType } from '../interfaces';
 
 export type AsideType = {
   Icon?: IconType;
@@ -12,20 +12,6 @@ export type AsideType = {
 export type AsidesType = {
   after?: AsideType;
   before?: AsideType;
-};
-
-export type ConnectionPortType = {
-  port?: PortType;
-  render?: (element: React.ReactNode) => React.ReactNode;
-};
-
-export type ConnectionType = {
-  from?: string;
-  fromItem?: BlockType;
-  fromPort?: ConnectionPortType;
-  to?: string;
-  toItem?: BlockType;
-  toPort?: ConnectionPortType;
 };
 
 export type TitleConfigType = {

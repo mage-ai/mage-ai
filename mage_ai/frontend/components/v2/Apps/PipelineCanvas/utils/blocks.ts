@@ -8,8 +8,8 @@ import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../../../Canvas/types';
-import { createConnection, connectionUUID } from '../Connections/utils';
-import { ConnectionType } from '../Connections/interfaces';
+import { createConnection, connectionUUID } from '../../../Canvas/Connections/utils';
+import { ConnectionType } from '../../../Canvas/Connections/interfaces';
 
 export function initializeBlocksAndConnections(
   blocks: BlockType[],
@@ -164,6 +164,7 @@ export function initializeBlocksAndConnections(
           index: idx,
           parent: item,
           subtype,
+          target: itemsMapping[uuid],
           type: ItemTypeEnum.PORT,
         };
         portsMapping[getNodeUUID(port)] = port;

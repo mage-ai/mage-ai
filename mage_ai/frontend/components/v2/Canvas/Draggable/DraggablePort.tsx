@@ -6,6 +6,7 @@ import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
 import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 import { getNodeUUID } from './utils';
+import { getTransformedBoundingClientRect } from '../utils/rect';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
@@ -95,6 +96,12 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
         connectDrag(itemRef);
         connectDrop(itemRef);
 
+        // Compute rect on mount
+        const rect = getTransformedBoundingClientRect(itemRef.current);
+        if (rect) {
+          console.log('Mount - rect:', rect);
+          onMount(update(item, { rect: { $set: rect as RectType } }), itemRef);
+        }
         if (onMount) {
           onMount?.(item, itemRef);
         }

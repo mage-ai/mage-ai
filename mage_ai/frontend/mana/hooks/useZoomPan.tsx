@@ -95,13 +95,13 @@ export const useZoomPan = (
       isPanning.current = false;
     };
 
-    element.addEventListener('wheel', handleWheel);
     element.addEventListener('mousedown', handleMouseDown);
     element.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    element.addEventListener('touchstart', handleTouchStart);
-    element.addEventListener('touchmove', handleTouchMove);
     element.addEventListener('touchend', handleTouchEnd);
+    element.addEventListener('wheel', handleWheel, { passive: true });
+    element.addEventListener('touchstart', handleTouchStart, { passive: true });
+    element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     return () => {
       element.removeEventListener('wheel', handleWheel);

@@ -1,103 +1,78 @@
-import { ConnectionType, ConnectionPortType } from '../types';
+import { ConnectionType, PortType } from '../../interfaces';
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
 import Text from '@mana/elements/Text';
 import Circle from '@mana/elements/Circle';
 import Grid from '@mana/components/Grid';
 import { getBlockColor } from '@mana/themes/blocks';
 import { randomSample } from '@utils/array';
-import { useMemo } from 'react';
+
+import { createRef, useEffect, useMemo, useRef } from 'react';
 
 type ConnectionProps = {
-  block: BlockType;
-  connection: ConnectionType;
+  input: PortType;
+  output: PortType;
   emphasized?: boolean;
+  onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
 };
 
-const TEST = false;
+export default function Connection({ input, output, onMount }: ConnectionProps) {
+  const inputRef = useRef<HTMLDivElement>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
 
-export default function Connection({ block, connection }: ConnectionProps) {
-  const { fromPort, toPort } = connection;
+  const inputColor = (getBlockColor(input?.target?.block?.type, {
+    getColorName: true })?.names?.base || 'gray')?.toLowerCase();
+  const outputColor = (getBlockColor(output?.target?.block?.type, {
+    getColorName: true })?.names?.base || 'gray')?.toLowerCase();
 
-  const fromItem = connection?.fromItem && connection?.fromItem?.uuid !== block?.uuid && connection?.fromItem;
-  const fromItemFailed = StatusTypeEnum.FAILED === randomSample([
-    StatusTypeEnum.EXECUTED,
-    StatusTypeEnum.FAILED,
-    StatusTypeEnum.NOT_EXECUTED,
-    StatusTypeEnum.UPDATED,,
-  ]);
-  const fromItemColor = TEST && fromItemFailed
-    ? null
-    : (getBlockColor(fromItem?.type, { getColorName: true })?.names?.base || 'gray')?.toLowerCase();
-
-  const toItem = connection?.toItem && connection?.toItem?.uuid !== block?.uuid && connection?.toItem;
-  const toItemFailed = StatusTypeEnum.FAILED === randomSample([
-    StatusTypeEnum.EXECUTED,
-    StatusTypeEnum.FAILED,
-    StatusTypeEnum.NOT_EXECUTED,
-    StatusTypeEnum.UPDATED,,
-  ]);
-  const toItemColor = TEST && toItemFailed
-    ? null
-    : (getBlockColor(toItem?.type, { getColorName: true })?.names?.base || 'gray')?.toLowerCase();
-
-  // const randomBoolean = (Number(new Date()) * (fromItem?.uuid?.length || 1) * (toItem?.uuid?.length || 1)) % 2 === 0;
-
-  // console.log(block);
-  // console.log(fromItem, toItem);
-  // console.log(fromPort, toPort);
-
-  const fromPortMemo = useMemo(() => fromItem && (
-    <>
-      {(fromPort ?? { render: el => el })?.render(
-        <Circle
-          backgroundColor={fromPort ? fromItemColor : undefined}
-          borderColor={fromPort
-            ? fromItemColor ? false : 'gray'
-            : 'red'}
-          size={12}
-        />,
-      )}
-
-      <Text italic={!fromPort} muted small>
-        {fromItem?.name}
-      </Text>
-    </>
-  ), [fromItem, fromPort, fromItemColor]);
-
-  const toPortMemo = useMemo(() => toItem && (
-    <>
-      <Text italic={!toPort} muted small>
-        {toItem?.name}
-      </Text>
-
-      {(toPort ?? { render: el => el })?.render(
-        <Circle
-          backgroundColor={toPort ? toItemColor : undefined}
-          borderColor={toPort
-            ? fromItemColor ? false : 'gray'
-            : 'red'}
-          size={12}
-        />,
-      )}
-    </>
-  ), [toItem, toPort, toItemColor]);
+  useEffect(() => {
+    if (onMount) {
+      input && onMount(input, inputRef);
+      output && onMount(output, outputRef);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Grid
       alignItems="center"
       columnGap={8}
       templateColumns={[
-        fromItem ? '1fr' : 'auto',
-        toItem ? '1fr' : 'auto',
+        ((input && output) || !(input && output)) ? '1fr 1fr' : '',
+        input && !output ? 'auto auto' : '',
+        !input && output ? 'auto auto' : '',
       ].join(' ')}
       templateRows="1fr"
     >
       <Grid alignItems="center" columnGap={8} justifyItems="start" templateColumns="auto 1fr" templateRows="1fr">
-        {fromPortMemo}
+        <div ref={inputRef} style={{ height: 12, width: 12 }}>
+          <Circle
+            backgroundColor={input ? inputColor : undefined}
+            borderColor={input
+              ? inputColor ? undefined : 'gray'
+              : 'red'}
+            size={12}
+          />
+        </div>
+
+        <Text italic={!input} muted small>
+          {input?.target?.block?.name || input?.target?.block?.uuid || 'Input'}
+        </Text>
       </Grid>
 
       <Grid alignItems="center" columnGap={8} justifyItems="end" templateColumns="1fr auto" templateRows="1fr">
-        {toPortMemo}
+        <Text italic={!output} muted small>
+          {output?.target?.block?.name || output?.target?.block?.uuid || 'Output'}
+        </Text>
+
+        <div ref={outputRef} style={{ height: 12, width: 12 }}>
+          <Circle
+            backgroundColor={output ? outputColor : undefined}
+            borderColor={output
+              ? inputColor ? undefined : 'gray'
+              : 'red'}
+            size={12}
+          />
+        </div>
       </Grid>
     </Grid>
   );

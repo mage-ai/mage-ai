@@ -1,6 +1,6 @@
 import update from 'immutability-helper';
-import { NodeItemType, PortType, RectType } from '../../../Canvas/interfaces';
-import { ItemTypeEnum } from '../../../Canvas/types';
+import { NodeItemType, PortType, RectType } from '../interfaces';
+import { ItemTypeEnum } from '../types';
 import { ConnectionType } from './interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import styles from '@styles/scss/elements/Path.module.scss';
@@ -170,6 +170,37 @@ export function updatePaths(
           // in the middle of the 5000x5000 canvas.
           const leftD = true ? 0 : connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
           const topD = true ? 0 : connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
+
+          // console.log([
+          //   connection.fromItem.rect.left - connection.fromItem.parent.rect.left,
+          //   connection.fromItem.rect.top - connection.fromItem.parent.rect.top,
+          //   connection.fromItem.rectTransformedDiff.left, connection.fromItem.parent.rect.left,
+          //   connection.fromItem.rectTransformedDiff.top, connection.fromItem.parent.rect.top,
+          // ]);
+          //
+          // console.log('Before Calculation');
+          // console.log({
+          //   fromRect: connection.fromItem.rect,
+          //   fromParentRect: connection.fromItem.parent.rect,
+          //   fromTransformedDiff: connection.fromItem.rectTransformedDiff,
+          // });
+
+          // const leftDiff = connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
+          // const topDiff = connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
+          // const transformedLeftDiff = connection.fromItem.rectTransformedDiff.left - connection.fromItem.parent.rect.left;
+          // const transformedTopDiff = connection.fromItem.rectTransformedDiff.top - connection.fromItem.parent.rect.top;
+
+          // console.log([
+          //   leftDiff, topDiff,
+          //   transformedLeftDiff, connection.fromItem.rectTransformedDiff.left,
+          //   transformedTopDiff, connection.fromItem.rectTransformedDiff.top,
+          // ]);
+
+          // console.log('After Calculation');
+
+          // console.log(
+          //   connection.fromItem.child,
+          // );
 
           connectionUpdate = update(connection, {
             fromItem: {

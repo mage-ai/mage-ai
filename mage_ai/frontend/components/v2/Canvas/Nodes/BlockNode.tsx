@@ -2,10 +2,11 @@ import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import Badge from '@mana/elements/Badge';
 import Circle from '@mana/elements/Circle';
-import { ConnectionType, ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
+import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { getBlockColor } from '@mana/themes/blocks';
 import Aside from './Blocks/Aside';
+import { DragItem, ConnectionType, PortType } from '../interfaces';
 import GradientContainer from '@mana/elements/Gradient';
 import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
@@ -13,27 +14,39 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import BlockType from '@interfaces/BlockType';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
+import { getNodeUUID } from '../Draggable/utils';
 
 type BlockNodeProps = {
   block?: BlockType
   borderConfig?: BorderConfigType;
+  item: DragItem;
   collapsed?: boolean;
-  connections?: ConnectionType[];
   configurationOptions?: ConfigurationOptionType[];
   groups?: Record<string, BlockType>;
+  onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   titleConfig?: TitleConfigType;
 };
 
 export function BlockNode({
   block,
   borderConfig,
-  connections,
   groups,
+  item,
+  onMount,
   titleConfig,
 }: BlockNodeProps) {
   const { borders } = borderConfig || {};
-  const { asides, badge, inputConnection, outputConnection } = titleConfig || {};
+  const { asides, badge } = titleConfig || {};
   const { after, before } = asides || {};
+  const { inputs, outputs } = item || {};
+
+  const inputOutputPairs = useMemo(() => {
+    const count = Math.max(inputs?.length, outputs?.length);
+    return Array.from({ length: count }).map((_, idx) => ({
+      input: inputs?.[idx],
+      output: outputs?.[idx],
+    }));
+  }, [inputs, outputs]);
 
   const classNames = [
     styles.blockNode,
@@ -49,45 +62,51 @@ export function BlockNode({
       alignItems="center"
       columnGap={8}
       templateColumns={[
-        inputConnection ? 'auto' : '1fr',
-        inputConnection ? '1fr' : '',
-        outputConnection ? 'auto' : '',
+        inputs?.length >= 1 ? 'auto' : '1fr',
+        inputs?.length >= 1 ? '1fr' : '',
+        outputs?.length >= 1 ? 'auto' : '',
       ].join(' ')}
       templateRows="1fr"
     >
-      {inputConnection && (
+      {inputs?.length >= 1 && (
         <Circle
           backgroundColor={getBlockColor(
-            inputConnection?.fromItem?.type, { getColorName: true },
+            inputs?.[0]?.target?.block?.type, { getColorName: true },
           )?.names?.base || 'gray'}
           size={12}
         />
       )}
       {badge && <Badge {...badge} />}
-      {outputConnection && (
+      {outputs?.length >= 1 && (
         <Circle
           backgroundColor={getBlockColor(
-            outputConnection?.toItem?.type, { getColorName: true },
+            outputs?.[0]?.target?.block?.type, { getColorName: true },
           )?.names?.base || 'gray'}
             size={12}
         />
       )}
     </Grid>
-  ), [
-    inputConnection, outputConnection, badge,
-  ]);
+  ), [badge, inputs, outputs]);
 
-  const connectionRows = useMemo(() => connections?.length >= 1 && (
+  const connectionRows = useMemo(() => inputOutputPairs?.length >= 1 && (
     <PanelRows>
-      {connections?.map((connection, idx: number) =>
+      {inputOutputPairs?.map(({
+        input,
+        output,
+      }, idx: number) =>
         <Connection
-          block={block}
-          connection={connection}
-          key={`${connection?.fromItem?.uuid}-${connection?.toItem?.uuid}-${idx}`}
+          input={input}
+          key={[
+            input ? getNodeUUID(input) : '',
+            output ? getNodeUUID(output) : '',
+          ].join(':')}
+          onMount={onMount}
+          output={output}
         />,
       )}
     </PanelRows>
-  ), [block, connections]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [block, inputOutputPairs]);
 
   const templateConfigurations = useMemo(() => groups && Object.entries(groups)?.map(([groupUUID, group]) => !isEmptyObject(group?.configuration?.templates)
     && Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (

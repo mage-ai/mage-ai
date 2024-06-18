@@ -48,7 +48,6 @@ export type NodeWrapperProps = {
   canDrag?: (item: DragItem) => boolean;
   children?: React.ReactNode;
   item: DragItem;
-  layout?: LayoutConfigType;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
   onMouseDown: (
@@ -59,22 +58,20 @@ export type NodeWrapperProps = {
     event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
     obj: NodeItemType,
   ) => void;
-  onPortMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
+  itemRef: React.RefObject<HTMLDivElement>;
 };
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
   canDrag,
   item,
-  layout,
   onDragStart,
   onDrop,
   onMouseDown,
   onMouseUp,
+  itemRef,
 }: NodeWrapperProps) {
   const phaseRef = useRef(0);
-  const itemRef = useRef(null);
-
 
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
@@ -179,35 +176,6 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
     connectDrag(itemRef);
   }
 
-  const isVertical = useMemo(
-    () => LayoutConfigDirectionEnum.VERTICAL === layout?.direction,
-    [layout],
-  );
-  const gridProps = useMemo(
-    () => ({
-      alignItems: 'center',
-      autoColumns: isVertical ? 'auto' : null,
-      autoRows: isVertical ? null : 'auto',
-      columnGap: isVertical ? 12 : null,
-      height: 'inherit',
-      rowGap: isVertical ? null : 12,
-      templateColumns: isVertical ? 'auto' : 'auto 1fr auto',
-      templateRows: isVertical ? 'auto 1fr auto' : 'auto',
-    }),
-    [isVertical],
-  );
-  const gridPortProps = useMemo(
-    () => ({
-      columnGap: isVertical ? 12 : null,
-      rowGap: isVertical ? null : 12,
-      style: {
-        gridTemplateColumns: isVertical ? 'repeat(auto-fit, minmax(0px, min-content))' : 'auto',
-        gridTemplateRows: isVertical ? 'auto' : 'repeat(auto-fit, minmax(0px, min-content))',
-      },
-    }),
-    [isVertical],
-  );
-
   return (
     <div
       onDragEnd={event => handleMouseUp(event, item)}
@@ -222,11 +190,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         isOverCurrent,
       })}
     >
-      <Grid {...gridProps}>
-        {/* <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid> */}
-        {children}
-        {/* <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid> */}
-      </Grid>
+      {children}
     </div>
   );
 });
