@@ -28,7 +28,6 @@ export const useZoomPan = (
     if (!element) return;
 
     const updateTransform = () => {
-      // console.log('ZoomPan transforming...');
       element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
     };
 
@@ -99,7 +98,7 @@ export const useZoomPan = (
     element.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     element.addEventListener('touchend', handleTouchEnd);
-    element.addEventListener('wheel', handleWheel, { passive: true });
+    element.addEventListener('wheel', handleWheel);
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 

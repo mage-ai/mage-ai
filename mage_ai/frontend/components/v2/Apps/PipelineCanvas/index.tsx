@@ -314,29 +314,25 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     [items],
   );
 
-  function onMountPort(item: PortType, itemRef: React.RefObject<HTMLDivElement>) {
-    if (itemRef.current) {
-      const rect = itemRef.current.getBoundingClientRect();
+  function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
+    if (portRef.current) {
+      const rect = portRef.current.getBoundingClientRect();
       const port = update(item, {
         rect: {
           $set: {
             height: rect.height,
             left: rect.left,
+            offsetLeft: portRef?.current?.offsetLeft,
+            offsetTop: portRef?.current?.offsetTop,
             top: rect.top,
             width: rect.width,
           },
-        },
-        rectTransformedDiff: {
-          $set: getTransformedBoundingClientRect(itemRef?.current),
         },
       });
 
       portsRef.current = update(portsRef.current, {
         [getNodeUUID(port)]: { $set: port },
       });
-
-      // console.log(portsRef.current, Object.keys(portsRef.current).length);
-      // console.log(connectionsRef.current, Object.keys(connectionsRef.current).length);
 
       const ready = Object.values(connectionsRef?.current || {})?.every(
         (connection: ConnectionType) => {
@@ -350,10 +346,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             return true;
           }
 
-          const connReady = [fromItem, toItem].every((item: PortType, idx: number) => {
+          const connReady = [fromItem, toItem].every((item: PortType) => {
             const uuid = getNodeUUID(item);
             const port = portsRef?.current?.[uuid];
-            console.log(idx === 0 ? 'fromItem' : 'toItem', uuid, port?.rect);
             return port && ['left', 'top'].every((key: string) => port?.rect?.[key] ?? false);
           });
 
@@ -365,22 +360,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             connectionsRef.current = update(connectionsRef.current, {
               [connectionUUID(connectionUpdated)]: { $set: connectionUpdated },
             });
-          } else {
-            console.log('NOT READY', connection);
           }
 
           return connReady;
         },
       );
 
-      console.log('Ready to update paths...', ready);
-
       if (ready) {
-        // console.log(portsRef.current);
-        // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
-          // console.log(item?.block?.type, names?.base, styles);
-          // console.log(styles);
           updatePaths(item, connectionsRef);
         });
       }

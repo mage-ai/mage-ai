@@ -28,7 +28,7 @@ export function BlockNodeWrapper({
   ...wrapperProps
 }: NodeWrapperProps & {
   items: Record<string, DragItem>;
-  onMountPort: (port: PortType, ref: HTMLDivElement) => void;
+  onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
   onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
@@ -41,11 +41,7 @@ export function BlockNodeWrapper({
     obj: NodeItemType,
   ) => void;
 }) {
-  const phaseRef = useRef(0);
-  const portsRef = useRef({});
-  const connectionPortsRef = useRef({});
   const itemRef = useRef(null);
-  const [reload, setReload] = useState<Record<string, number>>({});
 
   const portElementRefs = useRef<Record<string, any>>({});
 
@@ -76,7 +72,7 @@ export function BlockNodeWrapper({
         port,
         portRef,
       };
-      onMountPort(port, portRef?.current);
+      onMountPort(port, portRef);
     }
   }
 
@@ -158,7 +154,7 @@ export function BlockNodeWrapper({
       }}
     />
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [block, borders, groups, names, name, reload, type, uuid]);
+  ), [block, borders, groups, names, name, type, uuid]);
 
   return (
     <NodeWrapper

@@ -13,6 +13,8 @@ export interface OffsetType {
 }
 
 export interface RectType {
+  offsetTop?: number;
+  offsetLeft?: number;
   height?: number;
   left: number;
   top: number;

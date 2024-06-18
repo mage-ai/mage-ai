@@ -123,18 +123,9 @@ export function updatePaths(
         type: ItemTypeEnum;
       };
     };
-    pathProps?: {
-      classNames?: string[];
-    },
-    stop0Props?: {
-      classNames?: string[];
-    },
-    stop1Props?: {
-      classNames?: string[];
-    },
   },
 ) {
-  const { onlyUpdateTypes, pathProps, stop0Props, stop1Props } = opts || {};
+  const { onlyUpdateTypes } = opts || {};
   const { id, type } = node;
 
   const conns = getConnections(node, connectionsRef.current);
@@ -165,43 +156,6 @@ export function updatePaths(
     if (isFrom || isFromParent) {
       if (isFromParent) {
         if (connection?.fromItem?.rect) {
-          // This use to fix an issue but now it causes the issue when the page first loads,
-          // the connections are in the top left corner of the canvas while the nodes are centered
-          // in the middle of the 5000x5000 canvas.
-          const leftD = true ? 0 : connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
-          const topD = true ? 0 : connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
-
-          // console.log([
-          //   connection.fromItem.rect.left - connection.fromItem.parent.rect.left,
-          //   connection.fromItem.rect.top - connection.fromItem.parent.rect.top,
-          //   connection.fromItem.rectTransformedDiff.left, connection.fromItem.parent.rect.left,
-          //   connection.fromItem.rectTransformedDiff.top, connection.fromItem.parent.rect.top,
-          // ]);
-          //
-          // console.log('Before Calculation');
-          // console.log({
-          //   fromRect: connection.fromItem.rect,
-          //   fromParentRect: connection.fromItem.parent.rect,
-          //   fromTransformedDiff: connection.fromItem.rectTransformedDiff,
-          // });
-
-          // const leftDiff = connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
-          // const topDiff = connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
-          // const transformedLeftDiff = connection.fromItem.rectTransformedDiff.left - connection.fromItem.parent.rect.left;
-          // const transformedTopDiff = connection.fromItem.rectTransformedDiff.top - connection.fromItem.parent.rect.top;
-
-          // console.log([
-          //   leftDiff, topDiff,
-          //   transformedLeftDiff, connection.fromItem.rectTransformedDiff.left,
-          //   transformedTopDiff, connection.fromItem.rectTransformedDiff.top,
-          // ]);
-
-          // console.log('After Calculation');
-
-          // console.log(
-          //   connection.fromItem.child,
-          // );
-
           connectionUpdate = update(connection, {
             fromItem: {
               parent: {
@@ -211,10 +165,10 @@ export function updatePaths(
               },
               rect: {
                 left: {
-                  $set: node.rect.left + leftD,
+                  $set: node.rect.left + (connection.fromItem.rect.offsetLeft || 0),
                 },
                 top: {
-                  $set: node.rect.top + topD,
+                  $set: node.rect.top + (connection.fromItem.rect.offsetTop || 0),
                 },
               },
             },
@@ -230,12 +184,6 @@ export function updatePaths(
     } else if (isTo || isToParent) {
       if (isToParent) {
         if (connection?.toItem?.rect) {
-          // This use to fix an issue but now it causes the issue when the page first loads,
-          // the connections are in the top left corner of the canvas while the nodes are centered
-          // in the middle of the 5000x5000 canvas.
-          const leftD = true ? 0 : connection.toItem.rect.left - connection.toItem.parent.rect.left;
-          const topD = true ? 0 : connection.toItem.rect.top - connection.toItem.parent.rect.top;
-
           connectionUpdate = update(connection, {
             toItem: {
               parent: {
@@ -245,10 +193,10 @@ export function updatePaths(
               },
               rect: {
                 left: {
-                  $set: node.rect.left + leftD,
+                  $set: node.rect.left + (connection.toItem.rect.offsetLeft || 0),
                 },
                 top: {
-                  $set: node.rect.top + topD,
+                  $set: node.rect.top + (connection.toItem.rect.offsetTop || 0),
                 },
               },
             },
