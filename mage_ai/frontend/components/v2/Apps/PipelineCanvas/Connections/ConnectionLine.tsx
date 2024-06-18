@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 
+import Path from '@mana/elements/Path';
 import { RectType } from '../../../Canvas/interfaces';
 import { ConnectionType } from './interfaces';
 import { connectionUUID, getPathD } from './utils';
@@ -21,13 +22,10 @@ export const ConnectionLine = memo(({ connection }: ConnectionLineProps) => {
   }
 
   return (
-    <path
+    <Path
       d={dValue}
-      fill="transparent"
       id={connUUID}
       key={connectionUUID(connection)}
-      stroke="black"
-      strokeWidth="2"
     />
   );
 });

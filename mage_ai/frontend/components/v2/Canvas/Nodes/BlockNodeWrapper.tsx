@@ -7,9 +7,9 @@ import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
 import { createRef, useCallback, useMemo, useRef } from 'react';
 import { DragItem, PortType } from '../interfaces';
-import { getNodeUUID } from '../Draggable/utils';
+import { buildPortID, getNodeUUID } from '../Draggable/utils';
 import { DraggablePort } from '../Draggable/DraggablePort';
-import { GroupUUIDEnum,PortSubtypeEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { GroupUUIDEnum, PortSubtypeEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 export function BlockNodeWrapper({
   item,
@@ -22,10 +22,26 @@ export function BlockNodeWrapper({
   frameworkGroups: Record<GroupUUIDEnum, PipelineType>;
 }) {
   const portsRef = useRef({});
-  const ports: PortType[] = useMemo(
-    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType[]),
-    [item],
-  );
+  function renderPort(port: PortType, child: React.ReactNode) {
+    const uuid = getNodeUUID(port);
+    const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
+    portsRef.current[uuid] = itemRef;
+
+    return (
+      <DraggablePort
+        // handleMouseDown={event => handleMouseDown(event, port)}
+        // handleMouseUp={event => handleMouseUp(event, port)}
+        // handleOnDrop={handleOnDrop}
+        item={port}
+        itemRef={itemRef}
+        key={uuid}
+        // onDragStart={onDragStart}
+        onMount={onPortMount}
+      >
+        {child}
+      </DraggablePort>
+    );
+  }
 
   const block = item?.block;
   const {
@@ -57,24 +73,39 @@ export function BlockNodeWrapper({
     return c && c?.names ? c?.names : { base: 'gray' };
   }, [pipeline, type]);
 
-
   const connections = useMemo(() => {
     const arr = [];
+
     block?.downstream_blocks?.forEach((uuidB: string) => {
+      const toItem = items?.[uuidB]?.block;
+      const port = item?.outputs?.find(({ id }) => id === buildPortID(block?.uuid, uuidB));
+
       arr.push({
         fromItem: block,
-        toItem: items?.[uuidB]?.block,
+        toItem,
+        toPort: {
+          port,
+          render: (element: React.ReactNode) => renderPort(port, element),
+        },
       });
     });
+
     block?.upstream_blocks?.forEach((uuidB: string) => {
+      const fromItem = items?.[uuidB]?.block;
+      const port = item?.inputs?.find(({ id }) => id === buildPortID(block?.uuid, uuidB));
       arr.push({
-        fromItem: items?.[uuidB]?.block,
+        fromItem,
+        fromPort: {
+          port,
+          render: (element: React.ReactNode) => renderPort(port, element),
+        },
         toItem: block,
       });
     });
 
     return arr;
-  }, [block, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block, item, items]);
 
   const borders = useMemo(() => {
     const arr = [names?.base];
@@ -92,28 +123,6 @@ export function BlockNodeWrapper({
 
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
   }, [connections, names]);
-
-  const renderPorts = useCallback((portsArr: PortType[]) => portsArr?.map((port: PortType) => {
-    const uuid = getNodeUUID(port);
-    const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
-    portsRef.current[uuid] = itemRef;
-
-    return (
-      <DraggablePort
-        // handleMouseDown={event => handleMouseDown(event, port)}
-        // handleMouseUp={event => handleMouseUp(event, port)}
-        // handleOnDrop={handleOnDrop}
-        item={port}
-        itemRef={itemRef}
-        key={uuid}
-        // onDragStart={onDragStart}
-        onMount={onPortMount}
-      />
-    );
-  }), [onPortMount]);
-
-  const portsInput = useMemo(() => renderPorts(ports?.filter(({ parent }) => parent?.id === item?.id)), [item, ports, renderPorts]);
-  const portsOutput = useMemo(() => renderPorts(ports?.filter(({ parent }) => parent?.id !== item?.id)), [item, ports, renderPorts]);
 
   const node = useMemo(() => (
     <BlockNode
@@ -154,9 +163,7 @@ export function BlockNodeWrapper({
       {...wrapperProps}
       item={item}
     >
-      {portsInput}
       {node}
-      {portsOutput}
     </NodeWrapper>
   );
 }

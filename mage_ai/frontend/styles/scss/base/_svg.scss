@@ -1,0 +1,13 @@
+@use '../abstracts/helpers' as *;
+
+@mixin fill-stroke-colors() {
+  @each $value in $colors-names {
+    &.fill-#{$value} {
+      fill: var(--colors-#{$value});
+    }
+
+    &.stroke-#{$value} {
+      stroke: var(--colors-#{$value});
+    }
+  }
+}

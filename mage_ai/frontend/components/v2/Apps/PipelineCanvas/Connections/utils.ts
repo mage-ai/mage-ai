@@ -120,9 +120,12 @@ export function updatePaths(
         type: ItemTypeEnum;
       };
     };
+    pathProps?: {
+      className?: string;
+    },
   },
 ) {
-  const { onlyUpdateTypes } = opts || {};
+  const { onlyUpdateTypes, pathProps } = opts || {};
   const { id, type } = node;
 
   const conns = getConnections(node, connectionsRef.current);
@@ -220,14 +223,14 @@ export function updatePaths(
       }
     }
 
-    console.log(
-      'Will it update?',
-      connectionUpdate,
-      isFrom || isFromParent,
-      isTo || isToParent,
-      connection?.fromItem?.rect,
-      connection?.toItem?.rect,
-    );
+    // console.log(
+    //   'Will it update?',
+    //   connectionUpdate,
+    //   isFrom || isFromParent,
+    //   isTo || isToParent,
+    //   connection?.fromItem?.rect,
+    //   connection?.toItem?.rect,
+    // );
 
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);
@@ -238,6 +241,15 @@ export function updatePaths(
           connectionUpdate.fromItem.rect,
           connectionUpdate.toItem.rect,
         );
+
+        if (pathProps?.className?.length > 0) {
+          pathProps?.className?.split(' ').forEach((className) => {
+            pathElement.classList.add(className);
+          });
+        }
+
+        console.log(pathProps?.className);
+        // pathElement.setAttribute('stroke', pathProps.className);
 
         pathElement.setAttribute('d', pathD);
         connectionsRef.current[connUUID] = connectionUpdate;

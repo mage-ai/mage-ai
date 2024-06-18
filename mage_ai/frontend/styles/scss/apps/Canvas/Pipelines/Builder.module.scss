@@ -1,3 +1,5 @@
+@use '../../../base/svg';
+
 $grid-size: 40px;
 
 .canvas {
@@ -43,4 +45,8 @@ $grid-size: 40px;
         rgba(0, 0, 0, 0.1) $grid-size
       );
   }
+}
+
+.path {
+  @include svg.fill-stroke-colors();
 }

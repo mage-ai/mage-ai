@@ -9,6 +9,7 @@ import { getNodeUUID } from './utils';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
+  children: React.ReactNode;
   item: PortType;
   itemRef: React.RefObject<HTMLDivElement>;
   handleOnDrop: (source: NodeItemType, target: NodeItemType) => void;
@@ -19,6 +20,7 @@ type DraggablePortProps = {
 };
 
 export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort({
+  children,
   item,
   itemRef,
   handleOnDrop,
@@ -97,7 +99,9 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
           onMount?.(item, itemRef);
         }
       }
+
       phaseRef.current += 1;
+      console.log('Render port', phaseRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, onMount]);
@@ -109,22 +113,19 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onTouchStart={event => event.stopPropagation()}
-      style={{
-        border: '1px dotted black',
-        padding: 12,
-      }}
     >
+
       <div
         ref={itemRef}
         role={[ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].join(' ')}
         style={{
-          backgroundColor: isOver && canDrop ? 'red' : 'green',
+          backgroundColor: isOver && canDrop ? 'transparent' : 'transparent',
           cursor: 'move',
           display: 'inline-block',
-          height: 24,
-          width: 24,
         }}
-      />
+      >
+        {children}
+      </div>
     </div>
   );
 });

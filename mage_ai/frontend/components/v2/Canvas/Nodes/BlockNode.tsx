@@ -66,10 +66,10 @@ export function BlockNode({
       {badge && <Badge {...badge} />}
       {outputConnection && (
         <Circle
-        backgroundColor={getBlockColor(
-          outputConnection?.toItem?.type, { getColorName: true },
-        )?.names?.base || 'gray'}
-          size={12}
+          backgroundColor={getBlockColor(
+            outputConnection?.toItem?.type, { getColorName: true },
+          )?.names?.base || 'gray'}
+            size={12}
         />
       )}
     </Grid>

@@ -36,9 +36,11 @@ import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
+import { getBlockColor } from '@mana/themes/blocks';
 import { indexBy } from '@utils/array';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import styles from '@styles/scss/elements/Path.module.scss';
 
 const GRID_SIZE = 40;
 
@@ -283,7 +285,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
     });
 
-    console.log('onDrop', item);
+    // console.log('onDrop', item);
     updateItem(item);
   }
 
@@ -300,7 +302,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           }),
         );
         setConnections({ [connectionUUID(connection)]: connection });
-        console.log('onDropNode', connection);
+        // console.log('onDropNode', connection);
       }
 
       resetAfterDrop();
@@ -370,7 +372,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         // console.log(portsRef.current);
         // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
-          updatePaths(item, connectionsRef);
+          const { names } = getBlockColor(item?.block?.type, { getColorName: true });
+          console.log(item?.block?.type, names?.base, styles);
+          updatePaths(item, connectionsRef, {
+            pathProps: {
+              className: [
+                styles.path,
+                styles[`stroke-${names?.base}`],
+              ].join(' '),
+            },
+          });
         });
       }
     }
