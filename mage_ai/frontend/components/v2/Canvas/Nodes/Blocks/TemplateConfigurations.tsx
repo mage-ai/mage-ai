@@ -19,8 +19,8 @@ export default function TemplateConfigurations({
   return (
     <PanelRows>
       <Grid rowGap={4}>
-        <Text secondary semibold small>{template?.name || uuid}</Text>
-        {template?.description && <Text secondary xsmall>{template?.description}</Text>}
+        <Text semibold xsmall>{template?.name || uuid}</Text>
+        {false && template?.description && <Text secondary xsmall>{template?.description}</Text>}
       </Grid>
 
       {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => (

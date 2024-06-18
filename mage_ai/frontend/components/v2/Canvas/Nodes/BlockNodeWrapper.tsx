@@ -84,38 +84,43 @@ export function BlockNodeWrapper({
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
   }, [connections, names]);
 
+  const node = useMemo(() => (
+    <BlockNode
+      block={block}
+      borderConfig={{
+        borders,
+      }}
+      connections={connections}
+      groups={groups}
+      titleConfig={{
+        asides: {
+          after: {
+            Icon: Code,
+            onClick: () => alert('Coding...'),
+          },
+          before: {
+            // Icon: randomSample([Check, PlayButtonFilled]),
+            Icon: PlayButtonFilled,
+            baseColorName: randomSample(['blue', 'green', 'red']),
+          },
+        },
+        badge: BlockTypeEnum.PIPELINE === type
+          ? {
+            Icon: PipeIconVertical,
+            baseColorName: names?.base,
+            label: name || uuid,
+          }
+          : undefined,
+        inputConnection: connections?.find(({ toItem }) => toItem?.uuid === block?.uuid),
+        label: name || uuid,
+        outputConnection: connections?.find(({ fromItem }) => fromItem?.uuid === block?.uuid),
+      }}
+    />
+  ), [block, borders, connections, groups, names, name, type, uuid]);
+
   return (
     <NodeWrapper {...wrapperProps}>
-      <BlockNode
-        block={block}
-        borderConfig={{
-          borders,
-        }}
-        connections={connections}
-        groups={groups}
-        titleConfig={{
-          asides: {
-            after: {
-              Icon: Code,
-              onClick: () => alert('Coding...'),
-            },
-            before: {
-              Icon: randomSample([Check, PlayButtonFilled]),
-              baseColorName: randomSample(['blue', 'green', 'red']),
-            },
-          },
-          badge: BlockTypeEnum.PIPELINE === type
-            ? {
-              Icon: PipeIconVertical,
-              baseColorName: names?.base,
-              label: name || uuid,
-            }
-            : undefined,
-          inputConnection: connections?.find(({ toItem }) => toItem?.uuid === block?.uuid),
-          label: name || uuid,
-          outputConnection: connections?.find(({ fromItem }) => fromItem?.uuid === block?.uuid),
-        }}
-      />
+      {node}
     </NodeWrapper>
   );
 }

@@ -148,23 +148,23 @@ export const DataPreparationPipeline = {
       downstream_blocks: [TransformPipeline.uuid],
       upstream_blocks: ['ingest_titanic_data'],
     },
-    {
-      name: TransformPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      downstream_blocks: [ExportPipeline.uuid],
-      upstream_blocks: ['serialize_and_map_documents'],
-    },
-    {
-      name: ExportPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      downstream_blocks: [IndexPipeline.uuid],
-      upstream_blocks: [TransformPipeline.uuid],
-    },
-    {
-      name: IndexPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [ExportPipeline.uuid],
-    },
+    // {
+    //   name: TransformPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   downstream_blocks: [ExportPipeline.uuid],
+    //   upstream_blocks: ['serialize_and_map_documents'],
+    // },
+    // {
+    //   name: ExportPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   downstream_blocks: [IndexPipeline.uuid],
+    //   upstream_blocks: [TransformPipeline.uuid],
+    // },
+    // {
+    //   name: IndexPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [ExportPipeline.uuid],
+    // },
   ].map(block => ({
     ...block,
     uuid: cleanName(block.name),
@@ -345,12 +345,12 @@ export const PipelineFrameworkInstance = {
 
 export default [
   DataPreparationPipeline,
-  DataValidationPipeline,
-  ExportPipeline,
-  IndexPipeline,
-  InferencePipeline,
-  QueryProcessingPipeline,
-  ResponseGenerationPipeline,
-  RetrievalPipeline,
-  TransformPipeline,
+  // DataValidationPipeline,
+  // ExportPipeline,
+  // IndexPipeline,
+  // InferencePipeline,
+  // QueryProcessingPipeline,
+  // ResponseGenerationPipeline,
+  // RetrievalPipeline,
+  // TransformPipeline,
 ];
