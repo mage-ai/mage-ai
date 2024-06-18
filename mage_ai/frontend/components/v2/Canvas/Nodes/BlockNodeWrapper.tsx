@@ -1,7 +1,7 @@
 import update from 'immutability-helper';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { BlockNode } from './BlockNode';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -97,7 +97,8 @@ export function BlockNodeWrapper({
         return acc;
       }, {});
 
-      const modeType = (Object.keys(typeCounts || {}).reduce((a, b) => typeCounts![a] > typeCounts![b] ? a : b) as BlockTypeEnum);
+      const modeType = (Object.keys(typeCounts || {})
+        .reduce((a, b) => typeCounts![a] > typeCounts![b] ? a : b) as BlockTypeEnum);
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }
@@ -127,7 +128,6 @@ export function BlockNodeWrapper({
       borderConfig={{
         borders: borders?.slice(0, 1),
       }}
-      // connections={connections}
       groups={groups}
       item={item}
       onMount={onMount}
@@ -138,9 +138,12 @@ export function BlockNodeWrapper({
             onClick: () => alert('Coding...'),
           },
           before: {
-            // Icon: randomSample([Check, PlayButtonFilled]),
-            Icon: PlayButtonFilled,
-            baseColorName: 'blue' || randomSample(['blue', 'green', 'red']),
+            Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
+            baseColorName: StatusTypeEnum.FAILED === block?.status
+              ? 'red'
+              : StatusTypeEnum.EXECUTED
+                ? 'green'
+                : 'blue',
           },
         },
         badge: BlockTypeEnum.PIPELINE === type

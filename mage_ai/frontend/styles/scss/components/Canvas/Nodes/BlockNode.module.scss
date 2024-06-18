@@ -3,7 +3,6 @@
 .blockNode {
   @include borders.border-colors();
 
-  /* background-color: var(--background-color); */
   padding: var(--padding-base);
   min-width: 312px;
 }

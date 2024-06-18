@@ -39,7 +39,7 @@ export interface PortType extends DragItem {
   index?: number;
   parent: DragItem; // Always references the block that the port belongs to.
   target: DragItem; // Always references the block that the port is connected to that isn’t the current block.
-  direction: PortSubtypeEnum;
+  subtype: PortSubtypeEnum;
 }
 
 export interface LayoutConfigType {

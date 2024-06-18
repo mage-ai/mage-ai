@@ -218,7 +218,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // console.log('onDragging', node?.type);
 
     let rectOrigin = node?.rect;
-    console.log(rectOrigin, connectionsRef.current);
 
     if (
       ItemTypeEnum.PORT === node.type &&

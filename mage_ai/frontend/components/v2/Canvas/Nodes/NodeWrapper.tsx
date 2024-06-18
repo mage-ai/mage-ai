@@ -9,7 +9,6 @@ import { useDrag, useDrop } from 'react-dnd';
 import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
 import {
-
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
 } from '../types';
@@ -17,18 +16,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 
 
 // This is the style used for the preview when dragging
-function getStyles(
-  { rect }: DragItem,
-  {
-    canDrop,
-    isDragging,
-    isOverCurrent,
-  }: {
-    canDrop: boolean;
-    isDragging: boolean;
-    isOverCurrent: boolean;
-  },
-): CSSProperties {
+function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }): CSSProperties {
   const { left, top } = rect || ({} as RectType);
   const transform = `translate3d(${left}px, ${top}px, 0)`;
 
@@ -38,6 +26,7 @@ function getStyles(
     // border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
+    cursor: 'move',
     position: 'absolute',
     transform,
     ...(isDragging ? { height: 0, opacity: 0 } : {}),

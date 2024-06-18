@@ -9,7 +9,7 @@ import {
   LayoutConfigDirectionOriginEnum,
 } from '../../../Canvas/types';
 import { createConnection, connectionUUID } from '../../../Canvas/Connections/utils';
-import { ConnectionType } from '../../../Canvas/Connections/interfaces';
+import { ConnectionType } from '../../../Canvas/interfaces';
 
 export function initializeBlocksAndConnections(
   blocks: BlockType[],

@@ -13,7 +13,7 @@ export function createConnection(
 ): ConnectionType {
   // Default the positions to 'right' and 'left' if not specified
   const defaultOptions: Omit<ConnectionType, 'from' | 'to'> = {
-    curveControl: 0.5,
+    curveControl: 0,
     fromPosition: 'right',
     toPosition: 'left',
   };
@@ -145,8 +145,6 @@ export function updatePaths(
         (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type) &&
         (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connUUID);
 
-    // console.log('shouldUpdate', shouldUpdate);
-
     if (!shouldUpdate) {
       return;
     }
@@ -211,19 +209,9 @@ export function updatePaths(
       }
     }
 
-    // console.log(
-    //   'Will it update?',
-    //   connectionUpdate,
-    //   isFrom || isFromParent,
-    //   isTo || isToParent,
-    //   connection?.fromItem?.rect,
-    //   connection?.toItem?.rect,
-    // );
-    //
 
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);
-      // console.log(pathProps?.classNames, pathElement);
 
       if (pathElement) {
         const pathD = getPathD(
@@ -239,16 +227,18 @@ export function updatePaths(
           const fromColor = getBlockColor(connectionUpdate?.fromItem?.parent?.block?.type)?.names?.base;
           const toColor = getBlockColor(connectionUpdate?.toItem?.parent?.block?.type)?.names?.base;
 
+          // Reverse the colors so that the port color is the same as the half side of the line
+          // that protrudes from the block.
           [
             stylesPathGradient.stop,
-            stylesPathGradient[`stop-color-${fromColor}`],
+            stylesPathGradient[`stop-color-${toColor}`],
           ].forEach((classNames) => {
             element0.classList.add(classNames);
           });
 
           [
             stylesPathGradient.stop,
-            stylesPathGradient[`stop-color-${toColor}`],
+            stylesPathGradient[`stop-color-${fromColor}`],
           ].forEach((classNames) => {
             element1.classList.add(classNames);
           });
@@ -261,8 +251,6 @@ export function updatePaths(
             pathElement.classList.add(classNames);
           });
         }
-
-        // pathElement.setAttribute('stroke', pathProps.classNames);
 
         pathElement.setAttribute('d', pathD);
         connectionsRef.current[connUUID] = connectionUpdate;
