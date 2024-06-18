@@ -28,7 +28,7 @@ import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { ConnectionType } from '../../Canvas/Connections/interfaces';
-import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
+import { createConnection, updatePortConnectionPaths, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
@@ -359,11 +359,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       );
 
-      // console.log('UPDATE???????????????', ready);
 
       if (ready) {
         Object.values(portsRef?.current || {}).forEach((port: PortType) => {
-          updatePaths(port, connectionsRef);
+          updatePortConnectionPaths(port, connectionsRef);
         });
       }
     }

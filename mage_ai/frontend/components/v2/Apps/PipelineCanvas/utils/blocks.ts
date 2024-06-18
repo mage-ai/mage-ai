@@ -23,12 +23,12 @@ export function initializeBlocksAndConnections(
   },
 ) {
   const {
-    blockHeight = 100,
-    blockWidth = 100,
-    horizontalSpacing = 100,
+    blockHeight = 200,
+    blockWidth = 300,
+    horizontalSpacing = 50,
     layout,
     containerRect,
-    verticalSpacing = 100,
+    verticalSpacing = 200,
   } = opts || {};
 
   // Doesn’t change to vertical...

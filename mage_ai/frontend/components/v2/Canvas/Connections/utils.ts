@@ -293,3 +293,76 @@ export function updatePaths(
     }
   });
 }
+export function updatePortConnectionPaths(
+  port: PortType,
+  connectionsRef: {
+    current: Record<string, ConnectionType>;
+  },
+) {
+  const conns = Object.values(connectionsRef?.current || {}).reduce((acc, connection) => connection.fromItem.id === port.id || connection.toItem.id === port.id
+    ? acc.concat(connection)
+    : acc, []);
+
+
+  conns?.forEach((conn: ConnectionType) => {
+    if (!conn?.fromItem?.rect) {
+      return;
+    }
+
+    console.log(conn.id, conn);
+
+    const connection = conn;
+    const offsetLeft = conn?.fromItem?.rect?.offsetLeft || 0;
+    const offsetTop = conn?.fromItem?.rect?.offsetTop || 0;
+
+    console.log(offsetLeft, offsetTop);
+
+    connection.fromItem.rect.left  = connection.fromItem.parent.rect.left;
+    connection.fromItem.rect.top  = connection.fromItem.parent.rect.top;
+
+    const rect = connection.fromItem.rect;
+
+
+    const rectTarget = connection?.toItem?.rect || connection?.toItem?.target?.rect;
+    const pathD = getPathD(connection, rect, rectTarget);
+
+    const pathElement = document.getElementById(connection.id);
+    const element0 = document.getElementById(`${connection.id}-stop-0`);
+    const element1 = document.getElementById(`${connection.id}-stop-1`);
+
+    if (element0 && element1) {
+      const fromColor = getBlockColor(connection?.fromItem?.block?.type)?.names?.base;
+      const toColor = getBlockColor(connection?.toItem?.block?.type)?.names?.base;
+
+      // Reverse the colors so that the port color is the same as the half side of the line
+      // that protrudes from the block.
+      [
+        stylesPathGradient.stop,
+        stylesPathGradient[`stop-color-${toColor}`],
+      ].forEach((classNames) => {
+        element0.classList.add(classNames);
+      });
+
+      [
+        stylesPathGradient.stop,
+        stylesPathGradient[`stop-color-${fromColor}`],
+      ].forEach((classNames) => {
+        element1.classList.add(classNames);
+      });
+      console.log('Gradient colors updaated to', fromColor, toColor, connection.id);
+    } else {
+      console.log('NO ELEMENT0 OR ELEMENT1');
+
+      const colorName = getBlockColor(port?.block?.type)?.names?.base;
+      [
+        styles.path,
+        styles[`stroke-color-${colorName}`],
+      ].forEach((classNames) => {
+        pathElement.classList.add(classNames);
+      });
+    }
+
+    pathElement.setAttribute('d', pathD);
+    connectionsRef.current[connection.id] = connection;
+  });
+}

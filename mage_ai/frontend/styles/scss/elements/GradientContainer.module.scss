@@ -14,7 +14,7 @@
 .gradient-inner {
   @include backgrounds.background-colors();
 
-  /* background-color: var(--background-color); */
+  background-color: var(--background-color);
   border-radius: inherit;
   border: none;
   overflow: hidden; // To clip children with border-radius
