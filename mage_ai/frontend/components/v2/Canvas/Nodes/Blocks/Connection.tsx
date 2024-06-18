@@ -12,6 +12,8 @@ type ConnectionProps = {
   emphasized?: boolean;
 };
 
+const TEST = false;
+
 export default function Connection({ block, connection, emphasized }: ConnectionProps) {
   const fromItem = connection?.fromItem && connection?.fromItem?.uuid !== block?.uuid && connection?.fromItem;
   const fromItemFailed = StatusTypeEnum.FAILED === randomSample([
@@ -20,7 +22,7 @@ export default function Connection({ block, connection, emphasized }: Connection
     StatusTypeEnum.NOT_EXECUTED,
     StatusTypeEnum.UPDATED,,
   ]);
-  const fromItemColor = fromItemFailed
+  const fromItemColor = TEST && fromItemFailed
     ? null
     : (getBlockColor(fromItem?.type, { getColorName: true })?.names?.base || 'gray')?.toLowerCase();
 
@@ -31,7 +33,7 @@ export default function Connection({ block, connection, emphasized }: Connection
     StatusTypeEnum.NOT_EXECUTED,
     StatusTypeEnum.UPDATED,,
   ]);
-  const toItemColor = toItemFailed
+  const toItemColor = TEST && toItemFailed
     ? null
     : (getBlockColor(toItem?.type, { getColorName: true })?.names?.base || 'gray')?.toLowerCase();
 
@@ -51,8 +53,8 @@ export default function Connection({ block, connection, emphasized }: Connection
         {fromItem && (
         <>
           <Circle
-            backgroundColor={!fromItemFailed && randomBoolean ? fromItemColor : null}
-            borderColor={fromItemFailed ? 'red' : 'gray'}
+            backgroundColor={(!fromItemFailed && randomBoolean) || !TEST ? fromItemColor : null}
+            borderColor={TEST && fromItemFailed ? 'red' : 'gray'}
             size={12}
           />
 
@@ -71,8 +73,8 @@ export default function Connection({ block, connection, emphasized }: Connection
             </Text>
 
             <Circle
-              backgroundColor={!toItemFailed && randomBoolean ? toItemColor : null}
-              borderColor={toItemFailed ? 'red' : 'gray'}
+              backgroundColor={(!toItemFailed && randomBoolean) || !TEST ? toItemColor : null}
+              borderColor={TEST && toItemFailed ? 'red' : 'gray'}
               size={12}
             />
           </>

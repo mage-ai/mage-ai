@@ -153,8 +153,11 @@ export function updatePaths(
     if (isFrom || isFromParent) {
       if (isFromParent) {
         if (connection?.fromItem?.rect) {
-          const leftD = connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
-          const topD = connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
+          // This use to fix an issue but now it causes the issue when the page first loads,
+          // the connections are in the top left corner of the canvas while the nodes are centered
+          // in the middle of the 5000x5000 canvas.
+          const leftD = true ? 0 : connection.fromItem.rect.left - connection.fromItem.parent.rect.left;
+          const topD = true ? 0 : connection.fromItem.rect.top - connection.fromItem.parent.rect.top;
 
           connectionUpdate = update(connection, {
             fromItem: {
@@ -184,8 +187,11 @@ export function updatePaths(
     } else if (isTo || isToParent) {
       if (isToParent) {
         if (connection?.toItem?.rect) {
-          const leftD = connection.toItem.rect.left - connection.toItem.parent.rect.left;
-          const topD = connection.toItem.rect.top - connection.toItem.parent.rect.top;
+          // This use to fix an issue but now it causes the issue when the page first loads,
+          // the connections are in the top left corner of the canvas while the nodes are centered
+          // in the middle of the 5000x5000 canvas.
+          const leftD = true ? 0 : connection.toItem.rect.left - connection.toItem.parent.rect.left;
+          const topD = true ? 0 : connection.toItem.rect.top - connection.toItem.parent.rect.top;
 
           connectionUpdate = update(connection, {
             toItem: {
@@ -214,14 +220,14 @@ export function updatePaths(
       }
     }
 
-    // console.log(
-    //   'Will it update?',
-    //   connectionUpdate,
-    //   isFrom || isFromParent,
-    //   isTo || isToParent,
-    //   connection?.fromItem?.rect,
-    //   connection?.toItem?.rect,
-    // );
+    console.log(
+      'Will it update?',
+      connectionUpdate,
+      isFrom || isFromParent,
+      isTo || isToParent,
+      connection?.fromItem?.rect,
+      connection?.toItem?.rect,
+    );
 
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);

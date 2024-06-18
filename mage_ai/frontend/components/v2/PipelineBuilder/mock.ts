@@ -148,12 +148,12 @@ export const DataPreparationPipeline = {
       downstream_blocks: [TransformPipeline.uuid],
       upstream_blocks: ['ingest_titanic_data'],
     },
-    // {
-    //   name: TransformPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   downstream_blocks: [ExportPipeline.uuid],
-    //   upstream_blocks: ['serialize_and_map_documents'],
-    // },
+    {
+      name: TransformPipeline.name,
+      type: BlockTypeEnum.PIPELINE,
+      downstream_blocks: [ExportPipeline.uuid],
+      upstream_blocks: ['serialize_and_map_documents'],
+    },
     // {
     //   name: ExportPipeline.name,
     //   type: BlockTypeEnum.PIPELINE,
@@ -345,6 +345,7 @@ export const PipelineFrameworkInstance = {
 
 export default [
   DataPreparationPipeline,
+  TransformPipeline,
   // DataValidationPipeline,
   // ExportPipeline,
   // IndexPipeline,
@@ -352,5 +353,4 @@ export default [
   // QueryProcessingPipeline,
   // ResponseGenerationPipeline,
   // RetrievalPipeline,
-  // TransformPipeline,
 ];

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { CSSProperties, FC, useCallback } from 'react';
-import { createRef, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -9,13 +9,12 @@ import { useDrag, useDrop } from 'react-dnd';
 import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
 import {
-  PortSubtypeEnum,
+
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
 } from '../types';
 import { ElementRoleEnum } from '@mana/shared/types';
-import { getNodeUUID } from '../Draggable/utils';
-import { DraggablePort } from '../Draggable/DraggablePort';
+
 
 // This is the style used for the preview when dragging
 function getStyles(
@@ -72,16 +71,11 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   onDrop,
   onMouseDown,
   onMouseUp,
-  onPortMount,
 }: NodeWrapperProps) {
   const phaseRef = useRef(0);
-  const portsRef = useRef({});
   const itemRef = useRef(null);
 
-  const ports: PortType[] = useMemo(
-    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType[]),
-    [item],
-  );
+
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
@@ -178,36 +172,6 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
     [onMouseUp],
   );
 
-  const renderPorts = useCallback(
-    (key: PortSubtypeEnum) => (
-      <>
-        {ports?.reduce((acc: any[], port: PortType) => {
-          if (port?.subtype !== key) {
-            return acc;
-          }
-
-          const uuid = getNodeUUID(port);
-          const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
-          portsRef.current[uuid] = itemRef;
-
-          return acc.concat(
-            <DraggablePort
-              handleMouseDown={event => handleMouseDown(event, port)}
-              handleMouseUp={event => handleMouseUp(event, port)}
-              handleOnDrop={handleOnDrop}
-              item={port}
-              itemRef={itemRef}
-              key={uuid}
-              onDragStart={onDragStart}
-              onMount={onPortMount}
-            />,
-          );
-        }, [])}
-      </>
-    ),
-    [handleMouseDown, handleOnDrop, handleMouseUp, onDragStart, onPortMount, ports],
-  );
-
   const isDraggingBlock = useMemo(() => draggingNode?.type === item?.type, [draggingNode, item]);
   connectDrop(itemRef);
 
@@ -259,9 +223,9 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       })}
     >
       <Grid {...gridProps}>
-        <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid>
+        {/* <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.INPUT)}</Grid> */}
         {children}
-        <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid>
+        {/* <Grid {...gridPortProps}>{renderPorts(PortSubtypeEnum.OUTPUT)}</Grid> */}
       </Grid>
     </div>
   );

@@ -40,6 +40,8 @@ import { indexBy } from '@utils/array';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
+const GRID_SIZE = 40;
+
 type PipelineBuilderProps = {
   pipeline: PipelineType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType
@@ -136,8 +138,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         {
           blockHeight: 200,
           blockWidth: 300,
-          layout: layoutConfig,
           containerRect: containerRef?.current?.getBoundingClientRect(),
+          layout: layoutConfig,
         },
       );
 
@@ -145,6 +147,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       connectionsRef.current = connectionsMapping;
       portsRef.current = portsMapping;
+
       setItems(itemsMapping);
       setPipelinesMapping(pipelinesMapping);
     }
@@ -176,7 +179,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onMouseUp(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
-    // event.preventDefault();
     onDragEndProp();
     resetAfterDrop();
   }
@@ -264,8 +266,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           y: top,
         },
         {
-          height: 100,
-          width: 100,
+          height: GRID_SIZE,
+          width: GRID_SIZE,
         },
       );
       left = snappedX;
@@ -364,6 +366,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       );
 
       if (ready) {
+        console.log('Ready to update paths...');
         // console.log(portsRef.current);
         // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
