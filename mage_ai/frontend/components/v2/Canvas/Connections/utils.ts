@@ -1,10 +1,11 @@
 import update from 'immutability-helper';
 import { NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
-import { ConnectionType } from './interfaces';
+import { ConnectionType } from '../interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import styles from '@styles/scss/elements/Path.module.scss';
 import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
+import { getBlockConnectionUUID } from '../Draggable/utils';
 
 export function createConnection(
   fromItem: NodeItemType,
@@ -28,7 +29,14 @@ export function createConnection(
   };
 }
 
-export function connectionUUID({ from, to }: ConnectionType): string {
+export function connectionUUID({ from, fromItem, to, toItem }: ConnectionType): string {
+  if ((fromItem?.target?.block || fromItem?.block) && (toItem?.target?.block || toItem?.block)) {
+    return [
+      getBlockConnectionUUID((fromItem?.target || fromItem)?.block),
+      getBlockConnectionUUID((toItem?.target || toItem)?.block),
+    ].join('-');
+  }
+
   return `${from}-${to}`;
 }
 
@@ -129,7 +137,6 @@ export function updatePaths(
   const { id, type } = node;
 
   const conns = getConnections(node, connectionsRef.current);
-  // console.log(id, conns)
   conns?.forEach((connection: ConnectionType) => {
     const connUUID = connectionUUID(connection);
 
@@ -209,7 +216,6 @@ export function updatePaths(
       }
     }
 
-
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);
 
@@ -224,8 +230,8 @@ export function updatePaths(
         const element1 = document.getElementById(`${connUUID}-stop-1`);
 
         if (element0 && element1) {
-          const fromColor = getBlockColor(connectionUpdate?.fromItem?.parent?.block?.type)?.names?.base;
-          const toColor = getBlockColor(connectionUpdate?.toItem?.parent?.block?.type)?.names?.base;
+          const fromColor = getBlockColor(connectionUpdate?.fromItem?.block?.type)?.names?.base;
+          const toColor = getBlockColor(connectionUpdate?.toItem?.block?.type)?.names?.base;
 
           // Reverse the colors so that the port color is the same as the half side of the line
           // that protrudes from the block.

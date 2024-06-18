@@ -72,9 +72,9 @@ export function getBlockColor(
     blockColor === BlockColorEnum.GREY ||
     (BlockTypeEnum.CUSTOM === blockType && !blockColor)
   ) {
-    baseName = 'gray';
-    accent = colors?.typography?.text?.muted;
-    accentLight = colors?.typography?.text?.muted;
+    baseName = 'teal';
+    accent = colors?.teal;
+    accentLight = colors?.tealHi;
   } else if (
     [BlockTypeEnum.CHART, BlockTypeEnum.GLOBAL_DATA_PRODUCT].includes(blockType) &&
     !blockColor

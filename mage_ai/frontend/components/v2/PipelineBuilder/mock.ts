@@ -27,53 +27,53 @@ export const TransformPipeline = {
       downstream_blocks: ['subword_tokenizer'],
       upstream_blocks: ['add_3rd_party_data'],
     },
-    // {
-    //   name: 'Subword tokenizer',
-    //   groups: [GroupUUIDEnum.TOKENIZATION],
-    //   downstream_blocks: ['instructor_embeddings'],
-    //   upstream_blocks: ['sliding_window_chunker'],
-    //   configuration: {
-    //     templates: {
-    //       subword_tokenizer: {
-    //         variables: {
-    //           hallucination: 10,
-    //           fire: 'water',
-    //           spell: true,
-    //         },
-    //       },
-    //       word_tokenizer: {
-    //         variables: {
-    //           spacing: 'none',
-    //           max_length: 100,
-    //           add_special_tokens: true,
-    //         },
-    //       },
-    //     },
-    //   },
-    // },
-    // {
-    //   name: 'Instructor embeddings',
-    //   groups: [GroupUUIDEnum.EMBED],
-    //   downstream_blocks: [
-    //     'store_relationships_in_neo4j',
-    //     'store_embeddings_pgvector',
-    //   ],
-    //   upstream_blocks: ['subword_tokenizer'],
-    //   configuration: {
-    //     templates: {
-    //       bert_embedding: {
-    //         variables: {
-    //           bert_embeddings_uuid: 'abc',
-    //         },
-    //       },
-    //       word2vec_embedding: {
-    //         variables: {
-    //           word2vec_embeddings_uuid: 'def',
-    //         },
-    //       },
-    //     },
-    //   },
-    // },
+    {
+      name: 'Subword tokenizer',
+      groups: [GroupUUIDEnum.TOKENIZATION],
+      downstream_blocks: ['instructor_embeddings'],
+      upstream_blocks: ['sliding_window_chunker'],
+      configuration: {
+        templates: {
+          subword_tokenizer: {
+            variables: {
+              hallucination: 10,
+              fire: 'water',
+              spell: true,
+            },
+          },
+          word_tokenizer: {
+            variables: {
+              spacing: 'none',
+              max_length: 100,
+              add_special_tokens: true,
+            },
+          },
+        },
+      },
+    },
+    {
+      name: 'Instructor embeddings',
+      groups: [GroupUUIDEnum.EMBED],
+      downstream_blocks: [
+        'store_relationships_in_neo4j',
+        'store_embeddings_pgvector',
+      ],
+      upstream_blocks: ['subword_tokenizer'],
+      configuration: {
+        templates: {
+          bert_embedding: {
+            variables: {
+              bert_embeddings_uuid: 'abc',
+            },
+          },
+          word2vec_embedding: {
+            variables: {
+              word2vec_embeddings_uuid: 'def',
+            },
+          },
+        },
+      },
+    },
   ].map(block => ({
     ...block,
     type: BlockTypeEnum.TRANSFORMER,
@@ -91,11 +91,13 @@ export const ExportPipeline = {
       name: 'Store relationships in Neo4J',
       groups: [GroupUUIDEnum.KNOWLEDGE_GRAPH],
       upstream_blocks: ['instructor_embeddings'],
+      downstream_blocks: ['create_contextual_dictionary'],
     },
     {
       name: 'Store embeddings PGVector',
       groups: [GroupUUIDEnum.VECTOR_DATABASE],
       upstream_blocks: ['instructor_embeddings'],
+      downstream_blocks: ['create_contextual_dictionary'],
     },
   ].map(block => ({
     ...block,
@@ -113,13 +115,22 @@ export const IndexPipeline = {
     {
       name: 'Create Contextual Dictionary',
       groups: [GroupUUIDEnum.INDEX],
+      upstream_blocks: [
+        'store_relationships_in_neo_4_j',
+        'store_embeddings_pgvector',
+      ],
       downstream_blocks: ['create_document_hierarchy'],
-      upstream_blocks: [],
     },
     {
       name: 'Create Document Hierarchy',
       groups: [GroupUUIDEnum.INDEX],
       upstream_blocks: ['create_contextual_dictionary'],
+      downstream_blocks: ['search_index_using_faiss'],
+    },
+    {
+      name: 'Search index using FAISS',
+      groups: [GroupUUIDEnum.INDEX],
+      upstream_blocks: ['create_document_hierarchy'],
     },
   ].map(block => ({
     ...block,
@@ -145,26 +156,26 @@ export const DataPreparationPipeline = {
       name: 'Serialize and map documents',
       type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.MAP],
-      downstream_blocks: [TransformPipeline.uuid],
       upstream_blocks: ['ingest_titanic_data'],
+      downstream_blocks: [TransformPipeline.uuid],
     },
     {
       name: TransformPipeline.name,
       type: BlockTypeEnum.PIPELINE,
-      downstream_blocks: [ExportPipeline.uuid],
       upstream_blocks: ['serialize_and_map_documents'],
+      downstream_blocks: [ExportPipeline.uuid],
     },
-    // {
-    //   name: ExportPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   downstream_blocks: [IndexPipeline.uuid],
-    //   upstream_blocks: [TransformPipeline.uuid],
-    // },
-    // {
-    //   name: IndexPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [ExportPipeline.uuid],
-    // },
+    {
+      name: ExportPipeline.name,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [TransformPipeline.uuid],
+      downstream_blocks: [IndexPipeline.uuid],
+    },
+    {
+      name: IndexPipeline.name,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [ExportPipeline.uuid],
+    },
   ].map(block => ({
     ...block,
     uuid: cleanName(block.name),
@@ -179,13 +190,19 @@ export const DataValidationPipeline = {
     {
       name: 'Wait for enough resources',
       type: BlockTypeEnum.SENSOR,
-      downstream_blocks: ['run_unit_tests'],
       upstream_blocks: [],
+      downstream_blocks: ['run_unit_tests'],
+    },
+    {
+      name: 'Lint code and format',
+      type: BlockTypeEnum.TRANSFORMER,
+      upstream_blocks: ['wait_for_enough_resources'],
+      downstream_blocks: ['run_unit_tests'],
     },
     {
       name: 'Run unit tests',
       type: BlockTypeEnum.CUSTOM,
-      upstream_blocks: ['wait_for_enough_resources'],
+      upstream_blocks: ['lint_code_and_format'],
     },
   ].map(block => ({
     ...block,
@@ -344,9 +361,9 @@ export const PipelineFrameworkInstance = {
 }
 
 export default [
-  DataPreparationPipeline,
-  TransformPipeline,
-  // DataValidationPipeline,
+  // DataPreparationPipeline,
+  // TransformPipeline,
+  DataValidationPipeline,
   // ExportPipeline,
   // IndexPipeline,
   // InferencePipeline,

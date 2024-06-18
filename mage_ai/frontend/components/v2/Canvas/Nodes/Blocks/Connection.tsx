@@ -25,8 +25,8 @@ export default function Connection({ input, handlers, output, onMount }: Connect
 
   useEffect(() => {
     if (onMount) {
-      input && onMount(input, inputRef);
-      output && onMount(output, outputRef);
+      input?.target && onMount(input, inputRef);
+      output?.target && onMount(output, outputRef);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

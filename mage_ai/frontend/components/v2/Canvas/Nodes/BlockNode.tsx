@@ -14,7 +14,7 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import BlockType from '@interfaces/BlockType';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
-import { getNodeUUID } from '../Draggable/utils';
+import { buildPortUUID } from '../Draggable/utils';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { DragAndDropHandlersType } from './types';
 
@@ -117,8 +117,8 @@ export function BlockNode({
           handlers={handlers}
           input={input}
           key={[
-            input ? getNodeUUID(input) : '',
-            output ? getNodeUUID(output) : '',
+            input ? buildPortUUID(input) : '',
+            output ? buildPortUUID(output) : '',
           ].join(':')}
           onMount={onMount}
           output={output}

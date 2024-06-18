@@ -31,7 +31,7 @@ import { ConnectionType } from '../../Canvas/Connections/interfaces';
 import { createConnection, connectionUUID, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
-import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
+import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups } from './utils/pipelines';
@@ -103,7 +103,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
-  const [pipelinesMapping, setPipelinesMapping] = useState<Record<string, PipelineType>>(null);
 
   const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
 
@@ -140,8 +139,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         Object.values(blocksMapping),
         {
-          blockHeight: 200,
-          blockWidth: 300,
           containerRect: containerRef?.current?.getBoundingClientRect(),
           layout: layoutConfig,
         },
@@ -210,7 +207,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     if (
       ItemTypeEnum.PORT === node.type &&
       itemDraggingRef.current &&
-      getNodeUUID(node) === getNodeUUID(itemDraggingRef?.current)
+      buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
     ) {
       rectOrigin = itemDraggingRef?.current?.rect;
     }
@@ -315,8 +312,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       });
 
+      const portID = buildPortUUID(port);
+
       portsRef.current = update(portsRef.current, {
-        [getNodeUUID(port)]: { $set: port },
+        [portID]: { $set: port },
       });
 
       const ready = Object.values(connectionsRef?.current || {})?.every(
@@ -332,15 +331,15 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           }
 
           const connReady = [fromItem, toItem].every((item: PortType) => {
-            const uuid = getNodeUUID(item);
+            const uuid = buildPortUUID(item);
             const port = portsRef?.current?.[uuid];
             return port && ['left', 'top'].every((key: string) => port?.rect?.[key] ?? false);
           });
 
           if (connReady) {
             const connectionUpdated = update(connection, {
-              fromItem: { $set: portsRef?.current?.[getNodeUUID(fromItem)] },
-              toItem: { $set: portsRef?.current?.[getNodeUUID(toItem)] },
+              fromItem: { $set: portsRef?.current?.[buildPortUUID(fromItem)] },
+              toItem: { $set: portsRef?.current?.[buildPortUUID(toItem)] },
             });
             connectionsRef.current = update(connectionsRef.current, {
               [connectionUUID(connectionUpdated)]: { $set: connectionUpdated },
