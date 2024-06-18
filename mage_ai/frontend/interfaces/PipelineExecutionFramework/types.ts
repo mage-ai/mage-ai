@@ -31,6 +31,7 @@ export enum GroupUUIDEnum {
   RESPONSE_GENERATION = 'response_generation',
   RESPONSE_SYNTHESIS = 'response_synthesis',
   RETRIEVAL = 'retrieval',
+  SEARCH_INDEX = 'search_index',
   TOKENIZATION = 'tokenization',
   TRANSFORM = 'transform',
   VECTOR_DATABASE = 'vector_database',
@@ -56,6 +57,7 @@ export const GroupMapping = {
     [GroupUUIDEnum.INDEX]: [
       GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
       GroupUUIDEnum.DOCUMENT_HIERARCHY,
+      GroupUUIDEnum.SEARCH_INDEX,
     ],
   },
   [GroupUUIDEnum.INFERENCE]: {

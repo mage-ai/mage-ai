@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import pipelines, { PipelineFrameworkInstance } from './mock';
+import { PipelineExecutionFrameworkRAG } from '@interfaces/PipelineExecutionFramework/interfaces';
 // import mocks from './mocks';
 
 export default function PipelineBuilder() {
@@ -21,6 +22,7 @@ export default function PipelineBuilder() {
           {/* @ts-ignore */}
           <PipelineCanvas
             pipeline={PipelineFrameworkInstance}
+            pipelineExecutionFramework={PipelineExecutionFrameworkRAG}
             pipelines={pipelines}
             // pipelines={[
             //   // mocks.PIPELINE_DYNAMIC,

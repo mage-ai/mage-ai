@@ -37,13 +37,17 @@ export const TransformPipeline = {
           subword_tokenizer: {
             variables: {
               hallucination: 10,
+              fire: 'water',
+              spell: true,
             },
           },
           word_tokenizer: {
             variables: {
               spacing: 'none',
-            }
-          }
+              max_length: 100,
+              add_special_tokens: true,
+            },
+          },
         },
       },
     },

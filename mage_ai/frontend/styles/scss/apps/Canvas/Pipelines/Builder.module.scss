@@ -2,11 +2,12 @@ $grid-size: 100px;
 
 .canvas {
   background-color: var(--backgrounds-button-base-hover);
-  height: 200%; /* Large enough to initially fit all content, will expand as needed */
-  width: 200%;  /* Large enough to initially fit all content, will expand as needed */
+  height: 500%; /* Large enough to initially fit all content, will expand as needed */
+  width: 500%;  /* Large enough to initially fit all content, will expand as needed */
   position: absolute; /* Ensure it behaves correctly inside the parent container */
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the container within its parent */
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
 

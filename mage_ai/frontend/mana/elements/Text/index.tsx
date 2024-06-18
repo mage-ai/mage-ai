@@ -21,6 +21,7 @@ type TextProps = {
   monospace?: boolean;
   muted?: boolean;
   semibold?: boolean;
+  secondary?: boolean;
   warning?: boolean;
 } & ElementType;
 

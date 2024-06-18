@@ -1,6 +1,6 @@
 import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
-import { DragItem, PortType, LayoutConfigType } from '../../../Canvas/interfaces';
+import { DragItem, PortType, LayoutConfigType, RectType } from '../../../Canvas/interfaces';
 import { buildPortID, getNodeUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
@@ -18,21 +18,20 @@ export function initializeBlocksAndConnections(
     blockWidth?: number;
     horizontalSpacing?: number;
     layout?: LayoutConfigType;
-    maxHeight?: number;
-    maxWidth?: number;
+    containerRect?: RectType
     verticalSpacing?: number;
   },
 ) {
   const {
-    blockHeight = 200,
-    blockWidth = 300,
-    horizontalSpacing = 50,
+    blockHeight = 10,
+    blockWidth = 200,
+    horizontalSpacing = 300,
     layout,
-    maxHeight,
-    maxWidth,
-    verticalSpacing = 200,
+    containerRect,
+    verticalSpacing = 10,
   } = opts || {};
 
+  // Doesn’t change to vertical...
   const {
     direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
     origin: layoutOrigin = LayoutConfigDirectionOriginEnum.LEFT,
@@ -56,8 +55,8 @@ export function initializeBlocksAndConnections(
       levels[block.uuid] = 0;
     } else {
       levels[block.uuid] = Math.max(
-        ...block.upstream_blocks.map(upstreamId => {
-          const upstreamBlock = blocks.find(b => b.uuid === upstreamId);
+        ...block.upstream_blocks.map((upstreamId) => {
+          const upstreamBlock = blocks.find((b) => b.uuid === upstreamId);
           return upstreamBlock ? determineLevel(upstreamBlock) + 1 : 0;
         }),
       );
@@ -69,45 +68,70 @@ export function initializeBlocksAndConnections(
   blocks.forEach(determineLevel);
 
   const columns: Record<number, number[]> = {};
+  const rows: Record<number, number[]> = {};
   for (let i = 0; i <= maxLevel; i++) {
-    columns[i] = [20];
+    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
+      columns[i] = [20];
+    } else {
+      rows[i] = [20];
+    }
   }
 
-  function getNextAvailablePosition(
-    level: number,
-    index: number,
-    parentPosition?: { left: number; top: number },
-  ): { left: number; top: number } {
-    const offsetFactor = index % 2 === 0 ? 0.1 : -0.1;
-    const top = level * (blockHeight + (verticalSpacing * offsetFactor)) + 20;
-    let left = 20;
-    if (parentPosition) {
-      left = parentPosition.left + blockWidth + (horizontalSpacing * offsetFactor);
+  function getNextAvailablePosition(level: number, index: number, parentPosition?: { left: number; top: number }): { left: number; top: number } {
+    const offsetIndex = (index % 2 === 0 ? 0.1 : -0.1);
+    const actualHorizontalSpacing = horizontalSpacing * (1 + offsetIndex);
+    const actualVerticalSpacing = verticalSpacing * (1 + offsetIndex);
+
+    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
+      const top = level * (blockHeight + verticalSpacing) + 20;
+      let left;
+      if (parentPosition) {
+        left = parentPosition.left + blockWidth + actualHorizontalSpacing;
+      } else {
+        left = columns[level].reduce((a, b) => Math.max(a, b)) + blockWidth + actualHorizontalSpacing;
+      }
+      return { left, top };
     } else {
-      const lastLeft = columns[level][columns[level].length - 1];
-      left = lastLeft + blockWidth + (horizontalSpacing * offsetFactor);
+      const left = level * (blockWidth + horizontalSpacing) + 20;
+      let top;
+      if (parentPosition) {
+        top = parentPosition.top + blockHeight + actualVerticalSpacing;
+      } else {
+        top = rows[level].reduce((a, b) => Math.max(a, b)) + blockHeight + actualVerticalSpacing;
+      }
+      return { left, top };
     }
-    return { left, top };
   }
 
   blocks.forEach((block, idx: number) => {
     const level = levels[block.uuid];
-    const top = level * (blockHeight + verticalSpacing) + 20;
-    let left: number;
+    let position;
 
     if (block.upstream_blocks.length > 0) {
       const parentPosition = positions[block.upstream_blocks[0]];
-      const position = getNextAvailablePosition(level, idx, parentPosition);
-      left = position.left;
+      position = getNextAvailablePosition(level, idx, parentPosition);
     } else {
-      const position = getNextAvailablePosition(level, idx);
-      left = position.left;
+      position = getNextAvailablePosition(level, idx);
     }
 
-    positions[block.uuid] = { left, top };
-    occupiedPositions.add(`${left},${top}`);
-    columns[level].push(left);
+    positions[block.uuid] = position;
+    occupiedPositions.add(`${position.left},${position.top}`);
+
+    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
+      columns[level].push(position.left);
+    } else {
+      rows[level].push(position.top);
+    }
   });
+
+
+  const { height, width } = containerRect || { height: 0, width: 0 };
+  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
+  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
+  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
+  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
+  const offsetX = (width - (maxLeft - minLeft)) / 2;
+  const offsetY = (height - (maxTop - minTop)) / 2;
 
   blocks.forEach((block: BlockType) => {
     const position = positions[block.uuid];
@@ -116,8 +140,8 @@ export function initializeBlocksAndConnections(
       id: block.uuid,
       rect: {
         height: blockHeight,
-        left: position.left,
-        top: position.top,
+        left: position.left + offsetX,
+        top: position.top + offsetY,
         width: blockWidth,
       },
       title: block.name,
@@ -125,7 +149,7 @@ export function initializeBlocksAndConnections(
     };
   });
 
-  blocks?.forEach(block => {
+  blocks?.forEach((block) => {
     const item: DragItem = itemsMapping[block?.uuid];
     const inputs: PortType[] = [];
     const outputs: PortType[] = [];
@@ -138,13 +162,10 @@ export function initializeBlocksAndConnections(
         const port: PortType = {
           id: buildPortID(block?.uuid, uuid),
           index: idx,
-          // Parent is the wrong word; it’s suppose to mean the associated item.
-          // If the port is an input, then the parent is the upstream block.
           parent: item,
           subtype,
           type: ItemTypeEnum.PORT,
         };
-        // console.log(subtype, port);
         portsMapping[getNodeUUID(port)] = port;
 
         if (PortSubtypeEnum.INPUT === port?.subtype) {
@@ -161,16 +182,15 @@ export function initializeBlocksAndConnections(
     });
   });
 
-  blocks.forEach(block => {
+  blocks.forEach((block) => {
     const fromItem = itemsMapping[block.uuid];
-    // Downstream blocks
     block?.downstream_blocks?.forEach((uuidDn: string) => {
       const toItem = itemsMapping[uuidDn] as DragItem;
       const fromPort = (fromItem?.outputs as PortType[])?.find(
-        port => port.id === buildPortID(block?.uuid, uuidDn),
+        (port) => port.id === buildPortID(block?.uuid, uuidDn),
       );
       const toPort = (toItem?.inputs as PortType[])?.find(
-        port => port.id === buildPortID(uuidDn, block.uuid),
+        (port) => port.id === buildPortID(uuidDn, block.uuid),
       );
 
       if (fromPort && toPort) {
@@ -181,11 +201,6 @@ export function initializeBlocksAndConnections(
       }
     });
   });
-
-  // console.log('items', Object.values(itemsMapping || {})?.length);
-  // console.log('ports', Object.values(portsMapping || {})?.length);
-  // console.log('connections', Object.values(connectionsMapping || {})?.length);
-  // console.log(connectionsMapping);
 
   return {
     connectionsMapping,

@@ -7,14 +7,15 @@ import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
 import { useMemo } from 'react';
 import { DragItem } from '../interfaces';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 export function BlockNodeWrapper({
   items,
-  pipelinesMapping,
+  frameworkGroups,
   ...wrapperProps
 }: NodeWrapperProps & {
   items: Record<string, DragItem>;
-  pipelinesMapping: Record<string, PipelineType>;
+  frameworkGroups: Record<GroupUUIDEnum, PipelineType>;
 }) {
   const block = wrapperProps?.item?.block;
 
@@ -34,7 +35,6 @@ export function BlockNodeWrapper({
       }, {});
 
       const modeType = (Object.keys(typeCounts || {}).reduce((a, b) => typeCounts![a] > typeCounts![b] ? a : b) as BlockTypeEnum);
-      console.log(modeType);
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }

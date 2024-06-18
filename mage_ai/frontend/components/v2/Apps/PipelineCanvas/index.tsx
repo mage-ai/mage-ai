@@ -33,15 +33,19 @@ import { rectFromOrigin } from './utils/positioning';
 import { getNodeUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
-import { extractNestedBlocks } from './utils/pipelines';
+import { extractNestedBlocks, groupBlocksByGroups } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { indexBy } from '@utils/array';
+import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 type PipelineBuilderProps = {
   pipeline: PipelineType;
+  pipelineExecutionFramework: PipelineExecutionFrameworkType
   pipelines?: PipelineType[];
   canvasRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
   onDragStart: () => void;
   snapToGridOnDrop?: boolean;
@@ -64,7 +68,9 @@ type PipelineBuilderProps = {
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipeline,
   pipelines,
+  pipelineExecutionFramework,
   canvasRef,
+  containerRef,
   onDragEnd: onDragEndProp,
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
@@ -93,6 +99,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
   const [pipelinesMapping, setPipelinesMapping] = useState<Record<string, PipelineType>>(null);
 
+  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
+
   function setConnections(connections: Record<string, ConnectionType>) {
     connectionsRef.current = {
       ...connectionsRef.current,
@@ -115,17 +123,25 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
       const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
-      const blocks = extractNestedBlocks(pipeline, pipelinesMapping);
+      let blocksMapping = {};
+      pipelines?.forEach((pipe) => {
+        blocksMapping = {
+          ...blocksMapping,
+          ...extractNestedBlocks(pipe, pipelinesMapping),
+        };
+      });
 
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
-        blocks,
+        Object.values(blocksMapping),
         {
           blockHeight: 200,
           blockWidth: 300,
           layout: layoutConfig,
-          maxHeight: typeof window !== 'undefined' ? window.innerHeight : null,
+          containerRect: containerRef?.current?.getBoundingClientRect(),
         },
       );
+
+      frameworkGroups.current = groupBlocksByGroups(pipelineExecutionFramework);
 
       connectionsRef.current = connectionsMapping;
       portsRef.current = portsMapping;
@@ -396,6 +412,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         items &&
         Object.keys(items || items).map(key => (
           <BlockNodeWrapper
+            frameworkGroups={frameworkGroups?.current}
             item={items[key]}
             items={items}
             key={key}
@@ -421,9 +438,8 @@ export default function PipelineBuilderCanvas({
   snapToGridOnDrag?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
-
-  console.log('ZoomPan disabled:', isZoomPanDisabled);
 
   useZoomPan(canvasRef, {
     disabled: isZoomPanDisabled,
@@ -483,14 +499,20 @@ export default function PipelineBuilderCanvas({
         // })
       }}
       ref={canvasRef}
-      style={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'visible' }}
+      style={{
+        height: '100vh',
+        overflow: 'visible',
+        position: 'relative',
+        width: '100vw',
+      }}
     >
-      <CanvasStyled>
+      <CanvasStyled ref={containerRef}>
         <DndProvider backend={HTML5Backend}>
           <DragLayer snapToGrid={snapToGridOnDrag} />
           <PipelineBuilder
             {...props}
             canvasRef={canvasRef}
+            containerRef={containerRef}
             onDragEnd={() => setZoomPanDisabled(false)}
             onDragStart={() => setZoomPanDisabled(true)}
           />

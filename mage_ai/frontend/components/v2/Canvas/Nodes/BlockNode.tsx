@@ -9,7 +9,9 @@ import Aside from './Blocks/Aside';
 import GradientContainer from '@mana/elements/Gradient';
 import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
+import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import BlockType from '@interfaces/BlockType';
+import { isEmptyObject } from '@utils/hash';
 
 type BlockNodeProps = {
   block?: BlockType
@@ -29,6 +31,7 @@ export function BlockNode({
   const { borders } = borderConfig || {};
   const { asides, badge, inputConnection, outputConnection } = titleConfig || {};
   const { after, before } = asides || {};
+  const { configuration } = block || {};
 
   const classNames = [
     styles.blockNode,
@@ -106,6 +109,11 @@ export function BlockNode({
                 )}
               </PanelRows>
             )}
+
+            {!isEmptyObject(configuration?.templates)
+              && Object.entries(configuration?.templates || {})?.map(([uuid, template]) => (
+                <TemplateConfigurations key={uuid} template={{ ...template, uuid }} />
+            ))}
           </>
         )}
       </Grid>

@@ -12,7 +12,18 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
   blocks: [
     {
-      uuid: GroupUUIDEnum.LOAD,
+      uuid: GroupUUIDEnum.INGEST,
+      type: BlockTypeEnum.GROUP,
+      groups: [
+        GroupUUIDEnum.DATA_PREPARATION,
+        GroupUUIDEnum.LOAD,
+      ],
+      downstream_blocks: [
+        GroupUUIDEnum.MAP,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MAP,
       type: BlockTypeEnum.GROUP,
       groups: [
         GroupUUIDEnum.DATA_PREPARATION,
@@ -24,6 +35,18 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
     },
     {
       uuid: GroupUUIDEnum.CLEANING,
+      type: BlockTypeEnum.GROUP,
+      groups: [
+        GroupUUIDEnum.DATA_PREPARATION,
+        GroupUUIDEnum.TRANSFORM,
+      ],
+      downstream_blocks: [
+        GroupUUIDEnum.ENRICH,
+      ],
+    },
+
+    {
+      uuid: GroupUUIDEnum.ENRICH,
       type: BlockTypeEnum.GROUP,
       groups: [
         GroupUUIDEnum.DATA_PREPARATION,
@@ -76,14 +99,21 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
           subword_tokenizer: {
             name: 'Subword tokenizer',
             description: 'Tokenize text into subwords',
-            variables: {
-              hallucination: {
+            variables: [
+              'hallucination',
+              'fire',
+              'spell',
+              'max_length',
+              'add_special_tokens',
+            ].reduce((acc, uuid) => ({
+              ...acc,
+              [uuid]: {
                 input: {
                   description: '...',
-                  label: '...',
+                  label: `${uuid} - ${Number(new Date())}`,
                   options: [
                     {
-                      label: 'Default hallucination',
+                      label: `${uuid} - ${Number(new Date())}`,
                       value: 'none',
                     },
                   ],
@@ -96,16 +126,23 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
                   types: [InteractionVariableTypeEnum.STRING],
                 },
               },
-            },
+            }), {}),
           },
           word_tokenizer: {
             'name': 'Word Tokenizer',
             'description': 'Tokenize text into words',
-            variables: {
-              spacing: {
+            variables: [
+              'hallucination_variable',
+              'fire_variable',
+              'spell_variable',
+              'max_length_variable',
+              'add_special_tokens_variable',
+            ].reduce((acc, uuid) => ({
+              ...acc,
+              [uuid]: {
                 'input': {
                   'description': 'Enter the text you want to tokenize into words.',
-                  'label': 'Text Input',
+                  'label': `${uuid} - ${Number(new Date())}`,
                   'style': {
                     multiline: true,
                   },
@@ -119,7 +156,7 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
                   'uuid': '',
                 },
               },
-            },
+            }), {}),
           },
         },
       },
@@ -178,7 +215,6 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
                   'required': true,
                   'types': [InteractionVariableTypeEnum.DATE],
                 },
-
               },
             },
           },
@@ -200,21 +236,40 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
         GroupUUIDEnum.DATA_PREPARATION,
         GroupUUIDEnum.EXPORT,
       ],
+      downstream_blocks: [
+        GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
+        GroupUUIDEnum.DOCUMENT_HIERARCHY,
+        GroupUUIDEnum.SEARCH_INDEX,
+      ],
     },
     {
-      uuid: GroupUUIDEnum.INDEX,
+      uuid: GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
       type: BlockTypeEnum.GROUP,
       groups: [
         GroupUUIDEnum.DATA_PREPARATION,
         GroupUUIDEnum.INDEX,
       ],
+      downstream_blocks: [
+        GroupUUIDEnum.INTENT_DETECTION,
+      ],
     },
     {
-      uuid: GroupUUIDEnum.QUERY_PROCESSING,
+      uuid: GroupUUIDEnum.DOCUMENT_HIERARCHY,
       type: BlockTypeEnum.GROUP,
       groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.QUERY_PROCESSING,
+        GroupUUIDEnum.DATA_PREPARATION,
+        GroupUUIDEnum.INDEX,
+      ],
+      downstream_blocks: [
+        GroupUUIDEnum.INTENT_DETECTION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.SEARCH_INDEX,
+      type: BlockTypeEnum.GROUP,
+      groups: [
+        GroupUUIDEnum.DATA_PREPARATION,
+        GroupUUIDEnum.INDEX,
       ],
       downstream_blocks: [
         GroupUUIDEnum.INTENT_DETECTION,
@@ -250,11 +305,33 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
         GroupUUIDEnum.QUERY_PROCESSING,
       ],
       downstream_blocks: [
-        GroupUUIDEnum.RETRIEVAL,
+        GroupUUIDEnum.MEMORY,
       ],
     },
     {
-      uuid: GroupUUIDEnum.RETRIEVAL,
+      uuid: GroupUUIDEnum.MEMORY,
+      type: BlockTypeEnum.GROUP,
+      groups: [
+        GroupUUIDEnum.INFERENCE,
+        GroupUUIDEnum.RETRIEVAL,
+      ],
+      downstream_blocks: [
+        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      type: BlockTypeEnum.GROUP,
+      groups: [
+        GroupUUIDEnum.INFERENCE,
+        GroupUUIDEnum.RETRIEVAL,
+      ],
+      downstream_blocks: [
+        GroupUUIDEnum.MULTI_HOP_REASONING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MULTI_HOP_REASONING,
       type: BlockTypeEnum.GROUP,
       groups: [
         GroupUUIDEnum.INFERENCE,
@@ -270,17 +347,6 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
       groups: [
         GroupUUIDEnum.INFERENCE,
         GroupUUIDEnum.RETRIEVAL,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.RESPONSE_GENERATION,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.RESPONSE_GENERATION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RESPONSE_GENERATION,
       ],
       downstream_blocks: [
         GroupUUIDEnum.CONTEXTUALIZATION,

@@ -1,31 +1,53 @@
+import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import BlockType, { BlockPipelineType, BlockTypeEnum } from 'interfaces/BlockType';
 import PipelineType from 'interfaces/PipelineType';
 
 export function extractNestedBlocks(
   pipeline: PipelineType,
   pipelines: Record<string, PipelineType>,
-): BlockType[] {
-  const { blocks, uuid } = pipeline;
+): Record<string, any> {
+  let mapping = {
+    [pipeline.uuid]: {
+      ...pipeline,
+      downstream_blocks: [],
+      pipeline: pipeline,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [],
+    },
+  };
 
-  return blocks?.reduce((acc, block) => {
-    const item = {
+  pipeline?.blocks?.forEach((block) => {
+    mapping[block.uuid] = {
       ...block,
-      pipeline,
-    };
+      pipeline: pipeline,
+    } as any;
 
     if (BlockTypeEnum.PIPELINE === block.type) {
-      const pipelineInner = pipelines[block.uuid];
-
-      return [
-        ...acc,
-        ...(pipelineInner ? extractNestedBlocks(pipelineInner, pipelines) : []),
-        item,
-      ];
+      mapping = {
+        ...mapping,
+        ...extractNestedBlocks(pipelines[block.uuid], pipelines),
+      };
     }
+  });
 
-    return [
-      ...acc,
-      item,
-    ];
-  }, []);
+  return mapping;
 }
+
+export const groupBlocksByGroups = (framework: PipelineExecutionFrameworkType) => {
+  const blockGroupMap = {} as Record<GroupUUIDEnum, Record<string, any>>;
+
+  framework?.blocks?.forEach((block) => {
+    block.groups.forEach((group) => {
+      const uuid = group as GroupUUIDEnum;
+
+      if (!blockGroupMap[uuid]) {
+        blockGroupMap[uuid] = [];
+      }
+
+      blockGroupMap[uuid].push(block);
+    });
+  });
+
+  return blockGroupMap;
+};
