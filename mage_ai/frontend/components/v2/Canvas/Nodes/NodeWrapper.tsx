@@ -1,12 +1,11 @@
 import React from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { CSSProperties, FC, useCallback } from 'react';
-import { useState, useRef } from 'react';
+import { CSSProperties, FC } from 'react';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
-import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
+import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -37,58 +36,34 @@ export type NodeWrapperProps = {
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
-  canDrag,
+  draggingNode,
+  handlers,
   item,
-  onDragStart,
-  onDrop,
-  onMouseDown,
-  onMouseUp,
   itemRef,
 }: NodeWrapperProps) {
-  const phaseRef = useRef(0);
-
-  const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
-
+  const {
+    onDragEnd,
+    onDragStart,
+    onDrop,
+    onMouseDown,
+    onMouseUp,
+  } = handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
 
   useEffect(() => {
-    if (phaseRef.current === 0) {
-      preview(getEmptyImage(), { captureDraggingState: true });
-    }
-    phaseRef.current += 1;
+    preview(getEmptyImage(), { captureDraggingState: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleOnDrop = useCallback(
-    (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      onDrop(dragTarget, dropTarget);
-    },
-    [onDrop],
-  );
-
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
-      canDrag: (monitor: DragSourceMonitor) => {
-        if (!canDrag || canDrag(item)) {
-          onDragStart(item, monitor);
-          return true;
-        }
-
-        return false;
+      canDrag: () => {
+        onDragStart(null, item);
+        return true;
       },
-      collect: (monitor: DragSourceMonitor) => {
-        const isDragging = monitor.isDragging();
-
-        return {
-          backgroundColor: isDragging ? 'red' : undefined,
-          isDragging,
-          opacity: isDragging ? 0.4 : 1,
-        };
-      },
-      // end: (item: DragItem, monitor) => null,
+      collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
-        // console.log('isDragging?', node.id === itemToDrag.id);
         return node.id === itemToDrag.id;
       },
       item: itemToDrag,
@@ -118,49 +93,24 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         isOverCurrent: monitor.isOver({ shallow: true }),
       }),
       drop: (dragTarget: NodeItemType) => {
-        handleOnDrop(dragTarget, item);
+        onDrop(dragTarget, item);
       },
     }),
-    [handleOnDrop, item],
+    [onDrop, item],
   );
 
-  const handleMouseDown = useCallback(
-    (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-    ) => {
-      onMouseDown(event, node);
-      setDraggingNode(node);
-    },
-    [onMouseDown],
-  );
-
-  const handleMouseUp = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) => {
-      onMouseUp(event, node);
-      setDraggingNode(null);
-    },
-    [onMouseUp],
-  );
-
-  const isDraggingBlock = useMemo(() => draggingNode?.type === item?.type, [draggingNode, item]);
   connectDrop(itemRef);
-
-  if (isDraggingBlock) {
-    connectDrag(itemRef);
-  }
+  draggingNode?.type === item?.type && connectDrag(itemRef);
 
   return (
     <div
-      onDragEnd={event => handleMouseUp(event, item)}
-      onDragStart={event => handleMouseDown(event, item)}
-      onMouseDown={event => handleMouseDown(event, item)}
-      onMouseUp={event => handleMouseUp(event, item)}
+      onDragEnd={event => onDragEnd(event, item)}
+      onDragStart={event => onDragStart(event, item)}
+      onMouseDown={event => onMouseDown(event, item)}
+      onMouseUp={event => onMouseUp(event, item)}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={getStyles(item, {
-        isDragging: isDragging && draggingNode?.type === item?.type,
-      })}
+      style={getStyles(item, { isDragging: isDragging && draggingNode?.type === item?.type })}
     >
       {children}
     </div>

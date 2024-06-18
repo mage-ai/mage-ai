@@ -1,13 +1,12 @@
 import update from 'immutability-helper';
-import React, { FC, memo, useEffect, useMemo, useRef } from 'react';
+import React, { FC, memo, useEffect } from 'react';
 
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
-import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
-import { PortSubtypeEnum, ItemTypeEnum } from '../types';
+import type { DragSourceMonitor } from 'react-dnd';
+import { NodeItemType, PortType, RectType } from '../interfaces';
+import { useDrag, useDrop } from 'react-dnd';
+import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from '../Nodes/types';
 import { getNodeUUID } from './utils';
-import { getTransformedBoundingClientRect } from '../utils/rect';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
@@ -19,24 +18,38 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   children,
   item,
   itemRef,
-  onDragStart,
-  onDrop,
-  onMouseDown,
-  onMouseUp,
+  handlers,
 }: DraggablePortProps) {
-  const uuid = getNodeUUID(item);
-  const phaseRef = useRef(0);
+  const {
+    onDragStart,
+    onDrop,
+    onMouseDown,
+    onMouseUp,
+  } = handlers;
 
   const [, connectDrag] = useDrag(
     () => ({
       canDrag: (monitor: DragSourceMonitor) => {
+        const { x, y } = monitor.getInitialClientOffset();
+
+        const node = update(item, {
+          rect: {
+            $set: {
+              height: item.rect.height,
+              left: x,
+              top: y,
+              width: item.rect.width,
+            },
+          },
+        });
+
         onDragStart(
-          update(item, {
+          null,
+          update(node, {
             rect: {
               $set: itemRef?.current?.getBoundingClientRect() as RectType,
             },
           }),
-          monitor,
         );
 
         return true;
@@ -69,6 +82,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       }),
       drop: (dragTarget: NodeItemType) => {
         const { left, height, top, width } = itemRef?.current?.getBoundingClientRect() as RectType;
+
         onDrop(
           dragTarget,
           update(item, {
@@ -83,21 +97,14 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   );
 
   useEffect(() => {
-    if (itemRef.current) {
-      if (phaseRef.current === 0) {
-        connectDrag(itemRef);
-        connectDrop(itemRef);
-      }
-
-      phaseRef.current += 1;
-      console.log('Render port', phaseRef.current);
-    }
+    itemRef?.current && connectDrag(itemRef);
+    itemRef?.current && connectDrop(itemRef);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item]);
+  }, []);
 
   return (
     <div
-      key={uuid}
+      key={getNodeUUID(item)}
       onDragEnd={event => onMouseUp(event, item)}
       onMouseDown={event => onMouseDown(event, item)}
       onMouseUp={event => onMouseUp(event, item)}

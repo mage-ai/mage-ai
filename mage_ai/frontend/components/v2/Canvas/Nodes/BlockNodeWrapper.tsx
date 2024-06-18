@@ -16,30 +16,35 @@ import ReactDOM from 'react-dom';
 import { NodeItemType, PortType } from '../interfaces';
 
 export function BlockNodeWrapper({
-  item,
   frameworkGroups,
-  onDragStart,
-  onDrop,
+  item,
+  handlers,
   onMountPort,
-  onMouseDown,
-  onMouseUp,
-  ...wrapperProps
 }: NodeWrapperProps & {
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
-  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
-  onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-  onMouseDown: (
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    obj: NodeItemType,
-  ) => void;
-  onMouseUp: (
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    obj: NodeItemType,
-  ) => void;
 }) {
   const itemRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
+  const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
+
+  const { onMouseDown, onMouseUp } = handlers;
+
+  function handleMouseDown(
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    node: NodeItemType,
+  ) {
+    onMouseDown(event, node);
+    setDraggingNode(node);
+  }
+
+  function handleMouseUp(
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    node: NodeItemType,
+  ) {
+    onMouseUp(event, node);
+    setDraggingNode(null);
+  }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -98,13 +103,14 @@ export function BlockNodeWrapper({
 
   return (
     <NodeWrapper
-      {...wrapperProps}
+      draggingNode={draggingNode}
+      handlers={{
+        ...handlers,
+        onMouseDown: handleMouseDown,
+        onMouseUp: handleMouseUp,
+      }}
       item={item}
       itemRef={itemRef}
-      onDragStart={onDragStart}
-      onDrop={onDrop}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
     >
       <BlockNode
         block={block}
@@ -114,10 +120,9 @@ export function BlockNodeWrapper({
         }}
         groups={groups}
         handlers={{
-          onDragStart,
-          onDrop,
-          onMouseDown,
-          onMouseUp,
+          ...handlers,
+          onMouseDown: handleMouseDown,
+          onMouseUp: handleMouseUp,
         }}
         item={item}
         onMount={onMount}

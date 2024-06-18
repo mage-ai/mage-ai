@@ -77,7 +77,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipelineExecutionFramework,
   canvasRef,
   containerRef,
-  onDragEnd: onDragEndProp,
+  onDragEnd,
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
@@ -178,35 +178,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
   }
 
-  function onMouseDown(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
+  function onMouseDown(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
     onDragStartProp();
   }
 
-  function onMouseUp(event: React.MouseEvent<HTMLDivElement>, obj: NodeItemType) {
-    onDragEndProp();
+  function onMouseUp(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
+    onDragEnd();
     resetAfterDrop();
   }
 
-  function onDragStart(node: NodeItemType, monitor: DragSourceMonitor) {
+  function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
     console.log('onDragStart', node?.type);
 
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
-      const { x, y } = monitor.getInitialClientOffset();
-      const item = update(node, {
-        rect: {
-          $set: {
-            height: node.rect.height,
-            left: x,
-            top: y,
-            width: node.rect.width,
-          },
-        },
-      });
-
-      itemDraggingRef.current = item;
+      itemDraggingRef.current = node;
       const connection = createConnection(
-        item,
-        update(item, {
+        node,
+        update(node, {
           id: { $set: randomSimpleHashGenerator() },
         }),
       );
@@ -240,7 +228,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     setConnectionsDragging(null);
   }
 
-  function onDrop(node: NodeItemType, monitor: DropTargetMonitor) {
+  function onDropBlock(node: NodeItemType, monitor: DropTargetMonitor) {
     resetAfterDrop();
 
     const delta = monitor.getDifferenceFromInitialOffset() as {
@@ -287,11 +275,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
     });
 
-    // console.log('onDrop', item);
     updateItem(item);
   }
 
-  const onDropNode = useCallback(
+  const onDropPort = useCallback(
     (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
       if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
         const node = itemDraggingRef.current;
@@ -304,7 +291,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           }),
         );
         setConnections({ [connectionUUID(connection)]: connection });
-        // console.log('onDropNode', connection);
       }
 
       resetAfterDrop();
@@ -385,7 +371,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         return ItemTypeEnum.BLOCK === node.type;
       },
       drop: (item: DragItem, monitor: DropTargetMonitor) => {
-        onDrop(item, monitor);
+        onDropBlock(item, monitor);
 
         return undefined;
       },
@@ -399,13 +385,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     Object.keys(items || items).map(key => (
       <BlockNodeWrapper
         frameworkGroups={frameworkGroups?.current}
+        handlers={{
+          onDragEnd,
+          onDragStart,
+          onDrop: onDropPort,
+          onMouseDown,
+          onMouseUp,
+        }}
         item={items[key]}
         key={key}
-        onDragStart={onDragStart}
-        onDrop={onDropNode}
         onMountPort={onMountPort}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
       />
       // eslint-disable-next-line react-hooks/exhaustive-deps
     )), [items]);

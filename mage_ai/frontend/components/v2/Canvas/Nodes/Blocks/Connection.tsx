@@ -1,11 +1,9 @@
-import { ConnectionType, PortType } from '../../interfaces';
-import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import { PortType } from '../../interfaces';
 import Text from '@mana/elements/Text';
 import Circle from '@mana/elements/Circle';
 import Grid from '@mana/components/Grid';
 import { getBlockColor } from '@mana/themes/blocks';
-import { randomSample } from '@utils/array';
-import { createRef, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DraggablePort } from '../../Draggable/DraggablePort';
 import { DragAndDropHandlersType } from '../types';
 
@@ -67,7 +65,7 @@ export default function Connection({ input, handlers, output, onMount }: Connect
       <Grid alignItems="center" columnGap={8} justifyItems="start" templateColumns="auto 1fr" templateRows="1fr">
         <div ref={inputRef} style={{ height: 12, width: 12 }}>
           <DraggablePort
-            {...handlers}
+            handlers={handlers}
             item={input}
             itemRef={inputRef}
           >
@@ -87,7 +85,7 @@ export default function Connection({ input, handlers, output, onMount }: Connect
 
         <div ref={outputRef} style={{ height: 12, width: 12 }}>
           <DraggablePort
-            {...handlers}
+            handlers={handlers}
             item={output}
             itemRef={outputRef}
           >
