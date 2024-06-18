@@ -282,7 +282,7 @@ interface VariableSettingsType {
   input_data_types?: InputDataTypeEnum[];
 }
 
-interface TemplateType {
+export interface TemplateType {
   description?: string;
   name?: string;
   variables?: Record<string, {

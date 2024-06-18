@@ -19,6 +19,7 @@ type BlockNodeProps = {
   collapsed?: boolean;
   connections?: ConnectionType[];
   configurationOptions?: ConfigurationOptionType[];
+  groups?: Record<string, BlockType[]>;
   titleConfig?: TitleConfigType;
 };
 
@@ -26,6 +27,7 @@ export function BlockNode({
   block,
   borderConfig,
   connections,
+  groups,
   titleConfig,
 }: BlockNodeProps) {
   const { borders } = borderConfig || {};
@@ -110,10 +112,16 @@ export function BlockNode({
               </PanelRows>
             )}
 
-            {!isEmptyObject(configuration?.templates)
-              && Object.entries(configuration?.templates || {})?.map(([uuid, template]) => (
-                <TemplateConfigurations key={uuid} template={{ ...template, uuid }} />
-            ))}
+            {groups && Object.entries(groups)?.map(([groupUUID, group]) => !isEmptyObject(group?.configuration?.templates)
+              && Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
+                <TemplateConfigurations
+                  block={block}
+                  group={group}
+                  key={uuid}
+                  template={template}
+                  uuid={uuid}
+                />
+            )))}
           </>
         )}
       </Grid>

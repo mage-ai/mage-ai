@@ -26,6 +26,11 @@ export function BlockNodeWrapper({
     uuid,
   } = block;
 
+  const groups = useMemo(() => block?.groups?.reduce((acc, group) => ({
+    ...acc,
+    [group]: frameworkGroups?.[group],
+  }), {}), [block, frameworkGroups]);
+
   const names = useMemo(() => {
     if (BlockTypeEnum.PIPELINE === type) {
       const typeCounts = pipeline?.blocks?.reduce((acc: Record<string, number>, { type }) => {
@@ -87,6 +92,7 @@ export function BlockNodeWrapper({
           borders,
         }}
         connections={connections}
+        groups={groups}
         titleConfig={{
           asides: {
             after: {

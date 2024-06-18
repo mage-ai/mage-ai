@@ -38,14 +38,17 @@ export const groupBlocksByGroups = (framework: PipelineExecutionFrameworkType) =
   const blockGroupMap = {} as Record<GroupUUIDEnum, Record<string, any>>;
 
   framework?.blocks?.forEach((block) => {
+    blockGroupMap[block.uuid] ||= {};
+    blockGroupMap[block.uuid] = block
+    ;
     block.groups.forEach((group) => {
       const uuid = group as GroupUUIDEnum;
 
       if (!blockGroupMap[uuid]) {
-        blockGroupMap[uuid] = [];
+        blockGroupMap[uuid] = {};
       }
 
-      blockGroupMap[uuid].push(block);
+      blockGroupMap[uuid][block.uuid] = block;
     });
   });
 

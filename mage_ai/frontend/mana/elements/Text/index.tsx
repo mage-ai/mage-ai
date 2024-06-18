@@ -5,7 +5,7 @@ import { ElementType, extractProps } from '../../shared/types';
 import { hyphenateCamelCase } from '@utils/string';
 
 type TextProps = {
-  children: React.ReactNode;
+  children: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
   small?: boolean;
