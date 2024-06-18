@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { DragSourceMonitor, DropTargetMonitor, useDrag } from 'react-dnd';
 import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
@@ -9,25 +9,22 @@ import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
 import { randomSample } from '@utils/array';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { buildPortID, getNodeUUID } from '../Draggable/utils';
-import { DraggablePort } from '../Draggable/DraggablePort';
 import { getTransformedBoundingClientRect } from '../utils/rect';
 import { connectionUUID } from '../Connections/utils';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import ReactDOM from 'react-dom';
-import { DragItem, ConnectionType, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
+import { NodeItemType, PortType } from '../interfaces';
 
 export function BlockNodeWrapper({
   item,
-  items,
   frameworkGroups,
-  onMountPort,
   onDragStart,
   onDrop,
+  onMountPort,
   onMouseDown,
   onMouseUp,
   ...wrapperProps
 }: NodeWrapperProps & {
-  items: Record<string, DragItem>;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
@@ -42,29 +39,7 @@ export function BlockNodeWrapper({
   ) => void;
 }) {
   const itemRef = useRef(null);
-
   const portElementRefs = useRef<Record<string, any>>({});
-
-  // function renderPort(port: PortType, child: React.ReactNode) {
-  //   const uuid = getNodeUUID(port);
-  //   const itemRef = portsRef?.current?.[uuid] ?? createRef<HTMLDivElement>();
-  //   portsRef.current[uuid] = itemRef;
-
-  //   return (
-  //     <DraggablePort
-  //       // handleMouseDown={event => handleMouseDown(event, port)}
-  //       // handleMouseUp={event => handleMouseUp(event, port)}
-  //       // handleOnDrop={handleOnDrop}
-  //       // onDragStart={onDragStart}
-  //       item={port}
-  //       itemRef={itemRef}
-  //       key={uuid}
-  //       onMount={onPortMount}
-  //     >
-  //       {child}
-  //     </DraggablePort>
-  //   );
-  // }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -98,7 +73,7 @@ export function BlockNodeWrapper({
       }, {});
 
       const modeType = (Object.keys(typeCounts || {})
-        .reduce((a, b) => typeCounts![a] > typeCounts![b] ? a : b) as BlockTypeEnum);
+        .reduce((a, b) => typeCounts?.[a] > typeCounts?.[b] ? a : b) as BlockTypeEnum);
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }
@@ -121,44 +96,6 @@ export function BlockNodeWrapper({
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
   }, [names, ports]);
 
-  const node = useMemo(() => (
-    <BlockNode
-      block={block}
-      // Only use gradient borders when block selected
-      borderConfig={{
-        borders: borders?.slice(0, 1),
-      }}
-      groups={groups}
-      item={item}
-      onMount={onMount}
-      titleConfig={{
-        asides: {
-          after: {
-            Icon: Code,
-            onClick: () => alert('Coding...'),
-          },
-          before: {
-            Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
-            baseColorName: StatusTypeEnum.FAILED === block?.status
-              ? 'red'
-              : StatusTypeEnum.EXECUTED
-                ? 'green'
-                : 'blue',
-          },
-        },
-        badge: BlockTypeEnum.PIPELINE === type
-          ? {
-            Icon: PipeIconVertical,
-            baseColorName: names?.base,
-            label: name || uuid,
-          }
-          : undefined,
-        label: name || uuid,
-      }}
-    />
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [block, borders, groups, names, name, type, uuid]);
-
   return (
     <NodeWrapper
       {...wrapperProps}
@@ -169,9 +106,46 @@ export function BlockNodeWrapper({
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
     >
-      {node}
-
-      {/* {portsMemo} */}
+      <BlockNode
+        block={block}
+        // Only use gradient borders when block selected
+        borderConfig={{
+          borders: borders?.slice(0, 1),
+        }}
+        groups={groups}
+        handlers={{
+          onDragStart,
+          onDrop,
+          onMouseDown,
+          onMouseUp,
+        }}
+        item={item}
+        onMount={onMount}
+        titleConfig={{
+          asides: {
+            after: {
+              Icon: Code,
+              onClick: () => alert('Coding...'),
+            },
+            before: {
+              Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
+              baseColorName: StatusTypeEnum.FAILED === block?.status
+                ? 'red'
+                : StatusTypeEnum.EXECUTED
+                  ? 'green'
+                  : 'blue',
+            },
+          },
+          badge: BlockTypeEnum.PIPELINE === type
+            ? {
+              Icon: PipeIconVertical,
+              baseColorName: names?.base,
+              label: name || uuid,
+            }
+            : undefined,
+          label: name || uuid,
+        }}
+      />
     </NodeWrapper>
   );
 }

@@ -6,7 +6,7 @@ import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './ty
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { getBlockColor } from '@mana/themes/blocks';
 import Aside from './Blocks/Aside';
-import { DragItem, ConnectionType, PortType } from '../interfaces';
+import { DragItem, PortType } from '../interfaces';
 import GradientContainer from '@mana/elements/Gradient';
 import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
@@ -15,6 +15,8 @@ import BlockType from '@interfaces/BlockType';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
 import { getNodeUUID } from '../Draggable/utils';
+import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { DragAndDropHandlersType } from './types';
 
 type BlockNodeProps = {
   block?: BlockType
@@ -34,7 +36,8 @@ export function BlockNode({
   item,
   onMount,
   titleConfig,
-}: BlockNodeProps) {
+  handlers,
+}: BlockNodeProps & DragAndDropHandlersType) {
   const { borders } = borderConfig || {};
   const { asides, badge } = titleConfig || {};
   const { after, before } = asides || {};
@@ -42,11 +45,27 @@ export function BlockNode({
 
   const inputOutputPairs = useMemo(() => {
     const count = Math.max(inputs?.length, outputs?.length);
-    return Array.from({ length: count }).map((_, idx) => ({
-      input: inputs?.[idx],
-      output: outputs?.[idx],
-    }));
-  }, [inputs, outputs]);
+
+    return Array.from({ length: count }).map((_, idx) => {
+      const input = inputs?.[idx];
+      const output = outputs?.[idx];
+
+      const portDefault = {
+        block,
+        id: block?.uuid,
+        index: idx,
+        parent: item,
+        subtype: !input ? PortSubtypeEnum.INPUT : !output ? PortSubtypeEnum.OUTPUT : undefined,
+        target: null,
+        type: ItemTypeEnum.PORT,
+      };
+
+      return {
+        input: input || portDefault,
+        output: output || portDefault,
+      };
+    });
+  }, [block, inputs, item, outputs]);
 
   const classNames = [
     styles.blockNode,
@@ -95,6 +114,7 @@ export function BlockNode({
         output,
       }, idx: number) =>
         <Connection
+          handlers={handlers}
           input={input}
           key={[
             input ? getNodeUUID(input) : '',
@@ -106,7 +126,7 @@ export function BlockNode({
       )}
     </PanelRows>
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [block, inputOutputPairs]);
+  ), [block, handlers, inputOutputPairs]);
 
   const templateConfigurations = useMemo(() => groups && Object.entries(groups)?.map(([groupUUID, group]) => !isEmptyObject(group?.configuration?.templates)
     && Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (

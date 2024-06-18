@@ -5,17 +5,18 @@ import Circle from '@mana/elements/Circle';
 import Grid from '@mana/components/Grid';
 import { getBlockColor } from '@mana/themes/blocks';
 import { randomSample } from '@utils/array';
-
 import { createRef, useEffect, useMemo, useRef } from 'react';
+import { DraggablePort } from '../../Draggable/DraggablePort';
+import { DragAndDropHandlersType } from '../types';
 
 type ConnectionProps = {
   input: PortType;
   output: PortType;
   emphasized?: boolean;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-};
+} & DragAndDropHandlersType;
 
-export default function Connection({ input, output, onMount }: ConnectionProps) {
+export default function Connection({ input, handlers, output, onMount }: ConnectionProps) {
   const inputRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +33,26 @@ export default function Connection({ input, output, onMount }: ConnectionProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const inputPort = useMemo(() => (
+    <Circle
+      backgroundColor={input ? inputColor : undefined}
+      borderColor={input
+        ? inputColor ? undefined : 'gray'
+        : 'red'}
+      size={12}
+    />
+  ), [input, inputColor]);
+
+  const outputPort = useMemo(() => (
+    <Circle
+      backgroundColor={output ? outputColor : undefined}
+      borderColor={output
+        ? outputColor ? undefined : 'gray'
+        : 'red'}
+      size={12}
+    />
+  ), [output, outputColor]);
+
   return (
     <Grid
       alignItems="center"
@@ -45,13 +66,13 @@ export default function Connection({ input, output, onMount }: ConnectionProps) 
     >
       <Grid alignItems="center" columnGap={8} justifyItems="start" templateColumns="auto 1fr" templateRows="1fr">
         <div ref={inputRef} style={{ height: 12, width: 12 }}>
-          <Circle
-            backgroundColor={input ? inputColor : undefined}
-            borderColor={input
-              ? inputColor ? undefined : 'gray'
-              : 'red'}
-            size={12}
-          />
+          <DraggablePort
+            {...handlers}
+            item={input}
+            itemRef={inputRef}
+          >
+            {inputPort}
+          </DraggablePort>
         </div>
 
         <Text italic={!input} muted small>
@@ -65,13 +86,13 @@ export default function Connection({ input, output, onMount }: ConnectionProps) 
         </Text>
 
         <div ref={outputRef} style={{ height: 12, width: 12 }}>
-          <Circle
-            backgroundColor={output ? outputColor : undefined}
-            borderColor={output
-              ? inputColor ? undefined : 'gray'
-              : 'red'}
-            size={12}
-          />
+          <DraggablePort
+            {...handlers}
+            item={output}
+            itemRef={outputRef}
+          >
+            {outputPort}
+          </DraggablePort>
         </div>
       </Grid>
     </Grid>

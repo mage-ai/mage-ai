@@ -6,12 +6,9 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
-import Grid from '@mana/components/Grid';
 import { DragItem, LayoutConfigType, NodeItemType, PortType, RectType } from '../interfaces';
-import {
-  ItemTypeEnum,
-  LayoutConfigDirectionEnum,
-} from '../types';
+import { ItemTypeEnum } from '../types';
+import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 
@@ -34,21 +31,9 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
 }
 
 export type NodeWrapperProps = {
-  canDrag?: (item: DragItem) => boolean;
   children?: React.ReactNode;
   item: DragItem;
-  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
-  onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-  onMouseDown: (
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    obj: NodeItemType,
-  ) => void;
-  onMouseUp: (
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    obj: NodeItemType,
-  ) => void;
-  itemRef: React.RefObject<HTMLDivElement>;
-};
+} & DragAndDropType;
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
@@ -112,7 +97,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
     [itemToDrag, onDragStart],
   );
 
-  const [{ canDrop, isOverCurrent }, connectDrop] = useDrop(
+  const [, connectDrop] = useDrop(
     () => ({
       accept: [ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
@@ -132,7 +117,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         canDrop: monitor.canDrop(),
         isOverCurrent: monitor.isOver({ shallow: true }),
       }),
-      drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
+      drop: (dragTarget: NodeItemType) => {
         handleOnDrop(dragTarget, item);
       },
     }),
@@ -174,9 +159,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, {
-        canDrop,
         isDragging: isDragging && draggingNode?.type === item?.type,
-        isOverCurrent,
       })}
     >
       {children}

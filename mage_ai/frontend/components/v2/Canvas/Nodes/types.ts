@@ -1,7 +1,33 @@
+import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
-import { ConnectionType, PortType } from '../interfaces';
+import { ConnectionType, DragItem, NodeItemType, PortType } from '../interfaces';
+
+export type DragAndDropHandlersType = {
+  handlers: {
+    onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
+    onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+    onMouseDown: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      obj: NodeItemType,
+    ) => void;
+    onMouseUp: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      obj: NodeItemType,
+    ) => void;
+  };
+};
+
+export type DragAndDropType = DraggableType & DroppableType;
+
+export type DraggableType = {
+  itemRef?: React.RefObject<HTMLDivElement>;
+  canDrag?: (item: DragItem) => boolean;
+} & DragAndDropHandlersType['handlers'];
+
+export type DroppableType = DragAndDropHandlersType['handlers'];
 
 export type AsideType = {
   Icon?: IconType;

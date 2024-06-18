@@ -5,6 +5,7 @@ import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
 import { PortSubtypeEnum, ItemTypeEnum } from '../types';
+import { DragAndDropType } from '../Nodes/types';
 import { getNodeUUID } from './utils';
 import { getTransformedBoundingClientRect } from '../utils/rect';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -12,28 +13,21 @@ import { ElementRoleEnum } from '@mana/shared/types';
 type DraggablePortProps = {
   children: React.ReactNode;
   item: PortType;
-  itemRef: React.RefObject<HTMLDivElement>;
-  handleOnDrop: (source: NodeItemType, target: NodeItemType) => void;
-  handleMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
-  handleMouseUp: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
-  onMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
-};
+} & DragAndDropType;
 
 export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort({
   children,
   item,
   itemRef,
-  handleOnDrop,
-  handleMouseDown,
-  handleMouseUp,
   onDragStart,
-  onMount,
+  onDrop,
+  onMouseDown,
+  onMouseUp,
 }: DraggablePortProps) {
   const uuid = getNodeUUID(item);
   const phaseRef = useRef(0);
 
-  const [{ backgroundColor, isDragging }, connectDrag, preview] = useDrag(
+  const [, connectDrag] = useDrag(
     () => ({
       canDrag: (monitor: DragSourceMonitor) => {
         onDragStart(
@@ -56,7 +50,6 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
           opacity: isDragging ? 0.4 : 1,
         };
       },
-      // end: (item: DragItem, monitor) => null,
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
         return node.id === item.id;
@@ -70,14 +63,13 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   const [{ canDrop, isOver }, connectDrop] = useDrop(
     () => ({
       accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
-      canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => true,
       collect: monitor => ({
         canDrop: monitor.canDrop(),
         isOver: monitor.isOver(),
       }),
-      drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
+      drop: (dragTarget: NodeItemType) => {
         const { left, height, top, width } = itemRef?.current?.getBoundingClientRect() as RectType;
-        handleOnDrop(
+        onDrop(
           dragTarget,
           update(item, {
             rect: {
@@ -87,7 +79,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
         );
       },
     }),
-    [handleOnDrop, item],
+    [onDrop, item],
   );
 
   useEffect(() => {
@@ -95,33 +87,22 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
       if (phaseRef.current === 0) {
         connectDrag(itemRef);
         connectDrop(itemRef);
-
-        // Compute rect on mount
-        const rect = getTransformedBoundingClientRect(itemRef.current);
-        if (rect) {
-          console.log('Mount - rect:', rect);
-          onMount(update(item, { rect: { $set: rect as RectType } }), itemRef);
-        }
-        if (onMount) {
-          onMount?.(item, itemRef);
-        }
       }
 
       phaseRef.current += 1;
       console.log('Render port', phaseRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item, onMount]);
+  }, [item]);
 
   return (
     <div
       key={uuid}
-      onDragEnd={handleMouseUp}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      onDragEnd={event => onMouseUp(event, item)}
+      onMouseDown={event => onMouseDown(event, item)}
+      onMouseUp={event => onMouseUp(event, item)}
       onTouchStart={event => event.stopPropagation()}
     >
-
       <div
         ref={itemRef}
         role={[ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].join(' ')}
