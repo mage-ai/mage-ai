@@ -32,7 +32,7 @@ function getStyles(
   },
 ): CSSProperties {
   const { left, top } = rect || ({} as RectType);
-  const transform = `translate3d(${left}px, ${top}px, 0)`;
+  const transform = `translate3d(${left}px, ${top}px, 1)`;
   const backgroundColor = 'rgba(0, 0, 0, 0.1)';
 
   return {

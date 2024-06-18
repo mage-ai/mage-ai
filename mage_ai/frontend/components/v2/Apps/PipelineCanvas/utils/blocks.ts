@@ -155,8 +155,10 @@ export function initializeBlocksAndConnections(
       blockUpsDownsMapping[uuid].upstream_blocks[block.uuid] = block;
 
       const downstreamBlock = blocks.find((b) => b.uuid === uuid);
-      blockUpsDownsMapping[block.uuid].downstream_blocks ||= {};
-      blockUpsDownsMapping[block.uuid].downstream_blocks[uuid] = downstreamBlock;
+      if (downstreamBlock) {
+        blockUpsDownsMapping[block.uuid].downstream_blocks ||= {};
+        blockUpsDownsMapping[block.uuid].downstream_blocks[uuid] = downstreamBlock;
+      }
     });
 
     block?.upstream_blocks?.forEach((uuid: string) => {
@@ -168,8 +170,10 @@ export function initializeBlocksAndConnections(
       blockUpsDownsMapping[uuid].downstream_blocks[block.uuid] = block;
 
       const upstreamBlock = blocks.find((b) => b.uuid === uuid);
-      blockUpsDownsMapping[block.uuid].upstream_blocks ||= {};
-      blockUpsDownsMapping[block.uuid].upstream_blocks[uuid] = upstreamBlock;
+      if (upstreamBlock) {
+        blockUpsDownsMapping[block.uuid].upstream_blocks ||= {};
+        blockUpsDownsMapping[block.uuid].upstream_blocks[uuid] = upstreamBlock;
+      }
     });
 
     // Create item and rect
@@ -197,6 +201,8 @@ export function initializeBlocksAndConnections(
   }]) => {
     const block = blockMapping?.[blockUUID];
     const parentItem: DragItem = itemsMapping[blockUUID];
+
+    if (!parentItem) return;
 
     const inputs: PortType[] = [];
     const outputs: PortType[] = [];
