@@ -80,6 +80,7 @@ export function withStyles<P extends object = WithStylesProp>(
     {
       children,
       className,
+      id,
       uuid,
       ...props
     }: P & WithStylesProp,
@@ -100,6 +101,7 @@ export function withStyles<P extends object = WithStylesProp>(
       <HTMLTag
         {...extractProps(props)}
         className={classNames}
+        id={id}
         ref={mergeRefs(divRef, ref)}
       >
         {children && (children as React.ReactNode)}

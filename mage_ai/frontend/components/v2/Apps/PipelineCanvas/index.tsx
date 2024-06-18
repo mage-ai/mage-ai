@@ -373,7 +373,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         // console.log(connectionsRef.current);
         Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
           const { names } = getBlockColor(item?.block?.type, { getColorName: true });
-          console.log(item?.block?.type, names?.base, styles);
+          // console.log(item?.block?.type, names?.base, styles);
+          // console.log(styles);
           updatePaths(item, connectionsRef, {
             pathProps: {
               className: [

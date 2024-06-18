@@ -231,9 +231,11 @@ export function updatePaths(
     //   connection?.fromItem?.rect,
     //   connection?.toItem?.rect,
     // );
+    //
 
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);
+      // console.log(pathProps?.className, pathElement);
 
       if (pathElement) {
         const pathD = getPathD(
@@ -245,10 +247,10 @@ export function updatePaths(
         if (pathProps?.className?.length > 0) {
           pathProps?.className?.split(' ').forEach((className) => {
             pathElement.classList.add(className);
+            // console.log(className);
           });
         }
 
-        console.log(pathProps?.className);
         // pathElement.setAttribute('stroke', pathProps.className);
 
         pathElement.setAttribute('d', pathD);
