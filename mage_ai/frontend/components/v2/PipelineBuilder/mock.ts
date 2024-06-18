@@ -136,7 +136,7 @@ export const DataPreparationPipeline = {
   blocks: [
     {
       name: 'Ingest titanic data',
-      type: BlockTypeEnum.DATA_LOADER,
+      type: BlockTypeEnum.DATA_EXPORTER,
       groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.INGEST],
       downstream_blocks: ['serialize_and_map_documents'],
       upstream_blocks: [],

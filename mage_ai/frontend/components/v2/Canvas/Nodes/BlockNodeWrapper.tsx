@@ -127,8 +127,9 @@ export function BlockNodeWrapper({
   const node = useMemo(() => (
     <BlockNode
       block={block}
+      // Only use gradient borders when block selected
       borderConfig={{
-        borders,
+        borders: borders?.slice(0, 1),
       }}
       connections={connections}
       groups={groups}

@@ -9,6 +9,7 @@ const Path = withStyles<{
   fill?: string;
 }>(styles, {
   HTMLTag: 'path',
+  allowDynamicStyles: true,  // New property to signal dynamic styling
   classNames: ['path'],
 });
 
@@ -23,7 +24,7 @@ type PathProps = {
 const PathComponent = ({
   d,
   id,
-  stroke = 'grayhi',
+  stroke = 'gray',
   strokeWidth = '1.5',
   fill = 'none',
   ...rest
@@ -33,7 +34,7 @@ const PathComponent = ({
     d={d}
     fill={fill}
     id={id}
-    stroke={stroke}
+    stroke={stroke}  // Ensure stroke is passed
     strokeWidth={strokeWidth}
     {...rest}
   />

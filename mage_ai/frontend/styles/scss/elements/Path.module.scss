@@ -2,8 +2,7 @@
 
 .path {
   @include svg.fill-stroke-colors();
-
-  stroke-width: 1.5;
+  @include svg.stroke-width();
 
   &.fill-transparent {
     fill: transparent;
@@ -18,39 +17,3 @@
     stroke: none;
   }
 }
-
-
-/* Yes, you can apply a gradient stroke to an SVG path. You do this by defining a gradient element inside the SVG's `<defs>` section and then referencing that gradient from the path's `stroke` attribute. Here is an example:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVG Path with Gradient Stroke</title>
-</head>
-<body>
-    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-        <!-- Define the gradient -->
-        <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:rgb(255,255,0);stop-opacity:1" />
-                <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1" />
-            </linearGradient>
-        </defs>
-
-        <!-- Use the gradient for the stroke -->
-        <path id="myPath" d="M10 10 H 90 V 90 H 10 Z" fill="none" stroke="url(#grad1)" stroke-width="2"/>
-    </svg>
-</body>
-</html>
-```
-
-In this example:
-
-1. A `<linearGradient>` element is defined inside the `<defs>` section with the id `grad1`. This gradient goes from yellow at 0% to red at 100%.
-2. The path element references this gradient in its `stroke` attribute using `stroke="url(#grad1)"`.
-3. The `stroke-width` attribute is set to `2` to make the stroke width noticeable.
-
-You can also use radial gradients or more complex gradient configurations depending on your needs. */

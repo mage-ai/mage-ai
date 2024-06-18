@@ -6,6 +6,7 @@ type HOCProps = {
   HTMLTag?: keyof JSX.IntrinsicElements;
   PropTypes?: React.WeakValidationMap<any>;
   classNames?: string[];
+  allowDynamicStyles?: boolean;
 };
 
 export type GridType = {
@@ -74,7 +75,7 @@ export function withStyles<P extends object = WithStylesProp>(
   styles: any,
   propsHOC?: HOCProps,
 ) {
-  const { HTMLTag = 'div', PropTypes, classNames: baseClassNames } = propsHOC || ({} as HOCProps);
+  const { HTMLTag = 'div', PropTypes, classNames: baseClassNames, allowDynamicStyles = false } = propsHOC || ({} as HOCProps);
 
   return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
     {
@@ -97,11 +98,25 @@ export function withStyles<P extends object = WithStylesProp>(
       { className, uuid, ...props },
     );
 
+    // Build additional dynamic styles if allowed
+    const dynamicStyles = allowDynamicStyles ? {
+      fill: props.fill,
+      stroke: props.stroke,
+      strokeWidth: props.strokeWidth,
+    } : {};
+
+    const propsExtracted = extractProps(props);
+    if (allowDynamicStyles) {
+      propsExtracted.style = { ...propsExtracted.style, ...dynamicStyles };
+    }
+
     return (
+      // @ts-ignore
       <HTMLTag
-        {...extractProps(props)}
+        {...propsExtracted}
         className={classNames}
         id={id}
+        // @ts-ignore
         ref={mergeRefs(divRef, ref)}
       >
         {children && (children as React.ReactNode)}

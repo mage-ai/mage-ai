@@ -40,7 +40,8 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { indexBy } from '@utils/array';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import styles from '@styles/scss/elements/Path.module.scss';
+// import styles from '@styles/scss/elements/Path.module.scss';
+// import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
 
 const GRID_SIZE = 40;
 
@@ -376,12 +377,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           // console.log(item?.block?.type, names?.base, styles);
           // console.log(styles);
           updatePaths(item, connectionsRef, {
-            pathProps: {
-              className: [
-                styles.path,
-                styles[`stroke-${names?.base}`],
-              ].join(' '),
-            },
+            // pathProps: {
+            //   className: [
+            //     styles.path,
+            //     styles[`stroke-${names?.base}`],
+            //   ].join(' '),
+            // },
+            // stop0Props: {
+            //   classNames: [
+            //     stylesPathGradient.stop,
+            //     stylesPathGradient[`stop-color-${names?.base}`],
+            //   ],
+            // },
+            // stop1Props: {
+            //   classNames: [
+            //     stylesPathGradient.stop,
+            //     stylesPathGradient[`stop-color-${names?.base}`],
+            //   ],
+            // },
           });
         });
       }
@@ -415,11 +428,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       <ConnectionLines>
         {connections &&
           Object.values(connections || {}).map((connection: ConnectionType) => (
-            <ConnectionLine connection={connection} key={connectionUUID(connection)} />
+            <ConnectionLine
+              connection={connection}
+              key={connectionUUID(connection)}
+              stop0ColorName="gray"
+              stop1ColorName="graymd"
+            />
           ))}
         {connectionsDragging &&
           Object.values(connectionsDragging || {}).map((connection: ConnectionType) => (
-            <ConnectionLine connection={connection} key={connectionUUID(connection)} />
+            <ConnectionLine
+              connection={connection}
+              key={connectionUUID(connection)}
+              stop0ColorName="gray"
+              stop1ColorName="graymd"
+            />
           ))}
       </ConnectionLines>
 

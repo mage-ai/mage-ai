@@ -2,6 +2,9 @@ import update from 'immutability-helper';
 import { NodeItemType, PortType, RectType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { ConnectionType } from './interfaces';
+import { getBlockColor } from '@mana/themes/blocks';
+import styles from '@styles/scss/elements/Path.module.scss';
+import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
 
 export function createConnection(
   fromItem: NodeItemType,
@@ -121,11 +124,17 @@ export function updatePaths(
       };
     };
     pathProps?: {
-      className?: string;
+      classNames?: string[];
+    },
+    stop0Props?: {
+      classNames?: string[];
+    },
+    stop1Props?: {
+      classNames?: string[];
     },
   },
 ) {
-  const { onlyUpdateTypes, pathProps } = opts || {};
+  const { onlyUpdateTypes, pathProps, stop0Props, stop1Props } = opts || {};
   const { id, type } = node;
 
   const conns = getConnections(node, connectionsRef.current);
@@ -235,7 +244,7 @@ export function updatePaths(
 
     if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
       const pathElement = document.getElementById(connUUID);
-      // console.log(pathProps?.className, pathElement);
+      // console.log(pathProps?.classNames, pathElement);
 
       if (pathElement) {
         const pathD = getPathD(
@@ -244,14 +253,37 @@ export function updatePaths(
           connectionUpdate.toItem.rect,
         );
 
-        if (pathProps?.className?.length > 0) {
-          pathProps?.className?.split(' ').forEach((className) => {
-            pathElement.classList.add(className);
-            // console.log(className);
+        const element0 = document.getElementById(`${connUUID}-stop-0`);
+        const element1 = document.getElementById(`${connUUID}-stop-1`);
+
+        if (element0 && element1) {
+          const fromColor = getBlockColor(connectionUpdate?.fromItem?.parent?.block?.type)?.names?.base;
+          const toColor = getBlockColor(connectionUpdate?.toItem?.parent?.block?.type)?.names?.base;
+
+          [
+            stylesPathGradient.stop,
+            stylesPathGradient[`stop-color-${fromColor}`],
+          ].forEach((classNames) => {
+            element0.classList.add(classNames);
+          });
+
+          [
+            stylesPathGradient.stop,
+            stylesPathGradient[`stop-color-${toColor}`],
+          ].forEach((classNames) => {
+            element1.classList.add(classNames);
+          });
+        } else {
+          const colorName = getBlockColor(node?.block?.type)?.names?.base;
+          [
+            styles.path,
+            styles[`stroke-color-${colorName}`],
+          ].forEach((classNames) => {
+            pathElement.classList.add(classNames);
           });
         }
 
-        // pathElement.setAttribute('stroke', pathProps.className);
+        // pathElement.setAttribute('stroke', pathProps.classNames);
 
         pathElement.setAttribute('d', pathD);
         connectionsRef.current[connUUID] = connectionUpdate;
