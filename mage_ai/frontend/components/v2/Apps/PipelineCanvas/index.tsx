@@ -152,6 +152,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       portsRef.current = portsMapping;
 
       setItems(itemsMapping);
+      setConnections(connectionsMapping);
     }
 
     phaseRef.current += 1;
@@ -171,9 +172,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function onDrag(item: NodeItemType) {
     if (ItemTypeEnum.BLOCK === item.type) {
-      updatePaths(item, connectionsRef);
+      const ports = (item?.inputs || [])?.concat(item?.outputs || [])?.map(({ id }) => portsRef.current[id]);
+      ports.forEach((port) => {
+        const conn = connectionsRef.current[port.id];
+        if (conn) {
+          updatePortConnectionPaths(port, conn, connectionsRef, item.rect);
+        }
+      });
     } else if (ItemTypeEnum.PORT === item.type) {
-      updatePaths(item, connectionsDraggingRef);
+      const conn = connectionsRef.current[item.id];
+      if (conn) {
+        updatePortConnectionPaths(item as PortType, conn, connectionsDraggingRef);
+      }
     }
   }
 
@@ -314,56 +324,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       });
 
-      const portID = buildPortUUID(port);
+      console.log(port.id, connectionsRef.current[port.id], objectSize(connectionsRef.current));
+      portsRef.current[port.id] = port;
 
-      portsRef.current = update(portsRef.current || {}, {
-        [portID]: { $set: port },
-      });
-      // console.log(portID, portsRef.current);
-
-      const ready = Object.values(connectionsRef?.current || {})?.every(
-        (connection: ConnectionType) => {
-          const { fromItem, toItem } = connection;
-
-          if (
-            !fromItem ||
-            !toItem ||
-            (ItemTypeEnum.PORT !== fromItem?.type && ItemTypeEnum.PORT !== toItem?.type)
-          ) {
-            return true;
-          }
-
-          const connReady = [fromItem, toItem].every((item: PortType) => {
-            const uuid = buildPortUUID(item);
-            const port = portsRef?.current?.[uuid];
-            return port && ['left', 'top'].every((key: string) => port?.rect?.[key] ?? false);
-          });
-
-          if (connReady) {
-            const fromPort = portsRef?.current?.[connection?.fromItem?.id];
-            const toPort = portsRef?.current?.[connection?.toItem?.id];
-
-            const connectionUpdated = update(connection, {
-              fromItem: { $set: fromPort },
-              toItem: { $set: toPort },
-            });
-
-            if (connectionUpdated.id in connectionsRef.current) {
-              connectionsRef.current = update(connectionsRef.current, {
-                [connectionUpdated.id]: { $set: connectionUpdated },
-              });
-            }
-          }
-
-          return connReady;
-        },
-      );
-
-
-      if (ready) {
-        Object.values(portsRef?.current || {}).forEach((port: PortType) => {
-          updatePortConnectionPaths(port, connectionsRef);
-        });
+      if (port.id in connectionsRef.current) {
+        const conn = connectionsRef.current[port.id];
+        conn.fromItem = port;
+        connectionsRef.current[port.id] = conn;
+        updatePortConnectionPaths(port, conn, connectionsRef);
       }
     }
   }
@@ -391,8 +359,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   connectDrop(canvasRef);
 
   const nodesMemo = useMemo(() => phaseRef.current >= 1
-    && items
-    && objectSize(linesMounted) >= objectSize(connectionsRef?.current)
+    // && items
+    // && objectSize(linesMounted) >= objectSize(connectionsRef?.current)
     && Object.keys(items || items).map(key => (
       <BlockNodeWrapper
         frameworkGroups={frameworkGroups?.current}
@@ -418,10 +386,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             <ConnectionLine
               connection={connection}
               key={connection.id}
-              onMount={(uuid: string) => setLinesMounted((prev: Record<string, boolean>) => ({
-                ...prev,
-                [uuid]: true,
-              }))}
               stop0ColorName="gray"
               stop1ColorName="graymd"
             />

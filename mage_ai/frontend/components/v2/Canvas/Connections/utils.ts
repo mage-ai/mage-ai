@@ -5,7 +5,7 @@ import { ConnectionType } from '../interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import styles from '@styles/scss/elements/Path.module.scss';
 import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
-import { getBlockConnectionUUID } from '../Draggable/utils';
+import { getBlockConnectionUUID, buildPortID } from '../Draggable/utils';
 
 export function createConnection(
   fromItem: NodeItemType,
@@ -19,7 +19,7 @@ export function createConnection(
     toPosition: 'left',
   };
 
-  return {
+  const conn = {
     from: fromItem.id.toString(),
     fromItem,
     to: toItem.id.toString(),
@@ -27,6 +27,9 @@ export function createConnection(
     ...defaultOptions,
     ...options,
   };
+  conn.id = conn.from;
+
+  return conn as ConnectionType;
 }
 
 export function connectionUUID({ from, fromItem, to, toItem }: ConnectionType): string {
@@ -120,7 +123,7 @@ export function getConnections(
 }
 
 export function updatePaths(
-  node: NodeItemType,
+  node: DragItem,
   connectionsRef: {
     current: Record<string, ConnectionType>;
   },
@@ -295,74 +298,63 @@ export function updatePaths(
 }
 export function updatePortConnectionPaths(
   port: PortType,
+  conn: ConnectionType,
   connectionsRef: {
     current: Record<string, ConnectionType>;
   },
+  rectParent?: RectType,
 ) {
-  const conns = Object.values(connectionsRef?.current || {}).reduce((acc, connection) => connection.fromItem.id === port.id || connection.toItem.id === port.id
-    ? acc.concat(connection)
-    : acc, []);
+  const { fromItem, toItem } = conn;
+  const { parent, rect } = fromItem;
 
+  const offsetLeft = rect?.offsetLeft || 0;
+  const offsetTop = rect?.offsetTop || 0;
 
-  conns?.forEach((conn: ConnectionType) => {
-    if (!conn?.fromItem?.rect) {
-      return;
-    }
+  rect.left = (rectParent || parent?.rect || rect).left;
+  rect.top = (rectParent || parent?.rect || rect).top;
+  rect.left += offsetLeft;
+  rect.top += offsetTop;
+  fromItem.rect = rect;
+  conn.fromItem = fromItem;
+  connectionsRef.current[port.id] = conn;
 
-    console.log(conn.id, conn);
+  const pathElement = document.getElementById(String(port.id));
+  const pathD = getPathD(
+    conn,
+    rect,
+    toItem?.rect || toItem?.target?.rect,
+  );
+  pathElement.setAttribute('d', pathD);
 
-    const connection = conn;
-    const offsetLeft = conn?.fromItem?.rect?.offsetLeft || 0;
-    const offsetTop = conn?.fromItem?.rect?.offsetTop || 0;
+  const element0 = document.getElementById(`${conn.id}-stop-0`);
+  const element1 = document.getElementById(`${conn.id}-stop-1`);
+  if (element0 && element1) {
+    const fromColor = getBlockColor(fromItem?.block?.type)?.names?.base;
+    const toColor = getBlockColor(toItem?.block?.type)?.names?.base;
 
-    console.log(offsetLeft, offsetTop);
+    // Reverse the colors so that the port color is the same as the half side of the line
+    // that protrudes from the block.
+    [
+      stylesPathGradient.stop,
+      stylesPathGradient[`stop-color-${toColor}`],
+    ].forEach((classNames) => {
+      element0.classList.add(classNames);
+    });
 
-    connection.fromItem.rect.left  = connection.fromItem.parent.rect.left;
-    connection.fromItem.rect.top  = connection.fromItem.parent.rect.top;
+    [
+      stylesPathGradient.stop,
+      stylesPathGradient[`stop-color-${fromColor}`],
+    ].forEach((classNames) => {
+      element1.classList.add(classNames);
+    });
+  } else {
+    const colorName = getBlockColor(port?.block?.type)?.names?.base;
+    [
+      styles.path,
+      styles[`stroke-color-${colorName}`],
+    ].forEach((classNames) => {
+      pathElement.classList.add(classNames);
+    });
+  }
 
-    const rect = connection.fromItem.rect;
-
-
-    const rectTarget = connection?.toItem?.rect || connection?.toItem?.target?.rect;
-    const pathD = getPathD(connection, rect, rectTarget);
-
-    const pathElement = document.getElementById(connection.id);
-    const element0 = document.getElementById(`${connection.id}-stop-0`);
-    const element1 = document.getElementById(`${connection.id}-stop-1`);
-
-    if (element0 && element1) {
-      const fromColor = getBlockColor(connection?.fromItem?.block?.type)?.names?.base;
-      const toColor = getBlockColor(connection?.toItem?.block?.type)?.names?.base;
-
-      // Reverse the colors so that the port color is the same as the half side of the line
-      // that protrudes from the block.
-      [
-        stylesPathGradient.stop,
-        stylesPathGradient[`stop-color-${toColor}`],
-      ].forEach((classNames) => {
-        element0.classList.add(classNames);
-      });
-
-      [
-        stylesPathGradient.stop,
-        stylesPathGradient[`stop-color-${fromColor}`],
-      ].forEach((classNames) => {
-        element1.classList.add(classNames);
-      });
-      console.log('Gradient colors updaated to', fromColor, toColor, connection.id);
-    } else {
-      console.log('NO ELEMENT0 OR ELEMENT1');
-
-      const colorName = getBlockColor(port?.block?.type)?.names?.base;
-      [
-        styles.path,
-        styles[`stroke-color-${colorName}`],
-      ].forEach((classNames) => {
-        pathElement.classList.add(classNames);
-      });
-    }
-
-    pathElement.setAttribute('d', pathD);
-    connectionsRef.current[connection.id] = connection;
-  });
 }

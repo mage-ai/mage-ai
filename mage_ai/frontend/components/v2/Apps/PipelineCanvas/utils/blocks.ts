@@ -284,8 +284,7 @@ export function initializeBlocksAndConnections(
     // console.log(fromPort, toPort, port);
 
     const connection = createConnection(fromPort, toPort);
-    const id = connectionUUID(connection);
-    connectionsMapping[id] = update(connection, { id: { $set: id } });
+    connectionsMapping[connection.id] = connection;
   });
     // console.log('?????????????????????????????????', connectionsMapping);
 

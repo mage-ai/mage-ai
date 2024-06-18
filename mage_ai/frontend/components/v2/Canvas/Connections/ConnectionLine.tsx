@@ -29,32 +29,25 @@ export const ConnectionLine = memo(({
     dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
   }
 
-  useEffect(() => {
-    if (onMount) {
-      onMount?.(connUUID);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (stop0ColorName && stop1ColorName)
-  ? (
-    <PathGradient
-      d={dValue}
-      id={connUUID}
-      key={connUUID}
-      stop0ClassNames={[
-        'stop',
-        'stop-opacity-100',
-        `stop-color-${stop0ColorName}`,
-      ]}
-      stop1ClassNames={[
-        'stop',
-        'stop-opacity-100',
-        `stop-color-${stop1ColorName}`,
-      ]}
-    />
-  ): (
-    <Path
+    ? (
+      <PathGradient
+        d={dValue}
+        id={connUUID}
+        key={connUUID}
+        stop0ClassNames={[
+          'stop',
+          'stop-opacity-100',
+          `stop-color-${stop0ColorName}`,
+        ]}
+        stop1ClassNames={[
+          'stop',
+          'stop-opacity-100',
+          `stop-color-${stop1ColorName}`,
+        ]}
+      />
+    ): (
+      <Path
       d={dValue}
       id={connUUID}
       key={connUUID}
