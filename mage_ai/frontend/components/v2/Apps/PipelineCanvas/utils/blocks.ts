@@ -281,7 +281,9 @@ export function initializeBlocksAndConnections(
 
     const fromPort = fromItem?.outputs?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid);
     const toPort = toItem?.inputs?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid);
-    // console.log(fromPort, toPort, port);
+
+    fromPort.rect = { ...fromItem.rect };
+    toPort.rect = { ...toItem.rect };
 
     const connection = createConnection(fromPort, toPort);
     connectionsMapping[connection.id] = connection;
@@ -289,10 +291,10 @@ export function initializeBlocksAndConnections(
     // console.log('?????????????????????????????????', connectionsMapping);
 
   // console.log(
-  //   // blockUpsDownsMapping,
-  //   // itemsMapping,
-  //   // downFlowPorts,
-  //   // connectionsMapping,
+  // //   // blockUpsDownsMapping,
+  // //   // itemsMapping,
+  // //   // downFlowPorts,
+  //   connectionsMapping,
   // );
 
   return {

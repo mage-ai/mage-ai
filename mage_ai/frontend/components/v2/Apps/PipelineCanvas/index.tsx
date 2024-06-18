@@ -6,11 +6,12 @@ import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
+import { getConnectionsForItem } from '../../Canvas/utils/connections';
 import { CanvasStyled } from './index.style';
 import {
   DragItem,
   NodeItemType,
-  OffsetType,
+  ConnectionType,
   PortType,
   RectType,
   LayoutConfigType,
@@ -27,8 +28,8 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { ConnectionType } from '../../Canvas/Connections/interfaces';
-import { createConnection, updatePortConnectionPaths, getConnections, updatePaths } from '../../Canvas/Connections/utils';
+import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
+import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
@@ -82,7 +83,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
-  console.log('PipelineBuilder render');
 
   const layoutConfig = useMemo(
     () => ({
@@ -156,7 +156,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
 
     phaseRef.current += 1;
-    console.log('Canvas render', phaseRef.current);
 
     return () => {
       phaseRef.current = 0;
@@ -171,19 +170,35 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }, [pipelines, layoutConfig]);
 
   function onDrag(item: NodeItemType) {
-    if (ItemTypeEnum.BLOCK === item.type) {
-      const ports = (item?.inputs || [])?.concat(item?.outputs || [])?.map(({ id }) => portsRef.current[id]);
-      ports.forEach((port) => {
-        const conn = connectionsRef.current[port.id];
-        if (conn) {
-          updatePortConnectionPaths(port, conn, connectionsRef, item.rect);
-        }
+    updateAllPortConnectionsForItem(ItemTypeEnum.BLOCK === item.type
+      ? item
+      : (item as PortType).parent
+    , connectionsRef, portsRef);
+  }
+
+  function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
+    if (portRef.current) {
+      const rect = portRef.current.getBoundingClientRect();
+      const port = update(item, {
+        rect: {
+          $set: {
+            height: rect.height,
+            left: rect.left,
+            offsetLeft: portRef?.current?.offsetLeft,
+            offsetTop: portRef?.current?.offsetTop,
+            top: rect.top,
+            width: rect.width,
+          },
+        },
       });
-    } else if (ItemTypeEnum.PORT === item.type) {
-      const conn = connectionsRef.current[item.id];
-      if (conn) {
-        updatePortConnectionPaths(item as PortType, conn, connectionsDraggingRef);
+
+      portsRef.current[port.id] = port;
+      if (port.id in connectionsRef.current) {
+        const conn = connectionsRef.current[port.id];
+        conn.fromItem = port;
+        connectionsRef.current[port.id] = conn;
       }
+      updateAllPortConnectionsForItem(port?.parent, connectionsRef, portsRef);
     }
   }
 
@@ -197,7 +212,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    console.log('onDragStart', node?.type);
 
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       itemDraggingRef.current = node;
@@ -212,7 +226,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
-    // console.log('onDragging', node?.type);
 
     let rectOrigin = node?.rect;
 
@@ -307,34 +320,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items],
   );
-
-  function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
-    if (portRef.current) {
-      const rect = portRef.current.getBoundingClientRect();
-      const port = update(item, {
-        rect: {
-          $set: {
-            height: rect.height,
-            left: rect.left,
-            offsetLeft: portRef?.current?.offsetLeft,
-            offsetTop: portRef?.current?.offsetTop,
-            top: rect.top,
-            width: rect.width,
-          },
-        },
-      });
-
-      console.log(port.id, connectionsRef.current[port.id], objectSize(connectionsRef.current));
-      portsRef.current[port.id] = port;
-
-      if (port.id in connectionsRef.current) {
-        const conn = connectionsRef.current[port.id];
-        conn.fromItem = port;
-        connectionsRef.current[port.id] = conn;
-        updatePortConnectionPaths(port, conn, connectionsRef);
-      }
-    }
-  }
 
   const [, connectDrop] = useDrop(
     () => ({
@@ -464,7 +449,6 @@ export default function PipelineBuilderCanvas({
   return (
     <div
       onDoubleClick={(event: React.MouseEvent) => {
-        console.log('Add block...');
         // updateItem({
         //   id: randomSimpleHashGenerator(),
         //   rect: {
