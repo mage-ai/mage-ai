@@ -111,11 +111,11 @@ export const dig = (o, sArg) => {
 
 export function setNested(obj, path, value) {
   let schema = obj;
-  let pList = path.split('.');
-  let len = pList.length;
+  const pList = path.split('.');
+  const len = pList.length;
   for(let i = 0; i < len-1; i++) {
-    let elem = pList[i];
-    if( !schema[elem] ) schema[elem] = {}
+    const elem = pList[i];
+    if(!schema[elem]) schema[elem] = {};
     schema = schema[elem];
   }
 
@@ -151,4 +151,8 @@ export function mergeDeep(target, ...sources) {
   }
 
   return mergeDeep(target, ...sources);
+}
+
+export function objectSize(obj) {
+  return obj ? Object.keys(obj).length : 0;
 }

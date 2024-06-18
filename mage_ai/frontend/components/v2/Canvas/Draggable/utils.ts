@@ -3,7 +3,7 @@ import { DragItem, NodeItemType, PortType } from '../interfaces';
 import { PortSubtypeEnum, ItemTypeEnum } from '../types';
 
 export function buildPortID(fromUUID: string, toUUID: string) {
-  return [fromUUID, toUUID].join(':');
+  return [fromUUID, toUUID].join('-');
 }
 
 export function getBlockConnectionUUID(block: BlockType) {

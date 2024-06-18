@@ -30,7 +30,12 @@ export function createConnection(
 }
 
 export function connectionUUID({ from, fromItem, to, toItem }: ConnectionType): string {
-  if ((fromItem?.target?.block || fromItem?.block) && (toItem?.target?.block || toItem?.block)) {
+  if (fromItem?.block && toItem?.block) {
+    return [
+      fromItem?.block ? getBlockConnectionUUID(fromItem?.block) : '',
+      toItem?.block ? getBlockConnectionUUID(toItem?.block) : '',
+    ].join('-');
+  } else if ((fromItem?.target?.block || fromItem?.block) && (toItem?.target?.block || toItem?.block)) {
     return [
       getBlockConnectionUUID((fromItem?.target || fromItem)?.block),
       getBlockConnectionUUID((toItem?.target || toItem)?.block),
@@ -136,98 +141,122 @@ export function updatePaths(
   const { onlyUpdateTypes } = opts || {};
   const { id, type } = node;
 
-  const conns = getConnections(node, connectionsRef.current);
+  const isPort = ItemTypeEnum.PORT === node.type;
+
+  let conns = [];
+  if (isPort) {
+    conns = Object.values(connectionsRef?.current || {}).reduce((acc, connection) => {
+      return connection.fromItem.id === id || connection.toItem.id === id
+        ? acc.concat(connection)
+        : acc;
+      return acc;
+    }, []);
+  } else {
+    conns = getConnections(node, connectionsRef.current);
+  }
+
   conns?.forEach((connection: ConnectionType) => {
-    const connUUID = connectionUUID(connection);
+    let shouldUpdate = false;
+    let connectionUpdate = update(connection, {});
 
-    const { fromItem, toItem } = connection;
-    const isFrom = fromItem.type === type && fromItem.id === id;
-    const isTo = toItem.type === type && toItem.id === id;
-    const isFromParent = fromItem?.parent?.type === type && fromItem?.parent?.id === id;
-    const isToParent = toItem?.parent?.type === type && toItem?.parent?.id === id;
+    if (isPort && connectionUpdate.fromItem.rect) {
+      const rect = connectionUpdate?.fromItem?.parent?.rect || connectionUpdate?.fromItem?.rect;
+      const offsetLeft = connectionUpdate.fromItem?.rect?.offsetLeft || 0;
+      const offsetTop = connectionUpdate.fromItem?.rect?.offsetTop || 0;
 
-    const shouldUpdate = !onlyUpdateTypes
-      ? true
-      : (!onlyUpdateTypes?.fromItem || onlyUpdateTypes?.fromItem?.type === fromItem?.type) &&
-        (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type) &&
-        (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connUUID);
+      connectionUpdate.fromItem.parent.rect = rect;
+      connectionUpdate.fromItem.rect.left = rect.left + offsetLeft;
+      connectionUpdate.fromItem.rect.top = rect.top + offsetTop;
+      shouldUpdate = true;
+    } else {
+      const { fromItem, toItem } = connection;
+      const isFrom = fromItem.type === type && fromItem.id === id;
+      const isTo = toItem.type === type && toItem.id === id;
+      const isFromParent = fromItem?.parent?.type === type && fromItem?.parent?.id === id;
+      const isToParent = toItem?.parent?.type === type && toItem?.parent?.id === id;
 
-    if (!shouldUpdate) {
-      return;
-    }
+      shouldUpdate = !onlyUpdateTypes
+        ? true
+        : (!onlyUpdateTypes?.fromItem || onlyUpdateTypes?.fromItem?.type === fromItem?.type) &&
+          (!onlyUpdateTypes?.toItem || onlyUpdateTypes?.toItem?.type === toItem?.type) &&
+          (!onlyUpdateTypes?.connection || onlyUpdateTypes?.connection?.uuid === connection.id);
 
-    let connectionUpdate = null;
 
-    if (isFrom || isFromParent) {
-      if (isFromParent) {
-        if (connection?.fromItem?.rect) {
+      if (!shouldUpdate) {
+        return;
+      }
+
+      if (isFrom || isFromParent) {
+        if (isFromParent) {
+          if (connection?.fromItem?.rect) {
+
+            connectionUpdate = update(connection, {
+              fromItem: {
+                parent: {
+                  rect: {
+                    $merge: node.rect,
+                  },
+                },
+                rect: {
+                  left: {
+                    $set: node.rect.left + (connection.fromItem.rect.offsetLeft || 0),
+                  },
+                  top: {
+                    $set: node.rect.top + (connection.fromItem.rect.offsetTop || 0),
+                  },
+                },
+              },
+            });
+          }
+        } else {
           connectionUpdate = update(connection, {
             fromItem: {
-              parent: {
-                rect: {
-                  $merge: node.rect,
-                },
-              },
-              rect: {
-                left: {
-                  $set: node.rect.left + (connection.fromItem.rect.offsetLeft || 0),
-                },
-                top: {
-                  $set: node.rect.top + (connection.fromItem.rect.offsetTop || 0),
-                },
-              },
+              $merge: node,
             },
           });
         }
-      } else {
-        connectionUpdate = update(connection, {
-          fromItem: {
-            $merge: node,
-          },
-        });
-      }
-    } else if (isTo || isToParent) {
-      if (isToParent) {
-        if (connection?.toItem?.rect) {
+      } else if (isTo || isToParent) {
+        if (isToParent) {
+          if (connection?.toItem?.rect) {
+            connectionUpdate = update(connection, {
+              toItem: {
+                parent: {
+                  rect: {
+                    $merge: node.rect,
+                  },
+                },
+                rect: {
+                  left: {
+                    $set: node.rect.left + (connection.toItem.rect.offsetLeft || 0),
+                  },
+                  top: {
+                    $set: node.rect.top + (connection.toItem.rect.offsetTop || 0),
+                  },
+                },
+              },
+            });
+          }
+        } else {
           connectionUpdate = update(connection, {
             toItem: {
-              parent: {
-                rect: {
-                  $merge: node.rect,
-                },
-              },
-              rect: {
-                left: {
-                  $set: node.rect.left + (connection.toItem.rect.offsetLeft || 0),
-                },
-                top: {
-                  $set: node.rect.top + (connection.toItem.rect.offsetTop || 0),
-                },
-              },
+              $merge: node,
             },
           });
         }
-      } else {
-        connectionUpdate = update(connection, {
-          toItem: {
-            $merge: node,
-          },
-        });
       }
     }
 
-    if (connectionUpdate && connectionUpdate?.fromItem?.rect && connectionUpdate?.toItem?.rect) {
-      const pathElement = document.getElementById(connUUID);
+    if (shouldUpdate) {
+      const rect = connectionUpdate?.fromItem?.parent?.rect || connectionUpdate?.fromItem?.rect;
+      const rectTarget = connectionUpdate?.toItem?.rect || connectionUpdate?.toItem?.target?.rect;
+
+      const pathElement = document.getElementById(connectionUpdate.id);
 
       if (pathElement) {
-        const pathD = getPathD(
-          connectionUpdate,
-          connectionUpdate.fromItem.rect,
-          connectionUpdate.toItem.rect,
-        );
+        const pathD = getPathD(connectionUpdate, rect, rectTarget);
 
-        const element0 = document.getElementById(`${connUUID}-stop-0`);
-        const element1 = document.getElementById(`${connUUID}-stop-1`);
+        const element0 = document.getElementById(`${connectionUpdate.id}-stop-0`);
+        const element1 = document.getElementById(`${connectionUpdate.id}-stop-1`);
 
         if (element0 && element1) {
           const fromColor = getBlockColor(connectionUpdate?.fromItem?.block?.type)?.names?.base;
@@ -259,7 +288,7 @@ export function updatePaths(
         }
 
         pathElement.setAttribute('d', pathD);
-        connectionsRef.current[connUUID] = connectionUpdate;
+        connectionsRef.current[connectionUpdate.id] = connectionUpdate;
       }
     }
   });

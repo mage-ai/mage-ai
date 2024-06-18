@@ -54,6 +54,7 @@ export interface ConnectionType {
   from: string; // ID of the source node
   fromItem?: PortType; // Reference to the source node
   fromPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection starts
+  id: string;
   to: string; // ID of the destination node
   toItem?: PortType; // Reference to the destination node
   toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends

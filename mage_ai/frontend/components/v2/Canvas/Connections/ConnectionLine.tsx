@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 
 import Path from '@mana/elements/Path';
 import PathGradient from '@mana/elements/PathGradient';
@@ -7,12 +7,14 @@ import { connectionUUID, getPathD } from './utils';
 
 type ConnectionLineProps = {
   connection: ConnectionType;
+  onMount?: (uuid: string) => void;
   stop0ColorName?: string;
   stop1ColorName?: string;
 };
 
 export const ConnectionLine = memo(({
   connection,
+  onMount,
   stop0ColorName,
   stop1ColorName,
 }: ConnectionLineProps) => {
@@ -27,14 +29,19 @@ export const ConnectionLine = memo(({
     dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
   }
 
-  const key = connectionUUID(connection);
+  useEffect(() => {
+    if (onMount) {
+      onMount?.(connUUID);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (stop0ColorName && stop1ColorName)
   ? (
     <PathGradient
       d={dValue}
       id={connUUID}
-      key={key}
+      key={connUUID}
       stop0ClassNames={[
         'stop',
         'stop-opacity-100',
@@ -50,7 +57,7 @@ export const ConnectionLine = memo(({
     <Path
       d={dValue}
       id={connUUID}
-      key={key}
+      key={connUUID}
     />
   );
 });

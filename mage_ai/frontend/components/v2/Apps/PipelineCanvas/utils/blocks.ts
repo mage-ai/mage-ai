@@ -189,7 +189,7 @@ export function initializeBlocksAndConnections(
   });
 
   const downFlowPorts = {};
-
+  // console.log('OMGGGGGGGGGGGGGGGGGGG', blockUpsDownsMapping);
   // Create ports
   Object.entries(blockUpsDownsMapping)?.forEach(([blockUUID, map]: [string, {
     downstream_blocks: Record<string, BlockType>,
@@ -258,22 +258,36 @@ export function initializeBlocksAndConnections(
     });
   });
 
+  // Create connections; the fromItem and toItem MUST be ports, NOT blocks.
   Object.values(downFlowPorts)?.forEach((port: PortType) => {
-    let fromItem = null;
-    let toItem = null;
+    let fromItemBlock = null;
+    let toItemBlock = null;
 
     if (PortSubtypeEnum.INPUT === port?.subtype) {
-      fromItem = port.target;
-      toItem = port.parent;
+      fromItemBlock = port?.target?.block;
+      toItemBlock = port?.parent?.block;
     } else {
-      fromItem = port.parent;
-      toItem = port.target;
+      fromItemBlock = port?.parent?.block;
+      toItemBlock = port?.target?.block;
     }
 
-    const connection = createConnection(fromItem, toItem);
+    // console.log('OMGGGGGGGGGGGGGGGGGGG@@@@@@@@@@@@@@', port, fromItemBlock, toItemBlock);
+
+    // itemsMapping.inputs.target
+
+    const fromItem = itemsMapping[fromItemBlock.uuid];
+    const toItem = itemsMapping[toItemBlock.uuid];
+    // console.log(fromItem, toItem, port);
+
+    const fromPort = fromItem?.outputs?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid);
+    const toPort = toItem?.inputs?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid);
+    // console.log(fromPort, toPort, port);
+
+    const connection = createConnection(fromPort, toPort);
     const id = connectionUUID(connection);
-    connectionsMapping[id] = connection;
+    connectionsMapping[id] = update(connection, { id: { $set: id } });
   });
+    // console.log('?????????????????????????????????', connectionsMapping);
 
   // console.log(
   //   // blockUpsDownsMapping,

@@ -28,7 +28,7 @@ import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { ConnectionType } from '../../Canvas/Connections/interfaces';
-import { createConnection, connectionUUID, getConnections, updatePaths } from '../../Canvas/Connections/utils';
+import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
@@ -39,6 +39,7 @@ import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { indexBy } from '@utils/array';
+import { objectSize } from '@utils/hash';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 // import styles from '@styles/scss/elements/Path.module.scss';
@@ -98,6 +99,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const itemsRef = useRef<Record<string, DragItem>>(null);
   const connectionsDraggingRef = useRef<Record<string, ConnectionType>>(null);
   const itemDraggingRef = useRef<NodeItemType | null>(null);
+  const [linesMounted, setLinesMounted] = useState<Record<string, boolean>>({});
 
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
   const [connectionsDragging, setConnectionsDraggingState] =
@@ -195,7 +197,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           id: { $set: randomSimpleHashGenerator() },
         }),
       );
-      setConnectionsDragging({ [connectionUUID(connection)]: connection });
+      setConnectionsDragging({ [connection.id]: connection });
     }
   }
 
@@ -287,7 +289,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             parent: { $set: items?.[(dropTarget as PortType)?.parent?.id] },
           }),
         );
-        setConnections({ [connectionUUID(connection)]: connection });
+        setConnections({ [connection.id]: connection });
       }
 
       resetAfterDrop();
@@ -314,9 +316,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       const portID = buildPortUUID(port);
 
-      portsRef.current = update(portsRef.current, {
+      portsRef.current = update(portsRef.current || {}, {
         [portID]: { $set: port },
       });
+      // console.log(portID, portsRef.current);
 
       const ready = Object.values(connectionsRef?.current || {})?.every(
         (connection: ConnectionType) => {
@@ -337,22 +340,30 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           });
 
           if (connReady) {
+            const fromPort = portsRef?.current?.[connection?.fromItem?.id];
+            const toPort = portsRef?.current?.[connection?.toItem?.id];
+
             const connectionUpdated = update(connection, {
-              fromItem: { $set: portsRef?.current?.[buildPortUUID(fromItem)] },
-              toItem: { $set: portsRef?.current?.[buildPortUUID(toItem)] },
+              fromItem: { $set: fromPort },
+              toItem: { $set: toPort },
             });
-            connectionsRef.current = update(connectionsRef.current, {
-              [connectionUUID(connectionUpdated)]: { $set: connectionUpdated },
-            });
+
+            if (connectionUpdated.id in connectionsRef.current) {
+              connectionsRef.current = update(connectionsRef.current, {
+                [connectionUpdated.id]: { $set: connectionUpdated },
+              });
+            }
           }
 
           return connReady;
         },
       );
 
+      // console.log('UPDATE???????????????', ready);
+
       if (ready) {
-        Object.values(itemsRef?.current || {}).forEach((item: NodeItemType) => {
-          updatePaths(item, connectionsRef);
+        Object.values(portsRef?.current || {}).forEach((port: PortType) => {
+          updatePaths(port, connectionsRef);
         });
       }
     }
@@ -380,8 +391,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   );
   connectDrop(canvasRef);
 
-  const nodesMemo = useMemo(() => phaseRef.current >= 1 && items &&
-    Object.keys(items || items).map(key => (
+  const nodesMemo = useMemo(() => phaseRef.current >= 1
+    && items
+    && objectSize(linesMounted) >= objectSize(connectionsRef?.current)
+    && Object.keys(items || items).map(key => (
       <BlockNodeWrapper
         frameworkGroups={frameworkGroups?.current}
         handlers={{
@@ -396,7 +409,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         onMountPort={onMountPort}
       />
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    )), [items]);
+    )), [items, linesMounted]);
 
   return (
     <>
@@ -405,7 +418,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           Object.values(connections || {}).map((connection: ConnectionType) => (
             <ConnectionLine
               connection={connection}
-              key={connectionUUID(connection)}
+              key={connection.id}
+              onMount={(uuid: string) => setLinesMounted((prev: Record<string, boolean>) => ({
+                ...prev,
+                [uuid]: true,
+              }))}
               stop0ColorName="gray"
               stop1ColorName="graymd"
             />
@@ -414,7 +431,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           Object.values(connectionsDragging || {}).map((connection: ConnectionType) => (
             <ConnectionLine
               connection={connection}
-              key={connectionUUID(connection)}
+              key={connection.id}
               stop0ColorName="gray"
               stop1ColorName="graymd"
             />
