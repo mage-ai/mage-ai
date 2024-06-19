@@ -264,3 +264,6 @@ export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => a
     return arr3.includes(i);
   });
 }
+export function flattenArray(arr: any[]): any[] {
+  return arr.reduce((flat, toFlatten) => flat.concat(Array.isArray(toFlatten) ? flattenArray(toFlatten) : toFlatten), []);
+}

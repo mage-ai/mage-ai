@@ -15,11 +15,13 @@ export interface OffsetType {
 }
 
 export interface RectType {
+  diff?: RectType;
   id?: string;
   offset?: OffsetType;
   height?: number;
   left: number;
   top: number;
+  version?: number;
   width?: number;
 }
 

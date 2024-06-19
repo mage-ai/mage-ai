@@ -28,18 +28,19 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
+import { repositionGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
-import { indexBy } from '@utils/array';
+import { groupBy, indexBy, flattenArray } from '@utils/array';
 import { objectSize } from '@utils/hash';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
@@ -83,11 +84,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
+  const groupItemsBy = (block: BlockType) => block?.pipeline?.uuid;
 
   const layoutConfig = useMemo(
     () => ({
-      direction: LayoutConfigDirectionEnum.VERTICAL,
-      origin: LayoutConfigDirectionOriginEnum.TOP,
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      origin: LayoutConfigDirectionOriginEnum.LEFT,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [],
@@ -98,6 +100,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemsRef = useRef<Record<string, DragItem>>({});
+  const itemsMetadataRef = useRef<Record<string, any>>({
+    rect: {},
+  });
   const phaseRef = useRef<number>(0);
   const portsRef = useRef<Record<string, PortType>>({});
 
@@ -126,6 +131,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     setConnections(connectionsRef.current);
   }
 
+  function updateItemsMetadata(data?: {
+    version?: number;
+  }) {
+    const { version } = data ?? {};
+    itemsMetadataRef.current.rect.version = version ?? ((itemsMetadataRef.current.rect.version ?? 0) + 1);
+  }
+
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
       const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
@@ -141,15 +153,15 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         Object.values(blocksMapping),
         {
           containerRect: containerRef?.current?.getBoundingClientRect(),
-          groupBy: ({ pipeline }) => pipeline?.uuid,
+          groupBy: groupItemsBy,
           layout: layoutConfig,
         },
       );
 
       frameworkGroups.current = groupBlocksByGroups(pipelineExecutionFramework);
-
       connectionsRef.current = connectionsMapping;
       portsRef.current = portsMapping;
+      updateItemsMetadata();
 
       setItems(itemsMapping);
       setConnections(connectionsMapping);
@@ -165,6 +177,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       frameworkGroups.current = null;
       itemDraggingRef.current = null;
       itemsRef.current = {};
+      itemsMetadataRef.current = {
+        rect: {},
+      };
       phaseRef.current = 0;
       portsRef.current = {};
     };
@@ -177,6 +192,52 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       ? item
       : (item as PortType).parent
     , connectionsRef, portsRef);
+  }
+  console.log(items);
+
+  function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
+    const rectVersion = itemsMetadataRef.current.rect.version;
+
+    console.log(rectVersion, item?.rect?.version);
+
+    if (itemRef.current && item?.rect?.version !== rectVersion) {
+      const rect = itemRef.current.getBoundingClientRect();
+
+      const newItem = update(item, {
+        rect: {
+          $set: {
+            diff: item?.rect,
+            height: rect.height,
+            left: rect.left,
+            offset: {
+              left: itemRef?.current?.offsetLeft,
+              top: itemRef?.current?.offsetTop,
+            },
+            top: rect.top,
+            version: rectVersion,
+            width: rect.width,
+          },
+        },
+      });
+
+      itemsRef.current[newItem.id] = newItem;
+    }
+
+    const arr = Object.values(itemsRef.current || {});
+    const versions = arr?.map(({ rect }) => rect?.version ?? 0);
+
+    console.log(
+      versions?.every((version: number) => version === rectVersion),
+      versions,
+    );
+
+    if (versions?.every((version: number) => version === rectVersion)) {
+      const groups1 = groupBy(arr, (item: DragItem) => groupItemsBy(item?.block));
+      const groups2 = repositionGroups(groups1);
+
+      itemsRef.current = indexBy(flattenArray(Object.values(groups2)), (item: DragItem) => item.id);
+      setItems(itemsRef.current);
+    }
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -364,6 +425,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         }}
         item={item}
         key={key}
+        onMountItem={onMountItem}
         onMountPort={onMountPort}
       />
       // eslint-disable-next-line react-hooks/exhaustive-deps

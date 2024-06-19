@@ -5,10 +5,11 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { NodeItemType, PortType } from '../interfaces';
+import { NodeItemType, PortType, DragItem } from '../interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
+  onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
 };
@@ -19,8 +20,11 @@ export function BlockNodeWrapper({
   item,
   handlers,
   onMountPort,
+  onMountItem,
 }: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
+  const phaseRef = useRef(0);
+
   const portElementRefs = useRef<Record<string, any>>({});
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
@@ -96,6 +100,14 @@ export function BlockNodeWrapper({
 
     return arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
   }, [names, ports]);
+
+  useEffect(() => {
+    if (itemRef.current && phaseRef.current === 0 && onMountItem) {
+      onMountItem?.(item, itemRef);
+    }
+    phaseRef.current += 1;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <NodeWrapper

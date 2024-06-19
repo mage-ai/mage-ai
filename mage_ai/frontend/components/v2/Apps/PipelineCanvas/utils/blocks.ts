@@ -10,151 +10,33 @@ import {
 } from '../../../Canvas/types';
 import { createConnection, connectionUUID } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
+import { SetupOpts, determinePositions } from '../../../Canvas/utils/rect';
 
-function determinePositions(
-  blocks: BlockType[],
-  opts: {
-    blockHeight: number;
-    blockWidth: number;
-    horizontalSpacing: number;
-    layoutDirection: LayoutConfigDirectionEnum;
-    verticalSpacing: number;
-  },
-): Record<string, { left: number; top: number }> {
-  const {
-    blockHeight,
-    blockWidth,
-    horizontalSpacing,
-    layoutDirection,
-    verticalSpacing,
-  } = opts;
-
-  const positions: Record<string, { left: number; top: number }> = {};
-  const levels: Record<string, number> = {};
-
-  let maxLevel = 0;
-
-  function determineLevel(block: BlockType): number {
-    if (levels[block.uuid] !== undefined) {
-      return levels[block.uuid];
-    }
-    if (block.upstream_blocks.length === 0) {
-      levels[block.uuid] = 0;
-    } else {
-      levels[block.uuid] = Math.max(
-        ...block.upstream_blocks.map((upstreamId) => {
-          const upstreamBlock = blocks.find((b) => b.uuid === upstreamId);
-          return upstreamBlock ? determineLevel(upstreamBlock) + 1 : 0;
-        }),
-      );
-    }
-    maxLevel = Math.max(maxLevel, levels[block.uuid]);
-    return levels[block.uuid];
-  }
-
-  blocks.forEach(determineLevel);
-
-  const isHorizontal = layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL;
-
-  const columns: Record<number, number[]> = {};
-  const rows: Record<number, number[]> = {};
-
-  for (let i = 0; i <= maxLevel; i++) {
-    if (isHorizontal) {
-      columns[i] = [20];
-    } else {
-      rows[i] = [20];
-    }
-  }
-
-  function getNextAvailablePosition(level: number, index: number, parentPosition?: { left: number; top: number }): { left: number; top: number } {
-    const offsetIndex = (index % 2 === 0 ? 0.1 : -0.1);
-    const actualHorizontalSpacing = horizontalSpacing * (1 + offsetIndex);
-    const actualVerticalSpacing = verticalSpacing * (1 + offsetIndex);
-
-    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
-      const top = level * (blockHeight + verticalSpacing) + 20;
-      let left;
-      if (parentPosition) {
-        left = parentPosition.left + blockWidth + actualHorizontalSpacing;
-      } else {
-        left = columns[level].reduce((a, b) => Math.max(a, b)) + blockWidth + actualHorizontalSpacing;
-      }
-      return { left, top };
-    } else {
-      const left = level * (blockWidth + horizontalSpacing) + 20;
-      let top;
-      if (parentPosition) {
-        top = parentPosition.top + blockHeight + actualVerticalSpacing;
-      } else {
-        top = rows[level].reduce((a, b) => Math.max(a, b)) + blockHeight + actualVerticalSpacing;
-      }
-      return { left, top };
-    }
-  }
-
-  blocks.forEach((block, idx: number) => {
-    const level = levels[block.uuid];
-    let position;
-
-    if (block.upstream_blocks.length > 0) {
-      const parentPosition = positions[block.upstream_blocks[0]];
-      position = getNextAvailablePosition(level, idx, parentPosition);
-    } else {
-      position = getNextAvailablePosition(level, idx);
-    }
-
-    positions[block.uuid] = position;
-
-    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
-      columns[level].push(position.left);
-    } else {
-      rows[level].push(position.top);
-    }
-  });
-
-  return positions;
-}
 
 // Now, we update the initializeBlocksAndConnections function.
 export function initializeBlocksAndConnections(
   blocks: BlockType[],
-  opts?: {
-    blockHeight?: number;
-    blockWidth?: number;
-    horizontalSpacing?: number;
-    groupBy?: (block: BlockType) => string;
-    layout?: LayoutConfigType;
-    containerRect?: RectType;
-    verticalSpacing?: number;
-  },
+  opts?: SetupOpts,
 ) {
   const {
-    blockHeight = 200,
-    blockWidth = 300,
-    horizontalSpacing = 50,
-    layout,
+    blockHeight,
+    blockWidth,
     containerRect,
-    verticalSpacing = 200,
   } = opts || {};
-
-  // Doesn’t change to vertical...
-  const {
-    direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: layoutOrigin = LayoutConfigDirectionOriginEnum.LEFT,
-  } = layout || ({} as LayoutConfigType);
 
   const itemsMapping: Record<string, DragItem> = {};
   const connectionsMapping: Record<string, ConnectionType> = {};
   const portsMapping: Record<string, PortType> = {};
 
   const positions = determinePositions(blocks, {
-    blockHeight,
-    blockWidth,
-    horizontalSpacing,
-    layoutDirection,
-    verticalSpacing,
+    ...opts,
+    blockHeight: 100,
+    blockWidth: 100,
+    horizontalSpacing: 100,
+    verticalSpacing: 100,
   });
+
+  console.log(positions);
 
   const { height, width } = containerRect || { height: 0, width: 0 };
   const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
@@ -338,3 +220,33 @@ export function initializeBlocksAndConnections(
     portsMapping: portsMappingFinal,
   };
 }
+
+// function getNextAvailablePosition(
+//   level: number,
+//   index: number,
+//   parentPosition?: { left: number; top: number },
+// ): { left: number; top: number } {
+//   const offsetIndex = (index % 2 === 0 ? 0.1 : -0.1);
+//   const actualHorizontalSpacing = horizontalSpacing * (1 + offsetIndex);
+//   const actualVerticalSpacing = verticalSpacing * (1 + offsetIndex);
+
+//   if (isHorizontal) {
+//     const top = level * (blockHeight + verticalSpacing) + 20;
+//     let left;
+//     if (parentPosition) {
+//       left = parentPosition.left + blockWidth + actualHorizontalSpacing;
+//     } else {
+//       left = columns[level].reduce((a, b) => Math.max(a, b)) + blockWidth + actualHorizontalSpacing;
+//     }
+//     return { left, top };
+//   } else {
+//     const left = level * (blockWidth + horizontalSpacing) + 20;
+//     let top;
+//     if (parentPosition) {
+//       top = parentPosition.top + blockHeight + actualVerticalSpacing;
+//     } else {
+//       top = rows[level].reduce((a, b) => Math.max(a, b)) + blockHeight + actualVerticalSpacing;
+//     }
+//     return { left, top };
+//   }
+// }
