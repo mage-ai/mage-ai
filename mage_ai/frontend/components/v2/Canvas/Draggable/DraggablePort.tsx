@@ -75,7 +75,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
 
   const [{ canDrop, isOver }, connectDrop] = useDrop(
     () => ({
-      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
+      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
       collect: monitor => ({
         canDrop: monitor.canDrop(),
         isOver: monitor.isOver(),

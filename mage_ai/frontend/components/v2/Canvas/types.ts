@@ -17,8 +17,7 @@ export enum PortSubtypeEnum {
 
 export enum ItemTypeEnum {
   BLOCK = 'block',
-  BOX = 'box',
-  CARD = 'card',
+  NODE = 'node',
   PORT = 'port',
 }
 

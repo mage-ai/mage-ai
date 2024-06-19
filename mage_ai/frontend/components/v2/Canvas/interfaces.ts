@@ -36,6 +36,7 @@ export interface DragItem extends BaseItem {
   groups?: string[];
   inputs?: PortType[];
   isDragging?: boolean;
+  node?: NodeType;
   outputs?: PortType[];
   rect?: RectType;
   title?: string;

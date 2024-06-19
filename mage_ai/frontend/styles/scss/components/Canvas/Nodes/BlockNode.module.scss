@@ -6,3 +6,29 @@
   padding: var(--padding-base);
   min-width: 312px;
 }
+
+@mixin hidden {
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nodeWrapper {
+  &.focus-level-0 {
+    &.block {
+    }
+
+    &.node {
+      @include hidden;
+    }
+  }
+
+  &.focus-level-1 {
+    &.block {
+      @include hidden;
+    }
+
+    &.node {
+    }
+  }
+}

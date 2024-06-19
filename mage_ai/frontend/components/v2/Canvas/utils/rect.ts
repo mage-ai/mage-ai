@@ -395,7 +395,16 @@ export function layoutItemsInGroups(
 
     return acc.concat({
       ...node,
-      items: itemsCentered,
+      items: itemsCentered?.map((item: DragItem) => ({
+        ...item,
+        node: {
+          ...node,
+          items: itemsCentered?.map(() => ({
+            id: item?.id,
+            rect: item?.rect,
+          })),
+        },
+      })),
     });
   }, []);
 }

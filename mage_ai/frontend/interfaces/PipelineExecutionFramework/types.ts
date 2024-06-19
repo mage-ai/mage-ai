@@ -35,6 +35,7 @@ export enum GroupUUIDEnum {
   TOKENIZATION = 'tokenization',
   TRANSFORM = 'transform',
   VECTOR_DATABASE = 'vector_database',
+  NONE = 'none',
 }
 
 export const GroupMapping = {

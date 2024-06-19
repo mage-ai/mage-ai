@@ -103,7 +103,7 @@ export const InferencePipelineExecutionFramework: PipelineExecutionFrameworkType
       groups: [GroupUUIDEnum.RESPONSE_GENERATION],
     },
   ],
-}
+};
 
 export const DataPreparationPipelineExecutionFramework: PipelineExecutionFrameworkType = {
   name: 'Data preparation',
@@ -375,9 +375,6 @@ export const DataPreparationPipelineExecutionFramework: PipelineExecutionFramewo
 });
 
 export const RAGPipelineExecutionFramework: PipelineExecutionFrameworkType = {
-  name: PipelineExecutionFrameworkUUIDEnum.RAG,
-  uuid: PipelineExecutionFrameworkUUIDEnum.RAG,
-  type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
   blocks: [
     {
       uuid: GroupUUIDEnum.DATA_PREPARATION,
@@ -387,5 +384,12 @@ export const RAGPipelineExecutionFramework: PipelineExecutionFrameworkType = {
       uuid: GroupUUIDEnum.INFERENCE,
       type: BlockTypeEnum.PIPELINE,
     },
+    {
+      uuid: GroupUUIDEnum.NONE,
+      type: BlockTypeEnum.GROUP,
+    },
   ],
-}
+  name: PipelineExecutionFrameworkUUIDEnum.RAG,
+  type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  uuid: PipelineExecutionFrameworkUUIDEnum.RAG,
+};

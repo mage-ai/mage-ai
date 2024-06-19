@@ -1,6 +1,5 @@
 import update from 'immutability-helper';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
@@ -32,7 +31,7 @@ import { layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
-import { buildNodeGroups } from './utils/groups';
+import { buildNodeGroups } from './utils/nodes';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
@@ -42,12 +41,12 @@ import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { countOccurrences, groupBy, indexBy, flattenArray } from '@utils/array';
 import { ignoreKeys, objectSize } from '@utils/hash';
+import { FocusLevelEnum, FOCUS_LEVELS } from './types';
 import PipelineExecutionFrameworkType, {
   PipelineExecutionFrameworkBlockType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-// import styles from '@styles/scss/elements/Path.module.scss';
-// import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 
 const GRID_SIZE = 40;
 
@@ -88,8 +87,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
-  const groupItemsBy = (item: DragItem) => item?.block?.pipeline?.uuid;
-
   const layoutConfig = useMemo(
     () => ({
 
@@ -101,16 +98,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
   const connectionsRef = useRef<Record<string, ConnectionType>>({});
   const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
+  const focusLevelRef = useRef<number>(FocusLevelEnum.DEFAULT);
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemsRef = useRef<Record<string, DragItem>>({});
-  const itemsMetadataRef = useRef<Record<string, any>>({
-    rect: {},
-  });
+  const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
+  const nodeItemsRef = useRef<Record<string, NodeType>>({});
+  const itemsElementRef = useRef<Record<ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>>>({});
   const phaseRef = useRef<number>(0);
   const pipelinesRef = useRef<Record<string, PipelineType>>({});
   const portsRef = useRef<Record<string, PortType>>({});
 
-  const [linesMounted, setLinesMounted] = useState<Record<string, boolean>>({});
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
@@ -190,6 +187,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     return () => {
       phaseRef.current = 0;
+      focusLevelRef.current = 0;
 
       connectionsDraggingRef.current = {};
       connectionsRef.current = {};
@@ -199,6 +197,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsMetadataRef.current = {
         rect: {},
       };
+      nodeItemsRef.current = {};
       phaseRef.current = 0;
       pipelinesRef.current = {};
       portsRef.current = {};
@@ -214,10 +213,44 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     , connectionsRef, portsRef);
   }
 
+  function setFocusLevel(level: FocusLevelEnum) {
+    focusLevelRef.current = level;
+
+    Object.entries(
+      itemsElementRef?.current || {},
+    )?.forEach(([itemType, mapping]: [ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>]) => {
+      Object.entries(mapping)?.forEach(([id, elementRef]: [string, React.RefObject<HTMLDivElement>]) => {
+        const item = itemsRef?.current?.[id];
+        if (!item || !elementRef?.current) return;
+
+        elementRef?.current?.classList?.add(styles[String(itemType)]);
+
+        FOCUS_LEVELS.forEach((focusLevel: FocusLevelEnum) => {
+          const className = styles[`focus-level-${focusLevel}`];
+          focusLevel === level
+            ? elementRef?.current?.classList?.add(className)
+            : elementRef?.current?.classList?.remove(className);
+        });
+
+        if (ItemTypeEnum.NODE === itemType) {
+          const node = nodeItemsRef?.current?.[id];
+          if (node?.rect) {
+            node?.rect;
+          }
+        }
+      });
+    });
+  }
+
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
     const rectVersion = itemsMetadataRef.current.rect.version;
+    const { id, type } = item;
 
-    if (itemRef.current && item?.rect?.version !== rectVersion) {
+    if (!itemRef.current) return;
+
+    if (ItemTypeEnum.BLOCK === type) {
+      if (item?.rect?.version === rectVersion) return;
+
       const rect = itemRef.current.getBoundingClientRect();
 
       const newItem = update(item, {
@@ -237,31 +270,47 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       });
 
-      itemsRef.current[newItem.id] = newItem;
+      itemsRef.current[id] = newItem;
+
+      const arr = Object.values(itemsRef.current || {});
+      const versions = arr?.map(({ rect }) => rect?.version ?? 0);
+
+      if (versions?.every((version: number) => version === rectVersion)) {
+        const [nodes] = buildNodeGroups(arr);
+        const nodesGroupedArr = layoutItemsInGroups(nodes, {
+          boundingRect: canvasRef?.current?.getBoundingClientRect(),
+          containerRect: containerRef?.current?.getBoundingClientRect(),
+          direction: LayoutConfigDirectionEnum.HORIZONTAL,
+          gap: {
+            column: 100,
+            row: 100,
+          },
+          origin: LayoutConfigDirectionOriginEnum.LEFT,
+        });
+
+        const itemsMapping = {};
+        const nodesGrouped = {};
+        nodesGroupedArr?.forEach((node: NodeType) => {
+          node?.items?.forEach((itemNode: DragItem) => {
+            itemsMapping[itemNode.id] = item;
+          });
+          nodesGrouped[node.id] = node;
+        });
+
+        itemsRef.current = itemsMapping;
+        nodeItemsRef.current = nodesGrouped;
+        setItems(itemsRef.current);
+        setFocusLevel(FocusLevelEnum.GROUPS);
+      }
+    } else if (ItemTypeEnum.NODE === type) {
     }
 
-    const arr = Object.values(itemsRef.current || {});
-    const versions = arr?.map(({ rect }) => rect?.version ?? 0);
-
-    if (versions?.every((version: number) => version === rectVersion)) {
-      const [nodes] = buildNodeGroups(arr);
-      const nodesGrouped = layoutItemsInGroups(nodes, {
-        boundingRect: canvasRef?.current?.getBoundingClientRect(),
-        containerRect: containerRef?.current?.getBoundingClientRect(),
-        direction: LayoutConfigDirectionEnum.HORIZONTAL,
-        gap: {
-          column: 100,
-          row: 100,
-        },
-        origin: LayoutConfigDirectionOriginEnum.LEFT,
-      });
-
-      itemsRef.current = indexBy(
-        flattenArray(nodesGrouped?.map((node: NodeType) => node.items)),
-        (node: NodeType) => node.id,
-      );
-      setItems(itemsRef.current);
+    if (!itemsElementRef?.current) {
+      itemsElementRef.current = {};
     }
+
+    itemsElementRef.current[type] ||= {};
+    itemsElementRef.current[type][id] = itemRef;
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -415,7 +464,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
+      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
         if (!monitor.isOver({ shallow: true })) {
           return false;
@@ -434,10 +483,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   );
   connectDrop(canvasRef);
 
-  const nodesMemo = useMemo(() => phaseRef.current >= 1
-    // && items
-    // && objectSize(linesMounted) >= objectSize(connectionsRef?.current)
-    && Object.entries(items || {}).map(([key, item]) => (
+  console.log(nodeItemsRef?.current);
+
+  const nodesMemo = useMemo(() =>
+     [
+      ...Object.values(items || {}),
+      ...Object.values(nodeItemsRef?.current || {}),
+    ]?.map((node: NodeType) => (
       <BlockNodeWrapper
         frameworkGroups={frameworkGroups?.current}
         handlers={{
@@ -447,13 +499,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           onMouseDown,
           onMouseUp,
         }}
-        item={item}
-        key={key}
+        item={node}
+        key={node.id}
         onMountItem={onMountItem}
         onMountPort={onMountPort}
       />
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    )), [items, linesMounted]);
+    ))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  , [items]);
 
   return (
     <>

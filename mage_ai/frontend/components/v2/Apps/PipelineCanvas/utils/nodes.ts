@@ -1,7 +1,8 @@
 import { DragItem, NodeType } from '../../../Canvas/interfaces';
+import { ItemTypeEnum } from '../../../Canvas/types';
 
 export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
-  const ungrouped = [];
+  const itemsUngrouped = [];
   const groups = {};
 
   items?.forEach((item: DragItem) => {
@@ -10,6 +11,7 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
         groups[groupID] ||= {
           id: groupID,
           items: [],
+          type: ItemTypeEnum.NODE,
           upstreamNodes: [],
         };
         groups[groupID].items.push(item);
@@ -18,14 +20,15 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
           if (!(groups[groupID].upstreamNodes ?? []).find((node: NodeType) => node.id === nodeID)) {
             groups[groupID].upstreamNodes.push({
               id: nodeID,
+              type: ItemTypeEnum.NODE,
             });
           }
         });
       });
     } else {
-      ungrouped.push(item);
+      itemsUngrouped.push(item);
     }
   });
 
-  return [Object.values(groups), ungrouped];
+  return [Object.values(groups), itemsUngrouped];
 }

@@ -25,10 +25,16 @@ export function BlockNodeWrapper({
 }: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
-
   const portElementRefs = useRef<Record<string, any>>({});
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
+  const block = item?.block;
+  const {
+    name,
+    pipeline,
+    type,
+    uuid,
+  } = block || {};
   const { onMouseDown, onMouseUp } = handlers;
 
   function handleMouseDown(
@@ -56,15 +62,6 @@ export function BlockNodeWrapper({
       onMountPort(port, portRef);
     }
   }
-
-  const block = item?.block;
-  const {
-    name,
-    pipeline,
-    type,
-    uuid,
-  } = block;
-
   const groups = useMemo(() => block?.groups?.reduce((acc, group) => ({
     ...acc,
     [group]: frameworkGroups?.[group],

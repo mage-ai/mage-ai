@@ -5,6 +5,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
@@ -105,6 +106,10 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 
   return (
     <div
+      className={[
+        styles.nodeWrapper,
+        styles[itemToDrag?.type],
+      ].join(' ')}
       onDragEnd={event => onDragEnd(event, item)}
       onDragStart={event => onDragStart(event, item)}
       onMouseDown={event => onMouseDown(event, item)}
