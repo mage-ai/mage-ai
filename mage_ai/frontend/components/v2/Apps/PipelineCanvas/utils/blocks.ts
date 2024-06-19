@@ -1,59 +1,28 @@
 import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
 import { DragItem, PortType, LayoutConfigType, RectType } from '../../../Canvas/interfaces';
-import { buildPortUUID, getBlockConnectionUUID } from '../../../Canvas/Draggable/utils';
+import { buildPortUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
   ItemTypeEnum,
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../../../Canvas/types';
-import { createConnection, connectionUUID } from '../../../Canvas/Connections/utils';
+import { createConnection } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
-import { SetupOpts, determinePositions } from '../../../Canvas/utils/rect';
+import { SetupOpts, determinePositions, layoutRectsInContainer } from '../../../Canvas/utils/rect';
 
 
-// Now, we update the initializeBlocksAndConnections function.
 export function initializeBlocksAndConnections(
-  blocks: BlockType[],
+  blocksInit: BlockType[],
   opts?: SetupOpts,
 ) {
-  const {
-    blockHeight,
-    blockWidth,
-    containerRect,
-  } = opts || {};
-
-  const itemsMapping: Record<string, DragItem> = {};
-  const connectionsMapping: Record<string, ConnectionType> = {};
-  const portsMapping: Record<string, PortType> = {};
-
-  const positions = determinePositions(blocks, {
-    ...opts,
-    blockHeight: 100,
-    blockWidth: 100,
-    horizontalSpacing: 100,
-    verticalSpacing: 100,
-  });
-
-  console.log(positions);
-
-  const { height, width } = containerRect || { height: 0, width: 0 };
-  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
-  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
-  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
-  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
-  const offsetX = (width - (maxLeft - minLeft)) / 2;
-  const offsetY = (height - (maxTop - minTop)) / 2;
-
-  const blockMapping: Record<string, BlockType> = {};
   const blockUpsDownsMapping: Record<string, {
     downstream_blocks: Record<string, BlockType>,
     upstream_blocks: Record<string, BlockType>,
   }> = {};
 
-  blocks.forEach((block: BlockType) => {
-    blockMapping[block.uuid] = block;
+  blocksInit.forEach((block: BlockType) => {
     blockUpsDownsMapping[block.uuid] ||= {
       downstream_blocks: {},
       upstream_blocks: {},
@@ -67,7 +36,7 @@ export function initializeBlocksAndConnections(
       blockUpsDownsMapping[uuid].upstream_blocks ||= {};
       blockUpsDownsMapping[uuid].upstream_blocks[block.uuid] = block;
 
-      const downstreamBlock = blocks.find((b) => b.uuid === uuid);
+      const downstreamBlock = blocksInit.find((b) => b.uuid === uuid);
       if (downstreamBlock) {
         blockUpsDownsMapping[block.uuid].downstream_blocks ||= {};
         blockUpsDownsMapping[block.uuid].downstream_blocks[uuid] = downstreamBlock;
@@ -82,28 +51,42 @@ export function initializeBlocksAndConnections(
       blockUpsDownsMapping[uuid].downstream_blocks ||= {};
       blockUpsDownsMapping[uuid].downstream_blocks[block.uuid] = block;
 
-      const upstreamBlock = blocks.find((b) => b.uuid === uuid);
+      const upstreamBlock = blocksInit.find((b) => b.uuid === uuid);
       if (upstreamBlock) {
         blockUpsDownsMapping[block.uuid].upstream_blocks ||= {};
         blockUpsDownsMapping[block.uuid].upstream_blocks[uuid] = upstreamBlock;
       }
     });
-
-    // Create item and rect
-    const position = positions[block.uuid];
-    itemsMapping[block.uuid] = {
-      block,
-      id: block.uuid,
-      rect: {
-        height: blockHeight,
-        left: position.left + offsetX,
-        top: position.top + offsetY,
-        width: blockWidth,
-      },
-      title: block.name,
-      type: ItemTypeEnum.BLOCK,
-    };
   });
+
+  const blocks: BlockType[] = [];
+  const blockMapping: Record<string, BlockType> = {};
+  blocksInit.forEach((block: BlockType) => {
+    const block2 = {
+      ...block,
+      ...Object.entries(blockUpsDownsMapping[block.uuid] || {}).reduce((
+        acc, [key, obj]: [string, Record<string, BlockType>]
+      ) => ({
+        ...acc,
+        [key]: Object.values(obj)?.map(b => b.uuid),
+      }), {}),
+    };
+
+    blocks.push(block2);
+    blockMapping[block.uuid] = block2;
+  });
+
+  const itemsInit: DragItem[] = blocks?.map(block => ({
+    block,
+    id: block.uuid,
+    title: block.name || block.uuid,
+    type: ItemTypeEnum.BLOCK,
+  })) as DragItem[];
+  const positions = determinePositions(itemsInit, opts);
+
+  const itemsMapping: Record<string, DragItem> = layoutRectsInContainer(itemsInit, positions, opts?.containerRect)
+  const connectionsMapping: Record<string, ConnectionType> = {};
+  const portsMapping: Record<string, PortType> = {};
 
   const downFlowPorts = {};
   // Create ports

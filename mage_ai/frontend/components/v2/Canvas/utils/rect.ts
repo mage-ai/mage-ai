@@ -1,86 +1,83 @@
 import update from 'immutability-helper';
 
 import BlockType from '@interfaces/BlockType';
-import { DragItem, PortType, LayoutConfigType, RectType } from '../interfaces';
+import { DragItem, LayoutConfigType, RectType } from '../interfaces';
 import {
   LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
 } from '../types';
+import { indexBy } from '@utils/array';
+
+type GroupType = { items: DragItem[], position: { left: number; top: number } };
 
 export type SetupOpts = {
-  blockHeight?: number;
-  blockWidth?: number;
   horizontalSpacing?: number;
-  groupBy?: (block: BlockType) => string;
+  itemRect?: RectType;
+  groupBy?: (item: DragItem) => string;
   layout?: LayoutConfigType;
   containerRect?: RectType;
   verticalSpacing?: number;
 };
 
-export function getTransformedBoundingClientRect(element: HTMLElement) {
-  const rect = element.getBoundingClientRect();
-  let { left: offsetX, top: offsetY } = rect;
-  const { width, height } = rect;
+export function layoutRectsInContainer(
+  items: DragItem[],
+  positions: Record<string, { left: number; top: number }>,
+  containerRect: RectType,
+): Record<string, DragItem> {
+  const { height, width } = containerRect || { height: 0, width: 0 };
+  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
+  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
+  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
+  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
+  const offsetX = (width - (maxLeft - minLeft)) / 2;
+  const offsetY = (height - (maxTop - minTop)) / 2;
 
-  let el = element;
-  while (el) {
-    const computedStyle = window.getComputedStyle(el);
-    const transform = computedStyle.transform;
+  const itemsMapping: Record<string, DragItem> = {};
 
-    if (transform && transform !== 'none') {
-      const matrix = new DOMMatrix(transform);
+  items.forEach((item: DragItem) => {
+    const position = positions[item.id];
 
-      // We transform the offset position using the matrix
-      const transformedPoint = new DOMPoint(offsetX, offsetY).matrixTransform(matrix);
-      offsetX = transformedPoint.x;
-      offsetY = transformedPoint.y;
-    }
+    itemsMapping[item.id] = {
+      ...item,
+      rect: {
+        ...item?.rect,
+        left: position.left + offsetX,
+        top: position.top + offsetY,
+      },
+    };
+  });
 
-    if (!el.offsetParent) break;
-    el = el.offsetParent as HTMLElement;
-  }
-
-  return {
-    x: offsetX,
-    y: offsetY,
-    width,
-    height,
-    left: offsetX,
-    top: offsetY,
-    right: offsetX + width,
-    bottom: offsetY + height,
-  };
+  return itemsMapping;
 }
 
 export function determinePositions(
-  blocks: ({
-    id: number | string;
-    upstream_blocks: number[] | string[];
-    uuid: number | string;
-  } | BlockType)[],
+  items: DragItem[],
   opts?: SetupOpts,
 ): Record<string, RectType> {
+  const blocks = items?.map(i => i?.block);
+  const itemsByBlock = indexBy(items, i => i?.block?.uuid);
+
   const {
-    blockHeight = 100,
-    blockWidth = 100,
+    itemRect = { height: 100, width: 100 },
+    groupBy,
     horizontalSpacing = 100,
     layout,
     verticalSpacing = 100,
-    groupBy,
   } = opts || {};
 
   const {
     direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: layoutOrigin = 'left',
   } = layout || {
     direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: 'left',
+    origin: LayoutConfigDirectionOriginEnum.LEFT,
   };
 
   const positions: Record<string, { left: number; top: number }> = {};
   const levels: Record<string, number> = {};
   let maxLevel = 0;
 
-  function determineLevel(block: BlockType): number {
+  function determineLevel(item: DragItem): number {
+    const block = item.block;
     if (levels[block.uuid] !== undefined) {
       return levels[block.uuid];
     }
@@ -88,9 +85,9 @@ export function determinePositions(
       levels[block.uuid] = 0;
     } else {
       levels[block.uuid] = Math.max(
-        ...block?.upstream_blocks?.map((upstreamId) => {
+        ...block?.upstream_blocks?.map((upstreamId: string) => {
           const upstreamBlock = blocks.find((b) => b.uuid === upstreamId);
-          return upstreamBlock ? determineLevel(upstreamBlock as BlockType) + 1 : 0;
+          return upstreamBlock ? determineLevel(itemsByBlock[upstreamBlock?.uuid]) + 1 : 0;
         }),
       );
     }
@@ -98,32 +95,29 @@ export function determinePositions(
     return levels[block.uuid];
   }
 
-  blocks.forEach(determineLevel);
+  items.forEach(determineLevel);
 
-  const groups: Record<string, { blocks: BlockType[], position: { left: number; top: number } }> = {};
+  const groups: Record<string, GroupType> = {};
 
   if (groupBy) {
-    blocks.forEach((block) => {
-      const groupKey = groupBy(block as BlockType);
+    items.forEach((item) => {
+      const groupKey = groupBy(item);
       if (!groups[groupKey]) {
-        groups[groupKey] = { blocks: [], position: null };
+        groups[groupKey] = { items: [], position: null };
       }
-      groups[groupKey].blocks.push(block as BlockType);
+      groups[groupKey].items.push(item);
     });
   } else {
-    groups['default'] = { blocks: blocks as any, position: { left: 0, top: 0 } };
+    groups['default'] = { items, position: { left: 0, top: 0 } };
   }
 
   const currentGroupOffset = { left: 0, top: 0 };
   const padding = 20; // Additional padding for groups
 
-  Object.entries(groups).forEach(([groupKey, group], groupIndex) => {
-    const groupBlocks = group.blocks.map(block => ({
-      ...((block as { rect: RectType })?.rect ?? {
-        height: blockHeight,
-        width: blockWidth,
-      }),
-      id: block.uuid ?? (block as { id: number })?.id,
+  Object.values(groups).forEach((group: GroupType, groupIndex: number) => {
+    const groupBlocks = group.items.map(item => ({
+      ...(item?.rect ?? itemRect),
+      id: item.id,
       left: 0,
       top: 0,
     }));

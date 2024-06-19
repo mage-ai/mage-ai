@@ -96,7 +96,7 @@ function updateConnectionPaths(
     ].forEach((classNames) => {
       element1.classList.add(classNames);
     });
-  } else {
+  } else if (pathElement) {
     const colorName = getBlockColor(port?.block?.type)?.names?.base;
     [
       styles.path,

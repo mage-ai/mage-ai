@@ -84,7 +84,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   onDragStart: onDragStartProp,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
-  const groupItemsBy = (block: BlockType) => block?.pipeline?.uuid;
+  const groupItemsBy = (item: DragItem) => item?.block?.pipeline?.uuid;
 
   const layoutConfig = useMemo(
     () => ({
