@@ -12,6 +12,7 @@ import {
   NodeItemType,
   ConnectionType,
   PortType,
+  NodeType,
   RectType,
   LayoutConfigType,
 } from '../../Canvas/interfaces';
@@ -31,6 +32,7 @@ import { layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
+import { buildNodeGroups } from './utils/groups';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
@@ -242,30 +244,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
     if (versions?.every((version: number) => version === rectVersion)) {
-      const ungrouped = [];
-      const groups = {};
-      arr?.forEach((item: DragItem) => {
-        if (item?.block?.groups) {
-          item?.block?.groups?.forEach((groupID) => {
-            groups[groupID] ||= {
-              items: [],
-              upstreamGroups: [],
-            };
-            groups[groupID].items.push(item);
-            (item?.block?.upstream_blocks ?? [])?.forEach((upstreamGroupID: string) => {
-              if (!groups[groupID].upstreamGroups.includes(upstreamGroupID)) {
-                groups[groupID].upstreamGroups.push(upstreamGroupID);
-              }
-            });
-          });
-        } else {
-          ungrouped.push(item);
-        }
-      });
-
-      console.log(groups);
-
-      const itemsGrouped = layoutItemsInGroups(groups, {
+      const [nodes] = buildNodeGroups(arr);
+      const nodesGrouped = layoutItemsInGroups(nodes, {
         boundingRect: canvasRef?.current?.getBoundingClientRect(),
         containerRect: containerRef?.current?.getBoundingClientRect(),
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
@@ -275,7 +255,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
         origin: LayoutConfigDirectionOriginEnum.LEFT,
       });
-      itemsRef.current = indexBy(flattenArray(Object.values(itemsGrouped)), (item: DragItem) => item.id);
+
+      itemsRef.current = indexBy(
+        flattenArray(nodesGrouped?.map((node: NodeType) => node.items)),
+        (node: NodeType) => node.id,
+      );
       setItems(itemsRef.current);
     }
   }

@@ -33,11 +33,13 @@ interface BaseItem {
 
 export interface DragItem extends BaseItem {
   block?: BlockType;
+  groups?: string[];
   inputs?: PortType[];
   isDragging?: boolean;
   outputs?: PortType[];
   rect?: RectType;
   title?: string;
+  upstreamItems?: DragItem[];
 }
 
 export interface PortType extends DragItem {
@@ -45,6 +47,12 @@ export interface PortType extends DragItem {
   parent: DragItem; // Always references the block that the port belongs to.
   target: DragItem; // Always references the block that the port is connected to that isn’t the current block.
   subtype: PortSubtypeEnum;
+}
+
+export interface NodeType extends DragItem {
+  items: (DragItem | NodeType)[];
+  ports: PortType[];
+  upstreamNodes?: (DragItem | NodeType)[];
 }
 
 export interface LayoutConfigType {

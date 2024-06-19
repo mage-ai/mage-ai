@@ -1,7 +1,7 @@
 import update from 'immutability-helper';
 
 import BlockType from '@interfaces/BlockType';
-import { DragItem, LayoutConfigType, RectType } from '../interfaces';
+import { DragItem, LayoutConfigType, NodeType, RectType } from '../interfaces';
 import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
@@ -317,23 +317,19 @@ function applyRectDiff(rect: RectType, diff: RectType): RectType {
   };
 }
 
-type ItemGroup = {
-  items: DragItem[];
-  upstreamGroups: string[];
-};
-
 export function layoutItemsInGroups(
-  groups: Record<string, ItemGroup>,
+  nodes: NodeType[],
   layout: LayoutConfigType,
-): Record<string, DragItem[]> {
+): NodeType[] {
   const {
     boundingRect,
     containerRect,
   } = layout;
 
-  const groupsMapping = {};
+  const groupsMapping: Record<string, NodeType> = {};
 
-  Object.entries(groups || {})?.forEach(([groupID, { items }]: [string, ItemGroup]) => {
+  nodes?.forEach((node: NodeType) => {
+    const { items = [] } = node;
     const itemsByID = indexBy(items || [], (item: DragItem) => item?.block?.uuid);
     const items2 = items?.map((item: DragItem) => ({
       ...item,
@@ -356,60 +352,52 @@ export function layoutItemsInGroups(
     }));
     const box = calculateBoundingBox(rects);
 
-    groupsMapping[groupID] = {
+    groupsMapping[node.id] = {
+      ...node,
       items: items3,
       rect: box,
-      uuid: groupID,
     };
   });
 
-  Object.values(groupsMapping || {}).forEach(({ rect, items, uuid }) => {
-    const itemGroup = groups[uuid];
-
-    groupsMapping[uuid] = {
-      items,
+  Object.values(groupsMapping || {}).forEach((node: NodeType) => {
+    groupsMapping[node.id] = {
+      ...node,
       rect: {
-        ...rect,
-        upstreamRects: uniqueArray(itemGroup.upstreamGroups ?? []).reduce(
-          (acc: RectType[], id: string) => {
-            const rect = groupsMapping[id]?.rect;
-            return rect ? acc.concat({ ...rect, id }) : acc;
+        ...node?.rect,
+        upstreamRects: (node.upstreamNodes ?? []).reduce(
+          (acc: RectType[], node2: NodeType) => {
+            const rect = groupsMapping[node2.id]?.rect;
+            return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
           }, []),
       },
-      uuid,
     };
   });
 
-  const rectsTree0 = Object.entries(
+  const rectsTree0 = Object.values(
     groupsMapping || {},
-  )?.map(([id, item]: [string, { rect: RectType }]) => ({ ...item.rect, id }));
-  console.log('rectsTree0', rectsTree0);
-  const rectsTree1 = layoutRectsInTreeFormation(rectsTree0, layout);
-  console.log('rectsTree1', rectsTree1);
-  const rectsTree2 = centerRects(rectsTree1, boundingRect, containerRect);
-  console.log('rectsTree2', rectsTree2);
+  )?.map((node: NodeType) => ({ ...node.rect, id: node?.id }));
+  const rectsInTree = layoutRectsInTreeFormation(rectsTree0, layout);
+  const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
 
-  return rectsTree2.reduce((acc, groupRect: RectType) => {
-    const {
-      items,
-    } = groupsMapping[groupRect.id];
-    const rectItems = items?.map((item: DragItem) => item?.rect);
+  return rectsCentered.reduce((acc, rect: RectType) => {
+    const node = groupsMapping[rect.id];
+    const items = node?.items ?? [];
+    const rects = items?.map((item: DragItem) => item?.rect);
 
-    const itemsBox = calculateBoundingBox(rectItems);
-    const centerRect = calculateCentroid([groupRect]);
-    const diff = getRectDiff(itemsBox, centerRect);
+    const box = calculateBoundingBox(rects);
+    const centerRect = calculateCentroid([rect]);
+    const diff = getRectDiff(box, centerRect);
 
     const itemsCentered = items?.map((item: DragItem) => ({
       ...item,
       rect: applyRectDiff(item?.rect, diff),
     }));
-    console.log('itemsCentered', itemsCentered);
 
-    return {
-      ...acc,
-      [groupRect.id]: itemsCentered,
-    };
-  }, {});
+    return acc.concat({
+      ...node,
+      items: itemsCentered,
+    });
+  }, []);
 }
 
 function updateItemRect(item: DragItem, rect: RectType) {
