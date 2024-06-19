@@ -8,7 +8,7 @@ import {
 } from '../../../Canvas/types';
 import { createConnection } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
-import { SetupOpts, determinePositions, layoutItemsInContainer, layoutItemsInTreeFormation } from '../../../Canvas/utils/rect';
+import { SetupOpts, layoutItems, layoutRectsInContainer, layoutItemsInTreeFormation } from '../../../Canvas/utils/rect';
 import { indexBy } from '@utils/array';
 import { layout } from 'styled-system';
 
@@ -84,9 +84,12 @@ export function initializeBlocksAndConnections(
     type: ItemTypeEnum.BLOCK,
   })) as DragItem[];
 
-  const positions = determinePositions(itemsInit, opts);
-  const itemsInContainer = layoutItemsInContainer(itemsInit, positions, opts?.containerRect);
-  const rectItems = layoutItemsInTreeFormation(itemsInContainer, opts?.layout);
+  let rects = layoutItems(itemsInit, opts);
+  rects = layoutRectsInContainer(rects, opts?.containerRect);
+  const rectItems = layoutItemsInTreeFormation(itemsInit.map((i, idx) => ({
+    ...i,
+    rect: rects[idx],
+  })), opts?.layout);
   const itemsMapping: Record<string, DragItem> = indexBy(rectItems, i => i.id);
 
   const downFlowPorts = {};

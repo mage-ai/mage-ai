@@ -45,10 +45,10 @@ function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): Re
   }));
 }
 
-export function determinePositions(
+export function layoutItems(
   items: DragItem[],
   opts?: SetupOpts,
-): Record<string, RectType> {
+): RectType[] {
   const blocks = items?.map(i => i?.block);
   const itemsByBlock = indexBy(items, i => i?.block?.uuid);
 
@@ -69,7 +69,7 @@ export function determinePositions(
     },
   } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
 
-  const positions: Record<string, { left: number; top: number }> = {};
+  const positions: RectType[] = [];
   const levels: Record<string, number> = {};
   let maxLevel = 0;
 
@@ -121,12 +121,12 @@ export function determinePositions(
 
     const groupedRects = groupRectangles(groupBlocks as RectType[], Math.max(gap?.column, gap?.row));
 
-    groupedRects.forEach(({ id, left, top, ...rect }) => {
-      positions[id] = {
+    groupedRects.forEach(({ left, top, ...rect }) => {
+      positions.push({
         ...(rect ?? itemRect),
         left: currentGroupOffset.left + left,
         top: currentGroupOffset.top + top,
-      };
+      });
     });
 
     const groupWidth = Math.max(...groupedRects.map(rect => rect.left + rect.width));
@@ -145,33 +145,24 @@ export function determinePositions(
   return positions;
 }
 
-export function layoutItemsInContainer(
-  items: DragItem[],
-  positions: Record<string, RectType>,
+export function layoutRectsInContainer(
+  rects: RectType[],
   containerRect: RectType,
-): DragItem[] {
+): RectType[] {
   // This function lays out items within a container by centering them.
   const { height, width } = containerRect || { height: 0, width: 0 };
-  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
-  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
-  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
-  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
+  const minLeft = Math.min(...rects.map(r => r.left));
+  const minTop = Math.min(...rects.map(r => r.top));
+  const maxLeft = Math.max(...rects.map(r => r.left));
+  const maxTop = Math.max(...rects.map(r => r.top));
   const offsetX = (width - (maxLeft - minLeft)) / 2;
   const offsetY = (height - (maxTop - minTop)) / 2;
 
-  return items.map((item: DragItem) => {
-    const rect = positions[item.id];
-
-    return {
-      ...item,
-      rect: {
-        ...rect,
-        ...item?.rect,
-        left: rect.left + offsetX,
-        top: rect.top + offsetY,
-      },
-    };
-  });
+  return rects.map((rect: RectType) => ({
+    ...rect,
+    left: rect.left + offsetX,
+    top: rect.top + offsetY,
+  }));
 }
 
 export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutConfigType): DragItem[] {
@@ -180,12 +171,13 @@ export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutCon
     ...layout?.itemRect,
     ...item.rect,
     id: item.id,
-    upstreamRects: item?.block?.upstream_blocks.map((id: string) => mapping[id].rect),
+    upstreamRects: item?.block?.upstream_blocks.map((id: string) => mapping[id]?.rect || {
+      ...layout?.itemRect,
+      id,
+    }),
   }));
 
   const rects = layoutRectsInTreeFormation(rectItems, layout);
-
-  console.log(rects);
 
   return rects.map(rect => ({ ...mapping[rect.id], rect }));
 }

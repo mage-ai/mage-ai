@@ -6,7 +6,6 @@ import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import { getConnectionsForItem } from '../../Canvas/utils/connections';
 import { CanvasStyled } from './index.style';
 import {
   DragItem,
@@ -151,7 +150,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         Object.values(blocksMapping),
         {
           containerRect: containerRef?.current?.getBoundingClientRect(),
-          // groupBy: groupItemsBy,
           layout: layoutConfig,
         },
       );
