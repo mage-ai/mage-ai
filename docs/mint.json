@@ -116,6 +116,14 @@
           ]
         },
         {
+          "group": "Global Hooks",
+          "icon": "globe",
+          "pages": [
+            "orchestration/global-hooks/overview",
+            "orchestration/global-hooks/guides"
+          ]
+        },
+        {
           "group": "Blocks",
           "icon": "block-brick",
           "pages": [

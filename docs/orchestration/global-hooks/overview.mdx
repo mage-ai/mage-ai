@@ -1,0 +1,72 @@
+---
+title: Global Hooks
+sidebarTitle: "Overview"
+description: "Global Hooks are a powerful feature in Mage that allows you to execute custom functions before or after an API request. These hooks can be used to perform additional operations, validate data, or integrate with external systems."
+---
+<img
+  alt="Hook"
+  src="https://github.com/mage-ai/assets/blob/main/Hook.gif?raw=True"
+/>
+
+### **How Global Hooks Work**
+
+Global Hooks can be triggered at two different points during the execution of a pipeline:
+
+1. **Pre-completion of a Block**: The hook will run before a specific block in the pipeline is executed.
+2. **Post-completion of a Block**: The hook will run after a specific block in the pipeline has completed execution.
+
+### **Configuring Global Hooks**
+
+The Global Hooks UI in Mage provides several configuration options to customize the behavior of your hooks. Here's a breakdown of the available settings:
+
+**Hook UUID:** A unique identifier for the hook. This is used to reference the hook within your pipelines.
+
+**Resource Type:** The type of API resource that the hook is attached to (e.g., Pipeline, Dataset, etc.).
+
+**Operation Type:** The operation that triggers the hook (e.g., Create, Update, Delete).
+
+### **Targeting Conditions**
+
+The Targeting Condition fields in the Global Hooks UI allows you to specify a set of conditions that determine which subset of pipelines the hook should run on. This feature gives you control over the hook’s execution of a subset of features.
+
+### **When to Run a Hook**
+
+**Before/After Operation Toggles:** Toggles to specify whether the hook should run before or after the operation.
+
+**Run if Operation Succeeds/Fails Toggles:** Toggles to specify whether the hook should run only if the operation succeeds or fails.
+
+### Code to Run
+
+When a hook is triggered, it will execute the pipeline that was selected in the pipeline to execute dropdown.
+
+**Pipeline to Execute:** The pipeline that will be executed when the hook is triggered.
+
+**Valid Code Snapshot:** A snapshot of the pipeline code that validates the hook before it runs.
+
+<Note>
+When making a code change to the pipeline, you have to re-validate the global hook by clicking the "Create snapshot" button
+</Note>
+
+### How to Run a Hook
+
+**Stop Operation if Hook Fails Toggle:** If enabled, the operation will be stopped if the hook fails.
+
+**Execute Hook with History and Logging Toggle:** If enabled, the hook's execution will be logged and recorded in the history.
+
+<Note>
+Toggling on the history and logging feature will significantly degrade performance of the of the operations resolution time.
+</Note>
+
+**Run Hook Asynchronously Toggle:** If enabled, the hook will run separately from the main operation, so they don't slow down or block the main task from completing
+
+### Block Outputs
+
+Block outputs are optional features that are used to mutate the hook operation’s input and output features. 
+
+**Block to Extract Data From:** The block in the pipeline whose output data will be merged into the resource type operation data.
+
+**Object to Merge Block into Data:** The type of API resource output data (e.g., Payload, Resource, Metadata) into which the block output data will be merged.
+
+**Additional Dictionary Keys:** Additional keys that allow merging the block output data into nested objects or values in the resource type operation data. 
+
+With Global Hooks, you can extend the functionality of Mage and integrate it with your existing systems and workflows. By leveraging the various configuration options, you can fine-tune the behavior of your hooks to meet your specific requirements.
