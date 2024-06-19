@@ -11,7 +11,9 @@ from mage_ai.data_preparation.models.block.settings.global_data_products.models 
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.platform.utils import full_paths_for_all_projects
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import week_of_month
 from mage_ai.shared.hash import extract, index_by
@@ -49,8 +51,10 @@ class GlobalDataProduct:
         paths = []
         if repo_path:
             paths.append(repo_path)
-        else:
+        elif project_platform_activated():
             paths += full_paths_for_all_projects()
+        else:
+            paths.append(get_repo_path())
 
         arr = []
 
