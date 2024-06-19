@@ -23,12 +23,12 @@ export default function PipelineBuilder() {
           <PipelineCanvas
             pipeline={PipelineFrameworkInstance}
             pipelineExecutionFramework={PipelineExecutionFrameworkRAG}
-            pipelines={pipelines}
-            // pipelines={[
-            //   // mocks.PIPELINE_DYNAMIC,
-            //   // mocks.PIPELINE_DEPLOY,
-            //   // mocks.PIPELINE_TRAINING,
-            // ]}
+            pipelines={[
+              ...pipelines,
+              // mocks.PIPELINE_DYNAMIC,
+              // mocks.PIPELINE_DEPLOY,
+              // mocks.PIPELINE_TRAINING,
+            ]}
           />
         </Grid>
 

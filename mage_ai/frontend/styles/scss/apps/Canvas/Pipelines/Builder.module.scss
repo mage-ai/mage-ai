@@ -3,7 +3,7 @@
 $grid-size: 40px;
 
 .canvas {
-  background-color: var(--backgrounds-button-base-hover);
+  background-color: var(--colors-graylo);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
   width: 500%;  /* Large enough to initially fit all content, will expand as needed */
   position: absolute; /* Ensure it behaves correctly inside the parent container */
@@ -30,8 +30,8 @@ $grid-size: 40px;
         to right,
         transparent,
         transparent calc(#{$grid-size} - 1px),
-        rgba(0, 0, 0, 0.1) calc(#{$grid-size} - 1px),
-        rgba(0, 0, 0, 0.1) $grid-size
+        var(--colors-graylo) calc(#{$grid-size} - 1px),
+        var(--colors-graylo) $grid-size
       );
   }
 
@@ -41,8 +41,8 @@ $grid-size: 40px;
         to bottom,
         transparent,
         transparent calc(#{$grid-size} - 1px),
-        rgba(0, 0, 0, 0.1) calc(#{$grid-size} - 1px),
-        rgba(0, 0, 0, 0.1) $grid-size
+        var(--colors-graylo) calc(#{$grid-size} - 1px),
+        var(--colors-graylo) $grid-size
       );
   }
 }

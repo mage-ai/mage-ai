@@ -1,29 +1,25 @@
-import update from 'immutability-helper';
-import { DragSourceMonitor, DropTargetMonitor, useDrag } from 'react-dnd';
 import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
-import PipelineType from '@interfaces/PipelineType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Check, Code, PipeIconVertical, PlayButtonFilled } from '@mana/icons';
-import { randomSample } from '@utils/array';
+import { Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
-import { buildPortID, getNodeUUID } from '../Draggable/utils';
-import { getTransformedBoundingClientRect } from '../utils/rect';
-import { connectionUUID } from '../Connections/utils';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import ReactDOM from 'react-dom';
 import { NodeItemType, PortType } from '../interfaces';
 
+type BlockNodeWrapperProps = {
+  collapsed?: boolean;
+  onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
+  frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
+};
+
 export function BlockNodeWrapper({
+  collapsed,
   frameworkGroups,
   item,
   handlers,
   onMountPort,
-}: NodeWrapperProps & {
-  onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
-  frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
-}) {
+}: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
@@ -143,7 +139,7 @@ export function BlockNodeWrapper({
           },
           badge: BlockTypeEnum.PIPELINE === type
             ? {
-              Icon: PipeIconVertical,
+              Icon: collapsed ? Infinite : PipeIconVertical,
               baseColorName: names?.base,
               label: name || uuid,
             }

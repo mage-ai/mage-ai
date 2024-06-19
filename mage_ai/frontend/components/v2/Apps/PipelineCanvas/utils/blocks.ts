@@ -11,39 +11,26 @@ import {
 import { createConnection, connectionUUID } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
 
-export function initializeBlocksAndConnections(
+function determinePositions(
   blocks: BlockType[],
-  opts?: {
-    blockHeight?: number;
-    blockWidth?: number;
-    horizontalSpacing?: number;
-    layout?: LayoutConfigType;
-    containerRect?: RectType
-    verticalSpacing?: number;
+  opts: {
+    blockHeight: number;
+    blockWidth: number;
+    horizontalSpacing: number;
+    layoutDirection: LayoutConfigDirectionEnum;
+    verticalSpacing: number;
   },
-) {
+): Record<string, { left: number; top: number }> {
   const {
-    blockHeight = 200,
-    blockWidth = 300,
-    horizontalSpacing = 50,
-    layout,
-    containerRect,
-    verticalSpacing = 200,
-  } = opts || {};
-
-  // Doesn’t change to vertical...
-  const {
-    direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: layoutOrigin = LayoutConfigDirectionOriginEnum.LEFT,
-  } = layout || ({} as LayoutConfigType);
-
-  const itemsMapping: Record<string, DragItem> = {};
-  const connectionsMapping: Record<string, ConnectionType> = {};
-  const portsMapping: Record<string, PortType> = {};
+    blockHeight,
+    blockWidth,
+    horizontalSpacing,
+    layoutDirection,
+    verticalSpacing,
+  } = opts;
 
   const positions: Record<string, { left: number; top: number }> = {};
   const levels: Record<string, number> = {};
-  const occupiedPositions: Set<string> = new Set();
 
   let maxLevel = 0;
 
@@ -66,10 +53,12 @@ export function initializeBlocksAndConnections(
   }
 
   blocks.forEach(determineLevel);
+
   const isHorizontal = layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL;
 
   const columns: Record<number, number[]> = {};
   const rows: Record<number, number[]> = {};
+
   for (let i = 0; i <= maxLevel; i++) {
     if (isHorizontal) {
       columns[i] = [20];
@@ -116,13 +105,55 @@ export function initializeBlocksAndConnections(
     }
 
     positions[block.uuid] = position;
-    occupiedPositions.add(`${position.left},${position.top}`);
 
     if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
       columns[level].push(position.left);
     } else {
       rows[level].push(position.top);
     }
+  });
+
+  return positions;
+}
+
+// Now, we update the initializeBlocksAndConnections function.
+export function initializeBlocksAndConnections(
+  blocks: BlockType[],
+  opts?: {
+    blockHeight?: number;
+    blockWidth?: number;
+    horizontalSpacing?: number;
+    groupBy?: (block: BlockType) => string;
+    layout?: LayoutConfigType;
+    containerRect?: RectType;
+    verticalSpacing?: number;
+  },
+) {
+  const {
+    blockHeight = 200,
+    blockWidth = 300,
+    horizontalSpacing = 50,
+    layout,
+    containerRect,
+    verticalSpacing = 200,
+  } = opts || {};
+
+  // Doesn’t change to vertical...
+  const {
+    direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
+    origin: layoutOrigin = LayoutConfigDirectionOriginEnum.LEFT,
+  } = layout || ({} as LayoutConfigType);
+
+  const itemsMapping: Record<string, DragItem> = {};
+  const connectionsMapping: Record<string, ConnectionType> = {};
+  const portsMapping: Record<string, PortType> = {};
+
+  const positions = determinePositions(blocks, {
+    blockHeight,
+    blockWidth,
+    horizontalSpacing,
+    layoutDirection,
+    verticalSpacing,
   });
 
   const { height, width } = containerRect || { height: 0, width: 0 };
@@ -193,7 +224,6 @@ export function initializeBlocksAndConnections(
   });
 
   const downFlowPorts = {};
-  // console.log('OMGGGGGGGGGGGGGGGGGGG', blockUpsDownsMapping);
   // Create ports
   Object.entries(blockUpsDownsMapping)?.forEach(([blockUUID, map]: [string, {
     downstream_blocks: Record<string, BlockType>,
@@ -225,9 +255,9 @@ export function initializeBlocksAndConnections(
           block,
           id: null,
           index,
-          parent: update(parentItem, { block: { $set: block } }),
+          parent: { ...parentItem, block },
           subtype,
-          target: update(targetItem, { block: { $set: targetBlock } }),
+          target: { ...targetItem, block: targetBlock },
           type: ItemTypeEnum.PORT,
         };
 
@@ -258,9 +288,21 @@ export function initializeBlocksAndConnections(
       });
     });
 
-    itemsMapping[blockUUID] = update(parentItem, {
+    const itemWithPorts = update(parentItem, {
       inputs: { $set: inputs },
       outputs: { $set: outputs },
+    });
+
+    itemsMapping[blockUUID] = itemWithPorts;
+  });
+
+  const portsMappingFinal: Record<string, PortType> = {};
+  Object.values(itemsMapping).forEach((item: DragItem) => {
+    (item?.inputs || []).concat(item?.outputs || []).forEach((port: PortType) => {
+      const { parent, target } = port;
+      port.parent = itemsMapping[parent.block.uuid];
+      port.target = itemsMapping[target.block.uuid];
+      portsMappingFinal[port.id] = port;
     });
   });
 
@@ -277,13 +319,8 @@ export function initializeBlocksAndConnections(
       toItemBlock = port?.target?.block;
     }
 
-    // console.log('OMGGGGGGGGGGGGGGGGGGG@@@@@@@@@@@@@@', port, fromItemBlock, toItemBlock);
-
-    // itemsMapping.inputs.target
-
     const fromItem = itemsMapping[fromItemBlock.uuid];
     const toItem = itemsMapping[toItemBlock.uuid];
-    // console.log(fromItem, toItem, port);
 
     const fromPort = fromItem?.outputs?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid);
     const toPort = toItem?.inputs?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid);
@@ -294,18 +331,10 @@ export function initializeBlocksAndConnections(
     const connection = createConnection(fromPort, toPort);
     connectionsMapping[connection.id] = connection;
   });
-    // console.log('?????????????????????????????????', connectionsMapping);
-
-  // console.log(
-  // //   // blockUpsDownsMapping,
-  // //   // itemsMapping,
-  // //   // downFlowPorts,
-  //   connectionsMapping,
-  // );
 
   return {
     connectionsMapping,
     itemsMapping,
-    portsMapping,
+    portsMapping: portsMappingFinal,
   };
 }

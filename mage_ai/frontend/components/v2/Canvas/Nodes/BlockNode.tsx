@@ -11,12 +11,13 @@ import GradientContainer from '@mana/elements/Gradient';
 import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
 import { buildPortUUID } from '../Draggable/utils';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { DragAndDropHandlersType } from './types';
+import BlockGroup from './BlockGroup';
 
 type BlockNodeProps = {
   block?: BlockType
@@ -168,6 +169,10 @@ export function BlockNode({
         {!badge && titleRow}
         {connectionRows}
         {templateConfigurations}
+
+        {BlockTypeEnum.PIPELINE === block?.type && (
+          <BlockGroup />
+        )}
       </Grid>
     </div>
   );

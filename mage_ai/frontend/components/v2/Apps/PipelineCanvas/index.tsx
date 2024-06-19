@@ -93,20 +93,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     [],
   );
 
-  const phaseRef = useRef<number>(0);
-  const connectionsRef = useRef<Record<string, ConnectionType>>(null);
-  const portsRef = useRef<Record<string, PortType>>(null);
-  const itemsRef = useRef<Record<string, DragItem>>(null);
-  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>(null);
+  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
+  const connectionsRef = useRef<Record<string, ConnectionType>>({});
+  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
   const itemDraggingRef = useRef<NodeItemType | null>(null);
-  const [linesMounted, setLinesMounted] = useState<Record<string, boolean>>({});
+  const itemsRef = useRef<Record<string, DragItem>>({});
+  const phaseRef = useRef<number>(0);
+  const portsRef = useRef<Record<string, PortType>>({});
 
+  const [linesMounted, setLinesMounted] = useState<Record<string, boolean>>({});
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
-
-  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
 
   function setConnections(connections: Record<string, ConnectionType>) {
     connectionsRef.current = {
@@ -142,6 +141,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         Object.values(blocksMapping),
         {
           containerRect: containerRef?.current?.getBoundingClientRect(),
+          groupBy: ({ pipeline }) => pipeline?.uuid,
           layout: layoutConfig,
         },
       );
@@ -159,11 +159,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     return () => {
       phaseRef.current = 0;
-      connectionsRef.current = null;
-      portsRef.current = null;
-      itemsRef.current = null;
-      connectionsDraggingRef.current = null;
+
+      connectionsDraggingRef.current = {};
+      connectionsRef.current = {};
+      frameworkGroups.current = null;
       itemDraggingRef.current = null;
+      itemsRef.current = {};
+      phaseRef.current = 0;
+      portsRef.current = {};
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,15 +182,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (portRef.current) {
       const rect = portRef.current.getBoundingClientRect();
+
       const port = update(item, {
         rect: {
           $set: {
             height: rect.height,
             left: rect.left,
-            offsetLeft: portRef?.current?.offsetLeft,
-            offsetTop: portRef?.current?.offsetTop,
             top: rect.top,
             width: rect.width,
+            offset: {
+              left: portRef?.current?.offsetLeft,
+              top: portRef?.current?.offsetTop,
+            },
           },
         },
       });
@@ -346,7 +352,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const nodesMemo = useMemo(() => phaseRef.current >= 1
     // && items
     // && objectSize(linesMounted) >= objectSize(connectionsRef?.current)
-    && Object.keys(items || items).map(key => (
+    && Object.entries(items || {}).map(([key, item]) => (
       <BlockNodeWrapper
         frameworkGroups={frameworkGroups?.current}
         handlers={{
@@ -356,7 +362,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           onMouseDown,
           onMouseUp,
         }}
-        item={items[key]}
+        item={item}
         key={key}
         onMountPort={onMountPort}
       />

@@ -8,13 +8,15 @@ import {
 } from './types';
 
 export interface OffsetType {
-  x: number;
-  y: number;
+  left?: number;
+  top?: number;
+  x?: number;
+  y?: number;
 }
 
 export interface RectType {
-  offsetTop?: number;
-  offsetLeft?: number;
+  id?: string;
+  offset?: OffsetType;
   height?: number;
   left: number;
   top: number;

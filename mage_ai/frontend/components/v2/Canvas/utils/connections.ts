@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import { NodeItemType, PortType, RectType } from '../interfaces';
+import { NodeItemType, OffsetType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { getBlockColor } from '@mana/themes/blocks';
 import styles from '@styles/scss/elements/Path.module.scss';
@@ -29,10 +29,11 @@ export function updateAllPortConnectionsForItem(
   portsRef: { current: Record<string, PortType> },
 ) {
   const conns = getConnectionsForPorts(item, connectionsRef) || [];
+
   conns.forEach((conn) => {
     if (conn.id in connectionsRef.current && conn.id in portsRef.current) {
       const port = portsRef.current[conn.id];
-      updateConnectionPaths(item, port, conn, connectionsRef, item.rect);
+      updateConnectionPaths(item, port, conn, connectionsRef);
     }
   });
 }
@@ -55,13 +56,10 @@ function updateConnectionPaths(
   const rect = { ...(isTarget ? toItem.rect : fromItem.rect) };
   const ancestor = isTarget ? target : parent;
 
-  const offsetLeft = rect?.offsetLeft || 0;
-  const offsetTop = rect?.offsetTop || 0;
+  const offset: OffsetType = rect?.offset || { top: 0, left: 0 };
 
-  rect.left = (item?.rect || ancestor?.rect).left;
-  rect.top = (item?.rect || ancestor?.rect).top;
-  rect.left += offsetLeft;
-  rect.top += offsetTop;
+  rect.left = (item?.rect || ancestor?.rect).left + (offset?.left || 0);
+  rect.top = (item?.rect || ancestor?.rect).top + (offset?.top || 0);
 
   const connItem = isTarget ? toItem : fromItem;
   connItem.rect = rect;
@@ -78,6 +76,7 @@ function updateConnectionPaths(
 
   const element0 = document.getElementById(`${conn.id}-stop-0`);
   const element1 = document.getElementById(`${conn.id}-stop-1`);
+
   if (element0 && element1) {
     const fromColor = getBlockColor(fromItem?.block?.type)?.names?.base;
     const toColor = getBlockColor(toItem?.block?.type)?.names?.base;

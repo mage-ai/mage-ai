@@ -1,3 +1,5 @@
+import { RectType } from '../interfaces';
+
 export function getTransformedBoundingClientRect(element: HTMLElement) {
   const rect = element.getBoundingClientRect();
   let { left: offsetX, top: offsetY } = rect;
@@ -31,4 +33,38 @@ export function getTransformedBoundingClientRect(element: HTMLElement) {
     right: offsetX + width,
     bottom: offsetY + height,
   };
+}
+
+export function groupRectangles(rectangles: RectType[]): RectType[] {
+  // Sort rectangles by y position first, then x position for better alignment
+  const sortedRects = rectangles.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+
+  let currentX = 0;
+  let currentY = 0;
+  let maxHeight = 0;
+  const margin = 10; // Margin between rectangles
+
+  return sortedRects.map((rect, index) => {
+    if (index > 0) {
+      // Move to the right of the previous rectangle, adding a margin
+      currentX += sortedRects[index - 1].width + margin;
+
+      // If rectangles go off the screen, move to the next row
+      if (currentX + rect.width > window.innerWidth) {
+        currentX = 0;
+        currentY += maxHeight + margin;
+        maxHeight = 0;
+      }
+    }
+
+    if (rect.height > maxHeight) {
+      maxHeight = rect.height;
+    }
+
+    return {
+      ...rect,
+      left: currentX,
+      top: currentY,
+    };
+  });
 }
