@@ -27,20 +27,22 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { repositionGroups } from '../../Canvas/utils/rect';
+import { layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
-import { extractNestedBlocks, groupBlocksByGroups } from './utils/pipelines';
+import { extractNestedBlocks, groupBlocksByGroups, buildTreeOfBlockGroups } from '@utils/models/pipeline';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
-import { groupBy, indexBy, flattenArray } from '@utils/array';
-import { objectSize } from '@utils/hash';
-import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import { countOccurrences, groupBy, indexBy, flattenArray } from '@utils/array';
+import { ignoreKeys, objectSize } from '@utils/hash';
+import PipelineExecutionFrameworkType, {
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 // import styles from '@styles/scss/elements/Path.module.scss';
 // import stylesPathGradient from '@styles/scss/elements/PathGradient.module.scss';
@@ -48,8 +50,9 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 const GRID_SIZE = 40;
 
 type PipelineBuilderProps = {
-  pipeline: PipelineType;
+  pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType
+  pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
   pipelines?: PipelineType[];
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -74,8 +77,9 @@ type PipelineBuilderProps = {
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipeline,
-  pipelines,
   pipelineExecutionFramework,
+  pipelineExecutionFrameworks,
+  pipelines,
   canvasRef,
   containerRef,
   onDragEnd,
@@ -138,13 +142,20 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
-      const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
-      let blocksMapping = {};
-      pipelines?.forEach((pipe) => {
-        blocksMapping = {
-          ...blocksMapping,
-          ...extractNestedBlocks(pipe, pipelinesMapping),
-        };
+      const pipelinesMapping = indexBy([
+        // ...pipelines,
+        ...pipelineExecutionFrameworks,
+      ], ({ uuid }) => uuid);
+      const blocksMapping = {};
+      [
+        // ...pipelines,
+        ...pipelineExecutionFrameworks,
+      ]?.forEach((pipe: PipelineType | PipelineExecutionFrameworkType) => {
+        Object.values(
+          extractNestedBlocks(pipe, pipelinesMapping) || {},
+        )?.forEach((block: BlockType) => {
+          blocksMapping[block.uuid] = ignoreKeys(block, ['pipeline']);
+        });
       });
 
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
@@ -158,7 +169,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       );
 
-      frameworkGroups.current = groupBlocksByGroups(pipelineExecutionFramework);
+      const blocksFrameworkMapping = Object.values(extractNestedBlocks(
+        pipelineExecutionFramework,
+        indexBy(pipelineExecutionFrameworks, (p: PipelineExecutionFrameworkType) => p.uuid),
+      ));
+      frameworkGroups.current = groupBlocksByGroups(blocksFrameworkMapping);
+
       connectionsRef.current = connectionsMapping;
       pipelinesRef.current = pipelinesMapping;
       portsRef.current = portsMapping;
@@ -182,6 +198,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         rect: {},
       };
       phaseRef.current = 0;
+      pipelinesRef.current = {};
       portsRef.current = {};
     };
 
@@ -221,16 +238,46 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef.current[newItem.id] = newItem;
     }
 
-    // const arr = Object.values(itemsRef.current || {});
-    // const versions = arr?.map(({ rect }) => rect?.version ?? 0);
+    const arr = Object.values(itemsRef.current || {});
+    const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
-    // if (versions?.every((version: number) => version === rectVersion)) {
-    //   const groups1 = groupBy(arr, groupItemsBy);
-    //   const groups2 = repositionGroups(groups1);
+    if (versions?.every((version: number) => version === rectVersion)) {
+      const ungrouped = [];
+      const groups = {};
+      arr?.forEach((item: DragItem) => {
+        if (item?.block?.groups) {
+          item?.block?.groups?.forEach((groupID) => {
+            groups[groupID] ||= {
+              items: [],
+              upstreamGroups: [],
+            };
+            groups[groupID].items.push(item);
+            (item?.block?.upstream_blocks ?? [])?.forEach((upstreamGroupID: string) => {
+              if (!groups[groupID].upstreamGroups.includes(upstreamGroupID)) {
+                groups[groupID].upstreamGroups.push(upstreamGroupID);
+              }
+            });
+          });
+        } else {
+          ungrouped.push(item);
+        }
+      });
 
-    //   itemsRef.current = indexBy(flattenArray(Object.values(groups2)), (item: DragItem) => item.id);
-    //   setItems(itemsRef.current);
-    // }
+      console.log(groups);
+
+      const itemsGrouped = layoutItemsInGroups(groups, {
+        boundingRect: canvasRef?.current?.getBoundingClientRect(),
+        containerRect: containerRef?.current?.getBoundingClientRect(),
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        gap: {
+          column: 100,
+          row: 100,
+        },
+        origin: LayoutConfigDirectionOriginEnum.LEFT,
+      });
+      itemsRef.current = indexBy(flattenArray(Object.values(itemsGrouped)), (item: DragItem) => item.id);
+      setItems(itemsRef.current);
+    }
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -242,12 +289,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           $set: {
             height: rect.height,
             left: rect.left,
-            top: rect.top,
-            width: rect.width,
             offset: {
               left: portRef?.current?.offsetLeft,
               top: portRef?.current?.offsetTop,
             },
+            top: rect.top,
+            width: rect.width,
           },
         },
       });
@@ -456,8 +503,6 @@ export default function PipelineBuilderCanvas({
   snapToGridOnDrag = true,
   ...props
 }: PipelineBuilderProps & {
-  pipeline: PipelineType;
-  pipelines?: PipelineType[];
   snapToGridOnDrag?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);

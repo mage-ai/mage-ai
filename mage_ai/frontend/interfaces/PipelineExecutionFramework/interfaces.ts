@@ -1,68 +1,147 @@
-import PipelineType, { PipelineTypeEnum } from '../PipelineType';
-import { BlockTypeEnum, DynamicModeEnum, InputDataTypeEnum } from '../BlockType';
+import BlockType, { BlockTypeEnum, DynamicModeEnum, InputDataTypeEnum } from '../BlockType';
 import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
 import { InteractionInputTypeEnum, InteractionVariableTypeEnum } from '../InteractionType';
+import { PipelineTypeEnum } from '../PipelineType';
+import { extractNestedBlocks } from '@utils/models/pipeline';
 
-export default interface PipelineExecutionFrameworkType extends PipelineType {
-  author?: string;
+export type PipelineExecutionFrameworkBlockType = BlockType & {
+  downstream_blocks?: GroupUUIDEnum[];
+  groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+  type?: BlockTypeEnum.GROUP | BlockTypeEnum.PIPELINE;
+  upstream_blocks?: GroupUUIDEnum[];
+  uuid: GroupUUIDEnum;
+};
+
+type PipelineExecutionFrameworkType = {
+  blocks: PipelineExecutionFrameworkBlockType[];
+  groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+  name?: string;
+  type: PipelineTypeEnum.EXECUTION_FRAMEWORK;
+  uuid: GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum;
+};
+
+export default PipelineExecutionFrameworkType;
+
+export const InferencePipelineExecutionFramework: PipelineExecutionFrameworkType = {
+  name: 'Inference',
+  uuid: GroupUUIDEnum.INFERENCE,
+  type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  groups: [PipelineExecutionFrameworkUUIDEnum.RAG],
+  blocks: [
+    {
+      uuid: GroupUUIDEnum.INTENT_DETECTION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.QUERY_DECOMPOSITION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.QUERY_DECOMPOSITION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.QUERY_AUGMENTATION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.QUERY_AUGMENTATION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.MEMORY,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MEMORY,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.MULTI_HOP_REASONING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MULTI_HOP_REASONING,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.RANKING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RANKING,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.CONTEXTUALIZATION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.CONTEXTUALIZATION,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.RESPONSE_SYNTHESIS,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RESPONSE_SYNTHESIS,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.ANSWER_ENRICHMENT,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.ANSWER_ENRICHMENT,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.RESPONSE_FORMATTING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RESPONSE_FORMATTING,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+    },
+  ],
 }
 
-export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
-  uuid: PipelineExecutionFrameworkUUIDEnum.RAG,
+export const DataPreparationPipelineExecutionFramework: PipelineExecutionFrameworkType = {
+  name: 'Data preparation',
+  uuid: GroupUUIDEnum.DATA_PREPARATION,
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  groups: [PipelineExecutionFrameworkUUIDEnum.RAG],
   blocks: [
     {
       uuid: GroupUUIDEnum.INGEST,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.LOAD,
-      ],
+      groups: [GroupUUIDEnum.LOAD],
       downstream_blocks: [
         GroupUUIDEnum.MAP,
       ],
     },
     {
       uuid: GroupUUIDEnum.MAP,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.LOAD,
-      ],
+      groups: [GroupUUIDEnum.LOAD],
       downstream_blocks: [
         GroupUUIDEnum.CLEANING,
       ],
     },
     {
       uuid: GroupUUIDEnum.CLEANING,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.TRANSFORM,
-      ],
+      groups: [GroupUUIDEnum.TRANSFORM],
       downstream_blocks: [
         GroupUUIDEnum.ENRICH,
       ],
     },
-
     {
       uuid: GroupUUIDEnum.ENRICH,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.TRANSFORM,
-      ],
+      groups: [GroupUUIDEnum.TRANSFORM],
       downstream_blocks: [
         GroupUUIDEnum.CHUNKING,
       ],
     },
     {
       uuid: GroupUUIDEnum.CHUNKING,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.TRANSFORM,
-      ],
+      groups: [GroupUUIDEnum.TRANSFORM],
       downstream_blocks: [
         GroupUUIDEnum.TOKENIZATION,
       ],
@@ -86,11 +165,7 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
     },
     {
       uuid: GroupUUIDEnum.TOKENIZATION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.TRANSFORM,
-      ],
+      groups: [GroupUUIDEnum.TRANSFORM],
       downstream_blocks: [
         GroupUUIDEnum.EMBED,
       ],
@@ -163,11 +238,7 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
     },
     {
       uuid: GroupUUIDEnum.EMBED,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.TRANSFORM,
-      ],
+      groups: [GroupUUIDEnum.TRANSFORM],
       downstream_blocks: [
         GroupUUIDEnum.VECTOR_DATABASE,
         GroupUUIDEnum.KNOWLEDGE_GRAPH,
@@ -223,19 +294,11 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
     },
     {
       uuid: GroupUUIDEnum.KNOWLEDGE_GRAPH,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.EXPORT,
-      ],
+      groups: [GroupUUIDEnum.EXPORT],
     },
     {
       uuid: GroupUUIDEnum.VECTOR_DATABASE,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.EXPORT,
-      ],
+      groups: [GroupUUIDEnum.EXPORT],
       downstream_blocks: [
         GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
         GroupUUIDEnum.DOCUMENT_HIERARCHY,
@@ -244,154 +307,85 @@ export const PipelineExecutionFrameworkRAG: PipelineExecutionFrameworkType = {
     },
     {
       uuid: GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.INDEX,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.INTENT_DETECTION,
-      ],
+      groups: [GroupUUIDEnum.INDEX],
     },
     {
       uuid: GroupUUIDEnum.DOCUMENT_HIERARCHY,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.INDEX,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.INTENT_DETECTION,
-      ],
+      groups: [GroupUUIDEnum.INDEX],
     },
     {
       uuid: GroupUUIDEnum.SEARCH_INDEX,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.DATA_PREPARATION,
-        GroupUUIDEnum.INDEX,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.INTENT_DETECTION,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.INTENT_DETECTION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.QUERY_PROCESSING,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.QUERY_DECOMPOSITION,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.QUERY_DECOMPOSITION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.QUERY_PROCESSING,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.QUERY_AUGMENTATION,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.QUERY_AUGMENTATION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.QUERY_PROCESSING,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.MEMORY,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.MEMORY,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RETRIEVAL,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.ITERATIVE_RETRIEVAL,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RETRIEVAL,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.MULTI_HOP_REASONING,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.MULTI_HOP_REASONING,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RETRIEVAL,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.RANKING,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.RANKING,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RETRIEVAL,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.CONTEXTUALIZATION,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.CONTEXTUALIZATION,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RESPONSE_GENERATION,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.RESPONSE_SYNTHESIS,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.RESPONSE_SYNTHESIS,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RESPONSE_GENERATION,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.ANSWER_ENRICHMENT,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.ANSWER_ENRICHMENT,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RESPONSE_GENERATION,
-      ],
-      downstream_blocks: [
-        GroupUUIDEnum.RESPONSE_FORMATTING,
-      ],
-    },
-    {
-      uuid: GroupUUIDEnum.RESPONSE_FORMATTING,
-      type: BlockTypeEnum.GROUP,
-      groups: [
-        GroupUUIDEnum.INFERENCE,
-        GroupUUIDEnum.RESPONSE_GENERATION,
-      ],
+      groups: [GroupUUIDEnum.INDEX],
     },
   ],
 };
+
+[
+  DataPreparationPipelineExecutionFramework,
+  InferencePipelineExecutionFramework,
+].forEach((framework: PipelineExecutionFrameworkType) => {
+  const blocks = framework.blocks;
+  const blockUpsDownsMapping: Record<string, {
+    downstream_blocks: Record<string, PipelineExecutionFrameworkBlockType>,
+    upstream_blocks: Record<string, PipelineExecutionFrameworkBlockType>,
+  }> = {};
+
+  blocks.forEach((block: PipelineExecutionFrameworkBlockType) => {
+    blockUpsDownsMapping[block.uuid] ||= {
+      downstream_blocks: {},
+      upstream_blocks: {},
+    };
+
+    block?.downstream_blocks?.forEach((uuid: string) => {
+      blockUpsDownsMapping[uuid] ||= {
+        downstream_blocks: {},
+        upstream_blocks: {},
+      };
+      blockUpsDownsMapping[uuid].upstream_blocks ||= {};
+      blockUpsDownsMapping[uuid].upstream_blocks[block.uuid] = block;
+
+      const downstreamBlock = blocks.find((b) => b.uuid === uuid);
+      if (downstreamBlock) {
+        blockUpsDownsMapping[block.uuid].downstream_blocks ||= {};
+        blockUpsDownsMapping[block.uuid].downstream_blocks[uuid] = downstreamBlock;
+      }
+    });
+
+    block?.upstream_blocks?.forEach((uuid: string) => {
+      blockUpsDownsMapping[uuid] ||= {
+        downstream_blocks: {},
+        upstream_blocks: {},
+      };
+      blockUpsDownsMapping[uuid].downstream_blocks ||= {};
+      blockUpsDownsMapping[uuid].downstream_blocks[block.uuid] = block;
+
+      const upstreamBlock = blocks.find((b) => b.uuid === uuid);
+      if (upstreamBlock) {
+        blockUpsDownsMapping[block.uuid].upstream_blocks ||= {};
+        blockUpsDownsMapping[block.uuid].upstream_blocks[uuid] = upstreamBlock;
+      }
+    });
+  });
+
+  framework.blocks.forEach((block: PipelineExecutionFrameworkBlockType) => {
+    block.type = BlockTypeEnum.GROUP;
+    block.downstream_blocks = Object.values(blockUpsDownsMapping[block.uuid]?.downstream_blocks ?? {}).map(b => b.uuid);
+    block.upstream_blocks = Object.values(blockUpsDownsMapping[block.uuid]?.upstream_blocks ?? {}).map(b => b.uuid);
+  });
+});
+
+export const RAGPipelineExecutionFramework: PipelineExecutionFrameworkType = {
+  name: PipelineExecutionFrameworkUUIDEnum.RAG,
+  uuid: PipelineExecutionFrameworkUUIDEnum.RAG,
+  type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  blocks: [
+    {
+      uuid: GroupUUIDEnum.DATA_PREPARATION,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      uuid: GroupUUIDEnum.INFERENCE,
+      type: BlockTypeEnum.PIPELINE,
+    },
+  ],
+}

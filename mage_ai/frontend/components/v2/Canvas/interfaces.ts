@@ -56,6 +56,10 @@ export interface LayoutConfigType {
     column?: number;
     row?: number;
   };
+  grid?: {
+    columns?: number;
+    rows?: number;
+  };
   itemRect?: RectType;
 }
 

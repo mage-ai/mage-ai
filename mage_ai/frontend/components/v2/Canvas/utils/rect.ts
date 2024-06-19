@@ -6,7 +6,7 @@ import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../types';
-import { indexBy } from '@utils/array';
+import { flattenArray, indexBy, uniqueArray } from '@utils/array';
 
 type GroupType = { items: DragItem[], position: { left: number; top: number } };
 
@@ -14,7 +14,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
   direction: LayoutConfigDirectionEnum.HORIZONTAL,
   gap: {
     column: 40,
-    row:40,
+    row: 40,
   },
   itemRect: {
     left: 0,
@@ -60,7 +60,7 @@ export function layoutItems(
     direction = LayoutConfigDirectionEnum.HORIZONTAL,
     gap = {
       column: 40,
-      row:40,
+      row: 40,
     },
     itemRect = {
       height: 200,
@@ -146,7 +146,7 @@ export function layoutItems(
 
 export function layoutRectsInContainer(
   rects: RectType[],
-  layout?: LayoutConfigType
+  layout?: LayoutConfigType,
 ): RectType[] {
   // This function lays out items within a container by centering them.
   const { height, width } = layout?.containerRect || { height: 0, width: 0 };
@@ -163,6 +163,17 @@ export function layoutRectsInContainer(
   }));
 }
 
+function centerRects(rects: RectType[], boundingRect: RectType, containerRect: RectType): RectType[] {
+  const centerRect = {
+    left: ((containerRect.left + containerRect.width) / 2) + ((boundingRect.width ?? 0) / 2),
+    top: ((containerRect.top + containerRect.height) / 2) + ((boundingRect.height ?? 0) / 2),
+  };
+  const centroid = calculateBoundingBox(rects);
+  const diff = getRectDiff(centroid, centerRect);
+
+  return rects.map(rect => applyRectDiff(rect, diff));
+}
+
 export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutConfigType): DragItem[] {
   const { boundingRect, containerRect } = layout || {};
 
@@ -174,29 +185,23 @@ export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutCon
     upstreamRects: item?.block?.upstream_blocks.map((id: string) => mapping[id]?.rect || {
       ...layout?.itemRect,
       id,
-    }),
+    }) ?? [],
   }));
 
-  const rects = layoutRectsInTreeFormation(rectItems, layout);
+  let rects = layoutRectsInTreeFormation(rectItems, layout);
 
-  let diff = { left: 0, top: 0 };
   if (containerRect && boundingRect) {
-    const centerRect = {
-      left: ((containerRect.left + containerRect.width) / 2) + ((boundingRect.width ?? 0) / 2),
-      top: ((containerRect.top + containerRect.height) / 2) + ((boundingRect.height ?? 0) / 2),
-    }
-    const centroid = calculateBoundingBox(rects);
-    diff = getRectDiff(centroid, centerRect);
+    rects = centerRects(rects, boundingRect, containerRect);
   }
 
-  return rects.map(rect => ({ ...mapping[rect.id], rect: applyRectDiff(rect, diff) }));
+  return rects.map(rect => ({ ...mapping[rect.id], rect }));
 }
 
 function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType): RectType[] {
   const {
     direction,
     gap,
-  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout};
+  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
   const { column: horizontalSpacing, row: verticalSpacing } = gap;
 
   const positionedItems: RectType[] = [];
@@ -204,12 +209,18 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   const maxLevelWidths: Map<number, number> = new Map();
   const maxLevelHeights: Map<number, number> = new Map();
   const childrenMapping: Map<RectType, RectType[]> = new Map();
+  const visited = new Set<RectType>();
 
   // Determine the levels for each item
   function determineLevel(item: RectType): number {
     if (levels.has(item)) {
       return levels.get(item)!;
     }
+    if (visited.has(item)) {
+      throw new Error(`Cycle detected involving item id ${item.id}`);
+    }
+    visited.add(item);
+
     if (item.upstreamRects.length === 0) {
       levels.set(item, 0);
     } else {
@@ -226,6 +237,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
         return 0;
       })));
     }
+    visited.delete(item);
     return levels.get(item)!;
   }
 
@@ -255,8 +267,14 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     let offset = 0;
 
     // Calculate total dimension for alignment within current level
-    const totalDimension = rects.reduce((sum, rect) => sum + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? rect.height : rect.width) + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0) - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
-    const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL ? maxLevelHeights.get(level)! : maxLevelWidths.get(level)!;
+    const totalDimension = rects.reduce(
+      (sum, rect) => sum
+      + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? rect.height : rect.width)
+      + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0)
+    - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
+    const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL
+      ? maxLevelHeights.get(level)!
+      : maxLevelWidths.get(level)!;
 
     rects.forEach(item => {
       if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
@@ -299,54 +317,97 @@ function applyRectDiff(rect: RectType, diff: RectType): RectType {
   };
 }
 
-export function repositionGroups(groups: Record<string, DragItem[]>): Record<string, DragItem[]> {
-  const rectsOfGroups: Record<string, DragItem> = {};
-  const groupsUpdated = {};
+type ItemGroup = {
+  items: DragItem[];
+  upstreamGroups: string[];
+};
 
-  Object.entries(groups || {})?.forEach(([uuid, items1]: [string, DragItem[]]) => {
-    const {
-      rects0,
-      rects1,
-    } = items1.reduce((acc, item: DragItem) => ({
-      ...acc,
-      rects0: acc.rects0.concat(item?.rect?.diff),
-      rects1: acc.rects1.concat(item?.rect),
-    }), {
-      rects0: [],
-      rects1: [],
-    });
+export function layoutItemsInGroups(
+  groups: Record<string, ItemGroup>,
+  layout: LayoutConfigType,
+): Record<string, DragItem[]> {
+  const {
+    boundingRect,
+    containerRect,
+  } = layout;
 
-    const box0 = calculateBoundingBox(rects0);
-    console.log('uuid', box0);
+  const groupsMapping = {};
 
-    const items2 = repositionItems(items1);
-    const rects2 = items2.map((item: DragItem) => item.rect);
-    const box1 = calculateBoundingBox(rects2);
-
-    groupsUpdated[uuid] = items2;
-    rectsOfGroups[uuid] = {
-      id: uuid,
+  Object.entries(groups || {})?.forEach(([groupID, { items }]: [string, ItemGroup]) => {
+    const itemsByID = indexBy(items || [], (item: DragItem) => item?.block?.uuid);
+    const items2 = items?.map((item: DragItem) => ({
+      ...item,
       rect: {
-        height: box1.height,
-        left: box0.left,
-        top: box0.top,
-        width: box1.width,
+        ...item?.rect,
+        upstreamRects: uniqueArray(item?.block?.upstream_blocks ?? [])?.reduce(
+          (acc: RectType[], buuid: string) => {
+            const rect = itemsByID[buuid]?.rect;
+            return rect ? acc.concat({ ...rect, id: buuid }) : acc;
+          },
+          [],
+        ),
       },
-    } as DragItem;
+    }))  as DragItem[];
+
+    const rects = layoutRectsInTreeFormation(items2.map((item: DragItem) => item.rect), layout);
+    const items3 = items2?.map((item: DragItem, idx: number) => ({
+      ...item,
+      rect: rects[idx],
+    }));
+    const box = calculateBoundingBox(rects);
+
+    groupsMapping[groupID] = {
+      items: items3,
+      rect: box,
+      uuid: groupID,
+    };
   });
 
-  return (Object.values(rectsOfGroups) as DragItem[]).reduce((acc: Record<string, DragItem[]>, group: DragItem) => {
-    const { id, rect } = group as DragItem;
-    const items1 = groupsUpdated[id] || [];
-    const rects1 = items1.map((item: DragItem) => item.rect);
+  Object.values(groupsMapping || {}).forEach(({ rect, items, uuid }) => {
+    const itemGroup = groups[uuid];
 
-    const rects2 = shiftRectsIntoBoundingBox(rects1, rect);
-    const items2: DragItem[] =
-      items1.map((item: DragItem, index: number) => updateItemRect(item, rects2[index]));
+    groupsMapping[uuid] = {
+      items,
+      rect: {
+        ...rect,
+        upstreamRects: uniqueArray(itemGroup.upstreamGroups ?? []).reduce(
+          (acc: RectType[], id: string) => {
+            const rect = groupsMapping[id]?.rect;
+            return rect ? acc.concat({ ...rect, id }) : acc;
+          }, []),
+      },
+      uuid,
+    };
+  });
+
+  const rectsTree0 = Object.entries(
+    groupsMapping || {},
+  )?.map(([id, item]: [string, { rect: RectType }]) => ({ ...item.rect, id }));
+  console.log('rectsTree0', rectsTree0);
+  const rectsTree1 = layoutRectsInTreeFormation(rectsTree0, layout);
+  console.log('rectsTree1', rectsTree1);
+  const rectsTree2 = centerRects(rectsTree1, boundingRect, containerRect);
+  console.log('rectsTree2', rectsTree2);
+
+  return rectsTree2.reduce((acc, groupRect: RectType) => {
+    const {
+      items,
+    } = groupsMapping[groupRect.id];
+    const rectItems = items?.map((item: DragItem) => item?.rect);
+
+    const itemsBox = calculateBoundingBox(rectItems);
+    const centerRect = calculateCentroid([groupRect]);
+    const diff = getRectDiff(itemsBox, centerRect);
+
+    const itemsCentered = items?.map((item: DragItem) => ({
+      ...item,
+      rect: applyRectDiff(item?.rect, diff),
+    }));
+    console.log('itemsCentered', itemsCentered);
 
     return {
       ...acc,
-      [id]: items2,
+      [groupRect.id]: itemsCentered,
     };
   }, {});
 }
@@ -359,17 +420,12 @@ function updateItemRect(item: DragItem, rect: RectType) {
   });
 }
 
-function repositionItems(
+function layoutItemsInSqaure(
   items: DragItem[],
-  opts?: {
-    horizontalSpacing?: number;
-    numCols?: number;
-    numRows?: number;
-    verticalSpacing?: number;
-  },
+  layout?: LayoutConfigType,
 ) {
   const rects = items.map(item => item.rect);
-  const repositionedRects = repositionInGroup(rects, opts);
+  const repositionedRects = repositionInGroup(rects, layout);
 
   return items.map((item, index) => {
     const { left, top } = repositionedRects[index];
@@ -380,21 +436,17 @@ function repositionItems(
 
 function repositionInGroup(
   rects: RectType[],
-  opts?: {
-    horizontalSpacing?: number;
-    verticalSpacing?: number;
-    numCols?: number;
-    numRows?: number;
-  },
+  layout?: LayoutConfigType,
 ): RectType[] {
+  const { gap, grid } = layout || {};
   let {
-    numCols,
-    numRows,
-  } = opts || {};
+    columns: numCols,
+    rows: numRows,
+  } = grid || {};
   const {
-    horizontalSpacing = 50,
-    verticalSpacing = 50,
-  } = opts || {};
+    column: horizontalSpacing = 50,
+    row: verticalSpacing = 50,
+  } = gap || {};
 
   // If there is only one rect, return it as is
   if (rects.length === 1) {

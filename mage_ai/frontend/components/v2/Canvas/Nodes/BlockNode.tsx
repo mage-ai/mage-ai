@@ -177,15 +177,12 @@ export function BlockNode({
     </div>
   );
 
-  if (borders?.length >= 1) {
-    return (
-      <GradientContainer
-        borderColors={borders?.slice?.(0, 2)?.map(b => b.baseColorName)}
-      >
-        {main}
-      </GradientContainer>
-    );
-  }
-
-  return main;
+  return (
+    <GradientContainer
+      // Only use gradient borders when block selected
+      borderColors={borders?.slice?.(0, 100)?.map(b => b.baseColorName)}
+    >
+      {main}
+    </GradientContainer>
+  );
 }

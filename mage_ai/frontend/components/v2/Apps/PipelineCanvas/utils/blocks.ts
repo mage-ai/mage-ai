@@ -1,6 +1,6 @@
 import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
-import { DragItem, PortType, LayoutConfigType, RectType } from '../../../Canvas/interfaces';
+import { DragItem, PortType, RectType } from '../../../Canvas/interfaces';
 import { buildPortUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
@@ -10,7 +10,6 @@ import { createConnection } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
 import { SetupOpts, layoutItems, layoutRectsInContainer, layoutItemsInTreeFormation } from '../../../Canvas/utils/rect';
 import { indexBy } from '@utils/array';
-import { layout } from 'styled-system';
 
 export function initializeBlocksAndConnections(
   blocksInit: BlockType[],

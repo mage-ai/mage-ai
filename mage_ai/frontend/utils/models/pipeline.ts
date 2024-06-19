@@ -1,6 +1,13 @@
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import PipelineType from '@interfaces/PipelineType';
+import BlockType, { BlockTypeEnum } from 'interfaces/BlockType';
+import PipelineExecutionFrameworkType, { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineType from 'interfaces/PipelineType';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ReplicationMethodEnum, StreamType } from '@interfaces/IntegrationSourceType';
+
+interface TreeNode {
+  name: string;
+  children: TreeNode[];
+}
 
 export function blocksWithStreamsWithIncrementalReplicationMethod(pipeline: PipelineType): {
   [uuid: string]: {
@@ -36,4 +43,61 @@ export function blocksWithStreamsWithIncrementalReplicationMethod(pipeline: Pipe
   });
 
   return streamsByBlockUUID;
+}
+
+
+export function extractNestedBlocks(
+  pipeline: PipelineType | PipelineExecutionFrameworkType,
+  pipelines: Record<string, PipelineType | PipelineExecutionFrameworkType>,
+): Record<string, any> {
+  let mapping = {};
+
+  pipeline?.blocks?.forEach((block) => {
+    mapping[block.uuid] = block
+
+    if (BlockTypeEnum.PIPELINE === block.type) {
+      mapping = {
+        ...mapping,
+        ...extractNestedBlocks(pipelines[block.uuid], pipelines),
+      };
+    }
+  });
+
+  return mapping;
+}
+
+export function groupBlocksByGroups(
+  blocks: (BlockType | PipelineExecutionFrameworkBlockType)[],
+): Record<GroupUUIDEnum, Record<string, any>> {
+  const blockGroupMap = {} as Record<GroupUUIDEnum, Record<string, any>>;
+  blocks?.forEach((block) => {
+    (block?.groups || [])?.forEach((group) => {
+      const uuid = group as GroupUUIDEnum;
+      blockGroupMap[uuid] ||= {};
+      blockGroupMap[uuid][block.uuid] = block;
+    });
+  });
+
+  return blockGroupMap;
+}
+
+export function buildTreeOfBlockGroups(paths: string[][]): TreeNode {
+  const root: TreeNode = { name: 'root', children: [] };
+
+  paths.forEach(path => {
+    let currentNode = root;
+
+    for (let name of path) {
+      let nextNode = currentNode.children.find(child => child.name === name);
+
+      if (!nextNode) {
+        nextNode = { name, children: [] };
+        currentNode.children.push(nextNode);
+      }
+
+      currentNode = nextNode;
+    }
+  });
+
+  return root;
 }

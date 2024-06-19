@@ -267,3 +267,13 @@ export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => a
 export function flattenArray(arr: any[]): any[] {
   return arr.reduce((flat, toFlatten) => flat.concat(Array.isArray(toFlatten) ? flattenArray(toFlatten) : toFlatten), []);
 }
+
+export function countOccurrences<T>(arr: T[]): Record<T, number> {
+  return arr.reduce((acc, item) => {
+    if (!acc[item]) {
+      acc[item] = 0;
+    }
+    acc[item]++;
+    return acc;
+  }, {} as Record<T, number>);
+}
