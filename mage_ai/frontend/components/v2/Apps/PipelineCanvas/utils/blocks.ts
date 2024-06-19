@@ -5,22 +5,25 @@ import { buildPortUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
   ItemTypeEnum,
-  LayoutConfigDirectionEnum,
-  LayoutConfigDirectionOriginEnum,
 } from '../../../Canvas/types';
 import { createConnection } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
-import { SetupOpts, determinePositions, layoutRectsInContainer } from '../../../Canvas/utils/rect';
-
+import { SetupOpts, determinePositions, layoutItemsInContainer, layoutItemsInTreeFormation } from '../../../Canvas/utils/rect';
+import { indexBy } from '@utils/array';
+import { layout } from 'styled-system';
 
 export function initializeBlocksAndConnections(
   blocksInit: BlockType[],
   opts?: SetupOpts,
 ) {
+  const blocks: BlockType[] = [];
+  const blockMapping: Record<string, BlockType> = {};
   const blockUpsDownsMapping: Record<string, {
     downstream_blocks: Record<string, BlockType>,
     upstream_blocks: Record<string, BlockType>,
   }> = {};
+  const connectionsMapping: Record<string, ConnectionType> = {};
+  const portsMapping: Record<string, PortType> = {};
 
   blocksInit.forEach((block: BlockType) => {
     blockUpsDownsMapping[block.uuid] ||= {
@@ -59,8 +62,6 @@ export function initializeBlocksAndConnections(
     });
   });
 
-  const blocks: BlockType[] = [];
-  const blockMapping: Record<string, BlockType> = {};
   blocksInit.forEach((block: BlockType) => {
     const block2 = {
       ...block,
@@ -82,11 +83,11 @@ export function initializeBlocksAndConnections(
     title: block.name || block.uuid,
     type: ItemTypeEnum.BLOCK,
   })) as DragItem[];
-  const positions = determinePositions(itemsInit, opts);
 
-  const itemsMapping: Record<string, DragItem> = layoutRectsInContainer(itemsInit, positions, opts?.containerRect)
-  const connectionsMapping: Record<string, ConnectionType> = {};
-  const portsMapping: Record<string, PortType> = {};
+  const positions = determinePositions(itemsInit, opts);
+  const itemsInContainer = layoutItemsInContainer(itemsInit, positions, opts?.containerRect);
+  const rectItems = layoutItemsInTreeFormation(itemsInContainer, opts?.layout);
+  const itemsMapping: Record<string, DragItem> = indexBy(rectItems, i => i.id);
 
   const downFlowPorts = {};
   // Create ports

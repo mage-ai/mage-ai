@@ -16,11 +16,12 @@ export interface OffsetType {
 
 export interface RectType {
   diff?: RectType;
-  id?: string;
+  id?: number | string;
   offset?: OffsetType;
   height?: number;
   left: number;
   top: number;
+  upstreamRects?: RectType[];
   version?: number;
   width?: number;
 }
@@ -47,8 +48,13 @@ export interface PortType extends DragItem {
 }
 
 export interface LayoutConfigType {
-  direction: LayoutConfigDirectionEnum;
-  origin: LayoutConfigDirectionOriginEnum;
+  direction?: LayoutConfigDirectionEnum;
+  origin?: LayoutConfigDirectionOriginEnum;
+  gap?: {
+    column?: number;
+    row?: number;
+  };
+  itemRect?: RectType;
 }
 
 export type NodeItemType = DragItem | PortType;

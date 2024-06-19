@@ -31,7 +31,6 @@ import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { repositionGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
-import { getTransformedBoundingClientRect } from '../../Canvas/utils/rect';
 import { rectFromOrigin } from './utils/positioning';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
@@ -88,8 +87,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   const layoutConfig = useMemo(
     () => ({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      origin: LayoutConfigDirectionOriginEnum.LEFT,
+
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [],
@@ -153,7 +151,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         Object.values(blocksMapping),
         {
           containerRect: containerRef?.current?.getBoundingClientRect(),
-          groupBy: groupItemsBy,
+          // groupBy: groupItemsBy,
           layout: layoutConfig,
         },
       );
@@ -193,12 +191,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       : (item as PortType).parent
     , connectionsRef, portsRef);
   }
-  console.log(items);
 
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
     const rectVersion = itemsMetadataRef.current.rect.version;
-
-    console.log(rectVersion, item?.rect?.version);
 
     if (itemRef.current && item?.rect?.version !== rectVersion) {
       const rect = itemRef.current.getBoundingClientRect();
@@ -223,21 +218,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef.current[newItem.id] = newItem;
     }
 
-    const arr = Object.values(itemsRef.current || {});
-    const versions = arr?.map(({ rect }) => rect?.version ?? 0);
+    // const arr = Object.values(itemsRef.current || {});
+    // const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
-    console.log(
-      versions?.every((version: number) => version === rectVersion),
-      versions,
-    );
+    // if (versions?.every((version: number) => version === rectVersion)) {
+    //   const groups1 = groupBy(arr, groupItemsBy);
+    //   const groups2 = repositionGroups(groups1);
 
-    if (versions?.every((version: number) => version === rectVersion)) {
-      const groups1 = groupBy(arr, (item: DragItem) => groupItemsBy(item?.block));
-      const groups2 = repositionGroups(groups1);
-
-      itemsRef.current = indexBy(flattenArray(Object.values(groups2)), (item: DragItem) => item.id);
-      setItems(itemsRef.current);
-    }
+    //   itemsRef.current = indexBy(flattenArray(Object.values(groups2)), (item: DragItem) => item.id);
+    //   setItems(itemsRef.current);
+    // }
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {

@@ -10,44 +10,39 @@ import { indexBy } from '@utils/array';
 
 type GroupType = { items: DragItem[], position: { left: number; top: number } };
 
-export type SetupOpts = {
-  horizontalSpacing?: number;
-  itemRect?: RectType;
-  groupBy?: (item: DragItem) => string;
-  layout?: LayoutConfigType;
-  containerRect?: RectType;
-  verticalSpacing?: number;
+const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
+  direction: LayoutConfigDirectionEnum.HORIZONTAL,
+  gap: {
+    column: 40,
+    row:40,
+  },
+  itemRect: {
+    left: 0,
+    top: 0,
+    height: 200,
+    width: 300,
+  },
+  origin: LayoutConfigDirectionOriginEnum.LEFT,
 };
 
-export function layoutRectsInContainer(
-  items: DragItem[],
-  positions: Record<string, { left: number; top: number }>,
-  containerRect: RectType,
-): Record<string, DragItem> {
-  const { height, width } = containerRect || { height: 0, width: 0 };
-  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
-  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
-  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
-  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
-  const offsetX = (width - (maxLeft - minLeft)) / 2;
-  const offsetY = (height - (maxTop - minTop)) / 2;
+export type SetupOpts = {
+  containerRect?: RectType;
+  groupBy?: (item: DragItem) => string;
+  layout?: LayoutConfigType;
+};
 
-  const itemsMapping: Record<string, DragItem> = {};
+function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
+  // This function shifts a list of rectangles to fit within a specified bounding box.
+  const groupBoundingBox = calculateBoundingBox(rects);
 
-  items.forEach((item: DragItem) => {
-    const position = positions[item.id];
+  const offsetX = boundingBox.left - groupBoundingBox.left;
+  const offsetY = boundingBox.top - groupBoundingBox.top;
 
-    itemsMapping[item.id] = {
-      ...item,
-      rect: {
-        ...item?.rect,
-        left: position.left + offsetX,
-        top: position.top + offsetY,
-      },
-    };
-  });
-
-  return itemsMapping;
+  return rects.map(rect => ({
+    ...rect,
+    left: rect.left + offsetX,
+    top: rect.top + offsetY,
+  }));
 }
 
 export function determinePositions(
@@ -58,19 +53,21 @@ export function determinePositions(
   const itemsByBlock = indexBy(items, i => i?.block?.uuid);
 
   const {
-    itemRect = { height: 100, width: 100 },
     groupBy,
-    horizontalSpacing = 100,
     layout,
-    verticalSpacing = 100,
   } = opts || {};
 
   const {
-    direction: layoutDirection = LayoutConfigDirectionEnum.HORIZONTAL,
-  } = layout || {
-    direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: LayoutConfigDirectionOriginEnum.LEFT,
-  };
+    direction = LayoutConfigDirectionEnum.HORIZONTAL,
+    gap = {
+      column: 40,
+      row:40,
+    },
+    itemRect = {
+      height: 200,
+      width: 300,
+    },
+  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
 
   const positions: Record<string, { left: number; top: number }> = {};
   const levels: Record<string, number> = {};
@@ -114,7 +111,7 @@ export function determinePositions(
   const currentGroupOffset = { left: 0, top: 0 };
   const padding = 20; // Additional padding for groups
 
-  Object.values(groups).forEach((group: GroupType, groupIndex: number) => {
+  Object.values(groups).forEach((group: GroupType) => {
     const groupBlocks = group.items.map(item => ({
       ...(item?.rect ?? itemRect),
       id: item.id,
@@ -122,10 +119,11 @@ export function determinePositions(
       top: 0,
     }));
 
-    const groupedRects = groupRectangles(groupBlocks as RectType[], Math.max(horizontalSpacing, verticalSpacing));
+    const groupedRects = groupRectangles(groupBlocks as RectType[], Math.max(gap?.column, gap?.row));
 
-    groupedRects.forEach(({ id, left, top }) => {
+    groupedRects.forEach(({ id, left, top, ...rect }) => {
       positions[id] = {
+        ...(rect ?? itemRect),
         left: currentGroupOffset.left + left,
         top: currentGroupOffset.top + top,
       };
@@ -135,16 +133,136 @@ export function determinePositions(
     const groupHeight = Math.max(...groupedRects.map(rect => rect.top + rect.height));
 
     // Update the offset for the next group
-    if (layoutDirection === LayoutConfigDirectionEnum.HORIZONTAL) {
-      currentGroupOffset.left += groupWidth + Math.max(horizontalSpacing, verticalSpacing) + padding;
+    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
+      currentGroupOffset.left += groupWidth + Math.max(gap?.column, gap?.row) + padding;
       currentGroupOffset.top = 0; // Reset top position for horizontal row layout
     } else {
-      currentGroupOffset.top += groupHeight + Math.max(horizontalSpacing, verticalSpacing) + padding;
+      currentGroupOffset.top += groupHeight + Math.max(gap?.column, gap?.row) + padding;
       currentGroupOffset.left = 0; // Reset left position for vertical column layout
     }
   });
 
   return positions;
+}
+
+export function layoutItemsInContainer(
+  items: DragItem[],
+  positions: Record<string, RectType>,
+  containerRect: RectType,
+): DragItem[] {
+  // This function lays out items within a container by centering them.
+  const { height, width } = containerRect || { height: 0, width: 0 };
+  const minLeft = Math.min(...Object.values(positions).map((p) => p.left));
+  const minTop = Math.min(...Object.values(positions).map((p) => p.top));
+  const maxLeft = Math.max(...Object.values(positions).map((p) => p.left));
+  const maxTop = Math.max(...Object.values(positions).map((p) => p.top));
+  const offsetX = (width - (maxLeft - minLeft)) / 2;
+  const offsetY = (height - (maxTop - minTop)) / 2;
+
+  return items.map((item: DragItem) => {
+    const rect = positions[item.id];
+
+    return {
+      ...item,
+      rect: {
+        ...rect,
+        ...item?.rect,
+        left: rect.left + offsetX,
+        top: rect.top + offsetY,
+      },
+    };
+  });
+}
+
+export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutConfigType): DragItem[] {
+  const mapping = indexBy(items, i => i.id);
+  const rectItems = items.map(item => ({
+    ...layout?.itemRect,
+    ...item.rect,
+    id: item.id,
+    upstreamRects: item?.block?.upstream_blocks.map((id: string) => mapping[id].rect),
+  }));
+
+  const rects = layoutRectsInTreeFormation(rectItems, layout);
+
+  console.log(rects);
+
+  return rects.map(rect => ({ ...mapping[rect.id], rect }));
+}
+
+function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType): RectType[] {
+  const {
+    direction,
+    gap,
+  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout};
+  const { column: horizontalSpacing, row: verticalSpacing } = gap;
+
+  const positionedItems: RectType[] = [];
+  const levels: Map<RectType, number> = new Map();
+  const maxLevelWidth: Map<number, number> = new Map();
+  const maxLevelHeight: Map<number, number> = new Map();
+  const childrenMapping: Map<RectType, RectType[]> = new Map();
+
+  // Determine the levels for each item
+  function determineLevel(item: RectType): number {
+    if (levels.has(item)) {
+      return levels.get(item)!;
+    }
+    if (item.upstreamRects.length === 0) {
+      levels.set(item, 0);
+    } else {
+      levels.set(item, Math.max(...item.upstreamRects.map(rect => {
+        const parentItem = items.find(i => i.id === rect.id
+          || (i.left === rect.left && i.top === rect.top && i.width === rect.width && i.height === rect.height));
+        if (parentItem) {
+          const parentLevel = determineLevel(parentItem);
+          const children = childrenMapping.get(parentItem) || [];
+          children.push(item);
+          childrenMapping.set(parentItem, children);
+          return parentLevel + 1;
+        }
+        return 0;
+      })));
+    }
+    return levels.get(item)!;
+  }
+
+  items.forEach(determineLevel);
+
+  // Calculate positions based on levels and whether we're fanning in or out
+  items.forEach(item => {
+    const level = levels.get(item)!;
+    const siblings = childrenMapping.get(item) || [];
+
+    if (!maxLevelWidth.has(level)) maxLevelWidth.set(level, 0);
+    if (!maxLevelHeight.has(level)) maxLevelHeight.set(level, 0);
+
+    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
+      item.left = maxLevelWidth.get(level)! + horizontalSpacing;
+      item.top = level * (item.height + verticalSpacing);
+
+      if (siblings.length > 0) {
+        item.top -= ((siblings.length - 1) * (item.height + verticalSpacing)) / 2;
+      }
+
+      maxLevelWidth.set(level, item.left + item.width);
+      maxLevelHeight.set(level, Math.max(maxLevelHeight.get(level)!, item.height));
+    } else {
+      item.top = maxLevelHeight.get(level)! + verticalSpacing;
+      item.left = level * (item.width + horizontalSpacing);
+
+      if (siblings.length > 0) {
+        item.left -= ((siblings.length - 1) * (item.width + horizontalSpacing)) / 2;
+      }
+
+      maxLevelHeight.set(level, item.top + item.height);
+      maxLevelWidth.set(level, Math.max(maxLevelWidth.get(level)!, item.width));
+    }
+
+    positionedItems.push(item);
+  });
+
+  return positionedItems;
 }
 
 function getRectDiff(rect1: RectType, rect2: RectType): RectType {
@@ -159,19 +277,6 @@ function applyRectDiff(rect: RectType, diff: RectType): RectType {
     left: rect.left + diff.left,
     top: rect.top + diff.top,
   };
-}
-
-function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
-    const groupBoundingBox = calculateBoundingBox(rects);
-
-    const offsetX = boundingBox.left - groupBoundingBox.left;
-    const offsetY = boundingBox.top - groupBoundingBox.top;
-
-    return rects.map(rect => ({
-        ...rect,
-        left: rect.left + offsetX,
-        top: rect.top + offsetY,
-    }));
 }
 
 export function repositionGroups(groups: Record<string, DragItem[]>): Record<string, DragItem[]> {

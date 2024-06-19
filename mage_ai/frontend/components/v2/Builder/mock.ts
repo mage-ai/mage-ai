@@ -361,13 +361,13 @@ export const PipelineFrameworkInstance = {
 }
 
 export default [
-  // DataPreparationPipeline,
+  DataPreparationPipeline,
   TransformPipeline,
   DataValidationPipeline,
-  // ExportPipeline,
-  // IndexPipeline,
-  // InferencePipeline,
-  // QueryProcessingPipeline,
-  // ResponseGenerationPipeline,
-  // RetrievalPipeline,
+  ExportPipeline,
+  IndexPipeline,
+  InferencePipeline,
+  QueryProcessingPipeline,
+  ResponseGenerationPipeline,
+  RetrievalPipeline,
 ];
