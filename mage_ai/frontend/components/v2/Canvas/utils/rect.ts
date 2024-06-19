@@ -199,8 +199,8 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
 
   const positionedItems: RectType[] = [];
   const levels: Map<RectType, number> = new Map();
-  const maxLevelWidth: Map<number, number> = new Map();
-  const maxLevelHeight: Map<number, number> = new Map();
+  const maxLevelWidths: Map<number, number> = new Map();
+  const maxLevelHeights: Map<number, number> = new Map();
   const childrenMapping: Map<RectType, RectType[]> = new Map();
 
   // Determine the levels for each item
@@ -229,40 +229,58 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
 
   items.forEach(determineLevel);
 
-  // Calculate positions based on levels and whether we're fanning in or out
+  // Collect items by level
+  const levelItems: Map<number, RectType[]> = new Map();
   items.forEach(item => {
     const level = levels.get(item)!;
-    const siblings = childrenMapping.get(item) || [];
+    if (!levelItems.has(level)) {
+      levelItems.set(level, []);
+    }
+    levelItems.get(level)!.push(item);
 
-    if (!maxLevelWidth.has(level)) maxLevelWidth.set(level, 0);
-    if (!maxLevelHeight.has(level)) maxLevelHeight.set(level, 0);
-
-    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-      item.left = maxLevelWidth.get(level)! + horizontalSpacing;
-      item.top = level * (item.height + verticalSpacing);
-
-      if (siblings.length > 0) {
-        item.top -= ((siblings.length - 1) * (item.height + verticalSpacing)) / 2;
-      }
-
-      maxLevelWidth.set(level, item.left + item.width);
-      maxLevelHeight.set(level, Math.max(maxLevelHeight.get(level)!, item.height));
-    } else {
-      item.top = maxLevelHeight.get(level)! + verticalSpacing;
-      item.left = level * (item.width + horizontalSpacing);
-
-      if (siblings.length > 0) {
-        item.left -= ((siblings.length - 1) * (item.width + horizontalSpacing)) / 2;
-      }
-
-      maxLevelHeight.set(level, item.top + item.height);
-      maxLevelWidth.set(level, Math.max(maxLevelWidth.get(level)!, item.width));
+    if (!maxLevelWidths.has(level)) {
+      maxLevelWidths.set(level, 0);
+      maxLevelHeights.set(level, 0);
     }
 
-    positionedItems.push(item);
+    // Track maximum dimensions at each level for centers calculation
+    maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level)!, item.width));
+    maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level)!, item.height));
   });
 
-  return positionedItems;
+  // Position items level by level
+  levelItems.forEach((rects, level) => {
+    let offset = 0;
+
+    // Calculate total dimension for alignment within current level
+    const totalDimension = rects.reduce((sum, rect) => sum + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? rect.height : rect.width) + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0) - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
+    const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL ? maxLevelHeights.get(level)! : maxLevelWidths.get(level)!;
+
+    rects.forEach(item => {
+      if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
+        item.left = level * (maxLevelWidths.get(level)! + horizontalSpacing);
+        item.top = offset + (maxDimension - totalDimension) / 2;
+        offset += item.height + verticalSpacing;
+      } else {
+        item.top = level * (maxLevelHeights.get(level)! + verticalSpacing);
+        item.left = offset + (maxDimension - totalDimension) / 2;
+        offset += item.width + horizontalSpacing;
+      }
+
+      positionedItems.push(item);
+    });
+  });
+
+  // Center the entire layout within its container
+  const finalBoundingBox = calculateBoundingBox(positionedItems);
+  const offsetX = finalBoundingBox.left - (finalBoundingBox.width / 2);
+  const offsetY = finalBoundingBox.top - (finalBoundingBox.height / 2);
+
+  return positionedItems.map(item => ({
+    ...item,
+    left: item.left - offsetX,
+    top: item.top - offsetY,
+  }));
 }
 
 function getRectDiff(rect1: RectType, rect2: RectType): RectType {
