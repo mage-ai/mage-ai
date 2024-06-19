@@ -101,6 +101,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     rect: {},
   });
   const phaseRef = useRef<number>(0);
+  const pipelinesRef = useRef<Record<string, PipelineType>>({});
   const portsRef = useRef<Record<string, PortType>>({});
 
   const [linesMounted, setLinesMounted] = useState<Record<string, boolean>>({});
@@ -149,13 +150,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         Object.values(blocksMapping),
         {
-          containerRect: containerRef?.current?.getBoundingClientRect(),
-          layout: layoutConfig,
+          layout: {
+            ...layoutConfig,
+            boundingRect: canvasRef?.current?.getBoundingClientRect(),
+            containerRect: containerRef?.current?.getBoundingClientRect(),
+          },
         },
       );
 
       frameworkGroups.current = groupBlocksByGroups(pipelineExecutionFramework);
       connectionsRef.current = connectionsMapping;
+      pipelinesRef.current = pipelinesMapping;
       portsRef.current = portsMapping;
       updateItemsMetadata();
 

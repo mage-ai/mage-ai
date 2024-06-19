@@ -26,7 +26,6 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
 };
 
 export type SetupOpts = {
-  containerRect?: RectType;
   groupBy?: (item: DragItem) => string;
   layout?: LayoutConfigType;
 };
@@ -147,16 +146,15 @@ export function layoutItems(
 
 export function layoutRectsInContainer(
   rects: RectType[],
-  containerRect: RectType,
+  layout?: LayoutConfigType
 ): RectType[] {
   // This function lays out items within a container by centering them.
-  const { height, width } = containerRect || { height: 0, width: 0 };
-  const minLeft = Math.min(...rects.map(r => r.left));
-  const minTop = Math.min(...rects.map(r => r.top));
-  const maxLeft = Math.max(...rects.map(r => r.left));
-  const maxTop = Math.max(...rects.map(r => r.top));
-  const offsetX = (width - (maxLeft - minLeft)) / 2;
-  const offsetY = (height - (maxTop - minTop)) / 2;
+  const { height, width } = layout?.containerRect || { height: 0, width: 0 };
+  const rect = calculateBoundingBox(rects);
+  const maxLeft = rect.left + rect.width;
+  const maxTop = rect.top + rect.height;
+  const offsetX = (width - (maxLeft - rect.left)) / 2;
+  const offsetY = (height - (maxTop - rect.top)) / 2;
 
   return rects.map((rect: RectType) => ({
     ...rect,
@@ -166,6 +164,8 @@ export function layoutRectsInContainer(
 }
 
 export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutConfigType): DragItem[] {
+  const { boundingRect, containerRect } = layout || {};
+
   const mapping = indexBy(items, i => i.id);
   const rectItems = items.map(item => ({
     ...layout?.itemRect,
@@ -179,7 +179,17 @@ export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutCon
 
   const rects = layoutRectsInTreeFormation(rectItems, layout);
 
-  return rects.map(rect => ({ ...mapping[rect.id], rect }));
+  let diff = { left: 0, top: 0 };
+  if (containerRect && boundingRect) {
+    const centerRect = {
+      left: ((containerRect.left + containerRect.width) / 2) + ((boundingRect.width ?? 0) / 2),
+      top: ((containerRect.top + containerRect.height) / 2) + ((boundingRect.height ?? 0) / 2),
+    }
+    const centroid = calculateBoundingBox(rects);
+    diff = getRectDiff(centroid, centerRect);
+  }
+
+  return rects.map(rect => ({ ...mapping[rect.id], rect: applyRectDiff(rect, diff) }));
 }
 
 function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType): RectType[] {

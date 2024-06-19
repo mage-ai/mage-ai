@@ -48,6 +48,8 @@ export interface PortType extends DragItem {
 }
 
 export interface LayoutConfigType {
+  boundingRect?: RectType;
+  containerRect?: RectType;
   direction?: LayoutConfigDirectionEnum;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {

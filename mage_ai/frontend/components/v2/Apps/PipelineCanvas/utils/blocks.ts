@@ -85,7 +85,7 @@ export function initializeBlocksAndConnections(
   })) as DragItem[];
 
   let rects = layoutItems(itemsInit, opts);
-  rects = layoutRectsInContainer(rects, opts?.containerRect);
+  rects = layoutRectsInContainer(rects, opts?.layout);
   const rectItems = layoutItemsInTreeFormation(itemsInit.map((i, idx) => ({
     ...i,
     rect: rects[idx],
