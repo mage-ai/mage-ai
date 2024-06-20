@@ -301,12 +301,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       if (node?.rect) {
         // NodeWrapper is already translating the x and y based on the node’s rect attribute.
         const { rect } = node;
-        const rectCurrent = itemRef.current.getBoundingClientRect();
 
         itemRef.current.style.height = `${rect?.height}px`;
         itemRef.current.style.width = `${rect?.width}px`;
 
-        console.log(`onMountItem Node: ${node.id}`, rect);
+        // console.log(`onMountItem Node: ${node.id}`, rect);
       }
     }
 

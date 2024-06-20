@@ -70,6 +70,7 @@ export interface LayoutConfigType {
     rows?: number;
   };
   itemRect?: RectType;
+  stagger?: number;
 }
 
 export type NodeItemType = DragItem | PortType;

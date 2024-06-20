@@ -17,12 +17,13 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
     row: 40,
   },
   itemRect: {
+    height: 100,
     left: 0,
     top: 0,
-    height: 200,
-    width: 300,
+    width: 100,
   },
   origin: LayoutConfigDirectionOriginEnum.LEFT,
+  stagger: 100,
 };
 
 export type SetupOpts = {
@@ -201,6 +202,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   const {
     direction,
     gap,
+    stagger,
   } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
   const { column: horizontalSpacing, row: verticalSpacing } = gap;
 
@@ -222,11 +224,12 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     visited.add(item.id);
 
     if (item.upstreamRects.length === 0) {
+      console.log(`Item ${item.id} has no upstreamRects:`, item?.upstreamRects);
       levels.set(item.id, 0);
     } else {
-      levels.set(item.id, Math.max(...item.upstreamRects.map(rect => {
-        const parentItem = items.find(i => i.id === rect.id
-          || (i.left === rect.left && i.top === rect.top && i.width === rect.width && i.height === rect.height));
+      const lvl = Math.max(...item.upstreamRects.map(rect => {
+        const parentItem = items.find(i => i.id === rect.id);
+        console.log(`Checking parent for ${item.id}`, parentItem);
         if (parentItem) {
           const parentLevel = determineLevel(parentItem);
           const children = childrenMapping.get(parentItem) || [];
@@ -235,7 +238,9 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
           return parentLevel + 1;
         }
         return 0;
-      })));
+      }));
+      console.log(`Setting level for item ${item.id} to ${lvl}`);
+      levels.set(item.id, lvl);
     }
     visited.delete(item.id);
     return levels.get(item.id);
@@ -260,42 +265,47 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     // Track maximum dimensions at each level for centers calculation
     maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level), item.width));
     maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level), item.height));
-
-    console.log('maxLevelWidths', level, maxLevelWidths.get(level));
-    console.log('maxLevelHeights', level, maxLevelHeights.get(level));
   });
 
   // Position items level by level
-  levelItems.forEach((rects, level) => {
-    let offset = 0;
+  levelItems.forEach((rects, level: number) => {
+    const mod = level % 3;
+    const factor = mod === 0 ? 0 : mod === 1 ? 1 : -1;
+    const offset = stagger * factor;
 
     // Calculate total dimension for alignment within current level
-    const totalDimension = rects.reduce(
-      (sum, rect) => sum
-      + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? rect.height : rect.width)
-      + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0)
-    - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
-    const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL
-      ? maxLevelHeights.get(level)
-      : maxLevelWidths.get(level);
+    // const totalDimension = rects.reduce(
+    //   (sum, rect) => sum
+    //   + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? rect.height : rect.width)
+    //   + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0)
+    // - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
+    // const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL
+    //   ? maxLevelHeights.get(level)
+    //   : maxLevelWidths.get(level);
 
-    rects.forEach(item => {
+    rects.forEach((item, idx: number) => {
+      let left = 0;
+      let top = 0;
+
       if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-        let left = 0;
         range(level).forEach((_l, lvl: number) => {
           left += maxLevelWidths.get(lvl) + horizontalSpacing;
         });
         item.left = left;
-        item.top = offset + (maxDimension - totalDimension) / 2;
-        offset += item.height + verticalSpacing;
+
+        top += rects.slice(0, idx).reduce((sum, rect) => sum + rect.height, 0) + (idx * verticalSpacing) + offset;
+        console.log(`Top for ${item.id}:`, top);
+        item.top = top;
       } else {
-        let top = 0;
         range(level).forEach((_l, lvl: number) => {
           top += maxLevelHeights.get(lvl) + verticalSpacing;
         });
+        console.log(`Top for ${item.id}:`, top);
         item.top = top;
-        item.left = offset + (maxDimension - totalDimension) / 2;
-        offset += item.width + horizontalSpacing;
+
+        left += rects.slice(0, idx).reduce((sum, rect) => sum + rect.width, 0) + (idx * verticalSpacing) + offset;
+        console.log(`Left for ${item.id}:`, left);
+        item.left = left;
       }
 
       positionedItems.push(item);
@@ -348,6 +358,7 @@ export function layoutItemsInGroups(
       ...item,
       rect: {
         ...item?.rect,
+        id: item.id,
         upstreamRects: uniqueArray(item?.block?.upstream_blocks ?? [])?.reduce(
           (acc: RectType[], buuid: string) => {
             const rect = itemsByID[buuid]?.rect;
@@ -358,17 +369,25 @@ export function layoutItemsInGroups(
       },
     }))  as DragItem[];
 
-    console.log('Group items upstream rects:', items2);
+    let rects = items2.map((item: DragItem) => item.rect);
+    console.log(`Group items upstream rects ${node.id}:`, rects);
 
-    // Laying this out in a tree makes the height super small
-    // const rects = layoutRectsInTreeFormation(items2.map((item: DragItem) => item.rect), layout);
-    // const items3 = items2?.map((item: DragItem, idx: number) => ({
-    //   ...item,
-    //   rect: rects[idx],
-    // }));
+    const layoutInner = {
+      ...layout,
+      direction: LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
+        ? LayoutConfigDirectionEnum.VERTICAL
+        : LayoutConfigDirectionEnum.HORIZONTAL,
+    };
+    rects = layoutRectsInTreeFormation(rects, layoutInner);
 
-    const items3 = layoutItemsInSqaure(items2, layout);
-    const rects = items3?.map((item: DragItem) => item.rect);
+    const items3 = items2?.map((item: DragItem, idx: number) => ({
+      ...item,
+      rect: rects[idx],
+    }));
+
+    // const items3 = layoutItemsInSqaure(items2, layout);
+    // const rects = items3?.map((item: DragItem) => item.rect);
+    //
     const box = calculateBoundingBox(rects);
 
     groupsMapping[node.id] = {
@@ -420,9 +439,15 @@ export function layoutItemsInGroups(
     const centerRect = calculateCentroid([rect]);
     const diff = getRectDiff(box, centerRect);
 
-    const itemsCentered = items?.map((item: DragItem) => ({
+    let itemsCentered = items?.map((item: DragItem) => ({
       ...item,
       rect: applyRectDiff(item?.rect, diff),
+    }));
+
+    const rects2 = shiftRectsIntoBoundingBox(itemsCentered?.map((item: DragItem) => item.rect), rect);
+    itemsCentered = itemsCentered?.map((item: DragItem, idx: number) => ({
+      ...item,
+      rect: rects2[idx],
     }));
 
     return acc.concat({
@@ -609,31 +634,32 @@ function calculateBoundingBox(rects: RectType[]): RectType {
 
 function layoutRectsInWavePattern(
   rects: RectType[],
+  layout?: LayoutConfigType,
   opts?: {
     amplitude?: number;
     wavelength?: number;
-    spacing?: number;
-    direction?: LayoutConfigDirectionEnum;
   },
 ): RectType[] {
   const {
     amplitude = 40,
     wavelength = 100,
-    spacing = 20,
-    direction = LayoutConfigDirectionEnum.HORIZONTAL,
   } = opts || {};
+  const {
+    direction = LayoutConfigDirectionEnum.HORIZONTAL,
+    gap,
+  } = layout || {};
 
   let accumulatedWidth = 0;
   let accumulatedHeight = 0;
 
-  return rects.map((rect, index) => {
+  return rects.map((rect, index: number) => {
     let updatedRect: RectType;
 
     if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
       // Calculate wave positioning for horizontal direction
       const xPos = accumulatedWidth;
       const yPos = amplitude * Math.sin((2 * Math.PI / wavelength) * xPos);
-      accumulatedWidth += rect.width + spacing;
+      accumulatedWidth += rect.width + (gap?.column ?? 0);
 
       updatedRect = {
         ...rect,
@@ -644,7 +670,7 @@ function layoutRectsInWavePattern(
       // Calculate wave positioning for vertical direction
       const yPos = accumulatedHeight;
       const xPos = amplitude * Math.sin((2 * Math.PI / wavelength) * yPos);
-      accumulatedHeight += rect.height + spacing;
+      accumulatedHeight += rect.height + (gap?.row ?? 0);
 
       updatedRect = {
         ...rect,
