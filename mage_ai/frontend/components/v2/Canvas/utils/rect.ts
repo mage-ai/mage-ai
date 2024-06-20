@@ -6,7 +6,7 @@ import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../types';
-import { flattenArray, indexBy, uniqueArray } from '@utils/array';
+import { range, indexBy, uniqueArray } from '@utils/array';
 
 type GroupType = { items: DragItem[], position: { left: number; top: number } };
 
@@ -205,26 +205,26 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   const { column: horizontalSpacing, row: verticalSpacing } = gap;
 
   const positionedItems: RectType[] = [];
-  const levels: Map<RectType, number> = new Map();
+  const levels: Map<number | string, number> = new Map();
   const maxLevelWidths: Map<number, number> = new Map();
   const maxLevelHeights: Map<number, number> = new Map();
   const childrenMapping: Map<RectType, RectType[]> = new Map();
-  const visited = new Set<RectType>();
+  const visited = new Set<number | string>();
 
   // Determine the levels for each item
   function determineLevel(item: RectType): number {
-    if (levels.has(item)) {
-      return levels.get(item)!;
+    if (levels.has(item.id)) {
+      return levels.get(item.id);
     }
-    if (visited.has(item)) {
+    if (visited.has(item.id)) {
       throw new Error(`Cycle detected involving item id ${item.id}`);
     }
-    visited.add(item);
+    visited.add(item.id);
 
     if (item.upstreamRects.length === 0) {
-      levels.set(item, 0);
+      levels.set(item.id, 0);
     } else {
-      levels.set(item, Math.max(...item.upstreamRects.map(rect => {
+      levels.set(item.id, Math.max(...item.upstreamRects.map(rect => {
         const parentItem = items.find(i => i.id === rect.id
           || (i.left === rect.left && i.top === rect.top && i.width === rect.width && i.height === rect.height));
         if (parentItem) {
@@ -237,8 +237,8 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
         return 0;
       })));
     }
-    visited.delete(item);
-    return levels.get(item)!;
+    visited.delete(item.id);
+    return levels.get(item.id);
   }
 
   items.forEach(determineLevel);
@@ -246,11 +246,11 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   // Collect items by level
   const levelItems: Map<number, RectType[]> = new Map();
   items.forEach(item => {
-    const level = levels.get(item)!;
+    const level = levels.get(item.id);
     if (!levelItems.has(level)) {
       levelItems.set(level, []);
     }
-    levelItems.get(level)!.push(item);
+    levelItems.get(level).push(item);
 
     if (!maxLevelWidths.has(level)) {
       maxLevelWidths.set(level, 0);
@@ -258,8 +258,11 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     }
 
     // Track maximum dimensions at each level for centers calculation
-    maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level)!, item.width));
-    maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level)!, item.height));
+    maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level), item.width));
+    maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level), item.height));
+
+    console.log('maxLevelWidths', level, maxLevelWidths.get(level));
+    console.log('maxLevelHeights', level, maxLevelHeights.get(level));
   });
 
   // Position items level by level
@@ -273,16 +276,24 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
       + (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing), 0)
     - (direction === LayoutConfigDirectionEnum.HORIZONTAL ? verticalSpacing : horizontalSpacing);
     const maxDimension = direction === LayoutConfigDirectionEnum.HORIZONTAL
-      ? maxLevelHeights.get(level)!
-      : maxLevelWidths.get(level)!;
+      ? maxLevelHeights.get(level)
+      : maxLevelWidths.get(level);
 
     rects.forEach(item => {
       if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-        item.left = level * (maxLevelWidths.get(level)! + horizontalSpacing);
+        let left = 0;
+        range(level).forEach((_l, lvl: number) => {
+          left += maxLevelWidths.get(lvl) + horizontalSpacing;
+        });
+        item.left = left;
         item.top = offset + (maxDimension - totalDimension) / 2;
         offset += item.height + verticalSpacing;
       } else {
-        item.top = level * (maxLevelHeights.get(level)! + verticalSpacing);
+        let top = 0;
+        range(level).forEach((_l, lvl: number) => {
+          top += maxLevelHeights.get(lvl) + verticalSpacing;
+        });
+        item.top = top;
         item.left = offset + (maxDimension - totalDimension) / 2;
         offset += item.width + horizontalSpacing;
       }
@@ -290,6 +301,8 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
       positionedItems.push(item);
     });
   });
+
+  console.log('levelItems', levelItems);
 
   // Center the entire layout within its container
   const finalBoundingBox = calculateBoundingBox(positionedItems);
@@ -303,7 +316,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   }));
 }
 
-function getRectDiff(rect1: RectType, rect2: RectType): RectType {
+export function getRectDiff(rect1: RectType, rect2: RectType): RectType {
   const dx = rect2.left - rect1.left;
   const dy = rect2.top - rect1.top;
   return { left: dx, top: dy };
@@ -379,14 +392,24 @@ export function layoutItemsInGroups(
     };
   });
 
-  const rectsTree0 = Object.values(
+  const rectsBeforeLayout = Object.values(
     groupsMapping || {},
-  )?.map((node: NodeType) => ({ ...node.rect, id: node?.id }));
-  // console.log('rectsTree0', rectsTree0);
-  const rectsInTree = layoutRectsInTreeFormation(rectsTree0, layout);
-  // console.log('rectsInTree', rectsInTree);
+  )?.map((node: NodeType) => ({
+    ...node.rect,
+    id: node?.id,
+    left: null,
+    top: null,
+    upstreamRects: node?.rect?.upstreamRects?.map((rect: RectType) => ({
+      ...rect,
+      left: null,
+      top: null,
+    })),
+  }));
+  console.log('rectsBeforeLayout', rectsBeforeLayout);
+  const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
+  console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
-  // console.log('rectsCentered', rectsCentered);
+  console.log('rectsCentered', rectsCentered);
 
   return rectsCentered.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];

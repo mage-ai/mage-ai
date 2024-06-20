@@ -27,7 +27,7 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { getRectDiff, layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
@@ -299,15 +299,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const node = nodeItemsRef?.current?.[id];
 
       if (node?.rect) {
+        // NodeWrapper is already translating the x and y based on the node’s rect attribute.
         const { rect } = node;
         const rectCurrent = itemRef.current.getBoundingClientRect();
+
         itemRef.current.style.height = `${rect?.height}px`;
         itemRef.current.style.width = `${rect?.width}px`;
-        itemRef.current.style.position = 'absolute';
 
-        const x = rect.left - rectCurrent.left;
-        const y = rect.top - rectCurrent.top;
-        itemRef.current.style.transform = `translate(${x}px, ${y}px, 1)`;
+        console.log(`onMountItem Node: ${node.id}`, rect);
       }
     }
 

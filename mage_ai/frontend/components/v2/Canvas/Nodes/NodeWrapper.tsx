@@ -26,7 +26,6 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
     cursor: 'move',
     position: 'absolute',
     transform,
-    zIndex: 1,
     ...(isDragging ? { height: 0, opacity: 0 } : {}),
   };
 }
