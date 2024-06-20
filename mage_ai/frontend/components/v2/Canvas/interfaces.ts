@@ -15,15 +15,18 @@ export interface OffsetType {
 }
 
 export interface RectType {
+  bottom?: number;
   diff?: RectType;
-  id?: number | string;
-  offset?: OffsetType;
   height?: number;
+  id?: number | string;
   left: number;
+  offset?: OffsetType;
+  right?: number;
   top: number;
   upstreamRects?: RectType[];
   version?: number;
   width?: number;
+  zIndex?: number;
 }
 
 interface BaseItem {
@@ -70,6 +73,9 @@ export interface LayoutConfigType {
     rows?: number;
   };
   itemRect?: RectType;
+  padding?: {
+    node?: RectType;
+  };
   stagger?: number;
 }
 

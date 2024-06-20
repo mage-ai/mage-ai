@@ -28,6 +28,7 @@ export function BlockNodeWrapper({
 }: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
+  const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
@@ -110,10 +111,25 @@ export function BlockNodeWrapper({
   }, [names, ports, selected]);
 
   useEffect(() => {
+
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {
-      onMountItem?.(item, itemRef);
+      const checkComputedStyles = () => {
+        const computedStyle = typeof window !== 'undefined' && window.getComputedStyle(itemRef.current);
+        if (computedStyle) {
+          onMountItem?.(item, itemRef);
+        } else {
+          timeoutRef.current = setTimeout(checkComputedStyles, 100);
+        }
+      };
+
+      setTimeout(checkComputedStyles, 100);
     }
     phaseRef.current += 1;
+
+    const timeout = timeoutRef.current;
+    return () => {
+      clearTimeout(timeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

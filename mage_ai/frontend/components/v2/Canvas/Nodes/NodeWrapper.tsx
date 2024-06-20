@@ -14,7 +14,11 @@ import { ElementRoleEnum } from '@mana/shared/types';
 
 // This is the style used for the preview when dragging
 function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }): CSSProperties {
-  const { left, top } = rect || ({} as RectType);
+  const {
+    left,
+    top,
+    zIndex,
+  } = rect || ({} as RectType);
   const transform = `translate3d(${left}px, ${top}px, 0)`;
 
   return {
@@ -26,6 +30,7 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
     cursor: 'move',
     position: 'absolute',
     transform,
+    zIndex,
     ...(isDragging ? { height: 0, opacity: 0 } : {}),
   };
 }

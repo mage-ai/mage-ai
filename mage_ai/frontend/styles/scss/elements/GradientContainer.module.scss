@@ -13,6 +13,7 @@
   position: relative;
   display: grid;
   justify-items: stretch;
+  box-sizing: content-box;
 }
 
 
@@ -22,6 +23,6 @@
   background-color: var(--backgrounds-body);
   border-radius: calc(var(--borders-radius-base) - 2px);
   border: none;
-  /* height: inherit; */
+  height: inherit;
   overflow: hidden; // To clip children with border-radius
 }

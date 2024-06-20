@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
@@ -21,13 +21,14 @@ import {
   LayoutConfigDirectionOriginEnum,
 } from '../../Canvas/types';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { isDebug } from '@utils/environment';
 import { BlockNodeWrapper } from '../../Canvas/Nodes/BlockNodeWrapper';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { getRectDiff, layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
@@ -216,23 +217,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   function setFocusLevel(level: FocusLevelEnum) {
     focusLevelRef.current = level;
 
-    Object.entries(
-      itemsElementRef?.current || {},
-    )?.forEach(([itemType, mapping]: [ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>]) => {
-      Object.entries(mapping)?.forEach(([id, elementRef]: [string, React.RefObject<HTMLDivElement>]) => {
-        const item = itemsRef?.current?.[id];
-        if (!item || !elementRef?.current) return;
+    // Object.entries(
+    //   itemsElementRef?.current || {},
+    // )?.forEach(([itemType, mapping]: [ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>]) => {
+    //   Object.entries(mapping)?.forEach(([id, elementRef]: [string, React.RefObject<HTMLDivElement>]) => {
+    //     const item = itemsRef?.current?.[id];
+    //     if (!item || !elementRef?.current) return;
 
-        elementRef?.current?.classList?.add(styles[String(itemType)]);
+    //     elementRef?.current?.classList?.add(styles[String(itemType)]);
 
-        FOCUS_LEVELS.forEach((focusLevel: FocusLevelEnum) => {
-          const className = styles[`focus-level-${focusLevel}`];
-          focusLevel === level
-            ? elementRef?.current?.classList?.add(className)
-            : elementRef?.current?.classList?.remove(className);
-        });
-      });
-    });
+    //     FOCUS_LEVELS.forEach((focusLevel: FocusLevelEnum) => {
+    //       const className = styles[`focus-level-${focusLevel}`];
+    //       focusLevel === level
+    //         ? elementRef?.current?.classList?.add(className)
+    //         : elementRef?.current?.classList?.remove(className);
+    //     });
+    //   });
+    // });
   }
 
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
@@ -243,7 +244,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     if (ItemTypeEnum.BLOCK === type) {
       if (item?.rect?.version === rectVersion) return;
-
       const rect = itemRef.current.getBoundingClientRect();
 
       const newItem = update(item, {
@@ -269,17 +269,29 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
       if (versions?.every((version: number) => version === rectVersion)) {
-        const [nodes] = buildNodeGroups(arr);
-        const nodesGroupedArr = layoutItemsInGroups(nodes, {
+        const layout = {
           boundingRect: canvasRef?.current?.getBoundingClientRect(),
           containerRect: containerRef?.current?.getBoundingClientRect(),
           direction: LayoutConfigDirectionEnum.HORIZONTAL,
           gap: {
-            column: 100,
-            row: 100,
+            column: 40,
+            row: 40,
           },
-          origin: LayoutConfigDirectionOriginEnum.LEFT,
-        });
+          padding: {
+            node: {
+              bottom: 12,
+              left: 12,
+              right: 12,
+              top: 12,
+            },
+          },
+        };
+
+        const [nodes] = buildNodeGroups(arr);
+        const nodesGroupedArr = layoutItemsInGroups(nodes, layout);
+
+        // const items2 = layoutItemsInTreeFormation(arr, layout);
+        // const itemsMapping = indexBy(items2, ({ id }) => id);
 
         const itemsMapping = {};
         const nodesGrouped = {};
@@ -290,10 +302,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           nodesGrouped[node.id] = node;
         });
 
-        itemsRef.current = itemsMapping;
         nodeItemsRef.current = nodesGrouped;
-        setItems(itemsRef.current);
-        setFocusLevel(FocusLevelEnum.GROUPS);
+        itemsRef.current = itemsMapping;
+
+        startTransition(() => {
+          setItems(itemsRef.current);
+          setFocusLevel(FocusLevelEnum.GROUPS);
+        });
       }
     } else if (ItemTypeEnum.NODE === type) {
       const node = nodeItemsRef?.current?.[id];
