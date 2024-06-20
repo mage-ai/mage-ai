@@ -14,6 +14,7 @@ type BlockNodeWrapperProps = {
   onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
+  selected?: boolean;
 };
 
 export function BlockNodeWrapper({
@@ -23,6 +24,7 @@ export function BlockNodeWrapper({
   handlers,
   onMountPort,
   onMountItem,
+  selected = true,
 }: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
@@ -97,11 +99,15 @@ export function BlockNodeWrapper({
 
     const c = arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
     if (!c?.length) {
-      c.push({ baseColorName: 'gray' });
+      if (selected) {
+        c.push(...[{ baseColorName: 'red' }, { baseColorName: 'yellow' }]);
+      } else {
+        c.push({ baseColorName: 'gray' });
+      }
     }
 
     return c;
-  }, [names, ports]);
+  }, [names, ports, selected]);
 
   useEffect(() => {
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {

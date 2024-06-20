@@ -82,6 +82,10 @@ export function getBlockColor(
     baseName = 'green';
     accent = colors?.typography?.text?.base;
     accentLight = colors?.typography?.text?.muted;
+  } else if (BlockTypeEnum.GROUP === blockType) {
+    baseName = 'green';
+  } else if (BlockTypeEnum.PIPELINE === blockType) {
+    baseName = 'pink';
   }
 
   return {

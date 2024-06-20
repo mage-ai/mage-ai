@@ -4,6 +4,7 @@ import Badge from '@mana/elements/Badge';
 import Circle from '@mana/elements/Circle';
 import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
 import { getBlockColor } from '@mana/themes/blocks';
 import Aside from './Blocks/Aside';
 import { DragItem, PortType } from '../interfaces';
@@ -34,10 +35,10 @@ export function BlockNode({
   block,
   borderConfig,
   groups,
+  handlers,
   item,
   onMount,
   titleConfig,
-  handlers,
 }: BlockNodeProps & DragAndDropHandlersType) {
   const { borders } = borderConfig || {};
   const { asides, badge } = titleConfig || {};
@@ -69,11 +70,19 @@ export function BlockNode({
   }, [block, inputs, item, outputs]);
 
   const classNames = [
-    styles.blockNode,
+    borders?.length >= 2
+      ? stylesGradient[[
+        'gradient-background-to-top-right',
+        ...((borders ?? []).concat([
+          // { baseColorName: 'yellow' },
+          // { baseColorName: 'green' },
+        ]))?.slice?.(0, 100)?.map(b => b.baseColorName),
+      ].join('-')]
+      : '',
     borders?.length >= 2
       ? ''
       : borders?.length === 1
-        ?  styles[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]
+        ?  stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]
         : '',
   ];
 
@@ -159,8 +168,8 @@ export function BlockNode({
     </Grid>
   ), [after, before, titleConfig]);
 
-  const main = (
-    <div className={classNames.join(' ')}>
+  const main = useMemo(() => (
+    <div className={styles.blockNode}>
       <Grid
         rowGap={8}
         templateRows="auto"
@@ -175,12 +184,12 @@ export function BlockNode({
         )}
       </Grid>
     </div>
-  );
+  ), [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow]);
 
   return (
     <GradientContainer
       // Only use gradient borders when block selected
-      borderColors={borders?.slice?.(0, 100)?.map(b => b.baseColorName)}
+      className={classNames?.join(' ')}
     >
       {main}
     </GradientContainer>

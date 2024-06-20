@@ -33,20 +33,29 @@ const GradientContainerInner = withStyles<InnerProps>(styles, {
 
 export function GradientContainer({
   backgroundColor,
-  borderColors = ['white', 'purple'],
+  borderColors,
   children,
+  className,
   direction = 'to top right',
 }: OutterProps & InnerProps & {
   borderColors?: string[],
+  className?: string,
   direction?: Direction,
 }) {
   return (
     // @ts-ignore
     <GradientContainerOutter
-      gradientBackground={[
-        direction.replace(' ', '-'),
-        ...(borderColors || []),
-      ].join('-')}
+      className={[
+        styles['gradient-outter'],
+        className || '',
+      ].join(' ')}
+      gradientBackground={direction && borderColors?.length >= 2
+        ? [
+          direction.replace(' ', '-'),
+          ...(borderColors || []),
+        ].join('-')
+        : undefined
+      }
     >
       {/* @ts-ignore */}
       <GradientContainerInner backgroundColor={backgroundColor}>

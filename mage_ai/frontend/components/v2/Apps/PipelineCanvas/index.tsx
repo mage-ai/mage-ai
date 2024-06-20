@@ -297,22 +297,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       }
     } else if (ItemTypeEnum.NODE === type) {
       const node = nodeItemsRef?.current?.[id];
-      console.log('MOUNTED!!!!!!!!!!!!!!!!!!', id,
-        node?.rect,
-        itemRef?.current?.getBoundingClientRect(),
-      );
+
       if (node?.rect) {
         const { rect } = node;
+        const rectCurrent = itemRef.current.getBoundingClientRect();
         itemRef.current.style.height = `${rect?.height}px`;
-        itemRef.current.style.left = `${rect?.left}px`;
-        itemRef.current.style.top = `${rect?.top}px`;
         itemRef.current.style.width = `${rect?.width}px`;
         itemRef.current.style.position = 'absolute';
+
+        const x = rect.left - rectCurrent.left;
+        const y = rect.top - rectCurrent.top;
+        itemRef.current.style.transform = `translate(${x}px, ${y}px, 1)`;
       }
-      console.log('STYLEEEEEEEEEEEEEEEEEEEES', id,
-        node?.rect,
-        itemRef?.current?.getBoundingClientRect(),
-      );
     }
 
     if (!itemsElementRef?.current) {

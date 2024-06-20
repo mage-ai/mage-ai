@@ -345,11 +345,17 @@ export function layoutItemsInGroups(
       },
     }))  as DragItem[];
 
-    const rects = layoutRectsInTreeFormation(items2.map((item: DragItem) => item.rect), layout);
-    const items3 = items2?.map((item: DragItem, idx: number) => ({
-      ...item,
-      rect: rects[idx],
-    }));
+    console.log('Group items upstream rects:', items2);
+
+    // Laying this out in a tree makes the height super small
+    // const rects = layoutRectsInTreeFormation(items2.map((item: DragItem) => item.rect), layout);
+    // const items3 = items2?.map((item: DragItem, idx: number) => ({
+    //   ...item,
+    //   rect: rects[idx],
+    // }));
+
+    const items3 = layoutItemsInSqaure(items2, layout);
+    const rects = items3?.map((item: DragItem) => item.rect);
     const box = calculateBoundingBox(rects);
 
     groupsMapping[node.id] = {
@@ -376,8 +382,11 @@ export function layoutItemsInGroups(
   const rectsTree0 = Object.values(
     groupsMapping || {},
   )?.map((node: NodeType) => ({ ...node.rect, id: node?.id }));
+  // console.log('rectsTree0', rectsTree0);
   const rectsInTree = layoutRectsInTreeFormation(rectsTree0, layout);
+  // console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
+  // console.log('rectsCentered', rectsCentered);
 
   return rectsCentered.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];
@@ -395,6 +404,7 @@ export function layoutItemsInGroups(
 
     return acc.concat({
       ...node,
+      rect,
       items: itemsCentered?.map((item: DragItem) => ({
         ...item,
         node: {
@@ -533,17 +543,23 @@ function groupRectangles(
 }
 
 function calculateCentroid(rects: RectType[]): { left: number; top: number } {
-  const total = rects.reduce(
-    (acc, rect) => ({
-      left: acc.left + rect.left + rect.width / 2,
-      top: acc.top + rect.top + rect.height / 2,
-    }),
-    { left: 0, top: 0 },
-  );
+  let leftSum = 0;
+  let topSum = 0;
+
+  [...rects]?.forEach((rect: RectType) => {
+    const {
+      left,
+      top,
+      width,
+      height,
+    } = { ...rect };
+    leftSum += left + (width / 2);
+    topSum += top + (height / 2);
+  });
 
   return {
-    left: total.left / rects.length,
-    top: total.top / rects.length,
+    left: leftSum / rects.length,
+    top: topSum / rects.length,
   };
 }
 

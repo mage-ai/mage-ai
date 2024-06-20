@@ -3,8 +3,9 @@
 .blockNode {
   @include borders.border-colors();
 
-  padding: var(--padding-base);
+  height: inherit;
   min-width: 312px;
+  padding: var(--padding-base);
 }
 
 @mixin hidden {
