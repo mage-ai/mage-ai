@@ -13,13 +13,12 @@ description: "Schedule pipelines to run periodically"
 
 You can schedule your pipeline to run on these intervals:
 
-- Once
-- Hourly
-- Daily
-- Weekly
-- Monthly
-- Always on
-    - The pipeline will be run as soon as the previous pipeline run is finished
+- Once:  The pipeline will run only once
+- Hourly: The pipeline will run at the beginning of every hour (i.e 0100, 0200, 0300, etc)
+- Daily: The pipeline will run at 0000 UTC / GMT every day
+- Weekly: The pipeline will run at 0000 UTC / GMT the first day (Monday) of every week
+- Monthly: The pipeline will run at 0000 UTC / GMT on the first day of every month
+- Always on: The pipeline will be run as soon as the previous pipeline run is finished
 - Custom schedule using
   [CRON Expression](https://en.wikipedia.org/wiki/Cron#CRON_expression)
 - Every minute using CRON expression: `* * * * *`
