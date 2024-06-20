@@ -75,6 +75,35 @@ jobs:
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
 
+      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.18.0"
+        if: matrix.python-version == '3.10'
+      - name: Create Mage test project
+        run: |
+          python mage_ai/cli/main.py init test_project
+        env:
+          PYTHONPATH: ${{ env.pythonLocation }}:.
+        if: matrix.python-version == '3.10'
+      - name: Build frontend, start server, and run Playwright tests
+        run: |
+          yarn install &&
+          yarn export_prod &&
+          yarn playwright install chromium &&
+          yarn playwright test -c playwright.config.ci.ts
+        working-directory: mage_ai/frontend/
+        env:
+          PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
+        if: matrix.python-version == '3.10'
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: mage_ai/frontend/playwright-report/
+          retention-days: 3
+
   test_web_server_windows:
     runs-on: windows-latest
     strategy:
@@ -87,3 +116,29 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.18.0"
+      - name: Create Mage test project
+        run: |
+          Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
+          python -m venv venv3
+          venv3/Scripts/Activate.ps1
+          $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
+          python -m pip install -r requirements.txt
+          python mage_ai/cli/main.py init test_project
+      - name: Build frontend, start server, and run Playwright tests
+        run: |
+          yarn install &&
+          yarn export_prod &&
+          yarn playwright install chromium &&
+          yarn playwright test -c playwright-windows.config.ci.ts
+        working-directory: mage_ai/frontend/
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: mage_ai/frontend/playwright-report/
+          retention-days: 3
