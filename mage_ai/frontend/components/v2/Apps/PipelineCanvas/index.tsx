@@ -103,7 +103,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const itemsRef = useRef<Record<string, DragItem>>({});
   const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
   const nodeItemsRef = useRef<Record<string, NodeType>>({});
-  const itemsElementRef = useRef<Record<ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>>>({});
+  const itemsElementRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>({});
   const phaseRef = useRef<number>(0);
   const pipelinesRef = useRef<Record<string, PipelineType>>({});
   const portsRef = useRef<Record<string, PortType>>({});
@@ -231,13 +231,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             ? elementRef?.current?.classList?.add(className)
             : elementRef?.current?.classList?.remove(className);
         });
-
-        if (ItemTypeEnum.NODE === itemType) {
-          const node = nodeItemsRef?.current?.[id];
-          if (node?.rect) {
-            node?.rect;
-          }
-        }
       });
     });
   }
@@ -292,7 +285,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         const nodesGrouped = {};
         nodesGroupedArr?.forEach((node: NodeType) => {
           node?.items?.forEach((itemNode: DragItem) => {
-            itemsMapping[itemNode.id] = item;
+            itemsMapping[itemNode.id] = itemNode;
           });
           nodesGrouped[node.id] = node;
         });
@@ -303,6 +296,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         setFocusLevel(FocusLevelEnum.GROUPS);
       }
     } else if (ItemTypeEnum.NODE === type) {
+      const node = nodeItemsRef?.current?.[id];
+      console.log('MOUNTED!!!!!!!!!!!!!!!!!!', id,
+        node?.rect,
+        itemRef?.current?.getBoundingClientRect(),
+      );
+      if (node?.rect) {
+        const { rect } = node;
+        itemRef.current.style.height = `${rect?.height}px`;
+        itemRef.current.style.left = `${rect?.left}px`;
+        itemRef.current.style.top = `${rect?.top}px`;
+        itemRef.current.style.width = `${rect?.width}px`;
+        itemRef.current.style.position = 'absolute';
+      }
+      console.log('STYLEEEEEEEEEEEEEEEEEEEES', id,
+        node?.rect,
+        itemRef?.current?.getBoundingClientRect(),
+      );
     }
 
     if (!itemsElementRef?.current) {
@@ -483,28 +493,30 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   );
   connectDrop(canvasRef);
 
-  console.log(nodeItemsRef?.current);
+  const nodesMemo = useMemo(() => {
+    const arr = [
+     ...Object.values(items || {}),
+     ...Object.values(nodeItemsRef?.current || {}),
+   ];
 
-  const nodesMemo = useMemo(() =>
-     [
-      ...Object.values(items || {}),
-      ...Object.values(nodeItemsRef?.current || {}),
-    ]?.map((node: NodeType) => (
+    return arr?.map((node: NodeType, idx: number) => (
       <BlockNodeWrapper
-        frameworkGroups={frameworkGroups?.current}
-        handlers={{
-          onDragEnd,
-          onDragStart,
-          onDrop: onDropPort,
-          onMouseDown,
-          onMouseUp,
-        }}
-        item={node}
-        key={node.id}
-        onMountItem={onMountItem}
-        onMountPort={onMountPort}
-      />
-    ))
+       frameworkGroups={frameworkGroups?.current}
+       handlers={{
+         onDragEnd,
+         onDragStart,
+         onDrop: onDropPort,
+         onMouseDown,
+         onMouseUp,
+       }}
+       item={node}
+       key={`${node.id}-${node.type}-${idx}`}
+       onMountItem={onMountItem}
+       onMountPort={onMountPort}
+     />
+   ));
+  }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   , [items]);
 

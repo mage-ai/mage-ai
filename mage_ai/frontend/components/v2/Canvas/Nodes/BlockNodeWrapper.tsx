@@ -7,6 +7,7 @@ import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 're
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { ItemTypeEnum } from '../types';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -30,12 +31,14 @@ export function BlockNodeWrapper({
 
   const block = item?.block;
   const {
-    name,
     pipeline,
     type,
     uuid,
   } = block || {};
   const { onMouseDown, onMouseUp } = handlers;
+  const name = useMemo(() => ItemTypeEnum.BLOCK === item?.type
+    ? (item?.block?.name ?? item?.block?.uuid)
+    : item?.id, [item]);
 
   function handleMouseDown(
     event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
@@ -154,7 +157,7 @@ export function BlockNodeWrapper({
               label: name || uuid,
             }
             : undefined,
-          label: name || uuid,
+          label: String(name || uuid || ''),
         }}
       />
     </NodeWrapper>
