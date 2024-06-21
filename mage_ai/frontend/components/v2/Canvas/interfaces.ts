@@ -94,3 +94,8 @@ export interface ConnectionType {
   toItem?: PortType; // Reference to the destination node
   toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends
 }
+
+export type ConnectionMappingType = Record<string, ConnectionType>;
+export type ItemMappingType = Record<string, DragItem>;
+export type NodeItemMappingType = Record<string, NodeType>;
+export type PortMappingType = Record<string, PortType>;

@@ -1,6 +1,6 @@
 import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
-import { DragItem, PortType, RectType } from '../../../Canvas/interfaces';
+import { DragItem, PortType, ConnectionMappingType, ItemMappingType, PortMappingType } from '../../../Canvas/interfaces';
 import { buildPortUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
@@ -12,9 +12,15 @@ import { SetupOpts, layoutItems, layoutRectsInContainer, layoutItemsInTreeFormat
 import { indexBy } from '@utils/array';
 
 export function initializeBlocksAndConnections(
-  blocksInit: BlockType[],
+  blocksInitArg: BlockType[],
   opts?: SetupOpts,
-) {
+): {
+  connectionsMapping: ConnectionMappingType;
+  itemsMapping: ItemMappingType;
+  portsMapping: PortMappingType;
+} {
+  const { namespace } = opts || {};
+
   const blocks: BlockType[] = [];
   const blockMapping: Record<string, BlockType> = {};
   const blockUpsDownsMapping: Record<string, {
@@ -23,6 +29,16 @@ export function initializeBlocksAndConnections(
   }> = {};
   const connectionsMapping: Record<string, ConnectionType> = {};
   const portsMapping: Record<string, PortType> = {};
+
+  const addNamespace = (uuid: string) => [
+    namespace ?? '',
+    String(uuid ?? ''),
+  ]?.filter?.(Boolean).join('--');
+
+  const blocksInit = namespace?.length >= 1 ? blocksInitArg.map((block: BlockType) => ({
+    ...block,
+    uuid: addNamespace(block.uuid),
+  })) : blocksInitArg;
 
   blocksInit.forEach((block: BlockType) => {
     blockUpsDownsMapping[block.uuid] ||= {
@@ -65,7 +81,7 @@ export function initializeBlocksAndConnections(
     const block2 = {
       ...block,
       ...Object.entries(blockUpsDownsMapping[block.uuid] || {}).reduce((
-        acc, [key, obj]: [string, Record<string, BlockType>]
+        acc, [key, obj]: [string, Record<string, BlockType>],
       ) => ({
         ...acc,
         [key]: Object.values(obj)?.map(b => b.uuid),
@@ -206,33 +222,3 @@ export function initializeBlocksAndConnections(
     portsMapping: portsMappingFinal,
   };
 }
-
-// function getNextAvailablePosition(
-//   level: number,
-//   index: number,
-//   parentPosition?: { left: number; top: number },
-// ): { left: number; top: number } {
-//   const offsetIndex = (index % 2 === 0 ? 0.1 : -0.1);
-//   const actualHorizontalSpacing = horizontalSpacing * (1 + offsetIndex);
-//   const actualVerticalSpacing = verticalSpacing * (1 + offsetIndex);
-
-//   if (isHorizontal) {
-//     const top = level * (blockHeight + verticalSpacing) + 20;
-//     let left;
-//     if (parentPosition) {
-//       left = parentPosition.left + blockWidth + actualHorizontalSpacing;
-//     } else {
-//       left = columns[level].reduce((a, b) => Math.max(a, b)) + blockWidth + actualHorizontalSpacing;
-//     }
-//     return { left, top };
-//   } else {
-//     const left = level * (blockWidth + horizontalSpacing) + 20;
-//     let top;
-//     if (parentPosition) {
-//       top = parentPosition.top + blockHeight + actualVerticalSpacing;
-//     } else {
-//       top = rows[level].reduce((a, b) => Math.max(a, b)) + blockHeight + actualVerticalSpacing;
-//     }
-//     return { left, top };
-//   }
-// }

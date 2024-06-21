@@ -12,8 +12,10 @@ import {
   ConnectionType,
   PortType,
   NodeType,
-  RectType,
-  LayoutConfigType,
+  ConnectionMappingType,
+  ItemMappingType,
+  NodeItemMappingType,
+  PortMappingType,
 } from '../../Canvas/interfaces';
 import {
   ItemTypeEnum,
@@ -40,8 +42,8 @@ import { extractNestedBlocks, groupBlocksByGroups, buildTreeOfBlockGroups } from
 import {
   BlockMappingType,
   BlocksByGroupType,
-  GroupsByLevelType,
   GroupMappingType,
+  GroupLevelsMappingType,
   buildDependencies } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
@@ -68,20 +70,6 @@ type PipelineBuilderProps = {
   onDragStart: () => void;
   snapToGridOnDrop?: boolean;
 };
-
-// Drag preview image
-// https://react-dnd.github.io/react-dnd/docs/api/drag-preview-image
-
-// Drag layer
-// https://react-dnd.github.io/react-dnd/docs/api/use-drag-layer
-
-// Drop manager
-// https://react-dnd.github.io/react-dnd/docs/api/use-drag-drop-manager
-
-// Monitors
-// https://react-dnd.github.io/react-dnd/docs/api/drag-source-monitor
-// https://react-dnd.github.io/react-dnd/docs/api/drop-target-monitor
-// https://react-dnd.github.io/react-dnd/docs/api/drag-layer-monitor
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipeline,
@@ -112,17 +100,30 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const itemsElementRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>({});
   const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
 
-  // Models
-  const connectionsRef = useRef<Record<string, ConnectionType>>({});
-  const itemsRef = useRef<Record<string, DragItem>>({});
-  const nodeItemsRef = useRef<Record<string, NodeType>>({});
-  const portsRef = useRef<Record<string, PortType>>({});
-
   // Framework
-  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
+  const frameworkGroupsRef = useRef<GroupMappingType>({} as GroupMappingType);
   const blocksByGroupRef = useRef<BlocksByGroupType>({} as BlocksByGroupType);
-  const groupsByLevelRef = useRef<GroupsByLevelType>([]);
+  const groupLevelsMappingRef = useRef<GroupLevelsMappingType>([]);
 
+  // Models
+  const connectionsRef = useRef<ConnectionMappingType>({});
+  const itemsRef = useRef<ItemMappingType>({});
+  const nodeItemsRef = useRef<NodeItemMappingType>({});
+  const portsRef = useRef<PortMappingType>({});
+
+  const connectionsActiveRef = useRef<ConnectionMappingType>({});
+  const itemsActiveRef = useRef<ItemMappingType>({});
+  const nodeItemsActiveRef = useRef<NodeItemMappingType>({});
+  const portsActiveRef = useRef<PortMappingType>({});
+
+  const modelLevelsMapping = useRef<{
+    connectionsMapping: ConnectionMappingType;
+    itemsMapping: ItemMappingType;
+    nodeItemsMapping?: NodeItemMappingType;
+    portsMapping: PortMappingType;
+  }[]>([]);
+
+  // State management
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
@@ -136,15 +137,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     setConnectionsState(connectionsRef.current);
   }
 
-  function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
-    connectionsDraggingRef.current = connectionsDragging;
-    setConnectionsDraggingState(connectionsDragging);
-  }
-
   function setItems(items: Record<string, DragItem>) {
     itemsRef.current = items;
     setItemsState(prev => ({ ...prev, ...items }));
     setConnections(connectionsRef.current);
+  }
+
+  function setPorts(portsMapping: PortMappingType) {
+    portsRef.current = portsMapping;
+  }
+
+  function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
+    connectionsDraggingRef.current = connectionsDragging;
+    setConnectionsDraggingState(connectionsDragging);
   }
 
   function updateItemsMetadata(data?: {
@@ -159,8 +164,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const {
         blockMapping,
         blocksByGroup,
+        groupLevelsMapping,
         groupMapping,
-        groupsByLevel,
       } = buildDependencies(
         pipelineExecutionFramework,
         pipelineExecutionFrameworks,
@@ -168,26 +173,82 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         pipelines,
       );
 
-      const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
-        Object.values(blockMapping),
-        {
-          layout: {
-            ...layoutConfig,
-            boundingRect: canvasRef?.current?.getBoundingClientRect(),
-            containerRect: containerRef?.current?.getBoundingClientRect(),
-          },
+      const layout = {
+        layout: {
+          ...layoutConfig,
+          boundingRect: canvasRef?.current?.getBoundingClientRect(),
+          containerRect: containerRef?.current?.getBoundingClientRect(),
         },
+      };
+
+      // Presentation
+      updateItemsMetadata();
+
+      // Framework
+      blocksByGroupRef.current = blocksByGroup;
+      groupLevelsMappingRef.current = groupLevelsMapping;
+      frameworkGroupsRef.current = groupMapping;
+
+      // Models
+      groupLevelsMapping?.forEach((groupMapping: GroupMappingType, level: number) => {
+        const mapping = groupLevelsMapping?.slice(level + 1, level + 2)?.reduce((acc, map) => ({
+          ...acc,
+          ...map,
+        }), { ...groupMapping });
+
+        modelLevelsMapping.current.push(
+          initializeBlocksAndConnections(
+            Object.values(mapping),
+            { ...layout, namespace: `level_${level}` },
+          ),
+        );
+      });
+      modelLevelsMapping.current.push(
+        initializeBlocksAndConnections(Object.values(blockMapping), layout),
       );
 
-      blocksByGroupRef.current = blocksByGroup;
-      groupsByLevelRef.current = groupsByLevel;
-      frameworkGroups.current = groupMapping;
-      connectionsRef.current = connectionsMapping;
-      portsRef.current = portsMapping;
+      const {
+        connectionsMapping,
+        itemsMapping,
+        portsMapping,
+      } = modelLevelsMapping.current.reduce((acc, mapping) => {
+        const {
+          connectionsMapping,
+          itemsMapping,
+          nodeItemsMapping,
+          portsMapping,
+        } = mapping;
 
-      updateItemsMetadata();
-      setItems(itemsMapping);
-      setConnections(connectionsMapping);
+        return {
+          connectionsMapping: {
+            ...acc.connectionsMapping,
+            ...connectionsMapping,
+          },
+          itemsMapping: {
+            ...acc.itemsMapping,
+            ...itemsMapping,
+          },
+          nodeItemsMapping: {
+            ...acc.nodeItemsMapping,
+            ...nodeItemsMapping,
+          },
+          portsMapping: {
+            ...acc.portsMapping,
+            ...portsMapping,
+          },
+        };
+      }, {
+        connectionsMapping: {} as ConnectionMappingType,
+        itemsMapping: {} as ItemMappingType,
+        nodeItemsMapping: {} as NodeItemMappingType,
+        portsMapping: {} as PortMappingType,
+      });
+
+      startTransition(() => {
+        setConnections(connectionsMapping);
+        setItems(itemsMapping);
+        setPorts(portsMapping);
+      });
     }
 
     phaseRef.current += 1;
@@ -203,16 +264,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsElementRef.current = {};
       itemsMetadataRef.current = { rect: {} };
 
-      // Models
-      connectionsRef.current = {};
-      itemsRef.current = {};
-      nodeItemsRef.current = {};
-      portsRef.current = {};
-
       // Framework
-      frameworkGroups.current = null;
+      frameworkGroupsRef.current = {} as GroupMappingType;
       blocksByGroupRef.current = {} as BlocksByGroupType;
-      groupsByLevelRef.current = [];
+      groupLevelsMappingRef.current = [];
+
+      // Models
+      connectionsRef.current = {} as ConnectionMappingType;
+      itemsRef.current = {} as ItemMappingType;
+      nodeItemsRef.current = {} as NodeItemMappingType;
+      portsRef.current = {} as PortMappingType;
+
+      connectionsActiveRef.current = {} as ConnectionMappingType;
+      itemsActiveRef.current = {} as ItemMappingType;
+      nodeItemsActiveRef.current = {} as NodeItemMappingType;
+      portsActiveRef.current = {} as PortMappingType;
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -555,7 +621,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     return arr?.map((node: NodeType, idx: number) => (
       <BlockNodeWrapper
-       frameworkGroups={frameworkGroups?.current}
+       frameworkGroups={frameworkGroupsRef?.current}
        handlers={{
          onDragEnd,
          onDragStart,

@@ -13,8 +13,8 @@ const MAX_LEVELS = 10;
 
 export type BlockMappingType = Record<string, BlockType>;
 export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
-export type GroupsByLevelType = PipelineExecutionFrameworkBlockType[][];
 export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
+export type GroupLevelsMappingType = GroupMappingType[];
 
 export function buildDependencies(
   pipelineExecutionFramework: PipelineExecutionFrameworkType,
@@ -24,8 +24,8 @@ export function buildDependencies(
 ): {
   blockMapping: BlockMappingType;
   blocksByGroup: BlocksByGroupType;
+  groupLevelsMapping: GroupLevelsMappingType;
   groupMapping: GroupMappingType;
-  groupsByLevel: GroupsByLevelType;
 } {
   const frameworksMapping = indexBy(pipelineExecutionFrameworks, ({ uuid }) => uuid);
   const groupMapping = extractNestedBlocks(
@@ -53,49 +53,47 @@ export function buildDependencies(
   // 3. Blocks with a group from level 2
   // N. Blocks with type === GROUP
   let level = 0;
-  let groupsFlat = Object.values(groupMapping);
-  const groupsByLevel: PipelineExecutionFrameworkBlockType[][] = [];
-  while (level < MAX_LEVELS && groupsFlat.length >= 1) {
-    const groupsToAdd = [];
-    const groupsLeftOver = [];
+  const groupsPending = { ...groupMapping };
+  const groupLevelsMapping: GroupMappingType[] = [];
+  while (level < MAX_LEVELS && objectSize(groupsPending) >= 1) {
+    const groupsToAdd = {} as GroupMappingType;
 
-    groupsFlat?.forEach((group: PipelineExecutionFrameworkBlockType) => {
-      let addedToLevel = false;
+    const groupsProcessing = { ...groupsPending };
+    Object.entries(groupsProcessing)?.forEach((
+      [groupID, group]: [GroupUUIDEnum, PipelineExecutionFrameworkBlockType],
+    ) => {
       if (level === 0) {
         if (!group?.groups?.length) {
-          groupsToAdd.push(group);
-          addedToLevel = true;
+          groupsToAdd[groupID] = group;
+          delete groupsPending[groupID];
         }
       } else {
         let groupsFromHigherLevels = {};
-        groupsByLevel?.forEach((arr: PipelineExecutionFrameworkBlockType[]) => {
+        groupLevelsMapping?.forEach((map: GroupMappingType) => {
           groupsFromHigherLevels = {
             ...groupsFromHigherLevels,
-            ...indexBy(arr, ({ uuid }) => uuid),
+            ...map,
           };
         });
 
         if (group?.groups?.every((groupUUID: GroupUUIDEnum) => groupsFromHigherLevels[groupUUID])) {
-          groupsToAdd.push(group);
-          addedToLevel = true;
+          groupsToAdd[groupID] = group;
+          delete groupsPending[groupID];
         }
-      }
-
-      if (!addedToLevel) {
-        groupsLeftOver.push(group);
       }
     });
 
-    groupsByLevel.push(groupsToAdd);
-    groupsFlat = groupsLeftOver;
+    groupLevelsMapping.push(groupsToAdd);
     level++;
   }
 
   // Add upstream and downstream dependencies to pipeline instance’s blocks based on the
   // pipeline execution framework’s blocks.
   const blockMapping = {};
-  groupsByLevel?.forEach((groupsAtLevel: PipelineExecutionFrameworkBlockType[], level: number) => {
-    groupsAtLevel?.forEach((group: PipelineExecutionFrameworkBlockType) => {
+  groupLevelsMapping?.forEach((groupsAtLevel: GroupMappingType, level: number) => {
+    Object.entries(groupsAtLevel ?? {})?.forEach((
+      [groupID, group]: [GroupUUIDEnum, PipelineExecutionFrameworkBlockType],
+    ) => {
       const {
         downstream_blocks: downstreamGroups,
         upstream_blocks: upstreamGroups,
@@ -146,8 +144,8 @@ export function buildDependencies(
   const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
 
   isDebug() && console.log(
-    `groupMapping ${objectSize(groupMapping)?.length}`, groupMapping,
-    `groupsByLevel ${groupsByLevel?.length}`, groupsByLevel,
+    `groupMapping ${objectSize(groupMapping)}`, groupMapping,
+    `groupLevelsMapping ${groupLevelsMapping?.length}`, groupLevelsMapping,
     `blocksByGroup ${objectSize(blocksByGroup)}`, blocksByGroup,
     `blockMapping ${objectSize(blockMapping)}`, blockMapping,
   );
@@ -155,8 +153,8 @@ export function buildDependencies(
   return {
     blockMapping,
     blocksByGroup,
+    groupLevelsMapping,
     groupMapping,
-    groupsByLevel,
   };
 }
 

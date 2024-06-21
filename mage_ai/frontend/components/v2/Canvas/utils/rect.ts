@@ -35,6 +35,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
 export type SetupOpts = {
   groupBy?: (item: DragItem) => string;
   layout?: LayoutConfigType;
+  namespace?: string;
 };
 
 function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
