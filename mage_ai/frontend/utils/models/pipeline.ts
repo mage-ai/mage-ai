@@ -53,7 +53,10 @@ export function extractNestedBlocks(
   let mapping = {};
 
   pipeline?.blocks?.forEach((block) => {
-    mapping[block.uuid] = block
+    mapping[block.uuid] = {
+      ...block,
+      pipeline,
+    };
 
     if (BlockTypeEnum.PIPELINE === block.type) {
       mapping = {
@@ -87,7 +90,7 @@ export function buildTreeOfBlockGroups(paths: string[][]): TreeNode {
   paths.forEach(path => {
     let currentNode = root;
 
-    for (let name of path) {
+    for (const name of path) {
       let nextNode = currentNode.children.find(child => child.name === name);
 
       if (!nextNode) {

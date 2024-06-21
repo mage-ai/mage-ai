@@ -4,34 +4,29 @@ import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from '@interfaces/P
 import { cleanName } from '@utils/string';
 
 export const TransformPipeline = {
-  name: 'Transform documents',
-  uuid: 'transform_documents',
+  name: 'Transform a ton of documents',
+  uuid: cleanName('Transform a ton of documents'),
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.TRANSFORM],
   blocks: [
     {
       name: 'Clean column names',
+      type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.CLEANING],
-      downstream_blocks: ['add_3rd_party_data'],
-      upstream_blocks: [],
     },
     {
       name: 'Add 3rd party data',
+      type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.ENRICH],
-      downstream_blocks: ['sliding_window_chunker'],
-      upstream_blocks: ['clean_column_names'],
     },
     {
       name: 'Sliding window chunker',
+      type: BlockTypeEnum.DATA_EXPORTER,
       groups: [GroupUUIDEnum.CHUNKING],
-      downstream_blocks: ['subword_tokenizer'],
-      upstream_blocks: ['add_3rd_party_data'],
     },
     {
       name: 'Subword tokenizer',
+      type: BlockTypeEnum.CUSTOM,
       groups: [GroupUUIDEnum.TOKENIZATION],
-      downstream_blocks: ['instructor_embeddings'],
-      upstream_blocks: ['sliding_window_chunker'],
       configuration: {
         templates: {
           subword_tokenizer: {
@@ -53,12 +48,8 @@ export const TransformPipeline = {
     },
     {
       name: 'Instructor embeddings',
+      type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.EMBED],
-      downstream_blocks: [
-        'store_relationships_in_neo4j',
-        'store_embeddings_pgvector',
-      ],
-      upstream_blocks: ['subword_tokenizer'],
       configuration: {
         templates: {
           bert_embedding: {
@@ -74,152 +65,48 @@ export const TransformPipeline = {
         },
       },
     },
-  ].map(block => ({
-    ...block,
-    type: BlockTypeEnum.TRANSFORMER,
-    uuid: cleanName(block.name),
-  })),
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
 
 export const ExportPipeline = {
-  name: 'Export and store data',
-  uuid: 'export_and_store_data',
+  name: 'Export and store data forever',
+  uuid: cleanName('Export and store data forever'),
   type: PipelineTypeEnum.PYTHON,
-  // groups: [GroupUUIDEnum.EXPORT],
   blocks: [
     {
       name: 'Store relationships in Neo4J',
-      groups: [
-        GroupUUIDEnum.EXPORT,
-        // GroupUUIDEnum.KNOWLEDGE_GRAPH,
-      ],
-      upstream_blocks: ['instructor_embeddings'],
-      downstream_blocks: ['create_contextual_dictionary'],
+      type: BlockTypeEnum.CUSTOM,
+      groups: [GroupUUIDEnum.KNOWLEDGE_GRAPH],
     },
     {
       name: 'Store embeddings PGVector',
-      groups: [
-        GroupUUIDEnum.EXPORT,
-        // GroupUUIDEnum.VECTOR_DATABASE,
-      ],
-      upstream_blocks: ['instructor_embeddings'],
-      downstream_blocks: ['create_contextual_dictionary'],
+      type: BlockTypeEnum.DATA_EXPORTER,
+      groups: [GroupUUIDEnum.VECTOR_DATABASE],
     },
-  ].map(block => ({
-    ...block,
-    type: BlockTypeEnum.DATA_EXPORTER,
-    uuid: cleanName(block.name),
-  })),
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
 
 export const IndexPipeline = {
-  name: 'Optimize data for search',
-  uuid: 'optimize_data_for_search',
+  name: 'Optimize data for search and APIs',
+  uuid: cleanName('Optimize data for search and APIs'),
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.INDEX],
   blocks: [
     {
       name: 'Create Contextual Dictionary',
-      groups: [GroupUUIDEnum.INDEX],
-      upstream_blocks: [
-        'store_relationships_in_neo_4_j',
-        'store_embeddings_pgvector',
-      ],
-      downstream_blocks: ['create_document_hierarchy'],
+      type: BlockTypeEnum.CUSTOM,
+      groups: [GroupUUIDEnum.CONTEXTUAL_DICTIONARY],
     },
     {
       name: 'Create Document Hierarchy',
-      groups: [GroupUUIDEnum.INDEX],
-      upstream_blocks: ['create_contextual_dictionary'],
-      downstream_blocks: ['search_index_using_faiss'],
+      type: BlockTypeEnum.DATA_LOADER,
+      groups: [GroupUUIDEnum.DOCUMENT_HIERARCHY],
     },
     {
       name: 'Search index using FAISS',
-      groups: [GroupUUIDEnum.INDEX],
-      upstream_blocks: ['create_document_hierarchy'],
-    },
-  ].map(block => ({
-    ...block,
-    type: BlockTypeEnum.CUSTOM,
-    uuid: cleanName(block.name),
-  })),
-}
-
-export const DataPreparationPipeline = {
-  name: 'Data pre-processing',
-  uuid: 'data_pre_processing',
-  type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.DATA_PREPARATION],
-  blocks: [
-    {
-      name: 'Ingest titanic data',
       type: BlockTypeEnum.DATA_EXPORTER,
-      groups: [
-        GroupUUIDEnum.LOAD,
-        // GroupUUIDEnum.INGEST,
-      ],
-      downstream_blocks: ['serialize_and_map_documents'],
-      upstream_blocks: [],
+      groups: [GroupUUIDEnum.SEARCH_INDEX],
     },
-    {
-      name: 'Serialize and map documents',
-      type: BlockTypeEnum.TRANSFORMER,
-      groups: [
-        GroupUUIDEnum.LOAD,
-        // GroupUUIDEnum.MAP,
-      ],
-      upstream_blocks: ['ingest_titanic_data'],
-      // downstream_blocks: [TransformPipeline.uuid],
-    },
-    // {
-    //   name: TransformPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: ['serialize_and_map_documents'],
-    //   downstream_blocks: [ExportPipeline.uuid],
-    // },
-    // {
-    //   name: ExportPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [TransformPipeline.uuid],
-    //   downstream_blocks: [IndexPipeline.uuid],
-    // },
-    // {
-    //   name: IndexPipeline.name,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [ExportPipeline.uuid],
-    // },
-  ].map(block => ({
-    ...block,
-    uuid: cleanName(block.name),
-  })),
-}
-
-export const DataValidationPipeline = {
-  name: 'Run validations and quality checks',
-  uuid: 'run_validations_and_quality_checks',
-  type: PipelineTypeEnum.PYTHON,
-  blocks: [
-    {
-      name: 'Wait for enough resources',
-      type: BlockTypeEnum.SENSOR,
-      upstream_blocks: [],
-      downstream_blocks: ['run_unit_tests'],
-    },
-    {
-      name: 'Lint code and format',
-      type: BlockTypeEnum.TRANSFORMER,
-      upstream_blocks: ['wait_for_enough_resources'],
-      downstream_blocks: ['run_unit_tests'],
-    },
-    {
-      name: 'Run unit tests',
-      type: BlockTypeEnum.CUSTOM,
-      upstream_blocks: ['lint_code_and_format'],
-    },
-  ].map(block => ({
-    ...block,
-    uuid: cleanName(block.name),
-  })),
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
 
 export const QueryProcessingPipeline = {
@@ -229,35 +116,30 @@ export const QueryProcessingPipeline = {
   groups: [GroupUUIDEnum.QUERY_PROCESSING],
   blocks: [
     {
-      name: 'Intent Detection 1',
+      name: 'Understand user intentions',
+      type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.INTENT_DETECTION],
-      upstream_blocks: [],
-      downstream_blocks: ['query_decomposition'],
     },
 
     {
-      name: 'Intent Detection 2',
+      name: 'Detect malicious intent',
+      type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.INTENT_DETECTION],
-      upstream_blocks: [],
-      downstream_blocks: ['query_decomposition'],
     },
     {
-      name: 'Query Decomposition',
+      name: 'Decompose user query',
+      type: BlockTypeEnum.DATA_EXPORTER,
       groups: [GroupUUIDEnum.QUERY_DECOMPOSITION],
-      upstream_blocks: ['intent_detection_1', 'intent_detection_2'],
-      downstream_blocks: ['query_augmentation_1', 'query_augmentation_2'],
     },
     {
-      name: 'Query Augmentation 1',
+      name: 'Improve user query prompts',
+      type: BlockTypeEnum.CUSTOM,
       groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
-      upstream_blocks: ['query_decomposition'],
-      downstream_blocks: [],
     },
     {
-      name: 'Query Augmentation 2',
+      name: 'Augment user query with context',
+      type: BlockTypeEnum.TRANSFORMER,
       groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
-      upstream_blocks: ['query_decomposition'],
-      downstream_blocks: [],
     },
   ].map(block => ({
     ...block,
@@ -267,124 +149,123 @@ export const QueryProcessingPipeline = {
 }
 
 export const RetrievalPipeline = {
-  name: 'Retrieve documents',
-  uuid: 'retrieve_documents',
+  name: 'Retrieve numerous documents from company',
+  uuid: cleanName('Retrieve numerous documents from company'),
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.RETRIEVAL],
   blocks: [
     {
       name: 'Iterative Retrieval',
-      groups: [
-        GroupUUIDEnum.RETRIEVAL,
-        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
-      ],
-      downstream_blocks: ['memory'],
-      upstream_blocks: [],
+      groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
+      type: BlockTypeEnum.DATA_LOADER,
     },
     {
       name: 'Memory',
-      groups: [
-        GroupUUIDEnum.RETRIEVAL,
-        GroupUUIDEnum.MEMORY,
-      ],
-      upstream_blocks: ['iterative_retrieval'],
-      downstream_blocks: ['multi_hop_reasoning'],
+      groups: [GroupUUIDEnum.MEMORY],
+      type: BlockTypeEnum.TRANSFORMER,
     },
     {
       name: 'Multi-hop Reasoning',
-      groups: [
-        GroupUUIDEnum.RETRIEVAL,
-        GroupUUIDEnum.MULTI_HOP_REASONING,
-      ],
-      upstream_blocks: ['memory'],
-      downstream_blocks: ['ranking'],
+      groups: [GroupUUIDEnum.MULTI_HOP_REASONING],
+      type: BlockTypeEnum.DATA_LOADER,
     },
     {
       name: 'Ranking',
-      groups: [
-        GroupUUIDEnum.RETRIEVAL,
-        GroupUUIDEnum.RANKING,
-      ],
-      upstream_blocks: ['multi_hop_reasoning'],
+      groups: [GroupUUIDEnum.RANKING],
+      type: BlockTypeEnum.CUSTOM,
     },
-  ].map(block => ({
-    ...block,
-    type: BlockTypeEnum.DATA_LOADER,
-    uuid: cleanName(block.name),
-  })),
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
 
 export const ResponseGenerationPipeline = {
-  name: 'Generate answers for user',
-  uuid: 'generate_answers_for_user',
+  name: 'Generate great answers for user',
+  uuid: cleanName('Generate great answers for user'),
   type: PipelineTypeEnum.PYTHON,
   blocks: [
     {
       name: 'Contextualization',
-      groups: [
-        GroupUUIDEnum.RESPONSE_GENERATION,
-        GroupUUIDEnum.CONTEXTUALIZATION,
-      ],
-      downstream_blocks: ['response_synthesis'],
-      upstream_blocks: [],
+      groups: [GroupUUIDEnum.CONTEXTUALIZATION],
+      type: BlockTypeEnum.DATA_LOADER,
     },
     {
       name: 'Response Synthesis',
-      groups: [
-        GroupUUIDEnum.RESPONSE_GENERATION,
-        GroupUUIDEnum.RESPONSE_SYNTHESIS,
-      ],
-      downstream_blocks: ['answer_enrichment'],
-      upstream_blocks: ['contextualization'],
+      groups: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
+      type: BlockTypeEnum.TRANSFORMER,
     },
     {
       name: 'Answer Enrichment',
-      groups: [
-        GroupUUIDEnum.RESPONSE_GENERATION,
-        GroupUUIDEnum.ANSWER_ENRICHMENT,
-      ],
-      downstream_blocks: ['response_formatting'],
-      upstream_blocks: ['response_synthesis'],
+      groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
+      type: BlockTypeEnum.TRANSFORMER,
     },
     {
       name: 'Response Formatting',
-      groups: [
-        GroupUUIDEnum.RESPONSE_GENERATION,
-        GroupUUIDEnum.RESPONSE_FORMATTING,
-      ],
-      upstream_blocks: ['answer_enrichment'],
+      groups: [GroupUUIDEnum.RESPONSE_FORMATTING],
+      type: BlockTypeEnum.DATA_EXPORTER,
     },
-  ].map(block => ({
-    ...block,
-    type: BlockTypeEnum.DATA_EXPORTER,
-    uuid: cleanName(block.name),
-  })),
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
 
-export const InferencePipeline = {
-  name: 'Answer retrieval',
-  uuid: 'answer_retrieval',
+export const LoadPipeline = {
+  name: 'Load unstructured data',
+  uuid: cleanName('Load unstructured data'),
   type: PipelineTypeEnum.PYTHON,
   blocks: [
     {
-      uuid: QueryProcessingPipeline.uuid,
-      name: QueryProcessingPipeline.name,
-      downstream_blocks: [RetrievalPipeline.uuid],
-      upstream_blocks: [],
+      name: 'Ingest titanic data',
+      type: BlockTypeEnum.DATA_EXPORTER,
+      groups: [GroupUUIDEnum.INGEST],
     },
-    // {
-    //   uuid: RetrievalPipeline.uuid,
-    //   name: RetrievalPipeline.name,
-    //   downstream_blocks: [ResponseGenerationPipeline.uuid],
-    //   upstream_blocks: [QueryProcessingPipeline.uuid],
-    // },
-    // {
-    //   uuid: ResponseGenerationPipeline.uuid,
-    //   name: ResponseGenerationPipeline.name,
-    //   upstream_blocks: [RetrievalPipeline.uuid],
-    // },
-  ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
+    {
+      name: 'Serialize and map documents',
+      type: BlockTypeEnum.TRANSFORMER,
+      groups: [GroupUUIDEnum.MAP],
+    },
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
+};
+
+export const DataPreparationPipeline = {
+  name: 'Data pre-processing pipeline',
+  uuid: cleanName('Data pre-processing pipeline'),
+  type: PipelineTypeEnum.PYTHON,
+  blocks: [
+    {
+      name: `Data-prep ${LoadPipeline.name} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      name: `Data-prep ${TransformPipeline.name} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      name: `Data-prep ${ExportPipeline.name} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      name: `Data-prep ${IndexPipeline.name} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
 }
+
+
+export const InferencePipeline = {
+  name: 'Super cool inference pipeline',
+  uuid: cleanName('Super cool inference pipeline'),
+  type: PipelineTypeEnum.PYTHON,
+  blocks: [
+    {
+      name: `My custom ${QueryProcessingPipeline.uuid} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      name: `My custom ${RetrievalPipeline.uuid} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+    {
+      name: `My custom ${ResponseGenerationPipeline.uuid} pipeline`,
+      type: BlockTypeEnum.PIPELINE,
+    },
+  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
+};
 
 export const PipelineFrameworkInstance = {
   name: 'Mager RAG pipeline',
@@ -392,37 +273,17 @@ export const PipelineFrameworkInstance = {
   type: PipelineTypeEnum.PYTHON,
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
-    // {
-    //   uuid: DataPreparationPipeline.uuid,
-    //   name: DataPreparationPipeline.name,
-    //   downstream_blocks: [
-    //     DataValidationPipeline.uuid,
-    //     InferencePipeline.uuid,
-    //   ],
-    //   upstream_blocks: [],
-    // },
-    // // {
-    //   uuid: DataValidationPipeline.uuid,
-    //   name: DataValidationPipeline.name,
-    //   upstream_blocks: [DataPreparationPipeline.uuid],
-    // },
     {
-      uuid: InferencePipeline.uuid,
-      name: InferencePipeline.name,
-      groups: [GroupUUIDEnum.INFERENCE],
-      upstream_blocks: [DataPreparationPipeline.uuid],
+      name: `Main top-level ${DataPreparationPipeline.uuid} pipeline`,
+      uuid: cleanName(`Main top-level ${DataPreparationPipeline.uuid} pipeline`),
+      type: BlockTypeEnum.PIPELINE,
     },
-  ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
+    {
+      name: `Main top-level ${InferencePipeline.uuid} pipeline`,
+      uuid: cleanName(`Main top-level ${InferencePipeline.uuid} pipeline`),
+      type: BlockTypeEnum.PIPELINE,
+    },
+  ],
 }
 
-export default [
-  // DataValidationPipeline,
-  InferencePipeline,
-  QueryProcessingPipeline,
-  // RetrievalPipeline,
-  // ResponseGenerationPipeline,
-  // DataPreparationPipeline,
-  // TransformPipeline,
-  // ExportPipeline,
-  // IndexPipeline,
-];
+export default PipelineFrameworkInstance;

@@ -37,6 +37,7 @@ import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups, buildTreeOfBlockGroups } from '@utils/models/pipeline';
+import { buildDependencies } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -142,14 +143,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
+      buildDependencies(
+        pipelineExecutionFramework,
+        pipelineExecutionFrameworks,
+        pipeline,
+        pipelines,
+      );
+
       const pipelinesMapping = indexBy([
         ...pipelines,
-        // ...pipelineExecutionFrameworks,
       ], ({ uuid }) => uuid);
       const blocksMapping = {};
       [
         ...pipelines,
-        // ...pipelineExecutionFrameworks,
       ]?.forEach((pipe: PipelineType | PipelineExecutionFrameworkType) => {
         Object.values(
           extractNestedBlocks(pipe, pipelinesMapping) || {},

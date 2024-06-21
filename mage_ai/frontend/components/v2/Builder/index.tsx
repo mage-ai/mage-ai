@@ -2,12 +2,29 @@ import dynamic from 'next/dynamic';
 
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
-import pipelines, { InferencePipeline, PipelineFrameworkInstance } from './mock';
-import {
-  DataPreparationPipelineExecutionFramework,
-  InferencePipelineExecutionFramework,
-  RAGPipelineExecutionFramework,
-} from '@interfaces/PipelineExecutionFramework/interfaces';
+import RAGPipeline, {
+  DataPreparationPipeline,
+  ExportPipeline,
+  IndexPipeline,
+  InferencePipeline,
+  LoadPipeline,
+  QueryProcessingPipeline,
+  ResponseGenerationPipeline,
+  RetrievalPipeline,
+  TransformPipeline,
+} from './mock';
+import DataPreparation, {
+  Load,
+  Transform,
+  Export,
+  Index,
+} from '@interfaces/PipelineExecutionFramework/rag/dataPreparation';
+import Inference, {
+  QueryProcessing,
+  Retrieval,
+  ResponseGeneration,
+} from '@interfaces/PipelineExecutionFramework/rag/inference';
+import RAG from '@interfaces/PipelineExecutionFramework/rag';
 
 export default function PipelineBuilder() {
   const PipelineCanvas = dynamic(() => import('../Apps/PipelineCanvas'), {
@@ -24,17 +41,30 @@ export default function PipelineBuilder() {
 
           {/* @ts-ignore */}
           <PipelineCanvas
-            pipeline={
-              InferencePipeline
-              || RAGPipelineExecutionFramework
-              || PipelineFrameworkInstance
-            }
-            pipelineExecutionFramework={RAGPipelineExecutionFramework}
+            pipeline={RAGPipeline}
+            pipelineExecutionFramework={RAG}
             pipelineExecutionFrameworks={[
-              DataPreparationPipelineExecutionFramework,
-              InferencePipelineExecutionFramework,
+              DataPreparation,
+              Export,
+              Index,
+              Inference,
+              Load,
+              QueryProcessing,
+              ResponseGeneration,
+              Retrieval,
+              Transform,
             ]}
-            pipelines={pipelines}
+            pipelines={[
+              DataPreparationPipeline,
+              ExportPipeline,
+              IndexPipeline,
+              InferencePipeline,
+              LoadPipeline,
+              QueryProcessingPipeline,
+              ResponseGenerationPipeline,
+              RetrievalPipeline,
+              TransformPipeline,
+            ]}
           />
         </Grid>
 
