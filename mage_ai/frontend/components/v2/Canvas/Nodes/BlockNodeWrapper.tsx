@@ -8,6 +8,7 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { ItemTypeEnum } from '../types';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -141,6 +142,10 @@ export function BlockNodeWrapper({
 
   return (
     <NodeWrapper
+      className={[
+        stylesBuilder.level,
+        stylesBuilder[`level-${item?.level}`],
+      ]?.join(' ')}
       draggingNode={draggingNode}
       handlers={{
         ...handlers,

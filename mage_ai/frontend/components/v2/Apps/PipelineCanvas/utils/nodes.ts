@@ -5,7 +5,6 @@ import { isDebug } from '@utils/environment';
 export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
   const itemsUngrouped = [];
   const groups = {};
-
   const itemsToGroups = {};
 
   items?.forEach((item: DragItem) => {
@@ -16,6 +15,7 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
         groups[groupID] ||= {
           id: groupID,
           items: [],
+          level: item?.level,
           type: ItemTypeEnum.NODE,
           upstreamNodes: [],
         };
@@ -26,6 +26,7 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
 
             groups[groupID].upstreamNodes.push({
               id: nodeID,
+              level: item?.level,
               type: ItemTypeEnum.NODE,
             });
           }
@@ -45,6 +46,7 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
         if (groupID !== groupID2) {
           arr.push({
             id: groupID2,
+            level: group?.level,
             type: ItemTypeEnum.NODE,
           });
         }

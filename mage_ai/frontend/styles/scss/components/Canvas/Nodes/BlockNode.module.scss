@@ -1,20 +1,5 @@
 @use '../../../base/borders';
 
-@mixin base-level {
-  position: relative;
-}
-
-@mixin hidden {
-  /* opacity: 0.8;
-  pointer-events: none;
-  z-index: 3; */
-}
-
-@mixin visible {
-  opacity: 1;
-  z-index: 1;
-}
-
 .blockNode {
   @include borders.border-colors();
 
@@ -24,35 +9,11 @@
 }
 
 .nodeWrapper {
-  z-index: 1;
-
   &.block {
-    @include base-level;
     z-index: 2;
   }
 
   &.node {
-    @include base-level;
     z-index: 1;
-  }
-
-  &.focus-level-0 {
-    &.block {
-      @include visible;
-    }
-
-    &.node {
-      @include hidden;
-    }
-  }
-
-  &.focus-level-1 {
-    &.block {
-      @include hidden;
-    }
-
-    &.node {
-      @include visible;
-    }
   }
 }

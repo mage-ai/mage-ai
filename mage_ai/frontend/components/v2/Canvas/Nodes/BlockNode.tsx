@@ -87,7 +87,6 @@ export function BlockNode({
     classNames.push(stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]);
   }
 
-
   const badgeRow = useMemo(() => badge && (
     <Grid
       alignItems="center"

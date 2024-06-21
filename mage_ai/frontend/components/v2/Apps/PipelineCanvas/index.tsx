@@ -203,6 +203,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     nodeItemsRef.current = nodesGrouped;
     itemsRef.current = itemsMapping;
 
+    isDebug() && console.log(
+      'nodesGrouped',
+      nodesGrouped,
+    );
+
     startTransition(() => {
       setItems(itemsRef.current);
     });
