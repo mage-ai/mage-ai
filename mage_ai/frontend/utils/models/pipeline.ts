@@ -1,7 +1,7 @@
 import BlockType, { BlockTypeEnum } from 'interfaces/BlockType';
 import PipelineExecutionFrameworkType, { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from 'interfaces/PipelineType';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ReplicationMethodEnum, StreamType } from '@interfaces/IntegrationSourceType';
 
 interface TreeNode {
@@ -45,25 +45,97 @@ export function blocksWithStreamsWithIncrementalReplicationMethod(pipeline: Pipe
   return streamsByBlockUUID;
 }
 
+type DependencyUUIDType = GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum | string;
 
 export function extractNestedBlocks(
   pipeline: PipelineType | PipelineExecutionFrameworkType,
   pipelines: Record<string, PipelineType | PipelineExecutionFrameworkType>,
+  opts?: {
+    addBlockDependenciesToNestedPipelineBlocks?: boolean;
+    addPipelineGroupsToBlocks?: boolean;
+    addPipelineToBlocks?: boolean;
+  },
+  dependencies?: {
+    downstreamBlocks?: DependencyUUIDType[];
+    upstreamBlocks?: DependencyUUIDType[];
+  },
 ): Record<string, any> {
+  const {
+    addBlockDependenciesToNestedPipelineBlocks = false,
+    addPipelineGroupsToBlocks = false,
+    addPipelineToBlocks = false,
+  } = opts || {};
+  const {
+    downstreamBlocks,
+    upstreamBlocks,
+  } = dependencies || {};
+
   let mapping = {};
 
-  pipeline?.blocks?.forEach((block) => {
-    mapping[block.uuid] = {
-      ...block,
-      pipeline,
-    };
+  pipeline?.blocks?.forEach((blockBase: BlockType) => {
+    const block = { ...blockBase };
 
-    if (BlockTypeEnum.PIPELINE === block.type) {
+    if (downstreamBlocks && !block?.downstream_blocks) {
+      block.downstream_blocks = downstreamBlocks;
+    } else if (upstreamBlocks && !block?.upstream_blocks) {
+      block.upstream_blocks = upstreamBlocks;
+    }
+
+    if (addPipelineToBlocks) {
+      block.pipeline = pipeline;
+    }
+
+    if (addPipelineGroupsToBlocks) {
+      block.groups = [
+        ...(pipeline.groups ?? []),
+        ...(block.groups ?? []),
+      ] as any[];
+    }
+
+    const isPipeline = BlockTypeEnum.PIPELINE === block.type;
+    if (isPipeline) {
+      const pipeline2 = pipelines[block.uuid];
+
+      const deps = {} as {
+        downstreamBlocks?: DependencyUUIDType[];
+        upstreamBlocks?: DependencyUUIDType[];
+      };
+
+      if (addBlockDependenciesToNestedPipelineBlocks) {
+        [
+          ['downstreamBlocks', block.downstream_blocks],
+          ['upstreamBlocks', block.upstream_blocks],
+        ]?.forEach(([key, arr]: [string, DependencyUUIDType[]]) => {
+          arr?.forEach((uuid: string) => {
+            if (uuid in pipelines) {
+              const pip = pipelines[uuid];
+              deps[key] ||= [];
+              pip?.blocks?.forEach((b: BlockType) => {
+                if (('downstreamBlocks' === key && !b?.upstream_blocks?.length)
+                  || ('upstreamBlocks' === key && !b?.downstream_blocks?.length)
+                ) {
+                  deps[key].push(b?.uuid);
+                }
+              });
+            } else {
+              deps[key] ||= [];
+              deps[key].push(uuid);
+            }
+          });
+        });
+      }
       mapping = {
         ...mapping,
-        ...extractNestedBlocks(pipelines[block.uuid], pipelines),
+        ...extractNestedBlocks(
+          pipeline2,
+          pipelines,
+          opts,
+          deps,
+        ),
       };
     }
+
+    mapping[block.uuid] = block;
   });
 
   return mapping;

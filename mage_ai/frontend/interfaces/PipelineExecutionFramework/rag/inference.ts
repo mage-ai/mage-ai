@@ -37,6 +37,7 @@ export const Retrieval: PipelineExecutionFrameworkType = {
     {
       uuid: GroupUUIDEnum.MEMORY,
       type: BlockTypeEnum.GROUP,
+      upstream_blocks: [],
       downstream_blocks: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
     },
     {
@@ -68,20 +69,24 @@ export const ResponseGeneration: PipelineExecutionFrameworkType = {
     {
       uuid: GroupUUIDEnum.CONTEXTUALIZATION,
       type: BlockTypeEnum.GROUP,
+      upstream_blocks: [],
       downstream_blocks: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
     },
     {
       uuid: GroupUUIDEnum.RESPONSE_SYNTHESIS,
       type: BlockTypeEnum.GROUP,
+      upstream_blocks: [GroupUUIDEnum.CONTEXTUALIZATION],
       downstream_blocks: [GroupUUIDEnum.ANSWER_ENRICHMENT],
     },
     {
       uuid: GroupUUIDEnum.ANSWER_ENRICHMENT,
       type: BlockTypeEnum.GROUP,
+      upstream_blocks: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
       downstream_blocks: [GroupUUIDEnum.RESPONSE_FORMATTING],
     },
     {
       uuid: GroupUUIDEnum.RESPONSE_FORMATTING,
+      upstream_blocks: [GroupUUIDEnum.ANSWER_ENRICHMENT],
       type: BlockTypeEnum.GROUP,
     },
   ],
