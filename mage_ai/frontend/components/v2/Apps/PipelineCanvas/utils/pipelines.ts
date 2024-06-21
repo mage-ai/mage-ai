@@ -11,31 +11,41 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 
 const MAX_LEVELS = 10;
 
+export type BlockMappingType = Record<string, BlockType>;
+export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
+export type GroupsByLevelType = PipelineExecutionFrameworkBlockType[][];
+export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
+
 export function buildDependencies(
   pipelineExecutionFramework: PipelineExecutionFrameworkType,
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[],
   pipeline: PipelineType,
   pipelines: PipelineType[],
-) {
+): {
+  blockMapping: BlockMappingType;
+  blocksByGroup: BlocksByGroupType;
+  groupMapping: GroupMappingType;
+  groupsByLevel: GroupsByLevelType;
+} {
   const frameworksMapping = indexBy(pipelineExecutionFrameworks, ({ uuid }) => uuid);
-  const groupsMapping = extractNestedBlocks(
+  const groupMapping = extractNestedBlocks(
     pipelineExecutionFramework,
     frameworksMapping,
     {
       addBlockDependenciesToNestedPipelineBlocks: true,
       addPipelineGroupsToBlocks: true,
     },
-  );
+  ) as Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
 
   const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
-  const blocksMappingAll = extractNestedBlocks(
+  const blocksByUUIDAll = extractNestedBlocks(
     pipeline,
     pipelinesMapping,
     {
       addPipelineToBlocks: true,
     },
   );
-  const blocksByGroup = blocksToGroupMapping(Object.values(blocksMappingAll));
+  const blocksByGroupInit: BlocksByGroupType = blocksToGroupMapping(Object.values(blocksByUUIDAll));
 
   // Build group hierarchy from pipeline execution framework’s blocks:
   // 1. Any block with 0 groups
@@ -43,8 +53,8 @@ export function buildDependencies(
   // 3. Blocks with a group from level 2
   // N. Blocks with type === GROUP
   let level = 0;
-  let groupsFlat = Object.values(groupsMapping);
-  const groupLevels: PipelineExecutionFrameworkBlockType[][] = [];
+  let groupsFlat = Object.values(groupMapping);
+  const groupsByLevel: PipelineExecutionFrameworkBlockType[][] = [];
   while (level < MAX_LEVELS && groupsFlat.length >= 1) {
     const groupsToAdd = [];
     const groupsLeftOver = [];
@@ -58,7 +68,7 @@ export function buildDependencies(
         }
       } else {
         let groupsFromHigherLevels = {};
-        groupLevels?.forEach((arr: PipelineExecutionFrameworkBlockType[]) => {
+        groupsByLevel?.forEach((arr: PipelineExecutionFrameworkBlockType[]) => {
           groupsFromHigherLevels = {
             ...groupsFromHigherLevels,
             ...indexBy(arr, ({ uuid }) => uuid),
@@ -76,15 +86,15 @@ export function buildDependencies(
       }
     });
 
-    groupLevels.push(groupsToAdd);
+    groupsByLevel.push(groupsToAdd);
     groupsFlat = groupsLeftOver;
     level++;
   }
 
   // Add upstream and downstream dependencies to pipeline instance’s blocks based on the
   // pipeline execution framework’s blocks.
-  const blocksMapping = {};
-  groupLevels?.forEach((groupsAtLevel: PipelineExecutionFrameworkBlockType[], level: number) => {
+  const blockMapping = {};
+  groupsByLevel?.forEach((groupsAtLevel: PipelineExecutionFrameworkBlockType[], level: number) => {
     groupsAtLevel?.forEach((group: PipelineExecutionFrameworkBlockType) => {
       const {
         downstream_blocks: downstreamGroups,
@@ -96,7 +106,7 @@ export function buildDependencies(
       const upstreamBlocks = [];
 
       downstreamGroups?.forEach((groupUUID: GroupUUIDEnum) => {
-        Object.values(blocksByGroup?.[groupUUID] ?? {})?.forEach((b: BlockType) => {
+        Object.values(blocksByGroupInit?.[groupUUID] ?? {})?.forEach((b: BlockType) => {
           if (!b?.upstream_blocks
             && ![BlockTypeEnum.PIPELINE, BlockTypeEnum.GROUP]?.includes(b?.type)
           ) {
@@ -106,7 +116,7 @@ export function buildDependencies(
       });
 
       upstreamGroups?.forEach((groupUUID: GroupUUIDEnum) => {
-        Object.values(blocksByGroup?.[groupUUID] ?? {})?.forEach((b: BlockType) => {
+        Object.values(blocksByGroupInit?.[groupUUID] ?? {})?.forEach((b: BlockType) => {
           if (!b?.downstream_blocks
             && ![BlockTypeEnum.PIPELINE, BlockTypeEnum.GROUP]?.includes(b?.type)
           ) {
@@ -115,7 +125,7 @@ export function buildDependencies(
         });
       });
 
-      const blocks = blocksByGroup?.[uuid];
+      const blocks = blocksByGroupInit?.[uuid];
       Object.entries(blocks ?? {})?.forEach(([blockUUID, block]: [string, BlockType]) => {
         if (![BlockTypeEnum.PIPELINE, BlockTypeEnum.GROUP]?.includes(block?.type)) {
           const blockUpdated = { ...block };
@@ -125,7 +135,7 @@ export function buildDependencies(
             blockUpdated.downstream_blocks = downstreamBlocks?.map((b2: BlockType) => b2.uuid);
           }
 
-          blocksMapping[blockUUID] = {
+          blockMapping[blockUUID] = {
             ...blockUpdated,
             level,
           };
@@ -133,30 +143,32 @@ export function buildDependencies(
       });
     });
   });
+  const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
 
   isDebug() && console.log(
-    `groupLevels ${groupLevels?.length}`, groupLevels,
-    `blocksMapping ${objectSize(blocksMapping)}`, blocksMapping,
+    `groupMapping ${objectSize(groupMapping)?.length}`, groupMapping,
+    `groupsByLevel ${groupsByLevel?.length}`, groupsByLevel,
+    `blocksByGroup ${objectSize(blocksByGroup)}`, blocksByGroup,
+    `blockMapping ${objectSize(blockMapping)}`, blockMapping,
   );
 
   return {
+    blockMapping,
     blocksByGroup,
-    blocksMapping,
-    blocksMappingAll,
-    groupsMapping,
-    pipelinesMapping,
+    groupMapping,
+    groupsByLevel,
   };
 }
 
-function blocksToGroupMapping(blocks: BlockType[]): Record<GroupUUIDEnum, BlockType> {
-  const mapping = {} as Record<GroupUUIDEnum, BlockType>;
+function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
+  const mapping = {} as BlocksByGroupType;
 
   blocks?.forEach((block: BlockType) => {
     block?.groups?.forEach((groupUUID: GroupUUIDEnum) => {
-      mapping[groupUUID] ||= {};
-      mapping[groupUUID][block.uuid] = block;
+      mapping[groupUUID as GroupUUIDEnum] ||= {} as BlockMappingType;
+      mapping[groupUUID as GroupUUIDEnum][block.uuid] = block;
     });
   });
 
-  return mapping;
+  return mapping as BlocksByGroupType;
 }

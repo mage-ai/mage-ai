@@ -37,7 +37,12 @@ import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups, buildTreeOfBlockGroups } from '@utils/models/pipeline';
-import { buildDependencies } from './utils/pipelines';
+import {
+  BlockMappingType,
+  BlocksByGroupType,
+  GroupsByLevelType,
+  GroupMappingType,
+  buildDependencies } from './utils/pipelines';
 import { useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -97,18 +102,26 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     [],
   );
 
-  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
-  const connectionsRef = useRef<Record<string, ConnectionType>>({});
-  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
-  const focusLevelRef = useRef<number>(FocusLevelEnum.DEFAULT);
-  const itemDraggingRef = useRef<NodeItemType | null>(null);
-  const itemsRef = useRef<Record<string, DragItem>>({});
-  const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
-  const nodeItemsRef = useRef<Record<string, NodeType>>({});
-  const itemsElementRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>({});
+  // Control
   const phaseRef = useRef<number>(0);
-  const pipelinesRef = useRef<Record<string, PipelineType>>({});
+
+  // Presentation
+  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
+  const currentGroupLevelRef = useRef<number>(FocusLevelEnum.DEFAULT);
+  const itemDraggingRef = useRef<NodeItemType | null>(null);
+  const itemsElementRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>({});
+  const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
+
+  // Models
+  const connectionsRef = useRef<Record<string, ConnectionType>>({});
+  const itemsRef = useRef<Record<string, DragItem>>({});
+  const nodeItemsRef = useRef<Record<string, NodeType>>({});
   const portsRef = useRef<Record<string, PortType>>({});
+
+  // Framework
+  const frameworkGroups = useRef<Record<GroupUUIDEnum, Record<string, any>>>(null);
+  const blocksByGroupRef = useRef<BlocksByGroupType>({} as BlocksByGroupType);
+  const groupsByLevelRef = useRef<GroupsByLevelType>([]);
 
   const [connections, setConnectionsState] = useState<Record<string, ConnectionType>>(null);
   const [connectionsDragging, setConnectionsDraggingState] =
@@ -144,10 +157,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
       const {
+        blockMapping,
         blocksByGroup,
-        blocksMapping,
-        groupsMapping,
-        pipelinesMapping,
+        groupMapping,
+        groupsByLevel,
       } = buildDependencies(
         pipelineExecutionFramework,
         pipelineExecutionFrameworks,
@@ -156,7 +169,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       );
 
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
-        Object.values(blocksMapping),
+        Object.values(blockMapping),
         {
           layout: {
             ...layoutConfig,
@@ -166,9 +179,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       );
 
-      frameworkGroups.current = groupsMapping;
+      blocksByGroupRef.current = blocksByGroup;
+      groupsByLevelRef.current = groupsByLevel;
+      frameworkGroups.current = groupMapping;
       connectionsRef.current = connectionsMapping;
-      pipelinesRef.current = pipelinesMapping;
       portsRef.current = portsMapping;
 
       updateItemsMetadata();
@@ -179,21 +193,26 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     phaseRef.current += 1;
 
     return () => {
+      // Control
       phaseRef.current = 0;
-      focusLevelRef.current = 0;
 
+      // Presentation
       connectionsDraggingRef.current = {};
-      connectionsRef.current = {};
-      frameworkGroups.current = null;
+      currentGroupLevelRef.current = FocusLevelEnum.DEFAULT;
       itemDraggingRef.current = null;
+      itemsElementRef.current = {};
+      itemsMetadataRef.current = { rect: {} };
+
+      // Models
+      connectionsRef.current = {};
       itemsRef.current = {};
-      itemsMetadataRef.current = {
-        rect: {},
-      };
       nodeItemsRef.current = {};
-      phaseRef.current = 0;
-      pipelinesRef.current = {};
       portsRef.current = {};
+
+      // Framework
+      frameworkGroups.current = null;
+      blocksByGroupRef.current = {} as BlocksByGroupType;
+      groupsByLevelRef.current = [];
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,26 +225,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     , connectionsRef, portsRef);
   }
 
-  function setFocusLevel(level: FocusLevelEnum) {
-    focusLevelRef.current = level;
-
-    // Object.entries(
-    //   itemsElementRef?.current || {},
-    // )?.forEach(([itemType, mapping]: [ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>]) => {
-    //   Object.entries(mapping)?.forEach(([id, elementRef]: [string, React.RefObject<HTMLDivElement>]) => {
-    //     const item = itemsRef?.current?.[id];
-    //     if (!item || !elementRef?.current) return;
-
-    //     elementRef?.current?.classList?.add(styles[String(itemType)]);
-
-    //     FOCUS_LEVELS.forEach((focusLevel: FocusLevelEnum) => {
-    //       const className = styles[`focus-level-${focusLevel}`];
-    //       focusLevel === level
-    //         ? elementRef?.current?.classList?.add(className)
-    //         : elementRef?.current?.classList?.remove(className);
-    //     });
-    //   });
-    // });
+  function setCurrentGroupLevel(level: FocusLevelEnum) {
+    currentGroupLevelRef.current = level;
   }
 
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
@@ -351,7 +352,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
         startTransition(() => {
           setItems(itemsRef.current);
-          setFocusLevel(FocusLevelEnum.GROUPS);
+          setCurrentGroupLevel(FocusLevelEnum.GROUPS);
         });
       }
     } else if (ItemTypeEnum.NODE === type) {

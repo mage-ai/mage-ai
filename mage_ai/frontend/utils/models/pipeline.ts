@@ -59,7 +59,7 @@ export function extractNestedBlocks(
     downstreamBlocks?: DependencyUUIDType[];
     upstreamBlocks?: DependencyUUIDType[];
   },
-): Record<string, any> {
+): Record<string, BlockType | PipelineExecutionFrameworkBlockType> {
   const {
     addBlockDependenciesToNestedPipelineBlocks = false,
     addPipelineGroupsToBlocks = false,
