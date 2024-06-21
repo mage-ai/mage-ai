@@ -229,30 +229,35 @@ export const QueryProcessingPipeline = {
   groups: [GroupUUIDEnum.QUERY_PROCESSING],
   blocks: [
     {
-      name: 'Intent Detection',
-      groups: [
-        GroupUUIDEnum.QUERY_PROCESSING,
-        GroupUUIDEnum.INTENT_DETECTION,
-      ],
-      downstream_blocks: ['query_decomposition'],
+      name: 'Intent Detection 1',
+      groups: [GroupUUIDEnum.INTENT_DETECTION],
       upstream_blocks: [],
+      downstream_blocks: ['query_decomposition'],
+    },
+
+    {
+      name: 'Intent Detection 2',
+      groups: [GroupUUIDEnum.INTENT_DETECTION],
+      upstream_blocks: [],
+      downstream_blocks: ['query_decomposition'],
     },
     {
       name: 'Query Decomposition',
-      groups: [
-        GroupUUIDEnum.QUERY_PROCESSING,
-        GroupUUIDEnum.QUERY_DECOMPOSITION,
-      ],
-      downstream_blocks: ['query_augmentation'],
-      upstream_blocks: ['intent_detection'],
+      groups: [GroupUUIDEnum.QUERY_DECOMPOSITION],
+      upstream_blocks: ['intent_detection_1', 'intent_detection_2'],
+      downstream_blocks: ['query_augmentation_1', 'query_augmentation_2'],
     },
     {
-      name: 'Query Augmentation',
-      groups: [
-        GroupUUIDEnum.QUERY_PROCESSING,
-        GroupUUIDEnum.QUERY_AUGMENTATION,
-      ],
+      name: 'Query Augmentation 1',
+      groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
       upstream_blocks: ['query_decomposition'],
+      downstream_blocks: [],
+    },
+    {
+      name: 'Query Augmentation 2',
+      groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
+      upstream_blocks: ['query_decomposition'],
+      downstream_blocks: [],
     },
   ].map(block => ({
     ...block,
@@ -360,7 +365,6 @@ export const InferencePipeline = {
   name: 'Answer retrieval',
   uuid: 'answer_retrieval',
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.INFERENCE],
   blocks: [
     {
       uuid: QueryProcessingPipeline.uuid,
@@ -368,18 +372,17 @@ export const InferencePipeline = {
       downstream_blocks: [RetrievalPipeline.uuid],
       upstream_blocks: [],
     },
-    {
-      uuid: RetrievalPipeline.uuid,
-      name: RetrievalPipeline.name,
-      downstream_blocks: [ResponseGenerationPipeline.uuid],
-      upstream_blocks: [QueryProcessingPipeline.uuid],
-    },
-    {
-      uuid: ResponseGenerationPipeline.uuid,
-      name: ResponseGenerationPipeline.name,
-      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
-      upstream_blocks: [RetrievalPipeline.uuid],
-    },
+    // {
+    //   uuid: RetrievalPipeline.uuid,
+    //   name: RetrievalPipeline.name,
+    //   downstream_blocks: [ResponseGenerationPipeline.uuid],
+    //   upstream_blocks: [QueryProcessingPipeline.uuid],
+    // },
+    // {
+    //   uuid: ResponseGenerationPipeline.uuid,
+    //   name: ResponseGenerationPipeline.name,
+    //   upstream_blocks: [RetrievalPipeline.uuid],
+    // },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
 }
 
@@ -389,25 +392,26 @@ export const PipelineFrameworkInstance = {
   type: PipelineTypeEnum.PYTHON,
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
-    {
-      uuid: DataPreparationPipeline.uuid,
-      name: DataPreparationPipeline.name,
-      downstream_blocks: [
-        DataValidationPipeline.uuid,
-        InferencePipeline.uuid,
-      ],
-      upstream_blocks: [],
-    },
     // {
+    //   uuid: DataPreparationPipeline.uuid,
+    //   name: DataPreparationPipeline.name,
+    //   downstream_blocks: [
+    //     DataValidationPipeline.uuid,
+    //     InferencePipeline.uuid,
+    //   ],
+    //   upstream_blocks: [],
+    // },
+    // // {
     //   uuid: DataValidationPipeline.uuid,
     //   name: DataValidationPipeline.name,
     //   upstream_blocks: [DataPreparationPipeline.uuid],
     // },
-    // {
-    //   uuid: InferencePipeline.uuid,
-    //   name: InferencePipeline.name,
-    //   upstream_blocks: [DataPreparationPipeline.uuid],
-    // },
+    {
+      uuid: InferencePipeline.uuid,
+      name: InferencePipeline.name,
+      groups: [GroupUUIDEnum.INFERENCE],
+      upstream_blocks: [DataPreparationPipeline.uuid],
+    },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
 }
 
@@ -415,8 +419,8 @@ export default [
   // DataValidationPipeline,
   InferencePipeline,
   QueryProcessingPipeline,
-  RetrievalPipeline,
-  ResponseGenerationPipeline,
+  // RetrievalPipeline,
+  // ResponseGenerationPipeline,
   // DataPreparationPipeline,
   // TransformPipeline,
   // ExportPipeline,

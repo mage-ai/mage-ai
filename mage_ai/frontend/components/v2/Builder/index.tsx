@@ -2,7 +2,7 @@ import dynamic from 'next/dynamic';
 
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
-import pipelines, { PipelineFrameworkInstance } from './mock';
+import pipelines, { InferencePipeline, PipelineFrameworkInstance } from './mock';
 import {
   DataPreparationPipelineExecutionFramework,
   InferencePipelineExecutionFramework,
@@ -24,13 +24,17 @@ export default function PipelineBuilder() {
 
           {/* @ts-ignore */}
           <PipelineCanvas
-            pipeline={RAGPipelineExecutionFramework || PipelineFrameworkInstance}
-            pipelines={pipelines}
+            pipeline={
+              InferencePipeline
+              || RAGPipelineExecutionFramework
+              || PipelineFrameworkInstance
+            }
             pipelineExecutionFramework={RAGPipelineExecutionFramework}
             pipelineExecutionFrameworks={[
               DataPreparationPipelineExecutionFramework,
               InferencePipelineExecutionFramework,
             ]}
+            pipelines={pipelines}
           />
         </Grid>
 
