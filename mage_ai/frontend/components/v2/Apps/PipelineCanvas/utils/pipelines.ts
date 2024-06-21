@@ -144,7 +144,7 @@ export function buildDependencies(
   });
   const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
 
-  // false &&
+  false &&
   isDebug() && console.log(
     `groupMapping ${objectSize(groupMapping)}`, groupMapping,
     `groupLevelsMapping ${groupLevelsMapping?.length}`, groupLevelsMapping,

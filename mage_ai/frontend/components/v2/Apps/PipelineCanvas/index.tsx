@@ -40,7 +40,7 @@ import { calculateBoundingBox, getRectDiff, layoutItemsInGroups, layoutItemsInTr
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
-import { buildNodeGroups } from './utils/nodes';
+import { updateNodeGroupsWithItems } from './utils/nodes';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
@@ -166,7 +166,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     itemsRef.current = itemMapping ?? itemsRef.current;
     nodeItemsRef.current = nodeItemMapping ?? nodeItemsRef.current;
 
-    isDebug() && console.log(
+    false && isDebug() && console.log(
       'nodes',
       nodeItemsRef?.current,
       'connectionMapping',
@@ -195,8 +195,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     level?: number;
     updateModels?: boolean;
   }) {
-    const arr = Object.values(itemsRef.current || {});
-
     const layout = {
       boundingRect: canvasRef?.current?.getBoundingClientRect(),
       containerRect: containerRef?.current?.getBoundingClientRect(),
@@ -221,9 +219,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
     };
 
-    // const [nodes] = buildNodeGroups(arr);
-    const nodes = Object.values(nodeItemsRef.current ?? {}) ?? [];
-    const nodesGroupedArr = layoutItemsInGroups(nodes, layout);
+    nodeItemsRef.current =
+      updateNodeGroupsWithItems(nodeItemsRef?.current ?? {}, itemsRef?.current ?? {});
+    const nodesGroupedArr = [];
+
+    modelLevelsMapping?.current?.forEach((modelMapping: ModelMappingType) => {
+      const { nodeItemMapping } = modelMapping;
+
+      const nodeIDs = Object.keys(nodeItemMapping ?? {}) ?? [];
+
+
+      const nodes = nodeIDs.map((nodeID: string) => (nodeItemsRef.current ?? {})?.[nodeID]);
+      isDebug() && console.log(
+        'nodeIDs', nodeIDs,
+        'nodes', nodes,
+      );
+      const nodesArr = layoutItemsInGroups(nodes, layout);
+      nodesGroupedArr.push(...nodesArr);
+    });
 
     const itemMapping = {} as ItemMappingType;
     const nodesGrouped = {} as NodeItemMappingType;
@@ -234,9 +247,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       nodesGrouped[node.id] = node;
     });
 
-    false && isDebug() && console.log(
+    false &&
+    isDebug() && console.log(
       'nodesGrouped',
       nodesGrouped,
+      'itemMapping',
+      itemMapping,
     );
 
     if (opts?.updateModels) {
@@ -331,7 +347,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const finalLevel = modelLevelsMapping.current.length;
       modelLevelsMapping.current.push(
         initializeBlocksAndConnections(
-          Object.values(blocksByGroupRef.current),
+          Object.values(blockMapping),
           {
             groupMapping: finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
           },
@@ -385,7 +401,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         setPorts(portMapping);
         nodeItemsRef.current = nodeItemMapping;
 
-        // false &&
+        false &&
         isDebug() && console.log(
           itemMapping,
           portMapping,
@@ -514,6 +530,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef.current[id] = newItem;
 
       const arr = Object.values(itemsRef.current || {});
+      console.log('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', arr?.length, Object.keys(itemsRef?.current ?? {}));
       const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
       if (versions?.every((version: number) => version === rectVersion)) {

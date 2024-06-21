@@ -183,6 +183,7 @@ function centerRects(rects: RectType[], boundingRect: RectType, containerRect: R
 }
 
 export function setUpstreamRectsForItems(items: DragItem[]): DragItem[] {
+  isDebugBase() && console.log('setUpstreamRectsForItems', items);
   const rectsByItemID = indexBy(
     items.map(({ id, rect }) => ({ ...rect, id })),
     ({ id }) => id,
@@ -451,51 +452,34 @@ export function layoutItemsInGroups(
   nodes?.forEach((node: NodeType) => {
     const { items = [] } = node;
 
-    // const itemsByID = indexBy(items || [], (item: DragItem) => item?.block?.uuid);
-    // const items2 = items?.map((item: DragItem) => ({
-    //   ...item,
-    //   rect: {
-    //     ...item?.rect,
-    //     id: item.id,
-    //     upstreamRects: uniqueArray(item?.block?.upstream_blocks ?? [])?.reduce(
-    //       (acc: RectType[], buuid: string) => {
-    //         const rect = itemsByID[buuid]?.rect;
-    //         return rect ? acc.concat({ ...rect, id: buuid }) : acc;
-    //       },
-    //       [],
-    //     ),
-    //   },
-    // }))  as DragItem[];
-
-    // let rects = items2.map((item: DragItem) => item.rect);
-    // console.log(`Group items upstream rects ${node.id}:`, rects);
-
     const layoutInner = {
       ...layout,
       direction: LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
         ? LayoutConfigDirectionEnum.VERTICAL
         : LayoutConfigDirectionEnum.HORIZONTAL,
-      // padding: st,
     };
     const items2 = layoutItemsInTreeFormation(items, layoutInner);
-    // rects = layoutRectsInTreeFormation(rects, layoutInner);
 
-    // const items3 = items2?.map((item: DragItem, idx: number) => ({
-    //   ...item,
-    //   rect: rects[idx],
-    // }));
+    const offsetTopMax = items2?.length >= 1
+      ? Math.max(...items2.map((item: DragItem) =>
+        (item?.rect?.inner?.badge?.height ?? 0) + (item?.rect?.inner?.badge?.offset?.top ?? 0)
+        + (item?.rect?.inner?.title?.height ?? 0) + (item?.rect?.inner?.title?.offset?.top ?? 0),
+      ))
+      : 0;
+    const offsetLeftMax = items2?.length >= 1
+      ? Math.max(...items2.map((item: DragItem) => Math.max(
+        (item?.rect?.inner?.badge?.offset?.left ?? 0),
+        (item?.rect?.inner?.title?.offset?.left ?? 0),
+      )))
+      : 0;
 
-    // const items3 = layoutItemsInSqaure(items2, layout);
-    // const rects = items3?.map((item: DragItem) => item.rect);
-    //
-    const offsetTopMax = Math.max(...items2.map((item: DragItem) =>
-      (item?.rect?.inner?.badge?.height ?? 0) + (item?.rect?.inner?.badge?.offset?.top ?? 0)
-      + (item?.rect?.inner?.title?.height ?? 0) + (item?.rect?.inner?.title?.offset?.top ?? 0),
-    ));
-    const offsetLeftMax = Math.max(...items2.map((item: DragItem) => Math.max(
-      (item?.rect?.inner?.badge?.offset?.left ?? 0),
-      (item?.rect?.inner?.title?.offset?.left ?? 0),
-    )));
+    false &&
+    isDebugBase() && console.log(
+      items2,
+      offsetTopMax,
+      offsetLeftMax,
+    );
+
     const rectNode = defaultNodeRect(node) ?? {} as RectType;
     const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
@@ -553,11 +537,15 @@ export function layoutItemsInGroups(
       top: null,
     })),
   }));
-  isDebug() && console.log('rectsBeforeLayout', rectsBeforeLayout);
+
+  isDebugBase() &&
+  console.log('rectsBeforeLayout', rectsBeforeLayout);
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  isDebug() && console.log('rectsInTree', rectsInTree);
+  isDebugBase() &&
+  console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
-  isDebug() && console.log('rectsCentered', rectsCentered);
+  isDebugBase() &&
+  console.log('rectsCentered', rectsCentered);
 
   return rectsCentered.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];

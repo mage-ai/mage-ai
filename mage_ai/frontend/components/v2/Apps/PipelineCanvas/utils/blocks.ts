@@ -277,7 +277,7 @@ export function initializeBlocksAndConnections(
       const blocksInGroup = blocksByGroup?.[groupIDBase] || [];
       const groupID = buildUUIDForLevel(groupIDBase, level);
 
-      isDebug() && console.log(
+      false && isDebug() && console.log(
         groupIDBase, groupID,
         'blocksByGroup', blocksByGroup,
         'blocksInGroup', Object.keys(blocksInGroup),
