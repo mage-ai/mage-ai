@@ -95,7 +95,8 @@ export const ResponseGeneration: PipelineExecutionFrameworkType = {
 const Inference: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.INFERENCE,
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
-  groups: [PipelineExecutionFrameworkUUIDEnum.RAG],
+  groups: [GroupUUIDEnum.INFERENCE],
+  execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
     {
       uuid: QueryProcessing.uuid,

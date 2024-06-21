@@ -143,26 +143,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
-      buildDependencies(
+      const {
+        blocksByGroup,
+        blocksMapping,
+        groupsMapping,
+        pipelinesMapping,
+      } = buildDependencies(
         pipelineExecutionFramework,
         pipelineExecutionFrameworks,
         pipeline,
         pipelines,
       );
-
-      const pipelinesMapping = indexBy([
-        ...pipelines,
-      ], ({ uuid }) => uuid);
-      const blocksMapping = {};
-      [
-        ...pipelines,
-      ]?.forEach((pipe: PipelineType | PipelineExecutionFrameworkType) => {
-        Object.values(
-          extractNestedBlocks(pipe, pipelinesMapping) || {},
-        )?.forEach((block: BlockType) => {
-          blocksMapping[block.uuid] = ignoreKeys(block, ['pipeline']);
-        });
-      });
 
       const { connectionsMapping, itemsMapping, portsMapping } = initializeBlocksAndConnections(
         Object.values(blocksMapping),
@@ -175,17 +166,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       );
 
-      const blocksFrameworkMapping = Object.values(extractNestedBlocks(
-        pipelineExecutionFramework,
-        indexBy(pipelineExecutionFrameworks, (p: PipelineExecutionFrameworkType) => p.uuid),
-      ));
-      frameworkGroups.current = groupBlocksByGroups(blocksFrameworkMapping);
-
+      frameworkGroups.current = groupsMapping;
       connectionsRef.current = connectionsMapping;
       pipelinesRef.current = pipelinesMapping;
       portsRef.current = portsMapping;
-      updateItemsMetadata();
 
+      updateItemsMetadata();
       setItems(itemsMapping);
       setConnections(connectionsMapping);
     }

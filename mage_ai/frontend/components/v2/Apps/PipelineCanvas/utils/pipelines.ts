@@ -13,18 +13,20 @@ export function buildDependencies(
   pipeline: PipelineType,
   pipelines: PipelineType[],
 ) {
+  const frameworksMapping = indexBy(pipelineExecutionFrameworks, ({ uuid }) => uuid);
   const groupsMapping = extractNestedBlocks(
     pipelineExecutionFramework,
-    indexBy(pipelineExecutionFrameworks, ({ uuid }) => uuid),
+    frameworksMapping,
     {
       addBlockDependenciesToNestedPipelineBlocks: true,
       addPipelineGroupsToBlocks: true,
     },
   );
 
+  const pipelinesMapping = indexBy(pipelines, ({ uuid }) => uuid);
   const blocksMapping = extractNestedBlocks(
     pipeline,
-    indexBy(pipelines, ({ uuid }) => uuid),
+    pipelinesMapping,
     {
       addPipelineToBlocks: true,
     },
@@ -37,7 +39,17 @@ export function buildDependencies(
     `blocksByGroup ${objectSize(blocksByGroup)}`, blocksByGroup,
   );
 
-  return {};
+  const mapping = {};
+  Object.entries(groupsMapping).forEach(([groupUUID, blocks]) => {
+
+  });
+
+  return {
+    blocksByGroup,
+    blocksMapping,
+    groupsMapping,
+    pipelinesMapping,
+  };
 }
 
 function blocksToGroupMapping(blocks: BlockType[]): Record<GroupUUIDEnum, BlockType> {

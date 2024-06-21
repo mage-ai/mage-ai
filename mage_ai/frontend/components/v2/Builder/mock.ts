@@ -113,32 +113,35 @@ export const QueryProcessingPipeline = {
   name: 'Interpret user prompt',
   uuid: 'interpret_user_prompt',
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.QUERY_PROCESSING],
   blocks: [
     {
       name: 'Understand user intentions',
-      type: BlockTypeEnum.TRANSFORMER,
+      type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.INTENT_DETECTION],
     },
-
     {
       name: 'Detect malicious intent',
       type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.INTENT_DETECTION],
     },
     {
+      name: 'Add guardrails',
+      type: BlockTypeEnum.DATA_LOADER,
+      groups: [GroupUUIDEnum.INTENT_DETECTION],
+    },
+    {
       name: 'Decompose user query',
-      type: BlockTypeEnum.DATA_EXPORTER,
+      type: BlockTypeEnum.CUSTOM,
       groups: [GroupUUIDEnum.QUERY_DECOMPOSITION],
     },
     {
       name: 'Improve user query prompts',
-      type: BlockTypeEnum.CUSTOM,
+      type: BlockTypeEnum.DATA_EXPORTER,
       groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
     },
     {
       name: 'Augment user query with context',
-      type: BlockTypeEnum.TRANSFORMER,
+      type: BlockTypeEnum.DATA_LOADER,
       groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
     },
   ].map(block => ({
@@ -153,10 +156,6 @@ export const RetrievalPipeline = {
   uuid: cleanName('Retrieve numerous documents from company'),
   type: PipelineTypeEnum.PYTHON,
   blocks: [
-    {
-      groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
-      type: BlockTypeEnum.DATA_LOADER,
-    },
     {
       name: 'Page-Based Recursive Retrieval',
       groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
@@ -206,22 +205,32 @@ export const ResponseGenerationPipeline = {
   type: PipelineTypeEnum.PYTHON,
   blocks: [
     {
-      name: 'Contextualization',
+      name: 'Add documents to context for LLM',
       groups: [GroupUUIDEnum.CONTEXTUALIZATION],
       type: BlockTypeEnum.DATA_LOADER,
     },
     {
       name: 'Response Synthesis',
       groups: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
-      type: BlockTypeEnum.TRANSFORMER,
+      type: BlockTypeEnum.CUSTOM,
     },
     {
-      name: 'Answer Enrichment',
+      name: 'Add custom information to response',
       groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
       type: BlockTypeEnum.TRANSFORMER,
     },
     {
-      name: 'Response Formatting',
+      name: 'Add source links to response',
+      groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
+      type: BlockTypeEnum.TRANSFORMER,
+    },
+    {
+      name: 'Explain how the model got the answer',
+      groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
+      type: BlockTypeEnum.TRANSFORMER,
+    },
+    {
+      name: 'Parse model query and present',
       groups: [GroupUUIDEnum.RESPONSE_FORMATTING],
       type: BlockTypeEnum.DATA_EXPORTER,
     },

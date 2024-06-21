@@ -12,6 +12,7 @@ export type PipelineExecutionFrameworkBlockType = BlockType & {
 
 type PipelineExecutionFrameworkType = {
   blocks: PipelineExecutionFrameworkBlockType[];
+  execution_framework?: PipelineExecutionFrameworkUUIDEnum;
   groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   name?: string;
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK;

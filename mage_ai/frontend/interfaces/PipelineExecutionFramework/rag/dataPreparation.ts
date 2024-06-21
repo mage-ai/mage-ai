@@ -231,7 +231,8 @@ export const Index: PipelineExecutionFrameworkType = {
 const DataPreparation: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.DATA_PREPARATION,
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
-  groups: [PipelineExecutionFrameworkUUIDEnum.RAG],
+  groups: [GroupUUIDEnum.DATA_PREPARATION],
+  execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
     {
       uuid: Load.uuid,
