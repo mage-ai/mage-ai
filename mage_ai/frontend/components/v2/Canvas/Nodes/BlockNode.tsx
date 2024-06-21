@@ -90,6 +90,7 @@ export function BlockNode({
     <Grid
       alignItems="center"
       columnGap={8}
+      id={`${item.id}-badge`}
       templateColumns={[
         inputs?.length >= 1 ? 'auto' : '1fr',
         inputs?.length >= 1 ? '1fr' : '',
@@ -115,7 +116,7 @@ export function BlockNode({
         />
       )}
     </Grid>
-  ), [badge, inputs, outputs]);
+  ), [badge, inputs, item, outputs]);
 
   const connectionRows = useMemo(() => inputOutputPairs?.length >= 1 && (
     <PanelRows>
@@ -153,6 +154,7 @@ export function BlockNode({
     <Grid
       alignItems="center"
       columnGap={12}
+      id={`${item.id}-title`}
       templateColumns={[
         before ? 'auto' : '1fr',
         (before || after) ? '1fr' : '',
@@ -180,7 +182,7 @@ export function BlockNode({
         {templateConfigurations}
 
         {BlockTypeEnum.PIPELINE === block?.type && (
-          <BlockGroup />
+          <div />
         )}
       </Grid>
     </div>

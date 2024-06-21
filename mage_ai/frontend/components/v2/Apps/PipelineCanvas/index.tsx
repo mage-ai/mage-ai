@@ -28,7 +28,7 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation } from '../../Canvas/utils/rect';
+import { calculateBoundingBox, getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
@@ -245,12 +245,34 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     if (ItemTypeEnum.BLOCK === type) {
       if (item?.rect?.version === rectVersion) return;
       const rect = itemRef.current.getBoundingClientRect();
+      const elementBadge = itemRef?.current?.querySelector(`#${item.id}-badge`);
+      const rectBadge =
+        elementBadge?.getBoundingClientRect()
+          ?? { height: 0, left: 0, top: 0, width: 0 };
+      const elementTitle = itemRef?.current?.querySelector(`#${item.id}-title`);
+      const rectTitle =
+        elementTitle?.getBoundingClientRect()
+          ?? { height: 0, left: 0, top: 0, width: 0 };
 
-      const newItem = update(item, {
+      let newItem = update(item, {
         rect: {
           $set: {
             diff: item?.rect,
             height: rect.height,
+            inner: {
+              badge: {
+                height: rectBadge?.height,
+                left: rectBadge?.left,
+                top: rectBadge?.top,
+                width: rectBadge?.width,
+              },
+              title: {
+                height: rectTitle?.height,
+                left: rectTitle?.left,
+                top: rectTitle?.top,
+                width: rectTitle?.width,
+              },
+            },
             left: rect.left,
             offset: {
               left: itemRef?.current?.offsetLeft,
@@ -259,6 +281,30 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             top: rect.top,
             version: rectVersion,
             width: rect.width,
+          },
+        },
+      });
+      newItem = update(newItem, {
+        rect: {
+          inner: {
+            badge: {
+              offset: {
+                $set: {
+                  // No need to offset it because there is no extra spacing besides the group’s padding.
+                  // left: (elementBadge as { offsetLeft?: number })?.offsetLeft,
+                  top: (elementBadge as { offsetTop?: number })?.offsetTop,
+                },
+              },
+            },
+            title: {
+              offset: {
+                $set: {
+                  // No need to offset it because there is no extra spacing besides the group’s padding.
+                  // left: (elementTitle as { offsetLeft?: number })?.offsetLeft,
+                  top: (elementTitle as { offsetTop?: number })?.offsetTop,
+                },
+              },
+            },
           },
         },
       });
@@ -272,18 +318,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         const layout = {
           boundingRect: canvasRef?.current?.getBoundingClientRect(),
           containerRect: containerRef?.current?.getBoundingClientRect(),
+          defaultRect: {
+            node: () => ({
+              height: 100,
+              left: 0,
+              padding: {
+                bottom: 12,
+                left: 12,
+                right: 12,
+                top: 12,
+              },
+              top: 0,
+              width: 100,
+            }),
+          },
           direction: LayoutConfigDirectionEnum.HORIZONTAL,
           gap: {
             column: 40,
             row: 40,
-          },
-          padding: {
-            node: {
-              bottom: 12,
-              left: 12,
-              right: 12,
-              top: 12,
-            },
           },
         };
 

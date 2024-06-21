@@ -433,8 +433,12 @@ export function layoutItemsInGroups(
   const {
     boundingRect,
     containerRect,
+    defaultRect,
   } = layout;
-  const rectPadding = layout?.padding?.node ?? {} as RectType;
+  const {
+    item: defaultItemRect = () => ({}) as RectType,
+    node: defaultNodeRect = () => ({}) as RectType,
+  } = defaultRect || {};
 
   const groupsMapping: Record<string, NodeType> = {};
 
@@ -478,17 +482,33 @@ export function layoutItemsInGroups(
     // const items3 = layoutItemsInSqaure(items2, layout);
     // const rects = items3?.map((item: DragItem) => item.rect);
     //
+    const offsetTopMax = Math.max(...items2.map((item: DragItem) =>
+      (item?.rect?.inner?.badge?.height ?? 0) + (item?.rect?.inner?.badge?.offset?.top ?? 0)
+      + (item?.rect?.inner?.title?.height ?? 0) + (item?.rect?.inner?.title?.offset?.top ?? 0),
+    ));
+    const offsetLeftMax = Math.max(...items2.map((item: DragItem) => Math.max(
+      (item?.rect?.inner?.badge?.offset?.left ?? 0),
+      (item?.rect?.inner?.title?.offset?.left ?? 0),
+    )));
+    const rectNode = defaultNodeRect(node) ?? {} as RectType;
+    const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
     const box2 = {
       ...box1,
-      height: box1.height + rectPadding.top + rectPadding.bottom,
-      width: box1.width + rectPadding.left + rectPadding.right,
+      height: box1.height + (rectPadding?.top ?? 0) + (rectPadding?.bottom ?? 0) + (offsetTopMax ?? 0),
+      offset: {
+        left: offsetLeftMax,
+        top: offsetTopMax,
+      },
+      padding: rectPadding,
+      width: box1.width + (rectPadding?.left ?? 0) + (rectPadding?.right ?? 0),
     };
 
     isDebug() && console.log(
       node.id,
+      'offsetTopMax', offsetTopMax,
       'items2', items2,
-      'rectPadding', rectPadding,
+      'rectNode', rectNode,
       'itemsBox', box1,
       'itemsBoxPadding', box2,
     );
@@ -550,8 +570,8 @@ export function layoutItemsInGroups(
     itemsRects = shiftRectsIntoBoundingBox(itemsRects, rect);
     const itemsBox = calculateBoundingBox(itemsRects);
     const diff = {
-      left: (rect?.width - itemsBox?.width) / 2,
-      top: (rect?.height - itemsBox?.height) / 2,
+      left: (rect?.offset?.left ?? 0) + (rect?.padding?.left ?? 0),
+      top: (rect?.offset?.top ?? 0) + (rect?.padding?.top ?? 0),
     };
 
     isDebug() && console.log(
@@ -728,7 +748,7 @@ function calculateCentroid(rects: RectType[]): { left: number; top: number } {
   };
 }
 
-function calculateBoundingBox(rects: RectType[]): RectType {
+export function calculateBoundingBox(rects: RectType[]): RectType {
   if (rects.length === 0) {
     return { left: 0, top: 0, width: 0, height: 0 };
   }

@@ -55,6 +55,7 @@ export type GridType = {
 export type WithStylesProp = {
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   className?: string;
+  id?: string;
   uuid?: string;
 } & ElementType & React.CSSProperties & GridType;
 

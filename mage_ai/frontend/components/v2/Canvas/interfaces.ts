@@ -19,8 +19,10 @@ export interface RectType {
   diff?: RectType;
   height?: number;
   id?: number | string;
+  inner?: Record<string, RectType>;
   left: number;
   offset?: OffsetType;
+  padding?: RectType;
   right?: number;
   top: number;
   upstreamRects?: RectType[];
@@ -62,6 +64,10 @@ export interface NodeType extends DragItem {
 export interface LayoutConfigType {
   boundingRect?: RectType;
   containerRect?: RectType;
+  defaultRect?: {
+    item?: (item?: DragItem) => RectType;
+    node?: (node?: NodeType) => RectType;
+  };
   direction?: LayoutConfigDirectionEnum;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {
@@ -73,9 +79,6 @@ export interface LayoutConfigType {
     rows?: number;
   };
   itemRect?: RectType;
-  padding?: {
-    node?: RectType;
-  };
   stagger?: number;
 }
 

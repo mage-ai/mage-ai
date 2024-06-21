@@ -24,7 +24,7 @@ export function BlockNodeWrapper({
   handlers,
   onMountPort,
   onMountItem,
-  selected = true,
+  selected = false,
 }: NodeWrapperProps & BlockNodeWrapperProps) {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
@@ -111,7 +111,6 @@ export function BlockNodeWrapper({
   }, [names, ports, selected]);
 
   useEffect(() => {
-
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {
       const checkComputedStyles = () => {
         const computedStyle = typeof window !== 'undefined' && window.getComputedStyle(itemRef.current);

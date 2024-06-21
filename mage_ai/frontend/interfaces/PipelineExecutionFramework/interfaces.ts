@@ -28,80 +28,80 @@ export const InferencePipelineExecutionFramework: PipelineExecutionFrameworkType
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
   groups: [PipelineExecutionFrameworkUUIDEnum.RAG],
   blocks: [
-    // {
-    //   uuid: GroupUUIDEnum.INTENT_DETECTION,
-    //   groups: [GroupUUIDEnum.QUERY_PROCESSING],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.QUERY_DECOMPOSITION,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.QUERY_DECOMPOSITION,
-    //   groups: [GroupUUIDEnum.QUERY_PROCESSING],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.QUERY_AUGMENTATION,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.QUERY_AUGMENTATION,
-    //   groups: [GroupUUIDEnum.QUERY_PROCESSING],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.MEMORY,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.MEMORY,
-    //   groups: [GroupUUIDEnum.RETRIEVAL],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.ITERATIVE_RETRIEVAL,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.ITERATIVE_RETRIEVAL,
-    //   groups: [GroupUUIDEnum.RETRIEVAL],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.MULTI_HOP_REASONING,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.MULTI_HOP_REASONING,
-    //   groups: [GroupUUIDEnum.RETRIEVAL],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.RANKING,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.RANKING,
-    //   groups: [GroupUUIDEnum.RETRIEVAL],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.CONTEXTUALIZATION,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.CONTEXTUALIZATION,
-    //   groups: [GroupUUIDEnum.RESPONSE_GENERATION],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.RESPONSE_SYNTHESIS,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.RESPONSE_SYNTHESIS,
-    //   groups: [GroupUUIDEnum.RESPONSE_GENERATION],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.ANSWER_ENRICHMENT,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.ANSWER_ENRICHMENT,
-    //   groups: [GroupUUIDEnum.RESPONSE_GENERATION],
-    //   downstream_blocks: [
-    //     GroupUUIDEnum.RESPONSE_FORMATTING,
-    //   ],
-    // },
-    // {
-    //   uuid: GroupUUIDEnum.RESPONSE_FORMATTING,
-    //   groups: [GroupUUIDEnum.RESPONSE_GENERATION],
-    // },
+    {
+      uuid: GroupUUIDEnum.INTENT_DETECTION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.QUERY_DECOMPOSITION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.QUERY_DECOMPOSITION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.QUERY_AUGMENTATION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.QUERY_AUGMENTATION,
+      groups: [GroupUUIDEnum.QUERY_PROCESSING],
+      downstream_blocks: [
+        GroupUUIDEnum.MEMORY,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MEMORY,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.MULTI_HOP_REASONING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.MULTI_HOP_REASONING,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.RANKING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RANKING,
+      groups: [GroupUUIDEnum.RETRIEVAL],
+      downstream_blocks: [
+        GroupUUIDEnum.CONTEXTUALIZATION,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.CONTEXTUALIZATION,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.RESPONSE_SYNTHESIS,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RESPONSE_SYNTHESIS,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.ANSWER_ENRICHMENT,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.ANSWER_ENRICHMENT,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+      downstream_blocks: [
+        GroupUUIDEnum.RESPONSE_FORMATTING,
+      ],
+    },
+    {
+      uuid: GroupUUIDEnum.RESPONSE_FORMATTING,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
+    },
   ],
 };
 
