@@ -1,6 +1,7 @@
 import { DragItem, NodeType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { isDebug } from '@utils/environment';
+import { buildUUIDForLevel } from './levels';
 
 export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
   const itemsUngrouped = [];
@@ -9,7 +10,9 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
 
   items?.forEach((item: DragItem) => {
     if (item?.block?.groups) {
-      item?.block?.groups?.forEach((groupID: string) => {
+      item?.block?.groups?.forEach((groupIDBase: string) => {
+        const groupID = buildUUIDForLevel(groupIDBase, item?.level ?? 0);
+
         itemsToGroups[item.id] = groupID;
 
         groups[groupID] ||= {
@@ -36,7 +39,6 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
       itemsUngrouped.push(item);
     }
   });
-
 
   Object.entries(groups || {})?.forEach(([groupID, group]: [string, NodeType]) => {
     const arr = [];
@@ -71,7 +73,11 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
         const upstreamNodes = group?.upstreamNodes;
         const value = map[id];
         if (value?.join(',') !== upstreamNodes?.map((node: NodeType) => String(node.id))?.join(',')) {
-          console.error(`Group ${id} is missing upstream node ${value}: ${upstreamNodes}`);
+          console.error(
+            `Group ${id} is missing upstream node ${value}: ${upstreamNodes}`,
+            group,
+            groups,
+          );
         }
       }
     });

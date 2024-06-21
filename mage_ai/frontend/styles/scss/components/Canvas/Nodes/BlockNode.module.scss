@@ -10,10 +10,31 @@
 
 .nodeWrapper {
   &.block {
-    z-index: 2;
+    z-index: 6;
   }
 
   &.node {
-    z-index: 1;
+    z-index: 4;
+  }
+}
+
+.connectionLines {
+  z-index: 3;
+
+  .connectionLine {
+    &.connection-from-port-to-port,
+    &.connection-from-port-to-block,
+    &.connection-from-port-to-node,
+    &.connection-from-block-to-block,
+    &.connection-from-block-to-node,
+    &.connection-from-block-to-port,
+    &.connection-from-node-to-block,
+    &.connection-from-node-to-port {
+      z-index: 5;
+    }
+
+    &.connection-from-node-to-node {
+      z-index: 3;
+    }
   }
 }

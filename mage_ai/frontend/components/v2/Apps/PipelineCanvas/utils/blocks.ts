@@ -1,6 +1,19 @@
 import update from 'immutability-helper';
 import BlockType from '@interfaces/BlockType';
-import { DragItem, PortType, ConnectionMappingType, ItemMappingType, PortMappingType } from '../../../Canvas/interfaces';
+import {
+  DragItem,
+  PortType,
+  GroupMappingType,
+  ModelMappingType,
+  ConnectionMappingType,
+  NodeItemMappingType,
+  ItemMappingType,
+  PortMappingType,
+  BlocksByGroupType,
+  NodeType,
+} from '../../../Canvas/interfaces';
+import { blocksToGroupMapping } from './pipelines';
+import { buildUUIDForLevel } from './levels';
 import { buildPortUUID } from '../../../Canvas/Draggable/utils';
 import {
   PortSubtypeEnum,
@@ -10,16 +23,23 @@ import { createConnection } from '../../../Canvas/Connections/utils';
 import { ConnectionType } from '../../../Canvas/interfaces';
 import { SetupOpts, layoutItems, layoutRectsInContainer, layoutItemsInTreeFormation } from '../../../Canvas/utils/rect';
 import { indexBy } from '@utils/array';
+import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { isDebug } from '@utils/environment';
 
 export function initializeBlocksAndConnections(
   blocksInitArg: BlockType[],
+  mappings?: {
+    groupMapping: GroupMappingType;
+  },
   opts?: SetupOpts,
-): {
-  connectionsMapping: ConnectionMappingType;
-  itemsMapping: ItemMappingType;
-  portsMapping: PortMappingType;
-} {
-  const { level, namespace } = opts || {};
+): ModelMappingType {
+  const {
+    groupMapping,
+  } = mappings || {} as {
+    groupMapping: GroupMappingType
+  };
+
+  const { level } = opts || {};
 
   const blocks: BlockType[] = [];
   const blockMapping: Record<string, BlockType> = {};
@@ -27,20 +47,15 @@ export function initializeBlocksAndConnections(
     downstream_blocks: Record<string, BlockType>,
     upstream_blocks: Record<string, BlockType>,
   }> = {};
-  const connectionsMapping: Record<string, ConnectionType> = {};
-  const portsMapping: Record<string, PortType> = {};
+  const connectionMapping: Record<string, ConnectionType> = {};
+  const portMapping: Record<string, PortType> = {};
 
-  const addNamespace = (uuid: string) => [
-    namespace ?? '',
-    String(uuid ?? ''),
-  ]?.filter?.(Boolean).join('--');
-
-  const blocksInit = namespace?.length >= 1
+  const blocksInit = (level ?? false)
     ? blocksInitArg.map((block: BlockType) => ({
       ...block,
-      downstream_blocks: block?.downstream_blocks?.map((buuid: string) => addNamespace(buuid)),
-      upstream_blocks: block?.upstream_blocks?.map((buuid: string) => addNamespace(buuid)),
-      uuid: addNamespace(block.uuid),
+      downstream_blocks: block?.downstream_blocks?.map((buuid: string) => buildUUIDForLevel(buuid, level)),
+      upstream_blocks: block?.upstream_blocks?.map((buuid: string) => buildUUIDForLevel(buuid, level)),
+      uuid: buildUUIDForLevel(block.uuid, level),
     }))
     : blocksInitArg;
 
@@ -110,7 +125,7 @@ export function initializeBlocksAndConnections(
     ...i,
     rect: rects[idx],
   })), opts?.layout);
-  const itemsMapping: Record<string, DragItem> = indexBy(rectItems, i => i.id);
+  const itemMapping: Record<string, DragItem> = indexBy(rectItems, i => i.id);
 
   const downFlowPorts = {};
   // Create ports
@@ -119,7 +134,7 @@ export function initializeBlocksAndConnections(
     upstream_blocks: Record<string, BlockType>,
   }]) => {
     const block = blockMapping?.[blockUUID];
-    const parentItem: DragItem = itemsMapping[blockUUID];
+    const parentItem: DragItem = itemMapping[blockUUID];
 
     if (!parentItem) return;
 
@@ -139,7 +154,7 @@ export function initializeBlocksAndConnections(
       [PortSubtypeEnum.OUTPUT]: dnBlocks,
     }).forEach(([subtype, map]: [PortSubtypeEnum, Record<string, BlockType>]) => {
       Object.values(map)?.forEach((targetBlock: BlockType, index: number) => {
-        const targetItem = itemsMapping[targetBlock.uuid];
+        const targetItem = itemMapping[targetBlock.uuid];
         const port: PortType = {
           block,
           id: null,
@@ -174,7 +189,7 @@ export function initializeBlocksAndConnections(
 
         downFlowPorts[downwardsID] = port;
 
-        portsMapping[port.id] = port;
+        portMapping[port.id] = port;
       });
     });
 
@@ -183,16 +198,16 @@ export function initializeBlocksAndConnections(
       outputs: { $set: outputs },
     });
 
-    itemsMapping[blockUUID] = itemWithPorts;
+    itemMapping[blockUUID] = itemWithPorts;
   });
 
-  const portsMappingFinal: Record<string, PortType> = {};
-  Object.values(itemsMapping).forEach((item: DragItem) => {
+  const portMappingFinal: Record<string, PortType> = {};
+  Object.values(itemMapping).forEach((item: DragItem) => {
     (item?.inputs || []).concat(item?.outputs || []).forEach((port: PortType) => {
       const { parent, target } = port;
-      port.parent = itemsMapping[parent.block.uuid];
-      port.target = itemsMapping[target.block.uuid];
-      portsMappingFinal[port.id] = port;
+      port.parent = itemMapping[parent.block.uuid];
+      port.target = itemMapping[target.block.uuid];
+      portMappingFinal[port.id] = port;
     });
   });
 
@@ -209,8 +224,8 @@ export function initializeBlocksAndConnections(
       toItemBlock = port?.target?.block;
     }
 
-    const fromItem = itemsMapping[fromItemBlock.uuid];
-    const toItem = itemsMapping[toItemBlock.uuid];
+    const fromItem = itemMapping[fromItemBlock.uuid];
+    const toItem = itemMapping[toItemBlock.uuid];
 
     const fromPort = fromItem?.outputs?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid);
     const toPort = toItem?.inputs?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid);
@@ -219,12 +234,79 @@ export function initializeBlocksAndConnections(
     toPort.rect = { ...toItem.rect };
 
     const connection = createConnection(fromPort, toPort, { level });
-    connectionsMapping[connection.id] = connection;
+    connectionMapping[connection.id] = connection;
+  });
+
+  // {
+  //   "load": {
+  //     "level_2--ingest": {
+  //       "uuid": "level_2--ingest",
+  //       "type": "group",
+  //       "upstream_blocks": [],
+  //       "downstream_blocks": [
+  //         "level_2--map"
+  //       ],
+  //       "groups": [
+  //         "load"
+  //       ]
+  //     },
+  //     "level_2--map": {
+  //       "uuid": "level_2--map",
+  //       "type": "group",
+  //       "upstream_blocks": [
+  //         "level_2--ingest"
+  //       ],
+  //       "downstream_blocks": [],
+  //       "groups": [
+  //         "load"
+  //       ]
+  //     }
+  //   },
+  // }
+  const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping ?? {}) ?? []);
+  const nodeItemMapping = {} as NodeItemMappingType;
+
+  if (blocksByGroup && groupMapping) {
+    Object.entries(groupMapping).forEach(([
+      groupIDBase,
+      group,
+    ]: [string, PipelineExecutionFrameworkBlockType]) => {
+      // they key is the base key, but the keys from the value have the level in them
+      // "level_2--ingest": {}
+      // "level_2--map": {}
+      const blocksInGroup = blocksByGroup?.[groupIDBase] || [];
+      const groupID = buildUUIDForLevel(groupIDBase, level);
+
+      isDebug() && console.log(
+        groupIDBase, groupID,
+        'blocksByGroup', blocksByGroup,
+        'blocksInGroup', Object.keys(blocksInGroup),
+        'itemMapping', itemMapping,
+      );
+      nodeItemMapping[groupID] = {
+        block: {
+          ...group,
+          uuid: groupID,
+        },
+        id: groupID,
+        // The level key is already baked in.
+        items: Object.keys(blocksInGroup)?.map((buuid: string) => itemMapping?.[buuid]),
+        level,
+        type: ItemTypeEnum.NODE,
+      } as NodeType;
+    });
+  }
+  Object.entries(nodeItemMapping ?? {}).forEach(([groupID, node]: [string, NodeType]) => {
+    const upstreamNodes = node?.block?.upstream_blocks?.map(
+      (buuid: string) => nodeItemMapping?.[buildUUIDForLevel(buuid, level)],
+    ) ?? [];
+    nodeItemMapping[groupID].upstreamNodes = upstreamNodes;
   });
 
   return {
-    connectionsMapping,
-    itemsMapping,
-    portsMapping: portsMappingFinal,
+    connectionMapping,
+    itemMapping,
+    nodeItemMapping,
+    portMapping: portMappingFinal,
   };
 }

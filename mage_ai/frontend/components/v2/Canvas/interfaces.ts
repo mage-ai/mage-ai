@@ -1,4 +1,6 @@
 import BlockType from '@interfaces/BlockType';
+import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 import {
   ItemTypeEnum,
@@ -101,3 +103,15 @@ export type ConnectionMappingType = Record<string, ConnectionType>;
 export type ItemMappingType = Record<string, DragItem>;
 export type NodeItemMappingType = Record<string, NodeType>;
 export type PortMappingType = Record<string, PortType>;
+
+export type BlockMappingType = Record<string, BlockType>;
+export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
+export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
+export type GroupLevelsMappingType = GroupMappingType[];
+
+export type ModelMappingType = {
+  connectionMapping?: ConnectionMappingType;
+  itemMapping?: ItemMappingType;
+  nodeItemMapping?: NodeItemMappingType;
+  portMapping?: PortMappingType;
+};

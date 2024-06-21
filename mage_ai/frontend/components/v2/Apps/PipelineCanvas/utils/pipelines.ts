@@ -8,13 +8,14 @@ import { isDebug } from '@utils/environment';
 import { objectSize } from '@utils/hash';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import {
+  BlockMappingType,
+  BlocksByGroupType,
+  GroupMappingType,
+  GroupLevelsMappingType,
+} from '../../Canvas/interfaces';
 
 const MAX_LEVELS = 10;
-
-export type BlockMappingType = Record<string, BlockType>;
-export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
-export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
-export type GroupLevelsMappingType = GroupMappingType[];
 
 export function buildDependencies(
   pipelineExecutionFramework: PipelineExecutionFrameworkType,
@@ -143,7 +144,8 @@ export function buildDependencies(
   });
   const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
 
-  false && isDebug() && console.log(
+  // false &&
+  isDebug() && console.log(
     `groupMapping ${objectSize(groupMapping)}`, groupMapping,
     `groupLevelsMapping ${groupLevelsMapping?.length}`, groupLevelsMapping,
     `blocksByGroup ${objectSize(blocksByGroup)}`, blocksByGroup,
@@ -158,7 +160,7 @@ export function buildDependencies(
   };
 }
 
-function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
+export function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
   const mapping = {} as BlocksByGroupType;
 
   blocks?.forEach((block: BlockType) => {

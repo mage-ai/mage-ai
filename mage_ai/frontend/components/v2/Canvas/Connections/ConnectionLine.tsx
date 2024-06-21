@@ -3,6 +3,7 @@ import React, { memo, useEffect } from 'react';
 import Path from '@mana/elements/Path';
 import PathGradient from '@mana/elements/PathGradient';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { ConnectionType, RectType } from '../interfaces';
 import { connectionUUID, getPathD } from './utils';
 
@@ -19,6 +20,7 @@ export const ConnectionLine = memo(({
   stop0ColorName,
   stop1ColorName,
 }: ConnectionLineProps) => {
+  const { fromItem, toItem } = connection || {};
   const fromRect = connection?.fromItem?.rect;
   const toRect = connection?.toItem?.rect;
   const connUUID = `${connectionUUID(connection)}`;
@@ -33,6 +35,10 @@ export const ConnectionLine = memo(({
   const className = [
     stylesBuilder.level,
     stylesBuilder[`level-${connection?.level}`],
+    styles.connectionLine,
+    fromItem?.type && toItem?.type
+      ? styles[`connection-from-${fromItem?.type}-to-${toItem?.type}`]
+      : '',
   ].join(' ');
 
   return (stop0ColorName && stop1ColorName)

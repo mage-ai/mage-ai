@@ -36,7 +36,6 @@ export type SetupOpts = {
   groupBy?: (item: DragItem) => string;
   layout?: LayoutConfigType;
   level?: number;
-  namespace?: string;
 };
 
 function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
