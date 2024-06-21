@@ -143,13 +143,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   useEffect(() => {
     if (phaseRef.current === 0 && pipelines?.length >= 1) {
       const pipelinesMapping = indexBy([
-        // ...pipelines,
-        ...pipelineExecutionFrameworks,
+        ...pipelines,
+        // ...pipelineExecutionFrameworks,
       ], ({ uuid }) => uuid);
       const blocksMapping = {};
       [
-        // ...pipelines,
-        ...pipelineExecutionFrameworks,
+        ...pipelines,
+        // ...pipelineExecutionFrameworks,
       ]?.forEach((pipe: PipelineType | PipelineExecutionFrameworkType) => {
         Object.values(
           extractNestedBlocks(pipe, pipelinesMapping) || {},

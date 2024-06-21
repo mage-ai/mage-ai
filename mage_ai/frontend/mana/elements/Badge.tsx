@@ -5,7 +5,7 @@ import styles from '@styles/scss/elements/Badge.module.scss';
 import { withStyles } from '../hocs/withStyles';
 
 export type BadgeType = {
-  Icon?: IconType | ((props: { colorName: string; size: number }) => JSX.Element);
+  Icon?: IconType;
   baseColorName?: string;
   label?: string;
   short?: boolean;

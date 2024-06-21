@@ -38,6 +38,9 @@ export function BlockNodeWrapper({
     type,
     uuid,
   } = block || {};
+  const isPipeline = useMemo(() => !type || BlockTypeEnum.PIPELINE === type, [type]);
+  const isGroup = useMemo(() => !type || BlockTypeEnum.GROUP === type, [type]);
+
   const { onMouseDown, onMouseUp } = handlers;
   const name = useMemo(() => ItemTypeEnum.BLOCK === item?.type
     ? (item?.block?.name ?? item?.block?.uuid)
@@ -107,6 +110,10 @@ export function BlockNodeWrapper({
       }
     }
 
+    if (!selected) {
+      return c.slice(0, 1);
+    }
+
     return c;
   }, [names, ports, selected]);
 
@@ -158,10 +165,12 @@ export function BlockNodeWrapper({
         onMount={onMount}
         titleConfig={{
           asides: {
-            after: {
-              Icon: Code,
-              onClick: () => alert('Coding...'),
-            },
+            after: (isPipeline || isGroup)
+              ? undefined
+              : {
+                Icon: Code,
+                onClick: () => alert('Coding...'),
+              },
             before: {
               Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
               baseColorName: StatusTypeEnum.FAILED === block?.status
@@ -171,10 +180,10 @@ export function BlockNodeWrapper({
                   : 'blue',
             },
           },
-          badge: BlockTypeEnum.PIPELINE === type
+          badge: (isPipeline || isGroup)
             ? {
               Icon: collapsed ? Infinite : PipeIconVertical,
-              baseColorName: names?.base,
+              baseColorName: names?.base || 'purple',
               label: name || uuid,
             }
             : undefined,

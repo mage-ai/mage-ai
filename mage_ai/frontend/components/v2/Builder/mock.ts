@@ -85,17 +85,23 @@ export const ExportPipeline = {
   name: 'Export and store data',
   uuid: 'export_and_store_data',
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.EXPORT],
+  // groups: [GroupUUIDEnum.EXPORT],
   blocks: [
     {
       name: 'Store relationships in Neo4J',
-      groups: [GroupUUIDEnum.KNOWLEDGE_GRAPH],
+      groups: [
+        GroupUUIDEnum.EXPORT,
+        // GroupUUIDEnum.KNOWLEDGE_GRAPH,
+      ],
       upstream_blocks: ['instructor_embeddings'],
       downstream_blocks: ['create_contextual_dictionary'],
     },
     {
       name: 'Store embeddings PGVector',
-      groups: [GroupUUIDEnum.VECTOR_DATABASE],
+      groups: [
+        GroupUUIDEnum.EXPORT,
+        // GroupUUIDEnum.VECTOR_DATABASE,
+      ],
       upstream_blocks: ['instructor_embeddings'],
       downstream_blocks: ['create_contextual_dictionary'],
     },
@@ -148,34 +154,40 @@ export const DataPreparationPipeline = {
     {
       name: 'Ingest titanic data',
       type: BlockTypeEnum.DATA_EXPORTER,
-      groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.INGEST],
+      groups: [
+        GroupUUIDEnum.LOAD,
+        // GroupUUIDEnum.INGEST,
+      ],
       downstream_blocks: ['serialize_and_map_documents'],
       upstream_blocks: [],
     },
     {
       name: 'Serialize and map documents',
       type: BlockTypeEnum.TRANSFORMER,
-      groups: [GroupUUIDEnum.LOAD, GroupUUIDEnum.MAP],
+      groups: [
+        GroupUUIDEnum.LOAD,
+        // GroupUUIDEnum.MAP,
+      ],
       upstream_blocks: ['ingest_titanic_data'],
-      downstream_blocks: [TransformPipeline.uuid],
+      // downstream_blocks: [TransformPipeline.uuid],
     },
-    {
-      name: TransformPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: ['serialize_and_map_documents'],
-      downstream_blocks: [ExportPipeline.uuid],
-    },
-    {
-      name: ExportPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [TransformPipeline.uuid],
-      downstream_blocks: [IndexPipeline.uuid],
-    },
-    {
-      name: IndexPipeline.name,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [ExportPipeline.uuid],
-    },
+    // {
+    //   name: TransformPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: ['serialize_and_map_documents'],
+    //   downstream_blocks: [ExportPipeline.uuid],
+    // },
+    // {
+    //   name: ExportPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [TransformPipeline.uuid],
+    //   downstream_blocks: [IndexPipeline.uuid],
+    // },
+    // {
+    //   name: IndexPipeline.name,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [ExportPipeline.uuid],
+    // },
   ].map(block => ({
     ...block,
     uuid: cleanName(block.name),
@@ -347,25 +359,25 @@ export const PipelineFrameworkInstance = {
       ],
       upstream_blocks: [],
     },
-    {
-      uuid: DataValidationPipeline.uuid,
-      name: DataValidationPipeline.name,
-      upstream_blocks: [DataPreparationPipeline.uuid],
-    },
-    {
-      uuid: InferencePipeline.uuid,
-      name: InferencePipeline.name,
-      upstream_blocks: [DataPreparationPipeline.uuid],
-    },
+    // {
+    //   uuid: DataValidationPipeline.uuid,
+    //   name: DataValidationPipeline.name,
+    //   upstream_blocks: [DataPreparationPipeline.uuid],
+    // },
+    // {
+    //   uuid: InferencePipeline.uuid,
+    //   name: InferencePipeline.name,
+    //   upstream_blocks: [DataPreparationPipeline.uuid],
+    // },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
 }
 
 export default [
   DataPreparationPipeline,
-  DataValidationPipeline,
+  // DataValidationPipeline,
   ExportPipeline,
   IndexPipeline,
-  InferencePipeline,
+  // InferencePipeline,
   QueryProcessingPipeline,
   ResponseGenerationPipeline,
   RetrievalPipeline,

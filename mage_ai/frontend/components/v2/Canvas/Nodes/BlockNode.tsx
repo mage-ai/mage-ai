@@ -45,6 +45,9 @@ export function BlockNode({
   const { after, before } = asides || {};
   const { inputs, outputs } = item || {};
 
+  const isPipeline = useMemo(() => BlockTypeEnum.PIPELINE === block?.type, [block]);
+  const isGroup = useMemo(() => BlockTypeEnum.GROUP === block?.type, [block]);
+
   const inputOutputPairs = useMemo(() => {
     const count = Math.max(inputs?.length, outputs?.length);
 
@@ -79,12 +82,11 @@ export function BlockNode({
         ]))?.slice?.(0, 100)?.map(b => b.baseColorName),
       ].join('-')]
       : '',
-    borders?.length >= 2
-      ? ''
-      : borders?.length === 1
-        ?  stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]
-        : '',
-  ];
+  ].filter(b => b);
+  if (classNames?.length === 0 && borders?.length >= 1) {
+    classNames.push(stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]);
+  }
+
 
   const badgeRow = useMemo(() => badge && (
     <Grid
@@ -92,9 +94,10 @@ export function BlockNode({
       columnGap={8}
       id={`${item.id}-badge`}
       templateColumns={[
-        inputs?.length >= 1 ? 'auto' : '1fr',
-        inputs?.length >= 1 ? '1fr' : '',
+        inputs?.length >= 1 ? 'auto' : '',
+        inputs?.length >= 1 && outputs?.length >= 1 ? '1fr' : '',
         outputs?.length >= 1 ? 'auto' : '',
+        ((!inputs?.length ?? false) && (!outputs?.length ?? false)) ? 'auto 1fr' : '',
       ].join(' ')}
       templateRows="1fr"
     >
@@ -107,6 +110,7 @@ export function BlockNode({
         />
       )}
       {badge && <Badge {...badge} />}
+      {(!inputs?.length ?? false) && (!outputs?.length ?? false) && <div />}
       {outputs?.length >= 1 && (
         <Circle
           backgroundColor={getBlockColor(
@@ -168,7 +172,7 @@ export function BlockNode({
 
       {after && <Aside {...after} />}
     </Grid>
-  ), [after, before, titleConfig]);
+  ), [after, before, item, titleConfig]);
 
   const main = useMemo(() => (
     <div className={styles.blockNode}>
