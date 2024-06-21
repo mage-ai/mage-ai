@@ -19,7 +19,7 @@ export function initializeBlocksAndConnections(
   itemsMapping: ItemMappingType;
   portsMapping: PortMappingType;
 } {
-  const { namespace } = opts || {};
+  const { level, namespace } = opts || {};
 
   const blocks: BlockType[] = [];
   const blockMapping: Record<string, BlockType> = {};
@@ -35,10 +35,14 @@ export function initializeBlocksAndConnections(
     String(uuid ?? ''),
   ]?.filter?.(Boolean).join('--');
 
-  const blocksInit = namespace?.length >= 1 ? blocksInitArg.map((block: BlockType) => ({
-    ...block,
-    uuid: addNamespace(block.uuid),
-  })) : blocksInitArg;
+  const blocksInit = namespace?.length >= 1
+    ? blocksInitArg.map((block: BlockType) => ({
+      ...block,
+      downstream_blocks: block?.downstream_blocks?.map((buuid: string) => addNamespace(buuid)),
+      upstream_blocks: block?.upstream_blocks?.map((buuid: string) => addNamespace(buuid)),
+      uuid: addNamespace(block.uuid),
+    }))
+    : blocksInitArg;
 
   blocksInit.forEach((block: BlockType) => {
     blockUpsDownsMapping[block.uuid] ||= {
@@ -95,6 +99,7 @@ export function initializeBlocksAndConnections(
   const itemsInit: DragItem[] = blocks?.map(block => ({
     block,
     id: block.uuid,
+    level,
     title: block.name || block.uuid,
     type: ItemTypeEnum.BLOCK,
   })) as DragItem[];
@@ -139,6 +144,7 @@ export function initializeBlocksAndConnections(
           block,
           id: null,
           index,
+          level,
           parent: { ...parentItem, block },
           subtype,
           target: { ...targetItem, block: targetBlock },
@@ -212,7 +218,7 @@ export function initializeBlocksAndConnections(
     fromPort.rect = { ...fromItem.rect };
     toPort.rect = { ...toItem.rect };
 
-    const connection = createConnection(fromPort, toPort);
+    const connection = createConnection(fromPort, toPort, { level });
     connectionsMapping[connection.id] = connection;
   });
 

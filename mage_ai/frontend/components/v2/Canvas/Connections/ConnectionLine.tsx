@@ -2,6 +2,7 @@ import React, { memo, useEffect } from 'react';
 
 import Path from '@mana/elements/Path';
 import PathGradient from '@mana/elements/PathGradient';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ConnectionType, RectType } from '../interfaces';
 import { connectionUUID, getPathD } from './utils';
 
@@ -29,9 +30,15 @@ export const ConnectionLine = memo(({
     dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
   }
 
+  const className = [
+    stylesBuilder.level,
+    stylesBuilder[`level-${connection?.level}`],
+  ].join(' ');
+
   return (stop0ColorName && stop1ColorName)
     ? (
       <PathGradient
+        className={className}
         d={dValue}
         id={connUUID}
         key={connUUID}
@@ -48,9 +55,10 @@ export const ConnectionLine = memo(({
       />
     ): (
       <Path
-      d={dValue}
-      id={connUUID}
-      key={connUUID}
-    />
+        className={className}
+        d={dValue}
+        id={connUUID}
+        key={connUUID}
+      />
   );
 });

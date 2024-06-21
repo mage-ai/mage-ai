@@ -16,6 +16,7 @@ export function createConnection(
   const defaultOptions: Omit<ConnectionType, 'from' | 'to'> = {
     curveControl: 0,
     fromPosition: 'right',
+    id: null,
     toPosition: 'left',
   };
 

@@ -6,11 +6,11 @@ import { memo, useEffect, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
-
 
 // This is the style used for the preview when dragging
 function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }): CSSProperties {
@@ -113,6 +113,8 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       className={[
         styles.nodeWrapper,
         styles[itemToDrag?.type],
+        stylesBuilder.level,
+        stylesBuilder[`level-${item?.level}`],
       ].join(' ')}
       onDragEnd={event => onDragEnd(event, item)}
       onDragStart={event => onDragStart(event, item)}

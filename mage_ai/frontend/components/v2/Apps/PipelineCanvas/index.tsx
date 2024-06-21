@@ -50,12 +50,12 @@ import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { countOccurrences, groupBy, indexBy, flattenArray } from '@utils/array';
 import { ignoreKeys, objectSize } from '@utils/hash';
-import { FocusLevelEnum, FOCUS_LEVELS } from './types';
 import PipelineExecutionFrameworkType, {
   PipelineExecutionFrameworkBlockType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 
 const GRID_SIZE = 40;
 
@@ -68,18 +68,20 @@ type PipelineBuilderProps = {
   containerRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
   onDragStart: () => void;
+  snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
 };
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
-  pipeline,
-  pipelineExecutionFramework,
-  pipelineExecutionFrameworks,
-  pipelines,
   canvasRef,
   containerRef,
   onDragEnd,
   onDragStart: onDragStartProp,
+  pipeline,
+  pipelineExecutionFramework,
+  pipelineExecutionFrameworks,
+  pipelines,
+  snapToGridOnDrag = true,
   snapToGridOnDrop = true,
 }: PipelineBuilderProps) => {
   const layoutConfig = useMemo(
@@ -94,8 +96,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const phaseRef = useRef<number>(0);
 
   // Presentation
+  const activeLevel = useRef<number>(null);
   const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
-  const currentGroupLevelRef = useRef<number>(FocusLevelEnum.DEFAULT);
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemsElementRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>({});
   const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
@@ -191,20 +193,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       // Models
       groupLevelsMapping?.forEach((groupMapping: GroupMappingType, level: number) => {
-        const mapping = groupLevelsMapping?.slice(level + 1, level + 2)?.reduce((acc, map) => ({
-          ...acc,
-          ...map,
-        }), { ...groupMapping });
-
         modelLevelsMapping.current.push(
           initializeBlocksAndConnections(
-            Object.values(mapping),
-            { ...layout, namespace: `level_${level}` },
+            Object.values(groupMapping),
+            { ...layout, level, namespace: `level_${level}` },
           ),
         );
       });
       modelLevelsMapping.current.push(
-        initializeBlocksAndConnections(Object.values(blockMapping), layout),
+        initializeBlocksAndConnections(Object.values(blockMapping), {
+          ...layout,
+          level: modelLevelsMapping.current.length,
+          namespace: `level_${modelLevelsMapping.current.length}`,
+        }),
       );
 
       const {
@@ -248,6 +249,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         setConnections(connectionsMapping);
         setItems(itemsMapping);
         setPorts(portsMapping);
+        setActiveLevel(0);
+
+        console.log(
+          itemsMapping,
+          portsMapping,
+          connectionsMapping,
+        );
       });
     }
 
@@ -258,8 +266,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       phaseRef.current = 0;
 
       // Presentation
+      activeLevel.current = null;
       connectionsDraggingRef.current = {};
-      currentGroupLevelRef.current = FocusLevelEnum.DEFAULT;
       itemDraggingRef.current = null;
       itemsElementRef.current = {};
       itemsMetadataRef.current = { rect: {} };
@@ -274,6 +282,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef.current = {} as ItemMappingType;
       nodeItemsRef.current = {} as NodeItemMappingType;
       portsRef.current = {} as PortMappingType;
+      modelLevelsMapping.current = [];
 
       connectionsActiveRef.current = {} as ConnectionMappingType;
       itemsActiveRef.current = {} as ItemMappingType;
@@ -291,8 +300,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     , connectionsRef, portsRef);
   }
 
-  function setCurrentGroupLevel(level: FocusLevelEnum) {
-    currentGroupLevelRef.current = level;
+  function setActiveLevel(levelArg?: number) {
+    const levelPrevious: number = activeLevel.current;
+    levelPrevious !== null
+      && containerRef?.current?.classList.remove(stylesBuilder[`level-${levelPrevious}-active`]);
+
+    let level: number = levelArg ?? ((activeLevel?.current ?? 0) + 1);
+    if (level >= modelLevelsMapping?.current?.length) {
+      level = 0;
+    }
+
+    activeLevel.current = level;
+    containerRef?.current?.classList.add(stylesBuilder[`level-${level}-active`]);
   }
 
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
@@ -418,7 +437,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
         startTransition(() => {
           setItems(itemsRef.current);
-          setCurrentGroupLevel(FocusLevelEnum.GROUPS);
         });
       }
     } else if (ItemTypeEnum.NODE === type) {
@@ -635,45 +653,53 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
        onMountPort={onMountPort}
      />
    ));
-  }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  , [items]);
+  } , [items]);
 
   return (
-    <>
-      <ConnectionLines>
-        {connections &&
-          Object.values(connections || {}).map((connection: ConnectionType) => (
-            <ConnectionLine
-              connection={connection}
-              key={connection.id}
-              stop0ColorName="gray"
-              stop1ColorName="graymd"
-            />
-          ))}
-        {connectionsDragging &&
-          Object.values(connectionsDragging || {}).map((connection: ConnectionType) => (
-            <ConnectionLine
-              connection={connection}
-              key={connection.id}
-              stop0ColorName="gray"
-              stop1ColorName="graymd"
-            />
-          ))}
-      </ConnectionLines>
+    <div
+      onDoubleClick={(event: React.MouseEvent) => {
+        setActiveLevel();
+      }}
+      ref={canvasRef}
+      style={{
+        height: '100vh',
+        overflow: 'visible',
+        position: 'relative',
+        width: '100vw',
+      }}
+    >
+      <CanvasStyled ref={containerRef}>
+        <DragLayer snapToGrid={snapToGridOnDrag} />
 
-      {nodesMemo}
-    </>
+        <ConnectionLines>
+          {connections &&
+            Object.values(connections || {}).map((connection: ConnectionType) => (
+              <ConnectionLine
+                connection={connection}
+                key={connection.id}
+                stop0ColorName="gray"
+                stop1ColorName="graymd"
+              />
+            ))}
+          {connectionsDragging &&
+            Object.values(connectionsDragging || {}).map((connection: ConnectionType) => (
+              <ConnectionLine
+                connection={connection}
+                key={connection.id}
+                stop0ColorName="gray"
+                stop1ColorName="graymd"
+              />
+            ))}
+        </ConnectionLines>
+
+        {nodesMemo}
+      </CanvasStyled>
+    </div>
   );
 };
 
-export default function PipelineBuilderCanvas({
-  snapToGridOnDrag = true,
-  ...props
-}: PipelineBuilderProps & {
-  snapToGridOnDrag?: boolean;
-}) {
+export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
@@ -722,38 +748,14 @@ export default function PipelineBuilderCanvas({
   }, []);
 
   return (
-    <div
-      onDoubleClick={(event: React.MouseEvent) => {
-        // updateItem({
-        //   id: randomSimpleHashGenerator(),
-        //   rect: {
-        //     left: event.clientX,
-        //     top: event.clientY,
-        //   },
-        //   title: randomNameGenerator(),
-        //   type: ItemTypeEnum.BLOCK,
-        // })
-      }}
-      ref={canvasRef}
-      style={{
-        height: '100vh',
-        overflow: 'visible',
-        position: 'relative',
-        width: '100vw',
-      }}
-    >
-      <CanvasStyled ref={containerRef}>
-        <DndProvider backend={HTML5Backend}>
-          <DragLayer snapToGrid={snapToGridOnDrag} />
-          <PipelineBuilder
-            {...props}
-            canvasRef={canvasRef}
-            containerRef={containerRef}
-            onDragEnd={() => setZoomPanDisabled(false)}
-            onDragStart={() => setZoomPanDisabled(true)}
-          />
-        </DndProvider>
-      </CanvasStyled>
-    </div>
+    <DndProvider backend={HTML5Backend}>
+      <PipelineBuilder
+        {...props}
+        canvasRef={canvasRef}
+        containerRef={containerRef}
+        onDragEnd={() => setZoomPanDisabled(false)}
+        onDragStart={() => setZoomPanDisabled(true)}
+      />
+    </DndProvider>
   );
 }

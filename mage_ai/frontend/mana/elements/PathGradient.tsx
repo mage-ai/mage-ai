@@ -12,12 +12,14 @@ const PathGradient = withStyles<{
 });
 
 const PathGradientComponent = ({
+  className,
   d,
   id,
   stop0ClassNames = [],
   stop1ClassNames = [],
   ...rest
 }: {
+  className?: string;
   d?: string;
   id?: string;
   stop0ClassNames?: string[];
@@ -28,7 +30,7 @@ const PathGradientComponent = ({
     classNames.map(cn => styles[cn]).join(' ');
 
   return (
-    <PathGradient>
+    <PathGradient className={className}>
       <defs>
         <linearGradient id={`${id}-grad`} x1="0%" x2="100%" y1="0%" y2="0%">
           {stop0ClassNames.length > 0 && (
