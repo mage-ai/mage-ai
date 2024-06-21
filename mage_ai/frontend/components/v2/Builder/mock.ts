@@ -230,19 +230,28 @@ export const QueryProcessingPipeline = {
   blocks: [
     {
       name: 'Intent Detection',
-      groups: [GroupUUIDEnum.INTENT_DETECTION],
+      groups: [
+        GroupUUIDEnum.QUERY_PROCESSING,
+        GroupUUIDEnum.INTENT_DETECTION,
+      ],
       downstream_blocks: ['query_decomposition'],
       upstream_blocks: [],
     },
     {
       name: 'Query Decomposition',
-      groups: [GroupUUIDEnum.QUERY_DECOMPOSITION],
+      groups: [
+        GroupUUIDEnum.QUERY_PROCESSING,
+        GroupUUIDEnum.QUERY_DECOMPOSITION,
+      ],
       downstream_blocks: ['query_augmentation'],
       upstream_blocks: ['intent_detection'],
     },
     {
       name: 'Query Augmentation',
-      groups: [GroupUUIDEnum.QUERY_AUGMENTATION],
+      groups: [
+        GroupUUIDEnum.QUERY_PROCESSING,
+        GroupUUIDEnum.QUERY_AUGMENTATION,
+      ],
       upstream_blocks: ['query_decomposition'],
     },
   ].map(block => ({
@@ -260,19 +269,37 @@ export const RetrievalPipeline = {
   blocks: [
     {
       name: 'Iterative Retrieval',
-      groups: [GroupUUIDEnum.RETRIEVAL],
-      downstream_blocks: ['multi_hop_reasoning'],
+      groups: [
+        GroupUUIDEnum.RETRIEVAL,
+        GroupUUIDEnum.ITERATIVE_RETRIEVAL,
+      ],
+      downstream_blocks: ['memory'],
       upstream_blocks: [],
     },
     {
-      name: 'Multi-hop Reasoning',
-      groups: [GroupUUIDEnum.RETRIEVAL],
-      downstream_blocks: ['ranking'],
+      name: 'Memory',
+      groups: [
+        GroupUUIDEnum.RETRIEVAL,
+        GroupUUIDEnum.MEMORY,
+      ],
       upstream_blocks: ['iterative_retrieval'],
+      downstream_blocks: ['multi_hop_reasoning'],
+    },
+    {
+      name: 'Multi-hop Reasoning',
+      groups: [
+        GroupUUIDEnum.RETRIEVAL,
+        GroupUUIDEnum.MULTI_HOP_REASONING,
+      ],
+      upstream_blocks: ['memory'],
+      downstream_blocks: ['ranking'],
     },
     {
       name: 'Ranking',
-      groups: [GroupUUIDEnum.RETRIEVAL],
+      groups: [
+        GroupUUIDEnum.RETRIEVAL,
+        GroupUUIDEnum.RANKING,
+      ],
       upstream_blocks: ['multi_hop_reasoning'],
     },
   ].map(block => ({
@@ -286,29 +313,40 @@ export const ResponseGenerationPipeline = {
   name: 'Generate answers for user',
   uuid: 'generate_answers_for_user',
   type: PipelineTypeEnum.PYTHON,
-  groups: [GroupUUIDEnum.RESPONSE_GENERATION],
   blocks: [
     {
       name: 'Contextualization',
-      groups: [GroupUUIDEnum.CONTEXTUALIZATION],
+      groups: [
+        GroupUUIDEnum.RESPONSE_GENERATION,
+        GroupUUIDEnum.CONTEXTUALIZATION,
+      ],
       downstream_blocks: ['response_synthesis'],
       upstream_blocks: [],
     },
     {
       name: 'Response Synthesis',
-      groups: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
+      groups: [
+        GroupUUIDEnum.RESPONSE_GENERATION,
+        GroupUUIDEnum.RESPONSE_SYNTHESIS,
+      ],
       downstream_blocks: ['answer_enrichment'],
       upstream_blocks: ['contextualization'],
     },
     {
       name: 'Answer Enrichment',
-      groups: [GroupUUIDEnum.ANSWER_ENRICHMENT],
+      groups: [
+        GroupUUIDEnum.RESPONSE_GENERATION,
+        GroupUUIDEnum.ANSWER_ENRICHMENT,
+      ],
       downstream_blocks: ['response_formatting'],
       upstream_blocks: ['response_synthesis'],
     },
     {
       name: 'Response Formatting',
-      groups: [GroupUUIDEnum.RESPONSE_FORMATTING],
+      groups: [
+        GroupUUIDEnum.RESPONSE_GENERATION,
+        GroupUUIDEnum.RESPONSE_FORMATTING,
+      ],
       upstream_blocks: ['answer_enrichment'],
     },
   ].map(block => ({
@@ -339,6 +377,7 @@ export const InferencePipeline = {
     {
       uuid: ResponseGenerationPipeline.uuid,
       name: ResponseGenerationPipeline.name,
+      groups: [GroupUUIDEnum.RESPONSE_GENERATION],
       upstream_blocks: [RetrievalPipeline.uuid],
     },
   ].map(block => ({ ...block, type: BlockTypeEnum.PIPELINE })),
@@ -373,13 +412,13 @@ export const PipelineFrameworkInstance = {
 }
 
 export default [
-  DataPreparationPipeline,
   // DataValidationPipeline,
-  ExportPipeline,
-  IndexPipeline,
-  // InferencePipeline,
+  InferencePipeline,
   QueryProcessingPipeline,
-  ResponseGenerationPipeline,
   RetrievalPipeline,
-  TransformPipeline,
+  ResponseGenerationPipeline,
+  // DataPreparationPipeline,
+  // TransformPipeline,
+  // ExportPipeline,
+  // IndexPipeline,
 ];
