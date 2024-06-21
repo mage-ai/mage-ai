@@ -154,22 +154,46 @@ export const RetrievalPipeline = {
   type: PipelineTypeEnum.PYTHON,
   blocks: [
     {
-      name: 'Iterative Retrieval',
       groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
       type: BlockTypeEnum.DATA_LOADER,
     },
     {
-      name: 'Memory',
+      name: 'Page-Based Recursive Retrieval',
+      groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
+      type: BlockTypeEnum.DATA_LOADER,
+    },
+    {
+      name: 'Information-Centric Recursive Retrieval',
+      groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
+      type: BlockTypeEnum.DATA_LOADER,
+    },
+    {
+      name: 'Concept-Centric Recursive Retrieval',
+      groups: [GroupUUIDEnum.ITERATIVE_RETRIEVAL],
+      type: BlockTypeEnum.DATA_LOADER,
+    },
+    {
+      name: 'Fetch Wikipedia articles for memory',
       groups: [GroupUUIDEnum.MEMORY],
       type: BlockTypeEnum.TRANSFORMER,
     },
     {
-      name: 'Multi-hop Reasoning',
+      name: 'Multi-hop reasoning and logic',
       groups: [GroupUUIDEnum.MULTI_HOP_REASONING],
       type: BlockTypeEnum.DATA_LOADER,
     },
     {
-      name: 'Ranking',
+      name: 'ReRanking',
+      groups: [GroupUUIDEnum.RANKING],
+      type: BlockTypeEnum.CUSTOM,
+    },
+    {
+    name: 'Hybrid Search',
+      groups: [GroupUUIDEnum.RANKING],
+      type: BlockTypeEnum.CUSTOM,
+    },
+    {
+    name: 'Query Expansion',
       groups: [GroupUUIDEnum.RANKING],
       type: BlockTypeEnum.CUSTOM,
     },
@@ -228,24 +252,27 @@ export const DataPreparationPipeline = {
   type: PipelineTypeEnum.PYTHON,
   blocks: [
     {
-      name: `Data-prep ${LoadPipeline.name} pipeline`,
+      name: `Data-prep ${LoadPipeline.uuid} pipeline`,
+      uuid: LoadPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
-      name: `Data-prep ${TransformPipeline.name} pipeline`,
+      name: `Data-prep ${TransformPipeline.uuid} pipeline`,
+      uuid: TransformPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
-      name: `Data-prep ${ExportPipeline.name} pipeline`,
+      name: `Data-prep ${ExportPipeline.uuid} pipeline`,
+      uuid: ExportPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
-      name: `Data-prep ${IndexPipeline.name} pipeline`,
+      name: `Data-prep ${IndexPipeline.uuid} pipeline`,
+      uuid: IndexPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
-  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
+  ],
 }
-
 
 export const InferencePipeline = {
   name: 'Super cool inference pipeline',
@@ -254,33 +281,36 @@ export const InferencePipeline = {
   blocks: [
     {
       name: `My custom ${QueryProcessingPipeline.uuid} pipeline`,
+      uuid: QueryProcessingPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
       name: `My custom ${RetrievalPipeline.uuid} pipeline`,
+      uuid: RetrievalPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
       name: `My custom ${ResponseGenerationPipeline.uuid} pipeline`,
+      uuid: ResponseGenerationPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
-  ].map(block => ({ ...block, uuid: cleanName(block.name) })),
+  ],
 };
 
 export const PipelineFrameworkInstance = {
-  name: 'Mager RAG pipeline',
-  uuid: 'mager_rag_pipeline',
+  name: 'Mager RAGer pipeline',
+  uuid: cleanName('Mager RAGer pipeline'),
   type: PipelineTypeEnum.PYTHON,
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
     {
       name: `Main top-level ${DataPreparationPipeline.uuid} pipeline`,
-      uuid: cleanName(`Main top-level ${DataPreparationPipeline.uuid} pipeline`),
+      uuid: DataPreparationPipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
     {
       name: `Main top-level ${InferencePipeline.uuid} pipeline`,
-      uuid: cleanName(`Main top-level ${InferencePipeline.uuid} pipeline`),
+      uuid: InferencePipeline.uuid,
       type: BlockTypeEnum.PIPELINE,
     },
   ],

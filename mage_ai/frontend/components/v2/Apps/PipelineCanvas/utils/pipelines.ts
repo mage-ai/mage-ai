@@ -3,6 +3,7 @@ import PipelineType from '@interfaces/Pipeline';
 import { extractNestedBlocks } from '@utils/models/pipeline';
 import { indexBy } from '@utils/array';
 import { isDebug } from '@utils/environment';
+import { objectSize } from '@utils/hash';
 
 export function buildDependencies(
   pipelineExecutionFramework: PipelineExecutionFrameworkType,
@@ -16,8 +17,8 @@ export function buildDependencies(
     pipelineExecutionFramework, indexBy(pipelineExecutionFrameworks, ({ uuid }) => uuid));
 
   isDebug() && console.log(
-    'groupsMapping', groupsMapping,
-    'blocksMapping', blocksMapping,
+    `groupsMapping ${objectSize(groupsMapping)}`, groupsMapping,
+    `blocksMapping ${objectSize(blocksMapping)}`, blocksMapping,
   );
 
   return {};

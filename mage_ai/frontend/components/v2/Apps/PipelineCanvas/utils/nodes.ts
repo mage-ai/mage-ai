@@ -74,7 +74,8 @@ export function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
       }
     });
 
-    console.log('Groups with upstream nodes:', groups);
+    false &&
+      isDebug() && console.log('Groups with upstream nodes:', groups);
   }
 
   return [Object.values(groups), itemsUngrouped];

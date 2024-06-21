@@ -7,7 +7,12 @@ import {
   LayoutConfigDirectionOriginEnum,
 } from '../types';
 import { range, indexBy, uniqueArray, flattenArray } from '@utils/array';
-import { isDebug } from '@utils/environment';
+import { isDebug as isDebugBase } from '@utils/environment';
+
+function isDebug() {
+  return isDebugBase()
+    && false;
+}
 
 type GroupType = { items: DragItem[], position: { left: number; top: number } };
 
@@ -240,12 +245,12 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     visited.add(item.id);
 
     if (item.upstreamRects.length === 0) {
-      console.log(`Item ${item.id} has no upstreamRects:`, item?.upstreamRects);
+      isDebug() && console.log(`Item ${item.id} has no upstreamRects:`, item?.upstreamRects);
       levels.set(item.id, 0);
     } else {
       const lvl = Math.max(...item.upstreamRects.map(rect => {
         const parentItem = items.find(i => i.id === rect.id);
-        console.log(`Checking parent for ${item.id}`, parentItem);
+        isDebug() && console.log(`Checking parent for ${item.id}`, parentItem);
         if (parentItem) {
           const parentLevel = determineLevel(parentItem);
           const children = childrenMapping.get(parentItem) || [];
@@ -255,7 +260,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
         }
         return 0;
       }));
-      console.log(`Setting level for item ${item.id} to ${lvl}`);
+      isDebug() && console.log(`Setting level for item ${item.id} to ${lvl}`);
       levels.set(item.id, lvl);
     }
     visited.delete(item.id);
@@ -311,7 +316,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
 
         // Zig-zag middle, right, left
 
-        console.log(`[${direction}] Top for ${item.id}:`, top);
+        isDebug() && console.log(`[${direction}] Top for ${item.id}:`, top);
         item.top = top;
       } else {
         range(level).forEach((_l, lvl: number) => {
@@ -327,7 +332,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
 
         // Zig-zag center, down, up
 
-        console.log(`Left for ${item.id}:`, left);
+        isDebug() && console.log(`Left for ${item.id}:`, left);
         item.left = left;
       }
 
@@ -386,7 +391,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
   // Center the entire layout within its container
   const rects = flattenArray(Object.values(positionedItems));
   const finalBoundingBox = calculateBoundingBox(rects);
-  isDebug && console.log(
+  isDebug() && console.log(
     'levelItems', levelItems,
     'box', finalBoundingBox,
   );
@@ -547,11 +552,11 @@ export function layoutItemsInGroups(
       top: null,
     })),
   }));
-  console.log('rectsBeforeLayout', rectsBeforeLayout);
+  isDebug() && console.log('rectsBeforeLayout', rectsBeforeLayout);
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  console.log('rectsInTree', rectsInTree);
+  isDebug() && console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
-  console.log('rectsCentered', rectsCentered);
+  isDebug() && console.log('rectsCentered', rectsCentered);
 
   return rectsCentered.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];
