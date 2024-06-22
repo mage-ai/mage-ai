@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import { NodeItemType, OffsetType, PortType, RectType } from '../interfaces';
+import { NodeItemType, ModelRefsType, OffsetType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { getBlockColor } from '@mana/themes/blocks';
 import styles from '@styles/scss/elements/Path.module.scss';
@@ -9,7 +9,7 @@ import { ConnectionType, DragItem } from '../interfaces';
 import { getPathD } from '../Connections/utils';
 
 function getConnectionsForPorts(item: DragItem, connectionsRef: { current: Record<string, ConnectionType> }) {
-  const ports = (item?.inputs || [])?.concat(item?.outputs || []);
+  const ports = item?.ports ?? [];
   const conns = Object.values(connectionsRef?.current || {});
 
   return ports?.reduce((acc, port) => {
@@ -25,15 +25,20 @@ function getConnectionsForPorts(item: DragItem, connectionsRef: { current: Recor
 
 export function updateAllPortConnectionsForItem(
   item: DragItem,
-  connectionsRef: { current: Record<string, ConnectionType> },
-  portsRef: { current: Record<string, PortType> },
+  modelRefs: ModelRefsType,
 ) {
+  const {
+    connectionsRef,
+    itemsRef,
+    portsRef,
+  } = modelRefs;
+
   const conns = getConnectionsForPorts(item, connectionsRef) || [];
 
   conns.forEach((conn) => {
     if (conn.id in connectionsRef.current && conn.id in portsRef.current) {
       const port = portsRef.current[conn.id];
-      updateConnectionPaths(item, port, conn, connectionsRef);
+      updateConnectionPaths(item, port, conn, modelRefs);
     }
   });
 }
@@ -42,12 +47,20 @@ function updateConnectionPaths(
   item: DragItem,
   port: PortType,
   conn: ConnectionType,
-  connectionsRef: {
-    current: Record<string, ConnectionType>;
-  },
+  modelRefs: ModelRefsType,
 ) {
-  const { fromItem, toItem } = conn;
-  const { parent, target } = fromItem;
+  const {
+    connectionsRef,
+    itemsRef,
+    portsRef,
+  } = modelRefs;
+
+  const { fromItem: fi, toItem: ti } = conn;
+  const fromItem = portsRef.current[fi.id];
+  const toItem = portsRef.current[ti.id];
+  const { parent: p, target: t } = fromItem;
+  const parent = itemsRef.current[p.id];
+  const target = itemsRef.current[t.id];
 
   const isParent = item.block.uuid === parent.block.uuid;
   const isTarget = item.block.uuid === target.block.uuid;
@@ -72,6 +85,7 @@ function updateConnectionPaths(
     isTarget ? (fromItem?.rect || fromItem?.target?.rect) : rect,
     isTarget ? rect : (toItem?.rect || toItem?.target?.rect),
   );
+  console.log(item, conn, pathD);
   pathElement?.setAttribute('d', pathD);
 
   const element0 = document.getElementById(`${conn.id}-stop-0`);

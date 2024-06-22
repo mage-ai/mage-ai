@@ -3,6 +3,7 @@ import { BlockTypeEnum, DynamicModeEnum, InputDataTypeEnum } from '../../BlockTy
 import { InteractionInputTypeEnum, InteractionVariableTypeEnum } from '../../InteractionType';
 import { PipelineExecutionFrameworkUUIDEnum, GroupUUIDEnum } from '../types';
 import { PipelineTypeEnum } from '../../PipelineType';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 export const Load: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.LOAD,
@@ -21,7 +22,7 @@ export const Load: PipelineExecutionFrameworkType = {
       upstream_blocks: [GroupUUIDEnum.INGEST],
       downstream_blocks: [],
     },
-  ],
+  ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Transform: PipelineExecutionFrameworkType = {
@@ -189,7 +190,7 @@ export const Transform: PipelineExecutionFrameworkType = {
         },
       },
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Export: PipelineExecutionFrameworkType = {
@@ -205,7 +206,7 @@ export const Export: PipelineExecutionFrameworkType = {
       uuid: GroupUUIDEnum.VECTOR_DATABASE,
       type: BlockTypeEnum.GROUP,
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Index: PipelineExecutionFrameworkType = {
@@ -225,7 +226,7 @@ export const Index: PipelineExecutionFrameworkType = {
       uuid: GroupUUIDEnum.SEARCH_INDEX,
       type: BlockTypeEnum.GROUP,
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 const DataPreparation: PipelineExecutionFrameworkType = {
@@ -234,31 +235,31 @@ const DataPreparation: PipelineExecutionFrameworkType = {
   groups: [GroupUUIDEnum.DATA_PREPARATION],
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
-    {
-      uuid: Load.uuid,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [],
-      downstream_blocks: [Transform.uuid],
-    },
-    {
-      uuid: Transform.uuid,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [Load.uuid],
-      downstream_blocks: [Export.uuid],
-    },
-    {
-      uuid: Export.uuid,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [Transform.uuid],
-      downstream_blocks: [Index.uuid],
-    },
-    {
-      uuid: Index.uuid,
-      type: BlockTypeEnum.PIPELINE,
-      upstream_blocks: [Export.uuid],
-      downstream_blocks: [],
-    },
-  ],
+    // {
+    //   uuid: Load.uuid,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [],
+    //   downstream_blocks: [Transform.uuid],
+    // },
+    // {
+    //   uuid: Transform.uuid,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [Load.uuid],
+    //   downstream_blocks: [Export.uuid],
+    // },
+    // {
+    //   uuid: Export.uuid,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [Transform.uuid],
+    //   downstream_blocks: [Index.uuid],
+    // },
+    // {
+    //   uuid: Index.uuid,
+    //   type: BlockTypeEnum.PIPELINE,
+    //   upstream_blocks: [Export.uuid],
+    //   downstream_blocks: [],
+    // },
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export default DataPreparation;

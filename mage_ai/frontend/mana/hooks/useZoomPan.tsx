@@ -1,20 +1,36 @@
+import { RectType } from '@components/v2/Canvas/interfaces';
 import { useRef, useEffect } from 'react';
 
 // A helper function to check if an element has a specific role in a space-separated list of roles
 const hasRole = (element: HTMLElement | null, role: string): boolean =>
   element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
 
+export type ZoomPanStateType = {
+  zoom: React.MutableRefObject<number>;
+  offsetRectToCenter: (rect: RectType) => RectType;
+  position: {
+    x: React.MutableRefObject<number>;
+    y: React.MutableRefObject<number>;
+    origin: {
+      x: React.MutableRefObject<number>;
+      y: React.MutableRefObject<number>;
+    };
+  };
+  pan: React.MutableRefObject<boolean>;
+};
+
 export const useZoomPan = (
   elementRef: React.RefObject<HTMLElement>,
   opts?: {
+    containerRef?: React.RefObject<HTMLElement>;
     disabled?: boolean;
     zoomSensitivity?: number;
     minScale?: number;
     maxScale?: number;
     roles?: string[];
   },
-) => {
-  const { disabled = false, zoomSensitivity = 0.5, minScale = 0.01, maxScale = 4, roles } = opts;
+): ZoomPanStateType => {
+  const { containerRef, disabled = false, zoomSensitivity = 0.5, minScale = 0.01, maxScale = 4, roles } = opts;
 
   const scale = useRef(1);
   const originX = useRef(0);
@@ -24,11 +40,28 @@ export const useZoomPan = (
   const isPanning = useRef(false);
 
   useEffect(() => {
+    const container = containerRef?.current ?? window;
     const element = elementRef.current;
     if (!element) return;
 
     const updateTransform = () => {
       element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      // console.log(
+      //   'scale', scale?.current,
+      //   'originX', originX?.current,
+      //   'originY', originY?.current,
+      //   'startX', startX?.current,
+      //   'startY', startY?.current,
+      // );
+    };
+
+    const initializeOrigin = () => {
+      const canvasRect = element.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      originX.current = (canvasRect?.width - containerRect?.width) / 2;
+      originY.current = (canvasRect?.height - containerRect?.height) / 2;
+      updateTransform();
     };
 
     const handleWheel = (e: WheelEvent) => {
@@ -102,6 +135,8 @@ export const useZoomPan = (
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
+    initializeOrigin();
+
     return () => {
       element.removeEventListener('wheel', handleWheel);
       element.removeEventListener('mousedown', handleMouseDown);
@@ -111,5 +146,55 @@ export const useZoomPan = (
       element.removeEventListener('touchmove', handleTouchMove);
       element.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [elementRef, disabled, zoomSensitivity, minScale, maxScale, roles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled, zoomSensitivity, minScale, maxScale, roles]);
+
+  function offsetRectToCenter(rect: RectType): RectType {
+    // const containerRect = containerRef?.current.getBoundingClientRect();
+    // const containerCenterX = containerRect.width / 2;
+    // const containerCenterY = containerRect.height / 2;
+
+    // const rectCenterX = (rect.width * scale.current) / 2;
+    // const rectCenterY = (rect.height * scale.current) / 2;
+
+    // Calculate the offset to center the rect
+    const canvasRect = elementRef?.current?.getBoundingClientRect();
+    const containerRect = containerRef?.current?.getBoundingClientRect();
+
+    const originX = (canvasRect?.width - containerRect?.width) / 2;
+    const originY = (canvasRect?.height - containerRect?.height) / 2;
+    const diff = {
+      left: (startX.current / scale.current) - originX,
+      top: (startY.current / scale.current) - originY,
+    };
+    console.log('SHFTTTTTTTTTTTTTTTTT', rect?.id,
+      startX.current,
+      startY.current,
+      originX,
+      originY,
+      rect, {
+      ...rect,
+      ...diff,
+    });
+
+    // Apply the offset and take into account the current origin and scale
+    return {
+      ...rect,
+      ...diff,
+    };
+  }
+
+  return {
+    zoom: scale,
+    offsetRectToCenter,
+    position: {
+      x: startX,
+      y: startY,
+      origin: {
+        x: originX,
+        y: originY,
+      },
+    },
+    pan: isPanning,
+  };
 };

@@ -183,7 +183,7 @@ function centerRects(rects: RectType[], boundingRect: RectType, containerRect: R
 }
 
 export function setUpstreamRectsForItems(items: DragItem[]): DragItem[] {
-  isDebugBase() && console.log('setUpstreamRectsForItems', items);
+  isDebug() && console.log('setUpstreamRectsForItems', items);
   const rectsByItemID = indexBy(
     items.map(({ id, rect }) => ({ ...rect, id })),
     ({ id }) => id,
@@ -422,7 +422,7 @@ export function getRectDiff(rect1: RectType, rect2: RectType): RectType {
   };
 }
 
-function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boolean): RectType {
+export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boolean): RectType {
   const dl = dimensions ? (rect.width + diff.width) / 4 : diff.left;
   const dt = dimensions ? (rect.height + diff.height) / 4 : diff.top;
 
@@ -440,20 +440,24 @@ export function layoutItemsInGroups(
   const {
     boundingRect,
     containerRect,
-    defaultRect,
   } = layout;
   const {
-    item: defaultItemRect = () => ({}) as RectType,
-    node: defaultNodeRect = () => ({}) as RectType,
-  } = defaultRect || {};
+    node: transformRect = () => ({}) as RectType,
+  } = layout?.transformRect || {};
+  const {
+    node: defaultRect = () => ({}) as RectType,
+  } = layout?.defaultRect || {};
 
   const groupsMapping: Record<string, NodeType> = {};
+
+  console.log('TREEEEEEEEEEEEEEEEE', nodes);
 
   nodes?.forEach((node: NodeType) => {
     const { items = [] } = node;
 
     const layoutInner = {
       ...layout,
+
       direction: LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
         ? LayoutConfigDirectionEnum.VERTICAL
         : LayoutConfigDirectionEnum.HORIZONTAL,
@@ -473,28 +477,36 @@ export function layoutItemsInGroups(
       )))
       : 0;
 
-    false &&
+    // false &&
     isDebugBase() && console.log(
       items2,
       offsetTopMax,
       offsetLeftMax,
     );
 
-    const rectNode = defaultNodeRect(node) ?? {} as RectType;
+    const rectNode = addRects(defaultRect(node), (transformRect(node) ?? {} as RectType));
+    console.log('RECT TRANSSSSSSSSSSSSSSS', rectNode);
     const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
     const box2 = {
       ...box1,
-      height: box1.height + (rectPadding?.top ?? 0) + (rectPadding?.bottom ?? 0) + (offsetTopMax ?? 0),
+      height: Math.max(
+        box1.height + (rectPadding?.top ?? 0) + (rectPadding?.bottom ?? 0) + (offsetTopMax ?? 0),
+        defaultRect(node).height,
+      ),
       offset: {
         left: offsetLeftMax,
         top: offsetTopMax,
       },
       padding: rectPadding,
-      width: box1.width + (rectPadding?.left ?? 0) + (rectPadding?.right ?? 0),
+      width: Math.max(
+        box1.width + (rectPadding?.left ?? 0) + (rectPadding?.right ?? 0),
+        defaultRect(node).height,
+      ),
     };
 
-    isDebug() && console.log(
+    // isDebug() &&
+    console.log(
       node.id,
       'offsetTopMax', offsetTopMax,
       'items2', items2,
@@ -510,6 +522,7 @@ export function layoutItemsInGroups(
     };
   });
 
+  console.log('TREEEEEEEEEEEEEEEEE GGGGGGGGGGG', groupsMapping);
   Object.values(groupsMapping || {}).forEach((node: NodeType) => {
     groupsMapping[node.id] = {
       ...node,
@@ -538,14 +551,19 @@ export function layoutItemsInGroups(
     })),
   }));
 
-  isDebugBase() &&
+  // isDebug() &&
   console.log('rectsBeforeLayout', rectsBeforeLayout);
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  isDebugBase() &&
+  // isDebug() &&
   console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
-  isDebugBase() &&
-  console.log('rectsCentered', rectsCentered);
+  // isDebug() &&
+  console.log(
+    'rectsCentered', rectsCentered,
+    'boundingRect', boundingRect,
+    'containerRect', containerRect,
+    window.innerWidth, window.innerHeight,
+  );
 
   return rectsCentered.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];
@@ -812,4 +830,12 @@ function layoutRectsInWavePattern(
 
     return updatedRect;
   });
+}
+
+export function addRects(rect1: RectType, rect2: RectType): RectType {
+  return {
+    ...rect1,
+    left: rect1.left + rect2.left,
+    top: rect1.top + rect2.top,
+  };
 }

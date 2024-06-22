@@ -43,7 +43,9 @@ export function BlockNode({
   const { borders } = borderConfig || {};
   const { asides, badge } = titleConfig || {};
   const { after, before } = asides || {};
-  const { inputs, outputs } = item || {};
+
+  const inputs = item?.ports?.filter(p => p.subtype === PortSubtypeEnum.INPUT);
+  const outputs = item?.ports?.filter(p => p.subtype === PortSubtypeEnum.OUTPUT);
 
   const isPipeline = useMemo(() => BlockTypeEnum.PIPELINE === block?.type, [block]);
   const isGroup = useMemo(() => BlockTypeEnum.GROUP === block?.type, [block]);

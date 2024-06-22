@@ -8,9 +8,10 @@ $grid-size: 40px;
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
   width: 500%;  /* Large enough to initially fit all content, will expand as needed */
   position: absolute; /* Ensure it behaves correctly inside the parent container */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* Center the container within its parent */
+  /* top: 50%; */
+  /* left: 50%; */
+  /* Center the container within its parent */
+  /* transform: translate(-50%, -50%); */
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
 

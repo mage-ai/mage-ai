@@ -18,7 +18,7 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
     top,
     zIndex,
   } = rect || ({} as RectType);
-  const transform = `translate3d(${left}px, ${top}px, 0)`;
+  const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
   return {
     WebkitTransform: transform,

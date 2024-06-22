@@ -25,6 +25,7 @@ import { SetupOpts, layoutItems, layoutRectsInContainer, layoutItemsInTreeFormat
 import { indexBy } from '@utils/array';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { isDebug } from '@utils/environment';
+import { ignoreKeys } from '@utils/hash';
 
 export function initializeBlocksAndConnections(
   blocksInitArg: BlockType[],
@@ -115,17 +116,20 @@ export function initializeBlocksAndConnections(
     block,
     id: block.uuid,
     level,
+    rect: null,
     title: block.name || block.uuid,
     type: ItemTypeEnum.BLOCK,
   })) as DragItem[];
 
-  let rects = layoutItems(itemsInit, opts);
-  rects = layoutRectsInContainer(rects, opts?.layout);
-  const rectItems = layoutItemsInTreeFormation(itemsInit.map((i, idx) => ({
-    ...i,
-    rect: rects[idx],
-  })), opts?.layout);
-  const itemMapping: Record<string, DragItem> = indexBy(rectItems, i => i.id);
+  // let rects = layoutItems(itemsInit, opts);
+  // rects = layoutRectsInContainer(rects, opts?.layout);
+  // const rectItems = layoutItemsInTreeFormation(itemsInit.map((i, idx) => ({
+  //   ...i,
+  //   rect: rects[idx],
+  // })), opts?.layout);
+  const itemMapping: Record<string, DragItem> = indexBy(
+    itemsInit,
+    i => i.id);
 
   const downFlowPorts = {};
   // Create ports
@@ -138,8 +142,7 @@ export function initializeBlocksAndConnections(
 
     if (!parentItem) return;
 
-    const inputs: PortType[] = [];
-    const outputs: PortType[] = [];
+    const ports: PortType[] = [];
 
     const {
       downstream_blocks: dnBlocks,
@@ -178,24 +181,20 @@ export function initializeBlocksAndConnections(
             fromBlock: targetBlock,
             toBlock: block,
           });
-          inputs.push(port);
         } else if (PortSubtypeEnum.OUTPUT === port?.subtype) {
           downwardsID = buildPortUUID(null, {
             fromBlock: block,
             toBlock: targetBlock,
           });
-          outputs.push(port);
         }
-
+        ports.push(port);
         downFlowPorts[downwardsID] = port;
-
         portMapping[port.id] = port;
       });
     });
 
     const itemWithPorts = update(parentItem, {
-      inputs: { $set: inputs },
-      outputs: { $set: outputs },
+      ports: { $set: ports },
     });
 
     itemMapping[blockUUID] = itemWithPorts;
@@ -203,10 +202,10 @@ export function initializeBlocksAndConnections(
 
   const portMappingFinal: Record<string, PortType> = {};
   Object.values(itemMapping).forEach((item: DragItem) => {
-    (item?.inputs || []).concat(item?.outputs || []).forEach((port: PortType) => {
+    (item?.ports ?? []).forEach((port: PortType) => {
       const { parent, target } = port;
-      port.parent = itemMapping[parent.block.uuid];
-      port.target = itemMapping[target.block.uuid];
+      port.parent = ignoreKeys(itemMapping[parent.block.uuid], ['ports']);
+      port.target = ignoreKeys(itemMapping[target.block.uuid], ['ports']);
       portMappingFinal[port.id] = port;
     });
   });
@@ -227,8 +226,8 @@ export function initializeBlocksAndConnections(
     const fromItem = itemMapping[fromItemBlock.uuid];
     const toItem = itemMapping[toItemBlock.uuid];
 
-    const fromPort = fromItem?.outputs?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid);
-    const toPort = toItem?.inputs?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid);
+    const fromPort = fromItem?.ports?.find(p => p?.target?.block?.uuid === toItemBlock?.uuid && p.subtype === PortSubtypeEnum.OUTPUT);
+    const toPort = toItem?.ports?.find(p => p?.target?.block?.uuid === fromItemBlock?.uuid && p.subtype === PortSubtypeEnum.INPUT);
 
     fromPort.rect = { ...fromItem.rect };
     toPort.rect = { ...toItem.rect };
@@ -297,6 +296,7 @@ export function initializeBlocksAndConnections(
     });
   }
   Object.entries(nodeItemMapping ?? {}).forEach(([groupID, node]: [string, NodeType]) => {
+    const block = itemMapping[node?.block?.uuid];
     const upstreamNodes = node?.block?.upstream_blocks?.map(
       (buuid: string) => nodeItemMapping?.[buildUUIDForLevel(buuid, level)],
     ) ?? [];
@@ -305,8 +305,10 @@ export function initializeBlocksAndConnections(
 
   return {
     connectionMapping,
-    itemMapping,
-    nodeItemMapping,
+    itemMapping: {
+      ...itemMapping,
+      ...nodeItemMapping,
+    },
     portMapping: portMappingFinal,
   };
 }

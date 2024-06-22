@@ -1,128 +1,166 @@
-import { DragItem, NodeType, NodeItemMappingType, ItemMappingType } from '../../../Canvas/interfaces';
-import { ItemTypeEnum } from '../../../Canvas/types';
+import { applyRectDiff, getRectDiff } from '../../../Canvas/utils/rect';
+import { DragItem, NodeType, ItemMappingType,
+  ConnectionMappingType,
+  ModelMappingType,
+  ModelRefsType,
+  PortMappingType } from '../../../Canvas/interfaces';
+import { ItemTypeEnum, PortSubtypeEnum } from '../../../Canvas/types';
 import { isDebug } from '@utils/environment';
 import { buildUUIDForLevel } from './levels';
+import { ignoreKeys } from '@utils/hash';
 
 export function updateNodeGroupsWithItems(
-  nodeItemMapping: NodeItemMappingType,
   itemMapping: ItemMappingType,
-): NodeItemMappingType {
-  false &&
+): ItemMappingType {
+  // false &&
   isDebug() && console.log(
     'updateNodeGroupsWithItems',
-    'nodeItemMapping', nodeItemMapping,
+    'itemMapping', itemMapping,
     'itemMapping', itemMapping,
   );
 
-  const mapping = Object.entries(nodeItemMapping ?? {})?.reduce((
+  const mapping = Object.entries(itemMapping ?? {})?.reduce((
     acc,
     [nodeID, nodeItem]: [string, NodeType],
   ) =>  {
-    const items = nodeItem?.items?.map((item: DragItem) => itemMapping?.[item?.id]);
+    if (ItemTypeEnum.NODE !== nodeItem?.type) {
+      return acc;
+    }
+
+    const items = nodeItem?.items?.reduce((acc, item: DragItem) => ({
+      ...acc,
+      [item.id]: itemMapping?.[item?.id],
+    }), {});
 
     return {
       ...acc,
       [nodeID]: {
         ...nodeItem,
-        items,
+        items: Object.values(items),
       },
     };
-  }, {} as NodeItemMappingType);
+  }, {} as ItemMappingType);
 
   return Object.entries(mapping ?? {})?.reduce((
     acc,
     [nodeID, nodeItem]: [string, NodeType],
   ) =>  ({
-      ...acc,
-      [nodeID]: {
-        ...nodeItem,
-        upstreamNodes: nodeItem?.upstreamNodes?.map((node: NodeType) => mapping?.[node?.id]),
-      },
-    }), {} as NodeItemMappingType);
+    ...acc,
+    [nodeID]: {
+      ...nodeItem,
+      upstreamNodes: nodeItem?.upstreamNodes?.map((node: NodeType) => mapping?.[node?.id]),
+    },
+  }), {} as ItemMappingType);
 }
 
-// function buildNodeGroups(items: DragItem[]): [NodeType[], DragItem[]] {
-//   const itemsUngrouped = [];
-//   const groups = {};
-//   const itemsToGroups = {};
+export function updateModelsAndRelationships({
+  connectionsRef,
+  itemsRef,
+  portsRef,
+}: ModelRefsType, payload?: ModelMappingType) {
+  const {
+    connectionMapping,
+    itemMapping,
+    portMapping,
+  } = payload ?? {};
 
-//   items?.forEach((item: DragItem) => {
-//     if (item?.block?.groups) {
-//       item?.block?.groups?.forEach((groupIDBase: string) => {
-//         const groupID = buildUUIDForLevel(groupIDBase, item?.level ?? 0);
+  // 1. Items are updated
+  // 2. Item’s ports are updated
+  // 3. Nodes and node’s items are updated
+  // 4. Connection’s fromItem and toItem are updated
 
-//         itemsToGroups[item.id] = groupID;
+  false && isDebug() && console.log(
+    'updateModelsAndRelationships before',
+    'itemsRef', itemsRef?.current,
+    'portsRef', portsRef?.current,
+    'connectionsRef', connectionsRef?.current,
+    'payload', payload,
+    Object.values(payload?.connectionMapping ?? {})?.map(conn => [conn.fromItem?.id, conn.toItem?.id]),
+  );
 
-//         groups[groupID] ||= {
-//           id: groupID,
-//           items: [],
-//           level: item?.level,
-//           type: ItemTypeEnum.NODE,
-//           upstreamNodes: [],
-//         };
-//         groups[groupID].items.push(item);
+  Object.values({
+    ...itemsRef.current,
+    ...itemMapping,
+  } ?? {}).forEach((item: DragItem) => {
+    if (ItemTypeEnum.NODE === item?.type) {
+      return;
+    }
 
-//         (item?.block?.upstream_blocks ?? [])?.forEach((nodeID: string) => {
-//           if (!(groups[groupID].upstreamNodes ?? []).find((node: NodeType) => node.id === nodeID)) {
+    const arr = [];
 
-//             groups[groupID].upstreamNodes.push({
-//               id: nodeID,
-//               level: item?.level,
-//               type: ItemTypeEnum.NODE,
-//             });
-//           }
-//         });
-//       });
-//     } else {
-//       itemsUngrouped.push(item);
-//     }
-//   });
+    (item?.ports ?? [])?.forEach((port) => {
+      const port2 = {
+        ...port,
+        ...portsRef?.current?.[port?.id],
+        ...portMapping?.[port?.id],
+        parent: ignoreKeys(item, ['ports']),
+      };
 
-//   Object.entries(groups || {})?.forEach(([groupID, group]: [string, NodeType]) => {
-//     const arr = [];
-//     group?.upstreamNodes?.forEach((node: NodeType) => {
-//       if (node?.id in itemsToGroups) {
-//         const groupID2 = itemsToGroups?.[node?.id];
-//         if (groupID !== groupID2) {
-//           arr.push({
-//             id: groupID2,
-//             level: group?.level,
-//             type: ItemTypeEnum.NODE,
-//           });
-//         }
-//       }
-//     });
-//     groups[groupID].upstreamNodes = arr;
-//   });
+      if (item?.rect && item?.rect?.diff && !port2?.rect) {
+        const rect1 = port2?.rect;
+        const diff = getRectDiff(item?.rect, item?.rect?.diff);
+        const rect2 = applyRectDiff(rect1, diff);
+        port2.rect = {
+          ...rect2,
+          diff: rect1,
+        };
+      }
+      arr.push(port2);
+    });
 
-//   if (isDebug()) {
-//     Object.entries(groups || {})?.forEach(([id, group]: [string, NodeType]) => {
-//       const map = {
-//         export: ['transform'],
-//         index: ['export'],
-//         load: [],
-//         query_processing: [''],
-//         response_generation: ['retrieval'],
-//         retrieval: ['query_processing'],
-//         transform: ['load'],
-//       };
+    item.ports = arr;
+    itemsRef.current[item.id] = item;
 
-//       if (id in map){
-//         const upstreamNodes = group?.upstreamNodes;
-//         const value = map[id];
-//         if (value?.join(',') !== upstreamNodes?.map((node: NodeType) => String(node.id))?.join(',')) {
-//           console.error(
-//             `Group ${id} is missing upstream node ${value}: ${upstreamNodes}`,
-//             group,
-//             groups,
-//           );
-//         }
-//       }
-//     });
+    portsRef.current = {
+      ...portsRef.current,
+      ...arr.reduce((acc, port) => ({ ...acc, [port.id]: port }), {}),
+    };
+  });
 
-//     false &&
-//       isDebug() && console.log('Groups with upstream nodes:', groups);
-//   }
+  Object.entries({
+    ...itemsRef.current,
+    ...itemMapping,
+  } ?? {}).forEach(([nodeID, nodeInit]: [string, NodeType]) => {
+    if (ItemTypeEnum.NODE !== nodeInit?.type) {
+      return;
+    }
 
-//   return [Object.values(groups), itemsUngrouped];
-// }
+    const node = {
+      ...nodeInit,
+      ...itemsRef.current?.[nodeID],
+      ...itemMapping?.[nodeID],
+    };
+    const items = node?.items?.reduce((acc, item: DragItem) => ({ ...acc, [item.id]: itemsRef?.current?.[item?.id] }), {});
+    node.items = Object.values(items ?? {});
+    itemsRef.current[nodeID] = node;
+  });
+  Object.entries(itemsRef.current ?? {}).forEach(([nodeID, nodeItem]: [string, NodeType]) => {
+    nodeItem.upstreamNodes = nodeItem?.upstreamNodes?.map((node: NodeType) => itemsRef.current[node?.id]);
+    itemsRef.current[nodeID] = nodeItem;
+  });
+
+  Object.entries({
+    ...connectionsRef.current,
+    ...connectionMapping,
+  }).forEach(([key, conn]: [string, any]) => {
+    const { fromItem, toItem } = conn;
+    conn.fromItem = portsRef.current[fromItem?.id];
+    conn.toItem = portsRef.current[toItem?.id];
+    connectionsRef.current[key] = conn;
+  });
+
+  false &&
+  isDebug() && console.log(
+    'updateModelsAndRelationships after',
+    'itemsRef', itemsRef?.current,
+    'portsRef', portsRef?.current,
+    'connectionsRef', connectionsRef?.current,
+    Object.values(connectionsRef?.current ?? {})?.map(conn => [conn.fromItem, conn.toItem]),
+  );
+
+  return {
+    connectionsRef,
+    itemsRef,
+    portsRef,
+  };
+}

@@ -3,6 +3,7 @@ import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
 import { PipelineTypeEnum } from '../PipelineType';
 
 export type PipelineExecutionFrameworkBlockType = BlockType & {
+  name?: string;
   downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   type?: BlockTypeEnum.GROUP | BlockTypeEnum.PIPELINE;

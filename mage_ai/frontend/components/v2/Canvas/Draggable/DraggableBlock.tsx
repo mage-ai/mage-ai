@@ -81,7 +81,7 @@ export const DraggableBlock: FC<DraggableBlockProps> = memo(function DraggableBl
   const itemRef = useRef(null);
 
   const ports: PortType[] = useMemo(
-    () => ((item?.inputs || []) as PortType[]).concat((item?.outputs || []) as PortType[]),
+    () => item?.ports ?? [],
     [item],
   );
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);

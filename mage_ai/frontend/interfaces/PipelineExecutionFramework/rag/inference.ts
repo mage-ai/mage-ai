@@ -2,6 +2,7 @@ import PipelineExecutionFrameworkType from '../interfaces';
 import { BlockTypeEnum } from '../../BlockType';
 import { PipelineExecutionFrameworkUUIDEnum, GroupUUIDEnum } from '../types';
 import { PipelineTypeEnum } from '../../PipelineType';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 export const QueryProcessing: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.QUERY_PROCESSING,
@@ -26,7 +27,7 @@ export const QueryProcessing: PipelineExecutionFrameworkType = {
       upstream_blocks: [GroupUUIDEnum.QUERY_DECOMPOSITION],
       downstream_blocks: [],
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Retrieval: PipelineExecutionFrameworkType = {
@@ -58,7 +59,7 @@ export const Retrieval: PipelineExecutionFrameworkType = {
       upstream_blocks: [GroupUUIDEnum.MULTI_HOP_REASONING],
       downstream_blocks: [],
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const ResponseGeneration: PipelineExecutionFrameworkType = {
@@ -89,7 +90,7 @@ export const ResponseGeneration: PipelineExecutionFrameworkType = {
       upstream_blocks: [GroupUUIDEnum.ANSWER_ENRICHMENT],
       type: BlockTypeEnum.GROUP,
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 const Inference: PipelineExecutionFrameworkType = {
@@ -116,7 +117,7 @@ const Inference: PipelineExecutionFrameworkType = {
       upstream_blocks: [Retrieval.uuid],
       downstream_blocks: [],
     },
-  ],
+    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export default Inference;

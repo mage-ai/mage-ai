@@ -1,6 +1,7 @@
 import BlockType from '@interfaces/BlockType';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
 import {
   ItemTypeEnum,
@@ -42,10 +43,9 @@ interface BaseItem {
 export interface DragItem extends BaseItem {
   block?: BlockType;
   groups?: string[];
-  inputs?: PortType[];
   isDragging?: boolean;
   node?: NodeType;
-  outputs?: PortType[];
+  ports?: PortType[];
   rect?: RectType;
   title?: string;
   upstreamItems?: DragItem[];
@@ -60,7 +60,6 @@ export interface PortType extends DragItem {
 
 export interface NodeType extends DragItem {
   items: (DragItem | NodeType)[];
-  ports: PortType[];
   upstreamNodes?: (DragItem | NodeType)[];
 }
 
@@ -72,6 +71,7 @@ export interface LayoutConfigType {
     node?: (node?: NodeType) => RectType;
   };
   direction?: LayoutConfigDirectionEnum;
+  level?: number;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {
     column?: number;
@@ -83,6 +83,11 @@ export interface LayoutConfigType {
   };
   itemRect?: RectType;
   stagger?: number;
+  transform?: ZoomPanStateType;
+  transformRect?: {
+    block?: (item?: DragItem) => RectType;
+    node?: (node?: NodeType) => RectType;
+  };
 }
 
 export type NodeItemType = DragItem | PortType;
@@ -100,7 +105,7 @@ export interface ConnectionType {
 }
 
 export type ConnectionMappingType = Record<string, ConnectionType>;
-export type ItemMappingType = Record<string, DragItem>;
+export type ItemMappingType = Record<string, DragItem | NodeItemType>;
 export type NodeItemMappingType = Record<string, NodeType>;
 export type PortMappingType = Record<string, PortType>;
 
@@ -112,6 +117,11 @@ export type GroupLevelsMappingType = GroupMappingType[];
 export type ModelMappingType = {
   connectionMapping?: ConnectionMappingType;
   itemMapping?: ItemMappingType;
-  nodeItemMapping?: NodeItemMappingType;
   portMapping?: PortMappingType;
+};
+
+export type ModelRefsType = {
+  connectionsRef: { current: ConnectionMappingType };
+  itemsRef: { current: ItemMappingType };
+  portsRef: { current: PortMappingType };
 };
