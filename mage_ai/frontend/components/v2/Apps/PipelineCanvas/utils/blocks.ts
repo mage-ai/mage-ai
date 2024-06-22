@@ -12,6 +12,7 @@ import {
   BlocksByGroupType,
   NodeType,
 } from '../../../Canvas/interfaces';
+import { createConnections } from './ports';
 import { blocksToGroupMapping } from './pipelines';
 import { buildUUIDForLevel } from './levels';
 import { buildPortUUID } from '../../../Canvas/Draggable/utils';
@@ -48,7 +49,7 @@ export function initializeBlocksAndConnections(
     downstream_blocks: Record<string, BlockType>,
     upstream_blocks: Record<string, BlockType>,
   }> = {};
-  const connectionMapping: Record<string, ConnectionType> = {};
+  let connectionMapping: Record<string, ConnectionType> = {};
   const portMapping: Record<string, PortType> = {};
 
   const blocksInit = (level ?? false)
@@ -235,6 +236,14 @@ export function initializeBlocksAndConnections(
     const connection = createConnection(fromPort, toPort, { level });
     connectionMapping[connection.id] = connection;
   });
+  connectionMapping = {
+    ...connectionMapping,
+    ...createConnections(Object.values(downFlowPorts ?? {}), {
+      connectionMapping,
+      itemMapping,
+      portMapping,
+    }, { level })?.connectionMapping,
+  };
 
   // {
   //   "load": {
@@ -302,6 +311,8 @@ export function initializeBlocksAndConnections(
     ) ?? [];
     nodeItemMapping[groupID].upstreamNodes = upstreamNodes;
   });
+
+  console.log(connectionMapping);
 
   return {
     connectionMapping,

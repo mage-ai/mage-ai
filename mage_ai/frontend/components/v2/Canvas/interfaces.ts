@@ -121,7 +121,7 @@ export type ModelMappingType = {
 };
 
 export type ModelRefsType = {
-  connectionsRef: { current: ConnectionMappingType };
-  itemsRef: { current: ItemMappingType };
-  portsRef: { current: PortMappingType };
+  connectionsRef?: { current: ConnectionMappingType };
+  itemsRef?: { current: ItemMappingType };
+  portsRef?: { current: PortMappingType };
 };

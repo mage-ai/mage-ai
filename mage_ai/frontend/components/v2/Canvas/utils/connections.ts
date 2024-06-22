@@ -29,7 +29,6 @@ export function updateAllPortConnectionsForItem(
 ) {
   const {
     connectionsRef,
-    itemsRef,
     portsRef,
   } = modelRefs;
 
@@ -80,12 +79,10 @@ function updateConnectionPaths(
   connectionsRef.current[conn.id] = conn;
 
   const pathElement = document.getElementById(String(conn.id));
-  const pathD = getPathD(
-    conn,
-    isTarget ? (fromItem?.rect || fromItem?.target?.rect) : rect,
-    isTarget ? rect : (toItem?.rect || toItem?.target?.rect),
-  );
-  console.log(item, conn, pathD);
+  const fromRect = isTarget ? (fromItem?.rect || fromItem?.target?.rect) : rect;
+  const toRect = isTarget ? rect : (toItem?.rect || toItem?.target?.rect);
+  const pathD = getPathD(conn, fromRect, toRect);
+
   pathElement?.setAttribute('d', pathD);
 
   const element0 = document.getElementById(`${conn.id}-stop-0`);
@@ -121,4 +118,65 @@ function updateConnectionPaths(
   }
 
   return conn.fromItem.rect;
+}
+
+export function drawLine({
+  curveControl,
+  fromColor,
+  fromPosition,
+  fromRect,
+  id,
+  toColor,
+  toPosition,
+  toRect,
+}: {
+  fromColor: string,
+  curveControl?: number;
+  fromPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection starts
+  fromRect: RectType,
+  id?: string,
+  pathRef?: React.RefObject<SVGPathElement>,
+  toColor?: string,
+  toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends
+  toRect: RectType,
+}) {
+  const pathElement = document.getElementById(id);
+  const pathD = getPathD({
+    curveControl,
+    fromPosition,
+    toPosition,
+  } as ConnectionType, fromRect, toRect);
+
+  pathElement?.setAttribute('d', pathD);
+
+  // Get the corresponding linearGradient element using the stroke reference
+  const gradientId = pathElement?.getAttribute('stroke')?.match(/url\(#(.+)\)/)?.[1];
+  const gradientElement = document.querySelector(`#${gradientId}`);
+
+  // Query the first and second stop elements within the gradient element
+  const element0 = gradientElement?.querySelector('stop:first-of-type');
+  const element1 = gradientElement?.querySelector('stop:last-of-type');
+
+  if (fromColor && toColor) {
+    [
+      stylesPathGradient.stop,
+      stylesPathGradient[`stop-color-${toColor}`],
+    ].forEach((classNames) => {
+      element0.classList.add(classNames);
+    });
+
+    [
+      stylesPathGradient.stop,
+      stylesPathGradient[`stop-color-${fromColor}`],
+    ].forEach((classNames) => {
+      element1.classList.add(classNames);
+    });
+  } else if (fromColor || toColor) {
+    [
+      styles.path,
+      styles[`stroke-color-${fromColor || toColor}`],
+    ].forEach((classNames) => {
+      pathElement.classList.add(classNames);
+    });
+  }
 }

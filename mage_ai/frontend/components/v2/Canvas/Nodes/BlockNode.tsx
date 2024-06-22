@@ -18,7 +18,6 @@ import { useMemo } from 'react';
 import { buildPortUUID } from '../Draggable/utils';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { DragAndDropHandlersType } from './types';
-import BlockGroup from './BlockGroup';
 
 type BlockNodeProps = {
   block?: BlockType

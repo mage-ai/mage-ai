@@ -66,13 +66,21 @@ function getAnchorPosition({ left, height, top, width }: RectType, position?: st
   }
 }
 
-function calculatePosition(connection: ConnectionType, fromRect: RectType, toRect: RectType) {
-  const fromPosition = getAnchorPosition(fromRect, connection.fromPosition);
-  const toPosition = getAnchorPosition(toRect, connection.toPosition);
+function calculatePosition(
+  {
+    curveControl: curveControlArg,
+    fromPosition: fromPositionArg,
+    toPosition: toPositionArg,
+  }: ConnectionType,
+  fromRect: RectType,
+  toRect: RectType,
+) {
+  const fromPosition = getAnchorPosition(fromRect, fromPositionArg);
+  const toPosition = getAnchorPosition(toRect, toPositionArg);
   const { x: startX, y: startY } = fromPosition;
   const { x: endX, y: endY } = toPosition;
 
-  const curveControl = connection.curveControl ?? 0.5; // Default curve control value
+  const curveControl = curveControlArg ?? 0.5; // Default curve control value
 
   // Calculate control points for a smooth curve
   const controlPointX1 = startX + (endX - startX) * curveControl;
@@ -92,9 +100,13 @@ function calculatePosition(connection: ConnectionType, fromRect: RectType, toRec
   };
 }
 
-export function getPathD(connection: ConnectionType, fromRect: RectType, toRect: RectType): string {
+export function getPathD(opts: {
+  curveControl?: number;
+  fromPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection starts
+  toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends
+}, fromRect: RectType, toRect: RectType): string {
   const { endX, endY, startX, startY, x1, x2, y1, y2 } = calculatePosition(
-    connection,
+    opts as ConnectionType,
     fromRect,
     toRect,
   );

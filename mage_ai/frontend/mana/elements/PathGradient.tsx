@@ -11,26 +11,26 @@ const PathGradient = withStyles<{
   classNames: ['svg'],
 });
 
-const PathGradientComponent = ({
+const PathGradientComponent = React.forwardRef<SVGSVGElement, {
+  className?: string;
+  d?: string;
+  id?: string;
+  stop0ClassNames?: string[];
+  stop1ClassNames?: string[];
+} & React.HTMLAttributes<SVGPathElement>>(({
   className,
   d,
   id,
   stop0ClassNames = [],
   stop1ClassNames = [],
   ...rest
-}: {
-  className?: string;
-  d?: string;
-  id?: string;
-  stop0ClassNames?: string[];
-  stop1ClassNames?: string[];
-} & React.HTMLAttributes<SVGPathElement>) => {
+}, ref) => {
 
   const getJoinedClassNames = (classNames: string[]) =>
     classNames.map(cn => styles[cn]).join(' ');
 
   return (
-    <PathGradient className={className}>
+    <PathGradient className={className} ref={ref}>
       <defs>
         <linearGradient id={`${id}-grad`} x1="0%" x2="100%" y1="0%" y2="0%">
           {stop0ClassNames.length > 0 && (
@@ -46,9 +46,10 @@ const PathGradientComponent = ({
         fill="none"
         id={id}
         stroke={`url(#${id}-grad)`}
+        {...rest}
       />
     </PathGradient>
   );
-};
+});
 
 export default PathGradientComponent;
